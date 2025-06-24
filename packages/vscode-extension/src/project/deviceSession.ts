@@ -304,7 +304,6 @@ export class DeviceSession
     this.cancelToken?.cancel();
     await this.deactivate();
     await this.debugSession?.dispose();
-    this.disposableBuild?.dispose();
     this.device?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
@@ -651,7 +650,7 @@ export class DeviceSession
   }) {
     const buildStartTime = Date.now();
     this.updateStartupMessage(StartupMessage.Building);
-    this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
+    this.maybeBuildResult = await this.buildManager.startBuild(this.device.deviceInfo, {
       appRoot,
       clean,
       progressListener: throttle((stageProgress: number) => {
@@ -662,7 +661,6 @@ export class DeviceSession
       }, 100),
       cancelToken,
     });
-    this.maybeBuildResult = await this.disposableBuild.build;
     const buildDurationSec = (Date.now() - buildStartTime) / 1000;
     Logger.info("Build completed in", buildDurationSec.toFixed(2), "sec.");
     getTelemetryReporter().sendTelemetryEvent(

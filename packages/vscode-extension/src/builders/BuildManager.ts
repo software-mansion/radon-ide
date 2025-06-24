@@ -66,6 +66,143 @@ class WorkspaceChangeListener implements Disposable {
   }
 }
 
+export function createBuildConfig<Platform extends DevicePlatform>(
+  appRoot: string,
+  platform: Platform,
+  forceCleanBuild: boolean,
+  launchConfiguration: LaunchConfigurationOptions,
+  buildType: BuildType
+): BuildConfig & { platform: Platform } {
+  const { customBuild, eas, env, android, ios } = launchConfiguration;
+  const platformMapping = {
+    [DevicePlatform.Android]: "android",
+    [DevicePlatform.IOS]: "ios",
+  } as const;
+  const platformKey = platformMapping[platform];
+
+  switch (buildType) {
+    case BuildType.Local: {
+      if (platform === DevicePlatform.IOS) {
+        return {
+          appRoot,
+          platform: platform as DevicePlatform.IOS & Platform,
+          forceCleanBuild,
+          env,
+          type: BuildType.Local,
+          scheme: ios?.scheme,
+          configuration: ios?.configuration,
+        };
+      } else {
+        return {
+          appRoot,
+          platform: platform as DevicePlatform.Android & Platform,
+          forceCleanBuild,
+          env,
+          type: BuildType.Local,
+          productFlavor: android?.productFlavor,
+          buildType: android?.buildType,
+        };
+      }
+    }
+    case BuildType.ExpoGo: {
+      return {
+        appRoot,
+        platform,
+        env,
+        type: BuildType.ExpoGo,
+      };
+    }
+    case BuildType.Eas: {
+      const easBuildConfig = eas?.[platformKey];
+      if (easBuildConfig === undefined) {
+        throw new BuildError(
+          "An EAS build was initialized but no EAS build config was specified in the launch configuration.",
+          BuildType.Eas
+        );
+      }
+      return {
+        appRoot,
+        platform,
+        env,
+        type: BuildType.Eas,
+        config: easBuildConfig,
+      };
+    }
+    case BuildType.EasLocal: {
+      const easBuildConfig = eas?.[platformKey];
+      if (easBuildConfig === undefined) {
+        throw new BuildError(
+          "A local EAS build was initialized but no EAS build config was specified in the launch configuration.",
+          BuildType.EasLocal
+        );
+      }
+      return {
+        appRoot,
+        platform,
+        env,
+        type: BuildType.EasLocal,
+        profile: easBuildConfig.profile,
+      };
+    }
+    case BuildType.Custom: {
+      const customBuildConfig = customBuild?.[platformKey];
+      if (!customBuildConfig?.buildCommand) {
+        throw new BuildError(
+          "A custom build was initialized but no custom build command was specified in the launch configuration.",
+          BuildType.Custom
+        );
+      }
+      return {
+        appRoot,
+        platform,
+        env,
+        type: BuildType.Custom,
+        buildCommand: customBuildConfig.buildCommand,
+        ...customBuildConfig,
+      };
+    }
+  }
+}
+
+export async function inferBuildType(
+  appRoot: string,
+  platform: DevicePlatform,
+  launchConfiguration: LaunchConfigurationOptions
+): Promise<BuildType> {
+  const { customBuild, eas } = launchConfiguration;
+  const platformMapping = {
+    [DevicePlatform.Android]: "android",
+    [DevicePlatform.IOS]: "ios",
+  } as const;
+  const platformKey = platformMapping[platform];
+  const easBuildConfig = eas?.[platformKey];
+  const customBuildConfig = customBuild?.[platformKey];
+  if (customBuildConfig && easBuildConfig) {
+    throw new BuildError(
+      `Both custom custom builds and EAS builds are configured for ${platform}. Please use only one build method.`,
+      null
+    );
+  }
+
+  if (customBuildConfig?.buildCommand !== undefined) {
+    return BuildType.Custom;
+  }
+
+  if (easBuildConfig) {
+    if (easBuildConfig.local) {
+      return BuildType.EasLocal;
+    } else {
+      return BuildType.Eas;
+    }
+  }
+
+  if (await isExpoGoProject(appRoot)) {
+    return BuildType.ExpoGo;
+  }
+
+  return BuildType.Local;
+}
+
 export class BuildManager implements Disposable {
   private isCachedBuildStale: boolean;
 
@@ -109,144 +246,7 @@ export class BuildManager implements Disposable {
     return false;
   }
 
-  public async inferBuildType(
-    appRoot: string,
-    platform: DevicePlatform,
-    launchConfiguration: LaunchConfigurationOptions
-  ): Promise<BuildType> {
-    const { customBuild, eas } = launchConfiguration;
-    const platformMapping = {
-      [DevicePlatform.Android]: "android",
-      [DevicePlatform.IOS]: "ios",
-    } as const;
-    const platformKey = platformMapping[platform];
-    const easBuildConfig = eas?.[platformKey];
-    const customBuildConfig = customBuild?.[platformKey];
-    if (customBuildConfig && easBuildConfig) {
-      throw new BuildError(
-        `Both custom custom builds and EAS builds are configured for ${platform}. Please use only one build method.`,
-        null
-      );
-    }
-
-    if (customBuildConfig?.buildCommand !== undefined) {
-      return BuildType.Custom;
-    }
-
-    if (easBuildConfig) {
-      if (easBuildConfig.local) {
-        return BuildType.EasLocal;
-      } else {
-        return BuildType.Eas;
-      }
-    }
-
-    if (await isExpoGoProject(appRoot)) {
-      return BuildType.ExpoGo;
-    }
-
-    return BuildType.Local;
-  }
-
-  public createBuildConfig<Platform extends DevicePlatform>(
-    appRoot: string,
-    platform: Platform,
-    forceCleanBuild: boolean,
-    launchConfiguration: LaunchConfigurationOptions,
-    buildType: BuildType
-  ): BuildConfig & { platform: Platform } {
-    const { customBuild, eas, env, android, ios } = launchConfiguration;
-    const platformMapping = {
-      [DevicePlatform.Android]: "android",
-      [DevicePlatform.IOS]: "ios",
-    } as const;
-    const platformKey = platformMapping[platform];
-
-    switch (buildType) {
-      case BuildType.Local: {
-        if (platform === DevicePlatform.IOS) {
-          return {
-            appRoot,
-            platform: platform as DevicePlatform.IOS & Platform,
-            forceCleanBuild,
-            env,
-            type: BuildType.Local,
-            scheme: ios?.scheme,
-            configuration: ios?.configuration,
-          };
-        } else {
-          return {
-            appRoot,
-            platform: platform as DevicePlatform.Android & Platform,
-            forceCleanBuild,
-            env,
-            type: BuildType.Local,
-            productFlavor: android?.productFlavor,
-            buildType: android?.buildType,
-          };
-        }
-      }
-      case BuildType.ExpoGo: {
-        return {
-          appRoot,
-          platform,
-          env,
-          type: BuildType.ExpoGo,
-        };
-      }
-      case BuildType.Eas: {
-        const easBuildConfig = eas?.[platformKey];
-        if (easBuildConfig === undefined) {
-          throw new BuildError(
-            "An EAS build was initialized but no EAS build config was specified in the launch configuration.",
-            BuildType.Eas
-          );
-        }
-        return {
-          appRoot,
-          platform,
-          env,
-          type: BuildType.Eas,
-          config: easBuildConfig,
-        };
-      }
-      case BuildType.EasLocal: {
-        const easBuildConfig = eas?.[platformKey];
-        if (easBuildConfig === undefined) {
-          throw new BuildError(
-            "A local EAS build was initialized but no EAS build config was specified in the launch configuration.",
-            BuildType.EasLocal
-          );
-        }
-        return {
-          appRoot,
-          platform,
-          env,
-          type: BuildType.EasLocal,
-          profile: easBuildConfig.profile,
-        };
-      }
-      case BuildType.Custom: {
-        const customBuildConfig = customBuild?.[platformKey];
-        if (!customBuildConfig?.buildCommand) {
-          throw new BuildError(
-            "A custom build was initialized but no custom build command was specified in the launch configuration.",
-            BuildType.Custom
-          );
-        }
-        return {
-          appRoot,
-          platform,
-          env,
-          type: BuildType.Custom,
-          buildCommand: customBuildConfig.buildCommand,
-          ...customBuildConfig,
-        };
-      }
-    }
-  }
-
-  public startBuild(deviceInfo: DeviceInfo, options: BuildOptions): DisposableBuild<BuildResult> {
+  public async startBuild(deviceInfo: DeviceInfo, options: BuildOptions): Promise<BuildResult> {
     const { clean: forceCleanBuild, progressListener, appRoot, cancelToken } = options;
     const { platform } = deviceInfo;
     const launchConfiguration = getLaunchConfiguration();
@@ -256,138 +256,117 @@ export class BuildManager implements Disposable {
       type: forceCleanBuild ? "clean" : "incremental",
     });
 
-    const buildApp = async () => {
-      const currentFingerprint = await this.buildCache.calculateFingerprint(platform);
+    const currentFingerprint = await this.buildCache.calculateFingerprint(platform);
 
-      // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
-      const buildDependenciesChanged = await this.checkBuildDependenciesChanged(deviceInfo);
+    // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
+    const buildDependenciesChanged = await this.checkBuildDependenciesChanged(deviceInfo);
 
-      if (forceCleanBuild || buildDependenciesChanged) {
-        // we reset the cache when force clean build is requested as the newly
-        // started build may end up being cancelled
-        Logger.debug(
-          "Build cache is being invalidated",
-          forceCleanBuild ? "on request" : "due to build dependencies change"
-        );
-        await this.buildCache.clearCache(platform);
-      } else {
-        const cachedBuild = await this.buildCache.getBuild(currentFingerprint, platform);
-        if (cachedBuild) {
-          Logger.debug("Skipping native build – using cached");
-          getTelemetryReporter().sendTelemetryEvent("build:cache-hit", { platform });
-          return cachedBuild;
-        } else {
-          Logger.debug("Build cache is stale");
-        }
-      }
-
+    if (forceCleanBuild || buildDependenciesChanged) {
+      // we reset the cache when force clean build is requested as the newly
+      // started build may end up being cancelled
       Logger.debug(
-        "Starting native build – no build cached, cache has been invalidated or is stale"
+        "Build cache is being invalidated",
+        forceCleanBuild ? "on request" : "due to build dependencies change"
       );
-      getTelemetryReporter().sendTelemetryEvent("build:start", { platform });
-
-      let buildResult: BuildResult;
-      let buildFingerprint = currentFingerprint;
-      const buildType = await this.inferBuildType(appRoot, platform, launchConfiguration);
-      try {
-        if (platform === DevicePlatform.Android) {
-          this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
-            log: true,
-          });
-          this.buildOutputChannel.clear();
-          const buildConfig = this.createBuildConfig(
-            appRoot,
-            platform,
-            forceCleanBuild,
-            launchConfiguration,
-            buildType
-          );
-          buildResult = await buildAndroid(
-            buildConfig,
-            cancelToken,
-            this.buildOutputChannel,
-            progressListener,
-            this.dependencyManager
-          );
-        } else {
-          const iOSBuildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
-            log: true,
-          });
-          this.buildOutputChannel = iOSBuildOutputChannel;
-          this.buildOutputChannel.clear();
-          const installPodsIfNeeded = async () => {
-            let installPods = forceCleanBuild;
-            if (installPods) {
-              Logger.info("Clean build requested: installing pods");
-            } else {
-              const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
-              if (!podsInstalled) {
-                Logger.info("Pods installation is missing or outdated. Installing Pods.");
-                installPods = true;
-              }
-            }
-            if (installPods) {
-              getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
-              await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
-              const installed = await this.dependencyManager.checkPodsInstallationStatus();
-              if (!installed) {
-                throw new Error("Pods could not be installed automatically.");
-              }
-              // Installing pods may impact the fingerprint as new pods may be created under the project directory.
-              // For this reason we need to recalculate the fingerprint after installing pods.
-              buildFingerprint = await this.buildCache.calculateFingerprint(platform);
-            }
-          };
-          const buildConfig = this.createBuildConfig(
-            appRoot,
-            platform,
-            forceCleanBuild,
-            launchConfiguration,
-            buildType
-          );
-
-          buildResult = await buildIos(
-            buildConfig,
-            cancelToken,
-            this.buildOutputChannel,
-            progressListener,
-            this.dependencyManager,
-            installPodsIfNeeded
-          );
-        }
-      } catch (e) {
-        if (e instanceof CancelError) {
-          throw e; // If the build was canceled we pass the exception up.
-        }
-        throw new BuildError((e as Error).message, buildType);
+      await this.buildCache.clearCache(platform);
+    } else {
+      const cachedBuild = await this.buildCache.getBuild(currentFingerprint, platform);
+      if (cachedBuild) {
+        Logger.debug("Skipping native build – using cached");
+        getTelemetryReporter().sendTelemetryEvent("build:cache-hit", { platform });
+        return cachedBuild;
+      } else {
+        Logger.debug("Build cache is stale");
       }
+    }
 
+    Logger.debug("Starting native build – no build cached, cache has been invalidated or is stale");
+    getTelemetryReporter().sendTelemetryEvent("build:start", { platform });
+
+    let buildResult: BuildResult;
+    let buildFingerprint = currentFingerprint;
+    const buildType = await inferBuildType(appRoot, platform, launchConfiguration);
+    try {
+      if (platform === DevicePlatform.Android) {
+        this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
+          log: true,
+        });
+        this.buildOutputChannel.clear();
+        const buildConfig = createBuildConfig(
+          appRoot,
+          platform,
+          forceCleanBuild,
+          launchConfiguration,
+          buildType
+        );
+        buildResult = await buildAndroid(
+          buildConfig,
+          cancelToken,
+          this.buildOutputChannel,
+          progressListener,
+          this.dependencyManager
+        );
+      } else {
+        const iOSBuildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
+          log: true,
+        });
+        this.buildOutputChannel = iOSBuildOutputChannel;
+        this.buildOutputChannel.clear();
+        const installPodsIfNeeded = async () => {
+          let installPods = forceCleanBuild;
+          if (installPods) {
+            Logger.info("Clean build requested: installing pods");
+          } else {
+            const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
+            if (!podsInstalled) {
+              Logger.info("Pods installation is missing or outdated. Installing Pods.");
+              installPods = true;
+            }
+          }
+          if (installPods) {
+            getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
+            await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
+            const installed = await this.dependencyManager.checkPodsInstallationStatus();
+            if (!installed) {
+              throw new Error("Pods could not be installed automatically.");
+            }
+            // Installing pods may impact the fingerprint as new pods may be created under the project directory.
+            // For this reason we need to recalculate the fingerprint after installing pods.
+            buildFingerprint = await this.buildCache.calculateFingerprint(platform);
+          }
+        };
+        const buildConfig = createBuildConfig(
+          appRoot,
+          platform,
+          forceCleanBuild,
+          launchConfiguration,
+          buildType
+        );
+
+        buildResult = await buildIos(
+          buildConfig,
+          cancelToken,
+          this.buildOutputChannel,
+          progressListener,
+          this.dependencyManager,
+          installPodsIfNeeded
+        );
+      }
+    } catch (e) {
+      if (e instanceof CancelError) {
+        throw e; // If the build was canceled we pass the exception up.
+      }
+      throw new BuildError((e as Error).message, buildType);
+    }
+
+    try {
       await this.buildCache.storeBuild(buildFingerprint, buildResult);
-
-      return buildResult;
-    };
-
-    const disposableBuild = {
-      build: buildApp().catch((e: Error) => {
-        if (e instanceof CancelError) {
-          throw e; // If the build was canceled we pass the exception up.
-        }
-        if (e instanceof BuildError) {
-          throw e;
-        }
-        throw new BuildError(e.message, null);
-      }),
-      dispose: () => {
-        cancelToken.cancel();
-      },
-    };
-    disposableBuild.build
-      .then(() => {
-        this.isCachedBuildStale = false;
-      })
-      .catch(_.noop);
-
-    return disposableBuild;
+      this.isCachedBuildStale = false;
+    } catch (e) {
+      // NOTE: this is a fallible operation (since it does file system operations), but we don't want to fail the whole build if we fail to store it in a cache.
+      Logger.warn("Failed to store the build in cache.", e);
+    }
+    return buildResult;
   }
 
   private checkIfNativeChangedForPlatform = throttleAsync(async () => {
