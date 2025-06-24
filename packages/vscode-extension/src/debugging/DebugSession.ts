@@ -6,6 +6,7 @@ import { sleep } from "../utilities/retry";
 import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
+import { CancelError } from "../builders/cancelToken";
 
 const PING_TIMEOUT = 1000;
 
@@ -90,16 +91,21 @@ export class DebugSession implements Disposable {
     return this.currentWsTarget;
   }
 
+  private startParentSessionPromise: Promise<vscode.DebugSession> | undefined;
+
   public async startParentDebugSession() {
     assert(
       !this.jsDebugSession,
       "Cannot start parent debug session when js debug session is already running"
     );
-    const newParentDebugSession = await startDebugging(
+    if (this.startParentSessionPromise) {
+      this.startParentSessionPromise.then((session) => debug.stopDebugging(session));
+    }
+    const startPromise = (this.startParentSessionPromise = startDebugging(
       undefined,
       {
         type: MASTER_DEBUGGER_TYPE,
-        name: `${this.options.displayName} (Metro)`,
+        name: `${this.options.displayName}`,
         request: "attach",
       },
       {
@@ -108,28 +114,47 @@ export class DebugSession implements Disposable {
         suppressDebugToolbar: true,
         suppressSaveBeforeStart: true,
       }
-    );
-    if (this.parentDebugSession) {
-      Logger.warn("Parent debugger session has spawned concurrently, dropping the earlier session");
-      debug.stopDebugging(this.parentDebugSession);
+    ));
+
+    const newParentDebugSession = await startPromise;
+    if (this.startParentSessionPromise !== startPromise) {
+      // NOTE: this can happen due to one of two things happening while this parent session was still starting:
+      // - another parent debug session has been started.
+      // - the whole DebugSession has been stopped.
+      // In either case, the parent session starting here will be stopped, and we can safely do nothing.
+      const message =
+        this.startParentSessionPromise === undefined
+          ? "Debug session has been stopped while starting parent debug session"
+          : "Another parent debug session has been started while starting this one";
+      throw new CancelError(message);
     }
+
+    this.startParentSessionPromise = undefined;
     this.parentDebugSession = newParentDebugSession;
   }
 
   public async restart() {
-    await this.stop();
-    if (this.options.useParentDebugSession) {
+    await this.stopJsDebugSession();
+    if (this.options.useParentDebugSession && !this.parentDebugSession) {
       await this.startParentDebugSession();
     }
   }
 
-  public async stop() {
+  private async stopJsDebugSession() {
     if (this.jsDebugSession) {
       const jsDebugSession = this.jsDebugSession;
       this.jsDebugSession = undefined;
       await debug.stopDebugging(jsDebugSession);
     }
     this.currentWsTarget = undefined;
+  }
+
+  public async stop() {
+    if (this.startParentSessionPromise) {
+      this.startParentSessionPromise.then((session) => debug.stopDebugging(session));
+      this.startParentSessionPromise = undefined;
+    }
+    await this.stopJsDebugSession();
     if (this.parentDebugSession) {
       const parentDebugSession = this.parentDebugSession;
       this.parentDebugSession = undefined;
@@ -146,9 +171,6 @@ export class DebugSession implements Disposable {
   public async startJSDebugSession(configuration: JSDebugConfiguration) {
     if (this.jsDebugSession) {
       await this.restart();
-    }
-    if (this.options.useParentDebugSession && !this.parentDebugSession) {
-      await this.startParentDebugSession();
     }
 
     const isUsingNewDebugger = configuration.isUsingNewDebugger;
