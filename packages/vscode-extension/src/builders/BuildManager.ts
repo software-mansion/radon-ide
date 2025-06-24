@@ -1,15 +1,15 @@
+import assert from "assert";
 import { Disposable, OutputChannel, window } from "vscode";
 import _ from "lodash";
 import { BuildCache } from "./BuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
-import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
+import { DevicePlatform } from "../common/DeviceManager";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { CancelError, CancelToken } from "./cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
-import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { isExpoGoProject } from "./expoGo";
 import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 import { throttleAsync } from "../utilities/throttle";
@@ -28,8 +28,6 @@ export interface BuildManagerDelegate {
 }
 
 type BuildOptions = {
-  appRoot: string;
-  clean: boolean;
   progressListener: (newProgress: number) => void;
   cancelToken: CancelToken;
 };
@@ -110,6 +108,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
         platform,
         env,
         type: BuildType.ExpoGo,
+        forceCleanBuild,
       };
     }
     case BuildType.Eas: {
@@ -126,6 +125,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
         env,
         type: BuildType.Eas,
         config: easBuildConfig,
+        forceCleanBuild,
       };
     }
     case BuildType.EasLocal: {
@@ -142,6 +142,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
         env,
         type: BuildType.EasLocal,
         profile: easBuildConfig.profile,
+        forceCleanBuild,
       };
     }
     case BuildType.Custom: {
@@ -158,6 +159,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
         env,
         type: BuildType.Custom,
         buildCommand: customBuildConfig.buildCommand,
+        forceCleanBuild,
         ...customBuildConfig,
       };
     }
@@ -239,17 +241,16 @@ export class BuildManager implements Disposable {
    * This is currently only used for the scenario when we detect that pods need
    * to be reinstalled for iOS.
    */
-  private async checkBuildDependenciesChanged(deviceInfo: DeviceInfo) {
-    if (deviceInfo.platform === DevicePlatform.IOS) {
+  private async checkBuildDependenciesChanged(platform: DevicePlatform): Promise<boolean> {
+    if (platform === DevicePlatform.IOS) {
       return !(await this.dependencyManager.checkPodsInstallationStatus());
     }
     return false;
   }
 
-  public async startBuild(deviceInfo: DeviceInfo, options: BuildOptions): Promise<BuildResult> {
-    const { clean: forceCleanBuild, progressListener, appRoot, cancelToken } = options;
-    const { platform } = deviceInfo;
-    const launchConfiguration = getLaunchConfiguration();
+  public async buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult> {
+    const { progressListener, cancelToken } = options;
+    const { forceCleanBuild, platform, type: buildType } = buildConfig;
 
     getTelemetryReporter().sendTelemetryEvent("build:requested", {
       platform,
@@ -259,7 +260,7 @@ export class BuildManager implements Disposable {
     const currentFingerprint = await this.buildCache.calculateFingerprint(platform);
 
     // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
-    const buildDependenciesChanged = await this.checkBuildDependenciesChanged(deviceInfo);
+    const buildDependenciesChanged = await this.checkBuildDependenciesChanged(platform);
 
     if (forceCleanBuild || buildDependenciesChanged) {
       // we reset the cache when force clean build is requested as the newly
@@ -285,22 +286,19 @@ export class BuildManager implements Disposable {
 
     let buildResult: BuildResult;
     let buildFingerprint = currentFingerprint;
-    const buildType = await inferBuildType(appRoot, platform, launchConfiguration);
     try {
       if (platform === DevicePlatform.Android) {
         this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
           log: true,
         });
         this.buildOutputChannel.clear();
-        const buildConfig = createBuildConfig(
-          appRoot,
-          platform,
-          forceCleanBuild,
-          launchConfiguration,
-          buildType
+
+        assert(
+          buildConfig.platform === DevicePlatform.Android,
+          "Expected build config platform to be iOS"
         );
         buildResult = await buildAndroid(
-          buildConfig,
+          buildConfig as BuildConfig & { platform: DevicePlatform.Android },
           cancelToken,
           this.buildOutputChannel,
           progressListener,
@@ -335,16 +333,13 @@ export class BuildManager implements Disposable {
             buildFingerprint = await this.buildCache.calculateFingerprint(platform);
           }
         };
-        const buildConfig = createBuildConfig(
-          appRoot,
-          platform,
-          forceCleanBuild,
-          launchConfiguration,
-          buildType
-        );
 
+        assert(
+          buildConfig.platform === DevicePlatform.IOS,
+          "Expected build config platform to be iOS"
+        );
         buildResult = await buildIos(
-          buildConfig,
+          buildConfig as BuildConfig & { platform: DevicePlatform.IOS },
           cancelToken,
           this.buildOutputChannel,
           progressListener,

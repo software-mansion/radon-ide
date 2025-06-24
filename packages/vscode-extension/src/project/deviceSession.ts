@@ -20,7 +20,9 @@ import {
   BuildManager,
   BuildManagerDelegate,
   BuildResult,
+  createBuildConfig,
   DisposableBuild,
+  inferBuildType,
 } from "../builders/BuildManager";
 import {
   AppPermissionType,
@@ -650,9 +652,16 @@ export class DeviceSession
   }) {
     const buildStartTime = Date.now();
     this.updateStartupMessage(StartupMessage.Building);
-    this.maybeBuildResult = await this.buildManager.startBuild(this.device.deviceInfo, {
+    const launchConfiguration = getLaunchConfiguration();
+    const buildType = await inferBuildType(appRoot, this.device.platform, launchConfiguration);
+    const buildConfig = createBuildConfig(
       appRoot,
+      this.device.platform,
       clean,
+      launchConfiguration,
+      buildType
+    );
+    this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, {
       progressListener: throttle((stageProgress: number) => {
         if (this.startupMessage === StartupMessage.Building) {
           this.stageProgress = stageProgress;

@@ -12,6 +12,7 @@ interface BuildConfigCommon {
   appRoot: string;
   platform: DevicePlatform;
   env?: Record<string, string>;
+  forceCleanBuild: boolean;
 }
 
 export type CustomBuildConfig = {
