@@ -18,7 +18,6 @@ import { Logger } from "../Logger";
 import {
   BuildError,
   BuildManager,
-  BuildManagerDelegate,
   BuildResult,
   createBuildConfig,
   inferBuildType,
@@ -70,7 +69,7 @@ export class DeviceBootError extends Error {
 }
 
 export class DeviceSession
-  implements Disposable, MetroDelegate, ToolsDelegate, DebugSessionDelegate, BuildManagerDelegate
+  implements Disposable, MetroDelegate, ToolsDelegate, DebugSessionDelegate
 {
   private isActive = false;
   private metro: MetroLauncher;

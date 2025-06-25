@@ -15,10 +15,6 @@ import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
-export interface BuildManagerDelegate {
-  onCacheStale: (platform: DevicePlatform) => void;
-}
-
 type BuildOptions = {
   progressListener: (newProgress: number) => void;
   cancelToken: CancelToken;
