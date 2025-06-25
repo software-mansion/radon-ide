@@ -3,14 +3,17 @@ import Sinon from "sinon";
 import { describe, beforeEach, it } from "mocha";
 
 import { BatchingBuildManager } from "./BatchingBuildManager";
-import { BuildManagerInterface } from "./BuildManager";
 import { DevicePlatform } from "../common/DeviceManager";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { CancelToken } from "./cancelToken";
 
 describe("BatchingBuildManager", () => {
-  let buildManagerMock: BuildManagerInterface;
-  let buildAppMock: Sinon.SinonStub;
+  let buildAppMock = Sinon.stub();
+  let buildManagerMock = {
+    buildApp: buildAppMock,
+    focusBuildOutput: Sinon.stub(),
+    dispose: Sinon.stub(),
+  };
   const APP_ROOT = "appRoot";
   const APP_ROOT_2 = "appRoot_2";
   const BUILD_RESULT = "build result";
@@ -25,6 +28,12 @@ describe("BatchingBuildManager", () => {
       focusBuildOutput: Sinon.stub(),
       dispose: Sinon.stub(),
     };
+  });
+
+  it("shoud focus the build output of the wrapped build manager", () => {
+    const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
+    batchingBuildManager.focusBuildOutput();
+    assert(buildManagerMock.focusBuildOutput.calledOnce);
   });
 
   for (const platform of Object.values(DevicePlatform)) {
