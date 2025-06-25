@@ -14,6 +14,7 @@ describe("BatchingBuildManager", () => {
   const APP_ROOT = "appRoot";
   const APP_ROOT_2 = "appRoot_2";
   const BUILD_RESULT = "build result";
+  const BUILD_RESULT_2 = "build result 2";
   const progressListener = () => {};
 
   beforeEach(() => {
@@ -109,9 +110,11 @@ describe("BatchingBuildManager", () => {
 
         assert.strictEqual(await result1, BUILD_RESULT);
 
+        buildAppMock.resolves(BUILD_RESULT_2);
+
         // Second call after the first is resolved
         const result2 = batchingBuildManager.buildApp(BUILD_CONFIG, options);
-        assert.strictEqual(await result2, BUILD_RESULT);
+        assert.strictEqual(await result2, BUILD_RESULT_2);
         assert(buildAppMock.calledTwice);
         assert(buildAppMock.alwaysCalledWith(BUILD_CONFIG));
       });
@@ -160,6 +163,34 @@ describe("BatchingBuildManager", () => {
           !passedCancelToken.cancelled,
           "The cancel token passed to the wrapped BuildManager should be not marked as cancelled"
         );
+      });
+
+      it("should start new build when forceCleanBuild is passed", async () => {
+        const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
+        const options = { progressListener, cancelToken: new CancelToken() };
+
+        const { promise, resolve } = Promise.withResolvers();
+        buildAppMock.returns(promise);
+
+        // First call
+        const result1 = batchingBuildManager.buildApp(BUILD_CONFIG, options);
+
+        const { promise: promise2, resolve: resolve2 } = Promise.withResolvers();
+        buildAppMock.returns(promise2);
+
+        // Second call with the same configuration but forceCleanBuild is true
+        const result2 = batchingBuildManager.buildApp(
+          { ...BUILD_CONFIG, forceCleanBuild: true },
+          options
+        );
+
+        resolve(BUILD_RESULT);
+        resolve2(BUILD_RESULT_2);
+
+        assert.strictEqual(await result1, BUILD_RESULT);
+        assert.strictEqual(await result2, BUILD_RESULT_2);
+
+        assert(buildAppMock.calledTwice);
       });
     });
   }

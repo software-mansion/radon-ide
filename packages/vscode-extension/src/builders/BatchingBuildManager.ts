@@ -56,8 +56,10 @@ export class BatchingBuildManager implements BuildManagerInterface, Disposable {
   public async buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult> {
     const { progressListener, cancelToken } = options;
     const buildKey = this.makeBuildKey(buildConfig);
+    const { forceCleanBuild } = buildConfig;
 
-    if (this.buildsInProgress.has(buildKey)) {
+    // NOTE: if forceCleanBuild is true, we always start a new build
+    if (!forceCleanBuild && this.buildsInProgress.has(buildKey)) {
       Logger.debug("Build already in progress for this configuration, reusing the promise.");
       const existingBuild = this.buildsInProgress.get(buildKey);
       if (existingBuild) {
