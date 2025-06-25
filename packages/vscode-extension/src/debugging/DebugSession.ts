@@ -6,7 +6,7 @@ import { sleep } from "../utilities/retry";
 import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
-import { CancelError } from "../builders/cancelToken";
+import { CancelToken } from "../builders/cancelToken";
 
 const PING_TIMEOUT = 1000;
 
@@ -45,6 +45,7 @@ type DebugSessionOptions = {
 export class DebugSession implements Disposable {
   private parentDebugSession: vscode.DebugSession | undefined;
   private jsDebugSession: vscode.DebugSession | undefined;
+  private cancelStartDebuggingToken: CancelToken = new CancelToken();
 
   private disposables: Disposable[] = [];
 
@@ -91,17 +92,15 @@ export class DebugSession implements Disposable {
     return this.currentWsTarget;
   }
 
-  private startParentSessionPromise: Promise<vscode.DebugSession> | undefined;
-
   public async startParentDebugSession() {
     assert(
       !this.jsDebugSession,
       "Cannot start parent debug session when js debug session is already running"
     );
-    if (this.startParentSessionPromise) {
-      this.startParentSessionPromise.then((session) => debug.stopDebugging(session));
-    }
-    const startPromise = (this.startParentSessionPromise = startDebugging(
+
+    this.cancelStartingDebugSession();
+
+    const startPromise = startDebugging(
       undefined,
       {
         type: MASTER_DEBUGGER_TYPE,
@@ -113,27 +112,16 @@ export class DebugSession implements Disposable {
         suppressDebugView: true,
         suppressDebugToolbar: true,
         suppressSaveBeforeStart: true,
-      }
-    ));
+      },
+      this.cancelStartDebuggingToken
+    );
 
     const newParentDebugSession = await startPromise;
-    if (this.startParentSessionPromise !== startPromise) {
-      // NOTE: this can happen due to one of two things happening while this parent session was still starting:
-      // - another parent debug session has been started.
-      // - the whole DebugSession has been stopped.
-      // In either case, the parent session starting here will be stopped, and we can safely do nothing.
-      const message =
-        this.startParentSessionPromise === undefined
-          ? "Debug session has been stopped while starting parent debug session"
-          : "Another parent debug session has been started while starting this one";
-      throw new CancelError(message);
-    }
-
-    this.startParentSessionPromise = undefined;
     this.parentDebugSession = newParentDebugSession;
   }
 
   public async restart() {
+    this.cancelStartingDebugSession();
     await this.stopJsDebugSession();
     if (this.options.useParentDebugSession && !this.parentDebugSession) {
       await this.startParentDebugSession();
@@ -150,10 +138,7 @@ export class DebugSession implements Disposable {
   }
 
   public async stop() {
-    if (this.startParentSessionPromise) {
-      this.startParentSessionPromise.then((session) => debug.stopDebugging(session));
-      this.startParentSessionPromise = undefined;
-    }
+    this.cancelStartingDebugSession();
     await this.stopJsDebugSession();
     if (this.parentDebugSession) {
       const parentDebugSession = this.parentDebugSession;
@@ -177,6 +162,8 @@ export class DebugSession implements Disposable {
     const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
 
     const extensionPath = extensionContext.extensionUri.path;
+
+    this.cancelStartingDebugSession();
 
     const newDebugSession = await startDebugging(
       undefined,
@@ -204,7 +191,8 @@ export class DebugSession implements Disposable {
         suppressSaveBeforeStart: true,
         consoleMode: DebugConsoleMode.MergeWithParent,
         compact: true,
-      }
+      },
+      this.cancelStartDebuggingToken
     );
     if (this.jsDebugSession) {
       Logger.warn("JS debugger session has spawned concurrently, dropping the earlier session");
@@ -251,5 +239,10 @@ export class DebugSession implements Disposable {
 
   public async appendDebugConsoleEntry(message: string, type: string, source?: DebugSource) {
     await this.parentDebugSession?.customRequest("RNIDE_log_message", { message, type, source });
+  }
+
+  private cancelStartingDebugSession() {
+    this.cancelStartDebuggingToken.cancel();
+    this.cancelStartDebuggingToken = new CancelToken();
   }
 }
