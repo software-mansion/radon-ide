@@ -18,9 +18,9 @@ import { Logger } from "../Logger";
 import {
   BuildError,
   BuildManager,
-  BuildManagerDelegate,
   BuildResult,
-  DisposableBuild,
+  createBuildConfig,
+  inferBuildType,
 } from "../builders/BuildManager";
 import {
   AppPermissionType,
@@ -46,6 +46,7 @@ import { ToolKey, ToolsDelegate, ToolsManager } from "./tools";
 import { ReloadAction } from "../common/DeviceSessionsManager";
 import { focusSource } from "../utilities/focusSource";
 import { ApplicationContext } from "./ApplicationContext";
+import { BuildCache } from "../builders/BuildCache";
 
 const MAX_URL_HISTORY_SIZE = 20;
 
@@ -68,7 +69,7 @@ export class DeviceBootError extends Error {
 }
 
 export class DeviceSession
-  implements Disposable, MetroDelegate, ToolsDelegate, DebugSessionDelegate, BuildManagerDelegate
+  implements Disposable, MetroDelegate, ToolsDelegate, DebugSessionDelegate
 {
   private isActive = false;
   private metro: MetroLauncher;
@@ -77,9 +78,10 @@ export class DeviceSession
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
   private debugSession: DebugSession;
-  private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
+  private buildCache: BuildCache;
   private cancelToken: CancelToken | undefined;
+  private cacheStaleSubscription: Disposable;
 
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
@@ -124,13 +126,12 @@ export class DeviceSession
     this.metro = new MetroLauncher(this.devtools, this);
     this.toolsManager = new ToolsManager(this.inspectorBridge, this);
 
-    this.buildManager = new BuildManager(
-      applicationContext.dependencyManager,
-      applicationContext.buildCache,
-      this,
-      device.platform
-    );
-    this.debugSession = new DebugSession(this, { useParentDebugSession: true });
+    this.buildCache = this.applicationContext.buildCache;
+    this.buildManager = this.applicationContext.buildManager;
+    this.debugSession = new DebugSession(this, {
+      useParentDebugSession: true,
+    });
+    this.cacheStaleSubscription = this.buildCache.onCacheStale(this.onCacheStale);
   }
 
   public getState(): DeviceSessionState {
@@ -304,10 +305,10 @@ export class DeviceSession
     this.cancelToken?.cancel();
     await this.deactivate();
     await this.debugSession?.dispose();
-    this.disposableBuild?.dispose();
     this.device?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
+    this.cacheStaleSubscription.dispose();
   }
 
   public async activate() {
@@ -491,7 +492,7 @@ export class DeviceSession
 
     this.resetStartingState();
     try {
-      if (this.buildManager.shouldRebuild()) {
+      if (await this.buildCache.isCacheStale(this.device.platform)) {
         await this.restart({ forceClean: false, cleanCache: false });
         return;
       }
@@ -651,9 +652,17 @@ export class DeviceSession
   }) {
     const buildStartTime = Date.now();
     this.updateStartupMessage(StartupMessage.Building);
-    this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
+    const launchConfiguration = getLaunchConfiguration();
+    const buildType = await inferBuildType(appRoot, this.device.platform, launchConfiguration);
+    const buildConfig = createBuildConfig(
       appRoot,
+      this.device.platform,
       clean,
+      launchConfiguration,
+      buildType
+    );
+    this.hasStaleBuildCache = false;
+    this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, {
       progressListener: throttle((stageProgress: number) => {
         if (this.startupMessage === StartupMessage.Building) {
           this.stageProgress = stageProgress;
@@ -662,7 +671,6 @@ export class DeviceSession
       }, 100),
       cancelToken,
     });
-    this.maybeBuildResult = await this.disposableBuild.build;
     const buildDurationSec = (Date.now() - buildStartTime) / 1000;
     Logger.info("Build completed in", buildDurationSec.toFixed(2), "sec.");
     getTelemetryReporter().sendTelemetryEvent(
