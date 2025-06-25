@@ -666,7 +666,7 @@ export class DeviceSession
       buildType
     );
     this.hasStaleBuildCache = false;
-    this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, {
+    this.maybeBuildResult = await this.buildManager.requestBuild(buildConfig, {
       progressListener: throttle((stageProgress: number) => {
         if (this.startupMessage === StartupMessage.Building) {
           this.stageProgress = stageProgress;
