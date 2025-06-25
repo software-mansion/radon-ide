@@ -1,4 +1,4 @@
-import { exec } from "../utilities/subprocess";
+import { exec } from "./subprocess";
 
 export class CancelError extends Error {
   constructor(message: string) {

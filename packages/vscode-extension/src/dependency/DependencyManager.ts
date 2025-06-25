@@ -22,7 +22,7 @@ import {
   MinSupportedVersion,
 } from "../common/DependencyManager";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
-import { CancelToken } from "../builders/cancelToken";
+import { CancelToken } from "../utilities/cancelToken";
 import { getAndroidSourceDir } from "../builders/buildAndroid";
 import { Platform } from "../utilities/platform";
 import { requireNoCache } from "../utilities/requireNoCache";

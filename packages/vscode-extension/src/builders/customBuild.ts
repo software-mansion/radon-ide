@@ -5,7 +5,7 @@ import { mkdtemp } from "fs/promises";
 import { OutputChannel } from "vscode";
 import { Logger } from "../Logger";
 import { command, lineReader } from "../utilities/subprocess";
-import { CancelToken } from "./cancelToken";
+import { CancelToken } from "../utilities/cancelToken";
 import { extractTarApp, isApkFile, isAppFile } from "./utils";
 import { DevicePlatform } from "../common/DeviceManager";
 

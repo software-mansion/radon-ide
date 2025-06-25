@@ -6,7 +6,7 @@ import { sleep } from "../utilities/retry";
 import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
-import { CancelToken } from "../builders/cancelToken";
+import { CancelToken } from "../utilities/cancelToken";
 
 const PING_TIMEOUT = 1000;
 

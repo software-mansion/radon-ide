@@ -2,7 +2,7 @@ import path from "path";
 import { OutputChannel } from "vscode";
 import { exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import { CancelToken } from "./cancelToken";
+import { CancelToken } from "../utilities/cancelToken";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DevicePlatform } from "../common/DeviceManager";

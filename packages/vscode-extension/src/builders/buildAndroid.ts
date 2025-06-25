@@ -7,7 +7,7 @@ import { getNativeABI } from "../utilities/common";
 import { ANDROID_HOME, findJavaHome } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
-import { CancelToken } from "./cancelToken";
+import { CancelToken } from "../utilities/cancelToken";
 import { extensionContext } from "../utilities/extensionContext";
 import { BuildAndroidProgressProcessor } from "./BuildAndroidProgressProcessor";
 import { EXPO_GO_PACKAGE_NAME, downloadExpoGo } from "./expoGo";

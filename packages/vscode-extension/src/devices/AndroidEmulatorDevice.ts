@@ -18,7 +18,7 @@ import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
-import { CancelError, CancelToken } from "../builders/cancelToken";
+import { CancelError, CancelToken } from "../utilities/cancelToken";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,

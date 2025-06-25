@@ -6,7 +6,7 @@ import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
 import { DevicePlatform } from "../common/DeviceManager";
 import { DependencyManager } from "../dependency/DependencyManager";
-import { CancelError, CancelToken } from "./cancelToken";
+import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
 import { BuildConfig, BuildType } from "../common/BuildConfig";

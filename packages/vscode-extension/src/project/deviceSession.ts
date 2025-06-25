@@ -40,7 +40,7 @@ import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { CancelError, CancelToken } from "../builders/cancelToken";
+import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { ToolKey, ToolsDelegate, ToolsManager } from "./tools";
 import { ReloadAction } from "../common/DeviceSessionsManager";

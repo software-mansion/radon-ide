@@ -1,7 +1,7 @@
 import assert from "assert";
 import * as vscode from "vscode";
 import { debug, Disposable } from "vscode";
-import { CancelError, CancelToken } from "../builders/cancelToken";
+import { CancelError, CancelToken } from "../utilities/cancelToken";
 
 /**
  * Helper function that starts a debug session and returns the session object upon sucesfull start
