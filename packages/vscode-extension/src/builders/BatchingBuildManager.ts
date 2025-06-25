@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { Disposable } from "vscode";
 import { BuildConfig } from "../common/BuildConfig";
 import { Logger } from "../Logger";
@@ -19,7 +18,11 @@ class BuildInProgress {
   }
 
   public removeProgressListener(listener: (newProgress: number) => void) {
-    _.remove(this.progressListeners, (l) => l === listener);
+    const index = this.progressListeners.findIndex((l) => l === listener);
+    if (index === -1) {
+      return;
+    }
+    this.progressListeners.splice(index, 1);
     if (this.progressListeners.length <= 0) {
       this.cancelToken.cancel();
     }
