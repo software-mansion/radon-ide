@@ -3,13 +3,21 @@ import { BuildCache } from "../builders/BuildCache";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { LaunchConfigController } from "../panels/LaunchConfigController";
 import { disposeAll } from "../utilities/disposables";
-import { BuildManager } from "../builders/BuildManager";
+import { BuildManager, BuildManagerInterface } from "../builders/BuildManager";
+import { BatchingBuildManager } from "../builders/BatchingBuildManager";
+
+function createBuildManager(
+  dependencyManager: DependencyManager,
+  buildCache: BuildCache
+): BuildManagerInterface {
+  return new BatchingBuildManager(new BuildManager(dependencyManager, buildCache));
+}
 
 export class ApplicationContext implements Disposable {
   public dependencyManager: DependencyManager;
   public launchConfig: LaunchConfigController;
   public buildCache: BuildCache;
-  public buildManager: BuildManager;
+  public buildManager: BuildManagerInterface & Disposable;
   private disposables: Disposable[] = [];
 
   constructor(public appRootFolder: string) {
@@ -17,7 +25,7 @@ export class ApplicationContext implements Disposable {
 
     this.launchConfig = new LaunchConfigController(appRootFolder);
     this.buildCache = new BuildCache(appRootFolder);
-    this.buildManager = new BuildManager(this.dependencyManager, this.buildCache);
+    this.buildManager = createBuildManager(this.dependencyManager, this.buildCache);
 
     this.disposables.push(
       this.launchConfig,
@@ -41,7 +49,7 @@ export class ApplicationContext implements Disposable {
 
     this.launchConfig = new LaunchConfigController(newAppRoot);
     this.buildCache = new BuildCache(newAppRoot);
-    this.buildManager = new BuildManager(this.dependencyManager, this.buildCache);
+    this.buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.disposables.push(
       this.launchConfig,
       this.dependencyManager,

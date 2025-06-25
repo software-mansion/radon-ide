@@ -15,46 +15,16 @@ import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
-type BuildOptions = {
+export interface BuildManagerInterface extends Disposable {
+  buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult>;
+  focusBuildOutput(): void;
+}
+
+export type BuildOptions = {
   progressListener: (newProgress: number) => void;
   cancelToken: CancelToken;
 };
 
-class BuildInProgress {
-  private counter = 1;
-  private progressListeners: ((newProgress: number) => void)[] = [];
-
-  constructor(
-    public readonly buildConfig: BuildConfig,
-    public readonly promise: Promise<BuildResult>,
-    private readonly cancelToken: CancelToken
-  ) {}
-
-  public increment() {
-    this.counter++;
-  }
-
-  public decrement() {
-    this.counter--;
-    if (this.counter <= 0) {
-      this.cancelToken.cancel();
-    }
-  }
-
-  public addProgressListener(listener: (newProgress: number) => void) {
-    this.progressListeners.push(listener);
-  }
-
-  public removeProgressListener(listener: (newProgress: number) => void) {
-    _.remove(this.progressListeners, (l) => l === listener);
-  }
-
-  public onProgress(newProgress: number) {
-    for (const listener of this.progressListeners.slice()) {
-      listener(newProgress);
-    }
-  }
-}
 export class BuildError extends Error {
   constructor(
     message: string,
@@ -205,7 +175,7 @@ export async function inferBuildType(
   return BuildType.Local;
 }
 
-export class BuildManager implements Disposable {
+export class BuildManager implements Disposable, BuildManagerInterface {
   constructor(
     private readonly dependencyManager: DependencyManager,
     private readonly buildCache: BuildCache
@@ -231,62 +201,6 @@ export class BuildManager implements Disposable {
       return !(await this.dependencyManager.checkPodsInstallationStatus());
     }
     return false;
-  }
-
-  private buildsInProgress: Map<string, BuildInProgress> = new Map();
-
-  private makeBuildKey(buildConfig: BuildConfig) {
-    return `${buildConfig.platform}:${buildConfig.type}:${buildConfig.appRoot}`;
-  }
-
-  public async requestBuild(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult> {
-    const { progressListener, cancelToken } = options;
-    const buildKey = this.makeBuildKey(buildConfig);
-
-    if (this.buildsInProgress.has(buildKey)) {
-      Logger.debug("Build already in progress for this configuration, reusing the promise.");
-      const existingBuild = this.buildsInProgress.get(buildKey);
-      if (existingBuild) {
-        existingBuild.increment();
-        existingBuild.addProgressListener(progressListener);
-        cancelToken.onCancel(() => {
-          existingBuild.decrement();
-          existingBuild.removeProgressListener(progressListener);
-        });
-        return existingBuild.promise;
-      }
-    }
-
-    const cancelTokenForBuild = new CancelToken();
-    const buildInProgress = new BuildInProgress(
-      buildConfig,
-      this.buildApp(buildConfig, {
-        cancelToken: cancelTokenForBuild,
-        progressListener: (newProgress) => {
-          buildInProgress.onProgress(newProgress);
-        },
-      }),
-      cancelTokenForBuild
-    );
-    cancelTokenForBuild.onCancel(() => {
-      if (this.buildsInProgress.get(buildKey) === buildInProgress) {
-        Logger.debug("Build was canceled by the user.");
-        this.buildsInProgress.delete(buildKey);
-      }
-    });
-    buildInProgress.addProgressListener(progressListener);
-    cancelToken.onCancel(() => {
-      buildInProgress.decrement();
-      buildInProgress.removeProgressListener(progressListener);
-    });
-    this.buildsInProgress.set(buildKey, buildInProgress);
-    try {
-      return await buildInProgress.promise;
-    } finally {
-      if (this.buildsInProgress.get(buildKey) === buildInProgress) {
-        this.buildsInProgress.delete(buildKey);
-      }
-    }
   }
 
   public async buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult> {

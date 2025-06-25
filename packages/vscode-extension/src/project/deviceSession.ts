@@ -17,7 +17,7 @@ import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import {
   BuildError,
-  BuildManager,
+  BuildManagerInterface,
   BuildResult,
   createBuildConfig,
   inferBuildType,
@@ -78,7 +78,7 @@ export class DeviceSession
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
   private debugSession: DebugSession;
-  private buildManager: BuildManager;
+  private buildManager: BuildManagerInterface;
   private buildCache: BuildCache;
   private cancelToken: CancelToken | undefined;
   private cacheStaleSubscription: Disposable;
@@ -666,7 +666,7 @@ export class DeviceSession
       buildType
     );
     this.hasStaleBuildCache = false;
-    this.maybeBuildResult = await this.buildManager.requestBuild(buildConfig, {
+    this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, {
       progressListener: throttle((stageProgress: number) => {
         if (this.startupMessage === StartupMessage.Building) {
           this.stageProgress = stageProgress;
