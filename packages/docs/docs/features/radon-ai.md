@@ -65,14 +65,14 @@ The Radon IDE automatically adds the Radon AI MCP server configuration by creati
 
 You can to configure the Radon AI MCP server from Cursor Settings. There, you can adjust the server configuration, choose which tools are enabled or disable the MCP server completely.
 
-1. In Cursor, open `Cursor Settings` (Cmd+Shift+ J or Ctrl+Shift+J).
+1. In Cursor, open `Cursor Settings` (Ctrl+Shift+J or Cmd+Shift+J).
 2. Navigate to the `Tools & Integrations`.
 3. Find the `MCP Tools` section.
 4. Select `Radon AI` from the list of available servers.
 
 <img width="550" src="/img/docs/ai_cursor_mcp_settings.png" className="shadow-image"/>
 
-Alternatively, you can type and run `View: Open MCP Settings` from the Command Palette (Ctrl+Shift+P or Cmd+Shift+P).
+Alternatively, you can type and run "View: Open MCP Settings" from the Command Palette (Ctrl+Shift+P or Cmd+Shift+P).
 
 ## Available tools
 
