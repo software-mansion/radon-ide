@@ -2,14 +2,18 @@ import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-
 import { EventEmitter } from "vscode";
 import { Minimatch } from "minimatch";
 import _ from "lodash";
+import path from "path";
+import fs from "fs";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { Logger } from "../Logger";
+import { extensionContext } from "../utilities/extensionContext";
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter<{ reason: "breakpoint" | "exception" }>();
   private debuggerResumedEmitter = new EventEmitter();
   private consoleAPICalledEmitter = new EventEmitter();
+  private bindingCalledEmitter = new EventEmitter<{ name: string; payload: any }>();
   private ignoredPatterns: Minimatch[] = [];
 
   private justCalledStepOver = false;
@@ -18,10 +22,12 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   public onDebuggerPaused = this.debuggerPausedEmitter.event;
   public onDebuggerResumed = this.debuggerResumedEmitter.event;
   public onConsoleAPICalled = this.consoleAPICalledEmitter.event;
+  public onBindingCalled = this.bindingCalledEmitter.event;
 
   constructor(
     private sourceMapRegistry: SourceMapsRegistry,
-    skipFiles: string[]
+    skipFiles: string[],
+    private installConnectRuntime: boolean
   ) {
     this.ignoredPatterns = skipFiles.map(
       (pattern) => new Minimatch(pattern, { flipNegate: true, dot: true })
@@ -36,6 +42,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       case "Runtime.consoleAPICalled": {
         return this.handleConsoleAPICalled(applicationCommand);
       }
+      case "Runtime.bindingCalled": {
+        return this.handleBindingCalled(applicationCommand);
+      }
       case "Debugger.paused": {
         return this.handleDebuggerPaused(applicationCommand, tunnel);
       }
@@ -43,7 +52,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         return this.handleDebuggerResumed(applicationCommand, tunnel);
       }
       case "Debugger.scriptParsed": {
-        return this.handleScriptParsed(applicationCommand);
+        return this.handleScriptParsed(applicationCommand, tunnel);
       }
       case "Runtime.executionContextsCleared": {
         this.sourceMapRegistry.clearSourceMaps();
@@ -246,7 +255,43 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     throw new Error("Source map URL schemas other than `data` and `http` are not supported");
   }
 
-  private async handleScriptParsed(command: IProtocolCommand): Promise<IProtocolCommand> {
+  private async setupRadonConnectRuntime(tunnel: ProxyTunnel) {
+    // load script from lib/connect_runtime.js and evaluate it
+    const runtimeScriptPath = path.join(
+      extensionContext.extensionPath,
+      "dist",
+      "connect_runtime.js"
+    );
+    const runtimeScript = fs.readFileSync(runtimeScriptPath, "utf8");
+
+    await tunnel.injectDebuggerCommand({
+      method: "Runtime.addBinding",
+      params: {
+        name: "__radon_binding",
+      },
+    });
+
+    const result = (await tunnel.injectDebuggerCommand({
+      method: "Runtime.evaluate",
+      params: {
+        expression: runtimeScript,
+      },
+    })) as Cdp.Runtime.EvaluateResult;
+    if (result.exceptionDetails) {
+      Logger.error("Failed to setup Radon Connect runtime", result.exceptionDetails);
+    }
+  }
+
+  private handleBindingCalled(command: IProtocolCommand) {
+    const params = command.params as Cdp.Runtime.BindingCalledEvent;
+    this.bindingCalledEmitter.fire(params);
+    return command;
+  }
+
+  private async handleScriptParsed(
+    command: IProtocolCommand,
+    tunnel: ProxyTunnel
+  ): Promise<IProtocolCommand> {
     const { sourceMapURL, url, scriptId } = command.params as Cdp.Debugger.ScriptParsedEvent;
     if (!sourceMapURL) {
       return command;
@@ -259,6 +304,10 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       );
 
       this.sourceMapRegistry.registerSourceMap(sourceMapData, url, scriptId, isMainBundle);
+
+      if (isMainBundle && this.installConnectRuntime) {
+        await this.setupRadonConnectRuntime(tunnel);
+      }
     } catch (e) {
       Logger.error("Could not process the source map", e);
     }

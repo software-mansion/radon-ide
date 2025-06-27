@@ -7,6 +7,7 @@ import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
+import { RadonInspectorBridge } from "../project/bridge";
 
 const PING_TIMEOUT = 1000;
 
@@ -24,6 +25,7 @@ export type DebugSessionDelegate = {
   onDebuggerResumed?(event: DebugSessionCustomEvent): void;
   onProfilingCPUStarted?(event: DebugSessionCustomEvent): void;
   onProfilingCPUStopped?(event: DebugSessionCustomEvent): void;
+  onBindingCalled?(event: DebugSessionCustomEvent): void;
   onDebugSessionTerminated?(): void;
 };
 
@@ -79,6 +81,9 @@ export class DebugSession implements Disposable {
             break;
           case "RNIDE_profilingCPUStopped":
             this.delegate.onProfilingCPUStopped?.(event);
+            break;
+          case "RNIDE_bindingCalled":
+            this.delegate.onBindingCalled?.(event);
             break;
           default:
             // ignore other events
@@ -228,6 +233,10 @@ export class DebugSession implements Disposable {
       throw new Error("Ping timeout");
     });
     return Promise.race([resultPromise, timeout]).catch((_e) => false);
+  }
+
+  public postMessage(data: any) {
+    this.jsDebugSession?.customRequest("RNIDE_postMessage", data);
   }
 
   public async startProfilingCPU() {
