@@ -5,7 +5,7 @@ import { describe, beforeEach, it } from "mocha";
 import { BatchingBuildManager } from "./BatchingBuildManager";
 import { DevicePlatform } from "../common/DeviceManager";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
-import { CancelToken } from "./cancelToken";
+import { CancelToken } from "../utilities/cancelToken";
 
 describe("BatchingBuildManager", () => {
   let buildAppMock = Sinon.stub();

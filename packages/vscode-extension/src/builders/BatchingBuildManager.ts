@@ -2,7 +2,7 @@ import { Disposable } from "vscode";
 import { BuildConfig } from "../common/BuildConfig";
 import { Logger } from "../Logger";
 import { BuildManager, BuildOptions, BuildResult } from "./BuildManager";
-import { CancelToken } from "./cancelToken";
+import { CancelToken } from "../utilities/cancelToken";
 
 class BuildInProgress {
   private progressListeners: ((newProgress: number) => void)[] = [];
