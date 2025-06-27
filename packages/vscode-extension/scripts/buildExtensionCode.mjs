@@ -1,6 +1,7 @@
 import * as esbuild from "esbuild";
 import esbuildPluginLicense from "esbuild-plugin-license";
 import fs from "fs";
+import babel from "esbuild-plugin-babel";
 
 const [mode] = process.argv.slice(2);
 
@@ -73,4 +74,19 @@ await esbuild.build({
   format: "cjs",
   platform: "node",
   minify: true,
+});
+
+await esbuild.build({
+  entryPoints: ["./src/runtime/connect_runtime.ts"],
+  bundle: true,
+  outfile: "dist/connect_runtime.js",
+  platform: "neutral",
+  plugins: [
+    babel({
+      config: {
+        presets: ["@babel/preset-env", "@babel/preset-typescript"],
+      },
+    }),
+  ],
+  minify: false,
 });

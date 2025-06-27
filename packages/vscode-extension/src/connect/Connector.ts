@@ -11,6 +11,7 @@ import { Metro } from "../project/metro";
 import { extensionContext } from "../utilities/extensionContext";
 import { disposeAll } from "../utilities/disposables";
 import { Scanner } from "./Scanner";
+import ConnectSession from "./ConnectSession";
 
 const RADON_CONNECT_ENABLED_KEY = "radon_connect_enabled";
 export const RADON_CONNECT_PORT_KEY = "radon_connect_port";
@@ -19,8 +20,7 @@ export class Connector implements Disposable {
   private static instance: Connector | null = null;
 
   private statusBarItem: StatusBarItem;
-  private debugSession: DebugSession | null = null;
-  private metro: Metro | null = null;
+  public connectSession: ConnectSession | null = null;
   private scanner: Scanner | null = null;
 
   private disposables: Disposable[] = [];
@@ -30,22 +30,18 @@ export class Connector implements Disposable {
       StatusBarAlignment.Left,
       Number.MIN_SAFE_INTEGER
     );
+    this.statusBarItem.command = "RNIDE.openPanel";
     this.disposables.push(this.statusBarItem);
 
     this.disposables.push(
       commands.registerCommand("RNIDE.disableRadonConnect", () => {
-        extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, false);
-        this.disconnect();
-        this.stopScanner();
-        this.updateStatusBarItem();
+        this.disable();
       })
     );
 
     this.disposables.push(
       commands.registerCommand("RNIDE.enableRadonConnect", () => {
-        extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, true);
-        this.maybeStartScanner();
-        this.updateStatusBarItem();
+        this.enable();
       })
     );
 
@@ -83,6 +79,23 @@ export class Connector implements Disposable {
     );
   }
 
+  private enable() {
+    extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, true);
+    this.maybeStartScanner();
+    this.updateStatusBarItem();
+  }
+
+  private disable() {
+    extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, false);
+    this.disconnect();
+    this.stopScanner();
+    this.updateStatusBarItem();
+  }
+
+  public get isEnabled() {
+    return extensionContext.workspaceState.get(RADON_CONNECT_ENABLED_KEY, true);
+  }
+
   public dispose() {
     this.disconnect();
     this.stopScanner();
@@ -92,43 +105,33 @@ export class Connector implements Disposable {
   }
 
   private disconnect() {
-    this.metro = null;
-    this.debugSession?.dispose();
-    this.debugSession = null;
+    this.connectSession?.dispose();
+    this.connectSession = null;
   }
 
   private async tryConnectJSDebuggerWithMetro(websocketAddress: string, metro: Metro) {
-    const debugSession = new DebugSession({
-      onDebugSessionTerminated: () => {
-        this.metro = null;
-        this.debugSession = null;
+    const connectSession = new ConnectSession(metro, {
+      onSessionTerminated: () => {
+        if (this.connectSession === connectSession) {
+          this.connectSession = null;
+        }
+        connectSession.dispose();
         this.updateStatusBarItem();
         this.maybeStartScanner();
       },
     });
-    const isUsingNewDebugger = metro.isUsingNewDebugger;
-    if (!isUsingNewDebugger) {
-      throw new Error("Auto-connect is only supported for the new React Native debugger");
-    }
-    const success = await debugSession.startJSDebugSession({
-      websocketAddress,
-      displayDebuggerOverlay: true,
-      isUsingNewDebugger,
-      expoPreludeLineCount: metro.expoPreludeLineCount,
-      sourceMapPathOverrides: metro.sourceMapPathOverrides,
-    });
+    const success = await connectSession.start(websocketAddress);
     if (success) {
-      this.metro = metro;
-      this.debugSession = debugSession;
+      this.connectSession?.dispose();
+      this.connectSession = connectSession;
       this.stopScanner();
     } else {
-      debugSession.dispose();
+      connectSession.dispose();
     }
   }
 
   private maybeStartScanner(forceRestart: boolean = false) {
-    const enabled = extensionContext.workspaceState.get(RADON_CONNECT_ENABLED_KEY, true);
-    if (!enabled || (this.scanner && !forceRestart)) {
+    if (!this.isEnabled || (this.scanner && !forceRestart)) {
       return;
     }
 
@@ -172,16 +175,14 @@ export class Connector implements Disposable {
     markdownText.supportThemeIcons = true;
     markdownText.isTrusted = true;
 
-    const enabled = extensionContext.workspaceState.get(RADON_CONNECT_ENABLED_KEY, true);
-
-    if (this.debugSession && this.metro) {
+    if (this.connectSession) {
       this.statusBarItem.text = "Radon IDE $(debug)";
-      markdownText.appendMarkdown("Connected on port " + this.metro.port);
+      markdownText.appendMarkdown("Connected on port " + this.connectSession.port);
       markdownText.appendMarkdown("\n\n");
       markdownText.appendMarkdown("[Disconnect](command:RNIDE.disableRadonConnect)");
       markdownText.appendMarkdown("\n\n");
       markdownText.appendMarkdown("[Open debug console](command:workbench.panel.repl.view.focus)");
-    } else if (!enabled) {
+    } else if (!this.isEnabled) {
       this.statusBarItem.text = "Radon IDE $(open-preview)";
       markdownText.appendMarkdown("Radon Connect is disabled\n\n");
       markdownText.appendMarkdown(
@@ -189,7 +190,6 @@ export class Connector implements Disposable {
       );
       markdownText.appendMarkdown("\n\n");
       markdownText.appendMarkdown("[Enable Radon Connect](command:RNIDE.enableRadonConnect)\n\n");
-      markdownText.appendMarkdown("[Open Radon IDE Panel](command:RNIDE.openPanel)\n\n");
     } else {
       this.statusBarItem.text = "Radon IDE $(debug-disconnect)";
       const ports = Array.from(this.scanner?.portsStatus.keys() ?? []);
@@ -203,9 +203,6 @@ export class Connector implements Disposable {
       );
       markdownText.appendMarkdown(
         "[$(circle-slash) Disable Radon Connect](command:RNIDE.disableRadonConnect)\n\n"
-      );
-      markdownText.appendMarkdown(
-        "[$(open-preview) Open Radon IDE Panel](command:RNIDE.openPanel)\n\n"
       );
     }
 
