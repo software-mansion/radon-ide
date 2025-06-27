@@ -100,11 +100,11 @@ export class DebugSession implements Disposable {
 
     this.cancelStartingDebugSession();
 
-    const startPromise = startDebugging(
+    this.parentDebugSession = await startDebugging(
       undefined,
       {
         type: MASTER_DEBUGGER_TYPE,
-        name: `${this.options.displayName}`,
+        name: this.options.displayName,
         request: "attach",
       },
       {
@@ -115,9 +115,6 @@ export class DebugSession implements Disposable {
       },
       this.cancelStartDebuggingToken
     );
-
-    const newParentDebugSession = await startPromise;
-    this.parentDebugSession = newParentDebugSession;
   }
 
   public async restart() {
@@ -156,6 +153,10 @@ export class DebugSession implements Disposable {
   public async startJSDebugSession(configuration: JSDebugConfiguration) {
     if (this.jsDebugSession) {
       await this.restart();
+    }
+
+    if (this.options.useParentDebugSession && !this.parentDebugSession) {
+      await this.startParentDebugSession();
     }
 
     const isUsingNewDebugger = configuration.isUsingNewDebugger;
