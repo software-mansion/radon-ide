@@ -43,7 +43,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         return this.handleDebuggerResumed(applicationCommand, tunnel);
       }
       case "Debugger.scriptParsed": {
-        return this.handleScriptParsed(applicationCommand);
+        return this.handleScriptParsed(applicationCommand, tunnel);
       }
       case "Runtime.executionContextsCleared": {
         this.sourceMapRegistry.clearSourceMaps();
@@ -164,10 +164,35 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
           command.id!,
           command.params as Cdp.Debugger.SetBreakpointByUrlParams
         );
-        return command;
+
+        const paused = () => {
+          return this.isBreakpointSettingPaused;
+        };
+
+        return new Promise<IProtocolCommand>((resolve) => {
+          setImmediate(() => {
+            if (!paused()) {
+              resolve(command);
+            } else {
+              this.pendingBreakpointCommands.push({ command, resolve });
+            }
+          });
+        });
       }
     }
     return command;
+  }
+
+  private isBreakpointSettingPaused = false;
+  private pendingBreakpointCommands: Array<{
+    command: IProtocolCommand;
+    resolve: (cmd: IProtocolCommand) => void;
+  }> = [];
+
+  private dispatchPendingBreakpointCommands() {
+    for (const pending of this.pendingBreakpointCommands) {
+      pending.resolve(pending.command);
+    }
   }
 
   // NOTE: sometimes on Fast Refresh, when we try to set a new breakpoint with the new location,
@@ -214,6 +239,14 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     return reply;
   }
 
+  public async handleHMRSocketEvent(event: any) {
+    let message = JSON.parse(event.toString("utf-8"));
+
+    if (message.type === "update-start" && !message.body.isInitialUpdate) {
+      this.isBreakpointSettingPaused = true;
+    }
+  }
+
   private async onRuntimeEnable(tunnel: ProxyTunnel) {
     await tunnel
       .injectDebuggerCommand({
@@ -246,11 +279,17 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     throw new Error("Source map URL schemas other than `data` and `http` are not supported");
   }
 
-  private async handleScriptParsed(command: IProtocolCommand): Promise<IProtocolCommand> {
+  private async handleScriptParsed(
+    command: IProtocolCommand,
+    tunnel: ProxyTunnel
+  ): Promise<IProtocolCommand> {
     const { sourceMapURL, url, scriptId } = command.params as Cdp.Debugger.ScriptParsedEvent;
     if (!sourceMapURL) {
       return command;
     }
+
+    this.isBreakpointSettingPaused = false;
+    this.dispatchPendingBreakpointCommands();
 
     try {
       const sourceMapData = await this.getSourceMapData(sourceMapURL);
@@ -259,6 +298,15 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       );
 
       this.sourceMapRegistry.registerSourceMap(sourceMapData, url, scriptId, isMainBundle);
+
+      if (isMainBundle) {
+        tunnel.sendHMRSocketMessage(
+          JSON.stringify({
+            type: "register-entrypoints",
+            entryPoints: [url.replace("//&", "?")],
+          })
+        );
+      }
     } catch (e) {
       Logger.error("Could not process the source map", e);
     }
