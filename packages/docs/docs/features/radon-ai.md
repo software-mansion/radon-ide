@@ -4,8 +4,7 @@ title: Radon AI
 sidebar_position: 10
 ---
 
-Radon AI is a and a enhanced with up-to-date information about the React Native ecosystem.
-At its heart is our extensive React Native knowledge database, which is queried before answering your question.
+Radon AI is an AI assistant enhanced with up-to-date information about the React Native ecosystem. At its heart is our extensive React Native knowledge database, which is queried before answering your question.
 
 We index all of the popular React Native libraries to match questions to relevant pieces of documentation, providing additional, accurate context to your conversation.
 
@@ -22,7 +21,7 @@ Our knowledge database is updated daily to provide the most up-to-date informati
 
 You can use Radon AI in Visual Studio Code as a [GitHub Copilot Chat participant](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#chat-participants) or via [Model Context Protocol (MCP) server](https://modelcontextprotocol.io/introduction) in the [agent mode](https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode).
 
-### Use Radon AI in VS Code as Copilot Chat participant
+### Use Radon AI as Copilot Chat participant
 
 To start chatting with Radon AI open the GitHub Copilot Chat panel.
 
@@ -38,19 +37,50 @@ Radon AI has the context of the history of previous messages sent in the chat wi
 
 To start a new conversation open a new chat window.
 
-### Use Radon AI in VS Code in agent mode
+### Use Radon AI in agent mode
 
-**MCP: List Servers** command from the Command Palette.
+<!-- VS Code reads the `mcp.json` config file -->
+
+<!-- you must enable agent mode, vscode reads .cursor/mcp.json and .vscode/mcp.json files -->
+
+<!-- To enable agent mode: -->
+
+<!-- 1.  Open the Command Palette (Ctrl+Shift+P or Cmd+Shift+P). -->
+<!-- 2.  Type and run the `MCP: List Servers` command. -->
+<!-- 3.  Select "Radon AI" from the list of available servers. -->
+
+<!-- To switch back to the default GitHub Copilot, you can run `MCP: List Servers` again and select another server, or disable the agent. -->
 
 ## Usage in Cursor
 
+Radon AI assistant integrates with Cursor's `agent mode` via Model Context Protocol (MCP) server.
+
+<img width="550" src="/img/docs/ai_cursor_chat_response.png" className="shadow-image"/>
+
+The Radon IDE automatically adds the Radon AI MCP server configuration by creating a `.cursor/mcp.json` or appending an entry if this file exists. Cursor detects this change and asks you to enable the server.
+
+<img width="400" src="/img/docs/ai_cursor_enable_mcp.png" className="shadow-image"/>
+
+### Configure the MCP Server
+
+You can to configure the Radon AI MCP server from Cursor Settings. There, you can adjust the server configuration, choose which tools are enabled or disable the MCP server completely.
+
+1. In Cursor, open `Cursor Settings` (Cmd+Shift+ J or Ctrl+Shift+J).
+2. Navigate to the `Tools & Integrations`.
+3. Find the `MCP Tools` section.
+4. Select `Radon AI` from the list of available servers.
+
+<img width="550" src="/img/docs/ai_cursor_mcp_settings.png" className="shadow-image"/>
+
+Alternatively, you can type and run `View: Open MCP Settings` from the Command Palette (Ctrl+Shift+P or Cmd+Shift+P).
+
 ## Available tools
 
-The AI models automatically discover and invoke tools when when the they decides it will be useful. You can query the agent to use the tool by mentioning it's name in the prompt. These are currently available tools in Radon AI:
+The AI models automatically discover and invoke tools when they decide it will be useful. You can query the agent to use the tool by mentioning it's name in the prompt. These are currently available tools in Radon AI:
 
 - `get_library_description` Provides a detailed description of a library and its use cases.
 - `query_documentation` Retrieves documentation snippets relevant to a provided query.
-- `view_screenshot` Captures a device preview screenshot. Can help the agent to debug issues or make UI adjustements. Only supported in multimodal AI models (like Gemini or Claude).
+- `view_screenshot` Captures a device preview screenshot. Can help the agent to debug issues or make UI adjustements. Currenlty only supported in Gemini and Claude models.
 
 ## Limitations
 
