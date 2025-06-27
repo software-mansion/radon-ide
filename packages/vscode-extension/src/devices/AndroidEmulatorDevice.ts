@@ -115,7 +115,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
       new CameraSettingApplier(settings.camera),
     ];
 
-    const { bootSettingsChanged } = await this.tryUpdateConfigurationSettings(settingAppliers);
+    const settingsChanged = await this.tryUpdateConfigurationSettings(settingAppliers);
 
     // Apply runtime settings that don't require boot
     await exec(ADB_PATH, [
@@ -167,48 +167,42 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }
 
     // if the boot settings were changed, we need to restart the emulator
-    return bootSettingsChanged;
+    return settingsChanged;
   }
 
   /**
    * This method updates the configuration settings for the emulator.
    * It reads the config.ini file, applies the setting appliers, and writes the changes back to the file.
    * @param settingAppliers - The setting appliers to apply.
-   * @returns The changes that were made.
+   * @returns if any changes were made.
    */
   private async tryUpdateConfigurationSettings(settingAppliers: SettingApplier[]) {
     const avdDirectory = getAvdDirectoryLocation(this.avdId);
     const configIni = path.join(avdDirectory, `${this.avdId}.avd`, "config.ini");
     const configIniContent = await fs.promises.readFile(configIni, "utf-8");
-    let configLines = configIniContent.split("\n");
+    const initialConfigLines = configIniContent.split("\n");
+    let configLines = initialConfigLines;
 
     let bootSettingsChanged = false;
-    let runtimeSettingsChanged = false;
     for (const applier of settingAppliers) {
       if (await applier.shouldUpdate(configLines)) {
-        const results = await Promise.all([
-          applier.updateRuntime(configLines),
-          applier.updateBoot(configLines),
-        ] as const);
+        const { bootChanged, updatedConfigLines } = await applier.updateSettings(configLines);
 
-        const [runtimeUpdateResult, bootUpdateResult] = results;
-
-        if (bootUpdateResult.bootChanged && bootUpdateResult.updatedConfigLines !== undefined) {
-          configLines = bootUpdateResult.updatedConfigLines;
+        if (bootChanged || updatedConfigLines !== undefined) {
           bootSettingsChanged = true;
         }
-        if (runtimeUpdateResult) {
-          runtimeSettingsChanged = true;
+        if (updatedConfigLines !== undefined) {
+          configLines = updatedConfigLines;
         }
       }
     }
 
-    if (bootSettingsChanged) {
-      const finalizedConfigLines = configLines.join("\n");
-      await fs.promises.writeFile(configIni, finalizedConfigLines, "utf-8");
+    const finalizedConfig = configLines.join("\n");
+    if (bootSettingsChanged && finalizedConfig !== configIniContent) {
+      await fs.promises.writeFile(configIni, finalizedConfig, "utf-8");
     }
 
-    return { bootSettingsChanged, runtimeSettingsChanged };
+    return bootSettingsChanged;
   }
 
   /**
@@ -991,19 +985,12 @@ function getNativeQemuArch() {
 interface SettingApplier {
   shouldUpdate(configLines: string[]): Promise<boolean>;
   /**
-   * Updates the runtime settings of the emulator.
-   * @param configLines - The lines of the config.ini file. We can modify them if needed, but we should not return them.
-   * @returns True if the runtime settings were changed, false otherwise.
-   */
-  updateRuntime(configLines: string[]): Promise<boolean>;
-  /**
-   * Updates the boot settings of the emulator.
+   * Updates the settings of the emulator.
    * @param configLines - The lines of the config.ini file.
-   * @returns True if the boot settings were changed, false otherwise. The updated config lines are returned.
    */
-  updateBoot(
+  updateSettings(
     configLines: string[]
-  ): Promise<{ bootChanged: boolean; updatedConfigLines: string[] }>;
+  ): Promise<{ bootChanged: boolean; updatedConfigLines?: string[] }>;
 }
 
 class LocaleSettingApplier implements SettingApplier {
@@ -1012,8 +999,10 @@ class LocaleSettingApplier implements SettingApplier {
     private serial: string | undefined
   ) {}
 
-  async shouldUpdate(configLines: string[]): Promise<boolean> {
-    if (!this.serial) return false;
+  async shouldUpdate(_configLines: string[]): Promise<boolean> {
+    if (!this.serial) {
+      return false;
+    }
 
     const newLocale = this.newLocale.replace("_", "-");
     const { stdout } = await exec(ADB_PATH, [
@@ -1034,13 +1023,7 @@ class LocaleSettingApplier implements SettingApplier {
     return currentLocale !== newLocale;
   }
 
-  async updateRuntime(configLines: string[]): Promise<boolean> {
-    return false;
-  }
-
-  async updateBoot(
-    configLines: string[]
-  ): Promise<{ bootChanged: boolean; updatedConfigLines: string[] }> {
+  async updateSettings(_configLines: string[]): Promise<{ bootChanged: boolean }> {
     try {
       const locale = this.newLocale.replace("_", "-");
 
@@ -1075,10 +1058,10 @@ class LocaleSettingApplier implements SettingApplier {
       }
 
       // locale changes require boot to take effect
-      return { bootChanged: true, updatedConfigLines: configLines };
+      return { bootChanged: true };
     } catch (e) {
       Logger.error("Failed to update locale settings", e);
-      return { bootChanged: false, updatedConfigLines: configLines };
+      return { bootChanged: false };
     }
   }
 }
@@ -1113,11 +1096,7 @@ class CameraSettingApplier implements SettingApplier {
     }
   }
 
-  async updateRuntime(configLines: string[]): Promise<boolean> {
-    return false;
-  }
-
-  async updateBoot(
+  async updateSettings(
     configLines: string[]
   ): Promise<{ bootChanged: boolean; updatedConfigLines: string[] }> {
     try {
