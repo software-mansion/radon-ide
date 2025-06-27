@@ -15,7 +15,7 @@ import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
-export interface BuildManager extends Disposable {
+export interface BuildManager {
   buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult>;
   focusBuildOutput(): void;
 }

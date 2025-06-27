@@ -43,7 +43,7 @@ class BuildInProgress {
 export class BatchingBuildManager implements BuildManager, Disposable {
   private buildsInProgress: Map<string, BuildInProgress> = new Map();
 
-  constructor(private readonly wrappedBuildManager: BuildManager) {}
+  constructor(private readonly wrappedBuildManager: BuildManager & Partial<Disposable>) {}
 
   private makeBuildKey(buildConfig: BuildConfig) {
     return `${buildConfig.platform}:${buildConfig.type}:${buildConfig.appRoot}`;
@@ -101,6 +101,6 @@ export class BatchingBuildManager implements BuildManager, Disposable {
       build.cancelToken.cancel();
     }
     this.buildsInProgress.clear();
-    this.wrappedBuildManager.dispose();
+    this.wrappedBuildManager.dispose?.();
   }
 }

@@ -30,10 +30,16 @@ describe("BatchingBuildManager", () => {
     };
   });
 
-  it("shoud focus the build output of the wrapped build manager", () => {
+  it("should focus the build output of the wrapped build manager", () => {
     const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
     batchingBuildManager.focusBuildOutput();
     assert(buildManagerMock.focusBuildOutput.calledOnce);
+  });
+
+  it("should dispose the wrapped build manager", () => {
+    const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
+    batchingBuildManager.dispose();
+    assert(buildManagerMock.dispose.calledOnce);
   });
 
   for (const platform of Object.values(DevicePlatform)) {
