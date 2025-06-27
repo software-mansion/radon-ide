@@ -15,7 +15,12 @@ import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
-type BuildOptions = {
+export interface BuildManager {
+  buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult>;
+  focusBuildOutput(): void;
+}
+
+export type BuildOptions = {
   progressListener: (newProgress: number) => void;
   cancelToken: CancelToken;
 };
@@ -170,7 +175,7 @@ export async function inferBuildType(
   return BuildType.Local;
 }
 
-export class BuildManager implements Disposable {
+export class BuildManagerImpl implements Disposable, BuildManager {
   constructor(
     private readonly dependencyManager: DependencyManager,
     private readonly buildCache: BuildCache
