@@ -17,7 +17,7 @@ import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import {
   BuildError,
-  BuildManagerInterface,
+  BuildManager,
   BuildResult,
   createBuildConfig,
   inferBuildType,
@@ -78,7 +78,7 @@ export class DeviceSession
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
   private debugSession: DebugSession;
-  private buildManager: BuildManagerInterface;
+  private buildManager: BuildManager;
   private buildCache: BuildCache;
   private cancelToken: CancelToken | undefined;
   private cacheStaleSubscription: Disposable;

@@ -3,21 +3,21 @@ import { BuildCache } from "../builders/BuildCache";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { LaunchConfigController } from "../panels/LaunchConfigController";
 import { disposeAll } from "../utilities/disposables";
-import { BuildManager, BuildManagerInterface } from "../builders/BuildManager";
+import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
 
 function createBuildManager(
   dependencyManager: DependencyManager,
   buildCache: BuildCache
-): BuildManagerInterface {
-  return new BatchingBuildManager(new BuildManager(dependencyManager, buildCache));
+): BuildManager {
+  return new BatchingBuildManager(new BuildManagerImpl(dependencyManager, buildCache));
 }
 
 export class ApplicationContext implements Disposable {
   public dependencyManager: DependencyManager;
   public launchConfig: LaunchConfigController;
   public buildCache: BuildCache;
-  public buildManager: BuildManagerInterface & Disposable;
+  public buildManager: BuildManager;
   private disposables: Disposable[] = [];
 
   constructor(public appRootFolder: string) {

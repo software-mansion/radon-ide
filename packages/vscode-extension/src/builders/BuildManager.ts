@@ -15,7 +15,7 @@ import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
-export interface BuildManagerInterface extends Disposable {
+export interface BuildManager extends Disposable {
   buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult>;
   focusBuildOutput(): void;
 }
@@ -175,7 +175,7 @@ export async function inferBuildType(
   return BuildType.Local;
 }
 
-export class BuildManager implements Disposable, BuildManagerInterface {
+export class BuildManagerImpl implements Disposable, BuildManager {
   constructor(
     private readonly dependencyManager: DependencyManager,
     private readonly buildCache: BuildCache

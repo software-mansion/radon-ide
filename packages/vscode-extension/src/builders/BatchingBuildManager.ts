@@ -1,7 +1,7 @@
 import { Disposable } from "vscode";
 import { BuildConfig } from "../common/BuildConfig";
 import { Logger } from "../Logger";
-import { BuildManagerInterface, BuildOptions, BuildResult } from "./BuildManager";
+import { BuildManager, BuildOptions, BuildResult } from "./BuildManager";
 import { CancelToken } from "./cancelToken";
 
 class BuildInProgress {
@@ -40,10 +40,10 @@ class BuildInProgress {
  * for the same build configuration. It ensures that only one build is in progress for a given configuration
  * at a time, and reuses the existing build promise if another request comes in for the same configuration.
  */
-export class BatchingBuildManager implements BuildManagerInterface, Disposable {
+export class BatchingBuildManager implements BuildManager, Disposable {
   private buildsInProgress: Map<string, BuildInProgress> = new Map();
 
-  constructor(private readonly wrappedBuildManager: BuildManagerInterface) {}
+  constructor(private readonly wrappedBuildManager: BuildManager) {}
 
   private makeBuildKey(buildConfig: BuildConfig) {
     return `${buildConfig.platform}:${buildConfig.type}:${buildConfig.appRoot}`;
