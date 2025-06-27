@@ -7,7 +7,6 @@ import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
-import { RadonInspectorBridge } from "../project/bridge";
 
 const PING_TIMEOUT = 1000;
 
@@ -33,6 +32,7 @@ export interface JSDebugConfiguration {
   websocketAddress: string;
   sourceMapPathOverrides: Record<string, string>;
   displayDebuggerOverlay: boolean;
+  installConnectRuntime: boolean;
   isUsingNewDebugger: boolean;
   expoPreludeLineCount: number;
 }

@@ -56,6 +56,7 @@ export default class ConnectSession implements Disposable {
     const success = await this.debugSession.startJSDebugSession({
       websocketAddress,
       displayDebuggerOverlay: true,
+      installConnectRuntime: true,
       isUsingNewDebugger,
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
       sourceMapPathOverrides: this.metro.sourceMapPathOverrides,

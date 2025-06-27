@@ -62,7 +62,7 @@ export class ProxyDebugAdapter extends DebugSession {
     const proxyDelegate = new RadonCDPProxyDelegate(
       this.sourceMapRegistry,
       this.session.configuration.skipFiles,
-      this.session.configuration.displayDebuggerOverlay
+      this.session.configuration.installConnectRuntime
     );
 
     this.cdpProxy = new CDPProxy(
