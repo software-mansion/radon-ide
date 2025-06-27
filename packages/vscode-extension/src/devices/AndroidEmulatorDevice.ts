@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { EOL } from "node:os";
+import assert from "assert";
 import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
@@ -18,7 +19,7 @@ import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
-import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
+import { AppPermissionType, CameraSettings, DeviceSettings, Locale } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
@@ -108,19 +109,12 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }, DISPOSE_TIMEOUT);
   }
 
-  async changeSettings(settings: DeviceSettings) {
-    // Create setting appliers for configuration that requires boot to take effect
-    const settingAppliers: SettingApplier[] = [
-      new LocaleSettingApplier(settings.locale, this.serial),
-      new CameraSettingApplier(settings.camera),
-    ];
-
-    const settingsChanged = await this.tryUpdateConfigurationSettings(settingAppliers);
-
+  async changeSettings(settings: DeviceSettings): Promise<boolean> {
+    assert(this.serial, "Device serial is not set. Cannot change settings.");
     // Apply runtime settings that don't require boot
     await exec(ADB_PATH, [
       "-s",
-      this.serial!,
+      this.serial,
       "shell",
       "settings",
       "put",
@@ -134,7 +128,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     if (settings.location.isDisabled) {
       await exec(ADB_PATH, [
         "-s",
-        this.serial!,
+        this.serial,
         "shell",
         "settings",
         "put",
@@ -145,7 +139,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     } else {
       await exec(ADB_PATH, [
         "-s",
-        this.serial!,
+        this.serial,
         "shell",
         "settings",
         "put",
@@ -163,46 +157,165 @@ export class AndroidEmulatorDevice extends DeviceBase {
         Math.abs(settings.location.longitude) < 0.00001;
       const lat = areCoordinatesToCloseToZero ? "0.00001" : settings.location.latitude.toString();
       const long = areCoordinatesToCloseToZero ? "0.00001" : settings.location.longitude.toString();
-      await exec(ADB_PATH, ["-s", this.serial!, "emu", "geo", "fix", long, lat]);
+      await exec(ADB_PATH, ["-s", this.serial, "emu", "geo", "fix", long, lat]);
     }
 
+    // Apply settings that require emulator reboot
+    const updatedLocale = await this.maybeChangeLocale(settings.locale);
+    const updatedCameraSettings =
+      settings.camera !== undefined && (await this.maybeChangeCameraSettings(settings.camera));
+    const shouldReboot = updatedLocale || updatedCameraSettings;
+
     // if the boot settings were changed, we need to restart the emulator
-    return settingsChanged;
+    return shouldReboot;
   }
 
   /**
-   * This method updates the configuration settings for the emulator.
-   * It reads the config.ini file, applies the setting appliers, and writes the changes back to the file.
-   * @param settingAppliers - The setting appliers to apply.
-   * @returns if any changes were made.
+   * Checks the current locale of the Android emulator device and updates it if necessary.
+   *
+   * @param locale - The desired locale to set on the device (e.g., "en_US").
+   * @param deviceSerial - The serial number of the target Android emulator device.
+   * @returns A promise that resolves to `true` if the locale was changed, or `false` if no change was needed.
    */
-  private async tryUpdateConfigurationSettings(settingAppliers: SettingApplier[]) {
+  private async maybeChangeLocale(locale: Locale): Promise<boolean> {
+    assert(this.serial, "Device serial is not set. Cannot change locale.");
+    const newLocale = locale.replace("_", "-");
+
+    try {
+      const { stdout: rawCurrentLocale } = await exec(ADB_PATH, [
+        "-s",
+        this.serial,
+        "shell",
+        "settings",
+        "get",
+        "system",
+        "system_locales",
+      ]);
+
+      // if user did not use the device before it might not have system_locales property
+      // as en-US is the default locale, used by the system, when no setting is provided
+      // we assume that no value in stdout is the same as en-US on some devices
+      // stdout is a string "null" instead of undefined so we need to handle it separately
+      const currentLocale =
+        rawCurrentLocale === "null" || rawCurrentLocale === undefined ? "en-US" : rawCurrentLocale;
+      const needsUpdate = currentLocale !== newLocale;
+      if (!needsUpdate) {
+        return false; // no need to change locale
+      }
+    } catch (error) {
+      Logger.warn("Failed to get current locale settings from the Android emulator.", error);
+      return false;
+    }
+
+    try {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial,
+        "shell",
+        "settings",
+        "put",
+        "system",
+        "system_locales",
+        newLocale,
+      ]);
+
+      // this is needed to make sure that changes will persist
+      await exec(ADB_PATH, ["-s", this.serial, "shell", "sync"]);
+
+      // TODO:  Find a way to change or remove persist.sys.locale without root access. note: removing the whole
+      // data/property/persistent_properties file would also work as we persist device settings globally in Radon IDE
+      const { stdout } = await exec(ADB_PATH, [
+        "-s",
+        this.serial,
+        "shell",
+        "getprop",
+        "persist.sys.locale",
+      ]);
+
+      if (stdout) {
+        Logger.warn(
+          "Updating locale will not take effect as the device has altered locale via system settings which always takes precedence over the device setting the IDE uses."
+        );
+      }
+
+      return true;
+    } catch (error) {
+      Logger.warn("Failed to apply locale settings changes to the Android emulator.", error);
+      return false;
+    }
+  }
+
+  /**
+   * Checks and updates the camera settings in the Android emulator configuration file if necessary.
+   *
+   * @param cameraSettings - An object specifying the desired camera settings for the emulator.
+   * @returns A promise that resolves to `true` if the configuration was updated, or `false` if no changes were necessary.
+   */
+  private async maybeChangeCameraSettings(cameraSettings: CameraSettings): Promise<boolean> {
+    let configContent: string;
+    try {
+      configContent = await this.readConfigFile();
+    } catch (error) {
+      Logger.warn("Failed to read current emulator camera settings.", error);
+      return false; // If we cannot read the config, we assume no changes are needed
+    }
+    const configLines = configContent.split("\n");
+    let currentBackCamera = "emulated";
+    let currentFrontCamera = "none";
+
+    configLines.forEach((line: string) => {
+      const [key, value] = line.split("=");
+      if (key === "hw.camera.back") {
+        currentBackCamera = value;
+      } else if (key === "hw.camera.front") {
+        currentFrontCamera = value;
+      }
+    });
+
+    const backNeedsUpdate =
+      cameraSettings?.back !== undefined && currentBackCamera !== cameraSettings.back;
+    const frontNeedsUpdate =
+      cameraSettings?.front !== undefined && currentFrontCamera !== cameraSettings.front;
+
+    const needsUpdate = backNeedsUpdate || frontNeedsUpdate;
+    if (!needsUpdate) {
+      return false;
+    }
+
+    const newConfigLines = configLines.map((line) => {
+      const [key] = line.split("=");
+      if (backNeedsUpdate && key === "hw.camera.back") {
+        return `hw.camera.back=${cameraSettings.back}`;
+      }
+      if (frontNeedsUpdate && key === "hw.camera.front") {
+        return `hw.camera.front=${cameraSettings.front}`;
+      }
+      return line;
+    });
+
+    const newConfig = newConfigLines.join("\n");
+    try {
+      await this.writeConfigFile(newConfig);
+    } catch (error) {
+      Logger.warn(
+        "Failed to write updated camera settings to the emulator configuration file.",
+        error
+      );
+      return false; // If we cannot write the config, we assume no changes were made
+    }
+    return true;
+  }
+
+  private async readConfigFile(): Promise<string> {
     const avdDirectory = getAvdDirectoryLocation(this.avdId);
     const configIni = path.join(avdDirectory, `${this.avdId}.avd`, "config.ini");
-    const configIniContent = await fs.promises.readFile(configIni, "utf-8");
-    const initialConfigLines = configIniContent.split("\n");
-    let configLines = initialConfigLines;
+    return await fs.promises.readFile(configIni, "utf-8");
+  }
 
-    let bootSettingsChanged = false;
-    for (const applier of settingAppliers) {
-      if (await applier.shouldUpdate(configLines)) {
-        const { bootChanged, updatedConfigLines } = await applier.updateSettings(configLines);
-
-        if (bootChanged || updatedConfigLines !== undefined) {
-          bootSettingsChanged = true;
-        }
-        if (updatedConfigLines !== undefined) {
-          configLines = updatedConfigLines;
-        }
-      }
-    }
-
-    const finalizedConfig = configLines.join("\n");
-    if (bootSettingsChanged && finalizedConfig !== configIniContent) {
-      await fs.promises.writeFile(configIni, finalizedConfig, "utf-8");
-    }
-
-    return bootSettingsChanged;
+  private async writeConfigFile(configContent: string): Promise<void> {
+    const avdDirectory = getAvdDirectoryLocation(this.avdId);
+    const configIni = path.join(avdDirectory, `${this.avdId}.avd`, "config.ini");
+    await fs.promises.writeFile(configIni, configContent, "utf-8");
   }
 
   /**
@@ -979,144 +1092,5 @@ function getNativeQemuArch() {
       return CPU_ARCH.ARM64;
     default:
       throw new Error("Unsupported CPU architecture.");
-  }
-}
-
-interface SettingApplier {
-  shouldUpdate(configLines: string[]): Promise<boolean>;
-  /**
-   * Updates the settings of the emulator.
-   * @param configLines - The lines of the config.ini file.
-   */
-  updateSettings(
-    configLines: string[]
-  ): Promise<{ bootChanged: boolean; updatedConfigLines?: string[] }>;
-}
-
-class LocaleSettingApplier implements SettingApplier {
-  constructor(
-    private newLocale: Locale,
-    private serial: string | undefined
-  ) {}
-
-  async shouldUpdate(_configLines: string[]): Promise<boolean> {
-    if (!this.serial) {
-      return false;
-    }
-
-    const newLocale = this.newLocale.replace("_", "-");
-    const { stdout } = await exec(ADB_PATH, [
-      "-s",
-      this.serial,
-      "shell",
-      "settings",
-      "get",
-      "system",
-      "system_locales",
-    ]);
-
-    // if user did not use the device before it might not have system_locales property
-    // as en-US is the default locale, used by the system, when no setting is provided
-    // we assume that no value in stdout is the same as en-US on some devices
-    // stdout is a string "null" instead of undefined so we need to handle it separately
-    const currentLocale = stdout === "null" || stdout === undefined ? "en-US" : stdout;
-    return currentLocale !== newLocale;
-  }
-
-  async updateSettings(_configLines: string[]): Promise<{ bootChanged: boolean }> {
-    try {
-      const locale = this.newLocale.replace("_", "-");
-
-      await exec(ADB_PATH, [
-        "-s",
-        this.serial!,
-        "shell",
-        "settings",
-        "put",
-        "system",
-        "system_locales",
-        locale,
-      ]);
-
-      // this is needed to make sure that changes will persist
-      await exec(ADB_PATH, ["-s", this.serial!, "shell", "sync"]);
-
-      // TODO:  Find a way to change or remove persist.sys.locale without root access. note: removing the whole
-      // data/property/persistent_properties file would also work as we persist device settings globally in Radon IDE
-      const { stdout } = await exec(ADB_PATH, [
-        "-s",
-        this.serial!,
-        "shell",
-        "getprop",
-        "persist.sys.locale",
-      ]);
-
-      if (stdout) {
-        Logger.warn(
-          "Updating locale will not take effect as the device has altered locale via system settings which always takes precedence over the device setting the IDE uses."
-        );
-      }
-
-      // locale changes require boot to take effect
-      return { bootChanged: true };
-    } catch (e) {
-      Logger.error("Failed to update locale settings", e);
-      return { bootChanged: false };
-    }
-  }
-}
-
-class CameraSettingApplier implements SettingApplier {
-  constructor(private cameraSettings: DeviceSettings["camera"]) {}
-
-  async shouldUpdate(configLines: string[]): Promise<boolean> {
-    try {
-      let currentBackCamera = "emulated";
-      let currentFrontCamera = "none";
-
-      configLines.forEach((line: string) => {
-        const [key, value] = line.split("=");
-        if (key === "hw.camera.back") {
-          currentBackCamera = value;
-        } else if (key === "hw.camera.front") {
-          currentFrontCamera = value;
-        }
-      });
-
-      const backNeedsUpdate =
-        this.cameraSettings?.back !== undefined && currentBackCamera !== this.cameraSettings.back;
-      const frontNeedsUpdate =
-        this.cameraSettings?.front !== undefined &&
-        currentFrontCamera !== this.cameraSettings.front;
-
-      return backNeedsUpdate || frontNeedsUpdate;
-    } catch (e) {
-      Logger.warn("Failed to read AVD config for camera settings comparison", e);
-      return false;
-    }
-  }
-
-  async updateSettings(
-    configLines: string[]
-  ): Promise<{ bootChanged: boolean; updatedConfigLines: string[] }> {
-    try {
-      let hasChanges = false;
-      for (let i = 0; i < configLines.length; i++) {
-        const [key] = configLines[i].split("=");
-        if (key === "hw.camera.back" && this.cameraSettings?.back !== undefined) {
-          configLines[i] = `hw.camera.back=${this.cameraSettings.back}`;
-          hasChanges = true;
-        } else if (key === "hw.camera.front" && this.cameraSettings?.front !== undefined) {
-          configLines[i] = `hw.camera.front=${this.cameraSettings.front}`;
-          hasChanges = true;
-        }
-      }
-
-      // camera changes require boot to take effect
-      return { bootChanged: hasChanges, updatedConfigLines: configLines };
-    } catch (e) {
-      Logger.error("Failed to update AVD camera settings", e);
-      return { bootChanged: false, updatedConfigLines: configLines };
-    }
   }
 }
