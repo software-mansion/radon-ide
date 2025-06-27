@@ -12,7 +12,7 @@ import {
   DeviceBase,
   REBOOT_TIMEOUT,
 } from "./DeviceBase";
-import { retry } from "../utilities/retry";
+import { retry, sleep } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
@@ -408,8 +408,12 @@ export class AndroidEmulatorDevice extends DeviceBase {
           const iniFile = match![1];
           const emulatorInfo = await parseAvdIniFile(iniFile);
           const emulatorSerial = `emulator-${emulatorInfo.serialPort}`;
-          await waitForEmulatorOnline(emulatorSerial, 60000);
-          resolve(emulatorSerial);
+          try {
+            await waitForEmulatorOnline(emulatorSerial, 60000);
+            resolve(emulatorSerial);
+          } catch (error) {
+            reject(new Error(`Emulator did not come online: ${error}`));
+          }
         }
       });
     });
@@ -988,15 +992,27 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
   }, timeoutMs);
 
   try {
-    await cancelToken.adapt(
-      exec(ADB_PATH, [
-        "-s",
-        serial,
-        "wait-for-device",
-        "shell",
-        "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
-      ])
-    );
+    // NOTE: if the device was created shortly before this adb command, it will fail.
+    // To work around this, we retry it until the command succeeds or the timeout is reached.
+    while (!cancelToken.cancelled) {
+      try {
+        await cancelToken.adapt(
+          exec(ADB_PATH, [
+            "-s",
+            serial,
+            "wait-for-device",
+            "shell",
+            "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
+          ])
+        );
+        break;
+      } catch (error) {
+        if (error instanceof CancelError) {
+          throw error; // rethrow the cancel error to be handled by the outer catch block
+        }
+        await cancelToken.adapt(sleep(500));
+      }
+    }
 
     // If booting device and building the application was fast enough, the emulators network internals
     // would not be loaded before the start of the application. This in turn would cause PackagerStatusCheck
@@ -1010,8 +1026,6 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
         `while ! ping -c 1 10.0.2.2>/dev/null 2>&1; do sleep 0.5; done;`,
       ])
     );
-
-    await process;
 
     clearTimeout(timeout);
   } catch (error) {
