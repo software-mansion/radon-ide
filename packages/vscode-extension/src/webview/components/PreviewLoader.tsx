@@ -6,7 +6,11 @@ import "./PreviewLoader.css";
 import StartupMessageComponent from "./shared/StartupMessage";
 import ProgressBar from "./shared/ProgressBar";
 
-import { StartupMessage, StartupStageWeight } from "../../common/Project";
+import {
+  DeviceSessionStateStarting,
+  StartupMessage,
+  StartupStageWeight,
+} from "../../common/Project";
 import { useProject } from "../providers/ProjectProvider";
 import Button from "./shared/Button";
 import { useDevices } from "../providers/DevicesProvider";
@@ -16,21 +20,29 @@ const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).redu
   0
 );
 
-function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => void }) {
-  const { projectState, selectedDeviceSession, project } = useProject();
+function PreviewLoader({
+  startingSessionState,
+  onRequestShowPreview,
+}: {
+  onRequestShowPreview: () => void;
+
+  startingSessionState: DeviceSessionStateStarting;
+}) {
+  const { project } = useProject();
   const { deviceSessionsManager } = useDevices();
   const [progress, setProgress] = useState(0);
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
 
-  const startupMessage = selectedDeviceSession?.startupMessage;
+  const startupMessage = startingSessionState.startupMessage;
+  const stageProgress = startingSessionState.stageProgress;
 
   useEffect(() => {
-    if (selectedDeviceSession?.startupMessage === StartupMessage.Restarting) {
+    if (startupMessage === StartupMessage.Restarting) {
       setProgress(0);
     } else {
       const currentIndex = StartupStageWeight.findIndex(
-        (item) => item.StartupMessage === selectedDeviceSession?.startupMessage
+        (item) => item.StartupMessage === startupMessage
       );
       const currentWeight = StartupStageWeight[currentIndex].weight;
       const startupStageWeightSumUntilNow = StartupStageWeight.slice(0, currentIndex)
@@ -39,8 +51,8 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
       let progressComponent = 0;
 
-      if (selectedDeviceSession?.stageProgress !== undefined) {
-        progressComponent = selectedDeviceSession?.stageProgress;
+      if (stageProgress !== undefined) {
+        progressComponent = stageProgress;
       }
       setProgress(
         ((startupStageWeightSumUntilNow + progressComponent * currentWeight) /
@@ -48,7 +60,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
           100
       );
     }
-  }, [projectState]);
+  }, [startingSessionState]);
 
   useEffect(() => {
     setIsLoadingSlowly(false);
@@ -90,12 +102,12 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
               "preview-loader-message",
               isLoadingSlowly && "preview-loader-slow-progress"
             )}>
-            {selectedDeviceSession?.startupMessage}
+            {startingSessionState.startupMessage}
             {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
           </StartupMessageComponent>
-          {selectedDeviceSession?.stageProgress !== undefined && (
+          {startingSessionState.stageProgress !== undefined && (
             <div className="preview-loader-stage-progress">
-              {(selectedDeviceSession?.stageProgress * 100).toFixed(1)}%
+              {(startingSessionState.stageProgress * 100).toFixed(1)}%
             </div>
           )}
         </div>

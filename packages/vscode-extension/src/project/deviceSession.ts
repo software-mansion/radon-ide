@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import assert from "assert";
 import _ from "lodash";
 import {
   commands,
@@ -29,12 +30,13 @@ import {
   TouchPoint,
   DeviceButtonType,
   DeviceSessionState,
-  BuildErrorDescriptor,
   ToolsState,
   ProfilingState,
   NavigationHistoryItem,
   NavigationRoute,
   DeviceSessionStatus,
+  FatalErrorDescriptor,
+  BundleErrorDescriptor,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
@@ -86,7 +88,8 @@ export class DeviceSession
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
   private stageProgress: number | undefined;
-  private buildError: BuildErrorDescriptor | undefined;
+  private fatalError: FatalErrorDescriptor | undefined;
+  private bundleError: BundleErrorDescriptor | undefined;
   private isRefreshing: boolean = false;
   private profilingCPUState: ProfilingState = "stopped";
   private profilingReactState: ProfilingState = "stopped";
@@ -136,12 +139,7 @@ export class DeviceSession
   }
 
   public getState(): DeviceSessionState {
-    return {
-      status: this.status,
-      startupMessage: this.startupMessage,
-      stageProgress: this.stageProgress,
-      buildError: this.buildError,
-      isRefreshing: this.isRefreshing,
+    const commonState = {
       profilingCPUState: this.profilingCPUState,
       profilingReactState: this.profilingReactState,
       navigationHistory: this.navigationHistory,
@@ -154,13 +152,37 @@ export class DeviceSession
       hasStaleBuildCache: this.hasStaleBuildCache,
       isRecordingScreen: this.isRecordingScreen,
     };
+    if (this.status === "starting") {
+      return {
+        ...commonState,
+        status: "starting",
+        startupMessage: this.startupMessage,
+        stageProgress: this.stageProgress,
+      };
+    } else if (this.status === "running") {
+      return {
+        ...commonState,
+        status: "running",
+        isRefreshing: this.isRefreshing,
+        bundleError: this.bundleError,
+      };
+    } else if (this.status === "fatalError") {
+      assert(this.fatalError, "Expected error to be defined in fatal error state");
+      return {
+        ...commonState,
+        status: "fatalError",
+        error: this.fatalError,
+      };
+    }
+    assert(false, "Unexpected device session status: " + this.status);
   }
 
   private resetStartingState(startupMessage: StartupMessage = StartupMessage.Restarting) {
     this.status = "starting";
     this.startupMessage = startupMessage;
     this.stageProgress = undefined;
-    this.buildError = undefined;
+    this.fatalError = undefined;
+    this.bundleError = undefined;
     this.isRefreshing = false;
     this.hasStaleBuildCache = false;
     this.profilingCPUState = "stopped";
@@ -193,7 +215,11 @@ export class DeviceSession
 
     Logger.error("[Bundling Error]", message);
 
-    this.status = "bundlingError";
+    this.status = "running";
+    this.bundleError = {
+      kind: "bundle",
+      message,
+    };
     this.emitStateChange();
   };
 
@@ -262,6 +288,11 @@ export class DeviceSession
     const devtools = new Devtools();
     devtools.onEvent("appReady", () => {
       this.device.setUpKeyboard();
+      // NOTE: since this is triggered by the JS bundle,
+      // we can assume that if it fires, the bundle loaded successfully.
+      // This is necessary to reset the bundle error state when the app reload
+      // is triggered from the app itself (e.g. by in-app dev menu or redbox).
+      this.bundleError = undefined;
       Logger.debug("App ready");
     });
     // We don't need to store event disposables here as they are tied to the lifecycle
@@ -283,6 +314,7 @@ export class DeviceSession
     });
     devtools.onEvent("fastRefreshStarted", () => {
       this.isRefreshing = true;
+      this.bundleError = undefined;
       this.emitStateChange();
     });
     devtools.onEvent("fastRefreshComplete", () => {
@@ -360,8 +392,9 @@ export class DeviceSession
         // reload got cancelled, we don't show any errors
         return false;
       } else if (e instanceof BuildError) {
-        this.status = "buildError";
-        this.buildError = {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "build",
           message: e.message,
           buildType: e.buildType,
           platform: this.device.platform,
@@ -452,6 +485,7 @@ export class DeviceSession
     this.cancelToken = cancelToken;
 
     this.status = "starting";
+    this.fatalError = undefined;
     this.updateStartupMessage(StartupMessage.InitializingDevice);
 
     if (cleanCache) {
@@ -768,17 +802,23 @@ export class DeviceSession
       if (e instanceof CancelError) {
         Logger.info("Device selection was canceled", e);
       } else if (e instanceof DeviceBootError) {
-        this.status = "bootError";
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "device",
+          message: e.message,
+        };
       } else if (e instanceof BuildError) {
-        this.status = "buildError";
-        this.buildError = {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "build",
           message: e.message,
           buildType: e.buildType,
           platform: this.device.platform,
         };
       } else {
-        this.status = "buildError";
-        this.buildError = {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "build",
           message: (e as Error).message,
           buildType: null,
           platform: this.device.platform,
