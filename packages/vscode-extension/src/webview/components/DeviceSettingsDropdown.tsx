@@ -20,6 +20,7 @@ import { DevicePlatform } from "../../common/DeviceManager";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
+import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 
@@ -148,6 +149,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Location
           </DropdownMenu.Item>
           <LocalizationItem />
+          {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.Android && <CameraItem />}
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-redo" />
@@ -310,6 +312,21 @@ const BiometricsItem = () => {
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
     </DropdownMenu.Sub>
+  );
+};
+
+const CameraItem = () => {
+  const { openModal } = useModal();
+
+  return (
+    <DropdownMenu.Item
+      className="dropdown-menu-item"
+      onSelect={() => {
+        openModal("Camera Settings", <CameraSettingsView />);
+      }}>
+      <span className="codicon codicon-device-camera" />
+      Camera Settings
+    </DropdownMenu.Item>
   );
 };
 

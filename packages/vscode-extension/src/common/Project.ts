@@ -3,6 +3,15 @@ import { DeviceInfo, DevicePlatform } from "./DeviceManager";
 
 export type Locale = string;
 
+export type CameraSource = "emulated" | "none" | "webcam0";
+export type FrontCameraSource = CameraSource;
+export type BackCameraSource = CameraSource | "virtualscene";
+
+export interface CameraSettings {
+  back: BackCameraSource;
+  front: FrontCameraSource;
+}
+
 export type DeviceSettings = {
   appearance: "light" | "dark";
   contentSize: "xsmall" | "small" | "normal" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
@@ -15,6 +24,7 @@ export type DeviceSettings = {
   locale: Locale;
   replaysEnabled: boolean;
   showTouches: boolean;
+  camera?: CameraSettings;
 };
 
 export type ToolState = {
