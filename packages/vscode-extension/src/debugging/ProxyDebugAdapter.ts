@@ -293,7 +293,7 @@ export class ProxyDebugAdapter extends DebugSession {
     this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
   }
 
-  private async postMessage(args: any) {
+  private async dispatchRadonAgentMessage(args: any) {
     this.cdpProxy.injectDebuggerCommand({
       method: "Runtime.evaluate",
       params: {
@@ -316,8 +316,8 @@ export class ProxyDebugAdapter extends DebugSession {
       case "RNIDE_stopProfiling":
         await this.stopProfiling();
         break;
-      case "RNIDE_postMessage":
-        await this.postMessage(args);
+      case "RNIDE_dispatchRadonAgentMessage":
+        await this.dispatchRadonAgentMessage(args);
         break;
       case "RNIDE_ping":
         response.body.result = await this.ping();

@@ -3,11 +3,12 @@ import { EventEmitter } from "vscode";
 import { Minimatch } from "minimatch";
 import _ from "lodash";
 import path from "path";
-import fs from "fs";
+import fs from "fs/promises";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter<{ reason: "breakpoint" | "exception" }>();
@@ -262,7 +263,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       "dist",
       "connect_runtime.js"
     );
-    const runtimeScript = fs.readFileSync(runtimeScriptPath, "utf8");
+    const runtimeScript = await fs.readFile(runtimeScriptPath, "utf8");
 
     await tunnel.injectDebuggerCommand({
       method: "Runtime.addBinding",
@@ -279,6 +280,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     })) as Cdp.Runtime.EvaluateResult;
     if (result.exceptionDetails) {
       Logger.error("Failed to setup Radon Connect runtime", result.exceptionDetails);
+      getTelemetryReporter().sendTelemetryEvent("radon-connect:setup-runtime-error", {
+        error: result.exceptionDetails.exception?.description ?? "Unknown error",
+      });
     }
   }
 

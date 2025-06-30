@@ -21,7 +21,7 @@ class DebugSessionInspectorBridge extends BaseInspectorBridge {
   }
 
   protected send(message: any) {
-    this.debugSession.postMessage(message);
+    this.debugSession.dispatchRadonAgentMessage(message);
   }
 }
 

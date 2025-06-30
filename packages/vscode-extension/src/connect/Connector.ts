@@ -6,7 +6,6 @@ import {
   StatusBarItem,
   window,
 } from "vscode";
-import { DebugSession } from "../debugging/DebugSession";
 import { Metro } from "../project/metro";
 import { extensionContext } from "../utilities/extensionContext";
 import { disposeAll } from "../utilities/disposables";

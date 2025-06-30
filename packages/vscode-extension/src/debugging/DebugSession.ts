@@ -32,7 +32,7 @@ export interface JSDebugConfiguration {
   websocketAddress: string;
   sourceMapPathOverrides: Record<string, string>;
   displayDebuggerOverlay: boolean;
-  installConnectRuntime: boolean;
+  installConnectRuntime?: boolean;
   isUsingNewDebugger: boolean;
   expoPreludeLineCount: number;
 }
@@ -235,8 +235,8 @@ export class DebugSession implements Disposable {
     return Promise.race([resultPromise, timeout]).catch((_e) => false);
   }
 
-  public postMessage(data: any) {
-    this.jsDebugSession?.customRequest("RNIDE_postMessage", data);
+  public dispatchRadonAgentMessage(data: any) {
+    this.jsDebugSession?.customRequest("RNIDE_dispatchRadonAgentMessage", data);
   }
 
   public async startProfilingCPU() {
