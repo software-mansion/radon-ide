@@ -4,7 +4,7 @@ title: Radon AI
 sidebar_position: 10
 ---
 
-Radon AI is an AI assistant enhanced with up-to-date information about the React Native ecosystem. At its heart is our extensive React Native knowledge database, which is queried before answering your question.
+Radon AI is a React Native AI assistant enhanced with up-to-date information about the React Native ecosystem. At its heart is our extensive React Native knowledge database, which is queried before answering your question.
 
 We index all of the popular React Native libraries to match questions to relevant pieces of documentation, providing additional, accurate context to your conversation.
 
