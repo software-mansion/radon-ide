@@ -32,8 +32,8 @@ const items = [
     label: "Router integration",
     title: "Navigation made easier",
     body: "Our <strong>VSCode extension</strong> integrates tightly with your deep-linked application, allowing you to effortlessly jump around the navigation structure. It supports both React Navigation and Expo Router projects.",
-    mediaSrc: "video/4_sztudio_url_bar.mp4",
-    placeholderSrc: "video/placeholders/4_sztudio_url_bar_placeholder.webp",
+    mediaSrc: "video/ide_router_integration.mp4",
+    placeholderSrc: "video/placeholders/ide_router_integration_placeholder.webp",
     placeholderAlt: "Radon IDE router integration",
   },
   {

@@ -10,7 +10,7 @@ The extension automatically detects the changes in the navigation state and keep
 Radon IDE router integration supports both Expo Router and React Navigation projects.
 
 <video autoPlay loop width="700" controls className="shadow-image">
-  <source src="/video/4_sztudio_url_bar.mp4" type="video/mp4"/>
+  <source src="/video/ide_router_integration.mp4" type="video/mp4"/>
 </video>
 
 ## Using the integration

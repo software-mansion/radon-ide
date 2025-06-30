@@ -46,7 +46,7 @@ The Radon IDE integrates with your deep-linked application allowing you to jump 
 Learn more about the [Router integration](/docs/features/router-integration).
 
 <video autoPlay loop width="700" controls className="shadow-image">
-  <source src="/video/4_sztudio_url_bar.mp4" type="video/mp4"/>
+  <source src="/video/ide_router_integration.mp4" type="video/mp4"/>
 </video>
 
 ## Develop components in isolation
