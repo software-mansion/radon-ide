@@ -18,12 +18,20 @@ After [launching](/docs/getting-started/launching) the the Radon IDE panel the u
    - _Reload JS_ - reloads the JavaScript bundle from Metro bundler,
    - _Restart app process_ - closes and reopens the application,
    - _Reinstall app_ - reinstalls the application from the device,
-   - _Clean rebuild_ - resets metro cache, reboots the device, and reinstalls the application.
+   - _Clear Metro cache_ - resets Metro bundler cache, reboots the device and reopens the application,
+   - _Reboot IDE_ - reboots the device and reopens the application,
+   - _Clean rebuild_ - resets Metro bundler cache, reboots the device, and reinstalls the application.
 
-3. **Go to main screen button** - navigates to the `/` route.
-4. [**URL select**](/docs/features/router-integration) - allows to quickly visit recently used and all visited navigation URLs.
-5. [**Open logs**](/docs/features/debugging-and-logging) - opens the VSCode debug console.
-6. **Settings** - allows to adjust the Radon IDE panel settings like:
+3. [**URL select**](/docs/features/router-integration) - allows to quickly access the navigation paths within your application.
+
+   <img width="350" src="/img/docs/ide_url_select.png" className="shadow-image rounded-xl" />
+
+   - _Suggested paths_ - lists all available paths with recently visited paths displayed at the top,
+   - _Go to main screen button_ - navigates to the `/` route,
+   - _Open a deep link..._ - opens modal for testing [deep links](https://docs.expo.dev/linking/into-your-app/).
+
+4. [**Open logs**](/docs/features/debugging-and-logging) - opens the VSCode debug console.
+5. **Settings** - allows to adjust the Radon IDE panel settings like:
 
    <img width="200" src="/img/docs/ide_settings_dropdown.png" className="shadow-image" />
 
@@ -33,14 +41,14 @@ After [launching](/docs/getting-started/launching) the the Radon IDE panel the u
    - _Change IDE panel location_ - allows to change the location of the Radon IDE panel to editor tab, side panel, secondary side panel or to open the extension in a new window,
    - _Launch configuration_ - allows to adjust the [launch configuration](/docs/guides/configuration) of the extension.
 
-7. **Zoom controls** - hovering over the area reveals the zooms controls which allow to adjust how zoomed the device preview should be. You can choose one of the predefined values or use the plus and minus magnifier buttons to adjust the zoom manually.
+6. **Zoom controls** - hovering over the area reveals the zooms controls which allow to adjust how zoomed the device preview should be. You can choose one of the predefined values or use the plus and minus magnifier buttons to adjust the zoom manually.
    <img width="400" src="/img/docs/ide_zoom_controls.png" />
-8. **Device preview** - the preview of the running iOS simulator or Android emulator.
-9. [**Element inspector**](/docs/features/element-inspector) - enabling element inspector and clicking on the preview opens the line of code where the highlighted component is defined. Right-clicking on the device preview allows you to select components directly from the React tree.
-10. [**Manage devices**](/docs/guides/device-management) - allows to create, delete, and select devices currently used in the Radon IDE preview.
-    <img width="250" src="/img/docs/ide_manage_devices.png" />
-11. **Report issue** - opens a page in the Radon IDE GitHub repository where you can submit issue reports and suggest features.
-12. [**Device settings**](/docs/features/device-settings) - allows to adjust the device settings like device appearance, location, permissions, and text size.
+7. **Device preview** - the preview of the running iOS simulator or Android emulator.
+8. [**Element inspector**](/docs/features/element-inspector) - enabling element inspector and clicking on the preview opens the line of code where the highlighted component is defined. Right-clicking on the device preview allows you to select components directly from the React tree.
+9. [**Manage devices**](/docs/guides/device-management) - allows to create, delete, and select devices currently used in the Radon IDE preview.
+   <img width="250" src="/img/docs/ide_manage_devices.png" />
+10. **Report issue** - opens a page in the Radon IDE GitHub repository where you can submit issue reports and suggest features.
+11. [**Device settings**](/docs/features/device-settings) - allows to adjust the device settings like device appearance, location, permissions, and text size.
     <img width="250" src="/img/docs/ide_device_settings.png" />
 
 ## Theme
