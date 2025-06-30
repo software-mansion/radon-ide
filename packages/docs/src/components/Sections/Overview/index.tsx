@@ -84,6 +84,14 @@ const items = [
     placeholderSrc: "video/placeholders/9_sztudio_network_inspector_placeholder.webp",
     placeholderAlt: "React Native inspect network activity",
   },
+  {
+    label: "Radon AI",
+    title: "Your expert React Native AI assistant",
+    body: "Enhance your favorite LLM with an up-to-date knowledge about the React Native ecosystem.",
+    mediaSrc: "video/ide_chat.mp4",
+    placeholderSrc: "video/placeholders/ide_chat.webp",
+    placeholderAlt: "React Native AI assistant",
+  },
 ];
 
 const Overview = () => {

@@ -99,3 +99,13 @@ Learn more about [Network Inspector](/docs/features/network-inspector).
 <video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/ide_network_inspector_new.mp4" type="video/mp4"/>
 </video>
+
+## Radon AI
+
+Enhance your favorite LLM with an up-to-date knowledge about the React Native ecosystem.
+
+Learn more about [Radon AI](/docs/features/radon-ai).
+
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/ide_chat.mp4" type="video/mp4"/>
+</video>
