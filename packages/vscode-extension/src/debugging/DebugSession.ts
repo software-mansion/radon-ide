@@ -6,6 +6,7 @@ import { sleep } from "../utilities/retry";
 import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
+import { CancelToken } from "../utilities/cancelToken";
 
 const PING_TIMEOUT = 1000;
 
@@ -37,12 +38,14 @@ export interface JSDebugConfiguration {
 export type DebugSource = { filename?: string; line1based?: number; column0based?: number };
 
 type DebugSessionOptions = {
+  displayName: string;
   useParentDebugSession?: boolean;
 };
 
 export class DebugSession implements Disposable {
   private parentDebugSession: vscode.DebugSession | undefined;
   private jsDebugSession: vscode.DebugSession | undefined;
+  private cancelStartDebuggingToken: CancelToken = new CancelToken();
 
   private disposables: Disposable[] = [];
 
@@ -50,7 +53,7 @@ export class DebugSession implements Disposable {
 
   constructor(
     private delegate: DebugSessionDelegate,
-    private options: DebugSessionOptions = {}
+    private options: DebugSessionOptions = { displayName: "Radon IDE Debugger" }
   ) {
     this.disposables.push(
       debug.onDidTerminateDebugSession((session) => {
@@ -94,11 +97,14 @@ export class DebugSession implements Disposable {
       !this.jsDebugSession,
       "Cannot start parent debug session when js debug session is already running"
     );
-    const newParentDebugSession = await startDebugging(
+
+    this.cancelStartingDebugSession();
+
+    this.parentDebugSession = await startDebugging(
       undefined,
       {
         type: MASTER_DEBUGGER_TYPE,
-        name: "Radon IDE Debugger",
+        name: this.options.displayName,
         request: "attach",
       },
       {
@@ -106,29 +112,31 @@ export class DebugSession implements Disposable {
         suppressDebugView: true,
         suppressDebugToolbar: true,
         suppressSaveBeforeStart: true,
-      }
+      },
+      this.cancelStartDebuggingToken
     );
-    if (this.parentDebugSession) {
-      Logger.warn("Parent debugger session has spawned concurrently, dropping the earlier session");
-      debug.stopDebugging(this.parentDebugSession);
-    }
-    this.parentDebugSession = newParentDebugSession;
   }
 
   public async restart() {
-    await this.stop();
-    if (this.options.useParentDebugSession) {
+    this.cancelStartingDebugSession();
+    await this.stopJsDebugSession();
+    if (this.options.useParentDebugSession && !this.parentDebugSession) {
       await this.startParentDebugSession();
     }
   }
 
-  public async stop() {
+  private async stopJsDebugSession() {
     if (this.jsDebugSession) {
       const jsDebugSession = this.jsDebugSession;
       this.jsDebugSession = undefined;
       await debug.stopDebugging(jsDebugSession);
     }
     this.currentWsTarget = undefined;
+  }
+
+  public async stop() {
+    this.cancelStartingDebugSession();
+    await this.stopJsDebugSession();
     if (this.parentDebugSession) {
       const parentDebugSession = this.parentDebugSession;
       this.parentDebugSession = undefined;
@@ -146,6 +154,7 @@ export class DebugSession implements Disposable {
     if (this.jsDebugSession) {
       await this.restart();
     }
+
     if (this.options.useParentDebugSession && !this.parentDebugSession) {
       await this.startParentDebugSession();
     }
@@ -155,11 +164,13 @@ export class DebugSession implements Disposable {
 
     const extensionPath = extensionContext.extensionUri.path;
 
+    this.cancelStartingDebugSession();
+
     const newDebugSession = await startDebugging(
       undefined,
       {
         type: debuggerType,
-        name: "React Native JS Debugger",
+        name: this.options.displayName,
         request: "attach",
         breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
         sourceMapPathOverrides: configuration.sourceMapPathOverrides,
@@ -181,7 +192,8 @@ export class DebugSession implements Disposable {
         suppressSaveBeforeStart: true,
         consoleMode: DebugConsoleMode.MergeWithParent,
         compact: true,
-      }
+      },
+      this.cancelStartDebuggingToken
     );
     if (this.jsDebugSession) {
       Logger.warn("JS debugger session has spawned concurrently, dropping the earlier session");
@@ -228,5 +240,10 @@ export class DebugSession implements Disposable {
 
   public async appendDebugConsoleEntry(message: string, type: string, source?: DebugSource) {
     await this.parentDebugSession?.customRequest("RNIDE_log_message", { message, type, source });
+  }
+
+  private cancelStartingDebugSession() {
+    this.cancelStartDebuggingToken.cancel();
+    this.cancelStartDebuggingToken = new CancelToken();
   }
 }

@@ -4,11 +4,8 @@ import { clamp, debounce } from "lodash";
 import { useProject } from "../providers/ProjectProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
 import PreviewLoader from "./PreviewLoader";
-import {
-  useBootErrorAlert,
-  useBuildErrorAlert,
-  useBundleErrorAlert,
-} from "../hooks/useBuildErrorAlert";
+import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
+import { useBundleErrorAlert } from "../hooks/useBundleErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
@@ -85,29 +82,25 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
-  const { projectState, selectedDeviceSession, project } = useProject();
+  const { selectedDeviceSession, project } = useProject();
 
-  const projectStatus = selectedDeviceSession?.status;
-
-  const hasBuildError = projectStatus === "buildError";
-  const hasBootError = projectStatus === "bootError";
-  const hasBundlingError = projectStatus === "bundlingError";
+  const hasFatalError = selectedDeviceSession?.status === "fatalError";
+  const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
 
   const debugPaused = selectedDeviceSession?.isDebuggerPaused;
-  const isRefreshing = selectedDeviceSession?.isRefreshing ?? false;
+
+  const isRunning = selectedDeviceSession?.status === "running";
+  const isRefreshing = isRunning && selectedDeviceSession.isRefreshing;
 
   const previewURL = selectedDeviceSession?.previewURL;
 
-  const isStarting = hasBundlingError
-    ? false
-    : !projectState || selectedDeviceSession?.status === "starting";
   const showDevicePreview =
-    selectedDeviceSession?.previewURL &&
-    (showPreviewRequested || (!isStarting && !hasBuildError && !hasBootError));
+    selectedDeviceSession?.previewURL && (showPreviewRequested || isRunning);
 
-  useBuildErrorAlert(hasBuildError);
-  useBootErrorAlert(hasBootError);
-  useBundleErrorAlert(hasBundlingError);
+  useFatalErrorAlert(fatalErrorDescriptor);
+
+  const bundleErrorDescriptor = isRunning ? selectedDeviceSession?.bundleError : undefined;
+  useBundleErrorAlert(bundleErrorDescriptor);
 
   const openRebuildAlert = useNativeRebuildAlert();
 
@@ -553,15 +546,18 @@ function Preview({
             </div>
           </Device>
         )}
-        {!showDevicePreview && !hasBuildError && !hasBootError && (
+        {!showDevicePreview && selectedDeviceSession?.status === "starting" && (
           <Device device={device!} resizableProps={resizableProps}>
             <div className="phone-sized phone-content-loading-background" />
             <div className="phone-sized phone-content-loading ">
-              <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
+              <PreviewLoader
+                startingSessionState={selectedDeviceSession}
+                onRequestShowPreview={() => setShowPreviewRequested(true)}
+              />
             </div>
           </Device>
         )}
-        {(hasBuildError || hasBootError) && (
+        {hasFatalError && (
           <Device device={device!} resizableProps={resizableProps}>
             <div className="phone-sized extension-error-screen" />
           </Device>

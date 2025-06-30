@@ -4,7 +4,7 @@ import fs from "fs";
 import { extensionContext } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 import { DevicePlatform } from "../common/DeviceManager";
-import { CancelToken } from "./cancelToken";
+import { CancelToken } from "../utilities/cancelToken";
 
 type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 

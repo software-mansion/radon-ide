@@ -1,6 +1,7 @@
 import assert from "assert";
 import * as vscode from "vscode";
 import { debug, Disposable } from "vscode";
+import { CancelError, CancelToken } from "../utilities/cancelToken";
 
 /**
  * Helper function that starts a debug session and returns the session object upon sucesfull start
@@ -8,7 +9,8 @@ import { debug, Disposable } from "vscode";
 export async function startDebugging(
   folder: vscode.WorkspaceFolder | undefined,
   nameOrConfiguration: string | vscode.DebugConfiguration,
-  parentSessionOrOptions?: vscode.DebugSession | vscode.DebugSessionOptions
+  parentSessionOrOptions?: vscode.DebugSession | vscode.DebugSessionOptions,
+  cancelToken?: CancelToken
 ): Promise<vscode.DebugSession> {
   const debugSessionType =
     typeof nameOrConfiguration === "string" ? nameOrConfiguration : nameOrConfiguration.type;
@@ -31,6 +33,10 @@ export async function startDebugging(
       // NOTE: this is safe, because `debugStarted` means the session started successfully,
       // and we set the session in the `onDidStartDebugSession` handler
       assert(debugSession, "Expected debug session to be set");
+      if (cancelToken?.cancelled) {
+        debug.stopDebugging(debugSession);
+        throw new CancelError("Starting debug session was cancelled");
+      }
       return debugSession;
     } else {
       throw new Error("Failed to start debug session");

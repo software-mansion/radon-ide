@@ -8,7 +8,7 @@ import { OutputChannel } from "vscode";
 import { DevicePlatform } from "../common/DeviceManager";
 import { EasConfig } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
-import { CancelToken } from "./cancelToken";
+import { CancelToken } from "../utilities/cancelToken";
 import { downloadBinary } from "../utilities/common";
 import {
   EASBuild,

@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import assert from "assert";
 import _ from "lodash";
 import {
   commands,
@@ -18,9 +19,9 @@ import { Logger } from "../Logger";
 import {
   BuildError,
   BuildManager,
-  BuildManagerDelegate,
   BuildResult,
-  DisposableBuild,
+  createBuildConfig,
+  inferBuildType,
 } from "../builders/BuildManager";
 import {
   AppPermissionType,
@@ -29,23 +30,25 @@ import {
   TouchPoint,
   DeviceButtonType,
   DeviceSessionState,
-  BuildErrorDescriptor,
   ToolsState,
   ProfilingState,
   NavigationHistoryItem,
   NavigationRoute,
   DeviceSessionStatus,
+  FatalErrorDescriptor,
+  BundleErrorDescriptor,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { throttle } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { CancelError, CancelToken } from "../builders/cancelToken";
+import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { ToolKey, ToolsDelegate, ToolsManager } from "./tools";
 import { ReloadAction } from "../common/DeviceSessionsManager";
 import { focusSource } from "../utilities/focusSource";
 import { ApplicationContext } from "./ApplicationContext";
+import { BuildCache } from "../builders/BuildCache";
 
 const MAX_URL_HISTORY_SIZE = 20;
 
@@ -68,7 +71,7 @@ export class DeviceBootError extends Error {
 }
 
 export class DeviceSession
-  implements Disposable, MetroDelegate, ToolsDelegate, DebugSessionDelegate, BuildManagerDelegate
+  implements Disposable, MetroDelegate, ToolsDelegate, DebugSessionDelegate
 {
   private isActive = false;
   private metro: MetroLauncher;
@@ -77,14 +80,16 @@ export class DeviceSession
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
   private debugSession: DebugSession;
-  private disposableBuild: DisposableBuild<BuildResult> | undefined;
   private buildManager: BuildManager;
+  private buildCache: BuildCache;
   private cancelToken: CancelToken | undefined;
+  private cacheStaleSubscription: Disposable;
 
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
   private stageProgress: number | undefined;
-  private buildError: BuildErrorDescriptor | undefined;
+  private fatalError: FatalErrorDescriptor | undefined;
+  private bundleError: BundleErrorDescriptor | undefined;
   private isRefreshing: boolean = false;
   private profilingCPUState: ProfilingState = "stopped";
   private profilingReactState: ProfilingState = "stopped";
@@ -124,22 +129,17 @@ export class DeviceSession
     this.metro = new MetroLauncher(this.devtools, this);
     this.toolsManager = new ToolsManager(this.inspectorBridge, this);
 
-    this.buildManager = new BuildManager(
-      applicationContext.dependencyManager,
-      applicationContext.buildCache,
-      this,
-      device.platform
-    );
-    this.debugSession = new DebugSession(this, { useParentDebugSession: true });
+    this.buildCache = this.applicationContext.buildCache;
+    this.buildManager = this.applicationContext.buildManager;
+    this.debugSession = new DebugSession(this, {
+      displayName: this.device.deviceInfo.displayName,
+      useParentDebugSession: true,
+    });
+    this.cacheStaleSubscription = this.buildCache.onCacheStale(this.onCacheStale);
   }
 
   public getState(): DeviceSessionState {
-    return {
-      status: this.status,
-      startupMessage: this.startupMessage,
-      stageProgress: this.stageProgress,
-      buildError: this.buildError,
-      isRefreshing: this.isRefreshing,
+    const commonState = {
       profilingCPUState: this.profilingCPUState,
       profilingReactState: this.profilingReactState,
       navigationHistory: this.navigationHistory,
@@ -152,13 +152,37 @@ export class DeviceSession
       hasStaleBuildCache: this.hasStaleBuildCache,
       isRecordingScreen: this.isRecordingScreen,
     };
+    if (this.status === "starting") {
+      return {
+        ...commonState,
+        status: "starting",
+        startupMessage: this.startupMessage,
+        stageProgress: this.stageProgress,
+      };
+    } else if (this.status === "running") {
+      return {
+        ...commonState,
+        status: "running",
+        isRefreshing: this.isRefreshing,
+        bundleError: this.bundleError,
+      };
+    } else if (this.status === "fatalError") {
+      assert(this.fatalError, "Expected error to be defined in fatal error state");
+      return {
+        ...commonState,
+        status: "fatalError",
+        error: this.fatalError,
+      };
+    }
+    assert(false, "Unexpected device session status: " + this.status);
   }
 
   private resetStartingState(startupMessage: StartupMessage = StartupMessage.Restarting) {
     this.status = "starting";
     this.startupMessage = startupMessage;
     this.stageProgress = undefined;
-    this.buildError = undefined;
+    this.fatalError = undefined;
+    this.bundleError = undefined;
     this.isRefreshing = false;
     this.hasStaleBuildCache = false;
     this.profilingCPUState = "stopped";
@@ -191,7 +215,11 @@ export class DeviceSession
 
     Logger.error("[Bundling Error]", message);
 
-    this.status = "bundlingError";
+    this.status = "running";
+    this.bundleError = {
+      kind: "bundle",
+      message,
+    };
     this.emitStateChange();
   };
 
@@ -260,6 +288,11 @@ export class DeviceSession
     const devtools = new Devtools();
     devtools.onEvent("appReady", () => {
       this.device.setUpKeyboard();
+      // NOTE: since this is triggered by the JS bundle,
+      // we can assume that if it fires, the bundle loaded successfully.
+      // This is necessary to reset the bundle error state when the app reload
+      // is triggered from the app itself (e.g. by in-app dev menu or redbox).
+      this.bundleError = undefined;
       Logger.debug("App ready");
     });
     // We don't need to store event disposables here as they are tied to the lifecycle
@@ -281,6 +314,7 @@ export class DeviceSession
     });
     devtools.onEvent("fastRefreshStarted", () => {
       this.isRefreshing = true;
+      this.bundleError = undefined;
       this.emitStateChange();
     });
     devtools.onEvent("fastRefreshComplete", () => {
@@ -304,10 +338,10 @@ export class DeviceSession
     this.cancelToken?.cancel();
     await this.deactivate();
     await this.debugSession?.dispose();
-    this.disposableBuild?.dispose();
     this.device?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
+    this.cacheStaleSubscription.dispose();
   }
 
   public async activate() {
@@ -315,7 +349,10 @@ export class DeviceSession
       this.isActive = true;
       this.toolsManager.activate();
       if (this.startupMessage === StartupMessage.AttachingDebugger) {
-        this.debugSession = new DebugSession(this, { useParentDebugSession: true });
+        this.debugSession = new DebugSession(this, {
+          displayName: this.device.deviceInfo.displayName,
+          useParentDebugSession: true,
+        });
         await this.connectJSDebugger();
       }
     }
@@ -355,8 +392,9 @@ export class DeviceSession
         // reload got cancelled, we don't show any errors
         return false;
       } else if (e instanceof BuildError) {
-        this.status = "buildError";
-        this.buildError = {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "build",
           message: e.message,
           buildType: e.buildType,
           platform: this.device.platform,
@@ -447,6 +485,7 @@ export class DeviceSession
     this.cancelToken = cancelToken;
 
     this.status = "starting";
+    this.fatalError = undefined;
     this.updateStartupMessage(StartupMessage.InitializingDevice);
 
     if (cleanCache) {
@@ -491,7 +530,7 @@ export class DeviceSession
 
     this.resetStartingState();
     try {
-      if (this.buildManager.shouldRebuild()) {
+      if (await this.buildCache.isCacheStale(this.device.platform)) {
         await this.restart({ forceClean: false, cleanCache: false });
         return;
       }
@@ -651,9 +690,17 @@ export class DeviceSession
   }) {
     const buildStartTime = Date.now();
     this.updateStartupMessage(StartupMessage.Building);
-    this.disposableBuild = this.buildManager.startBuild(this.device.deviceInfo, {
+    const launchConfiguration = getLaunchConfiguration();
+    const buildType = await inferBuildType(appRoot, this.device.platform, launchConfiguration);
+    const buildConfig = createBuildConfig(
       appRoot,
+      this.device.platform,
       clean,
+      launchConfiguration,
+      buildType
+    );
+    this.hasStaleBuildCache = false;
+    this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, {
       progressListener: throttle((stageProgress: number) => {
         if (this.startupMessage === StartupMessage.Building) {
           this.stageProgress = stageProgress;
@@ -662,7 +709,6 @@ export class DeviceSession
       }, 100),
       cancelToken,
     });
-    this.maybeBuildResult = await this.disposableBuild.build;
     const buildDurationSec = (Date.now() - buildStartTime) / 1000;
     Logger.info("Build completed in", buildDurationSec.toFixed(2), "sec.");
     getTelemetryReporter().sendTelemetryEvent(
@@ -756,17 +802,23 @@ export class DeviceSession
       if (e instanceof CancelError) {
         Logger.info("Device selection was canceled", e);
       } else if (e instanceof DeviceBootError) {
-        this.status = "bootError";
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "device",
+          message: e.message,
+        };
       } else if (e instanceof BuildError) {
-        this.status = "buildError";
-        this.buildError = {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "build",
           message: e.message,
           buildType: e.buildType,
           platform: this.device.platform,
         };
       } else {
-        this.status = "buildError";
-        this.buildError = {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "build",
           message: (e as Error).message,
           buildType: null,
           platform: this.device.platform,

@@ -1,24 +1,31 @@
 import path from "path";
 import fs from "fs";
 import { EOL } from "node:os";
+import assert from "assert";
 import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
 import { Preview } from "./preview";
-import { DeviceBase, REBOOT_TIMEOUT } from "./DeviceBase";
-import { retry } from "../utilities/retry";
+import {
+  DEVICE_SETTINGS_DEFAULT,
+  DEVICE_SETTINGS_KEY,
+  DeviceBase,
+  REBOOT_TIMEOUT,
+} from "./DeviceBase";
+import { retry, cancellableRetry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { BuildResult } from "../builders/BuildManager";
 import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
-import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
+import { AppPermissionType, CameraSettings, DeviceSettings, Locale } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
-import { CancelError, CancelToken } from "../builders/cancelToken";
+import { CancelError, CancelToken } from "../utilities/cancelToken";
+import { extensionContext } from "../utilities/extensionContext";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -41,6 +48,14 @@ const ADB_PATH = path.join(
 
 const DISPOSE_TIMEOUT = 9000;
 
+const DEVICE_SETTINGS_EMULATOR_DEFAULT = {
+  ...DEVICE_SETTINGS_DEFAULT,
+  camera: {
+    back: "virtualscene" as const,
+    front: "emulated" as const,
+  },
+};
+
 interface EmulatorProcessInfo {
   pid: number;
   serialPort: number;
@@ -56,6 +71,10 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private serial: string | undefined;
   private nativeLogsOutputChannel: OutputChannel | undefined;
   private nativeLogsCancelToken: CancelToken | undefined;
+  protected override deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
+    DEVICE_SETTINGS_KEY,
+    DEVICE_SETTINGS_EMULATOR_DEFAULT
+  );
 
   constructor(
     private readonly avdId: string,
@@ -90,75 +109,12 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }, DISPOSE_TIMEOUT);
   }
 
-  private async shouldUpdateLocale(newLocale: Locale) {
-    const locale = newLocale.replace("_", "-");
-    const { stdout } = await exec(ADB_PATH, [
-      "-s",
-      this.serial!,
-      "shell",
-      "settings",
-      "get",
-      "system",
-      "system_locales",
-    ]);
-
-    // if user did not use the device before it might not have system_locales property
-    // as en-US is the default locale, used by the system, when no setting is provided
-    // we assume that no value in stdout is the same as en-US on some devices
-    // stdout is a string "null" instead of undefined so we need to handle it separately
-    if ((stdout ?? "en-US") === locale || stdout === "null") {
-      return false;
-    }
-    return true;
-  }
-
-  /**
-   * This method changes device locale by modifying system_locales system setting.
-   */
-  private async changeLocale(newLocale: Locale): Promise<void> {
-    const locale = newLocale.replace("_", "-");
-
+  async changeSettings(settings: DeviceSettings): Promise<boolean> {
+    assert(this.serial, "Device serial is not set. Cannot change settings.");
+    // Apply runtime settings that don't require boot
     await exec(ADB_PATH, [
       "-s",
-      this.serial!,
-      "shell",
-      "settings",
-      "put",
-      "system",
-      "system_locales",
-      locale,
-    ]);
-
-    // this is needed to make sure that changes will persist
-    await exec(ADB_PATH, ["-s", this.serial!, "shell", "sync"]);
-
-    // TODO:  Find a way to change or remove persist.sys.locale without root access. note: removing the whole
-    // data/property/persistent_properties file would also work as we persist device settings globally in Radon IDE
-    const { stdout } = await exec(ADB_PATH, [
-      "-s",
-      this.serial!,
-      "shell",
-      "getprop",
-      "persist.sys.locale",
-    ]);
-
-    if (stdout) {
-      Logger.warn(
-        "Updating locale will not take effect as the device has altered locale via system settings which always takes precedence over the device setting the IDE uses."
-      );
-    }
-  }
-
-  async changeSettings(settings: DeviceSettings) {
-    let shouldRestart = false;
-    if (await this.shouldUpdateLocale(settings.locale)) {
-      shouldRestart = true;
-      await this.changeLocale(settings.locale);
-    }
-
-    await exec(ADB_PATH, [
-      "-s",
-      this.serial!,
+      this.serial,
       "shell",
       "settings",
       "put",
@@ -172,7 +128,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     if (settings.location.isDisabled) {
       await exec(ADB_PATH, [
         "-s",
-        this.serial!,
+        this.serial,
         "shell",
         "settings",
         "put",
@@ -183,7 +139,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     } else {
       await exec(ADB_PATH, [
         "-s",
-        this.serial!,
+        this.serial,
         "shell",
         "settings",
         "put",
@@ -201,9 +157,165 @@ export class AndroidEmulatorDevice extends DeviceBase {
         Math.abs(settings.location.longitude) < 0.00001;
       const lat = areCoordinatesToCloseToZero ? "0.00001" : settings.location.latitude.toString();
       const long = areCoordinatesToCloseToZero ? "0.00001" : settings.location.longitude.toString();
-      await exec(ADB_PATH, ["-s", this.serial!, "emu", "geo", "fix", long, lat]);
+      await exec(ADB_PATH, ["-s", this.serial, "emu", "geo", "fix", long, lat]);
     }
-    return shouldRestart;
+
+    // Apply settings that require emulator reboot
+    const updatedLocale = await this.maybeChangeLocale(settings.locale);
+    const updatedCameraSettings =
+      settings.camera !== undefined && (await this.maybeChangeCameraSettings(settings.camera));
+    const shouldReboot = updatedLocale || updatedCameraSettings;
+
+    // if the boot settings were changed, we need to restart the emulator
+    return shouldReboot;
+  }
+
+  /**
+   * Checks the current locale of the Android emulator device and updates it if necessary.
+   *
+   * @param locale - The desired locale to set on the device (e.g., "en_US").
+   * @param deviceSerial - The serial number of the target Android emulator device.
+   * @returns A promise that resolves to `true` if the locale was changed, or `false` if no change was needed.
+   */
+  private async maybeChangeLocale(locale: Locale): Promise<boolean> {
+    assert(this.serial, "Device serial is not set. Cannot change locale.");
+    const newLocale = locale.replace("_", "-");
+
+    try {
+      const { stdout: rawCurrentLocale } = await exec(ADB_PATH, [
+        "-s",
+        this.serial,
+        "shell",
+        "settings",
+        "get",
+        "system",
+        "system_locales",
+      ]);
+
+      // if user did not use the device before it might not have system_locales property
+      // as en-US is the default locale, used by the system, when no setting is provided
+      // we assume that no value in stdout is the same as en-US on some devices
+      // stdout is a string "null" instead of undefined so we need to handle it separately
+      const currentLocale =
+        rawCurrentLocale === "null" || rawCurrentLocale === undefined ? "en-US" : rawCurrentLocale;
+      const needsUpdate = currentLocale !== newLocale;
+      if (!needsUpdate) {
+        return false; // no need to change locale
+      }
+    } catch (error) {
+      Logger.warn("Failed to get current locale settings from the Android emulator.", error);
+      return false;
+    }
+
+    try {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial,
+        "shell",
+        "settings",
+        "put",
+        "system",
+        "system_locales",
+        newLocale,
+      ]);
+
+      // this is needed to make sure that changes will persist
+      await exec(ADB_PATH, ["-s", this.serial, "shell", "sync"]);
+
+      // TODO:  Find a way to change or remove persist.sys.locale without root access. note: removing the whole
+      // data/property/persistent_properties file would also work as we persist device settings globally in Radon IDE
+      const { stdout } = await exec(ADB_PATH, [
+        "-s",
+        this.serial,
+        "shell",
+        "getprop",
+        "persist.sys.locale",
+      ]);
+
+      if (stdout) {
+        Logger.warn(
+          "Updating locale will not take effect as the device has altered locale via system settings which always takes precedence over the device setting the IDE uses."
+        );
+      }
+
+      return true;
+    } catch (error) {
+      Logger.warn("Failed to apply locale settings changes to the Android emulator.", error);
+      return false;
+    }
+  }
+
+  /**
+   * Checks and updates the camera settings in the Android emulator configuration file if necessary.
+   *
+   * @param cameraSettings - An object specifying the desired camera settings for the emulator.
+   * @returns A promise that resolves to `true` if the configuration was updated, or `false` if no changes were necessary.
+   */
+  private async maybeChangeCameraSettings(cameraSettings: CameraSettings): Promise<boolean> {
+    let configContent: string;
+    try {
+      configContent = await this.readConfigFile();
+    } catch (error) {
+      Logger.warn("Failed to read current emulator camera settings.", error);
+      return false; // If we cannot read the config, we assume no changes are needed
+    }
+    const configLines = configContent.split("\n");
+    let currentBackCamera = "emulated";
+    let currentFrontCamera = "none";
+
+    configLines.forEach((line: string) => {
+      const [key, value] = line.split("=");
+      if (key === "hw.camera.back") {
+        currentBackCamera = value;
+      } else if (key === "hw.camera.front") {
+        currentFrontCamera = value;
+      }
+    });
+
+    const backNeedsUpdate =
+      cameraSettings?.back !== undefined && currentBackCamera !== cameraSettings.back;
+    const frontNeedsUpdate =
+      cameraSettings?.front !== undefined && currentFrontCamera !== cameraSettings.front;
+
+    const needsUpdate = backNeedsUpdate || frontNeedsUpdate;
+    if (!needsUpdate) {
+      return false;
+    }
+
+    const newConfigLines = configLines.map((line) => {
+      const [key] = line.split("=");
+      if (backNeedsUpdate && key === "hw.camera.back") {
+        return `hw.camera.back=${cameraSettings.back}`;
+      }
+      if (frontNeedsUpdate && key === "hw.camera.front") {
+        return `hw.camera.front=${cameraSettings.front}`;
+      }
+      return line;
+    });
+
+    const newConfig = newConfigLines.join("\n");
+    try {
+      await this.writeConfigFile(newConfig);
+    } catch (error) {
+      Logger.warn(
+        "Failed to write updated camera settings to the emulator configuration file.",
+        error
+      );
+      return false; // If we cannot write the config, we assume no changes were made
+    }
+    return true;
+  }
+
+  private async readConfigFile(): Promise<string> {
+    const avdDirectory = getAvdDirectoryLocation(this.avdId);
+    const configIni = path.join(avdDirectory, `${this.avdId}.avd`, "config.ini");
+    return await fs.promises.readFile(configIni, "utf-8");
+  }
+
+  private async writeConfigFile(configContent: string): Promise<void> {
+    const avdDirectory = getAvdDirectoryLocation(this.avdId);
+    const configIni = path.join(avdDirectory, `${this.avdId}.avd`, "config.ini");
+    await fs.promises.writeFile(configIni, configContent, "utf-8");
   }
 
   /**
@@ -296,8 +408,12 @@ export class AndroidEmulatorDevice extends DeviceBase {
           const iniFile = match![1];
           const emulatorInfo = await parseAvdIniFile(iniFile);
           const emulatorSerial = `emulator-${emulatorInfo.serialPort}`;
-          await waitForEmulatorOnline(emulatorSerial, 60000);
-          resolve(emulatorSerial);
+          try {
+            await waitForEmulatorOnline(emulatorSerial, 60000);
+            resolve(emulatorSerial);
+          } catch (error) {
+            reject(new Error(`Emulator did not come online: ${error}`));
+          }
         }
       });
     });
@@ -876,14 +992,20 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
   }, timeoutMs);
 
   try {
-    await cancelToken.adapt(
-      exec(ADB_PATH, [
-        "-s",
-        serial,
-        "wait-for-device",
-        "shell",
-        "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
-      ])
+    const ADB_WAIT_RETRIES = 3;
+    const ADB_WAIT_RETRY_INTERVAL = 500;
+    await cancellableRetry(
+      () =>
+        exec(ADB_PATH, [
+          "-s",
+          serial,
+          "wait-for-device",
+          "shell",
+          "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
+        ]),
+      cancelToken,
+      ADB_WAIT_RETRIES,
+      ADB_WAIT_RETRY_INTERVAL
     );
 
     // If booting device and building the application was fast enough, the emulators network internals
@@ -898,8 +1020,6 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
         `while ! ping -c 1 10.0.2.2>/dev/null 2>&1; do sleep 0.5; done;`,
       ])
     );
-
-    await process;
 
     clearTimeout(timeout);
   } catch (error) {
