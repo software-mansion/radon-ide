@@ -174,13 +174,13 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         };
 
         return new Promise<IProtocolCommand>((resolve) => {
-          setImmediate(() => {
+          setTimeout(() => {
             if (!paused()) {
               resolve(command);
             } else {
               this.pendingBreakpointCommands.push({ command, resolve });
             }
-          });
+          }, 0);
         });
       }
     }
@@ -194,7 +194,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   }> = [];
 
   private dispatchPendingBreakpointCommands() {
-    for (const pending of this.pendingBreakpointCommands) {
+    const pendingCommands = this.pendingBreakpointCommands;
+    this.pendingBreakpointCommands = [];
+    for (const pending of pendingCommands) {
       pending.resolve(pending.command);
     }
   }
