@@ -8,7 +8,6 @@ import {
   WebSocketTransport,
 } from "vscode-cdp-proxy";
 import { Logger } from "../Logger";
-import { WebSocket } from "ws";
 
 type IProtocolReply = IProtocolSuccess | IProtocolError;
 
