@@ -174,13 +174,13 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         };
 
         return new Promise<IProtocolCommand>((resolve) => {
-          setTimeout(() => {
+          setImmediate(() => {
             if (!paused()) {
               resolve(command);
             } else {
               this.pendingBreakpointCommands.push({ command, resolve });
             }
-          }, 0);
+          });
         });
       }
     }
