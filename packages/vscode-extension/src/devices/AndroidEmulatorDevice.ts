@@ -12,7 +12,7 @@ import {
   DeviceBase,
   REBOOT_TIMEOUT,
 } from "./DeviceBase";
-import { retry, sleep } from "../utilities/retry";
+import { retry, cancellableRetry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
@@ -993,7 +993,8 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
 
   try {
     const ADB_WAIT_RETRIES = 3;
-    await withRetry(
+    const ADB_WAIT_RETRY_INTERVAL = 500;
+    await cancellableRetry(
       () =>
         exec(ADB_PATH, [
           "-s",
@@ -1002,8 +1003,9 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
           "shell",
           "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
         ]),
+      cancelToken,
       ADB_WAIT_RETRIES,
-      cancelToken
+      ADB_WAIT_RETRY_INTERVAL
     );
 
     // If booting device and building the application was fast enough, the emulators network internals
@@ -1098,32 +1100,5 @@ function getNativeQemuArch() {
       return CPU_ARCH.ARM64;
     default:
       throw new Error("Unsupported CPU architecture.");
-  }
-}
-
-type Cancellable = Parameters<CancelToken["adapt"]>[0];
-/**
- * Executes a given asynchronous function with retry logic, supporting cancellation.
- *
- * @param fn - A function that returns a `Cancellable` operation to be executed.
- * @param retries - The number of times to retry the operation upon failure.
- * @param cancelToken - A `CancelToken` used to signal cancellation and adapt promises.
- * @throws {CancelError} Throws if the operation is cancelled.
- * @throws {Error} Throws if the operation fails after all retries.
- */
-async function withRetry(fn: () => Cancellable, retries: number, cancelToken: CancelToken) {
-  while (!cancelToken.cancelled && retries-- > 0) {
-    try {
-      await cancelToken.adapt(fn());
-      return;
-    } catch (error) {
-      if (error instanceof CancelError) {
-        throw error; // rethrow the cancel error to be handled by the caller
-      }
-      if (retries === 0) {
-        throw error;
-      }
-      await cancelToken.adapt(sleep(500));
-    }
   }
 }
