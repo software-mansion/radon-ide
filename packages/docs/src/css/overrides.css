@@ -161,6 +161,10 @@ img.shadow-image {
   margin-bottom: 32px !important;
 }
 
+.rounded-xl {
+  border-radius: 20px;
+}
+
 [class*="DocSearch-Footer"] {
   margin-top: 0 !important;
 }
