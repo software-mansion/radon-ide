@@ -6,8 +6,6 @@ sidebar_position: 5
 
 The Radon IDE can record what's currently happens on the device preview. This proves to be extremely useful for rewinding to UI issues after they already happened. You can also granularly go through the recording frame by frame or save it as a file to your computer.
 
-To use screen recording, you need enable replays in the device settings.
-
 ## Enabling the screen recording
 
 <img width="350" src="/img/docs/ide_enable_replays.png" className="shadow-image" />
