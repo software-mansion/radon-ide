@@ -8,7 +8,7 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 
 ### How Has This Change Been Documented:
 
-Please if applicable (in case of an UI changes or new features) link the related documentation updates.
+If applicable (for UI changes or new features) provide a link to a PR that updates the relevant documentation pages.
 
 
 
