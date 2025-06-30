@@ -1,6 +1,7 @@
 import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-cdp-proxy";
 import { EventEmitter } from "vscode";
 import { Minimatch } from "minimatch";
+import { WebSocket } from "ws";
 import _ from "lodash";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
@@ -20,9 +21,12 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   public onConsoleAPICalled = this.consoleAPICalledEmitter.event;
 
   constructor(
+    private HMRSocket: WebSocket,
     private sourceMapRegistry: SourceMapsRegistry,
     skipFiles: string[]
   ) {
+    this.HMRSocket.on("message", this.handleHMRSocketEvent.bind(this));
+
     this.ignoredPatterns = skipFiles.map(
       (pattern) => new Minimatch(pattern, { flipNegate: true, dot: true })
     );
@@ -239,7 +243,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     return reply;
   }
 
-  public async handleHMRSocketEvent(event: any) {
+  private async handleHMRSocketEvent(event: any) {
     let message = JSON.parse(event.toString("utf-8"));
 
     if (message.type === "update-start" && !message.body.isInitialUpdate) {
@@ -300,7 +304,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       this.sourceMapRegistry.registerSourceMap(sourceMapData, url, scriptId, isMainBundle);
 
       if (isMainBundle) {
-        tunnel.sendHMRSocketMessage(
+        this.HMRSocket.send(
           JSON.stringify({
             type: "register-entrypoints",
             entryPoints: [url.replace("//&", "?")],
