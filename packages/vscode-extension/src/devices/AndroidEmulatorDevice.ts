@@ -992,27 +992,19 @@ async function waitForEmulatorOnline(serial: string, timeoutMs: number) {
   }, timeoutMs);
 
   try {
-    // NOTE: if the device was created shortly before this adb command, it will fail.
-    // To work around this, we retry it until the command succeeds or the timeout is reached.
-    while (!cancelToken.cancelled) {
-      try {
-        await cancelToken.adapt(
-          exec(ADB_PATH, [
-            "-s",
-            serial,
-            "wait-for-device",
-            "shell",
-            "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
-          ])
-        );
-        break;
-      } catch (error) {
-        if (error instanceof CancelError) {
-          throw error; // rethrow the cancel error to be handled by the outer catch block
-        }
-        await cancelToken.adapt(sleep(500));
-      }
-    }
+    const ADB_WAIT_RETRIES = 3;
+    await withRetry(
+      () =>
+        exec(ADB_PATH, [
+          "-s",
+          serial,
+          "wait-for-device",
+          "shell",
+          "while [[ -z $(getprop sys.boot_completed) ]]; do sleep 0.5; done; input keyevent 82",
+        ]),
+      ADB_WAIT_RETRIES,
+      cancelToken
+    );
 
     // If booting device and building the application was fast enough, the emulators network internals
     // would not be loaded before the start of the application. This in turn would cause PackagerStatusCheck
@@ -1106,5 +1098,32 @@ function getNativeQemuArch() {
       return CPU_ARCH.ARM64;
     default:
       throw new Error("Unsupported CPU architecture.");
+  }
+}
+
+type Cancellable = Parameters<CancelToken["adapt"]>[0];
+/**
+ * Executes a given asynchronous function with retry logic, supporting cancellation.
+ *
+ * @param fn - A function that returns a `Cancellable` operation to be executed.
+ * @param retries - The number of times to retry the operation upon failure.
+ * @param cancelToken - A `CancelToken` used to signal cancellation and adapt promises.
+ * @throws {CancelError} Throws if the operation is cancelled.
+ * @throws {Error} Throws if the operation fails after all retries.
+ */
+async function withRetry(fn: () => Cancellable, retries: number, cancelToken: CancelToken) {
+  while (!cancelToken.cancelled && retries-- > 0) {
+    try {
+      await cancelToken.adapt(fn());
+      return;
+    } catch (error) {
+      if (error instanceof CancelError) {
+        throw error; // rethrow the cancel error to be handled by the caller
+      }
+      if (retries === 0) {
+        throw error;
+      }
+      await cancelToken.adapt(sleep(500));
+    }
   }
 }
