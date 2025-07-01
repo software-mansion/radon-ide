@@ -87,7 +87,7 @@ const items = [
   {
     label: "Radon AI",
     title: "Your expert React Native AI assistant",
-    body: "Enhance your favorite LLM with an up-to-date knowledge about the React Native ecosystem.",
+    body: "Enhance your favorite LLM with up-to-date knowledge about the React Native ecosystem.",
     mediaSrc: "video/ide_chat.mp4",
     placeholderSrc: "video/placeholders/ide_chat.webp",
     placeholderAlt: "React Native AI assistant",

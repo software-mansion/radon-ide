@@ -102,7 +102,7 @@ Learn more about [Network Inspector](/docs/features/network-inspector).
 
 ## Radon AI
 
-Enhance your favorite LLM with an up-to-date knowledge about the React Native ecosystem.
+Enhance your favorite LLM with up-to-date knowledge about the React Native ecosystem.
 
 Learn more about [Radon AI](/docs/features/radon-ai).
 
