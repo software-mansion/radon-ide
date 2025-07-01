@@ -24,6 +24,7 @@ export type DebugSessionDelegate = {
   onDebuggerResumed?(event: DebugSessionCustomEvent): void;
   onProfilingCPUStarted?(event: DebugSessionCustomEvent): void;
   onProfilingCPUStopped?(event: DebugSessionCustomEvent): void;
+  onBindingCalled?(event: DebugSessionCustomEvent): void;
   onDebugSessionTerminated?(): void;
 };
 
@@ -31,6 +32,7 @@ export interface JSDebugConfiguration {
   websocketAddress: string;
   sourceMapPathOverrides: Record<string, string>;
   displayDebuggerOverlay: boolean;
+  installConnectRuntime?: boolean;
   isUsingNewDebugger: boolean;
   expoPreludeLineCount: number;
 }
@@ -79,6 +81,9 @@ export class DebugSession implements Disposable {
             break;
           case "RNIDE_profilingCPUStopped":
             this.delegate.onProfilingCPUStopped?.(event);
+            break;
+          case "RNIDE_bindingCalled":
+            this.delegate.onBindingCalled?.(event);
             break;
           default:
             // ignore other events
@@ -228,6 +233,10 @@ export class DebugSession implements Disposable {
       throw new Error("Ping timeout");
     });
     return Promise.race([resultPromise, timeout]).catch((_e) => false);
+  }
+
+  public dispatchRadonAgentMessage(data: any) {
+    this.jsDebugSession?.customRequest("RNIDE_dispatchRadonAgentMessage", data);
   }
 
   public async startProfilingCPU() {

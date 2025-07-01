@@ -61,7 +61,8 @@ export class ProxyDebugAdapter extends DebugSession {
 
     const proxyDelegate = new RadonCDPProxyDelegate(
       this.sourceMapRegistry,
-      this.session.configuration.skipFiles
+      this.session.configuration.skipFiles,
+      this.session.configuration.installConnectRuntime
     );
 
     this.cdpProxy = new CDPProxy(
@@ -105,6 +106,12 @@ export class ProxyDebugAdapter extends DebugSession {
         if (id === this.nodeDebugSession?.id) {
           this.terminate();
         }
+      })
+    );
+
+    this.disposables.push(
+      proxyDelegate.onBindingCalled(({ name, payload }) => {
+        this.sendEvent(new Event("RNIDE_bindingCalled", { name, payload }));
       })
     );
   }
@@ -286,6 +293,15 @@ export class ProxyDebugAdapter extends DebugSession {
     this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
   }
 
+  private async dispatchRadonAgentMessage(args: any) {
+    this.cdpProxy.injectDebuggerCommand({
+      method: "Runtime.evaluate",
+      params: {
+        expression: `globalThis.__radon_dispatch(${JSON.stringify(args)});`,
+      },
+    });
+  }
+
   protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
@@ -299,6 +315,9 @@ export class ProxyDebugAdapter extends DebugSession {
         break;
       case "RNIDE_stopProfiling":
         await this.stopProfiling();
+        break;
+      case "RNIDE_dispatchRadonAgentMessage":
+        await this.dispatchRadonAgentMessage(args);
         break;
       case "RNIDE_ping":
         response.body.result = await this.ping();
