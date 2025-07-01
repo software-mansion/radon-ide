@@ -30,7 +30,7 @@ The router integration consists of:
 <img width="300" src="/img/docs/ide_router_integration.png" className="shadow-image"/>
 
 1. **Back button** - goes to the previous URL route in the navigation history.
-2. **URL select** - a drop-down that allows to quickly access the static paths in your application. Clicking on one of the displayed URLs will take you to that particular screen.
+2. **URL select** - a drop-down that allows you to quickly access the static paths in your application. Clicking on one of the displayed URLs will take you to that particular screen.
    There are a couple of options inside the URL select menu:
 
    - _Suggested paths_ - lists all available paths with recently visited paths displayed at the top,
