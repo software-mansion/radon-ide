@@ -20,7 +20,9 @@ The opened device settings dropdown looks as follows:
 
 1. **Device Appearance** - allows to change the light/dark mode.
 2. **Text Size** - a slider that allows to change the font size on the device.
-3. **Biometrics** - options to simulate biometric authorization on iOS. This option isn't available on Android. The following options are available:
+3. **Press Home Button** - simulates a press of a home button.
+4. **Open App Switcher** - option for quickly switching between opened apps.
+5. **Biometrics** - options to simulate biometric authorization on iOS. This option isn't available on Android. The following options are available:
 
    <img width="250" src="/img/docs/ide_biometrics.png" className="shadow-image" />
 
@@ -28,7 +30,7 @@ The opened device settings dropdown looks as follows:
    - _Matching ID_ - simulates Touch ID or Face ID successfully recognizing the user,
    - _Non-matching ID_ - simulates Touch ID or Face ID failing to recognize the user.
 
-4. **Device Location** - allows to enable location services and set static device geolocation using coordinates.
+6. **Location** - allows to enable location services and set static device geolocation using coordinates.
 
 <img width="450" src="/img/docs/ide_geolocation.png" className="shadow-image" />
 
@@ -63,22 +65,26 @@ N 40 7.38 W 74 7.38
 </details>
 <br/>
 
-5. **Device Localization** - allows to set the device [localization](https://developer.mozilla.org/en-US/docs/Glossary/Localization). Changing the localization setting reboots the device. This option isn't available on Android.
+7. **Localization** - allows to set the device [localization](https://developer.mozilla.org/en-US/docs/Glossary/Localization). Changing the localization setting reboots the device. This option isn't available on Android.
 
 <img width="450" src="/img/docs/ide_localization.png" className="shadow-image" />
 
-6. **Permissions** - allows to reset the device privacy permissions.
+8. **Reset Permissions** - allows to reset the device privacy permissions.
 
 On iOS, you can reset all permissions, as well as reset location, photos, contacts and calendar. On Android, only resetting all permissions is supported.
 
 <img width="250" src="/img/docs/ide_permissions.png" className="shadow-image" />
 
-7. **Enable replays** - a toggle for enabling replays. After switching the `Enable Replays` toggle a `Replay` button appears in the Radon IDE panel.
-
-<img width="300" src="/img/docs/ide_replays_enabled.png" className="shadow-image" />
-
-8. **Show touches** - whether the touches should be visible on the device preview.
-
 9. **Deep links** - allows to provide deep links and website URLs to the device. Website URLs will open in the default device browser.
 
 <img width="450" src="/img/docs/ide_deep_link.png" className="shadow-image" />
+
+10. **Enable replays** - a toggle for enabling replays. After switching the `Enable Replays` toggle a `Replay` button appears in the Radon IDE panel.
+
+<img width="300" src="/img/docs/ide_replays_enabled.png" className="shadow-image" />
+
+11. **Show touches** - whether the touches should be visible on the device preview.
+
+12. **Show Device Frame** - allows to hide the frame of the device in the preview.
+
+<img width="370" src="/img/docs/ide_disable_frame.png" className="shadow-image" />
