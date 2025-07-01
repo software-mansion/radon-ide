@@ -76,7 +76,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.projectState = {
       selectedSessionId: null,
       deviceSessions: {},
-      initialized: false,
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
     };
@@ -168,11 +167,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     oldDeviceSessionsManager.dispose();
     this.updateProjectState({
       appRootPath: this.relativeAppRootPath,
+      selectedSessionId: null,
+      deviceSessions: {},
     });
-  }
-
-  onInitialized(): void {
-    this.updateProjectState({ initialized: true });
   }
 
   private recordingTimeout: NodeJS.Timeout | undefined = undefined;

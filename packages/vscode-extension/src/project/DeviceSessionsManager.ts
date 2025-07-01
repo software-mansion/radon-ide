@@ -10,17 +10,16 @@ import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import {
   DeviceSessionsManagerInterface,
+  LAST_SELECTED_DEVICE_KEY,
   ReloadAction,
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
 import { DeviceId, DeviceSessionsManagerState } from "../common/Project";
 
-const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
 
 export type DeviceSessionsManagerDelegate = {
-  onInitialized(): void;
   onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void;
 };
 
@@ -38,7 +37,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     private readonly deviceManager: DeviceManager,
     private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate
   ) {
-    this.findInitialDeviceAndStartSession();
+    // this.findInitialDeviceAndStartSession();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.deviceManager.addListener("devicesChanged", this.devicesChangedListener);
   }
@@ -123,7 +122,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
     this.maybeWarnAboutRunningDevices();
     this.updateSelectedSession(newDeviceSession);
-    this.deviceSessionManagerDelegate.onInitialized();
 
     if (stopPreviousDevices) {
       await this.terminatePreviousSessions();
@@ -192,8 +190,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
       }
     } finally {
       this.findingDevice = false;
-      // even if no device can be selected mark project as initialized
-      this.deviceSessionManagerDelegate.onInitialized();
     }
   };
 

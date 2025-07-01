@@ -34,7 +34,6 @@ const defaultProjectState: ProjectState = {
   deviceSessions: {},
   previewZoom: undefined,
   appRootPath: "./",
-  initialized: false,
 };
 
 const defaultDeviceSettings: DeviceSettings = {

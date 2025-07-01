@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { VscodeProgressRing } from "@vscode-elements/react-elements";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
@@ -30,6 +30,9 @@ import { ActivateLicenseView } from "./ActivateLicenseView";
 import ToolsDropdown from "../components/ToolsDropdown";
 import AppRootSelect from "../components/AppRootSelect";
 import { vscode } from "../utilities/vscode";
+import { workspaceStore } from "../utilities/WorkspaceStore";
+import { DevicePlatform } from "../../common/DeviceManager";
+import { LAST_SELECTED_DEVICE_KEY } from "../../common/DeviceSessionsManager";
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
@@ -80,6 +83,63 @@ function ProfilingButton({
   );
 }
 
+/**
+ * Custom React hook that automatically starts a device when the Preview is first mounted.
+ */
+function useInitialDeviceSetup(): boolean {
+  const findingDeviceRef = useRef(false);
+  const { projectState } = useProject();
+  const { deviceManager, deviceSessionsManager } = useDevices();
+  const { selectedSessionId } = projectState;
+  const [initialized, setInitialized] = useState(false);
+  const [prevAppRoot, setPrevAppRoot] = useState(projectState.appRootPath);
+
+  useEffect(() => {
+    const appRoot = projectState.appRootPath;
+    if (appRoot !== prevAppRoot) {
+      // Reset the state when the app root changes.
+      // On the extension side, we have to stop all device sessions
+      // when the app root changes, which means we need to start the
+      // initial device session again.
+      setInitialized(false);
+      findingDeviceRef.current = false;
+      setPrevAppRoot(appRoot);
+    }
+  }, [projectState.appRootPath]);
+
+  useEffect(() => {
+    (async () => {
+      if (initialized || selectedSessionId !== null || findingDeviceRef.current) {
+        return;
+      }
+
+      try {
+        findingDeviceRef.current = true;
+        // NOTE: on initial render, the `useDevices` hook always returns an empty list of devices while it loads.
+        // We have no way to tell if the list is empty because it's still loading, or because no devices actually exist,
+        // so instead we load the list of devices directly from the device manager.
+        const devices = await deviceManager.listAllDevices();
+
+        const lastDeviceId = await workspaceStore.get<string>(LAST_SELECTED_DEVICE_KEY);
+        const defaultDevice =
+          devices.find((device) => device.platform === DevicePlatform.IOS) ?? devices.at(0);
+        const initialDevice = devices.find((device) => device.id === lastDeviceId) ?? defaultDevice;
+
+        if (initialDevice) {
+          console.log("DEBUG_LOG starting initial device session", initialDevice);
+          // if we found a device on the devices list, we try to select it
+          await deviceSessionsManager.startOrActivateSessionForDevice(initialDevice);
+        }
+      } finally {
+        findingDeviceRef.current = false;
+        setInitialized(true);
+      }
+    })();
+  }, [initialized, selectedSessionId]);
+
+  return initialized || selectedSessionId !== null;
+}
+
 function PreviewView() {
   const {
     selectedDeviceSession,
@@ -105,7 +165,6 @@ function PreviewView() {
   const [recordingTime, setRecordingTime] = useState(0);
   const { devices } = useDevices();
 
-  const initialized = projectState.initialized;
   const selectedDevice = selectedDeviceSession?.deviceInfo;
   const hasNoDevices = projectState !== undefined && devices.length === 0;
   const isStarting = selectedDeviceSession?.status === "starting";
@@ -117,6 +176,8 @@ function PreviewView() {
   });
 
   const { openFileAt } = useUtils();
+
+  const initialized = useInitialDeviceSetup();
 
   useEffect(() => {
     const disableInspectorOnEscape = (event: KeyboardEvent) => {

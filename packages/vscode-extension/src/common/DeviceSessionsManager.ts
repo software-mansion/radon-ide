@@ -14,6 +14,8 @@ export type ReloadAction =
   | "restartProcess" // relaunch app
   | "reloadJs"; // refetch JS scripts from metro
 
+export const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
+
 export interface DeviceSessionsManagerInterface {
   reloadCurrentSession(type: ReloadAction): Promise<boolean>;
   startOrActivateSessionForDevice(
