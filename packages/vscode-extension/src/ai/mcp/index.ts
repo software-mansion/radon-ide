@@ -1,3 +1,4 @@
+import { lm, McpHttpServerDefinition, Uri, EventEmitter, version } from "vscode";
 import { Logger } from "../../Logger";
 import { watchLicenseTokenChange } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
@@ -5,7 +6,6 @@ import { insertRadonEntry, newMcpConfig } from "./configCreator";
 import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
 import { startLocalMcpServer } from "./server";
 import { MCP_LOG } from "./utils";
-import { lm, McpHttpServerDefinition, Uri, EventEmitter, version } from "vscode";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { extensionContext } from "../../utilities/extensionContext";
 
@@ -15,7 +15,7 @@ async function updateMcpConfig(port: number) {
   await writeMcpConfig(updatedConfig);
 }
 
-export function loadRadonAIOnVscode1_101() {
+export function directLoadRadonAi() {
   const serverStartPromise = startLocalMcpServer();
   const didChangeEmitter = new EventEmitter<void>();
 
@@ -49,7 +49,7 @@ export function loadRadonAIOnVscode1_101() {
   return true;
 }
 
-async function loadRadonAI() {
+async function fsLoadRadonAI() {
   try {
     // Server has to be online before the config is written
     const mcpPort = await startLocalMcpServer();
@@ -65,20 +65,23 @@ async function loadRadonAI() {
   }
 }
 
-export default function registerRadonAi() {
-  if (
-    // @ts-ignore lm.registerMcpServerDefinitionProvider API is only availble in VSCode 1.101+, we do runtime check here as it shouldn't be used in Cursor or Windsurf
+function isDirectLoadingAvailable() {
+  return (
+    // @ts-ignore lm.registerMcpServerDefinitionProvider API is only availble in VSCode 1.101+
     lm.registerMcpServerDefinitionProvider &&
     version.localeCompare("1.101.0", undefined, { numeric: true }) >= 0
-  ) {
-    // We need to register MCP definition before extension's activate resolves.
-    // As this is a sync call, we don't need to await for the server to actually load
-    // and we can simply return here to not delay the activation flow.
-    // We will need the server to start before
-    return loadRadonAIOnVscode1_101();
+  );
+}
+
+export default function registerRadonAi() {
+  // The `registerRadonAi` function is never awaited, so awaiting operations like express.js launch are not blocking the IDE startup.
+  if (isDirectLoadingAvailable()) {
+    return directLoadRadonAi();
   } else {
-    watchLicenseTokenChange(() => {
-      loadRadonAI();
-    });
+    extensionContext.subscriptions.push(
+      watchLicenseTokenChange(() => {
+        fsLoadRadonAI();
+      })
+    );
   }
 }
