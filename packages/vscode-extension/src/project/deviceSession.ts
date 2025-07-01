@@ -83,7 +83,6 @@ export class DeviceSession
   private buildManager: BuildManager;
   private buildCache: BuildCache;
   private cancelToken: CancelToken | undefined;
-  private cacheStaleSubscription: Disposable;
 
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
@@ -135,7 +134,6 @@ export class DeviceSession
       displayName: this.device.deviceInfo.displayName,
       useParentDebugSession: true,
     });
-    this.cacheStaleSubscription = this.buildCache.onCacheStale(this.onCacheStale);
   }
 
   public getState(): DeviceSessionState {
@@ -269,10 +267,8 @@ export class DeviceSession
 
   //#endregion
 
-  //#region Build manager delegate methods
-
-  onCacheStale = (platform: DevicePlatform) => {
-    if (platform === this.device.platform && this.status === "running") {
+  onCacheStale = () => {
+    if (this.status === "running") {
       // we only consider "stale cache" in a non-error state that happens
       // after the launch phase if complete. Otherwsie, it may be a result of
       // the build process that triggers the callback in which case we don't want
@@ -281,8 +277,6 @@ export class DeviceSession
       this.emitStateChange();
     }
   };
-
-  //#endregion
 
   private makeDevtools() {
     const devtools = new Devtools();
@@ -341,7 +335,6 @@ export class DeviceSession
     this.device?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
-    this.cacheStaleSubscription.dispose();
   }
 
   public async activate() {

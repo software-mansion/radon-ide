@@ -28,7 +28,7 @@ const MAX_ALLOWED_IOS_DEVICES = 3;
 const MAX_ALLOWED_ANDROID_DEVICES = 1;
 
 export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerInterface {
-  private deviceSessions: Map<DeviceId, DeviceSession> = new Map();
+  public readonly deviceSessions: Map<DeviceId, DeviceSession> = new Map();
   private activeSessionId: DeviceId | undefined;
   private findingDevice: boolean = false;
   private previousDevices: DeviceInfo[] = [];

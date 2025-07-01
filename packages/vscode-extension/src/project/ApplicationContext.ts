@@ -25,7 +25,7 @@ export class ApplicationContext implements Disposable {
     const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.buildManager = buildManager;
 
-    this.disposables.push(this.launchConfig, this.dependencyManager, buildManager, this.buildCache);
+    this.disposables.push(this.launchConfig, this.dependencyManager, buildManager);
   }
 
   public async updateAppRootFolder(newAppRoot: string) {
@@ -45,7 +45,7 @@ export class ApplicationContext implements Disposable {
     const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.buildManager = buildManager;
 
-    this.disposables.push(this.launchConfig, this.dependencyManager, buildManager, this.buildCache);
+    this.disposables.push(this.launchConfig, this.dependencyManager, buildManager);
   }
 
   public dispose() {

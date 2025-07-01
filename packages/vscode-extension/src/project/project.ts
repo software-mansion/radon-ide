@@ -39,6 +39,8 @@ import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRoo
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager, DeviceSessionsManagerDelegate } from "./DeviceSessionsManager";
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
+import { watchProjectFiles } from "../utilities/watchProjectFiles";
+import { throttleAsync } from "../utilities/throttle";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -46,6 +48,7 @@ const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
+const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
   private applicationContext: ApplicationContext;
@@ -109,7 +112,28 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         }
       })
     );
+
+    this.disposables.push(watchProjectFiles(this.onProjectFilesChanged));
   }
+
+  private onProjectFilesChanged = throttleAsync(async () => {
+    const sessions = this.deviceSessionsManager.deviceSessions.values().toArray();
+    const platforms = _.uniq(sessions.map((session) => session.platform));
+    for (const platform of platforms) {
+      const hasCachedBuild = this.applicationContext.buildCache.hasCachedBuild(platform);
+      if (hasCachedBuild) {
+        const isCacheStale = await this.applicationContext.buildCache.isCacheStale(platform);
+
+        if (isCacheStale) {
+          sessions
+            .filter((session) => session.platform === platform)
+            .forEach((session) => {
+              session.onCacheStale();
+            });
+        }
+      }
+    }
+  }, CACHE_STALE_THROTTLE_MS);
 
   onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
     this.updateProjectState(state);
