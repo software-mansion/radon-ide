@@ -1,5 +1,6 @@
 import fs from "fs";
 import assert from "assert";
+import { WebSocket } from "ws";
 import { DebugSession, ErrorDestination, Event } from "@vscode/debugadapter";
 import * as vscode from "vscode";
 import { DebugProtocol } from "@vscode/debugprotocol";
@@ -47,6 +48,7 @@ export class ProxyDebugAdapter extends DebugSession {
   private nodeDebugSession: vscode.DebugSession | null = null;
   private terminated: boolean = false;
   private sourceMapRegistry: SourceMapsRegistry;
+  private HMRSocket: WebSocket;
 
   constructor(private session: vscode.DebugSession) {
     super();
@@ -59,7 +61,26 @@ export class ProxyDebugAdapter extends DebugSession {
       sourceMapAliases
     );
 
+    const uri = new URL(this.session.configuration.websocketAddress);
+    const hostname = uri.hostname;
+    const port = uri.port;
+
+    this.HMRSocket = new WebSocket(`ws://${hostname}:${port}/hot`);
+
+    this.HMRSocket.on("open", () => {
+      Logger.debug("HMR WebSocket opened");
+    });
+
+    this.HMRSocket.on("error", (err) => {
+      Logger.error("HMR WebSocket error", err);
+    });
+
+    this.HMRSocket.on("close", () => {
+      Logger.debug("HMR WebSocket closed");
+    });
+
     const proxyDelegate = new RadonCDPProxyDelegate(
+      this.HMRSocket,
       this.sourceMapRegistry,
       this.session.configuration.skipFiles
     );
@@ -240,6 +261,7 @@ export class ProxyDebugAdapter extends DebugSession {
     await vscode.commands.executeCommand("workbench.action.debug.stop", undefined, {
       sessionId: this.session.id,
     });
+    this.HMRSocket.close();
   }
 
   private async ping() {

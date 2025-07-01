@@ -1,6 +1,7 @@
 import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-cdp-proxy";
 import { EventEmitter } from "vscode";
 import { Minimatch } from "minimatch";
+import { WebSocket } from "ws";
 import _ from "lodash";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
@@ -20,9 +21,12 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   public onConsoleAPICalled = this.consoleAPICalledEmitter.event;
 
   constructor(
+    private HMRSocket: WebSocket,
     private sourceMapRegistry: SourceMapsRegistry,
     skipFiles: string[]
   ) {
+    this.HMRSocket.on("message", this.handleHMRSocketEvent.bind(this));
+
     this.ignoredPatterns = skipFiles.map(
       (pattern) => new Minimatch(pattern, { flipNegate: true, dot: true })
     );
@@ -43,7 +47,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         return this.handleDebuggerResumed(applicationCommand, tunnel);
       }
       case "Debugger.scriptParsed": {
-        return this.handleScriptParsed(applicationCommand);
+        return this.handleScriptParsed(applicationCommand, tunnel);
       }
       case "Runtime.executionContextsCleared": {
         this.sourceMapRegistry.clearSourceMaps();
@@ -164,10 +168,37 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
           command.id!,
           command.params as Cdp.Debugger.SetBreakpointByUrlParams
         );
-        return command;
+
+        const paused = () => {
+          return this.isBreakpointSettingPaused;
+        };
+
+        return new Promise<IProtocolCommand>((resolve) => {
+          setImmediate(() => {
+            if (!paused()) {
+              resolve(command);
+            } else {
+              this.pendingBreakpointCommands.push({ command, resolve });
+            }
+          });
+        });
       }
     }
     return command;
+  }
+
+  private isBreakpointSettingPaused = false;
+  private pendingBreakpointCommands: Array<{
+    command: IProtocolCommand;
+    resolve: (cmd: IProtocolCommand) => void;
+  }> = [];
+
+  private dispatchPendingBreakpointCommands() {
+    const pendingCommands = this.pendingBreakpointCommands;
+    this.pendingBreakpointCommands = [];
+    for (const pending of pendingCommands) {
+      pending.resolve(pending.command);
+    }
   }
 
   // NOTE: sometimes on Fast Refresh, when we try to set a new breakpoint with the new location,
@@ -214,6 +245,14 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     return reply;
   }
 
+  private async handleHMRSocketEvent(event: any) {
+    let message = JSON.parse(event.toString("utf-8"));
+
+    if (message.type === "update-start" && !message.body.isInitialUpdate) {
+      this.isBreakpointSettingPaused = true;
+    }
+  }
+
   private async onRuntimeEnable(tunnel: ProxyTunnel) {
     await tunnel
       .injectDebuggerCommand({
@@ -246,11 +285,17 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     throw new Error("Source map URL schemas other than `data` and `http` are not supported");
   }
 
-  private async handleScriptParsed(command: IProtocolCommand): Promise<IProtocolCommand> {
+  private async handleScriptParsed(
+    command: IProtocolCommand,
+    tunnel: ProxyTunnel
+  ): Promise<IProtocolCommand> {
     const { sourceMapURL, url, scriptId } = command.params as Cdp.Debugger.ScriptParsedEvent;
     if (!sourceMapURL) {
       return command;
     }
+
+    this.isBreakpointSettingPaused = false;
+    this.dispatchPendingBreakpointCommands();
 
     try {
       const sourceMapData = await this.getSourceMapData(sourceMapURL);
@@ -259,6 +304,15 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       );
 
       this.sourceMapRegistry.registerSourceMap(sourceMapData, url, scriptId, isMainBundle);
+
+      if (isMainBundle) {
+        this.HMRSocket.send(
+          JSON.stringify({
+            type: "register-entrypoints",
+            entryPoints: [url.replace("//&", "?")],
+          })
+        );
+      }
     } catch (e) {
       Logger.error("Could not process the source map", e);
     }
