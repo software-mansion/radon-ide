@@ -5,6 +5,8 @@ import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 import { PanelLocation } from "../common/WorkspaceConfig";
+import { extensionContext } from "../utilities/extensionContext";
+import { MementoStore } from "../project/MementoStore";
 
 type CallArgs = {
   callId: string;
@@ -37,6 +39,8 @@ export class WebviewController implements Disposable {
     // Set an event listener to listen for messages passed from the webview context
     this.setWebviewMessageListener(webview);
 
+    const workspaceStore = new MementoStore(extensionContext.workspaceState);
+
     this.callableObjectGetters = new Map([
       ["DeviceManager", () => this.ide.deviceManager as object],
       ["DependencyManager", () => this.ide.project.dependencyManager as object],
@@ -49,6 +53,7 @@ export class WebviewController implements Disposable {
         "RenderOutlines",
         () => this.ide.project.deviceSession!.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,
       ],
+      ["WorkspaceStore", () => workspaceStore],
     ]);
 
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", true);
