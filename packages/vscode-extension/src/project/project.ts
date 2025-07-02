@@ -21,7 +21,7 @@ import {
   ZoomLevelType,
 } from "../common/Project";
 import { Logger } from "../Logger";
-import { DeviceInfo } from "../common/DeviceManager";
+import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
 import {
@@ -119,10 +119,19 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   private onProjectFilesChanged = throttleAsync(async () => {
     const sessions = this.deviceSessionsManager.deviceSessions.values().toArray();
     const platforms = _.uniq(sessions.map((session) => session.platform));
+    const launchConfig = getLaunchConfiguration();
     for (const platform of platforms) {
-      const hasCachedBuild = this.applicationContext.buildCache.hasCachedBuild(platform);
+      const hasCachedBuild = this.applicationContext.buildCache.hasCachedBuild(
+        platform,
+        this.appRootFolder
+      );
+      const platformKey: "ios" | "android" = platform === DevicePlatform.IOS ? "ios" : "android";
       if (hasCachedBuild) {
-        const isCacheStale = await this.applicationContext.buildCache.isCacheStale(platform);
+        const isCacheStale = await this.applicationContext.buildCache.isCacheStale(platform, {
+          appRoot: this.appRootFolder,
+          env: launchConfig.env,
+          fingerprintCommand: launchConfig.customBuild?.[platformKey]?.fingerprintCommand,
+        });
 
         if (isCacheStale) {
           sessions

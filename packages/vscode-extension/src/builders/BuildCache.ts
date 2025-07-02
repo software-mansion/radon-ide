@@ -6,7 +6,6 @@ import { extensionContext } from "../utilities/extensionContext";
 import { DevicePlatform } from "../common/DeviceManager";
 import { IOSBuildResult } from "./buildIOS";
 import { AndroidBuildResult } from "./buildAndroid";
-import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { runfingerprintCommand } from "./customBuild";
 import { calculateMD5 } from "../utilities/common";
 import { BuildResult } from "./BuildManager";
@@ -31,6 +30,12 @@ export type BuildCacheInfo = {
   buildResult: AndroidBuildResult | IOSBuildResult;
 };
 
+export interface FingerprintOptions {
+  appRoot: string;
+  env?: Record<string, string>;
+  fingerprintCommand?: string;
+}
+
 function makeCacheKey(platform: DevicePlatform, appRoot: string) {
   const keyPrefix =
     platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
@@ -38,30 +43,31 @@ function makeCacheKey(platform: DevicePlatform, appRoot: string) {
 }
 
 export class BuildCache {
-  constructor(private readonly appRootFolder: string) {}
+  constructor() {}
 
   /**
    * Passed fingerprint should be calculated at the time build is started.
    */
-  public async storeBuild(buildFingerprint: string, build: BuildResult) {
+  public async storeBuild(buildFingerprint: string, appRootFolder: string, build: BuildResult) {
     const appPath = await getAppHash(getAppPath(build));
-    await extensionContext.globalState.update(makeCacheKey(build.platform, this.appRootFolder), {
+    await extensionContext.globalState.update(makeCacheKey(build.platform, appRootFolder), {
       fingerprint: buildFingerprint,
       buildHash: appPath,
       buildResult: build,
     });
   }
 
-  public async clearCache(platform: DevicePlatform) {
-    await extensionContext.globalState.update(
-      makeCacheKey(platform, this.appRootFolder),
-      undefined
-    );
+  public async clearCache(platform: DevicePlatform, appRootFolder: string) {
+    await extensionContext.globalState.update(makeCacheKey(platform, appRootFolder), undefined);
   }
 
-  public async getBuild(currentFingerprint: string, platform: DevicePlatform) {
+  public async getBuild(
+    currentFingerprint: string,
+    platform: DevicePlatform,
+    appRootFolder: string
+  ) {
     const cache = extensionContext.globalState.get<BuildCacheInfo>(
-      makeCacheKey(platform, this.appRootFolder)
+      makeCacheKey(platform, appRootFolder)
     );
     if (!cache) {
       Logger.debug("No cached build found.");
@@ -98,54 +104,49 @@ export class BuildCache {
     }
   }
 
-  public async isCacheStale(platform: DevicePlatform) {
-    const currentFingerprint = await this.calculateFingerprint(platform);
+  public async isCacheStale(platform: DevicePlatform, options: FingerprintOptions) {
+    const currentFingerprint = await this.calculateFingerprint(options);
     const { fingerprint } =
-      extensionContext.globalState.get<BuildCacheInfo>(
-        makeCacheKey(platform, this.appRootFolder)
-      ) ?? {};
+      extensionContext.globalState.get<BuildCacheInfo>(makeCacheKey(platform, options.appRoot)) ??
+      {};
 
     return currentFingerprint !== fingerprint;
   }
 
-  public hasCachedBuild(platform: DevicePlatform) {
+  public hasCachedBuild(platform: DevicePlatform, appRootFolder: string) {
     return !!extensionContext.globalState.get<BuildCacheInfo>(
-      makeCacheKey(platform, this.appRootFolder)
+      makeCacheKey(platform, appRootFolder)
     );
   }
 
-  public async calculateFingerprint(platform: DevicePlatform) {
+  public async calculateFingerprint(options: FingerprintOptions) {
     Logger.debug("Calculating fingerprint");
-    const customFingerprint = await this.calculateCustomFingerprint(platform);
+    const { appRoot, env, fingerprintCommand } = options;
+    if (fingerprintCommand) {
+      const customFingerprint = await this.calculateCustomFingerprint(
+        appRoot,
+        fingerprintCommand,
+        env
+      );
 
-    if (customFingerprint) {
       Logger.debug("Using custom fingerprint", customFingerprint);
       return customFingerprint;
     }
 
-    const fingerprint = await createFingerprintAsync(this.appRootFolder, {
+    const fingerprint = await createFingerprintAsync(appRoot, {
       ignorePaths: IGNORE_PATHS,
     });
     Logger.debug("App folder fingerprint", fingerprint.hash);
     return fingerprint.hash;
   }
 
-  private async calculateCustomFingerprint(platform: DevicePlatform) {
-    const { customBuild, env } = getLaunchConfiguration();
-    const configPlatform = (
-      {
-        [DevicePlatform.Android]: "android",
-        [DevicePlatform.IOS]: "ios",
-      } as const
-    )[platform];
-    const fingerprintCommand = customBuild?.[configPlatform]?.fingerprintCommand;
-
-    if (!fingerprintCommand) {
-      return undefined;
-    }
-
+  private async calculateCustomFingerprint(
+    appRootFolder: string,
+    fingerprintCommand: string,
+    env: Record<string, string> | undefined
+  ): Promise<string> {
     Logger.debug(`Using custom fingerprint script '${fingerprintCommand}'`);
-    const fingerprint = await runfingerprintCommand(fingerprintCommand, env, this.appRootFolder);
+    const fingerprint = await runfingerprintCommand(fingerprintCommand, env, appRootFolder);
 
     if (!fingerprint) {
       throw new Error("Failed to generate application fingerprint using custom script.");

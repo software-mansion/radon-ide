@@ -521,9 +521,17 @@ export class DeviceSession
       platform: this.device.platform,
     });
 
+    const launchConfig = getLaunchConfiguration();
+    const platformKey = this.device.platform === DevicePlatform.IOS ? "ios" : "android";
+    const fingerprintOptions = {
+      appRoot: this.applicationContext.appRootFolder,
+      env: launchConfig.env,
+      fingerprintCommand: launchConfig.customBuild?.[platformKey]?.fingerprintCommand,
+    };
+
     this.resetStartingState();
     try {
-      if (await this.buildCache.isCacheStale(this.device.platform)) {
+      if (await this.buildCache.isCacheStale(this.device.platform, fingerprintOptions)) {
         await this.restart({ forceClean: false, cleanCache: false });
         return;
       }

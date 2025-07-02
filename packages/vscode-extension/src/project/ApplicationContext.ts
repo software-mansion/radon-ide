@@ -21,7 +21,7 @@ export class ApplicationContext implements Disposable {
     this.dependencyManager = new DependencyManager(appRootFolder);
 
     this.launchConfig = new LaunchConfigController(appRootFolder);
-    this.buildCache = new BuildCache(appRootFolder);
+    this.buildCache = new BuildCache();
     const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.buildManager = buildManager;
 
@@ -41,7 +41,7 @@ export class ApplicationContext implements Disposable {
     disposeAll(this.disposables);
 
     this.launchConfig = new LaunchConfigController(newAppRoot);
-    this.buildCache = new BuildCache(newAppRoot);
+    this.buildCache = new BuildCache();
     const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.buildManager = buildManager;
 

@@ -13,12 +13,12 @@ interface BuildConfigCommon {
   platform: DevicePlatform;
   env?: Record<string, string>;
   forceCleanBuild: boolean;
+  fingerprintCommand?: string;
 }
 
 export type CustomBuildConfig = {
   type: BuildType.Custom;
   buildCommand: string;
-  fingerprintCommand?: string;
 } & BuildConfigCommon;
 
 export type ExpoGoBuildConfig = {

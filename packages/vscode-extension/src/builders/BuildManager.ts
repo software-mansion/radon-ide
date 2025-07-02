@@ -47,6 +47,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
     [DevicePlatform.IOS]: "ios",
   } as const;
   const platformKey = platformMapping[platform];
+  const fingerprintCommand = customBuild?.[platformKey]?.fingerprintCommand;
 
   switch (buildType) {
     case BuildType.Local: {
@@ -59,6 +60,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
           type: BuildType.Local,
           scheme: ios?.scheme,
           configuration: ios?.configuration,
+          fingerprintCommand,
         };
       } else {
         return {
@@ -69,6 +71,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
           type: BuildType.Local,
           productFlavor: android?.productFlavor,
           buildType: android?.buildType,
+          fingerprintCommand,
         };
       }
     }
@@ -79,6 +82,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
         env,
         type: BuildType.ExpoGo,
         forceCleanBuild,
+        fingerprintCommand,
       };
     }
     case BuildType.Eas: {
@@ -96,6 +100,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
         type: BuildType.Eas,
         config: easBuildConfig,
         forceCleanBuild,
+        fingerprintCommand,
       };
     }
     case BuildType.EasLocal: {
@@ -113,6 +118,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
         type: BuildType.EasLocal,
         profile: easBuildConfig.profile,
         forceCleanBuild,
+        fingerprintCommand,
       };
     }
     case BuildType.Custom: {
@@ -205,14 +211,19 @@ export class BuildManagerImpl implements Disposable, BuildManager {
 
   public async buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult> {
     const { progressListener, cancelToken } = options;
-    const { forceCleanBuild, platform, type: buildType } = buildConfig;
+    const { forceCleanBuild, platform, type: buildType, appRoot } = buildConfig;
+    const fingerprintOptions = {
+      appRoot: buildConfig.appRoot,
+      env: buildConfig.env,
+      fingerprintCommand: buildConfig.fingerprintCommand,
+    };
 
     getTelemetryReporter().sendTelemetryEvent("build:requested", {
       platform,
       type: forceCleanBuild ? "clean" : "incremental",
     });
 
-    const currentFingerprint = await this.buildCache.calculateFingerprint(platform);
+    const currentFingerprint = await this.buildCache.calculateFingerprint(fingerprintOptions);
 
     // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
     const buildDependenciesChanged = await this.checkBuildDependenciesChanged(platform);
@@ -224,9 +235,9 @@ export class BuildManagerImpl implements Disposable, BuildManager {
         "Build cache is being invalidated",
         forceCleanBuild ? "on request" : "due to build dependencies change"
       );
-      await this.buildCache.clearCache(platform);
+      await this.buildCache.clearCache(platform, appRoot);
     } else {
-      const cachedBuild = await this.buildCache.getBuild(currentFingerprint, platform);
+      const cachedBuild = await this.buildCache.getBuild(currentFingerprint, platform, appRoot);
       if (cachedBuild) {
         Logger.debug("Skipping native build – using cached");
         getTelemetryReporter().sendTelemetryEvent("build:cache-hit", { platform });
@@ -285,7 +296,7 @@ export class BuildManagerImpl implements Disposable, BuildManager {
             }
             // Installing pods may impact the fingerprint as new pods may be created under the project directory.
             // For this reason we need to recalculate the fingerprint after installing pods.
-            buildFingerprint = await this.buildCache.calculateFingerprint(platform);
+            buildFingerprint = await this.buildCache.calculateFingerprint(fingerprintOptions);
           }
         };
 
@@ -310,7 +321,7 @@ export class BuildManagerImpl implements Disposable, BuildManager {
     }
 
     try {
-      await this.buildCache.storeBuild(buildFingerprint, buildResult);
+      await this.buildCache.storeBuild(buildFingerprint, appRoot, buildResult);
     } catch (e) {
       // NOTE: this is a fallible operation (since it does file system operations), but we don't want to fail the whole build if we fail to store it in a cache.
       Logger.warn("Failed to store the build in cache.", e);
