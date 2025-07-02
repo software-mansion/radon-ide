@@ -13,7 +13,7 @@ import "./shared/SwitchGroup.css";
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
-import { AppPermissionType, DeviceSettings, ProjectInterface } from "../../common/Project";
+import { AppPermissionType, DeviceRotationType, DeviceSettings, ProjectInterface } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
 import { DevicePlatform } from "../../common/DeviceManager";
@@ -56,8 +56,18 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
   const { showDeviceFrame, update } = useWorkspaceConfig();
   const { openModal } = useModal();
 
+  // Mock for now
+  const currentRotation: DeviceRotationType = "Portrait"; // This should be dynamically set based on the device's current rotation
+
   const resetOptions =
     selectedDeviceSession?.deviceInfo.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
+
+  const rotateOptions : Array<{ label: string; value: DeviceRotationType; icon: string }> = [
+    { label: "Portrait", value: "Portrait", icon: "device-mobile" },
+    { label: "Portrait Upside Down", value: "PortraitUpsideDown", icon: "device-mobile" },
+    { label: "Landscape Left", value: "LandscapeLeft", icon: "device-mobile" },
+    { label: "Landscape Right", value: "LandscapeRight", icon: "device-mobile" },
+  ]
 
   return (
     <DropdownMenuRoot>
@@ -173,6 +183,32 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
+
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+              <span className="codicon codicon-device-mobile" />
+              Rotate device
+              <span className="codicon codicon-chevron-right right-slot" />
+            </DropdownMenu.SubTrigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.SubContent
+                className="dropdown-menu-subcontent"
+                sideOffset={2}
+                alignOffset={-5}>
+                {rotateOptions.map((option, index) => (
+                  <DropdownMenu.Item
+                    className="dropdown-menu-item"
+                    key={index}
+                    onSelect={() => console.log(option.value)}>
+                    <span className={`codicon codicon-${option.icon}`} />
+                    {option.label}
+                    {currentRotation === option.value && <span className="codicon codicon-check right-slot" />}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Sub>
+
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => openModal("Open Deep Link", <OpenDeepLinkView />)}>
