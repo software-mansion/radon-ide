@@ -531,7 +531,14 @@ export class DeviceSession
 
     this.resetStartingState();
     try {
-      if (await this.buildCache.isCacheStale(this.device.platform, fingerprintOptions)) {
+      const currentFingerprint = await this.buildCache.calculateFingerprint(fingerprintOptions);
+      if (
+        await this.buildCache.isCacheStale(
+          currentFingerprint,
+          this.device.platform,
+          this.applicationContext.appRootFolder
+        )
+      ) {
         await this.restart({ forceClean: false, cleanCache: false });
         return;
       }

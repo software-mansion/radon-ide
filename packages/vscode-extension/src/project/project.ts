@@ -127,11 +127,16 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       );
       const platformKey: "ios" | "android" = platform === DevicePlatform.IOS ? "ios" : "android";
       if (hasCachedBuild) {
-        const isCacheStale = await this.applicationContext.buildCache.isCacheStale(platform, {
+        const fingerprint = await this.applicationContext.buildCache.calculateFingerprint({
           appRoot: this.appRootFolder,
           env: launchConfig.env,
           fingerprintCommand: launchConfig.customBuild?.[platformKey]?.fingerprintCommand,
         });
+        const isCacheStale = await this.applicationContext.buildCache.isCacheStale(
+          fingerprint,
+          platform,
+          this.appRootFolder
+        );
 
         if (isCacheStale) {
           sessions

@@ -66,14 +66,6 @@ export async function runExternalBuild(
   return binaryPath;
 }
 
-export async function runfingerprintCommand(externalCommand: string, env: Env, cwd: string) {
-  const output = await runExternalScript(externalCommand, env, cwd);
-  if (!output) {
-    return undefined;
-  }
-  return output.lastLine;
-}
-
 async function runExternalScript(
   externalCommand: string,
   env: Env,

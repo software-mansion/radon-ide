@@ -5,6 +5,7 @@ import { LaunchConfigController } from "../panels/LaunchConfigController";
 import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
+import { FingerprintProvider } from "./FingerprintProvider";
 
 function createBuildManager(dependencyManager: DependencyManager, buildCache: BuildCache) {
   return new BatchingBuildManager(new BuildManagerImpl(dependencyManager, buildCache));
@@ -15,13 +16,14 @@ export class ApplicationContext implements Disposable {
   public launchConfig: LaunchConfigController;
   public buildCache: BuildCache;
   public buildManager: BuildManager;
+  public fingerprintProvider: FingerprintProvider = new FingerprintProvider();
   private disposables: Disposable[] = [];
 
   constructor(public appRootFolder: string) {
     this.dependencyManager = new DependencyManager(appRootFolder);
 
     this.launchConfig = new LaunchConfigController(appRootFolder);
-    this.buildCache = new BuildCache();
+    this.buildCache = new BuildCache(this.fingerprintProvider);
     const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.buildManager = buildManager;
 
@@ -41,7 +43,7 @@ export class ApplicationContext implements Disposable {
     disposeAll(this.disposables);
 
     this.launchConfig = new LaunchConfigController(newAppRoot);
-    this.buildCache = new BuildCache();
+    this.buildCache = new BuildCache(this.fingerprintProvider);
     const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.buildManager = buildManager;
 
@@ -50,5 +52,6 @@ export class ApplicationContext implements Disposable {
 
   public dispose() {
     disposeAll(this.disposables);
+    this.fingerprintProvider.dispose();
   }
 }
