@@ -40,7 +40,7 @@ import {
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
-import { throttle } from "../utilities/throttle";
+import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
@@ -49,8 +49,10 @@ import { ReloadAction } from "../common/DeviceSessionsManager";
 import { focusSource } from "../utilities/focusSource";
 import { ApplicationContext } from "./ApplicationContext";
 import { BuildCache } from "../builders/BuildCache";
+import { watchProjectFiles } from "../utilities/watchProjectFiles";
 
 const MAX_URL_HISTORY_SIZE = 20;
+const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 type RestartOptions = {
   forceClean: boolean;
@@ -83,6 +85,7 @@ export class DeviceSession
   private buildManager: BuildManager;
   private buildCache: BuildCache;
   private cancelToken: CancelToken | undefined;
+  private watchProjectSubscription: Disposable;
 
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
@@ -134,6 +137,7 @@ export class DeviceSession
       displayName: this.device.deviceInfo.displayName,
       useParentDebugSession: true,
     });
+    this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
   }
 
   public getState(): DeviceSessionState {
@@ -194,6 +198,34 @@ export class DeviceSession
     this.stageProgress = undefined;
     this.emitStateChange();
   }
+
+  private onProjectFilesChanged = throttleAsync(async () => {
+    const appRoot = this.applicationContext.appRootFolder;
+    const hasCachedBuild = this.applicationContext.buildCache.hasCachedBuild(
+      this.device.platform,
+      appRoot
+    );
+    const launchConfig = getLaunchConfiguration();
+    const platformKey: "ios" | "android" =
+      this.device.platform === DevicePlatform.IOS ? "ios" : "android";
+    const fingerprintCommand = launchConfig.customBuild?.[platformKey]?.fingerprintCommand;
+    if (hasCachedBuild) {
+      const fingerprint = await this.applicationContext.buildCache.calculateFingerprint({
+        appRoot,
+        env: launchConfig.env,
+        fingerprintCommand,
+      });
+      const isCacheStale = await this.applicationContext.buildCache.isCacheStale(
+        fingerprint,
+        this.device.platform,
+        appRoot
+      );
+
+      if (isCacheStale) {
+        this.onCacheStale();
+      }
+    }
+  }, CACHE_STALE_THROTTLE_MS);
 
   //#region Metro delegate methods
 
@@ -335,6 +367,7 @@ export class DeviceSession
     this.device?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
+    this.watchProjectSubscription.dispose();
   }
 
   public async activate() {
