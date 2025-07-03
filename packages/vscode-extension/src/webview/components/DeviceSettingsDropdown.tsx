@@ -60,7 +60,6 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
   const { project, selectedDeviceSession, deviceSettings } = useProject();
   const { showDeviceFrame, update } = useWorkspaceConfig();
   const { openModal } = useModal();
-  
 
   const resetOptions =
     selectedDeviceSession?.deviceInfo.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
@@ -198,19 +197,25 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 className="dropdown-menu-subcontent"
                 sideOffset={2}
                 alignOffset={-5}>
-                {rotateOptions.map((option, index) => (
-                  <DropdownMenu.Item
-                    className="dropdown-menu-item"
-                    key={index}
-                    onSelect={() => project.dispatchRotate(option.value)}>
-                    <span className={`codicon codicon-${option.icon}`} />
-                    {option.label}
-                    {selectedDeviceSession?.status === "running" &&
-                      selectedDeviceSession.rotation === option.value && (
-                        <span className="codicon codicon-check right-slot" />
-                      )}
-                  </DropdownMenu.Item>
-                ))}
+                {rotateOptions.map(
+                  (option, index) =>
+                    !(
+                      option.value === "PortraitUpsideDown" &&
+                      selectedDeviceSession?.deviceInfo.platform === "iOS"
+                    ) && (
+                      <DropdownMenu.Item
+                        className="dropdown-menu-item"
+                        key={index}
+                        onSelect={() => project.dispatchRotate(option.value)}>
+                        <span className={`codicon codicon-${option.icon}`} />
+                        {option.label}
+                        {selectedDeviceSession?.status === "running" &&
+                          selectedDeviceSession.rotation === option.value && (
+                            <span className="codicon codicon-check right-slot" />
+                          )}
+                      </DropdownMenu.Item>
+                    )
+                )}
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
