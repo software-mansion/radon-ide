@@ -65,7 +65,7 @@ async function fsLoadRadonAI() {
 
 function isDirectLoadingAvailable() {
   return (
-    // @ts-ignore lm.registerMcpServerDefinitionProvider API is only availble in VSCode 1.101+. Cursor and Windsurf both use legacy <1.101 VSCode versions.
+    // @ts-ignore lm.registerMcpServerDefinitionProvider API is only availble in VSCode 1.101+. Cursor and Windsurf both use <1.101 VSCode versions
     lm.registerMcpServerDefinitionProvider &&
     version.localeCompare("1.101.0", undefined, { numeric: true }) >= 0
   );
