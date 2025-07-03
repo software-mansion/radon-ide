@@ -15,7 +15,7 @@ async function updateMcpConfig(port: number) {
   await writeMcpConfig(updatedConfig);
 }
 
-export function directLoadRadonAi() {
+function directLoadRadonAi() {
   const didChangeEmitter = new EventEmitter<void>();
 
   // version suffix is incremented whenever we get auth token update notification
@@ -45,7 +45,6 @@ export function directLoadRadonAi() {
       },
     })
   );
-  return true;
 }
 
 async function fsLoadRadonAI() {
