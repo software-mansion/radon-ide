@@ -1,8 +1,42 @@
+import path from "path";
 import { ConfigurationChangeEvent, Disposable, EventEmitter, workspace } from "vscode";
-import { LaunchConfiguration } from "../common/LaunchConfig";
+import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
 import { findAppRootCandidates } from "../utilities/extensionContext";
 import { getLaunchConfigurations } from "../utilities/launchConfiguration";
+
+export function launchConfigurationFromOptions(
+  options: LaunchConfigurationOptions
+): LaunchConfiguration {
+  const appRoots = findAppRootCandidates();
+  const defaultAppRoot = appRoots.length > 0 ? appRoots[0] : undefined;
+  if (appRoots.length > 0) {
+    // TODO: warning?
+  }
+  return launchConfigFromOptionsWithDefaultAppRoot(options, defaultAppRoot);
+}
+
+function launchConfigFromOptionsWithDefaultAppRoot(
+  options: LaunchConfigurationOptions,
+  defaultAppRoot: string | undefined
+): LaunchConfiguration {
+  if ((options.appRoot ?? defaultAppRoot) === undefined) {
+    throw new Error(
+      "No app root found. Please specify 'appRoot' in your launch configuration or ensure your workspace contains a valid React Native or Expo project."
+    );
+  }
+  const appRoot = (options.appRoot ?? defaultAppRoot) as string;
+  const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
+  return {
+    appRoot,
+    absoluteAppRoot,
+    env: {},
+    ...options,
+    preview: {
+      waitForAppLaunch: options.preview?.waitForAppLaunch ?? true,
+    },
+  };
+}
 
 function createLaunchConfigs() {
   const launchConfigOptions = getLaunchConfigurations();
@@ -12,23 +46,13 @@ function createLaunchConfigs() {
     // TODO: warning?
   }
   const launchConfigurations = launchConfigOptions.flatMap<LaunchConfiguration>((config) => {
-    if ((config.appRoot ?? defaultAppRoot) === undefined) {
-      Logger.warn(
-        "No app root found. Please specify 'appRoot' in your launch configuration or ensure your workspace contains a valid React Native or Expo project."
-      );
+    try {
+      return [launchConfigFromOptionsWithDefaultAppRoot(config, defaultAppRoot)];
+    } catch (error) {
+      const message = (error as Error).message;
+      Logger.warn(message);
       return [];
     }
-    const appRoot = (config.appRoot ?? defaultAppRoot) as string;
-    return [
-      {
-        appRoot,
-        env: {},
-        preview: {
-          waitForAppLaunch: true,
-        },
-        ...config,
-      },
-    ];
   });
   return launchConfigurations;
 }

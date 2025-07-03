@@ -1,6 +1,6 @@
 import { BuildType } from "./BuildConfig";
 import { DeviceInfo, DevicePlatform } from "./DeviceManager";
-import { LaunchConfiguration } from "./LaunchConfig";
+import { LaunchConfiguration, LaunchConfigurationOptions } from "./LaunchConfig";
 
 export type Locale = string;
 
@@ -218,7 +218,7 @@ export interface ProjectInterface {
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
-  setLaunchConfiguration(launchConfig: LaunchConfiguration): Promise<void>;
+  setLaunchConfiguration(launchConfig: LaunchConfigurationOptions): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;

@@ -4,7 +4,6 @@ import { exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
 import { BuildIOSProgressProcessor } from "./BuildIOSProgressProcessor";
-import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DevicePlatform } from "../common/DeviceManager";
 import { EXPO_GO_BUNDLE_ID, downloadExpoGo } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
@@ -39,7 +38,8 @@ function buildProject(
   buildDir: string,
   scheme: string,
   configuration: string,
-  cleanBuild: boolean
+  cleanBuild: boolean,
+  env: Record<string, string>
 ) {
   const xcodebuildArgs = [
     xcodeProject.isWorkspace ? "-workspace" : "-project",
@@ -63,7 +63,7 @@ function buildProject(
 
   return exec("xcodebuild", xcodebuildArgs, {
     env: {
-      ...getLaunchConfiguration().env,
+      ...env,
       RCT_NO_LAUNCH_PACKAGER: "true",
     },
     cwd: buildDir,
@@ -207,7 +207,14 @@ async function buildLocal(
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 
   const buildProcess = cancelToken.adapt(
-    buildProject(xcodeProject, sourceDir, scheme, configuration, forceCleanBuild)
+    buildProject(
+      xcodeProject,
+      sourceDir,
+      scheme,
+      configuration,
+      forceCleanBuild,
+      buildConfig.env ?? {}
+    )
   );
 
   const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);

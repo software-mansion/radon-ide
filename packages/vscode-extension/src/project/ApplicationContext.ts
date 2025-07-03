@@ -22,7 +22,7 @@ export class ApplicationContext implements Disposable {
     public launchConfig: LaunchConfiguration,
     public readonly buildCache: BuildCache
   ) {
-    this.dependencyManager = new DependencyManager(this.appRootFolder);
+    this.dependencyManager = new DependencyManager(this.launchConfig);
     this.launchConfigurationController = new LaunchConfigController(this.appRootFolder);
     const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.buildManager = buildManager;
@@ -37,20 +37,17 @@ export class ApplicationContext implements Disposable {
   public async updateLaunchConfig(launchConfig: LaunchConfiguration) {
     const oldAppRoot = this.appRootFolder;
     this.launchConfig = launchConfig;
+    this.dependencyManager.setLaunchConfiguration(launchConfig);
+    await this.dependencyManager.runAllDependencyChecks();
     if (this.appRootFolder !== oldAppRoot) {
       this.updateAppRootFolder();
     }
   }
 
   public async updateAppRootFolder() {
-    const newAppRoot = this.appRootFolder;
-    this.dependencyManager.appRootFolder = newAppRoot;
-
-    await this.dependencyManager.runAllDependencyChecks();
-
     disposeAll(this.disposables);
 
-    this.launchConfigurationController = new LaunchConfigController(newAppRoot);
+    this.launchConfigurationController = new LaunchConfigController(this.appRootFolder);
     const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.buildManager = buildManager;
 

@@ -1,20 +1,20 @@
 import path from "path";
-import { getLaunchConfiguration } from "./launchConfiguration";
 import { requireNoCache } from "./requireNoCache";
+import { LaunchConfiguration } from "../common/LaunchConfig";
 
-export function shouldUseExpoCLI(appRoot: string) {
+export function shouldUseExpoCLI(launchConfig: LaunchConfiguration) {
   // The mechanism for detecting whether the project should use Expo CLI or React Native Community CLI works as follows:
   // We check launch configuration, which has an option to force Expo CLI, we verify that first and if it is set to true we use Expo CLI.
   // When the Expo option isn't set, we need all of the below checks to be true in order to use Expo CLI:
   // 1. expo cli package is present in the app's node_modules (we can resolve it using require.resolve)
   // 2. package.json has expo scripts in it (i.e. "expo start" or "expo build" scripts are present in the scripts section of package.json)
   // 3. the user doesn't use a custom metro config option – this is only available for RN CLI projects
-  const config = getLaunchConfiguration();
-  if (config.isExpo) {
+  const appRoot = launchConfig.absoluteAppRoot;
+  if (launchConfig.isExpo) {
     return true;
   }
 
-  if (config.metroConfigPath) {
+  if (launchConfig.metroConfigPath) {
     return false;
   }
 

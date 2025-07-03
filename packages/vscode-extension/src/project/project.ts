@@ -39,8 +39,11 @@ import { DeviceSessionsManager, DeviceSessionsManagerDelegate } from "./DeviceSe
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 import { FingerprintProvider } from "./FingerprintProvider";
 import { BuildCache } from "../builders/BuildCache";
-import { LaunchConfigurationsManager } from "./launchConfigurationsManager";
-import { LaunchConfiguration } from "../common/LaunchConfig";
+import {
+  launchConfigurationFromOptions,
+  LaunchConfigurationsManager,
+} from "./launchConfigurationsManager";
+import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -105,7 +108,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
   }
 
-  async setLaunchConfiguration(launchConfig: LaunchConfiguration): Promise<void> {
+  async setLaunchConfiguration(options: LaunchConfigurationOptions): Promise<void> {
+    const launchConfig = launchConfigurationFromOptions(options);
     const oldAppRoot = this.applicationContext.launchConfig.appRoot;
     await this.applicationContext.updateLaunchConfig(launchConfig);
     if (oldAppRoot !== launchConfig.appRoot) {

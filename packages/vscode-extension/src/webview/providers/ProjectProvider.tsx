@@ -38,6 +38,7 @@ const defaultProjectState: ProjectState = {
   customLaunchConfigurations: [],
   selectedLaunchConfiguration: {
     appRoot: "./",
+    absoluteAppRoot: "/",
     env: {},
     preview: {
       waitForAppLaunch: true,
