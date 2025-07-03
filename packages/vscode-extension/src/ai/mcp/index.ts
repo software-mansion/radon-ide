@@ -16,7 +16,6 @@ async function updateMcpConfig(port: number) {
 }
 
 export function directLoadRadonAi() {
-  const serverStartPromise = startLocalMcpServer();
   const didChangeEmitter = new EventEmitter<void>();
 
   // version suffix is incremented whenever we get auth token update notification
@@ -34,7 +33,8 @@ export function directLoadRadonAi() {
     lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
       onDidChangeServerDefinitions: didChangeEmitter.event,
       provideMcpServerDefinitions: async () => {
-        const port = await serverStartPromise;
+        const port = await startLocalMcpServer();
+        Logger.error("XYZ:", port);
         return [
           new McpHttpServerDefinition(
             "RadonAI",
@@ -76,7 +76,7 @@ function isDirectLoadingAvailable() {
 export default function registerRadonAi() {
   // The `registerRadonAi` function is never awaited, so awaiting operations like express.js launch are not blocking the IDE startup.
   if (isDirectLoadingAvailable()) {
-    return directLoadRadonAi();
+    directLoadRadonAi();
   } else {
     extensionContext.subscriptions.push(
       watchLicenseTokenChange(() => {
