@@ -7,6 +7,7 @@ export type CustomBuild = {
 };
 
 export type LaunchConfigurationOptions = {
+  name?: string;
   appRoot?: string;
   metroConfigPath?: string;
   expoStartArgs?: string[];

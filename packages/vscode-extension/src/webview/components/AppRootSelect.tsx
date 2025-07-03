@@ -41,6 +41,9 @@ function renderLaunchConfigurations(
     return null;
   }
 
+  const displayName = (config: LaunchConfiguration) =>
+    config.name === undefined || config.name === "Radon IDE panel" ? config.appRoot : config.name;
+
   return (
     <Select.Group>
       <Select.Label className="approot-select-label">Custom configurations</Select.Label>
@@ -50,8 +53,8 @@ function renderLaunchConfigurations(
           value={`custom:${idx}`}
           key={idx}
           icon={<span className="codicon codicon-file" />}
-          title={config.appRoot}
-          subtitle={config.appRoot}
+          title={displayName(config)}
+          subtitle={displayName(config) !== config.appRoot ? config.appRoot : undefined}
           isSelected={_.isEqual(selectedLaunchConfiguration, config)}
         />
       ))}
