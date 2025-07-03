@@ -37,6 +37,7 @@ import {
   DeviceSessionStatus,
   FatalErrorDescriptor,
   BundleErrorDescriptor,
+  DeviceRotationType,
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
@@ -84,7 +85,7 @@ export class DeviceSession
   private buildCache: BuildCache;
   private cancelToken: CancelToken | undefined;
   private cacheStaleSubscription: Disposable;
-
+  
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
   private stageProgress: number | undefined;
@@ -165,6 +166,7 @@ export class DeviceSession
         status: "running",
         isRefreshing: this.isRefreshing,
         bundleError: this.bundleError,
+        rotation: this.device.rotation
       };
     } else if (this.status === "fatalError") {
       assert(this.fatalError, "Expected error to be defined in fatal error state");
@@ -1000,6 +1002,11 @@ export class DeviceSession
 
   public sendClipboard(text: string) {
     return this.device.sendClipboard(text);
+  }
+  
+  public sendRotate(rotation: DeviceRotationType) {
+    this.device.sendRotate(rotation);
+    this.emitStateChange();
   }
 
   public async getClipboard() {
