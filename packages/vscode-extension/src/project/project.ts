@@ -110,12 +110,20 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   async setLaunchConfiguration(options: LaunchConfigurationOptions): Promise<void> {
     const launchConfig = launchConfigurationFromOptions(options);
-    const oldAppRoot = this.applicationContext.launchConfig.appRoot;
-    await this.applicationContext.updateLaunchConfig(launchConfig);
-    if (oldAppRoot !== launchConfig.appRoot) {
-      await this.setupAppRoot();
+    if (_.isEqual(launchConfig, this.applicationContext.launchConfig)) {
+      // No change in launch configuration, nothing to do
+      return;
     }
+    await this.applicationContext.updateLaunchConfig(launchConfig);
+    const oldDeviceSessionsManager = this.deviceSessionsManager;
+    this.deviceSessionsManager = new DeviceSessionsManager(
+      this.applicationContext,
+      this.deviceManager,
+      this
+    );
+    oldDeviceSessionsManager.dispose();
     this.updateProjectState({
+      appRootPath: this.relativeAppRootPath,
       selectedLaunchConfiguration: launchConfig,
     });
   }
@@ -161,18 +169,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return selectedSessionState;
   }
 
-  private async setupAppRoot() {
-    const oldDeviceSessionsManager = this.deviceSessionsManager;
-    this.deviceSessionsManager = new DeviceSessionsManager(
-      this.applicationContext,
-      this.deviceManager,
-      this
-    );
-    oldDeviceSessionsManager.dispose();
-    this.updateProjectState({
-      appRootPath: this.relativeAppRootPath,
-    });
-  }
+  private async setupAppRoot() {}
 
   onInitialized(): void {
     this.updateProjectState({ initialized: true });
