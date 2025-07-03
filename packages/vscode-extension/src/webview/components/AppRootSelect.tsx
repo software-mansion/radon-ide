@@ -33,6 +33,13 @@ function renderAppRoots(
   );
 }
 
+function displayNameForConfig(config: LaunchConfiguration) {
+  if (config.name === "Radon IDE panel") {
+    return undefined;
+  }
+  return config.name;
+}
+
 function renderLaunchConfigurations(
   customLaunchConfigurations: LaunchConfiguration[],
   selectedLaunchConfiguration: LaunchConfiguration
@@ -40,9 +47,6 @@ function renderLaunchConfigurations(
   if (customLaunchConfigurations.length === 0) {
     return null;
   }
-
-  const displayName = (config: LaunchConfiguration) =>
-    config.name === undefined || config.name === "Radon IDE panel" ? config.appRoot : config.name;
 
   return (
     <Select.Group>
@@ -53,8 +57,8 @@ function renderLaunchConfigurations(
           value={`custom:${idx}`}
           key={idx}
           icon={<span className="codicon codicon-file" />}
-          title={displayName(config)}
-          subtitle={displayName(config) !== config.appRoot ? config.appRoot : undefined}
+          title={displayNameForConfig(config) ?? config.appRoot}
+          subtitle={displayNameForConfig(config) ? config.appRoot : undefined}
           isSelected={_.isEqual(selectedLaunchConfiguration, config)}
         />
       ))}
@@ -68,8 +72,6 @@ function AppRootSelect() {
   const { selectedLaunchConfiguration, customLaunchConfigurations } = projectState;
   const selectedAppRootPath = projectState.appRootPath;
   const selectedAppRoot = applicationRoots.find((root) => root.path === selectedAppRootPath);
-  const selectedAppRootName =
-    selectedAppRoot?.displayName ?? selectedAppRoot?.name ?? selectedAppRootPath;
 
   const handleAppRootChange = async (value: string) => {
     const launchConfiguration = value.startsWith("approot:")
@@ -82,13 +84,18 @@ function AppRootSelect() {
     project.setLaunchConfiguration(launchConfiguration);
   };
 
+  const selectedAppRootName =
+    selectedAppRoot?.displayName ?? selectedAppRoot?.name ?? selectedAppRootPath;
+  const selectedConfigName = displayNameForConfig(selectedLaunchConfiguration);
+  const value = selectedConfigName ?? selectedAppRootName;
+
   return (
     <Select.Root onValueChange={handleAppRootChange} value={selectedAppRootPath}>
       <Select.Trigger className="approot-select-trigger" disabled={applicationRoots.length === 0}>
         <Select.Value placeholder="No applications found">
           <div className="approot-select-value">
             <span className="codicon codicon-folder-opened" />
-            <span className="approot-select-value-text">{selectedAppRootName}</span>
+            <span className="approot-select-value-text">{value}</span>
           </div>
         </Select.Value>
       </Select.Trigger>
