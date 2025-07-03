@@ -40,7 +40,7 @@ import {
 } from "../common/Project";
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
-import { throttle } from "../utilities/throttle";
+import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
@@ -49,8 +49,10 @@ import { ReloadAction } from "../common/DeviceSessionsManager";
 import { focusSource } from "../utilities/focusSource";
 import { ApplicationContext } from "./ApplicationContext";
 import { BuildCache } from "../builders/BuildCache";
+import { watchProjectFiles } from "../utilities/watchProjectFiles";
 
 const MAX_URL_HISTORY_SIZE = 20;
+const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 type RestartOptions = {
   forceClean: boolean;
@@ -83,7 +85,7 @@ export class DeviceSession
   private buildManager: BuildManager;
   private buildCache: BuildCache;
   private cancelToken: CancelToken | undefined;
-  private cacheStaleSubscription: Disposable;
+  private watchProjectSubscription: Disposable;
 
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
@@ -135,7 +137,7 @@ export class DeviceSession
       displayName: this.device.deviceInfo.displayName,
       useParentDebugSession: true,
     });
-    this.cacheStaleSubscription = this.buildCache.onCacheStale(this.onCacheStale);
+    this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
   }
 
   public getState(): DeviceSessionState {
@@ -196,6 +198,34 @@ export class DeviceSession
     this.stageProgress = undefined;
     this.emitStateChange();
   }
+
+  private onProjectFilesChanged = throttleAsync(async () => {
+    const appRoot = this.applicationContext.appRootFolder;
+    const hasCachedBuild = this.applicationContext.buildCache.hasCachedBuild(
+      this.device.platform,
+      appRoot
+    );
+    const launchConfig = getLaunchConfiguration();
+    const platformKey: "ios" | "android" =
+      this.device.platform === DevicePlatform.IOS ? "ios" : "android";
+    const fingerprintCommand = launchConfig.customBuild?.[platformKey]?.fingerprintCommand;
+    if (hasCachedBuild) {
+      const fingerprint = await this.applicationContext.buildCache.calculateFingerprint({
+        appRoot,
+        env: launchConfig.env,
+        fingerprintCommand,
+      });
+      const isCacheStale = await this.applicationContext.buildCache.isCacheStale(
+        fingerprint,
+        this.device.platform,
+        appRoot
+      );
+
+      if (isCacheStale) {
+        this.onCacheStale();
+      }
+    }
+  }, CACHE_STALE_THROTTLE_MS);
 
   //#region Metro delegate methods
 
@@ -269,10 +299,8 @@ export class DeviceSession
 
   //#endregion
 
-  //#region Build manager delegate methods
-
-  onCacheStale = (platform: DevicePlatform) => {
-    if (platform === this.device.platform && this.status === "running") {
+  onCacheStale = () => {
+    if (this.status === "running") {
       // we only consider "stale cache" in a non-error state that happens
       // after the launch phase if complete. Otherwsie, it may be a result of
       // the build process that triggers the callback in which case we don't want
@@ -281,8 +309,6 @@ export class DeviceSession
       this.emitStateChange();
     }
   };
-
-  //#endregion
 
   private makeDevtools() {
     const devtools = new Devtools();
@@ -341,7 +367,7 @@ export class DeviceSession
     this.device?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
-    this.cacheStaleSubscription.dispose();
+    this.watchProjectSubscription.dispose();
   }
 
   public async activate() {
@@ -528,9 +554,24 @@ export class DeviceSession
       platform: this.device.platform,
     });
 
+    const launchConfig = getLaunchConfiguration();
+    const platformKey = this.device.platform === DevicePlatform.IOS ? "ios" : "android";
+    const fingerprintOptions = {
+      appRoot: this.applicationContext.appRootFolder,
+      env: launchConfig.env,
+      fingerprintCommand: launchConfig.customBuild?.[platformKey]?.fingerprintCommand,
+    };
+
     this.resetStartingState();
     try {
-      if (await this.buildCache.isCacheStale(this.device.platform)) {
+      const currentFingerprint = await this.buildCache.calculateFingerprint(fingerprintOptions);
+      if (
+        await this.buildCache.isCacheStale(
+          currentFingerprint,
+          this.device.platform,
+          this.applicationContext.appRootFolder
+        )
+      ) {
         await this.restart({ forceClean: false, cleanCache: false });
         return;
       }

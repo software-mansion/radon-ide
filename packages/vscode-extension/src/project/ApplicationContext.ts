@@ -13,19 +13,20 @@ function createBuildManager(dependencyManager: DependencyManager, buildCache: Bu
 export class ApplicationContext implements Disposable {
   public dependencyManager: DependencyManager;
   public launchConfig: LaunchConfigController;
-  public buildCache: BuildCache;
   public buildManager: BuildManager;
   private disposables: Disposable[] = [];
 
-  constructor(public appRootFolder: string) {
+  constructor(
+    public appRootFolder: string,
+    public readonly buildCache: BuildCache
+  ) {
     this.dependencyManager = new DependencyManager(appRootFolder);
 
     this.launchConfig = new LaunchConfigController(appRootFolder);
-    this.buildCache = new BuildCache(appRootFolder);
     const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.buildManager = buildManager;
 
-    this.disposables.push(this.launchConfig, this.dependencyManager, buildManager, this.buildCache);
+    this.disposables.push(this.launchConfig, this.dependencyManager, buildManager);
   }
 
   public async updateAppRootFolder(newAppRoot: string) {
@@ -41,11 +42,10 @@ export class ApplicationContext implements Disposable {
     disposeAll(this.disposables);
 
     this.launchConfig = new LaunchConfigController(newAppRoot);
-    this.buildCache = new BuildCache(newAppRoot);
     const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.buildManager = buildManager;
 
-    this.disposables.push(this.launchConfig, this.dependencyManager, buildManager, this.buildCache);
+    this.disposables.push(this.launchConfig, this.dependencyManager, buildManager);
   }
 
   public dispose() {

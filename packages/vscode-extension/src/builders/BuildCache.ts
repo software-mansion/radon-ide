@@ -1,34 +1,15 @@
-import path from "path";
 import fs from "fs";
-import { createFingerprintAsync } from "@expo/fingerprint";
-import { EventEmitter, Disposable } from "vscode";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { DevicePlatform } from "../common/DeviceManager";
 import { IOSBuildResult } from "./buildIOS";
 import { AndroidBuildResult } from "./buildAndroid";
-import { getLaunchConfiguration } from "../utilities/launchConfiguration";
-import { runfingerprintCommand } from "./customBuild";
 import { calculateMD5 } from "../utilities/common";
 import { BuildResult } from "./BuildManager";
-import { throttleAsync } from "../utilities/throttle";
-import { watchProjectFiles } from "../utilities/watchProjectFiles";
+import { FingerprintOptions, FingerprintProvider } from "../project/FingerprintProvider";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const IOS_BUILD_CACHE_KEY = "ios_build_cache";
-
-const FINGERPRINT_THROTTLE_MS = 10 * 1000; // 10 seconds
-
-const IGNORE_PATHS = [
-  path.join("android", ".gradle/**/*"),
-  path.join("android", "build/**/*"),
-  path.join("android", "app", "build/**/*"),
-  path.join("ios", "build/**/*"),
-  path.join("ios", "DerivedData/**/*"),
-  "**/node_modules/**/android/.cxx/**/*",
-  "**/node_modules/**/.gradle/**/*",
-  "**/node_modules/**/android/build/intermediates/cxx/**/*",
-];
 
 export type BuildCacheInfo = {
   fingerprint: string;
@@ -42,42 +23,32 @@ function makeCacheKey(platform: DevicePlatform, appRoot: string) {
   return `${keyPrefix}:${appRoot}`;
 }
 
-export class BuildCache implements Disposable {
-  private workspaceChangeListener: Disposable;
-  private cacheStaleEventEmitter = new EventEmitter<DevicePlatform>();
-  public readonly onCacheStale = this.cacheStaleEventEmitter.event;
-
-  constructor(private readonly appRootFolder: string) {
-    this.workspaceChangeListener = watchProjectFiles(this.checkIfFingerprintsChanged);
-  }
-
-  dispose() {
-    this.workspaceChangeListener.dispose();
-    this.cacheStaleEventEmitter.dispose();
-  }
+export class BuildCache {
+  constructor(private readonly fingerprintProvider: FingerprintProvider) {}
 
   /**
    * Passed fingerprint should be calculated at the time build is started.
    */
-  public async storeBuild(buildFingerprint: string, build: BuildResult) {
+  public async storeBuild(buildFingerprint: string, appRootFolder: string, build: BuildResult) {
     const appPath = await getAppHash(getAppPath(build));
-    await extensionContext.globalState.update(makeCacheKey(build.platform, this.appRootFolder), {
+    await extensionContext.globalState.update(makeCacheKey(build.platform, appRootFolder), {
       fingerprint: buildFingerprint,
       buildHash: appPath,
       buildResult: build,
     });
   }
 
-  public async clearCache(platform: DevicePlatform) {
-    await extensionContext.globalState.update(
-      makeCacheKey(platform, this.appRootFolder),
-      undefined
-    );
+  public async clearCache(platform: DevicePlatform, appRootFolder: string) {
+    await extensionContext.globalState.update(makeCacheKey(platform, appRootFolder), undefined);
   }
 
-  public async getBuild(currentFingerprint: string, platform: DevicePlatform) {
+  public async getBuild(
+    currentFingerprint: string,
+    platform: DevicePlatform,
+    appRootFolder: string
+  ) {
     const cache = extensionContext.globalState.get<BuildCacheInfo>(
-      makeCacheKey(platform, this.appRootFolder)
+      makeCacheKey(platform, appRootFolder)
     );
     if (!cache) {
       Logger.debug("No cached build found.");
@@ -114,73 +85,26 @@ export class BuildCache implements Disposable {
     }
   }
 
-  public async isCacheStale(platform: DevicePlatform) {
-    const currentFingerprint = await this.calculateFingerprint(platform);
+  public async calculateFingerprint(options: FingerprintOptions) {
+    return this.fingerprintProvider.calculateFingerprint(options);
+  }
+
+  public async isCacheStale(
+    currentFingerprint: string,
+    platform: DevicePlatform,
+    appRootFolder: string
+  ) {
     const { fingerprint } =
-      extensionContext.globalState.get<BuildCacheInfo>(
-        makeCacheKey(platform, this.appRootFolder)
-      ) ?? {};
+      extensionContext.globalState.get<BuildCacheInfo>(makeCacheKey(platform, appRootFolder)) ?? {};
 
     return currentFingerprint !== fingerprint;
   }
 
-  public async calculateFingerprint(platform: DevicePlatform) {
-    Logger.debug("Calculating fingerprint");
-    const customFingerprint = await this.calculateCustomFingerprint(platform);
-
-    if (customFingerprint) {
-      Logger.debug("Using custom fingerprint", customFingerprint);
-      return customFingerprint;
-    }
-
-    const fingerprint = await createFingerprintAsync(this.appRootFolder, {
-      ignorePaths: IGNORE_PATHS,
-    });
-    Logger.debug("App folder fingerprint", fingerprint.hash);
-    return fingerprint.hash;
-  }
-
-  private async calculateCustomFingerprint(platform: DevicePlatform) {
-    const { customBuild, env } = getLaunchConfiguration();
-    const configPlatform = (
-      {
-        [DevicePlatform.Android]: "android",
-        [DevicePlatform.IOS]: "ios",
-      } as const
-    )[platform];
-    const fingerprintCommand = customBuild?.[configPlatform]?.fingerprintCommand;
-
-    if (!fingerprintCommand) {
-      return undefined;
-    }
-
-    Logger.debug(`Using custom fingerprint script '${fingerprintCommand}'`);
-    const fingerprint = await runfingerprintCommand(fingerprintCommand, env, this.appRootFolder);
-
-    if (!fingerprint) {
-      throw new Error("Failed to generate application fingerprint using custom script.");
-    }
-
-    Logger.debug("Application fingerprint", fingerprint);
-    return fingerprint;
-  }
-
-  private checkIfFingerprintsChanged = throttleAsync(async () => {
-    await Promise.all(
-      [DevicePlatform.Android, DevicePlatform.IOS].map(async (platform) => {
-        const cacheKey = makeCacheKey(platform, this.appRootFolder);
-        const hasCachedBuild = extensionContext.globalState.get<BuildCacheInfo>(cacheKey);
-        if (hasCachedBuild) {
-          const isCacheStale = await this.isCacheStale(platform);
-
-          if (isCacheStale) {
-            this.cacheStaleEventEmitter.fire(platform);
-            await this.clearCache(platform);
-          }
-        }
-      })
+  public hasCachedBuild(platform: DevicePlatform, appRootFolder: string) {
+    return !!extensionContext.globalState.get<BuildCacheInfo>(
+      makeCacheKey(platform, appRootFolder)
     );
-  }, FINGERPRINT_THROTTLE_MS);
+  }
 }
 
 function getAppPath(build: BuildResult) {
