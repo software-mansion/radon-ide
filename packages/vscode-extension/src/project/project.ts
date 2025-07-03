@@ -39,6 +39,8 @@ import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRoo
 import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager, DeviceSessionsManagerDelegate } from "./DeviceSessionsManager";
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
+import { FingerprintProvider } from "./FingerprintProvider";
+import { BuildCache } from "../builders/BuildCache";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -66,7 +68,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     private readonly utils: UtilsInterface
   ) {
     const appRoot = findAndSetupNewAppRootFolder();
-    this.applicationContext = new ApplicationContext(appRoot);
+    const fingerprintProvider = new FingerprintProvider();
+    const buildCache = new BuildCache(fingerprintProvider);
+    this.applicationContext = new ApplicationContext(appRoot, buildCache);
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
       this.deviceManager,
@@ -81,6 +85,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       previewZoom: undefined,
     };
 
+    this.disposables.push(fingerprintProvider);
     this.disposables.push(refreshTokenPeriodically());
     this.disposables.push(
       watchLicenseTokenChange(async () => {
