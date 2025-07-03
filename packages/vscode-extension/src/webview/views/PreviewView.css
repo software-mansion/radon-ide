@@ -91,8 +91,13 @@
 .recording-rec-indicator {
   display: flex;
   align-items: center;
+  gap: 6px;
   font-size: 120%;
   font-family: "Courier new", fixed;
+}
+
+.recording-rec-indicator span {
+  margin-top: 2px;
 }
 
 .icon-red {
