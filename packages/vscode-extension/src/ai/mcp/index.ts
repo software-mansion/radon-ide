@@ -34,7 +34,6 @@ export function directLoadRadonAi() {
       onDidChangeServerDefinitions: didChangeEmitter.event,
       provideMcpServerDefinitions: async () => {
         const port = await startLocalMcpServer();
-        Logger.error("XYZ:", port);
         return [
           new McpHttpServerDefinition(
             "RadonAI",
