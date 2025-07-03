@@ -16,7 +16,7 @@ captures what's currently visible on the device preview. Radon IDE will ask you 
 
 ## Screen recording
 
-<img width="3-0" src="/img/docs/ide_screen_recording_button.png" className="shadow-image" />
+<img width="300" src="/img/docs/ide_screen_recording_button.png" className="shadow-image" />
 
 <img width="350" src="/img/docs/ide_screen_recording_indicator.png" className="shadow-image" />
 
