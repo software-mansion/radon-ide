@@ -12,7 +12,7 @@ Click the screenshot button to capture what's currently visible on the device pr
 
 <img width="300" src="/img/docs/ide_screenshot_button.png" className="shadow-image" />
 
-The IDE will open a file dialog to choose where to save the screenshot.
+The IDE will open a file dialog to choose where to save the screenshot. The screenshot will be saved as `.png` file.
 
 <img width="450" src="/img/docs/ide_screenshot_where.png" className="shadow-image" />
 
@@ -22,7 +22,7 @@ To start screen recording click the screen recording button in the top-right cor
 
 <img width="300" src="/img/docs/ide_screen_recording_button.png" className="shadow-image" />
 
-A recording indicator appears in the top-right corner of the device preview. Clicking on the indicator stops the recording. Radon IDE will prompt you to choose where to save the recording.
+A recording indicator appears in the top-right corner of the device preview. Clicking on the indicator stops the recording. Radon IDE will prompt you to choose where to save the recording. The screen recording will be saved as a `.mp4` file.
 
 <img width="350" src="/img/docs/ide_screen_recording_indicator.png" className="shadow-image" />
 
