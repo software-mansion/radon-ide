@@ -2,7 +2,12 @@ import path from "path";
 import { Disposable, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import { MultimediaData, TouchPoint, DeviceButtonType } from "../common/Project";
+import {
+  MultimediaData,
+  TouchPoint,
+  DeviceButtonType,
+  DeviceRotationType,
+} from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
 
@@ -159,6 +164,17 @@ export class Preview implements Disposable {
 
   public hideTouches() {
     this.subprocess?.stdin?.write("pointer show false\n");
+  }
+
+  public rotateDevice(rotation: DeviceRotationType) {
+    this.subprocess?.stdin?.write(`rotate ${rotation}\n`, (err) => {
+      if (err) {
+        Logger.error("sim-server: Error rotating device:", err);
+        throw new Error(`Failed to rotate device: ${err.message}`);
+      }
+      Logger.info(`sim-server: device rotated to ${rotation}`);
+     });
+    return rotation;
   }
 
   public startRecording() {

@@ -2,7 +2,7 @@ import fs from "fs";
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, TouchPoint, DeviceButtonType } from "../common/Project";
+import { AppPermissionType, DeviceSettings, TouchPoint, DeviceButtonType, DeviceRotationType } from "../common/Project";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 import { extensionContext } from "../utilities/extensionContext";
@@ -43,6 +43,7 @@ export abstract class DeviceBase implements Disposable {
   );
 
   abstract get lockFilePath(): string;
+  private _rotation: DeviceRotationType = "Portrait";
 
   public get previewURL() {
     return this.preview?.streamURL;
@@ -50,6 +51,10 @@ export abstract class DeviceBase implements Disposable {
 
   public get previewReady() {
     return this.preview?.streamURL !== undefined;
+  }
+
+  public get rotation(): DeviceRotationType {
+    return this._rotation;
   }
 
   async reboot(): Promise<void> {
@@ -174,7 +179,7 @@ export abstract class DeviceBase implements Disposable {
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
     // iOS simulator has a buggy behavior when sending cmd+V key combination.
-    // It sometimes triggers paste action but with a very low success rate.
+    // It sometimes triggers paste action but with a very §w success rate.
     // Other times it kicks in before the pasteboard is filled with the content
     // therefore pasting the previously copied content instead.
     // As a temporary workaround, we disable sending cmd+V as key combination
@@ -212,6 +217,14 @@ export abstract class DeviceBase implements Disposable {
 
   public sendWheel(point: TouchPoint, deltaX: number, deltaY: number) {
     this.preview?.sendWheel(point, deltaX, deltaY);
+  }
+
+  public sendRotate(rotation: DeviceRotationType) {
+    if(!this.preview) {
+      throw new Error("Preview not started");
+    }
+    this._rotation = this.preview.rotateDevice(rotation);
+    return this._rotation;
   }
 
   async startPreview() {

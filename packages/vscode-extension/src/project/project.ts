@@ -8,6 +8,7 @@ import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
+  DeviceRotationType,
   DeviceSessionsManagerState,
   DeviceSessionState,
   DeviceSettings,
@@ -438,6 +439,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number) {
     this.deviceSession?.sendWheel(point, deltaX, deltaY);
+  }
+
+  public dispatchRotate(rotation: DeviceRotationType) {
+    this.deviceSession?.sendRotate(rotation);
   }
 
   public async inspectElementAt(

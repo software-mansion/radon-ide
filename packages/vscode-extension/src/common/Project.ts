@@ -103,6 +103,7 @@ export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
   status: "running";
   isRefreshing: boolean;
   bundleError: BundleErrorDescriptor | undefined;
+  rotation: DeviceRotationType;
 };
 
 export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {
@@ -294,6 +295,7 @@ export interface ProjectInterface {
   dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number): void;
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;
+  dispatchRotate(rotation: DeviceRotationType): void;
   inspectElementAt(
     xRatio: number,
     yRatio: number,
