@@ -72,11 +72,12 @@ export class FingerprintProvider implements Disposable {
     this.workspaceWatcher = watchProjectFiles(this.onProjectFilesChanged);
   }
 
-  public async calculateFingerprint(options: FingerprintOptions): Promise<Fingerprint> {
+  public calculateFingerprint(options: FingerprintOptions): Promise<Fingerprint> {
     const cacheKey = this.makeCacheKey(options);
-    if (this.fingerprintCache.has(cacheKey)) {
+    const cachedFingerprintPromise = this.fingerprintCache.get(cacheKey);
+    if (cachedFingerprintPromise) {
       Logger.debug("Using cached fingerprint");
-      return this.fingerprintCache.get(this.makeCacheKey(options))!;
+      return cachedFingerprintPromise;
     }
     Logger.debug("Calculating fingerprint");
     const { appRoot } = options;
@@ -99,7 +100,7 @@ export class FingerprintProvider implements Disposable {
       }
     });
 
-    return await fingerprintPromise;
+    return fingerprintPromise;
   }
 
   private makeCacheKey(options: FingerprintOptions): string {
