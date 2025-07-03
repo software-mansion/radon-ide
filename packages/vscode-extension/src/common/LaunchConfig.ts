@@ -6,8 +6,21 @@ export type CustomBuild = {
   fingerprintCommand?: string;
 };
 
-export type LaunchConfigurationOptions = {
-  appRoot?: string;
+export type LaunchConfigurationOptions = Partial<LaunchConfiguration>;
+
+export interface IOSLaunchConfiguration {
+  scheme?: string;
+  configuration?: string;
+  launchArguments?: string[];
+}
+
+export interface AndroidLaunchConfiguration {
+  buildType?: string;
+  productFlavor?: string;
+}
+
+export interface LaunchConfiguration {
+  appRoot: string;
   metroConfigPath?: string;
   expoStartArgs?: string[];
   customBuild?: {
@@ -18,22 +31,15 @@ export type LaunchConfigurationOptions = {
     ios?: EasConfig;
     android?: EasConfig;
   };
-  env?: Record<string, string>;
-  ios?: {
-    scheme?: string;
-    configuration?: string;
-    launchArguments?: string[];
-  };
+  env: Record<string, string>;
+  ios?: IOSLaunchConfiguration;
   isExpo?: boolean;
-  android?: {
-    buildType?: string;
-    productFlavor?: string;
-  };
+  android?: AndroidLaunchConfiguration;
   packageManager?: string;
-  preview?: {
-    waitForAppLaunch?: boolean;
+  preview: {
+    waitForAppLaunch: boolean;
   };
-};
+}
 
 export interface LaunchConfigEventMap {
   launchConfigChange: LaunchConfigurationOptions;
