@@ -71,8 +71,8 @@ function isDirectLoadingAvailable() {
   );
 }
 
-export default function registerRadonAi() {
-  // The `registerRadonAi` function is never awaited, so awaiting operations like express.js launch are not blocking the IDE startup.
+export default async function registerRadonAi() {
+  // The `registerRadonAi` is async, but never awaited, to prevent slowing down Radon IDE startup.
   if (isDirectLoadingAvailable()) {
     directLoadRadonAi();
   } else {
