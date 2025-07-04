@@ -15,7 +15,7 @@ async function updateMcpConfig(port: number) {
   await writeMcpConfig(updatedConfig);
 }
 
-function directLoadRadonAi() {
+function directLoadRadonAI() {
   const didChangeEmitter = new EventEmitter<void>();
 
   // version suffix is incremented whenever we get auth token update notification
@@ -74,7 +74,7 @@ function isDirectLoadingAvailable() {
 export default async function registerRadonAi() {
   // The `registerRadonAi` is async, but never awaited, to prevent slowing down Radon IDE startup.
   if (isDirectLoadingAvailable()) {
-    directLoadRadonAi();
+    directLoadRadonAI();
   } else {
     extensionContext.subscriptions.push(
       watchLicenseTokenChange(() => {
