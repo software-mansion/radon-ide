@@ -115,10 +115,10 @@ const PricingPlansList = () => {
           <h2 className={pricing.plan__name}>Radon IDE Enterprise</h2>
           <h3 className={pricing.plan__price}>{enterprise}</h3>
           <p className={pricing.plan__tagline}>
-            For organizations that need custom solutions, support, and pricing.
+            For organizations that need custom contract options, pricing plans, and support.
           </p>
           <div className={pricing.plan__spacer} />
-          <Button href="mailto:projects@swmansion.com">Contact Sales</Button>
+          <Button href="mailto:projects@swmansion.com">Contact Us</Button>
         </PricingCard>
       </ul>
     </>
