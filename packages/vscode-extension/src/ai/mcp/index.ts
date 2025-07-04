@@ -72,7 +72,6 @@ function isDirectLoadingAvailable() {
 }
 
 export default function registerRadonAi() {
-  // The `registerRadonAi` is async, but never awaited, to prevent slowing down Radon IDE startup.
   if (isDirectLoadingAvailable()) {
     directLoadRadonAI();
   } else {
