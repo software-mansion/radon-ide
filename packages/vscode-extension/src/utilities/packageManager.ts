@@ -3,8 +3,8 @@ import fs from "fs";
 import { command } from "./subprocess";
 import { isWorkspaceRoot } from "./common";
 import { Logger } from "../Logger";
-import { getLaunchConfiguration } from "./launchConfiguration";
 import { requireNoCache } from "./requireNoCache";
+import { LaunchConfiguration } from "../common/LaunchConfig";
 
 export type PackageManagerInfo = {
   name: "npm" | "pnpm" | "yarn" | "bun";
@@ -31,7 +31,7 @@ async function listFilesSortedByModificationDate(dir: string) {
 const DEFAULT_PACKAGE_MANAGER = "npm";
 
 export async function resolvePackageManager(
-  appRoot: string
+  launchConfiguration: LaunchConfiguration
 ): Promise<PackageManagerInfo | undefined> {
   function findWorkspace(appRootPath: string) {
     let currentDir = appRootPath;
@@ -46,10 +46,10 @@ export async function resolvePackageManager(
     return undefined;
   }
 
-  const workspacePath = findWorkspace(appRoot);
+  const workspacePath = findWorkspace(launchConfiguration.absoluteAppRoot);
 
   async function findPackageManager(workspace: string) {
-    const { packageManager } = getLaunchConfiguration();
+    const { packageManager } = launchConfiguration;
 
     if (packageManager) {
       if (!isPackageManager(packageManager)) {
@@ -107,7 +107,7 @@ export async function resolvePackageManager(
     return DEFAULT_PACKAGE_MANAGER;
   }
 
-  const name = await findPackageManager(workspacePath ?? appRoot);
+  const name = await findPackageManager(workspacePath ?? launchConfiguration.absoluteAppRoot);
 
   try {
     await command(`${name} --version`);

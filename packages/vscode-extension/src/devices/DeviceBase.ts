@@ -95,7 +95,12 @@ export abstract class DeviceBase implements Disposable {
   abstract sendBiometricAuthorization(isMatch: boolean): Promise<void>;
   abstract getClipboard(): Promise<string | void>;
   abstract installApp(build: BuildResult, forceReinstall: boolean): Promise<void>;
-  abstract launchApp(build: BuildResult, metroPort: number, devtoolsPort: number): Promise<void>;
+  abstract launchApp(
+    build: BuildResult,
+    metroPort: number,
+    devtoolsPort: number,
+    launchArguments: string[]
+  ): Promise<void>;
   abstract terminateApp(packageNameOrBundleID: string): Promise<void>;
   abstract makePreview(): Preview;
   abstract get platform(): DevicePlatform;
