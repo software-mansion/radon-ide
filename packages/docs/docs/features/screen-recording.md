@@ -4,39 +4,71 @@ title: Screen recording
 sidebar_position: 5
 ---
 
-The Radon IDE can record what's currently happens on the device preview. This proves to be extremely useful for rewinding to UI issues after they already happened. You can also granularly go through the recording frame by frame or save it as a file to your computer.
+Radon IDE has access to what is happening on the device preview screen. It allows you to take screenshots and record the screen.
 
-## Enabling the screen recording
+## Capture a screenshot
 
-<img width="350" src="/img/docs/ide_enable_replays.png" className="shadow-image" />
+Click the screenshot button to capture what's currently visible on the device preview.
 
-Enabling the screen recording option gives access to a new `Replay` button in the top-right corner of the Radon IDE panel.
+<img width="300" src="/img/docs/ide_screenshot_button.png" className="shadow-image" />
 
-<img width="350" src="/img/docs/ide_replays_enabled.png" className="shadow-image" />
+The IDE will open a file dialog to choose where to save the screenshot. The screenshot will be saved as `.png` file.
 
-## Using Replay
+<img width="450" src="/img/docs/ide_screenshot_where.png" className="shadow-image" />
 
-Clicking on the `Replay` button rewinds the last 5 seconds of what was happening on the device preview.
+## Screen recording
+
+To start screen recording click the screen recording button in the top-right corner of the Radon IDE panel.
+
+<img width="300" src="/img/docs/ide_screen_recording_button.png" className="shadow-image" />
+
+A recording indicator appears in the top-right corner of the device preview. Clicking on the indicator stops the recording. Radon IDE will prompt you to choose where to save the recording. The screen recording will be saved as a `.mp4` file.
+
+<img width="350" src="/img/docs/ide_screen_recording_indicator.png" className="shadow-image" />
+
+When `Show Touches` is enabled, touch interactions are included in the recording. Radon IDE can capture recording up to 10 minutes.
 
 <video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/ide_screen_recording.mp4" type="video/mp4"/>
 </video>
 
-## Replay options
+## Replays
 
-On the replay overlay you have access to some functionalities like:
+Replays automatically capture the last few seconds of what was happening on the device preview. This allows you to review recent interactions after they occur, go through the recording frame by frame, or save the replay as a file.
 
-<img width="500" src="/img/docs/ide_screen_recording.png" className="shadow-image" />
+### Enabling replays
 
-1. **Replay length** - allows to adjust the length of the recording for last _5s_, _10s_, _30s_, or _full_ length of the recording,
-2. **Play/Pause button** - allows to manage the recording playback,
-3. **Seekbar** - allows to seek through or skip to a part of the video,
-4. **Previous frame** - jumps back one frame of the recording,
-5. **Next frame** - jumps forward one frame of the recording,
-6. **Save replay** - allows to save the recording.
+Enable the `Enable replays` option in device settings to activate the `Replay` feature.
 
-## Closing the Replay overlay
+<img width="350" src="/img/docs/ide_enable_replays.png" className="shadow-image" />
 
-You can close the overlay with a `x` button in the top-right corner of the overlay.
+A new button will appear in the top-right corner of the IDE panel.
+
+<img width="300" src="/img/docs/ide_replays_enabled.png" className="shadow-image" />
+
+### Using Replays
+
+Click the `Replay` button to view the last 5/10/30 seconds of screen activity.
+
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/ide_replays.mp4" type="video/mp4"/>
+</video>
+
+### Replay options
+
+The replay overlay provides the following controls:
+
+<img width="500" src="/img/docs/ide_replays.png" className="shadow-image" />
+
+1. **Replay length** - Select recording duration: 5s, 10s, 30s, or full length
+2. **Play/Pause button** - Control playback
+3. **Seekbar** - Navigate to specific timestamps
+4. **Previous frame** - Step backward one frame
+5. **Next frame** - Step forward one frame
+6. **Save replay** - Export the recording to file
+
+### Closing the Replay overlay
+
+Click the `x` button in the top-right corner to close the replay overlay.
 
 <img width="250" src="/img/docs/ide_close_overlay.png" className="shadow-image" />
