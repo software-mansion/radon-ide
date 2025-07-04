@@ -38,13 +38,10 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
   constructor(private launchConfiguration: LaunchConfiguration) {}
 
-  get appRootFolder() {
-    return this.launchConfiguration.absoluteAppRoot;
-  }
-
   setLaunchConfiguration(newLaunchConfiguration: LaunchConfiguration) {
     const newRoot = newLaunchConfiguration.absoluteAppRoot;
-    if (this.appRootFolder !== newRoot) {
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
+    if (appRoot !== newRoot) {
       this.packageManagerInternal = undefined;
     }
     this.launchConfiguration = newLaunchConfiguration;
@@ -67,7 +64,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async runAllDependencyChecks() {
-    const appRoot = this.appRootFolder;
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
     this.checkAndroidEmulatorBinaryStatus();
     this.checkAndroidDirectoryExits();
 
@@ -98,7 +95,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkSupportedNodeVersionInstalled(): Promise<boolean> {
-    const appRoot = this.appRootFolder;
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
     try {
       const { stdout: nodeVersion } = await exec("node", ["-v"]);
       const minimumNodeVersion = getMinimumSupportedNodeVersion(appRoot);
@@ -115,7 +112,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkAndroidDirectoryExits() {
-    const appRoot = this.appRootFolder;
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
     const androidDirPath = getAndroidSourceDir(appRoot);
 
     const isOptional = !(await projectRequiresNativeBuild(this.launchConfiguration));
@@ -131,7 +128,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkIOSDirectoryExists() {
-    const appRoot = this.appRootFolder;
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
     const iosDirPath = getIosSourceDir(appRoot);
 
     const isOptional = !(await projectRequiresNativeBuild(this.launchConfiguration));
@@ -146,7 +143,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkProjectUsesExpoRouter() {
-    const appRoot = this.appRootFolder;
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
     const dependsOnExpoRouter = appDependsOnExpoRouter(appRoot);
     const hasExpoRouterInstalled = npmPackageVersionCheck("expo-router", appRoot);
 
@@ -159,7 +156,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkProjectUsesStorybook() {
-    const appRoot = this.appRootFolder;
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
     const hasStotybookInstalled = npmPackageVersionCheck(
       "@storybook/react-native",
 
@@ -174,7 +171,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async installNodeModules(): Promise<boolean> {
-    const appRoot = this.appRootFolder;
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
     const packageManager = await this.getPackageManager();
     if (!packageManager) {
       return false;
@@ -199,7 +196,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async installPods(outputChannel: OutputChannel, cancelToken: CancelToken) {
-    const appRoot = this.appRootFolder;
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
     const iosDirPath = getIosSourceDir(appRoot);
 
     if (!iosDirPath) {
@@ -261,7 +258,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   private async shouldUseBundleCommand() {
-    const appRoot = this.appRootFolder;
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
     const gemfile = path.join(appRoot, "Gemfile");
     try {
       await fs.promises.access(gemfile);
@@ -303,7 +300,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkNodeModulesInstallationStatus() {
-    const appRoot = this.appRootFolder;
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
     const packageManager = await this.getPackageManager();
     if (!packageManager) {
       this.emitEvent("nodeModules", { status: "notInstalled", isOptional: false });
@@ -319,7 +316,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkPodsInstallationStatus() {
-    const appRoot = this.appRootFolder;
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
     const requiresNativeBuild = await projectRequiresNativeBuild(this.launchConfiguration);
     if (!requiresNativeBuild) {
       this.emitEvent("pods", { status: "notInstalled", isOptional: true });
@@ -357,7 +354,7 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   }
 
   public async checkEasCliInstallationStatus() {
-    const appRoot = this.appRootFolder;
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
     const installed = await isEasCliInstalled(appRoot);
     this.emitEvent("easCli", {
       status: installed ? "installed" : "notInstalled",

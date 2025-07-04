@@ -110,7 +110,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         const oldAppRoot = this.applicationContext.appRootFolder;
         if (selectedLaunchConfig.absoluteAppRoot !== oldAppRoot) {
           // If the app root has changed, we need to update the application context
-          this.setLaunchConfiguration(selectedLaunchConfig);
+          this.selectLaunchConfiguration(selectedLaunchConfig);
         } else {
           this.applicationContext.updateLaunchConfig(selectedLaunchConfig);
           this.updateProjectState({
@@ -121,7 +121,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
   }
 
-  async setLaunchConfiguration(options: LaunchConfigurationOptions): Promise<void> {
+  async selectLaunchConfiguration(options: LaunchConfigurationOptions): Promise<void> {
     const launchConfig = launchConfigurationFromOptions(options);
     if (_.isEqual(launchConfig, this.applicationContext.launchConfig)) {
       // No change in launch configuration, nothing to do
@@ -181,8 +181,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     assert(selectedSessionState !== undefined, "Expected the selected session to exist");
     return selectedSessionState;
   }
-
-  private async setupAppRoot() {}
 
   onInitialized(): void {
     this.updateProjectState({ initialized: true });
