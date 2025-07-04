@@ -86,6 +86,13 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     );
   }
 
+  public async terminateAllSessions() {
+    const sessionEntries = Array.from(this.deviceSessions.entries());
+    return Promise.all(
+      sessionEntries.map(([deviceId, _session]) => this.terminateSession(deviceId))
+    );
+  }
+
   public async startOrActivateSessionForDevice(
     deviceInfo: DeviceInfo,
     selectDeviceOptions?: SelectDeviceOptions

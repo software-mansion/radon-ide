@@ -11,9 +11,14 @@ import { extensionContext } from "../utilities/extensionContext";
 import { disposeAll } from "../utilities/disposables";
 import { Scanner } from "./Scanner";
 import ConnectSession from "./ConnectSession";
+import { ConnectState } from "../common/Project";
 
 const RADON_CONNECT_ENABLED_KEY = "radon_connect_enabled";
 export const RADON_CONNECT_PORT_KEY = "radon_connect_port";
+
+export interface ConnectorDelegate {
+  onConnectStateChanged(connectState: ConnectState): void;
+}
 
 export class Connector implements Disposable {
   private static instance: Connector | null = null;
@@ -23,6 +28,7 @@ export class Connector implements Disposable {
   private scanner: Scanner | null = null;
 
   private disposables: Disposable[] = [];
+  public delegate: ConnectorDelegate | null = null;
 
   private constructor() {
     this.statusBarItem = window.createStatusBarItem(
@@ -72,27 +78,31 @@ export class Connector implements Disposable {
           }
           extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, true);
           this.maybeStartScanner(true);
-          this.updateStatusBarItem();
+          this.handleStateChange();
         }
       })
     );
   }
 
-  private enable() {
+  public enable() {
     extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, true);
     this.maybeStartScanner();
-    this.updateStatusBarItem();
+    this.handleStateChange();
   }
 
-  private disable() {
+  public disable() {
     extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, false);
     this.disconnect();
     this.stopScanner();
-    this.updateStatusBarItem();
+    this.handleStateChange();
   }
 
   public get isEnabled() {
     return extensionContext.workspaceState.get(RADON_CONNECT_ENABLED_KEY, true);
+  }
+
+  public get isConnected() {
+    return this.connectSession !== null;
   }
 
   public dispose() {
@@ -115,7 +125,7 @@ export class Connector implements Disposable {
           this.connectSession = null;
         }
         connectSession.dispose();
-        this.updateStatusBarItem();
+        this.handleStateChange();
         this.maybeStartScanner();
       },
     });
@@ -139,7 +149,7 @@ export class Connector implements Disposable {
     }
 
     this.scanner = new Scanner({
-      onPortStatusUpdated: () => this.updateStatusBarItem(),
+      onPortStatusUpdated: () => this.handleStateChange(),
       onDeviceCandidateFound: async (metro, websocketAddress) => {
         await this.tryConnectJSDebuggerWithMetro(websocketAddress, metro);
       },
@@ -150,11 +160,11 @@ export class Connector implements Disposable {
   private stopScanner() {
     this.scanner?.dispose();
     this.scanner = null;
-    this.updateStatusBarItem();
+    this.handleStateChange();
   }
 
   public start() {
-    this.updateStatusBarItem();
+    this.handleStateChange();
     this.statusBarItem.show();
     commands.executeCommand("setContext", "RNIDE.showsStatusBarItem", true);
     this.maybeStartScanner();
@@ -169,7 +179,14 @@ export class Connector implements Disposable {
     }
   }
 
-  private updateStatusBarItem() {
+  private handleStateChange() {
+    // trigger delegate
+    this.delegate?.onConnectStateChanged({
+      enabled: this.isEnabled,
+      connected: this.isConnected,
+    });
+
+    // udpate status bar item
     const markdownText = new MarkdownString();
     markdownText.supportThemeIcons = true;
     markdownText.isTrusted = true;

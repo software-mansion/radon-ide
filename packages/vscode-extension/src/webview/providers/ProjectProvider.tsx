@@ -35,6 +35,10 @@ const defaultProjectState: ProjectState = {
   previewZoom: undefined,
   appRootPath: "./",
   initialized: false,
+  connectState: {
+    enabled: false,
+    connected: false,
+  },
 };
 
 const defaultDeviceSettings: DeviceSettings = {

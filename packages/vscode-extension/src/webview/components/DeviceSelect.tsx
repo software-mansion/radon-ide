@@ -85,7 +85,7 @@ function partitionDevices(devices: DeviceInfo[]): Record<string, DeviceInfo[]> {
 }
 
 function DeviceSelect() {
-  const { selectedDeviceSession, projectState } = useProject();
+  const { selectedDeviceSession, projectState, project } = useProject();
   const { devices, deviceSessionsManager } = useDevices();
   const { openModal } = useModal();
   const { stopPreviousDevices } = useWorkspaceConfig();
@@ -93,6 +93,8 @@ function DeviceSelect() {
 
   const hasNoDevices = devices.length === 0;
   const selectedDevice = selectedDeviceSession?.deviceInfo;
+  console.warn("STATETE", projectState);
+  const radonConnectEnabled = projectState.connectState.enabled;
 
   const { deviceSessions } = projectState;
   const runningSessionIds = Object.keys(deviceSessions);
@@ -102,6 +104,10 @@ function DeviceSelect() {
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
       openModal("Manage Devices", <ManageDevicesView />);
+      return;
+    }
+    if (value === "connect") {
+      project.enableRadonConnect();
       return;
     }
     if (selectedDevice?.id !== value) {
@@ -122,18 +128,21 @@ function DeviceSelect() {
   const text = selectedDevice?.displayName ?? placeholderText;
   const backgroundDeviceCounter = runningSessionIds.length - (selectedDevice ? 1 : 0);
 
+  const displayName = radonConnectEnabled ? "Radon Connect" : selectedDevice?.displayName;
+  const iconClass = radonConnectEnabled ? "debug-disconnect" : "device-mobile";
+
+  // NOTE: we use placeholder text as the value initially because passing `undefined` causes
+  // issues with the "manage devices" option.
+  // See https://github.com/software-mansion/radon-ide/pull/1231#pullrequestreview-2910304970
+  const value = radonConnectEnabled ? "connect" : selectedDevice?.id;
+
   return (
-    <Select.Root
-      onValueChange={handleDeviceDropdownChange}
-      // NOTE: we pass the placeholder text as the value because passing `undefined` causes
-      // issues with the "manage devices" option.
-      // See https://github.com/software-mansion/radon-ide/pull/1231#pullrequestreview-2910304970
-      value={selectedDevice?.id ?? placeholderText}>
+    <Select.Root onValueChange={handleDeviceDropdownChange} value={value}>
       <Select.Trigger className="device-select-trigger" disabled={hasNoDevices}>
         <Select.Value>
           <div className="device-select-value">
-            <span className="codicon codicon-device-mobile" />
-            <span className="device-select-value-text">{text}</span>
+            <span className={`codicon codicon-${iconClass}`} />
+            <span className="device-select-value-text">{displayName}</span>
             {backgroundDeviceCounter > 0 && (
               <span className="device-select-counter">+{backgroundDeviceCounter}</span>
             )}
@@ -160,7 +169,17 @@ function DeviceSelect() {
                 handleDeviceStop
               )
             )}
-            {devices.length > 0 && <Select.Separator className="device-select-separator" />}
+            <Select.Separator className="device-select-separator" />
+            <Select.Group>
+              <RichSelectItem
+                value="connect"
+                icon={<span className="codicon codicon-debug-disconnect" />}
+                title="Radon Connect"
+                subtitle="Attach to own device/simulator"
+                isSelected={radonConnectEnabled}
+              />
+            </Select.Group>
+            <Select.Separator className="device-select-separator" />
             <SelectItem value="manage">Manage devices...</SelectItem>
           </Select.Viewport>
           <Select.ScrollDownButton className="device-select-scroll">

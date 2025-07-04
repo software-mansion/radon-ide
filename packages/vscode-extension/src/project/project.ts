@@ -41,6 +41,7 @@ import { DeviceSessionsManager, DeviceSessionsManagerDelegate } from "./DeviceSe
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 import { FingerprintProvider } from "./FingerprintProvider";
 import { BuildCache } from "../builders/BuildCache";
+import { Connector } from "../connect/Connector";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -77,12 +78,27 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this
     );
 
+    const connector = Connector.getInstance();
+
     this.projectState = {
       selectedSessionId: null,
       deviceSessions: {},
       initialized: false,
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
+      connectState: {
+        enabled: connector.isEnabled,
+        connected: connector.isConnected,
+      },
+    };
+
+    connector.delegate = {
+      onConnectStateChanged: (connectState) => {
+        this.updateProjectState({ connectState });
+        if (connectState.enabled) {
+          this.deviceSessionsManager.terminateAllSessions();
+        }
+      },
     };
 
     this.disposables.push(fingerprintProvider);
@@ -114,6 +130,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         }
       })
     );
+
+    this.disposables.push({
+      dispose: () => {
+        connector.delegate = null;
+      },
+    });
   }
 
   onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
@@ -498,6 +520,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         await this.deviceSessionsManager.reloadCurrentSession("reboot");
       }
     }
+  }
+
+  public async enableRadonConnect() {
+    Connector.getInstance().enable();
+  }
+
+  public async disableRadonConnect() {
+    Connector.getInstance().disable();
   }
 
   onToolsStateChange = (toolsState: ToolsState) => {

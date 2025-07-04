@@ -116,10 +116,16 @@ export interface DeviceSessionsManagerState {
   deviceSessions: Record<DeviceId, DeviceSessionState>;
 }
 
+export type ConnectState = {
+  enabled: boolean;
+  connected: boolean;
+};
+
 export type ProjectState = {
   initialized: boolean;
   appRootPath: string | undefined;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
+  connectState: ConnectState;
 } & DeviceSessionsManagerState;
 
 export type ZoomLevelType = number | "Fit";
@@ -221,6 +227,9 @@ export interface ProjectInterface {
 
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
   openTool(toolName: keyof ToolsState): Promise<void>;
+
+  enableRadonConnect(): Promise<void>;
+  disableRadonConnect(): Promise<void>;
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
