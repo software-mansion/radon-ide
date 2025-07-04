@@ -164,7 +164,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.applicationContext.dependencyManager;
   }
 
-  get launchConfig() {
+  get launchConfigurationController() {
     return this.applicationContext.launchConfigurationController;
   }
 
