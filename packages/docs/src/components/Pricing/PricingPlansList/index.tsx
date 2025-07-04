@@ -4,6 +4,7 @@ import usePaddle from "@site/src/hooks/usePaddle";
 import pricing from "../PricingCard/pricing.module.css";
 import Button from "../../Button";
 import PricingCard from "../PricingCard";
+import { clsx } from "clsx";
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -44,6 +45,15 @@ const PricingPlansList = () => {
     <>
       $290 <span className={pricing.plan__currency}>USD</span>
       <p className={pricing.plan__price_second_line}> per seat/year excl. VAT </p>
+    </>
+  );
+
+  const enterprise = (
+    <>
+      Custom
+      <p className={clsx(pricing.plan__price_second_line, pricing.plan__price_second_line_hidden)}>
+        .
+      </p>
     </>
   );
 
@@ -100,6 +110,15 @@ const PricingPlansList = () => {
           </p>
           <div className={pricing.plan__spacer} />
           <Button onClick={openBusinessCheckout}>Buy Business</Button>
+        </PricingCard>
+        <PricingCard>
+          <h2 className={pricing.plan__name}>Radon IDE Enterprise</h2>
+          <h3 className={pricing.plan__price}>{enterprise}</h3>
+          <p className={pricing.plan__tagline}>
+            For organizations that need custom solutions, support, and pricing.
+          </p>
+          <div className={pricing.plan__spacer} />
+          <Button href="mailto:projects@swmansion.com">Contact Sales</Button>
         </PricingCard>
       </ul>
     </>
