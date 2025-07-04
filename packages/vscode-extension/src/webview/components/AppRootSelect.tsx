@@ -1,39 +1,13 @@
 import * as Select from "@radix-ui/react-select";
 import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
+import _ from "lodash";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { useProject } from "../providers/ProjectProvider";
-import { ApplicationRoot, LaunchConfiguration } from "../../common/LaunchConfig";
+import { LaunchConfigurationOptions } from "../../common/LaunchConfig";
 import RichSelectItem from "./shared/RichSelectItem";
-import _ from "lodash";
 
-function renderAppRoots(
-  applicationRoots: ApplicationRoot[],
-  selectedAppRootPath: string | undefined
-) {
-  if (applicationRoots.length === 0) {
-    return null;
-  }
-
-  return (
-    <Select.Group>
-      <Select.Label className="approot-select-label">Select application</Select.Label>
-      {applicationRoots.map(({ path, displayName, name }) => (
-        <RichSelectItem
-          className="approot-select-item"
-          value={`approot:${path}`}
-          key={path}
-          icon={<span className="codicon codicon-folder" />}
-          title={displayName || name}
-          subtitle={path}
-          isSelected={path === selectedAppRootPath}
-        />
-      ))}
-    </Select.Group>
-  );
-}
-
-function displayNameForConfig(config: LaunchConfiguration) {
+function displayNameForConfig(config: LaunchConfigurationOptions) {
   if (config.name === "Radon IDE panel") {
     return undefined;
   }
@@ -41,8 +15,10 @@ function displayNameForConfig(config: LaunchConfiguration) {
 }
 
 function renderLaunchConfigurations(
-  customLaunchConfigurations: LaunchConfiguration[],
-  selectedLaunchConfiguration: LaunchConfiguration
+  groupLabel: string,
+  prefix: string,
+  customLaunchConfigurations: LaunchConfigurationOptions[],
+  selectedValue: string | undefined
 ) {
   if (customLaunchConfigurations.length === 0) {
     return null;
@@ -50,19 +26,51 @@ function renderLaunchConfigurations(
 
   return (
     <Select.Group>
-      <Select.Label className="approot-select-label">Custom configurations</Select.Label>
+      <Select.Label className="approot-select-label">{groupLabel}</Select.Label>
       {customLaunchConfigurations.map((config, idx) => (
         <RichSelectItem
           className="approot-select-item"
-          value={`custom:${idx}`}
+          value={`${prefix}:${idx}`}
           key={idx}
-          icon={<span className="codicon codicon-file" />}
-          title={displayNameForConfig(config) ?? config.appRoot}
+          icon={<span className="codicon codicon-folder" />}
+          title={displayNameForConfig(config) ?? config.appRoot ?? "./"}
           subtitle={displayNameForConfig(config) ? config.appRoot : undefined}
-          isSelected={_.isEqual(selectedLaunchConfiguration, config)}
+          isSelected={selectedValue === `${prefix}:${idx}`}
         />
       ))}
     </Select.Group>
+  );
+}
+
+function renderDetectedLaunchConfigurations(
+  detectedConfigurations: LaunchConfigurationOptions[],
+  selectedValue: string | undefined
+) {
+  if (detectedConfigurations.length === 0) {
+    return null;
+  }
+
+  return renderLaunchConfigurations(
+    "Detected applications",
+    "detected",
+    detectedConfigurations,
+    selectedValue
+  );
+}
+
+function renderCustomLaunchConfigurations(
+  customLaunchConfigurations: LaunchConfigurationOptions[],
+  selectedValue: string | undefined
+) {
+  if (customLaunchConfigurations.length === 0) {
+    return null;
+  }
+
+  return renderLaunchConfigurations(
+    "Custom configurations",
+    "custom",
+    customLaunchConfigurations,
+    selectedValue
   );
 }
 
@@ -73,14 +81,21 @@ function AppRootSelect() {
   const selectedAppRootPath = projectState.appRootPath;
   const selectedAppRoot = applicationRoots.find((root) => root.path === selectedAppRootPath);
 
+  const detectedConfigurations: LaunchConfigurationOptions[] = applicationRoots.map(
+    ({ path, displayName, name }) => {
+      return {
+        appRoot: path,
+        name: displayName || name,
+      };
+    }
+  );
+
   const handleAppRootChange = async (value: string) => {
-    const launchConfiguration = value.startsWith("approot:")
-      ? {
-          appRoot: value.slice("approot:".length),
-          env: {},
-          preview: { waitForAppLaunch: true },
-        }
-      : customLaunchConfigurations[parseInt(value.slice("custom:".length), 10)];
+    const index = parseInt(value.split(":")[1], 10);
+    const configs = value.startsWith("detected:")
+      ? detectedConfigurations
+      : customLaunchConfigurations;
+    const launchConfiguration = configs[index];
     project.setLaunchConfiguration(launchConfiguration);
   };
 
@@ -88,6 +103,21 @@ function AppRootSelect() {
     selectedAppRoot?.displayName ?? selectedAppRoot?.name ?? selectedAppRootPath;
   const selectedConfigName = displayNameForConfig(selectedLaunchConfiguration);
   const value = selectedConfigName ?? selectedAppRootName;
+
+  const selectedValue = (() => {
+    if (selectedLaunchConfiguration) {
+      const index = customLaunchConfigurations.findIndex((config) =>
+        _.isEqual(config, selectedLaunchConfiguration)
+      );
+      if (index !== -1) {
+        return `custom:${index}`;
+      }
+    }
+    const index = detectedConfigurations.findIndex(
+      (config) => config.appRoot === selectedAppRootPath
+    );
+    return index !== -1 ? `detected:${index}` : undefined;
+  })();
 
   return (
     <Select.Root onValueChange={handleAppRootChange} value={selectedAppRootPath}>
@@ -109,8 +139,8 @@ function AppRootSelect() {
             <span className="codicon codicon-chevron-up" />
           </Select.ScrollUpButton>
           <Select.Viewport className="approot-select-viewport">
-            {renderAppRoots(applicationRoots, selectedAppRootPath)}
-            {renderLaunchConfigurations(customLaunchConfigurations, selectedLaunchConfiguration)}
+            {renderDetectedLaunchConfigurations(detectedConfigurations, selectedValue)}
+            {renderCustomLaunchConfigurations(customLaunchConfigurations, selectedValue)}
           </Select.Viewport>
           <Select.ScrollDownButton className="approot-select-scroll">
             <span className="codicon codicon-chevron-down" />
