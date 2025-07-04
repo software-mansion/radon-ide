@@ -1,3 +1,27 @@
+/*
+ * CSS Custom Properties used by Device.tsx component:
+ * 
+ * Device content sizing:
+ * --phone-content-min-height: Minimum height for phone content (350px)
+ * --phone-content-min-width: Minimum width for phone content (350px * aspect ratio)
+ * --phone-content-width: Current width of phone content (responsive)
+ * --phone-content-height: Current height of phone content (responsive)
+ * --phone-aspect-ratio: Aspect ratio of the device frame
+ * 
+ * Screen positioning and sizing:
+ * --phone-screen-height: Height of the screen area as percentage of frame
+ * --phone-screen-width: Width of the screen area as percentage of frame
+ * --phone-top: Top offset of screen area as percentage of frame
+ * --phone-left: Left offset of screen area as percentage of frame
+ * 
+ * Device appearance:
+ * --phone-mask-image: URL to the device mask image for screen clipping
+ * --phone-frame-image: URL to the device frame image (used in .phone-bezel)
+ * 
+ * Transform properties:
+ * rotate: CSS rotation for device orientation (0deg, 90deg, -90deg, 180deg)
+ */
+
 .phone-wrapper {
   flex: 1;
   display: flex;
@@ -18,11 +42,16 @@
   position: relative;
   display: flex;
   aspect-ratio: var(--phone-aspect-ratio);
-  max-width: 100%;
-  max-height: 100%;
-  min-height: 350px;
+  width: calc(var(--phone-content-width));
+  height: var(--phone-content-height);
+  min-height: var(--phone-content-min-height); /* 350px */
+  min-width: var(--phone-content-min-width); /* 350px * phones aspect ratio */
   align-self: center;
-  /* object-fit: scale-down; */
+  object-fit: scale-down;
+
+  /* From previous version, unused for now */
+  /* max-width: 100%;
+  max-height: 100%; */ 
 }
 
 .touch-area {
