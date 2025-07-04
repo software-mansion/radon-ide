@@ -1,12 +1,13 @@
 /*
  * CSS Custom Properties used by Device.tsx component:
  * 
- * Device content sizing:
+ * Device content positioning and sizing:
+ * --phone-content-offset-top: Top margin offset for the resizable wrapper (0px or negative centering)
  * --phone-content-min-height: Minimum height for phone content (350px)
- * --phone-content-min-width: Minimum width for phone content (350px * aspect ratio)
- * --phone-content-width: Current width of phone content (responsive)
- * --phone-content-height: Current height of phone content (responsive)
- * --phone-aspect-ratio: Aspect ratio of the device frame
+ * --phone-content-min-width: Minimum width for phone content (350px * aspect ratio or fit-content)
+ * --phone-content-width: Current width of phone content (auto, or calculated px value for landscape)
+ * --phone-content-height: Current height of phone content (100% or calculated px value for landscape)
+ * --phone-aspect-ratio: Aspect ratio of the device frame (width/height)
  * 
  * Screen positioning and sizing:
  * --phone-screen-height: Height of the screen area as percentage of frame
@@ -19,7 +20,7 @@
  * --phone-frame-image: URL to the device frame image (used in .phone-bezel)
  * 
  * Transform properties:
- * rotate: CSS rotation for device orientation (0deg, 90deg, -90deg, 180deg)
+ * --content-rotate: CSS rotation for device orientation (0deg, -90deg, 90deg, 180deg)
  */
 
 .phone-wrapper {
@@ -38,6 +39,14 @@
   outline: none;
 }
 
+ 
+.phone-wrapper-resizable {
+  margin-top: var(--phone-content-offset-top);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .phone-content {
   position: relative;
   display: flex;
@@ -46,8 +55,8 @@
   height: var(--phone-content-height);
   min-height: var(--phone-content-min-height); /* 350px */
   min-width: var(--phone-content-min-width); /* 350px * phones aspect ratio */
-  align-self: center;
   object-fit: scale-down;
+  rotate: var(--content-rotate);
 
   /* From previous version, unused for now */
   /* max-width: 100%;
