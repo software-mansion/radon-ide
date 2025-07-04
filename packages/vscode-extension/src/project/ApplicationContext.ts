@@ -1,5 +1,4 @@
-import path from "path";
-import { Disposable, workspace } from "vscode";
+import { Disposable } from "vscode";
 import { BuildCache } from "../builders/BuildCache";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { LaunchConfigController } from "../panels/LaunchConfigController";
@@ -31,7 +30,7 @@ export class ApplicationContext implements Disposable {
   }
 
   public get appRootFolder(): string {
-    return path.resolve(workspace.workspaceFolders![0].uri.fsPath, this.launchConfig.appRoot);
+    return this.launchConfig.absoluteAppRoot;
   }
 
   public async updateLaunchConfig(launchConfig: LaunchConfiguration) {
