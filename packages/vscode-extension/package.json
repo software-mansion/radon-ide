@@ -540,11 +540,31 @@
             "type": "radon-ide",
             "request": "launch",
             "name": "Radon IDE panel",
+            "env": {},
             "ios": {
               "configuration": "Debug"
             },
             "android": {
               "buildType": "debug"
+            }
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Radon IDE: Application configuration",
+            "description": "A new configuration for launching a React Native application in Radon IDE.",
+            "body": {
+              "type": "radon-ide",
+              "request": "launch",
+              "name": "${1:Application name}",
+              "appRoot": "${2:./}",
+              "env": {},
+              "ios": {
+                "configuration": "Debug"
+              },
+              "android": {
+                "buildType": "debug"
+              }
             }
           }
         ]
