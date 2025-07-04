@@ -73,7 +73,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   ) {
     const fingerprintProvider = new FingerprintProvider();
     const buildCache = new BuildCache(fingerprintProvider);
-    const initialLaunchConfig = this.launchConfigsManager.launchConfigurations[0];
+    const initialLaunchConfig = this.launchConfigsManager.initialLaunchConfiguration;
     this.applicationContext = new ApplicationContext(initialLaunchConfig, buildCache);
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,

@@ -82,6 +82,13 @@ export class LaunchConfigurationsManager implements Disposable {
     return this._launchConfigurations.slice();
   }
 
+  public get initialLaunchConfiguration(): LaunchConfiguration {
+    if (this._launchConfigurations.length > 0) {
+      return this._launchConfigurations[0];
+    }
+    return launchConfigurationFromOptions({});
+  }
+
   dispose() {
     this.watchWorkspaceConfiguration.dispose();
     this.launchConfigurationsChangedEventEmitter.dispose();
