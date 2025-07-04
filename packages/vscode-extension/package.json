@@ -574,6 +574,25 @@
                 "buildType": "debug"
               }
             }
+          },
+          {
+            "label": "Radon IDE: EAS configuration",
+            "description": "A new configuration for launching a React Native application in Radon IDE. Uses EAS build service.",
+            "body": {
+              "type": "radon-ide",
+              "request": "launch",
+              "name": "${1:Application name}",
+              "appRoot": "${2:./}",
+              "env": {},
+              "eas": {
+                "ios": {
+                  "profile": "${3:development}"
+                },
+                "android": {
+                  "profile": "${3:development}"
+                }
+              }
+            }
           }
         ]
       },
