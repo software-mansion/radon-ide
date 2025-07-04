@@ -50,8 +50,8 @@ function handleUncaughtErrors(context: ExtensionContext) {
       return;
     }
     Logger.error("Uncaught exception", error);
-    Logger.openOutputPanel();
     if (context.extensionMode === ExtensionMode.Development) {
+      Logger.openOutputPanel();
       window.showErrorMessage("Internal extension error.", "Dismiss");
     }
   });
