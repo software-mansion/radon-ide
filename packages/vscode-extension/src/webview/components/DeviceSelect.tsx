@@ -125,16 +125,13 @@ function DeviceSelect() {
   };
 
   const placeholderText = hasNoDevices ? "No devices found" : "Select device";
-  const text = selectedDevice?.displayName ?? placeholderText;
+  const deviceNameOrPlaceholder = selectedDevice?.displayName ?? placeholderText;
   const backgroundDeviceCounter = runningSessionIds.length - (selectedDevice ? 1 : 0);
 
-  const displayName = radonConnectEnabled ? "Radon Connect" : selectedDevice?.displayName;
+  const displayName = radonConnectEnabled ? "Radon Connect" : deviceNameOrPlaceholder;
   const iconClass = radonConnectEnabled ? "debug-disconnect" : "device-mobile";
 
-  // NOTE: we use placeholder text as the value initially because passing `undefined` causes
-  // issues with the "manage devices" option.
-  // See https://github.com/software-mansion/radon-ide/pull/1231#pullrequestreview-2910304970
-  const value = radonConnectEnabled ? "connect" : selectedDevice?.id;
+  const value = radonConnectEnabled ? "connect" : (selectedDevice?.id ?? placeholderText);
 
   return (
     <Select.Root onValueChange={handleDeviceDropdownChange} value={value}>

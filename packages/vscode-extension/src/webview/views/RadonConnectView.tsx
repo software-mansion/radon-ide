@@ -1,6 +1,9 @@
+import { useProject } from "../providers/ProjectProvider";
 import "./RadonConnectView.css";
 
-export default function RadonConnectView({ connected }: { connected: boolean }) {
+export default function RadonConnectView() {
+  const { projectState } = useProject();
+  const connected = projectState.connectState.connected;
   const className = connected ? "connected" : "";
   return (
     <div className="radon-connect-container">

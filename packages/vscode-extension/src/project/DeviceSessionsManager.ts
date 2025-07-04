@@ -15,6 +15,7 @@ import {
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
 import { DeviceId, DeviceSessionsManagerState } from "../common/Project";
+import { Connector } from "../connect/Connector";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -97,6 +98,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     deviceInfo: DeviceInfo,
     selectDeviceOptions?: SelectDeviceOptions
   ) {
+    Connector.getInstance().disable();
     const stopPreviousDevices = selectDeviceOptions?.stopPreviousDevices;
 
     // if there's an existing session for the device, we use it instead of starting a new one
@@ -174,6 +176,10 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   }
 
   private findInitialDeviceAndStartSession = async () => {
+    if (Connector.getInstance().isEnabled) {
+      // when radon connect is enabled, we don't want to automatically select and start a device
+      return;
+    }
     if (this.findingDevice) {
       // NOTE: if we are already in the process of finding a device, we don't want to start it again
       return;
