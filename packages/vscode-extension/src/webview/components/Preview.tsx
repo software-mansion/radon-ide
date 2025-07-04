@@ -107,31 +107,35 @@ function Preview({
   const openRebuildAlert = useNativeRebuildAlert();
 
   function getTouchPosition(event: MouseEvent<HTMLDivElement>) {
-
-    const platform = selectedDeviceSession?.deviceInfo.platform;
-    const rotation = selectedDeviceSession?.status === 'running' ? selectedDeviceSession.rotation : undefined;
+    // const platform = selectedDeviceSession?.deviceInfo.platform;
+    const rotation =
+      selectedDeviceSession?.status === "running" ? selectedDeviceSession.rotation : undefined;
 
     const imgRect = previewRef.current!.getBoundingClientRect();
-    const x = (event.clientX - imgRect.left) / imgRect.width;
-    const y = (event.clientY - imgRect.top) / imgRect.height;
-    let clampedX = clamp(x, 0, 1);
-    let clampedY = clamp(y, 0, 1);
 
-    // if(platform === DevicePlatform.IOS && rotation === "LandscapeLeft" ){
-    //   return { x: clampedY, y: 1-clampedX };
-    // }
-    // if(platform === DevicePlatform.IOS && rotation === "LandscapeRight" ){
-    //   return { x: 1-clampedY, y: clampedX };
-    // }
+    let x = (event.clientX - imgRect.left) / imgRect.width;
+    let y = (event.clientY - imgRect.top) / imgRect.height;
 
-    // // Have to check whether Android is different than ios when issue with streaming is fix
-    // if(platform === DevicePlatform.Android && rotation === "LandscapeLeft" ){
-    //   return { x: clampedY, y: 1-clampedX };
-    // }
-    // if(platform === DevicePlatform.Android && rotation === "LandscapeRight" ){
-    //   return { x: 1-clampedY, y: clampedX };
-    // }
-    console.log(clampedX, clampedY);
+    // Original computed coordinates before rotation
+    let newX = x;
+    let newY = y;
+
+    switch (rotation) {
+      case "LandscapeLeft":
+        newX = 1 - y;
+        newY = x;
+        break;
+      case "LandscapeRight":
+        newX = y;
+        newY = 1 - x;
+        break;
+      default:
+        break;
+    }
+
+    let clampedX = clamp(newX, 0, 1);
+    let clampedY = clamp(newY, 0, 1);
+
     return { x: clampedX, y: clampedY };
   }
 
