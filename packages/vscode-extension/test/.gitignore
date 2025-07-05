@@ -1,0 +1,5 @@
+node_modules
+data/radon-ide-test-apps
+data/*.vsix
+.vscode
+config.json
