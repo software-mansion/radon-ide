@@ -10,17 +10,16 @@ import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import {
   DeviceSessionsManagerInterface,
+  LAST_SELECTED_DEVICE_KEY,
   ReloadAction,
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
 import { DeviceId, DeviceSessionsManagerState } from "../common/Project";
 
-const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
 
 export type DeviceSessionsManagerDelegate = {
-  onInitialized(): void;
   onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void;
 };
 
@@ -38,7 +37,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     private readonly deviceManager: DeviceManager,
     private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate
   ) {
-    this.findInitialDeviceAndStartSession();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.deviceManager.addListener("devicesChanged", this.devicesChangedListener);
   }
@@ -123,7 +121,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
     this.maybeWarnAboutRunningDevices();
     this.updateSelectedSession(newDeviceSession);
-    this.deviceSessionManagerDelegate.onInitialized();
 
     if (stopPreviousDevices) {
       await this.terminatePreviousSessions();
@@ -166,54 +163,19 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     }
   }
 
-  private findInitialDeviceAndStartSession = async () => {
-    if (this.findingDevice) {
-      // NOTE: if we are already in the process of finding a device, we don't want to start it again
-      return;
-    }
-    try {
-      this.findingDevice = true;
-
-      const devices = await this.deviceManager.listAllDevices();
-      this.previousDevices = devices;
-
-      // we try to pick the last selected device that we saved in the persistent state, otherwise
-      // we take the first iOS device from the list, or any first device if there's no iOS device
-      const lastDeviceId = extensionContext.workspaceState.get<string | undefined>(
-        LAST_SELECTED_DEVICE_KEY
-      );
-      const defaultDevice =
-        devices.find((device) => device.platform === DevicePlatform.IOS) ?? devices.at(0);
-      const initialDevice = devices.find((device) => device.id === lastDeviceId) ?? defaultDevice;
-
-      if (initialDevice) {
-        // if we found a device on the devices list, we try to select it
-        await this.startOrActivateSessionForDevice(initialDevice);
-      }
-    } finally {
-      this.findingDevice = false;
-      // even if no device can be selected mark project as initialized
-      this.deviceSessionManagerDelegate.onInitialized();
-    }
-  };
-
   // used in callbacks, needs to be an arrow function
   private removeDeviceListener = async (device: DeviceInfo) => {
-    const activeSessionId = this.activeSessionId;
     // if the deleted device was running an active session, we need to terminate that session
     await this.terminateSession(device.id);
-    // if the deleted device was the selected one, we try to select a new device
-    if (activeSessionId === device.id) {
-      this.findInitialDeviceAndStartSession();
-    }
   };
 
   private devicesChangedListener = async (devices: DeviceInfo[]) => {
     const previousDevices = this.previousDevices;
     this.previousDevices = devices;
     // if this event is triggered due to the first device being created, we want to select it immediately.
-    if (previousDevices.length === 0) {
-      this.findInitialDeviceAndStartSession();
+    if (previousDevices.length === 0 && devices.length > 0) {
+      const firstDevice = devices[0];
+      this.startOrActivateSessionForDevice(firstDevice);
     }
   };
 

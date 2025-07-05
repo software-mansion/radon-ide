@@ -117,7 +117,6 @@ export interface DeviceSessionsManagerState {
 }
 
 export type ProjectState = {
-  initialized: boolean;
   appRootPath: string | undefined;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
 } & DeviceSessionsManagerState;
