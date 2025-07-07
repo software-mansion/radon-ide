@@ -86,6 +86,7 @@ type DeviceSessionStateCommon = {
   logCounter: number;
   hasStaleBuildCache: boolean;
   isRecordingScreen: boolean;
+  rotation: DeviceRotationType;
 };
 
 export type DeviceSessionStateStarting = DeviceSessionStateCommon & {
@@ -103,7 +104,6 @@ export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
   status: "running";
   isRefreshing: boolean;
   bundleError: BundleErrorDescriptor | undefined;
-  rotation: DeviceRotationType;
 };
 
 export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {

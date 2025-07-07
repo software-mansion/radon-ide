@@ -1,9 +1,12 @@
+import { DeviceRotationType } from "./Project";
+
 export type PanelLocation = "tab" | "side-panel";
 
 export type WorkspaceConfigProps = {
   panelLocation: PanelLocation;
   showDeviceFrame: boolean;
   stopPreviousDevices: boolean;
+  deviceRotation: DeviceRotationType
 };
 
 export interface WorkspaceConfigEventMap {

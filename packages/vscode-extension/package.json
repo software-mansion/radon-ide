@@ -230,6 +230,12 @@
           "scope": "window",
           "default": false,
           "description": "When set, switching between devices will shut down the previous device instead of leaving it running in the background."
+        },
+        "RadonIDE.deviceRotation": {
+          "type": "string",
+          "scope": "window",
+          "default": "Portrait",
+          "description": "Controls the default device rotation for simulators and emulators when they are created or launched."
         }
       }
     },
