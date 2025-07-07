@@ -112,10 +112,14 @@ function cssPropertiesForDevice(
     "--phone-left": `${(frame.offsetX / frame.width) * 100}%`,
     "--phone-mask-image": `url(${device.maskImage})`,
     "--content-rotate": ROTATION_ANGLE[rotation],
-    "--phone-wrapper-width":  "var(--phone-content-height)",
+    "--phone-wrapper-width": "var(--phone-content-height)",
     "--phone-wrapper-height": "var(--phone-content-width)",
-    "--phone-wrapper-min-width": isHorizontal ? "var(--phone-content-min-height)" : "var(--phone-content-min-width)",
-    "--phone-wrapper-min-height": isHorizontal ? "var(--phone-content-min-width)" : "var(--phone-content-min-height)",
+    "--phone-wrapper-min-width": isHorizontal
+      ? "var(--phone-content-min-height)"
+      : "var(--phone-content-min-width)",
+    "--phone-wrapper-min-height": isHorizontal
+      ? "var(--phone-content-min-width)"
+      : "var(--phone-content-min-height)",
   };
 }
 

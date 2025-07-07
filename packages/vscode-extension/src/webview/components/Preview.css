@@ -62,7 +62,7 @@
   min-width: var(--phone-content-min-width); /* 350px * phones aspect ratio */
   object-fit: scale-down;
   rotate: var(--content-rotate);
-  transition: rotate 0.5s ease;
+  transition: rotate 0.5s cubic-bezier(0, 0.25, 0, 1);
 }
 
 .touch-area {
