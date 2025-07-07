@@ -64,11 +64,26 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
   const resetOptions =
     selectedDeviceSession?.deviceInfo.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
 
-  const rotateOptions: Array<{ label: string; value: DeviceRotationType; icon: string; rotation: string }> = [
-    { label: "Portrait", value: "Portrait", icon: "device-mobile", rotation: '0deg' },
-    { label: "Portrait Upside Down", value: "PortraitUpsideDown", icon: "device-mobile" , rotation: '180deg'},
-    { label: "Landscape Left", value: "LandscapeLeft", icon: "device-mobile", rotation: '90deg' },
-    { label: "Landscape Right", value: "LandscapeRight", icon: "device-mobile", rotation: '-90deg' },
+  const rotateOptions: Array<{
+    label: string;
+    value: DeviceRotationType;
+    icon: string;
+    rotation: string;
+  }> = [
+    { label: "Portrait", value: "Portrait", icon: "device-mobile", rotation: "0deg" },
+    {
+      label: "Portrait Upside Down",
+      value: "PortraitUpsideDown",
+      icon: "device-mobile",
+      rotation: "180deg",
+    },
+    { label: "Landscape Left", value: "LandscapeLeft", icon: "device-mobile", rotation: "90deg" },
+    {
+      label: "Landscape Right",
+      value: "LandscapeRight",
+      icon: "device-mobile",
+      rotation: "-90deg",
+    },
   ];
 
   return (
@@ -206,13 +221,15 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                       <DropdownMenu.Item
                         className="dropdown-menu-item"
                         key={index}
-                        onSelect={() => project.dispatchRotate(option.value)}>
-                        <span className={`codicon codicon-${option.icon}`} style={{rotate: option.rotation}} />
+                        onSelect={() => update("deviceRotation", option.value)}>
+                        <span
+                          className={`codicon codicon-${option.icon}`}
+                          style={{ rotate: option.rotation }}
+                        />
                         {option.label}
-                        {selectedDeviceSession?.status === "running" &&
-                          selectedDeviceSession.rotation === option.value && (
-                            <span className="codicon codicon-check right-slot" />
-                          )}
+                        {selectedDeviceSession?.rotation === option.value && (
+                          <span className="codicon codicon-check right-slot" />
+                        )}
                       </DropdownMenu.Item>
                     )
                 )}
