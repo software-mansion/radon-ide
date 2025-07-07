@@ -9,6 +9,7 @@
  * --phone-content-height: Current height of phone content (100% or calculated px value for landscape)
  * --phone-aspect-ratio: Aspect ratio of the device frame (width/height)
  * --phone-wrapper-width: Width of the resizable phone wrapper container
+ * --phone-wrapper-min-width: Minimum width for the resizable phone wrapper container
  * 
  * Screen positioning and sizing:
  * --phone-screen-height: Height of the screen area as percentage of frame
@@ -45,6 +46,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  min-width: var(--phone-wrapper-min-width);
+  min-height: var(--phone-wrapper-min-height);
   width: var(--phone-wrapper-width) !important; /* Adjust the width for proper scroll behaviour */
                                                 /* !important necessary */
 }
@@ -59,6 +62,7 @@
   min-width: var(--phone-content-min-width); /* 350px * phones aspect ratio */
   object-fit: scale-down;
   rotate: var(--content-rotate);
+  transition: rotate 0.5s ease;
 }
 
 .touch-area {
