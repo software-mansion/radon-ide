@@ -25,7 +25,6 @@ interface DeviceProps {
 }
 
 type DeviceCSSProperties = React.CSSProperties & {
-  "--phone-content-offset-top"?: string;
   "--phone-content-min-height"?: string;
   "--phone-content-min-width"?: string;
   "--phone-content-width"?: string;
@@ -40,6 +39,7 @@ type DeviceCSSProperties = React.CSSProperties & {
   "--phone-wrapper-width"?: string;
   "--phone-wrapper-min-width"?: string;
   "--phone-wrapper-min-height"?: string;
+  "--phone-wrapper-height"?: string;
 };
 
 function getParentDimensions(phoneElement: HTMLDivElement | null) {
@@ -83,7 +83,6 @@ function cssPropertiesForDevice(
   const aspectRatio = frame.width / frame.height;
   const isHorizontal = rotation === "LandscapeLeft" || rotation === "LandscapeRight";
 
-  let offsetTop = "0px";
   let newHeight = "100%";
   let newWidth = "auto";
   let minWidth = "fit-content";
@@ -96,14 +95,12 @@ function cssPropertiesForDevice(
       resizableHeight
     );
 
-    offsetTop = landscapeProps.offsetTop;
     newHeight = landscapeProps.height;
     newWidth = landscapeProps.width;
     minWidth = landscapeProps.minWidth;
   }
 
   return {
-    "--phone-content-offset-top": offsetTop,
     "--phone-content-min-height": `${MIN_HEIGHT}px`,
     "--phone-content-min-width": minWidth,
     "--phone-content-width": newWidth,
@@ -115,7 +112,8 @@ function cssPropertiesForDevice(
     "--phone-left": `${(frame.offsetX / frame.width) * 100}%`,
     "--phone-mask-image": `url(${device.maskImage})`,
     "--content-rotate": ROTATION_ANGLE[rotation],
-    "--phone-wrapper-width": isHorizontal ? "var(--phone-content-height)" : "auto",
+    "--phone-wrapper-width":  "var(--phone-content-height)",
+    "--phone-wrapper-height": "var(--phone-content-width)",
     "--phone-wrapper-min-width": isHorizontal ? "var(--phone-content-min-height)" : "var(--phone-content-min-width)",
     "--phone-wrapper-min-height": isHorizontal ? "var(--phone-content-min-width)" : "var(--phone-content-min-height)",
   };
@@ -158,7 +156,6 @@ export default function Device({ device, resizableProps, children }: DeviceProps
       const propertiesToUpdate = [
         { element: phoneContentRef.current, property: "--phone-content-width" },
         { element: phoneContentRef.current, property: "--phone-content-height" },
-        { element: phoneContentRef.current.parentElement, property: "--phone-content-offset-top" },
       ] as const;
 
       propertiesToUpdate.forEach(({ element, property }) => {
