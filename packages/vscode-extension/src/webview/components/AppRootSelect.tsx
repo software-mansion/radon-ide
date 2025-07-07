@@ -5,7 +5,7 @@ import _ from "lodash";
 import React, { PropsWithChildren } from "react";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { useProject } from "../providers/ProjectProvider";
-import { LaunchConfigurationOptions } from "../../common/LaunchConfig";
+import { LaunchConfiguration, LaunchConfigurationOptions } from "../../common/LaunchConfig";
 import RichSelectItem from "./shared/RichSelectItem";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
@@ -25,11 +25,25 @@ function displayNameForConfig(config: LaunchConfigurationOptions) {
   return config.name;
 }
 
+function ConfigureButton({ onStopClick }: { onStopClick?: () => void }) {
+  return (
+    <div
+      onPointerUpCapture={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onClick={onStopClick}>
+      <span className="codicon codicon-gear" />
+    </div>
+  );
+}
+
 function renderLaunchConfigurations(
   groupLabel: string,
   prefix: string,
   customLaunchConfigurations: LaunchConfigurationOptions[],
-  selectedValue: string | undefined
+  selectedValue: string | undefined,
+  onEditConfig?: (config: LaunchConfiguration) => void
 ) {
   if (customLaunchConfigurations.length === 0) {
     return null;
@@ -45,8 +59,11 @@ function renderLaunchConfigurations(
           icon={<span className="codicon codicon-folder" />}
           title={displayNameForConfig(config) ?? config.appRoot ?? "./"}
           subtitle={displayNameForConfig(config) ? config.appRoot : undefined}
-          isSelected={selectedValue === `${prefix}:${idx}`}
-        />
+          isSelected={selectedValue === `${prefix}:${idx}`}>
+          {onEditConfig && (
+            <ConfigureButton onStopClick={() => onEditConfig(config as LaunchConfiguration)} />
+          )}
+        </RichSelectItem>
       ))}
     </Select.Group>
   );
@@ -70,7 +87,8 @@ function renderDetectedLaunchConfigurations(
 
 function renderCustomLaunchConfigurations(
   customLaunchConfigurations: LaunchConfigurationOptions[],
-  selectedValue: string | undefined
+  selectedValue: string | undefined,
+  onEditConfig: (config: LaunchConfiguration) => void
 ) {
   if (customLaunchConfigurations.length === 0) {
     return null;
@@ -80,7 +98,8 @@ function renderCustomLaunchConfigurations(
     "Custom configurations",
     "custom",
     customLaunchConfigurations,
-    selectedValue
+    selectedValue,
+    onEditConfig
   );
 }
 
@@ -94,6 +113,10 @@ function AppRootSelect() {
   const selectedAppRootPath = projectState.appRootPath;
   const selectedAppRoot = applicationRoots.find((root) => root.path === selectedAppRootPath);
   const { openModal } = useModal();
+
+  function onEditConfig(config: LaunchConfiguration) {
+    openModal("Launch Configuration", <LaunchConfigurationView launchConfigToUpdate={config} />);
+  }
 
   const detectedConfigurations: LaunchConfigurationOptions[] = applicationRoots.map(
     ({ path, displayName, name }) => {
@@ -163,7 +186,7 @@ function AppRootSelect() {
           </Select.ScrollUpButton>
           <Select.Viewport className="approot-select-viewport">
             {renderDetectedLaunchConfigurations(detectedConfigurations, selectedValue)}
-            {renderCustomLaunchConfigurations(customConfigurations, selectedValue)}
+            {renderCustomLaunchConfigurations(customConfigurations, selectedValue, onEditConfig)}
             {detectedConfigurations.length + customConfigurations.length > 0 && (
               <Select.Separator className="approot-select-separator" />
             )}
