@@ -1,4 +1,3 @@
-import assert from "assert";
 import * as Select from "@radix-ui/react-select";
 import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
@@ -98,7 +97,11 @@ function AppRootSelect() {
     const index = parseInt(value.split(":")[1], 10);
     const configs = value.startsWith("detected:") ? detectedConfigurations : customConfigurations;
     const launchConfiguration = configs[index];
-    assert(index < configs.length, "Index out of bounds for launch configurations");
+    console.assert(
+      index < configs.length,
+      "Index out of bounds for launch configurations %s",
+      value
+    );
     project.selectLaunchConfiguration(launchConfiguration);
   };
 

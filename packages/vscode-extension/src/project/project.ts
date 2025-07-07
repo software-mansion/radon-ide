@@ -114,21 +114,17 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       // No change in launch configuration, nothing to do
       return;
     }
-    const oldAppRoot = this.applicationContext.appRootFolder;
-    const newAppRoot = launchConfig.absoluteAppRoot;
     await this.applicationContext.updateLaunchConfig(launchConfig);
-    if (newAppRoot !== oldAppRoot) {
-      // NOTE: we reset the device sessions manager to close all the running sessions
-      // for the old app root. In the future, we might want to keep the devices running
-      // and only close the applications, but the API we have right now does not allow that.
-      const oldDeviceSessionsManager = this.deviceSessionsManager;
-      this.deviceSessionsManager = new DeviceSessionsManager(
-        this.applicationContext,
-        this.deviceManager,
-        this
-      );
-      oldDeviceSessionsManager.dispose();
-    }
+    // NOTE: we reset the device sessions manager to close all the running sessions
+    // and restart the current device with new config. In the future, we might want to keep the devices running
+    // and only close the applications, but the API we have right now does not allow that.
+    const oldDeviceSessionsManager = this.deviceSessionsManager;
+    this.deviceSessionsManager = new DeviceSessionsManager(
+      this.applicationContext,
+      this.deviceManager,
+      this
+    );
+    oldDeviceSessionsManager.dispose();
     this.updateProjectState({
       appRootPath: this.relativeAppRootPath,
       selectedLaunchConfiguration: launchConfig,
