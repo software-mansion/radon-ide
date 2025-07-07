@@ -104,19 +104,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         this.updateProjectState({
           customLaunchConfigurations: launchConfigs,
         });
-        const selectedLaunchConfig =
-          launchConfigs[0] ?? launchConfigurationFromOptions({ appRoot: this.relativeAppRootPath });
-
-        const oldAppRoot = this.applicationContext.appRootFolder;
-        if (selectedLaunchConfig.absoluteAppRoot !== oldAppRoot) {
-          // If the app root has changed, we need to update the application context
-          this.selectLaunchConfiguration(selectedLaunchConfig);
-        } else {
-          this.applicationContext.updateLaunchConfig(selectedLaunchConfig);
-          this.updateProjectState({
-            selectedLaunchConfiguration: selectedLaunchConfig,
-          });
-        }
       })
     );
   }
@@ -127,14 +114,21 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       // No change in launch configuration, nothing to do
       return;
     }
+    const oldAppRoot = this.applicationContext.appRootFolder;
+    const newAppRoot = launchConfig.absoluteAppRoot;
     await this.applicationContext.updateLaunchConfig(launchConfig);
-    const oldDeviceSessionsManager = this.deviceSessionsManager;
-    this.deviceSessionsManager = new DeviceSessionsManager(
-      this.applicationContext,
-      this.deviceManager,
-      this
-    );
-    oldDeviceSessionsManager.dispose();
+    if (newAppRoot !== oldAppRoot) {
+      // NOTE: we reset the device sessions manager to close all the running sessions
+      // for the old app root. In the future, we might want to keep the devices running
+      // and only close the applications, but the API we have right now does not allow that.
+      const oldDeviceSessionsManager = this.deviceSessionsManager;
+      this.deviceSessionsManager = new DeviceSessionsManager(
+        this.applicationContext,
+        this.deviceManager,
+        this
+      );
+      oldDeviceSessionsManager.dispose();
+    }
     this.updateProjectState({
       appRootPath: this.relativeAppRootPath,
       selectedLaunchConfiguration: launchConfig,
