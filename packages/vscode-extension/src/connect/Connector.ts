@@ -201,10 +201,7 @@ export class Connector implements Disposable {
     } else if (!this.isEnabled) {
       this.statusBarItem.text = "Radon IDE $(open-preview)";
       markdownText.appendMarkdown("Radon Connect is disabled\n\n");
-      markdownText.appendMarkdown(
-        "Radon will not connect to running\nmetro instances and React Native apps"
-      );
-      markdownText.appendMarkdown("\n\n");
+      markdownText.appendMarkdown("[Open Radon IDE panel](command:RNIDE.openPanel)\n\n");
       markdownText.appendMarkdown("[Enable Radon Connect](command:RNIDE.enableRadonConnect)\n\n");
     } else {
       this.statusBarItem.text = "Radon IDE $(debug-disconnect)";

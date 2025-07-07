@@ -332,10 +332,7 @@ class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDe
 
 function extensionActivated(context: ExtensionContext) {
   commands.executeCommand("setContext", "RNIDE.extensionIsActive", true);
-  if (context.extensionMode === ExtensionMode.Development) {
-    // "Connector" implements experimental functionality that is available in development mode only
-    Connector.getInstance().start();
-  }
+  Connector.getInstance().start();
 }
 
 async function openDevMenu() {

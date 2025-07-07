@@ -116,7 +116,7 @@ function PreviewView() {
   const isRecording = selectedDeviceSession?.isRecordingScreen ?? false;
 
   const navBarButtonsActive = initialized && !isStarting && !radonConnectEnabled;
-  const debuggerToolsButtonsActive = navBarButtonsActive || radonConnectConnected;
+  const debuggerToolsButtonsActive = navBarButtonsActive; // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
@@ -349,8 +349,12 @@ function PreviewView() {
         <span className="group-separator" />
 
         <div className="app-device-group">
-          <AppRootSelect />
-          <span className="codicon codicon-chevron-right" />
+          {!radonConnectEnabled && (
+            <>
+              <AppRootSelect />
+              <span className="codicon codicon-chevron-right" />
+            </>
+          )}
           <DeviceSelect />
         </div>
 
