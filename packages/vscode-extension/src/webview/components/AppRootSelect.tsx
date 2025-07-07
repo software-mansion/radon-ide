@@ -1,3 +1,4 @@
+import assert from "assert";
 import * as Select from "@radix-ui/react-select";
 import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
@@ -97,6 +98,7 @@ function AppRootSelect() {
     const index = parseInt(value.split(":")[1], 10);
     const configs = value.startsWith("detected:") ? detectedConfigurations : customConfigurations;
     const launchConfiguration = configs[index];
+    assert(index < configs.length, "Index out of bounds for launch configurations");
     project.selectLaunchConfiguration(launchConfiguration);
   };
 
@@ -121,8 +123,10 @@ function AppRootSelect() {
   })();
 
   return (
-    <Select.Root onValueChange={handleAppRootChange} value={selectedAppRootPath}>
-      <Select.Trigger className="approot-select-trigger" disabled={applicationRoots.length === 0}>
+    <Select.Root onValueChange={handleAppRootChange} value={selectedValue}>
+      <Select.Trigger
+        className="approot-select-trigger"
+        disabled={detectedConfigurations.length + customConfigurations.length === 0}>
         <Select.Value placeholder="No applications found">
           <div className="approot-select-value">
             <span className="codicon codicon-folder-opened" />
