@@ -152,6 +152,7 @@ export class DeviceSession
       logCounter: this.logCounter,
       hasStaleBuildCache: this.hasStaleBuildCache,
       isRecordingScreen: this.isRecordingScreen,
+      rotation: this.device.rotation
     };
     if (this.status === "starting") {
       return {
@@ -166,7 +167,6 @@ export class DeviceSession
         status: "running",
         isRefreshing: this.isRefreshing,
         bundleError: this.bundleError,
-        rotation: this.device.rotation
       };
     } else if (this.status === "fatalError") {
       assert(this.fatalError, "Expected error to be defined in fatal error state");

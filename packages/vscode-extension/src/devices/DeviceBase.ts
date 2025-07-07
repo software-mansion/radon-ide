@@ -1,5 +1,5 @@
 import fs from "fs";
-import { Disposable } from "vscode";
+import { Disposable, workspace } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, TouchPoint, DeviceButtonType, DeviceRotationType } from "../common/Project";
@@ -43,7 +43,7 @@ export abstract class DeviceBase implements Disposable {
   );
 
   abstract get lockFilePath(): string;
-  private _rotation: DeviceRotationType = "Portrait";
+  private _rotation: DeviceRotationType = workspace.getConfiguration("RadonIDE").get<DeviceRotationType>("deviceRotation") ?? "Portrait";
 
   public get previewURL() {
     return this.preview?.streamURL;
@@ -91,6 +91,7 @@ export abstract class DeviceBase implements Disposable {
       } else {
         preview.hideTouches();
       }
+      preview.rotateDevice(this._rotation);
     }
   }
 
