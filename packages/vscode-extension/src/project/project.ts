@@ -43,7 +43,7 @@ import {
   launchConfigurationFromOptions,
   LaunchConfigurationsManager,
 } from "./launchConfigurationsManager";
-import { LaunchConfigurationOptions } from "../common/LaunchConfig";
+import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -106,6 +106,23 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         });
       })
     );
+  }
+
+  async createOrUpdateLaunchConfiguration(
+    newLaunchConfiguration: LaunchConfigurationOptions,
+    oldLaunchConfiguration?: LaunchConfiguration
+  ) {
+    const isUpdatingSelectedConfig = _.isEqual(
+      oldLaunchConfiguration,
+      this.applicationContext.launchConfig
+    );
+    const newConfig = await this.launchConfigsManager.createOrUpdateLaunchConfiguration(
+      newLaunchConfiguration,
+      oldLaunchConfiguration
+    );
+    if (isUpdatingSelectedConfig) {
+      this.selectLaunchConfiguration(newConfig);
+    }
   }
 
   async selectLaunchConfiguration(options: LaunchConfigurationOptions): Promise<void> {

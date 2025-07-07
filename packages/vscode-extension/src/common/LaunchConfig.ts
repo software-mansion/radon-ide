@@ -1,3 +1,4 @@
+import _ from "lodash";
 import { EasBuildConfig } from "./EasConfig";
 
 export type EasConfig = { profile: string; buildUUID?: string; local?: boolean };
@@ -28,6 +29,20 @@ export type LaunchConfigurationOptions = {
     waitForAppLaunch?: boolean;
   };
 };
+
+// NOTE: when serializing the LaunchConfiguration, we want to omit the default and computed values.
+// This function is a messy attempt at that, and should be kept in sync with both the type definition
+// and the `launchConfigurationFromOptions` function in `/project/launchConfigurationsManager`.
+export function optionsForLaunchConfiguration(
+  config: LaunchConfiguration
+): LaunchConfigurationOptions {
+  const options: LaunchConfigurationOptions & Partial<LaunchConfiguration> = { ...config };
+  delete options.absoluteAppRoot;
+  if (options.preview?.waitForAppLaunch) {
+    delete options.preview;
+  }
+  return options;
+}
 
 export interface IOSLaunchConfiguration {
   scheme?: string;

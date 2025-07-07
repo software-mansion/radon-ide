@@ -218,6 +218,10 @@ export interface ProjectInterface {
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
+  createOrUpdateLaunchConfiguration(
+    newLaunchConfiguration: LaunchConfigurationOptions,
+    oldLaunchConfiguration?: LaunchConfiguration
+  ): Promise<void>;
   selectLaunchConfiguration(launchConfig: LaunchConfigurationOptions): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;

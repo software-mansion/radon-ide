@@ -5,6 +5,7 @@ import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/Launc
 import { Logger } from "../Logger";
 import { findAppRootCandidates } from "../utilities/extensionContext";
 import { getLaunchConfigurations } from "../utilities/launchConfiguration";
+import _ from "lodash";
 
 function findDefaultAppRoot(showWarning = false) {
   const appRoots = findAppRootCandidates();
@@ -101,6 +102,39 @@ export class LaunchConfigurationsManager implements Disposable {
       return this._launchConfigurations[0];
     }
     return launchConfigFromOptionsWithDefaultAppRoot({}, findDefaultAppRoot(true));
+  }
+
+  public async createOrUpdateLaunchConfiguration(
+    newLaunchConfiguration: LaunchConfigurationOptions,
+    oldLaunchConfiguration?: LaunchConfiguration
+  ): Promise<LaunchConfiguration> {
+    const newConfig = {
+      name: "Radon IDE panel",
+      type: "radon-ide",
+      request: "launch",
+      ...newLaunchConfiguration,
+    };
+    const defaultAppRoot = findDefaultAppRoot();
+    const launchConfig = workspace.getConfiguration("launch");
+    const configurations = launchConfig.get<Array<Record<string, unknown>>>("configurations") ?? [];
+    const oldConfigIndex =
+      oldLaunchConfiguration !== undefined
+        ? configurations.findIndex((config) => {
+            const fullConfig = launchConfigFromOptionsWithDefaultAppRoot(config, defaultAppRoot);
+            return _.isEqual(fullConfig, oldLaunchConfiguration);
+          })
+        : -1;
+    if (oldConfigIndex !== -1) {
+      configurations[oldConfigIndex] = newConfig;
+    } else {
+      configurations.push(newConfig);
+    }
+    await launchConfig.update(
+      "configurations",
+      configurations,
+      vscode.ConfigurationTarget.Workspace
+    );
+    return launchConfigFromOptionsWithDefaultAppRoot(newConfig, defaultAppRoot);
   }
 
   dispose() {

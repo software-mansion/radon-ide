@@ -9,12 +9,14 @@ import {
   EasConfig,
   LaunchConfigUpdater,
   LaunchConfigurationOptions,
+  optionsForLaunchConfiguration,
 } from "../../common/LaunchConfig";
 import Select from "../components/shared/Select";
 import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
 import { Input } from "../components/shared/Input";
 import { EasBuildConfig } from "../../common/EasConfig";
+import { useProject } from "../providers/ProjectProvider";
 
 function LaunchConfigurationView() {
   const {
@@ -24,12 +26,30 @@ function LaunchConfigurationView() {
     eas,
     isExpo,
     metroConfigPath,
-    update,
     xcodeSchemes,
     easBuildProfiles,
     applicationRoots,
     addCustomApplicationRoot,
   } = useLaunchConfig();
+
+  const { project, projectState } = useProject();
+
+  function update<K extends keyof LaunchConfigurationOptions>(
+    key: K,
+    value: LaunchConfigurationOptions[K] | "Auto"
+  ) {
+    const launchConfig = projectState.selectedLaunchConfiguration;
+    if (value === "Auto") {
+      value = undefined as LaunchConfigurationOptions[K];
+    }
+    project.createOrUpdateLaunchConfiguration(
+      optionsForLaunchConfiguration({
+        ...launchConfig,
+        [key]: value,
+      }),
+      launchConfig
+    );
+  }
 
   return (
     <>
