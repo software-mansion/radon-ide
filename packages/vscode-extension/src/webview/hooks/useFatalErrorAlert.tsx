@@ -21,14 +21,19 @@ function BuildErrorActions({
   logsButtonDestination?: LogsButtonDestination;
   onReload?: () => void;
 }) {
-  const { project } = useProject();
+  const { project, projectState } = useProject();
   const { openModal } = useModal();
   return (
     <>
       <IconButton
         type="secondary"
         onClick={() => {
-          openModal("Launch Configuration", <LaunchConfigurationView />);
+          openModal(
+            "Launch Configuration",
+            <LaunchConfigurationView
+              launchConfigToUpdate={projectState.selectedLaunchConfiguration}
+            />
+          );
         }}
         tooltip={{ label: "Launch Configuration", side: "bottom" }}>
         <span className="codicon codicon-rocket" />

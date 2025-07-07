@@ -8,6 +8,7 @@ import {
   ApplicationRoot,
   EasConfig,
   LaunchConfigUpdater,
+  LaunchConfiguration,
   LaunchConfigurationOptions,
   optionsForLaunchConfiguration,
 } from "../../common/LaunchConfig";
@@ -18,41 +19,43 @@ import { Input } from "../components/shared/Input";
 import { EasBuildConfig } from "../../common/EasConfig";
 import { useProject } from "../providers/ProjectProvider";
 
-function LaunchConfigurationView() {
-  const {
-    android,
-    appRoot,
-    ios,
-    eas,
-    isExpo,
-    metroConfigPath,
-    xcodeSchemes,
-    easBuildProfiles,
-    applicationRoots,
-    addCustomApplicationRoot,
-  } = useLaunchConfig();
+interface LaunchConfigurationViewProps {
+  launchConfigToUpdate?: LaunchConfiguration;
+}
 
-  const { project, projectState } = useProject();
+function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationViewProps) {
+  const { closeModal } = useModal();
+  const { xcodeSchemes, easBuildProfiles, applicationRoots, addCustomApplicationRoot } =
+    useLaunchConfig();
+
+  const { project } = useProject();
+
+  const [newLaunchConfigOptions, setNewLaunchConfigOptions] = useState<LaunchConfigurationOptions>(
+    launchConfigToUpdate ? optionsForLaunchConfiguration(launchConfigToUpdate) : {}
+  );
+  const { android, appRoot, ios, eas, isExpo, metroConfigPath } = newLaunchConfigOptions;
 
   function update<K extends keyof LaunchConfigurationOptions>(
     key: K,
     value: LaunchConfigurationOptions[K] | "Auto"
   ) {
-    const launchConfig = projectState.selectedLaunchConfiguration;
     if (value === "Auto") {
-      value = undefined as LaunchConfigurationOptions[K];
+      value = undefined;
     }
-    project.createOrUpdateLaunchConfiguration(
-      optionsForLaunchConfiguration({
-        ...launchConfig,
-        [key]: value,
-      }),
-      launchConfig
-    );
+    newLaunchConfigOptions[key] = value;
+    setNewLaunchConfigOptions({ ...newLaunchConfigOptions });
+  }
+
+  async function save() {
+    await project.createOrUpdateLaunchConfiguration(newLaunchConfigOptions, launchConfigToUpdate);
+    closeModal();
   }
 
   return (
     <>
+      <NameConfiguration name={newLaunchConfigOptions.name} update={update} />
+      <div className="launch-configuration-section-margin" />
+
       <Label>iOS</Label>
       <IosConfiguration
         scheme={ios?.scheme}
@@ -77,6 +80,7 @@ function LaunchConfigurationView() {
         update={update}
         applicationRoots={applicationRoots}
         addCustomApplicationRoot={addCustomApplicationRoot}
+        launchConfigToUpdate={launchConfigToUpdate}
       />
       <div className="launch-configuration-section-margin" />
 
@@ -109,7 +113,39 @@ function LaunchConfigurationView() {
           <div className="launch-configuration-section-margin" />
         </>
       )}
+
+      <Button onClick={save}>Save</Button>
     </>
+  );
+}
+
+interface NameConfigurationProps {
+  name?: string;
+  update: LaunchConfigUpdater;
+}
+
+function NameConfiguration({ name, update }: NameConfigurationProps) {
+  const nameInputRef = useRef<HTMLInputElement>(null);
+
+  const onNameBlur = () => {
+    let newName = nameInputRef.current?.value;
+    if (newName === "Auto" || newName === "") {
+      newName = undefined;
+    }
+    update("name", newName);
+  };
+
+  return (
+    <div className="launch-configuration-container">
+      <div className="setting-description">Configuration Entry Name:</div>
+      <Input
+        ref={nameInputRef}
+        className="input-configuration"
+        type="string"
+        defaultValue={name ?? "Auto"}
+        onBlur={onNameBlur}
+      />
+    </div>
   );
 }
 
@@ -216,6 +252,7 @@ interface appRootConfigurationProps {
   update: LaunchConfigUpdater;
   applicationRoots: ApplicationRoot[];
   addCustomApplicationRoot: AddCustomApplicationRoot;
+  launchConfigToUpdate?: LaunchConfiguration;
 }
 
 function AppRootConfiguration({
@@ -223,6 +260,7 @@ function AppRootConfiguration({
   update,
   applicationRoots,
   addCustomApplicationRoot,
+  launchConfigToUpdate,
 }: appRootConfigurationProps) {
   const customAppRootInputRef = useRef<HTMLInputElement>(null);
 
@@ -231,7 +269,10 @@ function AppRootConfiguration({
   const [customAppRootButtonDisabled, setCustomAppRootButtonDisabled] = useState(true);
 
   const onConfirmationCancel = () => {
-    openModal("Launch Configuration", <LaunchConfigurationView />);
+    openModal(
+      "Launch Configuration",
+      <LaunchConfigurationView launchConfigToUpdate={launchConfigToUpdate} />
+    );
   };
 
   const AppRootChangeConfirmationView = ({ newAppRoot }: { newAppRoot: string }) => {

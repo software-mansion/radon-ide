@@ -14,6 +14,7 @@ import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { SendFeedbackItem } from "./SendFeedbackItem";
 import { useTelemetry } from "../providers/TelemetryProvider";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import { useProject } from "../providers/ProjectProvider";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -24,6 +25,8 @@ interface SettingsDropdownProps {
 
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const { panelLocation, themeType, update } = useWorkspaceConfig();
+  const { projectState } = useProject();
+  const { selectedLaunchConfiguration } = projectState;
   const { openModal } = useModal();
   const { movePanelTo, reportIssue } = useUtils();
   const { telemetryEnabled } = useTelemetry();
@@ -109,7 +112,10 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              openModal("Launch Configuration", <LaunchConfigurationView />);
+              openModal(
+                "Launch Configuration",
+                <LaunchConfigurationView launchConfigToUpdate={selectedLaunchConfiguration} />
+              );
             }}>
             <span className="codicon codicon-rocket" />
             Launch configuration...
