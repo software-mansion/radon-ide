@@ -28,7 +28,7 @@ function PreviewLoader({
 
   startingSessionState: DeviceSessionStateStarting;
 }) {
-  const { project } = useProject();
+  const { project, selectedDeviceSession } = useProject();
   const { deviceSessionsManager } = useDevices();
   const [progress, setProgress] = useState(0);
 
@@ -91,9 +91,10 @@ function PreviewLoader({
 
   const isWaitingForApp = startupMessage === StartupMessage.WaitingForAppToLoad;
   const isBuilding = startupMessage === StartupMessage.Building;
+  const isRotated = selectedDeviceSession?.rotation === "LandscapeLeft" || selectedDeviceSession?.rotation === "LandscapeRight";
 
   return (
-    <>
+    <div className={`preview-loader-wrapper${isRotated ? " rotated": ''}`}>
       <div className="preview-loader-center-pad" />
       <button className="preview-loader-container" onClick={handleLoaderClick}>
         <div className="preview-loader-button-group">
@@ -141,7 +142,7 @@ function PreviewLoader({
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }
 
