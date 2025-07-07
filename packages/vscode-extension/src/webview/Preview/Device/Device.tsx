@@ -37,6 +37,7 @@ type DeviceCSSProperties = React.CSSProperties & {
   "--phone-left"?: string;
   "--phone-mask-image"?: string;
   "--content-rotate"?: string;
+  "--phone-wrapper-width"?: string;
 };
 
 function getParentDimensions(phoneElement: HTMLDivElement | null) {
@@ -112,6 +113,7 @@ function cssPropertiesForDevice(
     "--phone-left": `${(frame.offsetX / frame.width) * 100}%`,
     "--phone-mask-image": `url(${device.maskImage})`,
     "--content-rotate": ROTATION_ANGLE[rotation],
+    "--phone-wrapper-width": isHorizontal ? "var(--phone-content-height)" : "auto",
   };
 }
 
@@ -166,7 +168,7 @@ export default function Device({ device, resizableProps, children }: DeviceProps
   }, [device, frame, rotation, resizableHeight]);
 
   return (
-    <Resizable className="phone-wrapper-resizable" {...resizableProps} style={cssProperties}>
+    <Resizable className="phone-wrapper-resizable" {...resizableProps} style={{ ...cssProperties }}>
       <div ref={phoneContentRef} className="phone-content" style={cssProperties}>
         <DeviceFrame frame={frame} />
         <img src={device.screenImage} className="phone-screen-background" />
