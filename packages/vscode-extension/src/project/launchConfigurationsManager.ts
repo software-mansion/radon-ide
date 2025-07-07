@@ -1,11 +1,11 @@
 import path from "path";
 import { ConfigurationChangeEvent, Disposable, EventEmitter, workspace } from "vscode";
 import vscode from "vscode";
+import _ from "lodash";
 import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
 import { findAppRootCandidates } from "../utilities/extensionContext";
 import { getLaunchConfigurations } from "../utilities/launchConfiguration";
-import _ from "lodash";
 
 function findDefaultAppRoot(showWarning = false) {
   const appRoots = findAppRootCandidates();

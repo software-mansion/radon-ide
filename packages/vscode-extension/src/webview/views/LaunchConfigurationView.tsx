@@ -53,6 +53,7 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
 
   return (
     <>
+      <Label>Name</Label>
       <NameConfiguration name={newLaunchConfigOptions.name} update={update} />
       <div className="launch-configuration-section-margin" />
 
@@ -80,7 +81,6 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
         update={update}
         applicationRoots={applicationRoots}
         addCustomApplicationRoot={addCustomApplicationRoot}
-        launchConfigToUpdate={launchConfigToUpdate}
       />
       <div className="launch-configuration-section-margin" />
 
@@ -114,7 +114,7 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
         </>
       )}
 
-      <Button onClick={save}>Save</Button>
+      <Button onClick={save}>Save and restart device</Button>
     </>
   );
 }
@@ -137,7 +137,7 @@ function NameConfiguration({ name, update }: NameConfigurationProps) {
 
   return (
     <div className="launch-configuration-container">
-      <div className="setting-description">Configuration Entry Name:</div>
+      <div className="setting-description">Configuration Name:</div>
       <Input
         ref={nameInputRef}
         className="input-configuration"
@@ -252,7 +252,6 @@ interface appRootConfigurationProps {
   update: LaunchConfigUpdater;
   applicationRoots: ApplicationRoot[];
   addCustomApplicationRoot: AddCustomApplicationRoot;
-  launchConfigToUpdate?: LaunchConfiguration;
 }
 
 function AppRootConfiguration({
@@ -260,89 +259,16 @@ function AppRootConfiguration({
   update,
   applicationRoots,
   addCustomApplicationRoot,
-  launchConfigToUpdate,
 }: appRootConfigurationProps) {
   const customAppRootInputRef = useRef<HTMLInputElement>(null);
 
-  const { openModal, closeModal } = useModal();
-
   const [customAppRootButtonDisabled, setCustomAppRootButtonDisabled] = useState(true);
-
-  const onConfirmationCancel = () => {
-    openModal(
-      "Launch Configuration",
-      <LaunchConfigurationView launchConfigToUpdate={launchConfigToUpdate} />
-    );
-  };
-
-  const AppRootChangeConfirmationView = ({ newAppRoot }: { newAppRoot: string }) => {
-    return (
-      <div className="app-root-change-wrapper">
-        <h2 className="app-root-change-title">
-          Are you sure you want to change the application root?
-        </h2>
-        <p className="app-root-change-subtitle">
-          The new application root will be: <b>{newAppRoot}</b> and this action will reboot the
-          device.
-        </p>
-        <div className="app-root-change-button-group">
-          <Button
-            type="secondary"
-            className="app-root-change-button"
-            onClick={onConfirmationCancel}>
-            Cancel
-          </Button>
-          <Button
-            className="app-root-change-button"
-            type="ternary"
-            onClick={async () => {
-              update("appRoot", newAppRoot);
-              closeModal();
-            }}>
-            Confirm
-          </Button>
-        </div>
-      </div>
-    );
-  };
-
-  const CustomAppRootConfirmationView = ({ newAppRoot }: { newAppRoot: string }) => {
-    return (
-      <div className="app-root-change-wrapper">
-        <h2 className="app-root-change-title">
-          Are you sure you want to add custom application root?
-        </h2>
-        <p className="app-root-change-subtitle">
-          The new application root will be: <b>{newAppRoot}</b> and this action will reboot the
-          device.
-        </p>
-        <div className="app-root-change-button-group">
-          <Button
-            type="secondary"
-            className="app-root-change-button"
-            onClick={onConfirmationCancel}>
-            Cancel
-          </Button>
-          <Button
-            className="app-root-change-button"
-            type="ternary"
-            onClick={async () => {
-              addCustomApplicationRoot(newAppRoot);
-              update("appRoot", newAppRoot);
-              closeModal();
-            }}>
-            Confirm
-          </Button>
-        </div>
-      </div>
-    );
-  };
 
   const onAppRootChange = (newAppRoot: string | undefined) => {
     if (newAppRoot === undefined) {
       newAppRoot = "Auto";
     }
-    openModal("", <AppRootChangeConfirmationView newAppRoot={newAppRoot} />);
+    update("appRoot", newAppRoot);
   };
 
   const onCustomAppRootChange = () => {
@@ -350,8 +276,12 @@ function AppRootConfiguration({
   };
 
   const onAddNewAppRoot = () => {
-    let newAppRoot = customAppRootInputRef.current?.value ?? "";
-    openModal("", <CustomAppRootConfirmationView newAppRoot={newAppRoot} />);
+    let newAppRoot = customAppRootInputRef.current?.value;
+    if (newAppRoot) {
+      addCustomApplicationRoot(newAppRoot);
+      customAppRootInputRef.current!.value = "";
+      setCustomAppRootButtonDisabled(true);
+    }
   };
 
   const availableAppRoots = applicationRoots.map((applicationRoot) => {
