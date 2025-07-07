@@ -1,3 +1,5 @@
+import { DeviceRotationType } from "./Project";
+
 export type PanelLocation = "tab" | "side-panel";
 export type ThemeType = "vscode" | "built-in";
 
@@ -6,6 +8,7 @@ export type WorkspaceConfigProps = {
   showDeviceFrame: boolean;
   themeType: ThemeType;
   stopPreviousDevices: boolean;
+  deviceRotation: DeviceRotationType
 };
 
 export interface WorkspaceConfigEventMap {

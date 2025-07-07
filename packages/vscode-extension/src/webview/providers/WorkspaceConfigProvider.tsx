@@ -9,6 +9,7 @@ import {
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import { WorkspaceConfig, WorkspaceConfigProps } from "../../common/WorkspaceConfig";
+import { useProject } from "./ProjectProvider";
 
 const workspaceConfig = makeProxy<WorkspaceConfig>("WorkspaceConfig");
 
@@ -21,6 +22,7 @@ const INITIAL_WORKSPACE_CONFIG: WorkspaceConfigProps = {
   showDeviceFrame: true,
   themeType: "vscode",
   stopPreviousDevices: false,
+  deviceRotation: "Portrait",
 };
 
 const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
@@ -30,10 +32,12 @@ const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
 
 export default function WorkspaceConfigProvider({ children }: PropsWithChildren) {
   const [config, setConfig] = useState<WorkspaceConfigProps>(INITIAL_WORKSPACE_CONFIG);
+  const { project } = useProject();
 
   useEffect(() => {
     function watchConfigChange(e: WorkspaceConfigProps) {
       document.body.setAttribute("data-use-code-theme", `${e.themeType === "vscode"}`);
+      project.dispatchRotate(e.deviceRotation);
       setConfig(e);
     }
 

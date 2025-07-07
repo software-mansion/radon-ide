@@ -9,6 +9,7 @@ import {
   ThemeType,
 } from "../common/WorkspaceConfig";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { DeviceRotationType } from "../common/Project";
 
 export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
   private config: WorkspaceConfigProps;
@@ -22,6 +23,7 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
       showDeviceFrame: configuration.get<boolean>("showDeviceFrame")!,
       themeType: configuration.get<ThemeType>("themeType")!,
       stopPreviousDevices: configuration.get<boolean>("stopPreviousDevices")!,
+      deviceRotation: configuration.get<DeviceRotationType>("deviceRotation")!,
     };
 
     this.configListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
@@ -35,6 +37,7 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
         showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
         themeType: config.get<ThemeType>("themeType")!,
         stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
+        deviceRotation: config.get<DeviceRotationType>("deviceRotation")!,
       };
 
       if (newConfig.panelLocation !== this.config.panelLocation) {
@@ -50,7 +53,7 @@ export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
           { showDeviceFrame: String(newConfig.showDeviceFrame) }
         );
       }
-
+      
       this.config = newConfig;
       this.eventEmitter.emit("configChange", this.config);
     });
