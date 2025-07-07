@@ -2,10 +2,21 @@ import * as Select from "@radix-ui/react-select";
 import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
 import _ from "lodash";
+import React, { PropsWithChildren } from "react";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { useProject } from "../providers/ProjectProvider";
 import { LaunchConfigurationOptions } from "../../common/LaunchConfig";
 import RichSelectItem from "./shared/RichSelectItem";
+import { useModal } from "../providers/ModalProvider";
+import LaunchConfigurationView from "../views/LaunchConfigurationView";
+
+const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
+  ({ children, ...props }, forwardedRef) => (
+    <Select.Item className="rich-item approot-select-item" {...props} ref={forwardedRef}>
+      <Select.ItemText>{children}</Select.ItemText>
+    </Select.Item>
+  )
+);
 
 function displayNameForConfig(config: LaunchConfigurationOptions) {
   if (config.name === "Radon IDE panel") {
@@ -29,7 +40,6 @@ function renderLaunchConfigurations(
       <Select.Label className="approot-select-label">{groupLabel}</Select.Label>
       {customLaunchConfigurations.map((config, idx) => (
         <RichSelectItem
-          className="approot-select-item"
           value={`${prefix}:${idx}`}
           key={idx}
           icon={<span className="codicon codicon-folder" />}
@@ -83,6 +93,7 @@ function AppRootSelect() {
   } = projectState;
   const selectedAppRootPath = projectState.appRootPath;
   const selectedAppRoot = applicationRoots.find((root) => root.path === selectedAppRootPath);
+  const { openModal } = useModal();
 
   const detectedConfigurations: LaunchConfigurationOptions[] = applicationRoots.map(
     ({ path, displayName, name }) => {
@@ -94,6 +105,10 @@ function AppRootSelect() {
   );
 
   const handleAppRootChange = async (value: string) => {
+    if (value === "manage") {
+      openModal("Launch Configuration", <LaunchConfigurationView />);
+      return;
+    }
     const index = parseInt(value.split(":")[1], 10);
     const configs = value.startsWith("detected:") ? detectedConfigurations : customConfigurations;
     const launchConfiguration = configs[index];
@@ -149,6 +164,13 @@ function AppRootSelect() {
           <Select.Viewport className="approot-select-viewport">
             {renderDetectedLaunchConfigurations(detectedConfigurations, selectedValue)}
             {renderCustomLaunchConfigurations(customConfigurations, selectedValue)}
+            {detectedConfigurations.length + customConfigurations.length > 0 && (
+              <Select.Separator className="approot-select-separator" />
+            )}
+            <SelectItem value="manage">
+              <span className="codicon codicon-add" />
+              <span> Add custom launch config</span>
+            </SelectItem>
           </Select.Viewport>
           <Select.ScrollDownButton className="approot-select-scroll">
             <span className="codicon codicon-chevron-down" />

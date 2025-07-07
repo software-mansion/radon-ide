@@ -1,6 +1,6 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Label from "../components/shared/Label";
 import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import {
@@ -18,6 +18,7 @@ import Button from "../components/shared/Button";
 import { Input } from "../components/shared/Input";
 import { EasBuildConfig } from "../../common/EasConfig";
 import { useProject } from "../providers/ProjectProvider";
+import _ from "lodash";
 
 interface LaunchConfigurationViewProps {
   launchConfigToUpdate?: LaunchConfiguration;
@@ -28,7 +29,12 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
   const { xcodeSchemes, easBuildProfiles, applicationRoots, addCustomApplicationRoot } =
     useLaunchConfig();
 
-  const { project } = useProject();
+  const { project, projectState } = useProject();
+
+  const isEditingSelectedConfig = useMemo(
+    () => _.isEqual(projectState.selectedLaunchConfiguration, launchConfigToUpdate),
+    [projectState.selectedLaunchConfiguration, launchConfigToUpdate]
+  );
 
   const [newLaunchConfigOptions, setNewLaunchConfigOptions] = useState<LaunchConfigurationOptions>(
     launchConfigToUpdate ? optionsForLaunchConfiguration(launchConfigToUpdate) : {}
@@ -114,7 +120,7 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
         </>
       )}
 
-      <Button onClick={save}>Save and restart device</Button>
+      <Button onClick={save}>Save{isEditingSelectedConfig ? " and restart device" : ""}</Button>
     </>
   );
 }
@@ -142,7 +148,8 @@ function NameConfiguration({ name, update }: NameConfigurationProps) {
         ref={nameInputRef}
         className="input-configuration"
         type="string"
-        defaultValue={name ?? "Auto"}
+        defaultValue={name ?? ""}
+        placeholder="Configuration Name"
         onBlur={onNameBlur}
       />
     </div>

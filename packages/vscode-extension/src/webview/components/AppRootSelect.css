@@ -65,8 +65,17 @@
 }
 
 .approot-select-item {
+  height: 32px;
   line-height: 1.2;
+  font-size: 13px;
+  padding: 0 10px;
+  border-radius: 4px;
 }
+
+.approot-select-item > span > span {
+  vertical-align: middle;
+}
+
 .approot-select-viewport .approot-select-item:last-child {
   border-radius: 4px 4px 12px 12px;
 }
@@ -75,4 +84,11 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+.approot-select-separator {
+  height: 1px;
+  background-color: var(--swm-device-select-separator);
+  margin: 2px 0;
+  width: 100%;
 }
