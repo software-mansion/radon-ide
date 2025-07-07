@@ -35,6 +35,15 @@ const defaultProjectState: ProjectState = {
   previewZoom: undefined,
   appRootPath: "./",
   initialized: false,
+  customLaunchConfigurations: [],
+  selectedLaunchConfiguration: {
+    appRoot: "./",
+    absoluteAppRoot: "/",
+    env: {},
+    preview: {
+      waitForAppLaunch: true,
+    },
+  },
 };
 
 const defaultDeviceSettings: DeviceSettings = {

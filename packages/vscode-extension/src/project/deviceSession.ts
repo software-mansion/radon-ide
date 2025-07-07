@@ -38,7 +38,6 @@ import {
   FatalErrorDescriptor,
   BundleErrorDescriptor,
 } from "../common/Project";
-import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
@@ -205,7 +204,7 @@ export class DeviceSession
       this.device.platform,
       appRoot
     );
-    const launchConfig = getLaunchConfiguration();
+    const launchConfig = this.applicationContext.launchConfig;
     const platformKey: "ios" | "android" =
       this.device.platform === DevicePlatform.IOS ? "ios" : "android";
     const fingerprintCommand = launchConfig.customBuild?.[platformKey]?.fingerprintCommand;
@@ -531,7 +530,7 @@ export class DeviceSession
       Logger.debug(`Launching metro`);
       this.metro.start({
         resetCache: true,
-        appRoot: this.applicationContext.appRootFolder,
+        launchConfiguration: this.applicationContext.launchConfig,
         dependencies: [],
       });
     }
@@ -540,7 +539,6 @@ export class DeviceSession
     this.updateStartupMessage(StartupMessage.BootingDevice);
     await cancelToken.adapt(this.device.reboot());
     await this.buildApp({
-      appRoot: this.applicationContext.appRootFolder,
       clean: forceClean,
       cancelToken,
     });
@@ -554,7 +552,7 @@ export class DeviceSession
       platform: this.device.platform,
     });
 
-    const launchConfig = getLaunchConfiguration();
+    const launchConfig = this.applicationContext.launchConfig;
     const platformKey = this.device.platform === DevicePlatform.IOS ? "ios" : "android";
     const fingerprintOptions = {
       appRoot: this.applicationContext.appRootFolder,
@@ -653,16 +651,19 @@ export class DeviceSession
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
       platform: this.device.platform,
     });
+    const launchConfig = this.applicationContext.launchConfig;
 
     // FIXME: Windows getting stuck waiting for the promise to resolve. This
     // seems like a problem with app connecting to Metro and using embedded
     // bundle instead.
-    const shouldWaitForAppLaunch = getLaunchConfiguration().preview?.waitForAppLaunch !== false;
+    const shouldWaitForAppLaunch = launchConfig.preview.waitForAppLaunch;
+    const launchArguments =
+      (this.device.platform === DevicePlatform.IOS && launchConfig.ios?.launchArguments) || [];
     const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
     this.updateStartupMessage(StartupMessage.Launching);
     await cancelToken.adapt(
-      this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port)
+      this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port, launchArguments)
     );
 
     Logger.debug("Will wait for app ready and for preview");
@@ -720,21 +721,12 @@ export class DeviceSession
     }
   }
 
-  private async buildApp({
-    appRoot,
-    clean,
-    cancelToken,
-  }: {
-    appRoot: string;
-    clean: boolean;
-    cancelToken: CancelToken;
-  }) {
+  private async buildApp({ clean, cancelToken }: { clean: boolean; cancelToken: CancelToken }) {
     const buildStartTime = Date.now();
     this.updateStartupMessage(StartupMessage.Building);
-    const launchConfiguration = getLaunchConfiguration();
-    const buildType = await inferBuildType(appRoot, this.device.platform, launchConfiguration);
+    const launchConfiguration = this.applicationContext.launchConfig;
+    const buildType = await inferBuildType(this.device.platform, launchConfiguration);
     const buildConfig = createBuildConfig(
-      appRoot,
       this.device.platform,
       clean,
       launchConfiguration,
@@ -820,7 +812,7 @@ export class DeviceSession
       Logger.debug(`Launching metro`);
       this.metro.start({
         resetCache: false,
-        appRoot: this.applicationContext.appRootFolder,
+        launchConfiguration: this.applicationContext.launchConfig,
         dependencies: [waitForNodeModules],
       });
 
@@ -832,7 +824,6 @@ export class DeviceSession
       // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
       await cancelToken.adapt(this.bootDevice());
       await this.buildApp({
-        appRoot: this.applicationContext.appRootFolder,
         clean: false,
         cancelToken,
       });
