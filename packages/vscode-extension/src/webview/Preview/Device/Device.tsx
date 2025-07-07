@@ -38,6 +38,8 @@ type DeviceCSSProperties = React.CSSProperties & {
   "--phone-mask-image"?: string;
   "--content-rotate"?: string;
   "--phone-wrapper-width"?: string;
+  "--phone-wrapper-min-width"?: string;
+  "--phone-wrapper-min-height"?: string;
 };
 
 function getParentDimensions(phoneElement: HTMLDivElement | null) {
@@ -114,6 +116,8 @@ function cssPropertiesForDevice(
     "--phone-mask-image": `url(${device.maskImage})`,
     "--content-rotate": ROTATION_ANGLE[rotation],
     "--phone-wrapper-width": isHorizontal ? "var(--phone-content-height)" : "auto",
+    "--phone-wrapper-min-width": isHorizontal ? "var(--phone-content-min-height)" : "var(--phone-content-min-width)",
+    "--phone-wrapper-min-height": isHorizontal ? "var(--phone-content-min-width)" : "var(--phone-content-min-height)",
   };
 }
 
