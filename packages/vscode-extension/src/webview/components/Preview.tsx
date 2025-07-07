@@ -107,9 +107,7 @@ function Preview({
   const openRebuildAlert = useNativeRebuildAlert();
 
   function getTouchPosition(event: MouseEvent<HTMLDivElement>) {
-    // const platform = selectedDeviceSession?.deviceInfo.platform;
-    const rotation =
-      selectedDeviceSession?.status === "running" ? selectedDeviceSession.rotation : undefined;
+    const rotation = selectedDeviceSession?.rotation;
 
     const imgRect = previewRef.current!.getBoundingClientRect();
 
