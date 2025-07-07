@@ -42,13 +42,13 @@
 }
 
 .phone-wrapper-resizable {
-  margin-top: var(--phone-content-offset-top);
   display: flex;
   align-items: center;
   justify-content: center;
   min-width: var(--phone-wrapper-min-width);
+  max-height: var(--phone-content-width);
   min-height: var(--phone-wrapper-min-height);
-  width: var(--phone-wrapper-width) !important; /* Adjust the width for proper scroll behaviour */
+  width: var(--phone-content-height) !important; /* Adjust the width for proper scroll behaviour */
                                                 /* !important necessary */
 }
 
