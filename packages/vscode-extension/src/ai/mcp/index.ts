@@ -1,4 +1,4 @@
-import { lm, McpHttpServerDefinition, Uri, EventEmitter, version } from "vscode";
+import { lm, McpHttpServerDefinition, Uri, EventEmitter, version, Disposable } from "vscode";
 import { Logger } from "../../Logger";
 import { watchLicenseTokenChange } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
@@ -8,6 +8,24 @@ import { startLocalMcpServer } from "./server";
 import { MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { extensionContext } from "../../utilities/extensionContext";
+import { isServerOnline } from "../shared/api";
+
+const listenForServerConnection = (fireOnConnection: EventEmitter<void>): Disposable => {
+  const interval = setInterval(async () => {
+    const isOnline = await isServerOnline();
+
+    if (isOnline && interval) {
+      fireOnConnection.fire();
+      clearInterval(interval);
+    }
+  });
+
+  return new Disposable(() => {
+    if (interval) {
+      clearInterval(interval);
+    }
+  });
+};
 
 async function updateMcpConfig(port: number) {
   const mcpConfig = (await readMcpConfig()) || newMcpConfig();
