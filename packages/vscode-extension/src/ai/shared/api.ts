@@ -119,3 +119,9 @@ export async function getSystemPrompt(userPrompt: string): Promise<SystemRespons
 
   return await response.json();
 }
+
+export async function isServerOnline(): Promise<boolean> {
+  const url = new URL("/api/ping/", BACKEND_URL);
+  const response = await fetch(url);
+  return response.status === 200;
+}
