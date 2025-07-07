@@ -10,12 +10,12 @@ import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { extensionContext } from "../../utilities/extensionContext";
 import { isServerOnline } from "../shared/api";
 
-const listenForServerConnection = (fireOnConnection: EventEmitter<void>): Disposable => {
+const listenForServerConnection = (fireOnConnection: EventEmitter<boolean>): Disposable => {
   const interval = setInterval(async () => {
     const isOnline = await isServerOnline();
 
     if (isOnline && interval) {
-      fireOnConnection.fire();
+      fireOnConnection.fire(isOnline);
       clearInterval(interval);
     }
   });
@@ -33,13 +33,31 @@ async function updateMcpConfig(port: number) {
   await writeMcpConfig(updatedConfig);
 }
 
-function directLoadRadonAI() {
+async function directLoadRadonAI() {
+  // Version suffix has to be incremented on every MCP server reload.
+  let versionSuffix = 0;
+
+  let isOnline = await isServerOnline();
+
+  const isServerOnlineEmitter = new EventEmitter<boolean>();
   const didChangeEmitter = new EventEmitter<void>();
 
-  // version suffix is incremented whenever we get auth token update notification
-  // this way we request vscode to reload the tool on regular basis but also immediately
-  // after the user inputs the license token
-  let versionSuffix = 0;
+  isServerOnlineEmitter.event((isOnlineUpdate) => {
+    if (isOnline === isOnlineUpdate) {
+      return; // Status hasn't changed - no-op
+    }
+
+    isOnline = isOnlineUpdate;
+
+    if (isOnline) {
+      // Connection restored - restart local MCP server
+      didChangeEmitter.fire();
+    } else {
+      // Connection lost - ping MCP until first response
+      listenForServerConnection(isServerOnlineEmitter);
+    }
+  });
+
   extensionContext.subscriptions.push(
     watchLicenseTokenChange(() => {
       versionSuffix += 1;
