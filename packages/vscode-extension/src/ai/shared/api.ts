@@ -8,12 +8,12 @@ import { textToToolResponse } from "../mcp/utils";
 
 const BACKEND_URL = "https://radon-ai-backend.swmansion.com/api/";
 const MCP_LOG = "[MCP]";
-const PLACEHOLDER_ID = "3241"; // this placeholder is needed by the API, but the value doesn't matter
 
 export async function invokeToolCall(
   toolName: string,
   args: unknown,
-  id?: string
+  id: string,
+  onConnectionChange?: vscode.EventEmitter<boolean>
 ): Promise<ToolResponse> {
   getTelemetryReporter().sendTelemetryEvent("radon-ai:tool-called", { toolName });
   try {
@@ -29,14 +29,22 @@ export async function invokeToolCall(
         tool_calls: [
           {
             name: toolName,
-            id: id ?? PLACEHOLDER_ID,
+            id,
             args,
           },
         ],
       }),
     });
 
+    if (response.status === 401) {
+      throw Error(`Authorization failed when connecting to servers.`);
+    }
+
     if (response.status !== 200) {
+      // Trivially firing could result in one-off network issues causing a full MCP reload.
+      // To mitigate this possibility, we verify the connection is down before firing the event.
+      const isOnline = await isServerOnline();
+      onConnectionChange?.fire(isOnline);
       throw new Error(`Network error with status: ${response.status}`);
     }
 

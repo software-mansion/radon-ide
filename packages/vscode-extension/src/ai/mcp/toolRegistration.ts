@@ -1,9 +1,12 @@
+import { EventEmitter } from "vscode";
 import { z } from "zod";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { getToolSchema, invokeToolCall } from "../shared/api";
 import { ToolSchema } from "./models";
 import { screenshotToolExec } from "./toolExecutors";
+
+const PLACEHOLDER_ID = "3241"; // this placeholder is needed by the API, but the value doesn't matter
 
 function buildZodSchema(toolSchema: ToolSchema): z.ZodRawShape {
   const props = Object.values(toolSchema.inputSchema.properties);
@@ -12,7 +15,10 @@ function buildZodSchema(toolSchema: ToolSchema): z.ZodRawShape {
   return obj;
 }
 
-export async function registerMcpTools(server: McpServer) {
+export async function registerMcpTools(
+  server: McpServer,
+  onConnectionChange?: EventEmitter<boolean>
+) {
   server.registerTool(
     "view_screenshot",
     {
@@ -33,7 +39,7 @@ export async function registerMcpTools(server: McpServer) {
         inputSchema: zodSchema,
       },
       async (args) => {
-        return await invokeToolCall(tool.name, args);
+        return await invokeToolCall(tool.name, args, PLACEHOLDER_ID, onConnectionChange);
       }
     );
   }

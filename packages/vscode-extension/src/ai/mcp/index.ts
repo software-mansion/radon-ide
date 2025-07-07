@@ -10,12 +10,12 @@ import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { extensionContext } from "../../utilities/extensionContext";
 import { isServerOnline } from "../shared/api";
 
-const listenForServerConnection = (fireOnConnection: EventEmitter<boolean>): Disposable => {
+const listenForServerConnection = (onConnectionChange: EventEmitter<boolean>): Disposable => {
   const interval = setInterval(async () => {
     const isOnline = await isServerOnline();
 
     if (isOnline && interval) {
-      fireOnConnection.fire(isOnline);
+      onConnectionChange.fire(isOnline);
       clearInterval(interval);
     }
   });
@@ -69,7 +69,7 @@ async function directLoadRadonAI() {
     lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
       onDidChangeServerDefinitions: didChangeEmitter.event,
       provideMcpServerDefinitions: async () => {
-        const port = await startLocalMcpServer();
+        const port = await startLocalMcpServer(isServerOnlineEmitter);
         return [
           new McpHttpServerDefinition(
             "RadonAI",
