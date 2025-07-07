@@ -54,7 +54,7 @@ async function directLoadRadonAI() {
       didChangeEmitter.fire();
     } else {
       // Connection lost - ping MCP until first response
-      listenForServerConnection(isServerOnlineEmitter);
+      extensionContext.subscriptions.push(listenForServerConnection(isServerOnlineEmitter));
     }
   });
 
