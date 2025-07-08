@@ -9,12 +9,15 @@ import { getLaunchConfigurations } from "../utilities/launchConfiguration";
 
 function findDefaultAppRoot(showWarning = false) {
   const appRoots = findAppRootCandidates();
+  const workspacePath = workspace.workspaceFolders![0].uri.fsPath;
   const defaultAppRoot = appRoots.length > 0 ? appRoots[0] : undefined;
+  const defaultAppRootRelative =
+    defaultAppRoot && "./" + path.relative(workspacePath, defaultAppRoot);
   if (appRoots.length > 0 && showWarning) {
     vscode.window
       .showWarningMessage(
         "Multiple application roots found in workspace, but no 'appRoot' specified in launch configuration. Using the first found application root: " +
-          defaultAppRoot,
+          defaultAppRootRelative,
         "Add Launch Configuration"
       )
       .then((selection) => {
@@ -23,7 +26,7 @@ function findDefaultAppRoot(showWarning = false) {
         }
       });
   }
-  return defaultAppRoot;
+  return defaultAppRootRelative;
 }
 
 export function launchConfigurationFromOptions(
