@@ -74,7 +74,7 @@ function isDirectLoadingAvailable() {
   );
 }
 
-export default async function registerRadonAi() {
+export default function registerRadonAi() {
   const connectionListener = new ConnectionListener();
 
   if (isDirectLoadingAvailable()) {
