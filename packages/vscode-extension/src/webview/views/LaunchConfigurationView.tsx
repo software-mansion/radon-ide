@@ -1,6 +1,6 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import _ from "lodash";
 import Label from "../components/shared/Label";
 import { AddCustomApplicationRoot, ApplicationRoot } from "../../common/AppRootConfig";
@@ -66,7 +66,7 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
         scheme={ios?.scheme}
         configuration={ios?.configuration}
         update={update}
-        xcodeSchemes={xcodeSchemes ?? []}
+        xcodeSchemes={xcodeSchemes}
       />
       <div className="launch-configuration-section-margin" />
 
@@ -98,25 +98,21 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
 
       <div className="launch-configuration-section-margin" />
 
-      {!!easBuildProfiles && (
-        <>
-          <Label>EAS Build</Label>
-          <EasBuildConfiguration
-            platform="ios"
-            eas={eas}
-            update={update}
-            easBuildProfiles={easBuildProfiles}
-          />
-          <EasBuildConfiguration
-            platform="android"
-            eas={eas}
-            update={update}
-            easBuildProfiles={easBuildProfiles}
-          />
+      <Label>EAS Build</Label>
+      <EasBuildConfiguration
+        platform="ios"
+        eas={eas}
+        update={update}
+        easBuildProfiles={easBuildProfiles}
+      />
+      <EasBuildConfiguration
+        platform="android"
+        eas={eas}
+        update={update}
+        easBuildProfiles={easBuildProfiles}
+      />
 
-          <div className="launch-configuration-section-margin" />
-        </>
-      )}
+      <div className="launch-configuration-section-margin" />
 
       <Button onClick={save}>Save{isEditingSelectedConfig ? " and restart device" : ""}</Button>
     </>
@@ -425,11 +421,11 @@ function EasBuildConfiguration({
   const YES = "Yes" as const;
   const NO = "No" as const;
 
-  const profile = eas?.[platform]?.profile;
+  const configuredProfile = eas?.[platform]?.profile;
   const buildUUID = eas?.[platform]?.buildUUID;
   const local = eas?.[platform]?.local;
 
-  const [selectedProfile, setSelectedProfile] = useState<string>(() => {
+  function valueForProfile(profile: string | undefined): string {
     if (profile === undefined) {
       return DISABLED;
     }
@@ -437,7 +433,17 @@ function EasBuildConfiguration({
       return CUSTOM;
     }
     return profile;
-  });
+  }
+
+  const profileValue = useMemo(() => {
+    return valueForProfile(configuredProfile);
+  }, [configuredProfile, easBuildProfiles]);
+
+  useEffect(() => {
+    if (profileValue !== CUSTOM && customBuildProfileInputRef.current) {
+      customBuildProfileInputRef.current.value = "";
+    }
+  }, [profileValue]);
 
   const buildUUIDInputRef = useRef<HTMLInputElement>(null);
   const customBuildProfileInputRef = useRef<HTMLInputElement>(null);
@@ -446,7 +452,7 @@ function EasBuildConfiguration({
     const currentPlaftormConfig = eas?.[platform] ?? {};
     const newPlatformConfig = Object.fromEntries(
       Object.entries({ ...currentPlaftormConfig, ...configUpdate }).filter(
-        ([_k, v]) => !!v || v === false
+        ([_k, v]) => v !== undefined
       )
     );
     if ("profile" in newPlatformConfig) {
@@ -462,15 +468,13 @@ function EasBuildConfiguration({
   };
 
   const onProfileSelectionChange = (newProfile: string) => {
-    setSelectedProfile(newProfile);
-
     if (newProfile === DISABLED) {
       updateEasConfig({ profile: undefined, buildUUID: undefined });
       return;
     }
 
     if (newProfile === CUSTOM) {
-      newProfile = customBuildProfileInputRef.current?.value ?? profile ?? "";
+      newProfile = customBuildProfileInputRef.current?.value ?? configuredProfile ?? "";
     }
     updateProfile(newProfile);
   };
@@ -511,49 +515,41 @@ function EasBuildConfiguration({
     <div className="launch-configuration-container">
       <div className="setting-description">{prettyPlatformName(platform)} Build Profile:</div>
       <Select
-        value={selectedProfile}
+        value={profileValue}
         onChange={onProfileSelectionChange}
         items={availableEasBuildProfiles}
         className="scheme"
       />
-      {selectedProfile === CUSTOM && (
-        <>
-          <div className="setting-description">
-            {prettyPlatformName(platform)} Custom Build Profile:
-          </div>
-          <Input
-            ref={customBuildProfileInputRef}
-            className="input-configuration"
-            type="string"
-            defaultValue={profile ?? ""}
-            placeholder="Enter the build profile to be used"
-            onBlur={onCustomBuildProfileInputBlur}
-          />
-        </>
-      )}
-      {selectedProfile !== DISABLED && (
-        <>
-          <div className="setting-description">Build locally:</div>
-          <Select
-            value={local ? YES : NO}
-            onChange={onBuildLocallyChange}
-            items={buildLocallyOptions}
-            className="scheme"></Select>
-          {!local && (
-            <>
-              <div className="setting-description">{prettyPlatformName(platform)} Build UUID:</div>
-              <Input
-                ref={buildUUIDInputRef}
-                className="input-configuration"
-                type="string"
-                defaultValue={buildUUID ?? ""}
-                placeholder="Auto (build with matching fingerprint)"
-                onBlur={onBuildUUIDInputBlur}
-              />
-            </>
-          )}
-        </>
-      )}
+      <div className="setting-description">
+        {prettyPlatformName(platform)} Custom Build Profile:
+      </div>
+      <Input
+        ref={customBuildProfileInputRef}
+        className="input-configuration"
+        type="string"
+        placeholder="Enter the build profile to be used"
+        defaultValue={configuredProfile ?? ""}
+        onBlur={onCustomBuildProfileInputBlur}
+        disabled={profileValue !== CUSTOM}
+      />
+      <div className="setting-description">Build locally:</div>
+      <Select
+        value={local ? YES : NO}
+        onChange={onBuildLocallyChange}
+        items={buildLocallyOptions}
+        className="scheme"
+        disabled={profileValue === DISABLED}
+      />
+      <div className="setting-description">{prettyPlatformName(platform)} Build UUID:</div>
+      <Input
+        ref={buildUUIDInputRef}
+        className="input-configuration"
+        type="string"
+        defaultValue={buildUUID ?? ""}
+        placeholder="Auto (build with matching fingerprint)"
+        onBlur={onBuildUUIDInputBlur}
+        disabled={profileValue === DISABLED || local}
+      />
     </div>
   );
 }

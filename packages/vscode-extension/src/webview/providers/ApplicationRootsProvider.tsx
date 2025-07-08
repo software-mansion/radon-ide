@@ -14,9 +14,9 @@ export interface AppRootConfig {
   easBuildProfiles: EasBuildConfig;
 }
 
-export function useAppRootConfig(appRootFolder?: string): Partial<AppRootConfig> {
-  const [xcodeSchemes, setXcodeSchemes] = useState<string[] | undefined>(undefined);
-  const [easBuildProfiles, setEasBuildProfiles] = useState<EasBuildConfig | undefined>(undefined);
+export function useAppRootConfig(appRootFolder?: string): AppRootConfig {
+  const [xcodeSchemes, setXcodeSchemes] = useState<string[]>([]);
+  const [easBuildProfiles, setEasBuildProfiles] = useState<EasBuildConfig>({});
 
   useEffect(() => {
     appRootConfigProxy.getAvailableEasProfiles(appRootFolder).then(setEasBuildProfiles);
