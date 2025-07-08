@@ -71,18 +71,12 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
     rotation: string;
   }> = [
     { label: "Portrait", value: "Portrait", icon: "device-mobile", rotation: "0deg" },
-    {
-      label: "Portrait Upside Down",
-      value: "PortraitUpsideDown",
-      icon: "device-mobile",
-      rotation: "180deg",
-    },
-    { label: "Landscape Left", value: "LandscapeLeft", icon: "device-mobile", rotation: "90deg" },
+    { label: "Landscape Left", value: "LandscapeLeft", icon: "device-mobile", rotation: "-90deg" },
     {
       label: "Landscape Right",
       value: "LandscapeRight",
       icon: "device-mobile",
-      rotation: "-90deg",
+      rotation: "90deg",
     },
   ];
 
@@ -213,11 +207,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 sideOffset={2}
                 alignOffset={-5}>
                 {rotateOptions.map(
-                  (option, index) =>
-                    !(
-                      option.value === "PortraitUpsideDown" &&
-                      selectedDeviceSession?.deviceInfo.platform === "iOS"
-                    ) && (
+                  (option, index) => (
                       <DropdownMenu.Item
                         className="dropdown-menu-item"
                         key={index}
