@@ -33,7 +33,7 @@ export class ConnectionListener {
         this.connectionChangeEmitter.fire();
       } else {
         // Connection lost - ping server until first response
-        extensionContext.subscriptions.push(this.listenForConnection());
+        this.listenForConnection();
       }
     });
   }
@@ -54,7 +54,7 @@ export class ConnectionListener {
       }
     }, PING_INTERVAL);
 
-    return new Disposable(this.tryClearListeningInterval);
+    extensionContext.subscriptions.push(new Disposable(this.tryClearListeningInterval));
   }
 
   public onConnectionChange(callback: () => unknown) {
