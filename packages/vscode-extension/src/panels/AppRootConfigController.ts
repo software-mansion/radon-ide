@@ -48,17 +48,6 @@ function readApplicationRoot(appRootPath: string): ApplicationRoot {
 }
 
 export class AppRootConfigController implements AppRootConfig {
-  async addCustomApplicationRoot(appRoot: string) {
-    const oldCustomApplicationRoots =
-      extensionContext.workspaceState.get<string[] | undefined>(CUSTOM_APPLICATION_ROOTS_KEY) ?? [];
-
-    const newCustomApplicationRoots = [...oldCustomApplicationRoots, appRoot];
-
-    extensionContext.workspaceState.update(CUSTOM_APPLICATION_ROOTS_KEY, newCustomApplicationRoots);
-
-    return newCustomApplicationRoots.map(readApplicationRoot);
-  }
-
   async getAvailableApplicationRoots() {
     const workspacePath = workspace.workspaceFolders![0].uri.fsPath;
     const applicationRootsCandidates = findAppRootCandidates().map((candidate) => {

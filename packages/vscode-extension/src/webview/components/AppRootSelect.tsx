@@ -104,7 +104,7 @@ function renderCustomLaunchConfigurations(
 }
 
 function AppRootSelect() {
-  const { applicationRoots } = useApplicationRoots();
+  const applicationRoots = useApplicationRoots();
   const { projectState, project } = useProject();
   const {
     selectedLaunchConfiguration: selectedConfiguration,

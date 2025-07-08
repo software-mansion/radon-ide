@@ -1,7 +1,6 @@
 import { PropsWithChildren, useContext, createContext, useState, useEffect, useMemo } from "react";
 import { makeProxy } from "../utilities/rpc";
 import {
-  AddCustomApplicationRoot,
   ApplicationRoot,
   AppRootConfig as AppRootConfigInterface,
 } from "../../common/AppRootConfig";
@@ -32,15 +31,7 @@ export function useAppRootConfig(appRootFolder?: string): AppRootConfig {
   );
 }
 
-export interface ApplicationRootsContextType {
-  applicationRoots: ApplicationRoot[];
-  addCustomApplicationRoot: AddCustomApplicationRoot;
-}
-
-const ApplicationRootsContext = createContext<ApplicationRootsContextType>({
-  applicationRoots: [],
-  addCustomApplicationRoot: () => Promise.resolve([]),
-});
+const ApplicationRootsContext = createContext<ApplicationRoot[]>([]);
 
 export default function ApplicationRootsProvider({ children }: PropsWithChildren) {
   const [applicationRoots, setApplicationRoots] = useState<ApplicationRoot[]>([]);
@@ -49,19 +40,8 @@ export default function ApplicationRootsProvider({ children }: PropsWithChildren
     appRootConfigProxy.getAvailableApplicationRoots().then(setApplicationRoots);
   }, []);
 
-  const addCustomApplicationRoot = (appRoot: string) => {
-    appRootConfigProxy.addCustomApplicationRoot(appRoot).then(setApplicationRoots);
-  };
-
-  const contextValue = useMemo(() => {
-    return {
-      applicationRoots,
-      addCustomApplicationRoot,
-    };
-  }, [applicationRoots, addCustomApplicationRoot]);
-
   return (
-    <ApplicationRootsContext.Provider value={contextValue}>
+    <ApplicationRootsContext.Provider value={applicationRoots}>
       {children}
     </ApplicationRootsContext.Provider>
   );

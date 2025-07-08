@@ -24,7 +24,7 @@ interface LaunchConfigurationViewProps {
 
 function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationViewProps) {
   const { closeModal } = useModal();
-  const { applicationRoots } = useApplicationRoots();
+  const applicationRoots = useApplicationRoots();
 
   const { project, projectState } = useProject();
 
