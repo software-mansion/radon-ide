@@ -5,6 +5,7 @@ import { getTelemetryReporter } from "../../utilities/telemetry";
 import { CHAT_LOG } from "../chat";
 import { ToolResponse, ToolResult, ToolsInfo } from "../mcp/models";
 import { textToToolResponse } from "../mcp/utils";
+import { ConnectionListener } from "../mcp/ConnectionListener";
 
 const BACKEND_URL = "https://radon-ai-backend.swmansion.com/api/";
 const MCP_LOG = "[MCP]";
@@ -13,7 +14,7 @@ export async function invokeToolCall(
   toolName: string,
   args: unknown,
   id: string,
-  onConnectionChange?: vscode.EventEmitter<boolean>
+  connectionListener?: ConnectionListener
 ): Promise<ToolResponse> {
   getTelemetryReporter().sendTelemetryEvent("radon-ai:tool-called", { toolName });
   try {
@@ -41,10 +42,14 @@ export async function invokeToolCall(
     }
 
     if (response.status !== 200) {
-      // Trivially firing could result in one-off network issues causing a full MCP reload.
-      // To mitigate this possibility, we verify the connection is down before firing the event.
       const isOnline = await isServerOnline();
-      onConnectionChange?.fire(isOnline);
+
+      if (!isOnline) {
+        // Firing without `isOnline` verification could result in one-off network issues causing a full MCP reload.
+        // To prevent this, we verify the connection is down before announcing it.
+        connectionListener?.announceConnectionLost();
+      }
+
       throw new Error(`Network error with status: ${response.status}`);
     }
 

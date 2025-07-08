@@ -1,4 +1,4 @@
-import { lm, McpHttpServerDefinition, Uri, EventEmitter, version, Disposable } from "vscode";
+import { lm, McpHttpServerDefinition, Uri, EventEmitter, version } from "vscode";
 import { Logger } from "../../Logger";
 import { watchLicenseTokenChange } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
@@ -8,24 +8,7 @@ import { startLocalMcpServer } from "./server";
 import { MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { extensionContext } from "../../utilities/extensionContext";
-import { isServerOnline } from "../shared/api";
-
-const listenForServerConnection = (onConnectionChange: EventEmitter<boolean>): Disposable => {
-  const interval = setInterval(async () => {
-    const isOnline = await isServerOnline();
-
-    if (isOnline && interval) {
-      onConnectionChange.fire(isOnline);
-      clearInterval(interval);
-    }
-  });
-
-  return new Disposable(() => {
-    if (interval) {
-      clearInterval(interval);
-    }
-  });
-};
+import { ConnectionListener } from "./ConnectionListener";
 
 async function updateMcpConfig(port: number) {
   const mcpConfig = (await readMcpConfig()) || newMcpConfig();
@@ -33,49 +16,33 @@ async function updateMcpConfig(port: number) {
   await writeMcpConfig(updatedConfig);
 }
 
-async function directLoadRadonAI() {
+async function directLoadRadonAI(connectionListener: ConnectionListener) {
   // Version suffix has to be incremented on every MCP server reload.
   let versionSuffix = 0;
 
-  let isOnline = await isServerOnline();
-
-  const isServerOnlineEmitter = new EventEmitter<boolean>();
   const didChangeEmitter = new EventEmitter<void>();
-
-  isServerOnlineEmitter.event((isOnlineUpdate) => {
-    if (isOnline === isOnlineUpdate) {
-      return; // Status hasn't changed - no-op
-    }
-
-    isOnline = isOnlineUpdate;
-
-    if (isOnline) {
-      // Connection restored - restart local MCP server
-      didChangeEmitter.fire();
-    } else {
-      // Connection lost - ping MCP until first response
-      extensionContext.subscriptions.push(listenForServerConnection(isServerOnlineEmitter));
-    }
-  });
 
   extensionContext.subscriptions.push(
     watchLicenseTokenChange(() => {
-      versionSuffix += 1;
       didChangeEmitter.fire();
     })
   );
+
+  connectionListener.onConnectionChange(() => {
+    didChangeEmitter.fire();
+  });
 
   extensionContext.subscriptions.push(
     lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
       onDidChangeServerDefinitions: didChangeEmitter.event,
       provideMcpServerDefinitions: async () => {
-        const port = await startLocalMcpServer(isServerOnlineEmitter);
+        const port = await startLocalMcpServer(connectionListener);
         return [
           new McpHttpServerDefinition(
             "RadonAI",
             Uri.parse(`http://127.0.0.1:${port}/mcp`),
             {},
-            extensionContext.extension.packageJSON.version + `.${versionSuffix}`
+            extensionContext.extension.packageJSON.version + `.${versionSuffix++}`
           ),
         ];
       },
@@ -83,10 +50,10 @@ async function directLoadRadonAI() {
   );
 }
 
-async function fsLoadRadonAI() {
+async function fsLoadRadonAI(connectionListener: ConnectionListener) {
   try {
     // Server has to be online before the config is written
-    const mcpPort = await startLocalMcpServer();
+    const mcpPort = await startLocalMcpServer(connectionListener);
 
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
     await updateMcpConfig(mcpPort);
@@ -107,13 +74,15 @@ function isDirectLoadingAvailable() {
   );
 }
 
-export default function registerRadonAi() {
+export default async function registerRadonAi() {
+  const connectionListener = new ConnectionListener();
+
   if (isDirectLoadingAvailable()) {
-    directLoadRadonAI();
+    directLoadRadonAI(connectionListener);
   } else {
     extensionContext.subscriptions.push(
       watchLicenseTokenChange(() => {
-        fsLoadRadonAI();
+        fsLoadRadonAI(connectionListener);
       })
     );
   }

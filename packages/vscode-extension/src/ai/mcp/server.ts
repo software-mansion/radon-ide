@@ -3,16 +3,16 @@ import { AddressInfo } from "node:net";
 import { default as express, Express } from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { EventEmitter } from "vscode";
 import { registerMcpTools } from "./toolRegistration";
 import { Logger } from "../../Logger";
 import { Session } from "./models";
+import { ConnectionListener } from "./ConnectionListener";
 
 let session: Session = null;
 
 function getHttpServer(
   // todo: make onConnectionChange required
-  onConnectionChange?: EventEmitter<boolean>
+  connectionListener?: ConnectionListener
 ): Express {
   const app = express();
   app.use(express.json());
@@ -38,7 +38,7 @@ function getHttpServer(
         version: "1.0.0",
       });
 
-      await registerMcpTools(server, onConnectionChange);
+      await registerMcpTools(server, connectionListener);
 
       await server.connect(session.transport);
     }
@@ -63,9 +63,9 @@ function getHttpServer(
 
 export async function startLocalMcpServer(
   // todo: make onConnectionChange required
-  onConnectionChange?: EventEmitter<boolean>
+  connectionListener?: ConnectionListener
 ): Promise<number> {
-  const server = getHttpServer(onConnectionChange);
+  const server = getHttpServer(connectionListener);
 
   return await new Promise<number>((resolve, reject) => {
     try {
