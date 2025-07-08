@@ -38,7 +38,7 @@ export async function invokeToolCall(
     });
 
     if (response.status === 401) {
-      throw Error(`Authorization failed when connecting to servers.`);
+      throw Error(`Authorization failed when connecting to the backend.`);
     }
 
     if (response.status !== 200) {
@@ -84,7 +84,7 @@ export async function getToolSchema(connectionListener: ConnectionListener): Pro
     });
 
     if (response.status === 401) {
-      throw Error(`Authorization failed when connecting to servers.`);
+      throw Error(`Authorization failed when connecting to the backend.`);
     }
 
     if (response.status !== 200) {
