@@ -10,10 +10,7 @@ import { ConnectionListener } from "./ConnectionListener";
 
 let session: Session = null;
 
-function getHttpServer(
-  // todo: make onConnectionChange required
-  connectionListener?: ConnectionListener
-): Express {
+function getHttpServer(connectionListener: ConnectionListener): Express {
   const app = express();
   app.use(express.json());
 
@@ -61,10 +58,7 @@ function getHttpServer(
   return app;
 }
 
-export async function startLocalMcpServer(
-  // todo: make onConnectionChange required
-  connectionListener?: ConnectionListener
-): Promise<number> {
+export async function startLocalMcpServer(connectionListener: ConnectionListener): Promise<number> {
   const server = getHttpServer(connectionListener);
 
   return await new Promise<number>((resolve, reject) => {

@@ -15,7 +15,7 @@ function buildZodSchema(toolSchema: ToolSchema): z.ZodRawShape {
   return obj;
 }
 
-export async function registerMcpTools(server: McpServer, connectionListener?: ConnectionListener) {
+export async function registerMcpTools(server: McpServer, connectionListener: ConnectionListener) {
   server.registerTool(
     "view_screenshot",
     {
