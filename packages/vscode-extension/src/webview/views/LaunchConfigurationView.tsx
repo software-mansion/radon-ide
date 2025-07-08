@@ -63,6 +63,7 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
         </h2>
         <div className="launch-configuration-button-group">
           <Button
+            className="button-secondary"
             onClick={() =>
               openModal(
                 "Launch Configuration",
@@ -72,7 +73,6 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
             Cancel
           </Button>
           <Button
-            className="launch-configuration-delete"
             onClick={() => {
               project.createOrUpdateLaunchConfiguration(undefined, launchConfigToUpdate);
               closeModal();
@@ -148,7 +148,7 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
           <Button
             className="button-secondary"
             onClick={() => {
-              openModal("Delete Launch Configuration", <DeleteConfirmationModal />);
+              openModal("", <DeleteConfirmationModal />);
             }}>
             Delete
           </Button>
