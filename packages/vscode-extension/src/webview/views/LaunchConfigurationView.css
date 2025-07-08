@@ -24,7 +24,7 @@
   margin-bottom: 5px;
 }
 
-.launch-configuration-container {
+.launch-configuration-group {
   display: flex;
   flex-direction: column;
   padding-right: 5%;
@@ -36,37 +36,30 @@
   margin-bottom: 10px;
 }
 
-.app-root-change-title {
+.launch-configuration-confirmation-title {
   color: var(--swm-default-text);
   margin-top: 0;
 }
 
-.app-root-change-subtitle {
-  color: var(--swm-secondary-text);
-  margin: 16px 0;
-}
-
-.app-root-change-button-group {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  gap: 24px;
-  margin-top: 24px;
-}
-
-.app-root-change-button {
-  width: 100px;
-}
-
-.custom-app-root-container {
+.launch-configuration-button-group {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
-  gap: 10px;
-  align-items: center;
+  justify-content: flex-end;
 }
 
-.custom-app-root-input {
-  margin-bottom: 0px;
+.launch-configuration-button-group > button {
+  height: 32px;
+  margin-left: 10px;
+}
+
+.launch-configuration-modal {
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+}
+
+.launch-configuration-container {
+  flex: 1;
+  flex-direction: column;
+  overflow: scroll;
 }

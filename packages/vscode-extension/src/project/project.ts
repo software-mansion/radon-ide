@@ -112,7 +112,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   async createOrUpdateLaunchConfiguration(
-    newLaunchConfiguration: LaunchConfigurationOptions,
+    newLaunchConfiguration: LaunchConfigurationOptions | undefined,
     oldLaunchConfiguration?: LaunchConfiguration
   ) {
     const isUpdatingSelectedConfig = _.isEqual(
@@ -123,7 +123,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       newLaunchConfiguration,
       oldLaunchConfiguration
     );
-    if (isUpdatingSelectedConfig) {
+    if (isUpdatingSelectedConfig && newConfig) {
       this.selectLaunchConfiguration(newConfig);
     }
   }

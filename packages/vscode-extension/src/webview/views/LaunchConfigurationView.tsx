@@ -23,7 +23,7 @@ interface LaunchConfigurationViewProps {
 }
 
 function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationViewProps) {
-  const { closeModal } = useModal();
+  const { openModal, closeModal } = useModal();
   const applicationRoots = useApplicationRoots();
 
   const { project, projectState } = useProject();
@@ -55,62 +55,107 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
     closeModal();
   }
 
+  function DeleteConfirmationModal() {
+    return (
+      <div>
+        <h2 className="launch-configuration-confirmation-title">
+          Are you sure you want to delete the current configuration?
+        </h2>
+        <div className="launch-configuration-button-group">
+          <Button
+            onClick={() =>
+              openModal(
+                "Launch Configuration",
+                <LaunchConfigurationView launchConfigToUpdate={launchConfigToUpdate} />
+              )
+            }>
+            Cancel
+          </Button>
+          <Button
+            className="launch-configuration-delete"
+            onClick={() => {
+              project.createOrUpdateLaunchConfiguration(undefined, launchConfigToUpdate);
+              closeModal();
+            }}>
+            Delete
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <>
-      <Label>Name</Label>
-      <NameConfiguration name={newLaunchConfigOptions.name} update={update} />
+    <div className="launch-configuration-modal">
+      <div className="launch-configuration-container">
+        <Label>Name</Label>
+        <NameConfiguration name={newLaunchConfigOptions.name} update={update} />
+        <div className="launch-configuration-section-margin" />
+
+        <Label>iOS</Label>
+        <IosConfiguration
+          scheme={ios?.scheme}
+          configuration={ios?.configuration}
+          update={update}
+          xcodeSchemes={xcodeSchemes}
+        />
+        <div className="launch-configuration-section-margin" />
+
+        <Label>Android</Label>
+        <AndroidConfiguration
+          buildType={android?.buildType}
+          productFlavor={android?.productFlavor}
+          update={update}
+        />
+
+        <div className="launch-configuration-section-margin" />
+
+        <Label>App Root</Label>
+        <AppRootConfiguration
+          appRoot={appRoot}
+          update={update}
+          applicationRoots={applicationRoots}
+        />
+        <div className="launch-configuration-section-margin" />
+
+        <Label>metro Config Path</Label>
+        <MetroConfigPathConfiguration metroConfigPath={metroConfigPath} update={update} />
+
+        <div className="launch-configuration-section-margin" />
+
+        <Label>is Expo</Label>
+        <IsExpoConfiguration isExpo={isExpo} update={update} />
+
+        <div className="launch-configuration-section-margin" />
+
+        <Label>EAS Build</Label>
+        <EasBuildConfiguration
+          platform="ios"
+          eas={eas}
+          update={update}
+          easBuildProfiles={easBuildProfiles}
+        />
+        <EasBuildConfiguration
+          platform="android"
+          eas={eas}
+          update={update}
+          easBuildProfiles={easBuildProfiles}
+        />
+      </div>
       <div className="launch-configuration-section-margin" />
 
-      <Label>iOS</Label>
-      <IosConfiguration
-        scheme={ios?.scheme}
-        configuration={ios?.configuration}
-        update={update}
-        xcodeSchemes={xcodeSchemes}
-      />
-      <div className="launch-configuration-section-margin" />
-
-      <Label>Android</Label>
-      <AndroidConfiguration
-        buildType={android?.buildType}
-        productFlavor={android?.productFlavor}
-        update={update}
-      />
-
-      <div className="launch-configuration-section-margin" />
-
-      <Label>App Root</Label>
-      <AppRootConfiguration appRoot={appRoot} update={update} applicationRoots={applicationRoots} />
-      <div className="launch-configuration-section-margin" />
-
-      <Label>metro Config Path</Label>
-      <MetroConfigPathConfiguration metroConfigPath={metroConfigPath} update={update} />
-
-      <div className="launch-configuration-section-margin" />
-
-      <Label>is Expo</Label>
-      <IsExpoConfiguration isExpo={isExpo} update={update} />
-
-      <div className="launch-configuration-section-margin" />
-
-      <Label>EAS Build</Label>
-      <EasBuildConfiguration
-        platform="ios"
-        eas={eas}
-        update={update}
-        easBuildProfiles={easBuildProfiles}
-      />
-      <EasBuildConfiguration
-        platform="android"
-        eas={eas}
-        update={update}
-        easBuildProfiles={easBuildProfiles}
-      />
-
-      <div className="launch-configuration-section-margin" />
-
-      <Button onClick={save}>Save{isEditingSelectedConfig ? " and restart device" : ""}</Button>
-    </>
+      <div className="launch-configuration-button-group">
+        <Button onClick={save}>Save{isEditingSelectedConfig ? " and restart device" : ""}</Button>
+        {launchConfigToUpdate && (
+          <Button
+            className="launch-configuration-delete"
+            onClick={() => {
+              openModal("Delete Launch Configuration", <DeleteConfirmationModal />);
+            }}>
+            Delete
+          </Button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -136,7 +181,7 @@ function NameConfiguration({ name, update }: NameConfigurationProps) {
   };
 
   return (
-    <div className="launch-configuration-container">
+    <div className="launch-configuration-group">
       <div className="setting-description">Configuration Name:</div>
       <Input
         ref={nameInputRef}
@@ -182,7 +227,7 @@ function IosConfiguration({ scheme, configuration, update, xcodeSchemes }: iosCo
   availableXcodeSchemes.push({ value: "Auto", label: "Auto" });
 
   return (
-    <div className="launch-configuration-container">
+    <div className="launch-configuration-group">
       <div className="setting-description">Scheme:</div>
       <Select
         value={scheme ?? "Auto"}
@@ -229,7 +274,7 @@ function AndroidConfiguration({ buildType, productFlavor, update }: androidConfi
   };
 
   return (
-    <div className="launch-configuration-container">
+    <div className="launch-configuration-group">
       <div className="setting-description">Build Type:</div>
       <Input
         ref={buildTypeInputRef}
@@ -299,7 +344,7 @@ function AppRootConfiguration({ appRoot, update, applicationRoots }: appRootConf
   availableAppRoots.push({ value: "Custom", label: "Custom" });
 
   return (
-    <div className="launch-configuration-container">
+    <div className="launch-configuration-group">
       <div className="setting-description">AppRoot:</div>
       <Select
         value={selectedValue}
@@ -308,16 +353,14 @@ function AppRootConfiguration({ appRoot, update, applicationRoots }: appRootConf
         className="scheme"
       />
       <div className="setting-description">Add Custom Application Root:</div>
-      <div className="custom-app-root-container">
-        <input
-          ref={customAppRootInputRef}
-          className="input-configuration custom-app-root-input"
-          type="string"
-          placeholder={"Custom/Application/Root/Path"}
-          disabled={selectedValue !== "Custom"}
-          onBlur={onCustomAppRootInputBlur}
-        />
-      </div>
+      <input
+        ref={customAppRootInputRef}
+        className="input-configuration"
+        type="string"
+        placeholder={"Custom/Application/Root/Path"}
+        disabled={selectedValue !== "Custom"}
+        onBlur={onCustomAppRootInputBlur}
+      />
     </div>
   );
 }
@@ -339,7 +382,7 @@ function MetroConfigPathConfiguration({ metroConfigPath, update }: metroPathConf
   };
 
   return (
-    <div className="launch-configuration-container">
+    <div className="launch-configuration-group">
       <div className="setting-description">Metro Config Path:</div>
       <Input
         ref={metroPathInputRef}
@@ -375,7 +418,7 @@ function IsExpoConfiguration({ isExpo, update }: isExpoConfigurationProps) {
   };
 
   return (
-    <div className="launch-configuration-container">
+    <div className="launch-configuration-group">
       <div className="setting-description">Is Expo:</div>
       <Select
         value={isExpo?.toString() ?? "Auto"}
@@ -508,7 +551,7 @@ function EasBuildConfiguration({
   ];
 
   return (
-    <div className="launch-configuration-container">
+    <div className="launch-configuration-group">
       <div className="setting-description">{prettyPlatformName(platform)} Build Profile:</div>
       <Select
         value={profileValue}

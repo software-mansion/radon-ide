@@ -105,15 +105,17 @@ export class LaunchConfigurationsManager implements Disposable {
   }
 
   public async createOrUpdateLaunchConfiguration(
-    newLaunchConfiguration: LaunchConfigurationOptions,
+    newLaunchConfiguration: LaunchConfigurationOptions | undefined,
     oldLaunchConfiguration?: LaunchConfiguration
-  ): Promise<LaunchConfiguration> {
-    const newConfig = {
-      name: "Radon IDE panel",
-      type: "radon-ide",
-      request: "launch",
-      ...newLaunchConfiguration,
-    };
+  ): Promise<LaunchConfiguration | undefined> {
+    const newConfig = newLaunchConfiguration
+      ? {
+          name: "Radon IDE panel",
+          type: "radon-ide",
+          request: "launch",
+          ...newLaunchConfiguration,
+        }
+      : undefined;
     const defaultAppRoot = findDefaultAppRoot();
     const launchConfig = workspace.getConfiguration("launch");
     const configurations = launchConfig.get<Array<Record<string, unknown>>>("configurations") ?? [];
@@ -125,12 +127,20 @@ export class LaunchConfigurationsManager implements Disposable {
           })
         : -1;
     if (oldConfigIndex !== -1) {
-      configurations[oldConfigIndex] = newConfig;
-    } else {
+      if (newConfig === undefined) {
+        configurations.splice(oldConfigIndex, 1);
+      } else {
+        configurations[oldConfigIndex] = newConfig;
+      }
+    } else if (newConfig !== undefined) {
       configurations.push(newConfig);
+    } else {
+      return;
     }
     await launchConfig.update("configurations", configurations);
-    return launchConfigFromOptionsWithDefaultAppRoot(newConfig, defaultAppRoot);
+    if (newConfig !== undefined) {
+      return launchConfigFromOptionsWithDefaultAppRoot(newConfig, defaultAppRoot);
+    }
   }
 
   dispose() {
