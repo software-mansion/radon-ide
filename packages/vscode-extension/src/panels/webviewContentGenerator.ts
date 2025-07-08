@@ -76,7 +76,7 @@ export function generateWebviewContent(
       </head>
       <body data-use-code-theme="${useCodeTheme}">
         <div id="root"></div>
-        <script nonce="${nonce}">window.RNIDE_hostOS = "${Platform.OS}";</script>
+        <script nonce="${nonce}">window.RNIDE_hostOS = "${Platform.OS}";window.RNIDE_isDev = ${IS_DEV};</script>
         <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
       </body>
     </html>

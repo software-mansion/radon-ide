@@ -1,6 +1,13 @@
 import { useEffect, forwardRef, RefObject } from "react";
+import { IS_DEV } from "../providers/UtilsProvider";
 
-const NO_IMAGE_DATA = "data:,";
+const NO_IMAGE_DATA_PRODUCTION =
+  "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='100%' height='100%' fill='black'/></svg>";
+
+const NO_IMAGE_DATA_DEV =
+  "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='100%' height='100%' fill='gray'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='20'>No Image</text></svg>";
+
+const NO_IMAGE_DATA = IS_DEV ? NO_IMAGE_DATA_DEV : NO_IMAGE_DATA_PRODUCTION;
 
 const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageElement>>(
   (props, ref) => {
@@ -61,7 +68,14 @@ const MjpegImg = forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageE
       };
     }, [ref]);
 
-    return <img ref={ref} {...rest} />;
+    function handleError(e: React.SyntheticEvent<HTMLImageElement, Event>) {
+      const img = e.currentTarget;
+      if (img.src !== NO_IMAGE_DATA) {
+        img.src = NO_IMAGE_DATA;
+      }
+    }
+
+    return <img ref={ref} {...rest} onError={handleError} />;
   }
 );
 
