@@ -3,7 +3,7 @@ import "./LaunchConfigurationView.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import _ from "lodash";
 import Label from "../components/shared/Label";
-import { AddCustomApplicationRoot, ApplicationRoot } from "../../common/AppRootConfig";
+import { ApplicationRoot } from "../../common/AppRootConfig";
 import {
   EasConfig,
   LaunchConfiguration,
@@ -24,7 +24,7 @@ interface LaunchConfigurationViewProps {
 
 function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationViewProps) {
   const { closeModal } = useModal();
-  const { applicationRoots, addCustomApplicationRoot } = useApplicationRoots();
+  const { applicationRoots } = useApplicationRoots();
 
   const { project, projectState } = useProject();
 
@@ -80,12 +80,7 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
       <div className="launch-configuration-section-margin" />
 
       <Label>App Root</Label>
-      <AppRootConfiguration
-        appRoot={appRoot}
-        update={update}
-        applicationRoots={applicationRoots}
-        addCustomApplicationRoot={addCustomApplicationRoot}
-      />
+      <AppRootConfiguration appRoot={appRoot} update={update} applicationRoots={applicationRoots} />
       <div className="launch-configuration-section-margin" />
 
       <Label>metro Config Path</Label>
@@ -257,50 +252,57 @@ interface appRootConfigurationProps {
   appRoot?: string;
   update: LaunchConfigUpdater;
   applicationRoots: ApplicationRoot[];
-  addCustomApplicationRoot: AddCustomApplicationRoot;
 }
 
-function AppRootConfiguration({
-  appRoot,
-  update,
-  applicationRoots,
-  addCustomApplicationRoot,
-}: appRootConfigurationProps) {
+function AppRootConfiguration({ appRoot, update, applicationRoots }: appRootConfigurationProps) {
   const customAppRootInputRef = useRef<HTMLInputElement>(null);
 
-  const [customAppRootButtonDisabled, setCustomAppRootButtonDisabled] = useState(true);
+  function getInitialSelectedValue(): string {
+    if (appRoot === undefined) {
+      return "Auto";
+    }
+    if (applicationRoots.some((ar) => ar.path === appRoot)) {
+      return appRoot;
+    }
+    return "Custom";
+  }
+
+  const [selectedValue, setSelectedValue] = useState(getInitialSelectedValue());
 
   const onAppRootChange = (newAppRoot: string | undefined) => {
+    setSelectedValue(newAppRoot || "Auto");
+    if (newAppRoot === "Custom") {
+      // in this case, we apply the setting in the input blur handler
+      return;
+    }
+    if (customAppRootInputRef.current) {
+      customAppRootInputRef.current.value = "";
+    }
     if (newAppRoot === undefined) {
       newAppRoot = "Auto";
     }
     update("appRoot", newAppRoot);
   };
 
-  const onCustomAppRootChange = () => {
-    setCustomAppRootButtonDisabled(!customAppRootInputRef.current?.value);
-  };
-
-  const onAddNewAppRoot = () => {
-    let newAppRoot = customAppRootInputRef.current?.value;
+  function onCustomAppRootInputBlur() {
+    const newAppRoot = customAppRootInputRef.current?.value;
     if (newAppRoot) {
-      addCustomApplicationRoot(newAppRoot);
-      customAppRootInputRef.current!.value = "";
-      setCustomAppRootButtonDisabled(true);
+      update("appRoot", newAppRoot);
     }
-  };
+  }
 
   const availableAppRoots = applicationRoots.map((applicationRoot) => {
     return { value: applicationRoot.path, label: applicationRoot.path };
   });
 
   availableAppRoots.push({ value: "Auto", label: "Auto" });
+  availableAppRoots.push({ value: "Custom", label: "Custom" });
 
   return (
     <div className="launch-configuration-container">
       <div className="setting-description">AppRoot:</div>
       <Select
-        value={appRoot ?? "Auto"}
+        value={selectedValue}
         onChange={onAppRootChange}
         items={availableAppRoots}
         className="scheme"
@@ -309,18 +311,12 @@ function AppRootConfiguration({
       <div className="custom-app-root-container">
         <input
           ref={customAppRootInputRef}
-          onChange={onCustomAppRootChange}
           className="input-configuration custom-app-root-input"
           type="string"
           placeholder={"Custom/Application/Root/Path"}
+          disabled={selectedValue !== "Custom"}
+          onBlur={onCustomAppRootInputBlur}
         />
-        <Button
-          type="ternary"
-          className="custom-app-root-button"
-          disabled={customAppRootButtonDisabled}
-          onClick={onAddNewAppRoot}>
-          <span className="codicon codicon-add" />
-        </Button>
       </div>
     </div>
   );
