@@ -18,7 +18,6 @@
 
   /* LandscapeLeft and LandscapeRight display */
   &.rotated {
-    transform: rotate(90deg);
     width: 100%;
 
     .preview-loader-container {
