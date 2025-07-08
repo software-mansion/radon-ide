@@ -5,7 +5,7 @@ import { getTelemetryReporter } from "../../utilities/telemetry";
 import { CHAT_LOG } from "../chat";
 import { ToolResponse, ToolResult, ToolsInfo } from "../mcp/models";
 import { textToToolResponse } from "../mcp/utils";
-import { ConnectionListener } from "../mcp/ConnectionListener";
+import { ConnectionListener } from "./ConnectionListener";
 
 const BACKEND_URL = "https://radon-ai-backend.swmansion.com/api/";
 const MCP_LOG = "[MCP]";

@@ -6,7 +6,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { registerMcpTools } from "./toolRegistration";
 import { Logger } from "../../Logger";
 import { Session } from "./models";
-import { ConnectionListener } from "./ConnectionListener";
+import { ConnectionListener } from "../shared/ConnectionListener";
 
 let session: Session = null;
 

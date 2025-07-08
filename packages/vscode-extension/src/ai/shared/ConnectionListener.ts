@@ -1,6 +1,6 @@
 import { Disposable, EventEmitter } from "vscode";
 import { extensionContext } from "../../utilities/extensionContext";
-import { isServerOnline } from "../shared/api";
+import { isServerOnline } from "./api";
 
 const PING_INTERVAL = 5000;
 

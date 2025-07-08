@@ -4,7 +4,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { getToolSchema, invokeToolCall } from "../shared/api";
 import { ToolSchema } from "./models";
 import { screenshotToolExec } from "./toolExecutors";
-import { ConnectionListener } from "./ConnectionListener";
+import { ConnectionListener } from "../shared/ConnectionListener";
 
 const PLACEHOLDER_ID = "3241"; // this placeholder is needed by the API, but the value doesn't matter
 

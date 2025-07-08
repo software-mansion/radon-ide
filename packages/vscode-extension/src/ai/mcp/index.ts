@@ -8,7 +8,7 @@ import { startLocalMcpServer } from "./server";
 import { MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { extensionContext } from "../../utilities/extensionContext";
-import { ConnectionListener } from "./ConnectionListener";
+import { ConnectionListener } from "../shared/ConnectionListener";
 
 async function updateMcpConfig(port: number) {
   const mcpConfig = (await readMcpConfig()) || newMcpConfig();
