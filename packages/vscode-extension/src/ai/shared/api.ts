@@ -139,7 +139,14 @@ export async function getSystemPrompt(userPrompt: string): Promise<SystemRespons
 }
 
 export async function isServerOnline(): Promise<boolean> {
-  const url = new URL("/api/ping/", BACKEND_URL);
-  const response = await fetch(url);
-  return response.status === 200;
+  try {
+    const url = new URL("/api/ping/", BACKEND_URL);
+    const response = await fetch(url);
+    return response.status === 200;
+  } catch (error) {
+    let msg = `Failed pinging Radon AI backend: ${error instanceof Error ? error.message : String(error)}`;
+    Logger.error(MCP_LOG, msg);
+    getTelemetryReporter().sendTelemetryEvent("radon-ai:ping-error", { error: msg });
+    return false;
+  }
 }
