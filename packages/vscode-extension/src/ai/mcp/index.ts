@@ -52,7 +52,7 @@ async function directLoadRadonAI(connectionListener: ConnectionListener) {
 
 async function fsLoadRadonAI(connectionListener: ConnectionListener) {
   try {
-    // Server has to be online before the config is written
+    // The local server has to be online before the config is written
     const mcpPort = await startLocalMcpServer(connectionListener);
 
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
