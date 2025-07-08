@@ -6,7 +6,7 @@ import {
 } from "../../common/AppRootConfig";
 import { EasBuildConfig } from "../../common/EasConfig";
 
-const appRootConfigProxy = makeProxy<AppRootConfigInterface>("LaunchConfig");
+const appRootConfigProxy = makeProxy<AppRootConfigInterface>("AppRootConfig");
 
 export interface AppRootConfig {
   xcodeSchemes: string[];
