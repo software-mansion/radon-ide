@@ -25,7 +25,7 @@ export async function registerMcpTools(server: McpServer, connectionListener: Co
     screenshotToolExec
   );
 
-  const toolSchema = await getToolSchema();
+  const toolSchema = await getToolSchema(connectionListener);
 
   for (const tool of toolSchema.tools) {
     const zodSchema = buildZodSchema(tool);

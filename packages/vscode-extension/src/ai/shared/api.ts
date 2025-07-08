@@ -71,7 +71,7 @@ export async function invokeToolCall(
   }
 }
 
-export async function getToolSchema(): Promise<ToolsInfo> {
+export async function getToolSchema(connectionListener: ConnectionListener): Promise<ToolsInfo> {
   try {
     const url = new URL("/api/get_tool_schema/", BACKEND_URL);
     const token = await getLicenseToken();
@@ -83,7 +83,12 @@ export async function getToolSchema(): Promise<ToolsInfo> {
       },
     });
 
+    if (response.status === 401) {
+      throw Error(`Authorization failed when connecting to servers.`);
+    }
+
     if (response.status !== 200) {
+      connectionListener?.announceConnectionLost();
       throw new Error(`Network error with status: ${response.status}`);
     }
 
