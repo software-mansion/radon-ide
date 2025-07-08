@@ -88,7 +88,7 @@ export async function getToolSchema(connectionListener: ConnectionListener): Pro
     }
 
     if (response.status !== 200) {
-      connectionListener?.announceConnectionLost();
+      connectionListener.announceConnectionLost();
       throw new Error(`Network error with status: ${response.status}`);
     }
 
