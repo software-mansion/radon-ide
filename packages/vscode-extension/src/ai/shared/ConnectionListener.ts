@@ -54,7 +54,7 @@ export class ConnectionListener {
       }
     }, PING_INTERVAL);
 
-    extensionContext.subscriptions.push(new Disposable(this.tryClearListeningInterval));
+    extensionContext.subscriptions.push(new Disposable(() => this.tryClearListeningInterval()));
   }
 
   public onConnectionChange(callback: () => unknown) {
