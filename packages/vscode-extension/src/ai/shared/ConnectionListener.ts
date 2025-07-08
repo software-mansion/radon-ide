@@ -42,7 +42,7 @@ export class ConnectionListener {
     extensionContext.subscriptions.push(new Disposable(() => this.tryClearListeningInterval()));
   }
 
-  public onConnectionChange(callback: () => unknown) {
+  public onConnectionRestored(callback: () => unknown) {
     extensionContext.subscriptions.push(this.connectionChangeEmitter.event(callback));
   }
 }

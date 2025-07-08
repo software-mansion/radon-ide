@@ -28,7 +28,7 @@ function directLoadRadonAI(connectionListener: ConnectionListener) {
     })
   );
 
-  connectionListener.onConnectionChange(() => {
+  connectionListener.onConnectionRestored(() => {
     didChangeEmitter.fire();
   });
 
