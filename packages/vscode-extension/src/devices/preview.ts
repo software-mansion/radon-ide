@@ -174,7 +174,6 @@ export class Preview implements Disposable {
       }
       Logger.info(`sim-server: device rotated to ${rotation}`);
      });
-    return rotation;
   }
 
   public startRecording() {

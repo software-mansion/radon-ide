@@ -221,10 +221,13 @@ export abstract class DeviceBase implements Disposable {
   }
 
   public sendRotate(rotation: DeviceRotationType) {
-    if(!this.preview) {
-      throw new Error("Preview not started");
-    }
-    this._rotation = this.preview.rotateDevice(rotation);
+    // Preview may not be started yet, but we still wish to be able to rotate during init of device.
+    // The rotation is set in constructor of device and is gotten from the workspace configuration anyways.
+    // if(!this.preview) {
+    //   throw new Error("Preview not started");
+    // }
+    this.preview?.rotateDevice(rotation);
+    this._rotation = rotation;
     return this._rotation;
   }
 
