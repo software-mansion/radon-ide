@@ -195,27 +195,33 @@ export class Connector implements Disposable {
       this.statusBarItem.text = "Radon IDE $(debug)";
       markdownText.appendMarkdown("Connected on port " + this.connectSession.port);
       markdownText.appendMarkdown("\n\n");
-      markdownText.appendMarkdown("[Disconnect](command:RNIDE.disableRadonConnect)");
+      markdownText.appendMarkdown(
+        "[$(circle-slash) Disconnect](command:RNIDE.disableRadonConnect)"
+      );
       markdownText.appendMarkdown("\n\n");
-      markdownText.appendMarkdown("[Open debug console](command:workbench.panel.repl.view.focus)");
+      markdownText.appendMarkdown(
+        "[$(debug-console) Open debug console](command:workbench.panel.repl.view.focus)"
+      );
     } else if (!this.isEnabled) {
       this.statusBarItem.text = "Radon IDE $(open-preview)";
-      markdownText.appendMarkdown("Radon Connect is disabled\n\n");
-      markdownText.appendMarkdown("[Open Radon IDE panel](command:RNIDE.openPanel)\n\n");
-      markdownText.appendMarkdown("[Enable Radon Connect](command:RNIDE.enableRadonConnect)\n\n");
+      markdownText.appendMarkdown(
+        "[$(open-preview) Open Radon IDE panel](command:RNIDE.openPanel)\n\n"
+      );
+      markdownText.appendMarkdown(
+        "[$(debug-disconnect) Enable Radon Connect](command:RNIDE.enableRadonConnect)\n\n"
+      );
     } else {
       this.statusBarItem.text = "Radon IDE $(debug-disconnect)";
-      const ports = Array.from(this.scanner?.portsStatus.keys() ?? []);
-      markdownText.appendMarkdown(
-        "Waiting for React Native app to connect, scanning ports:\n" +
-          ports.map(this.printPortStatus.bind(this)).join("\n")
-      );
+      markdownText.appendMarkdown("Radon Connect enabled (scanning ports)");
       markdownText.appendMarkdown("\n\n");
       markdownText.appendMarkdown(
         "[$(broadcast) Connect on custom port](command:RNIDE.connect.configurePort)\n\n"
       );
       markdownText.appendMarkdown(
         "[$(circle-slash) Disable Radon Connect](command:RNIDE.disableRadonConnect)\n\n"
+      );
+      markdownText.appendMarkdown(
+        "[$(open-preview) Open Radon IDE panel](command:RNIDE.openPanel)\n\n"
       );
     }
 

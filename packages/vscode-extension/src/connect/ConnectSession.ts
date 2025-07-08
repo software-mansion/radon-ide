@@ -37,14 +37,20 @@ export default class ConnectSession implements Disposable {
     private readonly metro: Metro,
     private readonly delegate: ConnectSessionDelegate
   ) {
-    this.debugSession = new DebugSession({
-      onDebugSessionTerminated: () => {
-        this.delegate.onSessionTerminated();
+    this.debugSession = new DebugSession(
+      {
+        onDebugSessionTerminated: () => {
+          this.delegate.onSessionTerminated();
+        },
+        onBindingCalled: (event: any) => {
+          this.inspectorBridge.onBindingCalled(event);
+        },
       },
-      onBindingCalled: (event: any) => {
-        this.inspectorBridge.onBindingCalled(event);
-      },
-    });
+      {
+        suppressDebugToolbar: false,
+        displayName: "Radon Connect Debugger",
+      }
+    );
     this.inspectorBridge = new DebugSessionInspectorBridge(this.debugSession);
   }
 
