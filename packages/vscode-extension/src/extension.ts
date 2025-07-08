@@ -34,6 +34,7 @@ import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebu
 import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
 import { IDEPanelMoveTarget } from "./common/utils";
+import { DeviceRotationType } from "./common/Project";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -230,6 +231,9 @@ export async function activate(context: ExtensionContext) {
       IDE.getInstanceIfExists()?.project.deviceSessionsManager.selectNextNthRunningSession(-1)
     )
   );
+
+  context.subscriptions.push(commands.registerCommand("RNIDE.rotateDeviceAnticlockwise", rotateDeviceAnticlockwise));
+  context.subscriptions.push(commands.registerCommand("RNIDE.rotateDeviceClockwise", rotateDeviceClockwise));
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
   // When it does happen, we open the IDE panel and restart the app.
@@ -395,6 +399,33 @@ async function toggleRecording() {
 async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
 }
+
+const ROTATIONS: DeviceRotationType[] = ["LandscapeLeft", "Portrait", "LandscapeRight"] as const;
+
+async function rotateDeviceAnticlockwise(){
+  const configuration = workspace.getConfiguration("RadonIDE");
+  const rotation = configuration.inspect<DeviceRotationType>("deviceRotation")?.workspaceValue;
+  if(!rotation){
+    await configuration.update("deviceRotation", "Portrait", false);
+    return;
+  }
+  const currentIndex = ROTATIONS.indexOf(rotation);
+  const newIndex = (currentIndex - 1 + ROTATIONS.length) % ROTATIONS.length;
+  await configuration.update("deviceRotation", ROTATIONS[newIndex], false);
+}
+
+async function rotateDeviceClockwise(){
+const configuration = workspace.getConfiguration("RadonIDE");
+  const rotation = configuration.inspect<DeviceRotationType>("deviceRotation")?.workspaceValue;
+  if(!rotation){
+    await configuration.update("deviceRotation", "Portrait", false);
+    return;
+  }
+  const currentIndex = ROTATIONS.indexOf(rotation);
+  const newIndex = (currentIndex + 1) % ROTATIONS.length;
+  await configuration.update("deviceRotation", ROTATIONS[newIndex], false);
+}
+
 
 async function openChat() {
   let prompt = undefined;
