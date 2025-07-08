@@ -2,6 +2,8 @@ import { Disposable, EventEmitter } from "vscode";
 import { extensionContext } from "../../utilities/extensionContext";
 import { isServerOnline } from "../shared/api";
 
+const PING_INTERVAL = 5000;
+
 export class ConnectionListener {
   connectionSuccessEmitter: EventEmitter<boolean>;
   connectionChangeEmitter: EventEmitter<void>;
@@ -50,7 +52,7 @@ export class ConnectionListener {
         this.connectionSuccessEmitter.fire(isOnline);
         clearInterval(this.connectionListeningInterval);
       }
-    });
+    }, PING_INTERVAL);
 
     return new Disposable(this.tryClearListeningInterval);
   }
