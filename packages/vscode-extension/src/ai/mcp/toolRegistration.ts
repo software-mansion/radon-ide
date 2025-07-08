@@ -6,7 +6,7 @@ import { ToolSchema } from "./models";
 import { screenshotToolExec } from "./toolExecutors";
 import { ConnectionListener } from "../shared/ConnectionListener";
 
-const PLACEHOLDER_ID = "3241"; // this placeholder is needed by the API, but the value doesn't matter
+const PLACEHOLDER_ID = "3241"; // This placeholder is needed by the API, but the value doesn't matter
 
 function buildZodSchema(toolSchema: ToolSchema): z.ZodRawShape {
   const props = Object.values(toolSchema.inputSchema.properties);
