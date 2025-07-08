@@ -56,7 +56,7 @@ export class ConnectionListener {
   }
 
   public onConnectionChange(callback: () => unknown) {
-    this.connectionChangeEmitter.event(callback);
+    extensionContext.subscriptions.push(this.connectionChangeEmitter.event(callback));
   }
 
   public announceConnectionLost() {
