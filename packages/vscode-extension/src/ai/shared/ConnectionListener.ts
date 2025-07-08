@@ -26,6 +26,7 @@ export class ConnectionListener {
   private tryClearListeningInterval() {
     if (this.connectionListeningInterval) {
       clearInterval(this.connectionListeningInterval);
+      this.connectionListeningInterval = null;
     }
   }
 
