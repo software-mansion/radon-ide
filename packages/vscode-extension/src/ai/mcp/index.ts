@@ -16,7 +16,7 @@ async function updateMcpConfig(port: number) {
   await writeMcpConfig(updatedConfig);
 }
 
-async function directLoadRadonAI(connectionListener: ConnectionListener) {
+function directLoadRadonAI(connectionListener: ConnectionListener) {
   // Version suffix has to be incremented on every MCP server reload.
   let versionSuffix = 0;
 
