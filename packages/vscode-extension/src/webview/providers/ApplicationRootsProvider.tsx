@@ -21,7 +21,7 @@ export function useAppRootConfig(appRootFolder?: string): AppRootConfig {
   useEffect(() => {
     appRootConfigProxy.getAvailableEasProfiles(appRootFolder).then(setEasBuildProfiles);
     appRootConfigProxy.getAvailableXcodeSchemes(appRootFolder).then(setXcodeSchemes);
-  }, []);
+  }, [appRootFolder]);
 
   return useMemo(
     () => ({

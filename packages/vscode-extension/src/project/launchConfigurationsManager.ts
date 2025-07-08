@@ -129,11 +129,7 @@ export class LaunchConfigurationsManager implements Disposable {
     } else {
       configurations.push(newConfig);
     }
-    await launchConfig.update(
-      "configurations",
-      configurations,
-      vscode.ConfigurationTarget.Workspace
-    );
+    await launchConfig.update("configurations", configurations);
     return launchConfigFromOptionsWithDefaultAppRoot(newConfig, defaultAppRoot);
   }
 
