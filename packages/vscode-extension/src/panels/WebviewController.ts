@@ -43,7 +43,7 @@ export class WebviewController implements Disposable {
       ["Project", () => this.ide.project as object],
       ["DeviceSessionsManager", () => this.ide.project.deviceSessionsManager as object],
       ["WorkspaceConfig", () => this.ide.workspaceConfigController as object],
-      ["LaunchConfig", () => this.ide.project.launchConfigurationController as object],
+      ["LaunchConfig", () => this.ide.project.appRootConfigController as object],
       ["Utils", () => this.ide.utils as object],
       [
         "RenderOutlines",

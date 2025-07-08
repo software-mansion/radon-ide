@@ -3,12 +3,12 @@ import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
 import _ from "lodash";
 import React, { PropsWithChildren } from "react";
-import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { useProject } from "../providers/ProjectProvider";
 import { LaunchConfiguration, LaunchConfigurationOptions } from "../../common/LaunchConfig";
 import RichSelectItem from "./shared/RichSelectItem";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
+import { useApplicationRoots } from "../providers/ApplicationRootsProvider";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -104,7 +104,7 @@ function renderCustomLaunchConfigurations(
 }
 
 function AppRootSelect() {
-  const { applicationRoots } = useLaunchConfig();
+  const { applicationRoots } = useApplicationRoots();
   const { projectState, project } = useProject();
   const {
     selectedLaunchConfiguration: selectedConfiguration,

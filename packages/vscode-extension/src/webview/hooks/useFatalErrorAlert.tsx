@@ -4,11 +4,11 @@ import { useProject } from "../providers/ProjectProvider";
 import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
-import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { BuildType } from "../../common/BuildConfig";
 import { useDevices } from "../providers/DevicesProvider";
 import { BuildErrorDescriptor, FatalErrorDescriptor } from "../../common/Project";
 import { DeviceSessionsManagerInterface } from "../../common/DeviceSessionsManager";
+import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
 
 type LogsButtonDestination = "build" | "extension";
 
@@ -132,7 +132,9 @@ function createBuildErrorAlert(
 
 export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undefined) {
   let errorAlert = noErrorAlert;
-  const { ios, xcodeSchemes } = useLaunchConfig();
+  const { projectState } = useProject();
+  const { absoluteAppRoot, ios } = projectState.selectedLaunchConfiguration;
+  const { xcodeSchemes } = useAppRootConfig(absoluteAppRoot);
   const { deviceSessionsManager } = useDevices();
 
   if (errorDescriptor?.kind === "build") {

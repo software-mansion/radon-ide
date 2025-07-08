@@ -20,6 +20,7 @@ import {
   TouchPoint,
   ZoomLevelType,
 } from "../common/Project";
+import { AppRootConfigController } from "../panels/AppRootConfigController";
 import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceManager } from "../devices/DeviceManager";
@@ -62,6 +63,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   private projectState: ProjectState;
 
   private disposables: Disposable[] = [];
+
+  public readonly appRootConfigController: AppRootConfigController = new AppRootConfigController();
 
   public get deviceSession() {
     return this.deviceSessionsManager.selectedDeviceSession;
@@ -169,10 +172,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   get dependencyManager() {
     return this.applicationContext.dependencyManager;
-  }
-
-  get launchConfigurationController() {
-    return this.applicationContext.launchConfigurationController;
   }
 
   get buildCache() {

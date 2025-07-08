@@ -1,13 +1,11 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
 import { useMemo, useRef, useState } from "react";
+import _ from "lodash";
 import Label from "../components/shared/Label";
-import { useLaunchConfig } from "../providers/LaunchConfigProvider";
+import { AddCustomApplicationRoot, ApplicationRoot } from "../../common/AppRootConfig";
 import {
-  AddCustomApplicationRoot,
-  ApplicationRoot,
   EasConfig,
-  LaunchConfigUpdater,
   LaunchConfiguration,
   LaunchConfigurationOptions,
   optionsForLaunchConfiguration,
@@ -18,7 +16,7 @@ import Button from "../components/shared/Button";
 import { Input } from "../components/shared/Input";
 import { EasBuildConfig } from "../../common/EasConfig";
 import { useProject } from "../providers/ProjectProvider";
-import _ from "lodash";
+import { useApplicationRoots, useAppRootConfig } from "../providers/ApplicationRootsProvider";
 
 interface LaunchConfigurationViewProps {
   launchConfigToUpdate?: LaunchConfiguration;
@@ -26,8 +24,7 @@ interface LaunchConfigurationViewProps {
 
 function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationViewProps) {
   const { closeModal } = useModal();
-  const { xcodeSchemes, easBuildProfiles, applicationRoots, addCustomApplicationRoot } =
-    useLaunchConfig();
+  const { applicationRoots, addCustomApplicationRoot } = useApplicationRoots();
 
   const { project, projectState } = useProject();
 
@@ -40,6 +37,7 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
     launchConfigToUpdate ? optionsForLaunchConfiguration(launchConfigToUpdate) : {}
   );
   const { android, appRoot, ios, eas, isExpo, metroConfigPath } = newLaunchConfigOptions;
+  const { xcodeSchemes, easBuildProfiles } = useAppRootConfig(appRoot);
 
   function update<K extends keyof LaunchConfigurationOptions>(
     key: K,
@@ -68,7 +66,7 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
         scheme={ios?.scheme}
         configuration={ios?.configuration}
         update={update}
-        xcodeSchemes={xcodeSchemes}
+        xcodeSchemes={xcodeSchemes ?? []}
       />
       <div className="launch-configuration-section-margin" />
 
@@ -124,6 +122,11 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
     </>
   );
 }
+
+type LaunchConfigUpdater = <K extends keyof LaunchConfigurationOptions>(
+  key: K,
+  value: LaunchConfigurationOptions[K] | "Auto"
+) => void;
 
 interface NameConfigurationProps {
   name?: string;
