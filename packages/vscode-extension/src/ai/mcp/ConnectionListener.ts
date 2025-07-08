@@ -64,8 +64,4 @@ export class ConnectionListener {
   public announceConnectionLost() {
     this.connectionSuccessEmitter.fire(false);
   }
-
-  public announceConnectionFound() {
-    this.connectionSuccessEmitter.fire(true);
-  }
 }
