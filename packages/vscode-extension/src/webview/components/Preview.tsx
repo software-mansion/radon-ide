@@ -527,7 +527,7 @@ function Preview({
                     "--x": `${touchPoint.x * 100}%`,
                     "--y": `${touchPoint.y * 100}%`,
                     "--size": `${normalTouchIndicatorSize}px`,
-                  }}>
+                  } as React.CSSProperties}>
                   <TouchPointIndicator isPressing={isPressing} />
                 </div>
               )}
@@ -537,7 +537,7 @@ function Preview({
                     "--x": `${anchorPoint.x * 100}%`,
                     "--y": `${anchorPoint.y * 100}%`,
                     "--size": `${smallTouchIndicatorSize}px`,
-                  }}>
+                  } as React.CSSProperties}>
                   <TouchPointIndicator isPressing={false} />
                 </div>
               )}
@@ -547,7 +547,7 @@ function Preview({
                     "--x": `${mirroredTouchPosition.x * 100}%`,
                     "--y": `${mirroredTouchPosition.y * 100}%`,
                     "--size": `${normalTouchIndicatorSize}px`,
-                  }}>
+                  } as React.CSSProperties}>
                   <TouchPointIndicator isPressing={isPressing} />
                 </div>
               )}
