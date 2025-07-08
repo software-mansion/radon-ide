@@ -48,7 +48,7 @@ function AppRootSelect() {
     <Select.Root onValueChange={handleAppRootChange} value={selectedAppRootPath}>
       <Select.Trigger className="approot-select-trigger" disabled={applicationRoots.length === 0}>
         <Select.Value placeholder="No applications found">
-          <div className="approot-select-value">
+          <div className="approot-select-value" data-test="approot-select-value">
             <span className="codicon codicon-folder-opened" />
             <span className="approot-select-value-text">{selectedAppRootName}</span>
           </div>

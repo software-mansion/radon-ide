@@ -3,7 +3,7 @@ const paths = {
 };
 
 const texts = {
-    pageTitle: "Visual Studio Code",
+    pageTitle: paths.projectPath.split("/").pop(),
     expectedProjectName: "reactNative80"
 };
 

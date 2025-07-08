@@ -201,6 +201,7 @@ function PreviewView() {
   return (
     <div
       className="panel-view"
+      data-test="radon-panel-view"
       onFocus={(e) => {
         vscode.postMessage({
           command: "focusPreview",

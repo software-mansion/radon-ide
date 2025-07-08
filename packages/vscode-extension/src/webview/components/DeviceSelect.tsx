@@ -133,7 +133,7 @@ function DeviceSelect() {
         <Select.Value>
           <div className="device-select-value">
             <span className="codicon codicon-device-mobile" />
-            <span className="device-select-value-text">{text}</span>
+            <span className="device-select-value-text" data-test="device-select-value-text">{text}</span>
             {backgroundDeviceCounter > 0 && (
               <span className="device-select-counter">+{backgroundDeviceCounter}</span>
             )}
