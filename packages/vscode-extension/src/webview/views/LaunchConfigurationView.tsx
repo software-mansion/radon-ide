@@ -37,7 +37,7 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
     launchConfigToUpdate ? optionsForLaunchConfiguration(launchConfigToUpdate) : {}
   );
   const { android, appRoot, ios, eas, isExpo, metroConfigPath } = newLaunchConfigOptions;
-  const { xcodeSchemes, easBuildProfiles } = useAppRootConfig(appRoot);
+  const { xcodeSchemes, easBuildProfiles } = useAppRootConfig(appRoot ?? applicationRoots[0]?.path);
 
   function update<K extends keyof LaunchConfigurationOptions>(
     key: K,
