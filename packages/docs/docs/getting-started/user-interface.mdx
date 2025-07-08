@@ -46,7 +46,6 @@ After [launching](/docs/getting-started/launching) the the Radon IDE panel the u
    - _Manage devices..._ - open a [manage devices](/docs/guides/device-management) modal,
    - _Open dev menu_ - opens the React Native in-app development menu,
    - _Change IDE panel location_ - allows to change the location of the Radon IDE panel to editor tab, side panel, secondary side panel or to open the extension in a new window,
-   - _Launch configuration_ - allows to adjust the [launch configuration](/docs/guides/configuration) of the extension,
    - _Report issue_ - opens a page in the Radon IDE GitHub repository where you can submit issue reports and suggest features,
    - _Theme_ - allows to adjust whether the extension should follow the editor theme or use the one provided by the extension,
    - _Send feedback_ - lets you communicate your thoughts, suggestions and problems.
@@ -56,7 +55,13 @@ After [launching](/docs/getting-started/launching) the the Radon IDE panel the u
     <img width="400" src="/img/docs/ide_zoom_controls.png" />
 11. **Device preview** - the preview of the running iOS simulator or Android emulator.
 12. [**Element inspector**](/docs/features/element-inspector) - enabling element inspector and clicking on the preview opens the line of code where the highlighted component is defined. Right-clicking on the device preview allows you to select components directly from the React tree.
-13. **App root selector** - lets you switch between applications in a monorepo setup.
+13. **Launch configuration selector** - lets you switch between different [launch configurations](/docs/guides/configuration) for your workspace.
+
+    <img width="250" src="/img/docs/ide_approot_select.png" className="shadow-image" />
+    In a monorepo workspace, the drop-down displays all automatically detected React Native applications.
+    If you configure any custom launch configurations, you will be able to select or edit them from this
+    drop-down as well.
+
 14. [**Manage devices**](/docs/guides/device-management) - allows to create, delete, and select devices currently running in the device preview.
     <img width="250" src="/img/docs/ide_manage_devices.png" />
 15. [**Device settings**](/docs/features/device-settings) - allows to adjust the device settings like device appearance, location, permissions, and text size.
