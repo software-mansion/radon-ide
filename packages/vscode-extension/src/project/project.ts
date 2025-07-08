@@ -2,7 +2,7 @@ import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
 import assert from "assert";
-import { env, Disposable, commands, workspace, window, ConfigurationChangeEvent } from "vscode";
+import { env, Disposable, commands, workspace, window } from "vscode";
 import _ from "lodash";
 import { minimatch } from "minimatch";
 import {
@@ -35,13 +35,16 @@ import { ToolKey } from "./tools";
 import { UtilsInterface } from "../common/utils";
 import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
-import { findAndSetupNewAppRootFolder } from "../utilities/findAndSetupNewAppRootFolder";
-import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { DeviceSessionsManager, DeviceSessionsManagerDelegate } from "./DeviceSessionsManager";
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 import { FingerprintProvider } from "./FingerprintProvider";
 import { BuildCache } from "../builders/BuildCache";
 import { Connector } from "../connect/Connector";
+import {
+  launchConfigurationFromOptions,
+  LaunchConfigurationsManager,
+} from "./launchConfigurationsManager";
+import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -51,6 +54,7 @@ const DEEP_LINKS_HISTORY_LIMIT = 50;
 const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 
 export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
+  private launchConfigsManager = new LaunchConfigurationsManager();
   private applicationContext: ApplicationContext;
   private eventEmitter = new EventEmitter();
 
@@ -68,10 +72,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     private readonly deviceManager: DeviceManager,
     private readonly utils: UtilsInterface
   ) {
-    const appRoot = findAndSetupNewAppRootFolder();
     const fingerprintProvider = new FingerprintProvider();
     const buildCache = new BuildCache(fingerprintProvider);
-    this.applicationContext = new ApplicationContext(appRoot, buildCache);
+    const initialLaunchConfig = this.launchConfigsManager.initialLaunchConfiguration;
+    this.applicationContext = new ApplicationContext(initialLaunchConfig, buildCache);
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
       this.deviceManager,
@@ -86,6 +90,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       initialized: false,
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
+      selectedLaunchConfiguration: initialLaunchConfig,
+      customLaunchConfigurations: this.launchConfigsManager.launchConfigurations,
       connectState: {
         enabled: connector.isEnabled,
         connected: connector.isConnected,
@@ -109,24 +115,23 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
       })
     );
-
     this.disposables.push(
-      workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-        if (event.affectsConfiguration("launch")) {
-          const config = getLaunchConfiguration();
-          const oldAppRoot = this.appRootFolder;
-          if (config.appRoot === oldAppRoot) {
-            return;
-          }
-          this.setupAppRoot();
+      this.launchConfigsManager.onLaunchConfigurationsChanged((launchConfigs) => {
+        this.updateProjectState({
+          customLaunchConfigurations: launchConfigs,
+        });
+        const selectedLaunchConfig =
+          launchConfigs[0] ?? launchConfigurationFromOptions({ appRoot: this.relativeAppRootPath });
 
-          if (this.appRootFolder === undefined) {
-            window.showErrorMessage(
-              "Unable to find the new app root, after a change in launch configuration. Radon IDE might not work properly.",
-              "Dismiss"
-            );
-            return;
-          }
+        const oldAppRoot = this.applicationContext.appRootFolder;
+        if (selectedLaunchConfig.absoluteAppRoot !== oldAppRoot) {
+          // If the app root has changed, we need to update the application context
+          this.selectLaunchConfiguration(selectedLaunchConfig);
+        } else {
+          this.applicationContext.updateLaunchConfig(selectedLaunchConfig);
+          this.updateProjectState({
+            selectedLaunchConfiguration: selectedLaunchConfig,
+          });
         }
       })
     );
@@ -135,6 +140,26 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       dispose: () => {
         connector.delegate = null;
       },
+    });
+  }
+
+  async selectLaunchConfiguration(options: LaunchConfigurationOptions): Promise<void> {
+    const launchConfig = launchConfigurationFromOptions(options);
+    if (_.isEqual(launchConfig, this.applicationContext.launchConfig)) {
+      // No change in launch configuration, nothing to do
+      return;
+    }
+    await this.applicationContext.updateLaunchConfig(launchConfig);
+    const oldDeviceSessionsManager = this.deviceSessionsManager;
+    this.deviceSessionsManager = new DeviceSessionsManager(
+      this.applicationContext,
+      this.deviceManager,
+      this
+    );
+    oldDeviceSessionsManager.dispose();
+    this.updateProjectState({
+      appRootPath: this.relativeAppRootPath,
+      selectedLaunchConfiguration: launchConfig,
     });
   }
 
@@ -161,8 +186,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.applicationContext.dependencyManager;
   }
 
-  get launchConfig() {
-    return this.applicationContext.launchConfig;
+  get launchConfigurationController() {
+    return this.applicationContext.launchConfigurationController;
   }
 
   get buildCache() {
@@ -177,25 +202,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this.projectState.deviceSessions[this.projectState.selectedSessionId];
     assert(selectedSessionState !== undefined, "Expected the selected session to exist");
     return selectedSessionState;
-  }
-
-  private async setupAppRoot() {
-    const newAppRoot = findAndSetupNewAppRootFolder();
-    if (newAppRoot === this.appRootFolder) {
-      return;
-    }
-    await this.applicationContext.updateAppRootFolder(newAppRoot);
-
-    const oldDeviceSessionsManager = this.deviceSessionsManager;
-    this.deviceSessionsManager = new DeviceSessionsManager(
-      this.applicationContext,
-      this.deviceManager,
-      this
-    );
-    oldDeviceSessionsManager.dispose();
-    this.updateProjectState({
-      appRootPath: this.relativeAppRootPath,
-    });
   }
 
   onInitialized(): void {

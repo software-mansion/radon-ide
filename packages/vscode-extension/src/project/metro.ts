@@ -8,13 +8,13 @@ import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { Devtools } from "./devtools";
-import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
 import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 import { getOpenPort } from "../utilities/common";
 import { DebugSource } from "../debugging/DebugSession";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
+import { LaunchConfiguration } from "../common/LaunchConfig";
 
 const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
@@ -341,16 +341,16 @@ export class MetroLauncher extends Metro implements Disposable {
   public async start({
     resetCache,
     dependencies,
-    appRoot,
+    launchConfiguration,
   }: {
     resetCache: boolean;
     dependencies: Promise<any>[];
-    appRoot: string;
+    launchConfiguration: LaunchConfiguration;
   }) {
     if (this.startPromise) {
       throw new Error("metro already started");
     }
-    this.startPromise = this.startInternal(resetCache, dependencies, appRoot);
+    this.startPromise = this.startInternal(resetCache, dependencies, launchConfiguration);
     this.startPromise.then(() => {
       // start promise is used to indicate that metro has started, however, sometimes
       // the metro process may exit, in which case we need to update the promise to
@@ -420,8 +420,12 @@ export class MetroLauncher extends Metro implements Disposable {
     );
   }
 
-  public async startInternal(resetCache: boolean, dependencies: Promise<any>[], appRoot: string) {
-    const launchConfiguration = getLaunchConfiguration();
+  public async startInternal(
+    resetCache: boolean,
+    dependencies: Promise<any>[],
+    launchConfiguration: LaunchConfiguration
+  ) {
+    const appRoot = launchConfiguration.absoluteAppRoot;
     await Promise.all([this.devtools.ready()].concat(dependencies));
 
     const libPath = path.join(extensionContext.extensionPath, "lib");
@@ -455,7 +459,7 @@ export class MetroLauncher extends Metro implements Disposable {
     };
     let bundlerProcess: ChildProcess;
 
-    if (shouldUseExpoCLI(appRoot)) {
+    if (shouldUseExpoCLI(launchConfiguration)) {
       bundlerProcess = this.launchExpoMetro(
         appRoot,
         libPath,

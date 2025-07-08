@@ -11,7 +11,7 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { isExpoGoProject } from "./expoGo";
-import { LaunchConfigurationOptions } from "../common/LaunchConfig";
+import { LaunchConfiguration } from "../common/LaunchConfig";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -35,12 +35,12 @@ export class BuildError extends Error {
 }
 
 export function createBuildConfig<Platform extends DevicePlatform>(
-  appRoot: string,
   platform: Platform,
   forceCleanBuild: boolean,
-  launchConfiguration: LaunchConfigurationOptions,
+  launchConfiguration: LaunchConfiguration,
   buildType: BuildType
 ): BuildConfig & { platform: Platform } {
+  const appRoot = launchConfiguration.absoluteAppRoot;
   const { customBuild, eas, env, android, ios } = launchConfiguration;
   const platformMapping = {
     [DevicePlatform.Android]: "android",
@@ -143,11 +143,10 @@ export function createBuildConfig<Platform extends DevicePlatform>(
 }
 
 export async function inferBuildType(
-  appRoot: string,
   platform: DevicePlatform,
-  launchConfiguration: LaunchConfigurationOptions
+  launchConfiguration: LaunchConfiguration
 ): Promise<BuildType> {
-  const { customBuild, eas } = launchConfiguration;
+  const { absoluteAppRoot, customBuild, eas } = launchConfiguration;
   const platformMapping = {
     [DevicePlatform.Android]: "android",
     [DevicePlatform.IOS]: "ios",
@@ -174,7 +173,7 @@ export async function inferBuildType(
     }
   }
 
-  if (await isExpoGoProject(appRoot)) {
+  if (await isExpoGoProject(absoluteAppRoot)) {
     return BuildType.ExpoGo;
   }
 

@@ -50,8 +50,8 @@ function handleUncaughtErrors(context: ExtensionContext) {
       return;
     }
     Logger.error("Uncaught exception", error);
-    Logger.openOutputPanel();
     if (context.extensionMode === ExtensionMode.Development) {
+      Logger.openOutputPanel();
       window.showErrorMessage("Internal extension error.", "Dismiss");
     }
   });
@@ -67,6 +67,11 @@ export function deactivate(context: ExtensionContext): undefined {
 }
 
 export async function activate(context: ExtensionContext) {
+  // We reset RNIDE.panelIsOpen context to false on activation
+  // to avoid situations when "Open IDE Panel" button is not shown
+  // after improper deactivation of the extension.
+  commands.executeCommand("setContext", "RNIDE.panelIsOpen", false);
+
   context.subscriptions.push(
     window.registerWebviewPanelSerializer(TabPanel.viewType, new TabPanelSerializer())
   );

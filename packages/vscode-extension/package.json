@@ -461,6 +461,10 @@
                       "buildUUID": {
                         "type": "string",
                         "description": "UUID of the EAS build used in `eas build:view` command. If unspecified, will use a build with matching fingerprint if available."
+                      },
+                      "local": {
+                        "type": "boolean",
+                        "description": "When set, builds the app locally using EAS CLI."
                       }
                     },
                     "required": [
@@ -478,6 +482,10 @@
                       "buildUUID": {
                         "type": "string",
                         "description": "UUID of the EAS build used in `eas build:view` command. If unspecified, will use a build with matching fingerprint if available."
+                      },
+                      "local": {
+                        "type": "boolean",
+                        "description": "When set, builds the app locally using EAS CLI."
                       }
                     },
                     "required": [
@@ -540,11 +548,50 @@
             "type": "radon-ide",
             "request": "launch",
             "name": "Radon IDE panel",
+            "env": {},
             "ios": {
               "configuration": "Debug"
             },
             "android": {
               "buildType": "debug"
+            }
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Radon IDE: Application configuration",
+            "description": "A new configuration for launching a React Native application in Radon IDE.",
+            "body": {
+              "type": "radon-ide",
+              "request": "launch",
+              "name": "${1:Application name}",
+              "appRoot": "${2:./}",
+              "env": {},
+              "ios": {
+                "configuration": "Debug"
+              },
+              "android": {
+                "buildType": "debug"
+              }
+            }
+          },
+          {
+            "label": "Radon IDE: EAS configuration",
+            "description": "A new configuration for launching a React Native application in Radon IDE. Uses EAS build service.",
+            "body": {
+              "type": "radon-ide",
+              "request": "launch",
+              "name": "${1:Application name}",
+              "appRoot": "${2:./}",
+              "env": {},
+              "eas": {
+                "ios": {
+                  "profile": "${3:development}"
+                },
+                "android": {
+                  "profile": "${3:development}"
+                }
+              }
             }
           }
         ]

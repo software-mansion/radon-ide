@@ -7,6 +7,7 @@ export type CustomBuild = {
 };
 
 export type LaunchConfigurationOptions = {
+  name?: string;
   appRoot?: string;
   metroConfigPath?: string;
   expoStartArgs?: string[];
@@ -19,19 +20,32 @@ export type LaunchConfigurationOptions = {
     android?: EasConfig;
   };
   env?: Record<string, string>;
-  ios?: {
-    scheme?: string;
-    configuration?: string;
-    launchArguments?: string[];
-  };
+  ios?: IOSLaunchConfiguration;
   isExpo?: boolean;
-  android?: {
-    buildType?: string;
-    productFlavor?: string;
-  };
+  android?: AndroidLaunchConfiguration;
   packageManager?: string;
   preview?: {
     waitForAppLaunch?: boolean;
+  };
+};
+
+export interface IOSLaunchConfiguration {
+  scheme?: string;
+  configuration?: string;
+  launchArguments?: string[];
+}
+
+export interface AndroidLaunchConfiguration {
+  buildType?: string;
+  productFlavor?: string;
+}
+
+export type LaunchConfiguration = LaunchConfigurationOptions & {
+  absoluteAppRoot: string;
+  appRoot: string;
+  env: Record<string, string>;
+  preview: {
+    waitForAppLaunch: boolean;
   };
 };
 

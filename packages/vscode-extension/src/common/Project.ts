@@ -1,5 +1,6 @@
 import { BuildType } from "./BuildConfig";
 import { DeviceInfo, DevicePlatform } from "./DeviceManager";
+import { LaunchConfiguration, LaunchConfigurationOptions } from "./LaunchConfig";
 
 export type Locale = string;
 
@@ -125,6 +126,8 @@ export type ProjectState = {
   initialized: boolean;
   appRootPath: string | undefined;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
+  selectedLaunchConfiguration: LaunchConfiguration;
+  customLaunchConfigurations: LaunchConfiguration[];
   connectState: ConnectState;
 } & DeviceSessionsManagerState;
 
@@ -220,6 +223,8 @@ export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
+
+  selectLaunchConfiguration(launchConfig: LaunchConfigurationOptions): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;

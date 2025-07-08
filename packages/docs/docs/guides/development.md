@@ -15,6 +15,19 @@ It is useful to understand this architecture a bit more before contributing, so 
 4. NPM package radon-ide – this package defines interface for the preview functionality which allows for components to be developed in isolation. Its code is placed under `packages/radon-ide`.
 5. Test applications – live in separate [radon-ide-test-apps](https://github.com/software-mansion-labs/radon-ide-test-apps) repo – serve a purpose of verifying the IDE works properly under different setups.
 
+## Prerequisites
+
+Make sure you have a React Native environment properly setup before configuring Radon IDE for development.
+
+Follow [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) from the official React Native documentation.
+
+Setup requires (but is not limited to) installing the following items:
+
+- **Node.js** (18.0.0 or higher)
+- **Xcode** (latest stable)
+- **Android Studio** (latest stable)
+- **Cocoapods**
+
 ## Development setup
 
 In order to run the extension in development mode, follow the steps below:

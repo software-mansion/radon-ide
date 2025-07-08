@@ -64,8 +64,8 @@ const items = [
     label: "Screen recording",
     title: "Instant replays",
     body: "Missed a bug? You can rewatch what happened on the device anytime.\n\nNo need to manually start the recording ever again.",
-    mediaSrc: "video/ide_screen_recording.mp4",
-    placeholderSrc: "video/placeholders/ide_screen_recording_placeholder.webp",
+    mediaSrc: "video/ide_replays.mp4",
+    placeholderSrc: "video/placeholders/ide_replays_placeholder.webp",
     placeholderAlt: "React Native debugging tools – instant replays",
   },
   {

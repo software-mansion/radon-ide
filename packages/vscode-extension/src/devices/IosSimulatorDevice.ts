@@ -13,7 +13,6 @@ import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
-import { getLaunchConfiguration } from "../utilities/launchConfiguration";
 
 interface SimulatorInfo {
   availability?: string;
@@ -357,7 +356,7 @@ export class IosSimulatorDevice extends DeviceBase {
     await Promise.all(matches.map(async (e) => await this.terminateApp(e)));
   }
 
-  async launchWithBuild(build: IOSBuildResult) {
+  async launchWithBuild(build: IOSBuildResult, launchArguments: string[]) {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
     await this.terminateAnyRunningApplications();
@@ -375,8 +374,6 @@ export class IosSimulatorDevice extends DeviceBase {
 
     this.nativeLogsOutputChannel.clear();
 
-    const applicationArguments = getLaunchConfiguration().ios?.launchArguments ?? [];
-
     const launchAppArgs = [
       "simctl",
       "--set",
@@ -386,7 +383,7 @@ export class IosSimulatorDevice extends DeviceBase {
       "--terminate-running-process",
       this.deviceUDID,
       build.bundleID,
-      ...applicationArguments,
+      ...launchArguments,
     ];
 
     this.runningAppProcess = exec("xcrun", launchAppArgs);
@@ -434,7 +431,12 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  async launchApp(build: IOSBuildResult, metroPort: number, devtoolsPort: number) {
+  async launchApp(
+    build: IOSBuildResult,
+    metroPort: number,
+    _devtoolsPort: number,
+    launchArguments: string[]
+  ) {
     if (build.platform !== DevicePlatform.IOS) {
       throw new Error("Invalid platform");
     }
@@ -444,7 +446,7 @@ export class IosSimulatorDevice extends DeviceBase {
       this.launchWithExpoDeeplink(build.bundleID, expoDeeplink);
     } else {
       await this.configureMetroPort(build.bundleID, metroPort);
-      await this.launchWithBuild(build);
+      await this.launchWithBuild(build, launchArguments);
     }
   }
 
