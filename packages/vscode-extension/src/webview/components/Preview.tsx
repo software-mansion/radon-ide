@@ -26,7 +26,6 @@ import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
 import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
-import { DevicePlatform } from "../../common/DeviceManager";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -81,6 +80,8 @@ function Preview({
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
+  const [loadingBackgroundHeight, setLoadingBackgroundHeight] = useState(0);
+  const loadingBackgroundRef = useRef<HTMLDivElement>(null);
 
   const { selectedDeviceSession, project } = useProject();
 
@@ -465,6 +466,25 @@ function Preview({
     }
   }, [selectedDeviceSession?.hasStaleBuildCache]);
 
+  useEffect(() => {
+    const loadingBackgroundElement = loadingBackgroundRef.current;
+    if (!loadingBackgroundElement) {
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setLoadingBackgroundHeight(entry.contentRect.height);
+      }
+    });
+
+    resizeObserver.observe(loadingBackgroundElement);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [selectedDeviceSession?.status]);
+
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
   });
@@ -568,11 +588,12 @@ function Preview({
         )}
         {!showDevicePreview && selectedDeviceSession?.status === "starting" && (
           <Device device={device!} resizableProps={resizableProps}>
-            <div className="phone-sized phone-content-loading-background" />
+            <div className="phone-sized phone-content-loading-background" ref={loadingBackgroundRef} />
             <div className="phone-sized phone-content-loading ">
               <PreviewLoader
                 startingSessionState={selectedDeviceSession}
                 onRequestShowPreview={() => setShowPreviewRequested(true)}
+                parentHeight={loadingBackgroundHeight}
               />
             </div>
           </Device>

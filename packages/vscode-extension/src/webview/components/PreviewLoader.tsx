@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 import "./PreviewLoader.css";
 
@@ -22,13 +22,37 @@ const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).redu
   0
 );
 
+const BREAKPOINT_SMALL_ROTATED = 450;
+const BREAKPOINT_MEDIUM_ROTATED = 700;
+
+const BREAKPOINT_SMALL_PORTRAIT = 475;
+const BREAKPOINT_MEDIUM_PORTRAIT = 600;
+
+const BREAKPOINT_CLASSES_ROTATED = {
+  [BREAKPOINT_SMALL_ROTATED]: "small",
+  [BREAKPOINT_MEDIUM_ROTATED]: "medium",
+} as const;
+
+const BREAKPOINT_CLASSES_PORTRAIT = {
+  [BREAKPOINT_SMALL_PORTRAIT]: "small",
+  [BREAKPOINT_MEDIUM_PORTRAIT]: "medium",
+} as const;
+
+const TOOLTIPS = {
+  logs: { label: "Open Radon IDE Logs", side: "top" },
+  preview: { label: "Force show device screen", side: "top" },
+  troubleshoot: { label: "Visit troubleshoot guide", side: "top" },
+  rebuild: { label: "Clean rebuild project", side: "top" },
+} as const;
+
 function PreviewLoader({
   startingSessionState,
   onRequestShowPreview,
+  parentHeight,
 }: {
   onRequestShowPreview: () => void;
-
   startingSessionState: DeviceSessionStateStarting;
+  parentHeight: number;
 }) {
   const { project, selectedDeviceSession } = useProject();
   const { deviceSessionsManager } = useDevices();
@@ -36,6 +60,8 @@ function PreviewLoader({
   const platform = selectedDeviceSession?.deviceInfo.platform;
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
+
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const startupMessage = startingSessionState.startupMessage;
   const stageProgress = startingSessionState.stageProgress;
@@ -100,57 +126,90 @@ function PreviewLoader({
 
   const isWaitingForApp = startupMessage === StartupMessage.WaitingForAppToLoad;
   const isBuilding = startupMessage === StartupMessage.Building;
-  const isRotated = selectedDeviceSession?.rotation === "LandscapeLeft" || selectedDeviceSession?.rotation === "LandscapeRight";
+  const isRotated =
+    selectedDeviceSession?.rotation === "LandscapeLeft" ||
+    selectedDeviceSession?.rotation === "LandscapeRight";
+
+  const getBreakpointClass = () => {
+    const breakpointClasses = isRotated ? BREAKPOINT_CLASSES_ROTATED : BREAKPOINT_CLASSES_PORTRAIT;
+
+    for (const [breakpoint, className] of Object.entries(breakpointClasses)) {
+      if (parentHeight < Number(breakpoint)) {
+        return className;
+      }
+    }
+    return "";
+  };
+
+  const isSmallBreakpoint = isRotated
+    ? parentHeight < BREAKPOINT_SMALL_ROTATED
+    : parentHeight < BREAKPOINT_SMALL_PORTRAIT;
+
+  const breakpointClass = getBreakpointClass();
 
   return (
-    <div className={`preview-loader-wrapper${isRotated ? " rotated": ''}`}>
-      <div className="preview-loader-center-pad" />
-      <button className="preview-loader-container" onClick={handleLoaderClick}>
-        <div className="preview-loader-button-group">
-          <StartupMessageComponent
-            className={classNames(
-              "preview-loader-message",
-              isLoadingSlowly && "preview-loader-slow-progress"
-            )}>
-            {startingSessionState.startupMessage}
-            {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
-          </StartupMessageComponent>
-          {startingSessionState.stageProgress !== undefined && (
-            <div className="preview-loader-stage-progress">
-              {(startingSessionState.stageProgress * 100).toFixed(1)}%
-            </div>
-          )}
-        </div>
-      </button>
-      <ProgressBar progress={progress} />
-      <div className="preview-loader-center-pad">
+    <div
+      ref={parentRef}
+      className={`preview-loader-wrapper ${isRotated ? "rotated" : "portrait"} ${breakpointClass}`}>
+      <div className="preview-loader-load-info">
+        <button className="preview-loader-container" onClick={handleLoaderClick}>
+          <div className="preview-loader-button-group">
+            <StartupMessageComponent
+              className={classNames(
+                "preview-loader-message",
+                isLoadingSlowly && "preview-loader-slow-progress"
+              )}>
+              {startingSessionState.startupMessage}
+              {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
+            </StartupMessageComponent>
+            {startingSessionState.stageProgress !== undefined && (
+              <div className="preview-loader-stage-progress">
+                {(startingSessionState.stageProgress * 100).toFixed(1)}%
+              </div>
+            )}
+          </div>
+        </button>
+        <ProgressBar progress={progress} />
         {isLoadingSlowly && isWaitingForApp && (
-          <>
-            <div className="preview-loader-submessage">
-              Loading app takes longer than expected. If nothing happens after a while try the below
-              options to troubleshoot:
-            </div>
-            <div className="preview-loader-waiting-actions">
-              <Button type="secondary" onClick={() => project.focusOutput(Output.Ide)}>
-                <span className="codicon codicon-output" /> Open Radon IDE Logs
-              </Button>
-              <Button type="secondary" onClick={onRequestShowPreview}>
-                <span className="codicon codicon-open-preview" /> Force show device screen
-              </Button>
-              <a href="https://ide.swmansion.com/docs/guides/troubleshooting" target="_blank">
-                <Button type="secondary">
-                  <span className="codicon codicon-browser" /> Visit troubleshoot guide
-                </Button>
-              </a>
-              <Button
-                type="secondary"
-                onClick={() => deviceSessionsManager.reloadCurrentSession("rebuild")}>
-                <span className="codicon codicon-refresh" /> Clean rebuild project
-              </Button>
-            </div>
-          </>
+          <div className="preview-loader-submessage">
+            Loading app takes longer than expected. If nothing happens after a while try the below
+            options to troubleshoot:
+          </div>
         )}
       </div>
+      {isLoadingSlowly && isWaitingForApp && (
+        <div className={`preview-loader-waiting-actions`}>
+          <Button
+            type="secondary"
+            onClick={() => project.focusOutput(Output.Ide)}
+            tooltip={isSmallBreakpoint ? TOOLTIPS.logs : undefined}>
+            <span className="codicon codicon-output" />{" "}
+            <span className="button-text">{TOOLTIPS.logs.label}</span>
+          </Button>
+          <Button
+            type="secondary"
+            onClick={onRequestShowPreview}
+            tooltip={isSmallBreakpoint ? TOOLTIPS.preview : undefined}>
+            <span className="codicon codicon-open-preview" />{" "}
+            <span className="button-text">{TOOLTIPS.preview.label}</span>
+          </Button>
+          <a href="https://ide.swmansion.com/docs/guides/troubleshooting" target="_blank">
+            <Button
+              type="secondary"
+              tooltip={isSmallBreakpoint ? TOOLTIPS.troubleshoot : undefined}>
+              <span className="codicon codicon-browser" />{" "}
+              <span className="button-text">{TOOLTIPS.troubleshoot.label}</span>
+            </Button>
+          </a>
+          <Button
+            type="secondary"
+            onClick={() => deviceSessionsManager.reloadCurrentSession("rebuild")}
+            tooltip={isSmallBreakpoint ? TOOLTIPS.rebuild : undefined}>
+            <span className="codicon codicon-refresh" />{" "}
+            <span className="button-text">{TOOLTIPS.rebuild.label}</span>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
