@@ -45,6 +45,13 @@ const TOOLTIPS = {
   rebuild: { label: "Clean rebuild project", side: "top" },
 } as const;
 
+const ROTATION_STYLES = {
+  Portrait: "rotate(0deg)",
+  LandscapeLeft: "rotate(90deg)",
+  LandscapeRight: "rotate(-90deg)",
+  PortraitUpsideDown: "rotate(0deg)",
+} as const;
+
 function PreviewLoader({
   startingSessionState,
   onRequestShowPreview,
@@ -147,10 +154,15 @@ function PreviewLoader({
 
   const breakpointClass = getBreakpointClass();
 
+  const rotationStyle = selectedDeviceSession?.rotation 
+    ? ROTATION_STYLES[selectedDeviceSession.rotation] 
+    : ROTATION_STYLES.Portrait;
+
   return (
     <div
       ref={parentRef}
-      className={`preview-loader-wrapper ${isRotated ? "rotated" : "portrait"} ${breakpointClass}`}>
+      className={`preview-loader-wrapper ${isRotated ? "rotated" : "portrait"} ${breakpointClass}`}
+      style={{ transform: rotationStyle }}>
       <div className="preview-loader-load-info">
         <button className="preview-loader-container" onClick={handleLoaderClick}>
           <div className="preview-loader-button-group">
