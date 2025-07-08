@@ -13,11 +13,16 @@ export interface AppRootConfig {
   easBuildProfiles: EasBuildConfig;
 }
 
-export function useAppRootConfig(appRootFolder?: string): AppRootConfig {
+export function useAppRootConfig(appRootFolder: string | undefined): AppRootConfig {
   const [xcodeSchemes, setXcodeSchemes] = useState<string[]>([]);
   const [easBuildProfiles, setEasBuildProfiles] = useState<EasBuildConfig>({});
 
   useEffect(() => {
+    if (appRootFolder === undefined) {
+      setXcodeSchemes([]);
+      setEasBuildProfiles({});
+      return;
+    }
     appRootConfigProxy.getAvailableEasProfiles(appRootFolder).then(setEasBuildProfiles);
     appRootConfigProxy.getAvailableXcodeSchemes(appRootFolder).then(setXcodeSchemes);
   }, [appRootFolder]);

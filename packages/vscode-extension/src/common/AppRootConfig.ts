@@ -8,6 +8,6 @@ export type ApplicationRoot = {
 
 export interface AppRootConfig {
   getAvailableApplicationRoots(): Promise<ApplicationRoot[]>;
-  getAvailableXcodeSchemes(appRootFolder?: string): Promise<string[]>;
-  getAvailableEasProfiles(appRootFolder?: string): Promise<EasBuildConfig>;
+  getAvailableXcodeSchemes(appRootFolder: string): Promise<string[]>;
+  getAvailableEasProfiles(appRootFolder: string): Promise<EasBuildConfig>;
 }

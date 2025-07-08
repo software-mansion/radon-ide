@@ -323,8 +323,8 @@ function AppRootConfiguration({ appRoot, update, applicationRoots }: appRootConf
     if (customAppRootInputRef.current) {
       customAppRootInputRef.current.value = "";
     }
-    if (newAppRoot === undefined) {
-      newAppRoot = "Auto";
+    if (newAppRoot === undefined || newAppRoot === "Auto") {
+      newAppRoot = applicationRoots[0]?.path ?? "Auto";
     }
     update("appRoot", newAppRoot);
   };
@@ -340,7 +340,9 @@ function AppRootConfiguration({ appRoot, update, applicationRoots }: appRootConf
     return { value: applicationRoot.path, label: applicationRoot.path };
   });
 
-  availableAppRoots.push({ value: "Auto", label: "Auto" });
+  if (availableAppRoots.length > 0) {
+    availableAppRoots.push({ value: "Auto", label: `${applicationRoots[0].path} (Auto)` });
+  }
   availableAppRoots.push({ value: "Custom", label: "Custom" });
 
   return (

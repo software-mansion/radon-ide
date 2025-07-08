@@ -11,6 +11,10 @@ import { requireNoCache } from "../utilities/requireNoCache";
 
 const CUSTOM_APPLICATION_ROOTS_KEY = "custom_application_roots_key";
 
+function toAbsolutePath(appRoot: string): string {
+  return path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
+}
+
 function readApplicationRootFromStaticConfig(appRootPath: string, configAbsolutePath: string) {
   const appRootConfig = requireNoCache(configAbsolutePath);
   if (appRootConfig) {
@@ -24,7 +28,7 @@ function readApplicationRootFromStaticConfig(appRootPath: string, configAbsolute
 }
 
 function readApplicationRoot(appRootPath: string): ApplicationRoot {
-  const appRootAbsolutePath = path.resolve(workspace.workspaceFolders![0].uri.path, appRootPath);
+  const appRootAbsolutePath = toAbsolutePath(appRootPath);
   try {
     return readApplicationRootFromStaticConfig(appRootPath, appRootAbsolutePath + "/app.json");
   } catch {}
@@ -66,15 +70,8 @@ export class AppRootConfigController implements AppRootConfig {
     return applicationRoots.map(readApplicationRoot);
   }
 
-  async getAvailableXcodeSchemes(appRoot?: string) {
-    if (!appRoot) {
-      const appRootCandidates = findAppRootCandidates();
-      if (appRootCandidates.length === 0) {
-        return [];
-      }
-      appRoot = appRootCandidates[0];
-    }
-    const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
+  async getAvailableXcodeSchemes(appRoot: string) {
+    const absoluteAppRoot = toAbsolutePath(appRoot);
     const sourceDir = getIosSourceDir(absoluteAppRoot);
 
     const xcodeProject = findXcodeProject(absoluteAppRoot);
@@ -92,15 +89,8 @@ export class AppRootConfigController implements AppRootConfig {
     return await findXcodeScheme(xcodeProject);
   }
 
-  async getAvailableEasProfiles(appRoot?: string): Promise<EasBuildConfig> {
-    if (!appRoot) {
-      const appRootCandidates = findAppRootCandidates();
-      if (appRootCandidates.length === 0) {
-        return {};
-      }
-      appRoot = appRootCandidates[0];
-    }
-    const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
+  async getAvailableEasProfiles(appRoot: string): Promise<EasBuildConfig> {
+    const absoluteAppRoot = toAbsolutePath(appRoot);
     const easConfig = await readEasConfig(absoluteAppRoot);
     const easBuildConfig = easConfig?.build ?? {};
     return easBuildConfig;
