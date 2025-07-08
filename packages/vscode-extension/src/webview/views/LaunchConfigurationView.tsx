@@ -144,16 +144,16 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
       <div className="launch-configuration-section-margin" />
 
       <div className="launch-configuration-button-group">
-        <Button onClick={save}>Save{isEditingSelectedConfig ? " and restart device" : ""}</Button>
         {launchConfigToUpdate && (
           <Button
-            className="launch-configuration-delete"
+            className="button-secondary"
             onClick={() => {
               openModal("Delete Launch Configuration", <DeleteConfirmationModal />);
             }}>
             Delete
           </Button>
         )}
+        <Button onClick={save}>Save{isEditingSelectedConfig ? " and restart device" : ""}</Button>
       </div>
     </div>
   );
