@@ -47,7 +47,7 @@ export async function invokeToolCall(
       if (!isOnline) {
         // Firing without `isOnline` verification could result in one-off network issues causing a full MCP reload.
         // To prevent this, we verify the connection is down before announcing it.
-        connectionListener?.announceConnectionLost();
+        connectionListener?.tryRestoringConnection();
       }
 
       throw new Error(`Network error with status: ${response.status}`);
@@ -88,7 +88,7 @@ export async function getToolSchema(connectionListener: ConnectionListener): Pro
     }
 
     if (response.status !== 200) {
-      connectionListener.announceConnectionLost();
+      connectionListener.tryRestoringConnection();
       throw new Error(`Network error with status: ${response.status}`);
     }
 

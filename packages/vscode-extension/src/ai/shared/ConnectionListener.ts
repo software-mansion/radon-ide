@@ -5,35 +5,20 @@ import { isServerOnline } from "./api";
 const PING_INTERVAL = 5000;
 
 export class ConnectionListener {
-  connectionSuccessEmitter: EventEmitter<boolean>;
   connectionChangeEmitter: EventEmitter<void>;
   connectionListeningInterval: NodeJS.Timeout | null;
   isOnline: boolean;
 
   constructor() {
-    this.connectionSuccessEmitter = new EventEmitter();
     this.connectionChangeEmitter = new EventEmitter();
     this.connectionListeningInterval = null;
     this.isOnline = true;
 
     isServerOnline().then((isOnline) => {
       this.isOnline = isOnline;
-    });
 
-    this.connectionSuccessEmitter.event((isOnline) => {
-      if (this.isOnline === isOnline) {
-        return; // Status hasn't changed - no-op
-      }
-
-      this.isOnline = isOnline;
-
-      if (this.isOnline) {
-        // Connection restored
-        this.tryClearListeningInterval();
-        this.connectionChangeEmitter.fire();
-      } else {
-        // Connection lost - ping server until first response
-        this.listenForConnection();
+      if (!isOnline) {
+        this.tryRestoringConnection();
       }
     });
   }
@@ -44,13 +29,13 @@ export class ConnectionListener {
     }
   }
 
-  private listenForConnection() {
+  public tryRestoringConnection() {
     this.connectionListeningInterval = setInterval(async () => {
       const isOnline = await isServerOnline();
 
       if (isOnline && this.connectionListeningInterval) {
-        this.connectionSuccessEmitter.fire(isOnline);
-        clearInterval(this.connectionListeningInterval);
+        this.tryClearListeningInterval();
+        this.connectionChangeEmitter.fire();
       }
     }, PING_INTERVAL);
 
@@ -59,9 +44,5 @@ export class ConnectionListener {
 
   public onConnectionChange(callback: () => unknown) {
     extensionContext.subscriptions.push(this.connectionChangeEmitter.event(callback));
-  }
-
-  public announceConnectionLost() {
-    this.connectionSuccessEmitter.fire(false);
   }
 }
