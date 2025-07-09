@@ -224,6 +224,20 @@ export interface ProjectInterface {
   renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
+  /**
+   * Creates a new launch configuration or updates an existing one.
+   *
+   * If the `oldLaunchConfiguration` matches the currently selected launch configuration,
+   * the newly created or updated configuration will be selected.
+   *
+   * @param newLaunchConfiguration - The options for the new or updated launch configuration. If `undefined`, the existing configuration will be removed.
+   * @param oldLaunchConfiguration - (Optional) The existing launch configuration to update.
+   * @returns A promise that resolves when the operation is complete.
+   */
+  createOrUpdateLaunchConfiguration(
+    newLaunchConfiguration: LaunchConfigurationOptions | undefined,
+    oldLaunchConfiguration?: LaunchConfiguration
+  ): Promise<void>;
   selectLaunchConfiguration(launchConfig: LaunchConfigurationOptions): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;

@@ -1,6 +1,7 @@
 import path from "path";
 import { ConfigurationChangeEvent, Disposable, EventEmitter, workspace } from "vscode";
 import vscode from "vscode";
+import _ from "lodash";
 import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
 import { findAppRootCandidates } from "../utilities/extensionContext";
@@ -8,12 +9,15 @@ import { getLaunchConfigurations } from "../utilities/launchConfiguration";
 
 function findDefaultAppRoot(showWarning = false) {
   const appRoots = findAppRootCandidates();
+  const workspacePath = workspace.workspaceFolders![0].uri.fsPath;
   const defaultAppRoot = appRoots.length > 0 ? appRoots[0] : undefined;
+  const defaultAppRootRelative =
+    defaultAppRoot && "./" + path.relative(workspacePath, defaultAppRoot);
   if (appRoots.length > 0 && showWarning) {
     vscode.window
       .showWarningMessage(
         "Multiple application roots found in workspace, but no 'appRoot' specified in launch configuration. Using the first found application root: " +
-          defaultAppRoot,
+          defaultAppRootRelative,
         "Add Launch Configuration"
       )
       .then((selection) => {
@@ -22,7 +26,7 @@ function findDefaultAppRoot(showWarning = false) {
         }
       });
   }
-  return defaultAppRoot;
+  return defaultAppRootRelative;
 }
 
 export function launchConfigurationFromOptions(
@@ -101,6 +105,45 @@ export class LaunchConfigurationsManager implements Disposable {
       return this._launchConfigurations[0];
     }
     return launchConfigFromOptionsWithDefaultAppRoot({}, findDefaultAppRoot(true));
+  }
+
+  public async createOrUpdateLaunchConfiguration(
+    newLaunchConfiguration: LaunchConfigurationOptions | undefined,
+    oldLaunchConfiguration?: LaunchConfiguration
+  ): Promise<LaunchConfiguration | undefined> {
+    const newConfig = newLaunchConfiguration
+      ? {
+          name: "Radon IDE panel",
+          type: "radon-ide",
+          request: "launch",
+          ...newLaunchConfiguration,
+        }
+      : undefined;
+    const defaultAppRoot = findDefaultAppRoot();
+    const launchConfig = workspace.getConfiguration("launch");
+    const configurations = launchConfig.get<Array<Record<string, unknown>>>("configurations") ?? [];
+    const oldConfigIndex =
+      oldLaunchConfiguration !== undefined
+        ? configurations.findIndex((config) => {
+            const fullConfig = launchConfigFromOptionsWithDefaultAppRoot(config, defaultAppRoot);
+            return _.isEqual(fullConfig, oldLaunchConfiguration);
+          })
+        : -1;
+    if (oldConfigIndex !== -1) {
+      if (newConfig === undefined) {
+        configurations.splice(oldConfigIndex, 1);
+      } else {
+        configurations[oldConfigIndex] = newConfig;
+      }
+    } else if (newConfig !== undefined) {
+      configurations.push(newConfig);
+    } else {
+      return;
+    }
+    await launchConfig.update("configurations", configurations);
+    if (newConfig !== undefined) {
+      return launchConfigFromOptionsWithDefaultAppRoot(newConfig, defaultAppRoot);
+    }
   }
 
   dispose() {

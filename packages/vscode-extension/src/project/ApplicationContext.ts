@@ -1,7 +1,6 @@
 import { Disposable } from "vscode";
 import { BuildCache } from "../builders/BuildCache";
 import { DependencyManager } from "../dependency/DependencyManager";
-import { LaunchConfigController } from "../panels/LaunchConfigController";
 import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
@@ -13,7 +12,6 @@ function createBuildManager(dependencyManager: DependencyManager, buildCache: Bu
 
 export class ApplicationContext implements Disposable {
   public dependencyManager: DependencyManager;
-  public launchConfigurationController: LaunchConfigController;
   public buildManager: BuildManager;
   private disposables: Disposable[] = [];
 
@@ -22,11 +20,10 @@ export class ApplicationContext implements Disposable {
     public readonly buildCache: BuildCache
   ) {
     this.dependencyManager = new DependencyManager(this.launchConfig);
-    this.launchConfigurationController = new LaunchConfigController(this.appRootFolder);
     const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.buildManager = buildManager;
 
-    this.disposables.push(this.launchConfigurationController, this.dependencyManager, buildManager);
+    this.disposables.push(this.dependencyManager, buildManager);
   }
 
   public get appRootFolder(): string {
@@ -45,12 +42,9 @@ export class ApplicationContext implements Disposable {
 
   public async updateAppRootFolder() {
     disposeAll(this.disposables);
-
-    this.launchConfigurationController = new LaunchConfigController(this.appRootFolder);
     const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
     this.buildManager = buildManager;
-
-    this.disposables.push(this.launchConfigurationController, this.dependencyManager, buildManager);
+    this.disposables.push(this.dependencyManager, buildManager);
   }
 
   public dispose() {
