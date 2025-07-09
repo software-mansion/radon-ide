@@ -15,6 +15,7 @@ const ROTATION_ANGLE: Record<DeviceRotationType, string> = {
 } as const;
 
 const MIN_HEIGHT = 350;
+const CSS_MARGIN_FACTOR = 0.9;
 
 type ResizablePropsSize = string | number | undefined;
 
@@ -59,14 +60,10 @@ function calculateLandscapeProperties(
   const isFitSet = typeof resizableHeight === "string";
 
   const scaledHeight = Math.min(parentWidth, Math.max(parentHeight / aspectRatio, MIN_HEIGHT));
-  const adjustedHeight = isFitSet ? scaledHeight : (resizableHeight as number) || scaledHeight;
+  const adjustedHeight = (isFitSet ? scaledHeight : (resizableHeight as number) || scaledHeight) * CSS_MARGIN_FACTOR;
 
-  const offsetTop = isFitSet
-    ? "0px"
-    : `${-Math.max(((resizableHeight as number) || 0) - parentHeight, 0) / 2}px`;
 
   return {
-    offsetTop,
     height: `${adjustedHeight}px`,
     width: `${adjustedHeight * aspectRatio}px`,
     minWidth: `${MIN_HEIGHT * aspectRatio}px`,
@@ -82,13 +79,13 @@ function cssPropertiesForDevice(
 ): DeviceCSSProperties {
   const aspectRatio = frame.width / frame.height;
   const isHorizontal = rotation === "LandscapeLeft" || rotation === "LandscapeRight";
+  const parentDimensions = getParentDimensions(phoneElement);
 
-  let newHeight = "100%";
+  let newHeight = `min(100%, max(${MIN_HEIGHT}px, ${(parentDimensions.width / aspectRatio) * CSS_MARGIN_FACTOR}px))`;
   let newWidth = "auto";
   let minWidth = "fit-content";
 
   if (isHorizontal) {
-    const parentDimensions = getParentDimensions(phoneElement);
     const landscapeProps = calculateLandscapeProperties(
       aspectRatio,
       parentDimensions,
@@ -141,31 +138,31 @@ export default function Device({ device, resizableProps, children }: DeviceProps
     );
   }, [device, frame, rotation, resizableHeight]);
 
+  const handleResize = () => {
+    if (!phoneContentRef.current) {
+      return;
+    }
+
+    // Recalculate only the properties that depend on window size
+    const updatedProperties = cssPropertiesForDevice(
+      device,
+      frame,
+      rotation,
+      phoneContentRef.current,
+      resizableHeight
+    );
+
+    const propertiesToUpdate = [
+      { element: phoneContentRef.current, property: "--phone-content-width" },
+      { element: phoneContentRef.current, property: "--phone-content-height" },
+    ] as const;
+
+    propertiesToUpdate.forEach(({ element, property }) => {
+      element?.style.setProperty(property, updatedProperties[property] || null);
+    });
+  };
+
   useEffect(() => {
-    const handleResize = () => {
-      if (!phoneContentRef.current) {
-        return;
-      }
-
-      // Recalculate only the properties that depend on window size
-      const updatedProperties = cssPropertiesForDevice(
-        device,
-        frame,
-        rotation,
-        phoneContentRef.current,
-        resizableHeight
-      );
-
-      const propertiesToUpdate = [
-        { element: phoneContentRef.current, property: "--phone-content-width" },
-        { element: phoneContentRef.current, property: "--phone-content-height" },
-      ] as const;
-
-      propertiesToUpdate.forEach(({ element, property }) => {
-        element?.style.setProperty(property, updatedProperties[property] || null);
-      });
-    };
-
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);

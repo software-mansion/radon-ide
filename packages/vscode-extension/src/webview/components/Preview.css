@@ -2,7 +2,6 @@
  * CSS Custom Properties used by Device.tsx component:
  * 
  * Device content positioning and sizing:
- * --phone-content-offset-top: Top margin offset for the resizable wrapper (0px or negative centering)
  * --phone-content-min-height: Minimum height for phone content (350px)
  * --phone-content-min-width: Minimum width for phone content (350px * aspect ratio or fit-content)
  * --phone-content-width: Current width of phone content (auto, or calculated px value for landscape)
