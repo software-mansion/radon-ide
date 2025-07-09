@@ -511,7 +511,7 @@ function Preview({
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>
         {showDevicePreview && (
-          <Device device={device!} resizableProps={resizableProps}>
+          <Device device={device!} resizableProps={resizableProps} wrapperDivRef={wrapperDivRef}>
             <div className="touch-area" {...touchHandlers}>
               <MjpegImg
                 src={previewURL}
@@ -590,7 +590,7 @@ function Preview({
           </Device>
         )}
         {!showDevicePreview && selectedDeviceSession?.status === "starting" && (
-          <Device device={device!} resizableProps={resizableProps}>
+          <Device device={device!} resizableProps={resizableProps} wrapperDivRef={wrapperDivRef}>
             <div className="phone-sized phone-content-loading-background" ref={loadingBackgroundRef} />
             <div className="phone-sized phone-content-loading ">
               <PreviewLoader
@@ -602,7 +602,7 @@ function Preview({
           </Device>
         )}
         {hasFatalError && (
-          <Device device={device!} resizableProps={resizableProps}>
+          <Device device={device!} resizableProps={resizableProps} wrapperDivRef={wrapperDivRef}>
             <div className="phone-sized extension-error-screen" />
           </Device>
         )}
