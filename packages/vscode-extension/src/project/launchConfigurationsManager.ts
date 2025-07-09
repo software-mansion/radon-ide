@@ -2,7 +2,11 @@ import path from "path";
 import { ConfigurationChangeEvent, Disposable, EventEmitter, workspace } from "vscode";
 import vscode from "vscode";
 import _ from "lodash";
-import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/LaunchConfig";
+import {
+  LaunchConfiguration,
+  LaunchConfigurationKind,
+  LaunchConfigurationOptions,
+} from "../common/LaunchConfig";
 import { Logger } from "../Logger";
 import { findAppRootCandidates } from "../utilities/extensionContext";
 import { getLaunchConfigurations } from "../utilities/launchConfiguration";
@@ -50,6 +54,7 @@ function launchConfigFromOptionsWithDefaultAppRoot(
   const appRoot = (options.appRoot ?? defaultAppRoot) as string;
   const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
   return {
+    kind: LaunchConfigurationKind.Custom,
     appRoot,
     absoluteAppRoot,
     env: {},
@@ -104,7 +109,10 @@ export class LaunchConfigurationsManager implements Disposable {
     if (this._launchConfigurations.length > 0) {
       return this._launchConfigurations[0];
     }
-    return launchConfigFromOptionsWithDefaultAppRoot({}, findDefaultAppRoot(true));
+    return launchConfigFromOptionsWithDefaultAppRoot(
+      { kind: LaunchConfigurationKind.Detected } as LaunchConfigurationOptions,
+      findDefaultAppRoot(true)
+    );
   }
 
   public async createOrUpdateLaunchConfiguration(

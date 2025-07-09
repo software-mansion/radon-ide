@@ -54,7 +54,13 @@ export interface AndroidLaunchConfiguration {
   productFlavor?: string;
 }
 
+export enum LaunchConfigurationKind {
+  Custom = "Custom",
+  Detected = "Detected",
+}
+
 export type LaunchConfiguration = LaunchConfigurationOptions & {
+  kind: LaunchConfigurationKind;
   absoluteAppRoot: string;
   appRoot: string;
   env: Record<string, string>;
