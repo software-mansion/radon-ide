@@ -20,6 +20,7 @@ import {
   TouchPoint,
   ZoomLevelType,
 } from "../common/Project";
+import { AppRootConfigController } from "../panels/AppRootConfigController";
 import { Logger } from "../Logger";
 import { DeviceInfo } from "../common/DeviceManager";
 import { DeviceManager } from "../devices/DeviceManager";
@@ -43,7 +44,7 @@ import {
   launchConfigurationFromOptions,
   LaunchConfigurationsManager,
 } from "./launchConfigurationsManager";
-import { LaunchConfigurationOptions } from "../common/LaunchConfig";
+import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -62,6 +63,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   private projectState: ProjectState;
 
   private disposables: Disposable[] = [];
+
+  public readonly appRootConfigController: AppRootConfigController = new AppRootConfigController();
 
   public get deviceSession() {
     return this.deviceSessionsManager.selectedDeviceSession;
@@ -104,21 +107,25 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         this.updateProjectState({
           customLaunchConfigurations: launchConfigs,
         });
-        const selectedLaunchConfig =
-          launchConfigs[0] ?? launchConfigurationFromOptions({ appRoot: this.relativeAppRootPath });
-
-        const oldAppRoot = this.applicationContext.appRootFolder;
-        if (selectedLaunchConfig.absoluteAppRoot !== oldAppRoot) {
-          // If the app root has changed, we need to update the application context
-          this.selectLaunchConfiguration(selectedLaunchConfig);
-        } else {
-          this.applicationContext.updateLaunchConfig(selectedLaunchConfig);
-          this.updateProjectState({
-            selectedLaunchConfiguration: selectedLaunchConfig,
-          });
-        }
       })
     );
+  }
+
+  async createOrUpdateLaunchConfiguration(
+    newLaunchConfiguration: LaunchConfigurationOptions | undefined,
+    oldLaunchConfiguration?: LaunchConfiguration
+  ) {
+    const isUpdatingSelectedConfig = _.isEqual(
+      oldLaunchConfiguration,
+      this.applicationContext.launchConfig
+    );
+    const newConfig = await this.launchConfigsManager.createOrUpdateLaunchConfiguration(
+      newLaunchConfiguration,
+      oldLaunchConfiguration
+    );
+    if (isUpdatingSelectedConfig && newConfig) {
+      this.selectLaunchConfiguration(newConfig);
+    }
   }
 
   async selectLaunchConfiguration(options: LaunchConfigurationOptions): Promise<void> {
@@ -128,6 +135,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       return;
     }
     await this.applicationContext.updateLaunchConfig(launchConfig);
+    // NOTE: we reset the device sessions manager to close all the running sessions
+    // and restart the current device with new config. In the future, we might want to keep the devices running
+    // and only close the applications, but the API we have right now does not allow that.
     const oldDeviceSessionsManager = this.deviceSessionsManager;
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
@@ -162,10 +172,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   get dependencyManager() {
     return this.applicationContext.dependencyManager;
-  }
-
-  get launchConfigurationController() {
-    return this.applicationContext.launchConfigurationController;
   }
 
   get buildCache() {

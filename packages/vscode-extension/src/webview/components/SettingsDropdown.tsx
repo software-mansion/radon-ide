@@ -10,7 +10,6 @@ import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { useUtils } from "../providers/UtilsProvider";
 import "./shared/SwitchGroup.css";
-import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { SendFeedbackItem } from "./SendFeedbackItem";
 import { useTelemetry } from "../providers/TelemetryProvider";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
@@ -106,14 +105,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => {
-              openModal("Launch Configuration", <LaunchConfigurationView />);
-            }}>
-            <span className="codicon codicon-rocket" />
-            Launch configuration...
-          </DropdownMenu.Item>
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />
           <DropdownMenu.Item
             className="dropdown-menu-item"

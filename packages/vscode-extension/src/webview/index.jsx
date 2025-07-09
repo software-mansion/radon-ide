@@ -11,7 +11,7 @@ import WorkspaceConfigProvider from "./providers/WorkspaceConfigProvider";
 
 import { UtilsProvider, installLogOverrides } from "./providers/UtilsProvider";
 import { TelemetryProvider } from "./providers/TelemetryProvider";
-import LaunchConfigProvider from "./providers/LaunchConfigProvider";
+import LaunchConfigProvider from "./providers/ApplicationRootsProvider";
 
 import "./styles/theme.css";
 
