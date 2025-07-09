@@ -81,7 +81,6 @@ function Preview({
   const previewRef = useRef<HTMLImageElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
-  const [loadingBackgroundHeight, setLoadingBackgroundHeight] = useState(0);
   const loadingBackgroundRef = useRef<HTMLDivElement>(null);
 
   const { selectedDeviceSession, project } = useProject();
@@ -467,25 +466,6 @@ function Preview({
     }
   }, [selectedDeviceSession?.hasStaleBuildCache]);
 
-  useEffect(() => {
-    const loadingBackgroundElement = loadingBackgroundRef.current;
-    if (!loadingBackgroundElement) {
-      return;
-    }
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setLoadingBackgroundHeight(entry.contentRect.height);
-      }
-    });
-
-    resizeObserver.observe(loadingBackgroundElement);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [selectedDeviceSession?.status]);
-
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
   });
@@ -524,31 +504,37 @@ function Preview({
 
               {isMultiTouching && (
                 <div
-                  style={{
-                    "--x": `${touchPoint.x * 100}%`,
-                    "--y": `${touchPoint.y * 100}%`,
-                    "--size": `${normalTouchIndicatorSize}px`,
-                  } as React.CSSProperties}>
+                  style={
+                    {
+                      "--x": `${touchPoint.x * 100}%`,
+                      "--y": `${touchPoint.y * 100}%`,
+                      "--size": `${normalTouchIndicatorSize}px`,
+                    } as React.CSSProperties
+                  }>
                   <TouchPointIndicator isPressing={isPressing} />
                 </div>
               )}
               {isMultiTouching && (
                 <div
-                  style={{
-                    "--x": `${anchorPoint.x * 100}%`,
-                    "--y": `${anchorPoint.y * 100}%`,
-                    "--size": `${smallTouchIndicatorSize}px`,
-                  } as React.CSSProperties}>
+                  style={
+                    {
+                      "--x": `${anchorPoint.x * 100}%`,
+                      "--y": `${anchorPoint.y * 100}%`,
+                      "--size": `${smallTouchIndicatorSize}px`,
+                    } as React.CSSProperties
+                  }>
                   <TouchPointIndicator isPressing={false} />
                 </div>
               )}
               {isMultiTouching && (
                 <div
-                  style={{
-                    "--x": `${mirroredTouchPosition.x * 100}%`,
-                    "--y": `${mirroredTouchPosition.y * 100}%`,
-                    "--size": `${normalTouchIndicatorSize}px`,
-                  } as React.CSSProperties}>
+                  style={
+                    {
+                      "--x": `${mirroredTouchPosition.x * 100}%`,
+                      "--y": `${mirroredTouchPosition.y * 100}%`,
+                      "--size": `${normalTouchIndicatorSize}px`,
+                    } as React.CSSProperties
+                  }>
                   <TouchPointIndicator isPressing={isPressing} />
                 </div>
               )}
@@ -589,12 +575,15 @@ function Preview({
         )}
         {!showDevicePreview && selectedDeviceSession?.status === "starting" && (
           <Device device={device!} resizableProps={resizableProps} wrapperDivRef={wrapperDivRef}>
-            <div className="phone-sized phone-content-loading-background" ref={loadingBackgroundRef} />
+            <div
+              className="phone-sized phone-content-loading-background"
+              ref={loadingBackgroundRef}
+            />
             <div className="phone-sized phone-content-loading ">
               <PreviewLoader
                 startingSessionState={selectedDeviceSession}
                 onRequestShowPreview={() => setShowPreviewRequested(true)}
-                parentHeight={loadingBackgroundHeight}
+                backgroundElementRef={loadingBackgroundRef}
               />
             </div>
           </Device>

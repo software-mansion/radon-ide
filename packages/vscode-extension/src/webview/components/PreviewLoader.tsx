@@ -25,18 +25,23 @@ const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).redu
 
 const BREAKPOINT_SMALL_LANDSCAPE = 450;
 const BREAKPOINT_MEDIUM_LANDSCAPE = 700;
-
 const BREAKPOINT_SMALL_PORTRAIT = 475;
 const BREAKPOINT_MEDIUM_PORTRAIT = 600;
 
+enum BreakpointSize {
+  Small = "small",
+  Medium = "medium",
+  Large = "",
+}
+
 const BREAKPOINT_CLASSES_ROTATED = {
-  [BREAKPOINT_SMALL_LANDSCAPE]: "small",
-  [BREAKPOINT_MEDIUM_LANDSCAPE]: "medium",
+  [BREAKPOINT_SMALL_LANDSCAPE]: BreakpointSize.Small,
+  [BREAKPOINT_MEDIUM_LANDSCAPE]: BreakpointSize.Medium,
 } as const;
 
 const BREAKPOINT_CLASSES_PORTRAIT = {
-  [BREAKPOINT_SMALL_PORTRAIT]: "small",
-  [BREAKPOINT_MEDIUM_PORTRAIT]: "medium",
+  [BREAKPOINT_SMALL_PORTRAIT]: BreakpointSize.Small,
+  [BREAKPOINT_MEDIUM_PORTRAIT]: BreakpointSize.Medium,
 } as const;
 
 const TOOLTIPS = {
@@ -56,11 +61,11 @@ const ROTATION_STYLES = {
 function PreviewLoader({
   startingSessionState,
   onRequestShowPreview,
-  parentHeight,
+  backgroundElementRef,
 }: {
   onRequestShowPreview: () => void;
   startingSessionState: DeviceSessionStateStarting;
-  parentHeight: number;
+  backgroundElementRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const { project, selectedDeviceSession } = useProject();
   const { deviceSessionsManager } = useDevices();
@@ -68,6 +73,7 @@ function PreviewLoader({
   const platform = selectedDeviceSession?.deviceInfo.platform;
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
+  const [breakpointSize, setBreakpointSize] = useState<BreakpointSize>(BreakpointSize.Large);
 
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -116,6 +122,54 @@ function PreviewLoader({
     return () => timeoutHandle && clearTimeout(timeoutHandle);
   }, [startupMessage]);
 
+  // only update state when crossing thresholds
+  useEffect(() => {
+    const backgroundElement = backgroundElementRef.current;
+    if (!backgroundElement) {
+      return;
+    }
+
+    const checkBreakpoint = () => {
+      const height = backgroundElement.clientHeight;
+      const isRotated =
+        selectedDeviceSession?.rotation === DeviceRotationType.LandscapeLeft ||
+        selectedDeviceSession?.rotation === DeviceRotationType.LandscapeRight;
+
+      const breakpointClasses = isRotated
+        ? BREAKPOINT_CLASSES_ROTATED
+        : BREAKPOINT_CLASSES_PORTRAIT;
+
+      let newBreakpointSize = BreakpointSize.Large;
+
+      // Check breakpoints in order (small first, medium second)
+      for (const [breakpoint, className] of Object.entries(breakpointClasses)) {
+        if (height < Number(breakpoint)) {
+          newBreakpointSize = className as BreakpointSize;
+          break;
+        }
+      }
+
+      // Only update state if breakpoint changed
+      setBreakpointSize((prevSize) => {
+        if (prevSize !== newBreakpointSize) {
+          return newBreakpointSize;
+        }
+        return prevSize;
+      });
+    };
+
+    const resizeObserver = new ResizeObserver(() => {
+      checkBreakpoint();
+    });
+
+    resizeObserver.observe(backgroundElement);
+    checkBreakpoint();
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [backgroundElementRef]);
+
   function handleLoaderClick() {
     if (startupMessage === StartupMessage.Building) {
       const logTarget =
@@ -138,22 +192,8 @@ function PreviewLoader({
     selectedDeviceSession?.rotation === DeviceRotationType.LandscapeLeft ||
     selectedDeviceSession?.rotation === DeviceRotationType.LandscapeRight;
 
-  const getBreakpointClass = () => {
-    const breakpointClasses = isRotated ? BREAKPOINT_CLASSES_ROTATED : BREAKPOINT_CLASSES_PORTRAIT;
-
-    for (const [breakpoint, className] of Object.entries(breakpointClasses)) {
-      if (parentHeight < Number(breakpoint)) {
-        return className;
-      }
-    }
-    return "";
-  };
-
-  const isSmallBreakpoint = isRotated
-    ? parentHeight < BREAKPOINT_SMALL_LANDSCAPE
-    : parentHeight < BREAKPOINT_SMALL_PORTRAIT;
-
-  const breakpointClass = getBreakpointClass();
+  const isSmallBreakpoint = breakpointSize === BreakpointSize.Small;
+  const breakpointClass = breakpointSize;
 
   const rotationStyle = selectedDeviceSession?.rotation
     ? ROTATION_STYLES[selectedDeviceSession.rotation]
