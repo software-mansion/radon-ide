@@ -27,7 +27,10 @@ export class ConnectionListener {
   }
 
   public tryRestoringConnection() {
-    this.tryClearListeningInterval();
+    if (this.connectionListeningInterval) {
+      return; // Pings already running - no-op
+    }
+
     this.connectionListeningInterval = setInterval(async () => {
       const isOnline = await isServerOnline();
 
