@@ -23,6 +23,7 @@ interface DeviceProps {
   device: DeviceProperties;
   resizableProps: ResizableProps;
   children: React.ReactNode;
+  wrapperDivRef: React.RefObject<HTMLDivElement | null>;
 }
 
 type DeviceCSSProperties = React.CSSProperties & {
@@ -43,8 +44,8 @@ type DeviceCSSProperties = React.CSSProperties & {
   "--phone-wrapper-height"?: string;
 };
 
-function getParentDimensions(phoneElement: HTMLDivElement | null) {
-  const parentElement = phoneElement?.parentElement?.parentElement;
+function getParentDimensions(wrapperDivRef: React.RefObject<HTMLDivElement | null>) {
+  const parentElement = wrapperDivRef.current;
   return {
     width: parentElement?.clientWidth || window.innerWidth,
     height: parentElement?.clientHeight || window.innerHeight,
@@ -74,12 +75,12 @@ function cssPropertiesForDevice(
   device: DeviceProperties,
   frame: DevicePropertiesFrame,
   rotation: DeviceRotationType,
-  phoneElement: HTMLDivElement | null,
+  wrapperDivRef: React.RefObject<HTMLDivElement | null>,
   resizableHeight: ResizablePropsSize
 ): DeviceCSSProperties {
   const aspectRatio = frame.width / frame.height;
   const isHorizontal = rotation === "LandscapeLeft" || rotation === "LandscapeRight";
-  const parentDimensions = getParentDimensions(phoneElement);
+  const parentDimensions = getParentDimensions(wrapperDivRef);
 
   let newHeight = `min(100%, max(${MIN_HEIGHT}px, ${(parentDimensions.width / aspectRatio) * CSS_MARGIN_FACTOR}px))`;
   let newWidth = "auto";
@@ -120,7 +121,7 @@ function cssPropertiesForDevice(
   };
 }
 
-export default function Device({ device, resizableProps, children }: DeviceProps) {
+export default function Device({ device, resizableProps, children, wrapperDivRef }: DeviceProps) {
   const frame = useDeviceFrame(device);
   const { selectedDeviceSession } = useProject();
   const phoneContentRef = useRef<HTMLDivElement>(null);
@@ -133,22 +134,18 @@ export default function Device({ device, resizableProps, children }: DeviceProps
       device,
       frame,
       rotation,
-      phoneContentRef.current,
+      wrapperDivRef,
       resizableHeight
     );
-  }, [device, frame, rotation, resizableHeight]);
+  }, [device, frame, rotation, wrapperDivRef, resizableHeight]);
 
   const handleResize = () => {
-    if (!phoneContentRef.current) {
-      return;
-    }
-
     // Recalculate only the properties that depend on window size
     const updatedProperties = cssPropertiesForDevice(
       device,
       frame,
       rotation,
-      phoneContentRef.current,
+      wrapperDivRef,
       resizableHeight
     );
 
@@ -166,7 +163,7 @@ export default function Device({ device, resizableProps, children }: DeviceProps
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
-  }, [device, frame, rotation, resizableHeight]);
+  }, [device, frame, rotation, wrapperDivRef, resizableHeight]);
 
   return (
     <Resizable className="phone-wrapper-resizable" {...resizableProps} style={{ ...cssProperties }}>
