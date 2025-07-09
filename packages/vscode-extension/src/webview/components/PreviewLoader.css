@@ -125,7 +125,6 @@
   flex-direction: column;
   align-items: center;
   width: 100%;
-  margin-bottom: 0.5em;
 }
 
 .preview-loader-waiting-actions {
@@ -171,7 +170,7 @@
 
 .preview-loader-submessage {
   width: 100%;
-  margin-top: 8px;
+  margin-bottom: 8px;
 }
 
 .preview-loader-slow-progress {
