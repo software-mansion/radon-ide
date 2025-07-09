@@ -25,7 +25,7 @@
 
 .radon-connect-icon:before {
   font-size: 130px;
-  color: var(--swm-devices-not-found-icon)
+  color: var(--swm-devices-not-found-icon);
 }
 
 .radon-connect-icon > svg {
@@ -34,5 +34,5 @@
 }
 
 .radon-connect-icon.connected {
-  background-color:var(--swm-device-icon-background-selected)
+  background-color: var(--swm-device-icon-background-selected);
 }
