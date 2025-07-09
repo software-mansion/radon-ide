@@ -175,7 +175,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     }
   }
 
-  private findInitialDeviceAndStartSession = async () => {
+  public findInitialDeviceAndStartSession = async () => {
     if (Connector.getInstance().isEnabled) {
       // when radon connect is enabled, we don't want to automatically select and start a device
       return;

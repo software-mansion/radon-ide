@@ -103,6 +103,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         this.updateProjectState({ connectState });
         if (connectState.enabled) {
           this.deviceSessionsManager.terminateAllSessions();
+        } else {
+          this.deviceSessionsManager.findInitialDeviceAndStartSession();
         }
       },
     };
