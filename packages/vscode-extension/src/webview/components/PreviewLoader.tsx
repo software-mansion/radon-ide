@@ -23,15 +23,15 @@ const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).redu
   0
 );
 
-const BREAKPOINT_SMALL_ROTATED = 450;
-const BREAKPOINT_MEDIUM_ROTATED = 700;
+const BREAKPOINT_SMALL_LANDSCAPE = 450;
+const BREAKPOINT_MEDIUM_LANDSCAPE = 700;
 
 const BREAKPOINT_SMALL_PORTRAIT = 475;
 const BREAKPOINT_MEDIUM_PORTRAIT = 600;
 
 const BREAKPOINT_CLASSES_ROTATED = {
-  [BREAKPOINT_SMALL_ROTATED]: "small",
-  [BREAKPOINT_MEDIUM_ROTATED]: "medium",
+  [BREAKPOINT_SMALL_LANDSCAPE]: "small",
+  [BREAKPOINT_MEDIUM_LANDSCAPE]: "medium",
 } as const;
 
 const BREAKPOINT_CLASSES_PORTRAIT = {
@@ -150,13 +150,13 @@ function PreviewLoader({
   };
 
   const isSmallBreakpoint = isRotated
-    ? parentHeight < BREAKPOINT_SMALL_ROTATED
+    ? parentHeight < BREAKPOINT_SMALL_LANDSCAPE
     : parentHeight < BREAKPOINT_SMALL_PORTRAIT;
 
   const breakpointClass = getBreakpointClass();
 
-  const rotationStyle = selectedDeviceSession?.rotation 
-    ? ROTATION_STYLES[selectedDeviceSession.rotation] 
+  const rotationStyle = selectedDeviceSession?.rotation
+    ? ROTATION_STYLES[selectedDeviceSession.rotation]
     : ROTATION_STYLES[DeviceRotationType.Portrait];
 
   return (

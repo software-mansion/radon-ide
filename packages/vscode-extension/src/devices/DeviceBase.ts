@@ -2,7 +2,13 @@ import fs from "fs";
 import { Disposable, workspace } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, TouchPoint, DeviceButtonType, DeviceRotationType } from "../common/Project";
+import {
+  AppPermissionType,
+  DeviceSettings,
+  TouchPoint,
+  DeviceButtonType,
+  DeviceRotationType,
+} from "../common/Project";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 import { extensionContext } from "../utilities/extensionContext";
@@ -43,7 +49,9 @@ export abstract class DeviceBase implements Disposable {
   );
 
   abstract get lockFilePath(): string;
-  private _rotation: DeviceRotationType = workspace.getConfiguration("RadonIDE").get<DeviceRotationType>("deviceRotation") ?? DeviceRotationType.Portrait;
+  private _rotation: DeviceRotationType =
+    workspace.getConfiguration("RadonIDE").get<DeviceRotationType>("deviceRotation") ??
+    DeviceRotationType.Portrait;
 
   public get previewURL() {
     return this.preview?.streamURL;
@@ -180,7 +188,7 @@ export abstract class DeviceBase implements Disposable {
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
     // iOS simulator has a buggy behavior when sending cmd+V key combination.
-    // It sometimes triggers paste action but with a very §w success rate.
+    // It sometimes triggers paste action but with a very low success rate.
     // Other times it kicks in before the pasteboard is filled with the content
     // therefore pasting the previously copied content instead.
     // As a temporary workaround, we disable sending cmd+V as key combination
@@ -223,9 +231,6 @@ export abstract class DeviceBase implements Disposable {
   public sendRotate(rotation: DeviceRotationType) {
     // Preview may not be started yet, but we still wish to be able to rotate during init of device.
     // The rotation is set in constructor of device and is gotten from the workspace configuration anyways.
-    // if(!this.preview) {
-    //   throw new Error("Preview not started");
-    // }
     this.preview?.rotateDevice(rotation);
     this._rotation = rotation;
     return this._rotation;
