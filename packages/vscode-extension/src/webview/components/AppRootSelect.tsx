@@ -122,7 +122,6 @@ function useUnknownConfigurationAlert(shouldOpen: boolean) {
         description:
           "The selected launch configration is no longer specified in the launch.json file. " +
           "Radon IDE will continue to use the last selected configuration, but you may want to select a different one.",
-        priority: 1,
         actions: (
           <IconButton
             type="secondary"
