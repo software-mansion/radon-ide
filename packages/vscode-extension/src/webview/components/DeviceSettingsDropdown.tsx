@@ -56,6 +56,32 @@ const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon
   { label: "Reset All Permissions", value: "all", icon: "check-all" },
 ];
 
+const rotateOptions: Array<{
+  label: string;
+  value: DeviceRotationType;
+  icon: string;
+  rotation: string;
+}> = [
+  {
+    label: "Portrait",
+    value: DeviceRotationType.Portrait,
+    icon: "device-mobile",
+    rotation: "0deg",
+  },
+  {
+    label: "Landscape Left",
+    value: DeviceRotationType.LandscapeLeft,
+    icon: "device-mobile",
+    rotation: "-90deg",
+  },
+  {
+    label: "Landscape Right",
+    value: DeviceRotationType.LandscapeRight,
+    icon: "device-mobile",
+    rotation: "90deg",
+  },
+];
+
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const { project, selectedDeviceSession, deviceSettings } = useProject();
   const { showDeviceFrame, update } = useWorkspaceConfig();
@@ -63,22 +89,6 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
   const resetOptions =
     selectedDeviceSession?.deviceInfo.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
-
-  const rotateOptions: Array<{
-    label: string;
-    value: DeviceRotationType;
-    icon: string;
-    rotation: string;
-  }> = [
-    { label: "Portrait", value: DeviceRotationType.Portrait, icon: "device-mobile", rotation: "0deg" },
-    { label: "Landscape Left", value: DeviceRotationType.LandscapeLeft, icon: "device-mobile", rotation: "-90deg" },
-    {
-      label: "Landscape Right",
-      value: DeviceRotationType.LandscapeRight,
-      icon: "device-mobile",
-      rotation: "90deg",
-    },
-  ];
 
   return (
     <DropdownMenuRoot>
@@ -206,23 +216,21 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 className="dropdown-menu-subcontent"
                 sideOffset={2}
                 alignOffset={-5}>
-                {rotateOptions.map(
-                  (option, index) => (
-                      <DropdownMenu.Item
-                        className="dropdown-menu-item"
-                        key={index}
-                        onSelect={() => update("deviceRotation", option.value)}>
-                        <span
-                          className={`codicon codicon-${option.icon}`}
-                          style={{ rotate: option.rotation }}
-                        />
-                        {option.label}
-                        {selectedDeviceSession?.rotation === option.value && (
-                          <span className="codicon codicon-check right-slot" />
-                        )}
-                      </DropdownMenu.Item>
-                    )
-                )}
+                {rotateOptions.map((option, index) => (
+                  <DropdownMenu.Item
+                    className="dropdown-menu-item"
+                    key={index}
+                    onSelect={() => update("deviceRotation", option.value)}>
+                    <span
+                      className={`codicon codicon-${option.icon}`}
+                      style={{ rotate: option.rotation }}
+                    />
+                    {option.label}
+                    {selectedDeviceSession?.rotation === option.value && (
+                      <span className="codicon codicon-check right-slot" />
+                    )}
+                  </DropdownMenu.Item>
+                ))}
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
