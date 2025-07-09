@@ -5,18 +5,14 @@ import { isServerOnline } from "./api";
 const PING_INTERVAL = 5000;
 
 export class ConnectionListener {
-  connectionChangeEmitter: EventEmitter<void>;
+  connectionRestoredEmitter: EventEmitter<void>;
   connectionListeningInterval: NodeJS.Timeout | null;
-  isOnline: boolean;
 
   constructor() {
-    this.connectionChangeEmitter = new EventEmitter();
+    this.connectionRestoredEmitter = new EventEmitter();
     this.connectionListeningInterval = null;
-    this.isOnline = true;
 
     isServerOnline().then((isOnline) => {
-      this.isOnline = isOnline;
-
       if (!isOnline) {
         this.tryRestoringConnection();
       }
@@ -36,7 +32,7 @@ export class ConnectionListener {
 
       if (isOnline && this.connectionListeningInterval) {
         this.tryClearListeningInterval();
-        this.connectionChangeEmitter.fire();
+        this.connectionRestoredEmitter.fire();
       }
     }, PING_INTERVAL);
 
@@ -44,6 +40,6 @@ export class ConnectionListener {
   }
 
   public onConnectionRestored(callback: () => unknown) {
-    extensionContext.subscriptions.push(this.connectionChangeEmitter.event(callback));
+    extensionContext.subscriptions.push(this.connectionRestoredEmitter.event(callback));
   }
 }
