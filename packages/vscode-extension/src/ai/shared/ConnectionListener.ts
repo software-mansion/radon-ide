@@ -27,6 +27,7 @@ export class ConnectionListener {
   }
 
   public tryRestoringConnection() {
+    this.tryClearListeningInterval();
     this.connectionListeningInterval = setInterval(async () => {
       const isOnline = await isServerOnline();
 
