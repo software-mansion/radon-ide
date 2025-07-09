@@ -80,6 +80,10 @@ export default function registerRadonAi() {
   if (isDirectLoadingAvailable()) {
     directLoadRadonAI(connectionListener);
   } else {
+    connectionListener.onConnectionRestored(() => {
+      fsLoadRadonAI(connectionListener);
+    });
+
     extensionContext.subscriptions.push(
       watchLicenseTokenChange(() => {
         fsLoadRadonAI(connectionListener);
