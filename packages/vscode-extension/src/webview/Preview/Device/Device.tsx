@@ -8,10 +8,10 @@ import { DeviceProperties, DevicePropertiesFrame } from "../../utilities/deviceC
 import { DeviceRotationType } from "../../../common/Project";
 
 const ROTATION_ANGLE: Record<DeviceRotationType, string> = {
-  Portrait: "0deg",
-  LandscapeLeft: "-90deg",
-  LandscapeRight: "90deg",
-  PortraitUpsideDown: "180deg",
+  [DeviceRotationType.Portrait]: "0deg",
+  [DeviceRotationType.LandscapeLeft]: "-90deg",
+  [DeviceRotationType.LandscapeRight]: "90deg",
+  [DeviceRotationType.PortraitUpsideDown]: "180deg",
 } as const;
 
 const MIN_HEIGHT = 350;
@@ -79,7 +79,7 @@ function cssPropertiesForDevice(
   resizableHeight: ResizablePropsSize
 ): DeviceCSSProperties {
   const aspectRatio = frame.width / frame.height;
-  const isHorizontal = rotation === "LandscapeLeft" || rotation === "LandscapeRight";
+  const isHorizontal = rotation === DeviceRotationType.LandscapeLeft || rotation === DeviceRotationType.LandscapeRight;
   const parentDimensions = getParentDimensions(wrapperDivRef);
 
   let newHeight = `min(100%, max(${MIN_HEIGHT}px, ${(parentDimensions.width / aspectRatio) * CSS_MARGIN_FACTOR}px))`;
@@ -127,7 +127,7 @@ export default function Device({ device, resizableProps, children, wrapperDivRef
   const phoneContentRef = useRef<HTMLDivElement>(null);
 
   const resizableHeight = resizableProps.size?.height;
-  const rotation = selectedDeviceSession?.rotation ?? "Portrait";
+  const rotation = selectedDeviceSession?.rotation ?? DeviceRotationType.Portrait;
 
   const cssProperties = useMemo(() => {
     return cssPropertiesForDevice(
