@@ -8,6 +8,7 @@ import ProgressBar from "./shared/ProgressBar";
 
 import {
   DeviceSessionStateStarting,
+  DeviceRotationType,
   StartupMessage,
   StartupStageWeight,
 } from "../../common/Project";
@@ -46,10 +47,10 @@ const TOOLTIPS = {
 } as const;
 
 const ROTATION_STYLES = {
-  Portrait: "rotate(0deg)",
-  LandscapeLeft: "rotate(90deg)",
-  LandscapeRight: "rotate(-90deg)",
-  PortraitUpsideDown: "rotate(0deg)",
+  [DeviceRotationType.Portrait]: "rotate(0deg)",
+  [DeviceRotationType.LandscapeLeft]: "rotate(90deg)",
+  [DeviceRotationType.LandscapeRight]: "rotate(-90deg)",
+  [DeviceRotationType.PortraitUpsideDown]: "rotate(0deg)",
 } as const;
 
 function PreviewLoader({
@@ -134,8 +135,8 @@ function PreviewLoader({
   const isWaitingForApp = startupMessage === StartupMessage.WaitingForAppToLoad;
   const isBuilding = startupMessage === StartupMessage.Building;
   const isRotated =
-    selectedDeviceSession?.rotation === "LandscapeLeft" ||
-    selectedDeviceSession?.rotation === "LandscapeRight";
+    selectedDeviceSession?.rotation === DeviceRotationType.LandscapeLeft ||
+    selectedDeviceSession?.rotation === DeviceRotationType.LandscapeRight;
 
   const getBreakpointClass = () => {
     const breakpointClasses = isRotated ? BREAKPOINT_CLASSES_ROTATED : BREAKPOINT_CLASSES_PORTRAIT;
@@ -156,7 +157,7 @@ function PreviewLoader({
 
   const rotationStyle = selectedDeviceSession?.rotation 
     ? ROTATION_STYLES[selectedDeviceSession.rotation] 
-    : ROTATION_STYLES.Portrait;
+    : ROTATION_STYLES[DeviceRotationType.Portrait];
 
   return (
     <div

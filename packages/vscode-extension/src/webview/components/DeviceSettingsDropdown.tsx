@@ -70,11 +70,11 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
     icon: string;
     rotation: string;
   }> = [
-    { label: "Portrait", value: "Portrait", icon: "device-mobile", rotation: "0deg" },
-    { label: "Landscape Left", value: "LandscapeLeft", icon: "device-mobile", rotation: "-90deg" },
+    { label: "Portrait", value: DeviceRotationType.Portrait, icon: "device-mobile", rotation: "0deg" },
+    { label: "Landscape Left", value: DeviceRotationType.LandscapeLeft, icon: "device-mobile", rotation: "-90deg" },
     {
       label: "Landscape Right",
-      value: "LandscapeRight",
+      value: DeviceRotationType.LandscapeRight,
       icon: "device-mobile",
       rotation: "90deg",
     },

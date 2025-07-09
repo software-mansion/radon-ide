@@ -9,6 +9,7 @@ import {
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import { WorkspaceConfig, WorkspaceConfigProps } from "../../common/WorkspaceConfig";
+import { DeviceRotationType } from "../../common/Project";
 import { useProject } from "./ProjectProvider";
 
 const workspaceConfig = makeProxy<WorkspaceConfig>("WorkspaceConfig");
@@ -21,7 +22,7 @@ const INITIAL_WORKSPACE_CONFIG: WorkspaceConfigProps = {
   panelLocation: "tab",
   showDeviceFrame: true,
   stopPreviousDevices: false,
-  deviceRotation: "Portrait",
+  deviceRotation: DeviceRotationType.Portrait,
 };
 
 const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({

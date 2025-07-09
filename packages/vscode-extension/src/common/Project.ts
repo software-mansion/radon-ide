@@ -143,7 +143,12 @@ export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "ca
 
 export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown";
 
-export type DeviceRotationType = "Portrait" |  "PortraitUpsideDown" | "LandscapeLeft"  | "LandscapeRight";
+export enum DeviceRotationType {
+  Portrait = "Portrait",
+  PortraitUpsideDown = "PortraitUpsideDown",
+  LandscapeLeft = "LandscapeLeft",
+  LandscapeRight = "LandscapeRight"
+}
 
 // important: order of values in this enum matters
 export enum StartupMessage {

@@ -43,7 +43,7 @@ export abstract class DeviceBase implements Disposable {
   );
 
   abstract get lockFilePath(): string;
-  private _rotation: DeviceRotationType = workspace.getConfiguration("RadonIDE").get<DeviceRotationType>("deviceRotation") ?? "Portrait";
+  private _rotation: DeviceRotationType = workspace.getConfiguration("RadonIDE").get<DeviceRotationType>("deviceRotation") ?? DeviceRotationType.Portrait;
 
   public get previewURL() {
     return this.preview?.streamURL;

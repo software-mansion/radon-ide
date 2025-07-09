@@ -400,13 +400,13 @@ async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
 }
 
-const ROTATIONS: DeviceRotationType[] = ["LandscapeLeft", "Portrait", "LandscapeRight"] as const;
+const ROTATIONS: DeviceRotationType[] = [DeviceRotationType.LandscapeLeft, DeviceRotationType.Portrait, DeviceRotationType.LandscapeRight] as const;
 
 async function rotateDeviceAnticlockwise(){
   const configuration = workspace.getConfiguration("RadonIDE");
   const rotation = configuration.inspect<DeviceRotationType>("deviceRotation")?.workspaceValue;
   if(!rotation){
-    await configuration.update("deviceRotation", "Portrait", false);
+    await configuration.update("deviceRotation", DeviceRotationType.Portrait, false);
     return;
   }
   const currentIndex = ROTATIONS.indexOf(rotation);
@@ -418,7 +418,7 @@ async function rotateDeviceClockwise(){
 const configuration = workspace.getConfiguration("RadonIDE");
   const rotation = configuration.inspect<DeviceRotationType>("deviceRotation")?.workspaceValue;
   if(!rotation){
-    await configuration.update("deviceRotation", "Portrait", false);
+    await configuration.update("deviceRotation", DeviceRotationType.Portrait, false);
     return;
   }
   const currentIndex = ROTATIONS.indexOf(rotation);

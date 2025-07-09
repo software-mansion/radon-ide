@@ -9,6 +9,7 @@ import { useBundleErrorAlert } from "../hooks/useBundleErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
+  DeviceRotationType,
   Frame,
   InspectDataStackItem,
   ZoomLevelType,
@@ -120,11 +121,11 @@ function Preview({
     let newY = y;
 
     switch (rotation) {
-      case "LandscapeLeft":
+      case DeviceRotationType.LandscapeLeft:
         newX = 1 - y;
         newY = x;
         break;
-      case "LandscapeRight":
+      case DeviceRotationType.LandscapeRight:
         newX = y;
         newY = 1 - x;
         break;
