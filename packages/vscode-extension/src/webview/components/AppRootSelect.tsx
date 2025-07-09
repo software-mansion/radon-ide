@@ -178,11 +178,6 @@ function AppRootSelect() {
     project.selectLaunchConfiguration(launchConfiguration);
   };
 
-  const selectedAppRootName =
-    selectedAppRoot?.displayName ?? selectedAppRoot?.name ?? selectedAppRootPath;
-  const selectedConfigName = displayNameForConfig(selectedConfiguration);
-  const value = selectedConfigName ?? selectedAppRootName;
-
   const selectedValue = (() => {
     if (selectedConfiguration.kind === LaunchConfigurationKind.Custom) {
       const index = customConfigurations.findIndex((config) =>
@@ -201,6 +196,10 @@ function AppRootSelect() {
 
   const configurationsCount = detectedConfigurations.length + customConfigurations.length;
   const placeholder = configurationsCount === 0 ? "No applications found" : "Select application";
+  const selectedAppRootName =
+    selectedAppRoot?.displayName ?? selectedAppRoot?.name ?? selectedAppRootPath;
+  const selectedConfigName = displayNameForConfig(selectedConfiguration);
+  const value = selectedConfigName ?? selectedAppRootName ?? placeholder;
 
   return (
     <Select.Root onValueChange={handleAppRootChange} value={selectedValue}>
