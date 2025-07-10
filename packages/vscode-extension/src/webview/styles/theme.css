@@ -611,6 +611,7 @@ body[data-use-code-theme="true"] {
   --swm-scrollbar-thumb: var(--vscode-scrollbarSlider-background);
   --swm-scrollbar-hover: var(--vscode-scrollbarSlider-hoverBackground);
   --swm-select-hover-background: var(--vscode-list-hoverBackground);
+  --swm-select-shadow: 0 1px 10px var(--vscode-widget-shadow);
   --swm-select-disabled: var(--vscode-disabledForeground);
   --swm-select-item-highlighted-background: var(--vscode-list-hoverBackground);
   --swm-select-border: var(--vscode-input-border);
