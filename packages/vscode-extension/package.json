@@ -599,7 +599,7 @@
       {
         "type": "react-native-ide",
         "label": "Radon IDE",
-        "deprecated": "true",
+        "deprecated": "Use `radon-ide` instead",
         "languages": [
           "javascript",
           "typescript",
