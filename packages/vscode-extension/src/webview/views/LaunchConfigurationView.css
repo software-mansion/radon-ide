@@ -16,6 +16,10 @@
   margin-bottom: 5px;
 }
 
+.setting-item-category {
+  opacity: 0.7;
+}
+
 .scheme {
   margin-bottom: 5px;
 }
@@ -44,6 +48,7 @@
 .launch-configuration-button-group {
   display: flex;
   flex-direction: row;
+  gap: 10px;
   justify-content: flex-end;
 }
 
@@ -59,7 +64,8 @@
 }
 
 .launch-configuration-container {
+  display: flex;
   flex: 1;
+  height: 0;
   flex-direction: column;
-  overflow: scroll;
 }

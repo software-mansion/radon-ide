@@ -406,7 +406,7 @@
               },
               "metroConfigPath": {
                 "type": "string",
-                "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
+                "description": "Location of Metro config relative to the workspace. This is used for customizing metro configuration for e.g. development."
               },
               "expoStartArgs": {
                 "type": "array",
@@ -624,7 +624,7 @@
               },
               "metroConfigPath": {
                 "type": "string",
-                "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
+                "description": "Location of Metro config relative to the workspace. This is used for customizing metro configuration for e.g. development."
               },
               "expoStartArgs": {
                 "type": "array",

@@ -14,7 +14,7 @@ input {
 }
 
 .modal-content {
-  background-color: var(--swm-popover-background);
+  background-color: var(--swm-modal-background);
   border-radius: 6px;
   position: fixed;
   top: 50%;
