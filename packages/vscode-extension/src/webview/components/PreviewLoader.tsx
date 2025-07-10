@@ -32,7 +32,7 @@ enum BreakpointSize {
   Large = "",
 }
 
-const BREAKPOINT_CLASSES_ROTATED = {
+const BREAKPOINT_CLASSES_LANDSCAPE = {
   [BREAKPOINT_SMALL_LANDSCAPE]: BreakpointSize.Small,
   [BREAKPOINT_MEDIUM_LANDSCAPE]: BreakpointSize.Medium,
 } as const;
@@ -76,7 +76,7 @@ function PreviewLoader({
   const startupMessage = startingSessionState.startupMessage;
   const stageProgress = startingSessionState.stageProgress;
 
-  const isRotated =
+  const isLandscape =
     projectState.rotation === DeviceRotationType.LandscapeLeft ||
     projectState.rotation === DeviceRotationType.LandscapeRight;
 
@@ -140,8 +140,8 @@ function PreviewLoader({
     const checkBreakpoint = () => {
       const height = backgroundElement.clientHeight;
 
-      const breakpointClasses = isRotated
-        ? BREAKPOINT_CLASSES_ROTATED
+      const breakpointClasses = isLandscape
+        ? BREAKPOINT_CLASSES_LANDSCAPE
         : BREAKPOINT_CLASSES_PORTRAIT;
 
       let newBreakpointSize = BreakpointSize.Large;
@@ -188,7 +188,7 @@ function PreviewLoader({
   return (
     <div
       ref={parentRef}
-      className={`preview-loader-wrapper ${isRotated ? "rotated" : "portrait"} ${breakpointClass}`}
+      className={`preview-loader-wrapper ${isLandscape ? "landscape" : "portrait"} ${breakpointClass}`}
       style={{ transform: rotationStyle }}>
       <div className="preview-loader-load-info">
         <button className="preview-loader-container" onClick={handleLoaderClick}>
