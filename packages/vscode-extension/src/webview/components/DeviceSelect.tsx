@@ -93,7 +93,7 @@ function DeviceSelect() {
 
   const hasNoDevices = devices.length === 0;
   const selectedDevice = selectedDeviceSession?.deviceInfo;
-  console.warn("STATETE", projectState);
+  
   const radonConnectEnabled = projectState.connectState.enabled;
 
   const { deviceSessions } = projectState;
