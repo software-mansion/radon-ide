@@ -31,7 +31,6 @@ describe("Smoke tests Radon IDE", () => {
         await browser.waitForWorkbench();
 
         workbench = new Workbench();
-        await new Promise((resolve) => setTimeout(resolve, 500));
 
         view = new WebView();
     });

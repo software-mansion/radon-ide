@@ -17,13 +17,13 @@ async function openProject(browser, driver, projectPath, workbench) {
     );
 
     await workbench.executeCommand('RNIDE.openPanel');
-    await driver.sleep(5000);
+    await driver.sleep(1000);
 
-    const webview = await driver.findElement(By.className('webview'));
+    const webview = await driver.findElement(By.css('iframe[class*="webview"]'));
     await waitForElement(driver, webview);
     await driver.switchTo().frame(webview);
 
-    const iframe = await driver.findElement(By.tagName('iframe'));
+    const iframe = await driver.findElement(By.css('iframe[title="Radon IDE"]'));
     await waitForElement(driver, iframe);
     await driver.switchTo().frame(iframe);
 
