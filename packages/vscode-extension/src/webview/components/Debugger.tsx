@@ -1,12 +1,21 @@
+import { DeviceRotationType } from "../../common/Project";
 import { useProject } from "../providers/ProjectProvider";
 import "./Debugger.css";
 import IconButton from "./shared/IconButton";
 
+const ROTATION_STYLES = {
+  [DeviceRotationType.Portrait]: "rotate(0deg)",
+  [DeviceRotationType.LandscapeLeft]: "rotate(90deg)",
+  [DeviceRotationType.LandscapeRight]: "rotate(-90deg)",
+  [DeviceRotationType.PortraitUpsideDown]: "rotate(0deg)",
+} as const;
+
 function Debugger() {
-  const { project } = useProject();
+  const { project, projectState } = useProject();
+  const rotationStyle = ROTATION_STYLES[projectState.rotation];
 
   return (
-    <div className="debugger-container">
+    <div className="debugger-container" style={{transform: rotationStyle}}>
       <p className="debugger-label debugger-shadow">Paused in debugger</p>
       <div className="debugger-button-group">
         <IconButton

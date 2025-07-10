@@ -17,7 +17,7 @@
   }
 
   /* LandscapeLeft and LandscapeRight display */
-  &.rotated {
+  &.landscape {
     width: 100%;
 
     .preview-loader-container {
@@ -97,8 +97,8 @@
   }
 }
 
-.preview-loader-wrapper.rotated.small,
-.preview-loader-wrapper.rotated.medium {
+.preview-loader-wrapper.landscape.small,
+.preview-loader-wrapper.landscape.medium {
   width: 100%;
 }
 
