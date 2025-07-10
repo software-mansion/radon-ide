@@ -208,7 +208,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-sync" />
-              Rotate device
+              Rotate Device
               <span className="codicon codicon-chevron-right right-slot" />
             </DropdownMenu.SubTrigger>
             <DropdownMenu.Portal>
