@@ -7,10 +7,12 @@ export interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   children: React.ReactNode;
   disabled?: boolean;
+  disableTooltip?: boolean;
   counter?: number;
   active?: boolean;
   type?: "primary" | "secondary";
-  size?: "default" | "small";
+  side?: "left" | "right" | "center";
+  size?: "default" | "small" | "none";
   tooltip?: {
     label: string;
     side?: "top" | "right" | "bottom" | "left";
@@ -29,6 +31,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     active,
     type = "primary",
     size = "default",
+    side = "center",
     className = "",
     ...rest
   } = props;
@@ -49,7 +52,10 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
         "icon-button",
         type === "secondary" && "icon-button-secondary",
         active && "icon-button-selected",
+        size === "default" && "icon-button-default",
         size === "small" && "icon-button-small",
+        side === "left" && "icon-button-left",
+        side === "right" && "icon-button-right",
         className
       )}
       {...rest}
@@ -67,10 +73,10 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     return button;
   }
 
-  const { label, side, type: tooltipType } = tooltip;
+  const { label, side: tooltipSide, type: tooltipType } = tooltip;
 
   return (
-    <Tooltip label={label} side={side} type={tooltipType ?? type}>
+    <Tooltip label={label} side={tooltipSide} type={tooltipType ?? type}>
       {button}
     </Tooltip>
   );
