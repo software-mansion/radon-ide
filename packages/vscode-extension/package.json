@@ -678,20 +678,7 @@
               }
             }
           }
-        },
-        "initialConfigurations": [
-          {
-            "type": "react-native-ide",
-            "request": "launch",
-            "name": "Radon IDE panel",
-            "ios": {
-              "configuration": "Debug"
-            },
-            "android": {
-              "buildType": "debug"
-            }
-          }
-        ]
+        }
       }
     ],
     "walkthroughs": [
