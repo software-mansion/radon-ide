@@ -124,6 +124,7 @@ export class DeviceSession
   constructor(
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
+    private rotation: DeviceRotationType,
     private readonly deviceSessionDelegate: DeviceSessionDelegate
   ) {
     this.devtools = this.makeDevtools();
@@ -138,6 +139,7 @@ export class DeviceSession
     });
     this.cacheStaleSubscription = this.buildCache.onCacheStale(this.onCacheStale);
   }
+
 
   public getState(): DeviceSessionState {
     const commonState = {
@@ -647,6 +649,7 @@ export class DeviceSession
         this.metro.ready(),
         this.device.startPreview().then((url) => {
           previewURL = url;
+          this.device.sendRotate(this.rotation);
           this.emitStateChange();
         }),
         waitForAppReady,
@@ -1005,6 +1008,7 @@ export class DeviceSession
   
   public sendRotate(rotation: DeviceRotationType) {
     this.device.sendRotate(rotation);
+    this.rotation = rotation;
     this.emitStateChange();
   }
 

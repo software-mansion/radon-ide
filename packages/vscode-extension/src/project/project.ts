@@ -139,8 +139,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
   }
 
-  onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
+  public onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
     this.updateProjectState(state);
+  }
+
+  public getDeviceRotation(): DeviceRotationType {
+    return this.projectState.rotation;
   }
 
   get relativeAppRootPath() {
@@ -409,7 +413,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         .getConfiguration("RadonIDE")
         .update("deviceRotation", rotation, false)
         .then(() => {
-          this.deviceSession?.sendRotate(rotation);
+          this.deviceSessionsManager.rotateAllDevices(rotation);
           this.updateProjectState({ rotation });
         });
     } catch (err) {
