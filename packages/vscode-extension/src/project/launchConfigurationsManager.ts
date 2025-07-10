@@ -13,7 +13,7 @@ function findDefaultAppRoot(showWarning = false) {
   const defaultAppRoot = appRoots.length > 0 ? appRoots[0] : undefined;
   const defaultAppRootRelative =
     defaultAppRoot && "./" + path.relative(workspacePath, defaultAppRoot);
-  if (appRoots.length > 0 && showWarning) {
+  if (appRoots.length > 1 && showWarning) {
     vscode.window
       .showWarningMessage(
         "Multiple application roots found in workspace, but no 'appRoot' specified in launch configuration. Using the first found application root: " +
