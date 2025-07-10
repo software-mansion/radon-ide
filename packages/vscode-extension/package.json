@@ -257,6 +257,11 @@
           "type": "string",
           "scope": "window",
           "default": "Portrait",
+          "enum": [
+            "Portrait",
+            "LandscapeLeft",
+            "LandscapeRight"
+          ],
           "description": "Controls the default device rotation for simulators and emulators when they are created or launched."
         }
       }

@@ -1,5 +1,5 @@
 import fs from "fs";
-import { Disposable, workspace } from "vscode";
+import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
 import {
@@ -49,9 +49,6 @@ export abstract class DeviceBase implements Disposable {
   );
 
   abstract get lockFilePath(): string;
-  private _rotation: DeviceRotationType =
-    workspace.getConfiguration("RadonIDE").get<DeviceRotationType>("deviceRotation") ??
-    DeviceRotationType.Portrait;
 
   public get previewURL() {
     return this.preview?.streamURL;
@@ -59,10 +56,6 @@ export abstract class DeviceBase implements Disposable {
 
   public get previewReady() {
     return this.preview?.streamURL !== undefined;
-  }
-
-  public get rotation(): DeviceRotationType {
-    return this._rotation;
   }
 
   async reboot(): Promise<void> {
@@ -99,7 +92,6 @@ export abstract class DeviceBase implements Disposable {
       } else {
         preview.hideTouches();
       }
-      preview.rotateDevice(this._rotation);
     }
   }
 
@@ -232,8 +224,6 @@ export abstract class DeviceBase implements Disposable {
     // Preview may not be started yet, but we still wish to be able to rotate during init of device.
     // The rotation is set in constructor of device and is gotten from the workspace configuration anyways.
     this.preview?.rotateDevice(rotation);
-    this._rotation = rotation;
-    return this._rotation;
   }
 
   async startPreview() {

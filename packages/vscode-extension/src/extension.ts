@@ -232,8 +232,12 @@ export async function activate(context: ExtensionContext) {
     )
   );
 
-  context.subscriptions.push(commands.registerCommand("RNIDE.rotateDeviceAnticlockwise", rotateDeviceAnticlockwise));
-  context.subscriptions.push(commands.registerCommand("RNIDE.rotateDeviceClockwise", rotateDeviceClockwise));
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.rotateDeviceAnticlockwise", rotateDeviceAnticlockwise)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.rotateDeviceClockwise", rotateDeviceClockwise)
+  );
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
   // When it does happen, we open the IDE panel and restart the app.
@@ -400,32 +404,36 @@ async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
 }
 
-const ROTATIONS: DeviceRotationType[] = [DeviceRotationType.LandscapeLeft, DeviceRotationType.Portrait, DeviceRotationType.LandscapeRight] as const;
+const ROTATIONS: DeviceRotationType[] = [
+  DeviceRotationType.LandscapeLeft,
+  DeviceRotationType.Portrait,
+  DeviceRotationType.LandscapeRight,
+] as const;
 
-async function rotateDeviceAnticlockwise(){
-  const configuration = workspace.getConfiguration("RadonIDE");
-  const rotation = configuration.inspect<DeviceRotationType>("deviceRotation")?.workspaceValue;
-  if(!rotation){
-    await configuration.update("deviceRotation", DeviceRotationType.Portrait, false);
-    return;
-  }
-  const currentIndex = ROTATIONS.indexOf(rotation);
-  const newIndex = (currentIndex - 1 + ROTATIONS.length) % ROTATIONS.length;
-  await configuration.update("deviceRotation", ROTATIONS[newIndex], false);
+enum RotationDirection {
+  Clockwise = -1,
+  Anticlockwise = 1
 }
 
-async function rotateDeviceClockwise(){
-const configuration = workspace.getConfiguration("RadonIDE");
-  const rotation = configuration.inspect<DeviceRotationType>("deviceRotation")?.workspaceValue;
-  if(!rotation){
-    await configuration.update("deviceRotation", DeviceRotationType.Portrait, false);
-    return;
+async function rotateDevice(direction: RotationDirection) {
+  const project = IDE.getInstanceIfExists()?.project;
+  if (!project) {
+    throw new Error("Radon IDE is not initialized yet.");
   }
+  const projectState = await project.getProjectState();
+  const rotation = projectState.rotation;
   const currentIndex = ROTATIONS.indexOf(rotation);
-  const newIndex = (currentIndex + 1) % ROTATIONS.length;
-  await configuration.update("deviceRotation", ROTATIONS[newIndex], false);
+  const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
+  project.dispatchRotate(ROTATIONS[newIndex]);
 }
 
+async function rotateDeviceAnticlockwise() {
+  await rotateDevice(RotationDirection.Anticlockwise)
+}
+
+async function rotateDeviceClockwise() {
+  await rotateDevice(RotationDirection.Clockwise)
+}
 
 async function openChat() {
   let prompt = undefined;

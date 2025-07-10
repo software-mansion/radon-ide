@@ -123,11 +123,11 @@ function cssPropertiesForDevice(
 
 export default function Device({ device, resizableProps, children, wrapperDivRef }: DeviceProps) {
   const frame = useDeviceFrame(device);
-  const { selectedDeviceSession } = useProject();
+  const { projectState } = useProject();
   const phoneContentRef = useRef<HTMLDivElement>(null);
 
   const resizableHeight = resizableProps.size?.height;
-  const rotation = selectedDeviceSession?.rotation ?? DeviceRotationType.Portrait;
+  const rotation = projectState.rotation;
 
   const cssProperties = useMemo(() => {
     return cssPropertiesForDevice(

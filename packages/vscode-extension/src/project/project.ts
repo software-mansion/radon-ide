@@ -13,6 +13,7 @@ import {
   DeviceSessionState,
   DeviceSettings,
   InspectData,
+  isOfEnumDeviceRotationType,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -108,6 +109,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       initialized: false,
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
+      rotation:
+        workspace.getConfiguration("RadonIDE").get<DeviceRotationType>("deviceRotation") ??
+        DeviceRotationType.Portrait,
       selectedLaunchConfiguration: initialLaunchConfig,
       customLaunchConfigurations: this.launchConfigsManager.launchConfigurations,
       connectState: {
@@ -442,7 +446,17 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public dispatchRotate(rotation: DeviceRotationType) {
-    this.deviceSession?.sendRotate(rotation);
+    try {
+      workspace
+        .getConfiguration("RadonIDE")
+        .update("deviceRotation", rotation, false)
+        .then(() => {
+          this.deviceSession?.sendRotate(rotation);
+          this.updateProjectState({ rotation });
+        });
+    } catch (err) {
+      Logger.error(`Failed to update rotation configuration: ${err}`);
+    }
   }
 
   public async inspectElementAt(

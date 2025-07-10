@@ -67,7 +67,7 @@ function PreviewLoader({
   startingSessionState: DeviceSessionStateStarting;
   backgroundElementRef: React.RefObject<HTMLDivElement | null>;
 }) {
-  const { project, selectedDeviceSession } = useProject();
+  const { project, projectState } = useProject();
   const { deviceSessionsManager } = useDevices();
   const [progress, setProgress] = useState(0);
   const platform = selectedDeviceSession?.deviceInfo.platform;
@@ -79,6 +79,18 @@ function PreviewLoader({
 
   const startupMessage = startingSessionState.startupMessage;
   const stageProgress = startingSessionState.stageProgress;
+
+  const isRotated =
+    projectState.rotation === DeviceRotationType.LandscapeLeft ||
+    projectState.rotation === DeviceRotationType.LandscapeRight;
+
+  const isWaitingForApp = startupMessage === StartupMessage.WaitingForAppToLoad;
+  const isBuilding = startupMessage === StartupMessage.Building;
+
+  const isSmallBreakpoint = breakpointSize === BreakpointSize.Small;
+  const breakpointClass = breakpointSize;
+
+  const rotationStyle = ROTATION_STYLES[projectState.rotation];
 
   useEffect(() => {
     if (startupMessage === StartupMessage.Restarting) {
@@ -131,9 +143,6 @@ function PreviewLoader({
 
     const checkBreakpoint = () => {
       const height = backgroundElement.clientHeight;
-      const isRotated =
-        selectedDeviceSession?.rotation === DeviceRotationType.LandscapeLeft ||
-        selectedDeviceSession?.rotation === DeviceRotationType.LandscapeRight;
 
       const breakpointClasses = isRotated
         ? BREAKPOINT_CLASSES_ROTATED
@@ -185,19 +194,6 @@ function PreviewLoader({
       project.focusOutput(Output.Ide);
     }
   }
-
-  const isWaitingForApp = startupMessage === StartupMessage.WaitingForAppToLoad;
-  const isBuilding = startupMessage === StartupMessage.Building;
-  const isRotated =
-    selectedDeviceSession?.rotation === DeviceRotationType.LandscapeLeft ||
-    selectedDeviceSession?.rotation === DeviceRotationType.LandscapeRight;
-
-  const isSmallBreakpoint = breakpointSize === BreakpointSize.Small;
-  const breakpointClass = breakpointSize;
-
-  const rotationStyle = selectedDeviceSession?.rotation
-    ? ROTATION_STYLES[selectedDeviceSession.rotation]
-    : ROTATION_STYLES[DeviceRotationType.Portrait];
 
   return (
     <div
