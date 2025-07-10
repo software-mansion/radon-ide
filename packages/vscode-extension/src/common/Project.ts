@@ -80,7 +80,6 @@ type DeviceSessionStateCommon = {
   logCounter: number;
   hasStaleBuildCache: boolean;
   isRecordingScreen: boolean;
-  rotation: DeviceRotationType;
 };
 
 export type DeviceSessionStateStarting = DeviceSessionStateCommon & {
@@ -121,6 +120,7 @@ export type ProjectState = {
   initialized: boolean;
   appRootPath: string | undefined;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
+  rotation: DeviceRotationType;
 } & DeviceSessionsManagerState;
 
 export type ZoomLevelType = number | "Fit";
@@ -134,6 +134,10 @@ export enum DeviceRotationType {
   PortraitUpsideDown = "PortraitUpsideDown",
   LandscapeLeft = "LandscapeLeft",
   LandscapeRight = "LandscapeRight"
+}
+
+export function isOfEnumDeviceRotationType(value: any): value is DeviceRotationType {
+  return Object.values(DeviceRotationType).includes(value);
 }
 
 // important: order of values in this enum matters

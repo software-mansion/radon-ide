@@ -10,6 +10,7 @@ import {
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import {
+  DeviceRotationType,
   DeviceSessionState,
   DeviceSettings,
   MultimediaData,
@@ -35,6 +36,7 @@ const defaultProjectState: ProjectState = {
   previewZoom: undefined,
   appRootPath: "./",
   initialized: false,
+  rotation: DeviceRotationType.Portrait
 };
 
 const defaultDeviceSettings: DeviceSettings = {

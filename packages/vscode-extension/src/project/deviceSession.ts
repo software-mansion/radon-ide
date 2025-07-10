@@ -152,7 +152,6 @@ export class DeviceSession
       logCounter: this.logCounter,
       hasStaleBuildCache: this.hasStaleBuildCache,
       isRecordingScreen: this.isRecordingScreen,
-      rotation: this.device.rotation
     };
     if (this.status === "starting") {
       return {

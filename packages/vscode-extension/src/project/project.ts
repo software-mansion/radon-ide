@@ -13,6 +13,7 @@ import {
   DeviceSessionState,
   DeviceSettings,
   InspectData,
+  isOfEnumDeviceRotationType,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -80,6 +81,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       initialized: false,
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
+      rotation:
+        workspace.getConfiguration("RadonIDE").get<DeviceRotationType>("deviceRotation") ??
+        DeviceRotationType.Portrait,
     };
 
     this.disposables.push(refreshTokenPeriodically());
@@ -92,6 +96,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
     this.disposables.push(
       workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+        // Launch configuration change
         if (event.affectsConfiguration("launch")) {
           const config = getLaunchConfiguration();
           const oldAppRoot = this.appRootFolder;
@@ -106,6 +111,28 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
               "Dismiss"
             );
             return;
+          }
+        }
+        // Rotation change
+        if (event.affectsConfiguration("RadonIDE.deviceRotation")) {
+          const newRotation =
+            workspace.getConfiguration("RadonIDE").inspect<DeviceRotationType>("deviceRotation")
+              ?.workspaceValue ??
+            workspace.getConfiguration("RadonIDE").inspect<DeviceRotationType>("deviceRotation")
+              ?.globalValue;
+
+          if (!isOfEnumDeviceRotationType(newRotation)) {
+            const defaultValue =
+              workspace.getConfiguration("RadonIDE").inspect<DeviceRotationType>("deviceRotation")
+                ?.defaultValue ?? DeviceRotationType.Portrait;
+
+            this.deviceSession?.sendRotate(defaultValue);
+            this.updateProjectState({ rotation: defaultValue });
+          }
+
+          if (newRotation && newRotation !== this.projectState.rotation) {
+            this.deviceSession?.sendRotate(newRotation);
+            this.updateProjectState({ rotation: newRotation });
           }
         }
       })
@@ -377,7 +404,17 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public dispatchRotate(rotation: DeviceRotationType) {
-    this.deviceSession?.sendRotate(rotation);
+    try {
+      workspace
+        .getConfiguration("RadonIDE")
+        .update("deviceRotation", rotation, false)
+        .then(() => {
+          this.deviceSession?.sendRotate(rotation);
+          this.updateProjectState({ rotation });
+        });
+    } catch (err) {
+      Logger.error(`Failed to update rotation configuration: ${err}`);
+    }
   }
 
   public async inspectElementAt(

@@ -84,7 +84,7 @@ function Preview({
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
   const loadingBackgroundRef = useRef<HTMLDivElement>(null);
 
-  const { selectedDeviceSession, project } = useProject();
+  const { selectedDeviceSession, project, projectState } = useProject();
 
   const hasFatalError = selectedDeviceSession?.status === "fatalError";
   const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
@@ -107,7 +107,7 @@ function Preview({
   const openRebuildAlert = useNativeRebuildAlert();
 
   function getTouchPosition(event: MouseEvent<HTMLDivElement>) {
-    const rotation = selectedDeviceSession?.rotation;
+    const rotation = projectState.rotation;
 
     const imgRect = previewRef.current!.getBoundingClientRect();
 
