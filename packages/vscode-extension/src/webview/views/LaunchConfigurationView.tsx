@@ -72,6 +72,7 @@ function undefinedIfAuto(value: string) {
 
 function serializeLaunchConfig(formData: FormData) {
   const data = Object.fromEntries(formData as any);
+  console.log("data", JSON.parse(JSON.stringify(data)));
   const newConfig: LaunchConfigurationOptions = {
     name: data.name ?? undefined,
     appRoot: undefinedIfAuto(data.appRoot),
@@ -213,7 +214,7 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig: LaunchConfigu
           <SingleSelect
             combobox
             creatable
-            initialValue={appRoot}
+            value={appRoot}
             name="appRoot"
             onChange={(e) => setAppRoot((e.target as HTMLSelectElement).value)}>
             <Option value="auto">Detect automatically</Option>
@@ -325,7 +326,7 @@ function BuildConfiguration({
           <span className="setting-item-category">{prettyPlatformName(platform)}:</span> Build Type
         </Label>
         <SingleSelect
-          initialValue={buildType}
+          value={buildType}
           name={`buildType.${platform}`}
           onChange={(e) => setBuildType((e.target as HTMLSelectElement).value as any)}>
           <Option value="standard">Standard (recommended)</Option>
