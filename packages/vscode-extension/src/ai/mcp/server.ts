@@ -6,10 +6,11 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { registerMcpTools } from "./toolRegistration";
 import { Logger } from "../../Logger";
 import { Session } from "./models";
+import { ConnectionListener } from "../shared/ConnectionListener";
 
 let session: Session = null;
 
-function getHttpServer(): Express {
+function getHttpServer(connectionListener: ConnectionListener): Express {
   const app = express();
   app.use(express.json());
 
@@ -34,7 +35,7 @@ function getHttpServer(): Express {
         version: "1.0.0",
       });
 
-      await registerMcpTools(server);
+      await registerMcpTools(server, connectionListener);
 
       await server.connect(session.transport);
     }
@@ -57,8 +58,8 @@ function getHttpServer(): Express {
   return app;
 }
 
-export async function startLocalMcpServer(): Promise<number> {
-  const server = getHttpServer();
+export async function startLocalMcpServer(connectionListener: ConnectionListener): Promise<number> {
+  const server = getHttpServer(connectionListener);
 
   return await new Promise<number>((resolve, reject) => {
     try {
