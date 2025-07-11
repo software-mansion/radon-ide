@@ -136,7 +136,7 @@ function serializeLaunchConfig(formData: FormData) {
 
 type LaunchConfigAttrs = ReturnType<typeof getLaunchConfigAttrs>;
 
-function LaunchConfigurationView({ launchConfig }: { launchConfig: LaunchConfigurationOptions }) {
+function LaunchConfigurationView({ launchConfig }: { launchConfig?: LaunchConfigurationOptions }) {
   const { openModal, closeModal } = useModal();
   const applicationRoots = useApplicationRoots();
 
@@ -218,9 +218,9 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig: LaunchConfigu
             name="appRoot"
             onChange={(e) => setAppRoot((e.target as HTMLSelectElement).value)}>
             <Option value="auto">Detect automatically</Option>
-            {availableAppRoots.map((appRoot) => (
-              <Option key={appRoot.value} value={appRoot.value}>
-                {appRoot.label}
+            {availableAppRoots.map((appRootOption) => (
+              <Option key={appRootOption.value} value={appRootOption.value}>
+                {appRootOption.label}
               </Option>
             ))}
           </SingleSelect>
@@ -533,10 +533,10 @@ function EasBuildConfiguration({
   const { easBuildProfiles } = appRootConfig;
 
   const availableEasBuildProfiles = Object.entries(easBuildProfiles).map(
-    ([buildProfile, config]) => {
+    ([buildProfile, buildProfileConfig]) => {
       const canRunInSimulator =
-        config.distribution === "internal" &&
-        (platform !== "ios" || config.ios?.simulator === true);
+        buildProfileConfig.distribution === "internal" &&
+        (platform !== "ios" || buildProfileConfig.ios?.simulator === true);
       return { value: buildProfile, label: buildProfile, disabled: !canRunInSimulator };
     }
   );
