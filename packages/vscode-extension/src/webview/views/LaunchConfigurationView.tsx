@@ -136,7 +136,6 @@ function serializeLaunchConfig(formData: FormData) {
 type LaunchConfigAttrs = ReturnType<typeof getLaunchConfigAttrs>;
 
 function LaunchConfigurationView({ launchConfig }: { launchConfig: LaunchConfigurationOptions }) {
-  console.log("launchConfig", launchConfig);
   const { openModal, closeModal } = useModal();
   const applicationRoots = useApplicationRoots();
 
