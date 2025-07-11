@@ -14,7 +14,7 @@ input {
 }
 
 .modal-content {
-  background-color: var(--swm-modal-background);
+  background-color: var(--swm-popover-background);
   border-radius: 6px;
   position: fixed;
   top: 50%;
@@ -40,7 +40,7 @@ input {
 
 .modal-content-container {
   max-height: 80vh;
-  /* overflow-y: auto; */
+  overflow-y: auto;
 }
 
 .modal-close-button {

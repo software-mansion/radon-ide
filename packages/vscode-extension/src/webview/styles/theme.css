@@ -516,7 +516,6 @@ body[data-use-code-theme="true"] {
   --swm-dropdown-item-highlighted: var(--vscode-list-hoverBackground);
 
   --swm-popover-background: var(--vscode-dropdown-background);
-  --swm-modal-background: var(--vscode-panel-background);
 
   --swm-separator: var(--vscode-dropdown-border);
 

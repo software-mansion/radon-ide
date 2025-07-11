@@ -16,8 +16,12 @@
   margin-bottom: 5px;
 }
 
+.launch-configuration-container vscode-label {
+  color: var(--vscode-settings-headerForeground);
+}
+
 .setting-item-category {
-  opacity: 0.7;
+  color: var(--vscode-foreground);
 }
 
 .scheme {
@@ -81,4 +85,8 @@
 
 .launch-configuration-text-button:hover {
   text-decoration: underline;
+}
+
+.modal-content:has(.launch-configuration-modal) {
+  background-color: var(--vscode-panel-background);
 }
