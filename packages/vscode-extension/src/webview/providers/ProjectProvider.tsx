@@ -16,6 +16,7 @@ import {
   ProjectInterface,
   ProjectState,
 } from "../../common/Project";
+import { LaunchConfigurationKind } from "../../common/LaunchConfig";
 
 const project = makeProxy<ProjectInterface>("Project");
 
@@ -37,6 +38,7 @@ const defaultProjectState: ProjectState = {
   initialized: false,
   customLaunchConfigurations: [],
   selectedLaunchConfiguration: {
+    kind: LaunchConfigurationKind.Detected,
     appRoot: "./",
     absoluteAppRoot: "/",
     env: {},

@@ -4,7 +4,12 @@ import { describe, afterEach, beforeEach, it } from "mocha";
 
 import { BuildType } from "../common/BuildConfig";
 import { DevicePlatform } from "../common/DeviceManager";
-import { CustomBuild, EasConfig, LaunchConfiguration } from "../common/LaunchConfig";
+import {
+  CustomBuild,
+  EasConfig,
+  LaunchConfiguration,
+  LaunchConfigurationKind,
+} from "../common/LaunchConfig";
 import { createBuildConfig, inferBuildType } from "./BuildManager";
 import * as ExpoGo from "./expoGo";
 
@@ -35,6 +40,7 @@ function toPlatformConfig<T>(
 }
 
 const COMMON_CONFIG: LaunchConfiguration = {
+  kind: LaunchConfigurationKind.Detected,
   appRoot: APP_ROOT,
   absoluteAppRoot: APP_ROOT_ABSOLUTE,
   env: {},
