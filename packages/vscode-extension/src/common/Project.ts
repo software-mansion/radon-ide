@@ -230,7 +230,7 @@ export interface ProjectInterface {
    */
   createOrUpdateLaunchConfiguration(
     newLaunchConfiguration: LaunchConfigurationOptions | undefined,
-    oldLaunchConfiguration?: LaunchConfiguration
+    oldLaunchConfiguration?: LaunchConfigurationOptions
   ): Promise<void>;
   selectLaunchConfiguration(launchConfig: LaunchConfigurationOptions): Promise<void>;
 
