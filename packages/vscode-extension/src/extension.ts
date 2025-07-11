@@ -325,10 +325,16 @@ export async function activate(context: ExtensionContext) {
 }
 
 class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
-  createDebugAdapterDescriptor(
+  async createDebugAdapterDescriptor(
     session: vscode.DebugSession
-  ): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
-    commands.executeCommand("RNIDE.openPanel");
+  ): Promise<vscode.DebugAdapterDescriptor> {
+    await commands.executeCommand("RNIDE.openPanel");
+    const ide = IDE.attach();
+    try {
+      ide.project.selectLaunchConfiguration(session.configuration);
+    } finally {
+      ide.detach();
+    }
     // we can't return undefined or throw here because then VSCode displays an ugly error dialog
     // so we return a dummy adapter that calls echo command and exists immediately
     return new DebugAdapterExecutable("echo", ["noop"]);
