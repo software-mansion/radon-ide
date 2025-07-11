@@ -398,7 +398,7 @@
               },
               "isExpo": {
                 "type": "boolean",
-                "description": "IDE tries to detect whether project uses Expo or React Native community CLI. This is needed when starting the bundler. If your project uses Expo but IDE fails to automatically detect it, you can set this parameter to `true` to force the use of Expo CLI."
+                "description": "When set, it overrides the automatic detection of Expo projects and forces or disallows the use of Expo CLI."
               },
               "env": {
                 "type": "object",
@@ -599,7 +599,7 @@
       {
         "type": "react-native-ide",
         "label": "Radon IDE",
-        "deprecated": "true",
+        "deprecated": "Use `radon-ide` instead",
         "languages": [
           "javascript",
           "typescript",
@@ -629,6 +629,88 @@
               "expoStartArgs": {
                 "type": "array",
                 "description": "Extra arguments to pass to Expo start command."
+              },
+              "customBuild": {
+                "type": "object",
+                "description": "Configuration for using custom scripts for building and fingerprinting the app.",
+                "properties": {
+                  "ios": {
+                    "type": "object",
+                    "description": "Configuration for iOS.",
+                    "properties": {
+                      "buildCommand": {
+                        "type": "string",
+                        "description": "Script used to build the app. It should build the app in debug mode and print path to the built app as a last line of its standard output."
+                      },
+                      "fingerprintCommand": {
+                        "type": "string",
+                        "description": "Script used to fingerprint the app. It should print workspace hash as a last line of its standard output."
+                      }
+                    }
+                  },
+                  "android": {
+                    "type": "object",
+                    "description": "Configuration for Android.",
+                    "properties": {
+                      "buildCommand": {
+                        "type": "string",
+                        "description": "Script used to build the app. It should build the app in debug mode and print path to the built app as a last line of its standard output."
+                      },
+                      "fingerprintCommand": {
+                        "type": "string",
+                        "description": "Script used to fingerprint the app. It should print workspace hash as a last line of its standard output."
+                      }
+                    }
+                  }
+                }
+              },
+              "eas": {
+                "type": "object",
+                "description": "Configuration for EAS build service",
+                "properties": {
+                  "android": {
+                    "type": "object",
+                    "description": "Configuration for EAS build service for Android",
+                    "properties": {
+                      "profile": {
+                        "type": "string",
+                        "description": "Profile used to build the app in EAS. Built app should be in debug version."
+                      },
+                      "buildUUID": {
+                        "type": "string",
+                        "description": "UUID of the EAS build used in `eas build:view` command. If unspecified, will use a build with matching fingerprint if available."
+                      },
+                      "local": {
+                        "type": "boolean",
+                        "description": "When set, builds the app locally using EAS CLI."
+                      }
+                    },
+                    "required": [
+                      "profile"
+                    ]
+                  },
+                  "ios": {
+                    "type": "object",
+                    "description": "Configuration for EAS build service for iOS",
+                    "properties": {
+                      "profile": {
+                        "type": "string",
+                        "description": "Profile used to build the app in EAS. Built app should be in debug version and have '\"ios.simulator\": true' option set."
+                      },
+                      "buildUUID": {
+                        "type": "string",
+                        "description": "UUID of the EAS build used in `eas build:view` command. If unspecified, will use a build with matching fingerprint if available."
+                      },
+                      "local": {
+                        "type": "boolean",
+                        "description": "When set, builds the app locally using EAS CLI."
+                      }
+                    },
+                    "required": [
+                      "profile"
+                    ]
+                  }
+                }
               },
               "ios": {
                 "description": "Provides a way to customize Xcode builds for iOS",
@@ -678,20 +760,7 @@
               }
             }
           }
-        },
-        "initialConfigurations": [
-          {
-            "type": "react-native-ide",
-            "request": "launch",
-            "name": "Radon IDE panel",
-            "ios": {
-              "configuration": "Debug"
-            },
-            "android": {
-              "buildType": "debug"
-            }
-          }
-        ]
+        }
       }
     ],
     "walkthroughs": [

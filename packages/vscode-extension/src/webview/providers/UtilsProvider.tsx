@@ -7,8 +7,11 @@ declare global {
   interface Window {
     // set in generateWebviewContent()
     RNIDE_hostOS: "macos" | "windows" | "linux";
+    RNIDE_isDev: boolean;
   }
 }
+
+export const IS_DEV = window.RNIDE_isDev;
 
 export const Platform = {
   OS: window.RNIDE_hostOS,

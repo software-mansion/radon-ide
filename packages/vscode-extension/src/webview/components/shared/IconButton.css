@@ -5,14 +5,31 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  height: var(--swm-button-size);
-  width: var(--swm-button-size);
+  min-height: var(--swm-button-size);
   background: none;
   border: 0px solid transparent;
-  border-radius: var(--swm-button-size);
+  border-radius: 8px; /* Use a smaller value for pill/rounded rectangle */
   color: var(--swm-icon-button);
   transition: all 200ms 0ms ease-in-out;
   flex-shrink: 0;
+}
+
+.icon-button-left {
+  min-width: none;
+  padding-left: 4px;
+  padding-right: 1px;
+  border-radius: 8px 0px 0px 8px;
+}
+
+.icon-button-right {
+  min-width: none;
+  padding-left: 1px;
+  padding-right: 4px;
+  border-radius: 0px 8px 8px 0px;
+}
+
+.icon-button-default {
+  min-width: var(--swm-button-size);
 }
 
 .icon-button:disabled {
@@ -53,12 +70,6 @@
 
 .icon-button-secondary:hover {
   background-color: var(--swm-button-secondary-hover);
-}
-
-.icon-button-small {
-  height: 24px;
-  width: 24px;
-  border-radius: 6px;
 }
 
 .icon-button-counter {
