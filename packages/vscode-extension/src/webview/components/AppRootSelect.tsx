@@ -115,7 +115,7 @@ function AppRootSelect() {
   const { openModal } = useModal();
 
   function onEditConfig(config: LaunchConfiguration) {
-    openModal("Launch Configuration", <LaunchConfigurationView launchConfigToUpdate={config} />);
+    openModal("Launch Configuration", <LaunchConfigurationView launchConfig={config} />);
   }
 
   const detectedConfigurations: LaunchConfigurationOptions[] = applicationRoots.map(

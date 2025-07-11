@@ -45,27 +45,28 @@
   margin-top: 0;
 }
 
+.launch-configuration-container vscode-form-group {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .launch-configuration-button-group {
   display: flex;
   flex-direction: row;
   gap: 10px;
   justify-content: flex-end;
-}
-
-.launch-configuration-button-group > button {
-  height: 32px;
-  margin-left: 10px;
+  margin-top: 10px;
 }
 
 .launch-configuration-modal {
   display: flex;
   flex-direction: column;
-  max-height: 70vh;
+  overflow: hidden;
+  max-height: 60vh;
 }
 
 .launch-configuration-container {
   display: flex;
-  flex: 1;
-  height: 0;
   flex-direction: column;
+  overflow: auto;
 }

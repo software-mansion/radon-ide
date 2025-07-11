@@ -40,7 +40,7 @@ input {
 
 .modal-content-container {
   max-height: 80vh;
-  overflow-y: auto;
+  /* overflow-y: auto; */
 }
 
 .modal-close-button {
