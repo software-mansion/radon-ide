@@ -44,6 +44,10 @@ const defaultProjectState: ProjectState = {
       waitForAppLaunch: true,
     },
   },
+  connectState: {
+    enabled: false,
+    connected: false,
+  },
 };
 
 const defaultDeviceSettings: DeviceSettings = {
