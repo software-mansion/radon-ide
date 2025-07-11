@@ -39,6 +39,10 @@ const data = [
     label: "Data Processing Addendum (DPA)",
     link: "/legal/dpa",
   },
+  {
+    label: "Sub-Processors",
+    link: "/legal/subprocessors",
+  },
 ];
 
 export default function Legal(): JSX.Element {
