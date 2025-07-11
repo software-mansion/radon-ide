@@ -12,8 +12,8 @@ import {
 import {
   VscodeFormGroup as FormGroup,
   VscodeLabel as Label,
-  VscodeTextfield as Textfield,
-  VscodeSingleSelect as SingleSelect,
+  VscodeTextfield,
+  VscodeSingleSelect,
   VscodeOption as Option,
   VscodeFormHelper as FormHelper,
   VscodeButton as Button,
@@ -22,6 +22,38 @@ import {
   VscodeTabHeader as TabHeader,
 } from "@vscode-elements/react-elements";
 import extensionPackageJSON from "../../../package.json";
+
+/**
+ * Vscode element components are controller, this is a simple wrapper allowing
+ * it to be used as not-controlled component with an initial value.
+ */
+function TextField({
+  initialValue,
+  ...props
+}: React.ComponentProps<typeof VscodeTextfield> & { initialValue?: string }) {
+  const [value, setValue] = useState(initialValue);
+  return (
+    <VscodeTextfield
+      {...props}
+      value={value}
+      onInput={(e) => setValue((e.target as HTMLInputElement).value)}
+    />
+  );
+}
+
+function SingleSelect({
+  initialValue,
+  ...props
+}: React.ComponentProps<typeof VscodeSingleSelect> & { initialValue?: string }) {
+  const [value, setValue] = useState(initialValue);
+  return (
+    <VscodeSingleSelect
+      value={value}
+      onChange={(e) => setValue((e.target as HTMLSelectElement).value)}
+      {...props}
+    />
+  );
+}
 
 function getLaunchConfigAttrs() {
   const radonIDEDebugger = extensionPackageJSON.contributes?.debuggers?.find(
@@ -38,10 +70,9 @@ function undefinedIfAuto(value: string) {
   return value === "auto" ? undefined : value;
 }
 
-function serializeLaunchConfig(originalConfig: LaunchConfigurationOptions, formData: FormData) {
+function serializeLaunchConfig(formData: FormData) {
   const data = Object.fromEntries(formData as any);
   const newConfig: LaunchConfigurationOptions = {
-    ...originalConfig,
     name: data.name ?? undefined,
     appRoot: undefinedIfAuto(data.appRoot),
     metroConfigPath: undefinedIfEmpty(data.metroConfigPath),
@@ -105,6 +136,7 @@ function serializeLaunchConfig(originalConfig: LaunchConfigurationOptions, formD
 type LaunchConfigAttrs = ReturnType<typeof getLaunchConfigAttrs>;
 
 function LaunchConfigurationView({ launchConfig }: { launchConfig: LaunchConfigurationOptions }) {
+  console.log("launchConfig", launchConfig);
   const { openModal, closeModal } = useModal();
   const applicationRoots = useApplicationRoots();
 
@@ -120,7 +152,7 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig: LaunchConfigu
 
   async function save() {
     const formData = new FormData(formContainerRef?.current ?? undefined);
-    const newLaunchConfig = serializeLaunchConfig(launchConfig, formData);
+    const newLaunchConfig = serializeLaunchConfig(formData);
     await project.createOrUpdateLaunchConfiguration(newLaunchConfig, launchConfig);
     closeModal();
   }
@@ -169,9 +201,9 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig: LaunchConfigu
             The name of the launch configuration. This is used as a label for the configuration in
             the list.
           </FormHelper>
-          <Textfield
+          <TextField
             name="name"
-            defaultValue={launchConfig?.name ?? ""}
+            initialValue={launchConfig?.name ?? ""}
             placeholder="Configuration Name"
           />
         </FormGroup>
@@ -182,12 +214,10 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig: LaunchConfigu
           <SingleSelect
             combobox
             creatable
-            value="auto"
+            initialValue={appRoot}
             name="appRoot"
             onChange={(e) => setAppRoot((e.target as HTMLSelectElement).value)}>
-            <Option disabled value="auto">
-              Detect automatically
-            </Option>
+            <Option value="auto">Detect automatically</Option>
             {availableAppRoots.map((appRoot) => (
               <Option key={appRoot.value} value={appRoot.value}>
                 {appRoot.label}
@@ -199,7 +229,11 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig: LaunchConfigu
         <FormGroup variant="settings-group">
           <Label>Metro Config Path</Label>
           <FormHelper>{launchConfigAttrs?.properties?.metroConfigPath?.description}</FormHelper>
-          <Textfield placeholder="Detect automatically" name="metroConfigPath" />
+          <TextField
+            placeholder="Detect automatically"
+            name="metroConfigPath"
+            initialValue={launchConfig?.metroConfigPath ?? ""}
+          />
         </FormGroup>
 
         <FormGroup variant="settings-group">
@@ -207,7 +241,7 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig: LaunchConfigu
           <FormHelper>{launchConfigAttrs?.properties?.isExpo?.description}</FormHelper>
           <SingleSelect
             name="isExpo"
-            value={
+            initialValue={
               launchConfig?.isExpo === undefined ? "Auto" : launchConfig.isExpo ? "true" : "false"
             }>
             <Option value="true">Yes</Option>
@@ -239,9 +273,18 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig: LaunchConfigu
       </form>
 
       <div className="launch-configuration-button-group">
+        <a
+          className="launch-configuration-text-button"
+          role="button"
+          onClick={() => {
+            project.runCommand("workbench.action.debug.configure");
+            closeModal();
+          }}>
+          Edit in launch.json
+        </a>
         {launchConfig && (
           <Button
-            icon="trash"
+            secondary
             onClick={() => {
               openModal("", <DeleteConfirmationModal />);
             }}>
@@ -249,11 +292,13 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig: LaunchConfigu
             Delete
           </Button>
         )}
-        <Button onClick={save}>Save{isEditingSelectedConfig ? " and restart device" : ""}</Button>
+        <Button onClick={save}>Save{isEditingSelectedConfig ? " and restart" : ""}</Button>
       </div>
     </div>
   );
 }
+
+type BuildType = "standard" | "eas" | "eas-local" | "custom";
 
 function BuildConfiguration({
   appRootConfig,
@@ -266,9 +311,14 @@ function BuildConfiguration({
   config?: LaunchConfigurationOptions;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
-  const [buildType, setBuildType] = useState<"standard" | "eas" | "eas-local" | "custom">(
-    "standard"
-  );
+  let initialBuildType: BuildType = "standard";
+  if (config?.eas?.[platform]) {
+    initialBuildType = config.eas[platform].local ? "eas-local" : "eas";
+  } else if (config?.customBuild?.[platform]) {
+    initialBuildType = "custom";
+  }
+
+  const [buildType, setBuildType] = useState<BuildType>(initialBuildType);
   return (
     <>
       <FormGroup variant="settings-group">
@@ -276,7 +326,7 @@ function BuildConfiguration({
           <span className="setting-item-category">{prettyPlatformName(platform)}:</span> Build Type
         </Label>
         <SingleSelect
-          value={buildType}
+          initialValue={buildType}
           name={`buildType.${platform}`}
           onChange={(e) => setBuildType((e.target as HTMLSelectElement).value as any)}>
           <Option value="standard">Standard (recommended)</Option>
@@ -340,7 +390,7 @@ function StandardBuildConfiguration({
           <FormHelper>
             {launchConfigAttrs?.properties?.ios?.properties?.scheme?.description}
           </FormHelper>
-          <SingleSelect value={config?.ios?.scheme ?? "auto"} name="ios.scheme">
+          <SingleSelect initialValue={config?.ios?.scheme ?? "auto"} name="ios.scheme">
             <Option disabled value="auto">
               Detect automatically
             </Option>
@@ -359,8 +409,8 @@ function StandardBuildConfiguration({
           <FormHelper>
             {launchConfigAttrs?.properties?.ios?.properties?.configuration?.description}
           </FormHelper>
-          <Textfield
-            value={config?.ios?.configuration ?? ""}
+          <TextField
+            initialValue={config?.ios?.configuration ?? ""}
             placeholder="Debug"
             name="ios.configuration"
           />
@@ -377,8 +427,8 @@ function StandardBuildConfiguration({
           <FormHelper>
             {launchConfigAttrs?.properties?.android?.properties?.buildType?.description}
           </FormHelper>
-          <Textfield
-            defaultValue={config?.android?.buildType ?? "Auto"}
+          <TextField
+            initialValue={config?.android?.buildType ?? ""}
             placeholder="debug"
             name="android.buildType"
           />
@@ -391,8 +441,8 @@ function StandardBuildConfiguration({
           <FormHelper>
             {launchConfigAttrs?.properties?.android?.properties?.productFlavor?.description}
           </FormHelper>
-          <Textfield
-            defaultValue={config?.android?.productFlavor ?? "Auto"}
+          <TextField
+            initialValue={config?.android?.productFlavor ?? ""}
             name="android.productFlavor"
           />
         </FormGroup>
@@ -425,9 +475,9 @@ function CustomBuildConfiguration({
               ?.buildCommand?.description
           }
         </FormHelper>
-        <Textfield
+        <TextField
           placeholder="Enter the build command"
-          value={config?.customBuild?.[platform]?.buildCommand ?? ""}
+          initialValue={config?.customBuild?.[platform]?.buildCommand ?? ""}
           name={`customBuild.${platform}.buildCommand`}
         />
       </FormGroup>
@@ -445,9 +495,9 @@ function CustomBuildConfiguration({
               ?.fingerprintCommand?.description
           }
         </FormHelper>
-        <Textfield
+        <TextField
           placeholder="Enter the fingerprint command"
-          value={config?.customBuild?.[platform]?.fingerprintCommand ?? ""}
+          initialValue={config?.customBuild?.[platform]?.fingerprintCommand ?? ""}
           name={`customBuild.${platform}.fingerprintCommand`}
         />
       </FormGroup>
@@ -490,6 +540,16 @@ function EasBuildConfiguration({
       return { value: buildProfile, label: buildProfile, disabled: !canRunInSimulator };
     }
   );
+  const initialBuildProfile = config?.eas?.[platform]?.profile ?? "";
+  if (
+    availableEasBuildProfiles.find((profile) => profile.value === initialBuildProfile) === undefined
+  ) {
+    availableEasBuildProfiles.unshift({
+      value: initialBuildProfile,
+      label: initialBuildProfile,
+      disabled: true,
+    });
+  }
 
   return (
     <>
@@ -505,7 +565,7 @@ function EasBuildConfiguration({
           }
         </FormHelper>
         <SingleSelect
-          value={config?.eas?.[platform]?.profile ?? ""}
+          initialValue={initialBuildProfile}
           combobox
           creatable
           name={`eas.${platform}.profile`}>
@@ -529,8 +589,8 @@ function EasBuildConfiguration({
                 ?.description
             }
           </FormHelper>
-          <Textfield
-            value={config?.eas?.[platform]?.buildUUID ?? ""}
+          <TextField
+            initialValue={config?.eas?.[platform]?.buildUUID ?? ""}
             placeholder="Auto (build with matching fingerprint)"
             name={`eas.${platform}.buildUUID`}
           />

@@ -55,6 +55,7 @@
   flex-direction: row;
   gap: 10px;
   justify-content: flex-end;
+  align-items: center;
   margin-top: 10px;
 }
 
@@ -69,4 +70,15 @@
   display: flex;
   flex-direction: column;
   overflow: auto;
+}
+
+.launch-configuration-text-button {
+  display: flex;
+  margin-right: auto;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.launch-configuration-text-button:hover {
+  text-decoration: underline;
 }
