@@ -48,10 +48,32 @@ import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/Launc
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
+const INITIAL_LAUNCH_CONFIGURATION_KEY = "initialLaunchConfiguration";
 
 const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
+
+function getInitialLaunchConfig(launchConfigsManager: LaunchConfigurationsManager) {
+  const workspaceState = extensionContext.workspaceState;
+  const savedLaunchConfig = workspaceState.get<LaunchConfiguration | undefined>(
+    INITIAL_LAUNCH_CONFIGURATION_KEY
+  );
+  if (
+    savedLaunchConfig &&
+    launchConfigsManager.launchConfigurations.find((config) => _.isEqual(config, savedLaunchConfig))
+  ) {
+    // If the saved launch config is still valid, return it
+    return savedLaunchConfig;
+  }
+  // Otherwise, return the first launch config or a default one
+  return launchConfigsManager.initialLaunchConfiguration;
+}
+
+function saveInitialLaunchConfig(launchConfig: LaunchConfiguration) {
+  const workspaceState = extensionContext.workspaceState;
+  workspaceState.update(INITIAL_LAUNCH_CONFIGURATION_KEY, launchConfig);
+}
 
 export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
   private launchConfigsManager = new LaunchConfigurationsManager();
@@ -76,7 +98,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   ) {
     const fingerprintProvider = new FingerprintProvider();
     const buildCache = new BuildCache(fingerprintProvider);
-    const initialLaunchConfig = this.launchConfigsManager.initialLaunchConfiguration;
+    const initialLaunchConfig = getInitialLaunchConfig(this.launchConfigsManager);
     this.applicationContext = new ApplicationContext(initialLaunchConfig, buildCache);
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
@@ -145,6 +167,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this
     );
     oldDeviceSessionsManager.dispose();
+    saveInitialLaunchConfig(launchConfig);
     this.updateProjectState({
       appRootPath: this.relativeAppRootPath,
       selectedLaunchConfiguration: launchConfig,
