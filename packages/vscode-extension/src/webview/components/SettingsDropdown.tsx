@@ -22,7 +22,7 @@ interface SettingsDropdownProps {
 }
 
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
-  const { panelLocation, update } = useWorkspaceConfig();
+  const { panelLocation } = useWorkspaceConfig();
   const { openModal } = useModal();
   const { movePanelTo, reportIssue } = useUtils();
   const { telemetryEnabled } = useTelemetry();

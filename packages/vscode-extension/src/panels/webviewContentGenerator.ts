@@ -1,4 +1,4 @@
-import { ExtensionContext, Webview, Uri, workspace, ExtensionMode } from "vscode";
+import { ExtensionContext, Webview, Uri, ExtensionMode } from "vscode";
 import { getUri } from "../utilities/getUri";
 import { getNonce } from "../utilities/getNonce";
 import { Platform } from "../utilities/platform";
@@ -13,7 +13,6 @@ export function generateWebviewContent(
   wsEndpoint?: string,
   allowUnsafeEval?: boolean
 ) {
-  const config = workspace.getConfiguration("RadonIDE");
   const IS_DEV = context.extensionMode === ExtensionMode.Development;
 
   // The JS file from the React build output
