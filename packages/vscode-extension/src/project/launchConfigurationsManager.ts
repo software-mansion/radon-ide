@@ -41,7 +41,8 @@ export function launchConfigurationFromOptions(
 
 function launchConfigFromOptionsWithDefaultAppRoot(
   options: LaunchConfigurationOptions,
-  defaultAppRoot: string | undefined
+  defaultAppRoot: string | undefined,
+  launchConfigurationKind: LaunchConfigurationKind = LaunchConfigurationKind.Custom
 ): LaunchConfiguration {
   if ((options.appRoot ?? defaultAppRoot) === undefined) {
     const maybeName =
@@ -54,7 +55,7 @@ function launchConfigFromOptionsWithDefaultAppRoot(
   const appRoot = (options.appRoot ?? defaultAppRoot) as string;
   const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
   return {
-    kind: LaunchConfigurationKind.Custom,
+    kind: launchConfigurationKind,
     appRoot,
     absoluteAppRoot,
     env: {},
@@ -110,8 +111,9 @@ export class LaunchConfigurationsManager implements Disposable {
       return this._launchConfigurations[0];
     }
     return launchConfigFromOptionsWithDefaultAppRoot(
-      { kind: LaunchConfigurationKind.Detected } as LaunchConfigurationOptions,
-      findDefaultAppRoot(true)
+      {},
+      findDefaultAppRoot(true),
+      LaunchConfigurationKind.Detected
     );
   }
 
