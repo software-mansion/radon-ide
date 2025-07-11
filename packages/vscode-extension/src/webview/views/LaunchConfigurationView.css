@@ -62,4 +62,5 @@
   flex: 1;
   flex-direction: column;
   overflow: scroll;
+  scrollbar-color: var(--swm-scrollbar-thumb) var(--swm-popover-background);
 }
