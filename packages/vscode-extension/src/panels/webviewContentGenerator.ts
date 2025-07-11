@@ -14,7 +14,6 @@ export function generateWebviewContent(
   allowUnsafeEval?: boolean
 ) {
   const config = workspace.getConfiguration("RadonIDE");
-  const useCodeTheme = config.get("themeType") === "vscode";
   const IS_DEV = context.extensionMode === ExtensionMode.Development;
 
   // The JS file from the React build output
@@ -74,7 +73,7 @@ export function generateWebviewContent(
         `
         }
       </head>
-      <body data-use-code-theme="${useCodeTheme}">
+      <body>
         <div id="root"></div>
         <script nonce="${nonce}">window.RNIDE_hostOS = "${Platform.OS}";window.RNIDE_isDev = ${IS_DEV};</script>
         <script type="module" nonce="${nonce}" src="${scriptUri}"></script>

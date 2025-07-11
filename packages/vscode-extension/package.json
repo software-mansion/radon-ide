@@ -206,6 +206,7 @@
           "type": "string",
           "scope": "window",
           "default": "vscode",
+          "deprecationMessage": "This setting is deprecated and Radon IDE panel will use the vscode theme by default.",
           "enum": [
             "vscode",
             "built-in"
