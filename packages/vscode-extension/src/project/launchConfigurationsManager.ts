@@ -109,7 +109,7 @@ export class LaunchConfigurationsManager implements Disposable {
 
   public async createOrUpdateLaunchConfiguration(
     newLaunchConfiguration: LaunchConfigurationOptions | undefined,
-    oldLaunchConfiguration?: LaunchConfigurationOptions
+    oldLaunchConfiguration?: LaunchConfiguration
   ): Promise<LaunchConfiguration | undefined> {
     const newConfig = newLaunchConfiguration
       ? {

@@ -113,7 +113,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   async createOrUpdateLaunchConfiguration(
     newLaunchConfiguration: LaunchConfigurationOptions | undefined,
-    oldLaunchConfiguration?: LaunchConfigurationOptions
+    oldLaunchConfiguration?: LaunchConfiguration
   ) {
     const isUpdatingSelectedConfig = _.isEqual(
       oldLaunchConfiguration,

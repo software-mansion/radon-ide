@@ -1,7 +1,7 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
 import { useMemo, useRef, useState } from "react";
-import { LaunchConfigurationOptions } from "../../common/LaunchConfig";
+import { LaunchConfiguration, LaunchConfigurationOptions } from "../../common/LaunchConfig";
 import { useModal } from "../providers/ModalProvider";
 import { useProject } from "../providers/ProjectProvider";
 import {
@@ -72,7 +72,6 @@ function undefinedIfAuto(value: string) {
 
 function serializeLaunchConfig(formData: FormData) {
   const data = Object.fromEntries(formData as any);
-  console.log("data", JSON.parse(JSON.stringify(data)));
   const newConfig: LaunchConfigurationOptions = {
     name: data.name ?? undefined,
     appRoot: undefinedIfAuto(data.appRoot),
@@ -83,24 +82,18 @@ function serializeLaunchConfig(formData: FormData) {
   for (const platform of ["ios", "android"] as const) {
     const buildType = data[`buildType.${platform}`];
     if (buildType === "standard") {
-      delete newConfig.customBuild?.[platform];
-      delete newConfig.eas?.[platform];
       if (platform === "ios") {
         newConfig.ios = {
-          ...newConfig.ios,
           scheme: undefinedIfAuto(data["ios.scheme"]),
           configuration: undefinedIfEmpty(data["ios.configuration"]),
         };
       } else if (platform === "android") {
         newConfig.android = {
-          ...newConfig.android,
           buildType: undefinedIfEmpty(data["android.buildType"]),
           productFlavor: undefinedIfEmpty(data["android.productFlavor"]),
         };
       }
     } else if (buildType === "custom") {
-      delete newConfig.eas?.[platform];
-      delete newConfig[platform];
       newConfig.customBuild = {
         ...newConfig.customBuild,
         [platform]: {
@@ -109,8 +102,6 @@ function serializeLaunchConfig(formData: FormData) {
         },
       };
     } else if (buildType === "eas") {
-      delete newConfig.customBuild?.[platform];
-      delete newConfig[platform];
       newConfig.eas = {
         ...newConfig.eas,
         [platform]: {
@@ -119,8 +110,6 @@ function serializeLaunchConfig(formData: FormData) {
         },
       };
     } else if (buildType === "eas-local") {
-      delete newConfig.customBuild?.[platform];
-      delete newConfig[platform];
       newConfig.eas = {
         ...newConfig.eas,
         [platform]: {
@@ -136,13 +125,17 @@ function serializeLaunchConfig(formData: FormData) {
 
 type LaunchConfigAttrs = ReturnType<typeof getLaunchConfigAttrs>;
 
-function LaunchConfigurationView({ launchConfig }: { launchConfig?: LaunchConfigurationOptions }) {
+function LaunchConfigurationView({
+  launchConfig,
+  isCurrentConfig,
+}: {
+  launchConfig?: LaunchConfiguration;
+  isCurrentConfig?: boolean;
+}) {
   const { openModal, closeModal } = useModal();
   const applicationRoots = useApplicationRoots();
 
   const { project } = useProject();
-
-  const isEditingSelectedConfig = !!launchConfig;
 
   const formContainerRef = useRef<HTMLFormElement>(null);
   const [appRoot, setAppRoot] = useState<string>(
@@ -169,7 +162,10 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig?: LaunchConfig
             onClick={() =>
               openModal(
                 "Launch Configuration",
-                <LaunchConfigurationView launchConfig={launchConfig} />
+                <LaunchConfigurationView
+                  launchConfig={launchConfig}
+                  isCurrentConfig={isCurrentConfig}
+                />
               )
             }>
             Cancel
@@ -292,7 +288,7 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig?: LaunchConfig
             Delete
           </Button>
         )}
-        <Button onClick={save}>Save{isEditingSelectedConfig ? " and restart" : ""}</Button>
+        <Button onClick={save}>Save{isCurrentConfig ? " and restart" : ""}</Button>
       </div>
     </div>
   );
