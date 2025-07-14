@@ -12,6 +12,7 @@ import {
 import {
   VscodeFormGroup as FormGroup,
   VscodeLabel as Label,
+  VscodeTextfield,
   VscodeSingleSelect,
   VscodeOption as Option,
   VscodeFormHelper as FormHelper,
@@ -24,23 +25,18 @@ import extensionPackageJSON from "../../../package.json";
 import useFormValidityTrigger from "../hooks/useFormValidityTrigger";
 import EnvEditor from "./EnvEditor";
 
-/**
- * Vscode element components are controlled, this is a simple wrapper allowing
- * it to be used as not-controlled component with an initial value.
- */
-function wrapVscodeElement<T extends { value?: string; onChange?: (e: any) => void }>(
-  Component: React.ComponentType<T>
-) {
-  return function WrappedComponent({ initialValue, ...props }: T & { initialValue?: string }) {
-    const [value, setValue] = useState(initialValue);
-    return (
-      <Component
-        value={value}
-        onChange={(e: any) => setValue((e.target as HTMLInputElement).value)}
-        {...(props as T)}
-      />
-    );
-  };
+function TextField({
+  initialValue,
+  ...props
+}: React.ComponentProps<typeof VscodeTextfield> & { initialValue?: string }) {
+  const [value, setValue] = useState(initialValue);
+  return (
+    <VscodeTextfield
+      value={value}
+      onChange={(e) => setValue((e.target as HTMLInputElement).value)}
+      {...props}
+    />
+  );
 }
 
 function SingleSelect({
