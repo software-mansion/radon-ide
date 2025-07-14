@@ -74,12 +74,20 @@ export class IDE implements Disposable {
     return ide;
   }
 
+  /**
+   * Initializes a new singleton instance of the `IDE` class with the provided options.
+   * Throws an error if an instance already exists.
+   *
+   * @param initialOptions - Optional configuration options for initializing the IDE instance.
+   * @returns The attached `IDE` instance.
+   * @throws {Error} If an IDE instance already exists.
+   */
   public static initializeInstance(initialOptions: InitialOptions = {}): IDE {
-    if (IDE.instance) {
+    if (this.getInstanceIfExists()) {
       throw new Error("IDE instance already exists");
     }
     IDE.instance = new IDE(initialOptions);
-    return IDE.instance;
+    return IDE.attach();
   }
 
   public static getInstanceIfExists(): IDE | null {

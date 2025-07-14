@@ -328,6 +328,8 @@ class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDe
   async createDebugAdapterDescriptor(
     session: vscode.DebugSession
   ): Promise<vscode.DebugAdapterDescriptor> {
+    let attachedInstance: IDE | undefined = undefined;
+
     const existingIDE = IDE.getInstanceIfExists();
     if (existingIDE) {
       await existingIDE.project.selectLaunchConfiguration(session.configuration).catch((error) => {
@@ -337,9 +339,14 @@ class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDe
         );
       });
     } else {
-      IDE.initializeInstance({ initialLaunchConfig: session.configuration });
+      attachedInstance = IDE.initializeInstance({ initialLaunchConfig: session.configuration });
     }
-    await commands.executeCommand("RNIDE.openPanel");
+
+    try {
+      await commands.executeCommand("RNIDE.openPanel");
+    } finally {
+      attachedInstance?.detach();
+    }
     // we can't return undefined or throw here because then VSCode displays an ugly error dialog
     // so we return a dummy adapter that calls echo command and exists immediately
     return new DebugAdapterExecutable("echo", ["noop"]);
