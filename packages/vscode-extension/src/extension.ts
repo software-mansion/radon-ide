@@ -328,13 +328,15 @@ class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDe
   async createDebugAdapterDescriptor(
     session: vscode.DebugSession
   ): Promise<vscode.DebugAdapterDescriptor> {
-    await commands.executeCommand("RNIDE.openPanel");
-    const ide = IDE.attach();
-    try {
-      ide.project.selectLaunchConfiguration(session.configuration);
-    } finally {
-      ide.detach();
+    const existingIDE = IDE.getInstanceIfExists();
+    if (existingIDE) {
+      try {
+        await existingIDE.project.selectLaunchConfiguration(session.configuration);
+      } catch {}
+    } else {
+      IDE.initializeInstance({ initialLaunchConfig: session.configuration });
     }
+    await commands.executeCommand("RNIDE.openPanel");
     // we can't return undefined or throw here because then VSCode displays an ugly error dialog
     // so we return a dummy adapter that calls echo command and exists immediately
     return new DebugAdapterExecutable("echo", ["noop"]);
