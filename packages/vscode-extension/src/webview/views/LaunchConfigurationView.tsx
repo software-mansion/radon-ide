@@ -79,15 +79,11 @@ function undefinedIfEmpty(value: string) {
   return value === "" ? undefined : value;
 }
 
-function undefinedIfAuto(value: string) {
-  return value === "auto" ? undefined : value;
-}
-
 function serializeLaunchConfig(formData: FormData) {
   const data = Object.fromEntries(formData as any);
   const newConfig: LaunchConfigurationOptions = {
-    name: data.name ?? undefined,
-    appRoot: undefinedIfAuto(data.appRoot),
+    name: undefinedIfEmpty(data.name),
+    appRoot: undefinedIfEmpty(data.appRoot),
     metroConfigPath: undefinedIfEmpty(data.metroConfigPath),
     isExpo: data.isExpo === "true" ? true : data.isExpo === "false" ? false : undefined,
   };
@@ -97,7 +93,7 @@ function serializeLaunchConfig(formData: FormData) {
     if (buildType === "standard") {
       if (platform === "ios") {
         newConfig.ios = {
-          scheme: undefinedIfAuto(data["ios.scheme"]),
+          scheme: undefinedIfEmpty(data["ios.scheme"]),
           configuration: undefinedIfEmpty(data["ios.configuration"]),
         };
       } else if (platform === "android") {
@@ -111,7 +107,7 @@ function serializeLaunchConfig(formData: FormData) {
         ...newConfig.customBuild,
         [platform]: {
           buildCommand: data[`customBuild.${platform}.buildCommand`],
-          fingerprintCommand: data[`customBuild.${platform}.fingerprintCommand`],
+          fingerprintCommand: undefinedIfEmpty(data[`customBuild.${platform}.fingerprintCommand`]),
         },
       };
     } else if (buildType === "eas") {
@@ -119,7 +115,7 @@ function serializeLaunchConfig(formData: FormData) {
         ...newConfig.eas,
         [platform]: {
           profile: data[`eas.${platform}.profile`],
-          buildUUID: data[`eas.${platform}.buildUUID`],
+          buildUUID: undefinedIfEmpty(data[`eas.${platform}.buildUUID`]),
         },
       };
     } else if (buildType === "eas-local") {
@@ -244,7 +240,7 @@ function LaunchConfigurationView({
             value={appRoot}
             name="appRoot"
             onChange={(e) => setAppRoot((e.target as HTMLSelectElement).value)}>
-            <Option value="auto">Detect automatically</Option>
+            <Option value="">Detect automatically</Option>
             {availableAppRoots.map((appRootOption) => (
               <Option key={appRootOption.value} value={appRootOption.value}>
                 {appRootOption.label}
@@ -258,7 +254,6 @@ function LaunchConfigurationView({
           <FormHelper>{launchConfigAttrs?.properties?.metroConfigPath?.description}</FormHelper>
           <TextField
             placeholder="Detect automatically"
-            required
             name="metroConfigPath"
             initialValue={launchConfig?.metroConfigPath ?? ""}
           />
@@ -270,8 +265,9 @@ function LaunchConfigurationView({
           <SingleSelect
             name="isExpo"
             initialValue={
-              launchConfig?.isExpo === undefined ? "Auto" : launchConfig.isExpo ? "true" : "false"
+              launchConfig?.isExpo === undefined ? "" : launchConfig.isExpo ? "true" : "false"
             }>
+            <Option value="">Detect automatically</Option>
             <Option value="true">Yes</Option>
             <Option value="false">No</Option>
           </SingleSelect>
@@ -419,8 +415,8 @@ function StandardBuildConfiguration({
           <FormHelper>
             {launchConfigAttrs?.properties?.ios?.properties?.scheme?.description}
           </FormHelper>
-          <SingleSelect initialValue={config?.ios?.scheme ?? "auto"} name="ios.scheme">
-            <Option disabled value="auto">
+          <SingleSelect initialValue={config?.ios?.scheme ?? ""} name="ios.scheme">
+            <Option disabled value="">
               Detect automatically
             </Option>
             {availableXcodeSchemes.map((scheme) => (
@@ -507,6 +503,7 @@ function CustomBuildConfiguration({
         <TextField
           placeholder="Enter the build command"
           initialValue={config?.customBuild?.[platform]?.buildCommand ?? ""}
+          required
           name={`customBuild.${platform}.buildCommand`}
         />
       </FormGroup>
@@ -598,6 +595,7 @@ function EasBuildConfiguration({
           combobox
           creatable
           required
+          position="above"
           name={`eas.${platform}.profile`}>
           {availableEasBuildProfiles.map((profile) => (
             <Option key={profile.value} value={profile.value} disabled={profile.disabled}>
