@@ -106,7 +106,7 @@ function serializeLaunchConfig(formData: FormData) {
         ...newConfig.eas,
         [platform]: {
           profile: data[`eas.${platform}.profile`],
-          buildUUID: data[`eas.${platform}.buildUUID`] ?? undefined,
+          buildUUID: data[`eas.${platform}.buildUUID`],
         },
       };
     } else if (buildType === "eas-local") {
