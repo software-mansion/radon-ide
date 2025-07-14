@@ -1,4 +1,4 @@
-import { forwardRef, useRef, useState } from "react";
+import { forwardRef, useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import classNames from "classnames";
 import IconButton, { IconButtonProps } from "./shared/IconButton";
@@ -21,10 +21,14 @@ export const IconButtonWithOptions = forwardRef<HTMLButtonElement, IconButtonWit
         <IconButton ref={ref} disabled={disabled} side="left" size="none" {...iconButtonProps}>
           {children}
         </IconButton>
-        <IconButton ref={ref} onClick={() => {
-          setOptionsOpen(!optionsOpen);
-        }}
-          disabled={disabled} side="right" size="none">
+        <IconButton
+          ref={ref}
+          onClick={() => {
+            setOptionsOpen(!optionsOpen);
+          }}
+          disabled={disabled}
+          side="right"
+          size="none">
           <DropdownMenuRoot open={optionsOpen} onOpenChange={setOptionsOpen}>
             <DropdownMenu.Trigger asChild disabled={disabled}>
               <div

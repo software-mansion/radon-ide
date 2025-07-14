@@ -6,7 +6,11 @@ interface DropdownMenuRootProps extends PropsWithChildren {
   onOpenChange?: (open: boolean) => void;
 }
 
-export function DropdownMenuRoot({ children, open: openExternal, onOpenChange }: DropdownMenuRootProps) {
+export function DropdownMenuRoot({
+  children,
+  open: openExternal,
+  onOpenChange,
+}: DropdownMenuRootProps) {
   const [openInternal, setOpenInternal] = useState(false);
 
   const open = openExternal !== undefined ? openExternal : openInternal;
