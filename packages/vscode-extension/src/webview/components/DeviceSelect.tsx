@@ -135,7 +135,7 @@ function DeviceSelect() {
 
   return (
     <Select.Root onValueChange={handleDeviceDropdownChange} value={value}>
-      <Select.Trigger className="device-select-trigger" disabled={hasNoDevices}>
+      <Select.Trigger className="device-select-trigger">
         <Select.Value>
           <div className="device-select-value">
             <span className={`codicon codicon-${iconClass}`} />
