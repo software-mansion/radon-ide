@@ -1,6 +1,7 @@
 import {
   commands,
   Disposable,
+  EventEmitter,
   MarkdownString,
   StatusBarAlignment,
   StatusBarItem,
@@ -16,10 +17,6 @@ import { ConnectState } from "../common/Project";
 const RADON_CONNECT_ENABLED_KEY = "radon_connect_enabled";
 export const RADON_CONNECT_PORT_KEY = "radon_connect_port";
 
-export interface ConnectorDelegate {
-  onConnectStateChanged(connectState: ConnectState): void;
-}
-
 export class Connector implements Disposable {
   private static instance: Connector | null = null;
 
@@ -28,7 +25,9 @@ export class Connector implements Disposable {
   private scanner: Scanner | null = null;
 
   private disposables: Disposable[] = [];
-  public delegate: ConnectorDelegate | null = null;
+
+  private connectStateChangedEmitter = new EventEmitter<ConnectState>();
+  public onConnectStateChanged = this.connectStateChangedEmitter.event;
 
   private constructor() {
     this.statusBarItem = window.createStatusBarItem(
@@ -108,6 +107,7 @@ export class Connector implements Disposable {
   public dispose() {
     this.disconnect();
     this.stopScanner();
+    this.connectStateChangedEmitter.dispose();
     disposeAll(this.disposables);
     commands.executeCommand("setContext", "RNIDE.showsStatusBarItem", false);
     Connector.instance = null;
@@ -170,18 +170,9 @@ export class Connector implements Disposable {
     this.maybeStartScanner();
   }
 
-  private printPortStatus(port: number) {
-    const status = this.scanner?.portsStatus.get(port);
-    if (status) {
-      return ` - ${port}: ${status}`;
-    } else {
-      return ` - ${port}`;
-    }
-  }
-
   private handleStateChange() {
-    // trigger delegate
-    this.delegate?.onConnectStateChanged({
+    // emit connect state changed event
+    this.connectStateChangedEmitter.fire({
       enabled: this.isEnabled,
       connected: this.isConnected,
     });

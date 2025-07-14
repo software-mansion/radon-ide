@@ -101,16 +101,16 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       },
     };
 
-    connector.delegate = {
-      onConnectStateChanged: (connectState) => {
+    this.disposables.push(
+      connector.onConnectStateChanged((connectState) => {
         this.updateProjectState({ connectState });
         if (connectState.enabled) {
           this.deviceSessionsManager.terminateAllSessions();
         } else {
           this.deviceSessionsManager.findInitialDeviceAndStartSession();
         }
-      },
-    };
+      })
+    );
 
     this.disposables.push(fingerprintProvider);
     this.disposables.push(refreshTokenPeriodically());
@@ -127,12 +127,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         });
       })
     );
-
-    this.disposables.push({
-      dispose: () => {
-        connector.delegate = null;
-      },
-    });
   }
 
   async createOrUpdateLaunchConfiguration(
