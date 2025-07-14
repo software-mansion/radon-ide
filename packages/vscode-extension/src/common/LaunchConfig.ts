@@ -36,6 +36,7 @@ export function optionsForLaunchConfiguration(
   config: LaunchConfiguration
 ): LaunchConfigurationOptions {
   const options: LaunchConfigurationOptions & Partial<LaunchConfiguration> = { ...config };
+  delete options.kind;
   delete options.absoluteAppRoot;
   if (options.preview?.waitForAppLaunch) {
     delete options.preview;
