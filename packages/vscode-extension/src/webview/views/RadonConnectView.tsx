@@ -12,7 +12,7 @@ export default function RadonConnectView() {
       <h3 className="radon-connect-text">
         {connected ? "Connected to metro" : "Start metro / expo on your computer"}
       </h3>
-      <h3 className="radon-connect-text">You can close this panel now</h3>
+      <h3 className="radon-connect-subtitle">You can close this panel now</h3>
     </div>
   );
 }
