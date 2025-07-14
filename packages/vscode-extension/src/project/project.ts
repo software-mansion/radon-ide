@@ -145,6 +145,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this
     );
     oldDeviceSessionsManager.dispose();
+    this.launchConfigsManager.saveInitialLaunchConfig(launchConfig);
     this.updateProjectState({
       appRootPath: this.relativeAppRootPath,
       selectedLaunchConfiguration: launchConfig,
