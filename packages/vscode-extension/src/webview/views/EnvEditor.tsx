@@ -31,6 +31,13 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
   };
 
   const startEditing = (key: string) => {
+    // Cancel any ongoing add operation
+    if (showAddForm) {
+      setShowAddForm(false);
+      setNewKey("");
+      setNewValue("");
+    }
+
     setEditingKey(key);
     setEditingKeyValue(key);
     setEditingValue(env[key] || "");
@@ -132,11 +139,15 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
                   </div>
                 ) : (
                   <div style={{ display: "flex", gap: "4px", justifyContent: "flex-end" }}>
-                    <ToolbarButton onClick={() => startEditing(key)}>
+                    <ToolbarButton
+                      onClick={() => startEditing(key)}
+                      title="Edit Environment Variable">
                       <span className="codicon codicon-edit" />
                     </ToolbarButton>
-                    <ToolbarButton onClick={() => deleteEntry(key)}>
-                      <span className="codicon codicon-trash" />
+                    <ToolbarButton
+                      onClick={() => deleteEntry(key)}
+                      title="Remove Environment Variable">
+                      <span className="codicon codicon-close" />
                     </ToolbarButton>
                   </div>
                 )}
@@ -168,7 +179,18 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
             </Button>
           </div>
         ) : (
-          <Button onClick={() => setShowAddForm(true)}>Add Item</Button>
+          <Button
+            onClick={() => {
+              // Cancel any ongoing edit operation
+              if (editingKey) {
+                setEditingKey(null);
+                setEditingKeyValue("");
+                setEditingValue("");
+              }
+              setShowAddForm(true);
+            }}>
+            Add Variable
+          </Button>
         )}
       </div>
       <input type="hidden" name="env" value={JSON.stringify(env)} />
