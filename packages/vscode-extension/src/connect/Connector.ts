@@ -186,7 +186,7 @@ export class Connector implements Disposable {
       connected: this.isConnected,
     });
 
-    // udpate status bar item
+    // update status bar item
     const markdownText = new MarkdownString();
     markdownText.supportThemeIcons = true;
     markdownText.isTrusted = true;
