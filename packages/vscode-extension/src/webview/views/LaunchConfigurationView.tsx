@@ -324,7 +324,7 @@ function BuildConfiguration({
         <SingleSelect
           value={buildType}
           name={`buildType.${platform}`}
-          onChange={(e) => setBuildType((e.target as HTMLSelectElement).value as any)}>
+          onChange={(e) => setBuildType((e.target as HTMLSelectElement).value as BuildType)}>
           <Option value="standard">Standard (recommended)</Option>
           <Option value="eas">EAS (Cloud-based builds)</Option>
           <Option value="eas-local">EAS Local Build</Option>
