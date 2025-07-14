@@ -5,6 +5,7 @@ import {
   useState,
   useCallback,
   useMemo,
+  useEffect,
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import { WorkspaceConfig, WorkspaceConfigProps } from "../../common/WorkspaceConfig";
@@ -29,12 +30,21 @@ const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
 export default function WorkspaceConfigProvider({ children }: PropsWithChildren) {
   const [config, setConfig] = useState<WorkspaceConfigProps>(INITIAL_WORKSPACE_CONFIG);
 
+  useEffect(() => {
+    function watchConfigChange(e: WorkspaceConfigProps) {
+      setConfig(e);
+    }
+
+    workspaceConfig.getConfig().then(watchConfigChange);
+    workspaceConfig.addListener("configChange", watchConfigChange);
+
+    return () => {
+      workspaceConfig.removeListener("configChange", watchConfigChange);
+    };
+  }, []);
+
   const update = useCallback(
-    <K extends keyof WorkspaceConfigProps>(
-      key: K,
-      value: WorkspaceConfigProps[K],
-      configurationTarget?: boolean
-    ) => {
+    <K extends keyof WorkspaceConfigProps>(key: K, value: WorkspaceConfigProps[K]) => {
       const newState = { ...config, [key]: value };
       setConfig(newState);
       workspaceConfig.update(key, value);
