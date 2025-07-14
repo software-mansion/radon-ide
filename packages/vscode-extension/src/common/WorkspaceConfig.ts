@@ -1,10 +1,8 @@
 export type PanelLocation = "tab" | "side-panel";
-export type ThemeType = "vscode" | "built-in";
 
 export type WorkspaceConfigProps = {
   panelLocation: PanelLocation;
   showDeviceFrame: boolean;
-  themeType: ThemeType;
   stopPreviousDevices: boolean;
 };
 
