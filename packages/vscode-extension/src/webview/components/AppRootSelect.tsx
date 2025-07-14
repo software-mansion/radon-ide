@@ -192,7 +192,7 @@ function AppRootSelect() {
     }
   })();
 
-  useUnknownConfigurationAlert(selectedValue === "unknown");
+  useUnknownConfigurationAlert(projectState.initialized && selectedValue === "unknown");
 
   const configurationsCount = detectedConfigurations.length + customConfigurations.length;
   const placeholder = configurationsCount === 0 ? "No applications found" : "Select application";
