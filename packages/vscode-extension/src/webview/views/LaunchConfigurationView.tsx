@@ -24,7 +24,7 @@ import {
 import extensionPackageJSON from "../../../package.json";
 
 /**
- * Vscode element components are controller, this is a simple wrapper allowing
+ * Vscode element components are controlled, this is a simple wrapper allowing
  * it to be used as not-controlled component with an initial value.
  */
 function TextField({
