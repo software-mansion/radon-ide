@@ -15,11 +15,11 @@ export function DropdownMenuRoot({
 
   const open = openExternal !== undefined ? openExternal : openInternal;
 
-  const handleSetOpen = (open: boolean) => {
+  const handleSetOpen = (e: boolean) => {
     if (onOpenChange) {
-      onOpenChange(open);
+      onOpenChange(e);
     }
-    setOpenInternal(open);
+    setOpenInternal(e);
   };
 
   useEffect(() => {
