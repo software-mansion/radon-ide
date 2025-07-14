@@ -1,6 +1,6 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LaunchConfiguration, LaunchConfigurationOptions } from "../../common/LaunchConfig";
 import { useModal } from "../providers/ModalProvider";
 import { useProject } from "../providers/ProjectProvider";
@@ -12,7 +12,6 @@ import {
 import {
   VscodeFormGroup as FormGroup,
   VscodeLabel as Label,
-  VscodeTextfield,
   VscodeSingleSelect,
   VscodeOption as Option,
   VscodeFormHelper as FormHelper,
@@ -20,9 +19,9 @@ import {
   VscodeTabPanel as TabPanel,
   VscodeTabs as Tabs,
   VscodeTabHeader as TabHeader,
-  VscodeTextarea,
 } from "@vscode-elements/react-elements";
 import extensionPackageJSON from "../../../package.json";
+import useFormValidityTrigger from "../hooks/useFormValidityTrigger";
 import EnvEditor from "./EnvEditor";
 
 /**
@@ -44,9 +43,31 @@ function wrapVscodeElement<T extends { value?: string; onChange?: (e: any) => vo
   };
 }
 
-const TextField = wrapVscodeElement(VscodeTextfield);
-const Textarea = wrapVscodeElement(VscodeTextarea);
-const SingleSelect = wrapVscodeElement(VscodeSingleSelect);
+function SingleSelect({
+  initialValue,
+  required: requiredProp,
+  ...props
+}: React.ComponentProps<typeof VscodeSingleSelect> & { initialValue?: string }) {
+  const [value, setValue] = useState(initialValue);
+  // The below is a workaround to an issue with vscode-elements single-select
+  // component, that crashes when required is set on initial mount as it expects
+  // the DOM elements to be present in order to dynamically update styles.
+  // The workaround is to set the 'required' prop in effect, once all
+  // the elements are mounted.
+  const [required, setRequired] = useState(false);
+  useEffect(() => {
+    setRequired(requiredProp ?? false);
+  }, [requiredProp]);
+
+  return (
+    <VscodeSingleSelect
+      value={value}
+      onChange={(e) => setValue((e.target as HTMLSelectElement).value)}
+      required={required}
+      {...props}
+    />
+  );
+}
 
 function getLaunchConfigAttrs() {
   const radonIDEDebugger = extensionPackageJSON.contributes?.debuggers?.find(
@@ -59,29 +80,11 @@ function undefinedIfEmpty(value: string) {
   return value === "" ? undefined : value;
 }
 
-function undefinedIfAuto(value: string) {
-  return value === "auto" ? undefined : value;
-}
-
-function formatAsJavaScriptObject(obj: Record<string, any>): string {
-  if (!obj || Object.keys(obj).length === 0) return "{}";
-
-  const entries = Object.entries(obj)
-    .map(([key, value]) => {
-      const keyStr = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `"${key}"`;
-      const valueStr = typeof value === "string" ? `"${value}"` : JSON.stringify(value);
-      return `  ${keyStr}: ${valueStr}`;
-    })
-    .join(",\n");
-
-  return `{\n${entries}\n}`;
-}
-
 function serializeLaunchConfig(formData: FormData) {
   const data = Object.fromEntries(formData as any);
   const newConfig: LaunchConfigurationOptions = {
-    name: data.name ?? undefined,
-    appRoot: undefinedIfAuto(data.appRoot),
+    name: undefinedIfEmpty(data.name),
+    appRoot: undefinedIfEmpty(data.appRoot),
     metroConfigPath: undefinedIfEmpty(data.metroConfigPath),
     isExpo: data.isExpo === "true" ? true : data.isExpo === "false" ? false : undefined,
   };
@@ -91,7 +94,7 @@ function serializeLaunchConfig(formData: FormData) {
     if (buildType === "standard") {
       if (platform === "ios") {
         newConfig.ios = {
-          scheme: undefinedIfAuto(data["ios.scheme"]),
+          scheme: undefinedIfEmpty(data["ios.scheme"]),
           configuration: undefinedIfEmpty(data["ios.configuration"]),
         };
       } else if (platform === "android") {
@@ -105,7 +108,7 @@ function serializeLaunchConfig(formData: FormData) {
         ...newConfig.customBuild,
         [platform]: {
           buildCommand: data[`customBuild.${platform}.buildCommand`],
-          fingerprintCommand: data[`customBuild.${platform}.fingerprintCommand`],
+          fingerprintCommand: undefinedIfEmpty(data[`customBuild.${platform}.fingerprintCommand`]),
         },
       };
     } else if (buildType === "eas") {
@@ -113,7 +116,7 @@ function serializeLaunchConfig(formData: FormData) {
         ...newConfig.eas,
         [platform]: {
           profile: data[`eas.${platform}.profile`],
-          buildUUID: data[`eas.${platform}.buildUUID`],
+          buildUUID: undefinedIfEmpty(data[`eas.${platform}.buildUUID`]),
         },
       };
     } else if (buildType === "eas-local") {
@@ -199,9 +202,27 @@ function LaunchConfigurationView({
 
   const launchConfigAttrs = useMemo(getLaunchConfigAttrs, []);
 
+  const [isValid, setIsValid] = useState(false);
+
+  const checkValidity = () => {
+    if (formContainerRef.current) {
+      setIsValid(formContainerRef.current.checkValidity());
+    }
+  };
+
+  useFormValidityTrigger(formContainerRef, checkValidity);
+
   return (
     <div className="launch-configuration-modal">
-      <form ref={formContainerRef} className="launch-configuration-container">
+      <form
+        ref={formContainerRef}
+        className="launch-configuration-container"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (formContainerRef.current?.checkValidity()) {
+            save();
+          }
+        }}>
         <FormGroup variant="settings-group">
           <Label>Name</Label>
           <FormHelper>
@@ -224,7 +245,7 @@ function LaunchConfigurationView({
             value={appRoot}
             name="appRoot"
             onChange={(e) => setAppRoot((e.target as HTMLSelectElement).value)}>
-            <Option value="auto">Detect automatically</Option>
+            <Option value="">Detect automatically</Option>
             {availableAppRoots.map((appRootOption) => (
               <Option key={appRootOption.value} value={appRootOption.value}>
                 {appRootOption.label}
@@ -249,11 +270,11 @@ function LaunchConfigurationView({
           <SingleSelect
             name="isExpo"
             initialValue={
-              launchConfig?.isExpo === undefined ? "Auto" : launchConfig.isExpo ? "true" : "false"
+              launchConfig?.isExpo === undefined ? "" : launchConfig.isExpo ? "true" : "false"
             }>
+            <Option value="">Detect automatically</Option>
             <Option value="true">Yes</Option>
             <Option value="false">No</Option>
-            <Option value="Auto">Detect automatically</Option>
           </SingleSelect>
         </FormGroup>
 
@@ -305,7 +326,9 @@ function LaunchConfigurationView({
             Delete
           </Button>
         )}
-        <Button onClick={save}>Save{isCurrentConfig ? " and restart" : ""}</Button>
+        <Button onClick={save} disabled={!isValid}>
+          Save{isCurrentConfig ? " and restart" : ""}
+        </Button>
       </div>
     </div>
   );
@@ -403,8 +426,8 @@ function StandardBuildConfiguration({
           <FormHelper>
             {launchConfigAttrs?.properties?.ios?.properties?.scheme?.description}
           </FormHelper>
-          <SingleSelect initialValue={config?.ios?.scheme ?? "auto"} name="ios.scheme">
-            <Option disabled value="auto">
+          <SingleSelect initialValue={config?.ios?.scheme ?? ""} name="ios.scheme">
+            <Option disabled value="">
               Detect automatically
             </Option>
             {availableXcodeSchemes.map((scheme) => (
@@ -491,6 +514,7 @@ function CustomBuildConfiguration({
         <TextField
           placeholder="Enter the build command"
           initialValue={config?.customBuild?.[platform]?.buildCommand ?? ""}
+          required
           name={`customBuild.${platform}.buildCommand`}
         />
       </FormGroup>
@@ -581,6 +605,8 @@ function EasBuildConfiguration({
           initialValue={initialBuildProfile}
           combobox
           creatable
+          required
+          position="above"
           name={`eas.${platform}.profile`}>
           {availableEasBuildProfiles.map((profile) => (
             <Option key={profile.value} value={profile.value} disabled={profile.disabled}>
