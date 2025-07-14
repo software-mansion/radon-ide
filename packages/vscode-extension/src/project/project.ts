@@ -44,7 +44,7 @@ import {
   launchConfigurationFromOptions,
   LaunchConfigurationsManager,
 } from "./launchConfigurationsManager";
-import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/LaunchConfig";
+import { LaunchConfigurationOptions } from "../common/LaunchConfig";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";

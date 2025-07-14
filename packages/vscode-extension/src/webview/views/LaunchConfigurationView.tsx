@@ -20,40 +20,33 @@ import {
   VscodeTabPanel as TabPanel,
   VscodeTabs as Tabs,
   VscodeTabHeader as TabHeader,
+  VscodeTextarea,
 } from "@vscode-elements/react-elements";
 import extensionPackageJSON from "../../../package.json";
+import EnvEditor from "./EnvEditor";
 
 /**
- * Vscode element components are controller, this is a simple wrapper allowing
- * it to be used as not-controlled component with an initial value.
+ * Vscode element components are controlled, this is a simple wrapper allowing
+ * it to be used as uncontrolled component with an initial value.
  */
-function TextField({
-  initialValue,
-  ...props
-}: React.ComponentProps<typeof VscodeTextfield> & { initialValue?: string }) {
-  const [value, setValue] = useState(initialValue);
-  return (
-    <VscodeTextfield
-      {...props}
-      value={value}
-      onInput={(e) => setValue((e.target as HTMLInputElement).value)}
-    />
-  );
+function wrapVscodeElement<T extends { value?: string; onChange?: (e: any) => void }>(
+  Component: React.ComponentType<T>
+) {
+  return function WrappedComponent({ initialValue, ...props }: T & { initialValue?: string }) {
+    const [value, setValue] = useState(initialValue);
+    return (
+      <Component
+        value={value}
+        onChange={(e: any) => setValue((e.target as HTMLInputElement).value)}
+        {...(props as T)}
+      />
+    );
+  };
 }
 
-function SingleSelect({
-  initialValue,
-  ...props
-}: React.ComponentProps<typeof VscodeSingleSelect> & { initialValue?: string }) {
-  const [value, setValue] = useState(initialValue);
-  return (
-    <VscodeSingleSelect
-      value={value}
-      onChange={(e) => setValue((e.target as HTMLSelectElement).value)}
-      {...props}
-    />
-  );
-}
+const TextField = wrapVscodeElement(VscodeTextfield);
+const Textarea = wrapVscodeElement(VscodeTextarea);
+const SingleSelect = wrapVscodeElement(VscodeSingleSelect);
 
 function getLaunchConfigAttrs() {
   const radonIDEDebugger = extensionPackageJSON.contributes?.debuggers?.find(
@@ -68,6 +61,20 @@ function undefinedIfEmpty(value: string) {
 
 function undefinedIfAuto(value: string) {
   return value === "auto" ? undefined : value;
+}
+
+function formatAsJavaScriptObject(obj: Record<string, any>): string {
+  if (!obj || Object.keys(obj).length === 0) return "{}";
+
+  const entries = Object.entries(obj)
+    .map(([key, value]) => {
+      const keyStr = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `"${key}"`;
+      const valueStr = typeof value === "string" ? `"${value}"` : JSON.stringify(value);
+      return `  ${keyStr}: ${valueStr}`;
+    })
+    .join(",\n");
+
+  return `{\n${entries}\n}`;
 }
 
 function serializeLaunchConfig(formData: FormData) {
@@ -138,6 +145,7 @@ type LaunchConfigAttrs = ReturnType<typeof getLaunchConfigAttrs>;
 
 function LaunchConfigurationView({ launchConfig }: { launchConfig?: LaunchConfigurationOptions }) {
   const { openModal, closeModal } = useModal();
+  console.log("launchConfig", launchConfig);
   const applicationRoots = useApplicationRoots();
 
   const { project } = useProject();
@@ -148,11 +156,14 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig?: LaunchConfig
   const [appRoot, setAppRoot] = useState<string>(
     launchConfig?.appRoot ?? applicationRoots[0]?.path ?? ""
   );
+  const [env, setEnv] = useState<Record<string, string>>(launchConfig?.env ?? {});
   const appRootConfig = useAppRootConfig(appRoot);
 
   async function save() {
     const formData = new FormData(formContainerRef?.current ?? undefined);
     const newLaunchConfig = serializeLaunchConfig(formData);
+    // Add env from state since it's not in the form
+    newLaunchConfig.env = Object.keys(env).length > 0 ? env : undefined;
     await project.createOrUpdateLaunchConfiguration(newLaunchConfig, launchConfig);
     closeModal();
   }
@@ -248,6 +259,12 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig?: LaunchConfig
             <Option value="false">No</Option>
             <Option value="Auto">Detect automatically</Option>
           </SingleSelect>
+        </FormGroup>
+
+        <FormGroup variant="settings-group">
+          <Label>Environment Variables</Label>
+          <FormHelper>{launchConfigAttrs?.properties?.env?.description}</FormHelper>
+          <EnvEditor initialValue={env} onChange={setEnv} />
         </FormGroup>
 
         <Tabs panel>
