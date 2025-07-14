@@ -4,8 +4,9 @@ import vscode from "vscode";
 import _ from "lodash";
 import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
-import { findAppRootCandidates } from "../utilities/extensionContext";
+import { extensionContext, findAppRootCandidates } from "../utilities/extensionContext";
 import { getLaunchConfigurations } from "../utilities/launchConfiguration";
+const INITIAL_LAUNCH_CONFIGURATION_KEY = "initialLaunchConfiguration";
 
 function findDefaultAppRoot(showWarning = false) {
   const appRoots = findAppRootCandidates();
@@ -101,6 +102,18 @@ export class LaunchConfigurationsManager implements Disposable {
   }
 
   public get initialLaunchConfiguration(): LaunchConfiguration {
+    const workspaceState = extensionContext.workspaceState;
+    const savedLaunchConfig = workspaceState.get<LaunchConfiguration | undefined>(
+      INITIAL_LAUNCH_CONFIGURATION_KEY
+    );
+    if (
+      savedLaunchConfig &&
+      this._launchConfigurations.find((config) => _.isEqual(config, savedLaunchConfig))
+    ) {
+      // If the saved launch config is still valid, return it
+      return savedLaunchConfig;
+    }
+    // Otherwise, return the first launch config or a default one
     if (this._launchConfigurations.length > 0) {
       return this._launchConfigurations[0];
     }
@@ -144,6 +157,11 @@ export class LaunchConfigurationsManager implements Disposable {
     if (newConfig !== undefined) {
       return launchConfigFromOptionsWithDefaultAppRoot(newConfig, defaultAppRoot);
     }
+  }
+
+  public saveInitialLaunchConfig(launchConfig: LaunchConfiguration) {
+    const workspaceState = extensionContext.workspaceState;
+    workspaceState.update(INITIAL_LAUNCH_CONFIGURATION_KEY, launchConfig);
   }
 
   dispose() {
