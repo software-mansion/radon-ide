@@ -1,6 +1,6 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { LaunchConfiguration, LaunchConfigurationOptions } from "../../common/LaunchConfig";
 import { useModal } from "../providers/ModalProvider";
 import { useProject } from "../providers/ProjectProvider";
@@ -22,6 +22,7 @@ import {
   VscodeTabHeader as TabHeader,
 } from "@vscode-elements/react-elements";
 import extensionPackageJSON from "../../../package.json";
+import useFormValidityTrigger from "../hooks/useFormValidityTrigger";
 
 /**
  * Vscode element components are controlled, this is a simple wrapper allowing
@@ -43,13 +44,25 @@ function TextField({
 
 function SingleSelect({
   initialValue,
+  required: requiredProp,
   ...props
 }: React.ComponentProps<typeof VscodeSingleSelect> & { initialValue?: string }) {
   const [value, setValue] = useState(initialValue);
+  // The below is a workaround to an issue with vscode-elements single-select
+  // component, that crashes when required is set on initial mount as it expects
+  // the DOM elements to be present in order to dynamically update styles.
+  // The workaround is to set the 'required' prop in effect, once all
+  // the elements are mounted.
+  const [required, setRequired] = useState(false);
+  useEffect(() => {
+    setRequired(requiredProp ?? false);
+  }, [requiredProp]);
+
   return (
     <VscodeSingleSelect
       value={value}
       onChange={(e) => setValue((e.target as HTMLSelectElement).value)}
+      required={required}
       {...props}
     />
   );
@@ -188,9 +201,27 @@ function LaunchConfigurationView({
 
   const launchConfigAttrs = useMemo(getLaunchConfigAttrs, []);
 
+  const [isValid, setIsValid] = useState(false);
+
+  const checkValidity = () => {
+    if (formContainerRef.current) {
+      setIsValid(formContainerRef.current.checkValidity());
+    }
+  };
+
+  useFormValidityTrigger(formContainerRef, checkValidity);
+
   return (
     <div className="launch-configuration-modal">
-      <form ref={formContainerRef} className="launch-configuration-container">
+      <form
+        ref={formContainerRef}
+        className="launch-configuration-container"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (formContainerRef.current?.checkValidity()) {
+            save();
+          }
+        }}>
         <FormGroup variant="settings-group">
           <Label>Name</Label>
           <FormHelper>
@@ -227,6 +258,7 @@ function LaunchConfigurationView({
           <FormHelper>{launchConfigAttrs?.properties?.metroConfigPath?.description}</FormHelper>
           <TextField
             placeholder="Detect automatically"
+            required
             name="metroConfigPath"
             initialValue={launchConfig?.metroConfigPath ?? ""}
           />
@@ -242,7 +274,6 @@ function LaunchConfigurationView({
             }>
             <Option value="true">Yes</Option>
             <Option value="false">No</Option>
-            <Option value="Auto">Detect automatically</Option>
           </SingleSelect>
         </FormGroup>
 
@@ -288,7 +319,9 @@ function LaunchConfigurationView({
             Delete
           </Button>
         )}
-        <Button onClick={save}>Save{isCurrentConfig ? " and restart" : ""}</Button>
+        <Button onClick={save} disabled={!isValid}>
+          Save{isCurrentConfig ? " and restart" : ""}
+        </Button>
       </div>
     </div>
   );
@@ -564,6 +597,7 @@ function EasBuildConfiguration({
           initialValue={initialBuildProfile}
           combobox
           creatable
+          required
           name={`eas.${platform}.profile`}>
           {availableEasBuildProfiles.map((profile) => (
             <Option key={profile.value} value={profile.value} disabled={profile.disabled}>
