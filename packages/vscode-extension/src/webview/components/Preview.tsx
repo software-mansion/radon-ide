@@ -20,7 +20,7 @@ import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import { Platform } from "../providers/UtilsProvider";
-import DimensionsBox from "./DimensionsBox";
+import InspectOverlay from "./InspectOverlay";
 import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
 import { useKeyPresses } from "../Preview/hooks";
@@ -106,41 +106,56 @@ function Preview({
 
   const openRebuildAlert = useNativeRebuildAlert();
 
-  function getTouchPosition(event: MouseEvent<HTMLDivElement>) {
-    const rotation = projectState.rotation;
-
+  function getNormalizedTouchCoordinates(event: MouseEvent<HTMLDivElement>, translated = false) {
+    /*
+    Converts mouse event coordinates to normalized touch coordinates ([0-1] range)
+    relative to the device preview image + accounting for device rotation.
+    The function handles coordinate transformation when the device
+    is rotated in landscape mode, ensuring touch events are sent to the correct
+    position on the actual device regardless of how it's displayed in the preview.
+    */
     const imgRect = previewRef.current!.getBoundingClientRect();
-
+    // Normalize coordinates to [0-1] range
     let x = (event.clientX - imgRect.left) / imgRect.width;
     let y = (event.clientY - imgRect.top) / imgRect.height;
 
-    // Original computed coordinates before rotation
+    // Original computed coordinates before traslation
     let newX = x;
     let newY = y;
 
-    switch (rotation) {
-      case DeviceRotationType.LandscapeLeft:
-        newX = 1 - y;
-        newY = x;
-        break;
-      case DeviceRotationType.LandscapeRight:
-        newX = y;
-        newY = 1 - x;
-        break;
-      default:
-        break;
+    if (translated) {
+      const rotation = projectState.rotation;
+      switch (rotation) {
+        // 90° anticlockwise map (x,y) to (1-y, x)
+        case DeviceRotationType.LandscapeLeft:
+          newX = 1 - y;
+          newY = x;
+          break;
+        case DeviceRotationType.LandscapeRight:
+          // 90° clockwise map (x,y) to (y, 1-x)
+          newX = y;
+          newY = 1 - x;
+          break;
+        default:
+          // Portrait mode: no transformation needed
+          break;
+      }
     }
 
+    // Ensure coordinates are clamped to [0, 1] range
     let clampedX = clamp(newX, 0, 1);
     let clampedY = clamp(newY, 0, 1);
-
     return { x: clampedX, y: clampedY };
+  }
+
+  function getTranslatedNormalizedTouchCoordinates(event: MouseEvent<HTMLDivElement>) {
+    return getNormalizedTouchCoordinates(event, true);
   }
 
   function moveAnchorPoint(event: MouseEvent<HTMLDivElement>) {
     let { x: anchorX, y: anchorY } = anchorPoint;
     const { x: prevPointX, y: prevPointY } = touchPoint;
-    const { x: newPointX, y: newPointY } = getTouchPosition(event);
+    const { x: newPointX, y: newPointY } = getTranslatedNormalizedTouchCoordinates(event);
     anchorX += newPointX - prevPointX;
     anchorY += newPointY - prevPointY;
     anchorX = clamp(anchorX, 0, 1);
@@ -157,12 +172,12 @@ function Preview({
       return;
     }
 
-    const { x, y } = getTouchPosition(event);
+    const { x, y } = getTranslatedNormalizedTouchCoordinates(event);
     project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
   }
 
   function sendMultiTouchForEvent(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
-    const pt = getTouchPosition(event);
+    const pt = getTranslatedNormalizedTouchCoordinates(event);
     sendMultiTouch(pt, type);
   }
 
@@ -191,7 +206,9 @@ function Preview({
     if (type === "Leave") {
       return;
     }
-    const { x: clampedX, y: clampedY } = getTouchPosition(event);
+
+    const { x: clampedX, y: clampedY } = getNormalizedTouchCoordinates(event);
+
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
     project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
@@ -217,6 +234,7 @@ function Preview({
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
+
   function resetInspector() {
     setInspectFrame(null);
     setInspectStackData(null);
@@ -232,7 +250,7 @@ function Preview({
     if (isInspecting) {
       sendInspect(e, "Move", false);
     } else if (isMultiTouching) {
-      setTouchPoint(getTouchPosition(e));
+      setTouchPoint(getTranslatedNormalizedTouchCoordinates(e));
       if (isPanning) {
         moveAnchorPoint(e);
       }
@@ -250,7 +268,7 @@ function Preview({
       return;
     }
 
-    const { x, y } = getTouchPosition(e);
+    const { x, y } = getTranslatedNormalizedTouchCoordinates(e);
 
     project.dispatchWheel({ xRatio: x, yRatio: y }, e.deltaX, e.deltaY);
   }
@@ -438,7 +456,7 @@ function Preview({
             x: 0.5,
             y: 0.5,
           });
-          setTouchPoint(getTouchPosition(currentMousePosition.current!));
+          setTouchPoint(getTranslatedNormalizedTouchCoordinates(currentMousePosition.current!));
           setIsMultiTouching(true);
         }
 
@@ -543,24 +561,12 @@ function Preview({
               )}
 
               {!replayData && inspectFrame && (
-                <div className="phone-screen phone-inspect-overlay">
-                  <div
-                    className="inspect-area"
-                    style={{
-                      left: `${inspectFrame.x * 100}%`,
-                      top: `${inspectFrame.y * 100}%`,
-                      width: `${inspectFrame.width * 100}%`,
-                      height: `${inspectFrame.height * 100}%`,
-                    }}
-                  />
-                  {isInspecting && (
-                    <DimensionsBox
-                      device={device}
-                      frame={inspectFrame}
-                      wrapperDivRef={wrapperDivRef}
-                    />
-                  )}
-                </div>
+                <InspectOverlay
+                  inspectFrame={inspectFrame}
+                  isInspecting={isInspecting}
+                  device={device!}
+                  wrapperDivRef={wrapperDivRef}
+                />
               )}
               {isRefreshing && (
                 <div className="phone-screen phone-refreshing-overlay">
