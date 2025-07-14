@@ -1,7 +1,7 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
 import { useMemo, useRef, useState } from "react";
-import { LaunchConfigurationOptions } from "../../common/LaunchConfig";
+import { LaunchConfiguration, LaunchConfigurationOptions } from "../../common/LaunchConfig";
 import { useModal } from "../providers/ModalProvider";
 import { useProject } from "../providers/ProjectProvider";
 import {
@@ -27,7 +27,7 @@ import EnvEditor from "./EnvEditor";
 
 /**
  * Vscode element components are controlled, this is a simple wrapper allowing
- * it to be used as uncontrolled component with an initial value.
+ * it to be used as not-controlled component with an initial value.
  */
 function wrapVscodeElement<T extends { value?: string; onChange?: (e: any) => void }>(
   Component: React.ComponentType<T>
@@ -79,7 +79,6 @@ function formatAsJavaScriptObject(obj: Record<string, any>): string {
 
 function serializeLaunchConfig(formData: FormData) {
   const data = Object.fromEntries(formData as any);
-  console.log("data", JSON.parse(JSON.stringify(data)));
   const newConfig: LaunchConfigurationOptions = {
     name: data.name ?? undefined,
     appRoot: undefinedIfAuto(data.appRoot),
@@ -90,24 +89,18 @@ function serializeLaunchConfig(formData: FormData) {
   for (const platform of ["ios", "android"] as const) {
     const buildType = data[`buildType.${platform}`];
     if (buildType === "standard") {
-      delete newConfig.customBuild?.[platform];
-      delete newConfig.eas?.[platform];
       if (platform === "ios") {
         newConfig.ios = {
-          ...newConfig.ios,
           scheme: undefinedIfAuto(data["ios.scheme"]),
           configuration: undefinedIfEmpty(data["ios.configuration"]),
         };
       } else if (platform === "android") {
         newConfig.android = {
-          ...newConfig.android,
           buildType: undefinedIfEmpty(data["android.buildType"]),
           productFlavor: undefinedIfEmpty(data["android.productFlavor"]),
         };
       }
     } else if (buildType === "custom") {
-      delete newConfig.eas?.[platform];
-      delete newConfig[platform];
       newConfig.customBuild = {
         ...newConfig.customBuild,
         [platform]: {
@@ -116,18 +109,14 @@ function serializeLaunchConfig(formData: FormData) {
         },
       };
     } else if (buildType === "eas") {
-      delete newConfig.customBuild?.[platform];
-      delete newConfig[platform];
       newConfig.eas = {
         ...newConfig.eas,
         [platform]: {
           profile: data[`eas.${platform}.profile`],
-          buildUUID: data[`eas.${platform}.buildUUID`] ?? undefined,
+          buildUUID: data[`eas.${platform}.buildUUID`],
         },
       };
     } else if (buildType === "eas-local") {
-      delete newConfig.customBuild?.[platform];
-      delete newConfig[platform];
       newConfig.eas = {
         ...newConfig.eas,
         [platform]: {
@@ -143,14 +132,18 @@ function serializeLaunchConfig(formData: FormData) {
 
 type LaunchConfigAttrs = ReturnType<typeof getLaunchConfigAttrs>;
 
-function LaunchConfigurationView({ launchConfig }: { launchConfig?: LaunchConfigurationOptions }) {
+function LaunchConfigurationView({
+  launchConfig,
+  isCurrentConfig,
+}: {
+  launchConfig?: LaunchConfiguration;
+  isCurrentConfig?: boolean;
+}) {
   const { openModal, closeModal } = useModal();
   console.log("launchConfig", launchConfig);
   const applicationRoots = useApplicationRoots();
 
   const { project } = useProject();
-
-  const isEditingSelectedConfig = !!launchConfig;
 
   const formContainerRef = useRef<HTMLFormElement>(null);
   const [appRoot, setAppRoot] = useState<string>(
@@ -180,7 +173,10 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig?: LaunchConfig
             onClick={() =>
               openModal(
                 "Launch Configuration",
-                <LaunchConfigurationView launchConfig={launchConfig} />
+                <LaunchConfigurationView
+                  launchConfig={launchConfig}
+                  isCurrentConfig={isCurrentConfig}
+                />
               )
             }>
             Cancel
@@ -309,7 +305,7 @@ function LaunchConfigurationView({ launchConfig }: { launchConfig?: LaunchConfig
             Delete
           </Button>
         )}
-        <Button onClick={save}>Save{isEditingSelectedConfig ? " and restart" : ""}</Button>
+        <Button onClick={save}>Save{isCurrentConfig ? " and restart" : ""}</Button>
       </div>
     </div>
   );
@@ -345,7 +341,7 @@ function BuildConfiguration({
         <SingleSelect
           value={buildType}
           name={`buildType.${platform}`}
-          onChange={(e) => setBuildType((e.target as HTMLSelectElement).value as any)}>
+          onChange={(e) => setBuildType((e.target as HTMLSelectElement).value as BuildType)}>
           <Option value="standard">Standard (recommended)</Option>
           <Option value="eas">EAS (Cloud-based builds)</Option>
           <Option value="eas-local">EAS Local Build</Option>

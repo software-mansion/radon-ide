@@ -25,14 +25,14 @@ function displayNameForConfig(config: LaunchConfigurationOptions) {
   return config.name;
 }
 
-function ConfigureButton({ onStopClick }: { onStopClick?: () => void }) {
+function ConfigureButton({ onClick }: { onClick?: () => void }) {
   return (
     <div
       onPointerUpCapture={(e) => {
         e.preventDefault();
         e.stopPropagation();
       }}
-      onClick={onStopClick}>
+      onClick={onClick}>
       <span className="codicon codicon-gear" />
     </div>
   );
@@ -43,7 +43,7 @@ function renderLaunchConfigurations(
   prefix: string,
   customLaunchConfigurations: LaunchConfigurationOptions[],
   selectedValue: string | undefined,
-  onEditConfig?: (config: LaunchConfiguration) => void
+  onEditConfig?: (config: LaunchConfiguration, isSelected: boolean) => void
 ) {
   if (customLaunchConfigurations.length === 0) {
     return null;
@@ -61,7 +61,11 @@ function renderLaunchConfigurations(
           subtitle={displayNameForConfig(config) ? config.appRoot : undefined}
           isSelected={selectedValue === `${prefix}:${idx}`}>
           {onEditConfig && (
-            <ConfigureButton onStopClick={() => onEditConfig(config as LaunchConfiguration)} />
+            <ConfigureButton
+              onClick={() =>
+                onEditConfig(config as LaunchConfiguration, selectedValue === `${prefix}:${idx}`)
+              }
+            />
           )}
         </RichSelectItem>
       ))}
@@ -88,7 +92,7 @@ function renderDetectedLaunchConfigurations(
 function renderCustomLaunchConfigurations(
   customLaunchConfigurations: LaunchConfigurationOptions[],
   selectedValue: string | undefined,
-  onEditConfig: (config: LaunchConfiguration) => void
+  onEditConfig: (config: LaunchConfiguration, isSelected: boolean) => void
 ) {
   if (customLaunchConfigurations.length === 0) {
     return null;
@@ -114,8 +118,11 @@ function AppRootSelect() {
   const selectedAppRoot = applicationRoots.find((root) => root.path === selectedAppRootPath);
   const { openModal } = useModal();
 
-  function onEditConfig(config: LaunchConfiguration) {
-    openModal("Launch Configuration", <LaunchConfigurationView launchConfig={config} />);
+  function onEditConfig(config: LaunchConfiguration, isSelected: boolean) {
+    openModal(
+      "Launch Configuration",
+      <LaunchConfigurationView launchConfig={config} isCurrentConfig={isSelected} />
+    );
   }
 
   const detectedConfigurations: LaunchConfigurationOptions[] = applicationRoots.map(
