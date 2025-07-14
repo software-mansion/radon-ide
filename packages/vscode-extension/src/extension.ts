@@ -330,9 +330,12 @@ class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDe
   ): Promise<vscode.DebugAdapterDescriptor> {
     const existingIDE = IDE.getInstanceIfExists();
     if (existingIDE) {
-      try {
-        await existingIDE.project.selectLaunchConfiguration(session.configuration);
-      } catch {}
+      await existingIDE.project.selectLaunchConfiguration(session.configuration).catch((error) => {
+        Logger.error("Failed to select initial launch configuration", error);
+        Logger.debug(
+          "These errors should be caught in the Project instance and handled gracefully. If you see this, there's a bug in the code."
+        );
+      });
     } else {
       IDE.initializeInstance({ initialLaunchConfig: session.configuration });
     }
