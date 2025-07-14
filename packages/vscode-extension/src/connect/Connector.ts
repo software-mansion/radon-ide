@@ -97,7 +97,7 @@ export class Connector implements Disposable {
   }
 
   public get isEnabled() {
-    return extensionContext.workspaceState.get(RADON_CONNECT_ENABLED_KEY, true);
+    return extensionContext.workspaceState.get(RADON_CONNECT_ENABLED_KEY, false);
   }
 
   public get isConnected() {
