@@ -456,6 +456,7 @@ function Preview({
     <>
       <div
         className="phone-wrapper"
+        data-test="phone-wrapper"
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>
