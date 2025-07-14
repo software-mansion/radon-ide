@@ -9,7 +9,7 @@ import {
   VscodeTextfield,
   VscodeButton as Button,
 } from "@vscode-elements/react-elements";
-import IconButton from "../components/shared/IconButton";
+import ToolbarButton from "../components/shared/VscodeToolbarButton";
 
 interface EnvEditorProps {
   initialValue?: Record<string, string>;
@@ -132,12 +132,12 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
                   </div>
                 ) : (
                   <div style={{ display: "flex", gap: "4px", justifyContent: "flex-end" }}>
-                    <IconButton onClick={() => startEditing(key)} type="secondary">
+                    <ToolbarButton onClick={() => startEditing(key)}>
                       <span className="codicon codicon-edit" />
-                    </IconButton>
-                    <IconButton onClick={() => deleteEntry(key)} type="secondary">
+                    </ToolbarButton>
+                    <ToolbarButton onClick={() => deleteEntry(key)}>
                       <span className="codicon codicon-trash" />
-                    </IconButton>
+                    </ToolbarButton>
                   </div>
                 )}
               </VscodeTableCell>
