@@ -1,12 +1,30 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { PropsWithChildren, useEffect, useState } from "react";
 
-export function DropdownMenuRoot({ children }: PropsWithChildren) {
-  const [open, setOpen] = useState(false);
+interface DropdownMenuRootProps extends PropsWithChildren {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function DropdownMenuRoot({
+  children,
+  open: openExternal,
+  onOpenChange,
+}: DropdownMenuRootProps) {
+  const [openInternal, setOpenInternal] = useState(false);
+
+  const open = openExternal !== undefined ? openExternal : openInternal;
+
+  const handleSetOpen = (e: boolean) => {
+    if (onOpenChange) {
+      onOpenChange(e);
+    }
+    setOpenInternal(e);
+  };
 
   useEffect(() => {
     const blurListener = () => {
-      setOpen(false);
+      handleSetOpen(false);
     };
     window.addEventListener("blur", blurListener);
     return () => {
@@ -15,7 +33,7 @@ export function DropdownMenuRoot({ children }: PropsWithChildren) {
   }, []);
 
   return (
-    <DropdownMenu.Root open={open} onOpenChange={setOpen}>
+    <DropdownMenu.Root open={open} onOpenChange={handleSetOpen}>
       {children}
     </DropdownMenu.Root>
   );

@@ -75,7 +75,6 @@ function Preview({
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
-  const [isPanning, setIsPanning] = useState(false);
   const [touchPoint, setTouchPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLImageElement>(null);
@@ -209,7 +208,7 @@ function Preview({
       sendInspect(e, "Move", false);
     } else if (isMultiTouching) {
       setTouchPoint(getTouchPosition(e));
-      if (isPanning) {
+      if (e.shiftKey) {
         moveAnchorPoint(e);
       }
       if (isPressing) {
@@ -355,7 +354,6 @@ function Preview({
 
     function onBlurChange() {
       if (!document.hasFocus()) {
-        setIsPanning(false);
         setIsMultiTouching(false);
         setIsPressing(false);
       }
@@ -407,8 +405,6 @@ function Preview({
           linux: e.code === "ControlLeft" || e.code === "ControlRight",
         });
 
-        const isPanningKey = e.code === "ShiftLeft" || e.code === "ShiftRight";
-
         if (isMultiTouchKey && isKeydown) {
           setAnchorPoint({
             x: 0.5,
@@ -422,10 +418,6 @@ function Preview({
           sendMultiTouch(touchPoint, "Up");
           setIsPressing(false);
           setIsMultiTouching(false);
-        }
-
-        if (isPanningKey) {
-          setIsPanning(isKeydown);
         }
 
         dispatchKeyPress(e);

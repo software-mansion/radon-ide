@@ -3,7 +3,6 @@ import {
   useContext,
   createContext,
   useState,
-  useEffect,
   useCallback,
   useMemo,
 } from "react";
@@ -19,7 +18,6 @@ type WorkspaceConfigContextType = WorkspaceConfigProps & {
 const INITIAL_WORKSPACE_CONFIG: WorkspaceConfigProps = {
   panelLocation: "tab",
   showDeviceFrame: true,
-  themeType: "vscode",
   stopPreviousDevices: false,
 };
 
@@ -30,20 +28,6 @@ const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
 
 export default function WorkspaceConfigProvider({ children }: PropsWithChildren) {
   const [config, setConfig] = useState<WorkspaceConfigProps>(INITIAL_WORKSPACE_CONFIG);
-
-  useEffect(() => {
-    function watchConfigChange(e: WorkspaceConfigProps) {
-      document.body.setAttribute("data-use-code-theme", `${e.themeType === "vscode"}`);
-      setConfig(e);
-    }
-
-    workspaceConfig.getConfig().then(watchConfigChange);
-    workspaceConfig.addListener("configChange", watchConfigChange);
-
-    return () => {
-      workspaceConfig.removeListener("configChange", watchConfigChange);
-    };
-  }, []);
 
   const update = useCallback(
     <K extends keyof WorkspaceConfigProps>(

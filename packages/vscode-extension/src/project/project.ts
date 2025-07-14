@@ -72,11 +72,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   constructor(
     private readonly deviceManager: DeviceManager,
-    private readonly utils: UtilsInterface
+    private readonly utils: UtilsInterface,
+    initialLaunchConfigOptions?: LaunchConfigurationOptions
   ) {
     const fingerprintProvider = new FingerprintProvider();
     const buildCache = new BuildCache(fingerprintProvider);
-    const initialLaunchConfig = this.launchConfigsManager.initialLaunchConfiguration;
+    const initialLaunchConfig = initialLaunchConfigOptions
+      ? launchConfigurationFromOptions(initialLaunchConfigOptions)
+      : this.launchConfigsManager.initialLaunchConfiguration;
     this.applicationContext = new ApplicationContext(initialLaunchConfig, buildCache);
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
@@ -145,6 +148,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this
     );
     oldDeviceSessionsManager.dispose();
+    this.launchConfigsManager.saveInitialLaunchConfig(launchConfig);
     this.updateProjectState({
       appRootPath: this.relativeAppRootPath,
       selectedLaunchConfiguration: launchConfig,

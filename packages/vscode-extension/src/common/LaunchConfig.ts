@@ -36,6 +36,7 @@ export function optionsForLaunchConfiguration(
   config: LaunchConfiguration
 ): LaunchConfigurationOptions {
   const options: LaunchConfigurationOptions & Partial<LaunchConfiguration> = { ...config };
+  delete options.kind;
   delete options.absoluteAppRoot;
   if (options.preview?.waitForAppLaunch) {
     delete options.preview;
@@ -54,7 +55,13 @@ export interface AndroidLaunchConfiguration {
   productFlavor?: string;
 }
 
+export enum LaunchConfigurationKind {
+  Custom = "Custom",
+  Detected = "Detected",
+}
+
 export type LaunchConfiguration = LaunchConfigurationOptions & {
+  kind: LaunchConfigurationKind;
   absoluteAppRoot: string;
   appRoot: string;
   env: Record<string, string>;

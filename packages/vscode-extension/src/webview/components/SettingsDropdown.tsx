@@ -22,7 +22,7 @@ interface SettingsDropdownProps {
 }
 
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
-  const { panelLocation, themeType, update } = useWorkspaceConfig();
+  const { panelLocation } = useWorkspaceConfig();
   const { openModal } = useModal();
   const { movePanelTo, reportIssue } = useUtils();
   const { telemetryEnabled } = useTelemetry();
@@ -116,34 +116,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               <div className="dropdown-menu-item-content">Report Issue</div>
             </span>
           </DropdownMenu.Item>
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
-              <span className="codicon codicon-layout" />
-              Theme
-              <span className="codicon codicon-chevron-right right-slot" />
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent
-                className="dropdown-menu-subcontent"
-                sideOffset={2}
-                alignOffset={-5}>
-                <DropdownMenu.Item
-                  className="dropdown-menu-item"
-                  onSelect={() => update("themeType", "vscode")}>
-                  Match editor theme
-                  {themeType === "vscode" && <span className="codicon codicon-check right-slot" />}
-                </DropdownMenu.Item>
-                <DropdownMenu.Item
-                  className="dropdown-menu-item"
-                  onSelect={() => update("themeType", "built-in")}>
-                  Use Radon IDE theme
-                  {themeType === "built-in" && (
-                    <span className="codicon codicon-check right-slot" />
-                  )}
-                </DropdownMenu.Item>
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
           {telemetryEnabled && <SendFeedbackItem />}
           <div className="dropdown-menu-item device-settings-version-text">
             Radon IDE version: {extensionVersion}

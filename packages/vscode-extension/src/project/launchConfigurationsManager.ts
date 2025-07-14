@@ -2,10 +2,15 @@ import path from "path";
 import { ConfigurationChangeEvent, Disposable, EventEmitter, workspace } from "vscode";
 import vscode from "vscode";
 import _ from "lodash";
-import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/LaunchConfig";
+import {
+  LaunchConfiguration,
+  LaunchConfigurationKind,
+  LaunchConfigurationOptions,
+} from "../common/LaunchConfig";
 import { Logger } from "../Logger";
-import { findAppRootCandidates } from "../utilities/extensionContext";
+import { extensionContext, findAppRootCandidates } from "../utilities/extensionContext";
 import { getLaunchConfigurations } from "../utilities/launchConfiguration";
+const INITIAL_LAUNCH_CONFIGURATION_KEY = "initialLaunchConfiguration";
 
 function findDefaultAppRoot(showWarning = false) {
   const appRoots = findAppRootCandidates();
@@ -37,7 +42,8 @@ export function launchConfigurationFromOptions(
 
 function launchConfigFromOptionsWithDefaultAppRoot(
   options: LaunchConfigurationOptions,
-  defaultAppRoot: string | undefined
+  defaultAppRoot: string | undefined,
+  launchConfigurationKind: LaunchConfigurationKind = LaunchConfigurationKind.Custom
 ): LaunchConfiguration {
   if ((options.appRoot ?? defaultAppRoot) === undefined) {
     const maybeName =
@@ -50,6 +56,7 @@ function launchConfigFromOptionsWithDefaultAppRoot(
   const appRoot = (options.appRoot ?? defaultAppRoot) as string;
   const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
   return {
+    kind: launchConfigurationKind,
     appRoot,
     absoluteAppRoot,
     env: {},
@@ -101,10 +108,26 @@ export class LaunchConfigurationsManager implements Disposable {
   }
 
   public get initialLaunchConfiguration(): LaunchConfiguration {
+    const workspaceState = extensionContext.workspaceState;
+    const savedLaunchConfig = workspaceState.get<LaunchConfiguration | undefined>(
+      INITIAL_LAUNCH_CONFIGURATION_KEY
+    );
+    if (
+      savedLaunchConfig &&
+      this._launchConfigurations.find((config) => _.isEqual(config, savedLaunchConfig))
+    ) {
+      // If the saved launch config is still valid, return it
+      return savedLaunchConfig;
+    }
+    // Otherwise, return the first launch config or a default one
     if (this._launchConfigurations.length > 0) {
       return this._launchConfigurations[0];
     }
-    return launchConfigFromOptionsWithDefaultAppRoot({}, findDefaultAppRoot(true));
+    return launchConfigFromOptionsWithDefaultAppRoot(
+      {},
+      findDefaultAppRoot(true),
+      LaunchConfigurationKind.Detected
+    );
   }
 
   public async createOrUpdateLaunchConfiguration(
@@ -144,6 +167,11 @@ export class LaunchConfigurationsManager implements Disposable {
     if (newConfig !== undefined) {
       return launchConfigFromOptionsWithDefaultAppRoot(newConfig, defaultAppRoot);
     }
+  }
+
+  public saveInitialLaunchConfig(launchConfig: LaunchConfiguration) {
+    const workspaceState = extensionContext.workspaceState;
+    workspaceState.update(INITIAL_LAUNCH_CONFIGURATION_KEY, launchConfig);
   }
 
   dispose() {

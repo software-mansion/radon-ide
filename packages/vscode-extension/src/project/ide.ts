@@ -6,6 +6,11 @@ import { Utils } from "../utilities/utils";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
+import { LaunchConfigurationOptions } from "../common/LaunchConfig";
+
+interface InitialOptions {
+  initialLaunchConfig?: LaunchConfigurationOptions;
+}
 
 export class IDE implements Disposable {
   private static instance: IDE | null = null;
@@ -19,10 +24,10 @@ export class IDE implements Disposable {
 
   private attachSemaphore = 0;
 
-  constructor() {
+  constructor({ initialLaunchConfig }: InitialOptions = {}) {
     this.deviceManager = new DeviceManager();
     this.utils = new Utils();
-    this.project = new Project(this.deviceManager, this.utils);
+    this.project = new Project(this.deviceManager, this.utils, initialLaunchConfig);
     this.workspaceConfigController = new WorkspaceConfigController();
 
     this.disposables.push(this.project, this.workspaceConfigController);
@@ -67,6 +72,22 @@ export class IDE implements Disposable {
     const ide = IDE.instance;
     ide.attachSemaphore += 1;
     return ide;
+  }
+
+  /**
+   * Initializes a new singleton instance of the `IDE` class with the provided options.
+   * Throws an error if an instance already exists.
+   *
+   * @param initialOptions - Optional configuration options for initializing the IDE instance.
+   * @returns The attached `IDE` instance.
+   * @throws {Error} If an IDE instance already exists.
+   */
+  public static initializeInstance(initialOptions: InitialOptions = {}): IDE {
+    if (this.getInstanceIfExists()) {
+      throw new Error("IDE instance already exists");
+    }
+    IDE.instance = new IDE(initialOptions);
+    return IDE.attach();
   }
 
   public static getInstanceIfExists(): IDE | null {

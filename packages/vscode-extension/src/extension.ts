@@ -325,10 +325,28 @@ export async function activate(context: ExtensionContext) {
 }
 
 class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
-  createDebugAdapterDescriptor(
+  async createDebugAdapterDescriptor(
     session: vscode.DebugSession
-  ): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
-    commands.executeCommand("RNIDE.openPanel");
+  ): Promise<vscode.DebugAdapterDescriptor> {
+    let attachedInstance: IDE | undefined = undefined;
+
+    const existingIDE = IDE.getInstanceIfExists();
+    if (existingIDE) {
+      await existingIDE.project.selectLaunchConfiguration(session.configuration).catch((error) => {
+        Logger.error("Failed to select initial launch configuration", error);
+        Logger.debug(
+          "These errors should be caught in the Project instance and handled gracefully. If you see this, there's a bug in the code."
+        );
+      });
+    } else {
+      attachedInstance = IDE.initializeInstance({ initialLaunchConfig: session.configuration });
+    }
+
+    try {
+      await commands.executeCommand("RNIDE.openPanel");
+    } finally {
+      attachedInstance?.detach();
+    }
     // we can't return undefined or throw here because then VSCode displays an ugly error dialog
     // so we return a dummy adapter that calls echo command and exists immediately
     return new DebugAdapterExecutable("echo", ["noop"]);
