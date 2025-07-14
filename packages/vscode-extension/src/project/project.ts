@@ -40,6 +40,7 @@ import { DeviceSessionsManager, DeviceSessionsManagerDelegate } from "./DeviceSe
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 import { FingerprintProvider } from "./FingerprintProvider";
 import { BuildCache } from "../builders/BuildCache";
+import { Connector } from "../connect/Connector";
 import {
   launchConfigurationFromOptions,
   LaunchConfigurationsManager,
@@ -87,6 +88,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this
     );
 
+    const connector = Connector.getInstance();
+
     this.projectState = {
       selectedSessionId: null,
       deviceSessions: {},
@@ -95,7 +98,22 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       previewZoom: undefined,
       selectedLaunchConfiguration: initialLaunchConfig,
       customLaunchConfigurations: this.launchConfigsManager.launchConfigurations,
+      connectState: {
+        enabled: connector.isEnabled,
+        connected: connector.isConnected,
+      },
     };
+
+    this.disposables.push(
+      connector.onConnectStateChanged((connectState) => {
+        this.updateProjectState({ connectState });
+        if (connectState.enabled) {
+          this.deviceSessionsManager.terminateAllSessions();
+        } else {
+          this.deviceSessionsManager.findInitialDeviceAndStartSession();
+        }
+      })
+    );
 
     this.disposables.push(fingerprintProvider);
     this.disposables.push(refreshTokenPeriodically());
@@ -514,6 +532,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         await this.deviceSessionsManager.reloadCurrentSession("reboot");
       }
     }
+  }
+
+  public async enableRadonConnect() {
+    Connector.getInstance().enable();
+  }
+
+  public async disableRadonConnect() {
+    Connector.getInstance().disable();
   }
 
   onToolsStateChange = (toolsState: ToolsState) => {
