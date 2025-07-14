@@ -75,17 +75,15 @@ export class Connector implements Disposable {
           } else {
             extensionContext.workspaceState.update(RADON_CONNECT_PORT_KEY, parseInt(port));
           }
-          extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, true);
-          this.maybeStartScanner(true);
-          this.handleStateChange();
+          this.enable(true);
         }
       })
     );
   }
 
-  public enable() {
+  public enable(forceStartScanner: boolean = false) {
     extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, true);
-    this.maybeStartScanner();
+    this.maybeStartScanner(forceStartScanner);
     this.handleStateChange();
   }
 

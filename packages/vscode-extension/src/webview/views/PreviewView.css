@@ -66,12 +66,7 @@
   background-color: var(--swm-separator);
 }
 
-.missing-device-filler {
-  display: flex;
-  flex-grow: 1;
-  align-items: center;
-  justify-content: center;
-}
+
 
 .device-select {
   min-width: 200px;

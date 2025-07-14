@@ -137,9 +137,9 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
         <div className="devices-not-found-button-group">
           {Platform.OS === "macos" && (
             <Button
+              className="devices-not-found-quick-action"
               disabled={isIOSCreating}
               type="ternary"
-              className="devices-not-found-quick-action"
               onClick={createIOSDevice}>
               {isIOSCreating && <VscodeProgressRing className="devices-not-found-button-spinner" />}
               Add iPhone
@@ -147,9 +147,9 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
           )}
 
           <Button
+            className="devices-not-found-quick-action"
             disabled={isAndroidCreating}
             type="ternary"
-            className="devices-not-found-quick-action"
             onClick={createAndroidDevice}>
             {isAndroidCreating && (
               <VscodeProgressRing className="devices-not-found-button-spinner" />
@@ -168,6 +168,15 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
         <span className="codicon codicon-add" />
         Create new device
       </Button>
+      <h2 className="devices-not-found-title">Bring your own device or simulator</h2>
+      <Button onClick={openCreateNewDeviceModal}>
+        <span className="codicon codicon-debug-disconnect" />
+        Enable Radon Connect
+      </Button>
+      <p className="devices-not-found-subtitle">
+        Radon Connect allows you to work with existing Metro server, and your own devices or
+        simulators connected with it.
+      </p>
     </div>
   );
 }
