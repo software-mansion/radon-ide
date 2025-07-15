@@ -15,10 +15,8 @@ async function updateMcpConfig(port: number, mcpVersion: string) {
   await writeMcpConfig(updatedConfig);
 }
 
-function directLoadRadonAI() {
+function directLoadRadonAI(server: LocalMcpServer) {
   const didChangeEmitter = new EventEmitter<void>();
-
-  const server = new LocalMcpServer();
 
   let versionSuffix = 0;
 
@@ -48,11 +46,8 @@ function directLoadRadonAI() {
   );
 }
 
-async function fsLoadRadonAI(mcpVersion: string) {
+async function fsLoadRadonAI(server: LocalMcpServer, mcpVersion: string) {
   try {
-    // TODO: Use centralized version tracking once #1313 is merged
-    const server = new LocalMcpServer();
-
     // Server has to be online before the config is written
     const port = await server.getPort();
 
@@ -76,16 +71,17 @@ function isDirectLoadingAvailable() {
 }
 
 export default function registerRadonAi() {
+  const server = new LocalMcpServer();
+
   if (isDirectLoadingAvailable()) {
-    directLoadRadonAI();
+    directLoadRadonAI(server);
   } else {
-    const server = new LocalMcpServer();
     let versionSuffix = 0;
 
     extensionContext.subscriptions.push(
       watchLicenseTokenChange(() => {
         server.setVersionSuffix(versionSuffix++);
-        fsLoadRadonAI(server.getVersion());
+        fsLoadRadonAI(server, server.getVersion());
       })
     );
   }

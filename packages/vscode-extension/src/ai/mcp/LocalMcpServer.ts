@@ -9,8 +9,6 @@ import { Session } from "./models";
 import { extensionContext } from "../../utilities/extensionContext";
 
 export class LocalMcpServer {
-  private static instance: LocalMcpServer;
-
   private session: Session | null = null;
 
   private expressServer: express.Express | null = null;
@@ -21,15 +19,8 @@ export class LocalMcpServer {
   private versionSuffix: number = 0;
 
   constructor() {
-    if (LocalMcpServer.instance) {
-      return LocalMcpServer.instance;
-    }
-
-    LocalMcpServer.instance = this;
-
-    // Deferred promise. This syntax is akward, but there isn't another way of implementing it.
-    // The this.setServerPort is set immediately & synchronously.
-    this.serverPort = new Promise((resolve) => {
+    // Deferred promise. The this.setServerPort is set immediately & synchronously.
+    this.serverPort = new Promise<number>((resolve) => {
       this.setServerPort = resolve;
     });
 
