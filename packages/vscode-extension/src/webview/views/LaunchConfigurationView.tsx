@@ -23,11 +23,8 @@ import {
 } from "@vscode-elements/react-elements";
 import extensionPackageJSON from "../../../package.json";
 import useFormValidity from "../hooks/useFormValidity";
+import EnvEditor from "./EnvEditor";
 
-/**
- * Vscode element components are controlled, this is a simple wrapper allowing
- * it to be used as not-controlled component with an initial value.
- */
 function TextField({
   initialValue,
   ...props
@@ -35,9 +32,9 @@ function TextField({
   const [value, setValue] = useState(initialValue);
   return (
     <VscodeTextfield
-      {...props}
       value={value}
       onInput={(e) => setValue((e.target as HTMLInputElement).value)}
+      {...props}
     />
   );
 }
@@ -86,6 +83,7 @@ function serializeLaunchConfig(formData: FormData) {
     appRoot: undefinedIfEmpty(data.appRoot),
     metroConfigPath: undefinedIfEmpty(data.metroConfigPath),
     isExpo: data.isExpo === "true" ? true : data.isExpo === "false" ? false : undefined,
+    env: data.env ? JSON.parse(data.env) : undefined,
   };
 
   for (const platform of ["ios", "android"] as const) {
@@ -204,6 +202,10 @@ function LaunchConfigurationView({
         className="launch-configuration-container"
         onSubmit={(e) => {
           e.preventDefault();
+          // if active element has data-no-submit, don't submit
+          if (document.activeElement?.hasAttribute("data-no-submit")) {
+            return;
+          }
           if (formContainerRef.current?.checkValidity()) {
             save();
           }
@@ -263,6 +265,12 @@ function LaunchConfigurationView({
           </SingleSelect>
         </FormGroup>
 
+        <FormGroup variant="settings-group">
+          <Label>Environment Variables</Label>
+          <FormHelper>{launchConfigAttrs?.properties?.env?.description}</FormHelper>
+          <EnvEditor initialValue={launchConfig?.env ?? {}} />
+        </FormGroup>
+
         <Tabs panel>
           <TabHeader>iOS Build Settings</TabHeader>
           <TabPanel panel>
@@ -305,7 +313,7 @@ function LaunchConfigurationView({
             Delete
           </Button>
         )}
-        <Button onClick={save} disabled={!useFormValidity(formContainerRef)}>
+        <Button onClick={save} disabled={!useFormValidity(formContainerRef)} type="submit">
           Save{isCurrentConfig ? " and restart" : ""}
         </Button>
       </div>

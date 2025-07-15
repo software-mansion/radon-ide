@@ -1,0 +1,18 @@
+.env-editor-table {
+  margin-bottom: 8px;
+  margin-top: 8px;
+}
+
+.env-editor-table-cell-actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 4px;
+  margin: 4px 0;
+}
+
+.env-editor-add-form {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
