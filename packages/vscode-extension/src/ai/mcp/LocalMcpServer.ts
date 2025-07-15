@@ -109,15 +109,15 @@ export class LocalMcpServer {
     app.get("/mcp", this.handleSessionRequest);
     app.delete("/mcp", this.handleSessionRequest);
 
+    this.expressServer = app;
+
     const listener = this.expressServer?.listen(0, "127.0.0.1");
 
     listener?.on("listening", () => {
       // On "listening", listener.address() will always return AddressInfo
       const addressInfo = listener.address() as AddressInfo;
       this.setServerPort?.(addressInfo.port);
-      Logger.info(`Started local MCP server on port ${this.serverPort}.`);
+      Logger.info(`Started local MCP server on port ${addressInfo.port}.`);
     });
-
-    this.expressServer = app;
   }
 }
