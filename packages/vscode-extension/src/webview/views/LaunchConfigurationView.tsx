@@ -22,7 +22,7 @@ import {
   VscodeTabHeader as TabHeader,
 } from "@vscode-elements/react-elements";
 import extensionPackageJSON from "../../../package.json";
-import useFormValidityTrigger from "../hooks/useFormValidityTrigger";
+import useFormValidity from "../hooks/useFormValidity";
 import EnvEditor from "./EnvEditor";
 
 function TextField({
@@ -198,16 +198,6 @@ function LaunchConfigurationView({
 
   const launchConfigAttrs = useMemo(getLaunchConfigAttrs, []);
 
-  const [isValid, setIsValid] = useState(false);
-
-  const checkValidity = () => {
-    if (formContainerRef.current) {
-      setIsValid(formContainerRef.current.checkValidity());
-    }
-  };
-
-  useFormValidityTrigger(formContainerRef, checkValidity);
-
   return (
     <div className="launch-configuration-modal">
       <form
@@ -322,7 +312,7 @@ function LaunchConfigurationView({
             Delete
           </Button>
         )}
-        <Button onClick={save} disabled={!isValid}>
+        <Button onClick={save} disabled={!useFormValidity(formContainerRef)}>
           Save{isCurrentConfig ? " and restart" : ""}
         </Button>
       </div>
