@@ -31,7 +31,8 @@ function BuildErrorActions({
           openModal(
             "Launch Configuration",
             <LaunchConfigurationView
-              launchConfigToUpdate={projectState.selectedLaunchConfiguration}
+              launchConfig={projectState.selectedLaunchConfiguration}
+              isCurrentConfig
             />
           );
         }}

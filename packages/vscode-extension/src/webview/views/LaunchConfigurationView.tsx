@@ -1,57 +1,161 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import _ from "lodash";
-import Label from "../components/shared/Label";
-import { ApplicationRoot } from "../../common/AppRootConfig";
-import {
-  EasConfig,
-  LaunchConfiguration,
-  LaunchConfigurationOptions,
-  optionsForLaunchConfiguration,
-} from "../../common/LaunchConfig";
-import Select from "../components/shared/Select";
+import { LaunchConfiguration, LaunchConfigurationOptions } from "../../common/LaunchConfig";
 import { useModal } from "../providers/ModalProvider";
-import Button from "../components/shared/Button";
-import { Input } from "../components/shared/Input";
-import { EasBuildConfig } from "../../common/EasConfig";
 import { useProject } from "../providers/ProjectProvider";
-import { useApplicationRoots, useAppRootConfig } from "../providers/ApplicationRootsProvider";
+import {
+  AppRootConfig,
+  useApplicationRoots,
+  useAppRootConfig,
+} from "../providers/ApplicationRootsProvider";
+import {
+  VscodeFormGroup as FormGroup,
+  VscodeLabel as Label,
+  VscodeTextfield,
+  VscodeSingleSelect,
+  VscodeOption as Option,
+  VscodeFormHelper as FormHelper,
+  VscodeButton as Button,
+  VscodeTabPanel as TabPanel,
+  VscodeTabs as Tabs,
+  VscodeTabHeader as TabHeader,
+} from "@vscode-elements/react-elements";
+import extensionPackageJSON from "../../../package.json";
+import useFormValidity from "../hooks/useFormValidity";
 
-interface LaunchConfigurationViewProps {
-  launchConfigToUpdate?: LaunchConfiguration;
+/**
+ * Vscode element components are controlled, this is a simple wrapper allowing
+ * it to be used as not-controlled component with an initial value.
+ */
+function TextField({
+  initialValue,
+  ...props
+}: React.ComponentProps<typeof VscodeTextfield> & { initialValue?: string }) {
+  const [value, setValue] = useState(initialValue);
+  return (
+    <VscodeTextfield
+      {...props}
+      value={value}
+      onInput={(e) => setValue((e.target as HTMLInputElement).value)}
+    />
+  );
 }
 
-function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationViewProps) {
+function SingleSelect({
+  initialValue,
+  required: requiredProp,
+  ...props
+}: React.ComponentProps<typeof VscodeSingleSelect> & { initialValue?: string }) {
+  const [value, setValue] = useState(initialValue);
+  // The below is a workaround to an issue with vscode-elements single-select
+  // component, that crashes when required is set on initial mount as it expects
+  // the DOM elements to be present in order to dynamically update styles.
+  // The workaround is to set the 'required' prop in effect, once all
+  // the elements are mounted.
+  const [required, setRequired] = useState(false);
+  useEffect(() => {
+    setRequired(requiredProp ?? false);
+  }, [requiredProp]);
+
+  return (
+    <VscodeSingleSelect
+      value={value}
+      onChange={(e) => setValue((e.target as HTMLSelectElement).value)}
+      required={required}
+      {...props}
+    />
+  );
+}
+
+function getLaunchConfigAttrs() {
+  const radonIDEDebugger = extensionPackageJSON.contributes?.debuggers?.find(
+    (config) => config.type === "radon-ide"
+  );
+  return radonIDEDebugger?.configurationAttributes?.launch;
+}
+
+function undefinedIfEmpty(value: string) {
+  return value === "" ? undefined : value;
+}
+
+function serializeLaunchConfig(formData: FormData) {
+  const data = Object.fromEntries(formData as any);
+  const newConfig: LaunchConfigurationOptions = {
+    name: undefinedIfEmpty(data.name),
+    appRoot: undefinedIfEmpty(data.appRoot),
+    metroConfigPath: undefinedIfEmpty(data.metroConfigPath),
+    isExpo: data.isExpo === "true" ? true : data.isExpo === "false" ? false : undefined,
+  };
+
+  for (const platform of ["ios", "android"] as const) {
+    const buildType = data[`buildType.${platform}`];
+    if (buildType === "standard") {
+      if (platform === "ios") {
+        newConfig.ios = {
+          scheme: undefinedIfEmpty(data["ios.scheme"]),
+          configuration: undefinedIfEmpty(data["ios.configuration"]),
+        };
+      } else if (platform === "android") {
+        newConfig.android = {
+          buildType: undefinedIfEmpty(data["android.buildType"]),
+          productFlavor: undefinedIfEmpty(data["android.productFlavor"]),
+        };
+      }
+    } else if (buildType === "custom") {
+      newConfig.customBuild = {
+        ...newConfig.customBuild,
+        [platform]: {
+          buildCommand: data[`customBuild.${platform}.buildCommand`],
+          fingerprintCommand: undefinedIfEmpty(data[`customBuild.${platform}.fingerprintCommand`]),
+        },
+      };
+    } else if (buildType === "eas") {
+      newConfig.eas = {
+        ...newConfig.eas,
+        [platform]: {
+          profile: data[`eas.${platform}.profile`],
+          buildUUID: undefinedIfEmpty(data[`eas.${platform}.buildUUID`]),
+        },
+      };
+    } else if (buildType === "eas-local") {
+      newConfig.eas = {
+        ...newConfig.eas,
+        [platform]: {
+          profile: data[`eas.${platform}.profile`],
+          local: true,
+        },
+      };
+    }
+  }
+
+  return newConfig;
+}
+
+type LaunchConfigAttrs = ReturnType<typeof getLaunchConfigAttrs>;
+
+function LaunchConfigurationView({
+  launchConfig,
+  isCurrentConfig,
+}: {
+  launchConfig?: LaunchConfiguration;
+  isCurrentConfig?: boolean;
+}) {
   const { openModal, closeModal } = useModal();
   const applicationRoots = useApplicationRoots();
 
-  const { project, projectState } = useProject();
+  const { project } = useProject();
 
-  const isEditingSelectedConfig = useMemo(
-    () => _.isEqual(projectState.selectedLaunchConfiguration, launchConfigToUpdate),
-    [projectState.selectedLaunchConfiguration, launchConfigToUpdate]
+  const formContainerRef = useRef<HTMLFormElement>(null);
+  const [appRoot, setAppRoot] = useState<string>(
+    launchConfig?.appRoot ?? applicationRoots[0]?.path ?? ""
   );
-
-  const [newLaunchConfigOptions, setNewLaunchConfigOptions] = useState<LaunchConfigurationOptions>(
-    launchConfigToUpdate ? optionsForLaunchConfiguration(launchConfigToUpdate) : {}
-  );
-  const { android, appRoot, ios, eas, isExpo, metroConfigPath } = newLaunchConfigOptions;
-  const { xcodeSchemes, easBuildProfiles } = useAppRootConfig(appRoot ?? applicationRoots[0]?.path);
-
-  function update<K extends keyof LaunchConfigurationOptions>(
-    key: K,
-    value: LaunchConfigurationOptions[K] | "Auto"
-  ) {
-    if (value === "Auto") {
-      value = undefined;
-    }
-    newLaunchConfigOptions[key] = value;
-    setNewLaunchConfigOptions({ ...newLaunchConfigOptions });
-  }
+  const appRootConfig = useAppRootConfig(appRoot);
 
   async function save() {
-    await project.createOrUpdateLaunchConfiguration(newLaunchConfigOptions, launchConfigToUpdate);
+    const formData = new FormData(formContainerRef?.current ?? undefined);
+    const newLaunchConfig = serializeLaunchConfig(formData);
+    await project.createOrUpdateLaunchConfiguration(newLaunchConfig, launchConfig);
     closeModal();
   }
 
@@ -67,14 +171,17 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
             onClick={() =>
               openModal(
                 "Launch Configuration",
-                <LaunchConfigurationView launchConfigToUpdate={launchConfigToUpdate} />
+                <LaunchConfigurationView
+                  launchConfig={launchConfig}
+                  isCurrentConfig={isCurrentConfig}
+                />
               )
             }>
             Cancel
           </Button>
           <Button
             onClick={() => {
-              project.createOrUpdateLaunchConfiguration(undefined, launchConfigToUpdate);
+              project.createOrUpdateLaunchConfiguration(undefined, launchConfig);
               closeModal();
             }}>
             Delete
@@ -84,351 +191,333 @@ function LaunchConfigurationView({ launchConfigToUpdate }: LaunchConfigurationVi
     );
   }
 
-  return (
-    <div className="launch-configuration-modal">
-      <div className="launch-configuration-container">
-        <Label>Name</Label>
-        <NameConfiguration name={newLaunchConfigOptions.name} update={update} />
-        <div className="launch-configuration-section-margin" />
-
-        <Label>iOS</Label>
-        <IosConfiguration
-          scheme={ios?.scheme}
-          configuration={ios?.configuration}
-          update={update}
-          xcodeSchemes={xcodeSchemes}
-        />
-        <div className="launch-configuration-section-margin" />
-
-        <Label>Android</Label>
-        <AndroidConfiguration
-          buildType={android?.buildType}
-          productFlavor={android?.productFlavor}
-          update={update}
-        />
-
-        <div className="launch-configuration-section-margin" />
-
-        <Label>App Root</Label>
-        <AppRootConfiguration
-          appRoot={appRoot}
-          update={update}
-          applicationRoots={applicationRoots}
-        />
-        <div className="launch-configuration-section-margin" />
-
-        <Label>metro Config Path</Label>
-        <MetroConfigPathConfiguration metroConfigPath={metroConfigPath} update={update} />
-
-        <div className="launch-configuration-section-margin" />
-
-        <Label>is Expo</Label>
-        <IsExpoConfiguration isExpo={isExpo} update={update} />
-
-        <div className="launch-configuration-section-margin" />
-
-        <Label>EAS Build</Label>
-        <EasBuildConfiguration
-          platform="ios"
-          eas={eas}
-          update={update}
-          easBuildProfiles={easBuildProfiles}
-        />
-        <EasBuildConfiguration
-          platform="android"
-          eas={eas}
-          update={update}
-          easBuildProfiles={easBuildProfiles}
-        />
-      </div>
-      <div className="launch-configuration-section-margin" />
-
-      <div className="launch-configuration-button-group">
-        {launchConfigToUpdate && (
-          <Button
-            className="button-secondary"
-            onClick={() => {
-              openModal("", <DeleteConfirmationModal />);
-            }}>
-            Delete
-          </Button>
-        )}
-        <Button onClick={save}>Save{isEditingSelectedConfig ? " and restart device" : ""}</Button>
-      </div>
-    </div>
-  );
-}
-
-type LaunchConfigUpdater = <K extends keyof LaunchConfigurationOptions>(
-  key: K,
-  value: LaunchConfigurationOptions[K] | "Auto"
-) => void;
-
-interface NameConfigurationProps {
-  name?: string;
-  update: LaunchConfigUpdater;
-}
-
-function NameConfiguration({ name, update }: NameConfigurationProps) {
-  const nameInputRef = useRef<HTMLInputElement>(null);
-
-  const onNameBlur = () => {
-    let newName = nameInputRef.current?.value;
-    if (newName === "Auto" || newName === "") {
-      newName = undefined;
-    }
-    update("name", newName);
-  };
-
-  return (
-    <div className="launch-configuration-group">
-      <div className="setting-description">Configuration Name:</div>
-      <Input
-        ref={nameInputRef}
-        className="input-configuration"
-        type="string"
-        defaultValue={name ?? ""}
-        placeholder="Configuration Name"
-        onBlur={onNameBlur}
-      />
-    </div>
-  );
-}
-
-interface iosConfigurationProps {
-  scheme?: string;
-  configuration?: string;
-  update: LaunchConfigUpdater;
-  xcodeSchemes: string[];
-}
-
-function IosConfiguration({ scheme, configuration, update, xcodeSchemes }: iosConfigurationProps) {
-  const configurationInputRef = useRef<HTMLInputElement>(null);
-
-  const onSchemeChange = (newScheme: string | undefined) => {
-    if (newScheme === "Auto") {
-      newScheme = undefined;
-    }
-    update("ios", { scheme: newScheme, configuration });
-  };
-
-  const onConfigurationBlur = () => {
-    let newConfiguration = configurationInputRef.current?.value;
-    if (newConfiguration === "Auto" || newConfiguration !== "") {
-      newConfiguration = undefined;
-    }
-    update("ios", { scheme, configuration: newConfiguration });
-  };
-
-  const availableXcodeSchemes = xcodeSchemes.map((xcodeScheme) => {
-    return { value: xcodeScheme, label: xcodeScheme };
-  });
-
-  availableXcodeSchemes.push({ value: "Auto", label: "Auto" });
-
-  return (
-    <div className="launch-configuration-group">
-      <div className="setting-description">Scheme:</div>
-      <Select
-        value={scheme ?? "Auto"}
-        onChange={onSchemeChange}
-        items={availableXcodeSchemes}
-        className="scheme"
-      />
-      <div className="setting-description">Configuration:</div>
-      <Input
-        ref={configurationInputRef}
-        className="input-configuration"
-        type="string"
-        defaultValue={configuration ?? "Auto"}
-        onBlur={onConfigurationBlur}
-      />
-    </div>
-  );
-}
-
-interface androidConfigurationProps {
-  buildType?: string;
-  productFlavor?: string;
-  update: LaunchConfigUpdater;
-}
-
-function AndroidConfiguration({ buildType, productFlavor, update }: androidConfigurationProps) {
-  const buildTypeInputRef = useRef<HTMLInputElement>(null);
-  const productFlavorInputRef = useRef<HTMLInputElement>(null);
-
-  const onBuildTypeBlur = () => {
-    let newBuildType = buildTypeInputRef.current?.value;
-    if (newBuildType === "Auto" || newBuildType !== "") {
-      newBuildType = undefined;
-    }
-    update("android", { buildType: newBuildType, productFlavor });
-  };
-
-  const onProductFlavorBlur = () => {
-    let newProductFlavor = productFlavorInputRef.current?.value;
-    if (newProductFlavor === "Auto" || newProductFlavor !== "") {
-      newProductFlavor = undefined;
-    }
-    update("android", { buildType, productFlavor: newProductFlavor });
-  };
-
-  return (
-    <div className="launch-configuration-group">
-      <div className="setting-description">Build Type:</div>
-      <Input
-        ref={buildTypeInputRef}
-        type="string"
-        defaultValue={buildType ?? "Auto"}
-        onBlur={onBuildTypeBlur}
-      />
-      <div className="setting-description">Product Flavor:</div>
-      <Input
-        ref={productFlavorInputRef}
-        type="string"
-        defaultValue={productFlavor ?? "Auto"}
-        onBlur={onProductFlavorBlur}
-      />
-    </div>
-  );
-}
-
-interface appRootConfigurationProps {
-  appRoot?: string;
-  update: LaunchConfigUpdater;
-  applicationRoots: ApplicationRoot[];
-}
-
-function AppRootConfiguration({ appRoot, update, applicationRoots }: appRootConfigurationProps) {
-  const customAppRootInputRef = useRef<HTMLInputElement>(null);
-
-  function getInitialSelectedValue(): string {
-    if (appRoot === undefined) {
-      return "Auto";
-    }
-    if (applicationRoots.some((ar) => ar.path === appRoot)) {
-      return appRoot;
-    }
-    return "Custom";
-  }
-
-  const [selectedValue, setSelectedValue] = useState(getInitialSelectedValue());
-
-  const onAppRootChange = (newAppRoot: string | undefined) => {
-    setSelectedValue(newAppRoot || "Auto");
-    if (newAppRoot === "Custom") {
-      // in this case, we apply the setting in the input blur handler
-      return;
-    }
-    if (customAppRootInputRef.current) {
-      customAppRootInputRef.current.value = "";
-    }
-    if (newAppRoot === undefined || newAppRoot === "Auto") {
-      newAppRoot = applicationRoots[0]?.path ?? "Auto";
-    }
-    update("appRoot", newAppRoot);
-  };
-
-  function onCustomAppRootInputBlur() {
-    const newAppRoot = customAppRootInputRef.current?.value;
-    if (newAppRoot) {
-      update("appRoot", newAppRoot);
-    }
-  }
-
   const availableAppRoots = applicationRoots.map((applicationRoot) => {
     return { value: applicationRoot.path, label: applicationRoot.path };
   });
 
-  if (availableAppRoots.length > 0) {
-    availableAppRoots.push({ value: "Auto", label: `${applicationRoots[0].path} (Auto)` });
+  const launchConfigAttrs = useMemo(getLaunchConfigAttrs, []);
+
+  return (
+    <div className="launch-configuration-modal">
+      <form
+        ref={formContainerRef}
+        className="launch-configuration-container"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (formContainerRef.current?.checkValidity()) {
+            save();
+          }
+        }}>
+        <FormGroup variant="settings-group">
+          <Label>Name</Label>
+          <FormHelper>
+            The name of the launch configuration. This is used as a label for the configuration in
+            the list.
+          </FormHelper>
+          <TextField
+            name="name"
+            initialValue={launchConfig?.name ?? ""}
+            placeholder="Configuration Name"
+          />
+        </FormGroup>
+
+        <FormGroup variant="settings-group">
+          <Label>App Root</Label>
+          <FormHelper>{launchConfigAttrs?.properties?.appRoot?.description}</FormHelper>
+          <SingleSelect
+            combobox
+            creatable
+            value={appRoot}
+            name="appRoot"
+            onChange={(e) => setAppRoot((e.target as HTMLSelectElement).value)}>
+            <Option value="">Detect automatically</Option>
+            {availableAppRoots.map((appRootOption) => (
+              <Option key={appRootOption.value} value={appRootOption.value}>
+                {appRootOption.label}
+              </Option>
+            ))}
+          </SingleSelect>
+        </FormGroup>
+
+        <FormGroup variant="settings-group">
+          <Label>Metro Config Path</Label>
+          <FormHelper>{launchConfigAttrs?.properties?.metroConfigPath?.description}</FormHelper>
+          <TextField
+            placeholder="Detect automatically"
+            name="metroConfigPath"
+            initialValue={launchConfig?.metroConfigPath ?? ""}
+          />
+        </FormGroup>
+
+        <FormGroup variant="settings-group">
+          <Label>Use Expo CLI</Label>
+          <FormHelper>{launchConfigAttrs?.properties?.isExpo?.description}</FormHelper>
+          <SingleSelect
+            name="isExpo"
+            initialValue={
+              launchConfig?.isExpo === undefined ? "" : launchConfig.isExpo ? "true" : "false"
+            }>
+            <Option value="">Detect automatically</Option>
+            <Option value="true">Yes</Option>
+            <Option value="false">No</Option>
+          </SingleSelect>
+        </FormGroup>
+
+        <Tabs panel>
+          <TabHeader>iOS Build Settings</TabHeader>
+          <TabPanel panel>
+            <BuildConfiguration
+              appRootConfig={appRootConfig}
+              platform="ios"
+              config={launchConfig}
+              launchConfigAttrs={launchConfigAttrs}
+            />
+          </TabPanel>
+          <TabHeader>Android Build Settings</TabHeader>
+          <TabPanel panel>
+            <BuildConfiguration
+              appRootConfig={appRootConfig}
+              platform="android"
+              config={launchConfig}
+              launchConfigAttrs={launchConfigAttrs}
+            />
+          </TabPanel>
+        </Tabs>
+      </form>
+
+      <div className="launch-configuration-button-group">
+        <a
+          className="launch-configuration-text-button"
+          role="button"
+          onClick={() => {
+            project.runCommand("workbench.action.debug.configure");
+            closeModal();
+          }}>
+          Edit in launch.json
+        </a>
+        {launchConfig && (
+          <Button
+            secondary
+            onClick={() => {
+              openModal("", <DeleteConfirmationModal />);
+            }}>
+            <span className="codicon codicon-trash" />
+            Delete
+          </Button>
+        )}
+        <Button onClick={save} disabled={!useFormValidity(formContainerRef)}>
+          Save{isCurrentConfig ? " and restart" : ""}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+type BuildType = "standard" | "eas" | "eas-local" | "custom";
+
+function BuildConfiguration({
+  appRootConfig,
+  platform,
+  config,
+  launchConfigAttrs,
+}: {
+  appRootConfig: AppRootConfig;
+  platform: "ios" | "android";
+  config?: LaunchConfigurationOptions;
+  launchConfigAttrs: LaunchConfigAttrs;
+}) {
+  let initialBuildType: BuildType = "standard";
+  if (config?.eas?.[platform]) {
+    initialBuildType = config.eas[platform].local ? "eas-local" : "eas";
+  } else if (config?.customBuild?.[platform]) {
+    initialBuildType = "custom";
   }
-  availableAppRoots.push({ value: "Custom", label: "Custom" });
 
+  const [buildType, setBuildType] = useState<BuildType>(initialBuildType);
   return (
-    <div className="launch-configuration-group">
-      <div className="setting-description">AppRoot:</div>
-      <Select
-        value={selectedValue}
-        onChange={onAppRootChange}
-        items={availableAppRoots}
-        className="scheme"
-      />
-      <div className="setting-description">Add Custom Application Root:</div>
-      <input
-        ref={customAppRootInputRef}
-        className="input-configuration"
-        type="string"
-        placeholder={"Custom/Application/Root/Path"}
-        disabled={selectedValue !== "Custom"}
-        onBlur={onCustomAppRootInputBlur}
-      />
-    </div>
+    <>
+      <FormGroup variant="settings-group">
+        <Label>
+          <span className="setting-item-category">{prettyPlatformName(platform)}:</span> Build Type
+        </Label>
+        <SingleSelect
+          value={buildType}
+          name={`buildType.${platform}`}
+          onChange={(e) => setBuildType((e.target as HTMLSelectElement).value as BuildType)}>
+          <Option value="standard">Standard (recommended)</Option>
+          <Option value="eas">EAS (Cloud-based builds)</Option>
+          <Option value="eas-local">EAS Local Build</Option>
+          <Option value="custom">Custom (advanced)</Option>
+        </SingleSelect>
+      </FormGroup>
+
+      {buildType === "standard" && (
+        <StandardBuildConfiguration
+          appRootConfig={appRootConfig}
+          platform={platform}
+          config={config}
+          launchConfigAttrs={launchConfigAttrs}
+        />
+      )}
+      {(buildType === "eas" || buildType === "eas-local") && (
+        <EasBuildConfiguration
+          appRootConfig={appRootConfig}
+          local={buildType === "eas-local"}
+          platform={platform}
+          config={config}
+          launchConfigAttrs={launchConfigAttrs}
+        />
+      )}
+      {buildType === "custom" && (
+        <CustomBuildConfiguration
+          platform={platform}
+          config={config}
+          launchConfigAttrs={launchConfigAttrs}
+        />
+      )}
+    </>
   );
 }
 
-interface metroPathConfigurationProps {
-  metroConfigPath?: string;
-  update: LaunchConfigUpdater;
+function StandardBuildConfiguration({
+  appRootConfig,
+  platform,
+  config,
+  launchConfigAttrs,
+}: {
+  appRootConfig: AppRootConfig;
+  platform: "ios" | "android";
+  config?: LaunchConfigurationOptions;
+  launchConfigAttrs: LaunchConfigAttrs;
+}) {
+  if (platform === "ios") {
+    const { xcodeSchemes } = appRootConfig;
+    const availableXcodeSchemes = xcodeSchemes.map((xcodeScheme) => {
+      return { value: xcodeScheme, label: xcodeScheme };
+    });
+
+    return (
+      <>
+        <FormGroup variant="settings-group">
+          <Label>
+            <span className="setting-item-category">iOS:</span> Scheme name
+          </Label>
+          <FormHelper>
+            {launchConfigAttrs?.properties?.ios?.properties?.scheme?.description}
+          </FormHelper>
+          <SingleSelect initialValue={config?.ios?.scheme ?? ""} name="ios.scheme">
+            <Option disabled value="">
+              Detect automatically
+            </Option>
+            {availableXcodeSchemes.map((scheme) => (
+              <Option key={scheme.value} value={scheme.value}>
+                {scheme.label}
+              </Option>
+            ))}
+          </SingleSelect>
+        </FormGroup>
+
+        <FormGroup variant="settings-group">
+          <Label>
+            <span className="setting-item-category">iOS:</span> Configuration name
+          </Label>
+          <FormHelper>
+            {launchConfigAttrs?.properties?.ios?.properties?.configuration?.description}
+          </FormHelper>
+          <TextField
+            initialValue={config?.ios?.configuration ?? ""}
+            placeholder="Debug"
+            name="ios.configuration"
+          />
+        </FormGroup>
+      </>
+    );
+  } else if (platform === "android") {
+    return (
+      <>
+        <FormGroup variant="settings-group">
+          <Label>
+            <span className="setting-item-category">Android:</span> Build type
+          </Label>
+          <FormHelper>
+            {launchConfigAttrs?.properties?.android?.properties?.buildType?.description}
+          </FormHelper>
+          <TextField
+            initialValue={config?.android?.buildType ?? ""}
+            placeholder="debug"
+            name="android.buildType"
+          />
+        </FormGroup>
+
+        <FormGroup variant="settings-group">
+          <Label>
+            <span className="setting-item-category">Android:</span> Product flavor
+          </Label>
+          <FormHelper>
+            {launchConfigAttrs?.properties?.android?.properties?.productFlavor?.description}
+          </FormHelper>
+          <TextField
+            initialValue={config?.android?.productFlavor ?? ""}
+            name="android.productFlavor"
+          />
+        </FormGroup>
+      </>
+    );
+  }
 }
 
-function MetroConfigPathConfiguration({ metroConfigPath, update }: metroPathConfigurationProps) {
-  const metroPathInputRef = useRef<HTMLInputElement>(null);
-
-  const onMetroPathBlur = () => {
-    let newMetroPath = metroPathInputRef.current?.value;
-    if (newMetroPath !== "") {
-      newMetroPath = "Auto";
-    }
-    update("metroConfigPath", newMetroPath);
-  };
-
+function CustomBuildConfiguration({
+  platform,
+  config,
+  launchConfigAttrs,
+}: {
+  platform: "ios" | "android";
+  config?: LaunchConfigurationOptions;
+  launchConfigAttrs: LaunchConfigAttrs;
+}) {
   return (
-    <div className="launch-configuration-group">
-      <div className="setting-description">Metro Config Path:</div>
-      <Input
-        ref={metroPathInputRef}
-        className="input-configuration"
-        type="string"
-        defaultValue={metroConfigPath ?? "Auto"}
-        onBlur={onMetroPathBlur}
-      />
-    </div>
-  );
-}
+    <>
+      <FormGroup variant="settings-group">
+        <Label>
+          <span className="setting-item-category">
+            Custom {prettyPlatformName(platform)} build:
+          </span>{" "}
+          Build Command
+        </Label>
+        <FormHelper>
+          {
+            launchConfigAttrs?.properties?.customBuild?.properties?.[platform]?.properties
+              ?.buildCommand?.description
+          }
+        </FormHelper>
+        <TextField
+          placeholder="Enter the build command"
+          initialValue={config?.customBuild?.[platform]?.buildCommand ?? ""}
+          required
+          name={`customBuild.${platform}.buildCommand`}
+        />
+      </FormGroup>
 
-interface isExpoConfigurationProps {
-  isExpo?: boolean;
-  update: LaunchConfigUpdater;
-}
-
-function IsExpoConfiguration({ isExpo, update }: isExpoConfigurationProps) {
-  const options = [
-    { value: "true", label: "Yes" },
-    { value: "false", label: "No" },
-    { value: "Auto", label: "Auto" },
-  ];
-
-  const onIsExpoChange = (newIsExpo: string) => {
-    let updatedIsExpo: "Auto" | boolean = "Auto";
-    if (newIsExpo === "true") {
-      updatedIsExpo = true;
-    } else if (newIsExpo === "false") {
-      updatedIsExpo = false;
-    }
-    update("isExpo", updatedIsExpo);
-  };
-
-  return (
-    <div className="launch-configuration-group">
-      <div className="setting-description">Is Expo:</div>
-      <Select
-        value={isExpo?.toString() ?? "Auto"}
-        onChange={onIsExpoChange}
-        items={options}
-        className="scheme"
-      />
-    </div>
+      <FormGroup variant="settings-group">
+        <Label>
+          <span className="setting-item-category">
+            Custom {prettyPlatformName(platform)} build:
+          </span>{" "}
+          Fingerprint Command
+        </Label>
+        <FormHelper>
+          {
+            launchConfigAttrs?.properties?.customBuild?.properties?.[platform]?.properties
+              ?.fingerprintCommand?.description
+          }
+        </FormHelper>
+        <TextField
+          placeholder="Enter the fingerprint command"
+          initialValue={config?.customBuild?.[platform]?.fingerprintCommand ?? ""}
+          name={`customBuild.${platform}.fingerprintCommand`}
+        />
+      </FormGroup>
+    </>
   );
 }
 
@@ -444,154 +533,88 @@ function prettyPlatformName(platform: EasPlatform): string {
   }
 }
 
-interface easBuildConfigurationProps {
-  eas?: EasLaunchConfig;
-  platform: EasPlatform;
-  update: LaunchConfigUpdater;
-  easBuildProfiles: EasBuildConfig;
-}
-
 function EasBuildConfiguration({
-  eas,
+  appRootConfig,
+  local,
   platform,
-  update,
-  easBuildProfiles,
-}: easBuildConfigurationProps) {
-  const DISABLED = "Disabled" as const;
-  const CUSTOM = "Custom" as const;
-  const YES = "Yes" as const;
-  const NO = "No" as const;
-
-  const configuredProfile = eas?.[platform]?.profile;
-  const buildUUID = eas?.[platform]?.buildUUID;
-  const local = eas?.[platform]?.local;
-
-  function valueForProfile(profile: string | undefined): string {
-    if (profile === undefined) {
-      return DISABLED;
-    }
-    if (!(profile in easBuildProfiles)) {
-      return CUSTOM;
-    }
-    return profile;
-  }
-
-  const profileValue = useMemo(() => {
-    return valueForProfile(configuredProfile);
-  }, [configuredProfile, easBuildProfiles]);
-
-  useEffect(() => {
-    if (profileValue !== CUSTOM && customBuildProfileInputRef.current) {
-      customBuildProfileInputRef.current.value = "";
-    }
-  }, [profileValue]);
-
-  const buildUUIDInputRef = useRef<HTMLInputElement>(null);
-  const customBuildProfileInputRef = useRef<HTMLInputElement>(null);
-
-  const updateEasConfig = (configUpdate: Partial<EasConfig>) => {
-    const currentPlaftormConfig = eas?.[platform] ?? {};
-    const newPlatformConfig = Object.fromEntries(
-      Object.entries({ ...currentPlaftormConfig, ...configUpdate }).filter(
-        ([_k, v]) => v !== undefined
-      )
-    );
-    if ("profile" in newPlatformConfig) {
-      update("eas", { ...eas, [platform]: newPlatformConfig });
-    } else {
-      update("eas", { ...eas, [platform]: undefined });
-    }
-  };
-
-  const updateProfile = (newProfile: string | undefined) => {
-    const newBuildUUID = buildUUIDInputRef.current?.value || undefined;
-    updateEasConfig({ profile: newProfile, buildUUID: newBuildUUID });
-  };
-
-  const onProfileSelectionChange = (newProfile: string) => {
-    if (newProfile === DISABLED) {
-      updateEasConfig({ profile: undefined, buildUUID: undefined });
-      return;
-    }
-
-    if (newProfile === CUSTOM) {
-      newProfile = customBuildProfileInputRef.current?.value ?? configuredProfile ?? "";
-    }
-    updateProfile(newProfile);
-  };
-
-  const onCustomBuildProfileInputBlur = () => {
-    const newCustomProfile = customBuildProfileInputRef.current?.value ?? "";
-    updateProfile(newCustomProfile);
-  };
-
-  const onBuildUUIDInputBlur = () => {
-    const newBuildUUID = buildUUIDInputRef.current?.value || undefined;
-    updateEasConfig({ buildUUID: newBuildUUID });
-  };
-
-  const onBuildLocallyChange = (selection: string) => {
-    const newLocal = selection === YES ? true : undefined;
-    updateEasConfig({ local: newLocal });
-  };
+  config,
+  launchConfigAttrs,
+}: {
+  appRootConfig: AppRootConfig;
+  local: boolean;
+  platform: EasPlatform;
+  config?: LaunchConfigurationOptions;
+  launchConfigAttrs: LaunchConfigAttrs;
+}) {
+  const { easBuildProfiles } = appRootConfig;
 
   const availableEasBuildProfiles = Object.entries(easBuildProfiles).map(
-    ([buildProfile, config]) => {
+    ([buildProfile, buildProfileConfig]) => {
       const canRunInSimulator =
-        config.distribution === "internal" &&
-        (platform !== "ios" || config.ios?.simulator === true);
+        buildProfileConfig.distribution === "internal" &&
+        (platform !== "ios" || buildProfileConfig.ios?.simulator === true);
       return { value: buildProfile, label: buildProfile, disabled: !canRunInSimulator };
     }
   );
-
-  availableEasBuildProfiles.push({ value: DISABLED, label: DISABLED, disabled: false });
-  availableEasBuildProfiles.push({ value: CUSTOM, label: CUSTOM, disabled: false });
-
-  const buildLocallyOptions = [
-    { value: YES, label: YES },
-    { value: NO, label: NO },
-  ];
+  const initialBuildProfile = config?.eas?.[platform]?.profile ?? "";
+  if (
+    availableEasBuildProfiles.find((profile) => profile.value === initialBuildProfile) === undefined
+  ) {
+    availableEasBuildProfiles.unshift({
+      value: initialBuildProfile,
+      label: initialBuildProfile,
+      disabled: true,
+    });
+  }
 
   return (
-    <div className="launch-configuration-group">
-      <div className="setting-description">{prettyPlatformName(platform)} Build Profile:</div>
-      <Select
-        value={profileValue}
-        onChange={onProfileSelectionChange}
-        items={availableEasBuildProfiles}
-        className="scheme"
-      />
-      <div className="setting-description">
-        {prettyPlatformName(platform)} Custom Build Profile:
-      </div>
-      <Input
-        ref={customBuildProfileInputRef}
-        className="input-configuration"
-        type="string"
-        placeholder="Enter the build profile to be used"
-        defaultValue={configuredProfile ?? ""}
-        onBlur={onCustomBuildProfileInputBlur}
-        disabled={profileValue !== CUSTOM}
-      />
-      <div className="setting-description">Build locally:</div>
-      <Select
-        value={local ? YES : NO}
-        onChange={onBuildLocallyChange}
-        items={buildLocallyOptions}
-        className="scheme"
-        disabled={profileValue === DISABLED}
-      />
-      <div className="setting-description">{prettyPlatformName(platform)} Build UUID:</div>
-      <Input
-        ref={buildUUIDInputRef}
-        className="input-configuration"
-        type="string"
-        defaultValue={buildUUID ?? ""}
-        placeholder="Auto (build with matching fingerprint)"
-        onBlur={onBuildUUIDInputBlur}
-        disabled={profileValue === DISABLED || local}
-      />
-    </div>
+    <>
+      <FormGroup variant="settings-group">
+        <Label>
+          <span className="setting-item-category">EAS {prettyPlatformName(platform)}:</span> Build
+          Profile Name
+        </Label>
+        <FormHelper>
+          {
+            launchConfigAttrs?.properties?.eas?.properties?.[platform]?.properties?.profile
+              ?.description
+          }
+        </FormHelper>
+        <SingleSelect
+          initialValue={initialBuildProfile}
+          combobox
+          creatable
+          required
+          position="above"
+          name={`eas.${platform}.profile`}>
+          {availableEasBuildProfiles.map((profile) => (
+            <Option key={profile.value} value={profile.value} disabled={profile.disabled}>
+              {profile.label}
+            </Option>
+          ))}
+        </SingleSelect>
+      </FormGroup>
+
+      {!local && (
+        <FormGroup variant="settings-group">
+          <Label>
+            <span className="setting-item-category">EAS {prettyPlatformName(platform)}:</span> Build
+            UUID
+          </Label>
+          <FormHelper>
+            {
+              launchConfigAttrs?.properties?.eas?.properties?.[platform]?.properties?.buildUUID
+                ?.description
+            }
+          </FormHelper>
+          <TextField
+            initialValue={config?.eas?.[platform]?.buildUUID ?? ""}
+            placeholder="Auto (build with matching fingerprint)"
+            name={`eas.${platform}.buildUUID`}
+          />
+        </FormGroup>
+      )}
+    </>
   );
 }
 

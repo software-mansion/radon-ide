@@ -16,6 +16,14 @@
   margin-bottom: 5px;
 }
 
+.launch-configuration-container vscode-label {
+  color: var(--vscode-settings-headerForeground);
+}
+
+.setting-item-category {
+  color: var(--vscode-foreground);
+}
+
 .scheme {
   margin-bottom: 5px;
 }
@@ -41,26 +49,44 @@
   margin-top: 0;
 }
 
+.launch-configuration-container vscode-form-group {
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .launch-configuration-button-group {
   display: flex;
   flex-direction: row;
+  gap: 10px;
   justify-content: flex-end;
-}
-
-.launch-configuration-button-group > button {
-  height: 32px;
-  margin-left: 10px;
+  align-items: center;
+  margin-top: 10px;
 }
 
 .launch-configuration-modal {
   display: flex;
   flex-direction: column;
-  max-height: 70vh;
+  overflow: hidden;
+  max-height: 60vh;
 }
 
 .launch-configuration-container {
-  flex: 1;
+  display: flex;
   flex-direction: column;
-  overflow: scroll;
-  scrollbar-color: var(--swm-scrollbar-thumb) var(--swm-popover-background);
+  overflow: auto;
+}
+
+.launch-configuration-text-button {
+  display: flex;
+  margin-right: auto;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.launch-configuration-text-button:hover {
+  text-decoration: underline;
+}
+
+.modal-content:has(.launch-configuration-modal) {
+  background-color: var(--vscode-panel-background);
 }
