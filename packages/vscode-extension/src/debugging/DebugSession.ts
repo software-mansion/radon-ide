@@ -42,6 +42,7 @@ export type DebugSource = { filename?: string; line1based?: number; column0based
 type DebugSessionOptions = {
   displayName: string;
   useParentDebugSession?: boolean;
+  suppressDebugToolbar?: boolean;
 };
 
 export class DebugSession implements Disposable {
@@ -193,7 +194,7 @@ export class DebugSession implements Disposable {
         parentSession: this.parentDebugSession,
         suppressDebugStatusbar: true,
         suppressDebugView: true,
-        suppressDebugToolbar: true,
+        suppressDebugToolbar: this.options.suppressDebugToolbar ?? true,
         suppressSaveBeforeStart: true,
         consoleMode: DebugConsoleMode.MergeWithParent,
         compact: true,

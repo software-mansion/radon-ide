@@ -1,8 +1,13 @@
 .devices-not-found-container {
-  flex-grow: 1;
   display: flex;
-  flex-direction: column;
+  flex-grow: 1;
   align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.devices-not-found-container h2 {
+  margin-top: 24px;
 }
 
 .devices-not-found-button-group {
@@ -13,13 +18,10 @@
   gap: 20px;
 }
 
-.devices-not-found-title {
-  color: var(--swm-default-text);
-}
-
 .devices-not-found-subtitle {
-  color: var(--swm-default-text);
   margin-bottom: 32px;
+  width: 70%;
+  text-align: center;
 }
 
 .devices-not-found-quick-action {

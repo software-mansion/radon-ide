@@ -30,6 +30,7 @@ import { ActivateLicenseView } from "./ActivateLicenseView";
 import ToolsDropdown from "../components/ToolsDropdown";
 import AppRootSelect from "../components/AppRootSelect";
 import { vscode } from "../utilities/vscode";
+import RadonConnectView from "./RadonConnectView";
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
@@ -106,11 +107,16 @@ function PreviewView() {
   const { devices } = useDevices();
 
   const initialized = projectState.initialized;
+  const radonConnectEnabled = projectState.connectState.enabled;
+  const radonConnectConnected = projectState.connectState.connected;
   const selectedDevice = selectedDeviceSession?.deviceInfo;
   const hasNoDevices = projectState !== undefined && devices.length === 0;
   const isStarting = selectedDeviceSession?.status === "starting";
   const isRunning = selectedDeviceSession?.status === "running";
   const isRecording = selectedDeviceSession?.isRecordingScreen ?? false;
+
+  const navBarButtonsActive = initialized && !isStarting && !radonConnectEnabled;
+  const debuggerToolsButtonsActive = navBarButtonsActive; // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
@@ -198,6 +204,35 @@ function PreviewView() {
     .toString()
     .padStart(2, "0")}`;
 
+  let content = null;
+  if (radonConnectEnabled) {
+    content = <RadonConnectView />;
+  } else if (!initialized) {
+    content = (
+      <div className="preview-content-placeholder">
+        <VscodeProgressRing />
+      </div>
+    );
+  } else if (selectedDevice) {
+    content = (
+      <Preview
+        key={selectedDevice.id}
+        isInspecting={isInspecting}
+        setIsInspecting={setIsInspecting}
+        inspectFrame={inspectFrame}
+        setInspectFrame={setInspectFrame}
+        setInspectStackData={setInspectStackData}
+        onInspectorItemSelected={onInspectorItemSelected}
+        zoomLevel={zoomLevel}
+        replayData={replayData}
+        onReplayClose={() => setReplayData(undefined)}
+        onZoomChanged={onZoomChanged}
+      />
+    );
+  } else {
+    content = <NoDeviceView hasNoDevices={hasNoDevices} />;
+  }
+
   return (
     <div
       className="panel-view"
@@ -213,7 +248,7 @@ function PreviewView() {
       }}>
       <div className="button-group-top">
         <div className="button-group-top-left">
-          <UrlBar disabled={hasNoDevices} />
+          <UrlBar disabled={!navBarButtonsActive} />
         </div>
         <div className="button-group-top-right">
           <ProfilingButton
@@ -226,7 +261,7 @@ function PreviewView() {
             title="Stop profiling React"
             onClick={stopProfilingReact}
           />
-          <ToolsDropdown disabled={hasNoDevices || !isRunning}>
+          <ToolsDropdown disabled={!debuggerToolsButtonsActive}>
             <IconButton tooltip={{ label: "Tools", type: "primary" }}>
               <span className="codicon codicon-tools" />
             </IconButton>
@@ -237,7 +272,7 @@ function PreviewView() {
               label: isRecording ? "Stop screen recording" : "Start screen recording",
             }}
             onClick={toggleRecording}
-            disabled={isStarting}>
+            disabled={!navBarButtonsActive}>
             {isRecording ? (
               <div className="recording-rec-indicator">
                 <div className="recording-rec-dot" />
@@ -253,7 +288,7 @@ function PreviewView() {
                 label: "Replay the last few seconds of the app",
               }}
               onClick={handleReplay}
-              disabled={isStarting}>
+              disabled={!navBarButtonsActive}>
               <ReplayIcon />
             </IconButton>
           )}
@@ -262,7 +297,7 @@ function PreviewView() {
               label: "Capture a screenshot of the app",
             }}
             onClick={captureScreenshot}
-            disabled={isStarting}>
+            disabled={!navBarButtonsActive}>
             <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
           <IconButton
@@ -271,10 +306,10 @@ function PreviewView() {
             tooltip={{
               label: "Open logs panel",
             }}
-            disabled={hasNoDevices}>
+            disabled={!debuggerToolsButtonsActive}>
             <span slot="start" className="codicon codicon-debug-console" />
           </IconButton>
-          <SettingsDropdown project={project} isDeviceRunning={isRunning} disabled={hasNoDevices}>
+          <SettingsDropdown project={project} isDeviceRunning={isRunning || radonConnectConnected}>
             <IconButton tooltip={{ label: "Settings", type: "primary" }}>
               <span className="codicon codicon-settings-gear" />
             </IconButton>
@@ -282,25 +317,7 @@ function PreviewView() {
         </div>
       </div>
 
-      {selectedDevice && initialized ? (
-        <Preview
-          key={selectedDevice.id}
-          isInspecting={isInspecting}
-          setIsInspecting={setIsInspecting}
-          inspectFrame={inspectFrame}
-          setInspectFrame={setInspectFrame}
-          setInspectStackData={setInspectStackData}
-          onInspectorItemSelected={onInspectorItemSelected}
-          zoomLevel={zoomLevel}
-          replayData={replayData}
-          onReplayClose={() => setReplayData(undefined)}
-          onZoomChanged={onZoomChanged}
-        />
-      ) : (
-        <div className="missing-device-filler">
-          {initialized ? <NoDeviceView hasNoDevices={hasNoDevices} /> : <VscodeProgressRing />}
-        </div>
-      )}
+      {content}
 
       {!replayData && inspectStackData && (
         <InspectDataMenu
@@ -325,27 +342,27 @@ function PreviewView() {
             label: "Select an element to inspect it",
           }}
           onClick={() => setIsInspecting(!isInspecting)}
-          disabled={hasNoDevices}>
+          disabled={!navBarButtonsActive}>
           <span className="codicon codicon-inspect" />
         </IconButton>
 
         <span className="group-separator" />
 
         <div className="app-device-group">
-          <AppRootSelect />
-          <span className="codicon codicon-chevron-right" />
+          {!radonConnectEnabled && (
+            <>
+              <AppRootSelect />
+              <span className="codicon codicon-chevron-right" />
+            </>
+          )}
           <DeviceSelect />
         </div>
 
         <div className="spacer" />
         {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
-        <DeviceSettingsDropdown disabled={hasNoDevices || !isRunning}>
+        <DeviceSettingsDropdown disabled={!navBarButtonsActive}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
-            <DeviceSettingsIcon
-              color={
-                hasNoDevices || !isRunning ? "var(--swm-disabled-text)" : "var(--swm-default-text)"
-              }
-            />
+            <DeviceSettingsIcon />
           </IconButton>
         </DeviceSettingsDropdown>
       </div>

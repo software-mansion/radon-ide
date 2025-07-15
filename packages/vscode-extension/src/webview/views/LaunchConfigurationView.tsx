@@ -33,7 +33,7 @@ function TextField({
   return (
     <VscodeTextfield
       value={value}
-      onChange={(e) => setValue((e.target as HTMLInputElement).value)}
+      onInput={(e) => setValue((e.target as HTMLInputElement).value)}
       {...props}
     />
   );
@@ -139,6 +139,29 @@ function LaunchConfigurationView({
   isCurrentConfig?: boolean;
 }) {
   const { openModal, closeModal } = useModal();
+  const applicationRoots = useApplicationRoots();
+
+  const { project } = useProject();
+
+  const formContainerRef = useRef<HTMLFormElement>(null);
+  const [appRoot, setAppRoot] = useState<string>(
+    launchConfig?.appRoot ?? applicationRoots[0]?.path ?? ""
+  );
+  const appRootConfig = useAppRootConfig(appRoot);
+
+  return newConfig;
+}
+
+type LaunchConfigAttrs = ReturnType<typeof getLaunchConfigAttrs>;
+
+function LaunchConfigurationView({
+  launchConfig,
+  isCurrentConfig,
+}: {
+  launchConfig?: LaunchConfiguration;
+  isCurrentConfig?: boolean;
+}) {
+  const { openModal, closeModal } = useModal();
   console.log("launchConfig", launchConfig);
   const applicationRoots = useApplicationRoots();
 
@@ -148,14 +171,11 @@ function LaunchConfigurationView({
   const [appRoot, setAppRoot] = useState<string>(
     launchConfig?.appRoot ?? applicationRoots[0]?.path ?? ""
   );
-  const [env, setEnv] = useState<Record<string, string>>(launchConfig?.env ?? {});
   const appRootConfig = useAppRootConfig(appRoot);
 
   async function save() {
     const formData = new FormData(formContainerRef?.current ?? undefined);
     const newLaunchConfig = serializeLaunchConfig(formData);
-    // Add env from state since it's not in the form
-    newLaunchConfig.env = Object.keys(env).length > 0 ? env : undefined;
     await project.createOrUpdateLaunchConfiguration(newLaunchConfig, launchConfig);
     closeModal();
   }
@@ -267,7 +287,7 @@ function LaunchConfigurationView({
         <FormGroup variant="settings-group">
           <Label>Environment Variables</Label>
           <FormHelper>{launchConfigAttrs?.properties?.env?.description}</FormHelper>
-          <EnvEditor initialValue={env} onChange={setEnv} />
+          <EnvEditor initialValue={launchConfig?.env ?? {}} />
         </FormGroup>
 
         <Tabs panel>
