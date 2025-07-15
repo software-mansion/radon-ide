@@ -200,6 +200,10 @@ function LaunchConfigurationView({
         className="launch-configuration-container"
         onSubmit={(e) => {
           e.preventDefault();
+          // if active element has data-no-submit, don't submit
+          if (document.activeElement?.hasAttribute("data-no-submit")) {
+            return;
+          }
           if (formContainerRef.current?.checkValidity()) {
             save();
           }
@@ -307,7 +311,7 @@ function LaunchConfigurationView({
             Delete
           </Button>
         )}
-        <Button onClick={save} disabled={!useFormValidity(formContainerRef)}>
+        <Button onClick={save} disabled={!useFormValidity(formContainerRef)} type="submit">
           Save{isCurrentConfig ? " and restart" : ""}
         </Button>
       </div>

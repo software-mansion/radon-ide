@@ -29,21 +29,24 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
     onChange?.(newEnv);
   };
 
-  const startEditing = (key: string) => {
+  const startEditing = (key: string | null) => {
     // Cancel any ongoing add operation
     if (showAddForm) {
       setShowAddForm(false);
     }
+    if (key === null) {
+      setShowAddForm(true);
+    }
 
     setEditingKey(key);
-    setEditingKeyValue(key);
-    setEditingValue(env[key] || "");
+    setEditingKeyValue(key ?? "");
+    setEditingValue(key ? (env[key] ?? "") : "");
   };
 
   const save = () => {
     if (editingKeyValue && editingValue !== undefined) {
       const updatedEnv = { ...env };
-      if (editingKey !== null) {
+      if (editingKey !== null && editingKey !== editingKeyValue) {
         delete updatedEnv[editingKey];
       }
       updatedEnv[editingKeyValue] = editingValue;
@@ -89,7 +92,14 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
                   <VscodeTextfield
                     placeholder="Key"
                     value={editingKeyValue}
+                    data-no-submit
                     onInput={(e) => setEditingKeyValue((e.target as HTMLInputElement).value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        save();
+                      }
+                    }}
                   />
                 ) : (
                   key
@@ -100,7 +110,14 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
                   <VscodeTextfield
                     placeholder="Value"
                     value={editingValue}
+                    data-no-submit
                     onInput={(e) => setEditingValue((e.target as HTMLInputElement).value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        save();
+                      }
+                    }}
                   />
                 ) : (
                   value
@@ -137,20 +154,7 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
           ))}
         </VscodeTableBody>
       </VscodeTable>
-      {!showAddForm && (
-        <Button
-          onClick={() => {
-            // Cancel any ongoing edit operation
-            if (editingKey) {
-              setEditingKey(null);
-              setEditingKeyValue("");
-              setEditingValue("");
-            }
-            setShowAddForm(true);
-          }}>
-          Add Variable
-        </Button>
-      )}
+      {!showAddForm && <Button onClick={() => startEditing(null)}>Add Variable</Button>}
       <input type="hidden" name="env" value={JSON.stringify(env)} />
     </>
   );
