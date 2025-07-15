@@ -132,7 +132,6 @@ function cssPropertiesForDevice(
     [touchAreaScreenHeight, touchAreaScreenWidth] = [touchAreaScreenWidth, touchAreaScreenHeight]; // Swap for landscape
     [touchAreaScreenTop, touchAreaScreenLeft] = [touchAreaScreenLeft, touchAreaScreenTop]; // Swap for landscape
   }
-  console.log("Dimensions", newHeight, newWidth);
 
   return {
     "--phone-content-min-height": minHeight,
