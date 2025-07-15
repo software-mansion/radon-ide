@@ -65,7 +65,7 @@ export default defineConfig({
     port: 2137,
     strictPort: true,
     hmr: {
-      host: "127.0.0.1",
+      host: "localhost",
     },
   },
 });

@@ -78,7 +78,7 @@ function Preview({
   const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [touchPoint, setTouchPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
-  const previewRef = useRef<HTMLImageElement>(null);
+  const previewRef = useRef<HTMLCanvasElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
   const loadingBackgroundRef = useRef<HTMLDivElement>(null);
@@ -613,6 +613,11 @@ function Preview({
           />
         </div>
       </div>
+      {/* Hack needed for css to cache those images */}
+      <span className="phone-preload-masks">
+        <div style={{ maskImage: `url(${device?.landscapeMaskImage})` }} />
+        <div style={{ maskImage: `url(${device?.maskImage})` }} />
+      </span>
     </>
   );
 }

@@ -27,6 +27,10 @@ import iphone16pro from "../../assets/iphone_16_pro/skin.png";
 import iphone16promask from "../../assets/iphone_16_pro/mask.png";
 import iphone16probezel from "../../assets/iphone_16_pro/bezel.png";
 import iphone16proscreen from "../../assets/iphone_16_pro/screen.png";
+import iphone16proLandscape from "../../assets/iphone_16_pro/landscape/skin.png";
+import iphone16proLandscapeMask from "../../assets/iphone_16_pro/landscape/mask.png";
+import iphone16proLandscapeBezel from "../../assets/iphone_16_pro/landscape/bezel.png";
+import iphone16proLandscapeScreen from "../../assets/iphone_16_pro/landscape/screen.png";
 
 import iphoneSE from "../../assets/iphone_SE/skin.webp";
 import iphoneSEmask from "../../assets/iphone_SE/mask.png";
@@ -42,6 +46,7 @@ export type DevicePropertiesFrame = {
   offsetX: number;
   offsetY: number;
   image: string;
+  imageLandscape?: string;
 };
 
 export type DeviceProperties = {
@@ -52,6 +57,8 @@ export type DeviceProperties = {
   screenHeight: number;
   maskImage: string;
   screenImage: string;
+  landscapeMaskImage: string;
+  landscapeScreenImage: string;
   minimumAndroidApiLevel?: number;
   bezel: DevicePropertiesFrame;
   skin: DevicePropertiesFrame;
@@ -71,6 +78,8 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     screenHeight: 2556,
     maskImage: iphone16promask,
     screenImage: iphone16proscreen,
+    landscapeMaskImage: iphone16proLandscapeMask,
+    landscapeScreenImage: iphone16proLandscapeScreen,
     bezel: {
       type: "mask" as const,
       width: 1186,
@@ -78,6 +87,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
       offsetX: 4,
       offsetY: 4,
       image: iphone16probezel,
+      imageLandscape: iphone16proLandscapeBezel,
     },
     skin: {
       type: "skin" as const,
@@ -86,6 +96,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
       offsetX: 55,
       offsetY: 55,
       image: iphone16pro,
+      imageLandscape: iphone16proLandscape,
     },
   },
   {
@@ -96,6 +107,8 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     screenHeight: 2556,
     maskImage: iphone15promask,
     screenImage: iphone15proscreen,
+    landscapeMaskImage: iphone15promask, // Mock: using portrait mask
+    landscapeScreenImage: iphone15proscreen, // Mock: using portrait screen
     bezel: {
       type: "mask" as const,
       width: 1186,
@@ -121,6 +134,8 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     screenHeight: 1334,
     maskImage: iphoneSEmask,
     screenImage: iphoneSEscreen,
+    landscapeMaskImage: iphoneSEmask, // Mock: using portrait mask
+    landscapeScreenImage: iphoneSEscreen, // Mock: using portrait screen
     bezel: {
       type: "mask",
       width: 758,
@@ -150,6 +165,8 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     screenHeight: 2424,
     maskImage: pixel9mask,
     screenImage: pixel9screen,
+    landscapeMaskImage: pixel9mask, // Mock: using portrait mask
+    landscapeScreenImage: pixel9screen, // Mock: using portrait screen
     bezel: {
       type: "mask",
       width: 1088,
@@ -176,6 +193,8 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     screenHeight: 2400,
     maskImage: pixel8mask,
     screenImage: pixel8screen,
+    landscapeMaskImage: pixel8mask, // Mock: using portrait mask
+    landscapeScreenImage: pixel8screen, // Mock: using portrait screen
     bezel: {
       type: "mask",
       width: 1088,
@@ -202,6 +221,8 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     screenHeight: 2400,
     maskImage: pixel7mask,
     screenImage: pixel7screen,
+    landscapeMaskImage: pixel7mask, // Mock: using portrait mask
+    landscapeScreenImage: pixel7screen, // Mock: using portrait screen
     bezel: {
       type: "mask",
       width: 1088,
@@ -228,6 +249,8 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     screenHeight: 2400,
     maskImage: pixel6amask,
     screenImage: pixel6ascreen,
+    landscapeMaskImage: pixel6amask, // Mock: using portrait mask
+    landscapeScreenImage: pixel6ascreen, // Mock: using portrait screen
     bezel: {
       type: "mask",
       width: 1088,

@@ -1,8 +1,7 @@
 import { RefObject } from "react";
-import { DeviceRotationType, Frame } from "../../common/Project";
+import { Frame } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceContants";
 import DimensionsBox from "./DimensionsBox";
-import { useProject } from "../providers/ProjectProvider";
 
 interface InspectOverlayProps {
   inspectFrame: Frame;
@@ -11,38 +10,15 @@ interface InspectOverlayProps {
   wrapperDivRef: RefObject<HTMLDivElement | null>;
 }
 
-
-
-const getCssProperties = (frame: Frame, rotation: DeviceRotationType): React.CSSProperties => {
+const getCssProperties = (frame: Frame): React.CSSProperties => {
   const width = `${frame.width * 100}%`;
   const height = `${frame.height * 100}%`;
-  const top = `${frame.y * 100}%`;
-  const left = `${frame.x * 100}%`;
-
-  switch (rotation) {
-    case DeviceRotationType.LandscapeRight:
-      return {
-        width: height,
-        height: width,
-        left: top,
-        bottom: left,
-      };
-    case DeviceRotationType.LandscapeLeft:
-      return {
-        width: height,
-        height: width,
-        right: top,
-        top: left,
-      };
-    default:
-      // Portait
-      return {
-        width: width,
-        height: height,
-        left: `${frame.x * 100}%`,
-        top: `${frame.y * 100}%`,
-      };
-  }
+  return {
+    width: width,
+    height: height,
+    left: `${frame.x * 100}%`,
+    top: `${frame.y * 100}%`,
+  };
 };
 
 function InspectOverlay({
@@ -51,9 +27,7 @@ function InspectOverlay({
   device,
   wrapperDivRef,
 }: InspectOverlayProps) {
-  const { projectState } = useProject();
-
-  const cssProperties = getCssProperties(inspectFrame, projectState.rotation);
+  const cssProperties = getCssProperties(inspectFrame);
 
   return (
     <div className="phone-screen phone-inspect-overlay">
