@@ -78,6 +78,20 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     if ((params.reason as string) === "other") {
       return false;
     }
+
+    // This is a hack that solves an issue described in https://github.com/software-mansion/radon-ide/issues/1333
+    // when Caught exception functionality is enabled, by the user it breaks in inspectors internal
+    // mechanism for getting information about a component at a point. The getInspectorDataForViewAtPoint
+    // internally throws an error as a component in order to get a stack trace and infer
+    // components name and source location. Unfortunately normal "skipFiles" logic does not work here
+    // as the error is thrown as a component form the location of its definition.
+    const wasCalledFromInspector = params.callFrames.some((frame) => {
+      return frame.functionName.includes("getInspectorDataForViewAtPoint");
+    });
+    if (wasCalledFromInspector) {
+      return true;
+    }
+
     const { scriptId, lineNumber, columnNumber } = params.callFrames[0].location;
     const { sourceURL } = this.sourceMapRegistry.findOriginalPosition(
       scriptId,
