@@ -39,7 +39,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     private readonly deviceManager: DeviceManager,
     private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate
   ) {
-    this.findInitialDeviceAndStartSession();
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.deviceManager.addListener("devicesChanged", this.devicesChangedListener);
   }
