@@ -104,13 +104,13 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       },
     };
 
+    this.maybeStartInitialDeviceSession();
+
     this.disposables.push(
       connector.onConnectStateChanged((connectState) => {
         this.updateProjectState({ connectState });
         if (connectState.enabled) {
           this.deviceSessionsManager.terminateAllSessions();
-        } else {
-          this.deviceSessionsManager.findInitialDeviceAndStartSession();
         }
       })
     );
@@ -166,6 +166,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this
     );
     oldDeviceSessionsManager.dispose();
+    this.maybeStartInitialDeviceSession();
+
     this.launchConfigsManager.saveInitialLaunchConfig(launchConfig);
     this.updateProjectState({
       appRootPath: this.relativeAppRootPath,
@@ -198,6 +200,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   get buildCache() {
     return this.applicationContext.buildCache;
+  }
+
+  private maybeStartInitialDeviceSession() {
+    if (!Connector.getInstance().isEnabled && !this.deviceSessionsManager.selectedDeviceSession) {
+      this.deviceSessionsManager.findInitialDeviceAndStartSession();
+    }
   }
 
   private get selectedDeviceSessionState(): DeviceSessionState | undefined {
