@@ -9,9 +9,9 @@ import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { extensionContext } from "../../utilities/extensionContext";
 import { LocalMcpServer } from "./LocalMcpServer";
 
-async function updateMcpConfig(port: number) {
+async function updateMcpConfig(port: number, mcpVersion: string) {
   const mcpConfig = (await readMcpConfig()) || newMcpConfig();
-  const updatedConfig = insertRadonEntry(mcpConfig, port);
+  const updatedConfig = insertRadonEntry(mcpConfig, port, mcpVersion);
   await writeMcpConfig(updatedConfig);
 }
 
@@ -48,7 +48,7 @@ function directLoadRadonAI() {
   );
 }
 
-async function fsLoadRadonAI() {
+async function fsLoadRadonAI(mcpVersion: string) {
   try {
     // TODO: Use centralized version tracking once #1313 is merged
     const server = new LocalMcpServer();
@@ -57,7 +57,7 @@ async function fsLoadRadonAI() {
     const port = await server.getPort();
 
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
-    await updateMcpConfig(port);
+    await updateMcpConfig(port, mcpVersion);
 
     getTelemetryReporter().sendTelemetryEvent("radon-ai:mcp-started");
   } catch (error) {
@@ -79,9 +79,13 @@ export default function registerRadonAi() {
   if (isDirectLoadingAvailable()) {
     directLoadRadonAI();
   } else {
+    const server = new LocalMcpServer();
+    let versionSuffix = 0;
+
     extensionContext.subscriptions.push(
       watchLicenseTokenChange(() => {
-        fsLoadRadonAI();
+        server.setVersionSuffix(versionSuffix++);
+        fsLoadRadonAI(server.getVersion());
       })
     );
   }
