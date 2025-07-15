@@ -248,7 +248,7 @@ function PreviewView() {
       }}>
       <div className="button-group-top">
         <div className="button-group-top-left">
-          <UrlBar disabled={!navBarButtonsActive} />
+          <UrlBar disabled={!selectedDeviceSession} />
         </div>
         <div className="button-group-top-right">
           <ProfilingButton
