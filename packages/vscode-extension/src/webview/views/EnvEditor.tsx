@@ -10,6 +10,7 @@ import {
   VscodeButton as Button,
 } from "@vscode-elements/react-elements";
 import ToolbarButton from "../components/shared/VscodeToolbarButton";
+import "./EnvEditor.css";
 
 interface EnvEditorProps {
   initialValue?: Record<string, string>;
@@ -22,8 +23,6 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
   const [editingKeyValue, setEditingKeyValue] = useState<string>("");
   const [editingValue, setEditingValue] = useState<string>("");
   const [showAddForm, setShowAddForm] = useState<boolean>(false);
-  const [newKey, setNewKey] = useState<string>("");
-  const [newValue, setNewValue] = useState<string>("");
 
   const updateEnv = (newEnv: Record<string, string>) => {
     setEnv(newEnv);
@@ -34,8 +33,6 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
     // Cancel any ongoing add operation
     if (showAddForm) {
       setShowAddForm(false);
-      setNewKey("");
-      setNewValue("");
     }
 
     setEditingKey(key);
@@ -43,18 +40,23 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
     setEditingValue(env[key] || "");
   };
 
-  const saveEdit = () => {
-    if (editingKey && editingKeyValue && editingValue !== undefined) {
-      const { [editingKey]: removed, ...newEnv } = env;
-      const updatedEnv = { ...newEnv, [editingKeyValue]: editingValue };
+  const save = () => {
+    if (editingKeyValue && editingValue !== undefined) {
+      const updatedEnv = { ...env };
+      if (editingKey !== null) {
+        delete updatedEnv[editingKey];
+      }
+      updatedEnv[editingKeyValue] = editingValue;
       updateEnv(updatedEnv);
     }
+    setShowAddForm(false);
     setEditingKey(null);
     setEditingKeyValue("");
     setEditingValue("");
   };
 
-  const cancelEdit = () => {
+  const cancel = () => {
+    setShowAddForm(false);
     setEditingKey(null);
     setEditingKeyValue("");
     setEditingValue("");
@@ -65,63 +67,38 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
     updateEnv(newEnv);
   };
 
-  const addEntry = () => {
-    if (newKey) {
-      const newEnv = { ...env, [newKey]: newValue };
-      updateEnv(newEnv);
-      setNewKey("");
-      setNewValue("");
-      setShowAddForm(false);
-    }
-  };
+  const entries: [string | null, string][] = Object.entries(env);
 
-  const cancelAdd = () => {
-    setNewKey("");
-    setNewValue("");
-    setShowAddForm(false);
-  };
-
-  const entries = Object.entries(env);
+  if (showAddForm) {
+    entries.push([null, ""]);
+  }
 
   return (
-    <div>
-      <VscodeTable>
+    <>
+      <VscodeTable className="env-editor-table">
         <VscodeTableHeader slot="header">
           <VscodeTableHeaderCell>Item</VscodeTableHeaderCell>
           <VscodeTableHeaderCell>Value</VscodeTableHeaderCell>
-          <VscodeTableHeaderCell style={{ width: "100px" }}></VscodeTableHeaderCell>
+          <VscodeTableHeaderCell></VscodeTableHeaderCell>
         </VscodeTableHeader>
         <VscodeTableBody slot="body">
           {entries.map(([key, value]) => (
-            <VscodeTableRow
-              key={key}
-              onDoubleClick={() => startEditing(key)}
-              style={{
-                cursor: editingKey === key ? "default" : "pointer",
-                backgroundColor:
-                  editingKey === key
-                    ? "var(--vscode-list-activeSelectionBackground)"
-                    : "transparent",
-                color:
-                  editingKey === key ? "var(--vscode-list-activeSelectionForeground)" : "inherit",
-              }}>
+            <VscodeTableRow key={key} onDoubleClick={() => startEditing(key)}>
               <VscodeTableCell>
-                {editingKey === key ? (
+                {editingKey === key || key === null ? (
                   <VscodeTextfield
+                    placeholder="Key"
                     value={editingKeyValue}
                     onInput={(e) => setEditingKeyValue((e.target as HTMLInputElement).value)}
-                    style={{
-                      backgroundColor: "var(--vscode-inputOption-activeBorder)",
-                      color: "var(--vscode-inputOption-activeForeground)",
-                    }}
                   />
                 ) : (
                   key
                 )}
               </VscodeTableCell>
               <VscodeTableCell>
-                {editingKey === key ? (
+                {editingKey === key || key === null ? (
                   <VscodeTextfield
+                    placeholder="Value"
                     value={editingValue}
                     onInput={(e) => setEditingValue((e.target as HTMLInputElement).value)}
                   />
@@ -129,72 +106,53 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
                   value
                 )}
               </VscodeTableCell>
-              <VscodeTableCell style={{ textAlign: "right" }}>
-                {editingKey === key ? (
-                  <div style={{ display: "flex", gap: "4px", justifyContent: "flex-end" }}>
-                    <Button onClick={saveEdit}>OK</Button>
-                    <Button onClick={cancelEdit} secondary>
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", gap: "4px", justifyContent: "flex-end" }}>
-                    <ToolbarButton
-                      onClick={() => startEditing(key)}
-                      title="Edit Environment Variable">
-                      <span className="codicon codicon-edit" />
-                    </ToolbarButton>
-                    <ToolbarButton
-                      onClick={() => deleteEntry(key)}
-                      title="Remove Environment Variable">
-                      <span className="codicon codicon-close" />
-                    </ToolbarButton>
-                  </div>
-                )}
+              <VscodeTableCell>
+                <div className="env-editor-table-cell-actions">
+                  {editingKey === key || key === null ? (
+                    <>
+                      <Button disabled={!editingKeyValue} onClick={save}>
+                        OK
+                      </Button>
+                      <Button onClick={cancel} secondary>
+                        Cancel
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <ToolbarButton
+                        onClick={() => startEditing(key)}
+                        title="Edit Environment Variable">
+                        <span className="codicon codicon-edit" />
+                      </ToolbarButton>
+                      <ToolbarButton
+                        onClick={() => deleteEntry(key)}
+                        title="Remove Environment Variable">
+                        <span className="codicon codicon-close" />
+                      </ToolbarButton>
+                    </>
+                  )}
+                </div>
               </VscodeTableCell>
             </VscodeTableRow>
           ))}
         </VscodeTableBody>
       </VscodeTable>
-      <div style={{ marginTop: "8px" }}>
-        {showAddForm ? (
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <VscodeTextfield
-              placeholder="Key"
-              value={newKey}
-              onInput={(e) => setNewKey((e.target as HTMLInputElement).value)}
-              style={{ flex: 1 }}
-            />
-            <VscodeTextfield
-              placeholder="Value"
-              value={newValue}
-              onInput={(e) => setNewValue((e.target as HTMLInputElement).value)}
-              style={{ flex: 1 }}
-            />
-            <Button onClick={addEntry} disabled={!newKey}>
-              OK
-            </Button>
-            <Button onClick={cancelAdd} secondary>
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <Button
-            onClick={() => {
-              // Cancel any ongoing edit operation
-              if (editingKey) {
-                setEditingKey(null);
-                setEditingKeyValue("");
-                setEditingValue("");
-              }
-              setShowAddForm(true);
-            }}>
-            Add Variable
-          </Button>
-        )}
-      </div>
+      {!showAddForm && (
+        <Button
+          onClick={() => {
+            // Cancel any ongoing edit operation
+            if (editingKey) {
+              setEditingKey(null);
+              setEditingKeyValue("");
+              setEditingValue("");
+            }
+            setShowAddForm(true);
+          }}>
+          Add Variable
+        </Button>
+      )}
       <input type="hidden" name="env" value={JSON.stringify(env)} />
-    </div>
+    </>
   );
 }
 
