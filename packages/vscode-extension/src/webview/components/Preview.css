@@ -78,6 +78,7 @@
   height: var(--phone-screen-height);
   top: var(--phone-top);
   left: calc(var(--phone-left));
+  rotate: var(--frame-rotation);
 }
 
 .phone-sized {
@@ -121,6 +122,7 @@
 .phone-frame {
   pointer-events: none;
   position: absolute;
+  rotate: var(--frame-rotation);
 }
 
 .extension-error-screen {

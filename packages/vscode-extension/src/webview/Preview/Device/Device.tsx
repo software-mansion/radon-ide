@@ -42,6 +42,7 @@ type DeviceCSSProperties = React.CSSProperties & {
   "--phone-touch-area-screen-width"?: string;
   "--phone-touch-area-screen-top"?: string;
   "--phone-touch-area-screen-left"?: string;
+  "--frame-rotation"?: string;
 };
 
 function getParentDimensions(wrapperDivRef: React.RefObject<HTMLDivElement | null>) {
@@ -107,6 +108,7 @@ function cssPropertiesForDevice(
   let touchAreaScreenWidth = "calc(100% - 14px)";
   let touchAreaScreenTop = "0";
   let touchAreaScreenLeft = "7px";
+  let frameRotation = "0deg"
 
   if (isLandscape) {
     const landscapeProps = calculateLandscapeProperties(
@@ -133,6 +135,10 @@ function cssPropertiesForDevice(
     [touchAreaScreenTop, touchAreaScreenLeft] = [touchAreaScreenLeft, touchAreaScreenTop]; // Swap for landscape
   }
 
+  if(rotation === DeviceRotationType.LandscapeRight || rotation === DeviceRotationType.PortraitUpsideDown) {
+    frameRotation = "180deg";
+  }
+
   return {
     "--phone-content-min-height": minHeight,
     "--phone-content-min-width": minWidth,
@@ -153,6 +159,7 @@ function cssPropertiesForDevice(
     "--phone-touch-area-screen-width": touchAreaScreenWidth,
     "--phone-touch-area-screen-top": touchAreaScreenTop,
     "--phone-touch-area-screen-left": touchAreaScreenLeft,
+    "--frame-rotation": frameRotation,
 
     "--phone-wrapper-min-width": isLandscape
       ? "var(--phone-content-min-height)"
