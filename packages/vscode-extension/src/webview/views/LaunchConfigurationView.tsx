@@ -130,6 +130,8 @@ function serializeLaunchConfig(formData: FormData) {
   return newConfig;
 }
 
+type LaunchConfigAttrs = ReturnType<typeof getLaunchConfigAttrs>;
+
 function LaunchConfigurationView({
   launchConfig,
   isCurrentConfig,

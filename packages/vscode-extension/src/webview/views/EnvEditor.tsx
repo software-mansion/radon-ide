@@ -66,7 +66,8 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
   };
 
   const deleteEntry = (key: string) => {
-    const { [key]: removed, ...newEnv } = env;
+    const newEnv = { ...env };
+    delete newEnv[key];
     updateEnv(newEnv);
   };
 
