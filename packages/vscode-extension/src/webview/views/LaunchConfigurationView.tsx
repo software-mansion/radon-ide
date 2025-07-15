@@ -138,7 +138,6 @@ function LaunchConfigurationView({
   isCurrentConfig?: boolean;
 }) {
   const { openModal, closeModal } = useModal();
-  console.log("launchConfig", launchConfig);
   const applicationRoots = useApplicationRoots();
 
   const { project } = useProject();
