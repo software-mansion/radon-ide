@@ -66,7 +66,7 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
   };
 
   const addEntry = () => {
-    if (newKey && newValue) {
+    if (newKey) {
       const newEnv = { ...env, [newKey]: newValue };
       updateEnv(newEnv);
       setNewKey("");
@@ -171,7 +171,7 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
               onInput={(e) => setNewValue((e.target as HTMLInputElement).value)}
               style={{ flex: 1 }}
             />
-            <Button onClick={addEntry} disabled={!newKey || !newValue}>
+            <Button onClick={addEntry} disabled={!newKey}>
               OK
             </Button>
             <Button onClick={cancelAdd} secondary>

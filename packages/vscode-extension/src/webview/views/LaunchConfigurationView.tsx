@@ -129,31 +129,6 @@ function serializeLaunchConfig(formData: FormData) {
   return newConfig;
 }
 
-type LaunchConfigAttrs = ReturnType<typeof getLaunchConfigAttrs>;
-
-function LaunchConfigurationView({
-  launchConfig,
-  isCurrentConfig,
-}: {
-  launchConfig?: LaunchConfiguration;
-  isCurrentConfig?: boolean;
-}) {
-  const { openModal, closeModal } = useModal();
-  const applicationRoots = useApplicationRoots();
-
-  const { project } = useProject();
-
-  const formContainerRef = useRef<HTMLFormElement>(null);
-  const [appRoot, setAppRoot] = useState<string>(
-    launchConfig?.appRoot ?? applicationRoots[0]?.path ?? ""
-  );
-  const appRootConfig = useAppRootConfig(appRoot);
-
-  return newConfig;
-}
-
-type LaunchConfigAttrs = ReturnType<typeof getLaunchConfigAttrs>;
-
 function LaunchConfigurationView({
   launchConfig,
   isCurrentConfig,
