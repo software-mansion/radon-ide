@@ -83,6 +83,7 @@ function serializeLaunchConfig(formData: FormData) {
     appRoot: undefinedIfEmpty(data.appRoot),
     metroConfigPath: undefinedIfEmpty(data.metroConfigPath),
     isExpo: data.isExpo === "true" ? true : data.isExpo === "false" ? false : undefined,
+    env: data.env ? JSON.parse(data.env) : undefined,
   };
 
   for (const platform of ["ios", "android"] as const) {
