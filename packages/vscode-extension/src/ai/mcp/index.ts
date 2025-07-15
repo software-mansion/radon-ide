@@ -18,14 +18,15 @@ async function updateMcpConfig(port: number) {
 function directLoadRadonAI() {
   const didChangeEmitter = new EventEmitter<void>();
 
-  // version suffix is incremented whenever we get auth token update notification
-  // this way we request vscode to reload the tool on regular basis but also immediately
-  // after the user inputs the license token
+  const server = new LocalMcpServer();
+
   let versionSuffix = 0;
+
   extensionContext.subscriptions.push(
     watchLicenseTokenChange(() => {
       versionSuffix += 1;
       didChangeEmitter.fire();
+      server.setVersionSuffix(versionSuffix);
     })
   );
 
@@ -33,15 +34,13 @@ function directLoadRadonAI() {
     lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
       onDidChangeServerDefinitions: didChangeEmitter.event,
       provideMcpServerDefinitions: async () => {
-        const mcpVersion = extensionContext.extension.packageJSON.version + `.${versionSuffix}`;
-        const server = new LocalMcpServer(mcpVersion);
         const port = await server.getPort();
         return [
           new McpHttpServerDefinition(
             "RadonAI",
             Uri.parse(`http://127.0.0.1:${port}/mcp`),
             {},
-            mcpVersion
+            server.getVersion()
           ),
         ];
       },
@@ -52,9 +51,7 @@ function directLoadRadonAI() {
 async function fsLoadRadonAI() {
   try {
     // TODO: Use centralized version tracking once #1313 is merged
-    const mcpVersion = extensionContext.extension.packageJSON.version;
-
-    const server = new LocalMcpServer(mcpVersion);
+    const server = new LocalMcpServer();
 
     // Server has to be online before the config is written
     const port = await server.getPort();

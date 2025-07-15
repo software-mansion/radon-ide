@@ -6,6 +6,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { Logger } from "../../Logger";
 import { registerMcpTools } from "./toolRegistration";
 import { Session } from "./models";
+import { extensionContext } from "../../utilities/extensionContext";
 
 export class LocalMcpServer {
   private static instance: LocalMcpServer;
@@ -17,8 +18,9 @@ export class LocalMcpServer {
   private setServerPort: ((port: number) => void) | null = null;
 
   private mcpServer: McpServer | null = null;
+  private versionSuffix: number = 0;
 
-  constructor(mcpVersion: string) {
+  constructor() {
     if (LocalMcpServer.instance) {
       return LocalMcpServer.instance;
     }
@@ -31,13 +33,27 @@ export class LocalMcpServer {
       this.setServerPort = resolve;
     });
 
-    this.initializeHttpServer(mcpVersion);
+    this.initializeHttpServer();
   }
 
   public async getPort() {
     // `this.serverPort` is set in the initializer.
     // Typescript incorrectly types it as nullable.
     return (await this.serverPort) ?? 0;
+  }
+
+  public reloadToolSchema() {
+    this.session?.transport.close();
+    this.session = null;
+  }
+
+  public setVersionSuffix(newSuffix: number) {
+    this.versionSuffix = newSuffix;
+  }
+
+  public getVersion(): string {
+    const baseVersion = extensionContext.extension.packageJSON.version;
+    return `${baseVersion}.${this.versionSuffix}`;
   }
 
   private async handleSessionRequest(req: express.Request, res: express.Response) {
@@ -50,7 +66,7 @@ export class LocalMcpServer {
     await this.session.transport.handleRequest(req, res);
   }
 
-  private initializeHttpServer(mcpVersion: string) {
+  private initializeHttpServer() {
     const app = express();
     app.use(express.json());
 
@@ -79,7 +95,7 @@ export class LocalMcpServer {
 
         this.mcpServer = new McpServer({
           name: "RadonAI",
-          version: mcpVersion,
+          version: this.getVersion(),
         });
 
         await registerMcpTools(this.mcpServer);
