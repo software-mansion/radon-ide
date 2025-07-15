@@ -1,16 +1,21 @@
-import { useEffect, RefObject } from "react";
+import { useEffect, RefObject, useState } from "react";
 
-function useFormValidityTrigger(formRef: RefObject<HTMLFormElement | null>, callback: () => void) {
+function useFormValidity(formRef: RefObject<HTMLFormElement | null>) {
+  const [isValid, setIsValid] = useState(false);
+
   useEffect(() => {
     const form = formRef.current;
     if (!form) return;
 
-    callback(); // Initial check
+    setIsValid(form.checkValidity());
+    const callback = () => {
+      setIsValid(form.checkValidity());
+    };
 
     // Watch for changes to the form structure (i.e. new required fields added
     // or values changed). We use Mutation Observer which blocks layout and
     // hence we delay the actual callback to run after the next tick.
-    const delayedCallback = () => setTimeout(callback, 0);
+    const delayedCallback = () => setTimeout(() => setIsValid(form.checkValidity()), 0);
     const observer = new MutationObserver(delayedCallback);
     observer.observe(form, { childList: true, subtree: true, attributes: true });
 
@@ -21,7 +26,9 @@ function useFormValidityTrigger(formRef: RefObject<HTMLFormElement | null>, call
       observer.disconnect();
       form.removeEventListener("input", callback);
     };
-  }, [callback]);
+  }, [formRef]);
+
+  return isValid;
 }
 
-export default useFormValidityTrigger;
+export default useFormValidity;
