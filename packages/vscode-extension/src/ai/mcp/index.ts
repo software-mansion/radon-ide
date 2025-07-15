@@ -4,10 +4,10 @@ import { watchLicenseTokenChange } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
 import { insertRadonEntry, newMcpConfig } from "./configCreator";
 import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
-import { startLocalMcpServer } from "./server";
 import { MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { extensionContext } from "../../utilities/extensionContext";
+import { LocalMcpServer } from "./LocalMcpServer";
 
 async function updateMcpConfig(port: number) {
   const mcpConfig = (await readMcpConfig()) || newMcpConfig();
@@ -33,13 +33,15 @@ function directLoadRadonAI() {
     lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
       onDidChangeServerDefinitions: didChangeEmitter.event,
       provideMcpServerDefinitions: async () => {
-        const port = await startLocalMcpServer();
+        const mcpVersion = extensionContext.extension.packageJSON.version + `.${versionSuffix}`;
+        const server = new LocalMcpServer(mcpVersion);
+        const port = await server.getPort();
         return [
           new McpHttpServerDefinition(
             "RadonAI",
             Uri.parse(`http://127.0.0.1:${port}/mcp`),
             {},
-            extensionContext.extension.packageJSON.version + `.${versionSuffix}`
+            mcpVersion
           ),
         ];
       },
@@ -49,11 +51,16 @@ function directLoadRadonAI() {
 
 async function fsLoadRadonAI() {
   try {
+    // TODO: Use centralized version tracking once #1313 is merged
+    const mcpVersion = extensionContext.extension.packageJSON.version;
+
+    const server = new LocalMcpServer(mcpVersion);
+
     // Server has to be online before the config is written
-    const mcpPort = await startLocalMcpServer();
+    const port = await server.getPort();
 
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
-    await updateMcpConfig(mcpPort);
+    await updateMcpConfig(port);
 
     getTelemetryReporter().sendTelemetryEvent("radon-ai:mcp-started");
   } catch (error) {
