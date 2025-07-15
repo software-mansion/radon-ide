@@ -22,6 +22,8 @@ export interface UtilsInterface {
 
   movePanelTo(location: IDEPanelMoveTarget): Promise<void>;
 
+  enableRadonConnect(): Promise<void>;
+
   showDismissableError(errorMessage: string): Promise<void>;
 
   openExternalUrl(uriString: string): Promise<void>;

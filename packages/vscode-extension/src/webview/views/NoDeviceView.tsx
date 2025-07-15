@@ -82,6 +82,10 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
     openModal("Manage devices", <ManageDevicesView />);
   }
 
+  function enableRadonConnect() {
+    utils.enableRadonConnect();
+  }
+
   async function createAndroidDevice() {
     if (errors?.emulator) {
       utils.showDismissableError(errors?.emulator.message);
@@ -169,7 +173,7 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
         Create new device
       </Button>
       <h2 className="devices-not-found-title">Bring your own device or simulator</h2>
-      <Button onClick={openCreateNewDeviceModal}>
+      <Button onClick={enableRadonConnect}>
         <span className="codicon codicon-debug-disconnect" />
         Enable Radon Connect
       </Button>
