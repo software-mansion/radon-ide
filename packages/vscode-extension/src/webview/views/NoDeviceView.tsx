@@ -11,6 +11,7 @@ import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform, useUtils } from "../providers/UtilsProvider";
 import ManageDevicesView from "./ManageDevicesView";
+import { useProject } from "../providers/ProjectProvider";
 
 const firstIosDevice = iOSSupportedDevices[0];
 const firstAndroidDevice = AndroidSupportedDevices[0];
@@ -70,6 +71,7 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
   const [isAndroidCreating, withAndroidCreating] = useLoadingState();
   const { errors } = useDependencies();
   const utils = useUtils();
+  const { project } = useProject();
 
   function openCreateNewDeviceModal() {
     openModal(
@@ -83,7 +85,7 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
   }
 
   function enableRadonConnect() {
-    utils.enableRadonConnect();
+    project.enableRadonConnect();
   }
 
   async function createAndroidDevice() {

@@ -132,10 +132,6 @@ export class Utils implements UtilsInterface {
     commands.executeCommand("RNIDE.showPanel", location);
   }
 
-  public async enableRadonConnect() {
-    commands.executeCommand("RNIDE.enableRadonConnect");
-  }
-
   public async showDismissableError(errorMessage: string) {
     window.showErrorMessage(errorMessage, "Dismiss");
   }
