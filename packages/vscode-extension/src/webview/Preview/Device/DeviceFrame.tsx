@@ -2,17 +2,21 @@ import { DevicePropertiesFrame } from "../../utilities/deviceContants";
 
 type DeviceFrameProps = {
   frame: DevicePropertiesFrame;
+  isLandscape?: boolean;
 };
 
-function DeviceFrame({ frame }: DeviceFrameProps) {
+function DeviceFrame({ frame, isLandscape }: DeviceFrameProps) {
   if (!frame) {
     return null;
   }
 
   return frame.type === "mask" ? (
-    <div style={{ "--phone-frame-image": `url(${frame.image})` } as React.CSSProperties} className="phone-bezel"></div>
+    <div className="phone-bezel"></div>
   ) : (
-    <img src={frame.image} className="phone-frame" />
+    <span>
+      <img src={ frame.imageLandscape} style={{visibility: isLandscape ? "visible" : 'hidden'}} className="phone-frame" />
+      <img src={ frame.image} style={{visibility: isLandscape ? "hidden" : 'visible'}} className="phone-frame" />
+    </span>
   );
 }
 

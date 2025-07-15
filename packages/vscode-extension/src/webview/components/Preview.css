@@ -45,10 +45,9 @@
   align-items: center;
   justify-content: center;
   min-width: var(--phone-wrapper-min-width);
-  max-height: var(--phone-content-width);
   min-height: var(--phone-wrapper-min-height);
-  width: var(--phone-content-height) !important; /* Adjust the width for proper scroll behaviour */
-                                                /* !important necessary */
+  width: var(--phone-content-width) !important; /* Adjust the width for proper scroll behaviour */
+  /* !important necessary */
 }
 
 .phone-content {
@@ -66,10 +65,10 @@
 
 .touch-area {
   position: absolute;
-  width: calc(var(--phone-screen-width) + 14px);
-  height: var(--phone-screen-height);
-  top: var(--phone-top);
-  left: calc(var(--phone-left) - 7px);
+  width: var(--phone-touch-area-width);
+  height: var(--phone-touch-area-height);
+  top: var(--phone-touch-area-top);
+  left: var(--phone-touch-area-left);
   user-select: none;
 }
 
@@ -96,10 +95,10 @@
 
 .phone-screen {
   position: absolute;
-  width: calc(100% - 14px);
-  height: 100%;
-  top: 0;
-  left: 7px;
+  width: var(--phone-touch-area-screen-width);
+  height: var(--phone-touch-area-screen-height);
+  top: var(--phone-touch-area-screen-top);
+  left: var(--phone-touch-area-screen-left);
   -webkit-mask-image: var(--phone-mask-image);
   mask-image: var(--phone-mask-image);
   -webkit-mask-size: cover;
@@ -121,6 +120,7 @@
 
 .phone-frame {
   pointer-events: none;
+  position: absolute;
 }
 
 .extension-error-screen {
@@ -232,4 +232,11 @@
 .button-group-left-wrapper:hover .button-group-left,
 .button-group-left:has(.zoom-controls.select-open) {
   transform: translate(0px, 21px);
+}
+
+.phone-preload-masks {
+  visibility: hidden;
+  pointer-events: none;
+  position: fixed;
+  left: -10000px;
 }
