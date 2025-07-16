@@ -1,4 +1,5 @@
 import fs from "fs";
+import assert from "assert";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { DevicePlatform } from "../common/DeviceManager";
@@ -17,10 +18,16 @@ export type BuildCacheInfo = {
   buildResult: AndroidBuildResult | IOSBuildResult;
 };
 
-function makeCacheKey(platform: DevicePlatform, appRoot: string) {
+export interface CacheKey {
+  platform: DevicePlatform;
+  appRoot: string;
+  env: Record<string, string>;
+}
+
+function stringifyCacheKey({ platform, appRoot, env }: CacheKey) {
   const keyPrefix =
     platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
-  return `${keyPrefix}:${appRoot}`;
+  return `${keyPrefix}:${appRoot}:${JSON.stringify(env)}`;
 }
 
 export class BuildCache {
@@ -29,27 +36,22 @@ export class BuildCache {
   /**
    * Passed fingerprint should be calculated at the time build is started.
    */
-  public async storeBuild(buildFingerprint: string, appRootFolder: string, build: BuildResult) {
+  public async storeBuild(buildFingerprint: string, cacheKey: CacheKey, build: BuildResult) {
+    assert(cacheKey.platform === build.platform, "Cache key platform must match build platform");
     const appPath = await getAppHash(getAppPath(build));
-    await extensionContext.globalState.update(makeCacheKey(build.platform, appRootFolder), {
+    await extensionContext.globalState.update(stringifyCacheKey(cacheKey), {
       fingerprint: buildFingerprint,
       buildHash: appPath,
       buildResult: build,
     });
   }
 
-  public async clearCache(platform: DevicePlatform, appRootFolder: string) {
-    await extensionContext.globalState.update(makeCacheKey(platform, appRootFolder), undefined);
+  public async clearCache(cacheKey: CacheKey) {
+    await extensionContext.globalState.update(stringifyCacheKey(cacheKey), undefined);
   }
 
-  public async getBuild(
-    currentFingerprint: string,
-    platform: DevicePlatform,
-    appRootFolder: string
-  ) {
-    const cache = extensionContext.globalState.get<BuildCacheInfo>(
-      makeCacheKey(platform, appRootFolder)
-    );
+  public async getBuild(currentFingerprint: string, cacheKey: CacheKey) {
+    const cache = extensionContext.globalState.get<BuildCacheInfo>(stringifyCacheKey(cacheKey));
     if (!cache) {
       Logger.debug("No cached build found.");
       return undefined;
@@ -89,21 +91,15 @@ export class BuildCache {
     return this.fingerprintProvider.calculateFingerprint(options);
   }
 
-  public async isCacheStale(
-    currentFingerprint: string,
-    platform: DevicePlatform,
-    appRootFolder: string
-  ) {
+  public async isCacheStale(currentFingerprint: string, cacheKey: CacheKey) {
     const { fingerprint } =
-      extensionContext.globalState.get<BuildCacheInfo>(makeCacheKey(platform, appRootFolder)) ?? {};
+      extensionContext.globalState.get<BuildCacheInfo>(stringifyCacheKey(cacheKey)) ?? {};
 
     return currentFingerprint !== fingerprint;
   }
 
-  public hasCachedBuild(platform: DevicePlatform, appRootFolder: string) {
-    return !!extensionContext.globalState.get<BuildCacheInfo>(
-      makeCacheKey(platform, appRootFolder)
-    );
+  public hasCachedBuild(cacheKey: CacheKey) {
+    return !!extensionContext.globalState.get<BuildCacheInfo>(stringifyCacheKey(cacheKey));
   }
 }
 
@@ -122,7 +118,14 @@ export async function migrateOldBuildCachesToNewStorage(appRoot: string) {
         platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
       const cache = extensionContext.workspaceState.get<BuildCacheInfo>(oldKey);
       if (cache) {
-        await extensionContext.globalState.update(makeCacheKey(platform, appRoot), cache);
+        await extensionContext.globalState.update(
+          stringifyCacheKey({
+            platform,
+            appRoot,
+            env: {},
+          }),
+          cache
+        );
         await extensionContext.workspaceState.update(oldKey, undefined);
       }
     }
