@@ -7,12 +7,13 @@ sidebar_position: 10
 Radon Connect allows to connect a debugger to a variety of external devices, including Android phones, iPhones, external simulators, desktops, TVs, VR goggles, and web browsers. Allowing you to debug these devices directly from your code editor without any additional setup.
 
 ## Getting Started with Radon Connect
+
 To use Radon Connect, you need to enable connecting to external applications. Do do so: 
 
-1. Turn on you application via react native or expo CLI tool.
-2. Navigate to Radon IDE context button on the bottom of your IDE.
+1. Run your application. Make sure to keep the Metro running in the terminal window. 
+2. Hover over Radon IDE context button in the bottom-left corner of your editor.
 3. Choose the "Enable Radon Connect" option. 
-4. Enjoy integrated debugger experience. 
+4. Enjoy integrated debugger experience.
 
 <img width="700" src="/img/docs/enable_radon_connect.png" className="shadow-image"/>
 
