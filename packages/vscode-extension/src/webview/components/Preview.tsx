@@ -9,7 +9,6 @@ import { useBundleErrorAlert } from "../hooks/useBundleErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
-  DeviceRotationType,
   Frame,
   InspectDataStackItem,
   ZoomLevelType,
@@ -83,7 +82,7 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
-  const { selectedDeviceSession, project, projectState } = useProject();
+  const { selectedDeviceSession, project } = useProject();
 
   const { sendTelemetry } = useUtils();
 
@@ -107,56 +106,29 @@ function Preview({
 
   const openRebuildAlert = useNativeRebuildAlert();
 
-  function getNormalizedTouchCoordinates(event: MouseEvent<HTMLDivElement>, translated = false) {
+  function getNormalizedTouchCoordinates(event: MouseEvent<HTMLDivElement>) {
     /*
     Converts mouse event coordinates to normalized touch coordinates ([0-1] range)
-    relative to the device preview image + accounting for device rotation.
-    The function handles coordinate transformation when the device
-    is rotated in landscape mode, ensuring touch events are sent to the correct
-    position on the actual device regardless of how it's displayed in the preview.
+    relative to the device preview image.
+    Coordinate transformation handling when the device when the device is rotated,
+    done in the dispatchTouches method of project.
     */
     const imgRect = previewRef.current!.getBoundingClientRect();
+
     // Normalize coordinates to [0-1] range
-    let x = (event.clientX - imgRect.left) / imgRect.width;
-    let y = (event.clientY - imgRect.top) / imgRect.height;
-
-    // Original computed coordinates before traslation
-    let newX = x;
-    let newY = y;
-
-    if (translated) {
-      const rotation = projectState.rotation;
-      switch (rotation) {
-        // 90° anticlockwise map (x,y) to (1-y, x)
-        case DeviceRotationType.LandscapeLeft:
-          newX = 1 - y;
-          newY = x;
-          break;
-        case DeviceRotationType.LandscapeRight:
-          // 90° clockwise map (x,y) to (y, 1-x)
-          newX = y;
-          newY = 1 - x;
-          break;
-        default:
-          // Portrait mode: no transformation needed
-          break;
-      }
-    }
+    const x = (event.clientX - imgRect.left) / imgRect.width;
+    const y = (event.clientY - imgRect.top) / imgRect.height;
 
     // Ensure coordinates are clamped to [0, 1] range
-    let clampedX = clamp(newX, 0, 1);
-    let clampedY = clamp(newY, 0, 1);
+    let clampedX = clamp(x, 0, 1);
+    let clampedY = clamp(y, 0, 1);
     return { x: clampedX, y: clampedY };
-  }
-
-  function getTranslatedNormalizedTouchCoordinates(event: MouseEvent<HTMLDivElement>) {
-    return getNormalizedTouchCoordinates(event, true);
   }
 
   function moveAnchorPoint(event: MouseEvent<HTMLDivElement>) {
     let { x: anchorX, y: anchorY } = anchorPoint;
     const { x: prevPointX, y: prevPointY } = touchPoint;
-    const { x: newPointX, y: newPointY } = getTranslatedNormalizedTouchCoordinates(event);
+    const { x: newPointX, y: newPointY } = getNormalizedTouchCoordinates(event);
     anchorX += newPointX - prevPointX;
     anchorY += newPointY - prevPointY;
     anchorX = clamp(anchorX, 0, 1);
@@ -173,12 +145,12 @@ function Preview({
       return;
     }
 
-    const { x, y } = getTranslatedNormalizedTouchCoordinates(event);
+    const { x, y } = getNormalizedTouchCoordinates(event);
     project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
   }
 
   function sendMultiTouchForEvent(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
-    const pt = getTranslatedNormalizedTouchCoordinates(event);
+    const pt = getNormalizedTouchCoordinates(event);
     sendMultiTouch(pt, type);
   }
 
@@ -254,7 +226,7 @@ function Preview({
     if (isInspecting) {
       sendInspect(e, "Move", false);
     } else if (isMultiTouching) {
-      setTouchPoint(getTranslatedNormalizedTouchCoordinates(e));
+      setTouchPoint(getNormalizedTouchCoordinates(e));
       if (e.shiftKey) {
         moveAnchorPoint(e);
       }
@@ -272,7 +244,7 @@ function Preview({
       return;
     }
 
-    const { x, y } = getTranslatedNormalizedTouchCoordinates(e);
+    const { x, y } = getNormalizedTouchCoordinates(e);
 
     project.dispatchWheel({ xRatio: x, yRatio: y }, e.deltaX, e.deltaY);
   }
@@ -457,7 +429,7 @@ function Preview({
             x: 0.5,
             y: 0.5,
           });
-          setTouchPoint(getTranslatedNormalizedTouchCoordinates(currentMousePosition.current!));
+          setTouchPoint(getNormalizedTouchCoordinates(currentMousePosition.current!));
           setIsMultiTouching(true);
         }
 
