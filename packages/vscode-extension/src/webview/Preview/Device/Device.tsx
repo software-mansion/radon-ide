@@ -108,7 +108,7 @@ function cssPropertiesForDevice(
   let touchAreaScreenWidth = "calc(100% - 14px)";
   let touchAreaScreenTop = "0";
   let touchAreaScreenLeft = "7px";
-  let frameRotation = "0deg"
+  let frameRotation = "0deg";
 
   if (isLandscape) {
     const landscapeProps = calculateLandscapeProperties(
@@ -135,7 +135,10 @@ function cssPropertiesForDevice(
     [touchAreaScreenTop, touchAreaScreenLeft] = [touchAreaScreenLeft, touchAreaScreenTop]; // Swap for landscape
   }
 
-  if(rotation === DeviceRotationType.LandscapeRight || rotation === DeviceRotationType.PortraitUpsideDown) {
+  if (
+    rotation === DeviceRotationType.LandscapeRight ||
+    rotation === DeviceRotationType.PortraitUpsideDown
+  ) {
     frameRotation = "180deg";
   }
 
@@ -221,18 +224,10 @@ export default function Device({ device, resizableProps, children, wrapperDivRef
     <Resizable className="phone-wrapper-resizable" {...resizableProps} style={{ ...cssProperties }}>
       <div ref={phoneContentRef} className="phone-content" style={cssProperties}>
         <DeviceFrame frame={frame} isLandscape={isLandscape} />
-        <span>
-          <img
-            src={device.landscapeScreenImage}
-            style={{ visibility: isLandscape ? "visible" : "hidden" }}
-            className="phone-screen-background"
-          />
-          <img
-            src={device.screenImage}
-            style={{ visibility: isLandscape ? "hidden" : "visible" }}
-            className="phone-screen-background"
-          />
-        </span>
+        <img
+          src={isLandscape ? device.landscapeScreenImage : device.screenImage}
+          className="phone-screen-background"
+        />
         {children}
       </div>
     </Resizable>
