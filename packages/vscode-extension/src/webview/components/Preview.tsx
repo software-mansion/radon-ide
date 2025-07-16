@@ -169,7 +169,7 @@ function Preview({
       return;
     }
     if (type === "RightButtonDown") {
-      sendTelemetry("inspector:right-button-down", {});
+      sendTelemetry("inspector:show-component-stack", {});
     }
     const { x: clampedX, y: clampedY } = getTouchPosition(event);
     const requestStack = type === "Down" || type === "RightButtonDown";
