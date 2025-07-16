@@ -23,8 +23,8 @@ function directLoadRadonAI(server: LocalMcpServer) {
   extensionContext.subscriptions.push(
     watchLicenseTokenChange(() => {
       versionSuffix += 1;
-      didChangeEmitter.fire();
       server.setVersionSuffix(versionSuffix);
+      didChangeEmitter.fire();
     })
   );
 

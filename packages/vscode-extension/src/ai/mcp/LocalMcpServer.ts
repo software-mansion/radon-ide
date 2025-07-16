@@ -33,13 +33,14 @@ export class LocalMcpServer {
     return (await this.serverPort) ?? 0;
   }
 
-  public reloadToolSchema() {
+  private reloadToolSchema() {
     this.session?.transport.close();
     this.session = null;
   }
 
   public setVersionSuffix(newSuffix: number) {
     this.versionSuffix = newSuffix;
+    this.reloadToolSchema();
   }
 
   public getVersion(): string {
