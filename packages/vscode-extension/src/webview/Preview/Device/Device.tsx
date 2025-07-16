@@ -20,6 +20,7 @@ interface DeviceProps {
 }
 
 type DeviceCSSProperties = React.CSSProperties & {
+  "--phone-wrapper-height"?: string,
   "--phone-content-min-height"?: string;
   "--phone-content-min-width"?: string;
   "--phone-content-width"?: string;
@@ -60,20 +61,20 @@ function calculateLandscapeProperties(
   resizableHeight: ResizablePropsSize
 ) {
   const { width: parentWidth } = parentDimensions;
-  // const isFitSet = typeof resizableHeight === "string";
+  const isFitSet = typeof resizableHeight === "string";
 
   const minWidth = MIN_HEIGHT;
   const minHeight = minWidth * aspectRatio;
-  const adjustedWidth = Math.max(parentWidth * CSS_MARGIN_FACTOR, minWidth);
-  // const adjustedHeight = (isFitSet ? scaledHeight : (resizableHeight as number) || scaledHeight) * CSS_MARGIN_FACTOR;
-  // const adjustedHeight = 'auto'
+  const adjustedWidth = isFitSet
+    ? Math.max(parentWidth * CSS_MARGIN_FACTOR, minWidth)
+    : (resizableHeight as number);
   const adjustedHeight = adjustedWidth * aspectRatio;
 
   return {
     width: `${adjustedWidth}px`,
     height: `${adjustedHeight}px`,
-    minWidth: `${minWidth}px`,
-    minHeight: `${minHeight}px`,
+    minWidth: isFitSet ? `${minWidth}px` : 'none',
+    minHeight: isFitSet ?`${minHeight}px` : 'none',
   };
 }
 
@@ -87,13 +88,17 @@ function cssPropertiesForDevice(
   const aspectRatio = frame.width / frame.height;
   const isLandscape =
     rotation === DeviceRotationType.LandscapeLeft || rotation === DeviceRotationType.LandscapeRight;
+  const isFitSet = typeof resizableHeight === "string";
 
   const parentDimensions = getParentDimensions(wrapperDivRef);
 
-  let newHeight = `min(100%, max(${MIN_HEIGHT}px, ${(parentDimensions.width / aspectRatio) * CSS_MARGIN_FACTOR}px))`;
+  let wrapperHeight = isFitSet ? resizableHeight : `${resizableHeight}px`;
+  let newHeight = isFitSet
+    ? `min(100%, max(${MIN_HEIGHT}px, ${(parentDimensions.width / aspectRatio) * CSS_MARGIN_FACTOR}px))`
+    : `${resizableHeight}px`;
   let newWidth = "auto";
   let minWidth = "fit-content";
-  let minHeight = `${MIN_HEIGHT}px`;
+  let minHeight = isFitSet ? `${MIN_HEIGHT}px` : 'none';
   let screenHeight = `${(device.screenHeight / frame.height) * 100}%`;
   let screenWidth = `${(device.screenWidth / frame.width) * 100}%`;
   let phoneTop = `${(frame.offsetY / frame.height) * 100}%`;
@@ -117,6 +122,7 @@ function cssPropertiesForDevice(
       resizableHeight
     );
 
+    wrapperHeight = "fit-content";
     newHeight = landscapeProps.height;
     newWidth = landscapeProps.width;
     minWidth = landscapeProps.minWidth;
@@ -143,6 +149,7 @@ function cssPropertiesForDevice(
   }
 
   return {
+    "--phone-wrapper-height": wrapperHeight,
     "--phone-content-min-height": minHeight,
     "--phone-content-min-width": minWidth,
     "--phone-content-width": newWidth,
@@ -179,7 +186,6 @@ export default function Device({ device, resizableProps, children, wrapperDivRef
   const phoneContentRef = useRef<HTMLDivElement>(null);
 
   const resizableHeight = resizableProps.size?.height;
-  // console.log("DIMENSIONS", resizableProps.size?.width, resizableProps.size?.height);
   const rotation = projectState.rotation;
 
   const cssProperties = useMemo(() => {
