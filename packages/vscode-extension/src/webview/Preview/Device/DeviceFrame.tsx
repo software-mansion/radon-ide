@@ -13,10 +13,7 @@ function DeviceFrame({ frame, isLandscape }: DeviceFrameProps) {
   return frame.type === "mask" ? (
     <div className="phone-bezel"></div>
   ) : (
-    <span>
-      <img src={ frame.imageLandscape} style={{visibility: isLandscape ? "visible" : 'hidden'}} className="phone-frame" />
-      <img src={ frame.image} style={{visibility: isLandscape ? "hidden" : 'visible'}} className="phone-frame" />
-    </span>
+    <img src={isLandscape ? frame.imageLandscape : frame.image} className="phone-frame" />
   );
 }
 

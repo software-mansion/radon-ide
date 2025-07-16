@@ -1,6 +1,6 @@
-import { useEffect, forwardRef, RefObject, useRef, useCallback } from "react";
-import { DeviceRotationType } from "../../common/Project";
+import { useEffect, forwardRef, RefObject, useRef } from "react";
 import { useProject } from "../providers/ProjectProvider";
+import useCanvasRenderer from "../hooks/useCanvasRenderer";
 import { IS_DEV } from "../providers/UtilsProvider";
 
 const NO_IMAGE_DATA_PRODUCTION =
@@ -10,74 +10,6 @@ const NO_IMAGE_DATA_DEV =
   "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='100%' height='100%' fill='gray'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='20'>No Image</text></svg>";
 
 const NO_IMAGE_DATA = IS_DEV ? NO_IMAGE_DATA_DEV : NO_IMAGE_DATA_PRODUCTION;
-
-function useCanvasRenderer(
-  rotation: DeviceRotationType,
-  canvasRef: RefObject<HTMLCanvasElement | null>
-) {
-  const drawImageToCanvas = useCallback(
-    (sourceImg: HTMLImageElement): void => {
-      if (!canvasRef.current) {
-        return;
-      }
-
-      const canvas = canvasRef.current;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        return;
-      }
-
-      const { width: imgWidth, height: imgHeight } = sourceImg;
-
-      // Determine rotation angle and new dimensions
-      let angle = 0;
-      let newWidth = imgWidth;
-      let newHeight = imgHeight;
-
-      switch (rotation) {
-        case DeviceRotationType.LandscapeLeft:
-          angle = -Math.PI / 2; // -90 degrees
-          newWidth = imgHeight;
-          newHeight = imgWidth;
-          break;
-        case DeviceRotationType.LandscapeRight:
-          angle = Math.PI / 2; // 90 degrees
-          newWidth = imgHeight;
-          newHeight = imgWidth;
-          break;
-        case DeviceRotationType.PortraitUpsideDown:
-          angle = Math.PI; // 180 degrees
-          break;
-        default:
-          // Portrait mode: no rotation
-          break;
-      }
-
-      // Resize canvas to accommodate dimensions
-      canvas.width = newWidth;
-      canvas.height = newHeight;
-
-      // Clear and draw
-      ctx.clearRect(0, 0, newWidth, newHeight);
-
-      if (rotation === DeviceRotationType.Portrait) {
-        // Direct draw for portrait mode
-        ctx.drawImage(sourceImg, 0, 0);
-      } else {
-        // Apply rotation transformation
-        ctx.save();
-        ctx.translate(newWidth / 2, newHeight / 2);
-        ctx.rotate(angle);
-        ctx.translate(-imgWidth / 2, -imgHeight / 2);
-        ctx.drawImage(sourceImg, 0, 0);
-        ctx.restore();
-      }
-    },
-    [rotation, canvasRef]
-  );
-
-  return drawImageToCanvas;
-}
 
 const MjpegImg = forwardRef<
   HTMLCanvasElement,
