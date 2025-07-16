@@ -26,7 +26,8 @@ With Radon Connect, debugging external devices becomes seamless:
 </video>
 
 ## Viewing Logs
-Debugging is not complete without logs. Radon Connect provides integrated logging for connected devices:
+
+Debugging isn't complete without logs. Radon Connect provides integrated logging for connected devices:
 
 - Access logs by navigating to the debug console in your editor.
 - Logs include the application console logs, errors, and metro bundling messages.
