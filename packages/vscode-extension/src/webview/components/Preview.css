@@ -43,10 +43,11 @@
 .phone-wrapper-resizable {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   min-width: var(--phone-wrapper-min-width);
   min-height: var(--phone-wrapper-min-height);
   width: var(--phone-content-width) !important; /* Adjust the width for proper scroll behaviour */
+  height: var(--phone-wrapper-height) !important;
   /* !important necessary */
 }
 
@@ -119,7 +120,8 @@
 
 .phone-frame {
   pointer-events: none;
-  position: absolute;
+  /* Uncomment if something breaks */
+  /* position: absolute; */
   rotate: var(--frame-rotation);
 }
 
