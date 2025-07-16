@@ -179,6 +179,7 @@ export default function Device({ device, resizableProps, children, wrapperDivRef
   const phoneContentRef = useRef<HTMLDivElement>(null);
 
   const resizableHeight = resizableProps.size?.height;
+  // console.log("DIMENSIONS", resizableProps.size?.width, resizableProps.size?.height);
   const rotation = projectState.rotation;
 
   const cssProperties = useMemo(() => {
