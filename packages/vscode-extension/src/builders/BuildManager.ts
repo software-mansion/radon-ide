@@ -216,6 +216,11 @@ export class BuildManagerImpl implements Disposable, BuildManager {
       env: buildConfig.env,
       fingerprintCommand: buildConfig.fingerprintCommand,
     };
+    const buildCacheKey = {
+      platform,
+      appRoot,
+      env: buildConfig.env ?? {},
+    };
 
     getTelemetryReporter().sendTelemetryEvent("build:requested", {
       platform,
@@ -234,9 +239,9 @@ export class BuildManagerImpl implements Disposable, BuildManager {
         "Build cache is being invalidated",
         forceCleanBuild ? "on request" : "due to build dependencies change"
       );
-      await this.buildCache.clearCache(platform, appRoot);
+      await this.buildCache.clearCache(buildCacheKey);
     } else {
-      const cachedBuild = await this.buildCache.getBuild(currentFingerprint, platform, appRoot);
+      const cachedBuild = await this.buildCache.getBuild(currentFingerprint, buildCacheKey);
       if (cachedBuild) {
         Logger.debug("Skipping native build – using cached");
         getTelemetryReporter().sendTelemetryEvent("build:cache-hit", { platform });
@@ -320,7 +325,7 @@ export class BuildManagerImpl implements Disposable, BuildManager {
     }
 
     try {
-      await this.buildCache.storeBuild(buildFingerprint, appRoot, buildResult);
+      await this.buildCache.storeBuild(buildFingerprint, buildCacheKey, buildResult);
     } catch (e) {
       // NOTE: this is a fallible operation (since it does file system operations), but we don't want to fail the whole build if we fail to store it in a cache.
       Logger.warn("Failed to store the build in cache.", e);
