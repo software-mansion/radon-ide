@@ -1,4 +1,4 @@
-import { lm, McpHttpServerDefinition, Uri, EventEmitter, version } from "vscode";
+import { lm, McpHttpServerDefinition, Uri, EventEmitter, version, Disposable } from "vscode";
 import { Logger } from "../../Logger";
 import { watchLicenseTokenChange } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
@@ -74,20 +74,25 @@ function isDirectLoadingAvailable() {
   );
 }
 
-export default function registerRadonAi() {
+export default function registerRadonAi(): Disposable {
   const connectionListener = new ConnectionListener();
 
   if (isDirectLoadingAvailable()) {
     directLoadRadonAI(connectionListener);
+
+    return connectionListener;
   } else {
     connectionListener.onConnectionRestored(() => {
       fsLoadRadonAI(connectionListener);
     });
 
-    extensionContext.subscriptions.push(
-      watchLicenseTokenChange(() => {
-        fsLoadRadonAI(connectionListener);
-      })
-    );
+    const licenseObserver = watchLicenseTokenChange(() => {
+      fsLoadRadonAI(connectionListener);
+    });
+
+    return new Disposable(() => {
+      connectionListener.dispose();
+      licenseObserver.dispose();
+    });
   }
 }

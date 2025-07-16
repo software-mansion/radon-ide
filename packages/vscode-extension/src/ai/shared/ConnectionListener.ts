@@ -1,12 +1,13 @@
 import { Disposable, EventEmitter } from "vscode";
-import { extensionContext } from "../../utilities/extensionContext";
 import { isServerOnline } from "./api";
 
 const PING_INTERVAL = 5000;
 
-export class ConnectionListener {
+export class ConnectionListener implements Disposable {
   connectionRestoredEmitter: EventEmitter<void>;
   connectionListeningInterval: NodeJS.Timeout | null;
+
+  listenerDisposables: Disposable[] = [];
 
   constructor() {
     this.connectionRestoredEmitter = new EventEmitter();
@@ -26,7 +27,15 @@ export class ConnectionListener {
     }
   }
 
-  public tryRestoringConnection() {
+  dispose() {
+    this.tryClearListeningInterval();
+    this.connectionRestoredEmitter.dispose();
+    for (const disposable of this.listenerDisposables) {
+      disposable.dispose();
+    }
+  }
+
+  tryRestoringConnection() {
     if (this.connectionListeningInterval) {
       return; // Pings already running - no-op
     }
@@ -39,11 +48,9 @@ export class ConnectionListener {
         this.connectionRestoredEmitter.fire();
       }
     }, PING_INTERVAL);
-
-    extensionContext.subscriptions.push(new Disposable(() => this.tryClearListeningInterval()));
   }
 
-  public onConnectionRestored(callback: () => unknown) {
-    extensionContext.subscriptions.push(this.connectionRestoredEmitter.event(callback));
+  onConnectionRestored(callback: () => unknown) {
+    this.connectionRestoredEmitter.event(callback, undefined, this.listenerDisposables);
   }
 }
