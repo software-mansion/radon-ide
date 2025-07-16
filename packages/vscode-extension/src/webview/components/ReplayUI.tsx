@@ -7,7 +7,7 @@ import { useProject } from "../providers/ProjectProvider";
 
 function VHSRewind() {
   return (
-    <div className="phone-screen">
+    <div className="phone-screen vhs-wrapper">
       <div className="vhs-lines"></div>
       <div className="crt-lines"></div>
       <div className="vhs-bg">
@@ -49,7 +49,7 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
     };
 
     const handleSourceLoad = () => {
-      if(intervalId) {
+      if (intervalId) {
         clearInterval(intervalId); // Clear any existing interval
       }
 
@@ -59,7 +59,7 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
     };
 
     const handleSourceError = () => {
-      if(intervalId) {
+      if (intervalId) {
         clearInterval(intervalId); // Clear any existing interval
       }
 
@@ -86,7 +86,7 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
   }, [canvasRef, replayData.url, rotation, drawToCanvas]);
 
   return (
-    <>
+    <span className="replay-ui-wrapper">
       <ReplayOverlay
         isRewinding={isRewinding}
         setIsRewinding={setIsRewinding}
@@ -102,6 +102,6 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
       />
       <canvas ref={canvasRef} className="phone-screen replay-video" />
       {isRewinding && <VHSRewind />}
-    </>
+    </span>
   );
 }

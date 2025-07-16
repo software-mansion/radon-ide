@@ -27,6 +27,7 @@ import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
 import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
+import { useDeviceFrame } from "../Preview/Device/hooks";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -487,6 +488,7 @@ function Preview({
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
   });
+  const frame = useDeviceFrame(device!);
 
   const resizableProps = useResizableProps({
     wrapperDivRef,
@@ -613,10 +615,15 @@ function Preview({
           />
         </div>
       </div>
+
       {/* Hack needed for css to cache those images */}
       <span className="phone-preload-masks">
         <div style={{ maskImage: `url(${device?.landscapeMaskImage})` }} />
         <div style={{ maskImage: `url(${device?.maskImage})` }} />
+        <img src={frame.imageLandscape} alt="" />
+        <img src={frame.image} alt="" />
+        <img src={device?.landscapeScreenImage} alt="" />
+        <img src={device?.screenImage} alt="" />
       </span>
     </>
   );
