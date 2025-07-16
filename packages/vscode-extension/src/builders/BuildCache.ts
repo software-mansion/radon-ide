@@ -27,7 +27,9 @@ export interface CacheKey {
 function stringifyCacheKey({ platform, appRoot, env }: CacheKey) {
   const keyPrefix =
     platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
-  return `${keyPrefix}:${appRoot}:${JSON.stringify(env)}`;
+  const envEntries = Object.entries(env).sort(([k], [k2]) => k.localeCompare(k2));
+  const envStrings = envEntries.map(([k, v]) => `${k}=${v}`);
+  return `${keyPrefix}:${appRoot}:${JSON.stringify(envStrings)}`;
 }
 
 export class BuildCache {
