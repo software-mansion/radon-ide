@@ -42,32 +42,35 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
       return;
     }
 
-    let intervalId: NodeJS.Timeout;
+    let animationFrameId: number;
+    let isAnimating = false;
 
     const updateCanvas = () => {
       drawToCanvas(sourceVideo);
+      if (isAnimating) {
+        animationFrameId = requestAnimationFrame(updateCanvas);
+      }
     };
 
     const handleSourceLoad = () => {
-      if (intervalId) {
-        clearInterval(intervalId); // Clear any existing interval
+      if (isAnimating) {
+        cancelAnimationFrame(animationFrameId);
       }
 
+      isAnimating = true;
       updateCanvas();
-      // continuously update the canvas
-      intervalId = setInterval(updateCanvas, 17); // ~60 FPS
     };
 
     const handleSourceError = () => {
-      if (intervalId) {
-        clearInterval(intervalId); // Clear any existing interval
+      if (isAnimating) {
+        cancelAnimationFrame(animationFrameId);
+        isAnimating = false;
       }
 
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
-      clearInterval(intervalId);
     };
 
     // If video is already loaded and ready to play, dispatch drawHandler
@@ -79,11 +82,14 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
     sourceVideo.addEventListener("error", handleSourceError);
 
     return () => {
-      clearInterval(intervalId);
+      if (isAnimating) {
+        cancelAnimationFrame(animationFrameId);
+        isAnimating = false;
+      }
       sourceVideo.removeEventListener("loadeddata", handleSourceLoad);
       sourceVideo.removeEventListener("error", handleSourceError);
     };
-  }, [canvasRef, replayData.url, rotation, drawToCanvas]);
+  }, [canvasRef, rotation, drawToCanvas]);
 
   return (
     <span className="replay-ui-wrapper">
