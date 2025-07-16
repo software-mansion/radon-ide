@@ -91,7 +91,7 @@ function PreviewView() {
     replayData,
     setReplayData,
   } = useProject();
-  const { showDismissableError } = useUtils();
+  const { showDismissableError, sendTelemetry } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
@@ -341,7 +341,12 @@ function PreviewView() {
           tooltip={{
             label: "Select an element to inspect it",
           }}
-          onClick={() => setIsInspecting(!isInspecting)}
+          onClick={() => {
+            sendTelemetry("inspector:inspector-button-clicked", {
+              isInspecting: String(!isInspecting),
+            });
+            setIsInspecting(!isInspecting);
+          }}
           disabled={!navBarButtonsActive}>
           <span className="codicon codicon-inspect" />
         </IconButton>

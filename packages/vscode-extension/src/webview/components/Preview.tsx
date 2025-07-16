@@ -18,7 +18,7 @@ import {
 import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
-import { Platform } from "../providers/UtilsProvider";
+import { Platform, useUtils } from "../providers/UtilsProvider";
 import DimensionsBox from "./DimensionsBox";
 import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
@@ -82,6 +82,8 @@ function Preview({
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
   const { selectedDeviceSession, project } = useProject();
+
+  const { sendTelemetry } = useUtils();
 
   const hasFatalError = selectedDeviceSession?.status === "fatalError";
   const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
@@ -165,6 +167,9 @@ function Preview({
   ) {
     if (type === "Leave") {
       return;
+    }
+    if (type === "RightButtonDown") {
+      sendTelemetry("inspector:right-button-down", {});
     }
     const { x: clampedX, y: clampedY } = getTouchPosition(event);
     const requestStack = type === "Down" || type === "RightButtonDown";
