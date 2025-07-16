@@ -4,8 +4,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
   flex-direction: column;
+  height: 100%;
+  flex-wrap: nowrap;
+  container: preview-loader / size;
 
   .progress-bar-root {
     width: 100%;
@@ -18,20 +20,8 @@
 
   /* LandscapeLeft and LandscapeRight display */
   &.landscape {
-    width: 100%;
-
-    .preview-loader-container {
-      width: 100%;
-      cursor: pointer;
-      display: block;
-    }
-
-    .preview-loader-waiting-actions {
-      width: 100%;
-    }
-
-    /* Small Breakpoint */
-    &.small {
+    /* Small container query for landscape */
+    @container preview-loader (height <= 170px) {
       .preview-loader-load-info {
         font-size: 0.6em;
       }
@@ -39,7 +29,7 @@
       .preview-loader-waiting-actions {
         font-size: 0.4em;
         flex-direction: row !important;
-        justify-content: space-evenly;
+        justify-content: space-between;
 
         .codicon {
           font-size: 12px;
@@ -51,8 +41,8 @@
       }
     }
 
-    /* Medium breakpoint */
-    &.medium {
+    /* Medium container query for landscape */
+    @container preview-loader (height >= 170px) and (height <= 300px) {
       .preview-loader-load-info {
         font-size: 0.8em;
       }
@@ -68,8 +58,8 @@
   }
 
   &.portrait {
-    /* Small Breakpoint */
-    &.small {
+    /* Small container query for portrait */
+    @container preview-loader (width <= 150px) {
       .preview-loader-load-info {
         font-size: 0.6em;
       }
@@ -81,10 +71,15 @@
       .codicon {
         font-size: 14px;
       }
+
+      .button {
+        height: 25px;
+        border-radius: 8px;
+      }
     }
 
-    /* Medium breakpoint */
-    &.medium {
+    /* Medium container query for portrait */
+    @container preview-loader (width >= 150px) and (width <= 200px) {
       .preview-loader-load-info {
         font-size: 0.75em;
       }
@@ -95,11 +90,6 @@
       }
     }
   }
-}
-
-.preview-loader-wrapper.landscape.small,
-.preview-loader-wrapper.landscape.medium {
-  width: 100%;
 }
 
 .preview-loader-section {
@@ -120,7 +110,6 @@
 }
 
 .preview-loader-load-info {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -135,6 +124,7 @@
   flex-direction: column;
   gap: 1em;
   align-items: stretch;
+  width: 100%;
 }
 
 .preview-loader-waiting-actions a {

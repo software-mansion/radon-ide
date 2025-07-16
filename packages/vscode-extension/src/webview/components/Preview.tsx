@@ -82,7 +82,6 @@ function Preview({
   const previewRef = useRef<HTMLCanvasElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
-  const loadingBackgroundRef = useRef<HTMLDivElement>(null);
 
   const { selectedDeviceSession, project, projectState } = useProject();
 
@@ -583,15 +582,11 @@ function Preview({
         )}
         {!showDevicePreview && selectedDeviceSession?.status === "starting" && (
           <Device device={device!} resizableProps={resizableProps} wrapperDivRef={wrapperDivRef}>
-            <div
-              className="phone-sized phone-content-loading-background"
-              ref={loadingBackgroundRef}
-            />
+            <div className="phone-sized phone-content-loading-background" />
             <div className="phone-sized phone-content-loading ">
               <PreviewLoader
                 startingSessionState={selectedDeviceSession}
                 onRequestShowPreview={() => setShowPreviewRequested(true)}
-                backgroundElementRef={loadingBackgroundRef}
               />
             </div>
           </Device>

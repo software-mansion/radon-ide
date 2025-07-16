@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 import "./PreviewLoader.css";
 
@@ -23,27 +23,6 @@ const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).redu
   0
 );
 
-const BREAKPOINT_SMALL_LANDSCAPE = 450;
-const BREAKPOINT_MEDIUM_LANDSCAPE = 700;
-const BREAKPOINT_SMALL_PORTRAIT = 475;
-const BREAKPOINT_MEDIUM_PORTRAIT = 600;
-
-enum BreakpointSize {
-  Small = "small",
-  Medium = "medium",
-  Large = "",
-}
-
-const BREAKPOINT_CLASSES_LANDSCAPE = {
-  [BREAKPOINT_SMALL_LANDSCAPE]: BreakpointSize.Small,
-  [BREAKPOINT_MEDIUM_LANDSCAPE]: BreakpointSize.Medium,
-} as const;
-
-const BREAKPOINT_CLASSES_PORTRAIT = {
-  [BREAKPOINT_SMALL_PORTRAIT]: BreakpointSize.Small,
-  [BREAKPOINT_MEDIUM_PORTRAIT]: BreakpointSize.Medium,
-} as const;
-
 const TOOLTIPS = {
   logs: { label: "Open Radon IDE Logs", side: "top" },
   preview: { label: "Force show device screen", side: "top" },
@@ -51,21 +30,12 @@ const TOOLTIPS = {
   rebuild: { label: "Clean rebuild project", side: "top" },
 } as const;
 
-const ROTATION_STYLES = {
-  [DeviceRotationType.Portrait]: "rotate(0deg)",
-  [DeviceRotationType.LandscapeLeft]: "rotate(90deg)",
-  [DeviceRotationType.LandscapeRight]: "rotate(-90deg)",
-  [DeviceRotationType.PortraitUpsideDown]: "rotate(0deg)",
-} as const;
-
 function PreviewLoader({
   startingSessionState,
   onRequestShowPreview,
-  backgroundElementRef,
 }: {
   onRequestShowPreview: () => void;
   startingSessionState: DeviceSessionStateStarting;
-  backgroundElementRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const { project, projectState } = useProject();
   const { deviceSessionsManager } = useDevices();
@@ -73,9 +43,6 @@ function PreviewLoader({
   const platform = selectedDeviceSession?.deviceInfo.platform;
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
-  const [breakpointSize, setBreakpointSize] = useState<BreakpointSize>(BreakpointSize.Large);
-
-  const parentRef = useRef<HTMLDivElement>(null);
 
   const startupMessage = startingSessionState.startupMessage;
   const stageProgress = startingSessionState.stageProgress;
@@ -86,11 +53,6 @@ function PreviewLoader({
 
   const isWaitingForApp = startupMessage === StartupMessage.WaitingForAppToLoad;
   const isBuilding = startupMessage === StartupMessage.Building;
-
-  const isSmallBreakpoint = breakpointSize === BreakpointSize.Small;
-  const breakpointClass = breakpointSize;
-
-  const rotationStyle = ROTATION_STYLES[projectState.rotation];
 
   useEffect(() => {
     if (startupMessage === StartupMessage.Restarting) {
@@ -134,51 +96,6 @@ function PreviewLoader({
     return () => timeoutHandle && clearTimeout(timeoutHandle);
   }, [startupMessage]);
 
-  // only update state when crossing thresholds
-  useEffect(() => {
-    const backgroundElement = backgroundElementRef.current;
-    if (!backgroundElement) {
-      return;
-    }
-
-    const checkBreakpoint = () => {
-      const height = backgroundElement.clientHeight;
-
-      const breakpointClasses = isLandscape
-        ? BREAKPOINT_CLASSES_LANDSCAPE
-        : BREAKPOINT_CLASSES_PORTRAIT;
-
-      let newBreakpointSize = BreakpointSize.Large;
-
-      // Check breakpoints in order (small first, medium second)
-      for (const [breakpoint, className] of Object.entries(breakpointClasses)) {
-        if (height < Number(breakpoint)) {
-          newBreakpointSize = className as BreakpointSize;
-          break;
-        }
-      }
-
-      // Only update state if breakpoint changed
-      setBreakpointSize((prevSize) => {
-        if (prevSize !== newBreakpointSize) {
-          return newBreakpointSize;
-        }
-        return prevSize;
-      });
-    };
-
-    const resizeObserver = new ResizeObserver(() => {
-      checkBreakpoint();
-    });
-
-    resizeObserver.observe(backgroundElement);
-    checkBreakpoint();
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, [backgroundElementRef]);
-
   function handleLoaderClick() {
     if (startupMessage === StartupMessage.Building) {
       const logTarget =
@@ -197,9 +114,7 @@ function PreviewLoader({
 
   return (
     <div
-      ref={parentRef}
-      className={`preview-loader-wrapper ${isLandscape ? "landscape" : "portrait"} ${breakpointClass}`}
-      style={{ transform: rotationStyle }}>
+      className={`preview-loader-wrapper ${isLandscape ? "landscape" : "portrait"}`}>
       <div className="preview-loader-load-info">
         <button className="preview-loader-container" onClick={handleLoaderClick}>
           <div className="preview-loader-button-group">
@@ -231,21 +146,16 @@ function PreviewLoader({
           <Button
             type="secondary"
             onClick={() => project.focusOutput(Output.Ide)}
-            tooltip={isSmallBreakpoint ? TOOLTIPS.logs : undefined}>
+            tooltip={TOOLTIPS.logs}>
             <span className="codicon codicon-output" />{" "}
             <span className="button-text">{TOOLTIPS.logs.label}</span>
           </Button>
-          <Button
-            type="secondary"
-            onClick={onRequestShowPreview}
-            tooltip={isSmallBreakpoint ? TOOLTIPS.preview : undefined}>
+          <Button type="secondary" onClick={onRequestShowPreview} tooltip={TOOLTIPS.preview}>
             <span className="codicon codicon-open-preview" />{" "}
             <span className="button-text">{TOOLTIPS.preview.label}</span>
           </Button>
           <a href="https://ide.swmansion.com/docs/guides/troubleshooting" target="_blank">
-            <Button
-              type="secondary"
-              tooltip={isSmallBreakpoint ? TOOLTIPS.troubleshoot : undefined}>
+            <Button type="secondary" tooltip={TOOLTIPS.troubleshoot}>
               <span className="codicon codicon-browser" />{" "}
               <span className="button-text">{TOOLTIPS.troubleshoot.label}</span>
             </Button>
@@ -253,7 +163,7 @@ function PreviewLoader({
           <Button
             type="secondary"
             onClick={() => deviceSessionsManager.reloadCurrentSession("rebuild")}
-            tooltip={isSmallBreakpoint ? TOOLTIPS.rebuild : undefined}>
+            tooltip={TOOLTIPS.rebuild}>
             <span className="codicon codicon-refresh" />{" "}
             <span className="button-text">{TOOLTIPS.rebuild.label}</span>
           </Button>
