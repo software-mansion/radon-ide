@@ -4,7 +4,7 @@ title: Radon Connect
 sidebar_position: 10
 ---
 
-Radon Connect is an innovative feature of Radon IDE that allows for connecting to a variety of external devices, including Android phones, iPhones, external simulators, desktops, TVs, VR goggles, and web browsers. It integrates seamlessly, allowing you to debug these devices directly from your code editor.
+Radon Connect allows to connect a debugger to a variety of external devices, including Android phones, iPhones, external simulators, desktops, TVs, VR goggles, and web browsers. Allowing you to debug these devices directly from your code editor without any additional setup.
 
 ## Getting Started with Radon Connect
 To use Radon Connect, you need to enable connecting to external applications. Do do so: 
