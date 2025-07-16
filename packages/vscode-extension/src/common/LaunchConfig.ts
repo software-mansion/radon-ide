@@ -29,15 +29,40 @@ export type LaunchConfigurationOptions = {
   };
 };
 
+export const LAUNCH_CONFIG_OPTIONS_KEYS = [
+  "name",
+  "appRoot",
+  "metroConfigPath",
+  "expoStartArgs",
+  "customBuild",
+  "eas",
+  "env",
+  "ios",
+  "isExpo",
+  "android",
+  "packageManager",
+  "preview",
+] as const;
+
+type IsSuperTypeOf<Base, T extends Base> = T;
+// Type level proof that the strings in `LAUNCH_CONFIG_OPTIONS_KEYS` cover all keys `LaunchConfigurationOptions`.
+type _AssertKeysCover = IsSuperTypeOf<
+  Required<LaunchConfigurationOptions>,
+  Record<(typeof LAUNCH_CONFIG_OPTIONS_KEYS)[number], any>
+>;
+// Type level proof that the strings in `LAUNCH_CONFIG_OPTIONS_KEYS` are valid keys of `LaunchConfigurationOptions`.
+type _AssertKeysValid = IsSuperTypeOf<
+  keyof LaunchConfigurationOptions,
+  (typeof LAUNCH_CONFIG_OPTIONS_KEYS)[number]
+>;
+
 // NOTE: when serializing the LaunchConfiguration, we want to omit the default and computed values.
 // This function is a messy attempt at that, and should be kept in sync with both the type definition
 // and the `launchConfigurationFromOptions` function in `/project/launchConfigurationsManager`.
 export function optionsForLaunchConfiguration(
   config: LaunchConfiguration
 ): LaunchConfigurationOptions {
-  const options: LaunchConfigurationOptions & Partial<LaunchConfiguration> = { ...config };
-  delete options.kind;
-  delete options.absoluteAppRoot;
+  const options: LaunchConfigurationOptions = _.pick(config, LAUNCH_CONFIG_OPTIONS_KEYS);
   if (options.preview?.waitForAppLaunch) {
     delete options.preview;
   }

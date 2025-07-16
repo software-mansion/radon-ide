@@ -3,6 +3,7 @@ import { ConfigurationChangeEvent, Disposable, EventEmitter, workspace } from "v
 import vscode from "vscode";
 import _ from "lodash";
 import {
+  LAUNCH_CONFIG_OPTIONS_KEYS,
   LaunchConfiguration,
   LaunchConfigurationKind,
   LaunchConfigurationOptions,
@@ -45,6 +46,9 @@ function launchConfigFromOptionsWithDefaultAppRoot(
   defaultAppRoot: string | undefined,
   launchConfigurationKind: LaunchConfigurationKind = LaunchConfigurationKind.Custom
 ): LaunchConfiguration {
+  // only pick the keys that we care about from `options`
+  options = _.pick(options, LAUNCH_CONFIG_OPTIONS_KEYS);
+
   if ((options.appRoot ?? defaultAppRoot) === undefined) {
     const maybeName =
       options.name === undefined ? "" : ` for launch configuration "${options.name}"`;
