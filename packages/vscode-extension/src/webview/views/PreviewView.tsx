@@ -342,7 +342,7 @@ function PreviewView() {
             label: "Select an element to inspect it",
           }}
           onClick={() => {
-            sendTelemetry("inspector:inspector-button-clicked", {
+            sendTelemetry("inspector:button-clicked", {
               isInspecting: String(!isInspecting),
             });
             setIsInspecting(!isInspecting);
