@@ -101,17 +101,24 @@ const MjpegImg = forwardRef<
     };
 
     const handleSourceLoad = () => {
+      if(intervalId){
+        clearInterval(intervalId)
+      }
+
       updateCanvas();
       // continuously update the canvas
       intervalId = setInterval(updateCanvas, 17); // ~60 FPS
     };
 
     const handleSourceError = () => {
+      if(intervalId){
+        clearInterval(intervalId)
+      }
+
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
-      clearInterval(intervalId);
     };
 
     sourceImg.addEventListener("load", handleSourceLoad);
