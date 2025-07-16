@@ -3,6 +3,7 @@ import { AddressInfo } from "node:net";
 import express from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { Logger } from "../../Logger";
 import { registerMcpTools } from "./toolRegistration";
 import { Session } from "./models";
@@ -65,7 +66,7 @@ export class LocalMcpServer {
     app.post("/mcp", async (req, res) => {
       const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
-      if (!sessionId || !this.session || sessionId !== this.session.sessionId) {
+      if (!sessionId && isInitializeRequest(req.body)) {
         const newSessionId = randomUUID();
 
         // Clean up old session
