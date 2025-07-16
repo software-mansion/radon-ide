@@ -10,7 +10,6 @@ function useCanvasRenderer(
       if (!canvasRef.current) {
         return;
       }
-
       const canvas = canvasRef.current;
       const ctx = canvas.getContext("2d");
       if (!ctx) {
@@ -47,11 +46,10 @@ function useCanvasRenderer(
       }
 
       // Resize canvas to accommodate dimensions
-      canvas.width = newWidth;
-      canvas.height = newHeight;
-
-      // Clear and draw
-      ctx.clearRect(0, 0, newWidth, newHeight);
+      if(newWidth !== canvas.width || newHeight !== canvas.height) {
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+      }
 
       if (rotation === DeviceRotationType.Portrait) {
         // Direct draw for portrait mode

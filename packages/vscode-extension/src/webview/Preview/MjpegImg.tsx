@@ -94,25 +94,29 @@ const MjpegImg = forwardRef<
       return;
     }
 
-    let intervalId: NodeJS.Timeout;
+    let animationFrameId: number;
+    let isAnimating = false;
 
     const updateCanvas = () => {
       drawToCanvas(sourceImg);
+      if (isAnimating) {
+        animationFrameId = requestAnimationFrame(updateCanvas);
+      }
     };
 
     const handleSourceLoad = () => {
-      if(intervalId){
-        clearInterval(intervalId)
+      if (isAnimating) {
+        cancelAnimationFrame(animationFrameId);
       }
 
+      isAnimating = true;
       updateCanvas();
-      // continuously update the canvas
-      intervalId = setInterval(updateCanvas, 17); // ~60 FPS
     };
 
     const handleSourceError = () => {
-      if(intervalId){
-        clearInterval(intervalId)
+      if (isAnimating) {
+        cancelAnimationFrame(animationFrameId);
+        isAnimating = false;
       }
 
       const ctx = canvas.getContext("2d");
@@ -129,7 +133,10 @@ const MjpegImg = forwardRef<
     sourceImg.src = src || NO_IMAGE_DATA;
 
     return () => {
-      clearInterval(intervalId);
+      if (isAnimating) {
+        cancelAnimationFrame(animationFrameId);
+        isAnimating = false;
+      }
       sourceImg.removeEventListener("load", handleSourceLoad);
       sourceImg.removeEventListener("error", handleSourceError);
       sourceImg.src = NO_IMAGE_DATA;
