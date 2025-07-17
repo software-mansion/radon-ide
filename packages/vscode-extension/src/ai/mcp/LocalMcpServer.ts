@@ -22,6 +22,7 @@ export class LocalMcpServer implements Disposable {
   private versionSuffix: number = 0;
 
   private connectionListener: ConnectionListener;
+  private connectionSubscribtion: Disposable;
 
   constructor(connectionListener: ConnectionListener) {
     // Deferred promise. The this.setServerPort is set immediately & synchronously.
@@ -31,7 +32,7 @@ export class LocalMcpServer implements Disposable {
 
     this.connectionListener = connectionListener;
 
-    this.connectionListener.onConnectionRestored(() => {
+    this.connectionSubscribtion = this.connectionListener.onConnectionRestored(() => {
       this.versionSuffix++;
       this.setVersionSuffix(this.versionSuffix);
     });
@@ -40,6 +41,7 @@ export class LocalMcpServer implements Disposable {
   }
 
   public dispose(): void {
+    this.connectionSubscribtion.dispose();
     this.mcpServer?.close();
     this.expressServer?.close();
     this.session = null;
@@ -77,10 +79,12 @@ export class LocalMcpServer implements Disposable {
   }
 
   private initializeHttpServer() {
+    Logger.error("MCP initializeHttpServer");
     const app = express();
     app.use(express.json());
 
     app.post("/mcp", async (req, res) => {
+      Logger.error("MCP endpoint");
       const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
       if (!sessionId && isInitializeRequest(req.body)) {
@@ -116,8 +120,8 @@ export class LocalMcpServer implements Disposable {
       await this.session?.transport.handleRequest(req, res, req.body);
     });
 
-    app.get("/mcp", this.handleSessionRequest);
-    app.delete("/mcp", this.handleSessionRequest);
+    app.get("/mcp", this.handleSessionRequest.bind(this));
+    app.delete("/mcp", this.handleSessionRequest.bind(this));
 
     this.expressServer = app.listen(0, "127.0.0.1");
 
