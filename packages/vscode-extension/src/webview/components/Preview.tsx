@@ -15,7 +15,6 @@ import {
   InspectStackData,
   MultimediaData,
 } from "../../common/Project";
-import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import { Platform, useUtils } from "../providers/UtilsProvider";
@@ -461,13 +460,6 @@ function Preview({
   });
   const frame = useDeviceFrame(device!);
 
-  const resizableProps = useResizableProps({
-    wrapperDivRef,
-    zoomLevel,
-    setZoomLevel: onZoomChanged,
-    device: device!,
-  });
-
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
@@ -480,7 +472,7 @@ function Preview({
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>
         {showDevicePreview && (
-          <Device device={device!} resizableProps={resizableProps} wrapperDivRef={wrapperDivRef}>
+          <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="touch-area" {...touchHandlers}>
               <MjpegImg
                 src={previewURL}
@@ -553,7 +545,7 @@ function Preview({
           </Device>
         )}
         {!showDevicePreview && selectedDeviceSession?.status === "starting" && (
-          <Device device={device!} resizableProps={resizableProps} wrapperDivRef={wrapperDivRef}>
+          <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="phone-sized phone-content-loading-background" />
             <div className="phone-sized phone-content-loading ">
               <PreviewLoader
@@ -564,7 +556,7 @@ function Preview({
           </Device>
         )}
         {hasFatalError && (
-          <Device device={device!} resizableProps={resizableProps} wrapperDivRef={wrapperDivRef}>
+          <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="phone-sized extension-error-screen" />
           </Device>
         )}

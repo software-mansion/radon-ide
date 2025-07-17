@@ -1,20 +1,18 @@
 import React, { useRef, useEffect, useMemo } from "react";
-import { ResizableProps } from "re-resizable";
 
 import DeviceFrame from "./DeviceFrame";
 import { useDeviceFrame } from "./hooks";
 import { useProject } from "../../providers/ProjectProvider";
 import { DeviceProperties, DevicePropertiesFrame } from "../../utilities/deviceContants";
-import { DeviceRotationType } from "../../../common/Project";
+import { DeviceRotationType, ZoomLevelType } from "../../../common/Project";
+import { DEVICE_DEFAULT_SCALE } from "../../components/ZoomControls";
 
 const MIN_HEIGHT = 350;
 const CSS_MARGIN_FACTOR = 0.9;
 
-type ResizablePropsSize = string | number | undefined;
-
 interface DeviceProps {
   device: DeviceProperties;
-  resizableProps: ResizableProps;
+  zoomLevel: ZoomLevelType;
   children: React.ReactNode;
   wrapperDivRef: React.RefObject<HTMLDivElement | null>;
 }
@@ -58,16 +56,17 @@ function cssPropertiesForDevice(
   frame: DevicePropertiesFrame,
   rotation: DeviceRotationType,
   wrapperDivRef: React.RefObject<HTMLDivElement | null>,
-  resizableHeight: ResizablePropsSize
+  zoomLevel: ZoomLevelType
 ): DeviceCSSProperties {
   const aspectRatio = frame.width / frame.height;
   const isLandscape =
     rotation === DeviceRotationType.LandscapeLeft || rotation === DeviceRotationType.LandscapeRight;
-  const isFitSet = typeof resizableHeight === "string";
+  const isFitSet = zoomLevel === "Fit";
 
   const { width: parentWidth, height: parentHeight } = getParentDimensions(wrapperDivRef);
+  const resizableHeight = isFitSet ? "100%" : frame.height * zoomLevel * DEVICE_DEFAULT_SCALE;
 
-  let wrapperHeight = isFitSet ? resizableHeight : `${resizableHeight}px`;
+  let wrapperHeight = isFitSet ? (resizableHeight as string) : `${resizableHeight}px`;
   let newHeight = isFitSet
     ? `min(100%, max(${MIN_HEIGHT}px, ${(parentWidth / aspectRatio) * CSS_MARGIN_FACTOR}px))`
     : `${resizableHeight}px`;
@@ -152,17 +151,17 @@ function cssPropertiesForDevice(
   };
 }
 
-export default function Device({ device, resizableProps, children, wrapperDivRef }: DeviceProps) {
+export default function Device({ device, zoomLevel, children, wrapperDivRef }: DeviceProps) {
   const frame = useDeviceFrame(device);
   const { projectState } = useProject();
   const phoneContentRef = useRef<HTMLDivElement>(null);
 
-  const resizableHeight = resizableProps.size?.height;
+  // const resizableHeight = frame.height;
   const rotation = projectState.rotation;
 
   const cssProperties = useMemo(() => {
-    return cssPropertiesForDevice(device, frame, rotation, wrapperDivRef, resizableHeight);
-  }, [device, frame, rotation, wrapperDivRef, resizableHeight]);
+    return cssPropertiesForDevice(device, frame, rotation, wrapperDivRef, zoomLevel);
+  }, [device, frame, rotation, wrapperDivRef, zoomLevel]);
 
   const handleResize = () => {
     // Recalculate the complete CSS properties that depend on window size
@@ -171,7 +170,7 @@ export default function Device({ device, resizableProps, children, wrapperDivRef
       frame,
       rotation,
       wrapperDivRef,
-      resizableHeight
+      zoomLevel
     );
 
     // Apply all CSS properties to both Resizable and phone-content elements
@@ -197,7 +196,7 @@ export default function Device({ device, resizableProps, children, wrapperDivRef
     window.addEventListener("resize", handleResize);
 
     return () => window.removeEventListener("resize", handleResize);
-  }, [device, frame, rotation, wrapperDivRef, resizableHeight]);
+  }, [device, frame, rotation, wrapperDivRef, zoomLevel]);
 
   return (
     <div className="phone-wrapper-resizable" style={{ ...cssProperties }}>
