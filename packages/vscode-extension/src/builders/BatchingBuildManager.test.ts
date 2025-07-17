@@ -11,7 +11,6 @@ describe("BatchingBuildManager", () => {
   let buildAppMock = Sinon.stub();
   let buildManagerMock = {
     buildApp: buildAppMock,
-    focusBuildOutput: Sinon.stub(),
     dispose: Sinon.stub(),
   };
   const APP_ROOT = "appRoot";
@@ -25,15 +24,8 @@ describe("BatchingBuildManager", () => {
     buildAppMock = Sinon.stub();
     buildManagerMock = {
       buildApp: buildAppMock,
-      focusBuildOutput: Sinon.stub(),
       dispose: Sinon.stub(),
     };
-  });
-
-  it("should focus the build output of the wrapped build manager", () => {
-    const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
-    batchingBuildManager.focusBuildOutput();
-    assert(buildManagerMock.focusBuildOutput.calledOnce);
   });
 
   it("should dispose the wrapped build manager", () => {

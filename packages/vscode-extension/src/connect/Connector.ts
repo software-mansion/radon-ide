@@ -13,6 +13,7 @@ import { disposeAll } from "../utilities/disposables";
 import { Scanner } from "./Scanner";
 import ConnectSession from "./ConnectSession";
 import { ConnectState } from "../common/Project";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 const RADON_CONNECT_ENABLED_KEY = "radon_connect_enabled";
 export const RADON_CONNECT_PORT_KEY = "radon_connect_port";
@@ -82,12 +83,14 @@ export class Connector implements Disposable {
   }
 
   public enable(forceStartScanner: boolean = false) {
+    getTelemetryReporter().sendTelemetryEvent("radon-connect:enable", {});
     extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, true);
     this.maybeStartScanner(forceStartScanner);
     this.handleStateChange();
   }
 
   public disable() {
+    getTelemetryReporter().sendTelemetryEvent("radon-connect:disable", {});
     extensionContext.workspaceState.update(RADON_CONNECT_ENABLED_KEY, false);
     this.disconnect();
     this.stopScanner();
@@ -119,6 +122,7 @@ export class Connector implements Disposable {
   private async tryConnectJSDebuggerWithMetro(websocketAddress: string, metro: Metro) {
     const connectSession = new ConnectSession(metro, {
       onSessionTerminated: () => {
+        getTelemetryReporter().sendTelemetryEvent("radon-connect:disconnected", {});
         if (this.connectSession === connectSession) {
           this.connectSession = null;
         }
@@ -129,6 +133,7 @@ export class Connector implements Disposable {
     });
     const success = await connectSession.start(websocketAddress);
     if (success) {
+      getTelemetryReporter().sendTelemetryEvent("radon-connect:connected", {});
       this.connectSession?.dispose();
       this.connectSession = connectSession;
       this.stopScanner();

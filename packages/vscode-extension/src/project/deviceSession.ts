@@ -200,11 +200,12 @@ export class DeviceSession
 
   private onProjectFilesChanged = throttleAsync(async () => {
     const appRoot = this.applicationContext.appRootFolder;
-    const hasCachedBuild = this.applicationContext.buildCache.hasCachedBuild(
-      this.device.platform,
-      appRoot
-    );
     const launchConfig = this.applicationContext.launchConfig;
+    const hasCachedBuild = this.applicationContext.buildCache.hasCachedBuild({
+      platform: this.device.platform,
+      appRoot,
+      env: launchConfig.env,
+    });
     const platformKey: "ios" | "android" =
       this.device.platform === DevicePlatform.IOS ? "ios" : "android";
     const fingerprintCommand = launchConfig.customBuild?.[platformKey]?.fingerprintCommand;
@@ -214,11 +215,11 @@ export class DeviceSession
         env: launchConfig.env,
         fingerprintCommand,
       });
-      const isCacheStale = await this.applicationContext.buildCache.isCacheStale(
-        fingerprint,
-        this.device.platform,
-        appRoot
-      );
+      const isCacheStale = await this.applicationContext.buildCache.isCacheStale(fingerprint, {
+        platform: this.device.platform,
+        appRoot,
+        env: launchConfig.env,
+      });
 
       if (isCacheStale) {
         this.onCacheStale();
@@ -564,11 +565,11 @@ export class DeviceSession
     try {
       const currentFingerprint = await this.buildCache.calculateFingerprint(fingerprintOptions);
       if (
-        await this.buildCache.isCacheStale(
-          currentFingerprint,
-          this.device.platform,
-          this.applicationContext.appRootFolder
-        )
+        await this.buildCache.isCacheStale(currentFingerprint, {
+          platform: this.device.platform,
+          appRoot: this.applicationContext.appRootFolder,
+          env: launchConfig.env,
+        })
       ) {
         await this.restart({ forceClean: false, cleanCache: false });
         return;
@@ -1099,10 +1100,6 @@ export class DeviceSession
 
   public async updateDeviceSettings(settings: DeviceSettings): Promise<boolean> {
     return this.device.updateDeviceSettings(settings);
-  }
-
-  public focusBuildOutput() {
-    this.buildManager.focusBuildOutput();
   }
 
   public async sendBiometricAuthorization(isMatch: boolean) {

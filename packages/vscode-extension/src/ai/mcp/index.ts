@@ -1,4 +1,4 @@
-import { lm, McpHttpServerDefinition, Uri, EventEmitter, version } from "vscode";
+import { lm, McpHttpServerDefinition, Uri, EventEmitter, version, Disposable } from "vscode";
 import { Logger } from "../../Logger";
 import { watchLicenseTokenChange } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
@@ -6,8 +6,9 @@ import { insertRadonEntry, newMcpConfig } from "./configCreator";
 import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
 import { MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
-import { extensionContext } from "../../utilities/extensionContext";
 import { LocalMcpServer } from "./LocalMcpServer";
+import { disposeAll } from "../../utilities/disposables";
+import { ConnectionListener } from "../shared/ConnectionListener";
 
 async function updateMcpConfig(port: number, mcpVersion: string) {
   const mcpConfig = (await readMcpConfig()) || newMcpConfig();
@@ -15,44 +16,54 @@ async function updateMcpConfig(port: number, mcpVersion: string) {
   await writeMcpConfig(updatedConfig);
 }
 
-function directLoadRadonAI(server: LocalMcpServer) {
-  const didChangeEmitter = new EventEmitter<void>();
-
+function directLoadRadonAI(
+  server: LocalMcpServer,
+  connectionListener: ConnectionListener
+): Disposable {
+  // Version suffix has to be incremented on every MCP server reload.
   let versionSuffix = 0;
 
-  extensionContext.subscriptions.push(
-    watchLicenseTokenChange(() => {
-      versionSuffix += 1;
-      server.setVersionSuffix(versionSuffix);
-      didChangeEmitter.fire();
-    })
-  );
+  const didChangeEmitter = new EventEmitter<void>();
 
-  extensionContext.subscriptions.push(
-    lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
-      onDidChangeServerDefinitions: didChangeEmitter.event,
-      provideMcpServerDefinitions: async () => {
-        const port = await server.getPort();
-        return [
-          new McpHttpServerDefinition(
-            "RadonAI",
-            Uri.parse(`http://127.0.0.1:${port}/mcp`),
-            {},
-            server.getVersion()
-          ),
-        ];
-      },
-    })
+  const connectionChangeListener = connectionListener.onConnectionRestored(() => {
+    versionSuffix += 1;
+    server.setVersionSuffix(versionSuffix);
+    didChangeEmitter.fire();
+  });
+
+  const licenseChangeListener = watchLicenseTokenChange(() => {
+    versionSuffix += 1;
+    server.setVersionSuffix(versionSuffix);
+    didChangeEmitter.fire();
+  });
+
+  const mcpServerEntry = lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
+    onDidChangeServerDefinitions: didChangeEmitter.event,
+    provideMcpServerDefinitions: async () => {
+      const port = await server.getPort();
+      return [
+        new McpHttpServerDefinition(
+          "RadonAI",
+          Uri.parse(`http://127.0.0.1:${port}/mcp`),
+          {},
+          server.getVersion()
+        ),
+      ];
+    },
+  });
+
+  return new Disposable(() =>
+    disposeAll([connectionChangeListener, licenseChangeListener, mcpServerEntry])
   );
 }
 
-async function fsLoadRadonAI(server: LocalMcpServer, mcpVersion: string) {
+async function fsLoadRadonAI(server: LocalMcpServer) {
   try {
-    // Server has to be online before the config is written
+    // The local server has to be online before the config is written
     const port = await server.getPort();
 
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
-    await updateMcpConfig(port, mcpVersion);
+    await updateMcpConfig(port, server.getVersion());
 
     getTelemetryReporter().sendTelemetryEvent("radon-ai:mcp-started");
   } catch (error) {
@@ -70,21 +81,27 @@ function isDirectLoadingAvailable() {
   );
 }
 
-export default function registerRadonAi() {
-  const server = new LocalMcpServer();
+export default function registerRadonAi(): Disposable {
+  const connectionListener = new ConnectionListener();
+  const server = new LocalMcpServer(connectionListener);
 
   if (isDirectLoadingAvailable()) {
-    directLoadRadonAI(server);
+    const disposables = directLoadRadonAI(server, connectionListener);
+
+    return new Disposable(() => disposeAll([disposables, server, connectionListener]));
   } else {
     let versionSuffix = 0;
 
-    extensionContext.subscriptions.push(
-      watchLicenseTokenChange(() => {
-        server.setVersionSuffix(versionSuffix++);
-        fsLoadRadonAI(server, server.getVersion());
-      })
+    const fsReloadRadonAi = () => {
+      server.setVersionSuffix(versionSuffix++);
+      fsLoadRadonAI(server);
+    };
+
+    const connectionChangeListener = connectionListener.onConnectionRestored(fsReloadRadonAi);
+    const licenseObserver = watchLicenseTokenChange(fsReloadRadonAi);
+
+    return new Disposable(() =>
+      disposeAll([server, connectionListener, connectionChangeListener, licenseObserver])
     );
   }
-
-  return server; // FIXME: add to disposables list on merge with #1313
 }

@@ -9,8 +9,8 @@ import { useDevices } from "../providers/DevicesProvider";
 import { BuildErrorDescriptor, FatalErrorDescriptor } from "../../common/Project";
 import { DeviceSessionsManagerInterface } from "../../common/DeviceSessionsManager";
 import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
-
-type LogsButtonDestination = "build" | "extension";
+import { Output } from "../../common/OutputChannel";
+import { DevicePlatform } from "../../common/DeviceManager";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
 
@@ -18,7 +18,7 @@ function BuildErrorActions({
   logsButtonDestination,
   onReload,
 }: {
-  logsButtonDestination?: LogsButtonDestination;
+  logsButtonDestination?: Output;
   onReload?: () => void;
 }) {
   const { project, projectState } = useProject();
@@ -42,11 +42,7 @@ function BuildErrorActions({
       <IconButton
         type="secondary"
         onClick={() => {
-          if (logsButtonDestination === "extension") {
-            project.focusExtensionLogsOutput();
-          } else {
-            project.focusBuildOutput();
-          }
+          project.focusOutput(logsButtonDestination ?? Output.Ide);
         }}
         tooltip={{ label: "Open build logs", side: "bottom" }}>
         <span className="codicon codicon-symbol-keyword" />
@@ -68,7 +64,7 @@ function BootErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.focusExtensionLogsOutput();
+          project.focusOutput(Output.Ide);
         }}
         tooltip={{ label: "Open IDE logs", side: "bottom" }}>
         <span className="codicon codicon-output" />
@@ -101,17 +97,16 @@ function createBuildErrorAlert(
   let onReload = () => {
     deviceSessionsManager.reloadCurrentSession("autoReload");
   };
-  let logsButtonDestination: LogsButtonDestination | undefined = undefined;
+  let logsButtonDestination: Output | undefined = undefined;
 
   let description = "Open extension logs to find out what went wrong.";
 
   if (buildErrorDescriptor !== undefined) {
-    const { buildType, message } = buildErrorDescriptor;
+    const { buildType, message, platform } = buildErrorDescriptor;
     description = message;
     if (buildType && [BuildType.Local, BuildType.EasLocal, BuildType.Custom].includes(buildType)) {
-      logsButtonDestination = "build";
-    } else {
-      logsButtonDestination = "extension";
+      logsButtonDestination =
+        platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid;
     }
 
     if (buildType === null && !hasSelectedScheme && xcodeSchemes.length > 1) {

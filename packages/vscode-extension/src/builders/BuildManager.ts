@@ -1,5 +1,4 @@
 import assert from "assert";
-import { Disposable, OutputChannel, window } from "vscode";
 import _ from "lodash";
 import { BuildCache } from "./BuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
@@ -12,12 +11,13 @@ import { Logger } from "../Logger";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { isExpoGoProject } from "./expoGo";
 import { LaunchConfiguration } from "../common/LaunchConfig";
+import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
+import { Output } from "../common/OutputChannel";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
 export interface BuildManager {
   buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult>;
-  focusBuildOutput(): void;
 }
 
 export type BuildOptions = {
@@ -180,20 +180,12 @@ export async function inferBuildType(
   return BuildType.Local;
 }
 
-export class BuildManagerImpl implements Disposable, BuildManager {
+export class BuildManagerImpl implements BuildManager {
   constructor(
     private readonly dependencyManager: DependencyManager,
-    private readonly buildCache: BuildCache
-  ) {
-    // Note: in future implementations decoupled from device session we
-    // should make this logic platform independent
-  }
-
-  private buildOutputChannel: OutputChannel | undefined;
-
-  public focusBuildOutput() {
-    this.buildOutputChannel?.show();
-  }
+    private readonly buildCache: BuildCache,
+    private readonly outputChannelRegistry: OutputChannelRegistry
+  ) {}
 
   /**
    * Returns true if some native build dependencies have change and we should perform
@@ -216,6 +208,11 @@ export class BuildManagerImpl implements Disposable, BuildManager {
       env: buildConfig.env,
       fingerprintCommand: buildConfig.fingerprintCommand,
     };
+    const buildCacheKey = {
+      platform,
+      appRoot,
+      env: buildConfig.env ?? {},
+    };
 
     getTelemetryReporter().sendTelemetryEvent("build:requested", {
       platform,
@@ -234,9 +231,9 @@ export class BuildManagerImpl implements Disposable, BuildManager {
         "Build cache is being invalidated",
         forceCleanBuild ? "on request" : "due to build dependencies change"
       );
-      await this.buildCache.clearCache(platform, appRoot);
+      await this.buildCache.clearCache(buildCacheKey);
     } else {
-      const cachedBuild = await this.buildCache.getBuild(currentFingerprint, platform, appRoot);
+      const cachedBuild = await this.buildCache.getBuild(currentFingerprint, buildCacheKey);
       if (cachedBuild) {
         Logger.debug("Skipping native build – using cached");
         getTelemetryReporter().sendTelemetryEvent("build:cache-hit", { platform });
@@ -253,10 +250,10 @@ export class BuildManagerImpl implements Disposable, BuildManager {
     let buildFingerprint = currentFingerprint;
     try {
       if (platform === DevicePlatform.Android) {
-        this.buildOutputChannel = window.createOutputChannel("Radon IDE (Android build)", {
-          log: true,
-        });
-        this.buildOutputChannel.clear();
+        const buildOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
+          Output.BuildAndroid
+        );
+        buildOutputChannel.clear();
 
         assert(
           buildConfig.platform === DevicePlatform.Android,
@@ -265,16 +262,15 @@ export class BuildManagerImpl implements Disposable, BuildManager {
         buildResult = await buildAndroid(
           buildConfig as BuildConfig & { platform: DevicePlatform.Android },
           cancelToken,
-          this.buildOutputChannel,
+          buildOutputChannel,
           progressListener,
           this.dependencyManager
         );
       } else {
-        const iOSBuildOutputChannel = window.createOutputChannel("Radon IDE (iOS build)", {
-          log: true,
-        });
-        this.buildOutputChannel = iOSBuildOutputChannel;
-        this.buildOutputChannel.clear();
+        const buildOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
+          Output.BuildIos
+        );
+        buildOutputChannel.clear();
         const installPodsIfNeeded = async () => {
           let installPods = forceCleanBuild;
           if (installPods) {
@@ -288,7 +284,7 @@ export class BuildManagerImpl implements Disposable, BuildManager {
           }
           if (installPods) {
             getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
-            await this.dependencyManager.installPods(iOSBuildOutputChannel, cancelToken);
+            await this.dependencyManager.installPods(buildOutputChannel, cancelToken);
             const installed = await this.dependencyManager.checkPodsInstallationStatus();
             if (!installed) {
               throw new Error("Pods could not be installed automatically.");
@@ -306,7 +302,7 @@ export class BuildManagerImpl implements Disposable, BuildManager {
         buildResult = await buildIos(
           buildConfig as BuildConfig & { platform: DevicePlatform.IOS },
           cancelToken,
-          this.buildOutputChannel,
+          buildOutputChannel,
           progressListener,
           this.dependencyManager,
           installPodsIfNeeded
@@ -320,15 +316,11 @@ export class BuildManagerImpl implements Disposable, BuildManager {
     }
 
     try {
-      await this.buildCache.storeBuild(buildFingerprint, appRoot, buildResult);
+      await this.buildCache.storeBuild(buildFingerprint, buildCacheKey, buildResult);
     } catch (e) {
       // NOTE: this is a fallible operation (since it does file system operations), but we don't want to fail the whole build if we fail to store it in a cache.
       Logger.warn("Failed to store the build in cache.", e);
     }
     return buildResult;
-  }
-
-  public dispose() {
-    this.buildOutputChannel?.dispose();
   }
 }

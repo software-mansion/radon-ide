@@ -46,6 +46,8 @@ import {
   LaunchConfigurationsManager,
 } from "./launchConfigurationsManager";
 import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/LaunchConfig";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
+import { Output } from "../common/OutputChannel";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -74,6 +76,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   constructor(
     private readonly deviceManager: DeviceManager,
     private readonly utils: UtilsInterface,
+    private readonly outputChannelRegistry: OutputChannelRegistry,
     initialLaunchConfigOptions?: LaunchConfigurationOptions
   ) {
     const fingerprintProvider = new FingerprintProvider();
@@ -81,7 +84,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     const initialLaunchConfig = initialLaunchConfigOptions
       ? launchConfigurationFromOptions(initialLaunchConfigOptions)
       : this.launchConfigsManager.initialLaunchConfiguration;
-    this.applicationContext = new ApplicationContext(initialLaunchConfig, buildCache);
+    this.applicationContext = new ApplicationContext(
+      initialLaunchConfig,
+      buildCache,
+      this.outputChannelRegistry
+    );
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
       this.deviceManager,
@@ -130,6 +137,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         });
       })
     );
+  }
+
+  async focusOutput(channel: Output): Promise<void> {
+    this.outputChannelRegistry.getOrCreateOutputChannel(channel).show();
   }
 
   async createOrUpdateLaunchConfiguration(
@@ -458,14 +469,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async stepOverDebugger() {
     this.deviceSession?.stepOverDebugger();
-  }
-
-  public async focusBuildOutput() {
-    this.deviceSession?.focusBuildOutput();
-  }
-
-  public async focusExtensionLogsOutput() {
-    Logger.openOutputPanel();
   }
 
   public async focusDebugConsole() {
