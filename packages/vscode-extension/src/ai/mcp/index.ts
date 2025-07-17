@@ -16,23 +16,20 @@ async function updateMcpConfig(port: number) {
   await writeMcpConfig(updatedConfig);
 }
 
-function directLoadRadonAI(connectionListener: ConnectionListener) {
+function directLoadRadonAI(connectionListener: ConnectionListener): Disposable[] {
   // Version suffix has to be incremented on every MCP server reload.
   let versionSuffix = 0;
 
   const didChangeEmitter = new EventEmitter<void>();
 
-  extensionContext.subscriptions.push(
-    watchLicenseTokenChange(() => {
-      didChangeEmitter.fire();
-    })
-  );
-
   connectionListener.onConnectionRestored(() => {
     didChangeEmitter.fire();
   });
 
-  extensionContext.subscriptions.push(
+  return [
+    watchLicenseTokenChange(() => {
+      didChangeEmitter.fire();
+    }),
     lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
       onDidChangeServerDefinitions: didChangeEmitter.event,
       provideMcpServerDefinitions: async () => {
@@ -46,8 +43,8 @@ function directLoadRadonAI(connectionListener: ConnectionListener) {
           ),
         ];
       },
-    })
-  );
+    }),
+  ];
 }
 
 async function fsLoadRadonAI(connectionListener: ConnectionListener) {
@@ -74,13 +71,13 @@ function isDirectLoadingAvailable() {
   );
 }
 
-export default function registerRadonAi(): Disposable {
+export default function registerRadonAi(): Disposable[] {
   const connectionListener = new ConnectionListener();
 
   if (isDirectLoadingAvailable()) {
-    directLoadRadonAI(connectionListener);
+    const disposables = directLoadRadonAI(connectionListener);
 
-    return connectionListener;
+    return [...disposables, connectionListener];
   } else {
     connectionListener.onConnectionRestored(() => {
       fsLoadRadonAI(connectionListener);
@@ -90,9 +87,6 @@ export default function registerRadonAi(): Disposable {
       fsLoadRadonAI(connectionListener);
     });
 
-    return new Disposable(() => {
-      connectionListener.dispose();
-      licenseObserver.dispose();
-    });
+    return [connectionListener, licenseObserver];
   }
 }
