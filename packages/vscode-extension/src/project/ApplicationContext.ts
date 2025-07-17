@@ -5,9 +5,16 @@ import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
 import { LaunchConfiguration } from "../common/LaunchConfig";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
-function createBuildManager(dependencyManager: DependencyManager, buildCache: BuildCache) {
-  return new BatchingBuildManager(new BuildManagerImpl(dependencyManager, buildCache));
+function createBuildManager(
+  dependencyManager: DependencyManager,
+  buildCache: BuildCache,
+  outputChannelRegistry: OutputChannelRegistry
+) {
+  return new BatchingBuildManager(
+    new BuildManagerImpl(dependencyManager, buildCache, outputChannelRegistry)
+  );
 }
 
 export class ApplicationContext implements Disposable {
@@ -17,10 +24,15 @@ export class ApplicationContext implements Disposable {
 
   constructor(
     public launchConfig: LaunchConfiguration,
-    public readonly buildCache: BuildCache
+    public readonly buildCache: BuildCache,
+    private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     this.dependencyManager = new DependencyManager(this.launchConfig);
-    const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
+    const buildManager = createBuildManager(
+      this.dependencyManager,
+      this.buildCache,
+      this.outputChannelRegistry
+    );
     this.buildManager = buildManager;
 
     this.disposables.push(this.dependencyManager, buildManager);
@@ -42,7 +54,11 @@ export class ApplicationContext implements Disposable {
 
   public async updateAppRootFolder() {
     disposeAll(this.disposables);
-    const buildManager = createBuildManager(this.dependencyManager, this.buildCache);
+    const buildManager = createBuildManager(
+      this.dependencyManager,
+      this.buildCache,
+      this.outputChannelRegistry
+    );
     this.buildManager = buildManager;
     this.disposables.push(this.dependencyManager, buildManager);
   }

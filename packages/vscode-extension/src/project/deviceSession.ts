@@ -1102,10 +1102,6 @@ export class DeviceSession
     return this.device.updateDeviceSettings(settings);
   }
 
-  public focusBuildOutput() {
-    this.buildManager.focusBuildOutput();
-  }
-
   public async sendBiometricAuthorization(isMatch: boolean) {
     await this.device.sendBiometricAuthorization(isMatch);
   }

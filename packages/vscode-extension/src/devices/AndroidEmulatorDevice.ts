@@ -2,7 +2,6 @@ import path from "path";
 import fs from "fs";
 import { EOL } from "node:os";
 import assert from "assert";
-import { OutputChannel, window } from "vscode";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
 import { Preview } from "./preview";
@@ -26,6 +25,8 @@ import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { extensionContext } from "../utilities/extensionContext";
+import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
+import { Output } from "../common/OutputChannel";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -69,7 +70,6 @@ interface EmulatorProcessInfo {
 export class AndroidEmulatorDevice extends DeviceBase {
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
-  private nativeLogsOutputChannel: OutputChannel | undefined;
   private nativeLogsCancelToken: CancelToken | undefined;
   protected override deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
     DEVICE_SETTINGS_KEY,
@@ -78,7 +78,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   constructor(
     private readonly avdId: string,
-    private readonly info: DeviceInfo
+    private readonly info: DeviceInfo,
+    private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     super();
   }
@@ -97,10 +98,13 @@ export class AndroidEmulatorDevice extends DeviceBase {
     return pidFile;
   }
 
+  private get nativeLogsOutputChannel() {
+    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.AndroidDevice);
+  }
+
   public dispose(): void {
     super.dispose();
     this.emulatorProcess?.kill();
-    this.nativeLogsOutputChannel?.dispose();
     this.nativeLogsCancelToken?.cancel();
     // If the emulator process does not shut down initially due to ongoing activities or processes,
     // a forced termination (kill signal) is sent after a certain timeout period.
@@ -576,13 +580,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
           reject(new Error("Timeout while waiting for app to start to get the process PID."));
         }, 10000);
       });
-
-    if (!this.nativeLogsOutputChannel) {
-      this.nativeLogsOutputChannel = window.createOutputChannel(
-        "Radon IDE (Android Emulator Logs)",
-        "log"
-      );
-    }
 
     this.nativeLogsOutputChannel.clear();
     const pid = await extractPidFromLogcat(this.nativeLogsCancelToken);

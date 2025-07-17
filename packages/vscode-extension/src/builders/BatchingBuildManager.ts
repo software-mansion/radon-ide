@@ -49,10 +49,6 @@ export class BatchingBuildManager implements BuildManager, Disposable {
     return `${buildConfig.platform}:${buildConfig.type}:${buildConfig.appRoot}`;
   }
 
-  public focusBuildOutput(): void {
-    this.wrappedBuildManager.focusBuildOutput();
-  }
-
   public async buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult> {
     const { progressListener, cancelToken } = options;
     const buildKey = this.makeBuildKey(buildConfig);

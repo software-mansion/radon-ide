@@ -32,12 +32,15 @@ import { extensionContext } from "../utilities/extensionContext";
 import { Platform } from "../utilities/platform";
 import { checkXcodeExists } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
 export class DeviceAlreadyUsedError extends Error {}
 export class DeviceManager implements DeviceManagerInterface {
   private eventEmitter = new EventEmitter();
+
+  constructor(private readonly outputChannelRegistry: OutputChannelRegistry) {}
 
   public async addListener<K extends keyof DeviceManagerEventMap>(
     eventType: K,
@@ -64,7 +67,11 @@ export class DeviceManager implements DeviceManagerInterface {
       if (!simulatorInfo || simulatorInfo.platform !== DevicePlatform.IOS) {
         throw new Error(`Simulator ${deviceInfo.id} not found`);
       }
-      const device = new IosSimulatorDevice(simulatorInfo.UDID, simulatorInfo);
+      const device = new IosSimulatorDevice(
+        simulatorInfo.UDID,
+        simulatorInfo,
+        this.outputChannelRegistry
+      );
       if (await device.acquire()) {
         return device;
       } else {
@@ -76,7 +83,11 @@ export class DeviceManager implements DeviceManagerInterface {
       if (!emulatorInfo || emulatorInfo.platform !== DevicePlatform.Android) {
         throw new Error(`Emulator ${deviceInfo.id} not found`);
       }
-      const device = new AndroidEmulatorDevice(emulatorInfo.avdId, emulatorInfo);
+      const device = new AndroidEmulatorDevice(
+        emulatorInfo.avdId,
+        emulatorInfo,
+        this.outputChannelRegistry
+      );
       if (await device.acquire()) {
         return device;
       } else {
