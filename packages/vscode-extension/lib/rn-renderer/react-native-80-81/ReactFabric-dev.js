@@ -484,6 +484,7 @@ __DEV__ &&
       return "function" === typeof maybeIterable ? maybeIterable : null;
     }
     function getComponentNameFromType(type) {
+      console.log("Frytki5", type)
       if (null == type) return null;
       if ("function" === typeof type)
         return type.$$typeof === REACT_CLIENT_REFERENCE
