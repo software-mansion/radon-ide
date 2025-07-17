@@ -80,6 +80,12 @@ const rotateOptions: Array<{
     icon: "device-mobile",
     rotation: "90deg",
   },
+  {
+    label: "Portait Upside Down",
+    value: DeviceRotationType.PortraitUpsideDown,
+    icon: "device-mobile",
+    rotation: "180deg",
+  },
 ];
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
