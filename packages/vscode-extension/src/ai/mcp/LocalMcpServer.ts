@@ -1,18 +1,19 @@
 import { randomUUID } from "node:crypto";
 import { AddressInfo } from "node:net";
+import http from "node:http";
 import express from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
+import { Disposable } from "vscode";
 import { Logger } from "../../Logger";
 import { registerMcpTools } from "./toolRegistration";
 import { Session } from "./models";
 import { extensionContext } from "../../utilities/extensionContext";
-
-export class LocalMcpServer {
+export class LocalMcpServer implements Disposable {
   private session: Session | null = null;
 
-  private expressServer: express.Express | null = null;
+  private expressServer: http.Server | null = null;
   private serverPort: Promise<number> | null = null;
   private setServerPort: ((port: number) => void) | null = null;
 
@@ -26,6 +27,12 @@ export class LocalMcpServer {
     });
 
     this.initializeHttpServer();
+  }
+
+  public dispose(): void {
+    this.mcpServer?.close();
+    this.expressServer?.close();
+    this.session = null;
   }
 
   public async getPort() {
@@ -102,13 +109,11 @@ export class LocalMcpServer {
     app.get("/mcp", this.handleSessionRequest);
     app.delete("/mcp", this.handleSessionRequest);
 
-    this.expressServer = app;
+    this.expressServer = app.listen(0, "127.0.0.1");
 
-    const listener = this.expressServer?.listen(0, "127.0.0.1");
-
-    listener?.on("listening", () => {
+    this.expressServer?.on("listening", () => {
       // On "listening", listener.address() will always return AddressInfo
-      const addressInfo = listener.address() as AddressInfo;
+      const addressInfo = this.expressServer?.address() as AddressInfo;
       this.setServerPort?.(addressInfo.port);
       Logger.info(`Started local MCP server on port ${addressInfo.port}.`);
     });

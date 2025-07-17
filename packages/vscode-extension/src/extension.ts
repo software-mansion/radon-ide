@@ -312,7 +312,7 @@ export async function activate(context: ExtensionContext) {
   );
 
   // Initializes MCP part of Radon AI
-  registerRadonAi();
+  context.subscriptions.push(registerRadonAi());
 
   // You can configure the chat in package.json under the `chatParticipants` key
   registerRadonChat(context);

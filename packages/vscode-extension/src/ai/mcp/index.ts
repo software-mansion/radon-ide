@@ -85,4 +85,6 @@ export default function registerRadonAi() {
       })
     );
   }
+
+  return server; // FIXME: add to disposables list on merge with #1313
 }
