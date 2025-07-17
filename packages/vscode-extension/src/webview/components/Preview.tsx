@@ -467,7 +467,7 @@ function Preview({
   return (
     <>
       <div
-        className="phone-wrapper"
+        className="phone-display-container"
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>

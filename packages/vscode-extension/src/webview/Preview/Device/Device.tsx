@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 
 import DeviceFrame from "./DeviceFrame";
 import { useDeviceFrame } from "./hooks";
@@ -18,6 +18,8 @@ interface DeviceProps {
 }
 
 type DeviceCSSProperties = React.CSSProperties & {
+  "--phone-wrapper-min-height"?: string;
+  "--phone-wrapper-min-width"?: string;
   "--phone-wrapper-height"?: string;
   "--phone-content-min-height"?: string;
   "--phone-content-min-width"?: string;
@@ -42,112 +44,192 @@ type DeviceCSSProperties = React.CSSProperties & {
   "--frame-rotation"?: string;
 };
 
+interface DeviceLayoutConfig {
+  aspectRatio: number;
+  isLandscape: boolean;
+  isFitSet: boolean;
+  parentWidth: number;
+  parentHeight: number;
+}
+
 function getParentDimensions(wrapperDivRef: React.RefObject<HTMLDivElement | null>) {
   const parentElement = wrapperDivRef.current;
-
   return {
     width: parentElement?.clientWidth || window.innerWidth,
     height: parentElement?.clientHeight || window.innerHeight,
   };
 }
 
-function cssPropertiesForDevice(
-  device: DeviceProperties,
-  frame: DevicePropertiesFrame,
-  rotation: DeviceRotationType,
-  wrapperDivRef: React.RefObject<HTMLDivElement | null>,
-  zoomLevel: ZoomLevelType
-): DeviceCSSProperties {
-  const aspectRatio = frame.width / frame.height;
-  const isLandscape =
-    rotation === DeviceRotationType.LandscapeLeft || rotation === DeviceRotationType.LandscapeRight;
-  const isFitSet = zoomLevel === "Fit";
+function isLandscapeOrientation(rotation: DeviceRotationType): boolean {
+  return (
+    rotation === DeviceRotationType.LandscapeLeft || rotation === DeviceRotationType.LandscapeRight
+  );
+}
 
-  const { width: parentWidth, height: parentHeight } = getParentDimensions(wrapperDivRef);
-  const resizableHeight = isFitSet ? "100%" : frame.height * zoomLevel * DEVICE_DEFAULT_SCALE;
-
-  let wrapperHeight = isFitSet ? (resizableHeight as string) : `${resizableHeight}px`;
-  let newHeight = isFitSet
-    ? `min(100%, max(${MIN_HEIGHT}px, ${(parentWidth / aspectRatio) * CSS_MARGIN_FACTOR}px))`
-    : `${resizableHeight}px`;
-  let newWidth = "auto";
-  let minWidth = "fit-content";
-  let minHeight = isFitSet ? `${MIN_HEIGHT}px` : "none";
-  let screenHeight = `${(device.screenHeight / frame.height) * 100}%`;
-  let screenWidth = `${(device.screenWidth / frame.width) * 100}%`;
-  let phoneTop = `${(frame.offsetY / frame.height) * 100}%`;
-  let phoneLeft = `${(frame.offsetX / frame.width) * 100}%`;
-  let maskImage = `url(${device.screenImage})`;
-  let frameImage = `url(${frame.image})`;
-  let touchAreaWidth = "calc(var(--phone-screen-width) + 14px)";
-  let touchAreaHeight = "var(--phone-screen-height)";
-  let touchAreaTop = "var(--phone-top)";
-  let touchAreaLeft = "calc(var(--phone-left) - 7px)";
-  let touchAreaScreenHeight = "100%";
-  let touchAreaScreenWidth = "calc(100% - 14px)";
-  let touchAreaScreenTop = "0";
-  let touchAreaScreenLeft = "7px";
-  let frameRotation = "0deg";
-
-  if (isLandscape) {
-    const landscapeMinWidth = MIN_HEIGHT;
-    const landscapeMinHeight = landscapeMinWidth * aspectRatio;
-    const adjustedWidth = isFitSet
-      ? Math.max(
-          Math.min(parentWidth, parentHeight / aspectRatio) * CSS_MARGIN_FACTOR,
-          landscapeMinWidth
-        )
-      : (resizableHeight as number);
-    const adjustedHeight = adjustedWidth * aspectRatio;
-
-    wrapperHeight = "fit-content";
-    newHeight = `${adjustedHeight}px`;
-    newWidth = `${adjustedWidth}px`;
-    minWidth = `${landscapeMinWidth}px`;
-    minHeight = `${landscapeMinHeight}px`;
-    [screenHeight, screenWidth] = [screenWidth, screenHeight]; // Swap for landscape
-    [phoneTop, phoneLeft] = [phoneLeft, phoneTop]; // Swap for landscape
-    maskImage = `url(${device.landscapeScreenImage})`;
-    frameImage = `url(${frame.imageLandscape})`;
-    [touchAreaHeight, touchAreaWidth] = [touchAreaWidth, touchAreaHeight]; // Swap for landscape
-    [touchAreaTop, touchAreaLeft] = [touchAreaLeft, touchAreaTop]; // Swap for landscape
-    touchAreaWidth = "var(--phone-screen-width)";
-    touchAreaHeight = "calc(var(--phone-screen-height) + 14px)";
-    touchAreaTop = "calc(var(--phone-top) - 7px)";
-    touchAreaLeft = "var(--phone-left)";
-    [touchAreaScreenHeight, touchAreaScreenWidth] = [touchAreaScreenWidth, touchAreaScreenHeight]; // Swap for landscape
-    [touchAreaScreenTop, touchAreaScreenLeft] = [touchAreaScreenLeft, touchAreaScreenTop]; // Swap for landscape
-  }
-
-  if (
+function shouldRotateFrame(rotation: DeviceRotationType): boolean {
+  return (
     rotation === DeviceRotationType.LandscapeRight ||
     rotation === DeviceRotationType.PortraitUpsideDown
-  ) {
-    frameRotation = "180deg";
-  }
+  );
+}
+
+function getPortraitDimensions(
+  config: DeviceLayoutConfig,
+  device: DeviceProperties,
+  frame: DevicePropertiesFrame,
+  zoomLevel: ZoomLevelType
+) {
+  const { isFitSet, parentWidth } = config;
+
+  const zoomHeight = isFitSet
+    ? "100%"
+    : frame.height * (zoomLevel as number) * DEVICE_DEFAULT_SCALE;
+
+  const phoneWrapperMinWidth = "auto";
+  const phoneWrapperMinHeight = `${MIN_HEIGHT}px`;
+  const phoneWrapperHeight = isFitSet ? (zoomHeight as string) : `${zoomHeight}px`;
+  const phoneContentHeight = isFitSet
+    ? `min(100%, max(${MIN_HEIGHT}px, ${(parentWidth / config.aspectRatio) * CSS_MARGIN_FACTOR}px))`
+    : `${zoomHeight}px`;
+  const phoneContentWidth = "auto";
+  const phoneContentMinWidth = "fit-content";
+  const phoneContentMinHeight = isFitSet ? `${MIN_HEIGHT}px` : "none";
+  const phoneScreenHeight = `${(device.screenHeight / frame.height) * 100}%`;
+  const phoneScreenWidth = `${(device.screenWidth / frame.width) * 100}%`;
+  const phoneTop = `${(frame.offsetY / frame.height) * 100}%`;
+  const phoneLeft = `${(frame.offsetX / frame.width) * 100}%`;
+  const phoneMaskImage = `url(${device.screenImage})`;
+  const phoneFrameImage = `url(${frame.image})`;
+  const phoneAspectRatio = `${config.aspectRatio}`;
 
   return {
-    "--phone-wrapper-height": wrapperHeight,
-    "--phone-content-min-height": minHeight,
-    "--phone-content-min-width": minWidth,
-    "--phone-content-width": newWidth,
-    "--phone-content-height": newHeight,
-    "--phone-screen-height": screenHeight,
-    "--phone-screen-width": screenWidth,
-    "--phone-aspect-ratio": `${aspectRatio}`,
-    "--phone-top": phoneTop,
-    "--phone-left": phoneLeft,
-    "--phone-mask-image": maskImage,
-    "--phone-frame-image": frameImage,
-    "--phone-touch-area-width": touchAreaWidth,
-    "--phone-touch-area-height": touchAreaHeight,
-    "--phone-touch-area-top": touchAreaTop,
-    "--phone-touch-area-left": touchAreaLeft,
-    "--phone-touch-area-screen-height": touchAreaScreenHeight,
-    "--phone-touch-area-screen-width": touchAreaScreenWidth,
-    "--phone-touch-area-screen-top": touchAreaScreenTop,
-    "--phone-touch-area-screen-left": touchAreaScreenLeft,
-    "--frame-rotation": frameRotation,
+    phoneWrapperMinWidth,
+    phoneWrapperMinHeight,
+    phoneWrapperHeight,
+    phoneContentHeight,
+    phoneContentWidth,
+    phoneContentMinWidth,
+    phoneContentMinHeight,
+    phoneScreenHeight,
+    phoneScreenWidth,
+    phoneTop,
+    phoneLeft,
+    phoneMaskImage,
+    phoneFrameImage,
+    phoneAspectRatio,
+  };
+}
+
+function getLandscapeDimensions(
+  config: DeviceLayoutConfig,
+  device: DeviceProperties,
+  frame: DevicePropertiesFrame,
+  zoomLevel: ZoomLevelType
+) {
+  const { isFitSet, parentWidth } = config;
+
+  const zoomHeight = isFitSet
+    ? "100%"
+    : frame.height * (zoomLevel as number) * DEVICE_DEFAULT_SCALE;
+
+  const phoneWrapperMinWidth = "auto";
+  const phoneWrapperMinHeight = "auto";
+  const phoneWrapperHeight = "fit-content";
+  const phoneContentHeight = "auto";
+  const phoneContentMinWidthValue = MIN_HEIGHT;
+  const phoneContentMinHeightValue = phoneContentMinWidthValue * config.aspectRatio;
+  const phoneContentWidth = isFitSet
+    ? `calc(min(100%,  ${parentWidth / config.aspectRatio}px) * ${CSS_MARGIN_FACTOR})`
+    : `${zoomHeight}px`;
+  const phoneContentMinWidth = `${phoneContentMinWidthValue}px`;
+  const phoneContentMinHeight = `${phoneContentMinHeightValue}px`;
+  const phoneScreenHeight = `${(device.screenWidth / frame.width) * 100}%`; // Swapped for landscape
+  const phoneScreenWidth = `${(device.screenHeight / frame.height) * 100}%`; // Swapped for landscape
+  const phoneTop = `${(frame.offsetX / frame.width) * 100}%`; // Swapped for landscape
+  const phoneLeft = `${(frame.offsetY / frame.height) * 100}%`; // Swapped for landscape
+  const phoneMaskImage = `url(${device.landscapeScreenImage})`;
+  const phoneFrameImage = `url(${frame.imageLandscape})`;
+  const phoneAspectRatio = `${1 / config.aspectRatio}`;
+
+  return {
+    phoneWrapperMinWidth,
+    phoneWrapperMinHeight,
+    phoneWrapperHeight,
+    phoneContentHeight,
+    phoneContentWidth,
+    phoneContentMinWidth,
+    phoneContentMinHeight,
+    phoneScreenHeight,
+    phoneScreenWidth,
+    phoneTop,
+    phoneLeft,
+    phoneMaskImage,
+    phoneFrameImage,
+    phoneAspectRatio,
+  };
+}
+
+function getPortraitTouchAreaDimensions() {
+  const phoneTouchAreaWidth = "calc(var(--phone-screen-width) + 14px)";
+  const phoneTouchAreaHeight = "var(--phone-screen-height)";
+  const phoneTouchAreaTop = "var(--phone-top)";
+  const phoneTouchAreaLeft = "calc(var(--phone-left) - 7px)";
+  const phoneTouchAreaScreenHeight = "100%";
+  const phoneTouchAreaScreenWidth = "calc(100% - 14px)";
+  const phoneTouchAreaScreenTop = "0";
+  const phoneTouchAreaScreenLeft = "7px";
+
+  return {
+    phoneTouchAreaWidth,
+    phoneTouchAreaHeight,
+    phoneTouchAreaTop,
+    phoneTouchAreaLeft,
+    phoneTouchAreaScreenHeight,
+    phoneTouchAreaScreenWidth,
+    phoneTouchAreaScreenTop,
+    phoneTouchAreaScreenLeft,
+  };
+}
+
+function getLandscapeTouchAreaDimensions() {
+  const phoneTouchAreaWidth = "var(--phone-screen-width)";
+  const phoneTouchAreaHeight = "calc(var(--phone-screen-height) + 14px)";
+  const phoneTouchAreaTop = "calc(var(--phone-top) - 7px)";
+  const phoneTouchAreaLeft = "var(--phone-left)";
+  const phoneTouchAreaScreenHeight = "calc(100% - 14px)";
+  const phoneTouchAreaScreenWidth = "100%";
+  const phoneTouchAreaScreenTop = "7px";
+  const phoneTouchAreaScreenLeft = "0";
+
+  return {
+    phoneTouchAreaWidth,
+    phoneTouchAreaHeight,
+    phoneTouchAreaTop,
+    phoneTouchAreaLeft,
+    phoneTouchAreaScreenHeight,
+    phoneTouchAreaScreenWidth,
+    phoneTouchAreaScreenTop,
+    phoneTouchAreaScreenLeft,
+  };
+}
+
+function getDeviceLayoutConfig(
+  frame: DevicePropertiesFrame,
+  rotation: DeviceRotationType,
+  zoomLevel: ZoomLevelType,
+  wrapperDivRef: React.RefObject<HTMLDivElement | null>
+): DeviceLayoutConfig {
+  const aspectRatio = frame.width / frame.height;
+  const isLandscape = isLandscapeOrientation(rotation);
+  const isFitSet = zoomLevel === "Fit";
+  const { width: parentWidth, height: parentHeight } = getParentDimensions(wrapperDivRef);
+
+  return {
+    aspectRatio,
+    isLandscape,
+    isFitSet,
+    parentWidth,
+    parentHeight,
   };
 }
 
@@ -156,56 +238,79 @@ export default function Device({ device, zoomLevel, children, wrapperDivRef }: D
   const { projectState } = useProject();
   const phoneContentRef = useRef<HTMLDivElement>(null);
 
-  // const resizableHeight = frame.height;
   const rotation = projectState.rotation;
+  const isLandscape = isLandscapeOrientation(rotation);
 
-  const cssProperties = useMemo(() => {
-    return cssPropertiesForDevice(device, frame, rotation, wrapperDivRef, zoomLevel);
-  }, [device, frame, rotation, wrapperDivRef, zoomLevel]);
+  const cssPropertiesForDevice = useCallback((): DeviceCSSProperties => {
+    const layoutConfig = getDeviceLayoutConfig(frame, rotation, zoomLevel, wrapperDivRef);
 
-  const handleResize = () => {
-    // Recalculate the complete CSS properties that depend on window size
-    const updatedProperties = cssPropertiesForDevice(
-      device,
-      frame,
-      rotation,
-      wrapperDivRef,
-      zoomLevel
-    );
+    const phoneDimensions = layoutConfig.isLandscape
+      ? getLandscapeDimensions(layoutConfig, device, frame, zoomLevel)
+      : getPortraitDimensions(layoutConfig, device, frame, zoomLevel);
+    const touchAreaDimensions = layoutConfig.isLandscape
+      ? getLandscapeTouchAreaDimensions()
+      : getPortraitTouchAreaDimensions();
 
-    // Apply all CSS properties to both Resizable and phone-content elements
+    const frameRotation = shouldRotateFrame(rotation) ? "180deg" : "0deg";
+
+    return {
+      "--phone-wrapper-min-width": phoneDimensions.phoneWrapperMinWidth,
+      "--phone-wrapper-min-height": phoneDimensions.phoneWrapperMinHeight,
+      "--phone-wrapper-height": phoneDimensions.phoneWrapperHeight,
+      "--phone-content-min-height": phoneDimensions.phoneContentMinHeight,
+      "--phone-content-min-width": phoneDimensions.phoneContentMinWidth,
+      "--phone-content-width": phoneDimensions.phoneContentWidth,
+      "--phone-content-height": phoneDimensions.phoneContentHeight,
+      "--phone-screen-height": phoneDimensions.phoneScreenHeight,
+      "--phone-screen-width": phoneDimensions.phoneScreenWidth,
+      "--phone-aspect-ratio": phoneDimensions.phoneAspectRatio,
+      "--phone-top": phoneDimensions.phoneTop,
+      "--phone-left": phoneDimensions.phoneLeft,
+      "--phone-mask-image": phoneDimensions.phoneMaskImage,
+      "--phone-frame-image": phoneDimensions.phoneFrameImage,
+      "--phone-touch-area-width": touchAreaDimensions.phoneTouchAreaWidth,
+      "--phone-touch-area-height": touchAreaDimensions.phoneTouchAreaHeight,
+      "--phone-touch-area-top": touchAreaDimensions.phoneTouchAreaTop,
+      "--phone-touch-area-left": touchAreaDimensions.phoneTouchAreaLeft,
+      "--phone-touch-area-screen-height": touchAreaDimensions.phoneTouchAreaScreenHeight,
+      "--phone-touch-area-screen-width": touchAreaDimensions.phoneTouchAreaScreenWidth,
+      "--phone-touch-area-screen-top": touchAreaDimensions.phoneTouchAreaScreenTop,
+      "--phone-touch-area-screen-left": touchAreaDimensions.phoneTouchAreaScreenLeft,
+      "--frame-rotation": frameRotation,
+    };
+  }, [device, frame, rotation, zoomLevel, wrapperDivRef]);
+
+  const applyStylePropertiesToComponents = () => {
+    const updatedProperties = cssPropertiesForDevice();
+
+    const phoneContentElement = phoneContentRef.current;
     const resizableElement = phoneContentRef.current?.parentElement;
 
-    if (resizableElement) {
-      Object.entries(updatedProperties).forEach(([property, value]) => {
-        resizableElement.style.setProperty(property, value || null);
-      });
-    }
-
-    if (phoneContentRef.current) {
-      Object.entries(updatedProperties).forEach(([property, value]) => {
-        phoneContentRef.current!.style.setProperty(property, value || null);
-      });
+    for (let element of [phoneContentElement, resizableElement]) {
+      if (element) {
+        Object.entries(updatedProperties).forEach(([property, value]) => {
+          element.style.setProperty(property, (value as string) || null);
+        });
+      }
     }
   };
 
-  const isLandscape =
-    rotation === DeviceRotationType.LandscapeLeft || rotation === DeviceRotationType.LandscapeRight;
-
   useEffect(() => {
-    window.addEventListener("resize", handleResize);
+    // initial call to set styles of elements
+    applyStylePropertiesToComponents();
 
-    return () => window.removeEventListener("resize", handleResize);
+    // recalculate on resize
+    window.addEventListener("resize", applyStylePropertiesToComponents);
+    return () => window.removeEventListener("resize", applyStylePropertiesToComponents);
   }, [device, frame, rotation, wrapperDivRef, zoomLevel]);
 
+  const backgroundImageSrc = isLandscape ? device.landscapeScreenImage : device.screenImage;
+
   return (
-    <div className="phone-wrapper-resizable" style={{ ...cssProperties }}>
-      <div ref={phoneContentRef} className="phone-content" style={cssProperties}>
+    <div className="phone-wrapper">
+      <div ref={phoneContentRef} className="phone-content">
         <DeviceFrame frame={frame} isLandscape={isLandscape} />
-        <img
-          src={isLandscape ? device.landscapeScreenImage : device.screenImage}
-          className="phone-screen-background"
-        />
+        <img src={backgroundImageSrc} className="phone-screen-background" alt="Device screen" />
         {children}
       </div>
     </div>
