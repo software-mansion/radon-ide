@@ -7,8 +7,6 @@ export class ConnectionListener implements Disposable {
   connectionRestoredEmitter: EventEmitter<void>;
   connectionListeningInterval: NodeJS.Timeout | null;
 
-  listenerDisposables: Disposable[] = [];
-
   constructor() {
     this.connectionRestoredEmitter = new EventEmitter();
     this.connectionListeningInterval = null;
@@ -30,9 +28,6 @@ export class ConnectionListener implements Disposable {
   dispose() {
     this.tryClearListeningInterval();
     this.connectionRestoredEmitter.dispose();
-    for (const disposable of this.listenerDisposables) {
-      disposable.dispose();
-    }
   }
 
   tryRestoringConnection() {
@@ -50,7 +45,7 @@ export class ConnectionListener implements Disposable {
     }, PING_INTERVAL);
   }
 
-  onConnectionRestored(callback: () => unknown) {
-    this.connectionRestoredEmitter.event(callback, undefined, this.listenerDisposables);
+  onConnectionRestored(callback: () => unknown): Disposable {
+    return this.connectionRestoredEmitter.event(callback);
   }
 }

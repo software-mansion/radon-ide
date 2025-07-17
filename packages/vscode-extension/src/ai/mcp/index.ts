@@ -22,29 +22,30 @@ function directLoadRadonAI(connectionListener: ConnectionListener): Disposable[]
 
   const didChangeEmitter = new EventEmitter<void>();
 
-  connectionListener.onConnectionRestored(() => {
+  const connectionChangeListener = connectionListener.onConnectionRestored(() => {
     didChangeEmitter.fire();
   });
 
-  return [
-    watchLicenseTokenChange(() => {
-      didChangeEmitter.fire();
-    }),
-    lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
-      onDidChangeServerDefinitions: didChangeEmitter.event,
-      provideMcpServerDefinitions: async () => {
-        const port = await startLocalMcpServer(connectionListener);
-        return [
-          new McpHttpServerDefinition(
-            "RadonAI",
-            Uri.parse(`http://127.0.0.1:${port}/mcp`),
-            {},
-            extensionContext.extension.packageJSON.version + `.${versionSuffix++}`
-          ),
-        ];
-      },
-    }),
-  ];
+  const licenseChangeListener = watchLicenseTokenChange(() => {
+    didChangeEmitter.fire();
+  });
+
+  const mcpServerEntry = lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
+    onDidChangeServerDefinitions: didChangeEmitter.event,
+    provideMcpServerDefinitions: async () => {
+      const port = await startLocalMcpServer(connectionListener);
+      return [
+        new McpHttpServerDefinition(
+          "RadonAI",
+          Uri.parse(`http://127.0.0.1:${port}/mcp`),
+          {},
+          extensionContext.extension.packageJSON.version + `.${versionSuffix++}`
+        ),
+      ];
+    },
+  });
+
+  return [connectionChangeListener, licenseChangeListener, mcpServerEntry];
 }
 
 async function fsLoadRadonAI(connectionListener: ConnectionListener) {
@@ -79,7 +80,7 @@ export default function registerRadonAi(): Disposable[] {
 
     return [...disposables, connectionListener];
   } else {
-    connectionListener.onConnectionRestored(() => {
+    const connectionChangeListener = connectionListener.onConnectionRestored(() => {
       fsLoadRadonAI(connectionListener);
     });
 
@@ -87,6 +88,6 @@ export default function registerRadonAi(): Disposable[] {
       fsLoadRadonAI(connectionListener);
     });
 
-    return [connectionListener, licenseObserver];
+    return [connectionListener, connectionChangeListener, licenseObserver];
   }
 }
