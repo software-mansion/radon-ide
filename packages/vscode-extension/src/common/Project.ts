@@ -1,6 +1,10 @@
 import { BuildType } from "./BuildConfig";
 import { DeviceInfo, DevicePlatform } from "./DeviceManager";
-import { LaunchConfiguration, LaunchConfigurationOptions } from "./LaunchConfig";
+import {
+  LaunchConfiguration,
+  LaunchConfigurationKind,
+  LaunchConfigurationOptions,
+} from "./LaunchConfig";
 import { Output } from "./OutputChannel";
 
 export type Locale = string;
@@ -239,7 +243,10 @@ export interface ProjectInterface {
     newLaunchConfiguration: LaunchConfigurationOptions | undefined,
     oldLaunchConfiguration?: LaunchConfiguration
   ): Promise<void>;
-  selectLaunchConfiguration(launchConfig: LaunchConfigurationOptions): Promise<void>;
+  selectLaunchConfiguration(
+    launchConfig: LaunchConfigurationOptions,
+    launchConfigurationKind: LaunchConfigurationKind
+  ): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
