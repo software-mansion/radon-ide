@@ -586,11 +586,13 @@ function Preview({
       {/* Hack needed for css to cache those images */}
       <span className="phone-preload-masks">
         <div style={{ maskImage: `url(${device?.landscapeMaskImage})` }} />
+        <div style={{ maskImage: `url(${device?.landscapeScreenImage})` }} />
+        <div style={{ maskImage: `url(${device?.screenImage})` }} />
         <div style={{ maskImage: `url(${device?.maskImage})` }} />
         <img src={frame.imageLandscape} alt="" />
         <img src={frame.image} alt="" />
         <img src={device?.landscapeScreenImage} alt="" />
-        <img src={device?.screenImage} alt="" />Ń
+        <img src={device?.screenImage} alt="" />
       </span>
     </>
   );

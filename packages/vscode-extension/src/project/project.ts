@@ -453,7 +453,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
           break;
         case DeviceRotationType.PortraitUpsideDown:
           // 180° map (x,y) to (1-x, 1-y)
-          // CHECK IF THIS IS CORRECT
           array[i] = { xRatio: 1 - x, yRatio: 1 - y };
           break;
         default:
