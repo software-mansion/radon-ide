@@ -1,4 +1,4 @@
-import { lm, McpHttpServerDefinition, Uri, EventEmitter, version } from "vscode";
+import { lm, McpHttpServerDefinition, Uri, EventEmitter, version, Disposable } from "vscode";
 import { Logger } from "../../Logger";
 import { watchLicenseTokenChange } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
@@ -8,6 +8,8 @@ import { startLocalMcpServer } from "./server";
 import { MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { extensionContext } from "../../utilities/extensionContext";
+import { ConnectionListener } from "../shared/ConnectionListener";
+import { disposeAll } from "../../utilities/disposables";
 
 async function updateMcpConfig(port: number) {
   const mcpConfig = (await readMcpConfig()) || newMcpConfig();
@@ -15,42 +17,44 @@ async function updateMcpConfig(port: number) {
   await writeMcpConfig(updatedConfig);
 }
 
-function directLoadRadonAI() {
+function directLoadRadonAI(connectionListener: ConnectionListener): Disposable {
+  // Version suffix has to be incremented on every MCP server reload.
+  let versionSuffix = 0;
+
   const didChangeEmitter = new EventEmitter<void>();
 
-  // version suffix is incremented whenever we get auth token update notification
-  // this way we request vscode to reload the tool on regular basis but also immediately
-  // after the user inputs the license token
-  let versionSuffix = 0;
-  extensionContext.subscriptions.push(
-    watchLicenseTokenChange(() => {
-      versionSuffix += 1;
-      didChangeEmitter.fire();
-    })
-  );
+  const connectionChangeListener = connectionListener.onConnectionRestored(() => {
+    didChangeEmitter.fire();
+  });
 
-  extensionContext.subscriptions.push(
-    lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
-      onDidChangeServerDefinitions: didChangeEmitter.event,
-      provideMcpServerDefinitions: async () => {
-        const port = await startLocalMcpServer();
-        return [
-          new McpHttpServerDefinition(
-            "RadonAI",
-            Uri.parse(`http://127.0.0.1:${port}/mcp`),
-            {},
-            extensionContext.extension.packageJSON.version + `.${versionSuffix}`
-          ),
-        ];
-      },
-    })
+  const licenseChangeListener = watchLicenseTokenChange(() => {
+    didChangeEmitter.fire();
+  });
+
+  const mcpServerEntry = lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
+    onDidChangeServerDefinitions: didChangeEmitter.event,
+    provideMcpServerDefinitions: async () => {
+      const port = await startLocalMcpServer(connectionListener);
+      return [
+        new McpHttpServerDefinition(
+          "RadonAI",
+          Uri.parse(`http://127.0.0.1:${port}/mcp`),
+          {},
+          extensionContext.extension.packageJSON.version + `.${versionSuffix++}`
+        ),
+      ];
+    },
+  });
+
+  return new Disposable(() =>
+    disposeAll([connectionChangeListener, licenseChangeListener, mcpServerEntry])
   );
 }
 
-async function fsLoadRadonAI() {
+async function fsLoadRadonAI(connectionListener: ConnectionListener) {
   try {
-    // Server has to be online before the config is written
-    const mcpPort = await startLocalMcpServer();
+    // The local server has to be online before the config is written
+    const mcpPort = await startLocalMcpServer(connectionListener);
 
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
     await updateMcpConfig(mcpPort);
@@ -71,14 +75,24 @@ function isDirectLoadingAvailable() {
   );
 }
 
-export default function registerRadonAi() {
+export default function registerRadonAi(): Disposable {
+  const connectionListener = new ConnectionListener();
+
   if (isDirectLoadingAvailable()) {
-    directLoadRadonAI();
+    const disposables = directLoadRadonAI(connectionListener);
+
+    return new Disposable(() => disposeAll([disposables, connectionListener]));
   } else {
-    extensionContext.subscriptions.push(
-      watchLicenseTokenChange(() => {
-        fsLoadRadonAI();
-      })
+    const connectionChangeListener = connectionListener.onConnectionRestored(() => {
+      fsLoadRadonAI(connectionListener);
+    });
+
+    const licenseObserver = watchLicenseTokenChange(() => {
+      fsLoadRadonAI(connectionListener);
+    });
+
+    return new Disposable(() =>
+      disposeAll([connectionListener, connectionChangeListener, licenseObserver])
     );
   }
 }
