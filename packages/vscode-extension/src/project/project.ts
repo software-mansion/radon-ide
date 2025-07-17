@@ -140,7 +140,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   async focusOutput(channel: Output): Promise<void> {
-    this.outputChannelRegistry.getChannel(channel).show();
+    this.outputChannelRegistry.getOrCreateOutputChannel(channel).show();
   }
 
   async createOrUpdateLaunchConfiguration(

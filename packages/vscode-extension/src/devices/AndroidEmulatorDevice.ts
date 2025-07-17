@@ -99,7 +99,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   private get nativeLogsOutputChannel() {
-    return this.outputChannelRegistry.getChannel(Output.AndroidDevice);
+    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.AndroidDevice);
   }
 
   public dispose(): void {

@@ -250,7 +250,9 @@ export class BuildManagerImpl implements BuildManager {
     let buildFingerprint = currentFingerprint;
     try {
       if (platform === DevicePlatform.Android) {
-        const buildOutputChannel = this.outputChannelRegistry.getChannel(Output.BuildAndroid);
+        const buildOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
+          Output.BuildAndroid
+        );
         buildOutputChannel.clear();
 
         assert(
@@ -265,7 +267,9 @@ export class BuildManagerImpl implements BuildManager {
           this.dependencyManager
         );
       } else {
-        const buildOutputChannel = this.outputChannelRegistry.getChannel(Output.BuildIos);
+        const buildOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
+          Output.BuildIos
+        );
         buildOutputChannel.clear();
         const installPodsIfNeeded = async () => {
           let installPods = forceCleanBuild;

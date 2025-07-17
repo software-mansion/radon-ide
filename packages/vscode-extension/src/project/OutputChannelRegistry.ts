@@ -7,7 +7,7 @@ export class OutputChannelRegistry implements Disposable {
     [Output.Ide, Logger.rawOutputChannel],
   ]);
 
-  getChannel(channel: Output) {
+  getOrCreateOutputChannel(channel: Output) {
     const logOutput = this.channelByName.get(channel);
     if (logOutput) {
       return logOutput;
