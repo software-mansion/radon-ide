@@ -9,6 +9,7 @@ import { MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { extensionContext } from "../../utilities/extensionContext";
 import { ConnectionListener } from "../shared/ConnectionListener";
+import { disposeAll } from "../../utilities/disposables";
 
 async function updateMcpConfig(port: number) {
   const mcpConfig = (await readMcpConfig()) || newMcpConfig();
@@ -16,7 +17,7 @@ async function updateMcpConfig(port: number) {
   await writeMcpConfig(updatedConfig);
 }
 
-function directLoadRadonAI(connectionListener: ConnectionListener): Disposable[] {
+function directLoadRadonAI(connectionListener: ConnectionListener): Disposable {
   // Version suffix has to be incremented on every MCP server reload.
   let versionSuffix = 0;
 
@@ -45,7 +46,9 @@ function directLoadRadonAI(connectionListener: ConnectionListener): Disposable[]
     },
   });
 
-  return [connectionChangeListener, licenseChangeListener, mcpServerEntry];
+  return new Disposable(() =>
+    disposeAll([connectionChangeListener, licenseChangeListener, mcpServerEntry])
+  );
 }
 
 async function fsLoadRadonAI(connectionListener: ConnectionListener) {
@@ -72,13 +75,13 @@ function isDirectLoadingAvailable() {
   );
 }
 
-export default function registerRadonAi(): Disposable[] {
+export default function registerRadonAi(): Disposable {
   const connectionListener = new ConnectionListener();
 
   if (isDirectLoadingAvailable()) {
     const disposables = directLoadRadonAI(connectionListener);
 
-    return [...disposables, connectionListener];
+    return new Disposable(() => disposeAll([disposables, connectionListener]));
   } else {
     const connectionChangeListener = connectionListener.onConnectionRestored(() => {
       fsLoadRadonAI(connectionListener);
@@ -88,6 +91,8 @@ export default function registerRadonAi(): Disposable[] {
       fsLoadRadonAI(connectionListener);
     });
 
-    return [connectionListener, connectionChangeListener, licenseObserver];
+    return new Disposable(() =>
+      disposeAll([connectionListener, connectionChangeListener, licenseObserver])
+    );
   }
 }
