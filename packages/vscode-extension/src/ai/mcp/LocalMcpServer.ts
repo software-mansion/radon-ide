@@ -10,6 +10,7 @@ import { Logger } from "../../Logger";
 import { registerMcpTools } from "./toolRegistration";
 import { Session } from "./models";
 import { extensionContext } from "../../utilities/extensionContext";
+import { ConnectionListener } from "../shared/ConnectionListener";
 export class LocalMcpServer implements Disposable {
   private session: Session | null = null;
 
@@ -20,10 +21,19 @@ export class LocalMcpServer implements Disposable {
   private mcpServer: McpServer | null = null;
   private versionSuffix: number = 0;
 
-  constructor() {
+  private connectionListener: ConnectionListener;
+
+  constructor(connectionListener: ConnectionListener) {
     // Deferred promise. The this.setServerPort is set immediately & synchronously.
     this.serverPort = new Promise<number>((resolve) => {
       this.setServerPort = resolve;
+    });
+
+    this.connectionListener = connectionListener;
+
+    this.connectionListener.onConnectionRestored(() => {
+      this.versionSuffix++;
+      this.setVersionSuffix(this.versionSuffix);
     });
 
     this.initializeHttpServer();
@@ -98,7 +108,7 @@ export class LocalMcpServer implements Disposable {
           version: this.getVersion(),
         });
 
-        await registerMcpTools(this.mcpServer);
+        await registerMcpTools(this.mcpServer, this.connectionListener);
 
         await this.mcpServer.connect(this.session.transport);
       }
