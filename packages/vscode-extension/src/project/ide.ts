@@ -7,6 +7,7 @@ import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
 import { LaunchConfigurationOptions } from "../common/LaunchConfig";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfigurationOptions;
@@ -19,18 +20,24 @@ export class IDE implements Disposable {
   public readonly project: Project;
   public readonly workspaceConfigController: WorkspaceConfigController;
   public readonly utils: Utils;
+  public readonly outputChannelRegistry = new OutputChannelRegistry();
   private disposed = false;
   private disposables: Disposable[] = [];
 
   private attachSemaphore = 0;
 
   constructor({ initialLaunchConfig }: InitialOptions = {}) {
-    this.deviceManager = new DeviceManager();
+    this.deviceManager = new DeviceManager(this.outputChannelRegistry);
     this.utils = new Utils();
-    this.project = new Project(this.deviceManager, this.utils, initialLaunchConfig);
+    this.project = new Project(
+      this.deviceManager,
+      this.utils,
+      this.outputChannelRegistry,
+      initialLaunchConfig
+    );
     this.workspaceConfigController = new WorkspaceConfigController();
 
-    this.disposables.push(this.project, this.workspaceConfigController);
+    this.disposables.push(this.project, this.workspaceConfigController, this.outputChannelRegistry);
     // register disposable with context
     extensionContext.subscriptions.push(this);
   }

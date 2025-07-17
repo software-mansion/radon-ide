@@ -1,6 +1,7 @@
 import { BuildType } from "./BuildConfig";
 import { DeviceInfo, DevicePlatform } from "./DeviceManager";
 import { LaunchConfiguration, LaunchConfigurationOptions } from "./LaunchConfig";
+import { Output } from "./OutputChannel";
 
 export type Locale = string;
 
@@ -252,8 +253,7 @@ export interface ProjectInterface {
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
-  focusBuildOutput(): Promise<void>;
-  focusExtensionLogsOutput(): Promise<void>;
+  focusOutput(channel: Output): Promise<void>;
   focusDebugConsole(): Promise<void>;
   openNavigation(navigationItemID: string): Promise<void>;
   navigateBack(): Promise<void>;

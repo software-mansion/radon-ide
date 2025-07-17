@@ -1,6 +1,5 @@
 import path from "path";
 import fs from "fs";
-import { OutputChannel, window } from "vscode";
 import { ExecaChildProcess, ExecaError } from "execa";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
@@ -13,6 +12,8 @@ import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
+import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
+import { Output } from "../common/OutputChannel";
 
 interface SimulatorInfo {
   availability?: string;
@@ -49,12 +50,12 @@ type PrivacyServiceName =
   | "siri";
 
 export class IosSimulatorDevice extends DeviceBase {
-  private nativeLogsOutputChannel: OutputChannel | undefined;
   private runningAppProcess: ExecaChildProcess | undefined;
 
   constructor(
     private readonly deviceUDID: string,
-    private readonly _deviceInfo: DeviceInfo
+    private readonly _deviceInfo: DeviceInfo,
+    private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     super();
   }
@@ -67,17 +68,18 @@ export class IosSimulatorDevice extends DeviceBase {
     return this._deviceInfo;
   }
 
-  get lockFilePath(): string {
+  public get lockFilePath(): string {
     const deviceSetLocation = getDeviceSetLocation(this.deviceUDID);
     const pidFile = path.join(deviceSetLocation, this.deviceUDID, "lock.pid");
     return pidFile;
   }
 
+  private get nativeLogsOutputChannel() {
+    return this.outputChannelRegistry.getChannel(Output.IosDevice);
+  }
+
   public dispose() {
     super.dispose();
-    const nativeLogsOutputChannel = this.nativeLogsOutputChannel;
-    this.nativeLogsOutputChannel = undefined;
-    nativeLogsOutputChannel?.dispose();
     this.runningAppProcess?.cancel();
     return exec("xcrun", [
       "simctl",
@@ -363,13 +365,6 @@ export class IosSimulatorDevice extends DeviceBase {
 
     if (this.runningAppProcess) {
       this.runningAppProcess.kill(9);
-    }
-
-    if (!this.nativeLogsOutputChannel) {
-      this.nativeLogsOutputChannel = window.createOutputChannel(
-        "Radon IDE (iOS Simulator Logs)",
-        "log"
-      );
     }
 
     this.nativeLogsOutputChannel.clear();

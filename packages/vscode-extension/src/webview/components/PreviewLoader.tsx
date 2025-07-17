@@ -14,6 +14,8 @@ import {
 import { useProject } from "../providers/ProjectProvider";
 import Button from "./shared/Button";
 import { useDevices } from "../providers/DevicesProvider";
+import { Output } from "../../common/OutputChannel";
+import { DevicePlatform } from "../../common/DeviceManager";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => acc + cur,
@@ -28,9 +30,10 @@ function PreviewLoader({
 
   startingSessionState: DeviceSessionStateStarting;
 }) {
-  const { project } = useProject();
+  const { project, selectedDeviceSession } = useProject();
   const { deviceSessionsManager } = useDevices();
   const [progress, setProgress] = useState(0);
+  const platform = selectedDeviceSession?.deviceInfo.platform;
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
 
@@ -81,11 +84,17 @@ function PreviewLoader({
 
   function handleLoaderClick() {
     if (startupMessage === StartupMessage.Building) {
-      project.focusBuildOutput();
+      const logTarget =
+        platform === DevicePlatform.IOS
+          ? Output.BuildIos
+          : platform === DevicePlatform.Android
+            ? Output.BuildAndroid
+            : Output.Ide;
+      project.focusOutput(logTarget);
     } else if (startupMessage === StartupMessage.WaitingForAppToLoad) {
       onRequestShowPreview();
     } else {
-      project.focusExtensionLogsOutput();
+      project.focusOutput(Output.Ide);
     }
   }
 
@@ -121,7 +130,7 @@ function PreviewLoader({
               options to troubleshoot:
             </div>
             <div className="preview-loader-waiting-actions">
-              <Button type="secondary" onClick={() => project.focusExtensionLogsOutput()}>
+              <Button type="secondary" onClick={() => project.focusOutput(Output.Ide)}>
                 <span className="codicon codicon-output" /> Open Radon IDE Logs
               </Button>
               <Button type="secondary" onClick={onRequestShowPreview}>
