@@ -593,7 +593,7 @@ function Preview({
         <img src={frame.imageLandscape} alt="" />
         <img src={frame.image} alt="" />
         <img src={device?.landscapeScreenImage} alt="" />
-        <img src={device?.screenImage} alt="" />
+        <img src={device?.screenImage} alt="" />Ń
       </span>
     </>
   );

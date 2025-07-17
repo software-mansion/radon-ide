@@ -386,6 +386,7 @@ const ROTATIONS: DeviceRotationType[] = [
   DeviceRotationType.LandscapeLeft,
   DeviceRotationType.Portrait,
   DeviceRotationType.LandscapeRight,
+  DeviceRotationType.PortraitUpsideDown,
 ] as const;
 
 enum RotationDirection {
