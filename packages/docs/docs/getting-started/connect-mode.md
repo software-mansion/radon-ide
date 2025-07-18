@@ -33,7 +33,7 @@ Hover the "Radon IDE" button in the activity bar, and click "Enable Radon Connec
 
 Later, you can also use the menu to disable Radon Connect and switch back to **Panel Mode**.
 
-### Using the device select menu from [Radon Panel](/docs/getting-started/user-interface)
+### Using the device select menu from [Radon Panel](/docs/getting-started/panel-interface)
 
 If you have the Radon IDE Panel opened, you can use the device select menu to enable Radon Connect:
 
