@@ -1,10 +1,43 @@
-import { RefObject, useCallback } from "react";
+import { RefObject, useCallback, useMemo, useRef } from "react";
 import { DeviceRotationType } from "../../common/Project";
+
+interface TransformationConfig {
+  angle: number;
+  isPortrait: boolean;
+}
 
 function useCanvasRenderer(
   rotation: DeviceRotationType,
   canvasRef: RefObject<HTMLCanvasElement | null>
 ) {
+  const lastCanvasDimensionsRef = useRef<{ width: number; height: number } | null>(null);
+
+  // Cache the transformation configuration based on rotation
+  const transformConfig = useMemo<TransformationConfig>(() => {
+    switch (rotation) {
+      case DeviceRotationType.LandscapeLeft:
+        return {
+          angle: -Math.PI / 2,
+          isPortrait: false,
+        };
+      case DeviceRotationType.LandscapeRight:
+        return {
+          angle: Math.PI / 2,
+          isPortrait: false,
+        };
+      case DeviceRotationType.PortraitUpsideDown:
+        return {
+          angle: Math.PI,
+          isPortrait: true,
+        };
+      default:
+        return {
+          angle: 0,
+          isPortrait: true,
+        };
+    }
+  }, [rotation]);
+
   const drawImageToCanvas = useCallback(
     (sourceImg: HTMLImageElement | HTMLVideoElement): void => {
       if (!canvasRef.current) {
@@ -21,50 +54,45 @@ function useCanvasRenderer(
       const imgHeight =
         sourceImg instanceof HTMLVideoElement ? sourceImg.videoHeight : sourceImg.height;
 
-      // Determine rotation angle and new dimensions
-      let angle = 0;
-      let newWidth = imgWidth;
-      let newHeight = imgHeight;
-
-      switch (rotation) {
-        case DeviceRotationType.LandscapeLeft:
-          angle = -Math.PI / 2; // -90 degrees
-          newWidth = imgHeight; // swap dimensions
-          newHeight = imgWidth;
-          break;
-        case DeviceRotationType.LandscapeRight:
-          angle = Math.PI / 2; // 90 degrees
-          newWidth = imgHeight; // swap dimensions
-          newHeight = imgWidth;
-          break;
-        case DeviceRotationType.PortraitUpsideDown:
-          angle = Math.PI; // 180 degrees
-          break;
-        default:
-          // Portrait mode: no rotation
-          break;
+      // Early return if image dimensions are invalid
+      if (imgWidth === 0 || imgHeight === 0) {
+        return;
       }
 
-      // Resize canvas to accommodate dimensions
-      if(newWidth !== canvas.width || newHeight !== canvas.height) {
+      // Calculate actual dimensions based on rotation
+      const newWidth = transformConfig.isPortrait ? imgWidth : imgHeight;
+      const newHeight = transformConfig.isPortrait ? imgHeight : imgWidth;
+
+      const currentCanvasDims = { width: newWidth, height: newHeight };
+
+      const canvasDimsChanged =
+        !lastCanvasDimensionsRef.current ||
+        lastCanvasDimensionsRef.current.width !== newWidth ||
+        lastCanvasDimensionsRef.current.height !== newHeight;
+
+      if (canvasDimsChanged) {
         canvas.width = newWidth;
         canvas.height = newHeight;
+        lastCanvasDimensionsRef.current = currentCanvasDims;
       }
 
+      // Clear canvas
+      ctx.clearRect(0, 0, newWidth, newHeight);
+
       if (rotation === DeviceRotationType.Portrait) {
-        // Direct draw for portrait mode
+        // Direct draw for portrait mode - fastest path
         ctx.drawImage(sourceImg, 0, 0);
       } else {
-        // Apply rotation transformation
+        // Apply cached transformation
         ctx.save();
         ctx.translate(newWidth / 2, newHeight / 2);
-        ctx.rotate(angle);
+        ctx.rotate(transformConfig.angle);
         ctx.translate(-imgWidth / 2, -imgHeight / 2);
         ctx.drawImage(sourceImg, 0, 0);
         ctx.restore();
       }
     },
-    [rotation, canvasRef]
+    [rotation, canvasRef, transformConfig]
   );
 
   return drawImageToCanvas;

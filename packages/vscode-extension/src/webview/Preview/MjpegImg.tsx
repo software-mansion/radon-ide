@@ -23,6 +23,12 @@ const MjpegImg = forwardRef<
   const sourceImgRef = useRef<HTMLImageElement>(null);
 
   const drawToCanvas = useCanvasRenderer(rotation, canvasRef);
+  const drawToCanvasRef = useRef(drawToCanvas);
+  const isRunningRef = useRef(false);
+
+  useEffect(() => {
+    drawToCanvasRef.current = drawToCanvas;
+  }, [drawToCanvas]);
 
   // The below effect implements the main logic of this component. The primary
   // reason we can't just use img tag with src directly, is that with mjpeg streams
@@ -94,30 +100,23 @@ const MjpegImg = forwardRef<
       return;
     }
 
-    let animationFrameId: number;
-    let isAnimating = false;
-
     const updateCanvas = () => {
-      drawToCanvas(sourceImg);
-      if (isAnimating) {
-        animationFrameId = requestAnimationFrame(updateCanvas);
-      }
+      const update = () => {
+        if (isRunningRef.current) {
+          drawToCanvasRef.current(sourceImg);
+          requestAnimationFrame(update);
+        }
+      };
+      update();
     };
 
     const handleSourceLoad = () => {
-      if (isAnimating) {
-        cancelAnimationFrame(animationFrameId);
-      }
-
-      isAnimating = true;
+      isRunningRef.current = true;
       updateCanvas();
     };
 
     const handleSourceError = () => {
-      if (isAnimating) {
-        cancelAnimationFrame(animationFrameId);
-        isAnimating = false;
-      }
+      isRunningRef.current = false;
 
       const ctx = canvas.getContext("2d");
       if (ctx) {
@@ -125,23 +124,21 @@ const MjpegImg = forwardRef<
       }
     };
 
+    const handleSourceUnload = () => {
+      isRunningRef.current = false;
+    };
+
     sourceImg.addEventListener("load", handleSourceLoad);
     sourceImg.addEventListener("error", handleSourceError);
-
-    // Reset and set source
-    sourceImg.src = NO_IMAGE_DATA;
-    sourceImg.src = src || NO_IMAGE_DATA;
+    sourceImg.addEventListener("unload", handleSourceUnload);
 
     return () => {
-      if (isAnimating) {
-        cancelAnimationFrame(animationFrameId);
-        isAnimating = false;
-      }
+      isRunningRef.current = false;
       sourceImg.removeEventListener("load", handleSourceLoad);
       sourceImg.removeEventListener("error", handleSourceError);
-      sourceImg.src = NO_IMAGE_DATA;
+      sourceImg.removeEventListener("unload", handleSourceUnload);
     };
-  }, [canvasRef, src, rotation, drawToCanvas]);
+  }, [canvasRef, src]);
 
   return (
     <>
