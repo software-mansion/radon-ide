@@ -92,7 +92,7 @@ function useCanvasRenderer(
         ctx.restore();
       }
     },
-    [rotation, canvasRef, transformConfig]
+    [canvasRef, transformConfig]
   );
 
   return drawImageToCanvas;

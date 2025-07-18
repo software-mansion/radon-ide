@@ -100,11 +100,13 @@ const MjpegImg = forwardRef<
       return;
     }
 
+    let animationId: number | null = null;
+
     const updateCanvas = () => {
       const update = () => {
         if (isRunningRef.current) {
           drawToCanvasRef.current(sourceImg);
-          requestAnimationFrame(update);
+          animationId = requestAnimationFrame(update);
         }
       };
       update();
@@ -117,6 +119,10 @@ const MjpegImg = forwardRef<
 
     const handleSourceError = () => {
       isRunningRef.current = false;
+      if(animationId){
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
 
       const ctx = canvas.getContext("2d");
       if (ctx) {
@@ -126,6 +132,10 @@ const MjpegImg = forwardRef<
 
     const handleSourceUnload = () => {
       isRunningRef.current = false;
+      if(animationId){
+        cancelAnimationFrame(animationId);
+        animationId = null;
+      }
     };
 
     sourceImg.addEventListener("load", handleSourceLoad);
@@ -134,6 +144,9 @@ const MjpegImg = forwardRef<
 
     return () => {
       isRunningRef.current = false;
+      if(animationId){
+        cancelAnimationFrame(animationId);
+      }
       sourceImg.removeEventListener("load", handleSourceLoad);
       sourceImg.removeEventListener("error", handleSourceError);
       sourceImg.removeEventListener("unload", handleSourceUnload);
