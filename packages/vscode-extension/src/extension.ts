@@ -196,6 +196,18 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.deviceAppSwitchButtonPress", deviceAppSwitchButtonPress)
   );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceVolumeIncreaseButtonDown", deviceVolumeIncreaseButtonDown)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceVolumeIncreaseButtonUp", deviceVolumeIncreaseButtonUp)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceVolumeDecreaseButtonDown", deviceVolumeDecreaseButtonDown)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceVolumeDecreaseButtonUp", deviceVolumeDecreaseButtonUp)
+  );
   context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
@@ -382,6 +394,26 @@ async function deviceAppSwitchButtonPress() {
   const project = IDE.getInstanceIfExists()?.project;
   project?.dispatchButton("appSwitch", "Down");
   project?.dispatchButton("appSwitch", "Up");
+}
+
+async function deviceVolumeIncreaseButtonDown() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("volumeUp", "Down");
+}
+
+async function deviceVolumeIncreaseButtonUp() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("volumeUp", "Up");
+}
+
+async function deviceVolumeDecreaseButtonDown() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("volumeDown", "Down");
+}
+
+async function deviceVolumeDecreaseButtonUp() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("volumeDown", "Up");
 }
 
 async function captureReplay() {

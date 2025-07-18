@@ -135,7 +135,7 @@ export type ZoomLevelType = number | "Fit";
 
 export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
 
-export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown";
+export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown" | "power";
 
 // important: order of values in this enum matters
 export enum StartupMessage {
