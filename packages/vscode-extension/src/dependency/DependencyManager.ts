@@ -5,7 +5,7 @@ import { Disposable, OutputChannel } from "vscode";
 import semver, { SemVer } from "semver";
 import { Logger } from "../Logger";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
-import { command, exec, lineReader } from "../utilities/subprocess";
+import { command, exec } from "../utilities/subprocess";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
 import {
@@ -30,6 +30,7 @@ import { DevicePlatform } from "../common/DeviceManager";
 import { isEasCliInstalled } from "../builders/easCommand";
 import { getMinimumSupportedNodeVersion } from "../utilities/getMinimumSupportedNodeVersion";
 import { LaunchConfiguration } from "../common/LaunchConfig";
+import { arePodsInstalled, installPods, isPodsCommandInstalled } from "../utilities/pods";
 
 export class DependencyManager implements Disposable, DependencyManagerInterface {
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
@@ -197,25 +198,9 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
   public async installPods(outputChannel: OutputChannel, cancelToken: CancelToken) {
     const appRoot = this.launchConfiguration.absoluteAppRoot;
-    const iosDirPath = getIosSourceDir(appRoot);
-
-    if (!iosDirPath) {
-      this.emitEvent("pods", { status: "notInstalled", isOptional: false });
-      throw new Error("ios directory was not found inside the workspace.");
-    }
-
+    const env = this.launchConfiguration.env;
     try {
-      const shouldUseBundle = await this.shouldUseBundleCommand();
-      const process = command(
-        shouldUseBundle ? "bundle install && bundle exec pod install" : "pod install",
-        {
-          shell: shouldUseBundle, // when using bundle, we need shell to run multiple commands
-          cwd: iosDirPath,
-          env: { ...this.launchConfiguration.env, LANG: "en_US.UTF-8" },
-        }
-      );
-      lineReader(process).onLineRead((line) => outputChannel.appendLine(line));
-      await cancelToken.adapt(process);
+      await installPods({ appRoot, env }, outputChannel, cancelToken);
     } catch (e) {
       Logger.error("Pods not installed", e);
       getTelemetryReporter().sendTelemetryEvent("build:pod-install-failed", {
@@ -257,22 +242,11 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     });
   }
 
-  private async shouldUseBundleCommand() {
-    const appRoot = this.launchConfiguration.absoluteAppRoot;
-    const gemfile = path.join(appRoot, "Gemfile");
-    try {
-      await fs.promises.access(gemfile);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
   private async checkPodsCommandStatus() {
-    const shouldUseBundle = await this.shouldUseBundleCommand();
-    const installed = await testCommand(
-      shouldUseBundle ? "bundle exec pod --version" : "pod --version"
-    );
+    const installed = await isPodsCommandInstalled({
+      appRoot: this.launchConfiguration.absoluteAppRoot,
+      env: this.launchConfiguration.env,
+    });
     this.emitEvent("cocoaPods", {
       status: installed ? "installed" : "notInstalled",
       isOptional: !(await projectRequiresNativeBuild(this.launchConfiguration)),
@@ -317,40 +291,20 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
   public async checkPodsInstallationStatus() {
     const appRoot = this.launchConfiguration.absoluteAppRoot;
+    const env = this.launchConfiguration.env;
     const requiresNativeBuild = await projectRequiresNativeBuild(this.launchConfiguration);
     if (!requiresNativeBuild) {
       this.emitEvent("pods", { status: "notInstalled", isOptional: true });
       return true;
     }
 
-    const iosDirPath = getIosSourceDir(appRoot);
-
-    const podfileLockExists = fs.existsSync(path.join(iosDirPath, "Podfile.lock"));
-    const podsDirExists = fs.existsSync(path.join(iosDirPath, "Pods"));
-
-    const podsInstallationIsPresent = podfileLockExists && podsDirExists;
-
-    if (!podsInstallationIsPresent) {
-      this.emitEvent("pods", { status: "notInstalled", isOptional: false });
-      return false;
-    }
-
-    // finally, we perform check between Podfile.lock and Pods/Manifest.lock
-    // this is what xcode does in Check Pods build phase and is used to determine
-    // if pods are up to date
-
-    // run diff command:
-    const { failed } = await command("diff Podfile.lock Pods/Manifest.lock", {
-      cwd: iosDirPath,
-      reject: false,
-      quietErrorsOnExit: true,
-    });
+    const installed = await arePodsInstalled({ appRoot, env });
 
     this.emitEvent("pods", {
-      status: failed ? "notInstalled" : "installed",
+      status: installed ? "installed" : "notInstalled",
       isOptional: false,
     });
-    return !failed;
+    return installed;
   }
 
   public async checkEasCliInstallationStatus() {
