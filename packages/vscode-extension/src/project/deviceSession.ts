@@ -49,7 +49,6 @@ import { focusSource } from "../utilities/focusSource";
 import { ApplicationContext } from "./ApplicationContext";
 import { BuildCache } from "../builders/BuildCache";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
-import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 
@@ -739,57 +738,6 @@ export class DeviceSession
     return false;
   }
 
-  private async ensureDependenciesForBuild(buildConfig: BuildConfig, cancelToken: CancelToken) {
-    const dependencyManager = this.applicationContext.dependencyManager;
-
-    if (buildConfig.type === BuildType.Local) {
-      if (buildConfig.platform === DevicePlatform.Android) {
-        if (!(await dependencyManager.checkAndroidDirectoryExits())) {
-          throw new Error(
-            'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.'
-          );
-        }
-      }
-      if (buildConfig.platform === DevicePlatform.IOS) {
-        if (!(await dependencyManager.checkIOSDirectoryExists())) {
-          throw new Error(
-            'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.'
-          );
-        }
-        await this.installPodsIfNeeded(buildConfig, cancelToken);
-      }
-    }
-  }
-
-  private async installPodsIfNeeded(
-    { forceCleanBuild, platform }: BuildConfig,
-    cancelToken: CancelToken
-  ) {
-    const dependencyManager = this.applicationContext.dependencyManager;
-    let installPods = forceCleanBuild;
-    if (forceCleanBuild) {
-      Logger.info("Clean build requested: installing pods");
-    } else {
-      const podsInstalled = await dependencyManager.checkPodsInstallationStatus();
-      if (!podsInstalled) {
-        Logger.info("Pods installation is missing or outdated. Installing Pods.");
-        installPods = true;
-      }
-    }
-    if (installPods) {
-      getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
-      const podInstallOutput = this.outputChannelRegistry.getOrCreateOutputChannel(Output.BuildIos);
-      podInstallOutput.clear();
-      await dependencyManager.installPods(podInstallOutput, cancelToken);
-      const installed = await dependencyManager.checkPodsInstallationStatus();
-      if (!installed) {
-        throw new Error(
-          "Pods could not be installed in your project. Check the build logs for details."
-        );
-      }
-    }
-  }
-
   private async buildApp({ clean, cancelToken }: { clean: boolean; cancelToken: CancelToken }) {
     const buildStartTime = Date.now();
     this.updateStartupMessage(StartupMessage.Building);
@@ -805,12 +753,18 @@ export class DeviceSession
       launchConfiguration,
       buildType
     );
-
-    await this.ensureDependenciesForBuild(buildConfig, cancelToken);
-    this.hasStaleBuildCache = false;
     const buildOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
       this.platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
     );
+
+    const dependencyManager = this.applicationContext.dependencyManager;
+    await dependencyManager.ensureDependenciesForBuild(
+      buildConfig,
+      buildOutputChannel,
+      cancelToken
+    );
+
+    this.hasStaleBuildCache = false;
     this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, {
       progressListener: throttle((stageProgress: number) => {
         if (this.startupMessage === StartupMessage.Building) {
