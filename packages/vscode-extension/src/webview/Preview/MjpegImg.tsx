@@ -1,6 +1,6 @@
-import { useEffect, forwardRef, RefObject, useRef } from "react";
-import { useProject } from "../providers/ProjectProvider";
-import useCanvasRenderer from "../hooks/useCanvasRenderer";
+import { useEffect, forwardRef, useRef } from "react";
+
+import MediaCanvas from "./MediaCanvas";
 import { IS_DEV } from "../providers/UtilsProvider";
 
 const NO_IMAGE_DATA_PRODUCTION =
@@ -16,19 +16,8 @@ const MjpegImg = forwardRef<
   React.CanvasHTMLAttributes<HTMLCanvasElement> & { src?: string }
 >((props, ref) => {
   const { src, ...rest } = props;
-  const { projectState } = useProject();
-  const rotation = projectState.rotation;
 
-  const canvasRef = ref as RefObject<HTMLCanvasElement>;
   const sourceImgRef = useRef<HTMLImageElement>(null);
-
-  const drawToCanvas = useCanvasRenderer(rotation, canvasRef);
-  const drawToCanvasRef = useRef(drawToCanvas);
-  const isRunningRef = useRef(false);
-
-  useEffect(() => {
-    drawToCanvasRef.current = drawToCanvas;
-  }, [drawToCanvas]);
 
   // The below effect implements the main logic of this component. The primary
   // reason we can't just use img tag with src directly, is that with mjpeg streams
@@ -92,62 +81,12 @@ const MjpegImg = forwardRef<
       }
     }
 
-  // useEffect for drawing onto the canvas
-  useEffect(() => {
-    const sourceImg = sourceImgRef.current;
-    const canvas = canvasRef.current;
-    if (!sourceImg || !canvas) {
-      return;
-    }
-
-    let animationId: number | null = null;
-
-    const updateCanvas = () => {
-      const update = () => {
-        if (isRunningRef.current) {
-          drawToCanvasRef.current(sourceImg);
-          animationId = requestAnimationFrame(update);
-        }
-      };
-      update();
-    };
-
-    const handleSourceLoad = () => {
-      isRunningRef.current = true;
-      updateCanvas();
-    };
-
-    const handleSourceError = () => {
-      isRunningRef.current = false;
-      if(animationId){
-        cancelAnimationFrame(animationId);
-        animationId = null;
-      }
-
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    };
-
-    sourceImg.addEventListener("load", handleSourceLoad);
-    sourceImg.addEventListener("error", handleSourceError);
-
-    return () => {
-      isRunningRef.current = false;
-      if(animationId){
-        cancelAnimationFrame(animationId);
-      }
-      sourceImg.removeEventListener("load", handleSourceLoad);
-      sourceImg.removeEventListener("error", handleSourceError);
-    };
-  }, [canvasRef, src]);
 
   return (
     <>
       <img ref={sourceImgRef} style={{ display: "none" }} crossOrigin="anonymous" onError={handleError}/>
 
-      <canvas ref={canvasRef} {...rest}  />
+      <MediaCanvas ref={ref} mediaRef={sourceImgRef} src={src} {...rest} />
     </>
   );
 });

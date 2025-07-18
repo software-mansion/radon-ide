@@ -1,9 +1,9 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 import "./ReplayUI.css";
 import ReplayOverlay from "./ReplayOverlay";
 import { MultimediaData } from "../../common/Project";
-import useCanvasRenderer from "../hooks/useCanvasRenderer";
-import { useProject } from "../providers/ProjectProvider";
+
+import MediaCanvas from "../Preview/MediaCanvas";
 
 function VHSRewind() {
   return (
@@ -29,77 +29,7 @@ type ReplayVideoProps = {
 export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isRunningRef = useRef<boolean>(false);
   const [isRewinding, setIsRewinding] = useState(false);
-  const { projectState } = useProject();
-  const rotation = projectState.rotation;
-
-  const drawToCanvas = useCanvasRenderer(rotation, canvasRef);
-  const drawToCanvasRef = useRef(drawToCanvas);
-
-  useEffect(() => {
-    drawToCanvasRef.current = drawToCanvas;
-  }, [drawToCanvas]);
-
-  // The below effect implements the main logic of this component similar to MjpegImg.tsx
-  // We manually control the video src and canvas rendering to ensure proper cleanup
-  // and avoid memory leaks when the component is unmounted or reloaded.
-  useEffect(() => {
-    const canvas = canvasRef?.current;
-    const sourceVideo = videoRef.current;
-    if (!canvas || !sourceVideo) {
-      return;
-    }
-
-    let animationFrameId: number | null = null;
-
-    const updateCanvas = () => {
-      drawToCanvasRef.current(sourceVideo);
-    };
-
-    const handleSourceLoad = () => {
-      updateCanvas();
-      // For video streams, continuously update the canvas with animation frames
-      const animate = () => {
-        if (isRunningRef.current) {
-          updateCanvas();
-          animationFrameId = requestAnimationFrame(animate);
-        }
-      };
-      isRunningRef.current = true;
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    const handleSourceError = () => {
-      isRunningRef.current = false;
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-        animationFrameId = null;
-      }
-
-      const ctx = canvas.getContext("2d");
-      if (ctx) {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-    };
-
-    // If video is already loaded and ready to play, start rendering
-    if (sourceVideo.readyState >= 2) {
-      handleSourceLoad();
-    }
-
-    sourceVideo.addEventListener("loadeddata", handleSourceLoad);
-    sourceVideo.addEventListener("error", handleSourceError);
-
-    return () => {
-      isRunningRef.current = false;
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId);
-      }
-      sourceVideo.removeEventListener("loadeddata", handleSourceLoad);
-      sourceVideo.removeEventListener("error", handleSourceError);
-    };
-  }, [canvasRef, replayData.url]);
 
   return (
     <span className="replay-ui-wrapper">
@@ -118,7 +48,13 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
         className="phone-screen replay-video"
       />
       {/* Main display canvas */}
-      <canvas ref={canvasRef} className="phone-screen replay-video" />
+      <MediaCanvas
+        ref={canvasRef}
+        mediaRef={videoRef}
+        src={replayData.url}
+        className="phone-screen replay-video"
+      />
+      {/* VHS rewind effect on top of MediaCanvas */}
       {isRewinding && <VHSRewind />}
     </span>
   );
