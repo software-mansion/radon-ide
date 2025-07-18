@@ -1,7 +1,7 @@
 ---
-id: feature-highlight
-title: Feature highlight
-sidebar_position: 5
+id: overview
+title: Features overview
+sidebar_position: 0
 ---
 
 Visit [Radon IDE](https://ide.swmansion.com/) website, for a nicely presented list of the feature highlights.
