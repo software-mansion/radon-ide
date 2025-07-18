@@ -26,6 +26,21 @@
       "permanent": true
     },
     {
+      "source": "/docs/getting-started/launching",
+      "destination": "/docs/getting-started/panel-mode",
+      "permanent": true
+    },
+    {
+      "source": "/docs/getting-started/feature-highlight",
+      "destination": "/docs/features/overview",
+      "permanent": true
+    },
+    {
+      "source": "/docs/features/radon-connect",
+      "destination": "/docs/getting-started/connect-mode",
+      "permanent": true
+    },
+    {
       "source": "/docs/configuration",
       "destination": "/docs/guides/configuration",
       "permanent": true

@@ -1,10 +1,16 @@
 ---
-id: launching
-title: Launching the IDE
+id: panel-mode
+title: Launching the Panel
 sidebar_position: 3
 ---
 
-After [installing](/docs/getting-started/installation) the extension, you should be able to start using it by opening your React Native or Expo project as a workspace in Visual Studio Code.
+Once [installed](/docs/getting-started/installation), Radon IDE provides two main modes of operation.
+You can either use the **Panel Mode** (documented on this page), or use [**Connect Mode**](/docs/getting-started/connect-mode):
+
+- **Panel Mode** is considered the main mode for Radon. It allows for the simulator/emulator preview to be embedded into the editor panel and provides the best integration with the editor. You don't need to use terminal to launch the React Native or Expo dev server and all the simulator/emulator settings are controlled in the editor panel. _Panel mode_ is however limited to running your app on Android emulator or iOS simulator.
+- [**Connect Mode**](/docs/getting-started/connect-mode) – allows you to connect to your existing React Native setup. You need to run the React Native / Expo development server ([Metro](https://metrobundler.dev/)) and start your own connected simulator, or run the app on physical device. Currently **Connect Mode** has a limited feature set supporting only [Debugging and logging](/docs/features/debugging-and-logging).
+
+After installing the extension, you should be able to start using it by opening your React Native or Expo project as a workspace in Visual Studio Code.
 If that's not the case and you have problems getting the extension to run, please check [troubleshooting](/docs/guides/troubleshooting) guide.
 
 For a quick overview of the features the IDE provides, you can check [Radon IDE website](https://ide.swmansion.com).
@@ -52,3 +58,7 @@ Here is how the IDE would look like when place in the side panel:
 
 After all the above steps are completed, you should see your app building and launching in the extension device preview.
 From there, you can use the simulator normally to navigate in your app and try out the developer experience enhancements that the IDE provides.
+
+## -sec-num- Explore the features
+
+Check out our [Features](/docs/category/features) page to learn how Radon can improve your development workflows.
