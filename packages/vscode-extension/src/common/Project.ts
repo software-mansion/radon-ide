@@ -282,6 +282,7 @@ export interface ProjectInterface {
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): void;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): void;
+  dispatchButton(buttonType: DeviceButtonType, direction: "Up" | "Down"): void;
   dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number): void;
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;

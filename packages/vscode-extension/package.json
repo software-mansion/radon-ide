@@ -100,26 +100,14 @@
         "enablement": "RNIDE.extensionIsActive"
       },
       {
-        "command": "RNIDE.deviceVolumeIncreaseButtonDown",
-        "title": "Trigger volume increase button down on the current device",
+        "command": "RNIDE.deviceVolumeIncrease",
+        "title": "Increase volume on the current device",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive"
       },
       {
-        "command": "RNIDE.deviceVolumeIncreaseButtonUp",
-        "title": "Trigger volume increase button up on the current device",
-        "category": "Radon IDE",
-        "enablement": "RNIDE.extensionIsActive"
-      },
-      {
-        "command": "RNIDE.deviceVolumeDecreaseButtonDown",
-        "title": "Trigger volume decrease button down on the current device",
-        "category": "Radon IDE",
-        "enablement": "RNIDE.extensionIsActive"
-      },
-      {
-        "command": "RNIDE.deviceVolumeDecreaseButtonUp",
-        "title": "Trigger volume decrease button up on the current device",
+        "command": "RNIDE.deviceVolumeDecrease",
+        "title": "Decrease volume on the current device",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive"
       },

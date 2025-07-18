@@ -335,19 +335,19 @@ const VolumeItem = () => {
   const { project } = useProject();
 
   const handleVolumeIncreaseDown = () => {
-    project.runCommand("RNIDE.deviceVolumeIncreaseButtonDown");
+    project.dispatchButton("volumeUp", "Down");
   };
 
   const handleVolumeIncreaseUp = () => {
-    project.runCommand("RNIDE.deviceVolumeIncreaseButtonUp");
+    project.dispatchButton("volumeUp", "Up");
   };
 
   const handleVolumeDecreaseDown = () => {
-    project.runCommand("RNIDE.deviceVolumeDecreaseButtonDown");
+    project.dispatchButton("volumeDown", "Down");
   };
 
   const handleVolumeDecreaseUp = () => {
-    project.runCommand("RNIDE.deviceVolumeDecreaseButtonUp");
+    project.dispatchButton("volumeDown", "Up");
   };
 
   // Make sure buttons get unpressed on unmount
@@ -369,7 +369,7 @@ const VolumeItem = () => {
           onMouseDown={handleVolumeDecreaseDown}
           onMouseUp={handleVolumeDecreaseUp}
           onMouseLeave={handleVolumeDecreaseUp}>
-          <span className="codicon codicon-chevron-down" />
+          <span className="codicon codicon-remove" />
         </button>
         <button
           title="Volume Up"
@@ -377,7 +377,7 @@ const VolumeItem = () => {
           onMouseDown={handleVolumeIncreaseDown}
           onMouseUp={handleVolumeIncreaseUp}
           onMouseLeave={handleVolumeIncreaseUp}>
-          <span className="codicon codicon-chevron-up" />
+          <span className="codicon codicon-add" />
         </button>
       </div>
     </div>

@@ -197,16 +197,10 @@ export async function activate(context: ExtensionContext) {
     commands.registerCommand("RNIDE.deviceAppSwitchButtonPress", deviceAppSwitchButtonPress)
   );
   context.subscriptions.push(
-    commands.registerCommand("RNIDE.deviceVolumeIncreaseButtonDown", deviceVolumeIncreaseButtonDown)
+    commands.registerCommand("RNIDE.deviceVolumeIncrease", deviceVolumeIncrease)
   );
   context.subscriptions.push(
-    commands.registerCommand("RNIDE.deviceVolumeIncreaseButtonUp", deviceVolumeIncreaseButtonUp)
-  );
-  context.subscriptions.push(
-    commands.registerCommand("RNIDE.deviceVolumeDecreaseButtonDown", deviceVolumeDecreaseButtonDown)
-  );
-  context.subscriptions.push(
-    commands.registerCommand("RNIDE.deviceVolumeDecreaseButtonUp", deviceVolumeDecreaseButtonUp)
+    commands.registerCommand("RNIDE.deviceVolumeDecrease", deviceVolumeDecrease)
   );
   context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
@@ -396,23 +390,15 @@ async function deviceAppSwitchButtonPress() {
   project?.dispatchButton("appSwitch", "Up");
 }
 
-async function deviceVolumeIncreaseButtonDown() {
+async function deviceVolumeIncrease() {
   const project = IDE.getInstanceIfExists()?.project;
   project?.dispatchButton("volumeUp", "Down");
-}
-
-async function deviceVolumeIncreaseButtonUp() {
-  const project = IDE.getInstanceIfExists()?.project;
   project?.dispatchButton("volumeUp", "Up");
 }
 
-async function deviceVolumeDecreaseButtonDown() {
+async function deviceVolumeDecrease() {
   const project = IDE.getInstanceIfExists()?.project;
   project?.dispatchButton("volumeDown", "Down");
-}
-
-async function deviceVolumeDecreaseButtonUp() {
-  const project = IDE.getInstanceIfExists()?.project;
   project?.dispatchButton("volumeDown", "Up");
 }
 
