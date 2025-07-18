@@ -141,7 +141,6 @@ export class DeviceSession
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
   }
 
-
   public getState(): DeviceSessionState {
     const commonState = {
       profilingCPUState: this.profilingCPUState,
@@ -692,6 +691,8 @@ export class DeviceSession
         this.metro.ready(),
         this.device.startPreview().then((url) => {
           previewURL = url;
+          // initialise device rotation
+          this.sendRotate(this.rotation);
         }),
         waitForAppReady,
       ])
@@ -1036,7 +1037,7 @@ export class DeviceSession
   public sendClipboard(text: string) {
     return this.device.sendClipboard(text);
   }
-  
+
   public sendRotate(rotation: DeviceRotationType) {
     this.device.sendRotate(rotation);
     this.emitStateChange();
@@ -1098,7 +1099,6 @@ export class DeviceSession
         if (payload.error) {
           reject(payload.error);
         } else {
-          this.device.sendRotate(this.rotation);
           resolve();
         }
       }
