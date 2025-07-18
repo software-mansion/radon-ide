@@ -29,42 +29,52 @@ type ReplayVideoProps = {
 export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isRunningRef = useRef<boolean>(false);
   const [isRewinding, setIsRewinding] = useState(false);
   const { projectState } = useProject();
   const rotation = projectState.rotation;
 
   const drawToCanvas = useCanvasRenderer(rotation, canvasRef);
+  const drawToCanvasRef = useRef(drawToCanvas);
 
   useEffect(() => {
+    drawToCanvasRef.current = drawToCanvas;
+  }, [drawToCanvas]);
+
+  // The below effect implements the main logic of this component similar to MjpegImg.tsx
+  // We manually control the video src and canvas rendering to ensure proper cleanup
+  // and avoid memory leaks when the component is unmounted or reloaded.
+  useEffect(() => {
+    const canvas = canvasRef?.current;
     const sourceVideo = videoRef.current;
-    const canvas = canvasRef.current;
-    if (!sourceVideo || !canvas) {
+    if (!canvas || !sourceVideo) {
       return;
     }
 
-    let animationFrameId: number;
-    let isAnimating = false;
+    let animationFrameId: number | null = null;
 
     const updateCanvas = () => {
-      drawToCanvas(sourceVideo);
-      if (isAnimating) {
-        animationFrameId = requestAnimationFrame(updateCanvas);
-      }
+      drawToCanvasRef.current(sourceVideo);
     };
 
     const handleSourceLoad = () => {
-      if (isAnimating) {
-        cancelAnimationFrame(animationFrameId);
-      }
-
-      isAnimating = true;
       updateCanvas();
+      // For video streams, continuously update the canvas with animation frames
+      const animate = () => {
+        if (isRunningRef.current) {
+          updateCanvas();
+          animationFrameId = requestAnimationFrame(animate);
+        }
+      };
+      isRunningRef.current = true;
+      animationFrameId = requestAnimationFrame(animate);
     };
 
     const handleSourceError = () => {
-      if (isAnimating) {
+      isRunningRef.current = false;
+      if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
-        isAnimating = false;
+        animationFrameId = null;
       }
 
       const ctx = canvas.getContext("2d");
@@ -73,7 +83,7 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
       }
     };
 
-    // If video is already loaded and ready to play, dispatch drawHandler
+    // If video is already loaded and ready to play, start rendering
     if (sourceVideo.readyState >= 2) {
       handleSourceLoad();
     }
@@ -82,14 +92,14 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
     sourceVideo.addEventListener("error", handleSourceError);
 
     return () => {
-      if (isAnimating) {
+      isRunningRef.current = false;
+      if (animationFrameId) {
         cancelAnimationFrame(animationFrameId);
-        isAnimating = false;
       }
       sourceVideo.removeEventListener("loadeddata", handleSourceLoad);
       sourceVideo.removeEventListener("error", handleSourceError);
     };
-  }, [canvasRef, rotation, drawToCanvas]);
+  }, [canvasRef, replayData.url]);
 
   return (
     <span className="replay-ui-wrapper">
@@ -100,12 +110,14 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
         onClose={onClose}
         replayData={replayData}
       />
+      {/* Hidden source video for loading the video stream */}
       <video
         ref={videoRef}
         src={replayData.url}
         style={{ display: "none" }}
         className="phone-screen replay-video"
       />
+      {/* Main display canvas */}
       <canvas ref={canvasRef} className="phone-screen replay-video" />
       {isRewinding && <VHSRewind />}
     </span>

@@ -130,17 +130,8 @@ const MjpegImg = forwardRef<
       }
     };
 
-    const handleSourceUnload = () => {
-      isRunningRef.current = false;
-      if(animationId){
-        cancelAnimationFrame(animationId);
-        animationId = null;
-      }
-    };
-
     sourceImg.addEventListener("load", handleSourceLoad);
     sourceImg.addEventListener("error", handleSourceError);
-    sourceImg.addEventListener("unload", handleSourceUnload);
 
     return () => {
       isRunningRef.current = false;
@@ -149,7 +140,6 @@ const MjpegImg = forwardRef<
       }
       sourceImg.removeEventListener("load", handleSourceLoad);
       sourceImg.removeEventListener("error", handleSourceError);
-      sourceImg.removeEventListener("unload", handleSourceUnload);
     };
   }, [canvasRef, src]);
 

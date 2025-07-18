@@ -4,6 +4,7 @@ import { DeviceRotationType } from "../../common/Project";
 interface TransformationConfig {
   angle: number;
   isPortrait: boolean;
+  rotation: DeviceRotationType;
 }
 
 function useCanvasRenderer(
@@ -19,21 +20,25 @@ function useCanvasRenderer(
         return {
           angle: -Math.PI / 2,
           isPortrait: false,
+          rotation: DeviceRotationType.LandscapeLeft,
         };
       case DeviceRotationType.LandscapeRight:
         return {
           angle: Math.PI / 2,
           isPortrait: false,
+          rotation: DeviceRotationType.LandscapeRight,
         };
       case DeviceRotationType.PortraitUpsideDown:
         return {
           angle: Math.PI,
           isPortrait: true,
+          rotation: DeviceRotationType.PortraitUpsideDown,
         };
       default:
         return {
           angle: 0,
           isPortrait: true,
+          rotation: DeviceRotationType.Portrait,
         };
     }
   }, [rotation]);
@@ -70,6 +75,7 @@ function useCanvasRenderer(
         lastCanvasDimensionsRef.current.width !== newWidth ||
         lastCanvasDimensionsRef.current.height !== newHeight;
 
+      
       if (canvasDimsChanged) {
         canvas.width = newWidth;
         canvas.height = newHeight;
@@ -79,8 +85,8 @@ function useCanvasRenderer(
       // Clear canvas
       ctx.clearRect(0, 0, newWidth, newHeight);
 
-      if (rotation === DeviceRotationType.Portrait) {
-        // Direct draw for portrait mode - fastest path
+      if (transformConfig.rotation === DeviceRotationType.Portrait) {
+        // Direct draw for portrait mode
         ctx.drawImage(sourceImg, 0, 0);
       } else {
         // Apply cached transformation
