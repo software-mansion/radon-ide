@@ -36,9 +36,14 @@ function findDefaultAppRoot(showWarning = false) {
 }
 
 export function launchConfigurationFromOptions(
-  options: LaunchConfigurationOptions
+  options: LaunchConfigurationOptions,
+  launchConfigurationKind: LaunchConfigurationKind = LaunchConfigurationKind.Custom
 ): LaunchConfiguration {
-  return launchConfigFromOptionsWithDefaultAppRoot(options, findDefaultAppRoot());
+  return launchConfigFromOptionsWithDefaultAppRoot(
+    options,
+    findDefaultAppRoot(),
+    launchConfigurationKind
+  );
 }
 
 function launchConfigFromOptionsWithDefaultAppRoot(

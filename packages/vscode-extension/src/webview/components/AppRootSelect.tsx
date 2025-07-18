@@ -162,7 +162,6 @@ function AppRootSelect() {
   const detectedConfigurations: LaunchConfigurationOptions[] = applicationRoots.map(
     ({ path, displayName, name }) => {
       return {
-        kind: LaunchConfigurationKind.Detected,
         appRoot: path,
         name: displayName || name,
       };
@@ -174,15 +173,19 @@ function AppRootSelect() {
       openModal("Launch Configuration", <LaunchConfigurationView />);
       return;
     }
+    const isDetected = value.startsWith("detected:");
     const index = parseInt(value.split(":")[1], 10);
-    const configs = value.startsWith("detected:") ? detectedConfigurations : customConfigurations;
+    const configs = isDetected ? detectedConfigurations : customConfigurations;
     const launchConfiguration = configs[index];
     console.assert(
       index < configs.length,
       "Index out of bounds for launch configurations %s",
       value
     );
-    project.selectLaunchConfiguration(launchConfiguration);
+    project.selectLaunchConfiguration(
+      launchConfiguration,
+      isDetected ? LaunchConfigurationKind.Detected : LaunchConfigurationKind.Custom
+    );
   };
 
   const selectedValue = (() => {
