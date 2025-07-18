@@ -649,8 +649,6 @@ export class DeviceSession
         this.metro.ready(),
         this.device.startPreview().then((url) => {
           previewURL = url;
-          this.device.sendRotate(this.rotation);
-          this.emitStateChange();
         }),
         waitForAppReady,
       ])
@@ -1008,8 +1006,8 @@ export class DeviceSession
   
   public sendRotate(rotation: DeviceRotationType) {
     this.device.sendRotate(rotation);
-    this.rotation = rotation;
     this.emitStateChange();
+    this.rotation = rotation;
   }
 
   public async getClipboard() {
@@ -1067,6 +1065,7 @@ export class DeviceSession
         if (payload.error) {
           reject(payload.error);
         } else {
+          this.device.sendRotate(this.rotation);
           resolve();
         }
       }
