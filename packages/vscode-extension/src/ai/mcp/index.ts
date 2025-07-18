@@ -38,7 +38,7 @@ function directLoadRadonAI(
   });
 
   const mcpServerEntry = lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
-    onDidChangeServerDefinitions: didChangeEmitter.event,
+    onDidChangeMcpServerDefinitions: didChangeEmitter.event,
     provideMcpServerDefinitions: async () => {
       const port = await server.getPort();
       return [
