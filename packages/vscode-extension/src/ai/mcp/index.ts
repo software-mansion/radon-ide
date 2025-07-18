@@ -25,17 +25,14 @@ function directLoadRadonAI(
 
   const didChangeEmitter = new EventEmitter<void>();
 
-  const connectionChangeListener = connectionListener.onConnectionRestored(() => {
+  const updateMcpEntry = () => {
     versionSuffix += 1;
     server.setVersionSuffix(versionSuffix);
     didChangeEmitter.fire();
-  });
+  };
 
-  const licenseChangeListener = watchLicenseTokenChange(() => {
-    versionSuffix += 1;
-    server.setVersionSuffix(versionSuffix);
-    didChangeEmitter.fire();
-  });
+  const connectionChangeListener = connectionListener.onConnectionRestored(updateMcpEntry);
+  const licenseChangeListener = watchLicenseTokenChange(updateMcpEntry);
 
   const mcpServerEntry = lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
     onDidChangeMcpServerDefinitions: didChangeEmitter.event,
