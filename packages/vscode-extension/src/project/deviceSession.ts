@@ -85,7 +85,7 @@ export class DeviceSession
   private buildCache: BuildCache;
   private cancelToken: CancelToken | undefined;
   private cacheStaleSubscription: Disposable;
-  
+
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
   private stageProgress: number | undefined;
@@ -139,7 +139,6 @@ export class DeviceSession
     });
     this.cacheStaleSubscription = this.buildCache.onCacheStale(this.onCacheStale);
   }
-
 
   public getState(): DeviceSessionState {
     const commonState = {
@@ -649,6 +648,8 @@ export class DeviceSession
         this.metro.ready(),
         this.device.startPreview().then((url) => {
           previewURL = url;
+          // initialise device rotation
+          this.sendRotate(this.rotation);
         }),
         waitForAppReady,
       ])
@@ -1003,7 +1004,7 @@ export class DeviceSession
   public sendClipboard(text: string) {
     return this.device.sendClipboard(text);
   }
-  
+
   public sendRotate(rotation: DeviceRotationType) {
     this.device.sendRotate(rotation);
     this.emitStateChange();
@@ -1065,7 +1066,6 @@ export class DeviceSession
         if (payload.error) {
           reject(payload.error);
         } else {
-          this.device.sendRotate(this.rotation);
           resolve();
         }
       }
