@@ -75,6 +75,7 @@ export class BatchingBuildManager implements BuildManager, Disposable {
         progressListener: (newProgress) => {
           buildInProgress.onProgress(newProgress);
         },
+        buildOutputChannel: options.buildOutputChannel,
       }),
       cancelTokenForBuild
     );

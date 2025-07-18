@@ -49,7 +49,11 @@ describe("BatchingBuildManager", () => {
     describe(`for ${platform}`, () => {
       it("should call the wrapped build manager's buildApp method", async () => {
         const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
-        const options = { progressListener, cancelToken: new CancelToken() };
+        const options = {
+          progressListener,
+          cancelToken: new CancelToken(),
+          buildOutputChannel: {} as any,
+        };
 
         buildAppMock.resolves(BUILD_RESULT);
         const result = await batchingBuildManager.buildApp(BUILD_CONFIG, options);
