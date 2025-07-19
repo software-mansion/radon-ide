@@ -88,15 +88,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     const initialLaunchConfig = initialLaunchConfigOptions
       ? launchConfigurationFromOptions(initialLaunchConfigOptions)
       : this.launchConfigsManager.initialLaunchConfiguration;
-    this.applicationContext = new ApplicationContext(
-      initialLaunchConfig,
-      buildCache,
-      this.outputChannelRegistry
-    );
+    this.applicationContext = new ApplicationContext(initialLaunchConfig, buildCache);
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
       this.deviceManager,
-      this
+      this,
+      this.outputChannelRegistry
     );
 
     const connector = Connector.getInstance();
@@ -181,7 +178,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
       this.deviceManager,
-      this
+      this,
+      this.outputChannelRegistry
     );
     oldDeviceSessionsManager.dispose();
     this.maybeStartInitialDeviceSession();

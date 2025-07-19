@@ -10,7 +10,6 @@ import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/
 import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild, performLocalEasBuild } from "./eas";
 import { getXcodebuildArch } from "../utilities/common";
-import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildType, IOSBuildConfig, IOSLocalBuildConfig } from "../common/BuildConfig";
 
@@ -75,9 +74,7 @@ export async function buildIos(
   buildConfig: IOSBuildConfig,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
-  progressListener: (newProgress: number) => void,
-  dependencyManager: DependencyManager,
-  installPodsIfNeeded: () => Promise<void>
+  progressListener: (newProgress: number) => void
 ): Promise<IOSBuildResult> {
   const { appRoot, env, type: buildType } = buildConfig;
 
@@ -153,25 +150,13 @@ export async function buildIos(
       return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
     }
     case BuildType.Local: {
-      if (!(await dependencyManager.checkIOSDirectoryExists())) {
-        throw new Error(
-          'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.'
-        );
-      }
-      return await buildLocal(
-        buildConfig,
-        installPodsIfNeeded,
-        cancelToken,
-        outputChannel,
-        progressListener
-      );
+      return await buildLocal(buildConfig, cancelToken, outputChannel, progressListener);
     }
   }
 }
 
 async function buildLocal(
   buildConfig: IOSLocalBuildConfig,
-  installPodsIfNeeded: () => Promise<void>,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
   progressListener: (newProgress: number) => void
@@ -179,14 +164,6 @@ async function buildLocal(
   const { appRoot, forceCleanBuild, configuration = "Debug" } = buildConfig;
 
   const sourceDir = getIosSourceDir(appRoot);
-
-  try {
-    await installPodsIfNeeded();
-  } catch {
-    throw new Error(
-      "Pods could not be installed in your project. Check the build logs for details."
-    );
-  }
 
   const xcodeProject = findXcodeProject(appRoot);
 

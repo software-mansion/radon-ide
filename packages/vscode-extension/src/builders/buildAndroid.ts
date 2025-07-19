@@ -15,7 +15,6 @@ import { DevicePlatform } from "../common/DeviceManager";
 import { getReactNativeVersion } from "../utilities/reactNative";
 import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild, performLocalEasBuild } from "./eas";
-import { DependencyManager } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { AndroidBuildConfig, AndroidLocalBuildConfig, BuildType } from "../common/BuildConfig";
 
@@ -83,8 +82,7 @@ export async function buildAndroid(
   buildConfig: AndroidBuildConfig,
   cancelToken: CancelToken,
   outputChannel: OutputChannel,
-  progressListener: (newProgress: number) => void,
-  dependencyManager: DependencyManager
+  progressListener: (newProgress: number) => void
 ): Promise<AndroidBuildResult> {
   const { appRoot, env, type: buildType } = buildConfig;
 
@@ -157,12 +155,6 @@ export async function buildAndroid(
       return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
     }
     case BuildType.Local: {
-      if (!(await dependencyManager.checkAndroidDirectoryExits())) {
-        throw new Error(
-          'Your project does not have "android" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.'
-        );
-      }
-
       return await buildLocal(buildConfig, cancelToken, outputChannel, progressListener);
     }
   }
