@@ -149,6 +149,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Location
           </DropdownMenu.Item>
           <LocalizationItem />
+          <VolumeItem />
           {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.Android && <CameraItem />}
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
@@ -327,6 +328,59 @@ const CameraItem = () => {
       <span className="codicon codicon-device-camera" />
       Camera Settings
     </DropdownMenu.Item>
+  );
+};
+
+const VolumeItem = () => {
+  const { project } = useProject();
+
+  const handleVolumeIncreaseDown = () => {
+    project.dispatchButton("volumeUp", "Down");
+  };
+
+  const handleVolumeIncreaseUp = () => {
+    project.dispatchButton("volumeUp", "Up");
+  };
+
+  const handleVolumeDecreaseDown = () => {
+    project.dispatchButton("volumeDown", "Down");
+  };
+
+  const handleVolumeDecreaseUp = () => {
+    project.dispatchButton("volumeDown", "Up");
+  };
+
+  // Make sure buttons get unpressed on unmount
+  React.useEffect(() => {
+    return () => {
+      handleVolumeDecreaseUp();
+      handleVolumeIncreaseUp();
+    };
+  }, []);
+
+  return (
+    <div className="dropdown-menu-item">
+      <span className="codicon codicon-unmute" />
+      Volume
+      <div className="volume-controls">
+        <button
+          title="Volume Down"
+          className="volume-button"
+          onMouseDown={handleVolumeDecreaseDown}
+          onMouseUp={handleVolumeDecreaseUp}
+          onMouseLeave={handleVolumeDecreaseUp}>
+          <span className="codicon codicon-remove" />
+        </button>
+        <button
+          title="Volume Up"
+          className="volume-button"
+          onMouseDown={handleVolumeIncreaseDown}
+          onMouseUp={handleVolumeIncreaseUp}
+          onMouseLeave={handleVolumeIncreaseUp}>
+          <span className="codicon codicon-add" />
+        </button>
+      </div>
+    </div>
   );
 };
 
