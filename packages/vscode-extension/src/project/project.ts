@@ -364,7 +364,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public dispose() {
-    this.deviceSession?.dispose();
+    this.deviceSessionsManager.dispose();
     this.applicationContext.dispose();
     disposeAll(this.disposables);
   }
