@@ -37,7 +37,7 @@ function PreviewLoader({
   onRequestShowPreview: () => void;
   startingSessionState: DeviceSessionStateStarting;
 }) {
-  const { project, projectState } = useProject();
+  const { project, projectState, selectedDeviceSession } = useProject();
   const { deviceSessionsManager } = useDevices();
   const [progress, setProgress] = useState(0);
   const platform = selectedDeviceSession?.deviceInfo.platform;
