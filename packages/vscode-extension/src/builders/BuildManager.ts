@@ -180,10 +180,7 @@ export async function inferBuildType(
 }
 
 export class BuildManagerImpl implements BuildManager {
-  constructor(private readonly buildCache: BuildCache) {
-    // Note: in future implementations decoupled from device session we
-    // should make this logic platform independent
-  }
+  constructor(private readonly buildCache: BuildCache) {}
 
   public async buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult> {
     const { progressListener, cancelToken, buildOutputChannel } = options;
