@@ -50,10 +50,14 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
       this.packageManagerInternal = undefined;
     }
     this.launchConfiguration = newLaunchConfiguration;
+    const oldPods = this.pods;
+    this.pods = new Pods(newRoot, newLaunchConfiguration.env);
+    oldPods.dispose(); // dispose the old pods instance to clean up resources
   }
 
   public dispose() {
     this.eventEmitter.removeAllListeners();
+    this.pods.dispose();
   }
 
   public async addListener(listener: DependencyListener) {

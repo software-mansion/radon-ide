@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import { OutputChannel } from "vscode";
+import { OutputChannel, Disposable } from "vscode";
 import { command, lineReader } from "./subprocess";
 import { CancelToken } from "./cancelToken";
 import { getIosSourceDir } from "../builders/buildIOS";
@@ -13,7 +13,7 @@ import { getIosSourceDir } from "../builders/buildIOS";
  * a given application root directory. It ensures that only one pod installation
  * process runs at a time and supports cancellation of ongoing installations.
  */
-export class Pods {
+export class Pods implements Disposable {
   private podsInstallationProcess:
     | {
         podsPromise: Promise<void>;
@@ -154,5 +154,10 @@ export class Pods {
     } catch (_) {
       return false;
     }
+  }
+
+  public dispose(): void {
+    this.podsInstallationProcess?.cancelToken.cancel();
+    this.podsInstallationProcess = undefined;
   }
 }
