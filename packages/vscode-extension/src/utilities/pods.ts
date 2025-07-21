@@ -5,6 +5,14 @@ import { command, lineReader } from "./subprocess";
 import { CancelToken } from "./cancelToken";
 import { getIosSourceDir } from "../builders/buildIOS";
 
+/**
+ * Utility class for managing CocoaPods dependencies in an iOS project workspace.
+ *
+ * The `Pods` class provides methods to check for the presence of the `pod` command,
+ * install CocoaPods dependencies, and verify the installation state of pods within
+ * a given application root directory. It ensures that only one pod installation
+ * process runs at a time and supports cancellation of ongoing installations.
+ */
 export class Pods {
   private podsInstallationProcess:
     | {
@@ -21,7 +29,7 @@ export class Pods {
     return { ...this._env, LANG: "en_US.UTF-8" };
   }
 
-  async isPodsCommandInstalled(): Promise<boolean> {
+  public async isPodsCommandInstalled(): Promise<boolean> {
     if (await this.shouldUseBundleCommand()) {
       await this.maybeInstallBundlePackages();
     }
@@ -30,7 +38,15 @@ export class Pods {
     return installed;
   }
 
-  async installPods(outputChannel: OutputChannel, cancelToken: CancelToken) {
+  /**
+   * Installs CocoaPods dependencies for the iOS project within the workspace.
+   *
+   * This method ensures that only one pod installation process runs at a time by cancelling any ongoing installation.
+   *
+   * @param outputChannel - The channel to which installation output will be appended.
+   * @param cancelToken - A token that can be used to cancel the pod installation process.
+   */
+  public async installPods(outputChannel: OutputChannel, cancelToken: CancelToken): Promise<void> {
     if (this.podsInstallationProcess) {
       this.podsInstallationProcess.cancelToken.cancel();
     }
@@ -68,7 +84,7 @@ export class Pods {
     }
   }
 
-  async arePodsInstalled(): Promise<boolean> {
+  public async arePodsInstalled(): Promise<boolean> {
     if (this.podsInstallationProcess) {
       await this.podsInstallationProcess.podsPromise;
     }
