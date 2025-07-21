@@ -6,10 +6,6 @@ import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
 import { LaunchConfiguration } from "../common/LaunchConfig";
 
-function createBuildManager(buildCache: BuildCache) {
-  return new BatchingBuildManager(new BuildManagerImpl(buildCache));
-}
-
 export class ApplicationContext implements Disposable {
   public dependencyManager: DependencyManager;
   public buildManager: BuildManager;
@@ -20,7 +16,7 @@ export class ApplicationContext implements Disposable {
     public readonly buildCache: BuildCache
   ) {
     this.dependencyManager = new DependencyManager(this.launchConfig);
-    const buildManager = createBuildManager(this.buildCache);
+    const buildManager = new BatchingBuildManager(new BuildManagerImpl(buildCache));
     this.buildManager = buildManager;
 
     this.disposables.push(this.dependencyManager, buildManager);
@@ -31,20 +27,9 @@ export class ApplicationContext implements Disposable {
   }
 
   public async updateLaunchConfig(launchConfig: LaunchConfiguration) {
-    const oldAppRoot = this.appRootFolder;
     this.launchConfig = launchConfig;
     this.dependencyManager.setLaunchConfiguration(launchConfig);
     await this.dependencyManager.runAllDependencyChecks();
-    if (this.appRootFolder !== oldAppRoot) {
-      this.updateAppRootFolder();
-    }
-  }
-
-  public async updateAppRootFolder() {
-    disposeAll(this.disposables);
-    const buildManager = createBuildManager(this.buildCache);
-    this.buildManager = buildManager;
-    this.disposables.push(this.dependencyManager, buildManager);
   }
 
   public dispose() {
