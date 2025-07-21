@@ -2,7 +2,7 @@ import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
 import assert from "assert";
-import { env, Disposable, commands, workspace, window } from "vscode";
+import { env, Disposable, commands, workspace, window, ConfigurationChangeEvent } from "vscode";
 import _ from "lodash";
 import { minimatch } from "minimatch";
 import {
@@ -144,6 +144,31 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         this.updateProjectState({
           customLaunchConfigurations: launchConfigs,
         });
+      })
+    );
+    this.disposables.push(
+      workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+        if (event.affectsConfiguration("RadonIDE.deviceRotation")) {
+          const newRotation =
+            workspace.getConfiguration("RadonIDE").inspect<DeviceRotationType>("deviceRotation")
+              ?.workspaceValue ??
+            workspace.getConfiguration("RadonIDE").inspect<DeviceRotationType>("deviceRotation")
+              ?.globalValue;
+
+          if (!isOfEnumDeviceRotationType(newRotation)) {
+            const defaultValue =
+              workspace.getConfiguration("RadonIDE").inspect<DeviceRotationType>("deviceRotation")
+                ?.defaultValue ?? DeviceRotationType.Portrait;
+
+            this.deviceSession?.sendRotate(defaultValue);
+            this.updateProjectState({ rotation: defaultValue });
+          }
+
+          if (newRotation && newRotation !== this.projectState.rotation) {
+            this.deviceSession?.sendRotate(newRotation);
+            this.updateProjectState({ rotation: newRotation });
+          }
+        }
       })
     );
   }
