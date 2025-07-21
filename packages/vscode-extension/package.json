@@ -230,6 +230,12 @@
           "scope": "window",
           "default": false,
           "description": "When set, switching between devices will shut down the previous device instead of leaving it running in the background."
+        },
+        "RadonIDE.enableRadonAI": {
+          "type": "boolean",
+          "scope": "window",
+          "default": true,
+          "description": "Enables the Radon AI functionality in the extension. Note: A full restart of the IDE is required for this setting to take effect."
         }
       }
     },

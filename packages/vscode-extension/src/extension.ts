@@ -311,11 +311,16 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
-  // Initializes MCP part of Radon AI
-  context.subscriptions.push(registerRadonAi());
+  const configuration = workspace.getConfiguration("RadonIDE");
+  const enableRadonAI = configuration.get<boolean>("enableRadonAI");
+
+  if (enableRadonAI) {
+    // Initializes MCP part of Radon AI
+    context.subscriptions.push(registerRadonAi());
+  }
 
   // You can configure the chat in package.json under the `chatParticipants` key
-  registerRadonChat(context);
+  registerRadonChat(context, !!enableRadonAI);
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
