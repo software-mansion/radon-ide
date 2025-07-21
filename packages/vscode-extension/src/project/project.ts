@@ -45,11 +45,7 @@ import {
   launchConfigurationFromOptions,
   LaunchConfigurationsManager,
 } from "./launchConfigurationsManager";
-import {
-  LaunchConfiguration,
-  LaunchConfigurationKind,
-  LaunchConfigurationOptions,
-} from "../common/LaunchConfig";
+import { LaunchConfiguration, LaunchJsonEntry } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 
@@ -68,6 +64,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public deviceSessionsManager: DeviceSessionsManager;
 
   private projectState: ProjectState;
+  private selectedLaunchConfiguration: LaunchConfiguration;
 
   private disposables: Disposable[] = [];
 
@@ -81,13 +78,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     private readonly deviceManager: DeviceManager,
     private readonly utils: UtilsInterface,
     private readonly outputChannelRegistry: OutputChannelRegistry,
-    initialLaunchConfigOptions?: LaunchConfigurationOptions
+    initialLaunchConfigOptions?: LaunchJsonEntry
   ) {
     const fingerprintProvider = new FingerprintProvider();
     const buildCache = new BuildCache(fingerprintProvider);
     const initialLaunchConfig = initialLaunchConfigOptions
       ? launchConfigurationFromOptions(initialLaunchConfigOptions)
       : this.launchConfigsManager.initialLaunchConfiguration;
+    this.selectedLaunchConfiguration = initialLaunchConfig;
     this.applicationContext = new ApplicationContext(initialLaunchConfig, buildCache);
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
@@ -104,7 +102,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       initialized: false,
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
-      selectedLaunchConfiguration: initialLaunchConfig,
+      selectedLaunchConfiguration: this.selectedLaunchConfiguration,
       customLaunchConfigurations: this.launchConfigsManager.launchConfigurations,
       connectState: {
         enabled: connector.isEnabled,
@@ -145,12 +143,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   async createOrUpdateLaunchConfiguration(
-    newLaunchConfiguration: LaunchConfigurationOptions | undefined,
+    newLaunchConfiguration: LaunchConfiguration | undefined,
     oldLaunchConfiguration?: LaunchConfiguration
   ) {
     const isUpdatingSelectedConfig = _.isEqual(
       oldLaunchConfiguration,
-      this.applicationContext.launchConfig
+      this.selectedLaunchConfiguration
     );
     const newConfig = await this.launchConfigsManager.createOrUpdateLaunchConfiguration(
       newLaunchConfiguration,
@@ -161,15 +159,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
-  async selectLaunchConfiguration(
-    options: LaunchConfigurationOptions,
-    launchConfigurationKind = LaunchConfigurationKind.Custom
-  ): Promise<void> {
-    const launchConfig = launchConfigurationFromOptions(options, launchConfigurationKind);
-    if (_.isEqual(launchConfig, this.applicationContext.launchConfig)) {
+  async selectLaunchConfiguration(launchConfig: LaunchConfiguration): Promise<void> {
+    if (_.isEqual(launchConfig, this.selectedLaunchConfiguration)) {
       // No change in launch configuration, nothing to do
       return;
     }
+    this.selectedLaunchConfiguration = launchConfig;
     await this.applicationContext.updateLaunchConfig(launchConfig);
     // NOTE: we reset the device sessions manager to close all the running sessions
     // and restart the current device with new config. In the future, we might want to keep the devices running

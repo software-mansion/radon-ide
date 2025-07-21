@@ -40,11 +40,7 @@ const defaultProjectState: ProjectState = {
   selectedLaunchConfiguration: {
     kind: LaunchConfigurationKind.Detected,
     appRoot: "./",
-    absoluteAppRoot: "/",
     env: {},
-    preview: {
-      waitForAppLaunch: true,
-    },
   },
   connectState: {
     enabled: false,

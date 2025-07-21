@@ -4,14 +4,10 @@ import { describe, afterEach, beforeEach, it } from "mocha";
 
 import { BuildType } from "../common/BuildConfig";
 import { DevicePlatform } from "../common/DeviceManager";
-import {
-  CustomBuild,
-  EasConfig,
-  LaunchConfiguration,
-  LaunchConfigurationKind,
-} from "../common/LaunchConfig";
+import { CustomBuild, EasConfig, LaunchConfigurationKind } from "../common/LaunchConfig";
 import { createBuildConfig, inferBuildType } from "./BuildManager";
 import * as ExpoGo from "./expoGo";
+import { ResolvedLaunchConfig } from "../project/ApplicationContext";
 
 const APP_ROOT = "appRoot";
 const APP_ROOT_ABSOLUTE = "/appRoot";
@@ -39,7 +35,7 @@ function toPlatformConfig<T>(
   } as any;
 }
 
-const COMMON_CONFIG: LaunchConfiguration = {
+const COMMON_CONFIG: ResolvedLaunchConfig = {
   kind: LaunchConfigurationKind.Detected,
   appRoot: APP_ROOT,
   absoluteAppRoot: APP_ROOT_ABSOLUTE,
@@ -128,7 +124,7 @@ describe("BuildManager", () => {
       });
 
       describe("createBuildConfig", function () {
-        const launchConfigByType = new Map<BuildType, LaunchConfiguration>([
+        const launchConfigByType = new Map<BuildType, ResolvedLaunchConfig>([
           [
             BuildType.Custom,
             {

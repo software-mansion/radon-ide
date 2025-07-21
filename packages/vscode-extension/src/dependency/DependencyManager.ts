@@ -29,9 +29,9 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { DevicePlatform } from "../common/DeviceManager";
 import { isEasCliInstalled } from "../builders/easCommand";
 import { getMinimumSupportedNodeVersion } from "../utilities/getMinimumSupportedNodeVersion";
-import { LaunchConfiguration } from "../common/LaunchConfig";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { Pods } from "../utilities/pods";
+import { ResolvedLaunchConfig } from "../project/ApplicationContext";
 
 export class DependencyManager implements Disposable, DependencyManagerInterface {
   // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
@@ -39,11 +39,11 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   private packageManagerInternal: PackageManagerInfo | undefined;
   private pods: Pods;
 
-  constructor(private launchConfiguration: LaunchConfiguration) {
+  constructor(private launchConfiguration: ResolvedLaunchConfig) {
     this.pods = new Pods(launchConfiguration.absoluteAppRoot, launchConfiguration.env);
   }
 
-  setLaunchConfiguration(newLaunchConfiguration: LaunchConfiguration) {
+  setLaunchConfiguration(newLaunchConfiguration: ResolvedLaunchConfig) {
     const newRoot = newLaunchConfiguration.absoluteAppRoot;
     const appRoot = this.launchConfiguration.absoluteAppRoot;
     if (appRoot !== newRoot) {
@@ -440,7 +440,7 @@ function appDependsOnExpoRouter(appRoot: string) {
  * or uses Expo Go, the IDE is not responsible for building the project, and hence
  * we don't want to report missing directories or tools as errors.
  */
-async function projectRequiresNativeBuild(launchConfiguration: LaunchConfiguration) {
+async function projectRequiresNativeBuild(launchConfiguration: ResolvedLaunchConfig) {
   if (launchConfiguration.customBuild || launchConfiguration.eas) {
     return false;
   }

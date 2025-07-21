@@ -1,15 +1,15 @@
 import { workspace } from "vscode";
-import { LaunchConfigurationOptions } from "../common/LaunchConfig";
+import { LaunchJsonEntry } from "../common/LaunchConfig";
 
 export function getLaunchConfiguration() {
-  const ideConfig: LaunchConfigurationOptions =
+  const ideConfig: LaunchJsonEntry =
     workspace.getConfiguration("launch")?.configurations?.find(isIdeConfig) ?? {};
 
   return ideConfig;
 }
 
-export function getLaunchConfigurations(): Array<LaunchConfigurationOptions> {
-  const ideConfigs: LaunchConfigurationOptions[] =
+export function getLaunchConfigurations(): Array<LaunchJsonEntry> {
+  const ideConfigs: LaunchJsonEntry[] =
     workspace.getConfiguration("launch")?.configurations?.filter(isIdeConfig) ?? [];
 
   return ideConfigs;

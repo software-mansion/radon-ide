@@ -14,7 +14,7 @@ import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 import { getOpenPort } from "../utilities/common";
 import { DebugSource } from "../debugging/DebugSession";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
-import { LaunchConfiguration } from "../common/LaunchConfig";
+import { ResolvedLaunchConfig } from "./ApplicationContext";
 
 const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
@@ -345,7 +345,7 @@ export class MetroLauncher extends Metro implements Disposable {
   }: {
     resetCache: boolean;
     dependencies: Promise<any>[];
-    launchConfiguration: LaunchConfiguration;
+    launchConfiguration: ResolvedLaunchConfig;
   }) {
     if (this.startPromise) {
       throw new Error("metro already started");
@@ -423,7 +423,7 @@ export class MetroLauncher extends Metro implements Disposable {
   public async startInternal(
     resetCache: boolean,
     dependencies: Promise<any>[],
-    launchConfiguration: LaunchConfiguration
+    launchConfiguration: ResolvedLaunchConfig
   ) {
     const appRoot = launchConfiguration.absoluteAppRoot;
     await Promise.all([this.devtools.ready()].concat(dependencies));

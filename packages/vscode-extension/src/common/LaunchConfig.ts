@@ -6,7 +6,7 @@ export type CustomBuild = {
   fingerprintCommand?: string;
 };
 
-export type LaunchConfigurationOptions = {
+export type LaunchJsonEntry = {
   name?: string;
   appRoot?: string;
   metroConfigPath?: string;
@@ -47,27 +47,14 @@ export const LAUNCH_CONFIG_OPTIONS_KEYS = [
 type IsSuperTypeOf<Base, T extends Base> = T;
 // Type level proof that the strings in `LAUNCH_CONFIG_OPTIONS_KEYS` cover all keys `LaunchConfigurationOptions`.
 type _AssertKeysCover = IsSuperTypeOf<
-  Required<LaunchConfigurationOptions>,
+  Required<LaunchJsonEntry>,
   Record<(typeof LAUNCH_CONFIG_OPTIONS_KEYS)[number], any>
 >;
 // Type level proof that the strings in `LAUNCH_CONFIG_OPTIONS_KEYS` are valid keys of `LaunchConfigurationOptions`.
 type _AssertKeysValid = IsSuperTypeOf<
-  keyof LaunchConfigurationOptions,
+  keyof LaunchJsonEntry,
   (typeof LAUNCH_CONFIG_OPTIONS_KEYS)[number]
 >;
-
-// NOTE: when serializing the LaunchConfiguration, we want to omit the default and computed values.
-// This function is a messy attempt at that, and should be kept in sync with both the type definition
-// and the `launchConfigurationFromOptions` function in `/project/launchConfigurationsManager`.
-export function optionsForLaunchConfiguration(
-  config: LaunchConfiguration
-): LaunchConfigurationOptions {
-  const options: LaunchConfigurationOptions = _.pick(config, LAUNCH_CONFIG_OPTIONS_KEYS);
-  if (options.preview?.waitForAppLaunch) {
-    delete options.preview;
-  }
-  return options;
-}
 
 export interface IOSLaunchConfiguration {
   scheme?: string;
@@ -85,12 +72,8 @@ export enum LaunchConfigurationKind {
   Detected = "Detected",
 }
 
-export type LaunchConfiguration = LaunchConfigurationOptions & {
+export type LaunchConfiguration = LaunchJsonEntry & {
   kind: LaunchConfigurationKind;
-  absoluteAppRoot: string;
   appRoot: string;
   env: Record<string, string>;
-  preview: {
-    waitForAppLaunch: boolean;
-  };
 };

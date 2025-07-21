@@ -1,7 +1,11 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LaunchConfiguration, LaunchConfigurationOptions } from "../../common/LaunchConfig";
+import {
+  LaunchConfiguration,
+  LaunchConfigurationKind,
+  LaunchJsonEntry,
+} from "../../common/LaunchConfig";
 import { useModal } from "../providers/ModalProvider";
 import { useProject } from "../providers/ProjectProvider";
 import {
@@ -76,14 +80,16 @@ function undefinedIfEmpty(value: string) {
   return value === "" ? undefined : value;
 }
 
-function serializeLaunchConfig(formData: FormData) {
+function serializeLaunchConfig(formData: FormData, defaultAppRoot: string) {
   const data = Object.fromEntries(formData as any);
-  const newConfig: LaunchConfigurationOptions = {
+  const appRoot = data.appRoot || defaultAppRoot;
+  const newConfig: LaunchConfiguration = {
+    kind: LaunchConfigurationKind.Custom,
     name: undefinedIfEmpty(data.name),
-    appRoot: undefinedIfEmpty(data.appRoot),
+    appRoot,
     metroConfigPath: undefinedIfEmpty(data.metroConfigPath),
     isExpo: data.isExpo === "true" ? true : data.isExpo === "false" ? false : undefined,
-    env: data.env ? JSON.parse(data.env) : undefined,
+    env: data.env ? JSON.parse(data.env) : {},
   };
 
   for (const platform of ["ios", "android"] as const) {
@@ -141,18 +147,17 @@ function LaunchConfigurationView({
 }) {
   const { openModal, closeModal } = useModal();
   const applicationRoots = useApplicationRoots();
+  const defaultAppRoot = applicationRoots[0]?.path ?? "./";
 
   const { project } = useProject();
 
   const formContainerRef = useRef<HTMLFormElement>(null);
-  const [appRoot, setAppRoot] = useState<string>(
-    launchConfig?.appRoot ?? applicationRoots[0]?.path ?? ""
-  );
+  const [appRoot, setAppRoot] = useState<string>(launchConfig?.appRoot ?? defaultAppRoot);
   const appRootConfig = useAppRootConfig(appRoot);
 
   async function save() {
     const formData = new FormData(formContainerRef?.current ?? undefined);
-    const newLaunchConfig = serializeLaunchConfig(formData);
+    const newLaunchConfig = serializeLaunchConfig(formData, defaultAppRoot);
     await project.createOrUpdateLaunchConfiguration(newLaunchConfig, launchConfig);
     closeModal();
   }
@@ -331,7 +336,7 @@ function BuildConfiguration({
 }: {
   appRootConfig: AppRootConfig;
   platform: "ios" | "android";
-  config?: LaunchConfigurationOptions;
+  config?: LaunchJsonEntry;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
   let initialBuildType: BuildType = "standard";
@@ -395,7 +400,7 @@ function StandardBuildConfiguration({
 }: {
   appRootConfig: AppRootConfig;
   platform: "ios" | "android";
-  config?: LaunchConfigurationOptions;
+  config?: LaunchJsonEntry;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
   if (platform === "ios") {
@@ -480,7 +485,7 @@ function CustomBuildConfiguration({
   launchConfigAttrs,
 }: {
   platform: "ios" | "android";
-  config?: LaunchConfigurationOptions;
+  config?: LaunchJsonEntry;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
   return (
@@ -529,7 +534,7 @@ function CustomBuildConfiguration({
   );
 }
 
-type EasLaunchConfig = NonNullable<LaunchConfigurationOptions["eas"]>;
+type EasLaunchConfig = NonNullable<LaunchJsonEntry["eas"]>;
 type EasPlatform = keyof EasLaunchConfig;
 
 function prettyPlatformName(platform: EasPlatform): string {
@@ -551,7 +556,7 @@ function EasBuildConfiguration({
   appRootConfig: AppRootConfig;
   local: boolean;
   platform: EasPlatform;
-  config?: LaunchConfigurationOptions;
+  config?: LaunchJsonEntry;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
   const { easBuildProfiles } = appRootConfig;

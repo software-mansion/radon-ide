@@ -6,7 +6,7 @@ import {
   LAUNCH_CONFIG_OPTIONS_KEYS,
   LaunchConfiguration,
   LaunchConfigurationKind,
-  LaunchConfigurationOptions,
+  LaunchJsonEntry,
 } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
 import { extensionContext, findAppRootCandidates } from "../utilities/extensionContext";
@@ -36,7 +36,7 @@ function findDefaultAppRoot(showWarning = false) {
 }
 
 export function launchConfigurationFromOptions(
-  options: LaunchConfigurationOptions,
+  options: LaunchJsonEntry,
   launchConfigurationKind: LaunchConfigurationKind = LaunchConfigurationKind.Custom
 ): LaunchConfiguration {
   return launchConfigFromOptionsWithDefaultAppRoot(
@@ -47,7 +47,7 @@ export function launchConfigurationFromOptions(
 }
 
 function launchConfigFromOptionsWithDefaultAppRoot(
-  options: LaunchConfigurationOptions,
+  options: LaunchJsonEntry,
   defaultAppRoot: string | undefined,
   launchConfigurationKind: LaunchConfigurationKind = LaunchConfigurationKind.Custom
 ): LaunchConfiguration {
@@ -63,16 +63,11 @@ function launchConfigFromOptionsWithDefaultAppRoot(
     );
   }
   const appRoot = (options.appRoot ?? defaultAppRoot) as string;
-  const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
   return {
     kind: launchConfigurationKind,
     appRoot,
-    absoluteAppRoot,
     env: {},
     ...options,
-    preview: {
-      waitForAppLaunch: options.preview?.waitForAppLaunch ?? true,
-    },
   };
 }
 
@@ -89,6 +84,18 @@ function createLaunchConfigs() {
     }
   });
   return launchConfigurations;
+}
+
+function serializeLaunchConfiguration(
+  launchConfiguration: LaunchConfiguration
+): LaunchJsonEntry & { type: "radon-ide"; request: "launch" } {
+  const options = _.pick(launchConfiguration, LAUNCH_CONFIG_OPTIONS_KEYS);
+  return {
+    name: "Radon IDE panel",
+    type: "radon-ide",
+    request: "launch",
+    ...options,
+  };
 }
 
 export class LaunchConfigurationsManager implements Disposable {
@@ -140,16 +147,11 @@ export class LaunchConfigurationsManager implements Disposable {
   }
 
   public async createOrUpdateLaunchConfiguration(
-    newLaunchConfiguration: LaunchConfigurationOptions | undefined,
+    newLaunchConfiguration: LaunchConfiguration | undefined,
     oldLaunchConfiguration?: LaunchConfiguration
   ): Promise<LaunchConfiguration | undefined> {
     const newConfig = newLaunchConfiguration
-      ? {
-          name: "Radon IDE panel",
-          type: "radon-ide",
-          request: "launch",
-          ...newLaunchConfiguration,
-        }
+      ? serializeLaunchConfiguration(newLaunchConfiguration)
       : undefined;
     const defaultAppRoot = findDefaultAppRoot();
     const launchConfig = workspace.getConfiguration("launch");
