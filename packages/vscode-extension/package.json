@@ -202,13 +202,13 @@
       },
       {
         "command": "RNIDE.rotateDeviceClockwise",
-        "key": "ctrl+alt+shift+0",
-        "mac": "cmd+alt+shift+0"
+        "key": "ctrl+alt+0",
+        "mac": "ctrl+alt+0"
       },
       {
         "command": "RNIDE.rotateDeviceAnticlockwise",
-        "key": "ctrl+alt+shift+9",
-        "mac": "cmd+alt+shift+9"
+        "key": "ctrl+alt+9",
+        "mac": "ctrl+alt+9"
       }
     ],
     "configuration": {
