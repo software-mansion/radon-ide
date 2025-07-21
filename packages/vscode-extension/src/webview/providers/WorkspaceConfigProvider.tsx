@@ -10,7 +10,6 @@ import {
 import { makeProxy } from "../utilities/rpc";
 import { WorkspaceConfig, WorkspaceConfigProps } from "../../common/WorkspaceConfig";
 import { DeviceRotationType } from "../../common/Project";
-import { useProject } from "./ProjectProvider";
 
 const workspaceConfig = makeProxy<WorkspaceConfig>("WorkspaceConfig");
 
@@ -32,11 +31,9 @@ const WorkspaceConfigContext = createContext<WorkspaceConfigContextType>({
 
 export default function WorkspaceConfigProvider({ children }: PropsWithChildren) {
   const [config, setConfig] = useState<WorkspaceConfigProps>(INITIAL_WORKSPACE_CONFIG);
-  const { project } = useProject();
 
   useEffect(() => {
     function watchConfigChange(e: WorkspaceConfigProps) {
-      project.dispatchRotate(e.deviceRotation);
       setConfig(e);
     }
 
