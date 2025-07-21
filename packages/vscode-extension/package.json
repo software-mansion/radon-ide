@@ -260,7 +260,8 @@
           "enum": [
             "Portrait",
             "LandscapeLeft",
-            "LandscapeRight"
+            "LandscapeRight",
+            "PortraitUpsideDown"
           ],
           "description": "Controls the default device rotation for simulators and emulators when they are created or launched."
         }
