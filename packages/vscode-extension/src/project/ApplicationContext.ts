@@ -5,16 +5,9 @@ import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
 import { LaunchConfiguration } from "../common/LaunchConfig";
-import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
-function createBuildManager(
-  dependencyManager: DependencyManager,
-  buildCache: BuildCache,
-  outputChannelRegistry: OutputChannelRegistry
-) {
-  return new BatchingBuildManager(
-    new BuildManagerImpl(dependencyManager, buildCache, outputChannelRegistry)
-  );
+function createBuildManager(buildCache: BuildCache) {
+  return new BatchingBuildManager(new BuildManagerImpl(buildCache));
 }
 
 export class ApplicationContext implements Disposable {
@@ -24,15 +17,10 @@ export class ApplicationContext implements Disposable {
 
   constructor(
     public launchConfig: LaunchConfiguration,
-    public readonly buildCache: BuildCache,
-    private readonly outputChannelRegistry: OutputChannelRegistry
+    public readonly buildCache: BuildCache
   ) {
     this.dependencyManager = new DependencyManager(this.launchConfig);
-    const buildManager = createBuildManager(
-      this.dependencyManager,
-      this.buildCache,
-      this.outputChannelRegistry
-    );
+    const buildManager = createBuildManager(this.buildCache);
     this.buildManager = buildManager;
 
     this.disposables.push(this.dependencyManager, buildManager);
@@ -54,11 +42,7 @@ export class ApplicationContext implements Disposable {
 
   public async updateAppRootFolder() {
     disposeAll(this.disposables);
-    const buildManager = createBuildManager(
-      this.dependencyManager,
-      this.buildCache,
-      this.outputChannelRegistry
-    );
+    const buildManager = createBuildManager(this.buildCache);
     this.buildManager = buildManager;
     this.disposables.push(this.dependencyManager, buildManager);
   }

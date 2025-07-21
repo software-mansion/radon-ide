@@ -1,18 +1,16 @@
 import assert from "assert";
 import _ from "lodash";
+import { OutputChannel } from "vscode";
 import { BuildCache } from "./BuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
 import { DevicePlatform } from "../common/DeviceManager";
-import { DependencyManager } from "../dependency/DependencyManager";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { isExpoGoProject } from "./expoGo";
 import { LaunchConfiguration } from "../common/LaunchConfig";
-import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
-import { Output } from "../common/OutputChannel";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -21,6 +19,7 @@ export interface BuildManager {
 }
 
 export type BuildOptions = {
+  buildOutputChannel: OutputChannel;
   progressListener: (newProgress: number) => void;
   cancelToken: CancelToken;
 };
@@ -181,27 +180,10 @@ export async function inferBuildType(
 }
 
 export class BuildManagerImpl implements BuildManager {
-  constructor(
-    private readonly dependencyManager: DependencyManager,
-    private readonly buildCache: BuildCache,
-    private readonly outputChannelRegistry: OutputChannelRegistry
-  ) {}
-
-  /**
-   * Returns true if some native build dependencies have change and we should perform
-   * a native build despite the fact the fingerprint indicates we don't need to.
-   * This is currently only used for the scenario when we detect that pods need
-   * to be reinstalled for iOS.
-   */
-  private async checkBuildDependenciesChanged(platform: DevicePlatform): Promise<boolean> {
-    if (platform === DevicePlatform.IOS) {
-      return !(await this.dependencyManager.checkPodsInstallationStatus());
-    }
-    return false;
-  }
+  constructor(private readonly buildCache: BuildCache) {}
 
   public async buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult> {
-    const { progressListener, cancelToken } = options;
+    const { progressListener, cancelToken, buildOutputChannel } = options;
     const { forceCleanBuild, platform, type: buildType, appRoot } = buildConfig;
     const fingerprintOptions = {
       appRoot: buildConfig.appRoot,
@@ -221,10 +203,7 @@ export class BuildManagerImpl implements BuildManager {
 
     const currentFingerprint = await this.buildCache.calculateFingerprint(fingerprintOptions);
 
-    // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
-    const buildDependenciesChanged = await this.checkBuildDependenciesChanged(platform);
-
-    if (forceCleanBuild || buildDependenciesChanged) {
+    if (forceCleanBuild) {
       // we reset the cache when force clean build is requested as the newly
       // started build may end up being cancelled
       Logger.debug(
@@ -250,50 +229,20 @@ export class BuildManagerImpl implements BuildManager {
     let buildFingerprint = currentFingerprint;
     try {
       if (platform === DevicePlatform.Android) {
-        const buildOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
-          Output.BuildAndroid
-        );
         buildOutputChannel.clear();
 
         assert(
           buildConfig.platform === DevicePlatform.Android,
-          "Expected build config platform to be iOS"
+          "Expected build config platform to be Android"
         );
         buildResult = await buildAndroid(
           buildConfig as BuildConfig & { platform: DevicePlatform.Android },
           cancelToken,
           buildOutputChannel,
-          progressListener,
-          this.dependencyManager
+          progressListener
         );
       } else {
-        const buildOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
-          Output.BuildIos
-        );
         buildOutputChannel.clear();
-        const installPodsIfNeeded = async () => {
-          let installPods = forceCleanBuild;
-          if (installPods) {
-            Logger.info("Clean build requested: installing pods");
-          } else {
-            const podsInstalled = await this.dependencyManager.checkPodsInstallationStatus();
-            if (!podsInstalled) {
-              Logger.info("Pods installation is missing or outdated. Installing Pods.");
-              installPods = true;
-            }
-          }
-          if (installPods) {
-            getTelemetryReporter().sendTelemetryEvent("build:install-pods", { platform });
-            await this.dependencyManager.installPods(buildOutputChannel, cancelToken);
-            const installed = await this.dependencyManager.checkPodsInstallationStatus();
-            if (!installed) {
-              throw new Error("Pods could not be installed automatically.");
-            }
-            // Installing pods may impact the fingerprint as new pods may be created under the project directory.
-            // For this reason we need to recalculate the fingerprint after installing pods.
-            buildFingerprint = await this.buildCache.calculateFingerprint(fingerprintOptions);
-          }
-        };
 
         assert(
           buildConfig.platform === DevicePlatform.IOS,
@@ -303,9 +252,7 @@ export class BuildManagerImpl implements BuildManager {
           buildConfig as BuildConfig & { platform: DevicePlatform.IOS },
           cancelToken,
           buildOutputChannel,
-          progressListener,
-          this.dependencyManager,
-          installPodsIfNeeded
+          progressListener
         );
       }
     } catch (e) {
