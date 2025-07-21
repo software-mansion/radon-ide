@@ -19,6 +19,12 @@ export class OutputChannelRegistry implements Disposable {
   }
 
   dispose() {
-    this.channelByName.values().forEach((c) => c.dispose());
+    this.channelByName.entries().forEach(([k, c]) => {
+      // NOTE: we special-case the IDE output channel to keep it open
+      // even when the IDE is disposed.
+      if (k !== Output.Ide) {
+        c.dispose();
+      }
+    });
   }
 }
