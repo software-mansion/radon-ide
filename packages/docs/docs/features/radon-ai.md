@@ -97,7 +97,11 @@ The AI models automatically discover and invoke tools when they decide it will b
 
 ## Disabling Radon AI 
 
-To control the enablement of the Radon AI we use build-in settings. To opt-out of any mcp or chat participant functionality navigate to `Radon IDE: Enable Radon AI` setting in your editor. 
+To disable Radon AI assistant navigate to the editor settings.
+
+You can use CMD+, or type "Preferences: Open User Settings" in the command pallette (Ctrl+Shift+P or Cmd+Shift+P).
+
+Type "Radon IDE: Enable Radon AI" then uncheck the checkbox.
 
 ## Privacy
 
