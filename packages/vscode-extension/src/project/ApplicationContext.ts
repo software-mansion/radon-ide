@@ -21,15 +21,14 @@ export type ResolvedLaunchConfig = LaunchOptions & {
   env: Record<string, string>;
 };
 
-function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunchConfig {
-  const appRoot = configuration.appRoot;
-  const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
-
-  const configuredEnv = configuration.env || {};
+function resolveEnvironment(
+  appRoot: string,
+  configuredEnv: Record<string, string>
+): Record<string, string> {
   const systemEnv = process.env as NodeJS.ProcessEnv;
   const mergedEnv = { ...systemEnv, ...configuredEnv };
   // load the dotenv files for the project into `mergedEnv`
-  const loadEnvResult = loadProjectEnv(absoluteAppRoot, { force: true, systemEnv: mergedEnv });
+  const loadEnvResult = loadProjectEnv(appRoot, { force: true, systemEnv: mergedEnv });
 
   if (loadEnvResult.result === "loaded") {
     Logger.info(
@@ -40,6 +39,15 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
 
   // filter out any `undefined` values from the environment variables
   const env = _.pickBy(mergedEnv, _.isString);
+  return env;
+}
+
+function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunchConfig {
+  const appRoot = configuration.appRoot;
+  const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
+
+  const configuredEnv = configuration.env || {};
+  const env = resolveEnvironment(absoluteAppRoot, configuredEnv);
 
   return {
     ...configuration,
