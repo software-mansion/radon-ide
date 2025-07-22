@@ -1,11 +1,14 @@
 import path from "path";
 import { Disposable, workspace } from "vscode";
+import { loadProjectEnv } from "@expo/env";
+import _ from "lodash";
 import { BuildCache } from "../builders/BuildCache";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
 import { LaunchConfiguration, LaunchOptions } from "../common/LaunchConfig";
+import { Logger } from "../Logger";
 
 /**
  * Represents a launch configuration that has been resolved with additional properties.
@@ -21,9 +24,26 @@ export type ResolvedLaunchConfig = LaunchOptions & {
 function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunchConfig {
   const appRoot = configuration.appRoot;
   const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
+
+  const configuredEnv = configuration.env || {};
+  const systemEnv = process.env as NodeJS.ProcessEnv;
+  const mergedEnv = { ...systemEnv, ...configuredEnv };
+  // load the dotenv files for the project into `mergedEnv`
+  const loadEnvResult = loadProjectEnv(absoluteAppRoot, { force: true, systemEnv: mergedEnv });
+
+  if (loadEnvResult.result === "loaded") {
+    Logger.info(
+      `Project in "${appRoot}" loaded environment variables from .env files:`,
+      loadEnvResult.files
+    );
+  }
+
+  // filter out any `undefined` values from the environment variables
+  const env = _.pickBy(mergedEnv, _.isString);
+
   return {
-    env: {},
     ...configuration,
+    env,
     absoluteAppRoot,
     preview: {
       waitForAppLaunch: configuration.preview?.waitForAppLaunch ?? true,
