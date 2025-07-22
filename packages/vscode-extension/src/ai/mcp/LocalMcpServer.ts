@@ -83,7 +83,6 @@ export class LocalMcpServer implements Disposable {
     app.use(express.json());
 
     app.post("/mcp", async (req, res) => {
-      Logger.error("MCP endpoint");
       const sessionId = req.headers["mcp-session-id"] as string | undefined;
 
       if (!sessionId && isInitializeRequest(req.body)) {
