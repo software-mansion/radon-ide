@@ -47,11 +47,12 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
   const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
 
   const configuredEnv = configuration.env || {};
-  const env = resolveEnvironment(absoluteAppRoot, configuredEnv);
 
   return {
     ...configuration,
-    env,
+    get env() {
+      return resolveEnvironment(absoluteAppRoot, configuredEnv);
+    },
     absoluteAppRoot,
     preview: {
       waitForAppLaunch: configuration.preview?.waitForAppLaunch ?? true,
