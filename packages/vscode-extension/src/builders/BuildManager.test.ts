@@ -4,7 +4,7 @@ import { describe, afterEach, beforeEach, it } from "mocha";
 
 import { BuildType } from "../common/BuildConfig";
 import { DevicePlatform } from "../common/DeviceManager";
-import { CustomBuild, EasConfig, LaunchConfigurationKind } from "../common/LaunchConfig";
+import { CustomBuild, EasConfig } from "../common/LaunchConfig";
 import { createBuildConfig, inferBuildType } from "./BuildManager";
 import * as ExpoGo from "./expoGo";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
@@ -36,7 +36,6 @@ function toPlatformConfig<T>(
 }
 
 const COMMON_CONFIG: ResolvedLaunchConfig = {
-  kind: LaunchConfigurationKind.Detected,
   appRoot: APP_ROOT,
   absoluteAppRoot: APP_ROOT_ABSOLUTE,
   env: {},

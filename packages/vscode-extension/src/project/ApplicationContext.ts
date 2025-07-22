@@ -5,12 +5,12 @@ import { DependencyManager } from "../dependency/DependencyManager";
 import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
-import { LaunchConfiguration } from "../common/LaunchConfig";
+import { LaunchConfiguration, LaunchOptions } from "../common/LaunchConfig";
 
 /**
  * Represents a launch configuration that has been resolved with additional properties.
  */
-export type ResolvedLaunchConfig = LaunchConfiguration & {
+export type ResolvedLaunchConfig = LaunchOptions & {
   absoluteAppRoot: string;
   preview: {
     waitForAppLaunch: boolean;

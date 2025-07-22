@@ -445,5 +445,5 @@ async function projectRequiresNativeBuild(launchConfiguration: ResolvedLaunchCon
     return false;
   }
 
-  return !(await isExpoGoProject(launchConfiguration.appRoot));
+  return !(await isExpoGoProject(launchConfiguration.absoluteAppRoot));
 }
