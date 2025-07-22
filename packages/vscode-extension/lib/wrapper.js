@@ -149,16 +149,16 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
         inspectorDataStack.map(
           (inspectorData) =>
             new Promise((res, rej) => {
+              const source = {
+                fileName: inspectorData.source.fileName,
+                line0Based: inspectorData.source.lineNumber - 1,
+                column0Based: inspectorData.source.columnNumber - 1,
+              };
               try {
                 inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
-                  const source = inspectorData.source;
                   res({
                     componentName: inspectorData.name,
-                    source: {
-                      fileName: source.fileName,
-                      line0Based: source.lineNumber - 1,
-                      column0Based: source.columnNumber - 1,
-                    },
+                    source,
                     frame: {
                       x: pageX / screenWidth,
                       y: pageY / screenHeight,
@@ -168,7 +168,7 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
                   });
                 });
               } catch (e) {
-                rej(e);
+                res({ componentName: inspectorData.name, source });
               }
             })
         )
@@ -186,7 +186,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const rootTag = useContext(RootTagContext);
   const [hasLayout, setHasLayout] = useState(false);
   const mainContainerRef = useRef();
-  const latestRouteListRef = useRef();
 
   const mountCallback = initialProps?.__RNIDE_onMount;
   useEffect(() => {

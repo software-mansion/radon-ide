@@ -187,7 +187,7 @@ export type InspectStackData = {
 
 export type InspectData = {
   stack: InspectDataStackItem[] | undefined;
-  frame: Frame;
+  frame?: Frame;
 };
 
 export type TouchPoint = {
