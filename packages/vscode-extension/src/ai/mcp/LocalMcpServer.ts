@@ -79,7 +79,6 @@ export class LocalMcpServer implements Disposable {
   }
 
   private initializeHttpServer() {
-    Logger.error("MCP initializeHttpServer");
     const app = express();
     app.use(express.json());
 
