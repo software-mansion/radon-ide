@@ -53,13 +53,13 @@ export class WorkspaceConfigController implements Disposable {
     this.stateManager.on("setState", async (partialState) => {
       const partialStateEntries = Object.entries(partialState);
 
-      const configuration = workspace.getConfiguration("RadonIDE");
+      const config = workspace.getConfiguration("RadonIDE");
 
       for (const partialStateEntry of partialStateEntries) {
-        if (configuration.inspect(partialStateEntry[0] as string)?.workspaceValue) {
-          await configuration.update(partialStateEntry[0] as string, partialStateEntry[1], false);
+        if (config.inspect(partialStateEntry[0] as string)?.workspaceValue) {
+          await config.update(partialStateEntry[0] as string, partialStateEntry[1], false);
         } else {
-          await configuration.update(partialStateEntry[0] as string, partialStateEntry[1], true);
+          await config.update(partialStateEntry[0] as string, partialStateEntry[1], true);
         }
       }
     });

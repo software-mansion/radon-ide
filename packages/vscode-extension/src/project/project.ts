@@ -43,7 +43,6 @@ import { BuildCache } from "../builders/BuildCache";
 import { Connector } from "../connect/Connector";
 import { LaunchConfigurationsManager } from "./launchConfigurationsManager";
 import { LaunchConfiguration } from "../common/LaunchConfig";
-import { State } from "../common/State";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 
