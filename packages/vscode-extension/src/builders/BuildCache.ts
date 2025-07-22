@@ -25,15 +25,19 @@ export interface CacheKey {
   env: Record<string, string>;
 }
 
-function stringifyCacheKey({ platform, appRoot, env }: CacheKey) {
-  const keyPrefix =
-    platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
-
+function hashEnvironment(env: Record<string, string>) {
   const envHash = crypto.createHash("md5");
   const envEntries = Object.entries(env).sort(([k], [k2]) => k.localeCompare(k2));
   envEntries.map(([k, v]) => `${k}=${v}`).forEach((entry) => envHash.update(entry));
-  const envHashString = envHash.digest("hex");
-  return `${keyPrefix}:${appRoot}:${envHashString}`;
+  return envHash.digest("hex");
+}
+
+function stringifyCacheKey({ platform, appRoot, env }: CacheKey) {
+  const keyPrefix =
+    platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
+  const envHash = hashEnvironment(env);
+
+  return `${keyPrefix}:${appRoot}:${envHash}`;
 }
 
 export class BuildCache {
