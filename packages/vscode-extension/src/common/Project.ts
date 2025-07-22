@@ -140,7 +140,7 @@ export type ZoomLevelType = number | "Fit";
 
 export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
 
-export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown";
+export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown" | "power";
 
 // important: order of values in this enum matters
 export enum StartupMessage {
@@ -289,6 +289,7 @@ export interface ProjectInterface {
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): void;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): void;
+  dispatchButton(buttonType: DeviceButtonType, direction: "Up" | "Down"): void;
   dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number): void;
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;

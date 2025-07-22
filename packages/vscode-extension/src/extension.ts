@@ -196,6 +196,12 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.deviceAppSwitchButtonPress", deviceAppSwitchButtonPress)
   );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceVolumeIncrease", deviceVolumeIncrease)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceVolumeDecrease", deviceVolumeDecrease)
+  );
   context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
@@ -387,6 +393,18 @@ async function deviceAppSwitchButtonPress() {
   const project = IDE.getInstanceIfExists()?.project;
   project?.dispatchButton("appSwitch", "Down");
   project?.dispatchButton("appSwitch", "Up");
+}
+
+async function deviceVolumeIncrease() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("volumeUp", "Down");
+  project?.dispatchButton("volumeUp", "Up");
+}
+
+async function deviceVolumeDecrease() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("volumeDown", "Down");
+  project?.dispatchButton("volumeDown", "Up");
 }
 
 async function captureReplay() {

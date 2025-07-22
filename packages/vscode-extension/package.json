@@ -100,6 +100,18 @@
         "enablement": "RNIDE.extensionIsActive"
       },
       {
+        "command": "RNIDE.deviceVolumeIncrease",
+        "title": "Increase volume on the current device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.deviceVolumeDecrease",
+        "title": "Decrease volume on the current device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
         "command": "RNIDE.captureReplay",
         "title": "Capture Replay",
         "category": "Radon IDE",
