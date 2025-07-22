@@ -6,14 +6,14 @@ sidebar_position: 5
 
 **Connect Mode** allows you to use some (currently limited) features of the Radon IDE while developing with your own React Native / Expo dev server ([Metro](https://metrobundler.dev/)) on your own simulator / emulator, or physical device.
 
-In this mode, you don't use the [Radon Panel](/docs/getting-started/panel-mode), but instead Radon IDE connects automatically to
+In this mode, you don't use the [Radon Panel](/docs/getting-started/panel-mode), but instead Radon IDE connects automatically to your running Metro development server.
 
 ## -sec-num- How does it work?
 
 Radon Connect allows to connect a debugger to a variety of external devices, including Android phones, iPhones, external simulators, desktops, TVs, VR goggles, and web browsers.
 Allowing you to debug these devices directly from your code editor without any additional setup.
 
-It detects when you launch your app whether it is by using the expo CLI or by other means, and automatically sets up the debugger connection and enables additional development workflows (see below) integrated with your editor.
+It detects when you launch your app whether it is by using the Expo CLI or by other means, and automatically sets up the debugger connection and enables additional development workflows (see below) integrated with your editor.
 The only thing that is necessary, is that you have a workspace opened in the editor that contains the app project that you run, and that you'd also enabled **Connect Mode** (documented in the next section).
 
 <video autoPlay loop width="1100" controls className="shadow-image">
