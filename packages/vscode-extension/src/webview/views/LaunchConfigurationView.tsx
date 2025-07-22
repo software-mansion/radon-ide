@@ -18,10 +18,7 @@ import {
 import { LaunchConfiguration, LaunchConfigurationKind } from "../../common/LaunchConfig";
 import { useModal } from "../providers/ModalProvider";
 import { useProject } from "../providers/ProjectProvider";
-import {
-  AppRootConfig,
-  useAppRootConfig,
-} from "../providers/ApplicationRootsProvider";
+import { AppRootConfig, useAppRootConfig } from "../providers/ApplicationRootsProvider";
 import extensionPackageJSON from "../../../package.json";
 import useFormValidity from "../hooks/useFormValidity";
 import EnvEditor from "./EnvEditor";

@@ -60,7 +60,7 @@ export class IDE extends EventEmitter implements Disposable {
     this.project.appRootConfigController.getAvailableApplicationRoots().then((applicationRoots) => {
       this.stateManager.setState({ applicationRoots });
     });
-    
+
     this.workspaceConfigController = new WorkspaceConfigController(
       this.stateManager.getDerived("workspaceConfiguration")
     );
