@@ -3,12 +3,13 @@ import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
 import _ from "lodash";
 import React, { PropsWithChildren, useEffect } from "react";
+import { use$ } from "@legendapp/state/react";
 import { useProject } from "../providers/ProjectProvider";
 import { LaunchConfiguration, LaunchConfigurationKind } from "../../common/LaunchConfig";
 import RichSelectItem from "./shared/RichSelectItem";
+import { useStore } from "../providers/storeProvider";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
-import { useApplicationRoots } from "../providers/ApplicationRootsProvider";
 import IconButton from "./shared/IconButton";
 import { useAlert } from "../providers/AlertProvider";
 
@@ -138,12 +139,15 @@ function useUnknownConfigurationAlert(shouldOpen: boolean) {
 }
 
 function AppRootSelect() {
-  const applicationRoots = useApplicationRoots();
   const { projectState, project } = useProject();
+  const store$ = useStore();
+  const applicationRoots = use$(store$.applicationRoots);
+
   const {
     selectedLaunchConfiguration: selectedConfiguration,
     customLaunchConfigurations: customConfigurations,
   } = projectState;
+
   const selectedAppRootPath = projectState.appRootPath;
   const selectedAppRoot = applicationRoots.find((root) => root.path === selectedAppRootPath);
   const { openModal } = useModal();

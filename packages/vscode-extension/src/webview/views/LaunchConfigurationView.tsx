@@ -1,6 +1,8 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useStore } from "../providers/storeProvider";
+import { use$ } from "@legendapp/state/react";
 import {
   VscodeFormGroup as FormGroup,
   VscodeLabel as Label,
@@ -18,7 +20,6 @@ import { useModal } from "../providers/ModalProvider";
 import { useProject } from "../providers/ProjectProvider";
 import {
   AppRootConfig,
-  useApplicationRoots,
   useAppRootConfig,
 } from "../providers/ApplicationRootsProvider";
 import extensionPackageJSON from "../../../package.json";
@@ -142,7 +143,9 @@ function LaunchConfigurationView({
   isCurrentConfig?: boolean;
 }) {
   const { openModal, closeModal } = useModal();
-  const applicationRoots = useApplicationRoots();
+
+  const store$ = useStore();
+  const applicationRoots = use$(store$.applicationRoots);
   const defaultAppRoot = applicationRoots[0]?.path ?? "./";
 
   const { project } = useProject();

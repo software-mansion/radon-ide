@@ -1,86 +1,73 @@
-import { EventEmitter } from "stream";
 import { ConfigurationChangeEvent, workspace, Disposable } from "vscode";
-import {
-  PanelLocation,
-  WorkspaceConfig,
-  WorkspaceConfigProps,
-  WorkspaceConfigEventMap,
-  WorkspaceConfigEventListener,
-} from "../common/WorkspaceConfig";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { PanelLocation, WorkspaceConfiguration } from "../common/State";
+import { StateManager } from "../project/StateManager";
+import { disposeAll } from "../utilities/disposables";
 
-export class WorkspaceConfigController implements Disposable, WorkspaceConfig {
-  private config: WorkspaceConfigProps;
-  private eventEmitter = new EventEmitter();
-  private configListener: Disposable | undefined;
+export class WorkspaceConfigController implements Disposable {
+  private disposables: Disposable[] = [];
 
-  constructor() {
+  constructor(private stateManager: StateManager<WorkspaceConfiguration>) {
     const configuration = workspace.getConfiguration("RadonIDE");
-    this.config = {
+    const workspaceConfig = {
       panelLocation: configuration.get<PanelLocation>("panelLocation")!,
       showDeviceFrame: configuration.get<boolean>("showDeviceFrame")!,
       stopPreviousDevices: configuration.get<boolean>("stopPreviousDevices")!,
     };
 
-    this.configListener = workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-      if (!event.affectsConfiguration("RadonIDE")) {
-        return;
+    this.stateManager.setState(workspaceConfig);
+
+    this.disposables.push(
+      workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
+        if (!event.affectsConfiguration("RadonIDE")) {
+          return;
+        }
+        const config = workspace.getConfiguration("RadonIDE");
+
+        const newConfig = {
+          panelLocation: config.get<PanelLocation>("panelLocation")!,
+          showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
+          stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
+        };
+
+        const oldConfig = this.stateManager.getState();
+
+        if (newConfig.panelLocation !== oldConfig.panelLocation) {
+          getTelemetryReporter().sendTelemetryEvent(
+            "workspace-configuration:panel-location-changed",
+            { newPanelLocation: newConfig.panelLocation }
+          );
+        }
+
+        if (newConfig.showDeviceFrame !== oldConfig.showDeviceFrame) {
+          getTelemetryReporter().sendTelemetryEvent(
+            "workspace-configuration:show-device-frame-changed",
+            { showDeviceFrame: String(newConfig.showDeviceFrame) }
+          );
+        }
+
+        this.stateManager.setState(newConfig);
+      })
+    );
+
+    this.stateManager.on("setState", async (partialState) => {
+      const partialStateEntries = Object.entries(partialState);
+
+      const configuration = workspace.getConfiguration("RadonIDE");
+
+      for (const partialStateEntry of partialStateEntries) {
+        if (configuration.inspect(partialStateEntry[0] as string)?.workspaceValue) {
+          await configuration.update(partialStateEntry[0] as string, partialStateEntry[1], false);
+        } else {
+          await configuration.update(partialStateEntry[0] as string, partialStateEntry[1], true);
+        }
       }
-      const config = workspace.getConfiguration("RadonIDE");
-
-      const newConfig = {
-        panelLocation: config.get<PanelLocation>("panelLocation")!,
-        showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
-        stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
-      };
-
-      if (newConfig.panelLocation !== this.config.panelLocation) {
-        getTelemetryReporter().sendTelemetryEvent(
-          "workspace-configuration:panel-location-changed",
-          { newPanelLocation: newConfig.panelLocation }
-        );
-      }
-
-      if (newConfig.showDeviceFrame !== this.config.showDeviceFrame) {
-        getTelemetryReporter().sendTelemetryEvent(
-          "workspace-configuration:show-device-frame-changed",
-          { showDeviceFrame: String(newConfig.showDeviceFrame) }
-        );
-      }
-
-      this.config = newConfig;
-      this.eventEmitter.emit("configChange", this.config);
     });
-  }
 
-  async getConfig() {
-    return this.config;
-  }
-
-  async update<K extends keyof WorkspaceConfigProps>(key: K, value: WorkspaceConfigProps[K]) {
-    const configuration = workspace.getConfiguration("RadonIDE");
-    if (configuration.inspect(key as string)?.workspaceValue) {
-      await configuration.update(key as string, value, false);
-    } else {
-      await configuration.update(key as string, value, true);
-    }
-  }
-
-  async addListener<K extends keyof WorkspaceConfigEventMap>(
-    eventType: K,
-    listener: WorkspaceConfigEventListener<WorkspaceConfigEventMap[K]>
-  ) {
-    this.eventEmitter.addListener(eventType, listener);
-  }
-
-  async removeListener<K extends keyof WorkspaceConfigEventMap>(
-    eventType: K,
-    listener: WorkspaceConfigEventListener<WorkspaceConfigEventMap[K]>
-  ) {
-    this.eventEmitter.removeListener(eventType, listener);
+    this.disposables.push(this.stateManager);
   }
 
   dispose() {
-    this.configListener?.dispose();
+    disposeAll(this.disposables);
   }
 }

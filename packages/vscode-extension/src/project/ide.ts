@@ -6,14 +6,17 @@ import { Utils } from "../utilities/utils";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
+import { State } from "../common/State";
 import { LaunchConfiguration } from "../common/LaunchConfig";
+import { EventEmitter } from "stream";
+import { RootStateManager } from "./StateManager";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
 }
 
-export class IDE implements Disposable {
+export class IDE extends EventEmitter implements Disposable {
   private static instance: IDE | null = null;
 
   public readonly deviceManager: DeviceManager;
@@ -21,12 +24,30 @@ export class IDE implements Disposable {
   public readonly workspaceConfigController: WorkspaceConfigController;
   public readonly utils: Utils;
   public readonly outputChannelRegistry = new OutputChannelRegistry();
+
+  private stateManager: RootStateManager<State>;
+
   private disposed = false;
   private disposables: Disposable[] = [];
 
   private attachSemaphore = 0;
 
   constructor({ initialLaunchConfig }: InitialOptions = {}) {
+    super();
+
+    const initialState: State = {
+      applicationRoots: [],
+      workspaceConfiguration: {
+        panelLocation: "tab",
+        showDeviceFrame: true,
+        stopPreviousDevices: false,
+      },
+    };
+
+    this.stateManager = new RootStateManager(initialState);
+
+    this.disposables.push(this.stateManager.on("setState", this.onStateChanged));
+
     this.deviceManager = new DeviceManager(this.outputChannelRegistry);
     this.utils = new Utils();
     this.project = new Project(
@@ -35,7 +56,14 @@ export class IDE implements Disposable {
       this.outputChannelRegistry,
       initialLaunchConfig
     );
-    this.workspaceConfigController = new WorkspaceConfigController();
+
+    this.project.appRootConfigController.getAvailableApplicationRoots().then((applicationRoots) => {
+      this.stateManager.setState({ applicationRoots });
+    });
+    
+    this.workspaceConfigController = new WorkspaceConfigController(
+      this.stateManager.getDerived("workspaceConfiguration")
+    );
 
     this.disposables.push(this.project, this.workspaceConfigController, this.outputChannelRegistry);
     // register disposable with context
@@ -55,6 +83,18 @@ export class IDE implements Disposable {
       disposeAll(this.disposables);
     }
   }
+
+  public async getState() {
+    return this.stateManager.getState();
+  }
+
+  public async setState(partialState: Partial<State>) {
+    this.stateManager.setState(partialState);
+  }
+
+  public onStateChanged = (partialState: Partial<State>) => {
+    this.emit("stateChanged", partialState);
+  };
 
   public detach() {
     this.attachSemaphore -= 1;
