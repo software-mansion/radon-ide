@@ -1,8 +1,8 @@
 import path from "path";
 import { requireNoCache } from "./requireNoCache";
-import { LaunchConfiguration } from "../common/LaunchConfig";
+import { ResolvedLaunchConfig } from "../project/ApplicationContext";
 
-export function shouldUseExpoCLI(launchConfig: LaunchConfiguration) {
+export function shouldUseExpoCLI(launchConfig: ResolvedLaunchConfig) {
   // The mechanism for detecting whether the project should use Expo CLI or React Native Community CLI works as follows:
   // We check launch configuration, which has an option to force Expo CLI, we verify that first and if it is set to true we use Expo CLI.
   // When the Expo option isn't set, we need all of the below checks to be true in order to use Expo CLI:

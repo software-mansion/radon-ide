@@ -4,7 +4,7 @@ import { command } from "./subprocess";
 import { isWorkspaceRoot } from "./common";
 import { Logger } from "../Logger";
 import { requireNoCache } from "./requireNoCache";
-import { LaunchConfiguration } from "../common/LaunchConfig";
+import { ResolvedLaunchConfig } from "../project/ApplicationContext";
 
 export type PackageManagerInfo = {
   name: "npm" | "pnpm" | "yarn" | "bun";
@@ -31,7 +31,7 @@ async function listFilesSortedByModificationDate(dir: string) {
 const DEFAULT_PACKAGE_MANAGER = "npm";
 
 export async function resolvePackageManager(
-  launchConfiguration: LaunchConfiguration
+  launchConfiguration: ResolvedLaunchConfig
 ): Promise<PackageManagerInfo | undefined> {
   function findWorkspace(appRootPath: string) {
     let currentDir = appRootPath;

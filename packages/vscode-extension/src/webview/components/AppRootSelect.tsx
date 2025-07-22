@@ -4,11 +4,7 @@ import "./shared/Dropdown.css";
 import _ from "lodash";
 import React, { PropsWithChildren, useEffect } from "react";
 import { useProject } from "../providers/ProjectProvider";
-import {
-  LaunchConfiguration,
-  LaunchConfigurationKind,
-  LaunchConfigurationOptions,
-} from "../../common/LaunchConfig";
+import { LaunchConfiguration, LaunchConfigurationKind } from "../../common/LaunchConfig";
 import RichSelectItem from "./shared/RichSelectItem";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
@@ -24,7 +20,7 @@ const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.Sel
   )
 );
 
-function displayNameForConfig(config: LaunchConfigurationOptions) {
+function displayNameForConfig(config: LaunchConfiguration) {
   if (config.name === "Radon IDE panel") {
     return undefined;
   }
@@ -47,7 +43,7 @@ function ConfigureButton({ onClick }: { onClick?: () => void }) {
 function renderLaunchConfigurations(
   groupLabel: string,
   prefix: string,
-  customLaunchConfigurations: LaunchConfigurationOptions[],
+  customLaunchConfigurations: LaunchConfiguration[],
   selectedValue: string | undefined,
   onEditConfig?: (config: LaunchConfiguration, isSelected: boolean) => void
 ) {
@@ -80,7 +76,7 @@ function renderLaunchConfigurations(
 }
 
 function renderDetectedLaunchConfigurations(
-  detectedConfigurations: LaunchConfigurationOptions[],
+  detectedConfigurations: LaunchConfiguration[],
   selectedValue: string | undefined
 ) {
   if (detectedConfigurations.length === 0) {
@@ -96,7 +92,7 @@ function renderDetectedLaunchConfigurations(
 }
 
 function renderCustomLaunchConfigurations(
-  customLaunchConfigurations: LaunchConfigurationOptions[],
+  customLaunchConfigurations: LaunchConfiguration[],
   selectedValue: string | undefined,
   onEditConfig: (config: LaunchConfiguration, isSelected: boolean) => void
 ) {
@@ -159,14 +155,14 @@ function AppRootSelect() {
     );
   }
 
-  const detectedConfigurations: LaunchConfigurationOptions[] = applicationRoots.map(
-    ({ path, displayName, name }) => {
-      return {
-        appRoot: path,
-        name: displayName || name,
-      };
-    }
-  );
+  const detectedConfigurations = applicationRoots.map(({ path, displayName, name }) => {
+    return {
+      appRoot: path,
+      name: displayName || name,
+      kind: LaunchConfigurationKind.Detected,
+      env: {},
+    };
+  });
 
   const handleAppRootChange = async (value: string) => {
     if (value === "manage") {
@@ -182,10 +178,7 @@ function AppRootSelect() {
       "Index out of bounds for launch configurations %s",
       value
     );
-    project.selectLaunchConfiguration(
-      launchConfiguration,
-      isDetected ? LaunchConfigurationKind.Detected : LaunchConfigurationKind.Custom
-    );
+    project.selectLaunchConfiguration({ ...launchConfiguration });
   };
 
   const selectedValue = (() => {
