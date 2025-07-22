@@ -1,12 +1,13 @@
-import _ from "lodash";
-
 export type EasConfig = { profile: string; buildUUID?: string; local?: boolean };
 export type CustomBuild = {
   buildCommand?: string;
   fingerprintCommand?: string;
 };
 
-export type LaunchJsonEntry = {
+/**
+ * Represents the options for building and launching an application in Radon IDE.
+ */
+export interface LaunchOptions {
   name?: string;
   appRoot?: string;
   metroConfigPath?: string;
@@ -20,14 +21,14 @@ export type LaunchJsonEntry = {
     android?: EasConfig;
   };
   env?: Record<string, string>;
-  ios?: IOSLaunchConfiguration;
+  ios?: IOSLaunchOptions;
   isExpo?: boolean;
-  android?: AndroidLaunchConfiguration;
+  android?: AndroidLaunchOptions;
   packageManager?: string;
   preview?: {
     waitForAppLaunch?: boolean;
   };
-};
+}
 
 export const LAUNCH_CONFIG_OPTIONS_KEYS = [
   "name",
@@ -47,22 +48,23 @@ export const LAUNCH_CONFIG_OPTIONS_KEYS = [
 type IsSuperTypeOf<Base, T extends Base> = T;
 // Type level proof that the strings in `LAUNCH_CONFIG_OPTIONS_KEYS` cover all keys `LaunchConfigurationOptions`.
 type _AssertKeysCover = IsSuperTypeOf<
-  Required<LaunchJsonEntry>,
+  Required<LaunchOptions>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Record<(typeof LAUNCH_CONFIG_OPTIONS_KEYS)[number], any>
 >;
 // Type level proof that the strings in `LAUNCH_CONFIG_OPTIONS_KEYS` are valid keys of `LaunchConfigurationOptions`.
 type _AssertKeysValid = IsSuperTypeOf<
-  keyof LaunchJsonEntry,
+  keyof LaunchOptions,
   (typeof LAUNCH_CONFIG_OPTIONS_KEYS)[number]
 >;
 
-export interface IOSLaunchConfiguration {
+export interface IOSLaunchOptions {
   scheme?: string;
   configuration?: string;
   launchArguments?: string[];
 }
 
-export interface AndroidLaunchConfiguration {
+export interface AndroidLaunchOptions {
   buildType?: string;
   productFlavor?: string;
 }
@@ -72,8 +74,11 @@ export enum LaunchConfigurationKind {
   Detected = "Detected",
 }
 
-export type LaunchConfiguration = LaunchJsonEntry & {
+/**
+ * A serializable representation of a launch configuration.
+ * Includes the options specified in `LaunchOptions` as well as relevant data useful in the presentation layer.
+ */
+export type LaunchConfiguration = LaunchOptions & {
   kind: LaunchConfigurationKind;
   appRoot: string;
-  env: Record<string, string>;
 };

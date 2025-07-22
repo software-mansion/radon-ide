@@ -2,18 +2,6 @@ import "./View.css";
 import "./LaunchConfigurationView.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  LaunchConfiguration,
-  LaunchConfigurationKind,
-  LaunchJsonEntry,
-} from "../../common/LaunchConfig";
-import { useModal } from "../providers/ModalProvider";
-import { useProject } from "../providers/ProjectProvider";
-import {
-  AppRootConfig,
-  useApplicationRoots,
-  useAppRootConfig,
-} from "../providers/ApplicationRootsProvider";
-import {
   VscodeFormGroup as FormGroup,
   VscodeLabel as Label,
   VscodeTextfield,
@@ -25,6 +13,14 @@ import {
   VscodeTabs as Tabs,
   VscodeTabHeader as TabHeader,
 } from "@vscode-elements/react-elements";
+import { LaunchConfiguration, LaunchConfigurationKind } from "../../common/LaunchConfig";
+import { useModal } from "../providers/ModalProvider";
+import { useProject } from "../providers/ProjectProvider";
+import {
+  AppRootConfig,
+  useApplicationRoots,
+  useAppRootConfig,
+} from "../providers/ApplicationRootsProvider";
 import extensionPackageJSON from "../../../package.json";
 import useFormValidity from "../hooks/useFormValidity";
 import EnvEditor from "./EnvEditor";
@@ -336,7 +332,7 @@ function BuildConfiguration({
 }: {
   appRootConfig: AppRootConfig;
   platform: "ios" | "android";
-  config?: LaunchJsonEntry;
+  config?: LaunchConfiguration;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
   let initialBuildType: BuildType = "standard";
@@ -400,7 +396,7 @@ function StandardBuildConfiguration({
 }: {
   appRootConfig: AppRootConfig;
   platform: "ios" | "android";
-  config?: LaunchJsonEntry;
+  config?: LaunchConfiguration;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
   if (platform === "ios") {
@@ -485,7 +481,7 @@ function CustomBuildConfiguration({
   launchConfigAttrs,
 }: {
   platform: "ios" | "android";
-  config?: LaunchJsonEntry;
+  config?: LaunchConfiguration;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
   return (
@@ -534,7 +530,7 @@ function CustomBuildConfiguration({
   );
 }
 
-type EasLaunchConfig = NonNullable<LaunchJsonEntry["eas"]>;
+type EasLaunchConfig = NonNullable<LaunchConfiguration["eas"]>;
 type EasPlatform = keyof EasLaunchConfig;
 
 function prettyPlatformName(platform: EasPlatform): string {
@@ -556,7 +552,7 @@ function EasBuildConfiguration({
   appRootConfig: AppRootConfig;
   local: boolean;
   platform: EasPlatform;
-  config?: LaunchJsonEntry;
+  config?: LaunchConfiguration;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
   const { easBuildProfiles } = appRootConfig;

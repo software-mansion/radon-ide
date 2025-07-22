@@ -1,16 +1,22 @@
 import path from "path";
-import { ConfigurationChangeEvent, Disposable, EventEmitter, workspace } from "vscode";
+import {
+  ConfigurationChangeEvent,
+  DebugConfiguration,
+  Disposable,
+  EventEmitter,
+  workspace,
+} from "vscode";
 import vscode from "vscode";
 import _ from "lodash";
 import {
   LAUNCH_CONFIG_OPTIONS_KEYS,
   LaunchConfiguration,
   LaunchConfigurationKind,
-  LaunchJsonEntry,
+  LaunchOptions,
 } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
 import { extensionContext, findAppRootCandidates } from "../utilities/extensionContext";
-import { getLaunchConfigurations } from "../utilities/launchConfiguration";
+import { getLaunchConfigurations, LaunchRadonConfig } from "../utilities/launchConfiguration";
 const INITIAL_LAUNCH_CONFIGURATION_KEY = "initialLaunchConfiguration";
 
 function findDefaultAppRoot(showWarning = false) {
@@ -36,18 +42,17 @@ function findDefaultAppRoot(showWarning = false) {
 }
 
 export function launchConfigurationFromOptions(
-  options: LaunchJsonEntry,
-  launchConfigurationKind: LaunchConfigurationKind = LaunchConfigurationKind.Custom
+  launchConfig: LaunchRadonConfig
 ): LaunchConfiguration {
   return launchConfigFromOptionsWithDefaultAppRoot(
-    options,
+    launchConfig,
     findDefaultAppRoot(),
-    launchConfigurationKind
+    LaunchConfigurationKind.Custom
   );
 }
 
 function launchConfigFromOptionsWithDefaultAppRoot(
-  options: LaunchJsonEntry,
+  options: LaunchOptions,
   defaultAppRoot: string | undefined,
   launchConfigurationKind: LaunchConfigurationKind = LaunchConfigurationKind.Custom
 ): LaunchConfiguration {
@@ -86,9 +91,7 @@ function createLaunchConfigs() {
   return launchConfigurations;
 }
 
-function serializeLaunchConfiguration(
-  launchConfiguration: LaunchConfiguration
-): LaunchJsonEntry & { type: "radon-ide"; request: "launch" } {
+function serializeLaunchConfiguration(launchConfiguration: LaunchConfiguration): LaunchRadonConfig {
   const options = _.pick(launchConfiguration, LAUNCH_CONFIG_OPTIONS_KEYS);
   return {
     name: "Radon IDE panel",
@@ -155,11 +158,18 @@ export class LaunchConfigurationsManager implements Disposable {
       : undefined;
     const defaultAppRoot = findDefaultAppRoot();
     const launchConfig = workspace.getConfiguration("launch");
-    const configurations = launchConfig.get<Array<Record<string, unknown>>>("configurations") ?? [];
+    const configurations = launchConfig.get<DebugConfiguration[]>("configurations") ?? [];
     const oldConfigIndex =
       oldLaunchConfiguration !== undefined
         ? configurations.findIndex((config) => {
-            const fullConfig = launchConfigFromOptionsWithDefaultAppRoot(config, defaultAppRoot);
+            if (config.type !== "react-native-ide" && config.type !== "radon-ide") {
+              return false;
+            }
+            const radonConfig = config as unknown as LaunchRadonConfig;
+            const fullConfig = launchConfigFromOptionsWithDefaultAppRoot(
+              radonConfig,
+              defaultAppRoot
+            );
             return _.isEqual(fullConfig, oldLaunchConfiguration);
           })
         : -1;
@@ -175,9 +185,7 @@ export class LaunchConfigurationsManager implements Disposable {
       return;
     }
     await launchConfig.update("configurations", configurations);
-    if (newConfig !== undefined) {
-      return launchConfigFromOptionsWithDefaultAppRoot(newConfig, defaultAppRoot);
-    }
+    return newLaunchConfiguration;
   }
 
   public saveInitialLaunchConfig(launchConfig: LaunchConfiguration) {

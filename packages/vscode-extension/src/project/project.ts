@@ -41,11 +41,8 @@ import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceB
 import { FingerprintProvider } from "./FingerprintProvider";
 import { BuildCache } from "../builders/BuildCache";
 import { Connector } from "../connect/Connector";
-import {
-  launchConfigurationFromOptions,
-  LaunchConfigurationsManager,
-} from "./launchConfigurationsManager";
-import { LaunchConfiguration, LaunchJsonEntry } from "../common/LaunchConfig";
+import { LaunchConfigurationsManager } from "./launchConfigurationsManager";
+import { LaunchConfiguration } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 
@@ -78,12 +75,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     private readonly deviceManager: DeviceManager,
     private readonly utils: UtilsInterface,
     private readonly outputChannelRegistry: OutputChannelRegistry,
-    initialLaunchConfigOptions?: LaunchJsonEntry
+    initialLaunchConfigOptions?: LaunchConfiguration
   ) {
     const fingerprintProvider = new FingerprintProvider();
     const buildCache = new BuildCache(fingerprintProvider);
     const initialLaunchConfig = initialLaunchConfigOptions
-      ? launchConfigurationFromOptions(initialLaunchConfigOptions)
+      ? initialLaunchConfigOptions
       : this.launchConfigsManager.initialLaunchConfiguration;
     this.selectedLaunchConfiguration = initialLaunchConfig;
     this.applicationContext = new ApplicationContext(initialLaunchConfig, buildCache);

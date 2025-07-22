@@ -6,11 +6,11 @@ import { Utils } from "../utilities/utils";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
-import { LaunchJsonEntry } from "../common/LaunchConfig";
+import { LaunchConfiguration } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
 interface InitialOptions {
-  initialLaunchConfig?: LaunchJsonEntry;
+  initialLaunchConfig?: LaunchConfiguration;
 }
 
 export class IDE implements Disposable {

@@ -7,17 +7,22 @@ import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
 import { LaunchConfiguration } from "../common/LaunchConfig";
 
+/**
+ * Represents a launch configuration that has been resolved with additional properties.
+ */
 export type ResolvedLaunchConfig = LaunchConfiguration & {
   absoluteAppRoot: string;
   preview: {
     waitForAppLaunch: boolean;
   };
+  env: Record<string, string>;
 };
 
 function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunchConfig {
   const appRoot = configuration.appRoot;
   const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
   return {
+    env: {},
     ...configuration,
     absoluteAppRoot,
     preview: {

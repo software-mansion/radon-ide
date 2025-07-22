@@ -35,6 +35,8 @@ import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
 import { IDEPanelMoveTarget } from "./common/utils";
 import { launchConfigurationFromOptions } from "./project/launchConfigurationsManager";
+import { isIdeConfig } from "./utilities/launchConfiguration";
+import assert from "assert";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -334,19 +336,23 @@ class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDe
   async createDebugAdapterDescriptor(
     session: vscode.DebugSession
   ): Promise<vscode.DebugAdapterDescriptor> {
+    assert(
+      isIdeConfig(session.configuration),
+      "This DebugAdapterDescriptorFactory is only registered for radon-ide launch configurations"
+    );
+    const initialLaunchConfig = launchConfigurationFromOptions(session.configuration);
     let attachedInstance: IDE | undefined = undefined;
 
     const existingIDE = IDE.getInstanceIfExists();
     if (existingIDE) {
-      const launchConfig = launchConfigurationFromOptions(session.configuration);
-      await existingIDE.project.selectLaunchConfiguration(launchConfig).catch((error) => {
+      await existingIDE.project.selectLaunchConfiguration(initialLaunchConfig).catch((error) => {
         Logger.error("Failed to select initial launch configuration", error);
         Logger.debug(
           "These errors should be caught in the Project instance and handled gracefully. If you see this, there's a bug in the code."
         );
       });
     } else {
-      attachedInstance = IDE.initializeInstance({ initialLaunchConfig: session.configuration });
+      attachedInstance = IDE.initializeInstance({ initialLaunchConfig });
     }
 
     try {
