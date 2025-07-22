@@ -9,7 +9,7 @@ import {
 import vscode from "vscode";
 import _ from "lodash";
 import {
-  LAUNCH_CONFIG_OPTIONS_KEYS,
+  LAUNCH_OPTIONS_KEYS,
   LaunchConfiguration,
   LaunchConfigurationKind,
   LaunchOptions,
@@ -57,7 +57,7 @@ function launchConfigFromOptionsWithDefaultAppRoot(
   launchConfigurationKind: LaunchConfigurationKind = LaunchConfigurationKind.Custom
 ): LaunchConfiguration {
   // only pick the keys that we care about from `options`
-  options = _.pick(options, LAUNCH_CONFIG_OPTIONS_KEYS);
+  options = _.pick(options, LAUNCH_OPTIONS_KEYS);
 
   if ((options.appRoot ?? defaultAppRoot) === undefined) {
     const maybeName =
@@ -92,7 +92,7 @@ function createLaunchConfigs() {
 }
 
 function serializeLaunchConfiguration(launchConfiguration: LaunchConfiguration): LaunchRadonConfig {
-  const options = _.pick(launchConfiguration, LAUNCH_CONFIG_OPTIONS_KEYS);
+  const options = _.pick(launchConfiguration, LAUNCH_OPTIONS_KEYS);
   return {
     name: "Radon IDE panel",
     type: "radon-ide",
