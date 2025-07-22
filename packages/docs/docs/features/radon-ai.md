@@ -95,7 +95,7 @@ The AI models automatically discover and invoke tools when they decide it will b
 
 4. GitHub Copilot Free is limited to 50 chat messages per month. When you reach this limit, you can upgrade to Copilot Pro to continue using Radon AI.
 
-## Enablement 
+## Disabling Radon AI 
 
 To control the enablement of the Radon AI we use build-in settings. To opt-out of any mcp or chat participant functionality navigate to `Radon IDE: Enable Radon AI` setting in your editor. 
 
