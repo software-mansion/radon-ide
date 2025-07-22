@@ -21,10 +21,10 @@ If your project setup is supported, you don't need any extra configuration to ge
 The only thing you need to do is open your React Native or Expo project as a workspace in VSCode (using `File > Open Folder...` option or `code <path to project's folder>` from the terminal).
 Once you have it open, you can start the extension panel in one of a few ways:
 
-1. When you open any file of your project to edit it, you can launch the extension from `Radon IDE` button in left-bottom corner of the editor:
+1. When you open any file of your project to edit it, you can launch the extension from `Radon IDE` button in the editor's Status Bar:
    <img width="700" alt="Localization of the Radon IDE open panel button" src="/img/docs/ide_open_panel.png" className="shadow-image"/>
 2. You can use "Radon IDE: Open IDE Panel" available in vscode's command palette:
-   <img width="800" alt="How to open Radon IDE Panel from the command pallette" src="/img/docs/sztudio_command_palette.png"/>
+   <img width="800" alt="How to open Radon IDE Panel from the command palette" src="/img/docs/sztudio_command_palette.png"/>
 3. If you already had the panel open in this project before restarting the editor, it will automatically reopen in the same place.
 
 ## -sec-num- Create simulator and emulator instances on the first run
