@@ -321,6 +321,7 @@ export class DeviceSession
       // This is necessary to reset the bundle error state when the app reload
       // is triggered from the app itself (e.g. by in-app dev menu or redbox).
       this.bundleError = undefined;
+      this.connectJSDebugger();
       Logger.debug("App ready");
     });
     // We don't need to store event disposables here as they are tied to the lifecycle
@@ -381,7 +382,6 @@ export class DeviceSession
           displayName: this.device.deviceInfo.displayName,
           useParentDebugSession: true,
         });
-        await this.connectJSDebugger();
       }
     }
   }
@@ -607,32 +607,6 @@ export class DeviceSession
     await this.debugSession.restart();
   }
 
-  private async reconnectJSDebuggerIfNeeded() {
-    // after reloading JS, we sometimes need to reconnect the JS debugger. This is
-    // needed specifically in Expo Go based environments where the reloaded runtime
-    // will be listed as a new target.
-    // Additionally, in some cases the old websocket endpoint would still be listed
-    // despite the runtime being terminated.
-    // In order to properly handle this case we first check if the websocket endpoint
-    // is still listed and if it is, we verify that the runtime is responding by
-    // requesting to execute some simple JS snippet.
-    const currentWsTarget = this.debugSession?.websocketTarget;
-    if (currentWsTarget) {
-      const possibleWsTargets = await this.metro.fetchWsTargets();
-      const currentWsTargetStillVisible = possibleWsTargets?.some(
-        (runtime) => runtime.webSocketDebuggerUrl === currentWsTarget
-      );
-      if (currentWsTargetStillVisible) {
-        // verify the runtime is responding
-        const isRuntimeResponding = await this.debugSession.pingJsDebugSessionWithTimeout();
-        if (isRuntimeResponding) {
-          return;
-        }
-      }
-    }
-    await this.connectJSDebugger();
-  }
-
   private async reloadMetro() {
     this.updateStartupMessage(StartupMessage.WaitingForAppToLoad);
     const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
@@ -646,70 +620,43 @@ export class DeviceSession
       bundleErrorSubscription.dispose();
     }
     this.updateStartupMessage(StartupMessage.AttachingDebugger);
-    await this.reconnectJSDebuggerIfNeeded();
   }
 
   private async launchApp(cancelToken: CancelToken) {
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
-      platform: this.platform,
+      platform: this.device.platform,
     });
-    const launchConfig = this.applicationContext.launchConfig;
-
-    // FIXME: Windows getting stuck waiting for the promise to resolve. This
-    // seems like a problem with app connecting to Metro and using embedded
-    // bundle instead.
-    const shouldWaitForAppLaunch = launchConfig.preview.waitForAppLaunch;
-    const launchArguments =
-      (this.platform === DevicePlatform.IOS && launchConfig.ios?.launchArguments) || [];
-    const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
     this.updateStartupMessage(StartupMessage.Launching);
+
     await cancelToken.adapt(
-      this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port, launchArguments)
+      this.device.launchApp(this.maybeBuildResult!, this.metro.port, this.devtools.port)
     );
 
     Logger.debug("Will wait for app ready and for preview");
     this.updateStartupMessage(StartupMessage.WaitingForAppToLoad);
 
     let previewURL: string | undefined;
-    if (shouldWaitForAppLaunch) {
-      const reportWaitingStuck = setTimeout(() => {
-        Logger.info(
-          "App is taking very long to boot up, it might be stuck. Device preview URL:",
-          previewURL
-        );
-        getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
-          platform: this.platform,
-        });
-      }, 30000);
-      waitForAppReady.then(() => clearTimeout(reportWaitingStuck));
-    }
-
     await cancelToken.adapt(
-      Promise.all([
-        this.metro.ready(),
-        this.device.startPreview().then((url) => {
-          previewURL = url;
-          this.emitStateChange();
-        }),
-        waitForAppReady,
-      ])
+      this.device.startPreview().then((url) => {
+        previewURL = url;
+        this.emitStateChange();
+      })
     );
-
-    Logger.debug("App and preview ready, moving on...");
-    this.updateStartupMessage(StartupMessage.AttachingDebugger);
-    if (this.isActive) {
-      await cancelToken.adapt(this.connectJSDebugger());
-    }
 
     const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
     Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
     getTelemetryReporter().sendTelemetryEvent(
       "app:launch:completed",
-      { platform: this.platform },
+      { platform: this.device.platform },
       { durationSec: launchDurationSec }
     );
+
+    await cancelToken.adapt(this.metro.ready());
+
+    this.status = "running";
+    this.emitStateChange();
 
     return previewURL!;
   }
@@ -995,10 +942,6 @@ export class DeviceSession
       }
 
       await this.device.sendDeepLink(link, this.maybeBuildResult, terminateApp);
-
-      if (terminateApp) {
-        this.reconnectJSDebuggerIfNeeded();
-      }
     }
   }
 

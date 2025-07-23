@@ -7,6 +7,7 @@ import { getIosSourceDir } from "../builders/buildIOS";
 import { readEasConfig } from "../utilities/eas";
 import { EasBuildConfig } from "../common/EasConfig";
 import { getAvailableApplicationRoots } from "../utilities/getAvailableApplicationRoots";
+import { getIOSConfiguration } from "../utilities/launchConfiguration";
 
 function toAbsolutePath(appRoot: string): string {
   return path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
@@ -18,6 +19,9 @@ export class AppRootConfigController implements AppRootConfig {
   }
 
   async getAvailableXcodeSchemes(appRoot: string) {
+    if (getIOSConfiguration()) {
+      return [];
+    }
     const absoluteAppRoot = toAbsolutePath(appRoot);
     const sourceDir = getIosSourceDir(absoluteAppRoot);
 

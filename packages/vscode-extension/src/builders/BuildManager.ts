@@ -11,6 +11,7 @@ import { Logger } from "../Logger";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { isExpoGoProject } from "./expoGo";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
+import { getAndroidConfiguration, getIOSConfiguration } from "../utilities/launchConfiguration";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -185,6 +186,19 @@ export class BuildManagerImpl implements BuildManager {
   public async buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult> {
     const { progressListener, cancelToken, buildOutputChannel } = options;
     const { forceCleanBuild, platform, type: buildType, appRoot } = buildConfig;
+
+    if (platform === DevicePlatform.IOS) {
+      const IOSInfo = getIOSConfiguration();
+      if (IOSInfo) {
+        return IOSInfo;
+      }
+    } else {
+      const AndroidInfo = getAndroidConfiguration();
+      if (AndroidInfo) {
+        return AndroidInfo;
+      }
+    }
+
     const fingerprintOptions = {
       appRoot: buildConfig.appRoot,
       env: buildConfig.env,

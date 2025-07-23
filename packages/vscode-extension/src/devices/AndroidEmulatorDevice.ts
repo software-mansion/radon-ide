@@ -605,7 +605,25 @@ export class AndroidEmulatorDevice extends DeviceBase {
       await this.configureExpoDevMenu(build.packageName);
       await this.launchWithExpoDeeplink(metroPort, devtoolsPort, expoDeeplink);
     } else {
-      await this.configureMetroPort(build.packageName, metroPort);
+      try {
+        await this.configureMetroPort(build.packageName, metroPort);
+      } catch {
+        await exec(ADB_PATH, [
+          "-s",
+          this.serial!,
+          "reverse",
+          `tcp:${metroPort}`,
+          `tcp:${metroPort}`,
+        ]);
+
+        await exec(ADB_PATH, [
+          "-s",
+          this.serial!,
+          "reverse",
+          `tcp:${devtoolsPort}`,
+          `tcp:${devtoolsPort}`,
+        ]);
+      }
       await this.launchWithBuild(build);
     }
   }

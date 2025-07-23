@@ -28,6 +28,7 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
     "app.json",
     "app.config.js",
     "app.config.ts",
+    "package.json",
   ];
 
   // In order to optimize the search time we exclude directories,
