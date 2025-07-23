@@ -21,9 +21,8 @@ export default function ContactCard({
   return (
     <div className={styles.card}>
       <div>
-        <h4>
-          {icon} {title}
-        </h4>
+        <span>{icon}</span>
+        <h4>{title}</h4>
         <p>{description}</p>
       </div>
       <div>

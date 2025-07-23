@@ -3,23 +3,39 @@
   flex-direction: column;
   gap: 24px;
 }
+@media (min-width: 1024px) {
+  .preventfulContainer {
+    margin: 0 40px;
+    border-left: 1px solid var(--radon-color-border);
+    border-right: 1px solid var(--radon-color-border);  
+    /* border: 1px solid var(--radon-color-border);   */
+}
+}
 
 .wrapper {
   margin: 0 auto;
   max-width: 70%;
 }
+.titleContainer {
+  gap: 24px;
+  width: 100%;
+  max-width: 1280px;
+}
 
 .headingLabel {
   margin-top: 60px;
+  margin-bottom: 20px;
   text-align: center;
   text-wrap: balance;
-  margin-bottom: 20px;
+  font-size: 64px;
+  font-weight: 400;
 }
 
 .subheadingLabel {
   text-align: center;
-  font-weight: normal;
   text-wrap: balance;
+  font-weight: 400;
+  font-size: 20px;
   margin-bottom: 32px;
 }
 

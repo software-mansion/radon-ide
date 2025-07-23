@@ -11,7 +11,7 @@ function ArrowRightSmallIcon(props) {
       {...props}>
       <path
         d="M17 12H7m10 0l-4 4m4-4l-4-4"
-        stroke="#001A72"
+        stroke="#FFFFFF"
         strokeWidth={1.5}
         strokeLinecap="round"
         strokeLinejoin="round"
