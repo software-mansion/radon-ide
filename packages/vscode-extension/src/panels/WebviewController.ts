@@ -119,7 +119,7 @@ export class WebviewController implements Disposable {
 
   private setWebviewMessageListener(webview: Webview) {
     webview.onDidReceiveMessage(
-      async (message: WebviewEvent) => {
+      (message: WebviewEvent) => {
         // ignore dispatchTouches and log calls from being logged as "Message from webview"
         if (!message.method || (message.method !== "dispatchTouches" && message.method !== "log")) {
           Logger.log("Message from webview", message);

@@ -1,6 +1,7 @@
 import _ from "lodash";
 import { Disposable, EventEmitter } from "vscode";
 import { disposeAll } from "../utilities/disposables";
+import { mergeAndCalculateChanges } from "../utilities/mergeAndCalculateChanges";
 
 export abstract class StateManager<T extends object> implements Disposable {
   static create<T extends object>(initialState: T): StateManager<T> {
@@ -59,8 +60,9 @@ class RootStateManager<T extends object> extends StateManager<T> {
   }
 
   setState(partialState: Partial<T>): void {
-    this.state = _.merge(this.state, partialState);
-    this.onSetStateEmitter.fire(partialState);
+    const [newState, changes] = mergeAndCalculateChanges(this.state, partialState);
+    this.state = newState;
+    this.onSetStateEmitter.fire(changes);
   }
 
   getState(): T {
@@ -77,7 +79,7 @@ class DerivedStateManager<T extends object, K extends object> extends StateManag
     this.disposables.push(
       parent.onSetState((partialParentState: Partial<K>) => {
         const partialState = partialParentState[this.keyInParent] as T | undefined;
-        if (!partialState) {
+        if (partialState === undefined) {
           return;
         }
         this.onSetStateEmitter.fire(partialState);

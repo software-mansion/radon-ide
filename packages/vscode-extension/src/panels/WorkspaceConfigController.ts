@@ -17,38 +17,7 @@ export class WorkspaceConfigController implements Disposable {
 
     this.stateManager.setState(workspaceConfig);
 
-    this.disposables.push(
-      workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-        if (!event.affectsConfiguration("RadonIDE")) {
-          return;
-        }
-        const config = workspace.getConfiguration("RadonIDE");
-
-        const newConfig = {
-          panelLocation: config.get<PanelLocation>("panelLocation")!,
-          showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
-          stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
-        };
-
-        const oldConfig = this.stateManager.getState();
-
-        if (newConfig.panelLocation !== oldConfig.panelLocation) {
-          getTelemetryReporter().sendTelemetryEvent(
-            "workspace-configuration:panel-location-changed",
-            { newPanelLocation: newConfig.panelLocation }
-          );
-        }
-
-        if (newConfig.showDeviceFrame !== oldConfig.showDeviceFrame) {
-          getTelemetryReporter().sendTelemetryEvent(
-            "workspace-configuration:show-device-frame-changed",
-            { showDeviceFrame: String(newConfig.showDeviceFrame) }
-          );
-        }
-
-        this.stateManager.setState(newConfig);
-      })
-    );
+    this.disposables.push(workspace.onDidChangeConfiguration(this.onConfigurationChange));
 
     this.stateManager.onSetState(async (partialState) => {
       const partialStateEntries = Object.entries(partialState);
@@ -66,6 +35,36 @@ export class WorkspaceConfigController implements Disposable {
 
     this.disposables.push(this.stateManager);
   }
+
+  private onConfigurationChange = (event: ConfigurationChangeEvent) => {
+    if (!event.affectsConfiguration("RadonIDE")) {
+      return;
+    }
+    const config = workspace.getConfiguration("RadonIDE");
+
+    const newConfig = {
+      panelLocation: config.get<PanelLocation>("panelLocation")!,
+      showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
+      stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
+    };
+
+    const oldConfig = this.stateManager.getState();
+
+    if (newConfig.panelLocation !== oldConfig.panelLocation) {
+      getTelemetryReporter().sendTelemetryEvent("workspace-configuration:panel-location-changed", {
+        newPanelLocation: newConfig.panelLocation,
+      });
+    }
+
+    if (newConfig.showDeviceFrame !== oldConfig.showDeviceFrame) {
+      getTelemetryReporter().sendTelemetryEvent(
+        "workspace-configuration:show-device-frame-changed",
+        { showDeviceFrame: String(newConfig.showDeviceFrame) }
+      );
+    }
+
+    this.stateManager.setState(newConfig);
+  };
 
   dispose() {
     disposeAll(this.disposables);
