@@ -22,7 +22,7 @@ export function mergeAndCalculateChanges<T extends object>(
       result[key] = oldNode[key];
       continue;
     }
-    if (typeof oldNode[key] === "object" && oldNode[key] !== null) {
+    if (typeof oldNode[key] === "object" && oldNode[key] !== null && !Array.isArray(oldNode[key])) {
       const [newChild, childChanges] = mergeAndCalculateChanges(oldNode[key], newNode[key]);
 
       if (oldNode[key] !== newChild) {
@@ -32,7 +32,7 @@ export function mergeAndCalculateChanges<T extends object>(
       result[key] = newChild;
       continue;
     }
-    if (oldNode === newNode) {
+    if (oldNode[key] === newNode[key]) {
       result[key] = oldNode[key];
     } else {
       wasChanged = true;
