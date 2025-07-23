@@ -625,7 +625,7 @@ export class DeviceSession
   private async launchApp(cancelToken: CancelToken) {
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
-      platform: this.device.platform,
+      platform: this.platform,
     });
 
     this.updateStartupMessage(StartupMessage.Launching);
@@ -649,7 +649,7 @@ export class DeviceSession
     Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
     getTelemetryReporter().sendTelemetryEvent(
       "app:launch:completed",
-      { platform: this.device.platform },
+      { platform: this.platform },
       { durationSec: launchDurationSec }
     );
 
