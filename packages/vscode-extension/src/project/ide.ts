@@ -1,4 +1,4 @@
-import { Disposable } from "vscode";
+import { Disposable, EventEmitter } from "vscode";
 import { Project } from "./project";
 import { DeviceManager } from "../devices/DeviceManager";
 import { WorkspaceConfigController } from "../panels/WorkspaceConfigController";
@@ -8,7 +8,6 @@ import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
 import { RecursivePartial, State } from "../common/State";
 import { LaunchConfiguration } from "../common/LaunchConfig";
-import { EventEmitter } from "stream";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
 
@@ -16,8 +15,10 @@ interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
 }
 
-export class IDE extends EventEmitter implements Disposable {
+export class IDE implements Disposable {
   private static instance: IDE | null = null;
+
+  private onStateChangedEmitter = new EventEmitter<RecursivePartial<State>>();
 
   public readonly deviceManager: DeviceManager;
   public readonly project: Project;
@@ -33,8 +34,6 @@ export class IDE extends EventEmitter implements Disposable {
   private attachSemaphore = 0;
 
   constructor({ initialLaunchConfig }: InitialOptions = {}) {
-    super();
-
     const initialState: State = {
       applicationRoots: [],
       workspaceConfiguration: {
@@ -46,7 +45,7 @@ export class IDE extends EventEmitter implements Disposable {
 
     this.stateManager = StateManager.create(initialState);
 
-    this.disposables.push(this.stateManager.onSetState(this.onStateChanged));
+    this.disposables.push(this.stateManager.onSetState(this.handleStateChanged));
 
     this.deviceManager = new DeviceManager(this.outputChannelRegistry);
     this.utils = new Utils();
@@ -92,8 +91,12 @@ export class IDE extends EventEmitter implements Disposable {
     this.stateManager.setState(partialState);
   }
 
-  public onStateChanged = (partialState: RecursivePartial<State>) => {
-    this.emit("stateChanged", partialState);
+  public handleStateChanged = (partialState: RecursivePartial<State>) => {
+    this.onStateChangedEmitter.fire(partialState);
+  };
+
+  public onStateChanged = (listener: (partialState: RecursivePartial<State>) => void) => {
+    return this.onStateChangedEmitter.event(listener);
   };
 
   public detach() {

@@ -4,7 +4,7 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
-import { PanelLocation, State } from "../common/State";
+import { PanelLocation, RecursivePartial, State } from "../common/State";
 
 interface EventBase {
   [key: string]: unknown;
@@ -69,7 +69,7 @@ export class WebviewController implements Disposable {
 
   constructor(private webview: Webview) {
     this.ide = IDE.attach();
-    this.ide.on("stateChanged", this.onStateUpdated);
+    this.disposables.push(this.ide.onStateChanged(this.onStateUpdated));
 
     // Set an event listener to listen for messages passed from the webview context
     this.setWebviewMessageListener(webview);
@@ -99,7 +99,7 @@ export class WebviewController implements Disposable {
     });
   }
 
-  public onStateUpdated = (partialState: Partial<State>) => {
+  public onStateUpdated = (partialState: RecursivePartial<State>) => {
     this.webview.postMessage({
       command: "RNIDE_state_updated",
       state: partialState,
@@ -113,7 +113,6 @@ export class WebviewController implements Disposable {
   public dispose() {
     commands.executeCommand("setContext", "RNIDE.panelIsOpen", false);
     disposeAll(this.disposables);
-    this.ide.off("stateChanged", this.onStateUpdated);
     this.ide.detach();
   }
 
