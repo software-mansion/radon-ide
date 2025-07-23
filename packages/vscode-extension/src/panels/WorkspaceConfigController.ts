@@ -50,7 +50,7 @@ export class WorkspaceConfigController implements Disposable {
       })
     );
 
-    this.stateManager.on("setState", async (partialState) => {
+    this.stateManager.onSetState(async (partialState) => {
       const partialStateEntries = Object.entries(partialState);
 
       const config = workspace.getConfiguration("RadonIDE");

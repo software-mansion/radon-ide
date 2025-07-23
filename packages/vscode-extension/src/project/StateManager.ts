@@ -1,17 +1,16 @@
 import _ from "lodash";
-import { EventEmitter } from "stream";
-import { Disposable } from "vscode";
+import { Disposable, EventEmitter } from "vscode";
 import { disposeAll } from "../utilities/disposables";
 
-type EventMap<T> = {
-  setState: Partial<T>;
-};
-
 export abstract class StateManager<T extends object> implements Disposable {
+  static create<T extends object>(initialState: T): StateManager<T> {
+    return new RootStateManager(initialState);
+  }
+
   abstract setState(partialState: Partial<T>): void;
   abstract getState(): T;
 
-  protected eventEmitter: EventEmitter = new EventEmitter();
+  protected onSetStateEmitter: EventEmitter<Partial<T>> = new EventEmitter<Partial<T>>();
   protected disposables: Disposable[] = [];
 
   /**
@@ -42,12 +41,8 @@ export abstract class StateManager<T extends object> implements Disposable {
     }
   }
 
-  public on<K extends keyof EventMap<T>>(event: K, listener: (arg: EventMap<T>[K]) => void) {
-    this.eventEmitter.on(event, listener);
-
-    return new Disposable(() => {
-      this.eventEmitter.off(event, listener);
-    });
+  public onSetState(listener: (arg: Partial<T>) => void) {
+    return this.onSetStateEmitter.event(listener);
   }
 
   public dispose() {
@@ -55,7 +50,7 @@ export abstract class StateManager<T extends object> implements Disposable {
   }
 }
 
-export class RootStateManager<T extends object> extends StateManager<T> {
+class RootStateManager<T extends object> extends StateManager<T> {
   private state: T;
 
   constructor(initialState: T) {
@@ -65,7 +60,7 @@ export class RootStateManager<T extends object> extends StateManager<T> {
 
   setState(partialState: Partial<T>): void {
     this.state = _.merge(this.state, partialState);
-    this.eventEmitter.emit("setState", partialState);
+    this.onSetStateEmitter.fire(partialState);
   }
 
   getState(): T {
@@ -73,19 +68,19 @@ export class RootStateManager<T extends object> extends StateManager<T> {
   }
 }
 
-export class DerivedStateManager<T extends object, K extends object> extends StateManager<T> {
+class DerivedStateManager<T extends object, K extends object> extends StateManager<T> {
   constructor(
     private parent: StateManager<K>,
     private keyInParent: keyof K
   ) {
     super();
     this.disposables.push(
-      parent.on("setState", (partialParentState: Partial<K>) => {
+      parent.onSetState((partialParentState: Partial<K>) => {
         const partialState = partialParentState[this.keyInParent] as T | undefined;
         if (!partialState) {
           return;
         }
-        this.eventEmitter.emit("setState", partialState);
+        this.onSetStateEmitter.fire(partialState);
       })
     );
   }

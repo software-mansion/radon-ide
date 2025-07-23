@@ -9,8 +9,8 @@ import { disposeAll } from "../utilities/disposables";
 import { State } from "../common/State";
 import { LaunchConfiguration } from "../common/LaunchConfig";
 import { EventEmitter } from "stream";
-import { RootStateManager } from "./StateManager";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
+import { StateManager } from "./StateManager";
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
@@ -25,7 +25,7 @@ export class IDE extends EventEmitter implements Disposable {
   public readonly utils: Utils;
   public readonly outputChannelRegistry = new OutputChannelRegistry();
 
-  private stateManager: RootStateManager<State>;
+  private stateManager: StateManager<State>;
 
   private disposed = false;
   private disposables: Disposable[] = [];
@@ -44,9 +44,9 @@ export class IDE extends EventEmitter implements Disposable {
       },
     };
 
-    this.stateManager = new RootStateManager(initialState);
+    this.stateManager = StateManager.create(initialState);
 
-    this.disposables.push(this.stateManager.on("setState", this.onStateChanged));
+    this.disposables.push(this.stateManager.onSetState(this.onStateChanged));
 
     this.deviceManager = new DeviceManager(this.outputChannelRegistry);
     this.utils = new Utils();
