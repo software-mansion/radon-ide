@@ -900,6 +900,7 @@
     "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "^7.27.1",
     "@eslint/compat": "^1.2.8",
+    "@expo/env": "^1.0.7",
     "@expo/fingerprint": "^0.11.11",
     "@expo/package-manager": "^1.7.2",
     "@modelcontextprotocol/sdk": "^1.12.3",
