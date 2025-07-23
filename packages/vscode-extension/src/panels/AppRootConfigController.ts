@@ -51,23 +51,27 @@ function readApplicationRoot(appRootPath: string): ApplicationRoot {
   };
 }
 
+export function getAvailableApplicationRoots() {
+  const workspacePath = workspace.workspaceFolders![0].uri.fsPath;
+  const applicationRootsCandidates = findAppRootCandidates().map((candidate) => {
+    return "./" + path.relative(workspacePath, candidate);
+  });
+  const customApplicationRoots =
+    extensionContext.workspaceState.get<string[] | undefined>(CUSTOM_APPLICATION_ROOTS_KEY) ?? [];
+
+  const applicationRoots = [...applicationRootsCandidates, ...customApplicationRoots];
+
+  if (!applicationRoots) {
+    Logger.debug(`Could not find any application roots.`);
+    return [];
+  }
+
+  return applicationRoots.map(readApplicationRoot);
+}
+
 export class AppRootConfigController implements AppRootConfig {
   async getAvailableApplicationRoots() {
-    const workspacePath = workspace.workspaceFolders![0].uri.fsPath;
-    const applicationRootsCandidates = findAppRootCandidates().map((candidate) => {
-      return "./" + path.relative(workspacePath, candidate);
-    });
-    const customApplicationRoots =
-      extensionContext.workspaceState.get<string[] | undefined>(CUSTOM_APPLICATION_ROOTS_KEY) ?? [];
-
-    const applicationRoots = [...applicationRootsCandidates, ...customApplicationRoots];
-
-    if (!applicationRoots) {
-      Logger.debug(`Could not find any application roots.`);
-      return [];
-    }
-
-    return applicationRoots.map(readApplicationRoot);
+    return getAvailableApplicationRoots();
   }
 
   async getAvailableXcodeSchemes(appRoot: string) {

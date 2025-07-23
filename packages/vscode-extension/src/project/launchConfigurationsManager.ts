@@ -17,6 +17,7 @@ import {
 import { Logger } from "../Logger";
 import { extensionContext, findAppRootCandidates } from "../utilities/extensionContext";
 import { getLaunchConfigurations, LaunchRadonConfig } from "../utilities/launchConfiguration";
+import { getAvailableApplicationRoots } from "../panels/AppRootConfigController";
 const INITIAL_LAUNCH_CONFIGURATION_KEY = "initialLaunchConfiguration";
 
 function findDefaultAppRoot(showWarning = false) {
@@ -131,6 +132,18 @@ export class LaunchConfigurationsManager implements Disposable {
     const savedLaunchConfig = workspaceState.get<LaunchConfiguration | undefined>(
       INITIAL_LAUNCH_CONFIGURATION_KEY
     );
+
+    if (savedLaunchConfig?.kind === LaunchConfigurationKind.Detected) {
+      const availableAppRoots = getAvailableApplicationRoots();
+      if (
+        availableAppRoots.some(
+          (availableAppRoot) => availableAppRoot.path === savedLaunchConfig.appRoot
+        )
+      ) {
+        return savedLaunchConfig;
+      }
+    }
+
     if (
       savedLaunchConfig &&
       this._launchConfigurations.find((config) => _.isEqual(config, savedLaunchConfig))
