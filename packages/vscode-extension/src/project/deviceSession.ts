@@ -321,7 +321,7 @@ export class DeviceSession
       // This is necessary to reset the bundle error state when the app reload
       // is triggered from the app itself (e.g. by in-app dev menu or redbox).
       this.bundleError = undefined;
-      this.connectJSDebugger();
+      this.reconnectJSDebuggerIfNeeded();
       Logger.debug("App ready");
     });
     // We don't need to store event disposables here as they are tied to the lifecycle
@@ -605,6 +605,32 @@ export class DeviceSession
 
   private async restartDebugger() {
     await this.debugSession.restart();
+  }
+
+  private async reconnectJSDebuggerIfNeeded() {
+    // after reloading JS, we sometimes need to reconnect the JS debugger. This is
+    // needed specifically in Expo Go based environments where the reloaded runtime
+    // will be listed as a new target.
+    // Additionally, in some cases the old websocket endpoint would still be listed
+    // despite the runtime being terminated.
+    // In order to properly handle this case we first check if the websocket endpoint
+    // is still listed and if it is, we verify that the runtime is responding by
+    // requesting to execute some simple JS snippet.
+    const currentWsTarget = this.debugSession?.websocketTarget;
+    if (currentWsTarget) {
+      const possibleWsTargets = await this.metro.fetchWsTargets();
+      const currentWsTargetStillVisible = possibleWsTargets?.some(
+        (runtime) => runtime.webSocketDebuggerUrl === currentWsTarget
+      );
+      if (currentWsTargetStillVisible) {
+        // verify the runtime is responding
+        const isRuntimeResponding = await this.debugSession.pingJsDebugSessionWithTimeout();
+        if (isRuntimeResponding) {
+          return;
+        }
+      }
+    }
+    await this.connectJSDebugger();
   }
 
   private async reloadMetro() {
