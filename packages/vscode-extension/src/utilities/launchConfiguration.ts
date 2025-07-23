@@ -73,6 +73,13 @@ export function getPortConfiguration() {
   return port;
 }
 
+export function getRootFileNameConfiguration() {
+  const launchConfig = workspace.getConfiguration("launch");
+  const configurations = launchConfig?.configurations;
+  const rootFileName = configurations[0]?.rootFileName;
+  return rootFileName;
+}
+
 export function getLaunchConfigurations(): Array<LaunchRadonConfig> {
   const ideConfigs =
     workspace.getConfiguration("launch")?.configurations?.filter(isIdeConfig) ?? [];

@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { commands, ExtensionContext, Uri, workspace, window } from "vscode";
 import { Logger } from "../Logger";
-import { getLaunchConfiguration } from "./launchConfiguration";
+import { getLaunchConfiguration, getRootFileNameConfiguration } from "./launchConfiguration";
 
 let _extensionContext: ExtensionContext | null = null;
 
@@ -22,13 +22,15 @@ export const extensionContext = new Proxy<ExtensionContext>({} as ExtensionConte
 });
 
 export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
+  const rootFileName = getRootFileNameConfiguration();
+
   const searchedFileNames = [
     "metro.config.js",
     "metro.config.ts",
     "app.json",
     "app.config.js",
     "app.config.ts",
-    "package.json",
+    rootFileName,
   ];
 
   // In order to optimize the search time we exclude directories,
