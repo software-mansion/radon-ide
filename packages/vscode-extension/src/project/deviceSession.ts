@@ -38,7 +38,7 @@ import {
   FatalErrorDescriptor,
   BundleErrorDescriptor,
 } from "../common/Project";
-import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
+import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
@@ -51,6 +51,7 @@ import { BuildCache } from "../builders/BuildCache";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
+import { disposeAll } from "../utilities/disposables";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -73,16 +74,15 @@ export class DeviceBootError extends Error {
   }
 }
 
-export class DeviceSession
-  implements Disposable, MetroDelegate, ToolsDelegate, DebugSessionDelegate
-{
+export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
   private isActive = false;
   private metro: MetroLauncher;
   private toolsManager: ToolsManager;
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
-  private debugSession: DebugSession;
+  private debugSession: DebugSession & Disposable;
+  private debugSessionEventSubscription: Disposable;
   private buildManager: BuildManager;
   private buildCache: BuildCache;
   private cancelToken: CancelToken | undefined;
@@ -135,10 +135,11 @@ export class DeviceSession
 
     this.buildCache = this.applicationContext.buildCache;
     this.buildManager = this.applicationContext.buildManager;
-    this.debugSession = new DebugSession(this, {
+    this.debugSession = new DebugSessionImpl({
       displayName: this.device.deviceInfo.displayName,
       useParentDebugSession: true,
     });
+    this.debugSessionEventSubscription = this.registerDebugSessionListeners();
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
   }
 
@@ -265,7 +266,7 @@ export class DeviceSession
 
   //#endregion
 
-  //#region Debug session delegate methods
+  //#region Debug session event listeners
 
   onConsoleLog = (event: DebugSessionCustomEvent): void => {
     this.logCounter += 1;
@@ -298,6 +299,19 @@ export class DeviceSession
       this.saveAndOpenCPUProfile(event.body.filePath);
     }
   };
+
+  private registerDebugSessionListeners(): Disposable {
+    const subscriptions: Disposable[] = [
+      this.debugSession.onConsoleLog(this.onConsoleLog),
+      this.debugSession.onDebuggerPaused(this.onDebuggerPaused),
+      this.debugSession.onDebuggerResumed(this.onDebuggerResumed),
+      this.debugSession.onProfilingCPUStarted(this.onProfilingCPUStarted),
+      this.debugSession.onProfilingCPUStopped(this.onProfilingCPUStopped),
+    ];
+    return new Disposable(() => {
+      disposeAll(subscriptions);
+    });
+  }
 
   //#endregion
 
@@ -365,6 +379,7 @@ export class DeviceSession
   public async dispose() {
     this.cancelToken?.cancel();
     await this.deactivate();
+    this.watchProjectSubscription.dispose();
     await this.debugSession?.dispose();
     this.device?.dispose();
     this.metro?.dispose();
@@ -377,10 +392,11 @@ export class DeviceSession
       this.isActive = true;
       this.toolsManager.activate();
       if (this.startupMessage === StartupMessage.AttachingDebugger) {
-        this.debugSession = new DebugSession(this, {
+        this.debugSession = new DebugSessionImpl({
           displayName: this.device.deviceInfo.displayName,
           useParentDebugSession: true,
         });
+        this.debugSessionEventSubscription = this.registerDebugSessionListeners();
         await this.connectJSDebugger();
       }
     }
@@ -395,6 +411,7 @@ export class DeviceSession
       // hence we reset the log counter.
       this.logCounter = 0;
       this.emitStateChange();
+      this.debugSessionEventSubscription.dispose();
       await this.debugSession.dispose();
     }
   }
