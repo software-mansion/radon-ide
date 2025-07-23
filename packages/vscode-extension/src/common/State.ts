@@ -1,5 +1,9 @@
 import { ApplicationRoot } from "./AppRootConfig";
 
+export type RecursivePartial<T> = {
+  [P in keyof T]?: RecursivePartial<T[P]>;
+};
+
 export type PanelLocation = "tab" | "side-panel";
 
 export type WorkspaceConfiguration = {
@@ -13,7 +17,7 @@ export type State = {
   workspaceConfiguration: WorkspaceConfiguration;
 };
 
-export type StateListener = (state: Partial<State>) => void;
+export type StateListener = (state: RecursivePartial<State>) => void;
 
 export const initialState: State = {
   applicationRoots: [],

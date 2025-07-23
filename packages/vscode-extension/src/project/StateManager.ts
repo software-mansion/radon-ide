@@ -2,16 +2,19 @@ import _ from "lodash";
 import { Disposable, EventEmitter } from "vscode";
 import { disposeAll } from "../utilities/disposables";
 import { mergeAndCalculateChanges } from "../utilities/mergeAndCalculateChanges";
+import { RecursivePartial } from "../common/State";
 
 export abstract class StateManager<T extends object> implements Disposable {
   static create<T extends object>(initialState: T): StateManager<T> {
     return new RootStateManager(initialState);
   }
 
-  abstract setState(partialState: Partial<T>): void;
+  abstract setState(partialState: RecursivePartial<T>): void;
   abstract getState(): T;
 
-  protected onSetStateEmitter: EventEmitter<Partial<T>> = new EventEmitter<Partial<T>>();
+  protected onSetStateEmitter: EventEmitter<RecursivePartial<T>> = new EventEmitter<
+    RecursivePartial<T>
+  >();
   protected disposables: Disposable[] = [];
 
   /**
@@ -42,7 +45,7 @@ export abstract class StateManager<T extends object> implements Disposable {
     }
   }
 
-  public onSetState(listener: (arg: Partial<T>) => void) {
+  public onSetState(listener: (arg: RecursivePartial<T>) => void) {
     return this.onSetStateEmitter.event(listener);
   }
 
@@ -77,7 +80,7 @@ class DerivedStateManager<T extends object, K extends object> extends StateManag
   ) {
     super();
     this.disposables.push(
-      parent.onSetState((partialParentState: Partial<K>) => {
+      parent.onSetState((partialParentState: RecursivePartial<K>) => {
         const partialState = partialParentState[this.keyInParent] as T | undefined;
         if (partialState === undefined) {
           return;

@@ -1,3 +1,5 @@
+import { RecursivePartial } from "../common/State";
+
 /**
  * Merges an existing state object with updates from a new partial state and calculates changes.
  *
@@ -10,9 +12,9 @@
 export function mergeAndCalculateChanges<T extends object>(
   oldNode: T,
   newNode: Partial<T>
-): [T, Partial<T>] {
+): [T, RecursivePartial<T>] {
   const result: Partial<T> = {};
-  const changes: Partial<T> = {};
+  const changes: RecursivePartial<T> = {};
   let wasChanged = false;
 
   for (const key in oldNode) {
