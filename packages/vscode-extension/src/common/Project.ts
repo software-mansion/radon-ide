@@ -103,6 +103,7 @@ export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
   status: "running";
   isRefreshing: boolean;
   bundleError: BundleErrorDescriptor | undefined;
+  appOrientation: DeviceRotationType;
 };
 
 export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {

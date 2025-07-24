@@ -102,6 +102,7 @@ export class DeviceSession
   private isDebuggerPaused = false;
   private hasStaleBuildCache = false;
   private isRecordingScreen = false;
+  private appOrientation: DeviceRotationType;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -139,6 +140,7 @@ export class DeviceSession
       useParentDebugSession: true,
     });
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
+    this.appOrientation = this.rotation;
   }
 
   public getState(): DeviceSessionState {
@@ -168,6 +170,7 @@ export class DeviceSession
         status: "running",
         isRefreshing: this.isRefreshing,
         bundleError: this.bundleError,
+        appOrientation: this.appOrientation,
       };
     } else if (this.status === "fatalError") {
       assert(this.fatalError, "Expected error to be defined in fatal error state");
@@ -355,6 +358,29 @@ export class DeviceSession
         this.emitStateChange();
       }
     });
+    devtools.onEvent("appOrientationInit", (isAppLandscape: boolean) => {
+      const isDeviceLandscape =
+        this.rotation === DeviceRotationType.LandscapeLeft ||
+        this.rotation === DeviceRotationType.LandscapeRight;
+      if (isAppLandscape) {
+        if (isDeviceLandscape) {
+          this.appOrientation = this.rotation;
+        } else {
+          this.appOrientation = DeviceRotationType.LandscapeLeft;
+        }
+      }
+      if (!isAppLandscape) {
+        // PortaitUspideDown not supported yet
+        this.appOrientation = DeviceRotationType.Portrait;
+      }
+      this.emitStateChange();
+    });
+
+    devtools.onEvent("appOrientationChanged", (orientation) => {
+      this.appOrientation = orientation;
+      this.emitStateChange();
+    });
+    // devtools.emitEvent("appOrientationInit", this.rotation);
     return devtools;
   }
 
