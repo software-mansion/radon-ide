@@ -126,7 +126,7 @@ function getLandscapeDimensions(
   frame: DevicePropertiesFrame,
   zoomLevel: ZoomLevelType
 ) {
-  const { isFitSet, parentWidth } = config;
+  const { isFitSet, parentHeight, aspectRatio } = config;
 
   const zoomHeight = isFitSet
     ? "100%"
@@ -137,9 +137,9 @@ function getLandscapeDimensions(
   const phoneWrapperHeight = "fit-content";
   const phoneContentHeight = "auto";
   const phoneContentMinWidthValue = MIN_HEIGHT;
-  const phoneContentMinHeightValue = phoneContentMinWidthValue * config.aspectRatio;
+  const phoneContentMinHeightValue = phoneContentMinWidthValue * aspectRatio;
   const phoneContentWidth = isFitSet
-    ? `calc(min(100%,  ${parentWidth / config.aspectRatio}px) * ${CSS_MARGIN_FACTOR})`
+    ? `calc(min(100%,  ${parentHeight / aspectRatio}px) * ${CSS_MARGIN_FACTOR})`
     : `${zoomHeight}px`;
   const phoneContentMinWidth = `${phoneContentMinWidthValue}px`;
   const phoneContentMinHeight = `${phoneContentMinHeightValue}px`;
@@ -149,7 +149,7 @@ function getLandscapeDimensions(
   const phoneLeft = `${(frame.offsetY / frame.height) * 100}%`; // Swapped for landscape
   const phoneMaskImage = `url(${device.landscapeScreenImage})`;
   const phoneFrameImage = `url(${frame.imageLandscape})`;
-  const phoneAspectRatio = `${1 / config.aspectRatio}`;
+  const phoneAspectRatio = `${1 / aspectRatio}`;
 
   return {
     phoneWrapperMinWidth,
