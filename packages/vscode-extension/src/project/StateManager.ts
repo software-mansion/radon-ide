@@ -12,9 +12,7 @@ export abstract class StateManager<T extends object> implements Disposable {
   abstract setState(partialState: RecursivePartial<T>): void;
   abstract getState(): T;
 
-  protected onSetStateEmitter: EventEmitter<RecursivePartial<T>> = new EventEmitter<
-    RecursivePartial<T>
-  >();
+  protected onSetStateEmitter = new EventEmitter<RecursivePartial<T>>();
   protected disposables: Disposable[] = [];
 
   /**

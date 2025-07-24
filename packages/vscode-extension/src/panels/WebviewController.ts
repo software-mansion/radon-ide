@@ -6,9 +6,7 @@ import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 import { PanelLocation, RecursivePartial, State } from "../common/State";
 
-interface EventBase {
-  [key: string]: unknown;
-}
+type EventBase = Record<string, unknown>;
 
 interface CallCommand extends EventBase {
   command: "call";
