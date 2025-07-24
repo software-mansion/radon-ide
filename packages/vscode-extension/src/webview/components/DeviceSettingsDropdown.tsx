@@ -15,6 +15,7 @@ import { useProject } from "../providers/ProjectProvider";
 import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import {
   AppPermissionType,
+  DeviceRotationDirection,
   DeviceRotationType,
   DeviceSettings,
   ProjectInterface,
@@ -56,7 +57,7 @@ const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon
   { label: "Reset All Permissions", value: "all", icon: "check-all" },
 ];
 
-const rotateOptions: Array<{
+const setOrientationOptions: Array<{
   label: string;
   value: DeviceRotationType;
   icon: string;
@@ -75,18 +76,39 @@ const rotateOptions: Array<{
     rotation: "-90deg",
   },
   {
-    label: "Landscape Right",
-    value: DeviceRotationType.LandscapeRight,
-    icon: "device-mobile",
-    rotation: "90deg",
-  },
-  {
     label: "Portait Upside Down",
     value: DeviceRotationType.PortraitUpsideDown,
     icon: "device-mobile",
     rotation: "180deg",
   },
+  {
+    label: "Landscape Right",
+    value: DeviceRotationType.LandscapeRight,
+    icon: "device-mobile",
+    rotation: "90deg",
+  }
 ];
+const rotateOptions: Array<{
+  label: string;
+  value: DeviceRotationDirection;
+  icon: string;
+  commandName: string;
+}> = [
+  {
+    label: "Clockwise",
+    value: DeviceRotationDirection.Clockwise,
+    icon: "refresh",
+    commandName: "RNIDE.rotateDeviceClockwise"
+  },
+  {
+    label: "Anticlockwise",
+    value: DeviceRotationDirection.Anticlockwise,
+    icon: "refresh mirror",
+    commandName: "RNIDE.rotateDeviceAnticlockwise"
+  },
+];
+
+
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const { project, selectedDeviceSession, deviceSettings, projectState } = useProject();
@@ -176,6 +198,51 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             label="Open App Switcher"
             icon="chrome-restore"
           />
+           <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+              <span className="codicon codicon-sync" />
+              Rotate Device
+              <span className="codicon codicon-chevron-right right-slot" />
+            </DropdownMenu.SubTrigger>
+            <DropdownMenu.Portal>
+
+              <DropdownMenu.SubContent
+                className="dropdown-menu-subcontent"
+                sideOffset={2}
+                alignOffset={-5}>
+
+                <Label>Rotate</Label>
+                {rotateOptions.map((option) => (
+                  <CommandItem
+                    project={project}
+                    commandName={option.commandName}
+                    label={option.label}
+                    icon={option.icon}
+                  />
+                ))}
+
+                <div className="device-settings-margin" />
+                <Label>Set Orientation</Label>
+
+                {setOrientationOptions.map((option, index) => (
+                  <DropdownMenu.Item
+                    className="dropdown-menu-item"
+                    key={index}
+                    onSelect={() => project.dispatchRotate(option.value)}>
+                    <span
+                      className={`codicon codicon-${option.icon}`}
+                      style={{ rotate: option.rotation }}
+                    />
+                    {option.label}
+                    {projectState.rotation === option.value && (
+                      <span className="codicon codicon-check right-slot" />
+                    )}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.SubContent>
+              
+            </DropdownMenu.Portal>
+          </DropdownMenu.Sub>
           {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
@@ -211,35 +278,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
 
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
-              <span className="codicon codicon-sync" />
-              Rotate Device
-              <span className="codicon codicon-chevron-right right-slot" />
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent
-                className="dropdown-menu-subcontent"
-                sideOffset={2}
-                alignOffset={-5}>
-                {rotateOptions.map((option, index) => (
-                  <DropdownMenu.Item
-                    className="dropdown-menu-item"
-                    key={index}
-                    onSelect={() => project.dispatchRotate(option.value)}>
-                    <span
-                      className={`codicon codicon-${option.icon}`}
-                      style={{ rotate: option.rotation }}
-                    />
-                    {option.label}
-                    {projectState.rotation === option.value && (
-                      <span className="codicon codicon-check right-slot" />
-                    )}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
+         
 
           <DropdownMenu.Item
             className="dropdown-menu-item"

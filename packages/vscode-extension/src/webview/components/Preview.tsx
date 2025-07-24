@@ -210,9 +210,6 @@ function Preview({
           }
         }
       }
-      if(selectedDeviceSession?.status === "running") {
-        console.log(selectedDeviceSession.appOrientation)
-      }
       setInspectFrame(inspectData.frame);
     });
   }
