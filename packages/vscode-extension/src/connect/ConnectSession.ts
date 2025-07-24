@@ -22,7 +22,9 @@ class DebugSessionInspectorBridge extends BaseInspectorBridge {
   }
 
   protected send(message: unknown) {
-    this.debugSession.dispatchRadonAgentMessage(message);
+    this.debugSession.evaluateExpression({
+      expression: `globalThis.__radon_dispatch(${JSON.stringify(message)});`,
+    });
   }
 }
 

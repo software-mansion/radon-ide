@@ -38,7 +38,7 @@ import {
   FatalErrorDescriptor,
   BundleErrorDescriptor,
 } from "../common/Project";
-import { DebugSession, DebugSource, ReconnectingDebugSession } from "../debugging/DebugSession";
+import { DebugSource, ReconnectingDebugSession } from "../debugging/DebugSession";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
@@ -81,7 +81,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
-  private debugSession: DebugSession & Disposable;
+  private debugSession: ReconnectingDebugSession;
   private debugSessionEventSubscription: Disposable;
   private buildManager: BuildManager;
   private buildCache: BuildCache;

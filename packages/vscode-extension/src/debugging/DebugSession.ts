@@ -1,6 +1,7 @@
 import assert from "assert";
 import { commands, debug, DebugConsoleMode, DebugSessionCustomEvent, Disposable } from "vscode";
 import * as vscode from "vscode";
+import { Cdp } from "vscode-cdp-proxy";
 import { disposeAll } from "../utilities/disposables";
 import { sleep } from "../utilities/retry";
 import { startDebugging } from "./startDebugging";
@@ -50,19 +51,14 @@ export interface DebugSession {
   restart(): Promise<void>;
   stop(): Promise<void>;
 
-  // This should probably just be "is connected" or "is alive"
-  pingJsDebugSessionWithTimeout(): Promise<boolean>;
-
   // debugger controls
   resumeDebugger(): void;
   stepOverDebugger(): void;
+  evaluateExpression(params: Cdp.Runtime.EvaluateParams): Promise<Cdp.Runtime.EvaluateResult>;
 
   // Profiling controls
   startProfilingCPU(): Promise<void>;
   stopProfilingCPU(): Promise<void>;
-
-  // Radon Agent methods -- leaky abstraction?
-  dispatchRadonAgentMessage(data: unknown): void;
 
   // events
   onConsoleLog(listener: DebugSessionCustomEventListener): Disposable;
@@ -274,23 +270,6 @@ export class DebugSessionImpl implements DebugSession, Disposable {
     });
   }
 
-  public async pingJsDebugSessionWithTimeout() {
-    if (!this.jsDebugSession) {
-      return false;
-    }
-    const resultPromise = this.jsDebugSession.customRequest("RNIDE_ping").then((response) => {
-      return !!response.result;
-    });
-    const timeout = sleep(PING_TIMEOUT).then(() => {
-      throw new Error("Ping timeout");
-    });
-    return Promise.race([resultPromise, timeout]).catch((_e) => false);
-  }
-
-  public dispatchRadonAgentMessage(data: unknown) {
-    this.jsDebugSession?.customRequest("RNIDE_dispatchRadonAgentMessage", data);
-  }
-
   public async startProfilingCPU() {
     await this.jsDebugSession?.customRequest("RNIDE_startProfiling");
   }
@@ -301,6 +280,16 @@ export class DebugSessionImpl implements DebugSession, Disposable {
 
   public async appendDebugConsoleEntry(message: string, type: string, source?: DebugSource) {
     await this.parentDebugSession?.customRequest("RNIDE_log_message", { message, type, source });
+  }
+
+  public async evaluateExpression(
+    params: Cdp.Runtime.EvaluateParams
+  ): Promise<Cdp.Runtime.EvaluateResult> {
+    if (!this.jsDebugSession) {
+      throw new Error("JS Debug session is not running");
+    }
+    const response = await this.jsDebugSession.customRequest("RNIDE_evaluate", params);
+    return response;
   }
 
   private cancelStartingDebugSession() {
@@ -339,11 +328,21 @@ export class ReconnectingDebugSession extends DebugSessionImpl {
     return super.stop();
   }
 
+  private async pingJsDebugSessionWithTimeout() {
+    const resultPromise = super.evaluateExpression({ expression: "('ping')" }).then((response) => {
+      return response.result.value === "ping";
+    });
+    const timeout = sleep(PING_TIMEOUT).then(() => {
+      throw new Error("Ping timeout");
+    });
+    return Promise.race([resultPromise, timeout]).catch((_e) => false);
+  }
+
   private async reconnect() {
     this.cancelReconnect = new CancelToken();
     while (this.isRunning && !this.cancelReconnect.cancelled) {
       try {
-        const connected = await super.pingJsDebugSessionWithTimeout();
+        const connected = await this.pingJsDebugSessionWithTimeout();
         if (connected) {
           // if we're connected to a responsive session, we can break
           break;
