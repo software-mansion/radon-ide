@@ -7,6 +7,7 @@ import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
+import { Metro } from "../project/metro";
 
 const PING_TIMEOUT = 1000;
 
@@ -132,6 +133,15 @@ export class DebugSessionImpl implements DebugSession, Disposable {
             break;
         }
       })
+    );
+    this.disposables.push(
+      this.consoleLogEventEmitter,
+      this.debuggerPausedEventEmitter,
+      this.debuggerResumedEventEmitter,
+      this.profilingCPUStartedEventEmitter,
+      this.profilingCPUStoppedEventEmitter,
+      this.bindingCalledEventEmitter,
+      this.debugSessionTerminatedEventEmitter
     );
   }
 
@@ -296,5 +306,68 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   private cancelStartingDebugSession() {
     this.cancelStartDebuggingToken.cancel();
     this.cancelStartDebuggingToken = new CancelToken();
+  }
+}
+
+export class ReconnectingDebugSession extends DebugSessionImpl {
+  private readonly sessionTerminatedSubscription: Disposable;
+  private cancelReconnect: CancelToken | undefined;
+
+  private isRunning: boolean = false;
+
+  constructor(
+    private metro: Metro,
+    options: DebugSessionOptions = { displayName: "Radon IDE Debugger" }
+  ) {
+    super(options);
+    this.sessionTerminatedSubscription = this.onDebugSessionTerminated(() => {
+      if (this.isRunning && this.cancelReconnect === undefined) {
+        this.reconnect();
+      }
+    });
+  }
+
+  public override async startJSDebugSession(configuration: JSDebugConfiguration) {
+    this.isRunning = true;
+    return super.startJSDebugSession(configuration);
+  }
+
+  public override async stop() {
+    this.isRunning = false;
+    this.cancelReconnect?.cancel();
+    this.cancelReconnect = undefined;
+    return super.stop();
+  }
+
+  private async reconnect() {
+    this.cancelReconnect = new CancelToken();
+    while (this.isRunning && !this.cancelReconnect.cancelled) {
+      try {
+        const connected = await super.pingJsDebugSessionWithTimeout();
+        if (connected) {
+          // if we're connected to a responsive session, we can break
+          break;
+        }
+        const websocketAddress = await this.metro.getDebuggerURL(undefined, this.cancelReconnect);
+        if (!websocketAddress) {
+          throw new Error("No connected device listed");
+        }
+        await super.startJSDebugSession({
+          websocketAddress,
+          displayDebuggerOverlay: false,
+          isUsingNewDebugger: this.metro.isUsingNewDebugger,
+          expoPreludeLineCount: this.metro.expoPreludeLineCount,
+          sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
+        });
+      } catch (e) {
+        // we ignore the errors and retry
+      }
+    }
+    this.cancelReconnect = undefined;
+  }
+
+  async dispose() {
+    this.sessionTerminatedSubscription.dispose();
+    await super.dispose();
   }
 }

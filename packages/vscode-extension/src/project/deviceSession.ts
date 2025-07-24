@@ -38,7 +38,7 @@ import {
   FatalErrorDescriptor,
   BundleErrorDescriptor,
 } from "../common/Project";
-import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
+import { DebugSession, DebugSource, ReconnectingDebugSession } from "../debugging/DebugSession";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
@@ -135,7 +135,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
 
     this.buildCache = this.applicationContext.buildCache;
     this.buildManager = this.applicationContext.buildManager;
-    this.debugSession = new DebugSessionImpl({
+    this.debugSession = new ReconnectingDebugSession(this.metro, {
       displayName: this.device.deviceInfo.displayName,
       useParentDebugSession: true,
     });
@@ -392,7 +392,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
       this.isActive = true;
       this.toolsManager.activate();
       if (this.startupMessage === StartupMessage.AttachingDebugger) {
-        this.debugSession = new DebugSessionImpl({
+        this.debugSession = new ReconnectingDebugSession(this.metro, {
           displayName: this.device.deviceInfo.displayName,
           useParentDebugSession: true,
         });
@@ -624,32 +624,6 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
     await this.debugSession.restart();
   }
 
-  private async reconnectJSDebuggerIfNeeded() {
-    // after reloading JS, we sometimes need to reconnect the JS debugger. This is
-    // needed specifically in Expo Go based environments where the reloaded runtime
-    // will be listed as a new target.
-    // Additionally, in some cases the old websocket endpoint would still be listed
-    // despite the runtime being terminated.
-    // In order to properly handle this case we first check if the websocket endpoint
-    // is still listed and if it is, we verify that the runtime is responding by
-    // requesting to execute some simple JS snippet.
-    const currentWsTarget = this.debugSession?.websocketTarget;
-    if (currentWsTarget) {
-      const possibleWsTargets = await this.metro.fetchWsTargets();
-      const currentWsTargetStillVisible = possibleWsTargets?.some(
-        (runtime) => runtime.webSocketDebuggerUrl === currentWsTarget
-      );
-      if (currentWsTargetStillVisible) {
-        // verify the runtime is responding
-        const isRuntimeResponding = await this.debugSession.pingJsDebugSessionWithTimeout();
-        if (isRuntimeResponding) {
-          return;
-        }
-      }
-    }
-    await this.connectJSDebugger();
-  }
-
   private async reloadMetro() {
     this.updateStartupMessage(StartupMessage.WaitingForAppToLoad);
     const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
@@ -662,8 +636,6 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
     } finally {
       bundleErrorSubscription.dispose();
     }
-    this.updateStartupMessage(StartupMessage.AttachingDebugger);
-    await this.reconnectJSDebuggerIfNeeded();
   }
 
   private async launchApp(cancelToken: CancelToken) {
@@ -1012,10 +984,6 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
       }
 
       await this.device.sendDeepLink(link, this.maybeBuildResult, terminateApp);
-
-      if (terminateApp) {
-        this.reconnectJSDebuggerIfNeeded();
-      }
     }
   }
 
