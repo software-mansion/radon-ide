@@ -8,6 +8,7 @@ import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
+  DeviceRotationDirection,
   DeviceRotationType,
   DeviceSessionsManagerState,
   DeviceSessionState,
@@ -61,6 +62,13 @@ const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
+
+const ROTATIONS: DeviceRotationType[] = [
+  DeviceRotationType.LandscapeLeft,
+  DeviceRotationType.Portrait,
+  DeviceRotationType.LandscapeRight,
+  DeviceRotationType.PortraitUpsideDown,
+] as const;
 
 export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
   private launchConfigsManager = new LaunchConfigurationsManager();
@@ -222,7 +230,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       selectedLaunchConfiguration: launchConfig,
     });
   }
-
 
   public onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
     this.updateProjectState(state);
@@ -513,6 +520,13 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     } catch (err) {
       Logger.error(`Failed to update rotation configuration: ${err}`);
     }
+  }
+
+  public dispatchDirectionalRotate(direction: DeviceRotationDirection) {
+    const rotation = this.projectState.rotation;
+    const currentIndex = ROTATIONS.indexOf(rotation);
+    const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
+    this.dispatchRotate(ROTATIONS[newIndex]);
   }
 
   public async inspectElementAt(

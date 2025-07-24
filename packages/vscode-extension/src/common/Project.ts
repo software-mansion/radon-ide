@@ -151,6 +151,11 @@ export enum DeviceRotationType {
   LandscapeRight = "LandscapeRight"
 }
 
+export enum DeviceRotationDirection {
+  Clockwise = -1,
+  Anticlockwise = 1
+}
+
 export type AppOrientationType = DeviceRotationType | "Landscape";
 
 export function isOfEnumDeviceRotationType(value: any): value is DeviceRotationType {
@@ -308,6 +313,7 @@ export interface ProjectInterface {
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;
   dispatchRotate(rotation: DeviceRotationType): void;
+  dispatchDirectionalRotate(direction: DeviceRotationDirection): void;
   inspectElementAt(
     xRatio: number,
     yRatio: number,

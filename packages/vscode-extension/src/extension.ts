@@ -34,7 +34,7 @@ import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebu
 import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
 import { IDEPanelMoveTarget } from "./common/utils";
-import { DeviceRotationType } from "./common/Project";
+import { DeviceRotationDirection } from "./common/Project";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -404,36 +404,21 @@ async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
 }
 
-const ROTATIONS: DeviceRotationType[] = [
-  DeviceRotationType.LandscapeLeft,
-  DeviceRotationType.Portrait,
-  DeviceRotationType.LandscapeRight,
-  DeviceRotationType.PortraitUpsideDown,
-] as const;
 
-enum RotationDirection {
-  Clockwise = -1,
-  Anticlockwise = 1
-}
-
-async function rotateDevice(direction: RotationDirection) {
+async function rotateDevice(direction: DeviceRotationDirection) {
   const project = IDE.getInstanceIfExists()?.project;
   if (!project) {
     throw new Error("Radon IDE is not initialized yet.");
   }
-  const projectState = await project.getProjectState();
-  const rotation = projectState.rotation;
-  const currentIndex = ROTATIONS.indexOf(rotation);
-  const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
-  project.dispatchRotate(ROTATIONS[newIndex]);
+  project.dispatchDirectionalRotate(direction);
 }
 
 async function rotateDeviceAnticlockwise() {
-  await rotateDevice(RotationDirection.Anticlockwise)
+  await rotateDevice(DeviceRotationDirection.Anticlockwise)
 }
 
 async function rotateDeviceClockwise() {
-  await rotateDevice(RotationDirection.Clockwise)
+  await rotateDevice(DeviceRotationDirection.Clockwise)
 }
 
 async function openChat() {
