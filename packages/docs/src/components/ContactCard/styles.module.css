@@ -1,6 +1,5 @@
 .card {
   border: 1px solid var(--radon-border-grid-subtle);
-  /* background-color: var(--swm-off-white); */
   background-color: var(--swm-background);
   padding: 16px;
   display: flex;
@@ -23,9 +22,7 @@
   font-weight: 500;
 }
 
-
 .card p {
-  /* color: var(--swm-navy-light-60); */
   color: var(--radon-color-secondary);
 }
 
@@ -55,4 +52,3 @@
 .contactButton:hover svg {
   transform: translateX(4px);
 }
-

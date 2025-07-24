@@ -65,7 +65,6 @@
 
   --swm-red-dark-140: #5a3b46;
   --swm-red-dark-120: #914f55;
-  --swm-red-dark-110: #c86364;
   --swm-red-dark-100: #ff7774;
   --swm-red-dark-80: #ff8b88;
   --swm-red-dark-60: #ffb4b2;
@@ -94,18 +93,18 @@
   --swm-off-navy: #272b3c;
   --swm-navy: #232736;
 
-    /* Rebranding colors */
+  /* Rebranding colors */
   --radon-color-background: #111111;
   --radon-color-border: #333333;
   --radon-border-grid-subtle: #222222;
   --radon-button: #248363;
-  --radon-button-hover: #186E51;
+  --radon-button-hover: #186e51;
   --radon-icon: var(--swm-green-light-100);
-  
+
   /* --- Text rebranding --- */
   --radon-color-primary: #fafafa;
   --radon-color-secondary: #a1a1a1;
-  --radon-button-text:#ffffff;
+  --radon-button-text: #ffffff;
 
   /* Infima main colors */
   --ifm-color-primary: var(--swm-navy-light-100);
@@ -250,7 +249,7 @@
 
   --swm-landing-horse: var(--swm-navy-light-100);
 
-    --swm-landing-button-green: var(--swm-green-light-100);
+  --swm-landing-button-green: var(--swm-green-light-100);
   --swm-landing-button-navy: var(--swm-navy-light-100);
 
   --swm-landing-feature-item: var(--swm-purple-light-40);
@@ -306,14 +305,9 @@
   --swm-compatibility-not-supported-background: var(--swm-red-light-80);
   --swm-compatibility-maybe-background: var(--swm-blue-light-80);
   --swm-compatibility-text-color: var(--swm-white);
-
-  /* App.js 2025 */
-  --swm-appjs-2025-primary: #484dfc;
-  --swm-appjs-2025-primary-hover: #7189ff;
-  --swm-appjs-2025-background: #f7eded;
 }
 
-:root[data-theme='dark'] {
+:root[data-theme="dark"] {
   /* Infima main colors */
   --ifm-color-primary: var(--radon-color-primary);
 
@@ -412,7 +406,7 @@
   --swm-searchbar-border: var(--swm-navy-dark-60);
   --swm-searchbar-border-hover: var(--swm-green-dark-80);
 
- --swm-search-hit-background: var(--swm-green-dark-120);
+  --swm-search-hit-background: var(--swm-green-dark-120);
   --swm-search-hit-background-hover: var(--swm-green-dark-40);
   --swm-search-hit-border: var(--swm-green-dark-120);
   --swm-search-hit-border-hover: var(--swm-green-dark-40);
