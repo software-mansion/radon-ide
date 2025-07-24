@@ -29,7 +29,10 @@ const { RCTUIManager } = NativeModules;
 // This means, we are experiencing a lag between current orientation and information from Dimensions API,
 // which is why additional listener is added to the Dimensions API to amend the effect.
 
-// Mapping from namedOrientationDidChangeEvent names to DeviceRotationType names sent to the extension.
+// Mapping from namedOrientationDidChangeEvent names to DeviceRotationType names or "Landscape" specific case
+// sent to the extension.
+// "Landscape" case happens when we cannot infer the detailed landscape orientation of the app and
+// leave the interpretation to the frontend of the extension.
 const orientationMapping = {
   "portrait-primary": "Portrait",
   "portrait-secondary": "PortraitUpsideDown",
@@ -37,15 +40,14 @@ const orientationMapping = {
   "landscape-secondary": "LandscapeRight",
 };
 
-// currentOrientation in the format supported by the namedOrientationDidChangeEvent
-let currentMappedOrientation = "Portrait";
-let lastRegisteredOrientation = "portrait-primary";
+let currentMappedOrientation = null;
+let lastRegisteredOrientation = null;
 
 // The landscape orientation from the eventListener object is different on iOS and Android.
 // iOs -> "landscape-secondary" === LandscapeLeft
 // Android -> "landscape-primary" === LandscapeRight
-// hence the below function is usde to map the orientation to a common format
-// used by the DeviceRotationType in the extension.
+// hence the below function is used to map the orientation to a common format
+// used by the AppOrientationType in the extension.
 
 const getMappedOrientation = (orientation, isLandscape) => {
   if (Platform.OS === "ios") {
@@ -53,6 +55,16 @@ const getMappedOrientation = (orientation, isLandscape) => {
     // this does not cause infinite recursion calls, because currentOrientation is never set to "portrait-secondary"
     if (orientation === "portrait-secondary" ) {
       return currentMappedOrientation;
+    }
+
+    // No previous namedOrientationDidChangeEvent fired 
+    // -> we only return partial information about the orientation
+    // This is fine in the cases we can handle, because it only happens during intialization
+    // and cases when the user forces app orientation programatically, without firing the event on iOS
+    // and later if the orientation does not change, further messages with this state 
+    // are not sent to the extension.
+    if(orientation === null){
+      return isLandscape ? "Landscape" : "Portrait";
     }
 
     // If the app is landscape and device is rotated to portrait-primary or portrait-secondary,
@@ -77,6 +89,7 @@ const getMappedOrientation = (orientation, isLandscape) => {
       return "LandscapeRight";
     }
   }
+
   // for android simply return the mapping
   return orientationMapping[orientation];
 };
@@ -90,18 +103,15 @@ const initializeOrientationAndSendInitMessage = () => {
   // infer currentOrientation based on the screen dimensions
   // android still fires the namedOrientationDidChangeEvent on app load,
   // but for safety still set it here first
-  // const landscapeDeviceFormat = Platform.OS === "ios" ? "landscape-secondary" : "landscape-primary";
-  currentMappedOrientation = isLandscape ? "LandscapeLeft" : "Portrait";
+  currentMappedOrientation = isLandscape ? "Landscape" : "Portrait";
   inspectorBridge.sendMessage({
-    type: "appOrientationInit",
-    data: isLandscape,
+    type: "appOrientationChanged",
+    data: currentMappedOrientation,
   });
 };
 
 const updateOrientationAndSendMessage = (orientation) => {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
-  console.log(Dimensions.get("screen"));
-  console.log(screenWidth, screenHeight);
   
   const isLandscape = screenWidth > screenHeight;
   const mappedOrientation = getMappedOrientation(orientation, isLandscape);
@@ -138,8 +148,14 @@ export function setup() {
 
   initializeOrientationAndSendInitMessage();
 
+  
+  // The below line may throw a warning on iOS, because RCTUIManager does not implement the addListener method
   orientationEventEmitter = new NativeEventEmitter(RCTUIManager);
   orientationEventEmitter.addListener("namedOrientationDidChange", handleOrientationChange);
+
+  if(Platform.OS === "ios") {
+    console.log("Above warnings may be ignored - RCTUIManager does not implement the addListener method, but is required to succesfully listen to namedOrientationDidChange events on iOS.");
+  }
 
   // Dimension change lags behind Orientation change in the IOS case, so we add a second listener to amend the effect
   // Explained in the context above.
@@ -157,5 +173,6 @@ export function cleanup() {
 
   if (dimensionEventSubscription) {
     dimensionEventSubscription.remove();
+    dimensionEventSubscription = null;
   }
 }

@@ -1,5 +1,5 @@
 import { Disposable } from "vscode";
-import { DeviceRotationType, NavigationRoute } from "../common/Project";
+import { AppOrientationType, NavigationRoute } from "../common/Project";
 import { Logger } from "../Logger";
 
 export interface RadonInspectorBridgeEvents {
@@ -13,8 +13,7 @@ export interface RadonInspectorBridgeEvents {
   devtoolPluginsChanged: [{ plugins: string[] }];
   pluginMessage: [{ pluginId: string; type: string; data: any }];
   isProfilingReact: [boolean];
-  appOrientationChanged: [DeviceRotationType];
-  appOrientationInit: [boolean];
+  appOrientationChanged: [AppOrientationType];
 }
 
 export interface RadonInspectorBridge {

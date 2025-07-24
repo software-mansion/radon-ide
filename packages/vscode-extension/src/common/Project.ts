@@ -151,6 +151,8 @@ export enum DeviceRotationType {
   LandscapeRight = "LandscapeRight"
 }
 
+export type AppOrientationType = DeviceRotationType | "Landscape";
+
 export function isOfEnumDeviceRotationType(value: any): value is DeviceRotationType {
   return Object.values(DeviceRotationType).includes(value);
 }

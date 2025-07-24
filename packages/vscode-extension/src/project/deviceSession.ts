@@ -38,6 +38,7 @@ import {
   FatalErrorDescriptor,
   BundleErrorDescriptor,
   DeviceRotationType,
+  AppOrientationType,
 } from "../common/Project";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { throttle, throttleAsync } from "../utilities/throttle";
@@ -358,29 +359,29 @@ export class DeviceSession
         this.emitStateChange();
       }
     });
-    devtools.onEvent("appOrientationInit", (isAppLandscape: boolean) => {
-      const isDeviceLandscape =
+    devtools.onEvent("appOrientationChanged", (orientation: AppOrientationType) => {
+      const isLandscape =
         this.rotation === DeviceRotationType.LandscapeLeft ||
         this.rotation === DeviceRotationType.LandscapeRight;
-      if (isAppLandscape) {
-        if (isDeviceLandscape) {
+
+      // if the app orientation is equal to "Landscape", it means we do not have enuogh
+      // information on the application site to infer the detailed orientation. 
+      // "Landscape" will only be messaged upon the initialisation - after that the app can infer the orientation
+      // based on our assumptions.
+      // If the device is in landscape mode, we assume that the app orientation is the same as the device rotation.
+      // Otherwise, it means the app is initialised and does not have previous orientation - 
+      if (orientation === "Landscape") {
+        if (isLandscape) {
           this.appOrientation = this.rotation;
         } else {
           this.appOrientation = DeviceRotationType.LandscapeLeft;
         }
+      } else {
+        this.appOrientation = orientation;
       }
-      if (!isAppLandscape) {
-        // PortaitUspideDown not supported yet
-        this.appOrientation = DeviceRotationType.Portrait;
-      }
-      this.emitStateChange();
-    });
 
-    devtools.onEvent("appOrientationChanged", (orientation) => {
-      this.appOrientation = orientation;
       this.emitStateChange();
     });
-    // devtools.emitEvent("appOrientationInit", this.rotation);
     return devtools;
   }
 

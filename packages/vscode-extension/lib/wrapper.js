@@ -123,7 +123,7 @@ function extractComponentStack(startNode, viewDataHierarchy) {
 }
 
 function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, callback) {
-  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
 
   RNInternals.getInspectorDataForViewAtPoint(
     mainContainerRef.current,

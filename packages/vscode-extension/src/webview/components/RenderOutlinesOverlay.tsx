@@ -85,7 +85,6 @@ function RenderOutlinesOverlay() {
           orientationRef.current.deviceOrientation,
           boundingRect
         );
-        console.log("HUGE GUTS", frameRect, boundingRect)
         const outline = {
           id: fiberId,
           name: name,
