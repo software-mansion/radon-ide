@@ -11,6 +11,7 @@ import { registerMcpTools } from "./toolRegistration";
 import { Session } from "./models";
 import { extensionContext } from "../../utilities/extensionContext";
 import { ConnectionListener } from "../shared/ConnectionListener";
+
 export class LocalMcpServer implements Disposable {
   private session: Session | null = null;
 
@@ -40,9 +41,10 @@ export class LocalMcpServer implements Disposable {
     this.initializeHttpServer();
   }
 
-  public dispose(): void {
+  public async dispose(): Promise<void> {
     this.connectionSubscribtion.dispose();
     this.mcpServer?.close();
+    this.expressServer?.closeAllConnections();
     this.expressServer?.close();
     this.session = null;
   }
@@ -103,7 +105,7 @@ export class LocalMcpServer implements Disposable {
         };
 
         // Clean up old mcp server
-        this.mcpServer?.close();
+        await this.mcpServer?.close();
 
         this.mcpServer = new McpServer({
           name: "RadonAI",
