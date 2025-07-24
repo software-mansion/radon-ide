@@ -2,6 +2,8 @@ import { RefObject } from "react";
 import { Frame } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceContants";
 import DimensionsBox from "./DimensionsBox";
+import { translateAppToPreviewCoordinates } from "../utilities/translateAppCoordinates";
+import { useProject } from "../providers/ProjectProvider";
 
 interface InspectOverlayProps {
   inspectFrame: Frame;
@@ -27,13 +29,26 @@ function InspectOverlay({
   device,
   wrapperDivRef,
 }: InspectOverlayProps) {
-  const cssProperties = getCssProperties(inspectFrame);
+  const { selectedDeviceSession, projectState } = useProject();
+  if (selectedDeviceSession?.status !== "running") {
+    return null;
+  }
+  const translatedInspectFrame = translateAppToPreviewCoordinates(
+    selectedDeviceSession?.appOrientation,
+    projectState.rotation,
+    inspectFrame
+  );
 
+  const cssProperties = getCssProperties(translatedInspectFrame);
   return (
     <div className="phone-screen phone-inspect-overlay">
       <div className="inspect-area" style={cssProperties} />
       {isInspecting && (
-        <DimensionsBox device={device} frame={inspectFrame} wrapperDivRef={wrapperDivRef} />
+        <DimensionsBox
+          device={device}
+          frame={translatedInspectFrame}
+          wrapperDivRef={wrapperDivRef}
+        />
       )}
     </div>
   );

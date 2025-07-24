@@ -26,6 +26,7 @@ import Device from "../Preview/Device";
 import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
 import { useDeviceFrame } from "../Preview/Device/hooks";
+import { translatePreviewToAppCoordinates } from "../utilities/translateAppCoordinates";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -81,7 +82,7 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
-  const { selectedDeviceSession, project } = useProject();
+  const { selectedDeviceSession, project, projectState } = useProject();
 
   const { sendTelemetry } = useUtils();
 
@@ -175,6 +176,9 @@ function Preview({
     event: MouseEvent<HTMLDivElement>,
     type: MouseMove | "Leave" | "RightButtonDown"
   ) {
+    if(selectedDeviceSession?.status !== "running") {
+      return;
+    }
     if (type === "Leave") {
       return;
     }
@@ -182,12 +186,14 @@ function Preview({
       sendTelemetry("inspector:show-component-stack", {});
     }
 
-    const { x: clampedX, y: clampedY } = getNormalizedTouchCoordinates(event);
+    const clampedCoordinates = getNormalizedTouchCoordinates(event);
+    const {x: translatedX, y: translatedY} = translatePreviewToAppCoordinates(selectedDeviceSession.appOrientation, projectState.rotation, clampedCoordinates)
 
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
-    project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
+    project.inspectElementAt(translatedX, translatedY, requestStack, (inspectData) => {
       if (requestStack && inspectData?.stack) {
+        
         if (showInspectStackModal) {
           setInspectStackData({
             requestLocation: {
@@ -203,6 +209,9 @@ function Preview({
             onInspectorItemSelected(firstItem);
           }
         }
+      }
+      if(selectedDeviceSession?.status === "running") {
+        console.log(selectedDeviceSession.appOrientation)
       }
       setInspectFrame(inspectData.frame);
     });
