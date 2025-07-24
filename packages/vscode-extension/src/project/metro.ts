@@ -15,6 +15,7 @@ import { getOpenPort } from "../utilities/common";
 import { DebugSource } from "../debugging/DebugSession";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
+import { getCustomDevCommand, getPortConfiguration } from "../utilities/launchConfiguration";
 
 const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
@@ -328,7 +329,11 @@ export class MetroLauncher extends Metro implements Disposable {
   }
 
   public dispose() {
-    this.subprocess?.kill(9);
+    try {
+      this.subprocess?.cancel();
+    } catch {
+      this.subprocess?.kill(9);
+    }
   }
 
   public async ready() {
@@ -388,6 +393,20 @@ export class MetroLauncher extends Metro implements Disposable {
     });
   }
 
+  private launchCustomDev(
+    appRootFolder: string,
+    port: number,
+    customDevEnv: typeof process.env,
+    devCommand: string
+  ): ChildProcess {
+    const commands = devCommand.split(" ");
+    return exec("npx", [...commands, "--port", port.toString()], {
+      cwd: appRootFolder,
+      env: customDevEnv,
+      buffer: false,
+    });
+  }
+
   private launchPackager(
     appRootFolder: string,
     port: number,
@@ -435,7 +454,12 @@ export class MetroLauncher extends Metro implements Disposable {
     }
     const isExtensionDev = extensionContext.extensionMode === ExtensionMode.Development;
 
-    const port = await getOpenPort();
+    let port = 0;
+    if (getPortConfiguration()) {
+      port = getPortConfiguration();
+    } else {
+      port = await getOpenPort();
+    }
 
     // NOTE: this is needed to capture metro's open-stack-frame calls.
     // See `packages/vscode-extension/atom` script for more details.
@@ -467,6 +491,8 @@ export class MetroLauncher extends Metro implements Disposable {
         launchConfiguration.expoStartArgs,
         metroEnv
       );
+    } else if (getCustomDevCommand()) {
+      bundlerProcess = this.launchCustomDev(appRoot, port, metroEnv, getCustomDevCommand());
     } else {
       bundlerProcess = this.launchPackager(appRoot, port, libPath, resetCache, metroEnv);
     }
