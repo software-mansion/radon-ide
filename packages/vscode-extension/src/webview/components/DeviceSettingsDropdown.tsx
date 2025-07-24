@@ -3,6 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
 import * as Switch from "@radix-ui/react-switch";
+import { use$ } from "@legendapp/state/react";
 
 import "./shared/Dropdown.css";
 import "./shared/RadioGroup.css";
@@ -12,7 +13,6 @@ import "./shared/SwitchGroup.css";
 
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
-import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import { AppPermissionType, DeviceSettings, ProjectInterface } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
@@ -23,6 +23,7 @@ import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import { useStore } from "../providers/storeProvider";
 
 const contentSizes = [
   "xsmall",
@@ -52,8 +53,11 @@ const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon
 ];
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
+  const store$ = useStore();
+  const showDeviceFrame = use$(store$.workspaceConfiguration.showDeviceFrame);
+
   const { project, selectedDeviceSession, deviceSettings } = useProject();
-  const { showDeviceFrame, update } = useWorkspaceConfig();
+
   const { openModal } = useModal();
 
   const resetOptions =
@@ -214,7 +218,9 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <Switch.Root
               className="switch-root small-switch"
               id="show-device-frame"
-              onCheckedChange={(checked) => update("showDeviceFrame", checked)}
+              onCheckedChange={(checked) =>
+                store$.workspaceConfiguration.showDeviceFrame.set(checked)
+              }
               defaultChecked={showDeviceFrame}
               style={{ marginLeft: "auto" }}>
               <Switch.Thumb className="switch-thumb" />

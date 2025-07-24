@@ -26,7 +26,6 @@ import {
   setExtensionContext,
 } from "./utilities/extensionContext";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
-import { PanelLocation } from "./common/WorkspaceConfig";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
 import { registerRadonChat, registerRadonAi } from "./ai";
@@ -37,6 +36,7 @@ import { IDEPanelMoveTarget } from "./common/utils";
 import { launchConfigurationFromOptions } from "./project/launchConfigurationsManager";
 import { isIdeConfig } from "./utilities/launchConfiguration";
 import assert from "assert";
+import { PanelLocation } from "./common/State";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 

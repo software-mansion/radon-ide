@@ -1,6 +1,7 @@
 import _ from "lodash";
 import React, { PropsWithChildren } from "react";
 import * as Select from "@radix-ui/react-select";
+import { use$ } from "@legendapp/state/react";
 import { DeviceInfo, DevicePlatform } from "../../common/DeviceManager";
 import "./DeviceSelect.css";
 import "./shared/Dropdown.css";
@@ -9,8 +10,8 @@ import { useDevices } from "../providers/DevicesProvider";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
-import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import { VscodeBadge as Badge } from "@vscode-elements/react-elements";
+import { useStore } from "../providers/storeProvider";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -85,10 +86,13 @@ function partitionDevices(devices: DeviceInfo[]): Record<string, DeviceInfo[]> {
 }
 
 function DeviceSelect() {
+  const store$ = useStore();
+  const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
+
   const { selectedDeviceSession, projectState, project } = useProject();
   const { devices, deviceSessionsManager } = useDevices();
   const { openModal } = useModal();
-  const { stopPreviousDevices } = useWorkspaceConfig();
+
   const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
 
   const hasNoDevices = devices.length === 0;
