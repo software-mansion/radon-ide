@@ -11,7 +11,6 @@ const {
   findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
-
 require("./react_devtools_agent"); // needs to be loaded before inspector_bridge is used
 const inspectorBridge = require("./inspector_bridge");
 
@@ -44,6 +43,9 @@ const InternalImports = {
   },
   get setupRenderOutlinesPlugin() {
     return require("./render_outlines").setup;
+  },
+  get setupOrientationPlugin() {
+    return require("./orientation").setup;
   },
 };
 
@@ -121,7 +123,7 @@ function extractComponentStack(startNode, viewDataHierarchy) {
 }
 
 function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, callback) {
-  const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
   RNInternals.getInspectorDataForViewAtPoint(
     mainContainerRef.current,
@@ -306,15 +308,21 @@ export function AppWrapper({ children, initialProps, fabric }) {
           break;
         case "inspect":
           const { id, x, y, requestStack } = data;
-          getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, (inspectorData) => {
-            inspectorBridge.sendMessage({
-              type: "inspectData",
-              data: {
-                id,
-                ...inspectorData,
-              },
-            });
-          });
+          getInspectorDataForCoordinates(
+            mainContainerRef,
+            x,
+            y,
+            requestStack,
+            (inspectorData) => {
+              inspectorBridge.sendMessage({
+                type: "inspectData",
+                data: {
+                  id,
+                  ...inspectorData,
+                },
+              });
+            }
+          );
           break;
         case "showStorybookStory":
           showStorybookStory(data.componentTitle, data.storyName);
@@ -342,6 +350,8 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
     InternalImports.setupRenderOutlinesPlugin();
     InternalImports.setupNetworkPlugin();
+    // Initialised eventListeners, cleanup needed
+    const orientationCleanup = InternalImports.setupOrientationPlugin();
 
     const originalErrorHandler = global.ErrorUtils.getGlobalHandler();
     LogBox.ignoreAllLogs(true);
@@ -360,6 +370,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
     global.ErrorUtils.setGlobalHandler(wrappedGlobalErrorHandler);
     return () => {
       global.ErrorUtils.setGlobalHandler(originalErrorHandler);
+      orientationCleanup();
     };
   }, []);
 
