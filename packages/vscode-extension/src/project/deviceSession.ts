@@ -4,11 +4,11 @@ import assert from "assert";
 import _ from "lodash";
 import {
   commands,
+  window,
   DebugSessionCustomEvent,
   Disposable,
   extensions,
   Uri,
-  window,
   workspace,
 } from "vscode";
 import { MetroLauncher, MetroDelegate } from "./metro";
@@ -51,6 +51,8 @@ import { focusSource } from "../utilities/focusSource";
 import { ApplicationContext } from "./ApplicationContext";
 import { BuildCache } from "../builders/BuildCache";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
+import { Output } from "../common/OutputChannel";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -128,7 +130,8 @@ export class DeviceSession
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private rotation: DeviceRotationType,
-    private readonly deviceSessionDelegate: DeviceSessionDelegate
+    private readonly deviceSessionDelegate: DeviceSessionDelegate,
+    private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     this.devtools = this.makeDevtools();
     this.metro = new MetroLauncher(this.devtools, this);
@@ -208,12 +211,11 @@ export class DeviceSession
     const appRoot = this.applicationContext.appRootFolder;
     const launchConfig = this.applicationContext.launchConfig;
     const hasCachedBuild = this.applicationContext.buildCache.hasCachedBuild({
-      platform: this.device.platform,
+      platform: this.platform,
       appRoot,
       env: launchConfig.env,
     });
-    const platformKey: "ios" | "android" =
-      this.device.platform === DevicePlatform.IOS ? "ios" : "android";
+    const platformKey: "ios" | "android" = this.platform === DevicePlatform.IOS ? "ios" : "android";
     const fingerprintCommand = launchConfig.customBuild?.[platformKey]?.fingerprintCommand;
     if (hasCachedBuild) {
       const fingerprint = await this.applicationContext.buildCache.calculateFingerprint({
@@ -222,7 +224,7 @@ export class DeviceSession
         fingerprintCommand,
       });
       const isCacheStale = await this.applicationContext.buildCache.isCacheStale(fingerprint, {
-        platform: this.device.platform,
+        platform: this.platform,
         appRoot,
         env: launchConfig.env,
       });
@@ -431,7 +433,7 @@ export class DeviceSession
       this.resetStartingState();
 
       getTelemetryReporter().sendTelemetryEvent("url-bar:reload-requested", {
-        platform: this.device.platform,
+        platform: this.platform,
         method: type,
       });
       const result = await this.performReloadActionInternal(type);
@@ -452,7 +454,7 @@ export class DeviceSession
           kind: "build",
           message: e.message,
           buildType: e.buildType,
-          platform: this.device.platform,
+          platform: this.platform,
         };
         this.emitStateChange();
       }
@@ -579,11 +581,11 @@ export class DeviceSession
 
   private async autoReload() {
     getTelemetryReporter().sendTelemetryEvent("url-bar:restart-requested", {
-      platform: this.device.platform,
+      platform: this.platform,
     });
 
     const launchConfig = this.applicationContext.launchConfig;
-    const platformKey = this.device.platform === DevicePlatform.IOS ? "ios" : "android";
+    const platformKey = this.platform === DevicePlatform.IOS ? "ios" : "android";
     const fingerprintOptions = {
       appRoot: this.applicationContext.appRootFolder,
       env: launchConfig.env,
@@ -595,7 +597,7 @@ export class DeviceSession
       const currentFingerprint = await this.buildCache.calculateFingerprint(fingerprintOptions);
       if (
         await this.buildCache.isCacheStale(currentFingerprint, {
-          platform: this.device.platform,
+          platform: this.platform,
           appRoot: this.applicationContext.appRootFolder,
           env: launchConfig.env,
         })
@@ -679,7 +681,7 @@ export class DeviceSession
   private async launchApp(cancelToken: CancelToken) {
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
-      platform: this.device.platform,
+      platform: this.platform,
     });
     const launchConfig = this.applicationContext.launchConfig;
 
@@ -688,7 +690,7 @@ export class DeviceSession
     // bundle instead.
     const shouldWaitForAppLaunch = launchConfig.preview.waitForAppLaunch;
     const launchArguments =
-      (this.device.platform === DevicePlatform.IOS && launchConfig.ios?.launchArguments) || [];
+      (this.platform === DevicePlatform.IOS && launchConfig.ios?.launchArguments) || [];
     const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
 
     this.updateStartupMessage(StartupMessage.Launching);
@@ -707,7 +709,7 @@ export class DeviceSession
           previewURL
         );
         getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
-          platform: this.device.platform,
+          platform: this.platform,
         });
       }, 30000);
       waitForAppReady.then(() => clearTimeout(reportWaitingStuck));
@@ -735,7 +737,7 @@ export class DeviceSession
     Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
     getTelemetryReporter().sendTelemetryEvent(
       "app:launch:completed",
-      { platform: this.device.platform },
+      { platform: this.platform },
       { durationSec: launchDurationSec }
     );
 
@@ -752,17 +754,46 @@ export class DeviceSession
     }
   }
 
+  /**
+   * Returns true if some native build dependencies have change and we should perform
+   * a native build despite the fact the fingerprint indicates we don't need to.
+   * This is currently only used for the scenario when we detect that pods need
+   * to be reinstalled for iOS.
+   */
+  private async checkBuildDependenciesChanged(platform: DevicePlatform): Promise<boolean> {
+    const dependencyManager = this.applicationContext.dependencyManager;
+    if (platform === DevicePlatform.IOS) {
+      return !(await dependencyManager.checkPodsInstallationStatus());
+    }
+    return false;
+  }
+
   private async buildApp({ clean, cancelToken }: { clean: boolean; cancelToken: CancelToken }) {
     const buildStartTime = Date.now();
     this.updateStartupMessage(StartupMessage.Building);
     const launchConfiguration = this.applicationContext.launchConfig;
-    const buildType = await inferBuildType(this.device.platform, launchConfiguration);
+    const buildType = await inferBuildType(this.platform, launchConfiguration);
+
+    // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
+    const buildDependenciesChanged = await this.checkBuildDependenciesChanged(this.platform);
+
     const buildConfig = createBuildConfig(
-      this.device.platform,
-      clean,
+      this.platform,
+      clean || buildDependenciesChanged,
       launchConfiguration,
       buildType
     );
+    const buildOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
+      this.platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
+    );
+
+    const dependencyManager = this.applicationContext.dependencyManager;
+    await dependencyManager.ensureDependenciesForBuild(
+      buildConfig,
+      buildOutputChannel,
+      cancelToken
+    );
+
     this.hasStaleBuildCache = false;
     this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, {
       progressListener: throttle((stageProgress: number) => {
@@ -772,13 +803,14 @@ export class DeviceSession
         }
       }, 100),
       cancelToken,
+      buildOutputChannel,
     });
     const buildDurationSec = (Date.now() - buildStartTime) / 1000;
     Logger.info("Build completed in", buildDurationSec.toFixed(2), "sec.");
     getTelemetryReporter().sendTelemetryEvent(
       "build:completed",
       {
-        platform: this.device.platform,
+        platform: this.platform,
       },
       { durationSec: buildDurationSec }
     );
@@ -876,7 +908,7 @@ export class DeviceSession
           kind: "build",
           message: e.message,
           buildType: e.buildType,
-          platform: this.device.platform,
+          platform: this.platform,
         };
       } else {
         this.status = "fatalError";
@@ -884,7 +916,7 @@ export class DeviceSession
           kind: "build",
           message: (e as Error).message,
           buildType: null,
-          platform: this.device.platform,
+          platform: this.platform,
         };
       }
       throw e;

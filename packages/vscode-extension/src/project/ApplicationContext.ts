@@ -1,38 +1,78 @@
-import { Disposable } from "vscode";
+import path from "path";
+import { Disposable, workspace } from "vscode";
+import { loadProjectEnv } from "@expo/env";
+import _ from "lodash";
 import { BuildCache } from "../builders/BuildCache";
 import { DependencyManager } from "../dependency/DependencyManager";
 import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
-import { LaunchConfiguration } from "../common/LaunchConfig";
-import { OutputChannelRegistry } from "./OutputChannelRegistry";
+import { LaunchConfiguration, LaunchOptions } from "../common/LaunchConfig";
+import { Logger } from "../Logger";
 
-function createBuildManager(
-  dependencyManager: DependencyManager,
-  buildCache: BuildCache,
-  outputChannelRegistry: OutputChannelRegistry
-) {
-  return new BatchingBuildManager(
-    new BuildManagerImpl(dependencyManager, buildCache, outputChannelRegistry)
-  );
+/**
+ * Represents a launch configuration that has been resolved with additional properties.
+ */
+export type ResolvedLaunchConfig = LaunchOptions & {
+  absoluteAppRoot: string;
+  preview: {
+    waitForAppLaunch: boolean;
+  };
+  env: Record<string, string>;
+};
+
+function resolveEnvironment(
+  appRoot: string,
+  configuredEnv: Record<string, string>
+): Record<string, string> {
+  const systemEnv = process.env as NodeJS.ProcessEnv;
+  const mergedEnv = { ...systemEnv, ...configuredEnv };
+  // load the dotenv files for the project into `mergedEnv`
+  const loadEnvResult = loadProjectEnv(appRoot, { force: true, systemEnv: mergedEnv });
+
+  if (loadEnvResult.result === "loaded") {
+    Logger.info(
+      `Project in "${appRoot}" loaded environment variables from .env files:`,
+      loadEnvResult.files
+    );
+  }
+
+  // filter out any `undefined` values from the environment variables
+  const env = _.pickBy(mergedEnv, _.isString);
+  return env;
+}
+
+function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunchConfig {
+  const appRoot = configuration.appRoot;
+  const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
+
+  const configuredEnv = configuration.env || {};
+
+  return {
+    ...configuration,
+    get env() {
+      return resolveEnvironment(absoluteAppRoot, configuredEnv);
+    },
+    absoluteAppRoot,
+    preview: {
+      waitForAppLaunch: configuration.preview?.waitForAppLaunch ?? true,
+    },
+  };
 }
 
 export class ApplicationContext implements Disposable {
   public dependencyManager: DependencyManager;
   public buildManager: BuildManager;
+  public launchConfig: ResolvedLaunchConfig;
   private disposables: Disposable[] = [];
 
   constructor(
-    public launchConfig: LaunchConfiguration,
-    public readonly buildCache: BuildCache,
-    private readonly outputChannelRegistry: OutputChannelRegistry
+    launchConfig: LaunchConfiguration,
+    public readonly buildCache: BuildCache
   ) {
+    this.launchConfig = resolveLaunchConfig(launchConfig);
     this.dependencyManager = new DependencyManager(this.launchConfig);
-    const buildManager = createBuildManager(
-      this.dependencyManager,
-      this.buildCache,
-      this.outputChannelRegistry
-    );
+    const buildManager = new BatchingBuildManager(new BuildManagerImpl(buildCache));
     this.buildManager = buildManager;
 
     this.disposables.push(this.dependencyManager, buildManager);
@@ -43,24 +83,9 @@ export class ApplicationContext implements Disposable {
   }
 
   public async updateLaunchConfig(launchConfig: LaunchConfiguration) {
-    const oldAppRoot = this.appRootFolder;
-    this.launchConfig = launchConfig;
-    this.dependencyManager.setLaunchConfiguration(launchConfig);
+    this.launchConfig = resolveLaunchConfig(launchConfig);
+    this.dependencyManager.setLaunchConfiguration(this.launchConfig);
     await this.dependencyManager.runAllDependencyChecks();
-    if (this.appRootFolder !== oldAppRoot) {
-      this.updateAppRootFolder();
-    }
-  }
-
-  public async updateAppRootFolder() {
-    disposeAll(this.disposables);
-    const buildManager = createBuildManager(
-      this.dependencyManager,
-      this.buildCache,
-      this.outputChannelRegistry
-    );
-    this.buildManager = buildManager;
-    this.disposables.push(this.dependencyManager, buildManager);
   }
 
   public dispose() {

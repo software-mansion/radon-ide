@@ -3,6 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
 import * as Switch from "@radix-ui/react-switch";
+import { use$ } from "@legendapp/state/react";
 
 import "./shared/Dropdown.css";
 import "./shared/RadioGroup.css";
@@ -12,7 +13,6 @@ import "./shared/SwitchGroup.css";
 
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
-import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import {
   AppPermissionType,
   DeviceRotationDirection,
@@ -29,6 +29,7 @@ import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import { useStore } from "../providers/storeProvider";
 
 const contentSizes = [
   "xsmall",
@@ -111,8 +112,11 @@ const rotateOptions: Array<{
 
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
+  const store$ = useStore();
+  const showDeviceFrame = use$(store$.workspaceConfiguration.showDeviceFrame);
+
   const { project, selectedDeviceSession, deviceSettings, projectState } = useProject();
-  const { showDeviceFrame, update } = useWorkspaceConfig();
+
   const { openModal } = useModal();
 
   const resetOptions =
@@ -253,6 +257,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Location
           </DropdownMenu.Item>
           <LocalizationItem />
+          <VolumeItem />
           {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.Android && <CameraItem />}
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
@@ -320,7 +325,9 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <Switch.Root
               className="switch-root small-switch"
               id="show-device-frame"
-              onCheckedChange={(checked) => update("showDeviceFrame", checked)}
+              onCheckedChange={(checked) =>
+                store$.workspaceConfiguration.showDeviceFrame.set(checked)
+              }
               defaultChecked={showDeviceFrame}
               style={{ marginLeft: "auto" }}>
               <Switch.Thumb className="switch-thumb" />
@@ -434,6 +441,59 @@ const CameraItem = () => {
       <span className="codicon codicon-device-camera" />
       Camera Settings
     </DropdownMenu.Item>
+  );
+};
+
+const VolumeItem = () => {
+  const { project } = useProject();
+
+  const handleVolumeIncreaseDown = () => {
+    project.dispatchButton("volumeUp", "Down");
+  };
+
+  const handleVolumeIncreaseUp = () => {
+    project.dispatchButton("volumeUp", "Up");
+  };
+
+  const handleVolumeDecreaseDown = () => {
+    project.dispatchButton("volumeDown", "Down");
+  };
+
+  const handleVolumeDecreaseUp = () => {
+    project.dispatchButton("volumeDown", "Up");
+  };
+
+  // Make sure buttons get unpressed on unmount
+  React.useEffect(() => {
+    return () => {
+      handleVolumeDecreaseUp();
+      handleVolumeIncreaseUp();
+    };
+  }, []);
+
+  return (
+    <div className="dropdown-menu-item">
+      <span className="codicon codicon-unmute" />
+      Volume
+      <div className="volume-controls">
+        <button
+          title="Volume Down"
+          className="volume-button"
+          onMouseDown={handleVolumeDecreaseDown}
+          onMouseUp={handleVolumeDecreaseUp}
+          onMouseLeave={handleVolumeDecreaseUp}>
+          <span className="codicon codicon-remove" />
+        </button>
+        <button
+          title="Volume Up"
+          className="volume-button"
+          onMouseDown={handleVolumeIncreaseDown}
+          onMouseUp={handleVolumeIncreaseUp}
+          onMouseLeave={handleVolumeIncreaseUp}>
+          <span className="codicon codicon-add" />
+        </button>
+      </div>
+    </div>
   );
 };
 

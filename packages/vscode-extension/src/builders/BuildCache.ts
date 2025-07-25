@@ -1,5 +1,6 @@
 import fs from "fs";
 import assert from "assert";
+import crypto from "crypto";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { DevicePlatform } from "../common/DeviceManager";
@@ -24,12 +25,19 @@ export interface CacheKey {
   env: Record<string, string>;
 }
 
+function hashEnvironment(env: Record<string, string>) {
+  const envHash = crypto.createHash("md5");
+  const envEntries = Object.entries(env).sort(([k], [k2]) => k.localeCompare(k2));
+  envEntries.map(([k, v]) => `${k}=${v}`).forEach((entry) => envHash.update(entry));
+  return envHash.digest("hex");
+}
+
 function stringifyCacheKey({ platform, appRoot, env }: CacheKey) {
   const keyPrefix =
     platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
-  const envEntries = Object.entries(env).sort(([k], [k2]) => k.localeCompare(k2));
-  const envStrings = envEntries.map(([k, v]) => `${k}=${v}`);
-  return `${keyPrefix}:${appRoot}:${JSON.stringify(envStrings)}`;
+  const envHash = hashEnvironment(env);
+
+  return `${keyPrefix}:${appRoot}:${envHash}`;
 }
 
 export class BuildCache {

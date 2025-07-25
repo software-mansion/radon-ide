@@ -210,7 +210,9 @@ function Preview({
           }
         }
       }
-      setInspectFrame(inspectData.frame);
+      if (inspectData.frame) {
+        setInspectFrame(inspectData.frame);
+      }
     });
   }
 

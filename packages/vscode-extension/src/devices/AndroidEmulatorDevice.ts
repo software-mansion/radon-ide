@@ -386,7 +386,6 @@ export class AndroidEmulatorDevice extends DeviceBase {
         "-avd",
         this.avdId,
         "-qt-hide-window",
-        "-no-audio",
         "-no-boot-anim",
         "-grpc-use-token",
         "-no-snapshot-save",

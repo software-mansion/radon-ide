@@ -16,6 +16,7 @@ import {
 import { disposeAll } from "../utilities/disposables";
 import { DeviceId, DeviceRotationType, DeviceSessionsManagerState } from "../common/Project";
 import { Connector } from "../connect/Connector";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -38,7 +39,8 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   constructor(
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
-    private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate
+    private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate,
+    private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.deviceManager.addListener("devicesChanged", this.devicesChangedListener);
@@ -124,15 +126,20 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     }
     Logger.debug("Selected device is ready");
 
-    const newDeviceSession = new DeviceSession(this.applicationContext, device, this.deviceSessionManagerDelegate.getDeviceRotation(), {
-      onStateChange: (state) => {
-        if (!this.deviceSessions.has(state.deviceInfo.id)) {
-          // NOTE: the device is being removed, we shouldn't report state updates
-          return;
-        }
-        this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
+    const newDeviceSession = new DeviceSession(
+      this.applicationContext,
+      device,
+      this.deviceSessionManagerDelegate.getDeviceRotation(), {
+        onStateChange: (state) => {
+          if (!this.deviceSessions.has(state.deviceInfo.id)) {
+            // NOTE: the device is being removed, we shouldn't report state updates
+            return;
+          }
+          this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
+        },
       },
-    });
+      this.outputChannelRegistry
+    );
 
     this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);

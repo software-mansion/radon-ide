@@ -50,7 +50,7 @@ async function processChatResponse(
   return [];
 }
 
-export function registerRadonChat(context: vscode.ExtensionContext) {
+export function registerRadonChat(context: vscode.ExtensionContext, enableRadonAI: boolean) {
   const chatHandler: vscode.ChatRequestHandler = async (
     request,
     chatContext,
@@ -60,6 +60,15 @@ export function registerRadonChat(context: vscode.ExtensionContext) {
     stream.progress("Thinking...");
     Logger.info(CHAT_LOG, "Chat requested");
     getTelemetryReporter().sendTelemetryEvent("radon-chat:requested");
+
+    if (!enableRadonAI) {
+      const msg =
+        "You have disabled radon AI. You can enable it using 'Radon IDE: Enable Radon AI' setting in your editor.";
+      Logger.warn(CHAT_LOG, msg);
+      getTelemetryReporter().sendTelemetryEvent("radon-chat:radon-ai-disabled", { error: msg });
+      stream.markdown(msg);
+      return { metadata: { command: "" } };
+    }
 
     const jwt = await getLicenseToken();
 
