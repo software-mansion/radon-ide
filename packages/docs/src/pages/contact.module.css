@@ -69,6 +69,24 @@
   }
 }
 
+@media (max-width: 767px) {
+  .headingLabel {
+    margin-top: 60px;
+    margin-bottom: 20px;
+    text-align: left;
+    text-wrap: balance;
+    font-size: 32px;
+    font-weight: 400;
+  }
+  .subheadingLabel {
+    text-align: left;
+    text-wrap: balance;
+    font-weight: 400;
+    font-size: 16px;
+    margin-bottom: 32px;
+  }
+}
+
 .row {
   display: grid;
   grid-template-columns: 1fr 1fr;
