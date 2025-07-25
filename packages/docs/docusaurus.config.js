@@ -51,6 +51,9 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       image: "img/og-image.png",
+      colorMode:{
+        respectPrefersColorScheme:true,
+      },
       navbar: {
         hideOnScroll: true,
         logo: {

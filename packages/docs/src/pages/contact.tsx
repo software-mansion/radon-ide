@@ -14,26 +14,30 @@ export default function Contact(): JSX.Element {
       <div className={styles.preventfulContainer}>
         <div className={styles.container}>
           <div className={styles.wrapper}>
-            <h1 className={styles.headingLabel}>Hi, how can we help you?</h1>
-            <h3 className={styles.subheadingLabel}>Get in touch with our sales or support team.</h3>
+            <div className={styles.titleContainer}>
+              <h1 className={styles.headingLabel}>Contact</h1>
+              <h3 className={styles.subheadingLabel}>
+                Get in touch with our sales or support team.
+              </h3>
+            </div>
 
             <div className={styles.row}>
               <ContactCard
-                icon={<MailIcon color={"var(--swm-navy-light-60)"} />}
+                icon={<MailIcon color={"var(--radon-icon)"} />}
                 title="Sales"
                 description="Contact us about plans, pricings, and enterprise contracts."
                 linkText="Talk to Sales"
                 linkHref="mailto:projects@swmansion.com"
               />
               <ContactCard
-                icon={<MessageIcon color={"var(--swm-navy-light-60)"} />}
+                icon={<MessageIcon color={"var(--radon-icon)"} />}
                 title="Help & Support"
                 description="Get help with your subscription, ask questions, report problems, or leave feedback."
                 linkText="Contact Support"
                 linkHref="mailto:ide@swmansion.com"
               />
               <ContactCard
-                icon={<FlagIcon color={"var(--swm-navy-light-60)"} />}
+                icon={<FlagIcon color={"var(--radon-icon)"} />}
                 title="Issues & Feature Requests"
                 description="Found a bug or want to request a new feature?"
                 linkText="Open a GitHub Issue"
@@ -41,7 +45,7 @@ export default function Contact(): JSX.Element {
                 linkTarget="_blank"
               />
               <ContactCard
-                icon={<UserIcon color={"var(--swm-navy-light-60)"} />}
+                icon={<UserIcon color={"var(--radon-icon)"} />}
                 title="Customer Portal"
                 description="Manage your subscription and access your license key."
                 linkText="Visit Radon IDE Portal"

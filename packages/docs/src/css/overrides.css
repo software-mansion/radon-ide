@@ -110,9 +110,6 @@ table thead tr {
   display: flex !important;
 }
 
-[class*="colorModeToggle"] {
-  display: none;
-}
 [class*="plugin-pages"] [class*="hireUsContainer"] {
   display: none;
 }

@@ -1,10 +1,16 @@
 .card {
-  border: 1px solid var(--swm-navy-light-10);
-  background-color: var(--swm-off-white);
+  border: 1px solid var(--radon-border-grid-subtle);
+  background-color: var(--swm-background);
   padding: 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  max-width: 620px;
+}
+
+.card span {
+  height: 24px;
+  width: 24px;
 }
 
 .card h4 {
@@ -12,22 +18,26 @@
   align-items: center;
   gap: 4px;
   margin-bottom: 12px;
+  font-size: 24px;
+  font-weight: 500;
 }
 
 .card p {
-  color: var(--swm-navy-light-60);
+  color: var(--radon-color-secondary);
 }
 
 .contactButton {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 6px 16px;
-  border: 1px solid var(--swm-navy-light-100);
-  background-color: var(--swm-white);
+  gap: 12px;
+  padding: 16px;
+  background-color: var(--radon-button);
   transition-property: border, background-color;
   transition-duration: 0.2s;
   transition-timing-function: ease-in-out;
+  color: var(--radon-color-primary);
+  font-weight: 400;
+  height: 48px;
 }
 
 .contactButton svg {
@@ -35,7 +45,7 @@
 }
 
 .contactButton:hover {
-  border: 1px solid var(--swm-green-light-80);
+  background-color: var(--radon-button-hover);
   text-decoration: none;
 }
 
