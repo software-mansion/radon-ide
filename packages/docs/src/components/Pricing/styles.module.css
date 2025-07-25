@@ -4,17 +4,29 @@
   gap: 24px;
 }
 
+.titleContainer {
+  gap: 24px;
+  max-width: 1280px;
+}
+
 .headingLabel {
   margin-top: 60px;
+  margin-bottom: 24px;
   text-align: center;
   text-wrap: balance;
+  font-size: 64px;
+  font-weight: normal;
 }
 
 .subheadlingLabel {
   text-align: center;
-  font-weight: normal;
   text-wrap: balance;
   margin-bottom: 20px;
+  line-height: 32px;
+  gap: 24px;
+  font-weight: normal;
+  font-size: 20px;
+  color: var(--radon-subheading);
 }
 
 .highlight {

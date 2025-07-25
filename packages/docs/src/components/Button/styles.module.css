@@ -5,9 +5,6 @@
   font-weight: 500;
   font-size: 18px;
 
-  color: var(--swm-off-white);
-  background-color: var(--swm-landing-button-purple);
-
   cursor: pointer;
   transition:
     background-color 0.3s,
@@ -18,9 +15,8 @@
   align-items: center;
   justify-content: center;
 
-  background-color: var(--swm-landing-button-green);
-  color: var(--swm-off-white);
-  border: 1px solid var(--swm-landing-button-green);
+  background-color: var(--radon-button);
+  color: var(--radon-button-text);
 }
 
 .disabled {
@@ -96,12 +92,11 @@ a.buttonLink:hover {
 }
 
 .button:hover {
-  background-color: transparent;
-  color: var(--swm-landing-button-green);
+  background-color: var(--radon-button-hover);
 }
 
 .button:hover svg {
-  stroke: var(--swm-landing-button-green);
+  stroke: var(--radon-button-text);
 }
 
 .arrow {

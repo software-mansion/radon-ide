@@ -28,23 +28,23 @@ const PricingPlansList = () => {
   const individual = isMonthly ? (
     <>
       $19 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/month excl. VAT </p>
+      <p className={pricing.plan__price_second_line}> per seat/month (excl. VAT) </p>
     </>
   ) : (
     <>
       $190 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/year excl. VAT </p>
+      <p className={pricing.plan__price_second_line}> per seat/year (excl. VAT) </p>
     </>
   );
   const business = isMonthly ? (
     <>
       $29 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/month excl. VAT </p>
+      <p className={pricing.plan__price_second_line}> per seat/month (excl. VAT) </p>
     </>
   ) : (
     <>
       $290 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/year excl. VAT </p>
+      <p className={pricing.plan__price_second_line}> per seat/year (excl. VAT) </p>
     </>
   );
 
@@ -77,20 +77,22 @@ const PricingPlansList = () => {
   return (
     <>
       <div className={styles.plan_pay_annually}>
-        <p>Monthly</p>
-        <label className={styles.toggleSwitch}>
-          <input
-            type="checkbox"
-            checked={isMonthly}
-            onChange={() => void setIsMonthly(!isMonthly)}
-          />
-          <div className={styles.toggleSwitchBackground}>
-            <div className={styles.toggleSwitchHandle}></div>
-          </div>
-        </label>
-        <p>
-          Yearly <p className={styles.plan_pay_annually__discount}>(save 16%)</p>
-        </p>
+        <div className={styles.container}>
+          <button
+            type="button"
+            className={isMonthly ? `${styles.btn} ${styles.active}` : styles.btn}
+            onClick={() => setIsMonthly(true)}>
+            <p>Monthly</p>
+          </button>
+          <button
+            type="button"
+            className={isMonthly ? styles.btn : `${styles.btn} ${styles.active}`}
+            onClick={() => setIsMonthly(false)}>
+            <p>
+              Yearly<span className={styles.plan_pay_annually__discount}>(Save 16%)</span>
+            </p>
+          </button>
+        </div>
       </div>
       <ul className={styles.list}>
         <PricingCard>

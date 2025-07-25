@@ -42,6 +42,7 @@
   font-weight: 400;
   font-size: 20px;
   margin-bottom: 32px;
+  color: var(--radon-subheading);
 }
 
 @media (max-width: 767px) {
