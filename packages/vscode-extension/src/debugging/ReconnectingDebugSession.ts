@@ -4,23 +4,23 @@ import { Metro } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
 import { sleep } from "../utilities/retry";
 import { DebugSession, DebugSource, JSDebugConfiguration } from "./DebugSession";
+import { Devtools } from "../project/devtools";
+import { disposeAll } from "../utilities/disposables";
 
 const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {
-  private readonly sessionTerminatedSubscription: Disposable;
+  private disposables: Disposable[] = [];
   private cancelReconnect: CancelToken | undefined;
 
   private isRunning: boolean = false;
 
   constructor(
     private readonly debugSession: DebugSession & Partial<Disposable>,
-    private readonly metro: Metro
+    private readonly metro: Metro,
+    devtools: Devtools
   ) {
-    this.sessionTerminatedSubscription = debugSession.onDebugSessionTerminated(() => {
-      if (this.isRunning && this.cancelReconnect === undefined) {
-        this.reconnect();
-      }
-    });
+    this.disposables.push(debugSession.onDebugSessionTerminated(this.maybeReconnect));
+    this.disposables.push(devtools.onEvent("appReady", this.maybeReconnect));
   }
 
   public async startJSDebugSession(configuration: JSDebugConfiguration) {
@@ -40,7 +40,10 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
     return Promise.race([resultPromise, timeout]).catch((_e) => false);
   }
 
-  private async reconnect() {
+  private maybeReconnect = async () => {
+    if (!this.isRunning || this.cancelReconnect !== undefined) {
+      return;
+    }
     this.cancelReconnect = new CancelToken();
     while (this.isRunning && !this.cancelReconnect.cancelled) {
       try {
@@ -65,10 +68,10 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
       }
     }
     this.cancelReconnect = undefined;
-  }
+  };
 
   async dispose() {
-    this.sessionTerminatedSubscription.dispose();
+    disposeAll(this.disposables);
     this.cancelReconnect?.cancel();
     await this.debugSession.dispose?.();
   }

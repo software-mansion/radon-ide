@@ -331,7 +331,8 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
         displayName: this.device.deviceInfo.displayName,
         useParentDebugSession: true,
       }),
-      this.metro
+      this.metro,
+      this.devtools
     );
   }
 
