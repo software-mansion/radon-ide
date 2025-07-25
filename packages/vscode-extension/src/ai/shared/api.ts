@@ -6,6 +6,7 @@ import { CHAT_LOG } from "../chat";
 import { ToolResponse, ToolResult, ToolsInfo } from "../mcp/models";
 import { textToToolResponse } from "../mcp/utils";
 import { ConnectionListener } from "./ConnectionListener";
+import { AuthorizationError } from "../mcp/AuthorizationError";
 
 const BACKEND_URL = "https://radon-ai-backend.swmansion.com/api/";
 const MCP_LOG = "[MCP]";
@@ -38,7 +39,7 @@ export async function invokeToolCall(
     });
 
     if (response.status === 401) {
-      throw Error(`Authorization failed when connecting to the backend.`);
+      throw new AuthorizationError(`Authorization failed when connecting to the backend.`);
     }
 
     if (response.status !== 200) {
@@ -84,7 +85,7 @@ export async function getToolSchema(connectionListener: ConnectionListener): Pro
     });
 
     if (response.status === 401) {
-      throw Error(`Authorization failed when connecting to the backend.`);
+      throw new AuthorizationError(`Authorization failed when connecting to the backend.`);
     }
 
     if (response.status !== 200) {
@@ -125,14 +126,14 @@ export async function getSystemPrompt(userPrompt: string): Promise<SystemRespons
     let msg = `Authorization failed when connecting to servers.`;
     Logger.error(CHAT_LOG, msg);
     getTelemetryReporter().sendTelemetryEvent("radon-chat:auth-error", { error: msg });
-    throw Error(msg);
+    throw new AuthorizationError(msg);
   }
 
   if (response.status !== 200) {
     let msg = `Failed to fetch with status: ${response.status}`;
     Logger.error(CHAT_LOG, msg);
     getTelemetryReporter().sendTelemetryEvent("radon-chat:server-status-error", { error: msg });
-    throw Error(msg);
+    throw new Error(msg);
   }
 
   return await response.json();
