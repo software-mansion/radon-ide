@@ -1,4 +1,4 @@
-import { DebugSessionCustomEvent, Disposable, Event } from "vscode";
+import { Disposable } from "vscode";
 import { Cdp } from "vscode-cdp-proxy";
 import { Metro } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
@@ -76,28 +76,15 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
     await this.debugSession.dispose?.();
   }
 
-  // Delegate DebugSession methods to the decorated object
-  public get onConsoleLog(): Event<DebugSessionCustomEvent> {
-    return this.debugSession.onConsoleLog;
-  }
-  public get onDebuggerPaused(): Event<DebugSessionCustomEvent> {
-    return this.debugSession.onDebuggerPaused;
-  }
-  public get onDebuggerResumed(): Event<DebugSessionCustomEvent> {
-    return this.debugSession.onDebuggerResumed;
-  }
-  public get onProfilingCPUStarted(): Event<DebugSessionCustomEvent> {
-    return this.debugSession.onProfilingCPUStarted;
-  }
-  public get onProfilingCPUStopped(): Event<DebugSessionCustomEvent> {
-    return this.debugSession.onProfilingCPUStopped;
-  }
-  public get onBindingCalled(): Event<DebugSessionCustomEvent> {
-    return this.debugSession.onBindingCalled;
-  }
-  public get onDebugSessionTerminated(): Event<void> {
-    return this.debugSession.onDebugSessionTerminated;
-  }
+  // #region DebugSession methods delegated to the decorated object
+  public onConsoleLog = this.debugSession.onConsoleLog;
+  public onDebuggerPaused = this.debugSession.onDebuggerPaused;
+  public onDebuggerResumed = this.debugSession.onDebuggerResumed;
+  public onProfilingCPUStarted = this.debugSession.onProfilingCPUStarted;
+  public onProfilingCPUStopped = this.debugSession.onProfilingCPUStopped;
+  public onBindingCalled = this.debugSession.onBindingCalled;
+  public onDebugSessionTerminated = this.debugSession.onDebugSessionTerminated;
+
   public async startParentDebugSession(): Promise<void> {
     return this.debugSession.startParentDebugSession();
   }
