@@ -3,14 +3,10 @@ import { commands, debug, DebugConsoleMode, DebugSessionCustomEvent, Disposable 
 import * as vscode from "vscode";
 import { Cdp } from "vscode-cdp-proxy";
 import { disposeAll } from "../utilities/disposables";
-import { sleep } from "../utilities/retry";
 import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
-import { Metro } from "../project/metro";
-
-const PING_TIMEOUT = 1000;
 
 const MASTER_DEBUGGER_TYPE = "com.swmansion.react-native-debugger";
 const OLD_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
@@ -31,7 +27,7 @@ export interface JSDebugConfiguration {
 
 export type DebugSource = { filename?: string; line1based?: number; column0based?: number };
 
-type DebugSessionOptions = {
+export type DebugSessionOptions = {
   displayName: string;
   useParentDebugSession?: boolean;
   suppressDebugToolbar?: boolean;
@@ -40,8 +36,6 @@ type DebugSessionOptions = {
 type DebugSessionCustomEventListener = (event: DebugSessionCustomEvent) => void;
 
 export interface DebugSession {
-  websocketTarget: string | undefined;
-
   // debug console conreols -- perhaps this should be moved to a separate interface?
   appendDebugConsoleEntry(message: string, type: string, source?: DebugSource): Promise<void>;
 
@@ -49,7 +43,6 @@ export interface DebugSession {
   startParentDebugSession(): Promise<void>;
   startJSDebugSession(configuration: JSDebugConfiguration): Promise<boolean>;
   restart(): Promise<void>;
-  stop(): Promise<void>;
 
   // debugger controls
   resumeDebugger(): void;
@@ -76,8 +69,6 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   private cancelStartDebuggingToken: CancelToken = new CancelToken();
 
   private disposables: Disposable[] = [];
-
-  private currentWsTarget: string | undefined;
 
   private consoleLogEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
   private debuggerPausedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
@@ -141,10 +132,6 @@ export class DebugSessionImpl implements DebugSession, Disposable {
     );
   }
 
-  public get websocketTarget() {
-    return this.currentWsTarget;
-  }
-
   public async startParentDebugSession() {
     assert(
       !this.jsDebugSession,
@@ -184,10 +171,9 @@ export class DebugSessionImpl implements DebugSession, Disposable {
       this.jsDebugSession = undefined;
       await debug.stopDebugging(jsDebugSession);
     }
-    this.currentWsTarget = undefined;
   }
 
-  public async stop() {
+  private async stop() {
     this.cancelStartingDebugSession();
     await this.stopJsDebugSession();
     if (this.parentDebugSession) {
@@ -253,7 +239,6 @@ export class DebugSessionImpl implements DebugSession, Disposable {
       debug.stopDebugging(this.jsDebugSession);
     }
     this.jsDebugSession = newDebugSession;
-    this.currentWsTarget = configuration.websocketAddress;
 
     return true;
   }
@@ -295,78 +280,5 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   private cancelStartingDebugSession() {
     this.cancelStartDebuggingToken.cancel();
     this.cancelStartDebuggingToken = new CancelToken();
-  }
-}
-
-export class ReconnectingDebugSession extends DebugSessionImpl {
-  private readonly sessionTerminatedSubscription: Disposable;
-  private cancelReconnect: CancelToken | undefined;
-
-  private isRunning: boolean = false;
-
-  constructor(
-    private metro: Metro,
-    options: DebugSessionOptions = { displayName: "Radon IDE Debugger" }
-  ) {
-    super(options);
-    this.sessionTerminatedSubscription = this.onDebugSessionTerminated(() => {
-      if (this.isRunning && this.cancelReconnect === undefined) {
-        this.reconnect();
-      }
-    });
-  }
-
-  public override async startJSDebugSession(configuration: JSDebugConfiguration) {
-    this.isRunning = true;
-    return super.startJSDebugSession(configuration);
-  }
-
-  public override async stop() {
-    this.isRunning = false;
-    this.cancelReconnect?.cancel();
-    this.cancelReconnect = undefined;
-    return super.stop();
-  }
-
-  private async pingJsDebugSessionWithTimeout() {
-    const resultPromise = super.evaluateExpression({ expression: "('ping')" }).then((response) => {
-      return response.result.value === "ping";
-    });
-    const timeout = sleep(PING_TIMEOUT).then(() => {
-      throw new Error("Ping timeout");
-    });
-    return Promise.race([resultPromise, timeout]).catch((_e) => false);
-  }
-
-  private async reconnect() {
-    this.cancelReconnect = new CancelToken();
-    while (this.isRunning && !this.cancelReconnect.cancelled) {
-      try {
-        const connected = await this.pingJsDebugSessionWithTimeout();
-        if (connected) {
-          // if we're connected to a responsive session, we can break
-          break;
-        }
-        const websocketAddress = await this.metro.getDebuggerURL(undefined, this.cancelReconnect);
-        if (!websocketAddress) {
-          throw new Error("No connected device listed");
-        }
-        await super.startJSDebugSession({
-          websocketAddress,
-          displayDebuggerOverlay: false,
-          isUsingNewDebugger: this.metro.isUsingNewDebugger,
-          expoPreludeLineCount: this.metro.expoPreludeLineCount,
-          sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
-        });
-      } catch (e) {
-        // we ignore the errors and retry
-      }
-    }
-    this.cancelReconnect = undefined;
-  }
-
-  async dispose() {
-    this.sessionTerminatedSubscription.dispose();
-    await super.dispose();
   }
 }

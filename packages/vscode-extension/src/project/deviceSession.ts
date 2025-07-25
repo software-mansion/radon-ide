@@ -38,7 +38,7 @@ import {
   FatalErrorDescriptor,
   BundleErrorDescriptor,
 } from "../common/Project";
-import { DebugSource, ReconnectingDebugSession } from "../debugging/DebugSession";
+import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
@@ -52,6 +52,7 @@ import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { disposeAll } from "../utilities/disposables";
+import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -81,7 +82,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
-  private debugSession: ReconnectingDebugSession;
+  private debugSession: DebugSession & Disposable;
   private debugSessionEventSubscription: Disposable;
   private buildManager: BuildManager;
   private buildCache: BuildCache;
@@ -135,10 +136,8 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
 
     this.buildCache = this.applicationContext.buildCache;
     this.buildManager = this.applicationContext.buildManager;
-    this.debugSession = new ReconnectingDebugSession(this.metro, {
-      displayName: this.device.deviceInfo.displayName,
-      useParentDebugSession: true,
-    });
+
+    this.debugSession = this.createDebugSession();
     this.debugSessionEventSubscription = this.registerDebugSessionListeners();
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
   }
@@ -326,6 +325,16 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
     }
   };
 
+  private createDebugSession(): DebugSession & Disposable {
+    return new ReconnectingDebugSession(
+      new DebugSessionImpl({
+        displayName: this.device.deviceInfo.displayName,
+        useParentDebugSession: true,
+      }),
+      this.metro
+    );
+  }
+
   private makeDevtools() {
     const devtools = new Devtools();
     devtools.onEvent("appReady", () => {
@@ -380,7 +389,8 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
     this.cancelToken?.cancel();
     await this.deactivate();
     this.watchProjectSubscription.dispose();
-    await this.debugSession?.dispose();
+    this.debugSessionEventSubscription.dispose();
+    await this.debugSession.dispose();
     this.device?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
@@ -392,10 +402,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
       this.isActive = true;
       this.toolsManager.activate();
       if (this.startupMessage === StartupMessage.AttachingDebugger) {
-        this.debugSession = new ReconnectingDebugSession(this.metro, {
-          displayName: this.device.deviceInfo.displayName,
-          useParentDebugSession: true,
-        });
+        this.debugSession = this.createDebugSession();
         this.debugSessionEventSubscription = this.registerDebugSessionListeners();
         await this.connectJSDebugger();
       }
