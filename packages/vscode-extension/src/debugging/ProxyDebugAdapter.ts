@@ -249,31 +249,6 @@ export class ProxyDebugAdapter extends DebugSession {
     });
   }
 
-  private async ping() {
-    try {
-      const response = await this.cdpProxy.injectDebuggerCommand({
-        method: "Runtime.evaluate",
-        params: {
-          expression: "('ping')",
-        },
-      });
-      if (
-        !("result" in response) ||
-        typeof response.result !== "object" ||
-        response.result === null
-      ) {
-        return false;
-      }
-      const result = response.result;
-      if ("value" in result && result.value === "ping") {
-        return true;
-      }
-    } catch (_) {
-      /** debugSession is waiting for an event, if it won't get any it will fail after timeout, so we don't need to do anything here */
-    }
-    return false;
-  }
-
   private async startProfiling() {
     await this.cdpProxy.injectDebuggerCommand({ method: "Profiler.start", params: {} });
     this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
@@ -302,6 +277,21 @@ export class ProxyDebugAdapter extends DebugSession {
     });
   }
 
+  private async evaluateExpression(params: any) {
+    const response = await this.cdpProxy.injectDebuggerCommand({
+      method: "Runtime.evaluate",
+      params,
+    });
+    if (
+      !("result" in response) ||
+      typeof response.result !== "object" ||
+      response.result === null
+    ) {
+      throw new Error("Invalid response from Runtime.evaluate");
+    }
+    return response.result;
+  }
+
   protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
@@ -319,8 +309,8 @@ export class ProxyDebugAdapter extends DebugSession {
       case "RNIDE_dispatchRadonAgentMessage":
         await this.dispatchRadonAgentMessage(args);
         break;
-      case "RNIDE_ping":
-        response.body.result = await this.ping();
+      case "RNIDE_evaluate":
+        response.body.result = await this.evaluateExpression(args);
         break;
     }
     this.sendResponse(response);
