@@ -1,0 +1,32 @@
+.pageLayout {
+  position: relative;
+  min-height: 100vh;
+}
+
+.verticalLine {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background-color: var(--radon-color-border);
+  z-index: 1;
+}
+
+.leftLine {
+  left: 200px;
+}
+
+.rightLine {
+  right: 200px;
+}
+
+.pageContent {
+  position: relative;
+  z-index: 2;
+}
+
+/* @media (max-width: 768px) {
+  .vertical-line {
+    display: none;
+  }
+} */

@@ -28,17 +28,6 @@
   font-weight: 500;
 }
 
-/* .plan_pay_annually p {
-  margin: 0;
-  display: flex;
-  align-items: center;
-} */
-
-/* .plan_pay_annually p:first-child { */
-/* align-items: end; */
-/* justify-content: end;
-} */
-
 .plan_pay_annually__discount {
   color: var(--swm-green-light-100);
   font-weight: bold;

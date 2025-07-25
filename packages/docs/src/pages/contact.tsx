@@ -7,12 +7,13 @@ import MessageIcon from "../components/MessageIcon";
 import FlagIcon from "../components/FlagIcon";
 import UserIcon from "../components/UserIcon";
 import ContactCard from "../components/ContactCard";
+import PageLayout from "../components/PageLayout";
 
 export default function Contact(): JSX.Element {
   return (
     <Layout description="Contact Us – Radon IDE: VSCode Extension for React Native">
-      <div className={styles.preventfulContainer}>
-        <div className={styles.container}>
+      <PageLayout>
+        <div className={styles.preventfulContainer}>
           <div className={styles.wrapper}>
             <div className={styles.titleContainer}>
               <h1 className={styles.headingLabel}>Contact</h1>
@@ -55,7 +56,7 @@ export default function Contact(): JSX.Element {
             </div>
           </div>
         </div>
-      </div>
+      </PageLayout>
     </Layout>
   );
 }
