@@ -15,10 +15,16 @@ button {
   box-shadow: var(--swm-backdrop-shadow);
   max-height: calc(var(--radix-dropdown-menu-content-available-height) - 40px);
   overflow-y: auto;
+
+  --menu-item-padding: 0 6px;
 }
 
 .dropdown-menu-subcontent {
   max-height: calc(var(--radix-dropdown-menu-content-available-height));
+
+  .label {
+    padding: var(--menu-item-padding);
+  }
 }
 
 .dropdown-menu-content[data-side="bottom"],
@@ -39,7 +45,7 @@ button {
   display: flex;
   align-items: center;
   height: 28px;
-  padding: 0 6px;
+  padding: var(--menu-item-padding);
   position: relative;
   user-select: none;
   outline: none;

@@ -1,5 +1,10 @@
+
 .device-settings-content {
   padding: 14px;
+}
+
+.mirror{
+  transform: scale(-1, 1);
 }
 
 .device-settings-heading {

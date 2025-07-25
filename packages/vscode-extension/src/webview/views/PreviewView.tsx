@@ -125,6 +125,10 @@ function PreviewView() {
   const { openFileAt } = useUtils();
 
   useEffect(() => {
+    resetInspector();
+  }, [projectState.rotation]);
+
+  useEffect(() => {
     const disableInspectorOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setIsInspecting(false);

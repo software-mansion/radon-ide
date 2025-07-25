@@ -2,7 +2,13 @@ import fs from "fs";
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, TouchPoint, DeviceButtonType } from "../common/Project";
+import {
+  AppPermissionType,
+  DeviceSettings,
+  TouchPoint,
+  DeviceButtonType,
+  DeviceRotationType,
+} from "../common/Project";
 import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 import { extensionContext } from "../utilities/extensionContext";
@@ -212,6 +218,12 @@ export abstract class DeviceBase implements Disposable {
 
   public sendWheel(point: TouchPoint, deltaX: number, deltaY: number) {
     this.preview?.sendWheel(point, deltaX, deltaY);
+  }
+
+  public sendRotate(rotation: DeviceRotationType) {
+    // Preview may not be started yet, but we still wish to be able to rotate during init of device.
+    // The rotation is set in constructor of device and is gotten from the workspace configuration anyways.
+    this.preview?.rotateDevice(rotation);
   }
 
   async startPreview() {

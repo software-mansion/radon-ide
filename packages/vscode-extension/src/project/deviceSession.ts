@@ -37,6 +37,8 @@ import {
   DeviceSessionStatus,
   FatalErrorDescriptor,
   BundleErrorDescriptor,
+  DeviceRotationType,
+  AppOrientationType,
 } from "../common/Project";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { throttle, throttleAsync } from "../utilities/throttle";
@@ -103,6 +105,7 @@ export class DeviceSession
   private isDebuggerPaused = false;
   private hasStaleBuildCache = false;
   private isRecordingScreen = false;
+  private appOrientation: DeviceRotationType;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -126,6 +129,7 @@ export class DeviceSession
   constructor(
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
+    private rotation: DeviceRotationType,
     private readonly deviceSessionDelegate: DeviceSessionDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
@@ -140,6 +144,7 @@ export class DeviceSession
       useParentDebugSession: true,
     });
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
+    this.appOrientation = this.rotation;
   }
 
   public getState(): DeviceSessionState {
@@ -169,6 +174,7 @@ export class DeviceSession
         status: "running",
         isRefreshing: this.isRefreshing,
         bundleError: this.bundleError,
+        appOrientation: this.appOrientation,
       };
     } else if (this.status === "fatalError") {
       assert(this.fatalError, "Expected error to be defined in fatal error state");
@@ -354,6 +360,29 @@ export class DeviceSession
         this.profilingReactState = isProfiling ? "profiling" : "stopped";
         this.emitStateChange();
       }
+    });
+    devtools.onEvent("appOrientationChanged", (orientation: AppOrientationType) => {
+      const isLandscape =
+        this.rotation === DeviceRotationType.LandscapeLeft ||
+        this.rotation === DeviceRotationType.LandscapeRight;
+
+      // if the app orientation is equal to "Landscape", it means we do not have enuogh
+      // information on the application site to infer the detailed orientation. 
+      // "Landscape" will only be messaged upon the initialisation - after that the app can infer the orientation
+      // based on our assumptions.
+      // If the device is in landscape mode, we assume that the app orientation is the same as the device rotation.
+      // Otherwise, it means the app is initialised and does not have previous orientation - 
+      if (orientation === "Landscape") {
+        if (isLandscape) {
+          this.appOrientation = this.rotation;
+        } else {
+          this.appOrientation = DeviceRotationType.LandscapeLeft;
+        }
+      } else {
+        this.appOrientation = orientation;
+      }
+
+      this.emitStateChange();
     });
     return devtools;
   }
@@ -691,7 +720,8 @@ export class DeviceSession
         this.metro.ready(),
         this.device.startPreview().then((url) => {
           previewURL = url;
-          this.emitStateChange();
+          // initialise device rotation
+          this.sendRotate(this.rotation);
         }),
         waitForAppReady,
       ])
@@ -1065,6 +1095,12 @@ export class DeviceSession
 
   public sendClipboard(text: string) {
     return this.device.sendClipboard(text);
+  }
+
+  public sendRotate(rotation: DeviceRotationType) {
+    this.device.sendRotate(rotation);
+    this.emitStateChange();
+    this.rotation = rotation;
   }
 
   public async getClipboard() {

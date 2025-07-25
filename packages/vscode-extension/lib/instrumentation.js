@@ -88,7 +88,7 @@ function getWindowRect() {
       height: screenHeight,
     };
   } else {
-    const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
+    const { width: windowWidth, height: windowHeight } = Dimensions.get("screen");
     return {
       x: 0,
       y: 0,
