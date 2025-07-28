@@ -6,10 +6,11 @@ import { Utils } from "../utilities/utils";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
-import { RecursivePartial, State } from "../common/State";
+import { initialState, RecursivePartial, State } from "../common/State";
 import { LaunchConfiguration } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
+import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
@@ -26,6 +27,8 @@ export class IDE implements Disposable {
   public readonly utils: Utils;
   public readonly outputChannelRegistry = new OutputChannelRegistry();
 
+  private environmentDependencyManager: EnvironmentDependencyManager;
+
   private stateManager: StateManager<State>;
 
   private disposed = false;
@@ -34,25 +37,21 @@ export class IDE implements Disposable {
   private attachSemaphore = 0;
 
   constructor({ initialLaunchConfig }: InitialOptions = {}) {
-    const initialState: State = {
-      applicationRoots: [],
-      workspaceConfiguration: {
-        panelLocation: "tab",
-        showDeviceFrame: true,
-        stopPreviousDevices: false,
-      },
-    };
-
     this.stateManager = StateManager.create(initialState);
 
     this.disposables.push(this.stateManager.onSetState(this.handleStateChanged));
 
     this.deviceManager = new DeviceManager(this.outputChannelRegistry);
     this.utils = new Utils();
+    this.environmentDependencyManager = new EnvironmentDependencyManager(
+      this.stateManager.getDerived("environmentDependencies")
+    );
     this.project = new Project(
+      this.stateManager.getDerived("projectState"),
       this.deviceManager,
       this.utils,
       this.outputChannelRegistry,
+      this.environmentDependencyManager,
       initialLaunchConfig
     );
 

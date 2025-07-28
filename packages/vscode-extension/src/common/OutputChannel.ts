@@ -4,4 +4,5 @@ export enum Output {
   BuildAndroid = "Radon IDE (Android build)",
   AndroidDevice = "Radon IDE (Android Emulator Logs)",
   IosDevice = "Radon IDE (iOS Simulator Logs)",
+  PackageManager = "Radon IDE (Package Manager)",
 }

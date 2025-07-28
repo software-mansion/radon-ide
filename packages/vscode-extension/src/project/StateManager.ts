@@ -60,7 +60,7 @@ class RootStateManager<T extends object> extends StateManager<T> {
     this.state = initialState;
   }
 
-  setState(partialState: Partial<T>): void {
+  setState(partialState: RecursivePartial<T>): void {
     const [newState, changes] = mergeAndCalculateChanges(this.state, partialState);
     this.state = newState;
     this.onSetStateEmitter.fire(changes);
@@ -88,8 +88,8 @@ class DerivedStateManager<T extends object, K extends object> extends StateManag
     );
   }
 
-  setState(partialValue: Partial<T>) {
-    this.parent.setState({ [this.keyInParent]: partialValue } as Partial<K>);
+  setState(partialValue: RecursivePartial<T>) {
+    this.parent.setState({ [this.keyInParent]: partialValue } as RecursivePartial<K>);
   }
 
   getState() {

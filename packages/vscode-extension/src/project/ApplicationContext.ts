@@ -3,12 +3,14 @@ import { Disposable, workspace } from "vscode";
 import { loadProjectEnv } from "@expo/env";
 import _ from "lodash";
 import { BuildCache } from "../builders/BuildCache";
-import { DependencyManager } from "../dependency/DependencyManager";
 import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
 import { LaunchConfiguration, LaunchOptions } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
+import { StateManager } from "./StateManager";
+import { ApplicationContextState } from "../common/State";
+import { ApplicationDependencyManager } from "../dependency/ApplicationDependencyManager";
 
 /**
  * Represents a launch configuration that has been resolved with additional properties.
@@ -61,21 +63,25 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
 }
 
 export class ApplicationContext implements Disposable {
-  public dependencyManager: DependencyManager;
+  public applicationDependencyManager: ApplicationDependencyManager;
   public buildManager: BuildManager;
   public launchConfig: ResolvedLaunchConfig;
   private disposables: Disposable[] = [];
 
   constructor(
+    private readonly stateManager: StateManager<ApplicationContextState>,
     launchConfig: LaunchConfiguration,
     public readonly buildCache: BuildCache
   ) {
     this.launchConfig = resolveLaunchConfig(launchConfig);
-    this.dependencyManager = new DependencyManager(this.launchConfig);
+    this.applicationDependencyManager = new ApplicationDependencyManager(
+      this.stateManager.getDerived("applicationDependencies"),
+      this.launchConfig
+    );
     const buildManager = new BatchingBuildManager(new BuildManagerImpl(buildCache));
     this.buildManager = buildManager;
 
-    this.disposables.push(this.dependencyManager, buildManager);
+    this.disposables.push(this.applicationDependencyManager, buildManager);
   }
 
   public get appRootFolder(): string {
@@ -84,8 +90,8 @@ export class ApplicationContext implements Disposable {
 
   public async updateLaunchConfig(launchConfig: LaunchConfiguration) {
     this.launchConfig = resolveLaunchConfig(launchConfig);
-    this.dependencyManager.setLaunchConfiguration(this.launchConfig);
-    await this.dependencyManager.runAllDependencyChecks();
+    this.applicationDependencyManager.setLaunchConfiguration(this.launchConfig);
+    await this.applicationDependencyManager.runAllDependencyChecks();
   }
 
   public dispose() {

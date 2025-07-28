@@ -241,6 +241,8 @@ export interface ProjectInterface {
   ): Promise<void>;
   selectLaunchConfiguration(launchConfig: LaunchConfiguration): Promise<void>;
 
+  runDependencyChecks(): Promise<void>;
+
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
   runCommand(command: string): Promise<void>;

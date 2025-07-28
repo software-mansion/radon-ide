@@ -74,7 +74,6 @@ export class WebviewController implements Disposable {
 
     this.callableObjectGetters = new Map([
       ["DeviceManager", () => this.ide.deviceManager as object],
-      ["DependencyManager", () => this.ide.project.dependencyManager as object],
       ["Project", () => this.ide.project as object],
       ["DeviceSessionsManager", () => this.ide.project.deviceSessionsManager as object],
       ["WorkspaceConfig", () => this.ide.workspaceConfigController as object],
