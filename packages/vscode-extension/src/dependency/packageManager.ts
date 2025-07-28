@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs";
-import { command } from "../utilities/subprocess";
+import { command, lineReader } from "../utilities/subprocess";
 import { isWorkspaceRoot } from "../utilities/common";
 import { Logger } from "../Logger";
 import { requireNoCache } from "../utilities/requireNoCache";
@@ -63,12 +63,18 @@ export class PackageManager implements Disposable {
 
     try {
       // all package managers support the `install` command
-      await cancelToken.adapt(
+      const packageManagerProcess = cancelToken.adapt(
         command(`${packageManager.name} install`, {
           cwd: packageManager.workspacePath ?? appRoot,
           quietErrorsOnExit: true,
         })
       );
+
+      lineReader(packageManagerProcess).onLineRead((line) => {
+        outputChannel.appendLine(line);
+      });
+      await packageManagerProcess;
+
       resolve();
     } catch (e) {
       Logger.error("Failed to install node modules", e);
