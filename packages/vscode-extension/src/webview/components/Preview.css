@@ -56,7 +56,7 @@
 .phone-wrapper {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-around;
   min-width: var(--phone-wrapper-min-width); 
   min-height: var(--phone-wrapper-min-height); 
   width: var(--phone-wrapper-width); 
@@ -70,7 +70,7 @@
   width: calc(var(--phone-content-width));
   height: var(--phone-content-height);
   min-height: var(--phone-content-min-height); /* 350px */
-  min-width: var(--phone-content-min-width); /* 350px * phones aspect ratio */
+  min-width: var(--phone-content-min-width); /* 350px × phones aspect ratio */
   object-fit: scale-down;
 }
 
@@ -132,8 +132,6 @@
 
 .phone-frame {
   pointer-events: none;
-  /* Uncomment if something breaks */
-  /* position: absolute; */
   rotate: var(--frame-rotation);
   width: 100%;
 }

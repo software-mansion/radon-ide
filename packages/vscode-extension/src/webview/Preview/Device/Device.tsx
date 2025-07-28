@@ -21,6 +21,7 @@ type DeviceCSSProperties = React.CSSProperties & {
   "--phone-wrapper-min-height"?: string;
   "--phone-wrapper-min-width"?: string;
   "--phone-wrapper-height"?: string;
+  "--phone-wrapper-width"?: string;
   "--phone-content-min-height"?: string;
   "--phone-content-min-width"?: string;
   "--phone-content-width"?: string;
@@ -61,15 +62,12 @@ function getParentDimensions(wrapperDivRef: React.RefObject<HTMLDivElement | nul
 }
 
 function isLandscapeOrientation(rotation: DeviceRotation): boolean {
-  return (
-    rotation === DeviceRotation.LandscapeLeft || rotation === DeviceRotation.LandscapeRight
-  );
+  return rotation === DeviceRotation.LandscapeLeft || rotation === DeviceRotation.LandscapeRight;
 }
 
 function shouldRotateFrame(rotation: DeviceRotation): boolean {
   return (
-    rotation === DeviceRotation.LandscapeRight ||
-    rotation === DeviceRotation.PortraitUpsideDown
+    rotation === DeviceRotation.LandscapeRight || rotation === DeviceRotation.PortraitUpsideDown
   );
 }
 
@@ -81,42 +79,26 @@ function getPortraitDimensions(
 ) {
   const { isFitSet, parentWidth } = config;
 
-  const zoomHeight = isFitSet
-    ? "100%"
-    : frame.height * (zoomLevel as number) * DEVICE_DEFAULT_SCALE;
-
-  const phoneWrapperMinWidth = "auto";
-  const phoneWrapperMinHeight = `${MIN_HEIGHT}px`;
-  const phoneWrapperHeight = isFitSet ? (zoomHeight as string) : `${zoomHeight}px`;
-  const phoneContentHeight = isFitSet
-    ? `min(100%, max(${MIN_HEIGHT}px, ${(parentWidth / config.aspectRatio) * CSS_MARGIN_FACTOR}px))`
-    : `${zoomHeight}px`;
-  const phoneContentWidth = "auto";
-  const phoneContentMinWidth = "fit-content";
-  const phoneContentMinHeight = isFitSet ? `${MIN_HEIGHT}px` : "none";
-  const phoneScreenHeight = `${(device.screenHeight / frame.height) * 100}%`;
-  const phoneScreenWidth = `${(device.screenWidth / frame.width) * 100}%`;
-  const phoneTop = `${(frame.offsetY / frame.height) * 100}%`;
-  const phoneLeft = `${(frame.offsetX / frame.width) * 100}%`;
-  const phoneMaskImage = `url(${device.screenImage})`;
-  const phoneFrameImage = `url(${frame.image})`;
-  const phoneAspectRatio = `${config.aspectRatio}`;
+  const zoomHeight = frame.height * (zoomLevel as number) * DEVICE_DEFAULT_SCALE;
 
   return {
-    phoneWrapperMinWidth,
-    phoneWrapperMinHeight,
-    phoneWrapperHeight,
-    phoneContentHeight,
-    phoneContentWidth,
-    phoneContentMinWidth,
-    phoneContentMinHeight,
-    phoneScreenHeight,
-    phoneScreenWidth,
-    phoneTop,
-    phoneLeft,
-    phoneMaskImage,
-    phoneFrameImage,
-    phoneAspectRatio,
+    phoneWrapperMinWidth: "auto",
+    phoneWrapperMinHeight: `${MIN_HEIGHT}px`,
+    phoneWrapperHeight: isFitSet ? "100%" : `${zoomHeight}px`,
+    phoneWrapperWidth: isFitSet ? "100%" : "fit-content",
+    phoneContentHeight: isFitSet
+      ? `min(100%, max(${MIN_HEIGHT}px, ${(parentWidth / config.aspectRatio) * CSS_MARGIN_FACTOR}px))`
+      : `${zoomHeight}px`,
+    phoneContentWidth: "auto",
+    phoneContentMinWidth: "fit-content",
+    phoneContentMinHeight: isFitSet ? `${MIN_HEIGHT}px` : "none",
+    phoneScreenHeight: `${(device.screenHeight / frame.height) * 100}%`,
+    phoneScreenWidth: `${(device.screenWidth / frame.width) * 100}%`,
+    phoneTop: `${(frame.offsetY / frame.height) * 100}%`,
+    phoneLeft: `${(frame.offsetX / frame.width) * 100}%`,
+    phoneMaskImage: `url(${device.screenImage})`,
+    phoneFrameImage: `url(${frame.image})`,
+    phoneAspectRatio: `${config.aspectRatio}`,
   };
 }
 
@@ -128,88 +110,52 @@ function getLandscapeDimensions(
 ) {
   const { isFitSet, parentHeight, aspectRatio } = config;
 
-  const zoomHeight = isFitSet
-    ? "100%"
-    : frame.height * (zoomLevel as number) * DEVICE_DEFAULT_SCALE;
-
-  const phoneWrapperMinWidth = "auto";
-  const phoneWrapperMinHeight = "auto";
-  const phoneWrapperHeight = "fit-content";
-  const phoneContentHeight = "auto";
-  const phoneContentMinWidthValue = MIN_HEIGHT;
-  const phoneContentMinHeightValue = phoneContentMinWidthValue * aspectRatio;
-  const phoneContentWidth = isFitSet
-    ? `calc(min(100%,  ${parentHeight / aspectRatio}px) * ${CSS_MARGIN_FACTOR})`
-    : `${zoomHeight}px`;
-  const phoneContentMinWidth = `${phoneContentMinWidthValue}px`;
-  const phoneContentMinHeight = `${phoneContentMinHeightValue}px`;
-  const phoneScreenHeight = `${(device.screenWidth / frame.width) * 100}%`; // Swapped for landscape
-  const phoneScreenWidth = `${(device.screenHeight / frame.height) * 100}%`; // Swapped for landscape
-  const phoneTop = `${(frame.offsetX / frame.width) * 100}%`; // Swapped for landscape
-  const phoneLeft = `${(frame.offsetY / frame.height) * 100}%`; // Swapped for landscape
-  const phoneMaskImage = `url(${device.landscapeScreenImage})`;
-  const phoneFrameImage = `url(${frame.imageLandscape})`;
-  const phoneAspectRatio = `${1 / aspectRatio}`;
+  const zoomHeight = frame.height * (zoomLevel as number) * DEVICE_DEFAULT_SCALE;
 
   return {
-    phoneWrapperMinWidth,
-    phoneWrapperMinHeight,
-    phoneWrapperHeight,
-    phoneContentHeight,
-    phoneContentWidth,
-    phoneContentMinWidth,
-    phoneContentMinHeight,
-    phoneScreenHeight,
-    phoneScreenWidth,
-    phoneTop,
-    phoneLeft,
-    phoneMaskImage,
-    phoneFrameImage,
-    phoneAspectRatio,
+    phoneWrapperMinWidth: "auto",
+    phoneWrapperMinHeight: "auto",
+    phoneWrapperHeight: "fit-content",
+    phoneWrapperWidth: isFitSet ? "100%" : "fit-content",
+    phoneContentHeight: "auto",
+    phoneContentWidth: isFitSet
+      ? `calc(min(100%,  ${parentHeight / aspectRatio}px) * ${CSS_MARGIN_FACTOR})`
+      : `${zoomHeight}px`,
+    phoneContentMinWidth: `${MIN_HEIGHT}px`,
+    phoneContentMinHeight: `${MIN_HEIGHT * aspectRatio}px`,
+    phoneScreenHeight: `${(device.screenWidth / frame.width) * 100}%`, // Swapped for landscape
+    phoneScreenWidth: `${(device.screenHeight / frame.height) * 100}%`, // Swapped for landscape
+    phoneTop: `${(frame.offsetX / frame.width) * 100}%`, // Swapped for landscape
+    phoneLeft: `${(frame.offsetY / frame.height) * 100}%`, // Swapped for landscape
+    phoneMaskImage: `url(${device.landscapeScreenImage})`,
+    phoneFrameImage: `url(${frame.imageLandscape})`,
+    phoneAspectRatio: `${1 / aspectRatio}`,
   };
 }
 
 function getPortraitTouchAreaDimensions() {
-  const phoneTouchAreaWidth = "calc(var(--phone-screen-width) + 14px)";
-  const phoneTouchAreaHeight = "var(--phone-screen-height)";
-  const phoneTouchAreaTop = "var(--phone-top)";
-  const phoneTouchAreaLeft = "calc(var(--phone-left) - 7px)";
-  const phoneTouchAreaScreenHeight = "100%";
-  const phoneTouchAreaScreenWidth = "calc(100% - 14px)";
-  const phoneTouchAreaScreenTop = "0";
-  const phoneTouchAreaScreenLeft = "7px";
-
   return {
-    phoneTouchAreaWidth,
-    phoneTouchAreaHeight,
-    phoneTouchAreaTop,
-    phoneTouchAreaLeft,
-    phoneTouchAreaScreenHeight,
-    phoneTouchAreaScreenWidth,
-    phoneTouchAreaScreenTop,
-    phoneTouchAreaScreenLeft,
+    phoneTouchAreaWidth: "calc(var(--phone-screen-width) + 14px)",
+    phoneTouchAreaHeight: "var(--phone-screen-height)",
+    phoneTouchAreaTop: "var(--phone-top)",
+    phoneTouchAreaLeft: "calc(var(--phone-left) - 7px)",
+    phoneTouchAreaScreenHeight: "100%",
+    phoneTouchAreaScreenWidth: "calc(100% - 14px)",
+    phoneTouchAreaScreenTop: "0",
+    phoneTouchAreaScreenLeft: "7px",
   };
 }
 
 function getLandscapeTouchAreaDimensions() {
-  const phoneTouchAreaWidth = "var(--phone-screen-width)";
-  const phoneTouchAreaHeight = "calc(var(--phone-screen-height) + 14px)";
-  const phoneTouchAreaTop = "calc(var(--phone-top) - 7px)";
-  const phoneTouchAreaLeft = "var(--phone-left)";
-  const phoneTouchAreaScreenHeight = "calc(100% - 14px)";
-  const phoneTouchAreaScreenWidth = "100%";
-  const phoneTouchAreaScreenTop = "7px";
-  const phoneTouchAreaScreenLeft = "0";
-
   return {
-    phoneTouchAreaWidth,
-    phoneTouchAreaHeight,
-    phoneTouchAreaTop,
-    phoneTouchAreaLeft,
-    phoneTouchAreaScreenHeight,
-    phoneTouchAreaScreenWidth,
-    phoneTouchAreaScreenTop,
-    phoneTouchAreaScreenLeft,
+    phoneTouchAreaWidth: "var(--phone-screen-width)",
+    phoneTouchAreaHeight: "calc(var(--phone-screen-height) + 14px)",
+    phoneTouchAreaTop: "calc(var(--phone-top) - 7px)",
+    phoneTouchAreaLeft: "var(--phone-left)",
+    phoneTouchAreaScreenHeight: "calc(100% - 14px)",
+    phoneTouchAreaScreenWidth: "100%",
+    phoneTouchAreaScreenTop: "7px",
+    phoneTouchAreaScreenLeft: "0",
   };
 }
 
@@ -219,15 +165,12 @@ function getDeviceLayoutConfig(
   zoomLevel: ZoomLevelType,
   wrapperDivRef: React.RefObject<HTMLDivElement | null>
 ): DeviceLayoutConfig {
-  const aspectRatio = frame.width / frame.height;
-  const isLandscape = isLandscapeOrientation(rotation);
-  const isFitSet = zoomLevel === "Fit";
   const { width: parentWidth, height: parentHeight } = getParentDimensions(wrapperDivRef);
 
   return {
-    aspectRatio,
-    isLandscape,
-    isFitSet,
+    aspectRatio: frame.width / frame.height,
+    isLandscape: isLandscapeOrientation(rotation),
+    isFitSet: zoomLevel === "Fit",
     parentWidth,
     parentHeight,
   };
@@ -257,6 +200,7 @@ export default function Device({ device, zoomLevel, children, wrapperDivRef }: D
       "--phone-wrapper-min-width": phoneDimensions.phoneWrapperMinWidth,
       "--phone-wrapper-min-height": phoneDimensions.phoneWrapperMinHeight,
       "--phone-wrapper-height": phoneDimensions.phoneWrapperHeight,
+      "--phone-wrapper-width": phoneDimensions.phoneWrapperWidth,
       "--phone-content-min-height": phoneDimensions.phoneContentMinHeight,
       "--phone-content-min-width": phoneDimensions.phoneContentMinWidth,
       "--phone-content-width": phoneDimensions.phoneContentWidth,

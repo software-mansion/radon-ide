@@ -106,20 +106,19 @@ function Preview({
 
   const openRebuildAlert = useNativeRebuildAlert();
 
+  /**
+   * Converts mouse event coordinates to normalized touch coordinates ([0-1] range)
+   * relative to the device preview image.
+   * Coordinate transformation handling when the device when the device is rotated,
+   * done in the sendTouches method in preview.ts.
+   */
   function getNormalizedTouchCoordinates(event: MouseEvent<HTMLDivElement>) {
-    /*
-    Converts mouse event coordinates to normalized touch coordinates ([0-1] range)
-    relative to the device preview image.
-    Coordinate transformation handling when the device when the device is rotated,
-    done in the dispatchTouches method of project.
-    */
     const imgRect = previewRef.current!.getBoundingClientRect();
 
     // Normalize coordinates to [0-1] range
     const x = (event.clientX - imgRect.left) / imgRect.width;
     const y = (event.clientY - imgRect.top) / imgRect.height;
 
-    // Ensure coordinates are clamped to [0, 1] range
     let clampedX = clamp(x, 0, 1);
     let clampedY = clamp(y, 0, 1);
     return { x: clampedX, y: clampedY };
@@ -176,7 +175,7 @@ function Preview({
     event: MouseEvent<HTMLDivElement>,
     type: MouseMove | "Leave" | "RightButtonDown"
   ) {
-    if(selectedDeviceSession?.status !== "running") {
+    if (selectedDeviceSession?.status !== "running") {
       return;
     }
     if (type === "Leave") {
@@ -187,13 +186,16 @@ function Preview({
     }
 
     const clampedCoordinates = getNormalizedTouchCoordinates(event);
-    const {x: translatedX, y: translatedY} = translatePreviewToAppCoordinates(selectedDeviceSession.appOrientation, projectState.rotation, clampedCoordinates)
+    const { x: translatedX, y: translatedY } = translatePreviewToAppCoordinates(
+      selectedDeviceSession.appOrientation,
+      projectState.rotation,
+      clampedCoordinates
+    );
 
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
     project.inspectElementAt(translatedX, translatedY, requestStack, (inspectData) => {
       if (requestStack && inspectData?.stack) {
-        
         if (showInspectStackModal) {
           setInspectStackData({
             requestLocation: {
@@ -583,7 +585,9 @@ function Preview({
         </div>
       </div>
 
-      {/* Hack needed for css to cache those images */}
+      {/* Hack needed for css to cache those images. By default, all the images are not cached on the frontend,
+      so without this in place, when the device rotates, the images are re-fetched from the file system
+      which causes the device preview to flicker. */}
       <span className="phone-preload-masks">
         <div style={{ maskImage: `url(${device?.landscapeScreenImage})` }} />
         <div style={{ maskImage: `url(${device?.screenImage})` }} />
