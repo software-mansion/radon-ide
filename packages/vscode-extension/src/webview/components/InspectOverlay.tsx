@@ -1,6 +1,6 @@
 import { RefObject } from "react";
 import { Frame } from "../../common/Project";
-import { DeviceProperties } from "../utilities/deviceContants";
+import { DeviceProperties } from "../utilities/deviceConstants";
 import DimensionsBox from "./DimensionsBox";
 import { translateAppToPreviewCoordinates } from "../utilities/translateAppCoordinates";
 import { useProject } from "../providers/ProjectProvider";

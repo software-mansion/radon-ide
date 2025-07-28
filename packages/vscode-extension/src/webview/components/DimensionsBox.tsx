@@ -1,5 +1,5 @@
 import { Frame } from "../../common/Project";
-import { DeviceProperties } from "../utilities/deviceContants";
+import { DeviceProperties } from "../utilities/deviceConstants";
 import "./DimensionsBox.css";
 
 const VERTICAL_POSITION_THRESHOLD = 0.3;

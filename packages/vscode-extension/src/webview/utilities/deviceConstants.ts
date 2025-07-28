@@ -2,26 +2,37 @@ import pixel9 from "../../assets/pixel_9/skin.webp";
 import pixel9mask from "../../assets/pixel_9/mask.png";
 import pixel9bezel from "../../assets/pixel_9/bezel.png";
 import pixel9screen from "../../assets/pixel_9/screen.png";
+import pixel9Landscape from "../../assets/pixel_9/landscape/skin.webp";
+import pixel9LandscapeMask from "../../assets/pixel_9/landscape/mask.png";
+import pixel9LandscapeBezel from "../../assets/pixel_9/landscape/bezel.png";
+import pixel9LandscapeScreen from "../../assets/pixel_9/landscape/screen.png";
 
 import pixel8 from "../../assets/pixel_8/skin.webp";
 import pixel8mask from "../../assets/pixel_8/mask.png";
 import pixel8bezel from "../../assets/pixel_8/bezel.png";
 import pixel8screen from "../../assets/pixel_8/screen.png";
+import pixel8Landscape from "../../assets/pixel_8/landscape/skin.webp";
+import pixel8LandscapeMask from "../../assets/pixel_8/landscape/mask.png";
+import pixel8LandscapeBezel from "../../assets/pixel_8/landscape/bezel.png";
+import pixel8LandscapeScreen from "../../assets/pixel_8/landscape/screen.png";
 
 import pixel7 from "../../assets/pixel_7/skin.webp";
 import pixel7mask from "../../assets/pixel_7/mask.png";
 import pixel7bezel from "../../assets/pixel_7/bezel.png";
 import pixel7screen from "../../assets/pixel_7/screen.png";
+import pixel7Landscape from "../../assets/pixel_7/landscape/skin.webp";
+import pixel7LandscapeMask from "../../assets/pixel_7/landscape/mask.png";
+import pixel7LandscapeBezel from "../../assets/pixel_7/landscape/bezel.png";
+import pixel7LandscapeScreen from "../../assets/pixel_7/landscape/screen.png";
 
 import pixel6a from "../../assets/pixel_6a/skin.webp";
 import pixel6amask from "../../assets/pixel_6a/mask.png";
 import pixel6abezel from "../../assets/pixel_6a/bezel.png";
 import pixel6ascreen from "../../assets/pixel_6a/screen.png";
-
-import iphone15pro from "../../assets/iphone_15_pro/skin.png";
-import iphone15promask from "../../assets/iphone_15_pro/mask.png";
-import iphone15probezel from "../../assets/iphone_15_pro/bezel.png";
-import iphone15proscreen from "../../assets/iphone_15_pro/screen.png";
+import pixel6aLandscape from "../../assets/pixel_6a/landscape/skin.webp";
+import pixel6aLandscapeMask from "../../assets/pixel_6a/landscape/mask.png";
+import pixel6aLandscapeBezel from "../../assets/pixel_6a/landscape/bezel.png";
+import pixel6aLandscapeScreen from "../../assets/pixel_6a/landscape/screen.png";
 
 import iphone16pro from "../../assets/iphone_16_pro/skin.png";
 import iphone16promask from "../../assets/iphone_16_pro/mask.png";
@@ -32,6 +43,10 @@ import iphone16proLandscapeMask from "../../assets/iphone_16_pro/landscape/mask.
 import iphone16proLandscapeBezel from "../../assets/iphone_16_pro/landscape/bezel.png";
 import iphone16proLandscapeScreen from "../../assets/iphone_16_pro/landscape/screen.png";
 
+import iphone15pro from "../../assets/iphone_15_pro/skin.png";
+import iphone15promask from "../../assets/iphone_15_pro/mask.png";
+import iphone15probezel from "../../assets/iphone_15_pro/bezel.png";
+import iphone15proscreen from "../../assets/iphone_15_pro/screen.png";
 import iphone15proLandscape from "../../assets/iphone_15_pro/landscape/skin.png";
 import iphone15proLandscapeMask from "../../assets/iphone_15_pro/landscape/mask.png";
 import iphone15proLandscapeBezel from "../../assets/iphone_15_pro/landscape/bezel.png";
@@ -45,26 +60,6 @@ import iphoneSELandscape from "../../assets/iphone_SE/landscape/skin.webp";
 import iphoneSELandscapeMask from "../../assets/iphone_SE/landscape/mask.png";
 import iphoneSELandscapeBezel from "../../assets/iphone_SE/landscape/bezel.png";
 import iphoneSELandscapeScreen from "../../assets/iphone_SE/landscape/screen.png";
-
-import pixel9Landscape from "../../assets/pixel_9/landscape/skin.webp";
-import pixel9LandscapeMask from "../../assets/pixel_9/landscape/mask.png";
-import pixel9LandscapeBezel from "../../assets/pixel_9/landscape/bezel.png";
-import pixel9LandscapeScreen from "../../assets/pixel_9/landscape/screen.png";
-
-import pixel8Landscape from "../../assets/pixel_8/landscape/skin.webp";
-import pixel8LandscapeMask from "../../assets/pixel_8/landscape/mask.png";
-import pixel8LandscapeBezel from "../../assets/pixel_8/landscape/bezel.png";
-import pixel8LandscapeScreen from "../../assets/pixel_8/landscape/screen.png";
-
-import pixel7Landscape from "../../assets/pixel_7/landscape/skin.webp";
-import pixel7LandscapeMask from "../../assets/pixel_7/landscape/mask.png";
-import pixel7LandscapeBezel from "../../assets/pixel_7/landscape/bezel.png";
-import pixel7LandscapeScreen from "../../assets/pixel_7/landscape/screen.png";
-
-import pixel6aLandscape from "../../assets/pixel_6a/landscape/skin.webp";
-import pixel6aLandscapeMask from "../../assets/pixel_6a/landscape/mask.png";
-import pixel6aLandscapeBezel from "../../assets/pixel_6a/landscape/bezel.png";
-import pixel6aLandscapeScreen from "../../assets/pixel_6a/landscape/screen.png";
 
 import { DevicePlatform } from "../../common/DeviceManager";
 

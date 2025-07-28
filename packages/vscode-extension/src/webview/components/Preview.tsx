@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
 import { useProject } from "../providers/ProjectProvider";
-import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import PreviewLoader from "./PreviewLoader";
 import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
 import { useBundleErrorAlert } from "../hooks/useBundleErrorAlert";

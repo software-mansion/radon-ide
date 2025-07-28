@@ -3,7 +3,7 @@ import React, { useRef, useEffect, useCallback } from "react";
 import DeviceFrame from "./DeviceFrame";
 import { useDeviceFrame } from "./hooks";
 import { useProject } from "../../providers/ProjectProvider";
-import { DeviceProperties, DevicePropertiesFrame } from "../../utilities/deviceContants";
+import { DeviceProperties, DevicePropertiesFrame } from "../../utilities/deviceConstants";
 import { DeviceRotation, ZoomLevelType } from "../../../common/Project";
 import { DEVICE_DEFAULT_SCALE } from "../../components/ZoomControls";
 
