@@ -64,8 +64,8 @@ function getOrientationPredicates(
  * Transform coordinates and rects from app's coordinate system to preview's coordinate system.
  * @param appOrientation - Current orientation of the app.
  * @param deviceOrientation - Current orientation of the device.
- * @param frameRect - coordinates and frame rects in app coordinate system.
- * @returns coordinates and frame rects in preview coordinate system.
+ * @param frameRect - Coordinates and frame rects in app coordinate system.
+ * @returns Coordinates and frame rects in preview coordinate system.
  *  The transform is needed to account of change of origin point after both - the device preview rotation
  *  and app orientation - change, synchronizing the app's coordinate system with the preview's coordinate system.
  * */
