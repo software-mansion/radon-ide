@@ -44,7 +44,7 @@ const InternalImports = {
   get setupRenderOutlinesPlugin() {
     return require("./render_outlines").setup;
   },
-  get setupOrientationPlugin() {
+  get setupOrientationListeners() {
     return require("./orientation").setup;
   },
 };
@@ -349,8 +349,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
     InternalImports.setupRenderOutlinesPlugin();
     InternalImports.setupNetworkPlugin();
-    // Initialised eventListeners, cleanup needed
-    const orientationCleanup = InternalImports.setupOrientationPlugin();
+    const orientationListenersCleanup = InternalImports.setupOrientationListeners();
 
     const originalErrorHandler = global.ErrorUtils.getGlobalHandler();
     LogBox.ignoreAllLogs(true);
@@ -369,7 +368,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
     global.ErrorUtils.setGlobalHandler(wrappedGlobalErrorHandler);
     return () => {
       global.ErrorUtils.setGlobalHandler(originalErrorHandler);
-      orientationCleanup();
+      orientationListenersCleanup();
     };
   }, []);
 

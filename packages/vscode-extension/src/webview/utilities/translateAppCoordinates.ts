@@ -22,14 +22,13 @@ type OrientationPredicates = {
   actualRightAppPortrait: boolean;
 };
 
-
 function getOrientationPredicates(
   appOrientation: DeviceRotationType,
   deviceOrientation: DeviceRotationType
 ): OrientationPredicates {
   const actualPortaitAppLeft =
-    (deviceOrientation === DeviceRotationType.Portrait &&
-      appOrientation === DeviceRotationType.LandscapeLeft);
+    deviceOrientation === DeviceRotationType.Portrait &&
+    appOrientation === DeviceRotationType.LandscapeLeft;
 
   const actualPortaitAppRight =
     deviceOrientation === DeviceRotationType.Portrait &&
@@ -41,8 +40,8 @@ function getOrientationPredicates(
     deviceOrientation === DeviceRotationType.PortraitUpsideDown &&
     appOrientation === DeviceRotationType.LandscapeLeft;
   const actualUpsideDownAppRight =
-    (deviceOrientation === DeviceRotationType.PortraitUpsideDown &&
-      appOrientation === DeviceRotationType.LandscapeRight);
+    deviceOrientation === DeviceRotationType.PortraitUpsideDown &&
+    appOrientation === DeviceRotationType.LandscapeRight;
   const actualLeftAppPortrait =
     deviceOrientation === DeviceRotationType.LandscapeLeft &&
     appOrientation === DeviceRotationType.Portrait;
@@ -62,10 +61,16 @@ function getOrientationPredicates(
 }
 
 export function translateAppToPreviewCoordinates(
-  appOrientation: DeviceRotationType,
+  appOrientation: DeviceRotationType | undefined,
   deviceOrientation: DeviceRotationType,
   frameRect: NormalizedFrameRect
 ): NormalizedFrameRect {
+  if (!appOrientation) {
+    // if the app orientation is undefined, we assume that
+    // the app's orientation is the same as the device's rotation
+    return frameRect;
+  }
+
   let newX = frameRect.x;
   let newY = frameRect.y;
   let newWidth = frameRect.width;
@@ -117,8 +122,7 @@ export function translateAppToPreviewCoordinates(
     newHeight = frameRect.width;
   }
 
-
-  // implicitly handles isLandscape &&  deviceOrientation === DeviceRotationType.LandscapeLeft || 
+  // implicitly handles isLandscape &&  deviceOrientation === DeviceRotationType.LandscapeLeft ||
   //              isLandscape && deviceOrientation === DeviceRotationType.LandscapeRight
   return {
     x: newX,
@@ -129,10 +133,16 @@ export function translateAppToPreviewCoordinates(
 }
 
 export function translatePreviewToAppCoordinates(
-  appOrientation: DeviceRotationType,
+  appOrientation: DeviceRotationType | undefined,
   deviceOrientation: DeviceRotationType,
   coords: NormalizedCoordinates
 ): NormalizedCoordinates {
+  if (!appOrientation) {
+    // if the app orientation is undefined, we assume that
+    // the app's orientation is the same as the device's rotation
+    return coords;
+  }
+
   const { x, y } = coords;
   let newX = x;
   let newY = y;

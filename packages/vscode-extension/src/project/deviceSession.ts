@@ -105,7 +105,7 @@ export class DeviceSession
   private isDebuggerPaused = false;
   private hasStaleBuildCache = false;
   private isRecordingScreen = false;
-  private appOrientation: DeviceRotationType;
+  private appOrientation: DeviceRotationType | undefined;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -144,7 +144,7 @@ export class DeviceSession
       useParentDebugSession: true,
     });
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
-    this.appOrientation = this.rotation;
+    // this.appOrientation = this.rotation;
   }
 
   public getState(): DeviceSessionState {
@@ -366,17 +366,18 @@ export class DeviceSession
         this.rotation === DeviceRotationType.LandscapeLeft ||
         this.rotation === DeviceRotationType.LandscapeRight;
 
-      // if the app orientation is equal to "Landscape", it means we do not have enuogh
-      // information on the application site to infer the detailed orientation. 
-      // "Landscape" will only be messaged upon the initialisation - after that the app can infer the orientation
-      // based on our assumptions.
-      // If the device is in landscape mode, we assume that the app orientation is the same as the device rotation.
-      // Otherwise, it means the app is initialised and does not have previous orientation - 
+      // if the app orientation is equal to "Landscape", it means we do not have enough
+      // information on the application side to infer the detailed orientation.
+      // In this case:
+      // - if the device is in landscape mode, we assume that the app orientation is correct with device rotation
+      // - if the device is not in landscape mode we set app orientation to the last known orientation. 
+      //   If the last orientation is not known, we assume the application was started in Landscape mode 
+      //   while the device was oriented in Portrait, and we pick `LandscapeLeft` as the default orientation in that case.
       if (orientation === "Landscape") {
         if (isLandscape) {
           this.appOrientation = this.rotation;
         } else {
-          this.appOrientation = DeviceRotationType.LandscapeLeft;
+          this.appOrientation = this.appOrientation ?? DeviceRotationType.LandscapeLeft;
         }
       } else {
         this.appOrientation = orientation;
