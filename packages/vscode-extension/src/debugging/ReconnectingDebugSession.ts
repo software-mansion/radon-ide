@@ -10,7 +10,7 @@ import { disposeAll } from "../utilities/disposables";
 const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {
   private disposables: Disposable[] = [];
-  private cancelReconnect: CancelToken | undefined;
+  private reconnectCancelToken: CancelToken | undefined;
 
   private isRunning: boolean = false;
 
@@ -41,18 +41,21 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   }
 
   private maybeReconnect = async () => {
-    if (!this.isRunning || this.cancelReconnect !== undefined) {
+    if (!this.isRunning || this.reconnectCancelToken !== undefined) {
       return;
     }
-    this.cancelReconnect = new CancelToken();
-    while (this.isRunning && !this.cancelReconnect.cancelled) {
+    this.reconnectCancelToken = new CancelToken();
+    while (this.isRunning && !this.reconnectCancelToken.cancelled) {
       try {
         const connected = await this.pingJsDebugSessionWithTimeout();
         if (connected) {
           // if we're connected to a responsive session, we can break
           break;
         }
-        const websocketAddress = await this.metro.getDebuggerURL(undefined, this.cancelReconnect);
+        const websocketAddress = await this.metro.getDebuggerURL(
+          undefined,
+          this.reconnectCancelToken
+        );
         if (!websocketAddress) {
           throw new Error("No connected device listed");
         }
@@ -63,16 +66,17 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
           expoPreludeLineCount: this.metro.expoPreludeLineCount,
           sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
         });
+        break;
       } catch (e) {
         // we ignore the errors and retry
       }
     }
-    this.cancelReconnect = undefined;
+    this.reconnectCancelToken = undefined;
   };
 
   async dispose() {
     disposeAll(this.disposables);
-    this.cancelReconnect?.cancel();
+    this.reconnectCancelToken?.cancel();
     await this.debugSession.dispose?.();
   }
 
