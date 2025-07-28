@@ -366,17 +366,16 @@ export class DeviceSession
         this.rotation === DeviceRotationType.LandscapeLeft ||
         this.rotation === DeviceRotationType.LandscapeRight;
 
-      // if the app orientation is equal to "Landscape", it means we do not have enough
-      // information on the application side to infer the detailed orientation.
-      // In this case:
-      // - if the device is in landscape mode, we assume that the app orientation is correct with device rotation
-      // - if the device is not in landscape mode we set app orientation to the last known orientation. 
-      //   If the last orientation is not known, we assume the application was started in Landscape mode 
-      //   while the device was oriented in Portrait, and we pick `LandscapeLeft` as the default orientation in that case.
       if (orientation === "Landscape") {
+        // if the app orientation is equal to "Landscape", it means we do not have enough
+        // information on the application side to infer the detailed orientation.
         if (isLandscape) {
+          // if the device is in landscape mode, we assume that the app orientation is correct with device rotation
           this.appOrientation = this.rotation;
         } else {
+          // if the device is not in landscape mode we set app orientation to the last known orientation.
+          // if the last orientation is not known, we assume the application was started in Landscape mode
+          // while the device was oriented in Portrait, and we pick `LandscapeLeft` as the default orientation in that case.
           this.appOrientation = this.appOrientation ?? DeviceRotationType.LandscapeLeft;
         }
       } else {
