@@ -37,8 +37,8 @@ import {
   DeviceSessionStatus,
   FatalErrorDescriptor,
   BundleErrorDescriptor,
-  DeviceRotationType,
-  AppOrientationType,
+  DeviceRotation,
+  AppOrientation,
 } from "../common/Project";
 import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
 import { throttle, throttleAsync } from "../utilities/throttle";
@@ -105,7 +105,7 @@ export class DeviceSession
   private isDebuggerPaused = false;
   private hasStaleBuildCache = false;
   private isRecordingScreen = false;
-  private appOrientation: DeviceRotationType | undefined;
+  private appOrientation: DeviceRotation | undefined;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -129,7 +129,7 @@ export class DeviceSession
   constructor(
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
-    private rotation: DeviceRotationType,
+    private rotation: DeviceRotation,
     private readonly deviceSessionDelegate: DeviceSessionDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
@@ -361,10 +361,10 @@ export class DeviceSession
         this.emitStateChange();
       }
     });
-    devtools.onEvent("appOrientationChanged", (orientation: AppOrientationType) => {
+    devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
       const isLandscape =
-        this.rotation === DeviceRotationType.LandscapeLeft ||
-        this.rotation === DeviceRotationType.LandscapeRight;
+        this.rotation === DeviceRotation.LandscapeLeft ||
+        this.rotation === DeviceRotation.LandscapeRight;
 
       if (orientation === "Landscape") {
         // if the app orientation is equal to "Landscape", it means we do not have enough
@@ -376,7 +376,7 @@ export class DeviceSession
           // if the device is not in landscape mode we set app orientation to the last known orientation.
           // if the last orientation is not known, we assume the application was started in Landscape mode
           // while the device was oriented in Portrait, and we pick `LandscapeLeft` as the default orientation in that case.
-          this.appOrientation = this.appOrientation ?? DeviceRotationType.LandscapeLeft;
+          this.appOrientation = this.appOrientation ?? DeviceRotation.LandscapeLeft;
         }
       } else {
         this.appOrientation = orientation;
@@ -1097,7 +1097,7 @@ export class DeviceSession
     return this.device.sendClipboard(text);
   }
 
-  public sendRotate(rotation: DeviceRotationType) {
+  public sendRotate(rotation: DeviceRotation) {
     this.device.sendRotate(rotation);
     this.emitStateChange();
     this.rotation = rotation;

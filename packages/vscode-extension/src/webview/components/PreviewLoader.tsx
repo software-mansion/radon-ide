@@ -8,7 +8,7 @@ import ProgressBar from "./shared/ProgressBar";
 
 import {
   DeviceSessionStateStarting,
-  DeviceRotationType,
+  DeviceRotation,
   StartupMessage,
   StartupStageWeight,
 } from "../../common/Project";
@@ -48,8 +48,8 @@ function PreviewLoader({
   const stageProgress = startingSessionState.stageProgress;
 
   const isLandscape =
-    projectState.rotation === DeviceRotationType.LandscapeLeft ||
-    projectState.rotation === DeviceRotationType.LandscapeRight;
+    projectState.rotation === DeviceRotation.LandscapeLeft ||
+    projectState.rotation === DeviceRotation.LandscapeRight;
 
   const isWaitingForApp = startupMessage === StartupMessage.WaitingForAppToLoad;
   const isBuilding = startupMessage === StartupMessage.Building;

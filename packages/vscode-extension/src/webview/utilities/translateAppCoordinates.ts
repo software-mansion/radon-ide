@@ -1,4 +1,4 @@
-import { DeviceRotationType } from "../../common/Project";
+import { DeviceRotation } from "../../common/Project";
 
 type NormalizedFrameRect = {
   width: number;
@@ -23,31 +23,31 @@ type OrientationPredicates = {
 };
 
 function getOrientationPredicates(
-  appOrientation: DeviceRotationType,
-  deviceOrientation: DeviceRotationType
+  appOrientation: DeviceRotation,
+  deviceOrientation: DeviceRotation
 ): OrientationPredicates {
   const actualPortaitAppLeft =
-    deviceOrientation === DeviceRotationType.Portrait &&
-    appOrientation === DeviceRotationType.LandscapeLeft;
+    deviceOrientation === DeviceRotation.Portrait &&
+    appOrientation === DeviceRotation.LandscapeLeft;
 
   const actualPortaitAppRight =
-    deviceOrientation === DeviceRotationType.Portrait &&
-    appOrientation === DeviceRotationType.LandscapeRight;
+    deviceOrientation === DeviceRotation.Portrait &&
+    appOrientation === DeviceRotation.LandscapeRight;
   const actualUpsideDownAppPortrait =
-    deviceOrientation === DeviceRotationType.PortraitUpsideDown &&
-    appOrientation === DeviceRotationType.Portrait;
+    deviceOrientation === DeviceRotation.PortraitUpsideDown &&
+    appOrientation === DeviceRotation.Portrait;
   const actualUpsideDownAppLeft =
-    deviceOrientation === DeviceRotationType.PortraitUpsideDown &&
-    appOrientation === DeviceRotationType.LandscapeLeft;
+    deviceOrientation === DeviceRotation.PortraitUpsideDown &&
+    appOrientation === DeviceRotation.LandscapeLeft;
   const actualUpsideDownAppRight =
-    deviceOrientation === DeviceRotationType.PortraitUpsideDown &&
-    appOrientation === DeviceRotationType.LandscapeRight;
+    deviceOrientation === DeviceRotation.PortraitUpsideDown &&
+    appOrientation === DeviceRotation.LandscapeRight;
   const actualLeftAppPortrait =
-    deviceOrientation === DeviceRotationType.LandscapeLeft &&
-    appOrientation === DeviceRotationType.Portrait;
+    deviceOrientation === DeviceRotation.LandscapeLeft &&
+    appOrientation === DeviceRotation.Portrait;
   const actualRightAppPortrait =
-    deviceOrientation === DeviceRotationType.LandscapeRight &&
-    appOrientation === DeviceRotationType.Portrait;
+    deviceOrientation === DeviceRotation.LandscapeRight &&
+    appOrientation === DeviceRotation.Portrait;
 
   return {
     actualPortaitAppLeft,
@@ -61,8 +61,8 @@ function getOrientationPredicates(
 }
 
 export function translateAppToPreviewCoordinates(
-  appOrientation: DeviceRotationType | undefined,
-  deviceOrientation: DeviceRotationType,
+  appOrientation: DeviceRotation | undefined,
+  deviceOrientation: DeviceRotation,
   frameRect: NormalizedFrameRect
 ): NormalizedFrameRect {
   if (!appOrientation) {
@@ -122,8 +122,8 @@ export function translateAppToPreviewCoordinates(
     newHeight = frameRect.width;
   }
 
-  // implicitly handles isLandscape &&  deviceOrientation === DeviceRotationType.LandscapeLeft ||
-  //              isLandscape && deviceOrientation === DeviceRotationType.LandscapeRight
+  // implicitly handles isLandscape &&  deviceOrientation === DeviceRotation.LandscapeLeft ||
+  //              isLandscape && deviceOrientation === DeviceRotation.LandscapeRight
   return {
     x: newX,
     y: newY,
@@ -133,8 +133,8 @@ export function translateAppToPreviewCoordinates(
 }
 
 export function translatePreviewToAppCoordinates(
-  appOrientation: DeviceRotationType | undefined,
-  deviceOrientation: DeviceRotationType,
+  appOrientation: DeviceRotation | undefined,
+  deviceOrientation: DeviceRotation,
   coords: NormalizedCoordinates
 ): NormalizedCoordinates {
   if (!appOrientation) {

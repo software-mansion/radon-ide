@@ -6,7 +6,7 @@ import {
   MultimediaData,
   TouchPoint,
   DeviceButtonType,
-  DeviceRotationType,
+  DeviceRotation,
 } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
@@ -166,7 +166,7 @@ export class Preview implements Disposable {
     this.subprocess?.stdin?.write("pointer show false\n");
   }
 
-  public rotateDevice(rotation: DeviceRotationType) {
+  public rotateDevice(rotation: DeviceRotation) {
     this.subprocess?.stdin?.write(`rotate ${rotation}\n`, (err) => {
       if (err) {
         Logger.error("sim-server: Error rotating device:", err);

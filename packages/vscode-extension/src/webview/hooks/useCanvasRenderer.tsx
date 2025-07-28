@@ -1,14 +1,14 @@
 import { RefObject, useCallback, useMemo, useRef } from "react";
-import { DeviceRotationType } from "../../common/Project";
+import { DeviceRotation } from "../../common/Project";
 
 interface TransformationConfig {
   angle: number;
   isPortrait: boolean;
-  rotation: DeviceRotationType;
+  rotation: DeviceRotation;
 }
 
 function useCanvasRenderer(
-  rotation: DeviceRotationType,
+  rotation: DeviceRotation,
   canvasRef: RefObject<HTMLCanvasElement | null>
 ) {
   const lastCanvasDimensionsRef = useRef<{ width: number; height: number } | null>(null);
@@ -16,29 +16,29 @@ function useCanvasRenderer(
   // Cache the transformation configuration based on rotation
   const transformConfig = useMemo<TransformationConfig>(() => {
     switch (rotation) {
-      case DeviceRotationType.LandscapeLeft:
+      case DeviceRotation.LandscapeLeft:
         return {
           angle: -Math.PI / 2,
           isPortrait: false,
-          rotation: DeviceRotationType.LandscapeLeft,
+          rotation: DeviceRotation.LandscapeLeft,
         };
-      case DeviceRotationType.LandscapeRight:
+      case DeviceRotation.LandscapeRight:
         return {
           angle: Math.PI / 2,
           isPortrait: false,
-          rotation: DeviceRotationType.LandscapeRight,
+          rotation: DeviceRotation.LandscapeRight,
         };
-      case DeviceRotationType.PortraitUpsideDown:
+      case DeviceRotation.PortraitUpsideDown:
         return {
           angle: Math.PI,
           isPortrait: true,
-          rotation: DeviceRotationType.PortraitUpsideDown,
+          rotation: DeviceRotation.PortraitUpsideDown,
         };
       default:
         return {
           angle: 0,
           isPortrait: true,
-          rotation: DeviceRotationType.Portrait,
+          rotation: DeviceRotation.Portrait,
         };
     }
   }, [rotation]);
@@ -85,7 +85,7 @@ function useCanvasRenderer(
       // Clear canvas
       ctx.clearRect(0, 0, newWidth, newHeight);
 
-      if (transformConfig.rotation === DeviceRotationType.Portrait) {
+      if (transformConfig.rotation === DeviceRotation.Portrait) {
         // Direct draw for portrait mode
         ctx.drawImage(sourceImg, 0, 0);
       } else {

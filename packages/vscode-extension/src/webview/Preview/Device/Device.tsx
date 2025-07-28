@@ -4,7 +4,7 @@ import DeviceFrame from "./DeviceFrame";
 import { useDeviceFrame } from "./hooks";
 import { useProject } from "../../providers/ProjectProvider";
 import { DeviceProperties, DevicePropertiesFrame } from "../../utilities/deviceContants";
-import { DeviceRotationType, ZoomLevelType } from "../../../common/Project";
+import { DeviceRotation, ZoomLevelType } from "../../../common/Project";
 import { DEVICE_DEFAULT_SCALE } from "../../components/ZoomControls";
 
 const MIN_HEIGHT = 350;
@@ -60,16 +60,16 @@ function getParentDimensions(wrapperDivRef: React.RefObject<HTMLDivElement | nul
   };
 }
 
-function isLandscapeOrientation(rotation: DeviceRotationType): boolean {
+function isLandscapeOrientation(rotation: DeviceRotation): boolean {
   return (
-    rotation === DeviceRotationType.LandscapeLeft || rotation === DeviceRotationType.LandscapeRight
+    rotation === DeviceRotation.LandscapeLeft || rotation === DeviceRotation.LandscapeRight
   );
 }
 
-function shouldRotateFrame(rotation: DeviceRotationType): boolean {
+function shouldRotateFrame(rotation: DeviceRotation): boolean {
   return (
-    rotation === DeviceRotationType.LandscapeRight ||
-    rotation === DeviceRotationType.PortraitUpsideDown
+    rotation === DeviceRotation.LandscapeRight ||
+    rotation === DeviceRotation.PortraitUpsideDown
   );
 }
 
@@ -215,7 +215,7 @@ function getLandscapeTouchAreaDimensions() {
 
 function getDeviceLayoutConfig(
   frame: DevicePropertiesFrame,
-  rotation: DeviceRotationType,
+  rotation: DeviceRotation,
   zoomLevel: ZoomLevelType,
   wrapperDivRef: React.RefObject<HTMLDivElement | null>
 ): DeviceLayoutConfig {

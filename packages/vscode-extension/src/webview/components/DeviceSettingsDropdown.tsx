@@ -16,7 +16,7 @@ import { useProject } from "../providers/ProjectProvider";
 import {
   AppPermissionType,
   DeviceRotationDirection,
-  DeviceRotationType,
+  DeviceRotation,
   DeviceSettings,
   ProjectInterface,
 } from "../../common/Project";
@@ -60,31 +60,31 @@ const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon
 
 const setOrientationOptions: Array<{
   label: string;
-  value: DeviceRotationType;
+  value: DeviceRotation;
   icon: string;
   rotation: string;
 }> = [
   {
     label: "Portrait",
-    value: DeviceRotationType.Portrait,
+    value: DeviceRotation.Portrait,
     icon: "device-mobile",
     rotation: "0deg",
   },
   {
     label: "Landscape Left",
-    value: DeviceRotationType.LandscapeLeft,
+    value: DeviceRotation.LandscapeLeft,
     icon: "device-mobile",
     rotation: "-90deg",
   },
   {
     label: "Portait Upside Down",
-    value: DeviceRotationType.PortraitUpsideDown,
+    value: DeviceRotation.PortraitUpsideDown,
     icon: "device-mobile",
     rotation: "180deg",
   },
   {
     label: "Landscape Right",
-    value: DeviceRotationType.LandscapeRight,
+    value: DeviceRotation.LandscapeRight,
     icon: "device-mobile",
     rotation: "90deg",
   }

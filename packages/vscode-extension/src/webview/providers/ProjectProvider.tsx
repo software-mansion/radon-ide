@@ -10,7 +10,7 @@ import {
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import {
-  DeviceRotationType,
+  DeviceRotation,
   DeviceSessionState,
   DeviceSettings,
   MultimediaData,
@@ -47,7 +47,7 @@ const defaultProjectState: ProjectState = {
     enabled: false,
     connected: false,
   },
-  rotation: DeviceRotationType.Portrait
+  rotation: DeviceRotation.Portrait
 };
 
 const defaultDeviceSettings: DeviceSettings = {

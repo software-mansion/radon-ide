@@ -3,7 +3,7 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { PanelLocation, WorkspaceConfiguration } from "../common/State";
 import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceRotationType } from "../common/Project";
+import { DeviceRotation } from "../common/Project";
 
 export class WorkspaceConfigController implements Disposable {
   private disposables: Disposable[] = [];
@@ -14,7 +14,7 @@ export class WorkspaceConfigController implements Disposable {
       panelLocation: configuration.get<PanelLocation>("panelLocation")!,
       showDeviceFrame: configuration.get<boolean>("showDeviceFrame")!,
       stopPreviousDevices: configuration.get<boolean>("stopPreviousDevices")!,
-      deviceRotation: configuration.get<DeviceRotationType>("deviceRotation")!,
+      deviceRotation: configuration.get<DeviceRotation>("deviceRotation")!,
     };
 
     this.stateManager.setState(workspaceConfig);
@@ -48,7 +48,7 @@ export class WorkspaceConfigController implements Disposable {
       panelLocation: config.get<PanelLocation>("panelLocation")!,
       showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
       stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
-      deviceRotation: config.get<DeviceRotationType>("deviceRotation")!,
+      deviceRotation: config.get<DeviceRotation>("deviceRotation")!,
     };
 
     const oldConfig = this.stateManager.getState();

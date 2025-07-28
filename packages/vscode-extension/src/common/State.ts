@@ -1,5 +1,5 @@
 import { ApplicationRoot } from "./AppRootConfig";
-import { DeviceRotationType } from "./Project";
+import { DeviceRotation } from "./Project";
 
 export type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>;
@@ -11,7 +11,7 @@ export type WorkspaceConfiguration = {
   panelLocation: PanelLocation;
   showDeviceFrame: boolean;
   stopPreviousDevices: boolean;
-  deviceRotation: DeviceRotationType
+  deviceRotation: DeviceRotation
 };
 
 export type State = {
@@ -27,6 +27,6 @@ export const initialState: State = {
     panelLocation: "tab",
     showDeviceFrame: true,
     stopPreviousDevices: false,
-    deviceRotation: DeviceRotationType.Portrait
+    deviceRotation: DeviceRotation.Portrait
   },
 };

@@ -99,7 +99,7 @@ export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
   status: "running";
   isRefreshing: boolean;
   bundleError: BundleErrorDescriptor | undefined;
-  appOrientation: DeviceRotationType | undefined;
+  appOrientation: DeviceRotation | undefined;
 };
 
 export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {
@@ -131,7 +131,7 @@ export type ProjectState = {
   selectedLaunchConfiguration: LaunchConfiguration;
   customLaunchConfigurations: LaunchConfiguration[];
   connectState: ConnectState;
-  rotation: DeviceRotationType;
+  rotation: DeviceRotation;
 } & DeviceSessionsManagerState;
 
 export type ZoomLevelType = number | "Fit";
@@ -140,7 +140,7 @@ export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "ca
 
 export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown" | "power";
 
-export enum DeviceRotationType {
+export enum DeviceRotation {
   Portrait = "Portrait",
   PortraitUpsideDown = "PortraitUpsideDown",
   LandscapeLeft = "LandscapeLeft",
@@ -152,10 +152,10 @@ export enum DeviceRotationDirection {
   Anticlockwise = 1
 }
 
-export type AppOrientationType = DeviceRotationType | "Landscape";
+export type AppOrientation = DeviceRotation | "Landscape";
 
-export function isOfEnumDeviceRotationType(value: any): value is DeviceRotationType {
-  return Object.values(DeviceRotationType).includes(value);
+export function isOfEnumDeviceRotation(value: any): value is DeviceRotation {
+  return Object.values(DeviceRotation).includes(value);
 }
 
 // important: order of values in this enum matters
@@ -306,7 +306,7 @@ export interface ProjectInterface {
   dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number): void;
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;
-  dispatchRotate(rotation: DeviceRotationType): void;
+  dispatchRotate(rotation: DeviceRotation): void;
   dispatchDirectionalRotate(direction: DeviceRotationDirection): void;
   inspectElementAt(
     xRatio: number,

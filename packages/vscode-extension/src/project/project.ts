@@ -9,12 +9,12 @@ import {
   AppPermissionType,
   DeviceButtonType,
   DeviceRotationDirection,
-  DeviceRotationType,
+  DeviceRotation,
   DeviceSessionsManagerState,
   DeviceSessionState,
   DeviceSettings,
   InspectData,
-  isOfEnumDeviceRotationType,
+  isOfEnumDeviceRotation,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -56,11 +56,11 @@ const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 
-const ROTATIONS: DeviceRotationType[] = [
-  DeviceRotationType.LandscapeLeft,
-  DeviceRotationType.Portrait,
-  DeviceRotationType.LandscapeRight,
-  DeviceRotationType.PortraitUpsideDown,
+const ROTATIONS: DeviceRotation[] = [
+  DeviceRotation.LandscapeLeft,
+  DeviceRotation.Portrait,
+  DeviceRotation.LandscapeRight,
+  DeviceRotation.PortraitUpsideDown,
 ] as const;
 
 export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
@@ -110,8 +110,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
       rotation:
-        workspace.getConfiguration("RadonIDE").get<DeviceRotationType>("deviceRotation") ??
-        DeviceRotationType.Portrait,
+        workspace.getConfiguration("RadonIDE").get<DeviceRotation>("deviceRotation") ??
+        DeviceRotation.Portrait,
       selectedLaunchConfiguration: this.selectedLaunchConfiguration,
       customLaunchConfigurations: this.launchConfigsManager.launchConfigurations,
       connectState: {
@@ -150,15 +150,15 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
         if (event.affectsConfiguration("RadonIDE.deviceRotation")) {
           const newRotation =
-            workspace.getConfiguration("RadonIDE").inspect<DeviceRotationType>("deviceRotation")
+            workspace.getConfiguration("RadonIDE").inspect<DeviceRotation>("deviceRotation")
               ?.workspaceValue ??
-            workspace.getConfiguration("RadonIDE").inspect<DeviceRotationType>("deviceRotation")
+            workspace.getConfiguration("RadonIDE").inspect<DeviceRotation>("deviceRotation")
               ?.globalValue;
 
-          if (!isOfEnumDeviceRotationType(newRotation)) {
+          if (!isOfEnumDeviceRotation(newRotation)) {
             const defaultValue =
-              workspace.getConfiguration("RadonIDE").inspect<DeviceRotationType>("deviceRotation")
-                ?.defaultValue ?? DeviceRotationType.Portrait;
+              workspace.getConfiguration("RadonIDE").inspect<DeviceRotation>("deviceRotation")
+                ?.defaultValue ?? DeviceRotation.Portrait;
 
             this.deviceSession?.sendRotate(defaultValue);
             this.updateProjectState({ rotation: defaultValue });
@@ -225,7 +225,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.updateProjectState(state);
   }
 
-  public getDeviceRotation(): DeviceRotationType {
+  public getDeviceRotation(): DeviceRotation {
     return this.projectState.rotation;
   }
 
@@ -466,14 +466,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       const { xRatio: x, yRatio: y } = touch;
       switch (rotation) {
         // 90° anticlockwise map (x,y) to (1-y, x)
-        case DeviceRotationType.LandscapeLeft:
+        case DeviceRotation.LandscapeLeft:
           array[i] = { xRatio: 1 - y, yRatio: x };
           break;
-        case DeviceRotationType.LandscapeRight:
+        case DeviceRotation.LandscapeRight:
           // 90° clockwise map (x,y) to (y, 1-x)
           array[i] = { xRatio: y, yRatio: 1 - x };
           break;
-        case DeviceRotationType.PortraitUpsideDown:
+        case DeviceRotation.PortraitUpsideDown:
           // 180° map (x,y) to (1-x, 1-y)
           array[i] = { xRatio: 1 - x, yRatio: 1 - y };
           break;
@@ -498,7 +498,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSession?.sendWheel(point, deltaX, deltaY);
   }
 
-  public dispatchRotate(rotation: DeviceRotationType) {
+  public dispatchRotate(rotation: DeviceRotation) {
     try {
       workspace
         .getConfiguration("RadonIDE")
