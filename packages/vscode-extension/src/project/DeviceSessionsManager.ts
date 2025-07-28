@@ -74,7 +74,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     const deviceSession = this.selectedDeviceSession;
     if (!deviceSession) {
       window.showErrorMessage("Failed to reload, no active device found.", "Dismiss");
-      return false;
+      return;
     }
     return await deviceSession.performReloadAction(type);
   }
