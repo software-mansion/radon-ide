@@ -8,7 +8,6 @@ import { DeviceRotation, ZoomLevelType } from "../../../common/Project";
 import { DEVICE_DEFAULT_SCALE } from "../../components/ZoomControls";
 
 const MIN_HEIGHT = 350;
-const CSS_MARGIN_FACTOR = 0.9;
 
 interface DeviceProps {
   device: DeviceProperties;
@@ -87,7 +86,7 @@ function getPortraitDimensions(
     phoneWrapperHeight: isFitSet ? "100%" : `${zoomHeight}px`,
     phoneWrapperWidth: isFitSet ? "100%" : "fit-content",
     phoneContentHeight: isFitSet
-      ? `min(100%, max(${MIN_HEIGHT}px, ${(parentWidth / config.aspectRatio) * CSS_MARGIN_FACTOR}px))`
+      ? `min(100%, max(${MIN_HEIGHT}px, ${(parentWidth / config.aspectRatio)}px))`
       : `${zoomHeight}px`,
     phoneContentWidth: "auto",
     phoneContentMinWidth: "fit-content",
@@ -119,7 +118,7 @@ function getLandscapeDimensions(
     phoneWrapperWidth: isFitSet ? "100%" : "fit-content",
     phoneContentHeight: "auto",
     phoneContentWidth: isFitSet
-      ? `calc(min(100%,  ${parentHeight / aspectRatio}px) * ${CSS_MARGIN_FACTOR})`
+      ? `min(100%,  ${parentHeight / aspectRatio}px)`
       : `${zoomHeight}px`,
     phoneContentMinWidth: `${MIN_HEIGHT}px`,
     phoneContentMinHeight: `${MIN_HEIGHT * aspectRatio}px`,
