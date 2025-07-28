@@ -7,7 +7,6 @@ import MessageIcon from "../components/MessageIcon";
 import FlagIcon from "../components/FlagIcon";
 import UserIcon from "../components/UserIcon";
 import ContactCard from "../components/ContactCard";
-import PageLayout from "../components/PageLayout";
 
 export default function Contact(): JSX.Element {
   return (

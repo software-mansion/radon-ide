@@ -17,12 +17,6 @@
 }
 .line {
   border-bottom: 1px solid var(--radon-color-border);
-  display: flex;
-  padding: 40px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-  align-self: stretch;
   height: 40%;
 }
 .container {
@@ -77,6 +71,7 @@
 @media (max-width: 1300px) {
   .list {
     grid-template-columns: 1fr;
+    padding: 0;
   }
   .btn {
     padding: 8px 12px;
@@ -89,7 +84,7 @@
     padding: 0;
   }
   .plan_pay_annually__discount {
-    margin: 0;
+    font-size: 14px;
   }
 }
 

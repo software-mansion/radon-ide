@@ -13,13 +13,13 @@
 
 @media (max-width: 1920px) {
   .container {
-    width: 65%;
+    width: 75%;
   }
 }
 
 @media (max-width: 1440px) {
   .container {
-    width: 75%;
+    width: 80%;
   }
 }
 

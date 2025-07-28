@@ -2,8 +2,10 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  max-width: 1280px;
+  max-width: 1360px;
   justify-content: center;
+  border-left: 1px solid var(--radon-color-border);
+  border-right: 1px solid var(--radon-color-border);
 }
 
 .titleContainer {
@@ -44,11 +46,29 @@
   margin-top: 36px;
 }
 
-@media (max-width: 800px) {
+@media (max-width: 1360px) {
   .wrapper {
     max-width: 100%;
   }
   .container {
     padding: 0 16px;
+    border: none;
+  }
+}
+@media (max-width: 550px) {
+  .headingLabel {
+    margin-top: 60px;
+    margin-bottom: 20px;
+    text-align: left;
+    text-wrap: balance;
+    font-size: 32px;
+    font-weight: 400;
+  }
+  .subheadlingLabel {
+    text-align: left;
+    text-wrap: balance;
+    font-weight: 400;
+    font-size: 16px;
+    margin-bottom: 32px;
   }
 }

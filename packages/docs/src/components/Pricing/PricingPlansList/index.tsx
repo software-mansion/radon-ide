@@ -134,7 +134,6 @@ const PricingPlansList = () => {
             </p>
           </div>
           <div className={`${styles.cardGrid} ${styles.buttonContainer}`}>
-            {/* <div className={pricing.plan__spacer} /> */}
             <Button href="mailto:projects@swmansion.com">Contact Us</Button>
           </div>
         </PricingCard>
