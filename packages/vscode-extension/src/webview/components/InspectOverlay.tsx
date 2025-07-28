@@ -2,7 +2,7 @@ import { RefObject } from "react";
 import { Frame } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import DimensionsBox from "./DimensionsBox";
-import { translateAppToPreviewCoordinates } from "../utilities/translateAppCoordinates";
+import { appToPreviewCoordinates } from "../utilities/transformAppCoordinates";
 import { useProject } from "../providers/ProjectProvider";
 
 interface InspectOverlayProps {
@@ -33,7 +33,7 @@ function InspectOverlay({
   if (selectedDeviceSession?.status !== "running") {
     return null;
   }
-  const translatedInspectFrame = translateAppToPreviewCoordinates(
+  const translatedInspectFrame = appToPreviewCoordinates(
     selectedDeviceSession?.appOrientation,
     projectState.rotation,
     inspectFrame

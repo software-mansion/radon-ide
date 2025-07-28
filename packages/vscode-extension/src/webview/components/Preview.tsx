@@ -26,7 +26,7 @@ import Device from "../Preview/Device";
 import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
 import { useDeviceFrame } from "../Preview/Device/hooks";
-import { translatePreviewToAppCoordinates } from "../utilities/translateAppCoordinates";
+import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -186,7 +186,7 @@ function Preview({
     }
 
     const clampedCoordinates = getNormalizedTouchCoordinates(event);
-    const { x: translatedX, y: translatedY } = translatePreviewToAppCoordinates(
+    const { x: translatedX, y: translatedY } = previewToAppCoordinates(
       selectedDeviceSession.appOrientation,
       projectState.rotation,
       clampedCoordinates

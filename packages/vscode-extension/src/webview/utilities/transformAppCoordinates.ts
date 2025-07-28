@@ -60,7 +60,16 @@ function getOrientationPredicates(
   };
 }
 
-export function translateAppToPreviewCoordinates(
+/**
+ * Transform coordinates and rects from app's coordinate system to preview's coordinate system.
+ * @param appOrientation - Current orientation of the app.
+ * @param deviceOrientation - Current orientation of the device.
+ * @param frameRect - coordinates and frame rects in app coordinate system.
+ * @returns coordinates and frame rects in preview coordinate system.
+ *  The transform is needed to account of change of origin point after both - the device preview rotation
+ *  and app orientation - change, synchronizing the app's coordinate system with the preview's coordinate system.
+ * */
+export function appToPreviewCoordinates(
   appOrientation: DeviceRotation | undefined,
   deviceOrientation: DeviceRotation,
   frameRect: NormalizedFrameRect
@@ -132,7 +141,16 @@ export function translateAppToPreviewCoordinates(
   };
 }
 
-export function translatePreviewToAppCoordinates(
+/**
+ * Transform coordinates from preview's coordinate system to app's coordinate system.
+ * @param appOrientation - Current orientation of the app.
+ * @param deviceOrientation - Current orientation of the device.
+ * @param coords - x,y coordinates in preview coordinate system.
+ * @returns x,y coordinates in app coordinate system.
+ *  The transform is needed to account of change of origin point after both - the device preview rotation
+ *  and app orientation - change, synchronizing the preview's coordinate system with the app's coordinate system.
+ * */
+export function previewToAppCoordinates(
   appOrientation: DeviceRotation | undefined,
   deviceOrientation: DeviceRotation,
   coords: NormalizedCoordinates

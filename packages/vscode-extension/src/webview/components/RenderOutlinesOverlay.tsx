@@ -9,7 +9,7 @@ import {
 import { makeProxy } from "../utilities/rpc";
 import "./RenderOutlinesOverlay.css";
 import { useProject } from "../providers/ProjectProvider";
-import { translateAppToPreviewCoordinates } from "../utilities/translateAppCoordinates";
+import { appToPreviewCoordinates } from "../utilities/transformAppCoordinates";
 
 const RenderOutlines = makeProxy<RenderOutlinesInterface>("RenderOutlines");
 
@@ -80,7 +80,7 @@ function RenderOutlinesOverlay() {
         const { name, count, boundingRect, didCommit } = blueprint;
         const horizontalScale = size.width;
         const verticalScale = size.height;
-        const frameRect = translateAppToPreviewCoordinates(
+        const frameRect = appToPreviewCoordinates(
           orientationRef.current.appOrientation,
           orientationRef.current.deviceOrientation,
           boundingRect
