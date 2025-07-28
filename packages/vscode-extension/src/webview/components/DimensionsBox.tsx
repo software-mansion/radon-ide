@@ -93,7 +93,7 @@ function DimensionsBox({ device, frame, wrapperDivRef }: DimensionsBoxProps) {
   };
 
   return (
-    <div style={cssPropertiesForDimensionsBox}>
+    <div style={cssPropertiesForDimensionsBox as React.CSSProperties}>
       {boxPosition !== "inside" && <div className="arrow" />}
       <div className="dimensions-box">
         {width} × {height}
