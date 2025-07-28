@@ -798,34 +798,6 @@ export class DeviceSession
     Logger.debug("Metro & devtools ready");
   }
 
-  // private async ensureDependenciesAndNodeVersion() {
-  //   if (this.applicationContext.applicationDependencyManager === undefined) {
-  //     Logger.error(
-  //       "[PROJECT] Dependency manager not initialized. this code should be unreachable."
-  //     );
-  //     throw new Error("[PROJECT] Dependency manager not initialized");
-  //   }
-
-  //   const installed =
-  //     await this.applicationContext.applicationDependencyManager.checkNodeModulesInstallationStatus();
-
-  //   if (!installed) {
-  //     Logger.info("Installing node modules");
-  //     await this.applicationContext.applicationDependencyManager.installNodeModules();
-  //     Logger.debug("Installing node modules succeeded");
-  //   } else {
-  //     Logger.debug("Node modules already installed - skipping");
-  //   }
-
-  //   const supportedNodeInstalled =
-  //     await this.applicationContext.applicationDependencyManager.checkSupportedNodeVersionInstalled();
-  //   if (!supportedNodeInstalled) {
-  //     throw new Error(
-  //       "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements."
-  //     );
-  //   }
-  // }
-
   public async start() {
     try {
       this.resetStartingState(StartupMessage.InitializingDevice);
