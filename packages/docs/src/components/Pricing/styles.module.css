@@ -2,6 +2,8 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  max-width: 1280px;
+  justify-content: center;
 }
 
 .titleContainer {
@@ -42,8 +44,11 @@
   margin-top: 36px;
 }
 
-@media (max-width: 430px) {
+@media (max-width: 800px) {
   .wrapper {
     max-width: 100%;
+  }
+  .container {
+    padding: 0 16px;
   }
 }

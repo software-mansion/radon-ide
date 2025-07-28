@@ -33,10 +33,6 @@
   margin: 8px 0 24px 0;
 }
 
-.plan__spacer {
-  flex-grow: 1;
-}
-
 .plan__tagline {
   margin-top: 8px;
   margin-bottom: 32px;

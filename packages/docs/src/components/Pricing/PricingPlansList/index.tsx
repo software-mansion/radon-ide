@@ -96,31 +96,47 @@ const PricingPlansList = () => {
       </div>
       <ul className={styles.list}>
         <PricingCard>
-          <h2 className={pricing.plan__name}>Radon IDE Individual</h2>
-          <h3 className={pricing.plan__price}>{individual}</h3>
-          <p className={pricing.plan__tagline}>
-            For individual developers and freelancers craving more enjoyable coding sessions.
-          </p>
-          <div className={pricing.plan__spacer} />
-          <Button onClick={openIndividualCheckout}>Buy Individual</Button>
+          <div className={`${styles.cardGrid} ${styles.line}`}>
+            <h2 className={pricing.plan__name}>Radon&nbsp;IDE&nbsp;Individual</h2>
+            <h3 className={pricing.plan__price}>{individual}</h3>
+          </div>
+          <div className={styles.cardGrid}>
+            <p className={pricing.plan__tagline}>
+              For individual developers and freelancers craving more enjoyable coding sessions.
+            </p>
+          </div>
+          <div className={styles.cardGrid}>
+            <Button onClick={openIndividualCheckout}>Buy Individual</Button>
+          </div>
         </PricingCard>
         <PricingCard>
-          <h2 className={pricing.plan__name}>Radon IDE Business</h2>
-          <h3 className={pricing.plan__price}>{business}</h3>
-          <p className={pricing.plan__tagline}>
-            For companies seeking to drastically improve their developer experience.
-          </p>
-          <div className={pricing.plan__spacer} />
-          <Button onClick={openBusinessCheckout}>Buy Business</Button>
+          <div className={`${styles.cardGrid} ${styles.line}`}>
+            <h2 className={pricing.plan__name}>Radon&nbsp;IDE&nbsp;Business</h2>
+            <h3 className={pricing.plan__price}>{business}</h3>
+          </div>
+          <div className={styles.cardGrid}>
+            <p className={pricing.plan__tagline}>
+              For companies seeking to drastically improve their developer experience.
+            </p>
+          </div>
+          <div className={styles.cardGrid}>
+            <Button onClick={openBusinessCheckout}>Buy Business</Button>
+          </div>
         </PricingCard>
         <PricingCard>
-          <h2 className={pricing.plan__name}>Radon IDE Enterprise</h2>
-          <h3 className={pricing.plan__price}>{enterprise}</h3>
-          <p className={pricing.plan__tagline}>
-            For organizations that need custom contract options, pricing plans, and support.
-          </p>
-          <div className={pricing.plan__spacer} />
-          <Button href="mailto:projects@swmansion.com">Contact Us</Button>
+          <div className={`${styles.cardGrid} ${styles.line}`}>
+            <h2 className={pricing.plan__name}>Radon&nbsp;IDE&nbsp;Enterprise</h2>
+            <h3 className={pricing.plan__price}>{enterprise}</h3>
+          </div>
+          <div className={styles.cardGrid}>
+            <p className={pricing.plan__tagline}>
+              For organizations that need custom contract options, pricing plans, and support.
+            </p>
+          </div>
+          <div className={`${styles.cardGrid} ${styles.buttonContainer}`}>
+            {/* <div className={pricing.plan__spacer} /> */}
+            <Button href="mailto:projects@swmansion.com">Contact Us</Button>
+          </div>
         </PricingCard>
       </ul>
     </>

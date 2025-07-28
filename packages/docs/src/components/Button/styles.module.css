@@ -1,6 +1,7 @@
 .button {
-  height: 50px;
-  padding: 8px;
+  height: 48px;
+  width: 100%;
+  padding: 16px;
 
   font-weight: 500;
   font-size: 18px;
@@ -11,9 +12,9 @@
     color 0.3s;
 
   display: flex;
-  gap: 8px;
   align-items: center;
   justify-content: center;
+  gap: 12px;
 
   background-color: var(--radon-button);
   color: var(--radon-button-text);
