@@ -19,7 +19,7 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
         "Reload JS": () => deviceSessionsManager.reloadCurrentSession("reloadJs"),
         "Restart app process": () => deviceSessionsManager.reloadCurrentSession("restartProcess"),
         "Reinstall app": () => deviceSessionsManager.reloadCurrentSession("reinstall"),
-        "Restart Metro": () => deviceSessionsManager.reloadCurrentSession("restartMetro"),
+        "Restart Metro server": () => deviceSessionsManager.reloadCurrentSession("restartMetro"),
         "Clear Metro cache": () => deviceSessionsManager.reloadCurrentSession("clearMetro"),
         "Reboot IDE": () => deviceSessionsManager.reloadCurrentSession("reboot"),
         "Clean rebuild": () => deviceSessionsManager.reloadCurrentSession("rebuild"),
