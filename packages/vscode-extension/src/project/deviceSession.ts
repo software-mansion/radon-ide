@@ -1081,8 +1081,12 @@ export class DeviceSession
     }
   }
 
-  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    this.device.sendTouches(touches, type);
+  public sendTouches(
+    touches: Array<TouchPoint>,
+    type: "Up" | "Move" | "Down",
+    rotation: DeviceRotation
+  ) {
+    this.device.sendTouches(touches, type, rotation);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {

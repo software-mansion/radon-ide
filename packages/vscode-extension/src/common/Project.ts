@@ -144,12 +144,12 @@ export enum DeviceRotation {
   Portrait = "Portrait",
   PortraitUpsideDown = "PortraitUpsideDown",
   LandscapeLeft = "LandscapeLeft",
-  LandscapeRight = "LandscapeRight"
+  LandscapeRight = "LandscapeRight",
 }
 
 export enum DeviceRotationDirection {
   Clockwise = -1,
-  Anticlockwise = 1
+  Anticlockwise = 1,
 }
 
 export type AppOrientation = DeviceRotation | "Landscape";

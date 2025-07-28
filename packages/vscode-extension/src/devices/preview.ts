@@ -2,12 +2,7 @@ import path from "path";
 import { Disposable, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import {
-  MultimediaData,
-  TouchPoint,
-  DeviceButtonType,
-  DeviceRotation,
-} from "../common/Project";
+import { MultimediaData, TouchPoint, DeviceButtonType, DeviceRotation } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
 
@@ -173,7 +168,7 @@ export class Preview implements Disposable {
         throw new Error(`Failed to rotate device: ${err.message}`);
       }
       Logger.info(`sim-server: device rotated to ${rotation}`);
-     });
+    });
   }
 
   public startRecording() {
@@ -209,7 +204,34 @@ export class Preview implements Disposable {
     return this.saveMultimediaWithID(MultimediaType.Screenshot, "screenshot");
   }
 
-  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
+  public sendTouches(
+    touches: Array<TouchPoint>,
+    type: "Up" | "Move" | "Down",
+    rotation: DeviceRotation
+  ) {
+    // transform touch coordinates to account for different device orientations before
+    // translation and sending them to the simulator-server.
+    touches.forEach((touch, i, array) => {
+      const { xRatio: x, yRatio: y } = touch;
+      switch (rotation) {
+        // 90° anticlockwise map (x,y) to (1-y, x)
+        case DeviceRotation.LandscapeLeft:
+          array[i] = { xRatio: 1 - y, yRatio: x };
+          break;
+        case DeviceRotation.LandscapeRight:
+          // 90° clockwise map (x,y) to (y, 1-x)
+          array[i] = { xRatio: y, yRatio: 1 - x };
+          break;
+        case DeviceRotation.PortraitUpsideDown:
+          // 180° map (x,y) to (1-x, 1-y)
+          array[i] = { xRatio: 1 - x, yRatio: 1 - y };
+          break;
+        default:
+          // Portrait mode: no transformation needed
+          break;
+      }
+    });
+
     const touchesCoords = touches.map((pt) => `${pt.xRatio},${pt.yRatio}`).join(" ");
     this.subprocess?.stdin?.write(`touch ${type} ${touchesCoords}\n`);
   }

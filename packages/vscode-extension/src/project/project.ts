@@ -457,33 +457,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    const rotation = this.projectState.rotation;
-
-    // transfrom touch coordinates to account for different device orientations before
-    // sending them for dispatch to the device session.
-
-    touches.forEach((touch, i, array) => {
-      const { xRatio: x, yRatio: y } = touch;
-      switch (rotation) {
-        // 90° anticlockwise map (x,y) to (1-y, x)
-        case DeviceRotation.LandscapeLeft:
-          array[i] = { xRatio: 1 - y, yRatio: x };
-          break;
-        case DeviceRotation.LandscapeRight:
-          // 90° clockwise map (x,y) to (y, 1-x)
-          array[i] = { xRatio: y, yRatio: 1 - x };
-          break;
-        case DeviceRotation.PortraitUpsideDown:
-          // 180° map (x,y) to (1-x, 1-y)
-          array[i] = { xRatio: 1 - x, yRatio: 1 - y };
-          break;
-        default:
-          // Portrait mode: no transformation needed
-          break;
-      }
-    });
-
-    this.deviceSession?.sendTouches(touches, type);
+    this.deviceSession?.sendTouches(touches, type, this.projectState.rotation);
   }
 
   public dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {

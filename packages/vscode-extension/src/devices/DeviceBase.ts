@@ -174,8 +174,10 @@ export abstract class DeviceBase implements Disposable {
     return this.preview.captureScreenShot();
   }
 
-  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    this.preview?.sendTouches(touches, type);
+  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down", rotation: DeviceRotation) {
+    
+    
+    this.preview?.sendTouches(touches, type, rotation);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
