@@ -11,7 +11,6 @@ const {
   findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
-
 require("./react_devtools_agent"); // needs to be loaded before inspector_bridge is used
 const inspectorBridge = require("./inspector_bridge");
 
@@ -44,6 +43,9 @@ const InternalImports = {
   },
   get setupRenderOutlinesPlugin() {
     return require("./render_outlines").setup;
+  },
+  get setupOrientationListeners() {
+    return require("./orientation").setup;
   },
 };
 
@@ -305,15 +307,21 @@ export function AppWrapper({ children, initialProps, fabric }) {
           break;
         case "inspect":
           const { id, x, y, requestStack } = data;
-          getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, (inspectorData) => {
-            inspectorBridge.sendMessage({
-              type: "inspectData",
-              data: {
-                id,
-                ...inspectorData,
-              },
-            });
-          });
+          getInspectorDataForCoordinates(
+            mainContainerRef,
+            x,
+            y,
+            requestStack,
+            (inspectorData) => {
+              inspectorBridge.sendMessage({
+                type: "inspectData",
+                data: {
+                  id,
+                  ...inspectorData,
+                },
+              });
+            }
+          );
           break;
         case "showStorybookStory":
           showStorybookStory(data.componentTitle, data.storyName);
@@ -341,6 +349,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
     InternalImports.setupRenderOutlinesPlugin();
     InternalImports.setupNetworkPlugin();
+    const orientationListenersCleanup = InternalImports.setupOrientationListeners();
 
     const originalErrorHandler = global.ErrorUtils.getGlobalHandler();
     LogBox.ignoreAllLogs(true);
@@ -359,6 +368,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
     global.ErrorUtils.setGlobalHandler(wrappedGlobalErrorHandler);
     return () => {
       global.ErrorUtils.setGlobalHandler(originalErrorHandler);
+      orientationListenersCleanup();
     };
   }, []);
 

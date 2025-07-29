@@ -1,3 +1,12 @@
+.replay-ui-wrapper {
+  --replay-z-index: 1;
+}
+
+.replay-video,
+.vhs-wrapper {
+  z-index: var(--replay-z-index);
+}
+
 .vhs-noise {
   position: fixed;
   top: 0;

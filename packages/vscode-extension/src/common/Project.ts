@@ -99,6 +99,7 @@ export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
   status: "running";
   isRefreshing: boolean;
   bundleError: BundleErrorDescriptor | undefined;
+  appOrientation: DeviceRotation | undefined;
 };
 
 export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {
@@ -130,6 +131,7 @@ export type ProjectState = {
   selectedLaunchConfiguration: LaunchConfiguration;
   customLaunchConfigurations: LaunchConfiguration[];
   connectState: ConnectState;
+  rotation: DeviceRotation;
 } & DeviceSessionsManagerState;
 
 export type ZoomLevelType = number | "Fit";
@@ -137,6 +139,24 @@ export type ZoomLevelType = number | "Fit";
 export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
 
 export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown" | "power";
+
+export enum DeviceRotation {
+  Portrait = "Portrait",
+  PortraitUpsideDown = "PortraitUpsideDown",
+  LandscapeLeft = "LandscapeLeft",
+  LandscapeRight = "LandscapeRight",
+}
+
+export enum DeviceRotationDirection {
+  Clockwise = -1,
+  Anticlockwise = 1,
+}
+
+export type AppOrientation = DeviceRotation | "Landscape";
+
+export function isOfEnumDeviceRotation(value: any): value is DeviceRotation {
+  return Object.values(DeviceRotation).includes(value);
+}
 
 // important: order of values in this enum matters
 export enum StartupMessage {
@@ -286,6 +306,8 @@ export interface ProjectInterface {
   dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number): void;
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;
+  dispatchRotate(rotation: DeviceRotation): void;
+  dispatchDirectionalRotate(direction: DeviceRotationDirection): void;
   inspectElementAt(
     xRatio: number,
     yRatio: number,

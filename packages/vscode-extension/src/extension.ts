@@ -1,3 +1,4 @@
+import assert from "assert";
 import {
   commands,
   languages,
@@ -35,8 +36,8 @@ import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevt
 import { IDEPanelMoveTarget } from "./common/utils";
 import { launchConfigurationFromOptions } from "./project/launchConfigurationsManager";
 import { isIdeConfig } from "./utilities/launchConfiguration";
-import assert from "assert";
 import { PanelLocation } from "./common/State";
+import { DeviceRotationDirection } from "./common/Project";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -239,6 +240,13 @@ export async function activate(context: ExtensionContext) {
       IDE.getInstanceIfExists()?.project.deviceSessionsManager.selectNextNthRunningSession(-1)
     )
   );
+
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.rotateDeviceAnticlockwise", rotateDeviceAnticlockwise)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.rotateDeviceClockwise", rotateDeviceClockwise)
+  );
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
   // When it does happen, we open the IDE panel and restart the app.
@@ -425,6 +433,22 @@ async function toggleRecording() {
 
 async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
+}
+
+async function rotateDevice(direction: DeviceRotationDirection) {
+  const project = IDE.getInstanceIfExists()?.project;
+  if (!project) {
+    throw new Error("Radon IDE is not initialized yet.");
+  }
+  project.dispatchDirectionalRotate(direction);
+}
+
+async function rotateDeviceAnticlockwise() {
+  await rotateDevice(DeviceRotationDirection.Anticlockwise);
+}
+
+async function rotateDeviceClockwise() {
+  await rotateDevice(DeviceRotationDirection.Clockwise);
 }
 
 async function openChat() {

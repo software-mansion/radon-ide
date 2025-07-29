@@ -9,6 +9,7 @@ import {
 import { makeProxy } from "../utilities/rpc";
 import "./RenderOutlinesOverlay.css";
 import { useProject } from "../providers/ProjectProvider";
+import { appToPreviewCoordinates } from "../utilities/transformAppCoordinates";
 
 const RenderOutlines = makeProxy<RenderOutlinesInterface>("RenderOutlines");
 
@@ -35,6 +36,23 @@ function RenderOutlinesOverlay() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const outlineRendererRef = useRef<OutlineRenderer | null>(null);
   const outlineRendererEnabled = useIsEnabled();
+  const { projectState, selectedDeviceSession } = useProject();
+
+  if (selectedDeviceSession?.status !== "running") {
+    return;
+  }
+
+  const orientationRef = useRef({
+    deviceOrientation: projectState.rotation,
+    appOrientation: selectedDeviceSession.appOrientation,
+  });
+
+  useEffect(() => {
+    orientationRef.current = {
+      deviceOrientation: projectState.rotation,
+      appOrientation: selectedDeviceSession.appOrientation,
+    };
+  }, [projectState.rotation, selectedDeviceSession.appOrientation]);
 
   useEffect(() => {
     if (!outlineRendererEnabled) {
@@ -62,14 +80,19 @@ function RenderOutlinesOverlay() {
         const { name, count, boundingRect, didCommit } = blueprint;
         const horizontalScale = size.width;
         const verticalScale = size.height;
+        const frameRect = appToPreviewCoordinates(
+          orientationRef.current.appOrientation,
+          orientationRef.current.deviceOrientation,
+          boundingRect
+        );
         const outline = {
           id: fiberId,
           name: name,
           count: count,
-          x: boundingRect.x * horizontalScale,
-          y: boundingRect.y * verticalScale,
-          width: boundingRect.width * horizontalScale,
-          height: boundingRect.height * verticalScale,
+          x: frameRect.x * horizontalScale,
+          y: frameRect.y * verticalScale,
+          width: frameRect.width * horizontalScale,
+          height: frameRect.height * verticalScale,
           didCommit: didCommit,
         };
         return [outline];

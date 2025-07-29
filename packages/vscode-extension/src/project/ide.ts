@@ -10,6 +10,7 @@ import { RecursivePartial, State } from "../common/State";
 import { LaunchConfiguration } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
+import { DeviceRotation } from "../common/Project";
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
@@ -40,6 +41,7 @@ export class IDE implements Disposable {
         panelLocation: "tab",
         showDeviceFrame: true,
         stopPreviousDevices: false,
+        deviceRotation: DeviceRotation.Portrait,
       },
     };
 

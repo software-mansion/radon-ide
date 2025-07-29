@@ -78,8 +78,8 @@ function shouldHideComponent(name) {
 }
 
 function getWindowRect() {
+  const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
   if (Platform.OS === "android") {
-    const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
     const statusBarHeight = StatusBar.currentHeight || 0;
     return {
       x: 0,
@@ -88,12 +88,11 @@ function getWindowRect() {
       height: screenHeight,
     };
   } else {
-    const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
     return {
       x: 0,
       y: 0,
-      width: windowWidth,
-      height: windowHeight,
+      width: screenWidth,
+      height: screenHeight,
     };
   }
 }

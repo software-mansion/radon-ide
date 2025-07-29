@@ -21,7 +21,7 @@ import {
   ZoomLevelType,
 } from "../../common/Project";
 import { Platform, useUtils } from "../providers/UtilsProvider";
-import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import "./View.css";
 import "./PreviewView.css";
 import ReplayIcon from "../components/icons/ReplayIcon";
@@ -123,6 +123,10 @@ function PreviewView() {
   });
 
   const { openFileAt } = useUtils();
+
+  useEffect(() => {
+    resetInspector();
+  }, [projectState.rotation]);
 
   useEffect(() => {
     const disableInspectorOnEscape = (event: KeyboardEvent) => {

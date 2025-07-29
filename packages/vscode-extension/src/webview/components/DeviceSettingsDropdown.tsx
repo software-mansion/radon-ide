@@ -13,7 +13,13 @@ import "./shared/SwitchGroup.css";
 
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
-import { AppPermissionType, DeviceSettings, ProjectInterface } from "../../common/Project";
+import {
+  AppPermissionType,
+  DeviceRotationDirection,
+  DeviceRotation,
+  DeviceSettings,
+  ProjectInterface,
+} from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
 import { DevicePlatform } from "../../common/DeviceManager";
@@ -52,11 +58,62 @@ const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon
   { label: "Reset All Permissions", value: "all", icon: "check-all" },
 ];
 
+const setOrientationOptions: Array<{
+  label: string;
+  value: DeviceRotation;
+  icon: string;
+  rotation: string;
+}> = [
+  {
+    label: "Portrait",
+    value: DeviceRotation.Portrait,
+    icon: "device-mobile",
+    rotation: "0deg",
+  },
+  {
+    label: "Landscape Left",
+    value: DeviceRotation.LandscapeLeft,
+    icon: "device-mobile",
+    rotation: "-90deg",
+  },
+  {
+    label: "Portait Upside Down",
+    value: DeviceRotation.PortraitUpsideDown,
+    icon: "device-mobile",
+    rotation: "180deg",
+  },
+  {
+    label: "Landscape Right",
+    value: DeviceRotation.LandscapeRight,
+    icon: "device-mobile",
+    rotation: "90deg",
+  },
+];
+const rotateOptions: Array<{
+  label: string;
+  value: DeviceRotationDirection;
+  icon: string;
+  commandName: string;
+}> = [
+  {
+    label: "Clockwise",
+    value: DeviceRotationDirection.Clockwise,
+    icon: "refresh",
+    commandName: "RNIDE.rotateDeviceClockwise",
+  },
+  {
+    label: "Anticlockwise",
+    value: DeviceRotationDirection.Anticlockwise,
+    icon: "refresh mirror",
+    commandName: "RNIDE.rotateDeviceAnticlockwise",
+  },
+];
+
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const store$ = useStore();
   const showDeviceFrame = use$(store$.workspaceConfiguration.showDeviceFrame);
 
-  const { project, selectedDeviceSession, deviceSettings } = useProject();
+  const { project, selectedDeviceSession, deviceSettings, projectState } = useProject();
 
   const { openModal } = useModal();
 
@@ -143,6 +200,48 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             label="Open App Switcher"
             icon="chrome-restore"
           />
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+              <span className="codicon codicon-sync" />
+              Rotate Device
+              <span className="codicon codicon-chevron-right right-slot" />
+            </DropdownMenu.SubTrigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.SubContent
+                className="dropdown-menu-subcontent"
+                sideOffset={2}
+                alignOffset={-5}>
+                <Label>Rotate</Label>
+                {rotateOptions.map((option) => (
+                  <CommandItem
+                    project={project}
+                    commandName={option.commandName}
+                    label={option.label}
+                    icon={option.icon}
+                  />
+                ))}
+
+                <div className="device-settings-margin" />
+                <Label>Set Orientation</Label>
+
+                {setOrientationOptions.map((option, index) => (
+                  <DropdownMenu.Item
+                    className="dropdown-menu-item"
+                    key={index}
+                    onSelect={() => project.dispatchRotate(option.value)}>
+                    <span
+                      className={`codicon codicon-${option.icon}`}
+                      style={{ rotate: option.rotation }}
+                    />
+                    {option.label}
+                    {projectState.rotation === option.value && (
+                      <span className="codicon codicon-check right-slot" />
+                    )}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Sub>
           {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
@@ -178,6 +277,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
+
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => openModal("Open Deep Link", <OpenDeepLinkView />)}>

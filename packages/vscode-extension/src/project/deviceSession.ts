@@ -37,6 +37,8 @@ import {
   DeviceSessionStatus,
   FatalErrorDescriptor,
   BundleErrorDescriptor,
+  DeviceRotation,
+  AppOrientation,
 } from "../common/Project";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { throttle, throttleAsync } from "../utilities/throttle";
@@ -104,6 +106,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
   private isDebuggerPaused = false;
   private hasStaleBuildCache = false;
   private isRecordingScreen = false;
+  private appOrientation: DeviceRotation | undefined;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -127,6 +130,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
   constructor(
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
+    private rotation: DeviceRotation,
     private readonly deviceSessionDelegate: DeviceSessionDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
@@ -169,6 +173,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
         status: "running",
         isRefreshing: this.isRefreshing,
         bundleError: this.bundleError,
+        appOrientation: this.appOrientation,
       };
     } else if (this.status === "fatalError") {
       assert(this.fatalError, "Expected error to be defined in fatal error state");
@@ -378,6 +383,29 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
         this.profilingReactState = isProfiling ? "profiling" : "stopped";
         this.emitStateChange();
       }
+    });
+    devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
+      const isLandscape =
+        this.rotation === DeviceRotation.LandscapeLeft ||
+        this.rotation === DeviceRotation.LandscapeRight;
+
+      if (orientation === "Landscape") {
+        // if the app orientation is equal to "Landscape", it means we do not have enough
+        // information on the application side to infer the detailed orientation.
+        if (isLandscape) {
+          // if the device is in landscape mode, we assume that the app orientation is correct with device rotation
+          this.appOrientation = this.rotation;
+        } else {
+          // if the device is not in landscape mode we set app orientation to the last known orientation.
+          // if the last orientation is not known, we assume the application was started in Landscape mode
+          // while the device was oriented in Portrait, and we pick `LandscapeLeft` as the default orientation in that case.
+          this.appOrientation = this.appOrientation ?? DeviceRotation.LandscapeLeft;
+        }
+      } else {
+        this.appOrientation = orientation;
+      }
+
+      this.emitStateChange();
     });
     return devtools;
   }
@@ -688,7 +716,8 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
         this.metro.ready(),
         this.device.startPreview().then((url) => {
           previewURL = url;
-          this.emitStateChange();
+          // initialise device rotation
+          this.sendRotate(this.rotation);
         }),
         waitForAppReady,
       ])
@@ -1044,8 +1073,12 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
     }
   }
 
-  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    this.device.sendTouches(touches, type);
+  public sendTouches(
+    touches: Array<TouchPoint>,
+    type: "Up" | "Move" | "Down",
+    rotation: DeviceRotation
+  ) {
+    this.device.sendTouches(touches, type, rotation);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
@@ -1058,6 +1091,12 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
 
   public sendClipboard(text: string) {
     return this.device.sendClipboard(text);
+  }
+
+  public sendRotate(rotation: DeviceRotation) {
+    this.device.sendRotate(rotation);
+    this.emitStateChange();
+    this.rotation = rotation;
   }
 
   public async getClipboard() {
