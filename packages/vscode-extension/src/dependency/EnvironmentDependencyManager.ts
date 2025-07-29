@@ -3,14 +3,14 @@ import { Disposable } from "vscode";
 import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
 import { Platform } from "../utilities/platform";
 import { StateManager } from "../project/StateManager";
-import { EnvironmentDependencyRecord } from "../common/State";
+import { EnvironmentDependencyStatuses } from "../common/State";
 import { testCommand } from "../utilities/testCommand";
 import { disposeAll } from "../utilities/disposables";
 
 export class EnvironmentDependencyManager implements Disposable {
   private disposables: Disposable[] = [];
 
-  constructor(private stateManager: StateManager<EnvironmentDependencyRecord>) {
+  constructor(private stateManager: StateManager<EnvironmentDependencyStatuses>) {
     this.runAllDependencyChecks();
     this.disposables.push(this.stateManager);
   }

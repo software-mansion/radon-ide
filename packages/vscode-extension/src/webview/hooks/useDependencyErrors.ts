@@ -3,16 +3,16 @@ import { useMemo } from "react";
 import { useStore } from "../providers/storeProvider";
 import {
   ApplicationDependency,
-  ApplicationDependencyRecord,
+  ApplicationDependencyStatuses,
   EnvironmentDependency,
-  EnvironmentDependencyRecord,
+  EnvironmentDependencyStatuses,
 } from "../../common/State";
 import { MinSupportedVersion } from "../../common/Constants";
 
 type Errors = Partial<Record<ErrorType, { message: string }>>;
 type ErrorType = "ios" | "simulator" | "emulator" | "android" | "common";
 type Dependency = ApplicationDependency | EnvironmentDependency;
-type DependencyRecord = ApplicationDependencyRecord | EnvironmentDependencyRecord;
+type DependencyStatuses = ApplicationDependencyStatuses | EnvironmentDependencyStatuses;
 
 export const useDependencyErrors = () => {
   const store$ = useStore();
@@ -27,7 +27,7 @@ export const useDependencyErrors = () => {
   return getErrors(statuses);
 };
 
-function getErrors(statuses: DependencyRecord): Errors | undefined {
+function getErrors(statuses: DependencyStatuses): Errors | undefined {
   const errors: Errors = {};
   let hasErrors = false;
   function setFirstError(dependency: Dependency, errorName: ErrorType) {

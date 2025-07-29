@@ -36,20 +36,24 @@ export type DependencyStatus = {
   details?: string;
 };
 
-export type EnvironmentDependencyRecord = Partial<Record<EnvironmentDependency, DependencyStatus>>;
-export type ApplicationDependencyRecord = Partial<Record<ApplicationDependency, DependencyStatus>>;
+export type EnvironmentDependencyStatuses = Partial<
+  Record<EnvironmentDependency, DependencyStatus>
+>;
+export type ApplicationDependencyStatuses = Partial<
+  Record<ApplicationDependency, DependencyStatus>
+>;
 
 export type ProjectStore = {
   applicationContext: ApplicationContextState;
 };
 
 export type ApplicationContextState = {
-  applicationDependencies: ApplicationDependencyRecord;
+  applicationDependencies: ApplicationDependencyStatuses;
 };
 
 export type State = {
   applicationRoots: ApplicationRoot[];
-  environmentDependencies: EnvironmentDependencyRecord;
+  environmentDependencies: EnvironmentDependencyStatuses;
   projectState: ProjectStore;
   workspaceConfiguration: WorkspaceConfiguration;
 };

@@ -19,10 +19,10 @@ import { getMinimumSupportedNodeVersion } from "../utilities/getMinimumSupported
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { Pods } from "./pods";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
-import { ApplicationDependencyRecord } from "../common/State";
 import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
 import { MinSupportedVersion } from "../common/Constants";
+import { ApplicationDependencyStatuses } from "../common/State";
 
 export class ApplicationDependencyManager implements Disposable {
   private disposables: Disposable[] = [];
@@ -31,7 +31,7 @@ export class ApplicationDependencyManager implements Disposable {
   private packageManager: PackageManager;
 
   constructor(
-    private stateManager: StateManager<ApplicationDependencyRecord>,
+    private stateManager: StateManager<ApplicationDependencyStatuses>,
     private launchConfiguration: ResolvedLaunchConfig
   ) {
     this.pods = new Pods(launchConfiguration.absoluteAppRoot, launchConfiguration.env);

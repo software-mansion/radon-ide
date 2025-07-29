@@ -194,8 +194,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async runDependencyChecks(): Promise<void> {
-    await this.applicationContext.applicationDependencyManager.runAllDependencyChecks();
-    await this.environmentDependencyManager.runAllDependencyChecks();
+    await Promise.all([
+      this.applicationContext.applicationDependencyManager.runAllDependencyChecks(),
+      this.environmentDependencyManager.runAllDependencyChecks(),
+    ]);
   }
 
   onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
