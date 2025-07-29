@@ -10,7 +10,6 @@ import {
 } from "react";
 import { makeProxy } from "../utilities/rpc";
 import {
-  DeviceRotation,
   DeviceSessionState,
   DeviceSettings,
   MultimediaData,
