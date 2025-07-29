@@ -211,28 +211,25 @@ export class Preview implements Disposable {
   ) {
     // transform touch coordinates to account for different device orientations before
     // translation and sending them to the simulator-server.
-    touches.forEach((touch, i, array) => {
+    const transformedTouches = touches.map((touch, i) => {
       const { xRatio: x, yRatio: y } = touch;
       switch (rotation) {
         // 90° anticlockwise map (x,y) to (1-y, x)
         case DeviceRotation.LandscapeLeft:
-          array[i] = { xRatio: 1 - y, yRatio: x };
-          break;
+          return { xRatio: 1 - y, yRatio: x };
         case DeviceRotation.LandscapeRight:
           // 90° clockwise map (x,y) to (y, 1-x)
-          array[i] = { xRatio: y, yRatio: 1 - x };
-          break;
+          return { xRatio: y, yRatio: 1 - x };
         case DeviceRotation.PortraitUpsideDown:
           // 180° map (x,y) to (1-x, 1-y)
-          array[i] = { xRatio: 1 - x, yRatio: 1 - y };
-          break;
+          return { xRatio: 1 - x, yRatio: 1 - y };
         default:
           // Portrait mode: no transformation needed
-          break;
+          return { xRatio: x, yRatio: y };
       }
     });
 
-    const touchesCoords = touches.map((pt) => `${pt.xRatio},${pt.yRatio}`).join(" ");
+    const touchesCoords = transformedTouches.map((pt) => `${pt.xRatio},${pt.yRatio}`).join(" ");
     this.subprocess?.stdin?.write(`touch ${type} ${touchesCoords}\n`);
   }
 
