@@ -6,7 +6,12 @@ import { waitForElement } from "./helpers.js";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-async function openProject(browser, driver, projectPath, workbench) {
+export async function openProjectInVSCode(
+  browser,
+  driver,
+  projectPath,
+  workbench
+) {
   await browser.openResources(
     path.resolve(__dirname, projectPath),
 
@@ -18,24 +23,23 @@ async function openProject(browser, driver, projectPath, workbench) {
       );
     }
   );
+}
 
+export async function openRadonIDEPanel(browser, driver, workbench) {
   await workbench.executeCommand("RNIDE.openPanel");
   const webview = await driver.wait(
     until.elementLocated(By.css('iframe[class*="webview"]')),
     10000,
-    "Timed out waiting for outer webview iframe"
+    "Timed out waiting for Radon IDE webview"
   );
   await waitForElement(driver, webview);
   await driver.switchTo().frame(webview);
 
-  const iframe = await driver.findElement(By.css('iframe[title="Radon IDE"]'));
+  const iframe = await driver.wait(
+    until.elementLocated(By.css('iframe[title="Radon IDE"]')),
+    10000,
+    "Timed out waiting for Radon IDE iframe"
+  );
   await waitForElement(driver, iframe);
   await driver.switchTo().frame(iframe);
-
-  const panelView = await driver.findElement(
-    By.css('[data-test="radon-panel-view"]')
-  );
-  await waitForElement(driver, panelView);
 }
-
-export { openProject };

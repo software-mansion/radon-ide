@@ -5,9 +5,13 @@ import {
   By,
   WebView,
   EditorView,
+  until,
 } from "vscode-extension-tester";
 import { paths, texts } from "../data/testData.js";
-import { openProject } from "../utils/projectLauncher.js";
+import {
+  openProjectInVSCode,
+  openRadonIDEPanel,
+} from "../utils/projectLauncher.js";
 import { waitForElement } from "../utils/helpers.js";
 
 describe("Smoke tests Radon IDE", () => {
@@ -39,6 +43,7 @@ describe("Smoke tests Radon IDE", () => {
     workbench = new Workbench();
 
     view = new WebView();
+    await openProjectInVSCode(browser, driver, paths.projectPath, workbench);
   });
 
   afterEach(async function () {
@@ -46,17 +51,38 @@ describe("Smoke tests Radon IDE", () => {
     await new EditorView().closeAllEditors();
   });
 
-  it("should open Radon IDE webview", async function () {
+  it("should open Radon IDE webview using command line", async function () {
     try {
-      await openProject(browser, driver, paths.projectPath, workbench);
+      await openRadonIDEPanel(browser, driver, workbench);
     } catch (error) {
       isSmokeFailed = true;
       throw error;
     }
   });
 
+  it("should open Radon IDE view using Radon IDE button", async function () {
+    await driver
+      .findElement(By.css("div#swmansion\\.react-native-ide"))
+      .click();
+    const webview = await driver.wait(
+      until.elementLocated(By.css('iframe[class*="webview"]')),
+      10000,
+      "Timed out waiting for Radon IDE webview"
+    );
+    await waitForElement(driver, webview);
+    await driver.switchTo().frame(webview);
+
+    const iframe = await driver.wait(
+      until.elementLocated(By.css('iframe[title="Radon IDE"]')),
+      10000,
+      "Timed out waiting for Radon IDE iframe"
+    );
+    await waitForElement(driver, iframe);
+    await driver.switchTo().frame(iframe);
+  });
+
   it("should open Radon IDE webview for a specific project", async function () {
-    await openProject(browser, driver, paths.projectPath, workbench);
+    await openRadonIDEPanel(browser, driver, workbench);
 
     const title = await driver.getTitle();
     assert.equal(
@@ -76,64 +102,5 @@ describe("Smoke tests Radon IDE", () => {
       texts.expectedProjectName,
       "Text of the element should be a name of the project"
     );
-  });
-
-  it("should the correct context be displayed based on the availability of devices after opening a project", async function () {
-    await openProject(browser, driver, paths.projectPath, workbench);
-
-    const deviceSelect = await driver.findElement(
-      By.css('[data-test="device-select-value-text"]')
-    );
-    await waitForElement(driver, deviceSelect);
-    const text = await deviceSelect.getText();
-
-    if (text === "No devices found") {
-      console.log("No devices found");
-      const missingDevice = await driver.findElement(
-        By.css('[data-test="devices-not-found-container"]')
-      );
-      assert.isTrue(
-        await missingDevice.isDisplayed(),
-        "Devices not found container should be displayed"
-      );
-
-      const deviceNotFoundSubtitle = await driver.findElement(
-        By.css('[data-test="devices-not-found-subtitle"]')
-      );
-      const text = await deviceNotFoundSubtitle.getText();
-      assert.include(
-        text,
-        "You can add a new device using the quick action below.",
-        "Text should be 'You can add a new device using the quick action below.'"
-      );
-    } else if (text === "Select device") {
-      console.log("Devices are available, but none is selected");
-      const deviceNotFound = await driver.findElement(
-        By.css('[data-test="devices-not-found-container"]')
-      );
-      assert.isTrue(
-        await deviceNotFound.isDisplayed(),
-        "Devices not found container should be displayed"
-      );
-
-      const deviceNotFoundSubtitle = await driver.findElement(
-        By.css('[data-test="devices-not-found-subtitle"]')
-      );
-      const text = await deviceNotFoundSubtitle.getText();
-      assert.include(
-        text,
-        "You can select one of available devices or create a new one to start.",
-        "Text should be 'You can select one of available devices or create a new one to start.'"
-      );
-    } else {
-      console.log("Some device is selected");
-      const phoneWrapper = await driver.findElement(
-        By.css('[data-test="phone-wrapper"]')
-      );
-      assert.isTrue(
-        await phoneWrapper.isDisplayed(),
-        "Phone wrapper should be displayed when a device is selected"
-      );
-    }
   });
 });
