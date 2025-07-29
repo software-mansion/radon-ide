@@ -17,6 +17,8 @@ import Button from "./shared/Button";
 import { useDevices } from "../providers/DevicesProvider";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/DeviceManager";
+import { useStore } from "../providers/storeProvider";
+import { use$ } from "@legendapp/state/react";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => acc + cur,
@@ -37,7 +39,10 @@ function PreviewLoader({
   onRequestShowPreview: () => void;
   startingSessionState: DeviceSessionStateStarting;
 }) {
-  const { project, projectState, selectedDeviceSession } = useProject();
+  const store$ = useStore();
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+
+  const { project, selectedDeviceSession } = useProject();
   const { deviceSessionsManager } = useDevices();
   const [progress, setProgress] = useState(0);
   const platform = selectedDeviceSession?.deviceInfo.platform;
@@ -48,8 +53,7 @@ function PreviewLoader({
   const stageProgress = startingSessionState.stageProgress;
 
   const isLandscape =
-    projectState.rotation === DeviceRotation.LandscapeLeft ||
-    projectState.rotation === DeviceRotation.LandscapeRight;
+    rotation === DeviceRotation.LandscapeLeft || rotation === DeviceRotation.LandscapeRight;
 
   const isWaitingForApp = startupMessage === StartupMessage.WaitingForAppToLoad;
   const isBuilding = startupMessage === StartupMessage.Building;

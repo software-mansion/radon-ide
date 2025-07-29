@@ -37,9 +37,17 @@ import { IDEPanelMoveTarget } from "./common/utils";
 import { launchConfigurationFromOptions } from "./project/launchConfigurationsManager";
 import { isIdeConfig } from "./utilities/launchConfiguration";
 import { PanelLocation } from "./common/State";
-import { DeviceRotationDirection } from "./common/Project";
+import { DeviceRotation, DeviceRotationDirection } from "./common/Project";
+import { updatePartialWorkspaceConfig } from "./utilities/updatePartialWorkspaceConfig";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
+
+const ROTATIONS: DeviceRotation[] = [
+  DeviceRotation.LandscapeLeft,
+  DeviceRotation.Portrait,
+  DeviceRotation.LandscapeRight,
+  DeviceRotation.PortraitUpsideDown,
+] as const;
 
 function handleUncaughtErrors(context: ExtensionContext) {
   process.on("unhandledRejection", (error) => {
@@ -440,7 +448,17 @@ async function rotateDevice(direction: DeviceRotationDirection) {
   if (!project) {
     throw new Error("Radon IDE is not initialized yet.");
   }
-  project.dispatchDirectionalRotate(direction);
+
+  const configuration = workspace.getConfiguration("RadonIDE");
+
+  const currentRotation = configuration.get<DeviceRotation>("deviceRotation");
+  if (currentRotation === undefined) {
+    Logger.warn("[Radon IDE] Device rotation is not set in the configuration.");
+    return;
+  }
+  const currentIndex = ROTATIONS.indexOf(currentRotation);
+  const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
+  await updatePartialWorkspaceConfig(configuration, ["deviceRotation", ROTATIONS[newIndex]]);
 }
 
 async function rotateDeviceAnticlockwise() {

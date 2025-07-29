@@ -8,10 +8,10 @@ import CreateDeviceView from "./CreateDeviceView";
 import { useDevices } from "../providers/DevicesProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
-import { useDependencies } from "../providers/DependenciesProvider";
 import { Platform, useUtils } from "../providers/UtilsProvider";
 import ManageDevicesView from "./ManageDevicesView";
 import { useProject } from "../providers/ProjectProvider";
+import { useDependencyErrors } from "../hooks/useDependencyErrors";
 
 const firstIosDevice = iOSSupportedDevices[0];
 const firstAndroidDevice = AndroidSupportedDevices[0];
@@ -69,7 +69,7 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
   const { iOSRuntimes, androidImages, deviceManager } = useDevices();
   const [isIOSCreating, withIosCreating] = useLoadingState();
   const [isAndroidCreating, withAndroidCreating] = useLoadingState();
-  const { errors } = useDependencies();
+  const errors = useDependencyErrors();
   const utils = useUtils();
   const { project } = useProject();
 

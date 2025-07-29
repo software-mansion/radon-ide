@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 
 import DevicesProvider from "./providers/DevicesProvider";
-import DependenciesProvider from "./providers/DependenciesProvider";
 import ModalProvider from "./providers/ModalProvider";
 import ProjectProvider from "./providers/ProjectProvider";
 import AlertProvider from "./providers/AlertProvider";
@@ -26,13 +25,11 @@ root.render(
         <UtilsProvider>
           <TelemetryProvider>
             <DevicesProvider>
-              <DependenciesProvider>
-                <ModalProvider>
-                  <AlertProvider>
-                    <App />
-                  </AlertProvider>
-                </ModalProvider>
-              </DependenciesProvider>
+              <ModalProvider>
+                <AlertProvider>
+                  <App />
+                </AlertProvider>
+              </ModalProvider>
             </DevicesProvider>
           </TelemetryProvider>
         </UtilsProvider>

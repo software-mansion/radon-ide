@@ -112,8 +112,9 @@ const rotateOptions: Array<{
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const store$ = useStore();
   const showDeviceFrame = use$(store$.workspaceConfiguration.showDeviceFrame);
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 
-  const { project, selectedDeviceSession, deviceSettings, projectState } = useProject();
+  const { project, selectedDeviceSession, deviceSettings } = useProject();
 
   const { openModal } = useModal();
 
@@ -228,13 +229,13 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                   <DropdownMenu.Item
                     className="dropdown-menu-item"
                     key={index}
-                    onSelect={() => project.dispatchRotate(option.value)}>
+                    onSelect={() => store$.workspaceConfiguration.deviceRotation.set(option.value)}>
                     <span
                       className={`codicon codicon-${option.icon}`}
-                      style={{ rotate: option.rotation }}
+                      style={{ rotate: rotation }}
                     />
                     {option.label}
-                    {projectState.rotation === option.value && (
+                    {rotation === option.value && (
                       <span className="codicon codicon-check right-slot" />
                     )}
                   </DropdownMenu.Item>

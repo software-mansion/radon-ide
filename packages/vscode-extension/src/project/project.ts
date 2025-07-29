@@ -2,13 +2,12 @@ import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
 import assert from "assert";
-import { env, Disposable, commands, workspace, window, ConfigurationChangeEvent } from "vscode";
+import { env, Disposable, commands, workspace, window } from "vscode";
 import _ from "lodash";
 import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
-  DeviceRotationDirection,
   DeviceRotation,
   DeviceSessionsManagerState,
   DeviceSessionState,
@@ -48,6 +47,9 @@ import { LaunchConfigurationsManager } from "./launchConfigurationsManager";
 import { LaunchConfiguration } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
+import { StateManager } from "./StateManager";
+import { ProjectStore, WorkspaceConfiguration } from "../common/State";
+import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -55,13 +57,6 @@ const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
-
-const ROTATIONS: DeviceRotation[] = [
-  DeviceRotation.LandscapeLeft,
-  DeviceRotation.Portrait,
-  DeviceRotation.LandscapeRight,
-  DeviceRotation.PortraitUpsideDown,
-] as const;
 
 export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
   private launchConfigsManager = new LaunchConfigurationsManager();
@@ -82,9 +77,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   constructor(
+    private readonly stateManager: StateManager<ProjectStore>,
+    private readonly workspaceStateManager: StateManager<WorkspaceConfiguration>,
     private readonly deviceManager: DeviceManager,
     private readonly utils: UtilsInterface,
     private readonly outputChannelRegistry: OutputChannelRegistry,
+    private readonly environmentDependencyManager: EnvironmentDependencyManager,
     initialLaunchConfigOptions?: LaunchConfiguration
   ) {
     const fingerprintProvider = new FingerprintProvider();
@@ -93,7 +91,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       ? initialLaunchConfigOptions
       : this.launchConfigsManager.initialLaunchConfiguration;
     this.selectedLaunchConfiguration = initialLaunchConfig;
-    this.applicationContext = new ApplicationContext(initialLaunchConfig, buildCache);
+    this.applicationContext = new ApplicationContext(
+      this.stateManager.getDerived("applicationContext"),
+      initialLaunchConfig,
+      buildCache
+    );
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
       this.deviceManager,
@@ -109,9 +111,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       initialized: false,
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
-      rotation:
-        workspace.getConfiguration("RadonIDE").get<DeviceRotation>("deviceRotation") ??
-        DeviceRotation.Portrait,
       selectedLaunchConfiguration: this.selectedLaunchConfiguration,
       customLaunchConfigurations: this.launchConfigsManager.launchConfigurations,
       connectState: {
@@ -147,30 +146,23 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       })
     );
     this.disposables.push(
-      workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-        if (event.affectsConfiguration("RadonIDE.deviceRotation")) {
-          const newRotation =
-            workspace.getConfiguration("RadonIDE").inspect<DeviceRotation>("deviceRotation")
-              ?.workspaceValue ??
-            workspace.getConfiguration("RadonIDE").inspect<DeviceRotation>("deviceRotation")
-              ?.globalValue;
-
-          if (!isOfEnumDeviceRotation(newRotation)) {
-            const defaultValue =
-              workspace.getConfiguration("RadonIDE").inspect<DeviceRotation>("deviceRotation")
-                ?.defaultValue ?? DeviceRotation.Portrait;
-
-            this.deviceSession?.sendRotate(defaultValue);
-            this.updateProjectState({ rotation: defaultValue });
+      this.workspaceStateManager.onSetState(
+        (partialWorkspaceConfig: Partial<WorkspaceConfiguration>) => {
+          const deviceRotation = partialWorkspaceConfig.deviceRotation;
+          if (!deviceRotation) {
+            return;
           }
 
-          if (newRotation && newRotation !== this.projectState.rotation) {
-            this.deviceSession?.sendRotate(newRotation);
-            this.updateProjectState({ rotation: newRotation });
-          }
+          const deviceRotationResult = isOfEnumDeviceRotation(deviceRotation)
+            ? deviceRotation
+            : DeviceRotation.Portrait;
+          this.deviceSessionsManager.rotateAllDevices(deviceRotationResult);
         }
-      })
+      )
     );
+
+    this.disposables.push(this.stateManager);
+    this.disposables.push(this.workspaceStateManager);
   }
 
   async focusOutput(channel: Output): Promise<void> {
@@ -221,12 +213,19 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     });
   }
 
-  public onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
+  public async runDependencyChecks(): Promise<void> {
+    await Promise.all([
+      this.applicationContext.applicationDependencyManager.runAllDependencyChecks(),
+      this.environmentDependencyManager.runAllDependencyChecks(),
+    ]);
+  }
+
+  onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
     this.updateProjectState(state);
   }
 
   public getDeviceRotation(): DeviceRotation {
-    return this.projectState.rotation;
+    return this.workspaceStateManager.getState().deviceRotation;
   }
 
   get relativeAppRootPath() {
@@ -242,10 +241,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   get appRootFolder() {
     return this.applicationContext.appRootFolder;
-  }
-
-  get dependencyManager() {
-    return this.applicationContext.dependencyManager;
   }
 
   get buildCache() {
@@ -364,8 +359,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     await this.utils.saveMultimedia(screenshot);
   }
 
-  //#endregion
-
   async dispatchPaste(text: string) {
     await this.deviceSession?.sendClipboard(text);
     await this.utils.showToast("Pasted to device clipboard", 2000);
@@ -415,14 +408,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
 
-    if (this.dependencyManager === undefined) {
+    if (this.applicationContext.applicationDependencyManager === undefined) {
       Logger.error(
         "[PROJECT] Dependency manager not initialized. this code should be unreachable."
       );
       throw new Error("[PROJECT] Dependency manager not initialized");
     }
 
-    if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
+    if (await this.applicationContext.applicationDependencyManager.checkProjectUsesExpoRouter()) {
       await this.deviceSession?.navigateHome();
     } else {
       await this.reloadMetro();
@@ -457,7 +450,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    this.deviceSession?.sendTouches(touches, type, this.projectState.rotation);
+    this.deviceSession?.sendTouches(touches, type, this.getDeviceRotation());
   }
 
   public dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
@@ -470,27 +463,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number) {
     this.deviceSession?.sendWheel(point, deltaX, deltaY);
-  }
-
-  public dispatchRotate(rotation: DeviceRotation) {
-    try {
-      workspace
-        .getConfiguration("RadonIDE")
-        .update("deviceRotation", rotation, false)
-        .then(() => {
-          this.deviceSessionsManager.rotateAllDevices(rotation);
-          this.updateProjectState({ rotation });
-        });
-    } catch (err) {
-      Logger.error(`Failed to update rotation configuration: ${err}`);
-    }
-  }
-
-  public dispatchDirectionalRotate(direction: DeviceRotationDirection) {
-    const rotation = this.projectState.rotation;
-    const currentIndex = ROTATIONS.indexOf(rotation);
-    const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
-    this.dispatchRotate(ROTATIONS[newIndex]);
   }
 
   public async inspectElementAt(
@@ -575,14 +547,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async showStorybookStory(componentTitle: string, storyName: string) {
-    if (this.dependencyManager === undefined) {
+    if (this.applicationContext.applicationDependencyManager === undefined) {
       Logger.error(
         "[PROJECT] Dependency manager not initialized. this code should be unreachable."
       );
       throw new Error("[PROJECT] Dependency manager not initialized");
     }
 
-    if (await this.dependencyManager.checkProjectUsesStorybook()) {
+    if (await this.applicationContext.applicationDependencyManager.checkProjectUsesStorybook()) {
       this.deviceSession?.openStorybookStory(componentTitle, storyName);
     } else {
       window.showErrorMessage("Storybook is not installed.", "Dismiss");

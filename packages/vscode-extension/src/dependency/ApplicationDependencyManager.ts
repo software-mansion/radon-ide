@@ -1,25 +1,12 @@
 import fs from "fs";
 import path from "path";
-import { EventEmitter } from "stream";
 import { Disposable, OutputChannel } from "vscode";
 import semver, { SemVer } from "semver";
 import { Logger } from "../Logger";
-import { EMULATOR_BINARY } from "../devices/AndroidEmulatorDevice";
-import { command, exec } from "../utilities/subprocess";
+import { exec } from "../utilities/subprocess";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
-import {
-  isNodeModulesInstalled,
-  PackageManagerInfo,
-  resolvePackageManager,
-} from "../utilities/packageManager";
-import {
-  Dependency,
-  DependencyListener,
-  DependencyManagerInterface,
-  DependencyStatus,
-  MinSupportedVersion,
-} from "../common/DependencyManager";
+import { PackageManager } from "./packageManager";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { CancelToken } from "../utilities/cancelToken";
 import { getAndroidSourceDir } from "../builders/buildAndroid";
@@ -30,77 +17,89 @@ import { DevicePlatform } from "../common/DeviceManager";
 import { isEasCliInstalled } from "../builders/easCommand";
 import { getMinimumSupportedNodeVersion } from "../utilities/getMinimumSupportedNodeVersion";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
-import { Pods } from "../utilities/pods";
+import { Pods } from "./pods";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
+import { StateManager } from "../project/StateManager";
+import { disposeAll } from "../utilities/disposables";
+import { MinSupportedVersion } from "../common/Constants";
+import { ApplicationDependencyStatuses } from "../common/State";
 
-export class DependencyManager implements Disposable, DependencyManagerInterface {
-  // React Native prepares build scripts based on node_modules, we need to reinstall pods if they change
-  private eventEmitter = new EventEmitter();
-  private packageManagerInternal: PackageManagerInfo | undefined;
+export class ApplicationDependencyManager implements Disposable {
+  private disposables: Disposable[] = [];
+
   private pods: Pods;
+  private packageManager: PackageManager;
 
-  constructor(private launchConfiguration: ResolvedLaunchConfig) {
+  constructor(
+    private stateManager: StateManager<ApplicationDependencyStatuses>,
+    private launchConfiguration: ResolvedLaunchConfig
+  ) {
     this.pods = new Pods(launchConfiguration.absoluteAppRoot, launchConfiguration.env);
+    this.packageManager = new PackageManager(launchConfiguration);
+
+    this.runAllDependencyChecks();
+
+    this.disposables.push(this.stateManager);
   }
 
   setLaunchConfiguration(newLaunchConfiguration: ResolvedLaunchConfig) {
     const newRoot = newLaunchConfiguration.absoluteAppRoot;
-    const appRoot = this.launchConfiguration.absoluteAppRoot;
-    if (appRoot !== newRoot) {
-      this.packageManagerInternal = undefined;
-    }
     this.launchConfiguration = newLaunchConfiguration;
+    const oldPackageManager = this.packageManager;
+    this.packageManager = new PackageManager(newLaunchConfiguration);
+    oldPackageManager.dispose();
     const oldPods = this.pods;
     this.pods = new Pods(newRoot, newLaunchConfiguration.env);
-    oldPods.dispose(); // dispose the old pods instance to clean up resources
+    oldPods.dispose();
+
+    this.runAllDependencyChecks();
   }
 
   public dispose() {
-    this.eventEmitter.removeAllListeners();
     this.pods.dispose();
-  }
-
-  public async addListener(listener: DependencyListener) {
-    this.eventEmitter.addListener("updatedDependencyStatus", listener);
-  }
-
-  public async removeListener(listener: DependencyListener) {
-    this.eventEmitter.removeListener("updatedDependencyStatus", listener);
-  }
-
-  private emitEvent(dependency: Dependency, status: DependencyStatus) {
-    this.eventEmitter.emit("updatedDependencyStatus", dependency, status);
+    disposeAll(this.disposables);
   }
 
   public async runAllDependencyChecks() {
-    const appRoot = this.launchConfiguration.absoluteAppRoot;
-    this.checkAndroidEmulatorBinaryStatus();
     this.checkAndroidDirectoryExits();
 
     if (Platform.OS === "macos") {
-      this.checkXcodebuildCommandStatus();
       this.checkIOSDirectoryExists();
       this.checkPodsCommandStatus();
       this.checkPodsInstallationStatus();
     }
 
-    this.checkNodeCommandStatus();
     this.checkPackageManagerInstallationStatus();
     this.checkNodeModulesInstallationStatus();
 
-    this.emitEvent("reactNative", {
-      status: npmPackageVersionCheck("react-native", appRoot, MinSupportedVersion.reactNative),
-      isOptional: false,
-    });
-
-    this.emitEvent("expo", {
-      status: npmPackageVersionCheck("expo", appRoot, MinSupportedVersion.expo),
-      isOptional: !shouldUseExpoCLI(this.launchConfiguration),
-    });
+    this.checkSupportedReactNativeInstalled();
+    this.checkSupportedExpoInstalled();
 
     this.checkProjectUsesExpoRouter();
     this.checkProjectUsesStorybook();
     this.checkEasCliInstallationStatus();
+  }
+
+  public async checkSupportedReactNativeInstalled() {
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
+
+    this.stateManager.setState({
+      reactNative: {
+        status: npmPackageVersionCheck("react-native", appRoot, MinSupportedVersion.reactNative),
+        isOptional: false,
+      },
+    });
+  }
+
+  public async checkSupportedExpoInstalled() {
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
+
+    this.stateManager.setState({
+      expo: {
+        status: npmPackageVersionCheck("expo", appRoot, MinSupportedVersion.expo),
+        isOptional: !shouldUseExpoCLI(this.launchConfiguration),
+      },
+    });
   }
 
   public async ensureDependenciesForBuild(
@@ -127,19 +126,48 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     }
   }
 
+  public async ensureDependenciesForStart(outputChannel: OutputChannel, cancelToken: CancelToken) {
+    const packageManagerInstalled = await this.checkPackageManagerInstallationStatus();
+
+    if (!packageManagerInstalled) {
+      Logger.warn(
+        "No package manager found. Please install npm, yarn, pnpm or bun to manage your project dependencies."
+      );
+    }
+
+    const installed = await this.checkNodeModulesInstallationStatus();
+
+    if (!installed) {
+      Logger.info("Installing node modules");
+      await this.installNodeModules(outputChannel, cancelToken);
+      Logger.debug("Installing node modules succeeded");
+    } else {
+      Logger.debug("Node modules already installed - skipping");
+    }
+
+    const supportedNodeInstalled = await this.checkSupportedNodeVersionInstalled();
+    if (!supportedNodeInstalled) {
+      throw new Error(
+        "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements."
+      );
+    }
+  }
+
   public async checkSupportedNodeVersionInstalled(): Promise<boolean> {
     const appRoot = this.launchConfiguration.absoluteAppRoot;
     try {
       const { stdout: nodeVersion } = await exec("node", ["-v"]);
       const minimumNodeVersion = getMinimumSupportedNodeVersion(appRoot);
       const isMinimumNodeVersion = semver.satisfies(nodeVersion, minimumNodeVersion);
-      this.emitEvent("nodejs", {
-        status: isMinimumNodeVersion ? "installed" : "notInstalled",
-        isOptional: false,
+      this.stateManager.setState({
+        nodeVersion: {
+          status: isMinimumNodeVersion ? "installed" : "notInstalled",
+          isOptional: false,
+        },
       });
       return isMinimumNodeVersion;
     } catch {
-      this.emitEvent("nodejs", { status: "notInstalled", isOptional: false });
+      this.stateManager.setState({ nodeVersion: { status: "notInstalled", isOptional: false } });
       return false;
     }
   }
@@ -152,10 +180,10 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
 
     try {
       await fs.promises.access(androidDirPath);
-      this.emitEvent("android", { status: "installed", isOptional });
+      this.stateManager.setState({ android: { status: "installed", isOptional } });
       return true;
     } catch (e) {
-      this.emitEvent("android", { status: "notInstalled", isOptional });
+      this.stateManager.setState({ android: { status: "notInstalled", isOptional } });
       return isOptional;
     }
   }
@@ -167,10 +195,10 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     const isOptional = !(await projectRequiresNativeBuild(this.launchConfiguration));
     try {
       await fs.promises.access(iosDirPath);
-      this.emitEvent("ios", { status: "installed", isOptional });
+      this.stateManager.setState({ ios: { status: "installed", isOptional } });
       return true;
     } catch (e) {
-      this.emitEvent("ios", { status: "notInstalled", isOptional });
+      this.stateManager.setState({ ios: { status: "notInstalled", isOptional } });
       return isOptional;
     }
   }
@@ -180,9 +208,11 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     const dependsOnExpoRouter = appDependsOnExpoRouter(appRoot);
     const hasExpoRouterInstalled = npmPackageVersionCheck("expo-router", appRoot);
 
-    this.emitEvent("expoRouter", {
-      status: hasExpoRouterInstalled,
-      isOptional: !dependsOnExpoRouter,
+    this.stateManager.setState({
+      expoRouter: {
+        status: hasExpoRouterInstalled,
+        isOptional: !dependsOnExpoRouter,
+      },
     });
 
     return dependsOnExpoRouter;
@@ -196,36 +226,28 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
       appRoot,
       MinSupportedVersion.storybook
     );
-    this.emitEvent("storybook", {
-      status: hasStotybookInstalled,
-      isOptional: true,
+    this.stateManager.setState({
+      storybook: {
+        status: hasStotybookInstalled,
+        isOptional: true,
+      },
     });
     return hasStotybookInstalled;
   }
 
-  public async installNodeModules(): Promise<boolean> {
-    const appRoot = this.launchConfiguration.absoluteAppRoot;
-    const packageManager = await this.getPackageManager();
-    if (!packageManager) {
-      return false;
-    }
-
-    this.emitEvent("nodeModules", { status: "installing", isOptional: false });
+  public async installNodeModules(
+    outputChannel: OutputChannel,
+    cancelToken: CancelToken
+  ): Promise<void> {
+    this.stateManager.setState({ nodeModules: { status: "installing", isOptional: false } });
 
     try {
-      // all package managers support the `install` command
-      await command(`${packageManager.name} install`, {
-        cwd: packageManager.workspacePath ?? appRoot,
-        quietErrorsOnExit: true,
-      });
+      await this.packageManager.installNodeModules(outputChannel, cancelToken);
+      this.stateManager.setState({ nodeModules: { status: "installed", isOptional: false } });
     } catch (e) {
-      Logger.error("Failed to install node modules", e);
+      this.stateManager.setState({ nodeModules: { status: "notInstalled", isOptional: false } });
       throw new Error("Failed to install node modules. Check the logs for details.");
     }
-
-    this.emitEvent("nodeModules", { status: "installed", isOptional: false });
-
-    return true;
   }
 
   private async installPods(outputChannel: OutputChannel, cancelToken: CancelToken) {
@@ -240,11 +262,11 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
       getTelemetryReporter().sendTelemetryEvent("build:pod-install-failed", {
         platform: DevicePlatform.IOS,
       });
-      this.emitEvent("pods", { status: "notInstalled", isOptional: false });
+      this.stateManager.setState({ pods: { status: "notInstalled", isOptional: false } });
       return;
     }
 
-    this.emitEvent("pods", { status: "installed", isOptional: false });
+    this.stateManager.setState({ pods: { status: "installed", isOptional: false } });
     Logger.debug("Project pods installed");
   }
 
@@ -273,74 +295,34 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
     }
   }
 
-  private async getPackageManager() {
-    if (!this.packageManagerInternal) {
-      this.packageManagerInternal = await resolvePackageManager(this.launchConfiguration);
-    }
-    return this.packageManagerInternal;
-  }
-
-  private async checkAndroidEmulatorBinaryStatus() {
-    try {
-      await fs.promises.access(EMULATOR_BINARY, fs.constants.X_OK);
-      this.emitEvent("androidEmulator", { status: "installed", isOptional: false });
-    } catch (e) {
-      this.emitEvent("androidEmulator", { status: "notInstalled", isOptional: false });
-    }
-  }
-
-  private async checkXcodebuildCommandStatus() {
-    const isXcodebuildInstalled = await testCommand("xcodebuild -version");
-    const isXcrunInstalled = await testCommand("xcrun --version");
-    const isSimctlInstalled = await testCommand("xcrun simctl help");
-
-    const isInstalled = isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled;
-    this.emitEvent("xcode", {
-      status: isInstalled ? "installed" : "notInstalled",
-      isOptional: false,
-    });
-  }
-
   private async checkPodsCommandStatus() {
     const installed = await this.pods.isPodsCommandInstalled();
-    this.emitEvent("cocoaPods", {
-      status: installed ? "installed" : "notInstalled",
-      isOptional: !(await projectRequiresNativeBuild(this.launchConfiguration)),
-    });
-  }
-
-  private async checkNodeCommandStatus() {
-    const installed = await testCommand("node -v");
-    this.emitEvent("nodejs", {
-      status: installed ? "installed" : "notInstalled",
-      isOptional: false,
+    this.stateManager.setState({
+      cocoaPods: {
+        status: installed ? "installed" : "notInstalled",
+        isOptional: !(await projectRequiresNativeBuild(this.launchConfiguration)),
+      },
     });
   }
 
   private async checkPackageManagerInstallationStatus() {
     // the resolvePackageManager function in getPackageManager checks
     // if a package manager is installed and otherwise returns undefined
-    const packageManager = await this.getPackageManager();
-    this.emitEvent("packageManager", {
-      status: packageManager ? "installed" : "notInstalled",
-      isOptional: false,
-      details: packageManager?.name,
+    const installed = await this.packageManager.isPackageManagerInstalled();
+    this.stateManager.setState({
+      packageManager: {
+        status: installed ? "installed" : "notInstalled",
+        isOptional: false,
+      },
     });
-    return packageManager;
+
+    return installed;
   }
 
   public async checkNodeModulesInstallationStatus() {
-    const appRoot = this.launchConfiguration.absoluteAppRoot;
-    const packageManager = await this.getPackageManager();
-    if (!packageManager) {
-      this.emitEvent("nodeModules", { status: "notInstalled", isOptional: false });
-      return false;
-    }
-
-    const installed = await isNodeModulesInstalled(packageManager, appRoot);
-    this.emitEvent("nodeModules", {
-      status: installed ? "installed" : "notInstalled",
-      isOptional: false,
+    const installed = await this.packageManager.areNodeModulesInstalled();
+    this.stateManager.setState({
+      nodeModules: { status: installed ? "installed" : "notInstalled", isOptional: false },
     });
     return installed;
   }
@@ -348,9 +330,11 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   public async checkPodsInstallationStatus() {
     const installed = await this.pods.arePodsInstalled();
 
-    this.emitEvent("pods", {
-      status: installed ? "installed" : "notInstalled",
-      isOptional: false,
+    this.stateManager.setState({
+      pods: {
+        status: installed ? "installed" : "notInstalled",
+        isOptional: false,
+      },
     });
     return installed;
   }
@@ -358,25 +342,13 @@ export class DependencyManager implements Disposable, DependencyManagerInterface
   public async checkEasCliInstallationStatus() {
     const appRoot = this.launchConfiguration.absoluteAppRoot;
     const installed = await isEasCliInstalled(appRoot);
-    this.emitEvent("easCli", {
-      status: installed ? "installed" : "notInstalled",
-      isOptional: true,
+    this.stateManager.setState({
+      easCli: {
+        status: installed ? "installed" : "notInstalled",
+        isOptional: true,
+      },
     });
     return;
-  }
-}
-
-async function testCommand(cmd: string) {
-  try {
-    // We are not checking the stderr here, because some of the CLIs put the warnings there.
-    const { failed } = await command(cmd, {
-      encoding: "utf8",
-      quietErrorsOnExit: true,
-      env: { ...process.env, LANG: "en_US.UTF-8" },
-    });
-    return !failed;
-  } catch (_) {
-    return false;
   }
 }
 
@@ -406,13 +378,6 @@ function npmPackageVersionCheck(
     // ignore if not installed
   }
   return "notInstalled";
-}
-
-export async function checkXcodeExists() {
-  const isXcodebuildInstalled = await testCommand("xcodebuild -version");
-  const isXcrunInstalled = await testCommand("xcrun --version");
-  const isSimctlInstalled = await testCommand("xcrun simctl help");
-  return isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled;
 }
 
 function appDependsOnExpoRouter(appRoot: string) {

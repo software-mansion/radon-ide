@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
+import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
 import { useProject } from "../providers/ProjectProvider";
@@ -27,6 +28,7 @@ import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
 import { useDeviceFrame } from "../Preview/Device/hooks";
 import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
+import { useStore } from "../providers/storeProvider";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -72,6 +74,9 @@ function Preview({
   replayData,
   onReplayClose,
 }: Props) {
+  const store$ = useStore();
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+
   const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>(null);
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
@@ -82,7 +87,7 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
-  const { selectedDeviceSession, project, projectState } = useProject();
+  const { selectedDeviceSession, project } = useProject();
 
   const { sendTelemetry } = useUtils();
 
@@ -188,7 +193,7 @@ function Preview({
     const clampedCoordinates = getNormalizedTouchCoordinates(event);
     const { x: translatedX, y: translatedY } = previewToAppCoordinates(
       selectedDeviceSession.appOrientation,
-      projectState.rotation,
+      rotation,
       clampedCoordinates
     );
 

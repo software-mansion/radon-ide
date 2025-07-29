@@ -1,11 +1,12 @@
 import React, { useRef, useEffect, useCallback } from "react";
+import { use$ } from "@legendapp/state/react";
 
 import DeviceFrame from "./DeviceFrame";
 import { useDeviceFrame } from "./hooks";
-import { useProject } from "../../providers/ProjectProvider";
 import { DeviceProperties, DevicePropertiesFrame } from "../../utilities/deviceConstants";
 import { DeviceRotation, ZoomLevelType } from "../../../common/Project";
 import { DEVICE_DEFAULT_SCALE } from "../../components/ZoomControls";
+import { useStore } from "../../providers/storeProvider";
 
 const MIN_HEIGHT = 350;
 
@@ -174,11 +175,13 @@ function getDeviceLayoutConfig(
 }
 
 export default function Device({ device, zoomLevel, children, wrapperDivRef }: DeviceProps) {
+  const store$ = useStore();
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+
   const frame = useDeviceFrame(device);
-  const { projectState } = useProject();
+
   const phoneContentRef = useRef<HTMLDivElement>(null);
 
-  const rotation = projectState.rotation;
   const isLandscape = isLandscapeOrientation(rotation);
 
   const cssPropertiesForDevice = useCallback((): DeviceCSSProperties => {

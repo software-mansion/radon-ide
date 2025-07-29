@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { use$ } from "@legendapp/state/react";
 import { CanvasOutlineRenderer, OutlineRenderer } from "react-scan";
 import {
   RenderOutlinesEventListener,
@@ -10,6 +11,7 @@ import { makeProxy } from "../utilities/rpc";
 import "./RenderOutlinesOverlay.css";
 import { useProject } from "../providers/ProjectProvider";
 import { appToPreviewCoordinates } from "../utilities/transformAppCoordinates";
+import { useStore } from "../providers/storeProvider";
 
 const RenderOutlines = makeProxy<RenderOutlinesInterface>("RenderOutlines");
 
@@ -36,23 +38,27 @@ function RenderOutlinesOverlay() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const outlineRendererRef = useRef<OutlineRenderer | null>(null);
   const outlineRendererEnabled = useIsEnabled();
-  const { projectState, selectedDeviceSession } = useProject();
+
+  const store$ = useStore();
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+
+  const { selectedDeviceSession } = useProject();
 
   if (selectedDeviceSession?.status !== "running") {
     return;
   }
 
   const orientationRef = useRef({
-    deviceOrientation: projectState.rotation,
+    deviceOrientation: rotation,
     appOrientation: selectedDeviceSession.appOrientation,
   });
 
   useEffect(() => {
     orientationRef.current = {
-      deviceOrientation: projectState.rotation,
+      deviceOrientation: rotation,
       appOrientation: selectedDeviceSession.appOrientation,
     };
-  }, [projectState.rotation, selectedDeviceSession.appOrientation]);
+  }, [rotation, selectedDeviceSession.appOrientation]);
 
   useEffect(() => {
     if (!outlineRendererEnabled) {

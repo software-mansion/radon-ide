@@ -1,9 +1,10 @@
+import { use$ } from "@legendapp/state/react";
 import { useProject } from "../providers/ProjectProvider";
 import UrlSelect from "./UrlSelect";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
 import IconButton from "./shared/IconButton";
-import { useDependencies } from "../providers/DependenciesProvider";
 import { useDevices } from "../providers/DevicesProvider";
+import { useStore } from "../providers/storeProvider";
 
 function ReloadButton({ disabled }: { disabled: boolean }) {
   const { deviceSessionsManager } = useDevices();
@@ -31,13 +32,16 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 
 function UrlBar({ disabled }: { disabled?: boolean }) {
   const { project, selectedDeviceSession } = useProject();
-  const { dependencies } = useDependencies();
+  const store$ = useStore();
+  const expoRouterStatus = use$(
+    store$.projectState.applicationContext.applicationDependencies.expoRouter
+  );
 
   const navigationHistory = selectedDeviceSession?.navigationHistory ?? [];
   const routeList = selectedDeviceSession?.navigationRouteList ?? [];
 
   const disabledAlsoWhenStarting = disabled || selectedDeviceSession?.status === "starting";
-  const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
+  const isExpoRouterProject = !expoRouterStatus?.isOptional;
 
   return (
     <>

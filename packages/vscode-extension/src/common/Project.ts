@@ -131,7 +131,6 @@ export type ProjectState = {
   selectedLaunchConfiguration: LaunchConfiguration;
   customLaunchConfigurations: LaunchConfiguration[];
   connectState: ConnectState;
-  rotation: DeviceRotation;
 } & DeviceSessionsManagerState;
 
 export type ZoomLevelType = number | "Fit";
@@ -261,6 +260,8 @@ export interface ProjectInterface {
   ): Promise<void>;
   selectLaunchConfiguration(launchConfig: LaunchConfiguration): Promise<void>;
 
+  runDependencyChecks(): Promise<void>;
+
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
   runCommand(command: string): Promise<void>;
@@ -306,8 +307,7 @@ export interface ProjectInterface {
   dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number): void;
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;
-  dispatchRotate(rotation: DeviceRotation): void;
-  dispatchDirectionalRotate(direction: DeviceRotationDirection): void;
+
   inspectElementAt(
     xRatio: number,
     yRatio: number,

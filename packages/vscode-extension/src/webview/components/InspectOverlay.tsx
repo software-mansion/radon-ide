@@ -1,9 +1,11 @@
 import { RefObject } from "react";
+import { use$ } from "@legendapp/state/react";
 import { Frame } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import DimensionsBox from "./DimensionsBox";
 import { appToPreviewCoordinates } from "../utilities/transformAppCoordinates";
 import { useProject } from "../providers/ProjectProvider";
+import { useStore } from "../providers/storeProvider";
 
 interface InspectOverlayProps {
   inspectFrame: Frame;
@@ -29,13 +31,15 @@ function InspectOverlay({
   device,
   wrapperDivRef,
 }: InspectOverlayProps) {
-  const { selectedDeviceSession, projectState } = useProject();
+  const store$ = useStore();
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const { selectedDeviceSession } = useProject();
   if (selectedDeviceSession?.status !== "running") {
     return null;
   }
   const translatedInspectFrame = appToPreviewCoordinates(
     selectedDeviceSession?.appOrientation,
-    projectState.rotation,
+    rotation,
     inspectFrame
   );
 

@@ -1,6 +1,7 @@
 import { useEffect, forwardRef, RefObject, useRef, useMemo, useCallback } from "react";
-import { useProject } from "../providers/ProjectProvider";
 import { DeviceRotation } from "../../common/Project";
+import { useStore } from "../providers/storeProvider";
+import { use$ } from "@legendapp/state/react";
 
 type MediaRef = RefObject<HTMLImageElement | null> | RefObject<HTMLVideoElement | null>;
 
@@ -17,8 +18,8 @@ interface TransformationConfig {
 
 const MediaCanvas = forwardRef<HTMLCanvasElement, MediaCanvasProps>(
   ({ mediaRef, src, ...rest }, ref) => {
-    const { projectState } = useProject();
-    const rotation = projectState.rotation;
+    const store$ = useStore();
+    const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 
     const isRunningRef = useRef(false);
     const canvasRef = ref as RefObject<HTMLCanvasElement>;

@@ -768,7 +768,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
    * to be reinstalled for iOS.
    */
   private async checkBuildDependenciesChanged(platform: DevicePlatform): Promise<boolean> {
-    const dependencyManager = this.applicationContext.dependencyManager;
+    const dependencyManager = this.applicationContext.applicationDependencyManager;
     if (platform === DevicePlatform.IOS) {
       return !(await dependencyManager.checkPodsInstallationStatus());
     }
@@ -795,7 +795,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
       this.platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
     );
 
-    const dependencyManager = this.applicationContext.dependencyManager;
+    const dependencyManager = this.applicationContext.applicationDependencyManager;
     await dependencyManager.ensureDependenciesForBuild(
       buildConfig,
       buildOutputChannel,
@@ -836,34 +836,6 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
     Logger.debug("Metro & devtools ready");
   }
 
-  private async ensureDependenciesAndNodeVersion() {
-    if (this.applicationContext.dependencyManager === undefined) {
-      Logger.error(
-        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
-      );
-      throw new Error("[PROJECT] Dependency manager not initialized");
-    }
-
-    const installed =
-      await this.applicationContext.dependencyManager.checkNodeModulesInstallationStatus();
-
-    if (!installed) {
-      Logger.info("Installing node modules");
-      await this.applicationContext.dependencyManager.installNodeModules();
-      Logger.debug("Installing node modules succeeded");
-    } else {
-      Logger.debug("Node modules already installed - skipping");
-    }
-
-    const supportedNodeInstalled =
-      await this.applicationContext.dependencyManager.checkSupportedNodeVersionInstalled();
-    if (!supportedNodeInstalled) {
-      throw new Error(
-        "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements."
-      );
-    }
-  }
-
   public async start() {
     try {
       this.resetStartingState(StartupMessage.InitializingDevice);
@@ -875,7 +847,15 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
       const cancelToken = new CancelToken();
       this.cancelToken = cancelToken;
 
-      const waitForNodeModules = this.ensureDependenciesAndNodeVersion();
+      const packageManagerOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
+        Output.PackageManager
+      );
+
+      const waitForNodeModules =
+        this.applicationContext.applicationDependencyManager.ensureDependenciesForStart(
+          packageManagerOutputChannel,
+          cancelToken
+        );
 
       Logger.debug(`Launching devtools`);
       this.devtools.start();

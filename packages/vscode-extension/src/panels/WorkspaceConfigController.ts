@@ -4,6 +4,7 @@ import { PanelLocation, WorkspaceConfiguration } from "../common/State";
 import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
 import { DeviceRotation } from "../common/Project";
+import { updatePartialWorkspaceConfig } from "../utilities/updatePartialWorkspaceConfig";
 
 export class WorkspaceConfigController implements Disposable {
   private disposables: Disposable[] = [];
@@ -27,11 +28,7 @@ export class WorkspaceConfigController implements Disposable {
       const config = workspace.getConfiguration("RadonIDE");
 
       for (const partialStateEntry of partialStateEntries) {
-        if (config.inspect(partialStateEntry[0] as string)?.workspaceValue) {
-          await config.update(partialStateEntry[0] as string, partialStateEntry[1], false);
-        } else {
-          await config.update(partialStateEntry[0] as string, partialStateEntry[1], true);
-        }
+        await updatePartialWorkspaceConfig(config, partialStateEntry);
       }
     });
 
