@@ -1,10 +1,6 @@
 const { Dimensions, Platform, UIManager, NativeEventEmitter } = require("react-native");
 const inspectorBridge = require("./inspector_bridge");
 
-// Used to supress warnings about UIManager not implementing below methods
-// when passed to NativeEventEmitter.
-UIManager.addListener = () => {};
-UIManager.removeListeners = () => {};
 
 // The approach implemented below is best we can do as of today, becuase of lack
 // of support for orientation getter sync requests in the React Native core.
@@ -139,14 +135,25 @@ const handleDimensionsChange = () => {
 export function setup() {
   initializeOrientationAndSendInitMessage();
 
+  // Suppress warnings about UIManager not implementing proper methods by overwriting console.warn temporarily.
+  // This is needed, because UIManager.addListener and UIManager.removeListeners methods
+  // are undefined. When the same trick is applied to those methods (overwriting and assigning the original 
+  // methods later), we begin to get Render and Console errors in LogBox after the assignment:
+  // "_this$_nativeModule2.removeListeners is not a function (it is undefined)"
+  const originalConsoleWarn = console.warn;
+  console.warn = () => {};
+
   const orientationEventSubscription = new NativeEventEmitter(UIManager).addListener(
     "namedOrientationDidChange",
     handleOrientationChange
   );
 
-  // Dimension change lags behind Orientation change in the IOS case, so we add a second listener to amend the effect
+  // Dimension change lags behind Orientation change in the IOS case, so we add a second listener to amend the effect.
   // Explained in the context above.
   const dimensionEventSubscription = Dimensions.addEventListener("change", handleDimensionsChange);
+
+  // Restore the original console.warn function
+  console.warn = originalConsoleWarn; 
 
   return function cleanup() {
     if (orientationEventSubscription) {
