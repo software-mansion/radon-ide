@@ -30,8 +30,6 @@ export interface UtilsInterface {
 
   sendTelemetry(eventName: string, properties?: TelemetryEventProperties): Promise<void>;
 
-  isTelemetryEnabled(): Promise<boolean>;
-
   addListener<K extends keyof UtilsEventMap>(
     eventType: K,
     listener: UtilsEventListener<UtilsEventMap[K]>
