@@ -53,6 +53,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-test="manage-devices-button"
             onSelect={() => {
               openModal("Manage Devices", <ManageDevicesView />);
             }}>

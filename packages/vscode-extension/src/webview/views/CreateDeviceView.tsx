@@ -143,6 +143,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Label className="form-label">Device Type</Label>
         <Select
           className="form-field"
+          dataTest="device-type-select"
           value={deviceProperties?.modelId ?? ""}
           onChange={(modelId: string) => {
             const deviceProps = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
@@ -167,6 +168,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
               "form-field",
               isSystemCompatible ? undefined : "form-filed-marked"
             )}
+            dataTest="system-image-select"
             value={selectedSystemName}
             onChange={(newValue) => {
               setIsSystemCompatible(
@@ -200,6 +202,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Input
           value={displayName}
           className="device-name-input"
+          data-test="device-name-input"
           data-error={!isDisplayNameValid}
           type="string"
           onChange={handleDisplayNameChange}
@@ -216,7 +219,11 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Button onClick={onCancel} type="secondary">
           Cancel
         </Button>
-        <Button disabled={createDisabled} onClick={createDevice} type="ternary">
+        <Button
+          disabled={createDisabled}
+          onClick={createDevice}
+          type="ternary"
+          dataTest="create-device-button">
           Create
         </Button>
       </div>

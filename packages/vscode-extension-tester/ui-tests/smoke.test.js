@@ -8,11 +8,13 @@ import {
   until,
 } from "vscode-extension-tester";
 import { paths, texts } from "../data/testData.js";
+import { openProjectInVSCode } from "../utils/projectLauncher.js";
+import { waitForElement, findAndWaitForElement } from "../utils/helpers.js";
 import {
-  openProjectInVSCode,
+  openDeviceCreationModal,
+  fillDeviceCreationForm,
   openRadonIDEPanel,
-} from "../utils/projectLauncher.js";
-import { waitForElement } from "../utils/helpers.js";
+} from "./interactions.js";
 
 describe("Smoke tests Radon IDE", () => {
   let browser;
@@ -51,7 +53,7 @@ describe("Smoke tests Radon IDE", () => {
     await new EditorView().closeAllEditors();
   });
 
-  it("should open Radon IDE webview using command line", async function () {
+  it("should open Radon IDE webview using Radon IDE button", async function () {
     try {
       await openRadonIDEPanel(browser, driver, workbench);
     } catch (error) {
@@ -60,24 +62,21 @@ describe("Smoke tests Radon IDE", () => {
     }
   });
 
-  it("should open Radon IDE view using Radon IDE button", async function () {
-    await driver
-      .findElement(By.css("div#swmansion\\.react-native-ide"))
-      .click();
-    const webview = await driver.wait(
-      until.elementLocated(By.css('iframe[class*="webview"]')),
-      10000,
+  it("should open Radon IDE view using command line", async function () {
+    await workbench.executeCommand("RNIDE.openPanel");
+
+    const webview = await findAndWaitForElement(
+      driver,
+      By.css('iframe[class*="webview"]'),
       "Timed out waiting for Radon IDE webview"
     );
-    await waitForElement(driver, webview);
     await driver.switchTo().frame(webview);
 
-    const iframe = await driver.wait(
-      until.elementLocated(By.css('iframe[title="Radon IDE"]')),
-      10000,
+    const iframe = await findAndWaitForElement(
+      driver,
+      By.css('iframe[title="Radon IDE"]'),
       "Timed out waiting for Radon IDE iframe"
     );
-    await waitForElement(driver, iframe);
     await driver.switchTo().frame(iframe);
   });
 
@@ -101,6 +100,28 @@ describe("Smoke tests Radon IDE", () => {
       text,
       texts.expectedProjectName,
       "Text of the element should be a name of the project"
+    );
+  });
+
+  it("should add device to Radon IDE", async function () {
+    await openRadonIDEPanel(browser, driver, workbench);
+    const newDeviceName = `TestDevice-${Date.now()}`;
+
+    await openDeviceCreationModal(driver);
+
+    await fillDeviceCreationForm(driver, newDeviceName);
+
+    const createDeviceButton = await findAndWaitForElement(
+      driver,
+      By.css('[data-test="create-device-button"]'),
+      "Timed out waiting for 'Create device' button"
+    );
+    createDeviceButton.click();
+
+    await findAndWaitForElement(
+      driver,
+      By.css(`[data-test="device-${newDeviceName}"]`),
+      `Timed out waiting for device with name: ${newDeviceName}`
     );
   });
 });
