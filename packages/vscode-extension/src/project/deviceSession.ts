@@ -739,7 +739,15 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
     Logger.debug("App and preview ready, moving on...");
     this.updateStartupMessage(StartupMessage.AttachingDebugger);
     if (this.isActive) {
-      await cancelToken.adapt(this.connectJSDebugger());
+      try {
+        await cancelToken.adapt(this.connectJSDebugger());
+      } catch (e) {
+        if (!(e instanceof CancelError)) {
+          throw e;
+        }
+        // when connecting to debugger is cancelled, we don't want to throw an error
+        // as that mean that the other process is already attaching the debugger
+      }
     }
 
     const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
