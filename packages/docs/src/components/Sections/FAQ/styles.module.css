@@ -1,66 +1,30 @@
+.faq {
+  display: flex;
+  flex-direction: row;
+  padding: 0 80px;
+  gap: 80px;
+}
 .faqMain {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 5rem;
+  gap: 24px;
 }
 
 .faqHeading {
   font-size: var(--swm-h2-font-size);
-  font-weight: 700;
+  font-weight: 400;
+  line-height: normal;
 }
 
 .faqSubheading {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 400;
+  line-height: 32px;
+  color: var(--radon-subheading);
 }
 
 .elipseContainer {
   position: relative;
-}
-
-/* bigger elipse */
-.elipse:nth-of-type(1) {
-  right: -40%;
-  bottom: -8rem;
-}
-
-/* smaller elipse */
-.elipse:nth-of-type(2) {
-  right: -4%;
-  bottom: -1.5rem;
-}
-
-@media (max-width: 1440px) {
-  /* bigger elipse */
-  .elipse:nth-of-type(1) {
-    right: -25%;
-  }
-  /* smaller elipse */
-  .elipse:nth-of-type(2) {
-    right: 8%;
-  }
-}
-
-@media (max-width: 996px) {
-  /* bigger elipse */
-  .elipse:nth-of-type(1) {
-    right: -10%;
-    bottom: -4rem;
-  }
-
-  /* smaller elipse */
-  .elipse:nth-of-type(2) {
-    right: 35%;
-    bottom: -6rem;
-  }
-}
-
-@media (max-width: 768px) {
-  /* smaller elipse */
-  .elipse:nth-of-type(2) {
-    display: none;
-  }
 }
 
 @media (max-width: 430px) {

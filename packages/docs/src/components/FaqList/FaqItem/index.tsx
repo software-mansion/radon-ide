@@ -1,8 +1,9 @@
 import React from "react";
 import clsx from "clsx";
 import styles from "./styles.module.css";
-import ChevronDownIcon from "@site/src/components/FaqList/ChevronDownIcon";
 import { type Dispatch, useRef } from "react";
+import PlusIcon from "../PlusIcon";
+import MinusIcon from "../MinusIcon";
 
 export interface ActiveItemProps {
   index: number | null;
@@ -45,11 +46,8 @@ const FaqItem = ({ index, topic, answer, isExpanded, setActiveItem }: FaqItemPro
             isExpanded ? styles.faqItemExpanded : styles.faqItemNormal
           )}>
           <h3 className={clsx(styles.question, isExpanded && styles.questionExpanded)}>{topic}</h3>
-          <div>
-            <ChevronDownIcon
-              color={"var(--swm-navy-light-100"}
-              className={clsx(styles.chevronIcon, isExpanded ? styles.chevronIconExpanded : "")}
-            />
+          <div className={styles.icon}>
+            {isExpanded ? <MinusIcon className={styles.icon} /> : <PlusIcon />}
           </div>
         </div>
       </button>

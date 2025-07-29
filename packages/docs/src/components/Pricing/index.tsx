@@ -2,8 +2,6 @@ import React from "react";
 import styles from "./styles.module.css";
 import PricingPlansList from "./PricingPlansList";
 import FAQ from "../Sections/FAQ";
-import Motivation from "../Motivation";
-import { CompatibilityInfo } from "./CompatibilityInfo";
 
 const Pricing = () => {
   return (
@@ -18,15 +16,6 @@ const Pricing = () => {
       <div className={styles.wrapper}>
         <PricingPlansList />
       </div>
-      <CompatibilityInfo />
-      <p>
-        Windows users can use beta version of Radon IDE for Windows which is available under{" "}
-        <a href="https://ide.swmansion.com/legal" target="_blank" className={styles.highlight}>
-          free beta license
-        </a>
-        .
-      </p>
-      <Motivation />
       <FAQ />
     </div>
   );

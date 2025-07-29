@@ -1,5 +1,6 @@
 .faqItemContainer {
   margin-bottom: 0.5rem;
+  width: 640px;
 }
 
 .faqItemContainer button {
@@ -18,16 +19,6 @@
   gap: 1.5rem;
 }
 
-.chevronIcon {
-  width: 1.5rem;
-  height: 1.5rem;
-  transition: all 200ms ease-in;
-}
-
-.chevronIconExpanded {
-  rotate: 180deg;
-}
-
 .answerContainer {
   overflow: hidden;
   transition: all 200ms ease-in-out;
@@ -37,7 +28,8 @@
   font-family: var(--swm-body-font);
   padding: 0.5rem 1.5rem;
   margin-top: 0.5rem;
-  font-size: var(--swm-heading-font-size-smaller);
+  font-size: 16px;
+  color: var(--radon-subheading);
 }
 
 .answer a {
@@ -52,7 +44,7 @@
   font-family: var(--swm-body-font);
   font-size: var(--swm-heading-font-size-smaller);
   font-weight: 400;
-  color: var(--swm-navy-light-100);
+  color: var(--radon-color-primary);
   text-align: left;
 }
 
@@ -61,14 +53,15 @@
 }
 
 .faqItemNormal {
-  background-color: var(--swm-green-light-20);
+  background-color: transparent;
+  border-bottom: 1px solid var(--radon-border-grid-subtle);
 }
-.faqItemNormal:hover {
-  background-color: var(--swm-green-light-40);
-}
+/* .faqItemNormal:hover {
+  border: 0.5px solid var(--radon-color-border);
+} */
 
 .faqItemExpanded {
-  background-color: var(--swm-green-light-60);
+  background-color: transparent;
 }
 
 @media (max-width: 430px) {
