@@ -515,7 +515,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
     });
 
     await cancelToken.adapt(this.restartDebugger());
-    if (!this.buildResult) {
+    if (!this.maybeBuildResult) {
       await this.buildApp({ clean: false, cancelToken });
     }
     await cancelToken.adapt(this.installApp({ reinstall: false }));
@@ -749,6 +749,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
   private async buildApp({ clean, cancelToken }: { clean: boolean; cancelToken: CancelToken }) {
     const buildStartTime = Date.now();
     this.updateStartupMessage(StartupMessage.Building);
+    this.maybeBuildResult = undefined;
     const launchConfiguration = this.applicationContext.launchConfig;
     const buildType = await inferBuildType(this.platform, launchConfiguration);
 
