@@ -25,7 +25,7 @@ export class PackageManager implements Disposable {
   public async isPackageManagerInstalled() {
     // the resolvePackageManager function in getPackageManager checks
     // if a package manager is installed and otherwise returns undefined
-    return Boolean(await resolvePackageManager(this.launchConfiguration));
+    return (await resolvePackageManager(this.launchConfiguration)) !== undefined;
   }
 
   /**
