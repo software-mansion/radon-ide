@@ -27,7 +27,6 @@
 .answer {
   font-family: var(--swm-body-font);
   padding: 0.5rem 1.5rem;
-  margin-top: 0.5rem;
   font-size: 16px;
   color: var(--radon-subheading);
 }
@@ -56,22 +55,24 @@
   background-color: transparent;
   border-bottom: 1px solid var(--radon-border-grid-subtle);
 }
-/* .faqItemNormal:hover {
-  border: 0.5px solid var(--radon-color-border);
-} */
 
 .faqItemExpanded {
   background-color: transparent;
 }
 
-@media (max-width: 430px) {
+@media (max-width: 1024px) {
   .question,
   .answer {
     font-size: 16px;
   }
 
-  .faqItemQuestion,
+  .faqItemQuestion {
+    padding: 16px 0;
+  }
   .answer {
-    padding: 10px 16px;
+    padding: 16px 0 24px 0;
+  }
+  .faqItemContainer {
+    width: 100%;
   }
 }

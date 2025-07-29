@@ -1,21 +1,14 @@
 .plan__name {
+  display: flex;
   font-size: 18px;
   font-weight: bold;
-  margin-bottom: 8px;
   color: var(--swm-green-light-100);
-  display: flex;
-  gap: 16px;
-}
-@media (max-width: 1300px) {
-  .plan__name {
-    font-size: 16px;
-  }
 }
 
 .plan__price {
-  font-weight: 700;
+  font-weight: 500;
   margin-top: 8px;
-  font-size: 36px;
+  font-size: 40px;
   margin-bottom: 0px;
   height: 100%;
 }
@@ -24,6 +17,7 @@
   font-size: 16px;
   font-weight: 400;
   color: var(--radon-color-secondary);
+  margin-bottom: 0;
 }
 /* A hack to hide the second line of the price but take the space for visual consistency */
 .plan__price_second_line_hidden {
@@ -53,4 +47,16 @@
 
 .plan__currency {
   font-weight: 250;
+}
+
+@media (max-width: 1024px) {
+  .plan__name {
+    font-size: 16px;
+  }
+  .plan__price {
+    font-size: 32px;
+  }
+  .plan__currency {
+    font-size: 32px;
+  }
 }

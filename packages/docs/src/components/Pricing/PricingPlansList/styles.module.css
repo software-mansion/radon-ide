@@ -7,17 +7,18 @@
   margin: 24px 0 48px;
 }
 .cardGrid {
+  height: 30%;
   display: flex;
-  padding: 40px;
   flex-direction: column;
+  padding: 40px;
   gap: 16px;
   align-self: stretch;
-  height: 30%;
   justify-content: center;
 }
 .line {
   border-bottom: 1px solid var(--radon-color-border);
   height: 40%;
+  gap: 8px;
 }
 .container {
   border: 1px solid var(--radon-color-border);
@@ -68,11 +69,23 @@
   color: var(--radon-color-primary);
 }
 
-@media (max-width: 1300px) {
+@media (max-width: 1024px) {
   .list {
     grid-template-columns: 1fr;
     padding: 0;
   }
+  .plan_pay_annually {
+    padding: 0;
+  }
+  .container {
+    width: 100%;
+  }
+  .cardGrid {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
   .btn {
     padding: 8px 12px;
   }
@@ -80,16 +93,7 @@
     font-size: 14px;
     white-space: wrap;
   }
-  .plan_pay_annually {
-    padding: 0;
-  }
   .plan_pay_annually__discount {
     font-size: 14px;
-  }
-}
-
-@media (max-width: 344px) {
-  .container {
-    width: 100%;
   }
 }

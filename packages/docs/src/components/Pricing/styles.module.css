@@ -8,11 +8,6 @@
   border-right: 1px solid var(--radon-color-border);
 }
 
-.titleContainer {
-  gap: 24px;
-  max-width: 1280px;
-}
-
 .headingLabel {
   margin-top: 60px;
   margin-bottom: 24px;
@@ -51,11 +46,11 @@
     max-width: 100%;
   }
   .container {
-    padding: 0 16px;
+    padding: 0 24px;
     border: none;
   }
 }
-@media (max-width: 550px) {
+@media (max-width: 480px) {
   .headingLabel {
     margin-top: 60px;
     margin-bottom: 20px;

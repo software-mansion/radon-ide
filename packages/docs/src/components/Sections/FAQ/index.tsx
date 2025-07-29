@@ -61,7 +61,7 @@ const FAQ = () => {
             Here are the answers to your most frequent questions about the Radon IDE.
           </span>
         </div>
-        <div>
+        <div className={styles.faqsContainer}>
           <FaqList faqs={faqs} />
         </div>
       </div>

@@ -23,18 +23,25 @@
   color: var(--radon-subheading);
 }
 
-.elipseContainer {
-  position: relative;
+.faqsContainer {
+  margin: 0;
 }
 
-@media (max-width: 430px) {
+@media (max-width: 1024px) {
+  .faq {
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 24px;
+    gap: 24px;
+  }
   .faqMain {
-    margin-bottom: 3rem;
+    gap: 16px;
   }
   .faqHeading {
     font-size: 24px;
   }
   .faqSubheading {
     font-size: 18px;
+    line-height: 24px;
   }
 }
