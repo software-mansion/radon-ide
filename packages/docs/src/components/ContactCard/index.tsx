@@ -20,7 +20,7 @@ export default function ContactCard({
 }: ContactCardProps) {
   return (
     <div className={styles.card}>
-      <div>
+      <div className={styles.cardContent}>
         <span>{icon}</span>
         <h4>{title}</h4>
         <p>{description}</p>

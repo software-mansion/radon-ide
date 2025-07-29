@@ -11,8 +11,8 @@
   gap: 24px;
   padding: 0 40px;
   align-items: center;
-  border-left: 1px solid var(--radon-color-border);
-  border-right: 1px solid var(--radon-color-border);
+  border-left: 1px solid var(--swm-border);
+  border-right: 1px solid var(--swm-border);
 }
 .titleContainer {
   gap: 24px;

@@ -43,7 +43,7 @@
   font-family: var(--swm-body-font);
   font-size: var(--swm-heading-font-size-smaller);
   font-weight: 400;
-  color: var(--radon-color-primary);
+  color: var(--ifm-color-primary);
   text-align: left;
 }
 
@@ -58,6 +58,10 @@
 
 .faqItemExpanded {
   background-color: transparent;
+}
+
+.icon {
+  color: var(--ifm-color-primary);
 }
 
 @media (max-width: 1024px) {

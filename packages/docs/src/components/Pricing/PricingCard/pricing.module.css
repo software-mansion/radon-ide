@@ -16,7 +16,7 @@
 .plan__price .plan__price_second_line {
   font-size: 16px;
   font-weight: 400;
-  color: var(--radon-color-secondary);
+  color: var(--radon-subheading);
   margin-bottom: 0;
 }
 /* A hack to hide the second line of the price but take the space for visual consistency */
@@ -37,7 +37,7 @@
   margin-top: 8px;
   margin-bottom: 32px;
   font-size: 18px;
-  color: var(--radon-color-secondary);
+  color: var(--radon-subheading);
 }
 
 .plan__tagline a {
@@ -58,5 +58,8 @@
   }
   .plan__currency {
     font-size: 32px;
+  }
+  .plan__tagline {
+    font-size: 16px;
   }
 }
