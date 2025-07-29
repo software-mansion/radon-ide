@@ -47,7 +47,7 @@ const defaultProjectState: ProjectState = {
     enabled: false,
     connected: false,
   },
-  rotation: DeviceRotation.Portrait
+  rotation: DeviceRotation.Portrait,
 };
 
 const defaultDeviceSettings: DeviceSettings = {

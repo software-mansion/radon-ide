@@ -113,8 +113,7 @@ function PreviewLoader({
   }
 
   return (
-    <div
-      className={`preview-loader-wrapper ${isLandscape ? "landscape" : "portrait"}`}>
+    <div className={`preview-loader-wrapper ${isLandscape ? "landscape" : "portrait"}`}>
       <div className="preview-loader-load-info">
         <button className="preview-loader-container" onClick={handleLoaderClick}>
           <div className="preview-loader-button-group">

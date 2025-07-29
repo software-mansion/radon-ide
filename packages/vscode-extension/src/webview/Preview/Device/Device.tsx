@@ -86,7 +86,7 @@ function getPortraitDimensions(
     phoneWrapperHeight: isFitSet ? "100%" : `${zoomHeight}px`,
     phoneWrapperWidth: isFitSet ? "100%" : "fit-content",
     phoneContentHeight: isFitSet
-      ? `min(100%, max(${MIN_HEIGHT}px, ${(parentWidth / config.aspectRatio)}px))`
+      ? `min(100%, max(${MIN_HEIGHT}px, ${parentWidth / config.aspectRatio}px))`
       : `${zoomHeight}px`,
     phoneContentWidth: "auto",
     phoneContentMinWidth: "fit-content",
@@ -117,9 +117,7 @@ function getLandscapeDimensions(
     phoneWrapperHeight: "fit-content",
     phoneWrapperWidth: isFitSet ? "100%" : "fit-content",
     phoneContentHeight: "auto",
-    phoneContentWidth: isFitSet
-      ? `min(100%,  ${parentHeight / aspectRatio}px)`
-      : `${zoomHeight}px`,
+    phoneContentWidth: isFitSet ? `min(100%,  ${parentHeight / aspectRatio}px)` : `${zoomHeight}px`,
     phoneContentMinWidth: `${MIN_HEIGHT}px`,
     phoneContentMinHeight: `${MIN_HEIGHT * aspectRatio}px`,
     phoneScreenHeight: `${(device.screenWidth / frame.width) * 100}%`, // Swapped for landscape

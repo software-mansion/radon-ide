@@ -129,7 +129,8 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     const newDeviceSession = new DeviceSession(
       this.applicationContext,
       device,
-      this.deviceSessionManagerDelegate.getDeviceRotation(), {
+      this.deviceSessionManagerDelegate.getDeviceRotation(),
+      {
         onStateChange: (state) => {
           if (!this.deviceSessions.has(state.deviceInfo.id)) {
             // NOTE: the device is being removed, we shouldn't report state updates

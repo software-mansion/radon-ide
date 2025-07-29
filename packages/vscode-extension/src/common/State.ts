@@ -11,7 +11,7 @@ export type WorkspaceConfiguration = {
   panelLocation: PanelLocation;
   showDeviceFrame: boolean;
   stopPreviousDevices: boolean;
-  deviceRotation: DeviceRotation
+  deviceRotation: DeviceRotation;
 };
 
 export type State = {
@@ -27,6 +27,6 @@ export const initialState: State = {
     panelLocation: "tab",
     showDeviceFrame: true,
     stopPreviousDevices: false,
-    deviceRotation: DeviceRotation.Portrait
+    deviceRotation: DeviceRotation.Portrait,
   },
 };

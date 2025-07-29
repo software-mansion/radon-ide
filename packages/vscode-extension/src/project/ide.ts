@@ -41,7 +41,7 @@ export class IDE implements Disposable {
         panelLocation: "tab",
         showDeviceFrame: true,
         stopPreviousDevices: false,
-        deviceRotation: DeviceRotation.Portrait
+        deviceRotation: DeviceRotation.Portrait,
       },
     };
 

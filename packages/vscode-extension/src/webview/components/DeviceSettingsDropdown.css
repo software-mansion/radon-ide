@@ -1,9 +1,8 @@
-
 .device-settings-content {
   padding: 14px;
 }
 
-.mirror{
+.mirror {
   transform: scale(-1, 1);
 }
 

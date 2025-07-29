@@ -144,7 +144,6 @@ export class DeviceSession
       useParentDebugSession: true,
     });
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
-    // this.appOrientation = this.rotation;
   }
 
   public getState(): DeviceSessionState {

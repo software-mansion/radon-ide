@@ -74,17 +74,21 @@ const MjpegImg = forwardRef<
     };
   }, [ref]);
 
-    function handleError(e: React.SyntheticEvent<HTMLImageElement, Event>) {
-      const img = e.currentTarget;
-      if (img.src !== NO_IMAGE_DATA) {
-        img.src = NO_IMAGE_DATA;
-      }
+  function handleError(e: React.SyntheticEvent<HTMLImageElement, Event>) {
+    const img = e.currentTarget;
+    if (img.src !== NO_IMAGE_DATA) {
+      img.src = NO_IMAGE_DATA;
     }
-
+  }
 
   return (
     <>
-      <img ref={sourceImgRef} style={{ display: "none" }} crossOrigin="anonymous" onError={handleError}/>
+      <img
+        ref={sourceImgRef}
+        style={{ display: "none" }}
+        crossOrigin="anonymous"
+        onError={handleError}
+      />
 
       <MediaCanvas ref={ref} mediaRef={sourceImgRef} src={src} {...rest} />
     </>

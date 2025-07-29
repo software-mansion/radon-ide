@@ -57,9 +57,9 @@
   display: flex;
   align-items: center;
   justify-content: space-around;
-  min-width: var(--phone-wrapper-min-width); 
-  min-height: var(--phone-wrapper-min-height); 
-  width: var(--phone-wrapper-width); 
+  min-width: var(--phone-wrapper-min-width);
+  min-height: var(--phone-wrapper-min-height);
+  width: var(--phone-wrapper-width);
   height: var(--phone-wrapper-height);
 }
 

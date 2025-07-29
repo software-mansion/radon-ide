@@ -435,7 +435,6 @@ async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
 }
 
-
 async function rotateDevice(direction: DeviceRotationDirection) {
   const project = IDE.getInstanceIfExists()?.project;
   if (!project) {
@@ -445,11 +444,11 @@ async function rotateDevice(direction: DeviceRotationDirection) {
 }
 
 async function rotateDeviceAnticlockwise() {
-  await rotateDevice(DeviceRotationDirection.Anticlockwise)
+  await rotateDevice(DeviceRotationDirection.Anticlockwise);
 }
 
 async function rotateDeviceClockwise() {
-  await rotateDevice(DeviceRotationDirection.Clockwise)
+  await rotateDevice(DeviceRotationDirection.Clockwise);
 }
 
 async function openChat() {

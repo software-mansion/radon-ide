@@ -87,7 +87,7 @@ const setOrientationOptions: Array<{
     value: DeviceRotation.LandscapeRight,
     icon: "device-mobile",
     rotation: "90deg",
-  }
+  },
 ];
 const rotateOptions: Array<{
   label: string;
@@ -99,17 +99,15 @@ const rotateOptions: Array<{
     label: "Clockwise",
     value: DeviceRotationDirection.Clockwise,
     icon: "refresh",
-    commandName: "RNIDE.rotateDeviceClockwise"
+    commandName: "RNIDE.rotateDeviceClockwise",
   },
   {
     label: "Anticlockwise",
     value: DeviceRotationDirection.Anticlockwise,
     icon: "refresh mirror",
-    commandName: "RNIDE.rotateDeviceAnticlockwise"
+    commandName: "RNIDE.rotateDeviceAnticlockwise",
   },
 ];
-
-
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const store$ = useStore();
@@ -202,19 +200,17 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             label="Open App Switcher"
             icon="chrome-restore"
           />
-           <DropdownMenu.Sub>
+          <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-sync" />
               Rotate Device
               <span className="codicon codicon-chevron-right right-slot" />
             </DropdownMenu.SubTrigger>
             <DropdownMenu.Portal>
-
               <DropdownMenu.SubContent
                 className="dropdown-menu-subcontent"
                 sideOffset={2}
                 alignOffset={-5}>
-
                 <Label>Rotate</Label>
                 {rotateOptions.map((option) => (
                   <CommandItem
@@ -244,7 +240,6 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                   </DropdownMenu.Item>
                 ))}
               </DropdownMenu.SubContent>
-              
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
           {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.IOS && <BiometricsItem />}
@@ -282,8 +277,6 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
-
-         
 
           <DropdownMenu.Item
             className="dropdown-menu-item"
