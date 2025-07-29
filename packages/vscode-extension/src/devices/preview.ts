@@ -225,7 +225,7 @@ export class Preview implements Disposable {
           return { xRatio: 1 - x, yRatio: 1 - y };
         default:
           // Portrait mode: no transformation needed
-          return { xRatio: x, yRatio: y };
+          return touch;
       }
     });
 
