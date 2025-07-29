@@ -53,9 +53,6 @@ export type ApplicationContextState = {
   applicationDependencies: ApplicationDependencyStatuses;
 };
 
-export type EnvironmentDependencyRecord = Partial<Record<EnvironmentDependency, DependencyStatus>>;
-export type ApplicationDependencyRecord = Partial<Record<ApplicationDependency, DependencyStatus>>;
-
 export type TelemetryState = {
   enabled: boolean;
 };
