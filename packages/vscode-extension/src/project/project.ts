@@ -8,10 +8,12 @@ import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
+  DeviceRotation,
   DeviceSessionsManagerState,
   DeviceSessionState,
   DeviceSettings,
   InspectData,
+  isOfEnumDeviceRotation,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -46,7 +48,7 @@ import { LaunchConfiguration } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { StateManager } from "./StateManager";
-import { ProjectStore } from "../common/State";
+import { ProjectStore, WorkspaceConfiguration } from "../common/State";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
@@ -76,6 +78,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   constructor(
     private readonly stateManager: StateManager<ProjectStore>,
+    private readonly workspaceStateManager: StateManager<WorkspaceConfiguration>,
     private readonly deviceManager: DeviceManager,
     private readonly utils: UtilsInterface,
     private readonly outputChannelRegistry: OutputChannelRegistry,
@@ -142,7 +145,24 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         });
       })
     );
+    this.disposables.push(
+      this.workspaceStateManager.onSetState(
+        (partialWorkspaceConfig: Partial<WorkspaceConfiguration>) => {
+          const deviceRotation = partialWorkspaceConfig.deviceRotation;
+          if (!deviceRotation) {
+            return;
+          }
+
+          const deviceRotationResult = isOfEnumDeviceRotation(deviceRotation)
+            ? deviceRotation
+            : DeviceRotation.Portrait;
+          this.deviceSessionsManager.rotateAllDevices(deviceRotationResult);
+        }
+      )
+    );
+
     this.disposables.push(this.stateManager);
+    this.disposables.push(this.workspaceStateManager);
   }
 
   async focusOutput(channel: Output): Promise<void> {
@@ -202,6 +222,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
     this.updateProjectState(state);
+  }
+
+  public getDeviceRotation(): DeviceRotation {
+    return this.workspaceStateManager.getState().deviceRotation;
   }
 
   get relativeAppRootPath() {
@@ -426,7 +450,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    this.deviceSession?.sendTouches(touches, type);
+    this.deviceSession?.sendTouches(touches, type, this.getDeviceRotation());
   }
 
   public dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {

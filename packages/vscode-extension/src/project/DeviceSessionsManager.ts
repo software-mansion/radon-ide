@@ -14,7 +14,7 @@ import {
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceId, DeviceSessionsManagerState } from "../common/Project";
+import { DeviceId, DeviceRotation, DeviceSessionsManagerState } from "../common/Project";
 import { Connector } from "../connect/Connector";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
@@ -24,6 +24,7 @@ const SWITCH_DEVICE_THROTTLE_MS = 300;
 export type DeviceSessionsManagerDelegate = {
   onInitialized(): void;
   onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void;
+  getDeviceRotation(): DeviceRotation;
 };
 
 const MAX_ALLOWED_IOS_DEVICES = 3;
@@ -47,6 +48,12 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
 
   public get selectedDeviceSession(): DeviceSession | undefined {
     return this.activeSessionId ? this.deviceSessions.get(this.activeSessionId) : undefined;
+  }
+
+  public rotateAllDevices(rotation: DeviceRotation) {
+    this.deviceSessions.forEach((session) => {
+      session.sendRotate(rotation);
+    });
   }
 
   public async terminateSession(deviceId: string) {
@@ -122,6 +129,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     const newDeviceSession = new DeviceSession(
       this.applicationContext,
       device,
+      this.deviceSessionManagerDelegate.getDeviceRotation(),
       {
         onStateChange: (state) => {
           if (!this.deviceSessions.has(state.deviceInfo.id)) {

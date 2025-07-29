@@ -1,4 +1,5 @@
 import { ApplicationRoot } from "./AppRootConfig";
+import { DeviceRotation } from "./Project";
 
 export type RecursivePartial<T> = {
   [P in keyof T]?: RecursivePartial<T[P]>;
@@ -10,6 +11,7 @@ export type WorkspaceConfiguration = {
   panelLocation: PanelLocation;
   showDeviceFrame: boolean;
   stopPreviousDevices: boolean;
+  deviceRotation: DeviceRotation;
 };
 
 export type EnvironmentDependency = "androidEmulator" | "xcode" | "nodejs";
@@ -72,5 +74,6 @@ export const initialState: State = {
     panelLocation: "tab",
     showDeviceFrame: true,
     stopPreviousDevices: false,
+    deviceRotation: DeviceRotation.Portrait,
   },
 };

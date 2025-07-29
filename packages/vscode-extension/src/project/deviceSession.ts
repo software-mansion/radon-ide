@@ -37,8 +37,10 @@ import {
   DeviceSessionStatus,
   FatalErrorDescriptor,
   BundleErrorDescriptor,
+  DeviceRotation,
+  AppOrientation,
 } from "../common/Project";
-import { DebugSession, DebugSessionDelegate, DebugSource } from "../debugging/DebugSession";
+import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
@@ -51,6 +53,8 @@ import { BuildCache } from "../builders/BuildCache";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
+import { disposeAll } from "../utilities/disposables";
+import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -73,16 +77,15 @@ export class DeviceBootError extends Error {
   }
 }
 
-export class DeviceSession
-  implements Disposable, MetroDelegate, ToolsDelegate, DebugSessionDelegate
-{
+export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
   private isActive = false;
   private metro: MetroLauncher;
   private toolsManager: ToolsManager;
   private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
-  private debugSession: DebugSession;
+  private debugSession: DebugSession & Disposable;
+  private debugSessionEventSubscription: Disposable;
   private buildManager: BuildManager;
   private buildCache: BuildCache;
   private cancelToken: CancelToken | undefined;
@@ -103,6 +106,7 @@ export class DeviceSession
   private isDebuggerPaused = false;
   private hasStaleBuildCache = false;
   private isRecordingScreen = false;
+  private appOrientation: DeviceRotation | undefined;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -126,6 +130,7 @@ export class DeviceSession
   constructor(
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
+    private rotation: DeviceRotation,
     private readonly deviceSessionDelegate: DeviceSessionDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
@@ -135,10 +140,9 @@ export class DeviceSession
 
     this.buildCache = this.applicationContext.buildCache;
     this.buildManager = this.applicationContext.buildManager;
-    this.debugSession = new DebugSession(this, {
-      displayName: this.device.deviceInfo.displayName,
-      useParentDebugSession: true,
-    });
+
+    this.debugSession = this.createDebugSession();
+    this.debugSessionEventSubscription = this.registerDebugSessionListeners();
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
   }
 
@@ -169,6 +173,7 @@ export class DeviceSession
         status: "running",
         isRefreshing: this.isRefreshing,
         bundleError: this.bundleError,
+        appOrientation: this.appOrientation,
       };
     } else if (this.status === "fatalError") {
       assert(this.fatalError, "Expected error to be defined in fatal error state");
@@ -265,7 +270,7 @@ export class DeviceSession
 
   //#endregion
 
-  //#region Debug session delegate methods
+  //#region Debug session event listeners
 
   onConsoleLog = (event: DebugSessionCustomEvent): void => {
     this.logCounter += 1;
@@ -299,6 +304,19 @@ export class DeviceSession
     }
   };
 
+  private registerDebugSessionListeners(): Disposable {
+    const subscriptions: Disposable[] = [
+      this.debugSession.onConsoleLog(this.onConsoleLog),
+      this.debugSession.onDebuggerPaused(this.onDebuggerPaused),
+      this.debugSession.onDebuggerResumed(this.onDebuggerResumed),
+      this.debugSession.onProfilingCPUStarted(this.onProfilingCPUStarted),
+      this.debugSession.onProfilingCPUStopped(this.onProfilingCPUStopped),
+    ];
+    return new Disposable(() => {
+      disposeAll(subscriptions);
+    });
+  }
+
   //#endregion
 
   onCacheStale = () => {
@@ -311,6 +329,17 @@ export class DeviceSession
       this.emitStateChange();
     }
   };
+
+  private createDebugSession(): DebugSession & Disposable {
+    return new ReconnectingDebugSession(
+      new DebugSessionImpl({
+        displayName: this.device.deviceInfo.displayName,
+        useParentDebugSession: true,
+      }),
+      this.metro,
+      this.devtools
+    );
+  }
 
   private makeDevtools() {
     const devtools = new Devtools();
@@ -355,6 +384,29 @@ export class DeviceSession
         this.emitStateChange();
       }
     });
+    devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
+      const isLandscape =
+        this.rotation === DeviceRotation.LandscapeLeft ||
+        this.rotation === DeviceRotation.LandscapeRight;
+
+      if (orientation === "Landscape") {
+        // if the app orientation is equal to "Landscape", it means we do not have enough
+        // information on the application side to infer the detailed orientation.
+        if (isLandscape) {
+          // if the device is in landscape mode, we assume that the app orientation is correct with device rotation
+          this.appOrientation = this.rotation;
+        } else {
+          // if the device is not in landscape mode we set app orientation to the last known orientation.
+          // if the last orientation is not known, we assume the application was started in Landscape mode
+          // while the device was oriented in Portrait, and we pick `LandscapeLeft` as the default orientation in that case.
+          this.appOrientation = this.appOrientation ?? DeviceRotation.LandscapeLeft;
+        }
+      } else {
+        this.appOrientation = orientation;
+      }
+
+      this.emitStateChange();
+    });
     return devtools;
   }
 
@@ -365,7 +417,9 @@ export class DeviceSession
   public async dispose() {
     this.cancelToken?.cancel();
     await this.deactivate();
-    await this.debugSession?.dispose();
+    this.watchProjectSubscription.dispose();
+    this.debugSessionEventSubscription.dispose();
+    await this.debugSession.dispose();
     this.device?.dispose();
     this.metro?.dispose();
     this.devtools?.dispose();
@@ -377,10 +431,8 @@ export class DeviceSession
       this.isActive = true;
       this.toolsManager.activate();
       if (this.startupMessage === StartupMessage.AttachingDebugger) {
-        this.debugSession = new DebugSession(this, {
-          displayName: this.device.deviceInfo.displayName,
-          useParentDebugSession: true,
-        });
+        this.debugSession = this.createDebugSession();
+        this.debugSessionEventSubscription = this.registerDebugSessionListeners();
         await this.connectJSDebugger();
       }
     }
@@ -395,6 +447,7 @@ export class DeviceSession
       // hence we reset the log counter.
       this.logCounter = 0;
       this.emitStateChange();
+      this.debugSessionEventSubscription.dispose();
       await this.debugSession.dispose();
     }
   }
@@ -607,32 +660,6 @@ export class DeviceSession
     await this.debugSession.restart();
   }
 
-  private async reconnectJSDebuggerIfNeeded() {
-    // after reloading JS, we sometimes need to reconnect the JS debugger. This is
-    // needed specifically in Expo Go based environments where the reloaded runtime
-    // will be listed as a new target.
-    // Additionally, in some cases the old websocket endpoint would still be listed
-    // despite the runtime being terminated.
-    // In order to properly handle this case we first check if the websocket endpoint
-    // is still listed and if it is, we verify that the runtime is responding by
-    // requesting to execute some simple JS snippet.
-    const currentWsTarget = this.debugSession?.websocketTarget;
-    if (currentWsTarget) {
-      const possibleWsTargets = await this.metro.fetchWsTargets();
-      const currentWsTargetStillVisible = possibleWsTargets?.some(
-        (runtime) => runtime.webSocketDebuggerUrl === currentWsTarget
-      );
-      if (currentWsTargetStillVisible) {
-        // verify the runtime is responding
-        const isRuntimeResponding = await this.debugSession.pingJsDebugSessionWithTimeout();
-        if (isRuntimeResponding) {
-          return;
-        }
-      }
-    }
-    await this.connectJSDebugger();
-  }
-
   private async reloadMetro() {
     this.updateStartupMessage(StartupMessage.WaitingForAppToLoad);
     const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
@@ -645,8 +672,6 @@ export class DeviceSession
     } finally {
       bundleErrorSubscription.dispose();
     }
-    this.updateStartupMessage(StartupMessage.AttachingDebugger);
-    await this.reconnectJSDebuggerIfNeeded();
   }
 
   private async launchApp(cancelToken: CancelToken) {
@@ -691,7 +716,8 @@ export class DeviceSession
         this.metro.ready(),
         this.device.startPreview().then((url) => {
           previewURL = url;
-          this.emitStateChange();
+          // initialise device rotation
+          this.sendRotate(this.rotation);
         }),
         waitForAppReady,
       ])
@@ -975,10 +1001,6 @@ export class DeviceSession
       }
 
       await this.device.sendDeepLink(link, this.maybeBuildResult, terminateApp);
-
-      if (terminateApp) {
-        this.reconnectJSDebuggerIfNeeded();
-      }
     }
   }
 
@@ -1031,8 +1053,12 @@ export class DeviceSession
     }
   }
 
-  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    this.device.sendTouches(touches, type);
+  public sendTouches(
+    touches: Array<TouchPoint>,
+    type: "Up" | "Move" | "Down",
+    rotation: DeviceRotation
+  ) {
+    this.device.sendTouches(touches, type, rotation);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
@@ -1045,6 +1071,12 @@ export class DeviceSession
 
   public sendClipboard(text: string) {
     return this.device.sendClipboard(text);
+  }
+
+  public sendRotate(rotation: DeviceRotation) {
+    this.device.sendRotate(rotation);
+    this.emitStateChange();
+    this.rotation = rotation;
   }
 
   public async getClipboard() {

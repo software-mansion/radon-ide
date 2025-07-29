@@ -146,6 +146,18 @@
         "title": "Switch to previous running device",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.rotateDeviceClockwise",
+        "title": "Rotate device clockwise",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.rotateDeviceAnticlockwise",
+        "title": "Rotate device anticlockwise",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
     "keybindings": [
@@ -199,6 +211,16 @@
         "command": "RNIDE.previousRunningDevice",
         "key": "ctrl+shift+9",
         "mac": "cmd+shift+9"
+      },
+      {
+        "command": "RNIDE.rotateDeviceClockwise",
+        "key": "ctrl+alt+0",
+        "mac": "ctrl+alt+0"
+      },
+      {
+        "command": "RNIDE.rotateDeviceAnticlockwise",
+        "key": "ctrl+alt+9",
+        "mac": "ctrl+alt+9"
       }
     ],
     "configuration": {
@@ -248,6 +270,18 @@
           "scope": "window",
           "default": true,
           "description": "Enables the Radon AI functionality in the extension. Note: A full restart of the IDE is required for this setting to take effect."
+        },
+        "RadonIDE.deviceRotation": {
+          "type": "string",
+          "scope": "window",
+          "default": "Portrait",
+          "enum": [
+            "Portrait",
+            "LandscapeLeft",
+            "LandscapeRight",
+            "PortraitUpsideDown"
+          ],
+          "description": "Controls the default device rotation for simulators and emulators when they are created or launched."
         }
       }
     },

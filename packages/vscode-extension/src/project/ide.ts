@@ -48,6 +48,7 @@ export class IDE implements Disposable {
     );
     this.project = new Project(
       this.stateManager.getDerived("projectState"),
+      this.stateManager.getDerived("workspaceConfiguration"),
       this.deviceManager,
       this.utils,
       this.outputChannelRegistry,

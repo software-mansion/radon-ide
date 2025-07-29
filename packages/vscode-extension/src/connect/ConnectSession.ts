@@ -1,7 +1,8 @@
-import { DebugSession } from "../debugging/DebugSession";
-import { Metro } from "../project/metro";
 import { Disposable } from "vscode";
+import { DebugSession, DebugSessionImpl } from "../debugging/DebugSession";
+import { Metro } from "../project/metro";
 import { BaseInspectorBridge } from "../project/bridge";
+import { disposeAll } from "../utilities/disposables";
 
 export interface ConnectSessionDelegate {
   onSessionTerminated: () => void;
@@ -20,13 +21,16 @@ class DebugSessionInspectorBridge extends BaseInspectorBridge {
     }
   }
 
-  protected send(message: any) {
-    this.debugSession.dispatchRadonAgentMessage(message);
+  protected send(message: unknown) {
+    this.debugSession.evaluateExpression({
+      expression: `globalThis.__radon_dispatch(${JSON.stringify(message)});`,
+    });
   }
 }
 
 export default class ConnectSession implements Disposable {
-  private debugSession: DebugSession;
+  private debugSession: DebugSession & Disposable;
+  private debugEventsSubscription: Disposable;
   public readonly inspectorBridge: DebugSessionInspectorBridge;
 
   public get port() {
@@ -37,20 +41,11 @@ export default class ConnectSession implements Disposable {
     private readonly metro: Metro,
     private readonly delegate: ConnectSessionDelegate
   ) {
-    this.debugSession = new DebugSession(
-      {
-        onDebugSessionTerminated: () => {
-          this.delegate.onSessionTerminated();
-        },
-        onBindingCalled: (event: any) => {
-          this.inspectorBridge.onBindingCalled(event);
-        },
-      },
-      {
-        suppressDebugToolbar: false,
-        displayName: "Radon Connect Debugger",
-      }
-    );
+    this.debugSession = new DebugSessionImpl({
+      suppressDebugToolbar: false,
+      displayName: "Radon Connect Debugger",
+    });
+    this.debugEventsSubscription = this.registerDebugSessionListeners();
     this.inspectorBridge = new DebugSessionInspectorBridge(this.debugSession);
   }
 
@@ -70,7 +65,22 @@ export default class ConnectSession implements Disposable {
     return success;
   }
 
+  private registerDebugSessionListeners(): Disposable {
+    const subscriptions = [
+      this.debugSession.onDebugSessionTerminated(() => {
+        this.delegate.onSessionTerminated();
+      }),
+      this.debugSession.onBindingCalled((event: unknown) => {
+        this.inspectorBridge.onBindingCalled(event);
+      }),
+    ];
+    return new Disposable(() => {
+      disposeAll(subscriptions);
+    });
+  }
+
   dispose() {
     this.debugSession.dispose();
+    this.debugEventsSubscription.dispose();
   }
 }

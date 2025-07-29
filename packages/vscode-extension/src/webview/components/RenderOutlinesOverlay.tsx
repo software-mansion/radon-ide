@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { use$ } from "@legendapp/state/react";
 import { CanvasOutlineRenderer, OutlineRenderer } from "react-scan";
 import {
   RenderOutlinesEventListener,
@@ -9,6 +10,8 @@ import {
 import { makeProxy } from "../utilities/rpc";
 import "./RenderOutlinesOverlay.css";
 import { useProject } from "../providers/ProjectProvider";
+import { appToPreviewCoordinates } from "../utilities/transformAppCoordinates";
+import { useStore } from "../providers/storeProvider";
 
 const RenderOutlines = makeProxy<RenderOutlinesInterface>("RenderOutlines");
 
@@ -36,6 +39,27 @@ function RenderOutlinesOverlay() {
   const outlineRendererRef = useRef<OutlineRenderer | null>(null);
   const outlineRendererEnabled = useIsEnabled();
 
+  const store$ = useStore();
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+
+  const { selectedDeviceSession } = useProject();
+
+  if (selectedDeviceSession?.status !== "running") {
+    return;
+  }
+
+  const orientationRef = useRef({
+    deviceOrientation: rotation,
+    appOrientation: selectedDeviceSession.appOrientation,
+  });
+
+  useEffect(() => {
+    orientationRef.current = {
+      deviceOrientation: rotation,
+      appOrientation: selectedDeviceSession.appOrientation,
+    };
+  }, [rotation, selectedDeviceSession.appOrientation]);
+
   useEffect(() => {
     if (!outlineRendererEnabled) {
       outlineRendererRef.current?.dispose();
@@ -62,14 +86,19 @@ function RenderOutlinesOverlay() {
         const { name, count, boundingRect, didCommit } = blueprint;
         const horizontalScale = size.width;
         const verticalScale = size.height;
+        const frameRect = appToPreviewCoordinates(
+          orientationRef.current.appOrientation,
+          orientationRef.current.deviceOrientation,
+          boundingRect
+        );
         const outline = {
           id: fiberId,
           name: name,
           count: count,
-          x: boundingRect.x * horizontalScale,
-          y: boundingRect.y * verticalScale,
-          width: boundingRect.width * horizontalScale,
-          height: boundingRect.height * verticalScale,
+          x: frameRect.x * horizontalScale,
+          y: frameRect.y * verticalScale,
+          width: frameRect.width * horizontalScale,
+          height: frameRect.height * verticalScale,
           didCommit: didCommit,
         };
         return [outline];
