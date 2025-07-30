@@ -22,7 +22,9 @@ interface TransformationConfig {
  *
  * These transformations are used to correctly render media (images or videos) on a canvas,
  * and are needed because of how the rotation is handled in the application. In our case,
- * we are mainly concerned with the effects this has on canvas in ReplayUI component.
+ * we are mainly concerned with the effects this has on canvas in ReplayUI component, where
+ * the video dimensions and rotation are adjusted based on the device rotation, because of
+ * how video saving is handled.
  *
  * The outer key represents the original orientation of the media when it was mounted.
  * The inner key represents the current device rotation.
