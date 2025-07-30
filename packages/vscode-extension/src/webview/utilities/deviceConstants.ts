@@ -61,6 +61,16 @@ import iphoneSELandscapeMask from "../../assets/iphone_SE/landscape/mask.png";
 import iphoneSELandscapeBezel from "../../assets/iphone_SE/landscape/bezel.png";
 import iphoneSELandscapeScreen from "../../assets/iphone_SE/landscape/screen.png";
 
+import ipadA16 from "../../assets/ipad_a16/skin.png";
+import ipadA16mask from "../../assets/ipad_a16/mask.png";
+import ipadA16bezel from "../../assets/ipad_a16/bezel.png";
+import ipadA16screen from "../../assets/ipad_a16/screen.png";
+import ipadA16Landscape from "../../assets/ipad_a16/landscape/skin.png";
+import ipadA16LandscapeMask from "../../assets/ipad_a16/landscape/mask.png";
+import ipadA16LandscapeBezel from "../../assets/ipad_a16/landscape/bezel.png";
+import ipadA16LandscapeScreen from "../../assets/ipad_a16/landscape/screen.png";
+
+
 import { DevicePlatform } from "../../common/DeviceManager";
 
 export type DevicePropertiesFrame = {
@@ -179,6 +189,35 @@ export const iOSSupportedDevices: DeviceProperties[] = [
       offsetY: 222,
       image: iphoneSE,
       imageLandscape: iphoneSELandscape,
+    },
+  },
+  {
+    modelName: "Ipad A16",
+    modelId: "com.apple.CoreSimulator.SimDeviceType.iPad-A16",
+    platform: DevicePlatform.IOS,
+    screenWidth: 2460,
+    screenHeight: 3540,
+    maskImage: ipadA16mask,
+    screenImage: ipadA16screen,
+    landscapeMaskImage: ipadA16LandscapeMask,
+    landscapeScreenImage: ipadA16LandscapeScreen,
+    bezel: {
+      type: "mask",
+      width: 1640,
+      height: 2360,
+      offsetX: 4,
+      offsetY: 4,
+      image: ipadA16bezel,
+      imageLandscape: ipadA16LandscapeBezel,
+    },
+    skin: {
+      type: "skin",
+      width: 2814,
+      height: 3894,
+      offsetX: 200,
+      offsetY: 200,
+      image: ipadA16,
+      imageLandscape: ipadA16Landscape,
     },
   },
 ] as const;
