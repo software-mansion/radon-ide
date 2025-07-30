@@ -74,15 +74,21 @@ type DeviceSessionStateCommon = {
   deviceInfo: DeviceInfo;
   previewURL: string | undefined;
   profilingReactState: ProfilingState;
-  profilingCPUState: ProfilingState;
   navigationHistory: NavigationHistoryItem[];
   navigationRouteList: NavigationRoute[];
-  toolsState: ToolsState;
-  isDebuggerPaused: boolean;
-  logCounter: number;
   hasStaleBuildCache: boolean;
   isRecordingScreen: boolean;
 };
+
+export interface ApplicationSessionState {
+  profilingCPUState: ProfilingState;
+  toolsState: ToolsState;
+  isDebuggerPaused: boolean;
+  logCounter: number;
+  isRefreshing: boolean;
+  bundleError: BundleErrorDescriptor | undefined;
+  appOrientation: DeviceRotation | undefined;
+}
 
 export type DeviceSessionStateStarting = DeviceSessionStateCommon & {
   status: "starting";
@@ -95,12 +101,10 @@ export type BundleErrorDescriptor = {
   message: string;
 };
 
-export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
-  status: "running";
-  isRefreshing: boolean;
-  bundleError: BundleErrorDescriptor | undefined;
-  appOrientation: DeviceRotation | undefined;
-};
+export type DeviceSessionStateRunning = DeviceSessionStateCommon &
+  ApplicationSessionState & {
+    status: "running";
+  };
 
 export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {
   status: "fatalError";

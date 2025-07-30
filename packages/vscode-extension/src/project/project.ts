@@ -496,11 +496,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async resumeDebugger() {
-    this.deviceSession?.resumeDebugger();
+    this.deviceSession?.applicationSession?.resumeDebugger();
   }
 
   public async stepOverDebugger() {
-    this.deviceSession?.stepOverDebugger();
+    this.deviceSession?.applicationSession?.stepOverDebugger();
   }
 
   public async focusDebugConsole() {
