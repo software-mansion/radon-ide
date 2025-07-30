@@ -1,8 +1,40 @@
+.cardHeader {
+  border-bottom: 1px solid var(--swm-border);
+  display: flex;
+  padding: 40px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  align-self: stretch;
+  height: 40%;
+}
+.cardMiddle {
+  display: flex;
+  padding: 40px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1 0 0;
+  align-self: stretch;
+  height: 30%;
+}
+
+.cardButton {
+  display: flex;
+  padding: 40px;
+  flex-direction: column;
+  gap: 8px;
+  align-self: stretch;
+  justify-content: flex-end;
+  height: 30%;
+}
+
 .plan__name {
   display: flex;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 500;
   color: var(--swm-green-light-100);
+  line-height: 24px;
 }
 
 .plan__price {
@@ -37,6 +69,7 @@
   margin-top: 8px;
   margin-bottom: 32px;
   font-size: 18px;
+  line-height: 24px;
   color: var(--radon-subheading);
 }
 
@@ -61,5 +94,8 @@
   }
   .plan__tagline {
     font-size: 16px;
+  }
+  .cardGrid {
+    padding: 20px;
   }
 }
