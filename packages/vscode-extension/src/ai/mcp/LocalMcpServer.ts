@@ -23,7 +23,7 @@ export class LocalMcpServer implements Disposable {
   private versionSuffix: number = 0;
 
   private connectionListener: ConnectionListener;
-  private connectionSubscribtion: Disposable;
+  private connectionSubscription: Disposable;
 
   constructor(connectionListener: ConnectionListener) {
     // Deferred promise. The this.setServerPort is set immediately & synchronously.
@@ -33,7 +33,7 @@ export class LocalMcpServer implements Disposable {
 
     this.connectionListener = connectionListener;
 
-    this.connectionSubscribtion = this.connectionListener.onConnectionRestored(() => {
+    this.connectionSubscription = this.connectionListener.onConnectionRestored(() => {
       this.versionSuffix++;
       this.setVersionSuffix(this.versionSuffix);
     });
@@ -42,7 +42,7 @@ export class LocalMcpServer implements Disposable {
   }
 
   public async dispose(): Promise<void> {
-    this.connectionSubscribtion.dispose();
+    this.connectionSubscription.dispose();
     this.mcpServer?.close();
     this.expressServer?.closeAllConnections();
     this.expressServer?.close();
