@@ -15,7 +15,7 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
     );
   }
 
-  const screenshot = await project.deviceSession.captureScreenshot();
+  const screenshot = await project.deviceSession.captureScreenshot(project.getDeviceRotation());
 
   const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
 
