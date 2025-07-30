@@ -39,7 +39,7 @@ import { BuildCache } from "../builders/BuildCache";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
-import { ApplicationSession } from "./applicationSession";
+import { AppLaunchStage, ApplicationSession } from "./applicationSession";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -534,61 +534,82 @@ export class DeviceSession implements Disposable {
       platform: this.platform,
     });
 
-    // FIXME: Windows getting stuck waiting for the promise to resolve. This
-    // seems like a problem with app connecting to Metro and using embedded
-    // bundle instead.
-    // const shouldWaitForAppLaunch = launchConfig.preview.waitForAppLaunch;
-    // const waitForAppReady = shouldWaitForAppLaunch ? this.devtools.appReady() : Promise.resolve();
+    let previewURL: string | undefined;
+    const previewReadyPromise = this.device.startPreview().then((url) => {
+      if (!url) {
+        throw new Error("Device preview URL is not available");
+      }
+      previewURL = url;
+      // initialise device rotation
+      this.sendRotate(this.rotation);
+    });
 
-    this.updateStartupMessage(StartupMessage.Launching);
-    // await cancelToken.adapt(
-    //   this.device.launchApp(this.buildResult, this.metro.port, this.devtools.port, launchArguments)
-    // );
+    const launchStageListener = (stage: AppLaunchStage) => {
+      switch (stage) {
+        case AppLaunchStage.LaunchingApp: {
+          this.updateStartupMessage(StartupMessage.Launching);
+          Logger.debug("Will wait for app ready and for preview");
+          break;
+        }
+        case AppLaunchStage.WaitingForApp: {
+          this.updateStartupMessage(StartupMessage.WaitingForAppToLoad);
+          break;
+        }
+        case AppLaunchStage.AttachingDebugger: {
+          this.updateStartupMessage(StartupMessage.AttachingDebugger);
+          break;
+        }
+      }
+    };
 
-    Logger.debug("Will wait for app ready and for preview");
-    this.updateStartupMessage(StartupMessage.WaitingForAppToLoad);
-
-    // let previewURL: string | undefined;
-    // if (shouldWaitForAppLaunch) {
-    //   const reportWaitingStuck = setTimeout(() => {
-    //     Logger.info(
-    //       "App is taking very long to boot up, it might be stuck. Device preview URL:",
-    //       previewURL
-    //     );
-    //     getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
-    //       platform: this.platform,
-    //     });
-    //   }, 30000);
-    //   waitForAppReady.then(() => clearTimeout(reportWaitingStuck));
-    // }
-
-    await cancelToken.adapt(
-      Promise.all([
-        this.metro.ready(),
-        this.device.startPreview().then((url) => {
-          if (!url) {
-            throw new Error("Device preview URL is not available");
-          }
-          // previewURL = url;
-          // initialise device rotation
-          this.sendRotate(this.rotation);
-        }),
-        // waitForAppReady,
-      ])
-    );
-
-    Logger.debug("App and preview ready, moving on...");
-    this.updateStartupMessage(StartupMessage.AttachingDebugger);
-    this.applicationSession = await ApplicationSession.launch(
+    const applicationSessionPromise = ApplicationSession.launch(
       this.applicationContext,
       this.device,
       this.buildResult,
       this.metro,
       this.devtools,
       () => this.isActive,
+      launchStageListener,
       cancelToken
     );
-    this.applicationSession.onStateChanged(() => this.emitStateChange());
+
+    const launchConfig = this.applicationContext.launchConfig;
+    const shouldWaitForAppLaunch = launchConfig.preview.waitForAppLaunch;
+    const waitForAppReady = shouldWaitForAppLaunch ? applicationSessionPromise : Promise.resolve();
+
+    if (shouldWaitForAppLaunch) {
+      const reportWaitingStuck = setTimeout(() => {
+        Logger.info(
+          "App is taking very long to boot up, it might be stuck. Device preview URL:",
+          previewURL
+        );
+        getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
+          platform: this.platform,
+        });
+      }, 30000);
+      waitForAppReady
+        .then(() => clearTimeout(reportWaitingStuck))
+        .catch(() => {
+          // ignore errors here
+        });
+    }
+
+    const applicationSession = await applicationSessionPromise;
+
+    try {
+      await cancelToken.adapt(previewReadyPromise);
+    } catch (e) {
+      // if the application session was launched successfully, but we couldn't start the preview,
+      // we need to dispose the session and bail
+      applicationSession.dispose();
+      throw e;
+    }
+
+    this.applicationSession = applicationSession;
+    applicationSession.onStateChanged(() => this.emitStateChange());
+    this.emitStateChange();
+
+    Logger.debug("App and preview ready, moving on...");
     this.status = "running";
 
     const launchDurationSec = (Date.now() - launchRequestTime) / 1000;

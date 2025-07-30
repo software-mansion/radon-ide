@@ -32,6 +32,12 @@ import { CancelToken } from "../utilities/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
 
+export enum AppLaunchStage {
+  LaunchingApp = "Launching application",
+  WaitingForApp = "Waiting for application to load",
+  AttachingDebugger = "Connecting debugger",
+}
+
 export class ApplicationSession implements ToolsDelegate, Disposable {
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
@@ -60,6 +66,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     metro: MetroLauncher,
     devtools: Devtools,
     getIsActive: () => boolean,
+    onLaunchStage: (stage: AppLaunchStage) => void,
     cancelToken: CancelToken
   ): Promise<ApplicationSession> {
     const session = new ApplicationSession(applicationContext, device, metro, devtools);
@@ -72,16 +79,22 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       (device.deviceInfo.platform === DevicePlatform.IOS && launchConfig.ios?.launchArguments) ||
       [];
 
+    onLaunchStage(AppLaunchStage.LaunchingApp);
+
     try {
       await cancelToken.adapt(
         device.launchApp(buildResult, metro.port, devtools.port, launchArguments)
       );
 
+      onLaunchStage(AppLaunchStage.WaitingForApp);
       await cancelToken.adapt(Promise.all([metro.ready(), devtools.appReady()]));
 
       if (getIsActive()) {
+        onLaunchStage(AppLaunchStage.AttachingDebugger);
         await cancelToken.adapt(session.activate());
       }
+
+      session.status = "running";
 
       return session;
     } catch (e) {
@@ -287,6 +300,14 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
       sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
     });
+  }
+
+  public async startProfilingCPU(): Promise<void> {
+    await this.debugSession?.startProfilingCPU();
+  }
+
+  public async stopProfilingCPU(): Promise<void> {
+    await this.debugSession?.stopProfilingCPU();
   }
 
   private async saveAndOpenCPUProfile(tempFilePath: string) {

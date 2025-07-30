@@ -296,18 +296,18 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   async startProfilingCPU() {
-    if (this.deviceSession) {
-      await this.deviceSession.startProfilingCPU();
+    if (this.deviceSession?.applicationSession) {
+      await this.deviceSession.applicationSession.startProfilingCPU();
     } else {
-      throw new Error("No device session available");
+      throw new Error("No application running");
     }
   }
 
   async stopProfilingCPU() {
-    if (this.deviceSession) {
-      await this.deviceSession.stopProfilingCPU();
+    if (this.deviceSession?.applicationSession) {
+      await this.deviceSession.applicationSession.stopProfilingCPU();
     } else {
-      throw new Error("No device session available");
+      throw new Error("No application running");
     }
   }
 
