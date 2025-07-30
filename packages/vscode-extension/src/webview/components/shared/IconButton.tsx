@@ -19,6 +19,7 @@ export interface IconButtonProps {
     type?: "primary" | "secondary";
   };
   className?: string;
+  dataTest?: string;
 }
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, ref) => {
@@ -33,6 +34,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     size = "default",
     side = "center",
     className = "",
+    dataTest,
     ...rest
   } = props;
   const [displayCounter, setDisplayCounter] = useState(counter);
@@ -58,6 +60,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
         side === "right" && "icon-button-right",
         className
       )}
+      data-test={dataTest}
       {...rest}
       ref={ref}>
       {children}

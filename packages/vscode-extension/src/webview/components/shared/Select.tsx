@@ -90,6 +90,7 @@ function Select({
                   key={item.value}
                   disabled={item.disabled}
                   value={item.value}
+                  data-test={`${dataTest}-item-${item.value}`}
                   marked={item.marked}>
                   {item.label}
                 </SelectItem>

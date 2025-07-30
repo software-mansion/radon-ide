@@ -115,6 +115,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
+          data-test={`rename-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceRename(deviceInfo);

@@ -46,10 +46,9 @@ export async function fillDeviceCreationForm(driver, deviceName) {
   );
   systemImageSelect.click();
 
-  // By.css('[data-test^="system-image-select-item-"]') doesnt work i dont know why
   const selectedSystemImage = await findAndWaitForElement(
     driver,
-    By.xpath("//*[normalize-space(text())='iOS 18.5']"),
+    By.css('[data-test^="system-image-select-item-"]'),
     "Timed out waiting for an element matching from system image list"
   );
   await selectedSystemImage.click();
@@ -59,11 +58,12 @@ export async function fillDeviceCreationForm(driver, deviceName) {
     By.css('[data-test="device-name-input"]'),
     "Timed out waiting for an element matching from system image list"
   );
-  deviceNameInput.clear();
-  deviceNameInput.sendKeys(deviceName);
+  deviceNameInput.clear().then(() => {
+    deviceNameInput.sendKeys(deviceName);
+  });
 }
 
-export async function openRadonIDEPanel(browser, driver, workbench) {
+export async function openRadonIDEPanel(driver) {
   await driver.findElement(By.css("div#swmansion\\.react-native-ide")).click();
 
   const webview = await findAndWaitForElement(
@@ -79,4 +79,40 @@ export async function openRadonIDEPanel(browser, driver, workbench) {
     "Timed out waiting for Radon IDE iframe"
   );
   await driver.switchTo().frame(iframe);
+}
+
+export async function addNewDevice(driver, newDeviceName) {
+  await openDeviceCreationModal(driver);
+
+  await fillDeviceCreationForm(driver, newDeviceName);
+
+  const createDeviceButton = await findAndWaitForElement(
+    driver,
+    By.css('[data-test="create-device-button"]'),
+    "Timed out waiting for 'Create device' button"
+  );
+  createDeviceButton.click();
+}
+
+export async function modifyDeviceName(driver, deviceName, modifiedDeviceName) {
+  const deviceRenameButton = await findAndWaitForElement(
+    driver,
+    By.css(`[data-test="rename-device-${deviceName}"]`),
+    "Timed out waiting for device edit button"
+  );
+
+  deviceRenameButton.click();
+  const deviceNameInput = await findAndWaitForElement(
+    driver,
+    By.css('[data-test="rename-device-input"]'),
+    "Timed out waiting for device name input"
+  );
+  await deviceNameInput.clear();
+  deviceNameInput.sendKeys(modifiedDeviceName);
+  const saveButton = await findAndWaitForElement(
+    driver,
+    By.css('[data-test="rename-device-save-button"]'),
+    "Timed out waiting for device rename save button"
+  );
+  saveButton.click();
 }
