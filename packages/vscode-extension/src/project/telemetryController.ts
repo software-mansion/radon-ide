@@ -3,7 +3,7 @@ import { StateManager } from "./StateManager";
 import { TelemetryState } from "../common/State";
 import { disposeAll } from "../utilities/disposables";
 
-export class TelemetryManager implements Disposable {
+export class TelemetryController implements Disposable {
   private disposables: Disposable[] = [];
 
   constructor(private readonly stateManager: StateManager<TelemetryState>) {
