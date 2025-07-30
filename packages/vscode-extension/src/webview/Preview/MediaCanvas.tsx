@@ -1,7 +1,7 @@
 import { useEffect, forwardRef, RefObject, useRef, useMemo, useCallback } from "react";
+import { use$ } from "@legendapp/state/react";
 import { DeviceRotation } from "../../common/Project";
 import { useStore } from "../providers/storeProvider";
-import { use$ } from "@legendapp/state/react";
 
 type MediaRef = RefObject<HTMLImageElement | null> | RefObject<HTMLVideoElement | null>;
 
@@ -17,95 +17,119 @@ interface TransformationConfig {
   shouldDrawWithoutTransform: boolean;
 }
 
-const TRANSFORM_CONFIGS_PORTRAIT = {
+/**
+ * Transformation configurations for media rotation.
+ *
+ * These transformations are used to correctly render media (images or videos) on a canvas,
+ * and are needed because of how the rotation is handled in the application. In our case,
+ * we are mainly concerned with the effects this has on canvas in ReplayUI component.
+ *
+ * The outer key represents the original orientation of the media when it was mounted.
+ * The inner key represents the current device rotation.
+ *
+ * - angle: Rotation angle in radians to apply to the media
+ * - dimensionsSwapped: Whether width and height should be swapped for the canvas
+ * - shouldDrawWithoutTransform: Whether to draw directly without applying transformation (optimization for native orientation)
+ */
+const TRANSFORM_CONFIGS = {
+  // Media mounted in Portrait orientation
   [DeviceRotation.Portrait]: {
-    angle: 0,
-    dimensionsSwapped: false,
-    shouldDrawWithoutTransform: true
+    // Transformations based on current device rotation
+    [DeviceRotation.Portrait]: {
+      angle: 0,
+      dimensionsSwapped: false,
+      shouldDrawWithoutTransform: true, // Native orientation
+    },
+    [DeviceRotation.LandscapeLeft]: {
+      angle: -Math.PI / 2, // Rotate 90° counter-clockwise
+      dimensionsSwapped: true,
+      shouldDrawWithoutTransform: false,
+    },
+    [DeviceRotation.LandscapeRight]: {
+      angle: Math.PI / 2, // Rotate 90° clockwise
+      dimensionsSwapped: true,
+      shouldDrawWithoutTransform: false,
+    },
+    [DeviceRotation.PortraitUpsideDown]: {
+      angle: Math.PI, // Rotate 180°
+      dimensionsSwapped: false,
+      shouldDrawWithoutTransform: false,
+    },
   },
-  [DeviceRotation.LandscapeLeft]: {
-    angle: -Math.PI / 2,
-    dimensionsSwapped: true,
-    shouldDrawWithoutTransform: false
-  },
-  [DeviceRotation.LandscapeRight]: {
-    angle: Math.PI / 2,
-    dimensionsSwapped: true,
-    shouldDrawWithoutTransform: false
-  },
-  [DeviceRotation.PortraitUpsideDown]: {
-    angle: Math.PI,
-    dimensionsSwapped: false,
-    shouldDrawWithoutTransform: false
-  },
-} as const;
 
-const TRANSFORM_CONFIGS_PORTRAITUPSIDEDOWN = {
+  // Media mounted in Portrait Upside Down orientation
   [DeviceRotation.PortraitUpsideDown]: {
-    angle: 0,
-    dimensionsSwapped: false,
-    shouldDrawWithoutTransform: true
+    // Transformations based on current device rotation
+    [DeviceRotation.Portrait]: {
+      angle: Math.PI, // Rotate 180°
+      dimensionsSwapped: false,
+      shouldDrawWithoutTransform: false,
+    },
+    [DeviceRotation.LandscapeLeft]: {
+      angle: Math.PI / 2, // Rotate 90° clockwise
+      dimensionsSwapped: true,
+      shouldDrawWithoutTransform: false,
+    },
+    [DeviceRotation.LandscapeRight]: {
+      angle: -Math.PI / 2, // Rotate 90° counter-clockwise
+      dimensionsSwapped: true,
+      shouldDrawWithoutTransform: false,
+    },
+    [DeviceRotation.PortraitUpsideDown]: {
+      angle: 0,
+      dimensionsSwapped: false,
+      shouldDrawWithoutTransform: true, // Native orientation
+    },
   },
-  [DeviceRotation.LandscapeRight]: {
-    angle: -Math.PI / 2,
-    dimensionsSwapped: true,
-    shouldDrawWithoutTransform: false
-  },
-  [DeviceRotation.LandscapeLeft]: {
-    angle: Math.PI / 2,
-    dimensionsSwapped: true,
-    shouldDrawWithoutTransform: false
-  },
-  [DeviceRotation.Portrait]: {
-    angle: Math.PI,
-    dimensionsSwapped: false,
-    shouldDrawWithoutTransform: false
-  },
-} as const;
 
-const TRANSFORM_CONFIGS_LANDSCAPELEFT = {
+  // Media mounted in Landscape Left orientation
   [DeviceRotation.LandscapeLeft]: {
-    angle: 0,
-    dimensionsSwapped: false,
-    shouldDrawWithoutTransform: true
+    // Transformations based on current device rotation
+    [DeviceRotation.Portrait]: {
+      angle: -Math.PI / 2, // Rotate 90° counter-clockwise
+      dimensionsSwapped: true,
+      shouldDrawWithoutTransform: false,
+    },
+    [DeviceRotation.LandscapeLeft]: {
+      angle: 0,
+      dimensionsSwapped: false,
+      shouldDrawWithoutTransform: true, // Native orientation
+    },
+    [DeviceRotation.LandscapeRight]: {
+      angle: Math.PI, // Rotate 180°
+      dimensionsSwapped: false,
+      shouldDrawWithoutTransform: false,
+    },
+    [DeviceRotation.PortraitUpsideDown]: {
+      angle: Math.PI / 2, // Rotate 90° clockwise
+      dimensionsSwapped: true,
+      shouldDrawWithoutTransform: false,
+    },
   },
-  [DeviceRotation.Portrait]: {
-    angle: -Math.PI / 2,
-    dimensionsSwapped: true,
-    shouldDrawWithoutTransform: false
-  },
-  [DeviceRotation.PortraitUpsideDown]: {
-    angle: Math.PI / 2,
-    dimensionsSwapped: true,
-    shouldDrawWithoutTransform: false
-  },
-  [DeviceRotation.LandscapeRight]: {
-    angle: Math.PI,
-    dimensionsSwapped: false,
-    shouldDrawWithoutTransform: false
-  },
-} as const;
 
-const TRANSFORM_CONFIGS_LANDSCAPERIGHT = {
+  // Media mounted in Landscape Right orientation
   [DeviceRotation.LandscapeRight]: {
-    angle: 0,
-    dimensionsSwapped: false,
-    shouldDrawWithoutTransform: true
-  },
-  [DeviceRotation.PortraitUpsideDown]: {
-    angle: -Math.PI / 2,
-    dimensionsSwapped: true,
-    shouldDrawWithoutTransform: false
-  },
-  [DeviceRotation.Portrait]: {
-    angle: Math.PI / 2,
-    dimensionsSwapped: true,
-    shouldDrawWithoutTransform: false
-  },
-  [DeviceRotation.LandscapeLeft]: {
-    angle: Math.PI,
-    dimensionsSwapped: false,
-    shouldDrawWithoutTransform: false
+    // Transformations based on current device rotation
+    [DeviceRotation.Portrait]: {
+      angle: Math.PI / 2, // Rotate 90° clockwise
+      dimensionsSwapped: true,
+      shouldDrawWithoutTransform: false,
+    },
+    [DeviceRotation.LandscapeLeft]: {
+      angle: Math.PI, // Rotate 180°
+      dimensionsSwapped: false,
+      shouldDrawWithoutTransform: false,
+    },
+    [DeviceRotation.LandscapeRight]: {
+      angle: 0,
+      dimensionsSwapped: false,
+      shouldDrawWithoutTransform: true, // Native orientation
+    },
+    [DeviceRotation.PortraitUpsideDown]: {
+      angle: -Math.PI / 2, // Rotate 90° counter-clockwise
+      dimensionsSwapped: true,
+      shouldDrawWithoutTransform: false,
+    },
   },
 } as const;
 
@@ -122,23 +146,16 @@ const MediaCanvas = forwardRef<HTMLCanvasElement, MediaCanvasProps>(
       return rotation;
     }, [mediaRef]);
 
-    const getTransformConfig = (): TransformationConfig => {
+    const getTransformConfig = useCallback((): TransformationConfig => {
+      // We expect the MJPEG stream to always be in Portrait orientation
+      // unlike the replay video, which is dependent on the device rotation upon
+      // mounting the MediaCanvas in ReplayUI.
       if (isAlwaysPortrait) {
-        return TRANSFORM_CONFIGS_PORTRAIT[rotation];
+        return TRANSFORM_CONFIGS[DeviceRotation.Portrait][rotation];
       }
 
-      switch (mediaRotationOnMount) {
-        case DeviceRotation.PortraitUpsideDown:
-          return TRANSFORM_CONFIGS_PORTRAITUPSIDEDOWN[rotation];
-        case DeviceRotation.LandscapeLeft:
-          return TRANSFORM_CONFIGS_LANDSCAPELEFT[rotation];
-        case DeviceRotation.LandscapeRight:
-          return TRANSFORM_CONFIGS_LANDSCAPERIGHT[rotation];
-        case DeviceRotation.Portrait:
-        default:
-          return TRANSFORM_CONFIGS_PORTRAIT[rotation];
-      }
-    };
+      return TRANSFORM_CONFIGS[mediaRotationOnMount][rotation];
+    }, [rotation, isAlwaysPortrait, mediaRotationOnMount]);
 
     const drawToCanvas = useCallback(
       (sourceImg: HTMLImageElement | HTMLVideoElement): void => {
@@ -198,8 +215,8 @@ const MediaCanvas = forwardRef<HTMLCanvasElement, MediaCanvasProps>(
       [canvasRef, rotation]
     );
 
+    // Avoid unnecessary re-renders by calling drawToCanvasRef.current
     const drawToCanvasRef = useRef(drawToCanvas);
-
     useEffect(() => {
       drawToCanvasRef.current = drawToCanvas;
     }, [drawToCanvas]);
