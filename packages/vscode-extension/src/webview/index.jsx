@@ -8,7 +8,6 @@ import ProjectProvider from "./providers/ProjectProvider";
 import AlertProvider from "./providers/AlertProvider";
 
 import { UtilsProvider, installLogOverrides } from "./providers/UtilsProvider";
-import { TelemetryProvider } from "./providers/TelemetryProvider";
 
 import "./styles/theme.css";
 import StoreProvider from "./providers/storeProvider";
@@ -23,15 +22,13 @@ root.render(
     <StoreProvider>
       <ProjectProvider>
         <UtilsProvider>
-          <TelemetryProvider>
-            <DevicesProvider>
-              <ModalProvider>
-                <AlertProvider>
-                  <App />
-                </AlertProvider>
-              </ModalProvider>
-            </DevicesProvider>
-          </TelemetryProvider>
+          <DevicesProvider>
+            <ModalProvider>
+              <AlertProvider>
+                <App />
+              </AlertProvider>
+            </ModalProvider>
+          </DevicesProvider>
         </UtilsProvider>
       </ProjectProvider>
     </StoreProvider>
