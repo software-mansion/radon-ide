@@ -11,7 +11,6 @@ import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { useUtils } from "../providers/UtilsProvider";
 import "./shared/SwitchGroup.css";
 import { SendFeedbackItem } from "./SendFeedbackItem";
-import { useTelemetry } from "../providers/TelemetryProvider";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
 
@@ -25,10 +24,10 @@ interface SettingsDropdownProps {
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const store$ = useStore();
   const panelLocation = use$(store$.workspaceConfiguration.panelLocation);
+  const telemetryEnabled = use$(store$.telemetry.enabled);
 
   const { openModal } = useModal();
   const { movePanelTo, reportIssue } = useUtils();
-  const { telemetryEnabled } = useTelemetry();
 
   const extensionVersion = document.querySelector<HTMLMetaElement>(
     "meta[name='radon-ide-version']"

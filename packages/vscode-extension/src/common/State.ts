@@ -53,10 +53,15 @@ export type ApplicationContextState = {
   applicationDependencies: ApplicationDependencyStatuses;
 };
 
+export type TelemetryState = {
+  enabled: boolean;
+};
+
 export type State = {
   applicationRoots: ApplicationRoot[];
   environmentDependencies: EnvironmentDependencyStatuses;
   projectState: ProjectStore;
+  telemetry: TelemetryState;
   workspaceConfiguration: WorkspaceConfiguration;
 };
 
@@ -69,6 +74,9 @@ export const initialState: State = {
     applicationContext: {
       applicationDependencies: {},
     },
+  },
+  telemetry: {
+    enabled: false,
   },
   workspaceConfiguration: {
     panelLocation: "tab",

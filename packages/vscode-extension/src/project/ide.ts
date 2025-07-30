@@ -11,6 +11,7 @@ import { LaunchConfiguration } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
+import { Telemetry } from "./telemetry";
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
@@ -29,6 +30,8 @@ export class IDE implements Disposable {
 
   private environmentDependencyManager: EnvironmentDependencyManager;
 
+  private readonly telemetry: Telemetry;
+
   private stateManager: StateManager<State>;
 
   private disposed = false;
@@ -40,6 +43,8 @@ export class IDE implements Disposable {
     this.stateManager = StateManager.create(initialState);
 
     this.disposables.push(this.stateManager.onSetState(this.handleStateChanged));
+
+    this.telemetry = new Telemetry(this.stateManager.getDerived("telemetry"));
 
     this.deviceManager = new DeviceManager(this.outputChannelRegistry);
     this.utils = new Utils();
@@ -64,7 +69,12 @@ export class IDE implements Disposable {
       this.stateManager.getDerived("workspaceConfiguration")
     );
 
-    this.disposables.push(this.project, this.workspaceConfigController, this.outputChannelRegistry);
+    this.disposables.push(
+      this.project,
+      this.workspaceConfigController,
+      this.outputChannelRegistry,
+      this.telemetry
+    );
     // register disposable with context
     extensionContext.subscriptions.push(this);
   }
