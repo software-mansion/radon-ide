@@ -7,7 +7,6 @@ import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
 import { LaunchConfiguration, LaunchOptions } from "../common/LaunchConfig";
-import { Logger } from "../Logger";
 import { StateManager } from "./StateManager";
 import { ApplicationContextState } from "../common/State";
 import { ApplicationDependencyManager } from "../dependency/ApplicationDependencyManager";
@@ -30,14 +29,7 @@ function resolveEnvironment(
   const systemEnv = process.env as NodeJS.ProcessEnv;
   const mergedEnv = { ...systemEnv, ...configuredEnv };
   // load the dotenv files for the project into `mergedEnv`
-  const loadEnvResult = loadProjectEnv(appRoot, { force: true, systemEnv: mergedEnv });
-
-  if (loadEnvResult.result === "loaded") {
-    Logger.info(
-      `Project in "${appRoot}" loaded environment variables from .env files:`,
-      loadEnvResult.files
-    );
-  }
+  loadProjectEnv(appRoot, { force: true, systemEnv: mergedEnv });
 
   // filter out any `undefined` values from the environment variables
   const env = _.pickBy(mergedEnv, _.isString);
