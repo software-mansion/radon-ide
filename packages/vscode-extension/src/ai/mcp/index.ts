@@ -1,6 +1,5 @@
 import { lm, McpHttpServerDefinition, Uri, EventEmitter, version, Disposable } from "vscode";
 import { Logger } from "../../Logger";
-import { watchLicenseTokenChange } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
 import { insertRadonEntry, newMcpConfig } from "./configCreator";
 import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
@@ -16,23 +15,13 @@ async function updateMcpConfig(port: number, mcpVersion: string) {
   await writeMcpConfig(updatedConfig);
 }
 
-function directLoadRadonAI(
-  server: LocalMcpServer,
-  connectionListener: ConnectionListener
-): Disposable {
+function directLoadRadonAI(server: LocalMcpServer): Disposable {
   // Version suffix has to be incremented on every MCP server reload.
-  let versionSuffix = 0;
-
   const didChangeEmitter = new EventEmitter<void>();
 
-  const updateMcpEntry = () => {
-    versionSuffix += 1;
-    server.setVersionSuffix(versionSuffix);
+  const onReloadDisposable = server.onReload(() => {
     didChangeEmitter.fire();
-  };
-
-  const connectionChangeListener = connectionListener.onConnectionRestored(updateMcpEntry);
-  const licenseChangeListener = watchLicenseTokenChange(updateMcpEntry);
+  });
 
   const mcpServerEntry = lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
     onDidChangeMcpServerDefinitions: didChangeEmitter.event,
@@ -49,9 +38,7 @@ function directLoadRadonAI(
     },
   });
 
-  return new Disposable(() =>
-    disposeAll([connectionChangeListener, licenseChangeListener, mcpServerEntry])
-  );
+  return new Disposable(() => disposeAll([onReloadDisposable, mcpServerEntry]));
 }
 
 async function fsLoadRadonAI(server: LocalMcpServer) {
@@ -83,22 +70,14 @@ export default function registerRadonAi(): Disposable {
   const server = new LocalMcpServer(connectionListener);
 
   if (isDirectLoadingAvailable()) {
-    const disposables = directLoadRadonAI(server, connectionListener);
+    const disposables = directLoadRadonAI(server);
 
     return new Disposable(() => disposeAll([disposables, server, connectionListener]));
   } else {
-    let versionSuffix = 0;
-
-    const fsReloadRadonAi = () => {
-      server.setVersionSuffix(versionSuffix++);
+    const onReloadDisposable = server.onReload(() => {
       fsLoadRadonAI(server);
-    };
+    });
 
-    const connectionChangeListener = connectionListener.onConnectionRestored(fsReloadRadonAi);
-    const licenseObserver = watchLicenseTokenChange(fsReloadRadonAi);
-
-    return new Disposable(() =>
-      disposeAll([server, connectionListener, connectionChangeListener, licenseObserver])
-    );
+    return new Disposable(() => disposeAll([onReloadDisposable, server, connectionListener]));
   }
 }

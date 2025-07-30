@@ -5,12 +5,13 @@ import express from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import { Disposable } from "vscode";
+import { Disposable, EventEmitter } from "vscode";
 import { Logger } from "../../Logger";
 import { registerMcpTools } from "./toolRegistration";
 import { Session } from "./models";
 import { extensionContext } from "../../utilities/extensionContext";
 import { ConnectionListener } from "../shared/ConnectionListener";
+import { watchLicenseTokenChange } from "../../utilities/license";
 
 export class LocalMcpServer implements Disposable {
   private session: Session | null = null;
@@ -24,6 +25,9 @@ export class LocalMcpServer implements Disposable {
 
   private connectionListener: ConnectionListener;
   private connectionSubscription: Disposable;
+  private licenseTokenSubscription: Disposable;
+
+  private serverReloadEmitter: EventEmitter<void>;
 
   constructor(connectionListener: ConnectionListener) {
     // Deferred promise. The this.setServerPort is set immediately & synchronously.
@@ -33,9 +37,14 @@ export class LocalMcpServer implements Disposable {
 
     this.connectionListener = connectionListener;
 
+    this.serverReloadEmitter = new EventEmitter<void>();
+
     this.connectionSubscription = this.connectionListener.onConnectionRestored(() => {
-      this.versionSuffix++;
-      this.setVersionSuffix(this.versionSuffix);
+      this.reloadToolSchema();
+    });
+
+    this.licenseTokenSubscription = watchLicenseTokenChange(() => {
+      this.reloadToolSchema();
     });
 
     this.initializeHttpServer();
@@ -43,6 +52,8 @@ export class LocalMcpServer implements Disposable {
 
   public async dispose(): Promise<void> {
     this.connectionSubscription.dispose();
+    this.licenseTokenSubscription.dispose();
+    this.serverReloadEmitter.dispose();
     this.mcpServer?.close();
     this.expressServer?.closeAllConnections();
     this.expressServer?.close();
@@ -56,13 +67,14 @@ export class LocalMcpServer implements Disposable {
   }
 
   private reloadToolSchema() {
+    this.versionSuffix += 1;
     this.session?.transport.close();
     this.session = null;
+    this.serverReloadEmitter.fire();
   }
 
-  public setVersionSuffix(newSuffix: number) {
-    this.versionSuffix = newSuffix;
-    this.reloadToolSchema();
+  public onReload(cb: () => void): Disposable {
+    return this.serverReloadEmitter.event(cb);
   }
 
   public getVersion(): string {
