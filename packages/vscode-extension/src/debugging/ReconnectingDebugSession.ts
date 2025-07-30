@@ -25,6 +25,10 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
 
   public async startJSDebugSession(configuration: JSDebugConfiguration) {
     this.isRunning = true;
+    if (this.reconnectCancelToken) {
+      this.reconnectCancelToken.cancel();
+      this.reconnectCancelToken = undefined;
+    }
     return this.debugSession.startJSDebugSession(configuration);
   }
 
@@ -44,18 +48,16 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
     if (!this.isRunning || this.reconnectCancelToken !== undefined) {
       return;
     }
-    this.reconnectCancelToken = new CancelToken();
-    while (this.isRunning && !this.reconnectCancelToken.cancelled) {
+    const cancelToken = new CancelToken();
+    this.reconnectCancelToken = cancelToken;
+    while (this.isRunning && !cancelToken.cancelled) {
       try {
-        const connected = await this.pingJsDebugSessionWithTimeout();
+        const connected = await cancelToken.adapt(this.pingJsDebugSessionWithTimeout());
         if (connected) {
           // if we're connected to a responsive session, we can break
           break;
         }
-        const websocketAddress = await this.metro.getDebuggerURL(
-          undefined,
-          this.reconnectCancelToken
-        );
+        const websocketAddress = await this.metro.getDebuggerURL(undefined, cancelToken);
         if (!websocketAddress) {
           throw new Error("No connected device listed");
         }
@@ -71,7 +73,9 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
         // we ignore the errors and retry
       }
     }
-    this.reconnectCancelToken = undefined;
+    if (this.reconnectCancelToken === cancelToken) {
+      this.reconnectCancelToken = undefined;
+    }
   };
 
   async dispose() {
@@ -93,6 +97,11 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
     return this.debugSession.startParentDebugSession();
   }
   public async restart(): Promise<void> {
+    this.isRunning = false;
+    if (this.reconnectCancelToken) {
+      this.reconnectCancelToken.cancel();
+      this.reconnectCancelToken = undefined;
+    }
     return this.debugSession.restart();
   }
   public resumeDebugger(): void {
