@@ -12,6 +12,7 @@ import "./RenderOutlinesOverlay.css";
 import { useProject } from "../providers/ProjectProvider";
 import { appToPreviewCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
+import { DeviceRotation } from "../../common/Project";
 
 const RenderOutlines = makeProxy<RenderOutlinesInterface>("RenderOutlines");
 
@@ -44,21 +45,22 @@ function RenderOutlinesOverlay() {
 
   const { selectedDeviceSession } = useProject();
 
-  if (selectedDeviceSession?.status !== "running") {
-    return;
-  }
+  const appOrientation =
+    selectedDeviceSession?.status === "running"
+      ? selectedDeviceSession.appOrientation
+      : DeviceRotation.Portrait;
 
   const orientationRef = useRef({
     deviceOrientation: rotation,
-    appOrientation: selectedDeviceSession.appOrientation,
+    appOrientation: appOrientation,
   });
 
   useEffect(() => {
     orientationRef.current = {
       deviceOrientation: rotation,
-      appOrientation: selectedDeviceSession.appOrientation,
+      appOrientation: appOrientation,
     };
-  }, [rotation, selectedDeviceSession.appOrientation]);
+  }, [rotation, appOrientation]);
 
   useEffect(() => {
     if (!outlineRendererEnabled) {
