@@ -6,7 +6,6 @@ import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
 import { DeviceRotation } from "../common/Project";
 import { updatePartialWorkspaceConfig } from "../utilities/updatePartialWorkspaceConfig";
-import { Logger } from "../Logger";
 
 export class WorkspaceConfigController implements Disposable {
   private disposables: Disposable[] = [];
