@@ -8,7 +8,7 @@ type MediaRef = RefObject<HTMLImageElement | null> | RefObject<HTMLVideoElement 
 interface MediaCanvasProps extends React.CanvasHTMLAttributes<HTMLCanvasElement> {
   mediaRef: MediaRef;
   src?: string;
-  isAlwaysPortrait?: boolean;
+  alwaysPortrait?: boolean;
 }
 
 interface TransformationConfig {
@@ -134,7 +134,7 @@ const TRANSFORM_CONFIGS = {
 } as const;
 
 const MediaCanvas = forwardRef<HTMLCanvasElement, MediaCanvasProps>(
-  ({ mediaRef, src, isAlwaysPortrait, ...rest }, ref) => {
+  ({ mediaRef, src, alwaysPortrait: isAlwaysPortrait, ...rest }, ref) => {
     const store$ = useStore();
     const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 

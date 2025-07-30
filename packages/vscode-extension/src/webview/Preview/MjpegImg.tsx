@@ -90,7 +90,7 @@ const MjpegImg = forwardRef<
         onError={handleError}
       />
 
-      <MediaCanvas ref={ref} mediaRef={sourceImgRef} src={src} {...rest} isAlwaysPortrait/>
+      <MediaCanvas ref={ref} mediaRef={sourceImgRef} src={src} {...rest} alwaysPortrait />
     </>
   );
 });

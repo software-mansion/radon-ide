@@ -38,7 +38,11 @@ export class Preview implements Disposable {
     stdin.write(command);
   }
 
-  private saveMultimediaWithID(type: MultimediaType, id: string, rotation: DeviceRotation): Promise<MultimediaData> {
+  private saveMultimediaWithID(
+    type: MultimediaType,
+    id: string,
+    rotation: DeviceRotation
+  ): Promise<MultimediaData> {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
@@ -177,7 +181,11 @@ export class Preview implements Disposable {
   }
 
   public captureAndStopRecording(rotation: DeviceRotation) {
-    const recordingDataPromise = this.saveMultimediaWithID(MultimediaType.Video, "recording", rotation);
+    const recordingDataPromise = this.saveMultimediaWithID(
+      MultimediaType.Video,
+      "recording",
+      rotation
+    );
     this.sendCommandOrThrow(`video recording stop\n`);
     return recordingDataPromise;
   }
