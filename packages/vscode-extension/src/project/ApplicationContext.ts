@@ -7,10 +7,10 @@ import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
 import { LaunchConfiguration, LaunchOptions } from "../common/LaunchConfig";
-import { Logger } from "../Logger";
 import { StateManager } from "./StateManager";
 import { ApplicationContextState } from "../common/State";
 import { ApplicationDependencyManager } from "../dependency/ApplicationDependencyManager";
+import { Logger } from "../Logger";
 
 /**
  * Represents a launch configuration that has been resolved with additional properties.
@@ -23,37 +23,37 @@ export type ResolvedLaunchConfig = LaunchOptions & {
   env: Record<string, string>;
 };
 
-function resolveEnvironment(
-  appRoot: string,
-  configuredEnv: Record<string, string>
-): Record<string, string> {
-  const systemEnv = process.env as NodeJS.ProcessEnv;
-  const mergedEnv = { ...systemEnv, ...configuredEnv };
-  // load the dotenv files for the project into `mergedEnv`
-  const loadEnvResult = loadProjectEnv(appRoot, { force: true, systemEnv: mergedEnv });
-
-  if (loadEnvResult.result === "loaded") {
-    Logger.info(
-      `Project in "${appRoot}" loaded environment variables from .env files:`,
-      loadEnvResult.files
-    );
-  }
-
-  // filter out any `undefined` values from the environment variables
-  const env = _.pickBy(mergedEnv, _.isString);
-  return env;
-}
-
 function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunchConfig {
   const appRoot = configuration.appRoot;
   const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
 
   const configuredEnv = configuration.env || {};
 
+  let lastLoadedEnvFiles: string[] | undefined;
+
+  function resolveEnvironment(): Record<string, string> {
+    const systemEnv = process.env as NodeJS.ProcessEnv;
+    const mergedEnv = { ...systemEnv, ...configuredEnv };
+    // load the dotenv files for the project into `mergedEnv`
+    const loadEnvResult = loadProjectEnv(absoluteAppRoot, { force: true, systemEnv: mergedEnv });
+
+    if (loadEnvResult.result === "loaded" && !_.isEqual(loadEnvResult.files, lastLoadedEnvFiles)) {
+      lastLoadedEnvFiles = loadEnvResult.files;
+      Logger.info(
+        `Project in "${appRoot}" loaded environment variables from .env files:`,
+        loadEnvResult.files
+      );
+    }
+
+    // filter out any `undefined` values from the environment variables
+    const env = _.pickBy(mergedEnv, _.isString);
+    return env;
+  }
+
   return {
     ...configuration,
     get env() {
-      return resolveEnvironment(absoluteAppRoot, configuredEnv);
+      return resolveEnvironment();
     },
     absoluteAppRoot,
     preview: {
