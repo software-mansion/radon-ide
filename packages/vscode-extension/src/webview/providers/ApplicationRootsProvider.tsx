@@ -1,9 +1,6 @@
-import { PropsWithChildren, useContext, createContext, useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { makeProxy } from "../utilities/rpc";
-import {
-  ApplicationRoot,
-  AppRootConfig as AppRootConfigInterface,
-} from "../../common/AppRootConfig";
+import { AppRootConfig as AppRootConfigInterface } from "../../common/AppRootConfig";
 import { EasBuildConfig } from "../../common/EasConfig";
 
 const appRootConfigProxy = makeProxy<AppRootConfigInterface>("AppRootConfig");
@@ -34,29 +31,4 @@ export function useAppRootConfig(appRootFolder: string | undefined): AppRootConf
     }),
     [xcodeSchemes, easBuildProfiles]
   );
-}
-
-const ApplicationRootsContext = createContext<ApplicationRoot[]>([]);
-
-export default function ApplicationRootsProvider({ children }: PropsWithChildren) {
-  const [applicationRoots, setApplicationRoots] = useState<ApplicationRoot[]>([]);
-
-  useEffect(() => {
-    appRootConfigProxy.getAvailableApplicationRoots().then(setApplicationRoots);
-  }, []);
-
-  return (
-    <ApplicationRootsContext.Provider value={applicationRoots}>
-      {children}
-    </ApplicationRootsContext.Provider>
-  );
-}
-
-export function useApplicationRoots() {
-  const context = useContext(ApplicationRootsContext);
-
-  if (context === undefined) {
-    throw new Error("useLaunchConfig must be used within a LaunchConfigProvider");
-  }
-  return context;
 }

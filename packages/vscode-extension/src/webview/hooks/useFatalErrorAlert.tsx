@@ -129,8 +129,8 @@ function createBuildErrorAlert(
 export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undefined) {
   let errorAlert = noErrorAlert;
   const { projectState } = useProject();
-  const { absoluteAppRoot, ios } = projectState.selectedLaunchConfiguration;
-  const { xcodeSchemes } = useAppRootConfig(absoluteAppRoot);
+  const { appRoot, ios } = projectState.selectedLaunchConfiguration;
+  const { xcodeSchemes } = useAppRootConfig(appRoot);
   const { deviceSessionsManager } = useDevices();
 
   if (errorDescriptor?.kind === "build") {

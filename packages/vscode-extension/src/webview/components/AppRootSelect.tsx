@@ -3,16 +3,13 @@ import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
 import _ from "lodash";
 import React, { PropsWithChildren, useEffect } from "react";
+import { use$ } from "@legendapp/state/react";
 import { useProject } from "../providers/ProjectProvider";
-import {
-  LaunchConfiguration,
-  LaunchConfigurationKind,
-  LaunchConfigurationOptions,
-} from "../../common/LaunchConfig";
+import { LaunchConfiguration, LaunchConfigurationKind } from "../../common/LaunchConfig";
 import RichSelectItem from "./shared/RichSelectItem";
+import { useStore } from "../providers/storeProvider";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
-import { useApplicationRoots } from "../providers/ApplicationRootsProvider";
 import IconButton from "./shared/IconButton";
 import { useAlert } from "../providers/AlertProvider";
 
@@ -24,7 +21,7 @@ const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.Sel
   )
 );
 
-function displayNameForConfig(config: LaunchConfigurationOptions) {
+function displayNameForConfig(config: LaunchConfiguration) {
   if (config.name === "Radon IDE panel") {
     return undefined;
   }
@@ -47,7 +44,7 @@ function ConfigureButton({ onClick }: { onClick?: () => void }) {
 function renderLaunchConfigurations(
   groupLabel: string,
   prefix: string,
-  customLaunchConfigurations: LaunchConfigurationOptions[],
+  customLaunchConfigurations: LaunchConfiguration[],
   selectedValue: string | undefined,
   onEditConfig?: (config: LaunchConfiguration, isSelected: boolean) => void
 ) {
@@ -80,7 +77,7 @@ function renderLaunchConfigurations(
 }
 
 function renderDetectedLaunchConfigurations(
-  detectedConfigurations: LaunchConfigurationOptions[],
+  detectedConfigurations: LaunchConfiguration[],
   selectedValue: string | undefined
 ) {
   if (detectedConfigurations.length === 0) {
@@ -96,7 +93,7 @@ function renderDetectedLaunchConfigurations(
 }
 
 function renderCustomLaunchConfigurations(
-  customLaunchConfigurations: LaunchConfigurationOptions[],
+  customLaunchConfigurations: LaunchConfiguration[],
   selectedValue: string | undefined,
   onEditConfig: (config: LaunchConfiguration, isSelected: boolean) => void
 ) {
@@ -142,12 +139,15 @@ function useUnknownConfigurationAlert(shouldOpen: boolean) {
 }
 
 function AppRootSelect() {
-  const applicationRoots = useApplicationRoots();
   const { projectState, project } = useProject();
+  const store$ = useStore();
+  const applicationRoots = use$(store$.applicationRoots);
+
   const {
     selectedLaunchConfiguration: selectedConfiguration,
     customLaunchConfigurations: customConfigurations,
   } = projectState;
+
   const selectedAppRootPath = projectState.appRootPath;
   const selectedAppRoot = applicationRoots.find((root) => root.path === selectedAppRootPath);
   const { openModal } = useModal();
@@ -159,30 +159,30 @@ function AppRootSelect() {
     );
   }
 
-  const detectedConfigurations: LaunchConfigurationOptions[] = applicationRoots.map(
-    ({ path, displayName, name }) => {
-      return {
-        kind: LaunchConfigurationKind.Detected,
-        appRoot: path,
-        name: displayName || name,
-      };
-    }
-  );
+  const detectedConfigurations = applicationRoots.map(({ path, displayName, name }) => {
+    return {
+      appRoot: path,
+      name: displayName || name,
+      kind: LaunchConfigurationKind.Detected,
+      env: {},
+    };
+  });
 
   const handleAppRootChange = async (value: string) => {
     if (value === "manage") {
       openModal("Launch Configuration", <LaunchConfigurationView />);
       return;
     }
+    const isDetected = value.startsWith("detected:");
     const index = parseInt(value.split(":")[1], 10);
-    const configs = value.startsWith("detected:") ? detectedConfigurations : customConfigurations;
+    const configs = isDetected ? detectedConfigurations : customConfigurations;
     const launchConfiguration = configs[index];
     console.assert(
       index < configs.length,
       "Index out of bounds for launch configurations %s",
       value
     );
-    project.selectLaunchConfiguration(launchConfiguration);
+    project.selectLaunchConfiguration({ ...launchConfiguration });
   };
 
   const selectedValue = (() => {

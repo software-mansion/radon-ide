@@ -100,6 +100,18 @@
         "enablement": "RNIDE.extensionIsActive"
       },
       {
+        "command": "RNIDE.deviceVolumeIncrease",
+        "title": "Increase volume on the current device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.deviceVolumeDecrease",
+        "title": "Decrease volume on the current device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
         "command": "RNIDE.captureReplay",
         "title": "Capture Replay",
         "category": "Radon IDE",
@@ -132,6 +144,18 @@
       {
         "command": "RNIDE.previousRunningDevice",
         "title": "Switch to previous running device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.rotateDeviceClockwise",
+        "title": "Rotate device clockwise",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.rotateDeviceAnticlockwise",
+        "title": "Rotate device anticlockwise",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
@@ -187,6 +211,16 @@
         "command": "RNIDE.previousRunningDevice",
         "key": "ctrl+shift+9",
         "mac": "cmd+shift+9"
+      },
+      {
+        "command": "RNIDE.rotateDeviceClockwise",
+        "key": "ctrl+alt+0",
+        "mac": "ctrl+alt+0"
+      },
+      {
+        "command": "RNIDE.rotateDeviceAnticlockwise",
+        "key": "ctrl+alt+9",
+        "mac": "ctrl+alt+9"
       }
     ],
     "configuration": {
@@ -230,6 +264,24 @@
           "scope": "window",
           "default": false,
           "description": "When set, switching between devices will shut down the previous device instead of leaving it running in the background."
+        },
+        "RadonIDE.enableRadonAI": {
+          "type": "boolean",
+          "scope": "window",
+          "default": true,
+          "description": "Enables the Radon AI functionality in the extension. Note: A full restart of the IDE is required for this setting to take effect."
+        },
+        "RadonIDE.deviceRotation": {
+          "type": "string",
+          "scope": "window",
+          "default": "Portrait",
+          "enum": [
+            "Portrait",
+            "LandscapeLeft",
+            "LandscapeRight",
+            "PortraitUpsideDown"
+          ],
+          "description": "Controls the default device rotation for simulators and emulators when they are created or launched."
         }
       }
     },
@@ -882,10 +934,12 @@
     "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "^7.27.1",
     "@eslint/compat": "^1.2.8",
+    "@expo/env": "^1.0.7",
     "@expo/fingerprint": "^0.11.11",
     "@expo/package-manager": "^1.7.2",
     "@modelcontextprotocol/sdk": "^1.12.3",
     "@msgpack/msgpack": "^3.1.1",
+    "@legendapp/state": "^3.0.0-beta.31",
     "@radix-ui/react-alert-dialog": "^1.1.7",
     "@radix-ui/react-context-menu": "^2.2.7",
     "@radix-ui/react-dialog": "^1.1.7",

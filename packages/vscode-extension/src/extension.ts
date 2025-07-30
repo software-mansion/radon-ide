@@ -1,3 +1,4 @@
+import assert from "assert";
 import {
   commands,
   languages,
@@ -26,7 +27,6 @@ import {
   setExtensionContext,
 } from "./utilities/extensionContext";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
-import { PanelLocation } from "./common/WorkspaceConfig";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
 import { registerRadonChat, registerRadonAi } from "./ai";
@@ -34,8 +34,20 @@ import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebu
 import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
 import { IDEPanelMoveTarget } from "./common/utils";
+import { launchConfigurationFromOptions } from "./project/launchConfigurationsManager";
+import { isIdeConfig } from "./utilities/launchConfiguration";
+import { PanelLocation } from "./common/State";
+import { DeviceRotation, DeviceRotationDirection } from "./common/Project";
+import { updatePartialWorkspaceConfig } from "./utilities/updatePartialWorkspaceConfig";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
+
+const ROTATIONS: DeviceRotation[] = [
+  DeviceRotation.LandscapeLeft,
+  DeviceRotation.Portrait,
+  DeviceRotation.LandscapeRight,
+  DeviceRotation.PortraitUpsideDown,
+] as const;
 
 function handleUncaughtErrors(context: ExtensionContext) {
   process.on("unhandledRejection", (error) => {
@@ -196,6 +208,12 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.deviceAppSwitchButtonPress", deviceAppSwitchButtonPress)
   );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceVolumeIncrease", deviceVolumeIncrease)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceVolumeDecrease", deviceVolumeDecrease)
+  );
   context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
@@ -229,6 +247,13 @@ export async function activate(context: ExtensionContext) {
     commands.registerCommand("RNIDE.previousRunningDevice", () =>
       IDE.getInstanceIfExists()?.project.deviceSessionsManager.selectNextNthRunningSession(-1)
     )
+  );
+
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.rotateDeviceAnticlockwise", rotateDeviceAnticlockwise)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.rotateDeviceClockwise", rotateDeviceClockwise)
   );
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
@@ -311,11 +336,16 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
-  // Initializes MCP part of Radon AI
-  context.subscriptions.push(registerRadonAi());
+  const configuration = workspace.getConfiguration("RadonIDE");
+  const enableRadonAI = configuration.get<boolean>("enableRadonAI");
+
+  if (enableRadonAI) {
+    // Initializes MCP part of Radon AI
+    context.subscriptions.push(registerRadonAi());
+  }
 
   // You can configure the chat in package.json under the `chatParticipants` key
-  registerRadonChat(context);
+  registerRadonChat(context, !!enableRadonAI);
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
@@ -328,18 +358,23 @@ class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDe
   async createDebugAdapterDescriptor(
     session: vscode.DebugSession
   ): Promise<vscode.DebugAdapterDescriptor> {
+    assert(
+      isIdeConfig(session.configuration),
+      "This DebugAdapterDescriptorFactory is only registered for radon-ide launch configurations"
+    );
+    const initialLaunchConfig = launchConfigurationFromOptions(session.configuration);
     let attachedInstance: IDE | undefined = undefined;
 
     const existingIDE = IDE.getInstanceIfExists();
     if (existingIDE) {
-      await existingIDE.project.selectLaunchConfiguration(session.configuration).catch((error) => {
+      await existingIDE.project.selectLaunchConfiguration(initialLaunchConfig).catch((error) => {
         Logger.error("Failed to select initial launch configuration", error);
         Logger.debug(
           "These errors should be caught in the Project instance and handled gracefully. If you see this, there's a bug in the code."
         );
       });
     } else {
-      attachedInstance = IDE.initializeInstance({ initialLaunchConfig: session.configuration });
+      attachedInstance = IDE.initializeInstance({ initialLaunchConfig });
     }
 
     try {
@@ -384,6 +419,18 @@ async function deviceAppSwitchButtonPress() {
   project?.dispatchButton("appSwitch", "Up");
 }
 
+async function deviceVolumeIncrease() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("volumeUp", "Down");
+  project?.dispatchButton("volumeUp", "Up");
+}
+
+async function deviceVolumeDecrease() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("volumeDown", "Down");
+  project?.dispatchButton("volumeDown", "Up");
+}
+
 async function captureReplay() {
   IDE.getInstanceIfExists()?.project.captureReplay();
 }
@@ -394,6 +441,32 @@ async function toggleRecording() {
 
 async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
+}
+
+async function rotateDevice(direction: DeviceRotationDirection) {
+  const project = IDE.getInstanceIfExists()?.project;
+  if (!project) {
+    throw new Error("Radon IDE is not initialized yet.");
+  }
+
+  const configuration = workspace.getConfiguration("RadonIDE");
+
+  const currentRotation = configuration.get<DeviceRotation>("deviceRotation");
+  if (currentRotation === undefined) {
+    Logger.warn("[Radon IDE] Device rotation is not set in the configuration.");
+    return;
+  }
+  const currentIndex = ROTATIONS.indexOf(currentRotation);
+  const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
+  await updatePartialWorkspaceConfig(configuration, ["deviceRotation", ROTATIONS[newIndex]]);
+}
+
+async function rotateDeviceAnticlockwise() {
+  await rotateDevice(DeviceRotationDirection.Anticlockwise);
+}
+
+async function rotateDeviceClockwise() {
+  await rotateDevice(DeviceRotationDirection.Clockwise);
 }
 
 async function openChat() {

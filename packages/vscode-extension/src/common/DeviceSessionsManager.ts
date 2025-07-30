@@ -7,6 +7,7 @@ export type SelectDeviceOptions = {
 
 export type ReloadAction =
   | "autoReload" // automatic reload mode
+  | "restartMetro"
   | "clearMetro" // clear metro cache, boot device, install app
   | "rebuild" // clean build, boot device, install app
   | "reboot" // reboots device, launch app
@@ -15,7 +16,7 @@ export type ReloadAction =
   | "reloadJs"; // refetch JS scripts from metro
 
 export interface DeviceSessionsManagerInterface {
-  reloadCurrentSession(type: ReloadAction): Promise<boolean>;
+  reloadCurrentSession(type: ReloadAction): Promise<void>;
   startOrActivateSessionForDevice(
     deviceInfo: DeviceInfo,
     selectDeviceOptions?: SelectDeviceOptions

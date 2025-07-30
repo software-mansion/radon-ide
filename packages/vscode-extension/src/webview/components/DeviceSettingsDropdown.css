@@ -2,6 +2,10 @@
   padding: 14px;
 }
 
+.mirror {
+  transform: scale(-1, 1);
+}
+
 .device-settings-heading {
   text-align: center;
   margin: 0 0 15px 0;
@@ -47,4 +51,32 @@
 .icons-container {
   display: flex;
   align-items: center;
+}
+
+.volume-controls {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.volume-button {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--swm-default-text);
+  cursor: pointer;
+  padding: 4px;
+  font-size: 12px;
+  transition: all 0.1s ease;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.volume-button:hover {
+  background: var(--swm-dropdown-item-highlighted);
 }

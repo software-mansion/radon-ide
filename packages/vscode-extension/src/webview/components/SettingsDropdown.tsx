@@ -1,18 +1,19 @@
 import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { use$ } from "@legendapp/state/react";
 import "./shared/Dropdown.css";
 import { useModal } from "../providers/ModalProvider";
 import DiagnosticView from "../views/DiagnosticView";
 import ManageDevicesView from "../views/ManageDevicesView";
 import { ProjectInterface } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
-import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { useUtils } from "../providers/UtilsProvider";
 import "./shared/SwitchGroup.css";
 import { SendFeedbackItem } from "./SendFeedbackItem";
 import { useTelemetry } from "../providers/TelemetryProvider";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import { useStore } from "../providers/storeProvider";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -22,7 +23,9 @@ interface SettingsDropdownProps {
 }
 
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
-  const { panelLocation } = useWorkspaceConfig();
+  const store$ = useStore();
+  const panelLocation = use$(store$.workspaceConfiguration.panelLocation);
+
   const { openModal } = useModal();
   const { movePanelTo, reportIssue } = useUtils();
   const { telemetryEnabled } = useTelemetry();

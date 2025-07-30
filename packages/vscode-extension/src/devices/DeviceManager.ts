@@ -30,9 +30,9 @@ import {
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { Platform } from "../utilities/platform";
-import { checkXcodeExists } from "../dependency/DependencyManager";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
+import { checkXcodeExists } from "../utilities/checkXcodeExists";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 

@@ -14,8 +14,9 @@ import {
   SelectDeviceOptions,
 } from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceId, DeviceSessionsManagerState } from "../common/Project";
+import { DeviceId, DeviceRotation, DeviceSessionsManagerState } from "../common/Project";
 import { Connector } from "../connect/Connector";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -23,6 +24,7 @@ const SWITCH_DEVICE_THROTTLE_MS = 300;
 export type DeviceSessionsManagerDelegate = {
   onInitialized(): void;
   onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void;
+  getDeviceRotation(): DeviceRotation;
 };
 
 const MAX_ALLOWED_IOS_DEVICES = 3;
@@ -37,7 +39,8 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   constructor(
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
-    private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate
+    private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate,
+    private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
     this.deviceManager.addListener("devicesChanged", this.devicesChangedListener);
@@ -45,6 +48,12 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
 
   public get selectedDeviceSession(): DeviceSession | undefined {
     return this.activeSessionId ? this.deviceSessions.get(this.activeSessionId) : undefined;
+  }
+
+  public rotateAllDevices(rotation: DeviceRotation) {
+    this.deviceSessions.forEach((session) => {
+      session.sendRotate(rotation);
+    });
   }
 
   public async terminateSession(deviceId: string) {
@@ -72,7 +81,7 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     const deviceSession = this.selectedDeviceSession;
     if (!deviceSession) {
       window.showErrorMessage("Failed to reload, no active device found.", "Dismiss");
-      return false;
+      return;
     }
     return await deviceSession.performReloadAction(type);
   }
@@ -117,15 +126,21 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     }
     Logger.debug("Selected device is ready");
 
-    const newDeviceSession = new DeviceSession(this.applicationContext, device, {
-      onStateChange: (state) => {
-        if (!this.deviceSessions.has(state.deviceInfo.id)) {
-          // NOTE: the device is being removed, we shouldn't report state updates
-          return;
-        }
-        this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
+    const newDeviceSession = new DeviceSession(
+      this.applicationContext,
+      device,
+      this.deviceSessionManagerDelegate.getDeviceRotation(),
+      {
+        onStateChange: (state) => {
+          if (!this.deviceSessions.has(state.deviceInfo.id)) {
+            // NOTE: the device is being removed, we shouldn't report state updates
+            return;
+          }
+          this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
+        },
       },
-    });
+      this.outputChannelRegistry
+    );
 
     this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);

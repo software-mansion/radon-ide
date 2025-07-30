@@ -14,10 +14,12 @@ import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 import { getOpenPort } from "../utilities/common";
 import { DebugSource } from "../debugging/DebugSession";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
-import { LaunchConfiguration } from "../common/LaunchConfig";
+import { ResolvedLaunchConfig } from "./ApplicationContext";
+import { CancelToken } from "../utilities/cancelToken";
 
 const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
+const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
 
 export interface MetroDelegate {
   onBundleProgress(bundleProgress: number): void;
@@ -265,13 +267,24 @@ export class Metro {
     return undefined;
   }
 
-  public async fetchWsTargets(): Promise<CDPTargetDescription[] | undefined> {
-    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
-
+  public async fetchWsTargets(
+    timeoutMs: number | undefined = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
+    cancelToken: CancelToken = new CancelToken()
+  ): Promise<CDPTargetDescription[] | undefined> {
     let retryCount = 0;
     const startTime = Date.now();
 
-    while (Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
+    function shouldContinue() {
+      if (timeoutMs !== undefined) {
+        if (Date.now() - startTime > timeoutMs) {
+          return false;
+        }
+      }
+
+      return !cancelToken.cancelled;
+    }
+
+    while (shouldContinue()) {
       retryCount++;
 
       try {
@@ -291,14 +304,19 @@ export class Metro {
         Logger.warn("[METRO] Fetching list of runtimes failed, retrying...");
       }
 
-      await sleep(progressiveRetryTimeout(retryCount));
+      await cancelToken.adapt(sleep(progressiveRetryTimeout(retryCount))).catch(() => {
+        // ignore the CancelError, we'll just break out of the loop after the condition is checked next time
+      });
     }
 
     return undefined;
   }
 
-  public async getDebuggerURL() {
-    const listJson = await this.fetchWsTargets();
+  public async getDebuggerURL(
+    timeoutMs: number | undefined = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
+    cancelToken: CancelToken = new CancelToken()
+  ) {
+    const listJson = await this.fetchWsTargets(timeoutMs, cancelToken);
 
     if (listJson === undefined) {
       return undefined;
@@ -345,7 +363,7 @@ export class MetroLauncher extends Metro implements Disposable {
   }: {
     resetCache: boolean;
     dependencies: Promise<any>[];
-    launchConfiguration: LaunchConfiguration;
+    launchConfiguration: ResolvedLaunchConfig;
   }) {
     if (this.startPromise) {
       throw new Error("metro already started");
@@ -423,7 +441,7 @@ export class MetroLauncher extends Metro implements Disposable {
   public async startInternal(
     resetCache: boolean,
     dependencies: Promise<any>[],
-    launchConfiguration: LaunchConfiguration
+    launchConfiguration: ResolvedLaunchConfig
   ) {
     const appRoot = launchConfiguration.absoluteAppRoot;
     await Promise.all([this.devtools.ready()].concat(dependencies));

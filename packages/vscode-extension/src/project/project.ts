@@ -8,10 +8,12 @@ import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
+  DeviceRotation,
   DeviceSessionsManagerState,
   DeviceSessionState,
   DeviceSettings,
   InspectData,
+  isOfEnumDeviceRotation,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -41,13 +43,13 @@ import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceB
 import { FingerprintProvider } from "./FingerprintProvider";
 import { BuildCache } from "../builders/BuildCache";
 import { Connector } from "../connect/Connector";
-import {
-  launchConfigurationFromOptions,
-  LaunchConfigurationsManager,
-} from "./launchConfigurationsManager";
-import { LaunchConfiguration, LaunchConfigurationOptions } from "../common/LaunchConfig";
+import { LaunchConfigurationsManager } from "./launchConfigurationsManager";
+import { LaunchConfiguration } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
+import { StateManager } from "./StateManager";
+import { ProjectStore, WorkspaceConfiguration } from "../common/State";
+import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -64,6 +66,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public deviceSessionsManager: DeviceSessionsManager;
 
   private projectState: ProjectState;
+  private selectedLaunchConfiguration: LaunchConfiguration;
 
   private disposables: Disposable[] = [];
 
@@ -74,25 +77,30 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   constructor(
+    private readonly stateManager: StateManager<ProjectStore>,
+    private readonly workspaceStateManager: StateManager<WorkspaceConfiguration>,
     private readonly deviceManager: DeviceManager,
     private readonly utils: UtilsInterface,
     private readonly outputChannelRegistry: OutputChannelRegistry,
-    initialLaunchConfigOptions?: LaunchConfigurationOptions
+    private readonly environmentDependencyManager: EnvironmentDependencyManager,
+    initialLaunchConfigOptions?: LaunchConfiguration
   ) {
     const fingerprintProvider = new FingerprintProvider();
     const buildCache = new BuildCache(fingerprintProvider);
     const initialLaunchConfig = initialLaunchConfigOptions
-      ? launchConfigurationFromOptions(initialLaunchConfigOptions)
+      ? initialLaunchConfigOptions
       : this.launchConfigsManager.initialLaunchConfiguration;
+    this.selectedLaunchConfiguration = initialLaunchConfig;
     this.applicationContext = new ApplicationContext(
+      this.stateManager.getDerived("applicationContext"),
       initialLaunchConfig,
-      buildCache,
-      this.outputChannelRegistry
+      buildCache
     );
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
       this.deviceManager,
-      this
+      this,
+      this.outputChannelRegistry
     );
 
     const connector = Connector.getInstance();
@@ -103,7 +111,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       initialized: false,
       appRootPath: this.relativeAppRootPath,
       previewZoom: undefined,
-      selectedLaunchConfiguration: initialLaunchConfig,
+      selectedLaunchConfiguration: this.selectedLaunchConfiguration,
       customLaunchConfigurations: this.launchConfigsManager.launchConfigurations,
       connectState: {
         enabled: connector.isEnabled,
@@ -137,6 +145,24 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         });
       })
     );
+    this.disposables.push(
+      this.workspaceStateManager.onSetState(
+        (partialWorkspaceConfig: Partial<WorkspaceConfiguration>) => {
+          const deviceRotation = partialWorkspaceConfig.deviceRotation;
+          if (!deviceRotation) {
+            return;
+          }
+
+          const deviceRotationResult = isOfEnumDeviceRotation(deviceRotation)
+            ? deviceRotation
+            : DeviceRotation.Portrait;
+          this.deviceSessionsManager.rotateAllDevices(deviceRotationResult);
+        }
+      )
+    );
+
+    this.disposables.push(this.stateManager);
+    this.disposables.push(this.workspaceStateManager);
   }
 
   async focusOutput(channel: Output): Promise<void> {
@@ -144,12 +170,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   async createOrUpdateLaunchConfiguration(
-    newLaunchConfiguration: LaunchConfigurationOptions | undefined,
+    newLaunchConfiguration: LaunchConfiguration | undefined,
     oldLaunchConfiguration?: LaunchConfiguration
   ) {
     const isUpdatingSelectedConfig = _.isEqual(
       oldLaunchConfiguration,
-      this.applicationContext.launchConfig
+      this.selectedLaunchConfiguration
     );
     const newConfig = await this.launchConfigsManager.createOrUpdateLaunchConfiguration(
       newLaunchConfiguration,
@@ -160,12 +186,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
-  async selectLaunchConfiguration(options: LaunchConfigurationOptions): Promise<void> {
-    const launchConfig = launchConfigurationFromOptions(options);
-    if (_.isEqual(launchConfig, this.applicationContext.launchConfig)) {
+  async selectLaunchConfiguration(launchConfig: LaunchConfiguration): Promise<void> {
+    if (_.isEqual(launchConfig, this.selectedLaunchConfiguration)) {
       // No change in launch configuration, nothing to do
       return;
     }
+    this.selectedLaunchConfiguration = launchConfig;
     await this.applicationContext.updateLaunchConfig(launchConfig);
     // NOTE: we reset the device sessions manager to close all the running sessions
     // and restart the current device with new config. In the future, we might want to keep the devices running
@@ -174,7 +200,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
       this.deviceManager,
-      this
+      this,
+      this.outputChannelRegistry
     );
     oldDeviceSessionsManager.dispose();
     this.maybeStartInitialDeviceSession();
@@ -186,8 +213,19 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     });
   }
 
+  public async runDependencyChecks(): Promise<void> {
+    await Promise.all([
+      this.applicationContext.applicationDependencyManager.runAllDependencyChecks(),
+      this.environmentDependencyManager.runAllDependencyChecks(),
+    ]);
+  }
+
   onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
     this.updateProjectState(state);
+  }
+
+  public getDeviceRotation(): DeviceRotation {
+    return this.workspaceStateManager.getState().deviceRotation;
   }
 
   get relativeAppRootPath() {
@@ -203,10 +241,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   get appRootFolder() {
     return this.applicationContext.appRootFolder;
-  }
-
-  get dependencyManager() {
-    return this.applicationContext.dependencyManager;
   }
 
   get buildCache() {
@@ -325,8 +359,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     await this.utils.saveMultimedia(screenshot);
   }
 
-  //#endregion
-
   async dispatchPaste(text: string) {
     await this.deviceSession?.sendClipboard(text);
     await this.utils.showToast("Pasted to device clipboard", 2000);
@@ -359,7 +391,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public dispose() {
-    this.deviceSession?.dispose();
+    this.deviceSessionsManager.dispose();
     this.applicationContext.dispose();
     disposeAll(this.disposables);
   }
@@ -376,14 +408,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
 
-    if (this.dependencyManager === undefined) {
+    if (this.applicationContext.applicationDependencyManager === undefined) {
       Logger.error(
         "[PROJECT] Dependency manager not initialized. this code should be unreachable."
       );
       throw new Error("[PROJECT] Dependency manager not initialized");
     }
 
-    if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
+    if (await this.applicationContext.applicationDependencyManager.checkProjectUsesExpoRouter()) {
       await this.deviceSession?.navigateHome();
     } else {
       await this.reloadMetro();
@@ -418,7 +450,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    this.deviceSession?.sendTouches(touches, type);
+    this.deviceSession?.sendTouches(touches, type, this.getDeviceRotation());
   }
 
   public dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
@@ -515,14 +547,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async showStorybookStory(componentTitle: string, storyName: string) {
-    if (this.dependencyManager === undefined) {
+    if (this.applicationContext.applicationDependencyManager === undefined) {
       Logger.error(
         "[PROJECT] Dependency manager not initialized. this code should be unreachable."
       );
       throw new Error("[PROJECT] Dependency manager not initialized");
     }
 
-    if (await this.dependencyManager.checkProjectUsesStorybook()) {
+    if (await this.applicationContext.applicationDependencyManager.checkProjectUsesStorybook()) {
       this.deviceSession?.openStorybookStory(componentTitle, storyName);
     } else {
       window.showErrorMessage("Storybook is not installed.", "Dismiss");

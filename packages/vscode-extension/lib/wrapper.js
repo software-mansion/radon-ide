@@ -11,7 +11,6 @@ const {
   findNodeHandle,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
-
 require("./react_devtools_agent"); // needs to be loaded before inspector_bridge is used
 const inspectorBridge = require("./inspector_bridge");
 
@@ -44,6 +43,9 @@ const InternalImports = {
   },
   get setupRenderOutlinesPlugin() {
     return require("./render_outlines").setup;
+  },
+  get setupOrientationListeners() {
+    return require("./orientation").setup;
   },
 };
 
@@ -149,16 +151,16 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
         inspectorDataStack.map(
           (inspectorData) =>
             new Promise((res, rej) => {
+              const source = {
+                fileName: inspectorData.source.fileName,
+                line0Based: inspectorData.source.lineNumber - 1,
+                column0Based: inspectorData.source.columnNumber - 1,
+              };
               try {
                 inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
-                  const source = inspectorData.source;
                   res({
                     componentName: inspectorData.name,
-                    source: {
-                      fileName: source.fileName,
-                      line0Based: source.lineNumber - 1,
-                      column0Based: source.columnNumber - 1,
-                    },
+                    source,
                     frame: {
                       x: pageX / screenWidth,
                       y: pageY / screenHeight,
@@ -168,7 +170,7 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
                   });
                 });
               } catch (e) {
-                rej(e);
+                res({ componentName: inspectorData.name, source });
               }
             })
         )
@@ -186,7 +188,6 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const rootTag = useContext(RootTagContext);
   const [hasLayout, setHasLayout] = useState(false);
   const mainContainerRef = useRef();
-  const latestRouteListRef = useRef();
 
   const mountCallback = initialProps?.__RNIDE_onMount;
   useEffect(() => {
@@ -306,15 +307,21 @@ export function AppWrapper({ children, initialProps, fabric }) {
           break;
         case "inspect":
           const { id, x, y, requestStack } = data;
-          getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, (inspectorData) => {
-            inspectorBridge.sendMessage({
-              type: "inspectData",
-              data: {
-                id,
-                ...inspectorData,
-              },
-            });
-          });
+          getInspectorDataForCoordinates(
+            mainContainerRef,
+            x,
+            y,
+            requestStack,
+            (inspectorData) => {
+              inspectorBridge.sendMessage({
+                type: "inspectData",
+                data: {
+                  id,
+                  ...inspectorData,
+                },
+              });
+            }
+          );
           break;
         case "showStorybookStory":
           showStorybookStory(data.componentTitle, data.storyName);
@@ -342,6 +349,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
     InternalImports.setupRenderOutlinesPlugin();
     InternalImports.setupNetworkPlugin();
+    const orientationListenersCleanup = InternalImports.setupOrientationListeners();
 
     const originalErrorHandler = global.ErrorUtils.getGlobalHandler();
     LogBox.ignoreAllLogs(true);
@@ -360,6 +368,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
     global.ErrorUtils.setGlobalHandler(wrappedGlobalErrorHandler);
     return () => {
       global.ErrorUtils.setGlobalHandler(originalErrorHandler);
+      orientationListenersCleanup();
     };
   }, []);
 

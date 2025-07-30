@@ -1,4 +1,4 @@
-import { Disposable } from "vscode";
+import { Disposable, EventEmitter } from "vscode";
 import { Project } from "./project";
 import { DeviceManager } from "../devices/DeviceManager";
 import { WorkspaceConfigController } from "../panels/WorkspaceConfigController";
@@ -6,36 +6,63 @@ import { Utils } from "../utilities/utils";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
-import { LaunchConfigurationOptions } from "../common/LaunchConfig";
+import { initialState, RecursivePartial, State } from "../common/State";
+import { LaunchConfiguration } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
+import { StateManager } from "./StateManager";
+import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 
 interface InitialOptions {
-  initialLaunchConfig?: LaunchConfigurationOptions;
+  initialLaunchConfig?: LaunchConfiguration;
 }
 
 export class IDE implements Disposable {
   private static instance: IDE | null = null;
+
+  private onStateChangedEmitter = new EventEmitter<RecursivePartial<State>>();
 
   public readonly deviceManager: DeviceManager;
   public readonly project: Project;
   public readonly workspaceConfigController: WorkspaceConfigController;
   public readonly utils: Utils;
   public readonly outputChannelRegistry = new OutputChannelRegistry();
+
+  private environmentDependencyManager: EnvironmentDependencyManager;
+
+  private stateManager: StateManager<State>;
+
   private disposed = false;
   private disposables: Disposable[] = [];
 
   private attachSemaphore = 0;
 
   constructor({ initialLaunchConfig }: InitialOptions = {}) {
+    this.stateManager = StateManager.create(initialState);
+
+    this.disposables.push(this.stateManager.onSetState(this.handleStateChanged));
+
     this.deviceManager = new DeviceManager(this.outputChannelRegistry);
     this.utils = new Utils();
+    this.environmentDependencyManager = new EnvironmentDependencyManager(
+      this.stateManager.getDerived("environmentDependencies")
+    );
     this.project = new Project(
+      this.stateManager.getDerived("projectState"),
+      this.stateManager.getDerived("workspaceConfiguration"),
       this.deviceManager,
       this.utils,
       this.outputChannelRegistry,
+      this.environmentDependencyManager,
       initialLaunchConfig
     );
-    this.workspaceConfigController = new WorkspaceConfigController();
+
+    this.project.appRootConfigController.getAvailableApplicationRoots().then((applicationRoots) => {
+      this.stateManager.setState({ applicationRoots });
+    });
+
+    this.workspaceConfigController = new WorkspaceConfigController(
+      this.stateManager.getDerived("workspaceConfiguration")
+    );
 
     this.disposables.push(this.project, this.workspaceConfigController, this.outputChannelRegistry);
     // register disposable with context
@@ -55,6 +82,22 @@ export class IDE implements Disposable {
       disposeAll(this.disposables);
     }
   }
+
+  public async getState() {
+    return this.stateManager.getState();
+  }
+
+  public async setState(partialState: RecursivePartial<State>) {
+    this.stateManager.setState(partialState);
+  }
+
+  public handleStateChanged = (partialState: RecursivePartial<State>) => {
+    this.onStateChangedEmitter.fire(partialState);
+  };
+
+  public onStateChanged = (listener: (partialState: RecursivePartial<State>) => void) => {
+    return this.onStateChangedEmitter.event(listener);
+  };
 
   public detach() {
     this.attachSemaphore -= 1;
