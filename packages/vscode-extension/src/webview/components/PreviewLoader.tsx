@@ -91,7 +91,7 @@ function PreviewLoader({
     // - 17 seconds for waiting for app to load phase (loads slowly on android devices after clean build)
     // - 12 seconds for other phases
     let timeoutMs = 12_000;
-    if(startupMessage === StartupMessage.WaitingForAppToLoad){
+    if (startupMessage === StartupMessage.WaitingForAppToLoad) {
       timeoutMs = 17_000;
     }
     if (startupMessage === StartupMessage.Building) {
