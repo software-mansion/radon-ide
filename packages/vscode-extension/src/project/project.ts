@@ -292,7 +292,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    return this.deviceSession.captureAndStopRecording();
+    return this.deviceSession.captureAndStopRecording(this.getDeviceRotation());
   }
 
   async startProfilingCPU() {
@@ -343,7 +343,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    const replay = await this.deviceSession.captureReplay();
+    const replay = await this.deviceSession.captureReplay(this.getDeviceRotation());
     this.eventEmitter.emit("replayDataCreated", replay);
   }
 
@@ -355,7 +355,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       throw new Error("No device session available");
     }
 
-    const screenshot = await this.deviceSession.captureScreenshot();
+    const screenshot = await this.deviceSession.captureScreenshot(this.getDeviceRotation());
     await this.utils.saveMultimedia(screenshot);
   }
 

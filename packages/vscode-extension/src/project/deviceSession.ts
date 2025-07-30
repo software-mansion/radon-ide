@@ -1022,18 +1022,18 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
     return this.device.startRecording();
   }
 
-  public async captureAndStopRecording() {
+  public async captureAndStopRecording(rotation: DeviceRotation) {
     this.isRecordingScreen = false;
     this.emitStateChange();
-    return this.device.captureAndStopRecording();
+    return this.device.captureAndStopRecording(rotation);
   }
 
-  public async captureReplay() {
-    return this.device.captureReplay();
+  public async captureReplay(rotation: DeviceRotation) {
+    return this.device.captureReplay(rotation);
   }
 
-  public async captureScreenshot() {
-    return this.device.captureScreenshot();
+  public async captureScreenshot(rotation: DeviceRotation) {
+    return this.device.captureScreenshot(rotation);
   }
 
   public async startProfilingReact() {

@@ -8,16 +8,109 @@ type MediaRef = RefObject<HTMLImageElement | null> | RefObject<HTMLVideoElement 
 interface MediaCanvasProps extends React.CanvasHTMLAttributes<HTMLCanvasElement> {
   mediaRef: MediaRef;
   src?: string;
+  isAlwaysPortrait?: boolean;
 }
 
 interface TransformationConfig {
   angle: number;
-  isPortrait: boolean;
-  rotation: DeviceRotation;
+  dimensionsSwapped: boolean;
+  shouldDrawWithoutTransform: boolean;
 }
 
+const TRANSFORM_CONFIGS_PORTRAIT = {
+  [DeviceRotation.Portrait]: {
+    angle: 0,
+    dimensionsSwapped: false,
+    shouldDrawWithoutTransform: true
+  },
+  [DeviceRotation.LandscapeLeft]: {
+    angle: -Math.PI / 2,
+    dimensionsSwapped: true,
+    shouldDrawWithoutTransform: false
+  },
+  [DeviceRotation.LandscapeRight]: {
+    angle: Math.PI / 2,
+    dimensionsSwapped: true,
+    shouldDrawWithoutTransform: false
+  },
+  [DeviceRotation.PortraitUpsideDown]: {
+    angle: Math.PI,
+    dimensionsSwapped: false,
+    shouldDrawWithoutTransform: false
+  },
+} as const;
+
+const TRANSFORM_CONFIGS_PORTRAITUPSIDEDOWN = {
+  [DeviceRotation.PortraitUpsideDown]: {
+    angle: 0,
+    dimensionsSwapped: false,
+    shouldDrawWithoutTransform: true
+  },
+  [DeviceRotation.LandscapeRight]: {
+    angle: -Math.PI / 2,
+    dimensionsSwapped: true,
+    shouldDrawWithoutTransform: false
+  },
+  [DeviceRotation.LandscapeLeft]: {
+    angle: Math.PI / 2,
+    dimensionsSwapped: true,
+    shouldDrawWithoutTransform: false
+  },
+  [DeviceRotation.Portrait]: {
+    angle: Math.PI,
+    dimensionsSwapped: false,
+    shouldDrawWithoutTransform: false
+  },
+} as const;
+
+const TRANSFORM_CONFIGS_LANDSCAPELEFT = {
+  [DeviceRotation.LandscapeLeft]: {
+    angle: 0,
+    dimensionsSwapped: false,
+    shouldDrawWithoutTransform: true
+  },
+  [DeviceRotation.Portrait]: {
+    angle: -Math.PI / 2,
+    dimensionsSwapped: true,
+    shouldDrawWithoutTransform: false
+  },
+  [DeviceRotation.PortraitUpsideDown]: {
+    angle: Math.PI / 2,
+    dimensionsSwapped: true,
+    shouldDrawWithoutTransform: false
+  },
+  [DeviceRotation.LandscapeRight]: {
+    angle: Math.PI,
+    dimensionsSwapped: false,
+    shouldDrawWithoutTransform: false
+  },
+} as const;
+
+const TRANSFORM_CONFIGS_LANDSCAPERIGHT = {
+  [DeviceRotation.LandscapeRight]: {
+    angle: 0,
+    dimensionsSwapped: false,
+    shouldDrawWithoutTransform: true
+  },
+  [DeviceRotation.PortraitUpsideDown]: {
+    angle: -Math.PI / 2,
+    dimensionsSwapped: true,
+    shouldDrawWithoutTransform: false
+  },
+  [DeviceRotation.Portrait]: {
+    angle: Math.PI / 2,
+    dimensionsSwapped: true,
+    shouldDrawWithoutTransform: false
+  },
+  [DeviceRotation.LandscapeLeft]: {
+    angle: Math.PI,
+    dimensionsSwapped: false,
+    shouldDrawWithoutTransform: false
+  },
+} as const;
+
 const MediaCanvas = forwardRef<HTMLCanvasElement, MediaCanvasProps>(
-  ({ mediaRef, src, ...rest }, ref) => {
+  ({ mediaRef, src, isAlwaysPortrait, ...rest }, ref) => {
     const store$ = useStore();
     const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 
@@ -25,35 +118,27 @@ const MediaCanvas = forwardRef<HTMLCanvasElement, MediaCanvasProps>(
     const canvasRef = ref as RefObject<HTMLCanvasElement>;
     const lastCanvasDimensionsRef = useRef<{ width: number; height: number } | null>(null);
 
-    // Memoize the transformation configuration based on rotation
-    const transformConfig = useMemo<TransformationConfig>(() => {
-      switch (rotation) {
-        case DeviceRotation.LandscapeLeft:
-          return {
-            angle: -Math.PI / 2,
-            isPortrait: false,
-            rotation: DeviceRotation.LandscapeLeft,
-          };
-        case DeviceRotation.LandscapeRight:
-          return {
-            angle: Math.PI / 2,
-            isPortrait: false,
-            rotation: DeviceRotation.LandscapeRight,
-          };
-        case DeviceRotation.PortraitUpsideDown:
-          return {
-            angle: Math.PI,
-            isPortrait: true,
-            rotation: DeviceRotation.PortraitUpsideDown,
-          };
-        default:
-          return {
-            angle: 0,
-            isPortrait: true,
-            rotation: DeviceRotation.Portrait,
-          };
+    const mediaRotationOnMount = useMemo(() => {
+      return rotation;
+    }, [mediaRef]);
+
+    const getTransformConfig = (): TransformationConfig => {
+      if (isAlwaysPortrait) {
+        return TRANSFORM_CONFIGS_PORTRAIT[rotation];
       }
-    }, [rotation]);
+
+      switch (mediaRotationOnMount) {
+        case DeviceRotation.PortraitUpsideDown:
+          return TRANSFORM_CONFIGS_PORTRAITUPSIDEDOWN[rotation];
+        case DeviceRotation.LandscapeLeft:
+          return TRANSFORM_CONFIGS_LANDSCAPELEFT[rotation];
+        case DeviceRotation.LandscapeRight:
+          return TRANSFORM_CONFIGS_LANDSCAPERIGHT[rotation];
+        case DeviceRotation.Portrait:
+        default:
+          return TRANSFORM_CONFIGS_PORTRAIT[rotation];
+      }
+    };
 
     const drawToCanvas = useCallback(
       (sourceImg: HTMLImageElement | HTMLVideoElement): void => {
@@ -77,8 +162,9 @@ const MediaCanvas = forwardRef<HTMLCanvasElement, MediaCanvasProps>(
         }
 
         // Calculate actual dimensions based on rotation
-        const newWidth = transformConfig.isPortrait ? sourceWidth : sourceHeight;
-        const newHeight = transformConfig.isPortrait ? sourceHeight : sourceWidth;
+        const transformConfig = getTransformConfig();
+        const newWidth = transformConfig.dimensionsSwapped ? sourceHeight : sourceWidth;
+        const newHeight = transformConfig.dimensionsSwapped ? sourceWidth : sourceHeight;
 
         const currentCanvasDims = { width: newWidth, height: newHeight };
 
@@ -96,7 +182,7 @@ const MediaCanvas = forwardRef<HTMLCanvasElement, MediaCanvasProps>(
         // Clear canvas
         ctx.clearRect(0, 0, newWidth, newHeight);
 
-        if (transformConfig.rotation === DeviceRotation.Portrait) {
+        if (transformConfig.shouldDrawWithoutTransform) {
           // Direct draw for portrait mode
           ctx.drawImage(sourceImg, 0, 0);
         } else {
@@ -109,7 +195,7 @@ const MediaCanvas = forwardRef<HTMLCanvasElement, MediaCanvasProps>(
           ctx.restore();
         }
       },
-      [canvasRef, transformConfig]
+      [canvasRef, rotation]
     );
 
     const drawToCanvasRef = useRef(drawToCanvas);

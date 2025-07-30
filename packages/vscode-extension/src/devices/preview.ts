@@ -38,7 +38,7 @@ export class Preview implements Disposable {
     stdin.write(command);
   }
 
-  private saveMultimediaWithID(type: MultimediaType, id: string): Promise<MultimediaData> {
+  private saveMultimediaWithID(type: MultimediaType, id: string, rotation: DeviceRotation): Promise<MultimediaData> {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
@@ -58,7 +58,8 @@ export class Preview implements Disposable {
 
     const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
     this.multimediaPromises.set(id, newPromiseHandler);
-    stdin.write(`${type} ${id} ${type === "video" ? "save" : ""}\n`);
+    stdin.write(`${type} ${id} ${type === "video" ? "save " : ""}-r ${rotation}\n`);
+    // stdin.write(`${type} ${id} ${type === "video" ? "save" : ""}\n`);
     return promise;
   }
 
@@ -175,8 +176,8 @@ export class Preview implements Disposable {
     this.sendCommandOrThrow(`video recording start -b 2000\n`); // 2000MB buffer for on-disk video
   }
 
-  public captureAndStopRecording() {
-    const recordingDataPromise = this.saveMultimediaWithID(MultimediaType.Video, "recording");
+  public captureAndStopRecording(rotation: DeviceRotation) {
+    const recordingDataPromise = this.saveMultimediaWithID(MultimediaType.Video, "recording", rotation);
     this.sendCommandOrThrow(`video recording stop\n`);
     return recordingDataPromise;
   }
@@ -196,12 +197,12 @@ export class Preview implements Disposable {
     this.sendCommandOrThrow(`video replay stop\n`);
   }
 
-  public captureReplay() {
-    return this.saveMultimediaWithID(MultimediaType.Video, "replay");
+  public captureReplay(rotation: DeviceRotation) {
+    return this.saveMultimediaWithID(MultimediaType.Video, "replay", rotation);
   }
 
-  public captureScreenShot() {
-    return this.saveMultimediaWithID(MultimediaType.Screenshot, "screenshot");
+  public captureScreenShot(rotation: DeviceRotation) {
+    return this.saveMultimediaWithID(MultimediaType.Screenshot, "screenshot", rotation);
   }
 
   public sendTouches(
