@@ -16,7 +16,6 @@ async function updateMcpConfig(port: number, mcpVersion: string) {
 }
 
 function directLoadRadonAI(server: LocalMcpServer): Disposable {
-  // Version suffix has to be incremented on every MCP server reload.
   const didChangeEmitter = new EventEmitter<void>();
 
   const onReloadDisposable = server.onReload(() => {
