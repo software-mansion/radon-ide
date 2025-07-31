@@ -20,7 +20,6 @@ import {
   TouchPoint,
   DeviceButtonType,
   DeviceSessionState,
-  ToolsState,
   NavigationHistoryItem,
   NavigationRoute,
   DeviceSessionStatus,
@@ -205,14 +204,6 @@ export class DeviceSession implements Disposable {
       this.emitStateChange();
     }
   }, 100);
-
-  //#endregion
-
-  //#region Tools delegate methods
-
-  onToolsStateChange = (toolsState: ToolsState) => {
-    this.emitStateChange();
-  };
 
   //#endregion
 
@@ -866,7 +857,7 @@ export class DeviceSession implements Disposable {
     this.inspectorBridge.sendShowStorybookStoryRequest(componentTitle, storyName);
   }
 
-  //#region Methoids delegated to Application Session
+  //#region Methods delegated to Application Session
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
     this.applicationSession?.updateToolEnabledState(toolName, enabled);
   }
