@@ -395,22 +395,13 @@ export class DeviceSession implements Disposable {
   }
 
   private async reloadJS() {
-    if (!this.devtools.hasConnectedClient) {
+    if (this.applicationSession === undefined) {
       throw new Error(
         "JS bundle cannot be reloaded before an application is launched and connected to Radon"
       );
     }
     this.updateStartupMessage(StartupMessage.WaitingForAppToLoad);
-    const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
-    const bundleErrorSubscription = this.metro.onBundleError(() => {
-      reject(new Error("Bundle error occurred during reload"));
-    });
-    try {
-      await this.metro.reload();
-      await Promise.race([this.devtools.appReady(), bundleErrorPromise]);
-    } finally {
-      bundleErrorSubscription.dispose();
-    }
+    await this.applicationSession.reloadJS();
   }
 
   private async reinstallApp() {

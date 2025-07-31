@@ -71,7 +71,9 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     onLaunchStage: (stage: AppLaunchStage) => void,
     cancelToken: CancelToken
   ): Promise<ApplicationSession> {
-    const session = new ApplicationSession(device, metro, devtools);
+    const packageNameOrBundleId =
+      buildResult.platform === DevicePlatform.IOS ? buildResult.bundleID : buildResult.packageName;
+    const session = new ApplicationSession(device, metro, devtools, packageNameOrBundleId);
     if (getIsActive()) {
       // we need to start the parent debug session asap to ensure metro errors are shown in the debug console
       await session.setupDebugSession();
@@ -108,7 +110,8 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   private constructor(
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
-    private readonly devtools: Devtools
+    private readonly devtools: Devtools,
+    private readonly packageNameOrBundleId: string
   ) {
     this.registerDevtoolsListeners();
     this.registerMetroListeners();
@@ -397,6 +400,26 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     );
   }
 
+  public async reloadJS() {
+    if (!this.devtools.hasConnectedClient) {
+      Logger.debug(
+        "`reloadJS()` was called on an application session while the devtools are not connected. " +
+          "This should never happen, since an application session should represent a running and connected application."
+      );
+      throw new Error("Tried to reload JS on an application which disconnected from Radon");
+    }
+    const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
+    const bundleErrorSubscription = this.metro.onBundleError(() => {
+      reject(new Error("Bundle error occurred during reload"));
+    });
+    try {
+      await this.metro.reload();
+      await Promise.race([this.devtools.appReady(), bundleErrorPromise]);
+    } finally {
+      bundleErrorSubscription.dispose();
+    }
+  }
+
   public resetLogCounter() {
     this.logCounter = 0;
     this.emitStateChange();
@@ -407,5 +430,6 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     this.debugSessionEventSubscription?.dispose();
     await this.debugSession?.dispose();
     this.debugSession = undefined;
+    this.device.terminateApp(this.packageNameOrBundleId);
   }
 }
