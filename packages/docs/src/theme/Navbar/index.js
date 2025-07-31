@@ -27,12 +27,12 @@ function Scripts() {
 
 export default function NavbarWrapper(props) {
   const heroImages = {
-    logo: useBaseUrl("/img/logo.svg"),
+    logo: useBaseUrl("/img/logo-dark.svg"),
   };
   return (
     <>
       <Navbar
-        isAlgoliaActive={true}
+        isAlgoliaActive={false}
         isThemeSwitcherShown={true}
         heroImages={heroImages}
         {...props}

@@ -51,33 +51,55 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       image: "img/og-image.png",
-      colorMode:{
-        respectPrefersColorScheme:true,
+      colorMode: {
+        respectPrefersColorScheme: true,
       },
       navbar: {
-        hideOnScroll: true,
+        hideOnScroll: false,
         logo: {
           alt: "Radon IDE logo",
           src: "img/logo.svg",
+          srcDark: "img/logo-dark.svg",
+          width: 156,
+          height: 40,
         },
         items: [
+          {
+            to: "/features",
+            activeBasePath: "features",
+            label: "Features",
+          },
           {
             to: "/pricing",
             activeBasePath: "pricing",
             label: "Pricing",
-            position: "right",
+          },
+          {
+            to: "/enterprise",
+            activeBasePath: "enterprise",
+            label: "Enterprise",
           },
           {
             to: "docs/category/getting-started",
             activeBasePath: "docs",
             label: "Docs",
-            position: "right",
+          },
+          {
+            to: "/contact",
+            activeBasePath: "contact",
+            label: "Contact",
           },
           {
             "href": "https://github.com/software-mansion/radon-ide/",
             "position": "right",
             "className": "header-github",
             "aria-label": "GitHub repository",
+          },
+          {
+            href: "https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide",
+            position: "right",
+            className: "header-download",
+            html: "Download",
           },
         ],
       },

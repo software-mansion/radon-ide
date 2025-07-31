@@ -95,6 +95,10 @@ table thead tr {
   content: "";
 }
 
+.header-download {
+  border: 1px solid;
+}
+
 @media (max-height: 768px) {
   .header-github:before {
     height: 20px;
@@ -103,11 +107,16 @@ table thead tr {
 }
 .header-github:before,
 .header-github:hover:before {
-  background-color: var(--swm-navy-light-100);
+  background-color: var(--ifm-color-primary);
+  opacity: 0.75;
 }
 
 [class*="navbar__item"] {
   display: flex !important;
+  /* justify-content: center; */
+}
+[class*="navbar__item"] {
+  justify-content: center;
 }
 
 [class*="plugin-pages"] [class*="hireUsContainer"] {
