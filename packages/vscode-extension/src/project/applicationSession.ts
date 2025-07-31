@@ -23,6 +23,7 @@ import {
   BundleErrorDescriptor,
   DeviceRotation,
   ProfilingState,
+  StartupMessage,
   ToolsState,
 } from "../common/Project";
 import { disposeAll } from "../utilities/disposables";
@@ -31,12 +32,6 @@ import { focusSource } from "../utilities/focusSource";
 import { CancelToken } from "../utilities/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
-
-export enum AppLaunchStage {
-  LaunchingApp = "Launching application",
-  WaitingForApp = "Waiting for application to load",
-  AttachingDebugger = "Connecting debugger",
-}
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
@@ -68,7 +63,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   public static async launch(
     { applicationContext, device, buildResult, metro, devtools }: LaunchApplicationSessionDeps,
     getIsActive: () => boolean,
-    onLaunchStage: (stage: AppLaunchStage) => void,
+    onLaunchStage: (stage: StartupMessage) => void,
     cancelToken: CancelToken
   ): Promise<ApplicationSession> {
     const packageNameOrBundleId =
@@ -83,18 +78,20 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       (device.deviceInfo.platform === DevicePlatform.IOS && launchConfig.ios?.launchArguments) ||
       [];
 
-    onLaunchStage(AppLaunchStage.LaunchingApp);
+    onLaunchStage(StartupMessage.StartingPackager);
+    await cancelToken.adapt(metro.ready());
 
     try {
+      onLaunchStage(StartupMessage.Launching);
       await cancelToken.adapt(
         device.launchApp(buildResult, metro.port, devtools.port, launchArguments)
       );
 
-      onLaunchStage(AppLaunchStage.WaitingForApp);
-      await cancelToken.adapt(Promise.all([metro.ready(), devtools.appReady()]));
+      onLaunchStage(StartupMessage.WaitingForAppToLoad);
+      await cancelToken.adapt(Promise.all([devtools.appReady()]));
 
       if (getIsActive()) {
-        onLaunchStage(AppLaunchStage.AttachingDebugger);
+        onLaunchStage(StartupMessage.AttachingDebugger);
         await cancelToken.adapt(session.activate());
       }
 

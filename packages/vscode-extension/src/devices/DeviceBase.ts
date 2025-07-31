@@ -113,7 +113,7 @@ export abstract class DeviceBase implements Disposable {
     launchArguments: string[]
   ): Promise<void>;
   abstract terminateApp(packageNameOrBundleID: string): Promise<void>;
-  abstract makePreview(): Preview;
+  protected abstract makePreview(): Preview;
   abstract get platform(): DevicePlatform;
   abstract get deviceInfo(): DeviceInfo;
   abstract resetAppPermissions(
@@ -234,7 +234,7 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.rotateDevice(rotation);
   }
 
-  async startPreview() {
+  public async startPreview() {
     if (!this.previewStartPromise) {
       this.preview = this.makePreview();
       this.previewStartPromise = this.preview.start();

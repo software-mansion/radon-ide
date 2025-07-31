@@ -39,7 +39,7 @@ import { BuildCache } from "../builders/BuildCache";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
-import { AppLaunchStage, ApplicationSession } from "./applicationSession";
+import { ApplicationSession } from "./applicationSession";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -69,7 +69,7 @@ export class DeviceSession implements Disposable {
   private devtools: Devtools;
   private buildManager: BuildManager;
   private buildCache: BuildCache;
-  private cancelToken: CancelToken | undefined;
+  private cancelToken: CancelToken = new CancelToken();
   private watchProjectSubscription: Disposable;
 
   private status: DeviceSessionStatus = "starting";
@@ -295,6 +295,13 @@ export class DeviceSession implements Disposable {
     }
   }
 
+  private cancelOngoingOperations() {
+    if (this.cancelToken) {
+      this.cancelToken.cancel();
+    }
+    this.cancelToken = new CancelToken();
+  }
+
   public async performReloadAction(type: ReloadAction): Promise<void> {
     try {
       this.resetStartingState();
@@ -361,12 +368,8 @@ export class DeviceSession implements Disposable {
   }
 
   private async restartMetro({ resetCache }: { resetCache: boolean }) {
-    if (this.cancelToken) {
-      this.cancelToken.cancel();
-    }
-
-    const cancelToken = new CancelToken();
-    this.cancelToken = cancelToken;
+    this.cancelOngoingOperations();
+    const cancelToken = this.cancelToken;
 
     this.status = "starting";
     this.fatalError = undefined;
@@ -405,50 +408,43 @@ export class DeviceSession implements Disposable {
   }
 
   private async reinstallApp() {
-    if (this.cancelToken) {
-      this.cancelToken.cancel();
-      this.cancelToken = undefined;
-    }
-    const cancelToken = new CancelToken();
-    this.cancelToken = cancelToken;
+    this.cancelOngoingOperations();
+    const cancelToken = this.cancelToken;
 
-    this.applicationSession?.dispose();
-    this.applicationSession = undefined;
+    this.status = "starting";
+    this.fatalError = undefined;
+    this.updateStartupMessage(StartupMessage.Installing);
 
+    await this.stopApp();
     await cancelToken.adapt(this.installApp({ reinstall: true }));
     await this.launchApp(cancelToken);
   }
 
   private async restartProcess() {
-    if (this.cancelToken) {
-      this.cancelToken.cancel();
-      this.cancelToken = undefined;
-    }
-    const cancelToken = new CancelToken();
-    this.cancelToken = cancelToken;
+    this.cancelOngoingOperations();
+    const cancelToken = this.cancelToken;
 
-    this.applicationSession?.dispose();
-    this.applicationSession = undefined;
+    this.status = "starting";
+    this.fatalError = undefined;
+    this.updateStartupMessage(StartupMessage.Launching);
+
+    await this.stopApp();
     await this.launchApp(cancelToken);
   }
 
   private async restartDevice({ forceClean }: RestartOptions) {
-    if (this.cancelToken) {
-      this.cancelToken.cancel();
-    }
-
-    const cancelToken = new CancelToken();
-    this.cancelToken = cancelToken;
+    this.cancelOngoingOperations();
+    const cancelToken = this.cancelToken;
 
     this.status = "starting";
     this.fatalError = undefined;
     this.updateStartupMessage(StartupMessage.InitializingDevice);
 
-    this.applicationSession?.dispose();
-    this.applicationSession = undefined;
+    await this.stopApp();
 
     this.updateStartupMessage(StartupMessage.BootingDevice);
     await cancelToken.adapt(this.device.reboot());
+    await cancelToken.adapt(this.device.startPreview());
 
     await this.buildApp({
       clean: forceClean,
@@ -526,32 +522,6 @@ export class DeviceSession implements Disposable {
       platform: this.platform,
     });
 
-    let previewURL: string | undefined;
-    const previewReadyPromise = this.device.startPreview().then((url) => {
-      if (!url) {
-        throw new Error("Device preview URL is not available");
-      }
-      previewURL = url;
-    });
-
-    const launchStageListener = (stage: AppLaunchStage) => {
-      switch (stage) {
-        case AppLaunchStage.LaunchingApp: {
-          this.updateStartupMessage(StartupMessage.Launching);
-          Logger.debug("Will wait for app ready and for preview");
-          break;
-        }
-        case AppLaunchStage.WaitingForApp: {
-          this.updateStartupMessage(StartupMessage.WaitingForAppToLoad);
-          break;
-        }
-        case AppLaunchStage.AttachingDebugger: {
-          this.updateStartupMessage(StartupMessage.AttachingDebugger);
-          break;
-        }
-      }
-    };
-
     const applicationSessionPromise = ApplicationSession.launch(
       {
         applicationContext: this.applicationContext,
@@ -561,7 +531,7 @@ export class DeviceSession implements Disposable {
         devtools: this.devtools,
       },
       () => this.isActive,
-      launchStageListener,
+      this.updateStartupMessage.bind(this),
       cancelToken
     );
 
@@ -573,7 +543,7 @@ export class DeviceSession implements Disposable {
       const reportWaitingStuck = setTimeout(() => {
         Logger.info(
           "App is taking very long to boot up, it might be stuck. Device preview URL:",
-          previewURL
+          this.device.previewURL
         );
         getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
           platform: this.platform,
@@ -586,31 +556,37 @@ export class DeviceSession implements Disposable {
         });
     }
 
-    const applicationSession = await applicationSessionPromise;
+    applicationSessionPromise.then((applicationSession) => {
+      // NOTE: this can happen if the launch finished successfully,
+      // but then the start operation was cancelled before this callback started executing
+      if (cancelToken.cancelled) {
+        applicationSession.dispose();
+        throw new CancelError("Launch cancelled");
+      }
+      this.applicationSession = applicationSession;
+      applicationSession.onStateChanged(() => this.emitStateChange());
+      this.emitStateChange();
 
-    try {
-      await cancelToken.adapt(previewReadyPromise);
-    } catch (e) {
-      // if the application session was launched successfully, but we couldn't start the preview,
-      // we need to dispose the session and bail
-      applicationSession.dispose();
-      throw e;
+      Logger.debug("App and preview ready, moving on...");
+      this.status = "running";
+
+      const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
+      Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
+      getTelemetryReporter().sendTelemetryEvent(
+        "app:launch:completed",
+        { platform: this.platform },
+        { durationSec: launchDurationSec }
+      );
+    });
+
+    return waitForAppReady;
+  }
+
+  private async stopApp() {
+    if (this.applicationSession) {
+      await this.applicationSession.dispose();
+      this.applicationSession = undefined;
     }
-
-    this.applicationSession = applicationSession;
-    applicationSession.onStateChanged(() => this.emitStateChange());
-    this.emitStateChange();
-
-    Logger.debug("App and preview ready, moving on...");
-    this.status = "running";
-
-    const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
-    Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
-    getTelemetryReporter().sendTelemetryEvent(
-      "app:launch:completed",
-      { platform: this.platform },
-      { durationSec: launchDurationSec }
-    );
   }
 
   private async bootDevice() {
@@ -702,12 +678,8 @@ export class DeviceSession implements Disposable {
     try {
       this.resetStartingState(StartupMessage.InitializingDevice);
 
-      if (this.cancelToken) {
-        this.cancelToken.cancel();
-      }
-
-      const cancelToken = new CancelToken();
-      this.cancelToken = cancelToken;
+      this.cancelOngoingOperations();
+      const cancelToken = this.cancelToken;
 
       const packageManagerOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
         Output.PackageManager
@@ -730,13 +702,13 @@ export class DeviceSession implements Disposable {
       });
 
       await cancelToken.adapt(this.waitForMetroReady());
-      // TODO(jgonet): Build and boot simultaneously, with predictable state change updates
       await cancelToken.adapt(this.bootDevice());
       await this.buildApp({
         clean: false,
         cancelToken,
       });
       await cancelToken.adapt(this.installApp({ reinstall: false }));
+      await this.device.startPreview();
       await this.launchApp(cancelToken);
       Logger.debug("Device session started");
     } catch (e) {
