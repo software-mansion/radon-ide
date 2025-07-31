@@ -1,6 +1,14 @@
 import React, { createContext, useState } from "react";
 import Modal from "../components/shared/Modal";
 
+interface ModalState {
+  title: string;
+  component: React.ReactNode;
+  open: boolean;
+  headerShown: boolean;
+  isFullScreen: boolean;
+}
+
 interface ModalOptions {
   title?: string;
   fullScreen?: boolean;
@@ -9,7 +17,7 @@ interface ModalOptions {
 interface ModalContextProps {
   openModal: (component: React.ReactNode, options?: ModalOptions) => void;
   closeModal: () => void;
-  showHeader: React.Dispatch<React.SetStateAction<boolean>>;
+  showHeader: (value: boolean) => void;
 }
 
 const ModalContext = createContext<ModalContextProps>({
@@ -19,38 +27,51 @@ const ModalContext = createContext<ModalContextProps>({
 });
 
 export default function ModalProvider({ children }: { children: React.ReactNode }) {
-  const [title, setTitle] = useState("");
-  const [component, setComponent] = useState<React.ReactNode>(<></>);
-  const [open, setOpen] = useState(false);
-  const [headerShown, showHeader] = useState(true);
-  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [state, setState] = useState<ModalState>({
+    title: "",
+    component: <></>,
+    open: false,
+    headerShown: true,
+    isFullScreen: false,
+  });
 
   const openModal = (modalComponent: React.ReactNode, options?: ModalOptions) => {
-    setComponent(modalComponent);
-    setOpen(true);
-
-    if (options?.title) {
-      setTitle(options.title);
-    }
-    if (options?.fullScreen) {
-      setIsFullScreen(options.fullScreen);
-    }
+    setState({
+      title: options?.title ?? "",
+      component: modalComponent,
+      open: true,
+      headerShown: true,
+      isFullScreen: options?.fullScreen || false,
+    });
   };
 
   const closeModal = () => {
-    setOpen(false);
+    setState({
+      title: "",
+      component: null,
+      open: false,
+      headerShown: true,
+      isFullScreen: false,
+    });
+  };
+
+  const showHeader = (value: boolean) => {
+    setState((prevState) => ({
+      ...prevState,
+      headerShown: value,
+    }));
   };
 
   return (
     <ModalContext.Provider value={{ openModal, closeModal, showHeader }}>
       {children}
       <Modal
-        title={title}
-        component={component}
-        open={open}
-        setOpen={setOpen}
-        headerShown={headerShown}
-        isFullScreen={isFullScreen}
+        title={state.title}
+        component={state.component}
+        isOpen={state.open}
+        onClose={closeModal}
+        headerShown={state.headerShown}
+        isFullScreen={state.isFullScreen}
       />
     </ModalContext.Provider>
   );
