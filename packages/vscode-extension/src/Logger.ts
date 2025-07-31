@@ -1,6 +1,10 @@
-import { LogOutputChannel, window } from "vscode";
+import { Output } from "./common/OutputChannel";
+import {
+  createReadableOutputChannel,
+  ReadableLogOutputChannel,
+} from "./project/ReadableLogOutputChannel";
 
-const outputChannel = window.createOutputChannel("Radon IDE", { log: true });
+const outputChannel = createReadableOutputChannel(Output.Ide);
 
 const logger = {
   log(_message: string, ..._args: any[]) {},
@@ -58,7 +62,7 @@ export function enableDevModeLogging() {
 }
 
 export class Logger {
-  public static get rawOutputChannel(): LogOutputChannel {
+  public static get rawOutputChannel(): ReadableLogOutputChannel {
     return outputChannel;
   }
 
