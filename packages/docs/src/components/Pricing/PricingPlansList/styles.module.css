@@ -39,7 +39,6 @@
   justify-content: center;
   align-items: center;
   width: 50%;
-  color: var(--radon-heading);
 }
 .btn p {
   white-space: nowrap;
@@ -51,16 +50,14 @@
 
 .btn.active {
   background-color: var(--radon-button);
-  color: var(--radon-color-primary);
+  color: var(--ifm-color-primary);
 }
 .btn.active .plan_pay_annually__discount {
-  color: var(--radon-color-primary);
+  color: var(--ifm-color-primary);
 }
 
-.btn:hover {
-  background-color: var(--swm-border);
-}
-.btn:hover {
+.btn:not(.active):hover {
+  background-color: #333333;
   transition: 0.5s;
 }
 
