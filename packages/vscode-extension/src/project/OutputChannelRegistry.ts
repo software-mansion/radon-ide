@@ -1,29 +1,7 @@
-import { Disposable, LogOutputChannel, window } from "vscode";
+import { Disposable, LogOutputChannel } from "vscode";
 import { Output } from "../common/OutputChannel";
 import { Logger } from "../Logger";
-
-interface ReadableLogOutputChannel extends LogOutputChannel {
-  readAll: () => string[];
-}
-
-function createReadableOutputChannel(channel: string): ReadableLogOutputChannel {
-  const blindOutput = window.createOutputChannel(channel, { log: true });
-
-  const logRegistry: string[] = [];
-
-  return {
-    ...blindOutput,
-    readAll: () => logRegistry,
-    append: (value: string) => {
-      logRegistry.push(value);
-      blindOutput.append(value);
-    },
-    appendLine: (value: string) => {
-      logRegistry.push(value);
-      blindOutput.appendLine(value);
-    },
-  };
-}
+import { createReadableOutputChannel } from "./ReadableLogOutputChannel";
 
 export class OutputChannelRegistry implements Disposable {
   private channelByName = new Map<Output, LogOutputChannel>([
