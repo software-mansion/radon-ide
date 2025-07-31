@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import { IDE } from "../../project/ide";
 import { textToToolResponse } from "./utils";
 import { ToolResponse } from "./models";
+import { Output } from "../../common/OutputChannel";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -31,23 +32,21 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
 }
 
 export async function buildLogsToolExec(): Promise<ToolResponse> {
-  const project = IDE.getInstanceIfExists()?.project;
+  const registry = IDE.getInstanceIfExists()?.outputChannelRegistry;
 
-  if (!project || !project.deviceSession) {
+  if (!registry) {
     // TODO: Give explanation within this error
-    return textToToolResponse("Could not view the build logs!\n");
+    return textToToolResponse(
+      "Could not view the build logs! Radon IDE extension has not been opened."
+    );
   }
 
-  // project.buildCache.getBuild()
+  // TODO: Combine latest logs for both iOS, Android, and Bundler.
+  // TODO: Preferably only serve the latest build. Alternatively, but less preferably, serve last N lines + timestamps.
+  // TODO: Make Output.AndroidDevice and Output.IosDevice logs available
 
-  const text = "placeholder"; // readFileSync(filename, { encoding: "utf8" });
+  const log = registry.getOrCreateOutputChannel(Output.BuildAndroid);
+  const text = log.readAll().join("\n");
 
-  return {
-    content: [
-      {
-        type: "text",
-        text,
-      },
-    ],
-  };
+  return textToToolResponse(text);
 }
