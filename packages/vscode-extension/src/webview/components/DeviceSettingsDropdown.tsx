@@ -247,7 +247,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              openModal("Location", <DeviceLocationView />);
+              openModal(<DeviceLocationView />, { title: "Location" });
             }}>
             <span className="codicon codicon-location" />
             Location
@@ -281,7 +281,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
           <DropdownMenu.Item
             className="dropdown-menu-item"
-            onSelect={() => openModal("Open Deep Link", <OpenDeepLinkView />)}>
+            onSelect={() => openModal(<OpenDeepLinkView />, { title: "Open Deep Link" })}>
             <span className="codicon codicon-link" />
             Open Deep Link
           </DropdownMenu.Item>
@@ -341,7 +341,7 @@ const LocalizationItem = () => {
       <DropdownMenu.Item
         className="dropdown-menu-item"
         onSelect={() => {
-          openModal("Localization", <DeviceLocalizationView />);
+          openModal(<DeviceLocalizationView />, { title: "Localization" });
         }}>
         <span className="codicon codicon-globe" />
         Localization
@@ -430,7 +430,7 @@ const CameraItem = () => {
     <DropdownMenu.Item
       className="dropdown-menu-item"
       onSelect={() => {
-        openModal("Camera Settings", <CameraSettingsView />);
+        openModal(<CameraSettingsView />, { title: "Camera Settings" });
       }}>
       <span className="codicon codicon-device-camera" />
       Camera Settings

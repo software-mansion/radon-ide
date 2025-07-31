@@ -1,7 +1,6 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useStore } from "../providers/storeProvider";
 import { use$ } from "@legendapp/state/react";
 import {
   VscodeFormGroup as FormGroup,
@@ -15,6 +14,7 @@ import {
   VscodeTabs as Tabs,
   VscodeTabHeader as TabHeader,
 } from "@vscode-elements/react-elements";
+import { useStore } from "../providers/storeProvider";
 import { LaunchConfiguration, LaunchConfigurationKind } from "../../common/LaunchConfig";
 import { useModal } from "../providers/ModalProvider";
 import { useProject } from "../providers/ProjectProvider";
@@ -169,11 +169,11 @@ function LaunchConfigurationView({
             className="button-secondary"
             onClick={() =>
               openModal(
-                "Launch Configuration",
                 <LaunchConfigurationView
                   launchConfig={launchConfig}
                   isCurrentConfig={isCurrentConfig}
-                />
+                />,
+                { title: "Launch Configuration" }
               )
             }>
             Cancel
@@ -308,7 +308,7 @@ function LaunchConfigurationView({
           <Button
             secondary
             onClick={() => {
-              openModal("", <DeleteConfirmationModal />);
+              openModal(<DeleteConfirmationModal />);
             }}>
             <span className="codicon codicon-trash" />
             Delete

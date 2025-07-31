@@ -352,7 +352,7 @@ function UrlSelect({
               refIndex={filteredItems.length + filteredOutItems.length + 1}
               onConfirm={() => {
                 setIsDropdownOpen(false);
-                openModal("Open Deep Link", <OpenDeepLinkView />);
+                openModal(<OpenDeepLinkView />, { title: "Open Deep Link" });
               }}
               itemList={dropdownItems}
               onArrowPress={focusBetweenItems}>

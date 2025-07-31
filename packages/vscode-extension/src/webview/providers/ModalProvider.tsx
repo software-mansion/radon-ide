@@ -1,8 +1,13 @@
 import React, { createContext, useState } from "react";
 import Modal from "../components/shared/Modal";
 
+interface ModalOptions {
+  title?: string;
+  fullScreen?: boolean;
+}
+
 interface ModalContextProps {
-  openModal: (title: string, component: React.ReactNode) => void;
+  openModal: (component: React.ReactNode, options?: ModalOptions) => void;
   closeModal: () => void;
   showHeader: React.Dispatch<React.SetStateAction<boolean>>;
 }
@@ -15,15 +20,21 @@ const ModalContext = createContext<ModalContextProps>({
 
 export default function ModalProvider({ children }: { children: React.ReactNode }) {
   const [title, setTitle] = useState("");
-  const [component, setComponent] = useState(<></>);
+  const [component, setComponent] = useState<React.ReactNode>(<></>);
   const [open, setOpen] = useState(false);
   const [headerShown, showHeader] = useState(true);
+  const [isFullScreen, setIsFullScreen] = useState(false);
 
-  const openModal = (modalTitle: string, modalComponent: React.ReactNode) => {
-    setTitle(modalTitle);
-    // @ts-ignore TODO see this further but i think it's fine
+  const openModal = (modalComponent: React.ReactNode, options?: ModalOptions) => {
     setComponent(modalComponent);
     setOpen(true);
+
+    if (options?.title) {
+      setTitle(options.title);
+    }
+    if (options?.fullScreen) {
+      setIsFullScreen(options.fullScreen);
+    }
   };
 
   const closeModal = () => {
@@ -39,6 +50,7 @@ export default function ModalProvider({ children }: { children: React.ReactNode 
         open={open}
         setOpen={setOpen}
         headerShown={headerShown}
+        isFullScreen={isFullScreen}
       />
     </ModalContext.Provider>
   );

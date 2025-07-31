@@ -42,7 +42,7 @@ function ActivateLicenseButton() {
       className="activate-license-button"
       onClick={() => {
         sendTelemetry("activateLicenseButtonClicked");
-        openModal("Activate License", <ActivateLicenseView />);
+        openModal(<ActivateLicenseView />, { title: "Activate License" });
       }}>
       {""} {/* using empty string here as the content is controlled via css */}
     </Button>

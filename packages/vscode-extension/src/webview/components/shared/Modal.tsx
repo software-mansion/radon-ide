@@ -5,21 +5,29 @@ import "./Modal.css";
 import IconButton from "./IconButton";
 
 interface ModalProps {
-  title: string;
+  title?: string;
   component: React.ReactNode;
   open: boolean;
   setOpen: React.Dispatch<React.SetStateAction<boolean>>;
   headerShown?: boolean;
+  isFullScreen?: boolean;
 }
 
-export default function Modal({ title, component, open, setOpen, headerShown }: ModalProps) {
+export default function Modal({
+  title,
+  component,
+  open,
+  setOpen,
+  headerShown,
+  isFullScreen,
+}: ModalProps) {
   const close = () => setOpen(false);
   return (
     <Dialog.Root open={open}>
       <Dialog.Portal>
         <Dialog.Overlay className="modal-overlay" onClick={close} />
         <Dialog.Content className="modal-content" onEscapeKeyDown={close}>
-          {headerShown && <Dialog.Title className="modal-title">{title}</Dialog.Title>}
+          {headerShown && title && <Dialog.Title className="modal-title">{title}</Dialog.Title>}
 
           <div className="modal-content-container">{component}</div>
           <Dialog.Close asChild>
