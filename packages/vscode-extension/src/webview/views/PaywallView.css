@@ -1,0 +1,79 @@
+.paywall-view {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+
+  color: var(--vscode-editor-foreground);
+}
+
+.paywall-container {
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.paywall-title {
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 32px;
+  color: var(--vscode-editor-foreground);
+}
+
+.subscription-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.subscription-option {
+  padding: 16px;
+  border: 2px solid var(--vscode-input-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--vscode-input-background);
+}
+
+.subscription-option:hover {
+  border-color: var(--vscode-button-background);
+}
+
+.subscription-option.selected {
+  border-color: var(--vscode-button-background);
+  background-color: var(--vscode-button-hoverBackground);
+}
+
+.plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.plan-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.plan-price {
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--vscode-button-background);
+}
+
+.plan-description {
+  text-align: left;
+  font-size: 14px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.continue-button {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 16px;
+  height: unset;
+}
