@@ -212,7 +212,7 @@ function AppRootSelect() {
     <Select.Root onValueChange={handleAppRootChange} value={selectedValue}>
       <Select.Trigger className="approot-select-trigger" disabled={configurationsCount === 0}>
         <Select.Value placeholder={placeholder}>
-          <div className="approot-select-value">
+          <div className="approot-select-value" data-test="approot-select-value">
             <span className="codicon codicon-folder-opened" />
             <span className="approot-select-value-text">{value}</span>
           </div>
