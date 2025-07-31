@@ -232,7 +232,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                     onSelect={() => store$.workspaceConfiguration.deviceRotation.set(option.value)}>
                     <span
                       className={`codicon codicon-${option.icon}`}
-                      style={{ rotate: rotation }}
+                      style={{ rotate: option.rotation }}
                     />
                     {option.label}
                     {rotation === option.value && (
