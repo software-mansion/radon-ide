@@ -133,9 +133,7 @@ export class LocalMcpServer implements Disposable {
     app.get("/mcp", this.handleSessionRequest.bind(this));
     app.delete("/mcp", this.handleSessionRequest.bind(this));
 
-    this.expressServer = app.listen(0, "127.0.0.1");
-
-    this.expressServer?.on("listening", () => {
+    this.expressServer = app.listen(0, "127.0.0.1").on("listening", () => {
       // On "listening", listener.address() will always return AddressInfo
       const addressInfo = this.expressServer?.address() as AddressInfo;
       this.setServerPort?.(addressInfo.port);
