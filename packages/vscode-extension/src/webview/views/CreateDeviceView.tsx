@@ -9,10 +9,10 @@ import {
   iOSSupportedDevices,
   AndroidSupportedDevices,
   DeviceProperties,
-} from "../utilities/deviceContants";
-import { useDependencies } from "../providers/DependenciesProvider";
+} from "../utilities/deviceConstants";
 import { Platform } from "../providers/UtilsProvider";
 import { Input } from "../components/shared/Input";
+import { useDependencyErrors } from "../hooks/useDependencyErrors";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -20,7 +20,7 @@ interface CreateDeviceViewProps {
 }
 
 function useSupportedDevices() {
-  const { errors } = useDependencies();
+  const errors = useDependencyErrors();
 
   return [
     Platform.select({

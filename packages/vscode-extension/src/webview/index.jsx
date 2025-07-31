@@ -3,13 +3,11 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 
 import DevicesProvider from "./providers/DevicesProvider";
-import DependenciesProvider from "./providers/DependenciesProvider";
 import ModalProvider from "./providers/ModalProvider";
 import ProjectProvider from "./providers/ProjectProvider";
 import AlertProvider from "./providers/AlertProvider";
 
 import { UtilsProvider, installLogOverrides } from "./providers/UtilsProvider";
-import { TelemetryProvider } from "./providers/TelemetryProvider";
 
 import "./styles/theme.css";
 import StoreProvider from "./providers/storeProvider";
@@ -24,17 +22,13 @@ root.render(
     <StoreProvider>
       <ProjectProvider>
         <UtilsProvider>
-          <TelemetryProvider>
-            <DevicesProvider>
-              <DependenciesProvider>
-                <ModalProvider>
-                  <AlertProvider>
-                    <App />
-                  </AlertProvider>
-                </ModalProvider>
-              </DependenciesProvider>
-            </DevicesProvider>
-          </TelemetryProvider>
+          <DevicesProvider>
+            <ModalProvider>
+              <AlertProvider>
+                <App />
+              </AlertProvider>
+            </ModalProvider>
+          </DevicesProvider>
         </UtilsProvider>
       </ProjectProvider>
     </StoreProvider>

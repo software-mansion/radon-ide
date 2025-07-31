@@ -29,12 +29,6 @@ type KeybindingType = {
 export class Utils implements UtilsInterface {
   private eventEmitter = new EventEmitter();
 
-  constructor() {
-    vscode.env.onDidChangeTelemetryEnabled((telemetryEnabled) => {
-      this.eventEmitter.emit("telemetryEnabledChanged", telemetryEnabled);
-    });
-  }
-
   public async getCommandsCurrentKeyBinding(commandName: string) {
     const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
     const extensionPackageJson = require(packageJsonPath);
@@ -161,10 +155,6 @@ export class Utils implements UtilsInterface {
 
   public async sendTelemetry(eventName: string, properties?: TelemetryEventProperties) {
     getTelemetryReporter().sendTelemetryEvent(eventName, properties);
-  }
-
-  public async isTelemetryEnabled() {
-    return vscode.env.isTelemetryEnabled;
   }
 
   async addListener<K extends keyof UtilsEventMap>(

@@ -1,5 +1,5 @@
 import { use$ } from "@legendapp/state/react";
-import { DeviceProperties } from "../../utilities/deviceContants";
+import { DeviceProperties } from "../../utilities/deviceConstants";
 import { useStore } from "../../providers/storeProvider";
 
 export function useDeviceFrame(device: DeviceProperties) {

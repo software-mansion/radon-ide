@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { VscodeProgressRing } from "@vscode-elements/react-elements";
+import { use$ } from "@legendapp/state/react";
 import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
@@ -21,7 +22,7 @@ import {
   ZoomLevelType,
 } from "../../common/Project";
 import { Platform, useUtils } from "../providers/UtilsProvider";
-import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import "./View.css";
 import "./PreviewView.css";
 import ReplayIcon from "../components/icons/ReplayIcon";
@@ -31,6 +32,7 @@ import ToolsDropdown from "../components/ToolsDropdown";
 import AppRootSelect from "../components/AppRootSelect";
 import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
+import { useStore } from "../providers/storeProvider";
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
@@ -82,6 +84,9 @@ function ProfilingButton({
 }
 
 function PreviewView() {
+  const store$ = useStore();
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+
   const {
     selectedDeviceSession,
     projectState,
@@ -123,6 +128,10 @@ function PreviewView() {
   });
 
   const { openFileAt } = useUtils();
+
+  useEffect(() => {
+    resetInspector();
+  }, [rotation]);
 
   useEffect(() => {
     const disableInspectorOnEscape = (event: KeyboardEvent) => {

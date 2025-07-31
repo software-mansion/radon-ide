@@ -1,102 +1,33 @@
+import { use$ } from "@legendapp/state/react";
+import { useMemo } from "react";
+import { useStore } from "../providers/storeProvider";
 import {
-  PropsWithChildren,
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
-import { makeProxy } from "../utilities/rpc";
-import {
-  DependencyManagerInterface,
-  DependencyStatus,
-  MinSupportedVersion,
-} from "../../common/DependencyManager";
+  ApplicationDependency,
+  ApplicationDependencyStatuses,
+  EnvironmentDependency,
+  EnvironmentDependencyStatuses,
+} from "../../common/State";
+import { MinSupportedVersion } from "../../common/Constants";
 
-const dependencyManager = makeProxy<DependencyManagerInterface>("DependencyManager");
-
-type Dependency =
-  | "nodejs"
-  | "packageManager"
-  | "androidEmulator"
-  | "xcode"
-  | "cocoaPods"
-  | "nodeModules"
-  | "ios"
-  | "android"
-  | "pods"
-  | "reactNative"
-  | "expo"
-  | "expoRouter"
-  | "storybook"
-  | "easCli";
-
-type ErrorType = "ios" | "simulator" | "emulator" | "android" | "common";
 type Errors = Partial<Record<ErrorType, { message: string }>>;
-type DependencyRecord = Partial<Record<Dependency, DependencyStatus>>;
+type ErrorType = "ios" | "simulator" | "emulator" | "android" | "common";
+type Dependency = ApplicationDependency | EnvironmentDependency;
+type DependencyStatuses = ApplicationDependencyStatuses | EnvironmentDependencyStatuses;
 
-interface DependenciesContextProps {
-  dependencies: DependencyRecord;
-  errors: Errors | undefined;
-  runDiagnostics: () => Promise<void>;
-}
-
-const DependenciesContext = createContext<DependenciesContextProps>({
-  dependencies: {},
-  errors: undefined,
-  runDiagnostics: () => {
-    throw new Error("Provider not initialized");
-  },
-});
-
-export default function DependenciesProvider({ children }: PropsWithChildren) {
-  const [depsState, updateDepsState] = useState<DependencyRecord>({});
-
-  const runDiagnostics = useCallback(() => {
-    return dependencyManager.runAllDependencyChecks();
-  }, []);
-
-  useEffect(() => {
-    const dependencies: DependencyRecord = {};
-
-    function handleUpdatedDependency(dependency: Dependency, status: DependencyStatus) {
-      dependencies[dependency] = status;
-      updateDepsState({ ...dependencies });
-    }
-
-    dependencyManager.addListener(handleUpdatedDependency);
-    runDiagnostics();
-
-    return () => {
-      dependencyManager.removeListener(handleUpdatedDependency);
-    };
-  }, []);
-
-  const contextValue = useMemo(() => {
-    return {
-      dependencies: depsState,
-      runDiagnostics,
-      errors: getErrors(depsState),
-    };
-  }, [depsState, runDiagnostics, getErrors]);
-
-  return (
-    <DependenciesContext.Provider value={contextValue}>{children}</DependenciesContext.Provider>
+export const useDependencyErrors = () => {
+  const store$ = useStore();
+  const environmentDependencies = use$(store$.environmentDependencies);
+  const applicationDependencies = use$(
+    store$.projectState.applicationContext.applicationDependencies
   );
-}
+  const statuses = useMemo(() => {
+    return { ...environmentDependencies, ...applicationDependencies };
+  }, [environmentDependencies, applicationDependencies]);
 
-export function useDependencies() {
-  const context = useContext(DependenciesContext);
+  return getErrors(statuses);
+};
 
-  if (context === undefined) {
-    throw new Error("useDependencies must be used within a DependenciesProvider");
-  }
-
-  return context;
-}
-
-function getErrors(statuses: DependencyRecord) {
+function getErrors(statuses: DependencyStatuses): Errors | undefined {
   const errors: Errors = {};
   let hasErrors = false;
   function setFirstError(dependency: Dependency, errorName: ErrorType) {
@@ -126,6 +57,7 @@ function getErrors(statuses: DependencyRecord) {
           setFirstError(dependency, "emulator");
           break;
         case "nodejs":
+        case "nodeVersion":
         case "packageManager":
         case "nodeModules":
           setFirstError(dependency, "common");
@@ -150,6 +82,12 @@ export function dependencyDescription(dependency: Dependency) {
         info: "Used for running scripts and getting dependencies.",
         error:
           "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements. You can find more information in our [documentation](https://ide.swmansion.com/docs/guides/troubleshooting#13-node-version-is-not-supported).",
+      };
+    case "nodeVersion":
+      return {
+        info: "Used for running scripts and getting dependencies.",
+        error:
+          "Node.js version is not supported. You can find more information in our [documentation](https://ide.swmansion.com/docs/guides/troubleshooting#13-node-version-is-not-supported).",
       };
     case "packageManager":
       return {

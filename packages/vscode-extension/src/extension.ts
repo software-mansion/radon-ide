@@ -1,3 +1,4 @@
+import assert from "assert";
 import {
   commands,
   languages,
@@ -35,10 +36,18 @@ import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevt
 import { IDEPanelMoveTarget } from "./common/utils";
 import { launchConfigurationFromOptions } from "./project/launchConfigurationsManager";
 import { isIdeConfig } from "./utilities/launchConfiguration";
-import assert from "assert";
 import { PanelLocation } from "./common/State";
+import { DeviceRotation, DeviceRotationDirection } from "./common/Project";
+import { updatePartialWorkspaceConfig } from "./utilities/updatePartialWorkspaceConfig";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
+
+const ROTATIONS: DeviceRotation[] = [
+  DeviceRotation.LandscapeLeft,
+  DeviceRotation.Portrait,
+  DeviceRotation.LandscapeRight,
+  DeviceRotation.PortraitUpsideDown,
+] as const;
 
 function handleUncaughtErrors(context: ExtensionContext) {
   process.on("unhandledRejection", (error) => {
@@ -239,6 +248,13 @@ export async function activate(context: ExtensionContext) {
       IDE.getInstanceIfExists()?.project.deviceSessionsManager.selectNextNthRunningSession(-1)
     )
   );
+
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.rotateDeviceAnticlockwise", rotateDeviceAnticlockwise)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.rotateDeviceClockwise", rotateDeviceClockwise)
+  );
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
   // When it does happen, we open the IDE panel and restart the app.
@@ -425,6 +441,32 @@ async function toggleRecording() {
 
 async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
+}
+
+async function rotateDevice(direction: DeviceRotationDirection) {
+  const project = IDE.getInstanceIfExists()?.project;
+  if (!project) {
+    throw new Error("Radon IDE is not initialized yet.");
+  }
+
+  const configuration = workspace.getConfiguration("RadonIDE");
+
+  const currentRotation = configuration.get<DeviceRotation>("deviceRotation");
+  if (currentRotation === undefined) {
+    Logger.warn("[Radon IDE] Device rotation is not set in the configuration.");
+    return;
+  }
+  const currentIndex = ROTATIONS.indexOf(currentRotation);
+  const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
+  await updatePartialWorkspaceConfig(configuration, ["deviceRotation", ROTATIONS[newIndex]]);
+}
+
+async function rotateDeviceAnticlockwise() {
+  await rotateDevice(DeviceRotationDirection.Anticlockwise);
+}
+
+async function rotateDeviceClockwise() {
+  await rotateDevice(DeviceRotationDirection.Clockwise);
 }
 
 async function openChat() {

@@ -1,11 +1,15 @@
+import _ from "lodash";
 import { ConfigurationChangeEvent, workspace, Disposable } from "vscode";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { PanelLocation, WorkspaceConfiguration } from "../common/State";
 import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
+import { DeviceRotation } from "../common/Project";
+import { updatePartialWorkspaceConfig } from "../utilities/updatePartialWorkspaceConfig";
 
 export class WorkspaceConfigController implements Disposable {
   private disposables: Disposable[] = [];
+  private workspaceConfigurationUpdatesToIgnore: WorkspaceConfiguration[] = [];
 
   constructor(private stateManager: StateManager<WorkspaceConfiguration>) {
     const configuration = workspace.getConfiguration("RadonIDE");
@@ -13,6 +17,7 @@ export class WorkspaceConfigController implements Disposable {
       panelLocation: configuration.get<PanelLocation>("panelLocation")!,
       showDeviceFrame: configuration.get<boolean>("showDeviceFrame")!,
       stopPreviousDevices: configuration.get<boolean>("stopPreviousDevices")!,
+      deviceRotation: configuration.get<DeviceRotation>("deviceRotation")!,
     };
 
     this.stateManager.setState(workspaceConfig);
@@ -24,12 +29,26 @@ export class WorkspaceConfigController implements Disposable {
 
       const config = workspace.getConfiguration("RadonIDE");
 
+      const currentWorkspaceConfig = {
+        panelLocation: config.get<PanelLocation>("panelLocation")!,
+        showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
+        stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
+        deviceRotation: config.get<DeviceRotation>("deviceRotation")!,
+      };
+
       for (const partialStateEntry of partialStateEntries) {
-        if (config.inspect(partialStateEntry[0] as string)?.workspaceValue) {
-          await config.update(partialStateEntry[0] as string, partialStateEntry[1], false);
-        } else {
-          await config.update(partialStateEntry[0] as string, partialStateEntry[1], true);
+        const updatedConfig = {
+          [partialStateEntry[0]]: partialStateEntry[1],
+          ...currentWorkspaceConfig,
+        };
+
+        const shouldSkipUpdate = _.isEqual(updatedConfig, currentWorkspaceConfig);
+        if (shouldSkipUpdate) {
+          continue;
         }
+
+        this.workspaceConfigurationUpdatesToIgnore.push(updatedConfig);
+        await updatePartialWorkspaceConfig(config, partialStateEntry);
       }
     });
 
@@ -46,7 +65,17 @@ export class WorkspaceConfigController implements Disposable {
       panelLocation: config.get<PanelLocation>("panelLocation")!,
       showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
       stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
+      deviceRotation: config.get<DeviceRotation>("deviceRotation")!,
     };
+
+    const index = this.workspaceConfigurationUpdatesToIgnore.findIndex((cfg) =>
+      _.isEqual(cfg, newConfig)
+    );
+    const shouldIgnoreUpdate = index !== -1;
+    if (shouldIgnoreUpdate) {
+      this.workspaceConfigurationUpdatesToIgnore.splice(index, 1);
+      return;
+    }
 
     const oldConfig = this.stateManager.getState();
 

@@ -2,6 +2,10 @@
   padding: 14px;
 }
 
+.mirror {
+  transform: scale(-1, 1);
+}
+
 .device-settings-heading {
   text-align: center;
   margin: 0 0 15px 0;

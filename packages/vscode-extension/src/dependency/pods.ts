@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import { OutputChannel, Disposable } from "vscode";
-import { command, lineReader } from "./subprocess";
-import { CancelToken } from "./cancelToken";
+import { command, lineReader } from "../utilities/subprocess";
+import { CancelToken } from "../utilities/cancelToken";
 import { getIosSourceDir } from "../builders/buildIOS";
 
 /**

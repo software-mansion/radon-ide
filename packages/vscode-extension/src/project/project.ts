@@ -8,10 +8,12 @@ import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
+  DeviceRotation,
   DeviceSessionsManagerState,
   DeviceSessionState,
   DeviceSettings,
   InspectData,
+  isOfEnumDeviceRotation,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -45,6 +47,9 @@ import { LaunchConfigurationsManager } from "./launchConfigurationsManager";
 import { LaunchConfiguration } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
+import { StateManager } from "./StateManager";
+import { ProjectStore, WorkspaceConfiguration } from "../common/State";
+import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -72,9 +77,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   constructor(
+    private readonly stateManager: StateManager<ProjectStore>,
+    private readonly workspaceStateManager: StateManager<WorkspaceConfiguration>,
     private readonly deviceManager: DeviceManager,
     private readonly utils: UtilsInterface,
     private readonly outputChannelRegistry: OutputChannelRegistry,
+    private readonly environmentDependencyManager: EnvironmentDependencyManager,
     initialLaunchConfigOptions?: LaunchConfiguration
   ) {
     const fingerprintProvider = new FingerprintProvider();
@@ -83,7 +91,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       ? initialLaunchConfigOptions
       : this.launchConfigsManager.initialLaunchConfiguration;
     this.selectedLaunchConfiguration = initialLaunchConfig;
-    this.applicationContext = new ApplicationContext(initialLaunchConfig, buildCache);
+    this.applicationContext = new ApplicationContext(
+      this.stateManager.getDerived("applicationContext"),
+      initialLaunchConfig,
+      buildCache
+    );
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
       this.deviceManager,
@@ -133,6 +145,24 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         });
       })
     );
+    this.disposables.push(
+      this.workspaceStateManager.onSetState(
+        (partialWorkspaceConfig: Partial<WorkspaceConfiguration>) => {
+          const deviceRotation = partialWorkspaceConfig.deviceRotation;
+          if (!deviceRotation) {
+            return;
+          }
+
+          const deviceRotationResult = isOfEnumDeviceRotation(deviceRotation)
+            ? deviceRotation
+            : DeviceRotation.Portrait;
+          this.deviceSessionsManager.rotateAllDevices(deviceRotationResult);
+        }
+      )
+    );
+
+    this.disposables.push(this.stateManager);
+    this.disposables.push(this.workspaceStateManager);
   }
 
   async focusOutput(channel: Output): Promise<void> {
@@ -183,8 +213,19 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     });
   }
 
+  public async runDependencyChecks(): Promise<void> {
+    await Promise.all([
+      this.applicationContext.applicationDependencyManager.runAllDependencyChecks(),
+      this.environmentDependencyManager.runAllDependencyChecks(),
+    ]);
+  }
+
   onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
     this.updateProjectState(state);
+  }
+
+  public getDeviceRotation(): DeviceRotation {
+    return this.workspaceStateManager.getState().deviceRotation;
   }
 
   get relativeAppRootPath() {
@@ -200,10 +241,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   get appRootFolder() {
     return this.applicationContext.appRootFolder;
-  }
-
-  get dependencyManager() {
-    return this.applicationContext.dependencyManager;
   }
 
   get buildCache() {
@@ -322,8 +359,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     await this.utils.saveMultimedia(screenshot);
   }
 
-  //#endregion
-
   async dispatchPaste(text: string) {
     await this.deviceSession?.sendClipboard(text);
     await this.utils.showToast("Pasted to device clipboard", 2000);
@@ -373,14 +408,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
 
-    if (this.dependencyManager === undefined) {
+    if (this.applicationContext.applicationDependencyManager === undefined) {
       Logger.error(
         "[PROJECT] Dependency manager not initialized. this code should be unreachable."
       );
       throw new Error("[PROJECT] Dependency manager not initialized");
     }
 
-    if (await this.dependencyManager.checkProjectUsesExpoRouter()) {
+    if (await this.applicationContext.applicationDependencyManager.checkProjectUsesExpoRouter()) {
       await this.deviceSession?.navigateHome();
     } else {
       await this.reloadMetro();
@@ -415,7 +450,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    this.deviceSession?.sendTouches(touches, type);
+    this.deviceSession?.sendTouches(touches, type, this.getDeviceRotation());
   }
 
   public dispatchKeyPress(keyCode: number, direction: "Up" | "Down") {
@@ -512,14 +547,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async showStorybookStory(componentTitle: string, storyName: string) {
-    if (this.dependencyManager === undefined) {
+    if (this.applicationContext.applicationDependencyManager === undefined) {
       Logger.error(
         "[PROJECT] Dependency manager not initialized. this code should be unreachable."
       );
       throw new Error("[PROJECT] Dependency manager not initialized");
     }
 
-    if (await this.dependencyManager.checkProjectUsesStorybook()) {
+    if (await this.applicationContext.applicationDependencyManager.checkProjectUsesStorybook()) {
       this.deviceSession?.openStorybookStory(componentTitle, storyName);
     } else {
       window.showErrorMessage("Storybook is not installed.", "Dismiss");

@@ -1,15 +1,105 @@
 import path from "path";
 import fs from "fs";
-import { command } from "./subprocess";
-import { isWorkspaceRoot } from "./common";
+import { command, lineReader } from "../utilities/subprocess";
+import { isWorkspaceRoot } from "../utilities/common";
 import { Logger } from "../Logger";
-import { requireNoCache } from "./requireNoCache";
+import { requireNoCache } from "../utilities/requireNoCache";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
+import { CancelToken } from "../utilities/cancelToken";
+import { Disposable, OutputChannel } from "vscode";
 
 export type PackageManagerInfo = {
   name: "npm" | "pnpm" | "yarn" | "bun";
   workspacePath?: string;
 };
+
+export class PackageManager implements Disposable {
+  private nodeModulesInstallationProcess:
+    | {
+        nodeModulesPromise: Promise<void>;
+        cancelToken: CancelToken;
+      }
+    | undefined;
+  constructor(private readonly launchConfiguration: ResolvedLaunchConfig) {}
+
+  public async isPackageManagerInstalled() {
+    // the resolvePackageManager function in getPackageManager checks
+    // if a package manager is installed and otherwise returns undefined
+    return (await resolvePackageManager(this.launchConfiguration)) !== undefined;
+  }
+
+  /**
+   * Installs node_modules project within the workspace.
+   *
+   * This method ensures that only one node_modules installation process runs at a time by cancelling any ongoing installation.
+   *
+   * @param outputChannel - The channel to which installation output will be appended.
+   * @param cancelToken - A token that can be used to cancel the node_modules installation process.
+   */
+  public async installNodeModules(
+    outputChannel: OutputChannel,
+    cancelToken: CancelToken
+  ): Promise<void> {
+    if (this.nodeModulesInstallationProcess) {
+      this.nodeModulesInstallationProcess.cancelToken.cancel();
+    }
+
+    // we create a new cancel token to avoid cancelling the calling process when the node_modules installation is cancelled
+    const cancelNodeModulesInstallToken = new CancelToken();
+    cancelToken.onCancel(() => cancelNodeModulesInstallToken.cancel());
+    const { promise, resolve, reject } = Promise.withResolvers<void>();
+    this.nodeModulesInstallationProcess = {
+      nodeModulesPromise: promise,
+      cancelToken: cancelNodeModulesInstallToken,
+    };
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
+    const packageManager = await resolvePackageManager(this.launchConfiguration);
+    if (!packageManager) {
+      // this should be unreachable, but we handle it just in case.
+      return reject(
+        "No package manager found. Please install npm, yarn, pnpm or bun to manage your project dependencies."
+      );
+    }
+
+    try {
+      // all package managers support the `install` command
+      const packageManagerProcess = cancelToken.adapt(
+        command(`${packageManager.name} install`, {
+          cwd: packageManager.workspacePath ?? appRoot,
+          quietErrorsOnExit: true,
+        })
+      );
+
+      lineReader(packageManagerProcess).onLineRead((line) => {
+        outputChannel.appendLine(line);
+      });
+      await packageManagerProcess;
+
+      resolve();
+    } catch (e) {
+      Logger.error("Failed to install node modules", e);
+      reject("Failed to install node modules. Check the logs for details.");
+    } finally {
+      this.nodeModulesInstallationProcess = undefined;
+    }
+
+    return promise;
+  }
+
+  public async areNodeModulesInstalled(): Promise<boolean> {
+    const appRoot = this.launchConfiguration.absoluteAppRoot;
+    const packageManager = (await resolvePackageManager(this.launchConfiguration)) ?? {
+      name: "npm",
+    };
+
+    return isNodeModulesInstalled(packageManager, appRoot);
+  }
+
+  dispose() {
+    this.nodeModulesInstallationProcess?.cancelToken.cancel();
+    this.nodeModulesInstallationProcess = undefined;
+  }
+}
 
 function isPackageManager(candidate: string): boolean {
   const packageManagers = ["npm", "yarn", "pnpm", "bun"];
