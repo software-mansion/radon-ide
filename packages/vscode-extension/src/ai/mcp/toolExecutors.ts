@@ -35,15 +35,14 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
   const registry = IDE.getInstanceIfExists()?.outputChannelRegistry;
 
   if (!registry) {
-    // TODO: Give explanation within this error
     return textToToolResponse(
       "Could not view the build logs! Radon IDE extension has not been opened."
     );
   }
 
   // TODO: Combine latest logs for both iOS, Android, and Bundler.
-  // TODO: Preferably only serve the latest build. Alternatively, but less preferably, serve last N lines + timestamps.
-  // TODO: Make Output.AndroidDevice and Output.IosDevice logs available
+  // TODO: Only serve the latest build.
+  // TODO: Make Output.AndroidDevice and Output.IosDevice logs available. Perhaps show them instead  if the build succeeded?
 
   const log = registry.getOrCreateOutputChannel(Output.BuildAndroid);
   const text = log.readAll().join("\n");

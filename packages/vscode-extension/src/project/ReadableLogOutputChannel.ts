@@ -5,20 +5,20 @@ export interface ReadableLogOutputChannel extends LogOutputChannel {
 }
 
 export function createReadableOutputChannel(channel: string): ReadableLogOutputChannel {
-  const blindOutput = window.createOutputChannel(channel, { log: true });
+  const outputChannel = window.createOutputChannel(channel, { log: true });
 
   const logRegistry: string[] = [];
 
   return {
-    ...blindOutput,
+    ...outputChannel,
     readAll: () => logRegistry,
     append: (value: string) => {
       logRegistry.push(value);
-      blindOutput.append(value);
+      outputChannel.append(value);
     },
     appendLine: (value: string) => {
       logRegistry.push(value);
-      blindOutput.appendLine(value);
+      outputChannel.appendLine(value);
     },
   };
 }
