@@ -45,6 +45,7 @@ function buildProject(
     xcodeProject.xcodeProjectLocation,
     "-configuration",
     configuration,
+    "TARGETED_DEVICE_FAMILY=1,2",
     "-scheme",
     scheme,
     "-arch",
