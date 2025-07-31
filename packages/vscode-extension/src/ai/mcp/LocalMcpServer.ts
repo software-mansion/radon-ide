@@ -15,19 +15,17 @@ import { watchLicenseTokenChange } from "../../utilities/license";
 
 export class LocalMcpServer implements Disposable {
   private session: Session | null = null;
+  private versionSuffix: number = 0;
 
-  private expressServer: http.Server | null = null;
+  private expressServer: http.Server;
+  private mcpServer: McpServer | null = null;
   private serverPort: Promise<number>;
   private setServerPort: ((port: number) => void) | null = null;
-
-  private mcpServer: McpServer | null = null;
-  private versionSuffix: number = 0;
+  private serverReloadEmitter: EventEmitter<void>;
 
   private connectionListener: ConnectionListener;
   private connectionSubscription: Disposable;
   private licenseTokenSubscription: Disposable;
-
-  private serverReloadEmitter: EventEmitter<void>;
 
   constructor(connectionListener: ConnectionListener) {
     // Deferred promise. The this.setServerPort is set immediately & synchronously.
@@ -47,7 +45,7 @@ export class LocalMcpServer implements Disposable {
       this.reloadToolSchema();
     });
 
-    this.initializeHttpServer();
+    this.expressServer = this.initializeHttpServer();
   }
 
   public async dispose(): Promise<void> {
@@ -90,7 +88,7 @@ export class LocalMcpServer implements Disposable {
     await this.session.transport.handleRequest(req, res);
   }
 
-  private initializeHttpServer() {
+  private initializeHttpServer(): http.Server {
     const app = express();
     app.use(express.json());
 
@@ -133,7 +131,7 @@ export class LocalMcpServer implements Disposable {
     app.get("/mcp", this.handleSessionRequest.bind(this));
     app.delete("/mcp", this.handleSessionRequest.bind(this));
 
-    this.expressServer = app.listen(0, "127.0.0.1").on("listening", () => {
+    return app.listen(0, "127.0.0.1").on("listening", () => {
       // On "listening", listener.address() will always return AddressInfo
       const addressInfo = this.expressServer?.address() as AddressInfo;
       this.setServerPort?.(addressInfo.port);
