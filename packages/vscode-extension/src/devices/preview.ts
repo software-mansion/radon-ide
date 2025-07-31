@@ -63,7 +63,6 @@ export class Preview implements Disposable {
     const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
     this.multimediaPromises.set(id, newPromiseHandler);
     stdin.write(`${type} ${id} ${type === "video" ? "save " : ""}-r ${rotation}\n`);
-    // stdin.write(`${type} ${id} ${type === "video" ? "save" : ""}\n`);
     return promise;
   }
 
