@@ -56,8 +56,6 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   private stateChangedEventEmitter = new EventEmitter<void>();
 
   public readonly onStateChanged = this.stateChangedEventEmitter.event;
-  // TODO:
-  private rotation: DeviceRotation = DeviceRotation.Portrait;
 
   public static async launch(
     applicationContext: ApplicationContext,
@@ -372,15 +370,15 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       }),
       this.devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
         const isLandscape =
-          this.rotation === DeviceRotation.LandscapeLeft ||
-          this.rotation === DeviceRotation.LandscapeRight;
+          this.device.rotation === DeviceRotation.LandscapeLeft ||
+          this.device.rotation === DeviceRotation.LandscapeRight;
 
         if (orientation === "Landscape") {
           // if the app orientation is equal to "Landscape", it means we do not have enough
           // information on the application side to infer the detailed orientation.
           if (isLandscape) {
             // if the device is in landscape mode, we assume that the app orientation is correct with device rotation
-            this.appOrientation = this.rotation;
+            this.appOrientation = this.device.rotation;
           } else {
             // if the device is not in landscape mode we set app orientation to the last known orientation.
             // if the last orientation is not known, we assume the application was started in Landscape mode

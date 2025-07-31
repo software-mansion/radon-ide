@@ -47,6 +47,7 @@ export abstract class DeviceBase implements Disposable {
     DEVICE_SETTINGS_KEY,
     DEVICE_SETTINGS_DEFAULT
   );
+  private _rotation: DeviceRotation = DeviceRotation.Portrait;
 
   abstract get lockFilePath(): string;
 
@@ -56,6 +57,10 @@ export abstract class DeviceBase implements Disposable {
 
   public get previewReady() {
     return this.preview?.streamURL !== undefined;
+  }
+
+  public get rotation() {
+    return this._rotation;
   }
 
   async reboot(): Promise<void> {
@@ -225,8 +230,7 @@ export abstract class DeviceBase implements Disposable {
   }
 
   public sendRotate(rotation: DeviceRotation) {
-    // Preview may not be started yet, but we still wish to be able to rotate during init of device.
-    // The rotation is set in constructor of device and is gotten from the workspace configuration anyways.
+    this._rotation = rotation;
     this.preview?.rotateDevice(rotation);
   }
 
@@ -236,6 +240,7 @@ export abstract class DeviceBase implements Disposable {
       this.previewStartPromise = this.preview.start();
       this.previewStartPromise.then(() => {
         this.applyPreviewSettings();
+        this.preview?.rotateDevice(this._rotation);
       });
     }
     return this.previewStartPromise;

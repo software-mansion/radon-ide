@@ -106,7 +106,7 @@ export class DeviceSession implements Disposable {
   constructor(
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
-    private rotation: DeviceRotation,
+    initialRotation: DeviceRotation,
     private readonly deviceSessionDelegate: DeviceSessionDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
@@ -118,6 +118,7 @@ export class DeviceSession implements Disposable {
     this.buildManager = this.applicationContext.buildManager;
 
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
+    this.device.sendRotate(initialRotation);
   }
 
   public getState(): DeviceSessionState {
@@ -540,8 +541,6 @@ export class DeviceSession implements Disposable {
         throw new Error("Device preview URL is not available");
       }
       previewURL = url;
-      // initialise device rotation
-      this.sendRotate(this.rotation);
     });
 
     const launchStageListener = (stage: AppLaunchStage) => {
@@ -861,7 +860,6 @@ export class DeviceSession implements Disposable {
   public sendRotate(rotation: DeviceRotation) {
     this.device.sendRotate(rotation);
     this.emitStateChange();
-    this.rotation = rotation;
   }
 
   public async getClipboard() {
