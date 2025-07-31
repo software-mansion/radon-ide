@@ -29,3 +29,25 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
     ],
   };
 }
+
+export async function buildLogsToolExec(): Promise<ToolResponse> {
+  const project = IDE.getInstanceIfExists()?.project;
+
+  if (!project || !project.deviceSession) {
+    // TODO: Give explanation within this error
+    return textToToolResponse("Could not view the build logs!\n");
+  }
+
+  // project.buildCache.getBuild()
+
+  const text = "placeholder"; // readFileSync(filename, { encoding: "utf8" });
+
+  return {
+    content: [
+      {
+        type: "text",
+        text,
+      },
+    ],
+  };
+}
