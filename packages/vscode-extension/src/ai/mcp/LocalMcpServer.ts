@@ -17,7 +17,7 @@ export class LocalMcpServer implements Disposable {
   private session: Session | null = null;
 
   private expressServer: http.Server | null = null;
-  private serverPort: Promise<number> | null = null;
+  private serverPort: Promise<number>;
   private setServerPort: ((port: number) => void) | null = null;
 
   private mcpServer: McpServer | null = null;
@@ -61,9 +61,7 @@ export class LocalMcpServer implements Disposable {
   }
 
   public async getPort() {
-    // `this.serverPort` is set in the initializer.
-    // Typescript incorrectly types it as nullable.
-    return (await this.serverPort) ?? 0;
+    return this.serverPort;
   }
 
   private reloadToolSchema() {
