@@ -38,6 +38,14 @@ export enum AppLaunchStage {
   AttachingDebugger = "Connecting debugger",
 }
 
+interface LaunchApplicationSessionDeps {
+  applicationContext: ApplicationContext;
+  device: DeviceBase;
+  buildResult: BuildResult;
+  metro: MetroLauncher;
+  devtools: Devtools;
+}
+
 export class ApplicationSession implements ToolsDelegate, Disposable {
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
@@ -58,16 +66,12 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   public readonly onStateChanged = this.stateChangedEventEmitter.event;
 
   public static async launch(
-    applicationContext: ApplicationContext,
-    device: DeviceBase,
-    buildResult: BuildResult,
-    metro: MetroLauncher,
-    devtools: Devtools,
+    { applicationContext, device, buildResult, metro, devtools }: LaunchApplicationSessionDeps,
     getIsActive: () => boolean,
     onLaunchStage: (stage: AppLaunchStage) => void,
     cancelToken: CancelToken
   ): Promise<ApplicationSession> {
-    const session = new ApplicationSession(applicationContext, device, metro, devtools);
+    const session = new ApplicationSession(device, metro, devtools);
     if (getIsActive()) {
       // we need to start the parent debug session asap to ensure metro errors are shown in the debug console
       await session.setupDebugSession();
@@ -102,7 +106,6 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   }
 
   private constructor(
-    private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
     private readonly devtools: Devtools

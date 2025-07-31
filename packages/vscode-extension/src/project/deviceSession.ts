@@ -562,11 +562,13 @@ export class DeviceSession implements Disposable {
     };
 
     const applicationSessionPromise = ApplicationSession.launch(
-      this.applicationContext,
-      this.device,
-      this.buildResult,
-      this.metro,
-      this.devtools,
+      {
+        applicationContext: this.applicationContext,
+        device: this.device,
+        buildResult: this.buildResult,
+        metro: this.metro,
+        devtools: this.devtools,
+      },
       () => this.isActive,
       launchStageListener,
       cancelToken
