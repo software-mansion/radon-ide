@@ -892,7 +892,7 @@ export class DeviceSession implements Disposable {
   }
 
   public async stopProfilingReact() {
-    await this.applicationSession?.stopProfilingReact();
+    return await this.applicationSession?.stopProfilingReact();
   }
 
   public openTool(toolName: ToolKey) {

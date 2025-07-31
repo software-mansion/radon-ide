@@ -244,6 +244,7 @@ function PreviewView() {
 
   const logCounter = isRunning ? selectedDeviceSession.logCounter : 0;
   const profilingCPUState = isRunning ? selectedDeviceSession?.profilingCPUState : "stopped";
+  const profilingReactState = isRunning ? selectedDeviceSession?.profilingReactState : "stopped";
 
   return (
     <div
@@ -270,7 +271,7 @@ function PreviewView() {
             onClick={stopProfilingCPU}
           />
           <ProfilingButton
-            profilingState={selectedDeviceSession?.profilingReactState ?? "stopped"}
+            profilingState={profilingReactState}
             title="Stop profiling React"
             onClick={stopProfilingReact}
           />
