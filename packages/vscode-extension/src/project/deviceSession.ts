@@ -371,10 +371,7 @@ export class DeviceSession implements Disposable {
     this.cancelOngoingOperations();
     const cancelToken = this.cancelToken;
 
-    this.status = "starting";
-    this.fatalError = undefined;
     this.updateStartupMessage(StartupMessage.StartingPackager);
-
     const oldMetro = this.metro;
     this.metro = new MetroLauncher(this.devtools);
     this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
@@ -411,8 +408,6 @@ export class DeviceSession implements Disposable {
     this.cancelOngoingOperations();
     const cancelToken = this.cancelToken;
 
-    this.status = "starting";
-    this.fatalError = undefined;
     this.updateStartupMessage(StartupMessage.Installing);
 
     await this.stopApp();
@@ -424,8 +419,6 @@ export class DeviceSession implements Disposable {
     this.cancelOngoingOperations();
     const cancelToken = this.cancelToken;
 
-    this.status = "starting";
-    this.fatalError = undefined;
     this.updateStartupMessage(StartupMessage.Launching);
 
     await this.stopApp();
@@ -436,10 +429,7 @@ export class DeviceSession implements Disposable {
     this.cancelOngoingOperations();
     const cancelToken = this.cancelToken;
 
-    this.status = "starting";
-    this.fatalError = undefined;
     this.updateStartupMessage(StartupMessage.InitializingDevice);
-
     await this.stopApp();
 
     this.updateStartupMessage(StartupMessage.BootingDevice);
@@ -533,7 +523,27 @@ export class DeviceSession implements Disposable {
       () => this.isActive,
       this.updateStartupMessage.bind(this),
       cancelToken
-    );
+    ).then((applicationSession) => {
+      // NOTE: this can happen if the launch finished successfully,
+      // but then the start operation was cancelled before this callback started executing
+      if (cancelToken.cancelled) {
+        applicationSession.dispose();
+        throw new CancelError("Launch cancelled");
+      }
+
+      this.applicationSession = applicationSession;
+      applicationSession.onStateChanged(() => this.emitStateChange());
+      this.status = "running";
+      this.emitStateChange();
+
+      const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
+      Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
+      getTelemetryReporter().sendTelemetryEvent(
+        "app:launch:completed",
+        { platform: this.platform },
+        { durationSec: launchDurationSec }
+      );
+    });
 
     const launchConfig = this.applicationContext.launchConfig;
     const shouldWaitForAppLaunch = launchConfig.preview.waitForAppLaunch;
@@ -556,30 +566,7 @@ export class DeviceSession implements Disposable {
         });
     }
 
-    applicationSessionPromise.then((applicationSession) => {
-      // NOTE: this can happen if the launch finished successfully,
-      // but then the start operation was cancelled before this callback started executing
-      if (cancelToken.cancelled) {
-        applicationSession.dispose();
-        throw new CancelError("Launch cancelled");
-      }
-      this.applicationSession = applicationSession;
-      applicationSession.onStateChanged(() => this.emitStateChange());
-      this.emitStateChange();
-
-      Logger.debug("App and preview ready, moving on...");
-      this.status = "running";
-
-      const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
-      Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
-      getTelemetryReporter().sendTelemetryEvent(
-        "app:launch:completed",
-        { platform: this.platform },
-        { durationSec: launchDurationSec }
-      );
-    });
-
-    return waitForAppReady;
+    await waitForAppReady;
   }
 
   private async stopApp() {
