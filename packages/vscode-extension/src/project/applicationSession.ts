@@ -50,6 +50,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   private logCounter = 0;
   private isDebuggerPaused = false;
   private profilingCPUState: ProfilingState = "stopped";
+  private profilingReactState: ProfilingState = "stopped";
   private isRefreshing: boolean = false;
   private appOrientation: DeviceRotation | undefined;
   private isActive = false;
@@ -119,6 +120,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   public get state(): ApplicationSessionState {
     return {
       profilingCPUState: this.profilingCPUState,
+      profilingReactState: this.profilingReactState,
       toolsState: this.toolsManager.getToolsState(),
       isDebuggerPaused: this.isDebuggerPaused,
       logCounter: this.logCounter,
@@ -276,6 +278,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     }
   }
 
+  //#region Debugger control
   public resumeDebugger() {
     this.debugSession?.resumeDebugger();
   }
@@ -303,6 +306,78 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     });
   }
 
+  private registerDevtoolsListeners() {
+    this.disposables.push(
+      this.devtools.onEvent("appReady", () => {
+        // NOTE: since this is triggered by the JS bundle,
+        // we can assume that if it fires, the bundle loaded successfully.
+        // This is necessary to reset the bundle error state when the app reload
+        // is triggered from the app itself (e.g. by in-app dev menu or redbox).
+        this.bundleError = undefined;
+      }),
+      this.devtools.onEvent("fastRefreshStarted", () => {
+        this.isRefreshing = true;
+        this.bundleError = undefined;
+        this.emitStateChange();
+      }),
+      this.devtools.onEvent("fastRefreshComplete", () => {
+        this.isRefreshing = false;
+        this.emitStateChange();
+      }),
+      this.devtools.onEvent("isProfilingReact", (isProfiling) => {
+        if (this.profilingReactState !== "saving") {
+          this.profilingReactState = isProfiling ? "profiling" : "stopped";
+          this.emitStateChange();
+        }
+      }),
+      this.devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
+        const isLandscape =
+          this.device.rotation === DeviceRotation.LandscapeLeft ||
+          this.device.rotation === DeviceRotation.LandscapeRight;
+
+        if (orientation === "Landscape") {
+          // if the app orientation is equal to "Landscape", it means we do not have enough
+          // information on the application side to infer the detailed orientation.
+          if (isLandscape) {
+            // if the device is in landscape mode, we assume that the app orientation is correct with device rotation
+            this.appOrientation = this.device.rotation;
+          } else {
+            // if the device is not in landscape mode we set app orientation to the last known orientation.
+            // if the last orientation is not known, we assume the application was started in Landscape mode
+            // while the device was oriented in Portrait, and we pick `LandscapeLeft` as the default orientation in that case.
+            this.appOrientation = this.appOrientation ?? DeviceRotation.LandscapeLeft;
+          }
+        } else {
+          this.appOrientation = orientation;
+        }
+
+        this.emitStateChange();
+      })
+    );
+  }
+  //#endregion
+
+  public async reloadJS() {
+    if (!this.devtools.hasConnectedClient) {
+      Logger.debug(
+        "`reloadJS()` was called on an application session while the devtools are not connected. " +
+          "This should never happen, since an application session should represent a running and connected application."
+      );
+      throw new Error("Tried to reload JS on an application which disconnected from Radon");
+    }
+    const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
+    const bundleErrorSubscription = this.metro.onBundleError(() => {
+      reject(new Error("Bundle error occurred during reload"));
+    });
+    try {
+      await this.metro.reload();
+      await Promise.race([this.devtools.appReady(), bundleErrorPromise]);
+    } finally {
+      bundleErrorSubscription.dispose();
+    }
+  }
+
+  //#region CPU Profiling
   public async startProfilingCPU(): Promise<void> {
     await this.debugSession?.startProfilingCPU();
   }
@@ -352,70 +427,22 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       }
     }
   }
+  //#endregion
 
-  private registerDevtoolsListeners() {
-    this.disposables.push(
-      this.devtools.onEvent("appReady", () => {
-        // NOTE: since this is triggered by the JS bundle,
-        // we can assume that if it fires, the bundle loaded successfully.
-        // This is necessary to reset the bundle error state when the app reload
-        // is triggered from the app itself (e.g. by in-app dev menu or redbox).
-        this.bundleError = undefined;
-      }),
-      this.devtools.onEvent("fastRefreshStarted", () => {
-        this.isRefreshing = true;
-        this.bundleError = undefined;
-        this.emitStateChange();
-      }),
-      this.devtools.onEvent("fastRefreshComplete", () => {
-        this.isRefreshing = false;
-        this.emitStateChange();
-      }),
-      this.devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
-        const isLandscape =
-          this.device.rotation === DeviceRotation.LandscapeLeft ||
-          this.device.rotation === DeviceRotation.LandscapeRight;
-
-        if (orientation === "Landscape") {
-          // if the app orientation is equal to "Landscape", it means we do not have enough
-          // information on the application side to infer the detailed orientation.
-          if (isLandscape) {
-            // if the device is in landscape mode, we assume that the app orientation is correct with device rotation
-            this.appOrientation = this.device.rotation;
-          } else {
-            // if the device is not in landscape mode we set app orientation to the last known orientation.
-            // if the last orientation is not known, we assume the application was started in Landscape mode
-            // while the device was oriented in Portrait, and we pick `LandscapeLeft` as the default orientation in that case.
-            this.appOrientation = this.appOrientation ?? DeviceRotation.LandscapeLeft;
-          }
-        } else {
-          this.appOrientation = orientation;
-        }
-
-        this.emitStateChange();
-      })
-    );
+  //#region React Profiling
+  public async startProfilingReact() {
+    return await this.devtools.startProfilingReact();
   }
 
-  public async reloadJS() {
-    if (!this.devtools.hasConnectedClient) {
-      Logger.debug(
-        "`reloadJS()` was called on an application session while the devtools are not connected. " +
-          "This should never happen, since an application session should represent a running and connected application."
-      );
-      throw new Error("Tried to reload JS on an application which disconnected from Radon");
-    }
-    const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
-    const bundleErrorSubscription = this.metro.onBundleError(() => {
-      reject(new Error("Bundle error occurred during reload"));
-    });
+  public async stopProfilingReact() {
     try {
-      await this.metro.reload();
-      await Promise.race([this.devtools.appReady(), bundleErrorPromise]);
+      return await this.devtools.stopProfilingReact();
     } finally {
-      bundleErrorSubscription.dispose();
+      this.profilingReactState = "stopped";
+      this.emitStateChange();
     }
   }
+  //#endregion
 
   public resetLogCounter() {
     this.logCounter = 0;

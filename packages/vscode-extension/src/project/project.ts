@@ -296,16 +296,16 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   async startProfilingCPU() {
-    if (this.deviceSession?.applicationSession) {
-      await this.deviceSession.applicationSession.startProfilingCPU();
+    if (this.deviceSession) {
+      await this.deviceSession.startProfilingCPU();
     } else {
       throw new Error("No application running");
     }
   }
 
   async stopProfilingCPU() {
-    if (this.deviceSession?.applicationSession) {
-      await this.deviceSession.applicationSession.stopProfilingCPU();
+    if (this.deviceSession) {
+      await this.deviceSession.stopProfilingCPU();
     } else {
       throw new Error("No application running");
     }
@@ -496,11 +496,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async resumeDebugger() {
-    this.deviceSession?.applicationSession?.resumeDebugger();
+    this.deviceSession?.resumeDebugger();
   }
 
   public async stepOverDebugger() {
-    this.deviceSession?.applicationSession?.stepOverDebugger();
+    this.deviceSession?.stepOverDebugger();
   }
 
   public async focusDebugConsole() {

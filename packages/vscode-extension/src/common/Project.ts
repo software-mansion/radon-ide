@@ -73,7 +73,6 @@ export type DeviceSessionStatus = "starting" | "running" | "fatalError";
 type DeviceSessionStateCommon = {
   deviceInfo: DeviceInfo;
   previewURL: string | undefined;
-  profilingReactState: ProfilingState;
   navigationHistory: NavigationHistoryItem[];
   navigationRouteList: NavigationRoute[];
   hasStaleBuildCache: boolean;
@@ -82,6 +81,7 @@ type DeviceSessionStateCommon = {
 
 export interface ApplicationSessionState {
   profilingCPUState: ProfilingState;
+  profilingReactState: ProfilingState;
   toolsState: ToolsState;
   isDebuggerPaused: boolean;
   logCounter: number;

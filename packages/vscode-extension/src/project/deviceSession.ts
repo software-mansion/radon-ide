@@ -21,7 +21,6 @@ import {
   DeviceButtonType,
   DeviceSessionState,
   ToolsState,
-  ProfilingState,
   NavigationHistoryItem,
   NavigationRoute,
   DeviceSessionStatus,
@@ -76,13 +75,12 @@ export class DeviceSession implements Disposable {
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
   private stageProgress: number | undefined;
   private fatalError: FatalErrorDescriptor | undefined;
-  private profilingReactState: ProfilingState = "stopped";
   private navigationHistory: NavigationHistoryItem[] = [];
   private navigationRouteList: NavigationRoute[] = [];
   private navigationHomeTarget: NavigationHistoryItem | undefined;
   private hasStaleBuildCache = false;
   private isRecordingScreen = false;
-  public applicationSession: ApplicationSession | undefined;
+  private applicationSession: ApplicationSession | undefined;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -123,7 +121,6 @@ export class DeviceSession implements Disposable {
 
   public getState(): DeviceSessionState {
     const commonState = {
-      profilingReactState: this.profilingReactState,
       navigationHistory: this.navigationHistory,
       navigationRouteList: this.navigationRouteList,
       deviceInfo: this.device.deviceInfo,
@@ -162,7 +159,6 @@ export class DeviceSession implements Disposable {
     this.stageProgress = undefined;
     this.fatalError = undefined;
     this.hasStaleBuildCache = false;
-    this.profilingReactState = "stopped";
     this.navigationHomeTarget = undefined;
     this.emitStateChange();
   }
@@ -253,12 +249,6 @@ export class DeviceSession implements Disposable {
     devtools.onEvent("navigationRouteListUpdated", (payload: NavigationRoute[]) => {
       this.navigationRouteList = payload;
       this.emitStateChange();
-    });
-    devtools.onEvent("isProfilingReact", (isProfiling) => {
-      if (this.profilingReactState !== "saving") {
-        this.profilingReactState = isProfiling ? "profiling" : "stopped";
-        this.emitStateChange();
-      }
     });
     return devtools;
   }
@@ -776,19 +766,6 @@ export class DeviceSession implements Disposable {
     return this.device.captureScreenshot();
   }
 
-  public async startProfilingReact() {
-    return await this.devtools.startProfilingReact();
-  }
-
-  public async stopProfilingReact() {
-    try {
-      return await this.devtools.stopProfilingReact();
-    } finally {
-      this.profilingReactState = "stopped";
-      this.emitStateChange();
-    }
-  }
-
   public sendTouches(
     touches: Array<TouchPoint>,
     type: "Up" | "Move" | "Down",
@@ -885,12 +862,37 @@ export class DeviceSession implements Disposable {
     await this.device.sendBiometricAuthorization(isMatch);
   }
 
+  public openStorybookStory(componentTitle: string, storyName: string) {
+    this.inspectorBridge.sendShowStorybookStoryRequest(componentTitle, storyName);
+  }
+
+  //#region Methoids delegated to Application Session
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
     this.applicationSession?.updateToolEnabledState(toolName, enabled);
   }
 
-  public openStorybookStory(componentTitle: string, storyName: string) {
-    this.inspectorBridge.sendShowStorybookStoryRequest(componentTitle, storyName);
+  public resumeDebugger() {
+    this.applicationSession?.resumeDebugger();
+  }
+
+  public stepOverDebugger() {
+    this.applicationSession?.stepOverDebugger();
+  }
+
+  public async startProfilingCPU() {
+    await this.applicationSession?.startProfilingCPU();
+  }
+
+  public async stopProfilingCPU() {
+    await this.applicationSession?.stopProfilingCPU();
+  }
+
+  public async startProfilingReact() {
+    await this.applicationSession?.startProfilingReact();
+  }
+
+  public async stopProfilingReact() {
+    await this.applicationSession?.stopProfilingReact();
   }
 
   public openTool(toolName: ToolKey) {
@@ -901,11 +903,12 @@ export class DeviceSession implements Disposable {
     return this.applicationSession?.getPlugin(toolName);
   }
 
-  public getMetroPort() {
-    return this.metro.port;
-  }
-
   public resetLogCounter() {
     this.applicationSession?.resetLogCounter();
+  }
+  //#endregion
+
+  public getMetroPort() {
+    return this.metro.port;
   }
 }
