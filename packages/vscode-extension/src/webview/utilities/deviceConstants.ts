@@ -203,8 +203,8 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     landscapeScreenImage: ipadA16LandscapeScreen,
     bezel: {
       type: "mask",
-      width: 1640,
-      height: 2360,
+      width: 2468,
+      height: 3548,
       offsetX: 4,
       offsetY: 4,
       image: ipadA16bezel,
