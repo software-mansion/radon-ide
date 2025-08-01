@@ -116,6 +116,11 @@
   height: unset;
 }
 
+.continue-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .paywall-background-image {
   width: 100%;
   height: 100%;

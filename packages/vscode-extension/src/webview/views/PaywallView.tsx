@@ -27,24 +27,36 @@ function PaywallView() {
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>("yearly");
   const paddle = usePaddle();
   const [prices, setPrices] = useState<PricePreviewResponse | null>(null);
+  const [isLoadingPrices, setIsLoadingPrices] = useState(false);
+  const [pricesError, setPricesError] = useState<string | null>(null);
 
-  // TODO: add a sneaky way to hide loading state for prices
   async function getPrices() {
-    const response = await paddle?.PricePreview({
-      items: [
-        { quantity: 1, priceId: RadonIDEProMonthlyPriceID },
-        { quantity: 1, priceId: RadonIDEProYearlyPriceID },
-      ],
-      address: {
-        countryCode: "US",
-      },
-    });
+    setIsLoadingPrices(true);
+    setPricesError(null);
 
-    if (!response) {
-      console.error("Failed to fetch prices from Paddle");
-      return;
+    try {
+      const response = await paddle?.PricePreview({
+        items: [
+          { quantity: 1, priceId: RadonIDEProMonthlyPriceID },
+          { quantity: 1, priceId: RadonIDEProYearlyPriceID },
+        ],
+        address: {
+          countryCode: "US",
+        },
+      });
+
+      if (!response) {
+        throw new Error("Failed to fetch prices from Paddle - no response received");
+      }
+
+      setPrices(response);
+      setIsLoadingPrices(false);
+    } catch (error) {
+      console.error("Failed to fetch prices from Paddle:", error);
+      setPricesError(error instanceof Error ? error.message : "Failed to load pricing information");
+    } finally {
+      setIsLoadingPrices(false);
     }
-    setPrices(response || null);
   }
 
   useEffect(() => {
@@ -70,7 +82,6 @@ function PaywallView() {
       <RadonBackgroundImage color="#222" className="paywall-background-image" />
       <div className="paywall-container">
         <h1 className="paywall-title">Unlock Radon IDE Pro</h1>
-        <p>Start with 2 week trial. Cancel any time.</p>
 
         <ul className="paywall-benefits">
           {benefits.map((benefit, index) => (
@@ -81,38 +92,48 @@ function PaywallView() {
           ))}
         </ul>
 
-        <div className="subscription-options">
-          <div
-            className={`subscription-option ${selectedPlan === "yearly" ? "selected" : ""}`}
-            onClick={() => setSelectedPlan("yearly")}>
-            <div className="plan-header">
-              <span className="plan-name">
-                Yearly Plan <span className="plan-saving">Save 16%</span>
-              </span>
-              <span className="plan-price">
-                <span>{radonProYearlyPrice?.formattedTotals.total}</span> / year
-              </span>
-            </div>
-            <div className="plan-description">Billed annually</div>
-          </div>
+        <p>Start with 2 week trial then:</p>
 
-          <div
-            className={`subscription-option ${selectedPlan === "monthly" ? "selected" : ""}`}
-            onClick={() => setSelectedPlan("monthly")}>
-            <div className="plan-header">
-              <span className="plan-name">Monthly Plan</span>
-              <span className="plan-price">
-                <span>{radonProMonthlyPrice?.formattedTotals.total}</span> / month
-              </span>
-            </div>
-            <div className="plan-description">Billed monthly</div>
-          </div>
+        <div className="subscription-options">
+          {!pricesError && (
+            <>
+              <div
+                className={`subscription-option ${selectedPlan === "yearly" ? "selected" : ""}`}
+                onClick={() => setSelectedPlan("yearly")}>
+                <div className="plan-header">
+                  <span className="plan-name">
+                    Yearly Plan <span className="plan-saving">Save 16%</span>
+                  </span>
+                  <span className="plan-price">
+                    <span>{radonProYearlyPrice?.formattedTotals.total || "Loading..."}</span> / year
+                  </span>
+                </div>
+                <div className="plan-description">Billed annually</div>
+              </div>
+
+              <div
+                className={`subscription-option ${selectedPlan === "monthly" ? "selected" : ""}`}
+                onClick={() => setSelectedPlan("monthly")}>
+                <div className="plan-header">
+                  <span className="plan-name">Monthly Plan</span>
+                  <span className="plan-price">
+                    <span>{radonProMonthlyPrice?.formattedTotals.total || "Loading..."}</span> /
+                    month
+                  </span>
+                </div>
+                <div className="plan-description">Billed monthly</div>
+              </div>
+            </>
+          )}
         </div>
 
         <p>Recurring billing. Cancel anytime.</p>
 
-        <Button className="continue-button" onClick={handleContinue}>
-          Continue
+        <Button
+          className="continue-button"
+          onClick={handleContinue}
+          disabled={isLoadingPrices || !!pricesError}>
+          {isLoadingPrices ? "Loading..." : "Continue"}
         </Button>
       </div>
     </div>
