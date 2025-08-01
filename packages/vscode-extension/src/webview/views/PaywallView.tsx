@@ -70,18 +70,30 @@ function PaywallView() {
       <RadonBackgroundImage color="#222" className="paywall-background-image" />
       <div className="paywall-container">
         <h1 className="paywall-title">Unlock Radon IDE Pro</h1>
+        <p>Start with 2 week trial. Cancel any time.</p>
+
+        <ul className="paywall-benefits">
+          {benefits.map((benefit, index) => (
+            <li key={index} className="paywall-benefit">
+              <span className="codicon codicon-check" />
+              {benefit}
+            </li>
+          ))}
+        </ul>
 
         <div className="subscription-options">
           <div
             className={`subscription-option ${selectedPlan === "yearly" ? "selected" : ""}`}
             onClick={() => setSelectedPlan("yearly")}>
             <div className="plan-header">
-              <span className="plan-name">Yearly Plan</span>
+              <span className="plan-name">
+                Yearly Plan <span className="plan-saving">Save 16%</span>
+              </span>
               <span className="plan-price">
                 <span>{radonProYearlyPrice?.formattedTotals.total}</span> / year
               </span>
             </div>
-            <div className="plan-description">Save 17% • Billed annually</div>
+            <div className="plan-description">Billed annually</div>
           </div>
 
           <div
