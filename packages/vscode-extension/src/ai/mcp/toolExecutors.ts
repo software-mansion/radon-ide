@@ -75,5 +75,14 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
 
   const text = combinedLogs.join("\n");
 
+  if (session.device.isPreviewStarted()) {
+    const screenshot = await session.captureScreenshot();
+    const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
+
+    return {
+      content: [textToContent(text), base64ToContent(contents)],
+    };
+  }
+
   return textToToolResponse(text);
 }
