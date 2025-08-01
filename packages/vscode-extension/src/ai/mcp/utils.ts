@@ -45,7 +45,7 @@ export const truncateMiddle = (
   } else {
     const removedLinesOfLogs = lines.length - keepTotal;
     return [
-      ...lines.slice(keepFirstN),
+      ...lines.slice(0, keepFirstN),
       `\n...\n\n[SKIPPED ${removedLinesOfLogs} LINES OF LOGS]\n\n...\n`,
       ...lines.slice(-keepLastN),
     ];
