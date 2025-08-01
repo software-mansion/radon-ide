@@ -1,7 +1,6 @@
 import path from "path";
 import fs from "fs";
 import assert from "assert";
-import _ from "lodash";
 import {
   commands,
   window,
@@ -1034,6 +1033,10 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
 
   public async captureScreenshot(rotation: DeviceRotation) {
     return this.device.captureScreenshot(rotation);
+  }
+
+  public isPreviewAvailable() {
+    return this.device.isPreviewAvailable();
   }
 
   public async startProfilingReact() {
