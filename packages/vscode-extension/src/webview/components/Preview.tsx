@@ -94,10 +94,9 @@ function Preview({
   const hasFatalError = selectedDeviceSession?.status === "fatalError";
   const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
 
-  const debugPaused = selectedDeviceSession?.isDebuggerPaused;
-
   const isRunning = selectedDeviceSession?.status === "running";
   const isRefreshing = isRunning && selectedDeviceSession.isRefreshing;
+  const debugPaused = isRunning && selectedDeviceSession.isDebuggerPaused;
 
   const previewURL = selectedDeviceSession?.previewURL;
 

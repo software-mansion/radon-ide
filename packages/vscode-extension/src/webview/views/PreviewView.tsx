@@ -242,6 +242,10 @@ function PreviewView() {
     content = <NoDeviceView hasNoDevices={hasNoDevices} />;
   }
 
+  const logCounter = isRunning ? selectedDeviceSession.logCounter : 0;
+  const profilingCPUState = isRunning ? selectedDeviceSession?.profilingCPUState : "stopped";
+  const profilingReactState = isRunning ? selectedDeviceSession?.profilingReactState : "stopped";
+
   return (
     <div
       className="panel-view"
@@ -262,12 +266,12 @@ function PreviewView() {
         </div>
         <div className="button-group-top-right">
           <ProfilingButton
-            profilingState={selectedDeviceSession?.profilingCPUState ?? "stopped"}
+            profilingState={profilingCPUState}
             title="Stop profiling CPU"
             onClick={stopProfilingCPU}
           />
           <ProfilingButton
-            profilingState={selectedDeviceSession?.profilingReactState ?? "stopped"}
+            profilingState={profilingReactState}
             title="Stop profiling React"
             onClick={stopProfilingReact}
           />
@@ -311,7 +315,7 @@ function PreviewView() {
             <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
           <IconButton
-            counter={selectedDeviceSession?.logCounter}
+            counter={logCounter}
             onClick={() => project.focusDebugConsole()}
             tooltip={{
               label: "Open logs panel",

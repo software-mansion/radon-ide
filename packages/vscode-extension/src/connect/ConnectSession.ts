@@ -54,7 +54,7 @@ export default class ConnectSession implements Disposable {
     if (!isUsingNewDebugger) {
       throw new Error("Auto-connect is only supported for the new React Native debugger");
     }
-    const success = await this.debugSession.startJSDebugSession({
+    await this.debugSession.startJSDebugSession({
       websocketAddress,
       displayDebuggerOverlay: true,
       installConnectRuntime: true,
@@ -62,7 +62,6 @@ export default class ConnectSession implements Disposable {
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
       sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
     });
-    return success;
   }
 
   private registerDebugSessionListeners(): Disposable {

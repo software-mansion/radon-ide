@@ -131,13 +131,13 @@ export class Connector implements Disposable {
         this.maybeStartScanner();
       },
     });
-    const success = await connectSession.start(websocketAddress);
-    if (success) {
+    try {
+      await connectSession.start(websocketAddress);
       getTelemetryReporter().sendTelemetryEvent("radon-connect:connected", {});
       this.connectSession?.dispose();
       this.connectSession = connectSession;
       this.stopScanner();
-    } else {
+    } catch {
       connectSession.dispose();
     }
   }
