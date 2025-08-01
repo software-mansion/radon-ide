@@ -83,7 +83,7 @@ function PaywallView() {
 
   return (
     <div className="paywall-view">
-      <RadonBackgroundImage color="#222" className="paywall-background-image" />
+      <RadonBackgroundImage className="paywall-background-image" />
       {shouldShowPaywall && (
         <div className="paywall-container">
           <h1 className="paywall-title">Unlock Radon IDE Pro</h1>
