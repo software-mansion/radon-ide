@@ -181,23 +181,26 @@
   font-size: 14px;
 }
 
+.continue-button-container {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+
+.continue-button-container.no-prices {
+  animation-delay: 850ms;
+}
+
+.continue-button-container.with-prices {
+  animation-delay: 950ms;
+}
+
 .continue-button {
   box-sizing: border-box;
   width: 100%;
   padding: 12px 24px;
   font-size: 16px;
   height: unset;
-  opacity: 0;
-  transform: translateY(12px);
-  animation: fadeInUp 0.3s ease-out forwards;
-}
-
-.continue-button.no-prices {
-  animation-delay: 850ms;
-}
-
-.continue-button.with-prices {
-  animation-delay: 950ms;
 }
 
 .continue-button:disabled {

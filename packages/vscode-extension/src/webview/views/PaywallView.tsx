@@ -145,12 +145,18 @@ function PaywallView() {
             Recurring billing. Cancel anytime.
           </p>
 
-          <Button
-            className={classNames("continue-button", isPriceReady ? "with-prices" : "no-prices")}
-            onClick={handleContinue}
-            disabled={isLoadingPrices || !prices}>
-            Continue
-          </Button>
+          <div
+            className={classNames(
+              "continue-button-container",
+              isPriceReady ? "with-prices" : "no-prices"
+            )}>
+            <Button
+              className="continue-button"
+              onClick={handleContinue}
+              disabled={isLoadingPrices || !prices}>
+              Continue
+            </Button>
+          </div>
         </div>
       )}
     </div>
