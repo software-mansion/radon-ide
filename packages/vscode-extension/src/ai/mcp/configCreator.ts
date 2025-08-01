@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { EditorType, McpEntry } from "./models";
 import { getEditorType } from "./utils";
 
@@ -7,14 +8,14 @@ const { applyEdits, modify }: typeof import("jsonc-parser/lib/esm/main") = requi
 const CURSOR_KEY = "mcpServers";
 const VSCODE_KEY = "servers";
 
-export function insertRadonEntry(incompleteConfig: string, port: number, version: string): string {
+export function insertRadonEntry(incompleteConfig: string, port: number): string {
   const rootKey = getEditorType() === EditorType.VSCODE ? VSCODE_KEY : CURSOR_KEY;
   const entryKey = "RadonAi";
   const radonMcpEntry: McpEntry = {
     url: `http://127.0.0.1:${port}/mcp` as const,
     type: "http" as const,
     headers: {
-      version, // Used as nonce, to force the MCP list to reload
+      nonce: randomUUID(),
     },
   };
 

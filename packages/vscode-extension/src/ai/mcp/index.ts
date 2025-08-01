@@ -9,9 +9,9 @@ import { LocalMcpServer } from "./LocalMcpServer";
 import { disposeAll } from "../../utilities/disposables";
 import { ConnectionListener } from "../shared/ConnectionListener";
 
-async function updateMcpConfig(port: number, mcpVersion: string) {
+async function updateMcpConfig(port: number) {
   const mcpConfig = (await readMcpConfig()) || newMcpConfig();
-  const updatedConfig = insertRadonEntry(mcpConfig, port, mcpVersion);
+  const updatedConfig = insertRadonEntry(mcpConfig, port);
   await writeMcpConfig(updatedConfig);
 }
 
@@ -46,7 +46,7 @@ async function fsLoadRadonAI(server: LocalMcpServer) {
     const port = await server.getPort();
 
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
-    await updateMcpConfig(port, server.getVersion());
+    await updateMcpConfig(port);
 
     getTelemetryReporter().sendTelemetryEvent("radon-ai:mcp-started");
   } catch (error) {
