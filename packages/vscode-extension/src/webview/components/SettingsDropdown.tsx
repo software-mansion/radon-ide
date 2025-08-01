@@ -13,7 +13,6 @@ import "./shared/SwitchGroup.css";
 import { SendFeedbackItem } from "./SendFeedbackItem";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
-import { usePaywall } from "../hooks/usePaywall";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -33,8 +32,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
   const extensionVersion = document.querySelector<HTMLMetaElement>(
     "meta[name='radon-ide-version']"
   )?.content;
-
-  const { openPaywall } = usePaywall();
 
   return (
     <DropdownMenuRoot>
@@ -120,10 +117,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               <span className="codicon codicon-report" />
               <div className="dropdown-menu-item-content">Report Issue</div>
             </span>
-          </DropdownMenu.Item>
-          {/* FIXME: REMOVE BEFORE MERGING */}
-          <DropdownMenu.Item className="dropdown-menu-item" onSelect={openPaywall}>
-            Show Paywall
           </DropdownMenu.Item>
           {telemetryEnabled && <SendFeedbackItem />}
           <div className="dropdown-menu-item device-settings-version-text">
