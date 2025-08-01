@@ -13,6 +13,7 @@ import "./shared/SwitchGroup.css";
 import { SendFeedbackItem } from "./SendFeedbackItem";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
+import PaywallView from "../views/PaywallView";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -117,6 +118,11 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               <span className="codicon codicon-report" />
               <div className="dropdown-menu-item-content">Report Issue</div>
             </span>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => openModal(<PaywallView />, { fullScreen: true })}>
+            Show Paywall
           </DropdownMenu.Item>
           {telemetryEnabled && <SendFeedbackItem />}
           <div className="dropdown-menu-item device-settings-version-text">

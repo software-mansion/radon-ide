@@ -34,8 +34,6 @@ import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
 
-import PaywallView from "./PaywallView";
-
 function ActivateLicenseButton() {
   const { openModal } = useModal();
   const { sendTelemetry } = useUtils();
@@ -44,7 +42,7 @@ function ActivateLicenseButton() {
       className="activate-license-button"
       onClick={() => {
         sendTelemetry("activateLicenseButtonClicked");
-        openModal(<PaywallView />, { fullScreen: true });
+        openModal(<ActivateLicenseView />, { fullScreen: true });
       }}>
       {""} {/* using empty string here as the content is controlled via css */}
     </Button>
