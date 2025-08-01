@@ -18,7 +18,6 @@
   opacity: 0;
   transform: translateY(12px);
   animation: fadeInUp 0.4s ease-out forwards;
-  animation-delay: 75ms;
 }
 
 .paywall-benefits {
@@ -40,31 +39,31 @@
 }
 
 .paywall-benefit:nth-child(1) {
-  animation-delay: 450ms;
+  animation-delay: 350ms;
 }
 .paywall-benefit:nth-child(2) {
-  animation-delay: 500ms;
+  animation-delay: 400ms;
 }
 .paywall-benefit:nth-child(3) {
-  animation-delay: 550ms;
+  animation-delay: 450ms;
 }
 .paywall-benefit:nth-child(4) {
-  animation-delay: 600ms;
+  animation-delay: 500ms;
 }
 .paywall-benefit:nth-child(5) {
-  animation-delay: 650ms;
+  animation-delay: 550ms;
 }
 .paywall-benefit:nth-child(6) {
-  animation-delay: 700ms;
+  animation-delay: 600ms;
 }
 .paywall-benefit:nth-child(7) {
-  animation-delay: 750ms;
+  animation-delay: 650ms;
 }
 .paywall-benefit:nth-child(8) {
-  animation-delay: 800ms;
+  animation-delay: 700ms;
 }
 .paywall-benefit:nth-child(9) {
-  animation-delay: 850ms;
+  animation-delay: 750ms;
 }
 
 @keyframes fadeInUp {
@@ -82,7 +81,7 @@
   opacity: 0;
   transform: translateY(12px);
   animation: fadeInUp 0.3s ease-out forwards;
-  animation-delay: 900ms;
+  animation-delay: 800ms;
 }
 
 .recurring-billing-label {
@@ -91,12 +90,12 @@
   animation: fadeInUp 0.3s ease-out forwards;
 }
 
-.recurring-billing-label.with-prices {
-  animation-delay: 1000ms;
+.recurring-billing-label.no-prices {
+  animation-delay: 800ms;
 }
 
-.recurring-billing-label.no-prices {
-  animation-delay: 900ms;
+.recurring-billing-label.with-prices {
+  animation-delay: 1000ms;
 }
 
 .paywall-benefit .codicon-check {
@@ -111,9 +110,6 @@
   gap: 12px;
   margin-bottom: 32px;
   justify-content: center;
-}
-
-.subscription-options.loaded {
   opacity: 0;
   transform: translateY(12px);
   animation: fadeInUp 0.4s ease-out forwards;
@@ -196,12 +192,12 @@
   animation: fadeInUp 0.3s ease-out forwards;
 }
 
-.continue-button.with-prices {
-  animation-delay: 1050ms;
-}
-
 .continue-button.no-prices {
   animation-delay: 950ms;
+}
+
+.continue-button.with-prices {
+  animation-delay: 1050ms;
 }
 
 .continue-button:disabled {
