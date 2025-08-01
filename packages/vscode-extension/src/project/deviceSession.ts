@@ -127,7 +127,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
 
   constructor(
     private readonly applicationContext: ApplicationContext,
-    public readonly device: DeviceBase,
+    private readonly device: DeviceBase,
     private rotation: DeviceRotation,
     private readonly deviceSessionDelegate: DeviceSessionDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
@@ -1033,6 +1033,10 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
 
   public async captureScreenshot() {
     return this.device.captureScreenshot();
+  }
+
+  public isPreviewAvailable() {
+    return this.device.isPreviewAvailable();
   }
 
   public async startProfilingReact() {
