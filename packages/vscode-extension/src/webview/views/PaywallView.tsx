@@ -8,7 +8,7 @@ import usePaddle from "../hooks/usePaddle";
 
 type SubscriptionPlan = "monthly" | "yearly";
 
-// FIXME: Pass with production Paddle product IDs when ready
+// FIXME: Add production Paddle price IDs when ready
 const RadonIDEProMonthlyPriceID = window.RNIDE_isDev ? "pri_01k1g12g3y3tqvpzw8tcyrsd1y" : "";
 const RadonIDEProYearlyPriceID = window.RNIDE_isDev ? "pri_01k1g8d3h0mhbtr5hfd9e4n8yg" : "";
 
