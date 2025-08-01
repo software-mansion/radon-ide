@@ -1,7 +1,6 @@
 import path from "path";
 import fs from "fs";
 import assert from "assert";
-import _ from "lodash";
 import {
   commands,
   window,
@@ -128,7 +127,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
 
   constructor(
     private readonly applicationContext: ApplicationContext,
-    private readonly device: DeviceBase,
+    public readonly device: DeviceBase,
     private rotation: DeviceRotation,
     private readonly deviceSessionDelegate: DeviceSessionDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry

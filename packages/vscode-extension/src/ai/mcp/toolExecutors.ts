@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 
 import { IDE } from "../../project/ide";
-import { textToToolResponse } from "./utils";
+import { base64ToContent, textToContent, textToToolResponse } from "./utils";
 import { ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/DeviceManager";
