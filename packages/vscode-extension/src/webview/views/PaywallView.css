@@ -16,7 +16,7 @@
   font-weight: 600;
   margin-bottom: 32px;
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(12px);
   animation: fadeInUp 0.4s ease-out forwards;
   animation-delay: 75ms;
 }
@@ -35,7 +35,7 @@
   margin-bottom: 8px;
   font-size: 14px;
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(12px);
   animation: fadeInUp 0.3s ease-out forwards;
 }
 
@@ -78,6 +78,20 @@
   }
 }
 
+.subscription-options-caption {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.3s ease-out forwards;
+  animation-delay: 900ms;
+}
+
+.recurring-billing-label {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.3s ease-out forwards;
+  animation-delay: 1000ms;
+}
+
 .paywall-benefit .codicon-check {
   color: var(--vscode-button-background);
   font-size: 16px;
@@ -95,9 +109,9 @@
 
 .subscription-options.loaded {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(12px);
   animation: fadeInUp 0.4s ease-out forwards;
-  animation-delay: 200ms;
+  animation-delay: 950ms;
   min-height: auto;
   justify-content: flex-start;
 }
@@ -171,6 +185,10 @@
   padding: 12px 24px;
   font-size: 16px;
   height: unset;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.3s ease-out forwards;
+  animation-delay: 1050ms;
 }
 
 .continue-button:disabled {

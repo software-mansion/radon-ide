@@ -95,7 +95,7 @@ function PaywallView() {
           ))}
         </ul>
 
-        <p>Start with 2 week trial then:</p>
+        <p className="subscription-options-caption">Start with 2 week trial then:</p>
 
         <div className={`subscription-options ${isPriceReady ? "loaded" : ""}`}>
           {isPriceReady && (
@@ -135,13 +135,13 @@ function PaywallView() {
           )}
         </div>
 
-        <p>Recurring billing. Cancel anytime.</p>
+        <p className="recurring-billing-label">Recurring billing. Cancel anytime.</p>
 
         <Button
           className="continue-button"
           onClick={handleContinue}
           disabled={isLoadingPrices || !prices}>
-          {isLoadingPrices ? "Loading..." : "Continue"}
+          Continue
         </Button>
       </div>
     </div>
