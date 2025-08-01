@@ -95,7 +95,7 @@
 }
 
 .recurring-billing-label.with-prices {
-  animation-delay: 1000ms;
+  animation-delay: 900ms;
 }
 
 .paywall-benefit .codicon-check {
@@ -113,7 +113,7 @@
   opacity: 0;
   transform: translateY(12px);
   animation: fadeInUp 0.4s ease-out forwards;
-  animation-delay: 950ms;
+  animation-delay: 1250ms;
   min-height: auto;
   justify-content: flex-start;
 }
@@ -193,11 +193,11 @@
 }
 
 .continue-button.no-prices {
-  animation-delay: 950ms;
+  animation-delay: 850ms;
 }
 
 .continue-button.with-prices {
-  animation-delay: 1050ms;
+  animation-delay: 950ms;
 }
 
 .continue-button:disabled {
