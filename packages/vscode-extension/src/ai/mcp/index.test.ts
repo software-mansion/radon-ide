@@ -23,7 +23,6 @@ describe("creatingMcpConfig", () => {
   const realPort = 1234;
   const realUrl = `http://127.0.0.1:${realPort}/mcp`;
   const realType = "http";
-  const realVersion = "1.0.0";
 
   const mockUrl = "https://mock-url.local/mock";
   const mockType = "mock";
@@ -31,11 +30,10 @@ describe("creatingMcpConfig", () => {
   const newPort = 4321;
   const newUrl = `http://127.0.0.1:${newPort}/mcp`;
   const newType = realType;
-  const newVersion = "2.0.0";
 
   it("should update the config", async () => {
     const empty = JSON.stringify({ servers: {} });
-    const updated = insertRadonEntry(empty, realPort, realVersion);
+    const updated = insertRadonEntry(empty, realPort);
 
     const config = parse(updated);
 
@@ -54,12 +52,11 @@ describe("creatingMcpConfig", () => {
     };
 
     const serialized = JSON.stringify(populated);
-    const updated = insertRadonEntry(serialized, realPort, realVersion);
+    const updated = insertRadonEntry(serialized, realPort);
     const config = parse(updated);
 
     assert.strictEqual(config.servers?.RadonAi?.url, realUrl);
     assert.strictEqual(config.servers?.RadonAi?.type, realType);
-    assert.strictEqual(config.servers?.RadonAi?.headers.version, realVersion);
     assert.strictEqual(config.servers?.MockAi.url, mockUrl);
     assert.strictEqual(config.servers?.MockAi.type, mockType);
   });
@@ -70,20 +67,16 @@ describe("creatingMcpConfig", () => {
         RadonAi: {
           url: realUrl,
           type: realType,
-          headers: {
-            version: realVersion,
-          },
         },
       },
     };
 
     const serialized = JSON.stringify(stale);
-    const updated = insertRadonEntry(serialized, newPort, newVersion);
+    const updated = insertRadonEntry(serialized, newPort);
     const config = parse(updated);
 
     assert.strictEqual(config.servers?.RadonAi?.url, newUrl);
     assert.strictEqual(config.servers?.RadonAi?.type, newType);
-    assert.strictEqual(config.servers?.RadonAi?.headers.version, newVersion);
   });
 
   it("should differenciate vscode and cursor", async () => {
