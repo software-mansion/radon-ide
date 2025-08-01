@@ -596,11 +596,9 @@ function Preview({
       which causes the device preview to flicker. */}
       <span className="phone-preload-masks">
         <div style={{ maskImage: `url(${device?.landscapeScreenImage})` }} />
-        <div style={{ maskImage: `url(${device?.screenImage})` }} />
+        <div style={{ maskImage: `url(${device?.screenMaskImage})` }} />
         <img src={frame.imageLandscape} alt="" />
         <img src={frame.image} alt="" />
-        <img src={device?.landscapeScreenImage} alt="" />
-        <img src={device?.screenImage} alt="" />
       </span>
     </>
   );

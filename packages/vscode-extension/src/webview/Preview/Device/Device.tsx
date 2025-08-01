@@ -96,7 +96,7 @@ function getPortraitDimensions(
     phoneScreenWidth: `${(device.screenWidth / frame.width) * 100}%`,
     phoneTop: `${(frame.offsetY / frame.height) * 100}%`,
     phoneLeft: `${(frame.offsetX / frame.width) * 100}%`,
-    phoneMaskImage: `url(${device.screenImage})`,
+    phoneMaskImage: `url(${device.screenMaskImage})`,
     phoneFrameImage: `url(${frame.image})`,
     phoneAspectRatio: `${config.aspectRatio}`,
   };
@@ -248,13 +248,11 @@ export default function Device({ device, zoomLevel, children, wrapperDivRef }: D
     return () => window.removeEventListener("resize", applyStylePropertiesToComponents);
   }, [device, frame, rotation, wrapperDivRef, zoomLevel]);
 
-  const backgroundImageSrc = isLandscape ? device.landscapeScreenImage : device.screenImage;
 
   return (
     <div className="phone-wrapper">
       <div ref={phoneContentRef} className="phone-content">
         <DeviceFrame frame={frame} isLandscape={isLandscape} />
-        <img src={backgroundImageSrc} className="phone-screen-background" alt="Device screen" />
         {children}
       </div>
     </div>
