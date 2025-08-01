@@ -11,6 +11,18 @@ type SubscriptionPlan = "monthly" | "yearly";
 const RadonIDEProMonthlyPriceID = window.RNIDE_isDev ? "pri_01k1g12g3y3tqvpzw8tcyrsd1y" : "";
 const RadonIDEProYearlyPriceID = window.RNIDE_isDev ? "pri_01k1g8d3h0mhbtr5hfd9e4n8yg" : "";
 
+const benefits = [
+  "All the Free features",
+  "Redux UI plugin",
+  "React Query plugin",
+  "CPU Profiler integration",
+  "React Profiler integration",
+  "React Scan integration",
+  "Radon AI assistant",
+  "Early access to new features",
+  "Priority support",
+];
+
 function PaywallView() {
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>("yearly");
   const paddle = usePaddle();
@@ -66,7 +78,7 @@ function PaywallView() {
             <div className="plan-header">
               <span className="plan-name">Yearly Plan</span>
               <span className="plan-price">
-                {radonProYearlyPrice?.formattedTotals.total} / year
+                <span>{radonProYearlyPrice?.formattedTotals.total}</span> / year
               </span>
             </div>
             <div className="plan-description">Save 17% • Billed annually</div>
@@ -78,7 +90,7 @@ function PaywallView() {
             <div className="plan-header">
               <span className="plan-name">Monthly Plan</span>
               <span className="plan-price">
-                {radonProMonthlyPrice?.formattedTotals.total} / month
+                <span>{radonProMonthlyPrice?.formattedTotals.total}</span> / month
               </span>
             </div>
             <div className="plan-description">Billed monthly</div>

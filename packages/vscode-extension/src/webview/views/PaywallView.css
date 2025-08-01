@@ -58,8 +58,15 @@
 }
 
 .plan-price {
-  font-weight: 600;
-  font-size: 16px;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.plan-price span {
+  font-weight: 700;
+  font-size: 18px;
 }
 
 .plan-description {
