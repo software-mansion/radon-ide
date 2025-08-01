@@ -48,11 +48,9 @@ import iphoneSELandscapeBezel from "../../assets/iphone_SE/landscape/bezel.png";
 import iphoneSELandscapeScreen from "../../assets/iphone_SE/landscape/screen.png";
 
 import ipadA16 from "../../assets/ipad_a16/skin.png";
-import ipadA16mask from "../../assets/ipad_a16/mask.png";
 import ipadA16bezel from "../../assets/ipad_a16/bezel.png";
 import ipadA16screen from "../../assets/ipad_a16/screen.png";
 import ipadA16Landscape from "../../assets/ipad_a16/landscape/skin.png";
-import ipadA16LandscapeMask from "../../assets/ipad_a16/landscape/mask.png";
 import ipadA16LandscapeBezel from "../../assets/ipad_a16/landscape/bezel.png";
 import ipadA16LandscapeScreen from "../../assets/ipad_a16/landscape/screen.png";
 
@@ -76,7 +74,7 @@ export type DeviceProperties = {
   screenWidth: number;
   screenHeight: number;
   screenMaskImage: string;
-  landscapeScreenImage: string;
+  landscapeScreenMaskImage: string;
   minimumAndroidApiLevel?: number;
   bezel: DevicePropertiesFrame;
   skin: DevicePropertiesFrame;
@@ -95,7 +93,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     screenWidth: 1178,
     screenHeight: 2556,
     screenMaskImage: iphone16proscreen,
-    landscapeScreenImage: iphone16proLandscapeScreen,
+    landscapeScreenMaskImage: iphone16proLandscapeScreen,
     bezel: {
       type: "mask" as const,
       width: 1186,
@@ -122,7 +120,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     screenWidth: 1178,
     screenHeight: 2556,
     screenMaskImage: iphone15proscreen,
-    landscapeScreenImage: iphone15proLandscapeScreen,
+    landscapeScreenMaskImage: iphone15proLandscapeScreen,
     bezel: {
       type: "mask" as const,
       width: 1186,
@@ -149,7 +147,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     screenWidth: 750,
     screenHeight: 1334,
     screenMaskImage: iphoneSEscreen,
-    landscapeScreenImage: iphoneSELandscapeScreen,
+    landscapeScreenMaskImage: iphoneSELandscapeScreen,
     bezel: {
       type: "mask",
       width: 758,
@@ -175,10 +173,8 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.IOS,
     screenWidth: 2460,
     screenHeight: 3540,
-    maskImage: ipadA16mask,
-    screenImage: ipadA16screen,
-    landscapeMaskImage: ipadA16LandscapeMask,
-    landscapeScreenImage: ipadA16LandscapeScreen,
+    screenMaskImage: ipadA16screen,
+    landscapeScreenMaskImage: ipadA16LandscapeScreen,
     bezel: {
       type: "mask",
       width: 2468,
@@ -209,7 +205,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     screenWidth: 1080,
     screenHeight: 2424,
     screenMaskImage: pixel9screen,
-    landscapeScreenImage: pixel9LandscapeScreen,
+    landscapeScreenMaskImage: pixel9LandscapeScreen,
     bezel: {
       type: "mask",
       width: 1088,
@@ -237,7 +233,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     screenWidth: 1080,
     screenHeight: 2400,
     screenMaskImage: pixel8screen,
-    landscapeScreenImage: pixel8LandscapeScreen,
+    landscapeScreenMaskImage: pixel8LandscapeScreen,
     bezel: {
       type: "mask",
       width: 1088,
@@ -265,7 +261,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     screenWidth: 1080,
     screenHeight: 2400,
     screenMaskImage: pixel7screen,
-    landscapeScreenImage: pixel7LandscapeScreen,
+    landscapeScreenMaskImage: pixel7LandscapeScreen,
     bezel: {
       type: "mask",
       width: 1088,
@@ -293,7 +289,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     screenWidth: 1080,
     screenHeight: 2400,
     screenMaskImage: pixel6ascreen,
-    landscapeScreenImage: pixel6aLandscapeScreen,
+    landscapeScreenMaskImage: pixel6aLandscapeScreen,
     bezel: {
       type: "mask",
       width: 1088,
