@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 
 import { IDE } from "../../project/ide";
-import { base64ToContent, textToContent, textToToolResponse } from "./utils";
+import { base64ToToolContent, textToToolContent, textToToolResponse } from "./utils";
 import { ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/DeviceManager";
@@ -22,7 +22,7 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
   const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
 
   return {
-    content: [base64ToContent(contents)],
+    content: [base64ToToolContent(contents)],
   };
 }
 
@@ -78,7 +78,7 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
     const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
 
     return {
-      content: [textToContent(text), base64ToContent(contents)],
+      content: [textToToolContent(text), base64ToToolContent(contents)],
     };
   }
 

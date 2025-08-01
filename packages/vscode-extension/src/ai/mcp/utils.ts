@@ -12,7 +12,7 @@ export function getEditorType(): EditorType {
   return EditorType.VSCODE;
 }
 
-export function base64ToContent(data: string): ImageContent {
+export function base64ToToolContent(data: string): ImageContent {
   return {
     type: "image",
     data,
@@ -20,7 +20,7 @@ export function base64ToContent(data: string): ImageContent {
   };
 }
 
-export function textToContent(text: string): TextContent {
+export function textToToolContent(text: string): TextContent {
   return {
     type: "text",
     text,
@@ -29,6 +29,6 @@ export function textToContent(text: string): TextContent {
 
 export function textToToolResponse(text: string): ToolResponse {
   return {
-    content: [textToContent(text)],
+    content: [textToToolContent(text)],
   };
 }
