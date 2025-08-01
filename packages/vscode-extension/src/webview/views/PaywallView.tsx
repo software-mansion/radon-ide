@@ -95,44 +95,46 @@ function PaywallView() {
           ))}
         </ul>
 
-        <p className="subscription-options-caption">Start with 2 week trial then:</p>
+        <div className="subscription-options-container">
+          <p className="subscription-options-caption">Start with 2 week trial then:</p>
 
-        <div className={`subscription-options ${isPriceReady ? "loaded" : ""}`}>
-          {isPriceReady && (
-            <>
-              <div
-                className={classNames(
-                  "subscription-option",
-                  selectedPlan === "yearly" && "selected"
-                )}
-                onClick={() => setSelectedPlan("yearly")}>
-                <div className="plan-header">
-                  <span className="plan-name">
-                    Yearly Plan <span className="plan-saving">Save 16%</span>
-                  </span>
-                  <span className="plan-price">
-                    <span>{radonProYearlyPrice?.formattedTotals.total}</span> / year
-                  </span>
+          <div className={`subscription-options ${isPriceReady ? "loaded" : ""}`}>
+            {isPriceReady && (
+              <>
+                <div
+                  className={classNames(
+                    "subscription-option",
+                    selectedPlan === "yearly" && "selected"
+                  )}
+                  onClick={() => setSelectedPlan("yearly")}>
+                  <div className="plan-header">
+                    <span className="plan-name">
+                      Yearly Plan <span className="plan-saving">Save 16%</span>
+                    </span>
+                    <span className="plan-price">
+                      <span>{radonProYearlyPrice?.formattedTotals.total}</span> / year
+                    </span>
+                  </div>
+                  <div className="plan-description">Billed annually</div>
                 </div>
-                <div className="plan-description">Billed annually</div>
-              </div>
 
-              <div
-                className={classNames(
-                  "subscription-option",
-                  selectedPlan === "monthly" && "selected"
-                )}
-                onClick={() => setSelectedPlan("monthly")}>
-                <div className="plan-header">
-                  <span className="plan-name">Monthly Plan</span>
-                  <span className="plan-price">
-                    <span>{radonProMonthlyPrice?.formattedTotals.total}</span> / month
-                  </span>
+                <div
+                  className={classNames(
+                    "subscription-option",
+                    selectedPlan === "monthly" && "selected"
+                  )}
+                  onClick={() => setSelectedPlan("monthly")}>
+                  <div className="plan-header">
+                    <span className="plan-name">Monthly Plan</span>
+                    <span className="plan-price">
+                      <span>{radonProMonthlyPrice?.formattedTotals.total}</span> / month
+                    </span>
+                  </div>
+                  <div className="plan-description">Billed monthly</div>
                 </div>
-                <div className="plan-description">Billed monthly</div>
-              </div>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
 
         <p className="recurring-billing-label">Recurring billing. Cancel anytime.</p>

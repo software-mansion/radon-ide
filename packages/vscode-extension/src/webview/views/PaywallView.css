@@ -103,7 +103,6 @@
   flex-direction: column;
   gap: 12px;
   margin-bottom: 32px;
-  min-height: 160px;
   justify-content: center;
 }
 
