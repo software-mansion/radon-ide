@@ -26,9 +26,9 @@ export async function registerMcpTools(server: McpServer, connectionListener: Co
   );
 
   server.registerTool(
-    "view_build_logs",
+    "view_debugging_data",
     {
-      description: "Get the build logs for the app.",
+      description: "Use this function to get all the data required for debugging the user's app.",
       inputSchema: {},
     },
     buildLogsToolExec

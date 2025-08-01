@@ -42,7 +42,7 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
 
   // TODO: Combine latest logs for both iOS, Android, and Bundler.
   // TODO: Only serve the latest build.
-  // TODO: Make Output.AndroidDevice and Output.IosDevice logs available. Perhaps show them instead  if the build succeeded?
+  // TODO: Make Output.AndroidDevice and Output.IosDevice logs available. Perhaps show them instead if the build succeeded?
 
   const log = registry.getOrCreateOutputChannel(Output.BuildAndroid);
   const text = log.readAll().join("\n");
