@@ -4,6 +4,7 @@ import { IDE } from "../../project/ide";
 import { textToToolResponse } from "./utils";
 import { ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
+import { DevicePlatform } from "../../common/DeviceManager";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -32,20 +33,54 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
 }
 
 export async function buildLogsToolExec(): Promise<ToolResponse> {
-  const registry = IDE.getInstanceIfExists()?.outputChannelRegistry;
+  const ideInstance = IDE.getInstanceIfExists();
 
-  if (!registry) {
+  if (!ideInstance) {
     return textToToolResponse(
       "Could not view the build logs! Radon IDE extension has not been opened."
     );
   }
 
-  // TODO: Combine latest logs for both iOS, Android, and Bundler.
-  // TODO: Only serve the latest build.
-  // TODO: Make Output.AndroidDevice and Output.IosDevice logs available. Perhaps show them instead if the build succeeded?
+  // TODO: Check if `deviceSession` is always available during build process.
 
-  const log = registry.getOrCreateOutputChannel(Output.BuildAndroid);
-  const text = log.readAll().join("\n");
+  const registry = ideInstance.outputChannelRegistry;
+  const session = ideInstance.project.deviceSession;
+
+  if (!session) {
+    return textToToolResponse(
+      "Could not view the build & bundler logs! Device session has not been started."
+    );
+  }
+
+  // TODO: Store logs, timestamps of the latest build, bundle with logs of bundler if they occured after the build.
+
+  const isAndroid = session.platform === DevicePlatform.Android;
+
+  const buildLogs = registry.getOrCreateOutputChannel(
+    isAndroid ? Output.BuildAndroid : Output.BuildIos
+  );
+
+  const bundlerLogs = registry.getOrCreateOutputChannel(Output.PackageManager);
+
+  const deviceLogs = registry.getOrCreateOutputChannel(
+    isAndroid ? Output.AndroidDevice : Output.IosDevice
+  );
+
+  // TODO: Only show the device and bundler logs if previous steps succeeded
+  //       ^ Adding timestamps to all logs will make this easy.
+
+  const combinedLogs = [
+    "=== BUILD PROCESS STARTED ===",
+    ...buildLogs.readAll(),
+    "=== BUNDLER LOGS ===",
+    ...bundlerLogs.readAll(),
+    "=== DEVICE LOGS ===",
+    ...deviceLogs.readAll(),
+  ];
+
+  // (deviceLogs.length ? ...deviceLogs.readAll() : 'ZERO DEVICE LOGS')
+
+  const text = combinedLogs.join("\n");
 
   return textToToolResponse(text);
 }
