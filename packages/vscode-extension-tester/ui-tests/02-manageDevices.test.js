@@ -8,7 +8,7 @@ import {
 } from "./interactions.js";
 import { sharedTestLifecycle } from "./setupTest.js";
 
-describe("Smoke tests Radon IDE", () => {
+describe("Adding device tests", () => {
   const get = sharedTestLifecycle();
 
   it("should add device to Radon IDE", async function () {

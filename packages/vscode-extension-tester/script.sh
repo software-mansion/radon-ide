@@ -19,6 +19,9 @@ done
 
 echo "VM is up!"
 
+echo "Building VSIX package..."
+npm run build-vsix-package
+
 echo "copying '$LOCAL_PROJECT_PATH' to VM..."
 sshpass -p '123456' scp -r "$LOCAL_PROJECT_PATH" "$VM_USER@$VM_IP:/Users/$VM_USER/"
 
