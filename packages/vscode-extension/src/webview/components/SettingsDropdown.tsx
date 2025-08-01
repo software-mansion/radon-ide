@@ -13,7 +13,7 @@ import "./shared/SwitchGroup.css";
 import { SendFeedbackItem } from "./SendFeedbackItem";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
-import PaywallView from "../views/PaywallView";
+import { usePaywall } from "../hooks/usePaywall";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -33,6 +33,8 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
   const extensionVersion = document.querySelector<HTMLMetaElement>(
     "meta[name='radon-ide-version']"
   )?.content;
+
+  const { openPaywall } = usePaywall();
 
   return (
     <DropdownMenuRoot>
@@ -119,9 +121,8 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               <div className="dropdown-menu-item-content">Report Issue</div>
             </span>
           </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => openModal(<PaywallView />, { fullScreen: true })}>
+          {/* FIXME: REMOVE BEFORE MERGING */}
+          <DropdownMenu.Item className="dropdown-menu-item" onSelect={openPaywall}>
             Show Paywall
           </DropdownMenu.Item>
           {telemetryEnabled && <SendFeedbackItem />}
