@@ -7,7 +7,6 @@
 .plan__container {
   border: 1px solid var(--swm-border);
   height: 100%;
-  padding: 24px;
   display: flex;
   flex-direction: column;
   background-color: var(--swm-off-background);

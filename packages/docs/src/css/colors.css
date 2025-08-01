@@ -96,7 +96,7 @@
   /* Rebranding colors */
   --radon-color-background: #111111;
   --radon-color-border: #333333;
-  --radon-border-grid-subtle: #222222;
+  --radon-color-border-grid-subtle: #222222;
   --radon-button: #248363;
   --radon-button-hover: #186e51;
   --radon-icon: var(--swm-green-light-100);
@@ -104,7 +104,11 @@
   /* --- Text rebranding --- */
   --radon-color-primary: #fafafa;
   --radon-color-secondary: #a1a1a1;
-  --radon-button-text: #ffffff;
+  --radon-color-button-text: #ffffff;
+
+  --radon-subheading: var(--swm-navy-light-100);
+  --radon-border-grid-subtle: var(--swm-border);
+  --radon-button-text: var(--radon-color-button-text);
 
   /* Infima main colors */
   --ifm-color-primary: var(--swm-navy-light-100);
@@ -308,6 +312,10 @@
 }
 
 :root[data-theme="dark"] {
+  /* Rebranding */
+
+  --radon-border-grid-subtle: var(--radon-color-border-grid-subtle);
+
   /* Infima main colors */
   --ifm-color-primary: var(--radon-color-primary);
 
@@ -324,8 +332,8 @@
   --swm-color-mode-disabled-color: var(--swm-navy-light-40);
 
   /* Typography */
-  /* --ifm-font-color-base: var(--swm-navy-light-10); */
   --ifm-font-color-base: var(--radon-color-primary);
+  --radon-subheading: var(--radon-color-secondary);
 
   /* Tabs */
   --swm-tab: var(--swm-navy-light-60);
@@ -372,7 +380,6 @@
   --swm-background-quote-purple: var(--swm-purple-dark-140);
 
   /* Code snippets */
-  /* --swm-border: var(--swm-navy-light-60); */
   --swm-border: var(--radon-color-border);
   --docusaurus-highlighted-code-line-bg: var(--swm-blue-dark-140);
 
@@ -449,7 +456,7 @@
 
   /* Cards */
   --swm-card-background: var(--swm-background);
-  --swm-card-border: var(--swm-navy-dark-60);
+  --swm-card-border: var(--radon-color-border);
   --swm-card-border-hover: var(--swm-green-dark-80);
 
   /* Sidebar label*/

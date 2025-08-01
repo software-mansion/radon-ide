@@ -1,11 +1,12 @@
 .card {
   border: 1px solid var(--radon-border-grid-subtle);
   background-color: var(--swm-background);
-  padding: 16px;
+  padding: 40px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   max-width: 620px;
+  gap: 16px;
 }
 
 .card span {
@@ -17,13 +18,18 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  margin-bottom: 12px;
   font-size: 24px;
   font-weight: 500;
 }
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 .card p {
-  color: var(--radon-color-secondary);
+  color: var(--radon-subheading);
+  margin: 0;
 }
 
 .contactButton {
@@ -49,6 +55,8 @@
   text-decoration: none;
 }
 
-.contactButton:hover svg {
-  transform: translateX(4px);
+@media (max-width: 1024px) {
+  .card {
+    padding: 24px;
+  }
 }

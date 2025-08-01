@@ -1,23 +1,55 @@
-.plan__name {
-  font-size: 18px;
-  font-weight: bold;
-  text-transform: uppercase;
-  margin-bottom: 8px;
-  color: var(--swm-green-light-100);
+.cardHeader {
+  border-bottom: 1px solid var(--swm-border);
   display: flex;
+  padding: 40px;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 16px;
+  align-self: stretch;
+  height: 40%;
+}
+.cardMiddle {
+  display: flex;
+  padding: 40px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  flex: 1 0 0;
+  align-self: stretch;
+  height: 30%;
+}
+
+.cardButton {
+  display: flex;
+  padding: 40px;
+  flex-direction: column;
+  gap: 8px;
+  align-self: stretch;
+  justify-content: flex-end;
+  height: 30%;
+}
+
+.plan__name {
+  display: flex;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--swm-green-light-100);
+  line-height: 24px;
 }
 
 .plan__price {
-  font-weight: 700;
+  font-weight: 500;
   margin-top: 8px;
-  font-size: 36px;
+  font-size: 40px;
   margin-bottom: 0px;
+  height: 100%;
 }
 
 .plan__price .plan__price_second_line {
   font-size: 16px;
   font-weight: 400;
+  color: var(--radon-subheading);
+  margin-bottom: 0;
 }
 /* A hack to hide the second line of the price but take the space for visual consistency */
 .plan__price_second_line_hidden {
@@ -33,15 +65,12 @@
   margin: 8px 0 24px 0;
 }
 
-.plan__spacer {
-  flex-grow: 1;
-}
-
 .plan__tagline {
   margin-top: 8px;
   margin-bottom: 32px;
   font-size: 18px;
-  color: var(--swm-navy-light-60);
+  line-height: 24px;
+  color: var(--radon-subheading);
 }
 
 .plan__tagline a {
@@ -50,5 +79,23 @@
 }
 
 .plan__currency {
-  font-weight: 400;
+  font-weight: 250;
+}
+
+@media (max-width: 1024px) {
+  .plan__name {
+    font-size: 16px;
+  }
+  .plan__price {
+    font-size: 32px;
+  }
+  .plan__currency {
+    font-size: 32px;
+  }
+  .plan__tagline {
+    font-size: 16px;
+  }
+  .cardGrid {
+    padding: 20px;
+  }
 }
