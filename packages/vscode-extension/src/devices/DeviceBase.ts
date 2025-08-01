@@ -97,6 +97,7 @@ export abstract class DeviceBase implements Disposable {
       } else {
         preview.hideTouches();
       }
+      this.preview.rotateDevice(this._rotation);
     }
   }
 
@@ -240,7 +241,6 @@ export abstract class DeviceBase implements Disposable {
       this.previewStartPromise = this.preview.start();
       this.previewStartPromise.then(() => {
         this.applyPreviewSettings();
-        this.preview?.rotateDevice(this._rotation);
       });
     }
     return this.previewStartPromise;

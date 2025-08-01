@@ -277,9 +277,7 @@ export class DeviceSession implements Disposable {
   }
 
   private cancelOngoingOperations() {
-    if (this.cancelToken) {
-      this.cancelToken.cancel();
-    }
+    this.cancelToken.cancel();
     this.cancelToken = new CancelToken();
   }
 
