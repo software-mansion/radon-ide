@@ -35,10 +35,10 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
 export async function buildLogsToolExec(): Promise<ToolResponse> {
   const ideInstance = IDE.getInstanceIfExists();
 
+  const errorMessage = "Could not view the build logs! Radon IDE extension has not been opened.";
+
   if (!ideInstance) {
-    return textToToolResponse(
-      "Could not view the build logs! Radon IDE extension has not been opened."
-    );
+    return textToToolResponse(errorMessage);
   }
 
   // TODO: Check if `deviceSession` is always available during build process.
@@ -47,9 +47,7 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
   const session = ideInstance.project.deviceSession;
 
   if (!session) {
-    return textToToolResponse(
-      "Could not view the build & bundler logs! Device session has not been started."
-    );
+    return textToToolResponse(errorMessage);
   }
 
   const isAndroid = session.platform === DevicePlatform.Android;
