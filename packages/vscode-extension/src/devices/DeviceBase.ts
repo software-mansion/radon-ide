@@ -58,7 +58,7 @@ export abstract class DeviceBase implements Disposable {
     return this.preview?.streamURL !== undefined;
   }
 
-  public isPreviewStarted() {
+  public isPreviewAvailable() {
     return !!this.preview;
   }
 
