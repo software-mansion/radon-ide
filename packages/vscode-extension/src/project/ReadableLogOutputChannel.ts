@@ -2,6 +2,7 @@ import { LogOutputChannel, window } from "vscode";
 
 export interface ReadableLogOutputChannel extends LogOutputChannel {
   readAll: () => string[];
+  isEmpty: () => boolean;
 }
 
 export function createReadableOutputChannel(channel: string): ReadableLogOutputChannel {
@@ -12,6 +13,9 @@ export function createReadableOutputChannel(channel: string): ReadableLogOutputC
   return {
     ...outputChannel,
     readAll: () => logRegistry,
+    isEmpty: () => {
+      return !logRegistry.length;
+    },
     clear: () => {
       logRegistry.length = 0;
       outputChannel.clear();

@@ -52,8 +52,6 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
     );
   }
 
-  // TODO: Store logs, timestamps of the latest build, bundle with logs of bundler if they occured after the build.
-
   const isAndroid = session.platform === DevicePlatform.Android;
 
   const buildLogs = registry.getOrCreateOutputChannel(
@@ -66,19 +64,22 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
     isAndroid ? Output.AndroidDevice : Output.IosDevice
   );
 
-  // TODO: Only show the device and bundler logs if previous steps succeeded
-  //       ^ Adding timestamps to all logs will make this easy.
+  const combinedLogs = [];
 
-  const combinedLogs = [
-    "=== BUILD PROCESS STARTED ===",
-    ...buildLogs.readAll(),
-    "=== BUNDLER LOGS ===",
-    ...bundlerLogs.readAll(),
-    "=== DEVICE LOGS ===",
-    ...deviceLogs.readAll(),
-  ];
+  if (!buildLogs.isEmpty()) {
+    combinedLogs.push("=== BUILD PROCESS STARTED ===\n", ...buildLogs.readAll());
+  }
 
-  // (deviceLogs.length ? ...deviceLogs.readAll() : 'ZERO DEVICE LOGS')
+  if (!bundlerLogs.isEmpty()) {
+    combinedLogs.push("\n\n=== BUNDLING PROCESS STARTED ===\n", ...bundlerLogs.readAll());
+  }
+
+  if (!deviceLogs.isEmpty()) {
+    combinedLogs.push("\n\n=== APPLICATION STARTED ===\n", ...deviceLogs.readAll());
+  }
+
+  // TODO: Are `bundlerLogs` and `deviceLogs` cleared before build?
+  //       ^ If not, then store timestamps of the latest build, bundle with logs of bundler if they occured after the build.
 
   const text = combinedLogs.join("\n");
 
