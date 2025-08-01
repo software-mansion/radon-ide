@@ -192,7 +192,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     },
   },
   {
-    modelName: "Ipad A16",
+    modelName: "iPad (A16)",
     modelId: "com.apple.CoreSimulator.SimDeviceType.iPad-A16",
     platform: DevicePlatform.IOS,
     screenWidth: 2460,
