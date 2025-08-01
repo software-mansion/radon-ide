@@ -12,6 +12,7 @@ export async function openProjectInVSCode(
   projectPath,
   workbench
 ) {
+  await workbench.executeCommand("View: close all editors");
   await browser.openResources(
     path.resolve(__dirname, projectPath),
 
