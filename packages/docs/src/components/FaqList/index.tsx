@@ -1,19 +1,21 @@
-import React, { useState } from 'react'
-import { type ActiveItemProps } from './FaqItem'
-import FaqItem from './FaqItem'
+import React, { useState } from "react";
+import { type ActiveItem } from "./FaqItem";
+import FaqItem from "./FaqItem";
 
 interface Props {
   faqs: {
-    topic: string
-    answer: string
-  }[]
+    topic: string;
+    answer: string;
+  }[];
 }
 
 const FaqList = ({ faqs }: Props) => {
-  const [activeItem, setActiveItem] = useState<ActiveItemProps>({
-    index: null,
-    height: 0,
-  })
+  const [activeItems, setActiveItems] = useState<ActiveItem[]>([
+    {
+      index: null,
+      height: 0,
+    },
+  ]);
 
   return (
     <>
@@ -23,12 +25,12 @@ const FaqList = ({ faqs }: Props) => {
           index={index}
           answer={faq.answer}
           topic={faq.topic}
-          isExpanded={activeItem.index === index}
-          setActiveItem={setActiveItem}
+          activeItems={activeItems}
+          setActiveItems={setActiveItems}
         />
       ))}
     </>
-  )
-}
+  );
+};
 
-export default FaqList
+export default FaqList;

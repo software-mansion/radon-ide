@@ -88,7 +88,7 @@ const PricingPlansList = () => {
             type="button"
             className={isMonthly ? styles.btn : `${styles.btn} ${styles.active}`}
             onClick={() => setIsMonthly(false)}>
-            <p>
+            <p className={styles.yearlyContainer}>
               Yearly<span className={styles.plan_pay_annually__discount}>(Save 16%)</span>
             </p>
           </button>
@@ -96,44 +96,44 @@ const PricingPlansList = () => {
       </div>
       <ul className={styles.list}>
         <PricingCard>
-          <div className={`${styles.cardGrid} ${styles.line}`}>
+          <div className={pricing.cardHeader}>
             <h2 className={pricing.plan__name}>Radon&nbsp;IDE&nbsp;Individual</h2>
             <h3 className={pricing.plan__price}>{individual}</h3>
           </div>
-          <div className={styles.cardGrid}>
+          <div className={pricing.cardMiddle}>
             <p className={pricing.plan__tagline}>
               For individual developers and freelancers craving more enjoyable coding sessions.
             </p>
           </div>
-          <div className={styles.cardGrid}>
+          <div className={pricing.cardButton}>
             <Button onClick={openIndividualCheckout}>Buy Individual</Button>
           </div>
         </PricingCard>
         <PricingCard>
-          <div className={`${styles.cardGrid} ${styles.line}`}>
+          <div className={pricing.cardHeader}>
             <h2 className={pricing.plan__name}>Radon&nbsp;IDE&nbsp;Business</h2>
             <h3 className={pricing.plan__price}>{business}</h3>
           </div>
-          <div className={styles.cardGrid}>
+          <div className={pricing.cardMiddle}>
             <p className={pricing.plan__tagline}>
               For companies seeking to drastically improve their developer experience.
             </p>
           </div>
-          <div className={styles.cardGrid}>
+          <div className={pricing.cardButton}>
             <Button onClick={openBusinessCheckout}>Buy Business</Button>
           </div>
         </PricingCard>
         <PricingCard>
-          <div className={`${styles.cardGrid} ${styles.line}`}>
+          <div className={pricing.cardHeader}>
             <h2 className={pricing.plan__name}>Radon&nbsp;IDE&nbsp;Enterprise</h2>
             <h3 className={pricing.plan__price}>{enterprise}</h3>
           </div>
-          <div className={styles.cardGrid}>
+          <div className={pricing.cardMiddle}>
             <p className={pricing.plan__tagline}>
               For organizations that need custom contract options, pricing plans, and support.
             </p>
           </div>
-          <div className={`${styles.cardGrid} ${styles.buttonContainer}`}>
+          <div className={pricing.cardButton}>
             <Button href="mailto:projects@swmansion.com">Contact Us</Button>
           </div>
         </PricingCard>

@@ -55,8 +55,10 @@
   text-decoration: none;
 }
 
-.contactButton:hover svg {
-  transform: translateX(4px);
+@media (max-width: 1024px) {
+  .card {
+    padding: 24px;
+  }
 }
 
 @media (max-width: 1024px) {

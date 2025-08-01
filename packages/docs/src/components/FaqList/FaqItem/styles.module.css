@@ -25,6 +25,7 @@
 }
 
 .answer {
+  border-bottom: 1px solid var(--radon-border-grid-subtle);
   font-family: var(--swm-body-font);
   padding: 0.5rem 1.5rem;
   font-size: 16px;
@@ -42,7 +43,7 @@
 .question {
   font-family: var(--swm-body-font);
   font-size: var(--swm-heading-font-size-smaller);
-  font-weight: 400;
+  font-weight: 500;
   color: var(--ifm-color-primary);
   text-align: left;
 }

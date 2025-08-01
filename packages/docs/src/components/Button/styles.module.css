@@ -1,5 +1,5 @@
 .button {
-  height: 48px;
+  height: 60px;
   width: 100%;
   padding: 16px;
 
@@ -12,6 +12,7 @@
     color 0.3s;
 
   display: flex;
+  align-self: stretch;
   align-items: center;
   justify-content: center;
   gap: 12px;
@@ -66,38 +67,8 @@ a.buttonLink:hover {
   margin: 0 0 2px 0;
 }
 
-.button svg {
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.arrow {
-  transition: left 0.3s;
-}
-
-.arrow {
-  left: 8px;
-}
-
-.button svg {
-  transition: stroke 0.3s;
-}
-
-.button:hover .arrow {
-  left: 16px;
-}
-
-.button svg {
-  stroke: var(--swm-off-white);
-}
-
 .button:hover {
   background-color: var(--radon-button-hover);
-}
-
-.button:hover svg {
-  stroke: var(--radon-button-text);
 }
 
 .arrow {

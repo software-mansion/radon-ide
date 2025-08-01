@@ -1,31 +1,34 @@
-import React from "react";
+import React, { useState } from "react";
 import clsx from "clsx";
 import styles from "./styles.module.css";
 import { type Dispatch, useRef } from "react";
 import PlusIcon from "../PlusIcon";
 import MinusIcon from "../MinusIcon";
 
-export interface ActiveItemProps {
-  index: number | null;
-  height: number | undefined;
+export interface ActiveItem {
+  index: number;
+  height: number;
 }
 
 interface FaqItemProps {
   topic: string;
   answer: string;
   index: number;
-  isExpanded: boolean;
-  setActiveItem: Dispatch<ActiveItemProps>;
+  activeItems: ActiveItem[];
+  setActiveItems: (items: ActiveItem[]) => void;
 }
 
-const FaqItem = ({ index, topic, answer, isExpanded, setActiveItem }: FaqItemProps) => {
+const FaqItem = ({ index, topic, answer, activeItems, setActiveItems }: FaqItemProps) => {
   const contentRef = useRef<HTMLDivElement | null>(null);
 
-  const toggleAnswer = (index: number) => {
+  const isExpanded = activeItems.some((item) => item.index === index);
+
+  const toggleAnswer = () => {
     if (isExpanded) {
-      setActiveItem({ index: null, height: 0 });
+      setActiveItems(activeItems.filter((item) => item.index !== index));
     } else {
-      setActiveItem({ index: index, height: contentRef.current?.clientHeight });
+      const height = contentRef.current?.clientHeight;
+      setActiveItems([...activeItems, { index, height }]);
     }
   };
 
@@ -38,7 +41,7 @@ const FaqItem = ({ index, topic, answer, isExpanded, setActiveItem }: FaqItemPro
       <button
         id={`faq-${index}`}
         aria-expanded={isExpanded}
-        onClick={() => toggleAnswer(index)}
+        onClick={() => toggleAnswer()}
         className={clsx(isExpanded ? styles.faqItemExpanded : styles.faqItemNormal)}>
         <div
           className={clsx(

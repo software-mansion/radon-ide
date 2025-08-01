@@ -6,20 +6,6 @@
   padding: 0 40px;
   margin: 24px 0 48px;
 }
-.cardGrid {
-  height: 30%;
-  display: flex;
-  flex-direction: column;
-  padding: 40px;
-  gap: 16px;
-  align-self: stretch;
-  justify-content: center;
-}
-.line {
-  border-bottom: 1px solid var(--swm-border);
-  height: 40%;
-  gap: 8px;
-}
 .container {
   border: 1px solid var(--swm-border);
   padding: 8px;
@@ -33,7 +19,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  grid-template-columns: 1fr auto 1fr;
   gap: 10px;
   font-weight: 500;
   padding: 0 24px;
@@ -41,8 +26,8 @@
 
 .plan_pay_annually__discount {
   color: var(--swm-green-light-100);
-  font-weight: bold;
-  margin-left: 4px;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .btn {
@@ -54,8 +39,9 @@
   justify-content: center;
   align-items: center;
   width: 50%;
-  color: var(--radon-subheading);
+  color: var(--ifm-color-primary);
 }
+
 .btn p {
   white-space: nowrap;
   font-size: 16px;
@@ -66,7 +52,26 @@
 
 .btn.active {
   background-color: var(--radon-button);
-  color: var(--radon-color-primary);
+  color: var(--radon-button-text);
+}
+
+.btn.active .plan_pay_annually__discount {
+  color: var(--radon-button-text);
+}
+
+.btn:not(.active):hover {
+  background-color: var(--swm-border);
+  color: var(--radon-button-text);
+  transition: 0.5s;
+}
+
+.yearlyContainer {
+  display: flex;
+  padding: 8px 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex: 1 0 0;
 }
 
 @media (max-width: 1024px) {
@@ -79,9 +84,6 @@
   }
   .container {
     width: 100%;
-  }
-  .cardGrid {
-    padding: 20px;
   }
 }
 
