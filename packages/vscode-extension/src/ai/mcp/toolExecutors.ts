@@ -1,10 +1,21 @@
 import { readFileSync } from "fs";
 
 import { IDE } from "../../project/ide";
-import { base64ToToolContent, textToToolContent, textToToolResponse } from "./utils";
+import {
+  base64ToToolContent,
+  textToToolContent,
+  textToToolResponse,
+  truncateMiddle,
+} from "./utils";
 import { ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/DeviceManager";
+
+// Some builds churn out +45k lines of logs.
+// We're only interested in the first 50 and last 150 of them.
+// These numbers are arbitriary and work well.
+const KEEP_FIRST_N = 50;
+const KEEP_LAST_N = 150;
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -57,15 +68,18 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
   const combinedLogs = [];
 
   if (!buildLogs.isEmpty()) {
-    combinedLogs.push("=== BUILD PROCESS STARTED ===\n", ...buildLogs.readAll());
+    const truncated = truncateMiddle(buildLogs.readAll(), KEEP_FIRST_N, KEEP_LAST_N);
+    combinedLogs.push("=== BUILD PROCESS STARTED ===\n", ...truncated);
   }
 
   if (!bundlerLogs.isEmpty()) {
-    combinedLogs.push("\n\n=== BUNDLING PROCESS STARTED ===\n", ...bundlerLogs.readAll());
+    const truncated = truncateMiddle(bundlerLogs.readAll(), KEEP_FIRST_N, KEEP_LAST_N);
+    combinedLogs.push("\n\n=== BUNDLING PROCESS STARTED ===\n", ...truncated);
   }
 
   if (!deviceLogs.isEmpty()) {
-    combinedLogs.push("\n\n=== APPLICATION STARTED ===\n", ...deviceLogs.readAll());
+    const truncated = truncateMiddle(deviceLogs.readAll(), KEEP_FIRST_N, KEEP_LAST_N);
+    combinedLogs.push("\n\n=== APPLICATION STARTED ===\n", ...truncated);
   }
 
   // TODO: Are `bundlerLogs` and `deviceLogs` cleared before build?
