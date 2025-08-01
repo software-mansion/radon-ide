@@ -25,7 +25,7 @@ export function createReadableOutputChannel(channel: string): ReadableLogOutputC
       outputChannel.append(value);
     },
     appendLine: (value: string) => {
-      logRegistry.push(value);
+      logRegistry.push(value + "\n");
       outputChannel.appendLine(value);
     },
   };

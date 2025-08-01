@@ -85,7 +85,7 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
   // TODO: Are `bundlerLogs` and `deviceLogs` cleared before build?
   //       ^ If not, then store timestamps of the latest build, bundle with logs of bundler if they occured after the build.
 
-  const text = combinedLogs.join("\n");
+  const text = combinedLogs.join("");
 
   if (session.isPreviewAvailable()) {
     const screenshot = await session.captureScreenshot();
