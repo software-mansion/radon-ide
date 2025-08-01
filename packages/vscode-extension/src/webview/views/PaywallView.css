@@ -89,6 +89,17 @@
   flex-direction: column;
   gap: 12px;
   margin-bottom: 32px;
+  min-height: 160px;
+  justify-content: center;
+}
+
+.subscription-options.loaded {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.4s ease-out forwards;
+  animation-delay: 200ms;
+  min-height: auto;
+  justify-content: flex-start;
 }
 
 .subscription-option {

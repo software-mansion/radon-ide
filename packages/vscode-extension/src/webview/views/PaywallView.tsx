@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import "./PaywallView.css";
 import { PricePreviewResponse } from "@paddle/paddle-js";
+import classNames from "classnames";
 import Button from "../components/shared/Button";
 import RadonBackgroundImage from "../components/RadonBackgroundImage";
 import usePaddle from "../hooks/usePaddle";
@@ -72,6 +73,8 @@ function PaywallView() {
     (item) => item.price.id === RadonIDEProYearlyPriceID
   );
 
+  const isPriceReady = !isLoadingPrices && !pricesError && prices;
+
   const handleContinue = () => {
     console.log(`Continue with ${selectedPlan} subscription`);
     // TODO: Implement subscription logic
@@ -94,31 +97,36 @@ function PaywallView() {
 
         <p>Start with 2 week trial then:</p>
 
-        <div className="subscription-options">
-          {!pricesError && (
+        <div className={`subscription-options ${isPriceReady ? "loaded" : ""}`}>
+          {isPriceReady && (
             <>
               <div
-                className={`subscription-option ${selectedPlan === "yearly" ? "selected" : ""}`}
+                className={classNames(
+                  "subscription-option",
+                  selectedPlan === "yearly" && "selected"
+                )}
                 onClick={() => setSelectedPlan("yearly")}>
                 <div className="plan-header">
                   <span className="plan-name">
                     Yearly Plan <span className="plan-saving">Save 16%</span>
                   </span>
                   <span className="plan-price">
-                    <span>{radonProYearlyPrice?.formattedTotals.total || "Loading..."}</span> / year
+                    <span>{radonProYearlyPrice?.formattedTotals.total}</span> / year
                   </span>
                 </div>
                 <div className="plan-description">Billed annually</div>
               </div>
 
               <div
-                className={`subscription-option ${selectedPlan === "monthly" ? "selected" : ""}`}
+                className={classNames(
+                  "subscription-option",
+                  selectedPlan === "monthly" && "selected"
+                )}
                 onClick={() => setSelectedPlan("monthly")}>
                 <div className="plan-header">
                   <span className="plan-name">Monthly Plan</span>
                   <span className="plan-price">
-                    <span>{radonProMonthlyPrice?.formattedTotals.total || "Loading..."}</span> /
-                    month
+                    <span>{radonProMonthlyPrice?.formattedTotals.total}</span> / month
                   </span>
                 </div>
                 <div className="plan-description">Billed monthly</div>
@@ -132,8 +140,8 @@ function PaywallView() {
         <Button
           className="continue-button"
           onClick={handleContinue}
-          disabled={isLoadingPrices || !!pricesError}>
-          Continue
+          disabled={isLoadingPrices || !prices}>
+          {isLoadingPrices ? "Loading..." : "Continue"}
         </Button>
       </div>
     </div>
