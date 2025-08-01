@@ -35,8 +35,6 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
     return textToToolResponse(errorMessage);
   }
 
-  // TODO: Check if `deviceSession` is always available during build process.
-
   const registry = ideInstance.outputChannelRegistry;
   const session = ideInstance.project.deviceSession;
 
