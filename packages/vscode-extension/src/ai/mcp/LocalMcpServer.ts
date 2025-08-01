@@ -20,7 +20,7 @@ export class LocalMcpServer implements Disposable {
   private expressServer: http.Server;
   private mcpServer: McpServer | null = null;
   private serverPort: Promise<number>;
-  private setServerPort: ((port: number) => void) | null = null;
+  private resolveServerPort: (port: number) => void;
   private serverReloadEmitter: EventEmitter<void>;
 
   private connectionListener: ConnectionListener;
@@ -28,10 +28,10 @@ export class LocalMcpServer implements Disposable {
   private licenseTokenSubscription: Disposable;
 
   constructor(connectionListener: ConnectionListener) {
-    // Deferred promise. The this.setServerPort is set immediately & synchronously.
-    this.serverPort = new Promise<number>((resolve) => {
-      this.setServerPort = resolve;
-    });
+    const promiseWithResolvers = Promise.withResolvers<number>();
+
+    this.serverPort = promiseWithResolvers.promise;
+    this.resolveServerPort = promiseWithResolvers.resolve;
 
     this.connectionListener = connectionListener;
 
@@ -134,7 +134,7 @@ export class LocalMcpServer implements Disposable {
     return app.listen(0, "127.0.0.1").on("listening", () => {
       // On "listening", listener.address() will always return AddressInfo
       const addressInfo = this.expressServer?.address() as AddressInfo;
-      this.setServerPort?.(addressInfo.port);
+      this.resolveServerPort(addressInfo.port);
       Logger.info(`Started local MCP server on port ${addressInfo.port}.`);
     });
   }
