@@ -248,7 +248,6 @@ export default function Device({ device, zoomLevel, children, wrapperDivRef }: D
     return () => window.removeEventListener("resize", applyStylePropertiesToComponents);
   }, [device, frame, rotation, wrapperDivRef, zoomLevel]);
 
-
   return (
     <div className="phone-wrapper">
       <div ref={phoneContentRef} className="phone-content">
