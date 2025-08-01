@@ -133,7 +133,7 @@ function PaywallView() {
           className="continue-button"
           onClick={handleContinue}
           disabled={isLoadingPrices || !!pricesError}>
-          {isLoadingPrices ? "Loading..." : "Continue"}
+          Continue
         </Button>
       </div>
     </div>

@@ -15,6 +15,10 @@
   font-size: 32px;
   font-weight: 600;
   margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.4s ease-out forwards;
+  animation-delay: 75ms;
 }
 
 .paywall-benefits {
@@ -36,31 +40,31 @@
 }
 
 .paywall-benefit:nth-child(1) {
-  animation-delay: 50ms;
+  animation-delay: 450ms;
 }
 .paywall-benefit:nth-child(2) {
-  animation-delay: 100ms;
+  animation-delay: 500ms;
 }
 .paywall-benefit:nth-child(3) {
-  animation-delay: 150ms;
+  animation-delay: 550ms;
 }
 .paywall-benefit:nth-child(4) {
-  animation-delay: 200ms;
+  animation-delay: 600ms;
 }
 .paywall-benefit:nth-child(5) {
-  animation-delay: 250ms;
+  animation-delay: 650ms;
 }
 .paywall-benefit:nth-child(6) {
-  animation-delay: 300ms;
+  animation-delay: 700ms;
 }
 .paywall-benefit:nth-child(7) {
-  animation-delay: 350ms;
+  animation-delay: 750ms;
 }
 .paywall-benefit:nth-child(8) {
-  animation-delay: 400ms;
+  animation-delay: 800ms;
 }
 .paywall-benefit:nth-child(9) {
-  animation-delay: 450ms;
+  animation-delay: 850ms;
 }
 
 @keyframes fadeInUp {
@@ -159,8 +163,9 @@
 }
 
 .continue-button:disabled {
-  opacity: 0.6;
   cursor: not-allowed;
+  color: var(--swm-button);
+  background-color: var(--swm-button-background);
 }
 
 .paywall-background-image {
