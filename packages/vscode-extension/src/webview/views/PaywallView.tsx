@@ -74,6 +74,7 @@ function PaywallView() {
   );
 
   const isPriceReady = !isLoadingPrices && !pricesError && prices;
+  const shouldShowPaywall = !isLoadingPrices;
 
   const handleContinue = () => {
     console.log(`Continue with ${selectedPlan} subscription`);
@@ -83,24 +84,24 @@ function PaywallView() {
   return (
     <div className="paywall-view">
       <RadonBackgroundImage color="#222" className="paywall-background-image" />
-      <div className="paywall-container">
-        <h1 className="paywall-title">Unlock Radon IDE Pro</h1>
+      {shouldShowPaywall && (
+        <div className="paywall-container">
+          <h1 className="paywall-title">Unlock Radon IDE Pro</h1>
 
-        <ul className="paywall-benefits">
-          {benefits.map((benefit, index) => (
-            <li key={index} className="paywall-benefit">
-              <span className="codicon codicon-check" />
-              {benefit}
-            </li>
-          ))}
-        </ul>
+          <ul className="paywall-benefits">
+            {benefits.map((benefit, index) => (
+              <li key={index} className="paywall-benefit">
+                <span className="codicon codicon-check" />
+                {benefit}
+              </li>
+            ))}
+          </ul>
 
-        <div className="subscription-options-container">
-          <p className="subscription-options-caption">Start with 2 week trial then:</p>
+          {isPriceReady && (
+            <div className="subscription-options-container">
+              <p className="subscription-options-caption">Start with 2 week trial then:</p>
 
-          <div className={`subscription-options ${isPriceReady ? "loaded" : ""}`}>
-            {isPriceReady && (
-              <>
+              <div className="subscription-options loaded">
                 <div
                   className={classNames(
                     "subscription-option",
@@ -132,20 +133,22 @@ function PaywallView() {
                   </div>
                   <div className="plan-description">Billed monthly</div>
                 </div>
-              </>
-            )}
-          </div>
+              </div>
+            </div>
+          )}
+
+          <p className={`recurring-billing-label ${isPriceReady ? "with-prices" : "no-prices"}`}>
+            Recurring billing. Cancel anytime.
+          </p>
+
+          <Button
+            className={`continue-button ${isPriceReady ? "with-prices" : "no-prices"}`}
+            onClick={handleContinue}
+            disabled={isLoadingPrices || !prices}>
+            Continue
+          </Button>
         </div>
-
-        <p className="recurring-billing-label">Recurring billing. Cancel anytime.</p>
-
-        <Button
-          className="continue-button"
-          onClick={handleContinue}
-          disabled={isLoadingPrices || !prices}>
-          Continue
-        </Button>
-      </div>
+      )}
     </div>
   );
 }
