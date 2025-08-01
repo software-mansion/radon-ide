@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { EditorType, ToolResponse } from "./models";
+import { EditorType, ImageContent, TextContent, ToolResponse } from "./models";
 
 export const MCP_LOG = "[MCP]";
 
@@ -12,13 +12,23 @@ export function getEditorType(): EditorType {
   return EditorType.VSCODE;
 }
 
+export function base64ToContent(data: string): ImageContent {
+  return {
+    type: "image",
+    data,
+    mimeType: "image/png",
+  };
+}
+
+export function textToContent(text: string): TextContent {
+  return {
+    type: "text",
+    text,
+  };
+}
+
 export function textToToolResponse(text: string): ToolResponse {
   return {
-    content: [
-      {
-        type: "text",
-        text,
-      },
-    ],
+    content: [textToContent(text)],
   };
 }

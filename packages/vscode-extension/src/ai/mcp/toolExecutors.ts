@@ -22,13 +22,7 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
   const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
 
   return {
-    content: [
-      {
-        type: "image",
-        data: contents,
-        mimeType: "image/png",
-      },
-    ],
+    content: [base64ToContent(contents)],
   };
 }
 
