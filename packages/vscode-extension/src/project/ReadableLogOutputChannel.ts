@@ -12,6 +12,10 @@ export function createReadableOutputChannel(channel: string): ReadableLogOutputC
   return {
     ...outputChannel,
     readAll: () => logRegistry,
+    clear: () => {
+      logRegistry.length = 0;
+      outputChannel.clear();
+    },
     append: (value: string) => {
       logRegistry.push(value);
       outputChannel.append(value);
