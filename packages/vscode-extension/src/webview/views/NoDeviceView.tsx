@@ -74,14 +74,15 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
   const { project } = useProject();
 
   function openCreateNewDeviceModal() {
-    openModal(
-      "Create new device",
-      <CreateDeviceView onCancel={closeModal} onCreate={closeModal} />
-    );
+    openModal(<CreateDeviceView onCancel={closeModal} onCreate={closeModal} />, {
+      title: "Create new device",
+    });
   }
 
   function openManageDevicesModal() {
-    openModal("Manage devices", <ManageDevicesView />);
+    openModal(<ManageDevicesView />, {
+      title: "Manage devices",
+    });
   }
 
   function enableRadonConnect() {

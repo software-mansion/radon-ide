@@ -2,6 +2,7 @@ import _ from "lodash";
 import React, { PropsWithChildren } from "react";
 import * as Select from "@radix-ui/react-select";
 import { use$ } from "@legendapp/state/react";
+import { VscodeBadge as Badge } from "@vscode-elements/react-elements";
 import { DeviceInfo, DevicePlatform } from "../../common/DeviceManager";
 import "./DeviceSelect.css";
 import "./shared/Dropdown.css";
@@ -10,7 +11,6 @@ import { useDevices } from "../providers/DevicesProvider";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
-import { VscodeBadge as Badge } from "@vscode-elements/react-elements";
 import { useStore } from "../providers/storeProvider";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
@@ -107,7 +107,7 @@ function DeviceSelect() {
 
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
-      openModal("Manage Devices", <ManageDevicesView />);
+      openModal(<ManageDevicesView />, { title: "Manage Devices" });
       return;
     }
     if (value === "connect") {
