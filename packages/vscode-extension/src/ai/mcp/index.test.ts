@@ -14,6 +14,7 @@ type ExtendedMcpConfig = {
     {
       url: string;
       type: string;
+      headers?: Record<string, string>;
     }
   >;
 };
