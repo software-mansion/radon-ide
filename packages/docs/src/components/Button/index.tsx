@@ -1,7 +1,6 @@
 import React from "react";
 import styles from "./styles.module.css";
 
-import ArrowRight from "@site/static/img/arrow-right-hero.svg";
 import clsx from "clsx";
 import ArrowRightSmallIcon from "../ArrowRightSmallIcon";
 

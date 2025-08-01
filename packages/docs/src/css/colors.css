@@ -104,10 +104,11 @@
   /* --- Text rebranding --- */
   --radon-color-primary: #fafafa;
   --radon-color-secondary: #a1a1a1;
-  --radon-button-text: #ffffff;
+  --radon-color-button-text: #ffffff;
 
   --radon-subheading: var(--swm-navy-light-100);
   --radon-border-grid-subtle: var(--swm-border);
+  --radon-button-text: var(--radon-color-button-text);
 
   /* Infima main colors */
   --ifm-color-primary: var(--swm-navy-light-100);
