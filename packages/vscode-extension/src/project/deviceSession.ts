@@ -752,8 +752,8 @@ export class DeviceSession implements Disposable {
     return this.device.captureScreenshot(rotation);
   }
 
-  public isPreviewAvailable() {
-    return this.device.isPreviewAvailable();
+  public get previewReady() {
+    return this.device.previewReady;
   }
 
   public sendTouches(
