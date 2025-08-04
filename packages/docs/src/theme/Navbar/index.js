@@ -1,6 +1,8 @@
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import React from "react";
-import { Navbar } from "@swmansion/t-rex-ui";
+import Navbar from "../../components/Navbar";
+// import { Navbar } from "@swmansion/t-rex-ui";
+
 import { Analytics } from "@vercel/analytics/react";
 import Head from "@docusaurus/Head";
 
@@ -27,15 +29,15 @@ function Scripts() {
 
 export default function NavbarWrapper(props) {
   const heroImages = {
-    logo: useBaseUrl("/img/logo-dark.svg"),
+    logo: useBaseUrl("/img/logo.svg"),
   };
   return (
     <>
       <Navbar
-        isAlgoliaActive={false}
-        isThemeSwitcherShown={true}
-        heroImages={heroImages}
-        {...props}
+      // isAlgoliaActive={false}
+      // isThemeSwitcherShown={true}
+      // heroImages={heroImages}
+      // {...props}
       />
       <Scripts />
       <Analytics />

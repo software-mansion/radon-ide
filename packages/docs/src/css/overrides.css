@@ -105,6 +105,7 @@ table thead tr {
     width: 20px;
   }
 }
+
 .header-github:before,
 .header-github:hover:before {
   background-color: var(--ifm-color-primary);
@@ -129,6 +130,21 @@ nav [class*="_sidebarFooter"] {
 
 nav [class*="navbar-sidebar__items"] {
   height: calc(100% - var(--swm-sidebar-header-height));
+}
+
+nav {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  /* Blur ? */
+  background-color: transparent;
+  /* background-color: var(--swm-background); */
+
+  position: sticky;
+  top: 0;
+  width: 100%;
+  z-index: 1000;
 }
 
 img + blockquote {
