@@ -62,7 +62,6 @@ export class DeviceBootError extends Error {
 export class DeviceSession implements Disposable {
   private isActive = false;
   private metro: MetroLauncher;
-  private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
   private buildManager: BuildManager;
@@ -787,19 +786,10 @@ export class DeviceSession implements Disposable {
   }
 
   public inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<any> {
-    const id = this.inspectCallID++;
-    const { promise, resolve, reject } = Promise.withResolvers<any>();
-    const listener = this.devtools.onEvent("inspectData", (payload) => {
-      if (payload.id === id) {
-        listener.dispose();
-        resolve(payload);
-      } else if (payload.id >= id) {
-        listener.dispose();
-        reject("Inspect request was invalidated by a later request");
-      }
-    });
-    this.inspectorBridge.sendInspectRequest(xRatio, yRatio, id, requestStack);
-    return promise;
+    if (!this.applicationSession) {
+      throw new Error("Cannot inspect element while the application is not running");
+    }
+    return this.applicationSession.inspectElementAt(xRatio, yRatio, requestStack);
   }
 
   public openNavigation(id: string) {

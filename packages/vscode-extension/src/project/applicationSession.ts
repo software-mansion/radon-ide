@@ -54,6 +54,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   private isRefreshing: boolean = false;
   private appOrientation: DeviceRotation | undefined;
   private isActive = false;
+  private inspectCallID = 7621;
 
   private stateChangedEventEmitter = new EventEmitter<void>();
 
@@ -445,6 +446,24 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       this.profilingReactState = "stopped";
       this.emitStateChange();
     }
+  }
+  //#endregion
+
+  //#region Element Inspector
+  public inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<any> {
+    const id = this.inspectCallID++;
+    const { promise, resolve, reject } = Promise.withResolvers<any>();
+    const listener = this.devtools.onEvent("inspectData", (payload) => {
+      if (payload.id === id) {
+        listener.dispose();
+        resolve(payload);
+      } else if (payload.id >= id) {
+        listener.dispose();
+        reject("Inspect request was invalidated by a later request");
+      }
+    });
+    this.devtools.sendInspectRequest(xRatio, yRatio, id, requestStack);
+    return promise;
   }
   //#endregion
 
