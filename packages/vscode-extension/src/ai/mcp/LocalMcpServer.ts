@@ -28,10 +28,10 @@ export class LocalMcpServer implements Disposable {
   private licenseTokenSubscription: Disposable;
 
   constructor(connectionListener: ConnectionListener) {
-    const promiseWithResolvers = Promise.withResolvers<number>();
+    const { promise, resolve } = Promise.withResolvers<number>();
 
-    this.serverPort = promiseWithResolvers.promise;
-    this.resolveServerPort = promiseWithResolvers.resolve;
+    this.serverPort = promise;
+    this.resolveServerPort = resolve;
 
     this.connectionListener = connectionListener;
 
