@@ -14,6 +14,7 @@ export interface RadonInspectorBridgeEvents {
   pluginMessage: [{ pluginId: string; type: string; data: any }];
   isProfilingReact: [boolean];
   appOrientationChanged: [AppOrientation];
+  inspectorAvailabilityChanged: [boolean];
 }
 
 export interface RadonInspectorBridge {

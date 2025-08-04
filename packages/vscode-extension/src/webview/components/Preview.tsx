@@ -183,6 +183,9 @@ function Preview({
     if (selectedDeviceSession?.status !== "running") {
       return;
     }
+    if(selectedDeviceSession?.inspectorAvailability === false) {
+      return;
+    }
     if (type === "Leave") {
       return;
     }

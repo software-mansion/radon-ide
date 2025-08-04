@@ -121,6 +121,7 @@ function PreviewView() {
   const isRecording = selectedDeviceSession?.isRecordingScreen ?? false;
 
   const navBarButtonsActive = initialized && !isStarting && !radonConnectEnabled;
+  const inspectorButtonActive = navBarButtonsActive && isRunning && selectedDeviceSession?.inspectorAvailability;
   const debuggerToolsButtonsActive = navBarButtonsActive; // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
@@ -357,7 +358,7 @@ function PreviewView() {
             });
             setIsInspecting(!isInspecting);
           }}
-          disabled={!navBarButtonsActive}>
+          disabled={!inspectorButtonActive}>
           <span className="codicon codicon-inspect" />
         </IconButton>
 

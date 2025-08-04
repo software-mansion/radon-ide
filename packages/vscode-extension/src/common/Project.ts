@@ -100,6 +100,7 @@ export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
   isRefreshing: boolean;
   bundleError: BundleErrorDescriptor | undefined;
   appOrientation: DeviceRotation | undefined;
+  inspectorAvailability: boolean;
 };
 
 export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {

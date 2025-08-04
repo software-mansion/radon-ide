@@ -106,6 +106,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
   private hasStaleBuildCache = false;
   private isRecordingScreen = false;
   private appOrientation: DeviceRotation | undefined;
+  private inspectorAvailability: boolean = true;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -173,6 +174,7 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
         isRefreshing: this.isRefreshing,
         bundleError: this.bundleError,
         appOrientation: this.appOrientation,
+        inspectorAvailability: this.inspectorAvailability,
       };
     } else if (this.status === "fatalError") {
       assert(this.fatalError, "Expected error to be defined in fatal error state");
@@ -403,7 +405,10 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
       } else {
         this.appOrientation = orientation;
       }
-
+      this.emitStateChange();
+    });
+    devtools.onEvent("inspectorAvailabilityChanged", (isAvailable: boolean) => { 
+      this.inspectorAvailability = isAvailable;
       this.emitStateChange();
     });
     return devtools;
