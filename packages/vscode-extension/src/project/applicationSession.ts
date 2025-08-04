@@ -257,20 +257,18 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   }
 
   public async deactivate(): Promise<void> {
-    if (this.isActive) {
-      this.isActive = false;
-      this.toolsManager.deactivate();
-      // detaching debugger will also stop the debug console, after switching back
-      // to the device session, we won't be able to see the logs from the previous session
-      // hence we reset the log counter.
-      this.logCounter = 0;
-      this.emitStateChange();
-      this.debugSessionEventSubscription?.dispose();
-      const debugSession = this.debugSession;
-      this.debugSession = undefined;
-      await debugSession?.dispose();
-      this.debugSessionEventSubscription = undefined;
-    }
+    this.isActive = false;
+    this.toolsManager.deactivate();
+    // detaching debugger will also stop the debug console, after switching back
+    // to the device session, we won't be able to see the logs from the previous session
+    // hence we reset the log counter.
+    this.logCounter = 0;
+    this.emitStateChange();
+    this.debugSessionEventSubscription?.dispose();
+    const debugSession = this.debugSession;
+    this.debugSession = undefined;
+    await debugSession?.dispose();
+    this.debugSessionEventSubscription = undefined;
   }
 
   //#region Debugger control
