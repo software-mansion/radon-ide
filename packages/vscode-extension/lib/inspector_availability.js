@@ -1,12 +1,13 @@
-const { Dimensions, AppState } = require("react-native");
+const { Dimensions, AppState, Platform } = require("react-native");
 const inspectorBridge = require("./inspector_bridge");
 
-let currentIsAppStateActive = true;
-let currentIsEdgeToEdge = true;
+let isAppStateActive = true;
+let isEdgeToEdge = true;
+let isFocused = true;
 let lastEstablishedAvailability = null;
 
 const updateAvailabilityAndSendMessage = () => {
-  const availability = currentIsAppStateActive && currentIsEdgeToEdge;
+  const availability = isAppStateActive && isEdgeToEdge && isFocused;
 
   if (availability !== lastEstablishedAvailability) {
     lastEstablishedAvailability = availability;
@@ -17,33 +18,51 @@ const updateAvailabilityAndSendMessage = () => {
   }
 };
 
-// Fire additionally on Dimensions change because of iOS "lag" issue described
-// in the above context.
 const handleDimensionsChange = () => {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
   const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
-  currentIsEdgeToEdge = screenWidth === windowWidth && screenHeight === windowHeight;
+  isEdgeToEdge = screenWidth === windowWidth && screenHeight === windowHeight;
   updateAvailabilityAndSendMessage();
 };
 
 const handleAppStateChange = (appState) => {
-  currentIsAppStateActive = appState === "active";
+  console.log("App state changed:", appState);
+  isAppStateActive = appState === "active";
+  updateAvailabilityAndSendMessage();
+};
+
+const handleBlurChange = () => {
+  isFocused = false;
+  updateAvailabilityAndSendMessage();
+};
+
+const handleFocusChange = () => {
+  isFocused = true;
   updateAvailabilityAndSendMessage();
 };
 
 const initializeInspectorAvailability = () => {
   const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
   const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
-  currentIsEdgeToEdge = screenWidth === windowWidth && screenHeight === windowHeight;
-  currentIsAppStateActive = AppState.currentState === "active";
+  isEdgeToEdge = screenWidth === windowWidth && screenHeight === windowHeight;
+  isAppStateActive = AppState.currentState === "active";
   updateAvailabilityAndSendMessage();
 };
 
 export function setup() {
   initializeInspectorAvailability();
 
+  let appBlurSubscription = null;
+  let appFocusSubscription = null;
+
   const dimensionEventSubscription = Dimensions.addEventListener("change", handleDimensionsChange);
   const appStateSubscription = AppState.addEventListener("change", handleAppStateChange);
+
+  // iOS does not support "blur" and "focus" events on AppState
+  if (Platform.OS === "android") {
+    appBlurSubscription = AppState.addEventListener("blur", handleBlurChange);
+    appFocusSubscription = AppState.addEventListener("focus", handleFocusChange);
+  }
 
   return function cleanup() {
     if (dimensionEventSubscription) {
@@ -51,6 +70,13 @@ export function setup() {
     }
     if (appStateSubscription) {
       appStateSubscription.remove();
+    }
+
+    if (appBlurSubscription) {
+      appBlurSubscription.remove();
+    }
+    if (appFocusSubscription) {
+      appFocusSubscription.remove();
     }
   };
 }
