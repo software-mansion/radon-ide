@@ -83,7 +83,8 @@ The AI models automatically discover and invoke tools when they decide it will b
 
 - `get_library_description` Provides a detailed description of a library and its use cases.
 - `query_documentation` Retrieves documentation snippets relevant to a provided query.
-- `view_screenshot` Captures a device preview screenshot. Can help the agent to debug issues or make UI adjustements. Currenlty only supported in Gemini and Claude models.
+- `view_application_logs` Returns all the build, bundling and runtime logs available to Radon IDE. 
+- `view_screenshot` Captures a device preview screenshot. Can help the agent with debugging issues and making UI adjustments. Currently only supported in GPT, Gemini and Claude models.
 
 ## Limitations
 
