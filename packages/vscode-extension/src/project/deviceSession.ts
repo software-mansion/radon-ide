@@ -786,20 +786,20 @@ export class DeviceSession implements Disposable {
     this.device.sendWheel(point, deltaX, deltaY);
   }
 
-  public inspectElementAt(
-    xRatio: number,
-    yRatio: number,
-    requestStack: boolean,
-    callback: (inspectData: any) => void
-  ) {
+  public inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<any> {
     const id = this.inspectCallID++;
+    const { promise, resolve, reject } = Promise.withResolvers<any>();
     const listener = this.devtools.onEvent("inspectData", (payload) => {
       if (payload.id === id) {
         listener.dispose();
-        callback(payload);
+        resolve(payload);
+      } else if (payload.id >= id) {
+        listener.dispose();
+        reject("Inspect request was invalidated by a later request");
       }
     });
     this.inspectorBridge.sendInspectRequest(xRatio, yRatio, id, requestStack);
+    return promise;
   }
 
   public openNavigation(id: string) {

@@ -195,7 +195,7 @@ function Preview({
 
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
-    project.inspectElementAt(translatedX, translatedY, requestStack, (inspectData) => {
+    project.inspectElementAt(translatedX, translatedY, requestStack).then((inspectData) => {
       if (requestStack && inspectData?.stack) {
         if (showInspectStackModal) {
           setInspectStackData({

@@ -15,7 +15,6 @@ import {
   DeviceSessionState,
   DeviceSettings,
   IDEPanelMoveTarget,
-  InspectData,
   isOfEnumDeviceRotation,
   MultimediaData,
   ProjectEventListener,
@@ -672,34 +671,28 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Inspector
 
-  public async inspectElementAt(
-    xRatio: number,
-    yRatio: number,
-    requestStack: boolean,
-    callback: (inspectData: InspectData) => void
-  ) {
-    this.deviceSession?.inspectElementAt(xRatio, yRatio, requestStack, (inspectData) => {
-      let stack = undefined;
-      if (requestStack && inspectData?.stack) {
-        stack = inspectData.stack;
-        const inspectorExcludePattern = workspace
-          .getConfiguration("RadonIDE")
-          .get("inspectorExcludePattern") as string | undefined;
-        const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
-        function testInspectorExcludeGlobPattern(filename: string) {
-          return patterns?.some((pattern) => minimatch(filename, pattern));
-        }
-        stack.forEach((item: any) => {
-          item.hide = false;
-          if (!isAppSourceFile(item.source.fileName)) {
-            item.hide = true;
-          } else if (testInspectorExcludeGlobPattern(item.source.fileName)) {
-            item.hide = true;
-          }
-        });
+  public async inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean) {
+    const inspectData = await this.deviceSession?.inspectElementAt(xRatio, yRatio, requestStack);
+    let stack = undefined;
+    if (requestStack && inspectData?.stack) {
+      stack = inspectData.stack;
+      const inspectorExcludePattern = workspace
+        .getConfiguration("RadonIDE")
+        .get("inspectorExcludePattern") as string | undefined;
+      const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
+      function testInspectorExcludeGlobPattern(filename: string) {
+        return patterns?.some((pattern) => minimatch(filename, pattern));
       }
-      callback({ frame: inspectData.frame, stack });
-    });
+      stack.forEach((item: any) => {
+        item.hide = false;
+        if (!isAppSourceFile(item.source.fileName)) {
+          item.hide = true;
+        } else if (testInspectorExcludeGlobPattern(item.source.fileName)) {
+          item.hide = true;
+        }
+      });
+    }
+    return { frame: inspectData.frame, stack };
   }
 
   // #endregion Inspector
