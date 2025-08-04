@@ -9,7 +9,9 @@
     "ui-tests": "extest run-tests ./ui-tests/*.test.js --extensions_dir ./data/vscode-extensions -r ../react-native-80",
     "clean": "rm -rf ./data/vscode-storage",
     "setup-run-tests": "npm run clean && npm run setup && npm run ui-tests",
-    "extest": "extest run-tests -h"
+    "extest": "extest run-tests -h",
+    "set-up-VM-environment": "cd ./scripts && ./setupVM.sh && cd ..",
+    "run-tests-on-VM": "cd ./scripts && ./runTests.sh"
   },
   "keywords": [],
   "author": "",

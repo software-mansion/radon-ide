@@ -4,10 +4,10 @@
 VM_NAME="macOS"
 VM_IP="192.168.64.3"
 VM_USER="test"
-LOCAL_PROJECT_PATH="../../vscode-extension-tester"
+LOCAL_PROJECT_PATH="../vscode-extension-tester"
 REMOTE_PATH="./vscode-extension-tester"
 
-open -a "UTM" && utmctl start macOS || {
+open -a "UTM" && sleep 3 && utmctl start macOS || {
     echo "Failed to start VM '$VM_NAME'."
     exit 1
 }

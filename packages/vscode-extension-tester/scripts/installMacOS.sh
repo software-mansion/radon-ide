@@ -3,6 +3,7 @@
 LINK="https://drive.google.com/file/d/1jL1MDcGv1UrN7xppVO6bGabl6b0VTZKu/view?usp=share_link"
 DEST_DIR="$HOME/Library/Containers/com.utmapp.UTM/Data/Documents"
 
+pkill -f "UTM"
 cd "$DEST_DIR" || { echo "cannot open directory"; exit 1; }
 
 echo "Downloading file from Google Drive..."
@@ -25,6 +26,6 @@ rm "$ZIP_FILE"
 
 open -a "UTM"
 sleep 5
-osascript -e 'quit app "UTM"'
+pkill -f "UTM"
 
 echo "Done!"
