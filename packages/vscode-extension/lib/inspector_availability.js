@@ -1,6 +1,11 @@
 const { Dimensions, AppState, Platform } = require("react-native");
 const inspectorBridge = require("./inspector_bridge");
 
+// Below module is used to determine whether we should make
+// inspector-and-alike overlays available, as they exhibit
+// unexpected behavior when the app is not edge-to-edge, because
+// of margins, which are unavailable to fetch using react-native API.
+
 let isAppStateActive = true;
 let isEdgeToEdge = true;
 let isFocused = true;
