@@ -47,6 +47,7 @@ export abstract class DeviceBase implements Disposable {
     DEVICE_SETTINGS_KEY,
     DEVICE_SETTINGS_DEFAULT
   );
+  private _rotation: DeviceRotation = DeviceRotation.Portrait;
 
   abstract get lockFilePath(): string;
 
@@ -60,6 +61,10 @@ export abstract class DeviceBase implements Disposable {
 
   public isPreviewAvailable() {
     return !!this.preview;
+  }
+
+  public get rotation() {
+    return this._rotation;
   }
 
   async reboot(): Promise<void> {
@@ -96,6 +101,7 @@ export abstract class DeviceBase implements Disposable {
       } else {
         preview.hideTouches();
       }
+      preview.rotateDevice(this._rotation);
     }
   }
 
@@ -112,7 +118,7 @@ export abstract class DeviceBase implements Disposable {
     launchArguments: string[]
   ): Promise<void>;
   abstract terminateApp(packageNameOrBundleID: string): Promise<void>;
-  abstract makePreview(): Preview;
+  protected abstract makePreview(): Preview;
   abstract get platform(): DevicePlatform;
   abstract get deviceInfo(): DeviceInfo;
   abstract resetAppPermissions(
@@ -157,25 +163,25 @@ export abstract class DeviceBase implements Disposable {
     return this.preview.startRecording();
   }
 
-  public async captureAndStopRecording() {
+  public async captureAndStopRecording(rotation: DeviceRotation) {
     if (!this.preview) {
       throw new Error("Preview not started");
     }
-    return this.preview.captureAndStopRecording();
+    return this.preview.captureAndStopRecording(rotation);
   }
 
-  public async captureReplay() {
+  public async captureReplay(rotation: DeviceRotation) {
     if (!this.preview) {
       throw new Error("Preview not started");
     }
-    return this.preview.captureReplay();
+    return this.preview.captureReplay(rotation);
   }
 
-  public async captureScreenshot() {
+  public async captureScreenshot(rotation: DeviceRotation) {
     if (!this.preview) {
       throw new Error("Preview not started");
     }
-    return this.preview.captureScreenShot();
+    return this.preview.captureScreenShot(rotation);
   }
 
   public sendTouches(
@@ -229,12 +235,11 @@ export abstract class DeviceBase implements Disposable {
   }
 
   public sendRotate(rotation: DeviceRotation) {
-    // Preview may not be started yet, but we still wish to be able to rotate during init of device.
-    // The rotation is set in constructor of device and is gotten from the workspace configuration anyways.
+    this._rotation = rotation;
     this.preview?.rotateDevice(rotation);
   }
 
-  async startPreview() {
+  public async startPreview() {
     if (!this.previewStartPromise) {
       this.preview = this.makePreview();
       this.previewStartPromise = this.preview.start();

@@ -90,6 +90,7 @@
   top: var(--phone-top);
   left: calc(var(--phone-left));
   rotate: var(--frame-rotation);
+  display: none;
 }
 
 .phone-sized {
@@ -103,6 +104,7 @@
   -webkit-mask-size: cover;
   mask-size: cover;
   user-select: none;
+  background-color: black;
 }
 
 .phone-screen {
@@ -128,6 +130,7 @@
   -webkit-mask-size: cover;
   mask-size: cover;
   background-color: var(--swm-separator);
+  aspect-ratio: var(--phone-aspect-ratio);
 }
 
 .phone-frame {

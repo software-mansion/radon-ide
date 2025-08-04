@@ -31,7 +31,10 @@ function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: numbe
 
 function useIsEnabled() {
   const { selectedDeviceSession } = useProject();
-  return selectedDeviceSession?.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled;
+  if (selectedDeviceSession?.status !== "running") {
+    return false;
+  }
+  return selectedDeviceSession.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled;
 }
 
 function RenderOutlinesOverlay() {

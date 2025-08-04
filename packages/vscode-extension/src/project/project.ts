@@ -292,14 +292,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    return this.deviceSession.captureAndStopRecording();
+    return this.deviceSession.captureAndStopRecording(this.getDeviceRotation());
   }
 
   async startProfilingCPU() {
     if (this.deviceSession) {
       await this.deviceSession.startProfilingCPU();
     } else {
-      throw new Error("No device session available");
+      throw new Error("No application running");
     }
   }
 
@@ -307,7 +307,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (this.deviceSession) {
       await this.deviceSession.stopProfilingCPU();
     } else {
-      throw new Error("No device session available");
+      throw new Error("No application running");
     }
   }
 
@@ -343,7 +343,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    const replay = await this.deviceSession.captureReplay();
+    const replay = await this.deviceSession.captureReplay(this.getDeviceRotation());
     this.eventEmitter.emit("replayDataCreated", replay);
   }
 
@@ -355,7 +355,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       throw new Error("No device session available");
     }
 
-    const screenshot = await this.deviceSession.captureScreenshot();
+    const screenshot = await this.deviceSession.captureScreenshot(this.getDeviceRotation());
     await this.utils.saveMultimedia(screenshot);
   }
 
@@ -397,10 +397,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   private async reloadMetro() {
-    if (await this.deviceSession?.performReloadAction("reloadJs")) {
+    try {
+      await this.deviceSession?.performReloadAction("reloadJs");
       return true;
+    } catch {
+      return false;
     }
-    return false;
   }
 
   public async navigateHome() {
