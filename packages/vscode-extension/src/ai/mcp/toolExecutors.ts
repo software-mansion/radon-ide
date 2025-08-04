@@ -10,7 +10,6 @@ import {
 import { ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/DeviceManager";
-import { DeviceRotation } from "../../common/Project";
 
 // Some builds churn out +45k lines of logs.
 // We're only interested in the first 50 and last 150 of them.
@@ -89,7 +88,7 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
   const text = combinedLogs.join("");
 
   if (session.previewReady) {
-    const screenshot = await session.captureScreenshot(DeviceRotation.Portrait);
+    const screenshot = await session.captureScreenshot(session.deviceRotation);
     const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
 
     return {

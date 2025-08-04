@@ -756,6 +756,10 @@ export class DeviceSession implements Disposable {
     return this.device.previewReady;
   }
 
+  public get deviceRotation() {
+    return this.device.rotation;
+  }
+
   public sendTouches(
     touches: Array<TouchPoint>,
     type: "Up" | "Move" | "Down",
