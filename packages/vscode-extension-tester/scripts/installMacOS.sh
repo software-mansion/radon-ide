@@ -23,4 +23,8 @@ unzip "$ZIP_FILE" -d .
 echo "Removing ZIP file..."
 rm "$ZIP_FILE"
 
+open -a "UTM"
+sleep 5
+osascript -e 'quit app "UTM"'
+
 echo "Done!"
