@@ -26,10 +26,11 @@ export async function registerMcpTools(server: McpServer, connectionListener: Co
   );
 
   server.registerTool(
-    "view_debugging_data",
+    "view_application_logs",
     {
       description:
-        "Use this function to get all the build, bundling and application logs which are required for debugging the user's app.",
+        "Returns all the build, bundling and runtime logs. Use this function whenever the user has any issue with the app, " +
+        "if it's builds are failing, or when there are errors in the console. These logs are always a useful debugging aid.",
       inputSchema: {},
     },
     buildLogsToolExec
