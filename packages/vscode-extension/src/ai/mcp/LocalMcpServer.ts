@@ -24,7 +24,7 @@ export class LocalMcpServer implements Disposable {
   private serverReloadEmitter: EventEmitter<void>;
 
   private connectionListener: ConnectionListener;
-  private connectionSubscription: Disposable;
+  private reconnectionSubscription: Disposable;
   private licenseTokenSubscription: Disposable;
 
   constructor(connectionListener: ConnectionListener) {
@@ -37,7 +37,7 @@ export class LocalMcpServer implements Disposable {
 
     this.serverReloadEmitter = new EventEmitter<void>();
 
-    this.connectionSubscription = this.connectionListener.onConnectionRestored(() => {
+    this.reconnectionSubscription = this.connectionListener.onConnectionRestored(() => {
       this.reloadToolSchema();
     });
 
@@ -49,7 +49,7 @@ export class LocalMcpServer implements Disposable {
   }
 
   public async dispose(): Promise<void> {
-    this.connectionSubscription.dispose();
+    this.reconnectionSubscription.dispose();
     this.licenseTokenSubscription.dispose();
     this.serverReloadEmitter.dispose();
     this.mcpServer?.close();
