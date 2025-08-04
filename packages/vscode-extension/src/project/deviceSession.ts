@@ -499,15 +499,18 @@ export class DeviceSession implements Disposable {
         metro: this.metro,
         devtools: this.devtools,
       },
-      () => this.isActive,
+      this.isActive,
       this.updateStartupMessage.bind(this),
       cancelToken
-    ).then((applicationSession) => {
-      // NOTE: this can happen if the launch finished successfully,
-      // but then the start operation was cancelled before this callback started executing
-      if (cancelToken.cancelled) {
-        applicationSession.dispose();
-        throw new CancelError("Launch cancelled");
+    ).then(async (applicationSession) => {
+      if (this.isActive) {
+        try {
+          this.updateStartupMessage(StartupMessage.AttachingDebugger);
+          await cancelToken.adapt(applicationSession.activate());
+        } catch (e) {
+          applicationSession.dispose();
+          throw e;
+        }
       }
 
       this.applicationSession = applicationSession;

@@ -63,14 +63,14 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
 
   public static async launch(
     { applicationContext, device, buildResult, metro, devtools }: LaunchApplicationSessionDeps,
-    getIsActive: () => boolean,
+    startDebugSession: boolean,
     onLaunchStage: (stage: StartupMessage) => void,
     cancelToken: CancelToken
   ): Promise<ApplicationSession> {
     const packageNameOrBundleId =
       buildResult.platform === DevicePlatform.IOS ? buildResult.bundleID : buildResult.packageName;
     const session = new ApplicationSession(device, metro, devtools, packageNameOrBundleId);
-    if (getIsActive()) {
+    if (startDebugSession) {
       // we need to start the parent debug session asap to ensure metro errors are shown in the debug console
       await session.setupDebugSession();
     }
@@ -90,11 +90,6 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
 
       onLaunchStage(StartupMessage.WaitingForAppToLoad);
       await cancelToken.adapt(Promise.all([devtools.appReady()]));
-
-      if (getIsActive()) {
-        onLaunchStage(StartupMessage.AttachingDebugger);
-        await cancelToken.adapt(session.activate());
-      }
 
       session.status = "running";
 
