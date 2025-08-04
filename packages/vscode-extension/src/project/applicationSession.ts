@@ -55,22 +55,20 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   private appOrientation: DeviceRotation | undefined;
   private isActive = false;
 
-  private status: "starting" | "running" = "starting";
-
   private stateChangedEventEmitter = new EventEmitter<void>();
 
   public readonly onStateChanged = this.stateChangedEventEmitter.event;
 
   public static async launch(
     { applicationContext, device, buildResult, metro, devtools }: LaunchApplicationSessionDeps,
-    startDebugSession: boolean,
+    initiallyActive: boolean,
     onLaunchStage: (stage: StartupMessage) => void,
     cancelToken: CancelToken
   ): Promise<ApplicationSession> {
     const packageNameOrBundleId =
       buildResult.platform === DevicePlatform.IOS ? buildResult.bundleID : buildResult.packageName;
     const session = new ApplicationSession(device, metro, devtools, packageNameOrBundleId);
-    if (startDebugSession) {
+    if (initiallyActive) {
       // we need to start the parent debug session asap to ensure metro errors are shown in the debug console
       await session.setupDebugSession();
     }
@@ -82,6 +80,15 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     onLaunchStage(StartupMessage.StartingPackager);
     await cancelToken.adapt(metro.ready());
 
+    const { promise: bundleErrorPromise, resolve: resolveBundleError } =
+      Promise.withResolvers<void>();
+    const bundleErrorSubscription = metro.onBundleError(({ source }) => {
+      resolveBundleError();
+      if (initiallyActive) {
+        focusSource(source);
+      }
+    });
+
     try {
       onLaunchStage(StartupMessage.Launching);
       await cancelToken.adapt(
@@ -89,14 +96,14 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       );
 
       onLaunchStage(StartupMessage.WaitingForAppToLoad);
-      await cancelToken.adapt(Promise.all([devtools.appReady()]));
-
-      session.status = "running";
+      await cancelToken.adapt(Promise.race([devtools.appReady(), bundleErrorPromise]));
 
       return session;
     } catch (e) {
       session.dispose();
       throw e;
+    } finally {
+      bundleErrorSubscription.dispose();
     }
   }
 
@@ -221,20 +228,13 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   //#region Metro event listeners
 
   private async onBundleError(message: string, source: DebugSource) {
-    await this.debugSession?.appendDebugConsoleEntry(message, "error", source);
-
-    if (this.isActive && this.status === "starting") {
-      focusSource(source);
-    }
-
     Logger.error("[Bundling Error]", message);
-
-    this.status = "running";
     this.bundleError = {
       kind: "bundle",
       message,
     };
     this.emitStateChange();
+    await this.debugSession?.appendDebugConsoleEntry(message, "error", source);
   }
 
   private registerMetroListeners() {
