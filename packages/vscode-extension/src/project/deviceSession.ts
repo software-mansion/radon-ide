@@ -499,23 +499,13 @@ export class DeviceSession implements Disposable {
         metro: this.metro,
         devtools: this.devtools,
       },
-      this.isActive,
+      () => this.isActive,
       this.updateStartupMessage.bind(this),
       cancelToken
     ).then(async (applicationSession) => {
-      // if an initial bundle error occurred, the app won't connect to Metro anyway,
-      // so there's no point in trying to attach a debugger
-      const hasBundleError = applicationSession.state.bundleError !== undefined;
-      try {
-        if (this.isActive && !hasBundleError) {
-          this.updateStartupMessage(StartupMessage.AttachingDebugger);
-          await cancelToken.adapt(applicationSession.activate());
-        } else if (!this.isActive) {
-          await cancelToken.adapt(applicationSession.deactivate());
-        }
-      } catch (e) {
+      if (cancelToken.cancelled) {
         applicationSession.dispose();
-        throw e;
+        throw new CancelError("Application launch was cancelled");
       }
 
       this.applicationSession = applicationSession;

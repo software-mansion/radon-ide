@@ -61,14 +61,14 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
 
   public static async launch(
     { applicationContext, device, buildResult, metro, devtools }: LaunchApplicationSessionDeps,
-    initiallyActive: boolean,
+    getIsActive: () => boolean,
     onLaunchStage: (stage: StartupMessage) => void,
     cancelToken: CancelToken
   ): Promise<ApplicationSession> {
     const packageNameOrBundleId =
       buildResult.platform === DevicePlatform.IOS ? buildResult.bundleID : buildResult.packageName;
     const session = new ApplicationSession(device, metro, devtools, packageNameOrBundleId);
-    if (initiallyActive) {
+    if (getIsActive()) {
       // we need to start the parent debug session asap to ensure metro errors are shown in the debug console
       await session.setupDebugSession();
     }
@@ -84,7 +84,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       Promise.withResolvers<void>();
     const bundleErrorSubscription = metro.onBundleError(({ source }) => {
       resolveBundleError();
-      if (initiallyActive) {
+      if (getIsActive()) {
         focusSource(source);
       }
     });
@@ -97,6 +97,17 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
 
       onLaunchStage(StartupMessage.WaitingForAppToLoad);
       await cancelToken.adapt(Promise.race([devtools.appReady(), bundleErrorPromise]));
+
+      if (getIsActive()) {
+        const activatePromise = session.activate();
+        const hasBundleError = session.bundleError !== undefined;
+        // NOTE: if an initial bundle error occurred, the app won't connect to Metro
+        // and we won't be able to attach the debugger anyway, so there's no point in waiting
+        if (!hasBundleError) {
+          onLaunchStage(StartupMessage.AttachingDebugger);
+          await cancelToken.adapt(activatePromise);
+        }
+      }
 
       return session;
     } catch (e) {
