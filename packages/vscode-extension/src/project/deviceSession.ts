@@ -25,6 +25,7 @@ import {
   DeviceSessionStatus,
   FatalErrorDescriptor,
   DeviceRotation,
+  InspectData,
 } from "../common/Project";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
@@ -785,7 +786,11 @@ export class DeviceSession implements Disposable {
     this.device.sendWheel(point, deltaX, deltaY);
   }
 
-  public inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<any> {
+  public inspectElementAt(
+    xRatio: number,
+    yRatio: number,
+    requestStack: boolean
+  ): Promise<InspectData> {
     if (!this.applicationSession) {
       throw new Error("Cannot inspect element while the application is not running");
     }

@@ -10,6 +10,7 @@ import {
   workspace,
   EventEmitter,
 } from "vscode";
+import { minimatch } from "minimatch";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { ApplicationContext } from "./ApplicationContext";
 import { MetroLauncher } from "./metro";
@@ -22,6 +23,7 @@ import {
   AppOrientation,
   BundleErrorDescriptor,
   DeviceRotation,
+  InspectData,
   ProfilingState,
   StartupMessage,
   ToolsState,
@@ -68,7 +70,13 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   ): Promise<ApplicationSession> {
     const packageNameOrBundleId =
       buildResult.platform === DevicePlatform.IOS ? buildResult.bundleID : buildResult.packageName;
-    const session = new ApplicationSession(device, metro, devtools, packageNameOrBundleId);
+    const session = new ApplicationSession(
+      applicationContext,
+      device,
+      metro,
+      devtools,
+      packageNameOrBundleId
+    );
     if (getIsActive()) {
       // we need to start the parent debug session asap to ensure metro errors are shown in the debug console
       await session.setupDebugSession();
@@ -120,6 +128,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   }
 
   private constructor(
+    private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
     private readonly devtools: Devtools,
@@ -450,20 +459,44 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   //#endregion
 
   //#region Element Inspector
-  public inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<any> {
+  public async inspectElementAt(
+    xRatio: number,
+    yRatio: number,
+    requestStack: boolean
+  ): Promise<InspectData> {
     const id = this.inspectCallID++;
-    const { promise, resolve, reject } = Promise.withResolvers<any>();
+    const { promise, resolve, reject } = Promise.withResolvers<InspectData>();
     const listener = this.devtools.onEvent("inspectData", (payload) => {
       if (payload.id === id) {
         listener.dispose();
-        resolve(payload);
+        resolve(payload as unknown as InspectData);
       } else if (payload.id >= id) {
         listener.dispose();
         reject("Inspect request was invalidated by a later request");
       }
     });
     this.devtools.sendInspectRequest(xRatio, yRatio, id, requestStack);
-    return promise;
+
+    const inspectData = await promise;
+    let stack = undefined;
+    if (requestStack && inspectData?.stack) {
+      stack = inspectData.stack;
+      const inspectorExcludePattern =
+        this.applicationContext.workspaceConfiguration.inspectorExcludePattern;
+      const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
+      function testInspectorExcludeGlobPattern(filename: string) {
+        return patterns?.some((pattern) => minimatch(filename, pattern));
+      }
+      stack.forEach((item: any) => {
+        item.hide = false;
+        if (!isAppSourceFile(item.source.fileName)) {
+          item.hide = true;
+        } else if (testInspectorExcludeGlobPattern(item.source.fileName)) {
+          item.hide = true;
+        }
+      });
+    }
+    return { frame: inspectData.frame, stack };
   }
   //#endregion
 
@@ -479,4 +512,16 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     this.debugSession = undefined;
     this.device.terminateApp(this.packageNameOrBundleId);
   }
+}
+
+export function isAppSourceFile(filePath: string) {
+  const relativeToWorkspace = workspace.asRelativePath(filePath, false);
+
+  if (relativeToWorkspace === filePath) {
+    // when path is outside of any workspace folder, workspace.asRelativePath returns the original path
+    return false;
+  }
+
+  // if the relative path contain node_modules, we assume it's not user's app source file:
+  return !relativeToWorkspace.includes("node_modules");
 }

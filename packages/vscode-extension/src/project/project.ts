@@ -5,7 +5,6 @@ import path from "path";
 import assert from "assert";
 import { env, Disposable, commands, workspace, window, Uri } from "vscode";
 import _ from "lodash";
-import { minimatch } from "minimatch";
 import {
   AppPermissionType,
   DeviceButtonType,
@@ -160,6 +159,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.selectedLaunchConfiguration = initialLaunchConfig;
     this.applicationContext = new ApplicationContext(
       this.stateManager.getDerived("applicationContext"),
+      workspaceStateManager,
       initialLaunchConfig,
       buildCache
     );
@@ -672,27 +672,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region Inspector
 
   public async inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean) {
-    const inspectData = await this.deviceSession?.inspectElementAt(xRatio, yRatio, requestStack);
-    let stack = undefined;
-    if (requestStack && inspectData?.stack) {
-      stack = inspectData.stack;
-      const inspectorExcludePattern = workspace
-        .getConfiguration("RadonIDE")
-        .get("inspectorExcludePattern") as string | undefined;
-      const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
-      function testInspectorExcludeGlobPattern(filename: string) {
-        return patterns?.some((pattern) => minimatch(filename, pattern));
-      }
-      stack.forEach((item: any) => {
-        item.hide = false;
-        if (!isAppSourceFile(item.source.fileName)) {
-          item.hide = true;
-        } else if (testInspectorExcludeGlobPattern(item.source.fileName)) {
-          item.hide = true;
-        }
-      });
+    if (!this.deviceSession) {
+      throw new Error("A device must be selected to inspect elements");
     }
-    return { frame: inspectData.frame, stack };
+    return this.deviceSession.inspectElementAt(xRatio, yRatio, requestStack);
   }
 
   // #endregion Inspector
