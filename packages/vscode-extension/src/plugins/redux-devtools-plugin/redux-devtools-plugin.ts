@@ -27,6 +27,8 @@ function initialize() {
 export class ReduxDevtoolsPlugin implements ToolPlugin {
   public readonly id: ToolKey = REDUX_PLUGIN_ID;
   public readonly label = "Redux DevTools";
+  public readonly disabledTooltipLabel = "Redux DevTools is not available";
+  private _buttonDisabled = false;
 
   public available = false;
   public readonly persist = true;
@@ -37,6 +39,10 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
 
   constructor(private readonly inspectorBridge: RadonInspectorBridge) {
     initialize();
+  }
+
+  public get optionButtonDisabled() {
+    return this._buttonDisabled;
   }
 
   connectDevtoolsWebview(webview: Webview) {
@@ -98,5 +104,9 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
 
   dispose() {
     disposeAll(this.devtoolsListeners);
+  }
+
+  setOptionButtonDisabled(disabled: boolean): void {
+    this._buttonDisabled = disabled;
   }
 }

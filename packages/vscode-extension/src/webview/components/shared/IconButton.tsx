@@ -19,6 +19,7 @@ export interface IconButtonProps {
     type?: "primary" | "secondary";
   };
   className?: string;
+  shouldDisplayLabelWhileDisabled?: boolean;
 }
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, ref) => {
@@ -33,6 +34,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     size = "default",
     side = "center",
     className = "",
+    shouldDisplayLabelWhileDisabled = false,
     ...rest
   } = props;
   const [displayCounter, setDisplayCounter] = useState(counter);
@@ -77,7 +79,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
 
   return (
     <Tooltip label={label} side={tooltipSide} type={tooltipType ?? type}>
-      {button}
+      {shouldDisplayLabelWhileDisabled ? <span>{button}</span> : button}
     </Tooltip>
   );
 });

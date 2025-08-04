@@ -9,11 +9,13 @@ import {
 import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolPlugin } from "../../project/tools";
 import { disposeAll } from "../../utilities/disposables";
+import { INSPECT_UNAVAILABLE_TOOLTIP_LABEL } from "../../common/Constants";
 
 export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface, Disposable {
   private eventEmitter = new EventEmitter();
   private isEnabled = false;
   private devtoolsListeners: Disposable[] = [];
+  private _buttonDisabled = false;
 
   constructor(private inspectorBridge: RadonInspectorBridge) {
     this.devtoolsListeners.push(
@@ -34,6 +36,11 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   public readonly label = "Outline Renders";
   public readonly available = true;
   public readonly persist = false;
+  public readonly disabledTooltipLabel = INSPECT_UNAVAILABLE_TOOLTIP_LABEL;
+
+  public get optionButtonDisabled() {
+    return this._buttonDisabled;
+  }
 
   activate(): void {
     this.setEnabled(true);
@@ -41,6 +48,10 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
 
   deactivate(): void {
     this.setEnabled(false);
+  }
+
+  setOptionButtonDisabled(disabled: boolean): void {
+    this._buttonDisabled = disabled;
   }
 
   dispose() {

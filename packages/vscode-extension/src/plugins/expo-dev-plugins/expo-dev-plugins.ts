@@ -53,6 +53,8 @@ export function createExpoDevPluginTools(): ToolPlugin[] {
       label: pluginInfo.label,
       available: false,
       persist: true,
+      optionButtonDisabled: false,
+      disabledTooltipLabel: "Expo Dev Plugin is not available",
       activate() {
         commands.executeCommand("setContext", `${pluginInfo.viewIdPrefix}.available`, true);
       },
@@ -63,6 +65,9 @@ export function createExpoDevPluginTools(): ToolPlugin[] {
         commands.executeCommand(`${pluginInfo.viewIdPrefix}.view.focus`);
       },
       dispose() {},
+      setOptionButtonDisabled(disabled: boolean) {
+        this.optionButtonDisabled = disabled;
+      },
     });
   }
 

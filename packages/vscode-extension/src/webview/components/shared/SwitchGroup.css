@@ -24,6 +24,12 @@
   background-color: var(--swm-switch-root-background-checked);
 }
 
+.switch-root[data-disabled] {
+  color: var(--swm-disabled-text);
+  background-color: var(--swm-input-disabled-background);
+  cursor: not-allowed;
+}
+
 .switch-thumb {
   display: block;
   width: var(--thumb-size);
@@ -36,4 +42,8 @@
 }
 .switch-thumb[data-state="checked"] {
   transform: translateX(calc(var(--switch-width) - var(--thumb-size) - var(--switch-padding)));
+}
+
+.switch-thumb[data-disabled] {
+  background-color: var(--swm-button-disabled);
 }

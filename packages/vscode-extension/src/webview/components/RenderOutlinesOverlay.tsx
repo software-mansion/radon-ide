@@ -31,7 +31,7 @@ function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: numbe
 
 function useIsEnabled() {
   const { selectedDeviceSession } = useProject();
-  const isToolEnabled = selectedDeviceSession?.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled
+  const isToolEnabled = selectedDeviceSession?.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled;
   const isRunning = selectedDeviceSession?.status === "running";
   const isInspectorAvailable = isRunning && selectedDeviceSession?.inspectorAvailability;
   return isToolEnabled && isRunning && isInspectorAvailable;

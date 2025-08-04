@@ -33,6 +33,7 @@ import AppRootSelect from "../components/AppRootSelect";
 import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
+import { INSPECT_UNAVAILABLE_TOOLTIP_LABEL } from "../../common/Constants";
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
@@ -121,7 +122,8 @@ function PreviewView() {
   const isRecording = selectedDeviceSession?.isRecordingScreen ?? false;
 
   const navBarButtonsActive = initialized && !isStarting && !radonConnectEnabled;
-  const inspectorButtonActive = navBarButtonsActive && isRunning && selectedDeviceSession?.inspectorAvailability;
+  const inspectorButtonActive =
+    navBarButtonsActive && isRunning && selectedDeviceSession?.inspectorAvailability;
   const debuggerToolsButtonsActive = navBarButtonsActive; // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
@@ -348,9 +350,12 @@ function PreviewView() {
 
       <div className="button-group-bottom">
         <IconButton
+          shouldDisplayLabelWhileDisabled={navBarButtonsActive}
           active={isInspecting}
           tooltip={{
-            label: "Select an element to inspect it",
+            label: inspectorButtonActive
+              ? "Select an element to inspect it"
+              : INSPECT_UNAVAILABLE_TOOLTIP_LABEL,
           }}
           onClick={() => {
             sendTelemetry("inspector:button-clicked", {
@@ -363,7 +368,6 @@ function PreviewView() {
         </IconButton>
 
         <span className="group-separator" />
-
         <div className="app-device-group">
           {!radonConnectEnabled && (
             <>
@@ -373,7 +377,6 @@ function PreviewView() {
           )}
           <DeviceSelect />
         </div>
-
         <div className="spacer" />
         {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
         <DeviceSettingsDropdown disabled={!navBarButtonsActive}>

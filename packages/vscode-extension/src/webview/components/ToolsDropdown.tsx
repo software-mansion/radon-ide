@@ -11,11 +11,14 @@ import IconButton from "./shared/IconButton";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import Label from "./shared/Label";
 import { ProjectInterface, ToolState } from "../../common/Project";
+import Tooltip from "./shared/Tooltip";
 
 interface DevToolCheckboxProps {
   label: string;
   checked: boolean;
   panelAvailable: boolean;
+  disabled?: boolean;
+  disabledTooltipLabel: string;
   onCheckedChange: (checked: boolean) => void;
   onSelect: () => void;
 }
@@ -24,25 +27,32 @@ function DevToolCheckbox({
   label,
   checked,
   panelAvailable,
+  disabled,
+  disabledTooltipLabel,
   onCheckedChange,
   onSelect,
 }: DevToolCheckboxProps) {
   return (
-    <div className="dropdown-menu-item">
-      {label}
-      {checked && panelAvailable && (
-        <IconButton onClick={onSelect}>
-          <span className="codicon codicon-link-external" />
-        </IconButton>
-      )}
-      <Switch.Root
-        className="switch-root small-switch"
-        onCheckedChange={onCheckedChange}
-        defaultChecked={checked}
-        style={{ marginLeft: "auto" }}>
-        <Switch.Thumb className="switch-thumb" />
-      </Switch.Root>
-    </div>
+    <Tooltip label={disabledTooltipLabel} disabled={!disabled}>
+      <div
+        className="dropdown-menu-item"
+        style={{ color: disabled ? "var(--swm-disabled-text)" : "inherit" }}>
+        {label}
+        {checked && panelAvailable && (
+          <IconButton onClick={onSelect}>
+            <span className="codicon codicon-link-external" />
+          </IconButton>
+        )}
+        <Switch.Root
+          disabled={disabled}
+          className="switch-root small-switch"
+          onCheckedChange={onCheckedChange}
+          defaultChecked={checked}
+          style={{ marginLeft: "auto" }}>
+          <Switch.Thumb className="switch-thumb" />
+        </Switch.Root>
+      </div>
+    </Tooltip>
   );
 }
 
@@ -59,6 +69,8 @@ function ToolsList({
       label={tool.label}
       checked={tool.enabled}
       panelAvailable={tool.panelAvailable}
+      disabled={tool.optionButtonDisabled}
+      disabledTooltipLabel={tool.disabledOptionTooltipLabel}
       onCheckedChange={async (checked) => {
         await project.updateToolEnabledState(key, checked);
         if (checked) {

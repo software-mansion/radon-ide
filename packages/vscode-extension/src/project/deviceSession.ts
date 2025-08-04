@@ -55,6 +55,7 @@ import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { disposeAll } from "../utilities/disposables";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
+import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -407,8 +408,9 @@ export class DeviceSession implements Disposable, MetroDelegate, ToolsDelegate {
       }
       this.emitStateChange();
     });
-    devtools.onEvent("inspectorAvailabilityChanged", (isAvailable: boolean) => { 
+    devtools.onEvent("inspectorAvailabilityChanged", (isAvailable: boolean) => {
       this.inspectorAvailability = isAvailable;
+      this.toolsManager.setToolButtonDisabled(RENDER_OUTLINES_PLUGIN_ID, !isAvailable);
       this.emitStateChange();
     });
     return devtools;

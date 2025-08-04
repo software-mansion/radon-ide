@@ -8,6 +8,7 @@ interface TooltipProps {
   side?: "top" | "right" | "bottom" | "left";
   type?: "primary" | "secondary" | "ternary" | "submit";
   instant?: boolean;
+  disabled?: boolean;
 }
 
 export default function Tooltip({
@@ -16,31 +17,34 @@ export default function Tooltip({
   side = "top",
   type = "primary",
   instant = false,
+  disabled = false,
 }: TooltipProps) {
   return (
     <RadixTooltip.Provider>
       <RadixTooltip.Root delayDuration={instant ? 0 : 700}>
         <RadixTooltip.Trigger asChild>{children}</RadixTooltip.Trigger>
-        <RadixTooltip.Portal>
-          <RadixTooltip.Content
-            className={classnames(
-              "tooltip-content",
-              type === "primary" && "tooltip-primary",
-              type === "secondary" && "tooltip-secondary",
-              type === "ternary" && "tooltip-ternary"
-            )}
-            side={side}
-            sideOffset={5}>
-            {label}
-            <RadixTooltip.Arrow
+        {!disabled && (
+          <RadixTooltip.Portal>
+            <RadixTooltip.Content
               className={classnames(
-                "tooltip-arrow",
-                type === "secondary" && "tooltip-arrow-secondary",
-                type === "ternary" && "tooltip-arrow-ternary"
+                "tooltip-content",
+                type === "primary" && "tooltip-primary",
+                type === "secondary" && "tooltip-secondary",
+                type === "ternary" && "tooltip-ternary"
               )}
-            />
-          </RadixTooltip.Content>
-        </RadixTooltip.Portal>
+              side={side}
+              sideOffset={5}>
+              {label}
+              <RadixTooltip.Arrow
+                className={classnames(
+                  "tooltip-arrow",
+                  type === "secondary" && "tooltip-arrow-secondary",
+                  type === "ternary" && "tooltip-arrow-ternary"
+                )}
+              />
+            </RadixTooltip.Content>
+          </RadixTooltip.Portal>
+        )}
       </RadixTooltip.Root>
     </RadixTooltip.Provider>
   );

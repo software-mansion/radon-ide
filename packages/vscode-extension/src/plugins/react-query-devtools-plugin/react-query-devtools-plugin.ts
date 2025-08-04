@@ -33,6 +33,8 @@ export const createReactQueryDevtools = (): ToolPlugin => {
     label: "React Query DevTools",
     available: false,
     persist: true,
+    optionButtonDisabled: false,
+    disabledTooltipLabel: "React Query DevTools is not available",
     activate() {
       commands.executeCommand("setContext", `${REACT_QUERY_PLUGIN_PREFIX}.available`, true);
     },
@@ -43,6 +45,9 @@ export const createReactQueryDevtools = (): ToolPlugin => {
       commands.executeCommand(`${REACT_QUERY_PLUGIN_PREFIX}.view.focus`);
     },
     dispose() {},
+    setOptionButtonDisabled(disabled: boolean) {
+      this.optionButtonDisabled = disabled;
+    },
   };
 
   return plugin;
