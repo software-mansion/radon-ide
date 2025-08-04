@@ -116,3 +116,20 @@ export async function modifyDeviceName(driver, deviceName, modifiedDeviceName) {
   );
   saveButton.click();
 }
+
+export async function deleteDevice(driver, deviceName) {
+  const deviceDeleteButton = await findAndWaitForElement(
+    driver,
+    By.css(`[data-test="delete-button-device-${deviceName}"]`),
+    "Timed out waiting for device delete button"
+  );
+
+  deviceDeleteButton.click();
+
+  const confirmDeleteButton = await findAndWaitForElement(
+    driver,
+    By.css('[data-test="confirm-delete-device-button"]'),
+    "Timed out waiting for confirm delete button"
+  );
+  confirmDeleteButton.click();
+}

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "./src/extension.ts",
   "scripts": {
-    "setup-dev": "extest setup-tests --extensions_dir ./data/vscode-extensions && npm run build-vsix-package",
+    "setup-dev": "npm run remove-devices && extest setup-tests --extensions_dir ./data/vscode-extensions && npm run build-vsix-package",
     "build-vsix-package": "cd ../vscode-extension && vsce package --out ../vscode-extension-tester/data/radon-ide.vsix && cd ../vscode-extension-tester",
     "install-vsix": "extest install-vsix -f ./data/radon-ide.vsix --extensions_dir ./data/vscode-extensions",
     "setup": "extest get-vscode && extest get-chromedriver && npm run install-vsix",
