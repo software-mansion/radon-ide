@@ -1,0 +1,30 @@
+.inspector-unavailable-box {
+  background-color: var(--dimensions-box-background);
+  color: var(--swm-tooltip-primary);
+
+  position: absolute;
+  left: var(--left);
+  top: var(--top);
+  height: 20px;
+  font-size: 11px;
+  border-radius: 4px;
+  padding-left: 10px;
+  padding-right: 10px;
+
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  transform: translate(-50%, -125%);
+  z-index: 1000;
+  /* Transition duration dependent on the code in InspectorUnavailableTooltip.tsx */
+  transition: opacity 0.3s ease-out;
+  pointer-events: none;
+}
+
+.inspector-unavailable-box.visible {
+  opacity: 1;
+}
+
+.inspector-unavailable-box.fade-out {
+  opacity: 0;
+}

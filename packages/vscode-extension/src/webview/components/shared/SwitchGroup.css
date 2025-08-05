@@ -26,7 +26,7 @@
 
 .switch-root[data-disabled] {
   color: var(--swm-disabled-text);
-  background-color: var(--swm-input-disabled-background);
+  background-color: var(--swm-device-select-separator);
   cursor: not-allowed;
 }
 

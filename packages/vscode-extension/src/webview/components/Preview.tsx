@@ -29,6 +29,7 @@ import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
 import { useDeviceFrame } from "../Preview/Device/hooks";
 import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
+import InspectorUnavailableBox from "./InspectorUnavailableBox";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -50,6 +51,11 @@ type Props = {
 interface Point {
   x: number;
   y: number;
+}
+
+interface InspectorUnavailableBoxData {
+  visible: boolean;
+  position: Point;
 }
 
 function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
@@ -85,6 +91,8 @@ function Preview({
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLCanvasElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
+  const [inspectorUnavailableBox, setInspectorUnavailableBox] =
+    useState<InspectorUnavailableBoxData | null>(null);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
   const { selectedDeviceSession, project } = useProject();
@@ -232,6 +240,17 @@ function Preview({
     setInspectStackData(null);
   }
 
+  function handleInspectorUnavailable(event: MouseEvent<HTMLDivElement>) {
+    if (inspectorUnavailableBox?.visible) {
+      return;
+    }
+    const clampedCoordinates = getNormalizedTouchCoordinates(event);
+    setInspectorUnavailableBox({
+      visible: true,
+      position: clampedCoordinates,
+    });
+  }
+
   const shouldPreventInputEvents =
     debugPaused || isRefreshing || !showDevicePreview || !!replayData;
 
@@ -273,7 +292,14 @@ function Preview({
       sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
     } else if (!inspectFrame) {
       if (e.button === 2) {
-        sendInspect(e, "RightButtonDown", true);
+        if (
+          selectedDeviceSession?.status === "running" &&
+          selectedDeviceSession?.inspectorAvailability === false
+        ) {
+          handleInspectorUnavailable(e);
+        } else {
+          sendInspect(e, "RightButtonDown", true);
+        }
       } else if (isMultiTouching) {
         setIsPressing(true);
         sendMultiTouchForEvent(e, "Down");
@@ -381,7 +407,7 @@ function Preview({
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
     // there is an active backlog item that aims to change the behavior of context menu, so it might not be necessary
     // in the future https://github.com/microsoft/vscode/issues/225411
-    function onContextMenu(e: any) {
+    function onContextMenu(e: Event) {
       e.stopImmediatePropagation();
     }
 
@@ -548,6 +574,16 @@ function Preview({
                   wrapperDivRef={wrapperDivRef}
                 />
               )}
+
+              {inspectorUnavailableBox?.visible && (
+                <InspectorUnavailableBox
+                  device={device!}
+                  clickPosition={inspectorUnavailableBox.position}
+                  wrapperDivRef={wrapperDivRef}
+                  onClose={() => setInspectorUnavailableBox(null)}
+                />
+              )}
+
               {isRefreshing && (
                 <div className="phone-screen phone-refreshing-overlay">
                   <div>Project is performing Fast Refresh...</div>
