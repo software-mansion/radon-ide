@@ -99,7 +99,7 @@ The AI models automatically discover and invoke tools when they decide it will b
 
 To change the location of `mcp.json` file, navigate to the editor settings.
 
-Type "Preferences: Open User Settings" in the command palette (Ctrl+Shift+P or Cmd+Shift+P).
+Open the command palette by pressing Cmd+Shift+P (or Ctrl+Shift+P on Linux and Windows), then type "Preferences: Open User Settings".
 
 Within editor settings, type "Radon IDE: Location Of Mcp Config" and choose whether the server entry should be written to the project's `.cursor` directory, or the global `~/.cursor` directory.
 
