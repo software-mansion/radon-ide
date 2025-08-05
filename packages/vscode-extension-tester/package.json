@@ -11,7 +11,7 @@
     "setup-run-tests": "npm run clean && npm run setup && npm run ui-tests",
     "extest": "extest run-tests -h",
     "set-up-VM-environment": "cd ./scripts && ./setupVM.sh && cd ..",
-    "run-tests-on-VM": "cd ./scripts && ./runTests.sh"
+    "run-tests-on-VM": "cd ./scripts && ./runTests.sh && cd .."
   },
   "keywords": [],
   "author": "",
