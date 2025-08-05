@@ -279,7 +279,7 @@
             "Project",
             "Global"
           ],
-          "description": "Changes location, where the mcp.json file will be written to by Radon AI on editors, which don't support alternative MCP registration methods."
+          "description": "Sets the write location for mcp.json on editors that lack alternative AI tool registration methods."
         },
         "RadonIDE.deviceRotation": {
           "type": "string",
