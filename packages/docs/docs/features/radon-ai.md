@@ -99,7 +99,7 @@ The AI models automatically discover and invoke tools when they decide it will b
 
 To disable Radon AI assistant navigate to the editor settings.
 
-You can type "Preferences: Open User Settings" in the command pallette (Ctrl+Shift+P or Cmd+Shift+P).
+You can type "Preferences: Open User Settings" in the command palette (Ctrl+Shift+P or Cmd+Shift+P).
 
 Within editor settings, type "Radon IDE: Enable Radon AI" and uncheck the checkbox.
 
