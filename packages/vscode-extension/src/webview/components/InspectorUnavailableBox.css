@@ -8,15 +8,15 @@
   pointer-events: none;
 
   /* Apply dimensions-box styling (DimensionBox.css) for consistency */
-  &.dimensions-box{
+  &.dimensions-box {
     --box-transform: translate(-50%, -125%);
   }
-}
 
-.inspector-unavailable-box.visible {
-  opacity: 1;
-}
+  &.visible {
+    opacity: 1;
+  }
 
-.inspector-unavailable-box.fade-out {
-  opacity: 0;
+  &.fade-out {
+    opacity: 0;
+  }
 }
