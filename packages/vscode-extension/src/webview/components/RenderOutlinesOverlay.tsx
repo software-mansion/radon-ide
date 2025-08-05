@@ -31,10 +31,12 @@ function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: numbe
 
 function useIsEnabled() {
   const { selectedDeviceSession } = useProject();
+  if (selectedDeviceSession?.status !== "running") {
+    return false;
+  }
   const isToolEnabled = selectedDeviceSession?.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled;
-  const isRunning = selectedDeviceSession?.status === "running";
-  const isInspectorAvailable = isRunning && selectedDeviceSession?.inspectorAvailability;
-  return isToolEnabled && isRunning && isInspectorAvailable;
+  const isInspectorAvailable = selectedDeviceSession?.inspectorAvailability;
+  return isToolEnabled && isInspectorAvailable;
 }
 
 function RenderOutlinesOverlay() {

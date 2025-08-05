@@ -299,7 +299,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (this.deviceSession) {
       await this.deviceSession.startProfilingCPU();
     } else {
-      throw new Error("No device session available");
+      throw new Error("No application running");
     }
   }
 
@@ -307,7 +307,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (this.deviceSession) {
       await this.deviceSession.stopProfilingCPU();
     } else {
-      throw new Error("No device session available");
+      throw new Error("No application running");
     }
   }
 
@@ -397,10 +397,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   private async reloadMetro() {
-    if (await this.deviceSession?.performReloadAction("reloadJs")) {
+    try {
+      await this.deviceSession?.performReloadAction("reloadJs");
       return true;
+    } catch {
+      return false;
     }
-    return false;
   }
 
   public async navigateHome() {
