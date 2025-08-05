@@ -3,16 +3,16 @@ import { Logger } from "../../Logger";
 import { getTelemetryReporter } from "../../utilities/telemetry";
 import { insertRadonEntry, newMcpConfig } from "./configCreator";
 import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
-import { MCP_LOG } from "./utils";
+import { ConfigLocation, MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { LocalMcpServer } from "./LocalMcpServer";
 import { disposeAll } from "../../utilities/disposables";
 import { ConnectionListener } from "../shared/ConnectionListener";
 
-async function updateMcpConfig(port: number) {
-  const mcpConfig = (await readMcpConfig()) || newMcpConfig();
+async function updateMcpConfig(port: number, location: ConfigLocation) {
+  const mcpConfig = (await readMcpConfig(location)) || newMcpConfig();
   const updatedConfig = insertRadonEntry(mcpConfig, port);
-  await writeMcpConfig(updatedConfig);
+  await writeMcpConfig(updatedConfig, location);
 }
 
 function directLoadRadonAI(server: LocalMcpServer): Disposable {
@@ -40,13 +40,13 @@ function directLoadRadonAI(server: LocalMcpServer): Disposable {
   return new Disposable(() => disposeAll([onReloadDisposable, mcpServerEntry]));
 }
 
-async function fsLoadRadonAI(server: LocalMcpServer) {
+async function fsLoadRadonAI(server: LocalMcpServer, location: ConfigLocation) {
   try {
     // The local server has to be online before the config is written
     const port = await server.getPort();
 
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
-    await updateMcpConfig(port);
+    await updateMcpConfig(port, location);
 
     getTelemetryReporter().sendTelemetryEvent("radon-ai:mcp-started");
   } catch (error) {
@@ -76,7 +76,7 @@ export default function registerRadonAi(
     return new Disposable(() => disposeAll([disposables, server, connectionListener]));
   } else {
     const onReloadDisposable = server.onReload(() => {
-      fsLoadRadonAI(server);
+      fsLoadRadonAI(server, location);
     });
 
     return new Disposable(() => disposeAll([onReloadDisposable, server, connectionListener]));
