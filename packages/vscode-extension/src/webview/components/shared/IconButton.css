@@ -94,3 +94,14 @@
   top: 20%;
   opacity: 1;
 }
+
+.icon-button-indicator {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background-color: var(--swm-button-counter-background, #ff5555);
+  border-radius: 50%;
+  border: 1px solid var(--swm-button-counter-border, transparent);
+}
