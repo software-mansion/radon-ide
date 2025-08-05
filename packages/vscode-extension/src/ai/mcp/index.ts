@@ -3,13 +3,14 @@ import { Logger } from "../../Logger";
 import { getTelemetryReporter } from "../../utilities/telemetry";
 import { insertRadonEntry, newMcpConfig } from "./configCreator";
 import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
-import { ConfigLocation, MCP_LOG } from "./utils";
+import { getConfigLocation, MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { LocalMcpServer } from "./LocalMcpServer";
 import { disposeAll } from "../../utilities/disposables";
 import { ConnectionListener } from "../shared/ConnectionListener";
 
-async function updateMcpConfig(port: number, location: ConfigLocation) {
+async function updateMcpConfig(port: number) {
+  const location = getConfigLocation();
   const mcpConfig = (await readMcpConfig(location)) || newMcpConfig();
   const updatedConfig = insertRadonEntry(mcpConfig, port);
   await writeMcpConfig(updatedConfig, location);
@@ -40,13 +41,13 @@ function directLoadRadonAI(server: LocalMcpServer): Disposable {
   return new Disposable(() => disposeAll([onReloadDisposable, mcpServerEntry]));
 }
 
-async function fsLoadRadonAI(server: LocalMcpServer, location: ConfigLocation) {
+async function fsLoadRadonAI(server: LocalMcpServer) {
   try {
     // The local server has to be online before the config is written
     const port = await server.getPort();
 
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
-    await updateMcpConfig(port, location);
+    await updateMcpConfig(port);
 
     getTelemetryReporter().sendTelemetryEvent("radon-ai:mcp-started");
   } catch (error) {
@@ -64,9 +65,7 @@ function isDirectLoadingAvailable() {
   );
 }
 
-export default function registerRadonAi(
-  location: ConfigLocation = ConfigLocation.Project
-): Disposable {
+export default function registerRadonAi(): Disposable {
   const connectionListener = new ConnectionListener();
   const server = new LocalMcpServer(connectionListener);
 
@@ -76,7 +75,7 @@ export default function registerRadonAi(
     return new Disposable(() => disposeAll([disposables, server, connectionListener]));
   } else {
     const onReloadDisposable = server.onReload(() => {
-      fsLoadRadonAI(server, location);
+      fsLoadRadonAI(server);
     });
 
     return new Disposable(() => disposeAll([onReloadDisposable, server, connectionListener]));

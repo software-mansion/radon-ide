@@ -8,6 +8,11 @@ export enum ConfigLocation {
   Global = "Global",
 }
 
+export function getConfigLocation(): ConfigLocation {
+  const configuration = vscode.workspace.getConfiguration("RadonIDE");
+  return configuration.get<ConfigLocation>("locationOfMcpConfig") ?? ConfigLocation.Project;
+}
+
 export function getEditorType(): EditorType {
   // Cursor features different settings than VSCode
   const config = vscode.workspace.getConfiguration();
