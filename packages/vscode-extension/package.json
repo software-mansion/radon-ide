@@ -271,6 +271,16 @@
           "default": true,
           "description": "Enables the Radon AI functionality in the extension. Note: A full restart of the IDE is required for this setting to take effect."
         },
+        "RadonIDE.locationOfMcpConfig": {
+          "type": "string",
+          "scope": "window",
+          "default": "Project",
+          "enum": [
+            "Project",
+            "Global"
+          ],
+          "description": "Changes location, where the mcp.json file will be written to by Radon AI on editors, which don't support alternative MCP registration methods."
+        },
         "RadonIDE.deviceRotation": {
           "type": "string",
           "scope": "window",

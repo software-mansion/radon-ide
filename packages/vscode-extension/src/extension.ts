@@ -29,7 +29,7 @@ import {
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
-import { registerRadonChat, registerRadonAi } from "./ai";
+import { registerRadonChat, registerRadonAi, ConfigLocation } from "./ai";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
@@ -338,10 +338,11 @@ export async function activate(context: ExtensionContext) {
 
   const configuration = workspace.getConfiguration("RadonIDE");
   const enableRadonAI = configuration.get<boolean>("enableRadonAI");
+  const locationOfMcpConfig = configuration.get<ConfigLocation>("locationOfMcpConfig");
 
   if (enableRadonAI) {
     // Initializes MCP part of Radon AI
-    context.subscriptions.push(registerRadonAi());
+    context.subscriptions.push(registerRadonAi(locationOfMcpConfig));
   }
 
   // You can configure the chat in package.json under the `chatParticipants` key
