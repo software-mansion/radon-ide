@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { EditorType, McpEntry } from "./models";
 import { getEditorType } from "./utils";
 
@@ -13,6 +14,9 @@ export function insertRadonEntry(incompleteConfig: string, port: number): string
   const radonMcpEntry: McpEntry = {
     url: `http://127.0.0.1:${port}/mcp` as const,
     type: "http" as const,
+    headers: {
+      nonce: randomUUID(),
+    },
   };
 
   try {
