@@ -12,18 +12,18 @@ const CURSOR_DIR_PATH = ".cursor";
 const MCP_FILE_NAME = "mcp.json";
 
 function getMcpConfigDirPath(location: ConfigLocation): string {
-  const folders = vscode.workspace.workspaceFolders;
-
-  if (!folders || folders.length === 0) {
-    // This is an expected warning, don't report via telemetry.
-    throw new Error(`Couldn't access MCP config - no workspace folder available.`);
-  }
-
   let rootPath = "";
 
   if (location === ConfigLocation.Global) {
     rootPath = os.homedir();
   } else {
+    const folders = vscode.workspace.workspaceFolders;
+
+    if (!folders || folders.length === 0) {
+      // This is an expected warning, don't report via telemetry.
+      throw new Error(`Couldn't access MCP config - no workspace folder available.`);
+    }
+
     rootPath = folders[0].uri.fsPath;
   }
 
