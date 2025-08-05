@@ -97,7 +97,7 @@ export class NetworkPlugin implements ToolPlugin {
   public readonly id: ToolKey = NETWORK_PLUGIN_ID;
   public readonly label = "Network";
   public readonly disabledTooltipLabel = "Network tool is disabled";
-  private _buttonDisabled = false;
+  private buttonDisabled = false;
 
   public available = false;
   public readonly persist = true;
@@ -114,8 +114,8 @@ export class NetworkPlugin implements ToolPlugin {
     return this.websocketBackend.port;
   }
 
-  public get optionButtonDisabled() {
-    return this._buttonDisabled;
+  public get pluginButtonDisabled() {
+    return this.buttonDisabled;
   }
 
   sendCDPMessage = (messageData: any) => {
@@ -155,7 +155,7 @@ export class NetworkPlugin implements ToolPlugin {
     disposeAll(this.devtoolsListeners);
   }
 
-  setOptionButtonDisabled(disabled: boolean): void {
-    this._buttonDisabled = disabled;
+  setPluginButtonDisabled(disabled: boolean): void {
+    this.buttonDisabled = disabled;
   }
 }

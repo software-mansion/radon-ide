@@ -15,7 +15,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   private eventEmitter = new EventEmitter();
   private isEnabled = false;
   private devtoolsListeners: Disposable[] = [];
-  private _buttonDisabled = false;
+  private buttonDisabled = false;
 
   constructor(private inspectorBridge: RadonInspectorBridge) {
     this.devtoolsListeners.push(
@@ -38,8 +38,8 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   public readonly persist = false;
   public readonly disabledTooltipLabel = INSPECT_UNAVAILABLE_TOOLTIP_LABEL;
 
-  public get optionButtonDisabled() {
-    return this._buttonDisabled;
+  public get pluginButtonDisabled() {
+    return this.buttonDisabled;
   }
 
   activate(): void {
@@ -50,8 +50,8 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
     this.setEnabled(false);
   }
 
-  setOptionButtonDisabled(disabled: boolean): void {
-    this._buttonDisabled = disabled;
+  setPluginButtonDisabled(disabled: boolean): void {
+    this.buttonDisabled = disabled;
   }
 
   dispose() {

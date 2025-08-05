@@ -33,8 +33,8 @@ export type ToolState = {
   enabled: boolean;
   panelAvailable: boolean;
   label: string;
-  optionButtonDisabled: boolean;
-  disabledOptionTooltipLabel: string;
+  pluginButtonDisabled: boolean;
+  disabledPluginTooltipLabel: string;
 };
 
 export type ToolsState = {

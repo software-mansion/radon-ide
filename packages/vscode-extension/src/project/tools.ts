@@ -34,12 +34,12 @@ export interface ToolPlugin extends Disposable {
   label: string;
   available: boolean;
   persist: boolean;
-  optionButtonDisabled: boolean;
+  pluginButtonDisabled: boolean;
   disabledTooltipLabel: string;
   activate(): void;
   deactivate(): void;
   openTool?(): void;
-  setOptionButtonDisabled(disabled: boolean): void;
+  setPluginButtonDisabled(disabled: boolean): void;
 }
 
 export function reportToolVisibilityChanged(toolName: ToolKey, visible: boolean) {
@@ -143,8 +143,8 @@ export class ToolsManager implements Disposable {
           label: plugin.label,
           enabled: this.toolsSettings[id] || false,
           panelAvailable: plugin.openTool !== undefined,
-          optionButtonDisabled: plugin.optionButtonDisabled,
-          disabledOptionTooltipLabel: plugin.disabledTooltipLabel,
+          pluginButtonDisabled: plugin.pluginButtonDisabled,
+          disabledPluginTooltipLabel: plugin.disabledTooltipLabel,
         };
       }
     }
@@ -166,7 +166,7 @@ export class ToolsManager implements Disposable {
   public setToolButtonDisabled(toolName: ToolKey, disabled: boolean) {
     const plugin = this.plugins.get(toolName);
     if (plugin) {
-      plugin.setOptionButtonDisabled(disabled);
+      plugin.setPluginButtonDisabled(disabled);
     }
     this.handleStateChange();
   }

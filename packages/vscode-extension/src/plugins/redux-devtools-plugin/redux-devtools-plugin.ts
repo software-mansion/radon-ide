@@ -28,7 +28,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   public readonly id: ToolKey = REDUX_PLUGIN_ID;
   public readonly label = "Redux DevTools";
   public readonly disabledTooltipLabel = "Redux DevTools is not available";
-  private _buttonDisabled = false;
+  private buttonDisabled = false;
 
   public available = false;
   public readonly persist = true;
@@ -41,8 +41,8 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     initialize();
   }
 
-  public get optionButtonDisabled() {
-    return this._buttonDisabled;
+  public get pluginButtonDisabled() {
+    return this.buttonDisabled;
   }
 
   connectDevtoolsWebview(webview: Webview) {
@@ -106,7 +106,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     disposeAll(this.devtoolsListeners);
   }
 
-  setOptionButtonDisabled(disabled: boolean): void {
-    this._buttonDisabled = disabled;
+  setPluginButtonDisabled(disabled: boolean): void {
+    this.buttonDisabled = disabled;
   }
 }

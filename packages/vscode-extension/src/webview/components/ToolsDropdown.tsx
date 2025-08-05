@@ -69,8 +69,8 @@ function ToolsList({
       label={tool.label}
       checked={tool.enabled}
       panelAvailable={tool.panelAvailable}
-      disabled={tool.optionButtonDisabled}
-      disabledTooltipLabel={tool.disabledOptionTooltipLabel}
+      disabled={tool.pluginButtonDisabled}
+      disabledTooltipLabel={tool.disabledPluginTooltipLabel}
       onCheckedChange={async (checked) => {
         await project.updateToolEnabledState(key, checked);
         if (checked) {
