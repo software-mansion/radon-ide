@@ -1,24 +1,16 @@
 .inspector-unavailable-box {
+  --box-transform: translate(-50%, -125%);
   background-color: var(--dimensions-box-background);
   color: var(--swm-tooltip-primary);
 
-  position: absolute;
-  left: var(--left);
-  top: var(--top);
-  height: 20px;
-  font-size: 11px;
-  border-radius: 4px;
-  padding-left: 10px;
-  padding-right: 10px;
-
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  transform: translate(-50%, -125%);
-  z-index: 1000;
   /* Transition duration dependent on the code in InspectorUnavailableTooltip.tsx */
   transition: opacity 0.3s ease-out;
   pointer-events: none;
+
+  /* Apply dimensions-box styling (DimensionBox.css) for consistency */
+  &.dimensions-box{
+    --box-transform: translate(-50%, -125%);
+  }
 }
 
 .inspector-unavailable-box.visible {

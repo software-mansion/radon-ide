@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { DeviceProperties } from "../utilities/deviceConstants";
-import "./InspectorUnavailableTooltip.css";
+import "./InspectorUnavailableBox.css";
 
 type InspectorUnavailableBoxProps = {
   device?: DeviceProperties;
@@ -57,7 +57,7 @@ function InspectorUnavailableBox({
 
   return (
     <div
-      className={`inspector-unavailable-box ${isVisible ? "visible" : "fade-out"}`}
+      className={`dimensions-box inspector-unavailable-box ${isVisible ? "visible" : "fade-out"}`}
       style={cssPropertiesForTooltip as React.CSSProperties}>
       Inspector not available
     </div>
