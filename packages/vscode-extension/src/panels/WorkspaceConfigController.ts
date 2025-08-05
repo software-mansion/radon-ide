@@ -39,7 +39,7 @@ export class WorkspaceConfigController implements Disposable {
       for (const partialStateEntry of partialStateEntries) {
         const updatedConfig = {
           ...currentWorkspaceConfig,
-          [partialStateEntry[0]]: partialStateEntry[1]
+          [partialStateEntry[0]]: partialStateEntry[1],
         };
 
         const shouldSkipUpdate = _.isEqual(updatedConfig, currentWorkspaceConfig);
