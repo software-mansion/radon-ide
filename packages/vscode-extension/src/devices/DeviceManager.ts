@@ -1,4 +1,3 @@
-import { EventEmitter } from "stream";
 import _ from "lodash";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import {
@@ -17,43 +16,47 @@ import {
   renameEmulator,
   removeEmulator,
 } from "./AndroidEmulatorDevice";
-import {
-  DeviceInfo,
-  DevicePlatform,
-  DeviceManagerInterface,
-  IOSRuntimeInfo,
-  DeviceManagerEventMap,
-  DeviceManagerEventListener,
-  IOSDeviceTypeInfo,
-  AndroidSystemImageInfo,
-} from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { Platform } from "../utilities/platform";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { checkXcodeExists } from "../utilities/checkXcodeExists";
+import {
+  AndroidSystemImageInfo,
+  DeviceInfo,
+  DevicePlatform,
+  DevicesState,
+  IOSDeviceTypeInfo,
+  IOSRuntimeInfo,
+} from "../common/State";
+import { StateManager } from "../project/StateManager";
+import { Disposable } from "vscode";
+import { disposeAll } from "../utilities/disposables";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
 export class DeviceAlreadyUsedError extends Error {}
-export class DeviceManager implements DeviceManagerInterface {
-  private eventEmitter = new EventEmitter();
+export class DeviceManager implements Disposable {
+  private disposables: Disposable[] = [];
 
-  constructor(private readonly outputChannelRegistry: OutputChannelRegistry) {}
-
-  public async addListener<K extends keyof DeviceManagerEventMap>(
-    eventType: K,
-    listener: DeviceManagerEventListener<K>
+  constructor(
+    private readonly stateManager: StateManager<DevicesState>,
+    private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
-    this.eventEmitter.addListener(eventType, listener);
-  }
+    this.loadDevicesIntoState();
+    this.listInstalledIOSRuntimes().then((runtimes) => {
+      this.stateManager.setState({
+        iOSRuntimes: runtimes,
+      });
+    });
+    this.listInstalledAndroidImages().then((images) => {
+      this.stateManager.setState({
+        androidImages: images,
+      });
+    });
 
-  public async removeListener<K extends keyof DeviceManagerEventMap>(
-    eventType: K,
-    listener: DeviceManagerEventListener<K>
-  ) {
-    this.eventEmitter.removeListener(eventType, listener);
+    this.disposables.push(this.stateManager);
   }
 
   public async acquireDevice(deviceInfo: DeviceInfo) {
@@ -117,8 +120,7 @@ export class DeviceManager implements DeviceManagerInterface {
     }
     const devices = await this.loadDevicesPromise;
     if (!_.isEqual(previousDevices, devices)) {
-      // Emit event only if the devices list has changed
-      this.eventEmitter.emit("devicesChanged", devices);
+      this.stateManager.setState({ devices });
     }
     return devices;
   }
@@ -147,22 +149,22 @@ export class DeviceManager implements DeviceManagerInterface {
     return devices;
   }
 
-  public async listInstalledAndroidImages() {
+  private async listInstalledAndroidImages() {
     return getAndroidSystemImages();
   }
 
-  public listInstalledIOSRuntimes() {
+  private listInstalledIOSRuntimes() {
     return getAvailableIosRuntimes();
   }
 
-  public async listAllDevices() {
+  private async loadDevicesIntoState() {
     const devices = extensionContext.globalState.get(DEVICE_LIST_CACHE_KEY) as
       | DeviceInfo[]
       | undefined;
     if (devices) {
       // we still want to perform load here in case anything changes, just won't wait for it
       this.loadDevices();
-      return devices;
+      this.stateManager.setState({ devices });
     } else {
       return await this.loadDevices();
     }
@@ -226,6 +228,9 @@ export class DeviceManager implements DeviceManagerInterface {
       await removeEmulator(device.avdId);
     }
     await this.loadDevices();
-    this.eventEmitter.emit("deviceRemoved", device);
+  }
+
+  dispose() {
+    disposeAll(this.disposables);
   }
 }

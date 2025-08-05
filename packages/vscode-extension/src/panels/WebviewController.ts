@@ -35,7 +35,7 @@ interface GetStateArgs {
 }
 interface SetStateArgs {
   callId: string;
-  state: Partial<State>;
+  state: RecursivePartial<State>;
 }
 
 type CallEvent = CallCommand & CallArgs;
@@ -73,10 +73,7 @@ export class WebviewController implements Disposable {
     this.setWebviewMessageListener(webview);
 
     this.callableObjectGetters = new Map([
-      ["DeviceManager", () => this.ide.deviceManager as object],
       ["Project", () => this.ide.project as object],
-      ["DeviceSessionsManager", () => this.ide.project.deviceSessionsManager as object],
-      ["WorkspaceConfig", () => this.ide.workspaceConfigController as object],
       ["AppRootConfig", () => this.ide.project.appRootConfigController as object],
       ["Utils", () => this.ide.utils as object],
       [

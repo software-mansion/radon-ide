@@ -16,7 +16,6 @@ import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { BuildResult } from "../builders/BuildManager";
-import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { AppPermissionType, CameraSettings, DeviceSettings, Locale } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
@@ -27,6 +26,7 @@ import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { extensionContext } from "../utilities/extensionContext";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
+import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform } from "../common/State";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,

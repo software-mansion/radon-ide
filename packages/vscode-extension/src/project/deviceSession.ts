@@ -44,9 +44,7 @@ import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugS
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
-import { DevicePlatform } from "../common/DeviceManager";
 import { ToolKey, ToolsDelegate, ToolsManager } from "./tools";
-import { ReloadAction } from "../common/DeviceSessionsManager";
 import { focusSource } from "../utilities/focusSource";
 import { ApplicationContext } from "./ApplicationContext";
 import { BuildCache } from "../builders/BuildCache";
@@ -55,6 +53,8 @@ import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { disposeAll } from "../utilities/disposables";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
+import { DevicePlatform } from "../common/State";
+import { ReloadAction } from "./DeviceSessionsManager";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds

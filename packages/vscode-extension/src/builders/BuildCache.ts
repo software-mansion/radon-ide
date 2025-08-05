@@ -3,12 +3,12 @@ import assert from "assert";
 import crypto from "crypto";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
-import { DevicePlatform } from "../common/DeviceManager";
 import { IOSBuildResult } from "./buildIOS";
 import { AndroidBuildResult } from "./buildAndroid";
 import { calculateMD5 } from "../utilities/common";
 import { BuildResult } from "./BuildManager";
 import { FingerprintOptions, FingerprintProvider } from "../project/FingerprintProvider";
+import { DevicePlatform } from "../common/State";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const IOS_BUILD_CACHE_KEY = "ios_build_cache";

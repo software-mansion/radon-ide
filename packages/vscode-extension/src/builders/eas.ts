@@ -5,7 +5,6 @@ import { mkdtemp } from "fs/promises";
 import assert from "assert";
 import { maxBy } from "lodash";
 import { OutputChannel } from "vscode";
-import { DevicePlatform } from "../common/DeviceManager";
 import { EasConfig } from "../common/LaunchConfig";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
@@ -19,6 +18,7 @@ import {
   buildLocal,
 } from "./easCommand";
 import { extractTarApp } from "./utils";
+import { DevicePlatform } from "../common/State";
 
 export async function fetchEasBuild(
   cancelToken: CancelToken,
