@@ -21,7 +21,7 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
         "Reinstall app": () => project.reloadCurrentSession("reinstall"),
         "Restart Metro server": () => project.reloadCurrentSession("restartMetro"),
         "Clear Metro cache": () => project.reloadCurrentSession("clearMetro"),
-        "Reboot IDE": () => project.reloadCurrentSession("reboot"),
+        "Reboot Device": () => project.reloadCurrentSession("reboot"),
         "Clean rebuild": () => project.reloadCurrentSession("rebuild"),
       }}>
       <span className="codicon codicon-refresh" />

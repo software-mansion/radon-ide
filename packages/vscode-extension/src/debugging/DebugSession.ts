@@ -41,7 +41,7 @@ export interface DebugSession {
 
   // lifecycle methods
   startParentDebugSession(): Promise<void>;
-  startJSDebugSession(configuration: JSDebugConfiguration): Promise<boolean>;
+  startJSDebugSession(configuration: JSDebugConfiguration): Promise<void>;
   restart(): Promise<void>;
 
   // debugger controls
@@ -239,8 +239,6 @@ export class DebugSessionImpl implements DebugSession, Disposable {
       debug.stopDebugging(this.jsDebugSession);
     }
     this.jsDebugSession = newDebugSession;
-
-    return true;
   }
 
   public resumeDebugger() {

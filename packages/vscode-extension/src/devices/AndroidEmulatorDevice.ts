@@ -594,7 +594,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     }
     // terminate the app before launching, otherwise launch commands won't actually start the process which
     // may be in a bad state
-    this.terminateApp(build.packageName);
+    await this.terminateApp(build.packageName);
 
     this.mirrorNativeLogs(build);
 

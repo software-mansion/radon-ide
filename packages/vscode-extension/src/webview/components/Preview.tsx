@@ -94,10 +94,9 @@ function Preview({
   const hasFatalError = selectedDeviceSession?.status === "fatalError";
   const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
 
-  const debugPaused = selectedDeviceSession?.isDebuggerPaused;
-
   const isRunning = selectedDeviceSession?.status === "running";
   const isRefreshing = isRunning && selectedDeviceSession.isRefreshing;
+  const debugPaused = isRunning && selectedDeviceSession.isDebuggerPaused;
 
   const previewURL = selectedDeviceSession?.previewURL;
 
@@ -483,6 +482,7 @@ function Preview({
     <>
       <div
         className="phone-display-container"
+        data-test="phone-wrapper"
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>
@@ -595,11 +595,9 @@ function Preview({
       which causes the device preview to flicker. */}
       <span className="phone-preload-masks">
         <div style={{ maskImage: `url(${device?.landscapeScreenImage})` }} />
-        <div style={{ maskImage: `url(${device?.screenImage})` }} />
+        <div style={{ maskImage: `url(${device?.screenMaskImage})` }} />
         <img src={frame.imageLandscape} alt="" />
         <img src={frame.image} alt="" />
-        <img src={device?.landscapeScreenImage} alt="" />
-        <img src={device?.screenImage} alt="" />
       </span>
     </>
   );

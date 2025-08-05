@@ -552,7 +552,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    return this.deviceSession.captureAndStopRecording();
+    return this.deviceSession.captureAndStopRecording(this.getDeviceRotation());
   }
 
   // #endregion Recording
@@ -563,7 +563,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (this.deviceSession) {
       await this.deviceSession.startProfilingCPU();
     } else {
-      throw new Error("No device session available");
+      throw new Error("No application running");
     }
   }
 
@@ -571,7 +571,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (this.deviceSession) {
       await this.deviceSession.stopProfilingCPU();
     } else {
-      throw new Error("No device session available");
+      throw new Error("No application running");
     }
   }
 
@@ -587,6 +587,133 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
+  async captureAndStopRecording() {
+    const recording = await this.stopRecording();
+    await this.utils.saveMultimedia(recording);
+  }
+
+  async toggleRecording() {
+    if (this.recordingTimeout) {
+      this.captureAndStopRecording();
+    } else {
+      this.startRecording();
+    }
+  }
+
+  async captureReplay() {
+    getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+    });
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    const replay = await this.deviceSession.captureReplay(this.getDeviceRotation());
+    this.eventEmitter.emit("replayDataCreated", replay);
+  }
+
+  async captureScreenshot() {
+    getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+    });
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+
+    const screenshot = await this.deviceSession.captureScreenshot(this.getDeviceRotation());
+    await this.utils.saveMultimedia(screenshot);
+  }
+
+  async dispatchPaste(text: string) {
+    await this.deviceSession?.sendClipboard(text);
+    await this.utils.showToast("Pasted to device clipboard", 2000);
+  }
+
+  async dispatchCopy() {
+    const text = await this.deviceSession?.getClipboard();
+    if (text) {
+      env.clipboard.writeText(text);
+    }
+    // For consistency between iOS and Android, we always display toast message
+    await this.utils.showToast("Copied from device clipboard", 2000);
+  }
+
+  async getProjectState(): Promise<ProjectState> {
+    return this.projectState;
+  }
+
+  async addListener<K extends keyof ProjectEventMap>(
+    eventType: K,
+    listener: ProjectEventListener<ProjectEventMap[K]>
+  ) {
+    this.eventEmitter.addListener(eventType, listener);
+  }
+  async removeListener<K extends keyof ProjectEventMap>(
+    eventType: K,
+    listener: ProjectEventListener<ProjectEventMap[K]>
+  ) {
+    this.eventEmitter.removeListener(eventType, listener);
+  }
+
+  public dispose() {
+    this.deviceSessionsManager.dispose();
+    this.applicationContext.dispose();
+    disposeAll(this.disposables);
+  }
+
+  private async reloadMetro() {
+    try {
+      await this.deviceSession?.performReloadAction("reloadJs");
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  public async navigateHome() {
+    getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+    });
+
+    if (this.applicationContext.applicationDependencyManager === undefined) {
+      Logger.error(
+        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
+      );
+      throw new Error("[PROJECT] Dependency manager not initialized");
+    }
+
+    if (await this.applicationContext.applicationDependencyManager.checkProjectUsesExpoRouter()) {
+      await this.deviceSession?.navigateHome();
+    } else {
+      await this.reloadMetro();
+    }
+  }
+
+  public async removeNavigationHistoryEntry(id: string): Promise<void> {
+    this.deviceSession?.removeNavigationHistoryEntry(id);
+  }
+
+  async resetAppPermissions(permissionType: AppPermissionType) {
+    const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);
+    if (needsRestart) {
+      await this.deviceSessionsManager.reloadCurrentSession("restartProcess");
+    }
+  }
+
+  async getDeepLinksHistory() {
+    return extensionContext.workspaceState.get<string[] | undefined>(DEEP_LINKS_HISTORY_KEY) ?? [];
+  }
+
+  async openDeepLink(link: string, terminateApp: boolean) {
+    const history = await this.getDeepLinksHistory();
+    if (history.length === 0 || link !== history[0]) {
+      extensionContext.workspaceState.update(
+        DEEP_LINKS_HISTORY_KEY,
+        [link, ...history.filter((s) => s !== link)].slice(0, DEEP_LINKS_HISTORY_LIMIT)
+      );
+    }
+
+    this.deviceSession?.sendDeepLink(link, terminateApp);
+  }
   // #endregion Profiling
 
   // #region Device Input

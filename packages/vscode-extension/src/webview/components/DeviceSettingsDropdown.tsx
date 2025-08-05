@@ -232,7 +232,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                     onSelect={() => store$.workspaceConfiguration.deviceRotation.set(option.value)}>
                     <span
                       className={`codicon codicon-${option.icon}`}
-                      style={{ rotate: rotation }}
+                      style={{ rotate: option.rotation }}
                     />
                     {option.label}
                     {rotation === option.value && (
@@ -355,18 +355,21 @@ function CommandItem({
   commandName,
   label,
   icon,
+  disabled = false,
 }: {
   project: ProjectInterface;
   commandName: string;
   label: string;
   icon: string;
+  disabled?: boolean;
 }) {
   return (
     <DropdownMenu.Item
       className="dropdown-menu-item"
       onSelect={() => {
         project.runCommand(commandName);
-      }}>
+      }}
+      disabled={disabled}>
       <span className="dropdown-menu-item-wraper">
         <span className={`codicon codicon-${icon}`} />
         <div className="dropdown-menu-item-content">
@@ -410,12 +413,14 @@ const BiometricsItem = () => {
             commandName="RNIDE.performBiometricAuthorization"
             label="Matching ID"
             icon="layout-sidebar-left"
+            disabled={!deviceSettings.hasEnrolledBiometrics}
           />
           <CommandItem
             project={project}
             commandName="RNIDE.performFailedBiometricAuthorization"
             label="Non-Matching ID"
             icon="layout-sidebar-left"
+            disabled={!deviceSettings.hasEnrolledBiometrics}
           />
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
