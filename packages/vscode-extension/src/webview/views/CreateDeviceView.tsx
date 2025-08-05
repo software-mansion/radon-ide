@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { use$ } from "@legendapp/state/react";
 import classNames from "classnames";
 import Select from "../components/shared/Select";
 import "./CreateDeviceView.css";
-import { useDevices } from "../providers/DevicesProvider";
 import Button from "../components/shared/Button";
 import Label from "../components/shared/Label";
 import {
@@ -13,6 +13,8 @@ import {
 import { Platform } from "../providers/UtilsProvider";
 import { Input } from "../components/shared/Input";
 import { useDependencyErrors } from "../hooks/useDependencyErrors";
+import { useStore } from "../providers/storeProvider";
+import { useProject } from "../providers/ProjectProvider";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -63,31 +65,36 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [loading, setLoading] = useState<boolean>(false);
 
   const supportedDevices = useSupportedDevices();
-  const { iOSRuntimes, androidImages, deviceManager, reload } = useDevices();
 
-  useEffect(() => {
-    reload();
-  }, []);
+  const { project } = useProject();
+
+  const store$ = useStore();
+  const iOSRuntimes = use$(store$.devicesState.iOSRuntimes);
+  const androidImages = use$(store$.devicesState.androidImages);
 
   const createDisabled = loading || !deviceProperties || !selectedSystemName || !isDisplayNameValid;
 
   const systemImagesOptions =
     deviceProperties && deviceProperties.platform === "iOS"
-      ? iOSRuntimes.map((runtime) => ({
-          value: runtime.identifier,
-          label: runtime.name,
-          disabled: !runtime.available,
-          marked: false,
-        }))
-      : androidImages.map((systemImage) => ({
-          value: systemImage.location,
-          label: systemImage.name,
-          disabled: !systemImage.available,
-          marked: !!(
-            deviceProperties?.minimumAndroidApiLevel &&
-            deviceProperties.minimumAndroidApiLevel > systemImage.apiLevel
-          ),
-        }));
+      ? iOSRuntimes !== null
+        ? iOSRuntimes.map((runtime) => ({
+            value: runtime.identifier,
+            label: runtime.name,
+            disabled: !runtime.available,
+            marked: false,
+          }))
+        : []
+      : androidImages !== null
+        ? androidImages.map((systemImage) => ({
+            value: systemImage.location,
+            label: systemImage.name,
+            disabled: !systemImage.available,
+            marked: !!(
+              deviceProperties?.minimumAndroidApiLevel &&
+              deviceProperties.minimumAndroidApiLevel > systemImage.apiLevel
+            ),
+          }))
+        : [];
 
   async function createDevice() {
     if (!deviceProperties || !selectedSystemName || !displayName) {
@@ -97,6 +104,9 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
     setLoading(true);
     try {
       if (deviceProperties && deviceProperties.platform === "iOS" && Platform.OS === "macos") {
+        if (!iOSRuntimes) {
+          return;
+        }
         const runtime = iOSRuntimes.find(({ identifier }) => identifier === selectedSystemName);
         if (!runtime) {
           return;
@@ -107,13 +117,16 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         if (!iOSDeviceType) {
           return;
         }
-        await deviceManager.createIOSDevice(iOSDeviceType, displayName.trim(), runtime);
+        await project.createIOSDevice(iOSDeviceType, displayName.trim(), runtime);
       } else {
+        if (!androidImages) {
+          return;
+        }
         const systemImage = androidImages.find((image) => image.location === selectedSystemName);
         if (!systemImage) {
           return;
         }
-        await deviceManager.createAndroidDevice(
+        await project.createAndroidDevice(
           deviceProperties.modelId,
           displayName.trim(),
           systemImage

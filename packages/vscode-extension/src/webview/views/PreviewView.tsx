@@ -9,7 +9,6 @@ import { useModal } from "../providers/ModalProvider";
 import NoDeviceView from "./NoDeviceView";
 import DeviceSettingsDropdown from "../components/DeviceSettingsDropdown";
 import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
-import { useDevices } from "../providers/DevicesProvider";
 import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
@@ -109,7 +108,8 @@ function PreviewView() {
     [project]
   );
   const [recordingTime, setRecordingTime] = useState(0);
-  const { devices } = useDevices();
+
+  const devices = use$(store$.devicesState.devices) ?? [];
 
   const initialized = projectState.initialized;
   const radonConnectEnabled = projectState.connectState.enabled;

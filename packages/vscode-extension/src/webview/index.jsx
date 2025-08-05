@@ -2,7 +2,6 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 
-import DevicesProvider from "./providers/DevicesProvider";
 import ModalProvider from "./providers/ModalProvider";
 import ProjectProvider from "./providers/ProjectProvider";
 import AlertProvider from "./providers/AlertProvider";
@@ -22,13 +21,11 @@ root.render(
     <StoreProvider>
       <ProjectProvider>
         <UtilsProvider>
-          <DevicesProvider>
-            <ModalProvider>
-              <AlertProvider>
-                <App />
-              </AlertProvider>
-            </ModalProvider>
-          </DevicesProvider>
+          <ModalProvider>
+            <AlertProvider>
+              <App />
+            </AlertProvider>
+          </ModalProvider>
         </UtilsProvider>
       </ProjectProvider>
     </StoreProvider>
