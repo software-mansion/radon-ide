@@ -19,16 +19,16 @@ function getMcpConfigDirPath(location: ConfigLocation): string {
     throw new Error(`Couldn't access MCP config - no workspace folder available.`);
   }
 
-  const folder = folders[0];
-  const editorType = getEditorType();
-  let filePath = "";
   let rootPath = "";
 
   if (location === ConfigLocation.Global) {
     rootPath = os.homedir();
   } else {
-    rootPath = folder.uri.fsPath;
+    rootPath = folders[0].uri.fsPath;
   }
+
+  let filePath = "";
+  const editorType = getEditorType();
 
   if (editorType === EditorType.CURSOR) {
     filePath = path.join(rootPath, CURSOR_DIR_PATH);
@@ -36,7 +36,7 @@ function getMcpConfigDirPath(location: ConfigLocation): string {
     filePath = path.join(rootPath, VSCODE_DIR_PATH);
   } else {
     // Unknown editors will not be handled, as mcp.json is not standardized yet.
-    let msg = `Couldn't read MCP config - unknown editor detected.`;
+    let msg = `Couldn't access MCP config - unknown editor detected.`;
     Logger.error(MCP_LOG, msg);
     getTelemetryReporter().sendTelemetryEvent("radon-ai:unknown-editor-error", { error: msg });
     throw new Error(msg);
