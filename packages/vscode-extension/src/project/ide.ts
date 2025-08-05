@@ -2,7 +2,6 @@ import { Disposable, EventEmitter } from "vscode";
 import { Project } from "./project";
 import { DeviceManager } from "../devices/DeviceManager";
 import { WorkspaceConfigController } from "../panels/WorkspaceConfigController";
-import { Utils } from "../utilities/utils";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
@@ -12,6 +11,7 @@ import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 import { Telemetry } from "./telemetry";
+import { EditorManager } from "./EditorManager";
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
@@ -23,9 +23,9 @@ export class IDE implements Disposable {
   private onStateChangedEmitter = new EventEmitter<RecursivePartial<State>>();
 
   public readonly deviceManager: DeviceManager;
+  public readonly editorManager: EditorManager;
   public readonly project: Project;
   public readonly workspaceConfigController: WorkspaceConfigController;
-  public readonly utils: Utils;
   public readonly outputChannelRegistry = new OutputChannelRegistry();
 
   private environmentDependencyManager: EnvironmentDependencyManager;
@@ -50,7 +50,8 @@ export class IDE implements Disposable {
       this.stateManager.getDerived("devicesState"),
       this.outputChannelRegistry
     );
-    this.utils = new Utils();
+    this.editorManager = new EditorManager();
+
     this.environmentDependencyManager = new EnvironmentDependencyManager(
       this.stateManager.getDerived("environmentDependencies")
     );
@@ -59,9 +60,10 @@ export class IDE implements Disposable {
       this.stateManager.getDerived("workspaceConfiguration"),
       this.stateManager.getDerived("devicesState"),
       this.deviceManager,
-      this.utils,
+      this.editorManager,
       this.outputChannelRegistry,
       this.environmentDependencyManager,
+      this.telemetry,
       initialLaunchConfig
     );
 

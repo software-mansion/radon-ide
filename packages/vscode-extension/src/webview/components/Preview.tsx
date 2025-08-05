@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
 import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
-import { useProject } from "../providers/ProjectProvider";
+import { Platform, useProject } from "../providers/ProjectProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import PreviewLoader from "./PreviewLoader";
 import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
@@ -18,7 +18,6 @@ import {
 } from "../../common/Project";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
-import { Platform, useUtils } from "../providers/UtilsProvider";
 import InspectOverlay from "./InspectOverlay";
 import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
@@ -88,8 +87,6 @@ function Preview({
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
   const { selectedDeviceSession, project } = useProject();
-
-  const { sendTelemetry } = useUtils();
 
   const hasFatalError = selectedDeviceSession?.status === "fatalError";
   const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
@@ -186,7 +183,7 @@ function Preview({
       return;
     }
     if (type === "RightButtonDown") {
-      sendTelemetry("inspector:show-component-stack", {});
+      project.sendTelemetry("inspector:show-component-stack", {});
     }
 
     const clampedCoordinates = getNormalizedTouchCoordinates(event);

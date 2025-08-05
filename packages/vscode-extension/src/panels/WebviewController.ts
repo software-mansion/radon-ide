@@ -75,7 +75,6 @@ export class WebviewController implements Disposable {
     this.callableObjectGetters = new Map([
       ["Project", () => this.ide.project as object],
       ["AppRootConfig", () => this.ide.project.appRootConfigController as object],
-      ["Utils", () => this.ide.utils as object],
       [
         "RenderOutlines",
         () => this.ide.project.deviceSession!.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,

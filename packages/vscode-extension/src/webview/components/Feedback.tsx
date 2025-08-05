@@ -1,8 +1,8 @@
 import { Dispatch, MouseEvent, SetStateAction } from "react";
 import "./Feedback.css";
 import classNames from "classnames";
-import { useUtils } from "../providers/UtilsProvider";
 import { Sentiment } from "./SendFeedbackItem";
+import { useProject } from "../providers/ProjectProvider";
 
 type FeedbackProps = {
   sentiment: Sentiment | undefined;
@@ -10,11 +10,11 @@ type FeedbackProps = {
 };
 
 export function Feedback({ sentiment, setSentiment }: FeedbackProps) {
-  const { sendTelemetry } = useUtils();
+  const { project } = useProject();
 
   const handleFeedback = (event: MouseEvent<HTMLButtonElement>, pickedSentiment: Sentiment) => {
     event.preventDefault();
-    sendTelemetry(`feedback:${pickedSentiment}`);
+    project.sendTelemetry(`feedback:${pickedSentiment}`);
     setSentiment(pickedSentiment);
   };
 

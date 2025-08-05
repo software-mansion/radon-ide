@@ -1,8 +1,9 @@
+import fs from "fs";
 import { EventEmitter } from "stream";
-import os from "os";
+import os, { homedir } from "os";
 import path from "path";
 import assert from "assert";
-import { env, Disposable, commands, workspace, window } from "vscode";
+import { env, Disposable, commands, workspace, window, Uri } from "vscode";
 import _ from "lodash";
 import { minimatch } from "minimatch";
 import {
@@ -13,8 +14,10 @@ import {
   DeviceSessionsManagerState,
   DeviceSessionState,
   DeviceSettings,
+  IDEPanelMoveTarget,
   InspectData,
   isOfEnumDeviceRotation,
+  MultimediaData,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -35,7 +38,6 @@ import {
 } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey } from "./tools";
-import { UtilsInterface } from "../common/utils";
 import { ApplicationContext } from "./ApplicationContext";
 import { disposeAll } from "../utilities/disposables";
 import {
@@ -64,6 +66,11 @@ import {
 } from "../common/State";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
+import { getTimestamp } from "../utilities/getTimestamp";
+import { Platform } from "../utilities/platform";
+import { EditorManager } from "./EditorManager";
+import { Telemetry } from "./telemetry";
+import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -138,9 +145,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     private readonly workspaceStateManager: StateManager<WorkspaceConfiguration>,
     private readonly devicesStateManager: StateManager<DevicesState>,
     private readonly deviceManager: DeviceManager,
-    private readonly utils: UtilsInterface,
+    private readonly editorManager: EditorManager,
     private readonly outputChannelRegistry: OutputChannelRegistry,
     private readonly environmentDependencyManager: EnvironmentDependencyManager,
+    private readonly telemetry: Telemetry,
     initialLaunchConfigOptions?: LaunchConfiguration
   ) {
     const fingerprintProvider = new FingerprintProvider();
@@ -511,7 +519,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async captureAndStopRecording() {
     const recording = await this.stopRecording();
-    await this.utils.saveMultimedia(recording);
+    await this.saveMultimedia(recording);
   }
 
   public async toggleRecording() {
@@ -542,7 +550,38 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
 
     const screenshot = await this.deviceSession.captureScreenshot(this.getDeviceRotation());
-    await this.utils.saveMultimedia(screenshot);
+    await this.saveMultimedia(screenshot);
+  }
+
+  public async saveMultimedia(multimediaData: MultimediaData) {
+    const extension = path.extname(multimediaData.tempFileLocation);
+    const timestamp = getTimestamp();
+    const baseFileName = multimediaData.fileName.substring(
+      0,
+      multimediaData.fileName.length - extension.length
+    );
+    const newFileName = `${baseFileName} ${timestamp}${extension}`;
+    const defaultFolder = Platform.select({
+      macos: path.join(homedir(), "Desktop"),
+      windows: homedir(),
+      linux: homedir(),
+    });
+    const defaultUri = Uri.file(path.join(defaultFolder, newFileName));
+
+    // save dialog open the location dialog, it also warns the user if the file already exists
+    let saveUri = await window.showSaveDialog({
+      defaultUri: defaultUri,
+      filters: {
+        "Video Files": [extension],
+      },
+    });
+
+    if (!saveUri) {
+      return false;
+    }
+
+    await fs.promises.copyFile(multimediaData.tempFileLocation, saveUri.fsPath);
+    return true;
   }
 
   private async stopRecording() {
@@ -611,7 +650,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async dispatchPaste(text: string) {
     await this.deviceSession?.sendClipboard(text);
-    await this.utils.showToast("Pasted to device clipboard", 2000);
+    await this.editorManager.showToast("Pasted to device clipboard", 2000);
   }
 
   public async dispatchCopy() {
@@ -620,7 +659,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       env.clipboard.writeText(text);
     }
     // For consistency between iOS and Android, we always display toast message
-    await this.utils.showToast("Copied from device clipboard", 2000);
+    await this.editorManager.showToast("Copied from device clipboard", 2000);
   }
 
   // #endregion Device Input
@@ -748,6 +787,57 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   // #endregion Extension Interface
+
+  // #region Logging
+
+  public async log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]) {
+    Logger[type]("[WEBVIEW LOG]", message, ...args);
+  }
+
+  // #endregion Logging
+
+  // #region Editor
+
+  public getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined> {
+    return this.editorManager.getCommandsCurrentKeyBinding(commandName);
+  }
+
+  public movePanelTo(location: IDEPanelMoveTarget): Promise<void> {
+    return this.editorManager.movePanelTo(location);
+  }
+
+  public openExternalUrl(uriString: string): Promise<void> {
+    return this.editorManager.openExternalUrl(uriString);
+  }
+
+  public openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void> {
+    return this.editorManager.openFileAt(filePath, line0Based, column0Based);
+  }
+
+  public showDismissableError(errorMessage: string): Promise<void> {
+    return this.editorManager.showDismissableError(errorMessage);
+  }
+
+  public showToast(message: string, timeout: number): Promise<void> {
+    return this.editorManager.showToast(message, timeout);
+  }
+
+  // #endregion Editor
+
+  // #region Telemetry
+
+  public async reportIssue(): Promise<void> {
+    this.telemetry.reportIssue();
+  }
+
+  public async sendTelemetry(
+    eventName: string,
+    properties?: TelemetryEventProperties
+  ): Promise<void> {
+    this.telemetry.sendTelemetry(eventName, properties);
+  }
+
+  // #endregion Telemetry
 
   // #region Event Emitter
 
