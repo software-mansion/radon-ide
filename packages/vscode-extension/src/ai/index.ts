@@ -1,4 +1,5 @@
 import { registerRadonChat } from "./chat";
-import registerRadonAi, { ConfigLocation } from "./mcp";
+import registerRadonAi from "./mcp";
+import { ConfigLocation } from "./mcp/utils";
 
 export { registerRadonAi, registerRadonChat, ConfigLocation };

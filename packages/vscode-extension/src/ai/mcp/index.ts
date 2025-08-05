@@ -64,12 +64,9 @@ function isDirectLoadingAvailable() {
   );
 }
 
-export enum ConfigLocation {
-  Project = "Project",
-  Global = "Global",
-}
-
-export default function registerRadonAi(location?: ConfigLocation): Disposable {
+export default function registerRadonAi(
+  location: ConfigLocation = ConfigLocation.Project
+): Disposable {
   const connectionListener = new ConnectionListener();
   const server = new LocalMcpServer(connectionListener);
 

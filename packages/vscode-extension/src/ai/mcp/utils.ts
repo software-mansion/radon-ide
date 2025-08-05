@@ -3,6 +3,11 @@ import { EditorType, ToolResponse } from "./models";
 
 export const MCP_LOG = "[MCP]";
 
+export enum ConfigLocation {
+  Project = "Project",
+  Global = "Global",
+}
+
 export function getEditorType(): EditorType {
   // Cursor features different settings than VSCode
   const config = vscode.workspace.getConfiguration();
