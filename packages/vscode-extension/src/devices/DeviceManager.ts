@@ -221,12 +221,19 @@ export class DeviceManager implements Disposable {
       systemName: String(device.systemName),
     });
 
+    // This is an optimization to update before costly operations
+    const previousDevices = this.stateManager.getState().devices ?? [];
+    const devices = previousDevices.filter((d) => d.id !== device.id);
+    this.stateManager.setState({ devices });
+
     if (device.platform === DevicePlatform.IOS) {
       await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
     }
     if (device.platform === DevicePlatform.Android) {
       await removeEmulator(device.avdId);
     }
+
+    // Load devices anyway to ensure the state is up-to-date
     await this.loadDevices();
   }
 

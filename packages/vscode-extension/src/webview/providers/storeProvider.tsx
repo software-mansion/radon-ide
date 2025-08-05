@@ -3,6 +3,7 @@ import { synced, SyncedSetParams, SyncedSubscribeParams } from "@legendapp/state
 import { vscode } from "../utilities/vscode";
 import { createContext, PropsWithChildren, useContext } from "react";
 import { initialState, State } from "../../common/State";
+import { mergeAndCalculateChanges } from "../../utilities/mergeAndCalculateChanges";
 
 let instanceToken = Math.floor(Math.random() * 1000000);
 let globalCallCounter = 1;
@@ -69,10 +70,12 @@ const setState = async (params: SyncedSetParams<State>) => {
 };
 
 const subscribeToState = (params: SyncedSubscribeParams<State>) => {
-  const { update } = params;
+  const { update, value$ } = params;
   const listener = (event: any) => {
     if (event.data.command === "RNIDE_state_updated") {
-      update({ value: event.data.state, mode: "merge" });
+      const oldState = value$.get();
+      const [newState] = mergeAndCalculateChanges(oldState, event.data.state);
+      update({ value: newState, mode: "set" });
     }
   };
 

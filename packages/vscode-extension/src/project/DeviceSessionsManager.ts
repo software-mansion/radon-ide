@@ -246,16 +246,6 @@ export class DeviceSessionsManager implements Disposable {
     }
   };
 
-  private handleRemovedDevice = async (device: DeviceInfo) => {
-    const activeSessionId = this.activeSessionId;
-    // if the deleted device was running an active session, we need to terminate that session
-    await this.terminateSession(device.id);
-    // if the deleted device was the selected one, we try to select a new device
-    if (activeSessionId === device.id) {
-      this.findInitialDeviceAndStartSession();
-    }
-  };
-
   // used in callbacks, needs to be an arrow function
   private devicesChangedListener = async (devices: DeviceInfo[]) => {
     const previousDevices = this.previousDevices;
@@ -270,11 +260,11 @@ export class DeviceSessionsManager implements Disposable {
       );
     }
 
-    removedDevices.forEach((device) => {
-      this.handleRemovedDevice(device).catch((e) => {
-        Logger.error("Error handling removed device", e);
-      });
-    });
+    await Promise.all(
+      removedDevices.map((device) => {
+        this.terminateSession(device.id);
+      })
+    );
 
     this.previousDevices = devices;
     // if this event is triggered due to the first device being created, we want to select it immediately.
