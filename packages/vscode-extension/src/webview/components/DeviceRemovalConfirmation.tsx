@@ -40,6 +40,7 @@ function DeviceRemovalConfirmation({
         </Button>
         <Button
           className="device-removal-button"
+          dataTest="confirm-delete-device-button"
           type="ternary"
           disabled={loading}
           onClick={async () => {

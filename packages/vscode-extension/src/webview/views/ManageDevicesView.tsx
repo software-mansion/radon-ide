@@ -130,6 +130,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
+          data-test={`delete-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceDelete(deviceInfo);

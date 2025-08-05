@@ -133,3 +133,42 @@ export async function deleteDevice(driver, deviceName) {
   );
   confirmDeleteButton.click();
 }
+
+export async function deleteAllDevices(driver) {
+  await openRadonIDEPanel(driver);
+  const deviceSelectButton = await findAndWaitForElement(
+    driver,
+    By.css('[data-test="device-select-trigger"]'),
+    "Timed out waiting for 'Select device button' element"
+  );
+  deviceSelectButton.click();
+
+  const manageDevicesButton = await findAndWaitForElement(
+    driver,
+    By.css('[data-test="manage-devices-button"]'),
+    "Timed out waiting for 'Manage devices' element"
+  );
+  manageDevicesButton.click();
+
+  try {
+    while (true) {
+      const deviceDeleteButton = await findAndWaitForElement(
+        driver,
+        By.css(`[data-test^="delete-button-device-"]`),
+        "Timed out waiting for device delete button"
+      );
+
+      deviceDeleteButton.click();
+
+      const confirmDeleteButton = await findAndWaitForElement(
+        driver,
+        By.css('[data-test="confirm-delete-device-button"]'),
+        "Timed out waiting for confirm delete button"
+      );
+      confirmDeleteButton.click();
+      break;
+    }
+  } catch (e) {
+    console.log(e);
+  }
+}

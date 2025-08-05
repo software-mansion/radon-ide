@@ -1,4 +1,3 @@
-import { assert } from "chai";
 import { By } from "vscode-extension-tester";
 import { findAndWaitForElement } from "../utils/helpers.js";
 import {
@@ -6,6 +5,7 @@ import {
   addNewDevice,
   modifyDeviceName,
   deleteDevice,
+  deleteAllDevices,
 } from "./interactions.js";
 import { sharedTestLifecycle } from "./setupTest.js";
 
@@ -47,7 +47,7 @@ describe("Adding device tests", () => {
   it("should delete device from Radon IDE", async function () {
     const { driver } = get();
     await openRadonIDEPanel(driver);
-    const deviceName = `TestDevice-${Date.now()}`;
+    const deviceName = `deviceToDelete-${Date.now()}`;
     let deviceFound = false;
 
     await addNewDevice(driver, deviceName);

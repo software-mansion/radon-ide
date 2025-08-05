@@ -40,6 +40,7 @@ function ActivateLicenseButton() {
   return (
     <Button
       className="activate-license-button"
+      dataTest="activate-license-button"
       onClick={() => {
         sendTelemetry("activateLicenseButtonClicked");
         openModal("Activate License", <ActivateLicenseView />);
@@ -276,7 +277,7 @@ function PreviewView() {
             onClick={stopProfilingReact}
           />
           <ToolsDropdown disabled={!debuggerToolsButtonsActive}>
-            <IconButton tooltip={{ label: "Tools", type: "primary" }}>
+            <IconButton tooltip={{ label: "Tools", type: "primary" }} dataTest="radon-tools-button">
               <span className="codicon codicon-tools" />
             </IconButton>
           </ToolsDropdown>
@@ -324,7 +325,9 @@ function PreviewView() {
             <span slot="start" className="codicon codicon-debug-console" />
           </IconButton>
           <SettingsDropdown project={project} isDeviceRunning={isRunning || radonConnectConnected}>
-            <IconButton tooltip={{ label: "Settings", type: "primary" }}>
+            <IconButton
+              tooltip={{ label: "Settings", type: "primary" }}
+              dataTest="radon-settings-button">
               <span className="codicon codicon-settings-gear" />
             </IconButton>
           </SettingsDropdown>
@@ -380,7 +383,9 @@ function PreviewView() {
         <div className="spacer" />
         {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
         <DeviceSettingsDropdown disabled={!navBarButtonsActive}>
-          <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
+          <IconButton
+            tooltip={{ label: "Device settings", type: "primary" }}
+            dataTest="device-settings-button">
             <DeviceSettingsIcon />
           </IconButton>
         </DeviceSettingsDropdown>

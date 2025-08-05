@@ -157,6 +157,7 @@ function DeviceSelect() {
       <Select.Portal>
         <Select.Content
           className="device-select-content"
+          data-test="device-select-content"
           position="popper"
           align="center"
           onCloseAutoFocus={(e) => e.preventDefault()}>

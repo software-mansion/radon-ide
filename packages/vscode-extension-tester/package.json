@@ -8,6 +8,7 @@
     "install-vsix": "extest install-vsix -f ./data/radon-ide.vsix --extensions_dir ./data/vscode-extensions",
     "setup": "extest get-vscode && extest get-chromedriver && npm run install-vsix",
     "ui-tests": "extest run-tests ./ui-tests/*.test.js --extensions_dir ./data/vscode-extensions -r ../react-native-80",
+    "devices-tests": "extest run-tests ./ui-tests/02-GUIButtons.test.js --extensions_dir ./data/vscode-extensions -r ../react-native-80",
     "clean": "rm -rf ./data/vscode-storage",
     "setup-run-tests": "npm run clean && npm run setup && npm run ui-tests",
     "extest": "extest run-tests -h",

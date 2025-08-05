@@ -33,4 +33,6 @@ cd ..
 rm -rf $REMOTE_PATH
 EOF
 
+pkill -f "UTM"
+
 echo "Tests completed."
