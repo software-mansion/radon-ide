@@ -44,7 +44,6 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
     "Render Outlines is disabled in apps that don\'t support Edge-to-Edge.";
 
   public get pluginAvailable() {
-    console.log("RENDER_OUTLINES_PLUGIN", this._pluginAvailable);
     return this._pluginAvailable;
   }
 
