@@ -10,11 +10,10 @@ import {
   AndroidSupportedDevices,
   DeviceProperties,
 } from "../utilities/deviceConstants";
-import { Platform } from "../providers/UtilsProvider";
 import { Input } from "../components/shared/Input";
 import { useDependencyErrors } from "../hooks/useDependencyErrors";
 import { useStore } from "../providers/storeProvider";
-import { useProject } from "../providers/ProjectProvider";
+import { Platform, useProject } from "../providers/ProjectProvider";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;

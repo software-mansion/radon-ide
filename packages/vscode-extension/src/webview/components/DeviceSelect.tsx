@@ -95,7 +95,7 @@ function DeviceSelect() {
 
   const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
 
-  const hasNoDevices = devices === null || devices.length === 0;
+  const hasNoDevices = devices.length === 0;
   const selectedDevice = selectedDeviceSession?.deviceInfo;
 
   const radonConnectEnabled = projectState.connectState.enabled;
@@ -103,7 +103,7 @@ function DeviceSelect() {
   const { deviceSessions } = projectState;
   const runningSessionIds = Object.keys(deviceSessions);
 
-  const deviceSections = partitionDevices(devices);
+  const deviceSections = partitionDevices(devices ?? []);
 
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
@@ -115,7 +115,7 @@ function DeviceSelect() {
       return;
     }
     if (selectedDevice?.id !== value) {
-      const deviceInfo = devices.find((d) => d.id === value);
+      const deviceInfo = (devices ?? []).find((d) => d.id === value);
       if (deviceInfo) {
         project.startOrActivateSessionForDevice(deviceInfo, {
           stopPreviousDevices,

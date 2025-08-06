@@ -9,7 +9,7 @@ import { useModal } from "../providers/ModalProvider";
 import NoDeviceView from "./NoDeviceView";
 import DeviceSettingsDropdown from "../components/DeviceSettingsDropdown";
 import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
-import { useProject } from "../providers/ProjectProvider";
+import { Platform, useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
@@ -20,7 +20,6 @@ import {
   ProfilingState,
   ZoomLevelType,
 } from "../../common/Project";
-import { Platform, useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import "./View.css";
 import "./PreviewView.css";
@@ -35,12 +34,12 @@ import { useStore } from "../providers/storeProvider";
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
-  const { sendTelemetry } = useUtils();
+  const { project } = useProject();
   return (
     <Button
       className="activate-license-button"
       onClick={() => {
-        sendTelemetry("activateLicenseButtonClicked");
+        project.sendTelemetry("activateLicenseButtonClicked");
         openModal("Activate License", <ActivateLicenseView />);
       }}>
       {""} {/* using empty string here as the content is controlled via css */}
@@ -95,7 +94,6 @@ function PreviewView() {
     replayData,
     setReplayData,
   } = useProject();
-  const { showDismissableError, sendTelemetry } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
@@ -126,8 +124,6 @@ function PreviewView() {
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
   });
-
-  const { openFileAt } = useUtils();
 
   useEffect(() => {
     resetInspector();
@@ -166,7 +162,7 @@ function PreviewView() {
     try {
       project.captureAndStopRecording();
     } catch (e) {
-      showDismissableError("Failed to capture recording");
+      project.showDismissableError("Failed to capture recording");
     }
   }
 
@@ -190,7 +186,7 @@ function PreviewView() {
     try {
       await project.captureReplay();
     } catch (e) {
-      showDismissableError("Failed to capture replay");
+      project.showDismissableError("Failed to capture replay");
     }
   }
 
@@ -199,7 +195,7 @@ function PreviewView() {
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
-    openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+    project.openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
   }
 
   function resetInspector() {
@@ -356,7 +352,7 @@ function PreviewView() {
             label: "Select an element to inspect it",
           }}
           onClick={() => {
-            sendTelemetry("inspector:button-clicked", {
+            project.sendTelemetry("inspector:button-clicked", {
               isInspecting: String(!isInspecting),
             });
             setIsInspecting(!isInspecting);

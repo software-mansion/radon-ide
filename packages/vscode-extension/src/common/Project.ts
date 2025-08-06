@@ -1,3 +1,4 @@
+import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import { ReloadAction, SelectDeviceOptions } from "../project/DeviceSessionsManager";
 import { BuildType } from "./BuildConfig";
 import { LaunchConfiguration } from "./LaunchConfig";
@@ -250,6 +251,8 @@ export type MultimediaData = {
   fileName: string;
 };
 
+export type IDEPanelMoveTarget = "new-window" | "editor-tab" | "side-panel";
+
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
@@ -284,7 +287,6 @@ export interface ProjectInterface {
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
-  focusOutput(channel: Output): Promise<void>;
   focusDebugConsole(): Promise<void>;
 
   openNavigation(navigationItemID: string): Promise<void>;
@@ -306,6 +308,7 @@ export interface ProjectInterface {
   captureAndStopRecording(): void;
   captureReplay(): void;
   captureScreenshot(): void;
+  saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
 
   startProfilingCPU(): void;
   stopProfilingCPU(): void;
@@ -345,6 +348,19 @@ export interface ProjectInterface {
   ): Promise<DeviceInfo>;
   renameDevice(device: DeviceInfo, newDisplayName: string): Promise<void>;
   removeDevice(device: DeviceInfo): Promise<void>;
+
+  log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]): Promise<void>;
+  focusOutput(channel: Output): Promise<void>;
+
+  getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;
+  movePanelTo(location: IDEPanelMoveTarget): Promise<void>;
+  openExternalUrl(uriString: string): Promise<void>;
+  openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
+  showDismissableError(errorMessage: string): Promise<void>;
+  showToast(message: string, timeout: number): Promise<void>;
+
+  reportIssue(): Promise<void>;
+  sendTelemetry(eventName: string, properties?: TelemetryEventProperties): Promise<void>;
 
   addListener<K extends keyof ProjectEventMap>(
     eventType: K,

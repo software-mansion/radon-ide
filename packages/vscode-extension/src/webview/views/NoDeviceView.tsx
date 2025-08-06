@@ -7,9 +7,8 @@ import Button from "../components/shared/Button";
 import { useModal } from "../providers/ModalProvider";
 import CreateDeviceView from "./CreateDeviceView";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
-import { Platform, useUtils } from "../providers/UtilsProvider";
 import ManageDevicesView from "./ManageDevicesView";
-import { useProject } from "../providers/ProjectProvider";
+import { Platform, useProject } from "../providers/ProjectProvider";
 import { useDependencyErrors } from "../hooks/useDependencyErrors";
 import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/State";
 import { useStore } from "../providers/storeProvider";
@@ -75,7 +74,6 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
   const [isIOSCreating, withIosCreating] = useLoadingState();
   const [isAndroidCreating, withAndroidCreating] = useLoadingState();
   const errors = useDependencyErrors();
-  const utils = useUtils();
   const { project } = useProject();
 
   function openCreateNewDeviceModal() {
@@ -95,7 +93,7 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
 
   async function createAndroidDevice() {
     if (errors?.emulator) {
-      utils.showDismissableError(errors?.emulator.message);
+      project.showDismissableError(errors?.emulator.message);
       return;
     }
 
@@ -117,7 +115,7 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
 
   async function createIOSDevice() {
     if (errors?.simulator) {
-      utils.showDismissableError(errors.simulator.message);
+      project.showDismissableError(errors.simulator.message);
       return;
     }
 
