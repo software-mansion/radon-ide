@@ -104,4 +104,10 @@
   background-color: var(--swm-button-counter-background, #ff5555);
   border-radius: 50%;
   border: 1px solid var(--swm-button-counter-border, transparent);
+  transform: scale(0);
+  transition: transform 175ms ease-in-out;
+}
+
+.icon-button-indicator.visible {
+  transform: scale(1);
 }

@@ -68,8 +68,8 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
           {displayCounter}
         </span>
       )}
-      {counterMode === "compact" && counter !== null && showCounter && (
-        <span className="icon-button-indicator" />
+      {counterMode === "compact" && counter !== null && (
+        <span className={classnames("icon-button-indicator", showCounter && "visible")} />
       )}
     </button>
   );
