@@ -73,13 +73,14 @@
 }
 
 .icon-button-new-badge {
-  border-radius: 4px;
   color: var(--swm-button-counter);
   background-color: var(--vscode-activityBarBadge-background);
   border: 1px solid var(--vscode-contrastBorder);
-  width: 8px;
-  height: 8px;
+  border-radius: 50%;
+  width: 9px;
+  height: 9px;
   position: absolute;
   top: 10%;
   right: 10%;
+  box-sizing: border-box;
 }
