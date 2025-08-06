@@ -90,12 +90,12 @@ function DeviceSelect() {
 
   const { selectedDeviceSession, projectState, project } = useProject();
 
-  const devices = use$(store$.devicesState.devices);
+  const devices = use$(store$.devicesState.devices) ?? [];
   const { openModal } = useModal();
 
   const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
 
-  const hasNoDevices = devices === null || devices.length === 0;
+  const hasNoDevices = devices.length === 0;
   const selectedDevice = selectedDeviceSession?.deviceInfo;
 
   const radonConnectEnabled = projectState.connectState.enabled;

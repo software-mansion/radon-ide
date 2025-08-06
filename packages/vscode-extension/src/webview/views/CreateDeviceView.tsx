@@ -68,33 +68,28 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const { project } = useProject();
 
   const store$ = useStore();
-  const iOSRuntimes = use$(store$.devicesState.iOSRuntimes);
-  const androidImages = use$(store$.devicesState.androidImages);
+  const iOSRuntimes = use$(store$.devicesState.iOSRuntimes) ?? [];
+  const androidImages = use$(store$.devicesState.androidImages) ?? [];
 
   const createDisabled = loading || !deviceProperties || !selectedSystemName || !isDisplayNameValid;
 
   const systemImagesOptions =
     deviceProperties && deviceProperties.platform === "iOS"
-      ? iOSRuntimes !== null
-        ? iOSRuntimes.map((runtime) => ({
-            value: runtime.identifier,
-            label: runtime.name,
-            disabled: !runtime.available,
-            marked: false,
-          }))
-        : []
-      : androidImages !== null
-        ? androidImages.map((systemImage) => ({
-            value: systemImage.location,
-            label: systemImage.name,
-            disabled: !systemImage.available,
-            marked: !!(
-              deviceProperties?.minimumAndroidApiLevel &&
-              deviceProperties.minimumAndroidApiLevel > systemImage.apiLevel
-            ),
-          }))
-        : [];
-
+      ? iOSRuntimes.map((runtime) => ({
+          value: runtime.identifier,
+          label: runtime.name,
+          disabled: !runtime.available,
+          marked: false,
+        }))
+      : androidImages.map((systemImage) => ({
+          value: systemImage.location,
+          label: systemImage.name,
+          disabled: !systemImage.available,
+          marked: !!(
+            deviceProperties?.minimumAndroidApiLevel &&
+            deviceProperties.minimumAndroidApiLevel > systemImage.apiLevel
+          ),
+        }));
   async function createDevice() {
     if (!deviceProperties || !selectedSystemName || !displayName) {
       return;

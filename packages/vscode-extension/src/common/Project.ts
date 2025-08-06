@@ -287,7 +287,6 @@ export interface ProjectInterface {
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
-  focusOutput(channel: Output): Promise<void>;
   focusDebugConsole(): Promise<void>;
 
   openNavigation(navigationItemID: string): Promise<void>;
@@ -351,6 +350,7 @@ export interface ProjectInterface {
   removeDevice(device: DeviceInfo): Promise<void>;
 
   log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]): Promise<void>;
+  focusOutput(channel: Output): Promise<void>;
 
   getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;
   movePanelTo(location: IDEPanelMoveTarget): Promise<void>;

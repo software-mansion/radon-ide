@@ -82,6 +82,8 @@ const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
   // #region Properties
 
+  // #region Properties
+
   private launchConfigsManager = new LaunchConfigurationsManager();
   private applicationContext: ApplicationContext;
   private eventEmitter = new EventEmitter();
@@ -389,10 +391,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async stepOverDebugger() {
     this.deviceSession?.stepOverDebugger();
-  }
-
-  async focusOutput(channel: Output): Promise<void> {
-    this.outputChannelRegistry.getOrCreateOutputChannel(channel).show();
   }
 
   public async focusDebugConsole() {
@@ -789,6 +787,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #endregion Extension Interface
 
   // #region Logging
+
+  public async focusOutput(channel: Output): Promise<void> {
+    this.outputChannelRegistry.getOrCreateOutputChannel(channel).show();
+  }
 
   public async log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]) {
     Logger[type]("[WEBVIEW LOG]", message, ...args);

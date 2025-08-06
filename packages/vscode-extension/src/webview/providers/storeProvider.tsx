@@ -3,7 +3,7 @@ import { synced, SyncedSetParams, SyncedSubscribeParams } from "@legendapp/state
 import { vscode } from "../utilities/vscode";
 import { createContext, PropsWithChildren, useContext } from "react";
 import { initialState, State } from "../../common/State";
-import { merge } from "../../utilities/merge";
+import { merge } from "../../common/Merge";
 
 let instanceToken = Math.floor(Math.random() * 1000000);
 let globalCallCounter = 1;
