@@ -48,3 +48,19 @@ export function mergeAndCalculateChanges<T extends { [P in keyof T]: T[P] }>(
   }
   return [oldNode, {}];
 }
+
+/**
+ * Merges an existing state object with updates from a new partial state.
+ *
+ * @param {T} oldNode - The original state object.
+ * @param {RecursivePartial<T>} newNode - A partial state object containing updates.
+ *
+ * @returns {T} The new state object post-merge.
+ */
+export function merge<T extends { [P in keyof T]: T[P] }>(
+  oldNode: T,
+  newNode: RecursivePartial<T>
+): T {
+  const [result] = mergeAndCalculateChanges(oldNode, newNode);
+  return result;
+}
