@@ -54,8 +54,7 @@ import ipadA16Landscape from "../../assets/ipad_a16/landscape/skin.png";
 import ipadA16LandscapeBezel from "../../assets/ipad_a16/landscape/bezel.png";
 import ipadA16LandscapeScreen from "../../assets/ipad_a16/landscape/screen.png";
 
-
-import { DevicePlatform } from "../../common/DeviceManager";
+import { DevicePlatform } from "../../common/State";
 
 export type DevicePropertiesFrame = {
   type: "mask" | "skin";

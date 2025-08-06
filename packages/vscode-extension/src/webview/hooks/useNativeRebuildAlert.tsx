@@ -1,20 +1,20 @@
 import { useCallback } from "react";
 import IconButton from "../components/shared/IconButton";
 import { useAlert } from "../providers/AlertProvider";
-import { useDevices } from "../providers/DevicesProvider";
+import { useProject } from "../providers/ProjectProvider";
 
 type Props = {
   closeAlert: () => void;
 };
 
 function Actions({ closeAlert }: Props) {
-  const { deviceSessionsManager } = useDevices();
+  const { project } = useProject();
   return (
     <>
       <IconButton
         type="secondary"
         onClick={() => {
-          deviceSessionsManager.reloadCurrentSession("rebuild");
+          project.reloadCurrentSession("rebuild");
           closeAlert();
         }}
         tooltip={{ label: "Rebuild", side: "bottom" }}>

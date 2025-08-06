@@ -3,27 +3,26 @@ import { useProject } from "../providers/ProjectProvider";
 import UrlSelect from "./UrlSelect";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
 import IconButton from "./shared/IconButton";
-import { useDevices } from "../providers/DevicesProvider";
 import { useStore } from "../providers/storeProvider";
 
 function ReloadButton({ disabled }: { disabled: boolean }) {
-  const { deviceSessionsManager } = useDevices();
+  const { project } = useProject();
   return (
     <IconButtonWithOptions
-      onClick={() => deviceSessionsManager.reloadCurrentSession("autoReload")}
+      onClick={() => project.reloadCurrentSession("autoReload")}
       tooltip={{
         label: "Reload the app",
         side: "bottom",
       }}
       disabled={disabled}
       options={{
-        "Reload JS": () => deviceSessionsManager.reloadCurrentSession("reloadJs"),
-        "Restart app process": () => deviceSessionsManager.reloadCurrentSession("restartProcess"),
-        "Reinstall app": () => deviceSessionsManager.reloadCurrentSession("reinstall"),
-        "Restart Metro server": () => deviceSessionsManager.reloadCurrentSession("restartMetro"),
-        "Clear Metro cache": () => deviceSessionsManager.reloadCurrentSession("clearMetro"),
-        "Reboot Device": () => deviceSessionsManager.reloadCurrentSession("reboot"),
-        "Clean rebuild": () => deviceSessionsManager.reloadCurrentSession("rebuild"),
+        "Reload JS": () => project.reloadCurrentSession("reloadJs"),
+        "Restart app process": () => project.reloadCurrentSession("restartProcess"),
+        "Reinstall app": () => project.reloadCurrentSession("reinstall"),
+        "Restart Metro server": () => project.reloadCurrentSession("restartMetro"),
+        "Clear Metro cache": () => project.reloadCurrentSession("clearMetro"),
+        "Reboot Device": () => project.reloadCurrentSession("reboot"),
+        "Clean rebuild": () => project.reloadCurrentSession("rebuild"),
       }}>
       <span className="codicon codicon-refresh" />
     </IconButtonWithOptions>

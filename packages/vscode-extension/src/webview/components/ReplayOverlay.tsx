@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import * as Select from "@radix-ui/react-select";
 import { MultimediaData } from "../../common/Project";
-import { useUtils } from "../providers/UtilsProvider";
 import "./ReplayOverlay.css";
 import Button from "./shared/Button";
+import { useProject } from "../providers/ProjectProvider";
 
 const INITIAL_REPLAY_LENGTH_SEC = 5;
 
@@ -187,7 +187,7 @@ export default function ReplayOverlay({
   onClose,
   replayData,
 }: ReplayOverlayProps) {
-  const utils = useUtils();
+  const { project } = useProject();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
   const [startTime, setStartTime] = useState(0);
@@ -335,7 +335,7 @@ export default function ReplayOverlay({
               }}>
               <span className="codicon codicon-triangle-right" />
             </Button>
-            <Button className="button-replay" onClick={() => utils.saveMultimedia(replayData)}>
+            <Button className="button-replay" onClick={() => project.saveMultimedia(replayData)}>
               <span className="codicon codicon-save-as" /> Save
             </Button>
           </div>
