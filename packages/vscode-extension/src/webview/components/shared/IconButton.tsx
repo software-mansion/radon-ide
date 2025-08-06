@@ -78,11 +78,12 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
   const { label, side: tooltipSide, type: tooltipType } = tooltip;
 
   return (
-    <Tooltip label={label} side={tooltipSide} type={tooltipType ?? type}>
-      {/* The button has `pointer-events: none` set in css when disabled,
-          so if we wish to show label when disabled, we've got to have
-          an element (in this case <span>), which can react to pointer events */}
-      {shouldDisplayLabelWhileDisabled ? <span>{button}</span> : button}
+    <Tooltip
+      label={label}
+      disabled={!shouldDisplayLabelWhileDisabled}
+      side={tooltipSide}
+      type={tooltipType ?? type}>
+      {button}
     </Tooltip>
   );
 });
