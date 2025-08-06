@@ -64,7 +64,15 @@ export function setup() {
   const appStateSubscription = AppState.addEventListener("change", handleAppStateChange);
 
   // iOS does not support "blur" and "focus" events on AppState
+
   if (Platform.OS === "android") {
+    // The `focus` and `blur` events are separate from `change` event and from the app state.
+    // On android the app state remains active in situations where on iPad it would become inactive -
+    // that is when the app switcher is used, notification drawer is pulled, etc.
+    // Upon these actions on android `blur` and `focus` events are fired, which
+    // do not change the app state but allow for detecting such situations. More on that:
+    // https://reactnative.dev/docs/appstate
+    
     appBlurSubscription = AppState.addEventListener("blur", handleBlurChange);
     appFocusSubscription = AppState.addEventListener("focus", handleFocusChange);
   }
