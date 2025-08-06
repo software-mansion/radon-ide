@@ -383,10 +383,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSession?.stepOverDebugger();
   }
 
-  async focusOutput(channel: Output): Promise<void> {
-    this.outputChannelRegistry.getOrCreateOutputChannel(channel).show();
-  }
-
   public async focusDebugConsole() {
     this.deviceSession?.resetLogCounter();
     commands.executeCommand("workbench.panel.repl.view.focus");
@@ -748,6 +744,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   // #endregion Extension Interface
+
+  // #region Logger
+
+  public async focusOutput(channel: Output): Promise<void> {
+    this.outputChannelRegistry.getOrCreateOutputChannel(channel).show();
+  }
+
+  // #endregion Logger
 
   // #region Event Emitter
 

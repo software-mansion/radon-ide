@@ -5,7 +5,7 @@ import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { BuildType } from "../../common/BuildConfig";
-import { BuildErrorDescriptor, FatalErrorDescriptor } from "../../common/Project";
+import { BuildErrorDescriptor, FatalErrorDescriptor, ProjectInterface } from "../../common/Project";
 import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
@@ -89,10 +89,9 @@ const noErrorAlert = {
 function createBuildErrorAlert(
   buildErrorDescriptor: BuildErrorDescriptor,
   hasSelectedScheme: boolean,
-  xcodeSchemes: string[]
+  xcodeSchemes: string[],
+  project: ProjectInterface
 ) {
-  const { project } = useProject();
-
   let onReload = () => {
     project.reloadCurrentSession("autoReload");
   };
@@ -127,7 +126,7 @@ function createBuildErrorAlert(
 
 export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undefined) {
   let errorAlert = noErrorAlert;
-  const { projectState } = useProject();
+  const { project, projectState } = useProject();
   const { appRoot, ios } = projectState.selectedLaunchConfiguration;
   const { xcodeSchemes } = useAppRootConfig(appRoot);
 
@@ -135,7 +134,8 @@ export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undef
     errorAlert = createBuildErrorAlert(
       errorDescriptor,
       ios?.scheme !== undefined,
-      xcodeSchemes || []
+      xcodeSchemes || [],
+      project
     );
   } else if (errorDescriptor?.kind === "device") {
     errorAlert = bootErrorAlert;

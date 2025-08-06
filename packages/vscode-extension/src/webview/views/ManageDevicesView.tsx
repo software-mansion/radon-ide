@@ -144,12 +144,12 @@ function ManageDevicesView() {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
 
-  const devices = use$(store$.devicesState.devices);
+  const devices = use$(store$.devicesState.devices) ?? [];
 
-  const iosDevices = (devices ?? []).filter(
+  const iosDevices = devices.filter(
     ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0
   );
-  const androidDevices = (devices ?? []).filter(
+  const androidDevices = devices.filter(
     ({ platform, modelId }) => platform === DevicePlatform.Android && modelId.length > 0
   );
 

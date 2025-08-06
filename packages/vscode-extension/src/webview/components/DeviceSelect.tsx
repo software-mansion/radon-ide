@@ -90,7 +90,7 @@ function DeviceSelect() {
 
   const { selectedDeviceSession, projectState, project } = useProject();
 
-  const devices = use$(store$.devicesState.devices);
+  const devices = use$(store$.devicesState.devices) ?? [];
   const { openModal } = useModal();
 
   const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
@@ -103,7 +103,7 @@ function DeviceSelect() {
   const { deviceSessions } = projectState;
   const runningSessionIds = Object.keys(deviceSessions);
 
-  const deviceSections = partitionDevices(devices ?? []);
+  const deviceSections = partitionDevices(devices);
 
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
@@ -115,7 +115,7 @@ function DeviceSelect() {
       return;
     }
     if (selectedDevice?.id !== value) {
-      const deviceInfo = (devices ?? []).find((d) => d.id === value);
+      const deviceInfo = devices.find((d) => d.id === value);
       if (deviceInfo) {
         project.startOrActivateSessionForDevice(deviceInfo, {
           stopPreviousDevices,
