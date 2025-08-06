@@ -1,18 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { DeviceProperties } from "../utilities/deviceConstants";
 import "./InspectorUnavailableBox.css";
 
 type InspectorUnavailableBoxProps = {
-  device?: DeviceProperties;
   clickPosition: { x: number; y: number };
-  wrapperDivRef: React.RefObject<HTMLDivElement | null>;
-  onClose?: () => void;
+  onClose: () => void;
 };
 
 function InspectorUnavailableBox({
-  device,
   clickPosition,
-  wrapperDivRef,
   onClose,
 }: InspectorUnavailableBoxProps) {
   const [isVisible, setIsVisible] = useState(true);
@@ -26,7 +21,7 @@ function InspectorUnavailableBox({
     // Call onClose after fade animation completes (additional 0.3s)
     // as in InspectorUnavailableBox.css transition
     const closeTimer = setTimeout(() => {
-      onClose?.();
+      onClose();
     }, 800);
 
     return () => {
@@ -34,21 +29,6 @@ function InspectorUnavailableBox({
       clearTimeout(closeTimer);
     };
   }, []);
-
-  if (!device) {
-    return null;
-  }
-
-  const previewDiv = wrapperDivRef.current?.childNodes?.[0] as unknown;
-
-  if (
-    !previewDiv ||
-    typeof previewDiv !== "object" ||
-    !("clientHeight" in previewDiv) ||
-    typeof previewDiv.clientHeight !== "number"
-  ) {
-    return null;
-  }
 
   const cssPropertiesForTooltip = {
     "--top": `${clickPosition.y * 100}%`,

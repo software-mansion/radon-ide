@@ -53,11 +53,6 @@ interface Point {
   y: number;
 }
 
-interface InspectorUnavailableBoxData {
-  visible: boolean;
-  position: Point;
-}
-
 function calculateMirroredTouchPosition(touchPoint: Point, anchorPoint: Point) {
   const { x: pointX, y: pointY } = touchPoint;
   const { x: mirrorX, y: mirrorY } = anchorPoint;
@@ -91,8 +86,8 @@ function Preview({
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLCanvasElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
-  const [inspectorUnavailableBox, setInspectorUnavailableBox] =
-    useState<InspectorUnavailableBoxData | null>(null);
+  const [inspectorUnavailableBoxPosition, setInspectorUnavailableBoxPosition] =
+    useState<Point | null>(null);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
   const { selectedDeviceSession, project } = useProject();
@@ -241,14 +236,11 @@ function Preview({
   }
 
   function handleInspectorUnavailable(event: MouseEvent<HTMLDivElement>) {
-    if (inspectorUnavailableBox?.visible) {
+    if (inspectorUnavailableBoxPosition) {
       return;
     }
     const clampedCoordinates = getNormalizedTouchCoordinates(event);
-    setInspectorUnavailableBox({
-      visible: true,
-      position: clampedCoordinates,
-    });
+    setInspectorUnavailableBoxPosition(clampedCoordinates);
   }
 
   const shouldPreventInputEvents =
@@ -575,12 +567,10 @@ function Preview({
                 />
               )}
 
-              {inspectorUnavailableBox?.visible && (
+              {inspectorUnavailableBoxPosition && (
                 <InspectorUnavailableBox
-                  device={device!}
-                  clickPosition={inspectorUnavailableBox.position}
-                  wrapperDivRef={wrapperDivRef}
-                  onClose={() => setInspectorUnavailableBox(null)}
+                  clickPosition={inspectorUnavailableBoxPosition}
+                  onClose={() => setInspectorUnavailableBoxPosition(null)}
                 />
               )}
 
