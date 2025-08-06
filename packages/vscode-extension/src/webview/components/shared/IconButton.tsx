@@ -8,7 +8,7 @@ export interface IconButtonProps {
   children: React.ReactNode;
   disabled?: boolean;
   disableTooltip?: boolean;
-  counter?: number;
+  showNewBadge?: boolean;
   active?: boolean;
   type?: "primary" | "secondary";
   side?: "left" | "right" | "center";
@@ -23,7 +23,7 @@ export interface IconButtonProps {
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, ref) => {
   const {
-    counter,
+    showNewBadge,
     children,
     onClick,
     tooltip,
@@ -35,15 +35,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     className = "",
     ...rest
   } = props;
-  const [displayCounter, setDisplayCounter] = useState(counter);
 
-  useEffect(() => {
-    if (counter !== 0) {
-      setDisplayCounter(counter);
-    }
-  }, [counter]);
-
-  const showCounter = Boolean(counter);
   const button = (
     <button
       onClick={onClick}
@@ -61,11 +53,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
       {...rest}
       ref={ref}>
       {children}
-      {counter !== null && (
-        <span className={classnames("icon-button-counter", showCounter && "visible")}>
-          {displayCounter}
-        </span>
-      )}
+      {showNewBadge && <span className="icon-button-new-badge" />}
     </button>
   );
 

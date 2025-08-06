@@ -315,7 +315,7 @@ function PreviewView() {
             <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
           <IconButton
-            counter={logCounter}
+            showNewBadge={logCounter > 0}
             onClick={() => project.focusDebugConsole()}
             tooltip={{
               label: "Open logs panel",

@@ -72,25 +72,14 @@
   background-color: var(--swm-button-secondary-hover);
 }
 
-.icon-button-counter {
-  border: 0px solid transparent;
+.icon-button-new-badge {
   border-radius: 4px;
   color: var(--swm-button-counter);
-  background-color: var(--swm-button-counter-background);
-  border: 1px solid var(--swm-button-counter-border);
-  padding: 2px 4px;
-  font-size: 10px;
+  background-color: var(--vscode-activityBarBadge-background);
+  border: 1px solid var(--vscode-contrastBorder);
+  width: 8px;
+  height: 8px;
   position: absolute;
-  top: 20%;
-  left: 20px;
-  opacity: 0;
-  transform: translateY(-50%);
-  transition:
-    left 200ms ease-in-out,
-    opacity 200ms ease-in-out;
-}
-
-.icon-button-counter.visible {
-  top: 20%;
-  opacity: 1;
+  top: 10%;
+  right: 10%;
 }
