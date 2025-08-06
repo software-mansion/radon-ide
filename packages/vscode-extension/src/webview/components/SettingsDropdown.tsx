@@ -46,6 +46,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-test="run-diagnostics-button"
             onSelect={() => {
               openModal("Diagnostics", <DiagnosticView />);
             }}>

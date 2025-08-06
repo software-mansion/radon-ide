@@ -24,6 +24,15 @@ export async function openDeviceCreationModal(driver) {
   createNewDeviceButton.click();
 }
 
+export async function openRadonSettingsMenu(driver) {
+  const radonSettingsButton = await findAndWaitForElement(
+    driver,
+    By.css('[data-test="radon-settings-button"]'),
+    "Timed out waiting for 'Radon settings' button"
+  );
+  await radonSettingsButton.click();
+}
+
 export async function fillDeviceCreationForm(driver, deviceName) {
   const deviceTypeSelect = await findAndWaitForElement(
     driver,
@@ -167,7 +176,5 @@ export async function deleteAllDevices(driver) {
       );
       confirmDeleteButton.click();
     }
-  } catch (e) {
-    console.log(e);
-  }
+  } catch (e) {}
 }

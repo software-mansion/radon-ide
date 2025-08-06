@@ -1,14 +1,18 @@
 import { By } from "vscode-extension-tester";
 import { findAndWaitForElement } from "../utils/helpers.js";
-import { openRadonIDEPanel } from "./interactions.js";
+import { openRadonIDEPanel, openRadonSettingsMenu } from "./interactions.js";
 import { sharedTestLifecycle } from "./setupTest.js";
 
 describe("Main interface buttons tests", () => {
   const get = sharedTestLifecycle();
 
-  it("Should open device settings window", async function () {
+  beforeEach(async function () {
     const { driver } = get();
     await openRadonIDEPanel(driver);
+  });
+
+  it("Should open device settings window", async function () {
+    const { driver } = get();
     const deviceSettingsButton = await findAndWaitForElement(
       driver,
       By.css('[data-test="device-settings-button"]'),
@@ -24,13 +28,7 @@ describe("Main interface buttons tests", () => {
 
   it("Should open radon settings window", async function () {
     const { driver } = get();
-    await openRadonIDEPanel(driver);
-    const radonSettingsButton = await findAndWaitForElement(
-      driver,
-      By.css('[data-test="radon-settings-button"]'),
-      "Timed out waiting for 'Radon settings' button"
-    );
-    await radonSettingsButton.click();
+    await openRadonSettingsMenu(driver);
     const radonSettingsModal = await findAndWaitForElement(
       driver,
       By.css('[data-test="radon-settings-menu"]'),
@@ -38,9 +36,56 @@ describe("Main interface buttons tests", () => {
     );
   });
 
+  it("Should open diagnostics window", async function () {
+    const { driver } = get();
+    await openRadonSettingsMenu(driver);
+    const diagnosticsButton = await findAndWaitForElement(
+      driver,
+      By.css('[data-test="run-diagnostics-button"]'),
+      "Timed out waiting for 'Run Diagnostics' button"
+    );
+    await diagnosticsButton.click();
+    const diagnosticsView = await findAndWaitForElement(
+      driver,
+      By.css('[data-test="diagnostics-view"]'),
+      "Timed out waiting for 'Diagnostics view' element"
+    );
+  });
+
+  it("Should open manage devices window", async function () {
+    const { driver } = get();
+    await openRadonSettingsMenu(driver);
+    const manageDevicesButton = await findAndWaitForElement(
+      driver,
+      By.css('[data-test="manage-devices-button"]'),
+      "Timed out waiting for 'Manage devices' button"
+    );
+    await manageDevicesButton.click();
+    const manageDevicesView = await findAndWaitForElement(
+      driver,
+      By.css('[data-test="manage-devices-view"]'),
+      "Timed out waiting for 'Manage devices view' element"
+    );
+  });
+
+  it("Should open send feedback window", async function () {
+    const { driver } = get();
+    await openRadonSettingsMenu(driver);
+    const sendFeedbackButton = await findAndWaitForElement(
+      driver,
+      By.css('[data-test="send-feedback-button"]'),
+      "Timed out waiting for 'Send feedback' button"
+    );
+    await sendFeedbackButton.click();
+    const sendFeedbackView = await findAndWaitForElement(
+      driver,
+      By.css('[data-test="feedback-view"]'),
+      "Timed out waiting for 'Feedback view' element"
+    );
+  });
+
   it("Should open radon tools window", async function () {
     const { driver } = get();
-    await openRadonIDEPanel(driver);
     const radonToolsButton = await findAndWaitForElement(
       driver,
       By.css('[data-test="radon-tools-button"]'),
@@ -56,7 +101,6 @@ describe("Main interface buttons tests", () => {
 
   it("Should open radon activate license window", async function () {
     const { driver } = get();
-    await openRadonIDEPanel(driver);
     const radonActivateLicenseButton = await findAndWaitForElement(
       driver,
       By.css('[data-test="activate-license-button"]'),
@@ -72,7 +116,6 @@ describe("Main interface buttons tests", () => {
 
   it("Should open radon select device menu", async function () {
     const { driver } = get();
-    await openRadonIDEPanel(driver);
     const deviceSelectButton = await findAndWaitForElement(
       driver,
       By.css('[data-test="device-select-trigger"]'),
@@ -88,14 +131,13 @@ describe("Main interface buttons tests", () => {
 
   it("Should open radon select approot menu", async function () {
     const { driver } = get();
-    await openRadonIDEPanel(driver);
     const approotSelectButton = await findAndWaitForElement(
       driver,
       By.css('[data-test="approot-select-trigger"]'),
       "Timed out waiting for 'Select approot button' element"
     );
     approotSelectButton.click();
-    const deviceSelectMenu = await findAndWaitForElement(
+    const approotSelectMenu = await findAndWaitForElement(
       driver,
       By.css('[data-test="approot-select-content"]'),
       "Timed out waiting for 'Select approot menu' element"
