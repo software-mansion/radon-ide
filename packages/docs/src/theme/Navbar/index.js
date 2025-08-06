@@ -34,10 +34,10 @@ export default function NavbarWrapper(props) {
   return (
     <>
       <Navbar
-      // isAlgoliaActive={false}
-      // isThemeSwitcherShown={true}
-      // heroImages={heroImages}
-      // {...props}
+        // isAlgoliaActive={false}
+        isThemeSwitcherShown={false}
+        // heroImages={heroImages}
+        // {...props}
       />
       <Scripts />
       <Analytics />

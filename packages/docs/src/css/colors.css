@@ -99,7 +99,6 @@
   --radon-color-border-grid-subtle: #222222;
   --radon-button: #248363;
   --radon-button-hover: #186e51;
-  --radon-icon: var(--swm-green-light-100);
 
   /* --- Text rebranding --- */
   --radon-color-primary: #fafafa;
@@ -109,9 +108,7 @@
   --radon-subheading: var(--swm-navy-light-100);
   --radon-border-grid-subtle: var(--swm-border);
   --radon-button-text: var(--radon-color-button-text);
-
-  --radon-subheading: var(--swm-navy-light-100);
-  --radon-border-grid-subtle: var(--swm-border);
+  --radon-icon: var(--swm-green-light-100);
 
   /* Infima main colors */
   --ifm-color-primary: var(--swm-navy-light-100);

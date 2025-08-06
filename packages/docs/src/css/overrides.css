@@ -85,16 +85,6 @@ table thead tr {
   color: var(--swm-navy-light-60);
 }
 
-.header-github:before {
-  display: flex;
-  height: 24px;
-  width: 24px;
-
-  mask: url(/static/img/github.svg) no-repeat 100% 100%;
-  mask-size: cover;
-  content: "";
-}
-
 .header-download {
   border: 1px solid;
 }
@@ -106,15 +96,8 @@ table thead tr {
   }
 }
 
-.header-github:before,
-.header-github:hover:before {
-  background-color: var(--ifm-color-primary);
-  opacity: 0.75;
-}
-
 [class*="navbar__item"] {
   display: flex !important;
-  /* justify-content: center; */
 }
 [class*="navbar__item"] {
   justify-content: center;
@@ -130,21 +113,6 @@ nav [class*="_sidebarFooter"] {
 
 nav [class*="navbar-sidebar__items"] {
   height: calc(100% - var(--swm-sidebar-header-height));
-}
-
-nav {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 24px;
-  /* Blur ? */
-  background-color: transparent;
-  /* background-color: var(--swm-background); */
-
-  position: sticky;
-  top: 0;
-  width: 100%;
-  z-index: 1000;
 }
 
 img + blockquote {
