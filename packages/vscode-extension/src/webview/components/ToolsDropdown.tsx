@@ -68,7 +68,7 @@ function ToolsList({
     <DevToolCheckbox
       key={key}
       label={tool.label}
-      checked={tool.enabled}
+      checked={tool.enabled && (tool.pluginAvailable ?? true)}
       isPanelTool={tool.isPanelTool}
       enabled={tool.pluginAvailable ?? true}
       pluginUnavailableTooltip={tool.pluginUnavailableTooltip ?? ""}
