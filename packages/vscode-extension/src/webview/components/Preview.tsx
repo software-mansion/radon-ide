@@ -195,28 +195,33 @@ function Preview({
 
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
-    project.inspectElementAt(translatedX, translatedY, requestStack).then((inspectData) => {
-      if (requestStack && inspectData?.stack) {
-        if (showInspectStackModal) {
-          setInspectStackData({
-            requestLocation: {
-              x: event.clientX,
-              y: event.clientY,
-            },
-            stack: inspectData.stack,
-          });
-        } else {
-          // find first item w/o hide flag and open file
-          const firstItem = inspectData.stack.find((item) => !item.hide);
-          if (firstItem) {
-            onInspectorItemSelected(firstItem);
+    project
+      .inspectElementAt(translatedX, translatedY, requestStack)
+      .then((inspectData) => {
+        if (requestStack && inspectData?.stack) {
+          if (showInspectStackModal) {
+            setInspectStackData({
+              requestLocation: {
+                x: event.clientX,
+                y: event.clientY,
+              },
+              stack: inspectData.stack,
+            });
+          } else {
+            // find first item w/o hide flag and open file
+            const firstItem = inspectData.stack.find((item) => !item.hide);
+            if (firstItem) {
+              onInspectorItemSelected(firstItem);
+            }
           }
         }
-      }
-      if (inspectData.frame) {
-        setInspectFrame(inspectData.frame);
-      }
-    });
+        if (inspectData.frame) {
+          setInspectFrame(inspectData.frame);
+        }
+      })
+      .catch(() => {
+        // NOTE: we can safely ignore errors, we'll simply not show the frame in that case
+      });
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
