@@ -10,7 +10,7 @@ const {
 } = require("__RNIDE_lib__/bippy");
 const { getFabricUIManager } = require("react-native/Libraries/ReactNative/FabricUIManager.js");
 const { StatusBar, UIManager, Platform } = require("react-native");
-const DimensionsObserver = require("./window_layout_manager");
+const DimensionsObserver = require("./dimensions_observer");
 const FabricUIManager = getFabricUIManager();
 
 const CORE_COMPONENT_NAMES = new Set([

@@ -1,7 +1,7 @@
 const { Platform, UIManager, NativeEventEmitter, NativeModules } = require("react-native");
 const NativeUIManager = NativeModules.UIManager ?? UIManager;
 const inspectorBridge = require("./inspector_bridge");
-const DimensionsObserver = require("./window_layout_manager");
+const DimensionsObserver = require("./dimensions_observer");
 
 // The approach implemented below is best we can do as of today, becuase of lack
 // of support for orientation getter sync requests in the React Native core.

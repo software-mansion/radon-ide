@@ -12,7 +12,7 @@ const {
 const { storybookPreview } = require("./storybook_helper");
 require("./react_devtools_agent"); // needs to be loaded before inspector_bridge is used
 const inspectorBridge = require("./inspector_bridge");
-const DimensionsObserver = require("./window_layout_manager");
+const DimensionsObserver = require("./dimensions_observer");
 
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
 const OffscreenComponentReactTag = 22;
