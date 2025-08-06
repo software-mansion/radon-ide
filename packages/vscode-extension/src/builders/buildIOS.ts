@@ -32,6 +32,16 @@ async function getBundleID(appPath: string) {
   ).stdout;
 }
 
+// IPAD BUILDING NOTE:
+// The only difference between building for iPhone and iPad is the
+// TARGETED_DEVICE_FAMILY build setting, which is set to "1,2" for
+// iPhone and iPad support, and "1" for iPhone only.
+// The build time is similiar when compared to building for iPhone-only
+// and it allows to run the app on both devices without rebuilding.
+// Additionally, the build time is reduced when DerivedData already exists for
+// iPhone-only build, so the first build, if old DerivedData exists, before 1.10.0,
+// will be faster than building from scratch.
+
 function buildProject(
   xcodeProject: IOSProjectInfo,
   buildDir: string,
