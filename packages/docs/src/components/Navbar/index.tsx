@@ -2,40 +2,45 @@ import React from "react";
 import styles from "./styles.module.css";
 import { ColorModeToggle } from "@swmansion/t-rex-ui";
 import { useThemeConfig, useColorMode } from "@docusaurus/theme-common";
-import { useHideableNavbar, useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
-import clsx from "clsx";
 import { translate } from "@docusaurus/Translate";
 import MobileSidebarToggle from "./MobileSidebarToggle";
 import NavbarMobileSidebar from "./MobileSidebar";
-import CloseButton from "../CloseButton";
+import NavbarItems from "../NavbarItems";
+import ThemeSwitcher from "../ThemeSwitcher";
 
-type NavbarCenterItem = {
+export interface NavbarItem {
   label: string;
   to: string;
-};
+  position?: "left" | "center" | "right";
+}
+
+const navbarItems: NavbarItem[] = [
+  { label: "Features", to: "/features", position: "center" },
+  { label: "Pricing", to: "/pricing", position: "center" },
+  { label: "Enterprise", to: "/enterprise", position: "center" },
+  { label: "Docs", to: "/docs/category/getting-started", position: "center" },
+  { label: "Contact", to: "/contact", position: "center" },
+  { label: "GitHub", to: "https://github.com/software-mansion/radon-ide/", position: "right" },
+  {
+    label: "Download",
+    to: "https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide",
+    position: "right",
+  },
+];
+
 export interface NavbarProps {
   isThemeSwitcherShown?: boolean;
 }
-const navCenterItems: NavbarCenterItem[] = [
-  { label: "Features", to: "/features" },
-  { label: "Pricing", to: "/pricing" },
-  { label: "Enterprise", to: "/enterprise" },
-  { label: "Docs", to: "/docs/category/getting-started" },
-  { label: "Contact", to: "/contact" },
-];
 
 export default function Navbar({ isThemeSwitcherShown }: NavbarProps) {
   const {
-    navbar: { style, hideOnScroll, logo, items },
+    navbar: { logo },
   } = useThemeConfig();
-  const mobileSidebar = useNavbarMobileSidebar();
-  const { navbarRef, isNavbarVisible } = useHideableNavbar(hideOnScroll);
   const { colorMode, setColorMode } = useColorMode();
 
   return (
     <>
       <nav
-        ref={navbarRef}
         aria-label={translate({
           id: "theme.NavBar.navAriaLabel",
           message: "Main",
@@ -46,23 +51,26 @@ export default function Navbar({ isThemeSwitcherShown }: NavbarProps) {
           <div className={styles.navbar_left}>
             <a href="/">
               <img
-                // src="https://www.svgrepo.com/show/326119/star-small.svg"
+                // src="../../img/logo-dark.svg"
                 src={colorMode === "dark" ? logo.srcDark : logo.src}
                 className={styles.logo}
                 alt={logo.alt}
-                width={logo.width}
-                height={logo.height}
               />
             </a>
           </div>
           <div className={styles.navbar_center}>
             <ul className={styles.nav_links}>
-              {navCenterItems.map((item, index) => (
-                <li key={index}>
-                  <a href={item.to}>{item.label}</a>
-                </li>
-              ))}
-              {isThemeSwitcherShown ? (
+              {/* {navbarItems.map((item, index) =>
+                item.position == "center" ? (
+                  <li key={index}>
+                    <a href={item.to}>{item.label}</a>
+                  </li>
+                ) : null
+              )} */}
+              <NavbarItems navbarItems={navbarItems} />
+              <ThemeSwitcher isThemeSwitcherShown={isThemeSwitcherShown} />
+
+              {/* {isThemeSwitcherShown ? (
                 <li>
                   <ColorModeToggle
                     onChange={() => {
@@ -70,16 +78,11 @@ export default function Navbar({ isThemeSwitcherShown }: NavbarProps) {
                     }}
                   />
                 </li>
-              ) : null}
+              ) : null} */}
             </ul>
           </div>
-          {/* {mobileSidebar.shown ? (
-            <CloseButton onClick={mobileSidebar.toggle} />
-          ) : (
-            <MobileSidebarToggle />
-          )} */}
-          <MobileSidebarToggle />
 
+          <MobileSidebarToggle />
           <div className={styles.navbar_right}>
             <a
               href="https://github.com/software-mansion/radon-ide/"
@@ -92,7 +95,7 @@ export default function Navbar({ isThemeSwitcherShown }: NavbarProps) {
           </div>
         </div>
       </nav>
-      <NavbarMobileSidebar />
+      <NavbarMobileSidebar navbarItems={navbarItems} />
     </>
   );
 }

@@ -7,6 +7,9 @@
     display: flex;
     background-color: transparent;
     border: none;
-    padding: 20px;
+    padding: 0 24px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
   }
 }

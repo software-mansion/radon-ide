@@ -1,7 +1,7 @@
-import MenuIcon from "../../MenuIcon";
 import { useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
 import { translate } from "@docusaurus/Translate";
 import styles from "./styles.module.css";
+import MenuIcon from "../../MenuIcon";
 import CloseIcon from "../../CloseIcon";
 
 export default function MobileSidebarToggle() {

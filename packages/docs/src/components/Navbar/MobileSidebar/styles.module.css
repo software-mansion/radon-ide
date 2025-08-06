@@ -1,18 +1,22 @@
 .container {
+  display: flex;
+  flex-direction: column;
   position: fixed;
+
   top: 80px;
   left: 0;
   height: 100%;
   width: 100%;
-  /* background: var(--swm-background); */
-  background-color: transparent;
+  padding: 24px;
+
   transform: translateY(-130%);
   /* transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); */
-  z-index: 900;
-  display: flex;
-  flex-direction: column;
-  padding: 24px;
+
+  background: var(--swm-background);
+  background-color: transparent;
   backdrop-filter: blur(20px);
+
+  z-index: 999;
 }
 
 .open {
@@ -26,7 +30,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
+  gap: 24px;
 }
 
 .mobileNavLinks a {
