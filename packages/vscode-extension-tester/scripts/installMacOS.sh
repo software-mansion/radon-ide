@@ -4,6 +4,15 @@ LINK="https://drive.google.com/file/d/1jL1MDcGv1UrN7xppVO6bGabl6b0VTZKu/view?usp
 DEST_DIR="$HOME/Library/Containers/com.utmapp.UTM/Data/Documents"
 
 pkill -f "UTM"
+
+if [ -d "$DEST_DIR/macOS.utm" ]; then
+    read -p "'macOS.utm' directory already exists. Do you want to continue the download? (y/n): " CONFIRM
+    if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
+        echo "Download canceled."
+        exit 0
+    fi
+fi
+
 cd "$DEST_DIR" || { echo "cannot open directory"; exit 1; }
 
 echo "Downloading file from Google Drive..."
