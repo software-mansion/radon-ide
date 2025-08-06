@@ -10,7 +10,7 @@ const {
 } = require("__RNIDE_lib__/bippy");
 const { getFabricUIManager } = require("react-native/Libraries/ReactNative/FabricUIManager.js");
 const { StatusBar, UIManager, Platform } = require("react-native");
-const WindowDimensionsManager = require("./window_layout_manager");
+const DimensionsObserver = require("./window_layout_manager");
 const FabricUIManager = getFabricUIManager();
 
 const CORE_COMPONENT_NAMES = new Set([
@@ -80,7 +80,7 @@ function shouldHideComponent(name) {
 
 function getWindowRect() {
   const { width: screenWidth, height: screenHeight } =
-    WindowDimensionsManager.getScreenDimensionsCompat();
+    DimensionsObserver.getScreenDimensions();
   if (Platform.OS === "android") {
     const statusBarHeight = StatusBar.currentHeight || 0;
     return {

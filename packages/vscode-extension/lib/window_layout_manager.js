@@ -13,13 +13,14 @@ const { Dimensions, Platform } = require("react-native");
 // devices other than ipads.
 
 /**
- * WindowDimensionsManager - Simplified dimensions change event manager
+ * DimensionsObserver
+ *  - Simplified dimensions change event manager
  * Provides means to get proper window dimensions across the lib, due to the fact
  * that Dimensions API is bugged and not reliable on iPads. Instead, the manager
  * uses the onLayout event of the main view wrapper to determine dimension changes
  * and synchronize them across the lib components.
  */
-class WindowDimensionsManager {
+class DimensionsObserver {
   constructor() {
     this.dimensionsListeners = [];
     // Initialize with current window dimensions - before first dimension change
@@ -59,7 +60,7 @@ class WindowDimensionsManager {
    * due to the fact that Dimensions.get("screen") is bugged on iPads.
    * @returns {Object} Current screen dimensions (window dimensions on iPads)
    */
-  getScreenDimensionsCompat() {
+  getScreenDimensions() {
     if (Platform.isPad) {
       return this.getWindowDimensions();
     }
@@ -92,7 +93,8 @@ class WindowDimensionsManager {
   }
 }
 
-// Singleton instance of WindowDimensionsManager used across lib
-const windowDimensionsManager = new WindowDimensionsManager();
+// Singleton instance of DimensionsObserver
+//  used across lib
+const dimensionsObserver = new DimensionsObserver();
 
-module.exports = windowDimensionsManager;
+module.exports = dimensionsObserver;

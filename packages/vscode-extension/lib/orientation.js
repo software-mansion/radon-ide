@@ -1,12 +1,12 @@
 const { Platform, UIManager, NativeEventEmitter, NativeModules } = require("react-native");
 const NativeUIManager = NativeModules.UIManager ?? UIManager;
 const inspectorBridge = require("./inspector_bridge");
-const WindowDimensionsManager = require("./window_layout_manager");
+const DimensionsObserver = require("./window_layout_manager");
 
 // The approach implemented below is best we can do as of today, becuase of lack
 // of support for orientation getter sync requests in the React Native core.
 // Hence, the orientation is determined by the event listener via NativeEventEmitter(UIManager)
-// and the WindowDimensionsManager, which is not 100% reliable and works differently across platforms.
+// and the DimensionsObserver, which is not 100% reliable and works differently across platforms.
 
 // The orientation events on Android work as one would expect - the orientation change
 // is reported after the app actually rotates and is distinct from the device orientation.
@@ -17,15 +17,15 @@ const WindowDimensionsManager = require("./window_layout_manager");
 // On iOS, the orientation events are fired when the DEVICE ROTATES, because the API is based on device sensors.
 // Hence, orientation change event is not fired when the app starts,
 // and the app's initial orientation is not known until the first rotation occurs - this
-// is why we need to use the WindowDimensionsManager and appOrientationInit to properly handle it on the frontend.
+// is why we need to use the DimensionsObserver and appOrientationInit to properly handle it on the frontend.
 // Additionally, when app does not support given orientation, the event still fires (new orientation is reported
 // even though the app remains in previous mode, only because the device was rotated). This is why, we need to
 // infer information about the app's orientation based on the device orientation and ASSUME THAT PORTRAIT-SECONDARY IS NOT SET.
 // We also assume that, if one of the landscape orientations is supported, the other one is supported as well.
 
 // For IOS the orientation event is fired after the DEVICE rotates, but before the APP actually rotates.
-// This means, we are experiencing a lag between current orientation and information from WindowDimensionsManager,
-// which is why additional listener is added to the WindowDimensionsManager to amend the effect.
+// This means, we are experiencing a lag between current orientation and information from DimensionsObserver,
+// which is why additional listener is added to the DimensionsObserver to amend the effect.
 
 /**
  * Mapping from namedOrientationDidChangeEvent names to DeviceRotation names or "Landscape" specific case
@@ -96,7 +96,7 @@ const getMappedOrientation = (orientation, isLandscape) => {
 // This is used to infer the initial orientation of the app, due to IOS limitations.
 const initializeOrientationAndSendInitMessage = () => {
   const { width: screenWidth, height: screenHeight } =
-    WindowDimensionsManager.getScreenDimensionsCompat();
+    DimensionsObserver.getScreenDimensions();
   const isLandscape = screenWidth > screenHeight;
   // infer currentOrientation based on the screen dimensions
   // android still fires the namedOrientationDidChangeEvent on app load,
@@ -110,7 +110,7 @@ const initializeOrientationAndSendInitMessage = () => {
 
 const updateOrientationAndSendMessage = (orientation) => {
   const { width: screenWidth, height: screenHeight } =
-    WindowDimensionsManager.getScreenDimensionsCompat();
+    DimensionsObserver.getScreenDimensions();
   const isLandscape = screenWidth > screenHeight;
   const mappedOrientation = getMappedOrientation(orientation, isLandscape);
 
@@ -152,7 +152,7 @@ export function setup() {
 
   // Dimension change lags behind Orientation change in the IOS case, so we add a second listener to amend the effect.
   // Explained in the context above.
-  const dimensionsChangeSubscription = WindowDimensionsManager.addListener(handleDimensionsChange);
+  const dimensionsChangeSubscription = DimensionsObserver.addListener(handleDimensionsChange);
 
   // Restore the original console.warn function
   console.warn = originalConsoleWarn;
