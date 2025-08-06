@@ -112,7 +112,6 @@ export class NetworkPlugin implements ToolPlugin {
     return this.websocketBackend.port;
   }
 
-
   sendCDPMessage = (messageData: any) => {
     this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
   };

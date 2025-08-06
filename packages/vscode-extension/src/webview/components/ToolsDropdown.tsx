@@ -63,7 +63,6 @@ function ToolsList({
   project: ProjectInterface;
   tools: [string, ToolState][];
 }) {
-  
   return tools.map(([key, tool]) => (
     <DevToolCheckbox
       key={key}

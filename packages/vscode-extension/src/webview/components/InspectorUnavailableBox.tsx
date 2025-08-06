@@ -6,10 +6,7 @@ type InspectorUnavailableBoxProps = {
   onClose: () => void;
 };
 
-function InspectorUnavailableBox({
-  clickPosition,
-  onClose,
-}: InspectorUnavailableBoxProps) {
+function InspectorUnavailableBox({ clickPosition, onClose }: InspectorUnavailableBoxProps) {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {

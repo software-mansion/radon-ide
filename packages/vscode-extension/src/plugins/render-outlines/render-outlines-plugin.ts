@@ -32,7 +32,6 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("inspectorAvailabilityChanged", (isAvailable: boolean) => {
         this._pluginAvailable = isAvailable;
-        
       })
     );
   }
@@ -41,7 +40,8 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   public readonly label = "Outline Renders";
   public readonly toolInstalled = true;
   public readonly persist = false;
-  public readonly pluginUnavailableTooltip = "Render Outlines is disabled in apps that don\'t support Edge-to-Edge.";
+  public readonly pluginUnavailableTooltip =
+    "Render Outlines is disabled in apps that don\'t support Edge-to-Edge.";
 
   public get pluginAvailable() {
     console.log("RENDER_OUTLINES_PLUGIN", this._pluginAvailable);

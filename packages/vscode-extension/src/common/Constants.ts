@@ -3,4 +3,3 @@ export const MinSupportedVersion = {
   expo: "49.0.0",
   storybook: "5.2.0",
 } as const;
-
