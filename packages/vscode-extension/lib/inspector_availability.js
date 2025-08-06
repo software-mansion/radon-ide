@@ -24,8 +24,13 @@ const updateAvailabilityAndSendMessage = () => {
 };
 
 const handleDimensionsChange = () => {
+  // Despite Dimensions API being bugged on iPads, it still provides
+  // the dimensions of the screen and window in the same orientation state
+  // between the two, so for comparison purposes we can use it to determine
+  // whether the app is edge-to-edge or not.
   const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
   const { width: windowWidth, height: windowHeight } = Dimensions.get("window");
+
   isEdgeToEdge = screenWidth === windowWidth && screenHeight === windowHeight;
   updateAvailabilityAndSendMessage();
 };
