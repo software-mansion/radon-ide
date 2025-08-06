@@ -12,6 +12,11 @@ import { sharedTestLifecycle } from "./setupTest.js";
 describe("Adding device tests", () => {
   const get = sharedTestLifecycle();
 
+  after(async function () {
+    const { driver } = get();
+    await deleteAllDevices(driver);
+  });
+
   it("should add device to Radon IDE", async function () {
     const { driver } = get();
     await openRadonIDEPanel(driver);

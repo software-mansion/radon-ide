@@ -1,11 +1,9 @@
-import { assert } from "chai";
 import { By } from "vscode-extension-tester";
-import { texts } from "../data/testData.js";
-import { waitForElement, findAndWaitForElement } from "../utils/helpers.js";
+import { findAndWaitForElement } from "../utils/helpers.js";
 import { openRadonIDEPanel } from "./interactions.js";
 import { sharedTestLifecycle } from "./setupTest.js";
 
-describe("Smoke tests Radon IDE", () => {
+describe("Main interface buttons tests", () => {
   const get = sharedTestLifecycle();
 
   it("Should open device settings window", async function () {

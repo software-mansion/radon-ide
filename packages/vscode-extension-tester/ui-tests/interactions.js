@@ -166,7 +166,6 @@ export async function deleteAllDevices(driver) {
         "Timed out waiting for confirm delete button"
       );
       confirmDeleteButton.click();
-      break;
     }
   } catch (e) {
     console.log(e);
