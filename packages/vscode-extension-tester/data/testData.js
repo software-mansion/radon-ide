@@ -1,6 +1,5 @@
 export const paths = {
   projectPath: "../../react-native-80",
-  // projectPath: "/Users/krzysztof/react-native-80",
 };
 
 export const texts = {
