@@ -32,7 +32,6 @@ import { focusSource } from "../utilities/focusSource";
 import { CancelToken } from "../utilities/cancelToken";
 import { DevicePlatform } from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
-import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
@@ -362,7 +361,6 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       }),
       this.devtools.onEvent("inspectorAvailabilityChanged", (isAvailable: boolean) => {
         this.inspectorAvailability = isAvailable;
-        this.toolsManager.setToolButtonDisabled(RENDER_OUTLINES_PLUGIN_ID, !isAvailable);
         this.emitStateChange();
       })
     );

@@ -9,13 +9,12 @@ import {
 import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolPlugin } from "../../project/tools";
 import { disposeAll } from "../../utilities/disposables";
-import { INSPECT_UNAVAILABLE_TOOLTIP_LABEL } from "../../common/Constants";
 
 export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface, Disposable {
   private eventEmitter = new EventEmitter();
   private isEnabled = false;
   private devtoolsListeners: Disposable[] = [];
-  private buttonDisabled = false;
+  private _pluginAvailable = true;
 
   constructor(private inspectorBridge: RadonInspectorBridge) {
     this.devtoolsListeners.push(
@@ -30,16 +29,23 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
         }
       })
     );
+    this.devtoolsListeners.push(
+      this.inspectorBridge.onEvent("inspectorAvailabilityChanged", (isAvailable: boolean) => {
+        this._pluginAvailable = isAvailable;
+        
+      })
+    );
   }
 
   public readonly id = RENDER_OUTLINES_PLUGIN_ID;
   public readonly label = "Outline Renders";
-  public readonly available = true;
+  public readonly toolInstalled = true;
   public readonly persist = false;
-  public readonly disabledTooltipLabel = INSPECT_UNAVAILABLE_TOOLTIP_LABEL;
+  public readonly pluginUnavailableTooltip = "Render Outlines is disabled in apps that don\'t support Edge-to-Edge.";
 
-  public get pluginButtonDisabled() {
-    return this.buttonDisabled;
+  public get pluginAvailable() {
+    console.log("RENDER_OUTLINES_PLUGIN", this._pluginAvailable);
+    return this._pluginAvailable;
   }
 
   activate(): void {
@@ -48,10 +54,6 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
 
   deactivate(): void {
     this.setEnabled(false);
-  }
-
-  setPluginButtonDisabled(disabled: boolean): void {
-    this.buttonDisabled = disabled;
   }
 
   dispose() {

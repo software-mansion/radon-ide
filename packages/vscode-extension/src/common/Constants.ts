@@ -4,5 +4,3 @@ export const MinSupportedVersion = {
   storybook: "5.2.0",
 } as const;
 
-export const INSPECT_UNAVAILABLE_TOOLTIP_LABEL =
-  "Inspector is disabled in apps that don\'t support Edge-to-Edge.";

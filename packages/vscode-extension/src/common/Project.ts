@@ -31,10 +31,10 @@ export type DeviceSettings = {
 
 export type ToolState = {
   enabled: boolean;
-  panelAvailable: boolean;
+  isPanelTool: boolean;
   label: string;
-  pluginButtonDisabled: boolean;
-  disabledPluginTooltipLabel: string;
+  pluginAvailable?: boolean;
+  pluginUnavailableTooltip?: string;
 };
 
 export type ToolsState = {

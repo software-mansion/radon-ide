@@ -33,7 +33,6 @@ import AppRootSelect from "../components/AppRootSelect";
 import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
-import { INSPECT_UNAVAILABLE_TOOLTIP_LABEL } from "../../common/Constants";
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
@@ -365,7 +364,7 @@ function PreviewView() {
           tooltip={{
             label: inspectorAvailable
               ? "Select an element to inspect it"
-              : INSPECT_UNAVAILABLE_TOOLTIP_LABEL,
+              : "Render Outlines is disabled in apps that don't support Edge-to-Edge.",
           }}
           onClick={() => {
             sendTelemetry("inspector:button-clicked", {

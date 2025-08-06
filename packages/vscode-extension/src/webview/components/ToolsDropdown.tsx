@@ -16,9 +16,9 @@ import Tooltip from "./shared/Tooltip";
 interface DevToolCheckboxProps {
   label: string;
   checked: boolean;
-  panelAvailable: boolean;
-  disabled?: boolean;
-  disabledTooltipLabel: string;
+  isPanelTool: boolean;
+  enabled: boolean;
+  pluginUnavailableTooltip?: string;
   onCheckedChange: (checked: boolean) => void;
   onSelect: () => void;
 }
@@ -26,25 +26,25 @@ interface DevToolCheckboxProps {
 function DevToolCheckbox({
   label,
   checked,
-  panelAvailable,
-  disabled,
-  disabledTooltipLabel,
+  isPanelTool,
+  enabled,
+  pluginUnavailableTooltip,
   onCheckedChange,
   onSelect,
 }: DevToolCheckboxProps) {
   return (
-    <Tooltip label={disabledTooltipLabel} disabled={!disabled}>
+    <Tooltip label={pluginUnavailableTooltip} disabled={enabled}>
       <div
         className="dropdown-menu-item"
-        style={{ color: disabled ? "var(--swm-disabled-text)" : "inherit" }}>
+        style={{ color: enabled ? "inherit" : "var(--swm-disabled-text)" }}>
         {label}
-        {checked && panelAvailable && (
+        {checked && isPanelTool && (
           <IconButton onClick={onSelect}>
             <span className="codicon codicon-link-external" />
           </IconButton>
         )}
         <Switch.Root
-          disabled={disabled}
+          disabled={!enabled}
           className="switch-root small-switch"
           onCheckedChange={onCheckedChange}
           defaultChecked={checked}
@@ -63,14 +63,15 @@ function ToolsList({
   project: ProjectInterface;
   tools: [string, ToolState][];
 }) {
+  
   return tools.map(([key, tool]) => (
     <DevToolCheckbox
       key={key}
       label={tool.label}
       checked={tool.enabled}
-      panelAvailable={tool.panelAvailable}
-      disabled={tool.pluginButtonDisabled}
-      disabledTooltipLabel={tool.disabledPluginTooltipLabel}
+      isPanelTool={tool.isPanelTool}
+      enabled={tool.pluginAvailable ?? true}
+      pluginUnavailableTooltip={tool.pluginUnavailableTooltip ?? ""}
       onCheckedChange={async (checked) => {
         await project.updateToolEnabledState(key, checked);
         if (checked) {
@@ -89,8 +90,8 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
   const toolsState = isRunning ? selectedDeviceSession.toolsState : {};
 
   const allTools = Object.entries(toolsState);
-  const panelTools = allTools.filter(([key, tool]) => tool.panelAvailable);
-  const nonPanelTools = allTools.filter(([key, tool]) => !tool.panelAvailable);
+  const panelTools = allTools.filter(([key, tool]) => tool.isPanelTool);
+  const nonPanelTools = allTools.filter(([key, tool]) => !tool.isPanelTool);
 
   const isProfilingCPU = isRunning && selectedDeviceSession.profilingCPUState !== "stopped";
   const isProfilingReact = isRunning && selectedDeviceSession.profilingReactState !== "stopped";

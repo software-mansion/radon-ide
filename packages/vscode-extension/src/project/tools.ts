@@ -32,14 +32,13 @@ export type ToolKey =
 export interface ToolPlugin extends Disposable {
   id: ToolKey;
   label: string;
-  available: boolean;
+  toolInstalled: boolean;
   persist: boolean;
-  pluginButtonDisabled: boolean;
-  disabledTooltipLabel: string;
+  pluginAvailable?: boolean;
+  pluginUnavailableTooltip?: string;
   activate(): void;
   deactivate(): void;
   openTool?(): void;
-  setPluginButtonDisabled(disabled: boolean): void;
 }
 
 export function reportToolVisibilityChanged(toolName: ToolKey, visible: boolean) {
@@ -83,9 +82,9 @@ export class ToolsManager implements Disposable {
         const availablePlugins = new Set(payload.plugins);
         let changed = false;
         this.plugins.forEach((plugin) => {
-          if (!plugin.available && availablePlugins.has(plugin.id)) {
+          if (!plugin.toolInstalled && availablePlugins.has(plugin.id)) {
             changed = true;
-            plugin.available = true;
+            plugin.toolInstalled = true;
           }
         });
         // notify tools manager that the state of requested plugins has changed
@@ -117,7 +116,7 @@ export class ToolsManager implements Disposable {
 
   public handleStateChange() {
     for (const plugin of this.plugins.values()) {
-      if (plugin.available) {
+      if (plugin.toolInstalled) {
         const enabled = this.toolsSettings[plugin.id] || false;
         const active = this.activePlugins.has(plugin);
         if (active !== enabled) {
@@ -138,13 +137,13 @@ export class ToolsManager implements Disposable {
   public getToolsState(): ToolsState {
     const toolsState: ToolsState = {};
     for (const [id, plugin] of this.plugins) {
-      if (plugin.available) {
+      if (plugin.toolInstalled) {
         toolsState[id] = {
           label: plugin.label,
           enabled: this.toolsSettings[id] || false,
-          panelAvailable: plugin.openTool !== undefined,
-          pluginButtonDisabled: plugin.pluginButtonDisabled,
-          disabledPluginTooltipLabel: plugin.disabledTooltipLabel,
+          isPanelTool: plugin.openTool !== undefined,
+          pluginAvailable: plugin.pluginAvailable,
+          pluginUnavailableTooltip: plugin.pluginUnavailableTooltip,
         };
       }
     }
@@ -161,14 +160,6 @@ export class ToolsManager implements Disposable {
       this.reportToolEnabled(toolName, enabled);
       this.handleStateChange();
     }
-  }
-
-  public setToolButtonDisabled(toolName: ToolKey, disabled: boolean) {
-    const plugin = this.plugins.get(toolName);
-    if (plugin) {
-      plugin.setPluginButtonDisabled(disabled);
-    }
-    this.handleStateChange();
   }
 
   public openTool(toolName: ToolKey) {

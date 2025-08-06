@@ -51,10 +51,8 @@ export function createExpoDevPluginTools(): ToolPlugin[] {
     plugins.push({
       id: id as ExpoDevPluginToolName,
       label: pluginInfo.label,
-      available: false,
+      toolInstalled: false,
       persist: true,
-      pluginButtonDisabled: false,
-      disabledTooltipLabel: "Expo Dev Plugin is not available",
       activate() {
         commands.executeCommand("setContext", `${pluginInfo.viewIdPrefix}.available`, true);
       },
@@ -64,10 +62,7 @@ export function createExpoDevPluginTools(): ToolPlugin[] {
       openTool() {
         commands.executeCommand(`${pluginInfo.viewIdPrefix}.view.focus`);
       },
-      dispose() {},
-      setPluginButtonDisabled(disabled: boolean) {
-        this.pluginButtonDisabled = disabled;
-      },
+      dispose() {}
     });
   }
 
