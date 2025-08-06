@@ -68,9 +68,9 @@ import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependenc
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
 import { getTimestamp } from "../utilities/getTimestamp";
 import { Platform } from "../utilities/platform";
-import { EditorManager } from "./EditorManager";
 import { Telemetry } from "./telemetry";
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
+import { EditorBindings } from "./EditorBindings";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
@@ -147,7 +147,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     private readonly workspaceStateManager: StateManager<WorkspaceConfiguration>,
     private readonly devicesStateManager: StateManager<DevicesState>,
     private readonly deviceManager: DeviceManager,
-    private readonly editorManager: EditorManager,
+    private readonly editorBindings: EditorBindings,
     private readonly outputChannelRegistry: OutputChannelRegistry,
     private readonly environmentDependencyManager: EnvironmentDependencyManager,
     private readonly telemetry: Telemetry,
@@ -648,7 +648,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async dispatchPaste(text: string) {
     await this.deviceSession?.sendClipboard(text);
-    await this.editorManager.showToast("Pasted to device clipboard", 2000);
+    await this.editorBindings.showToast("Pasted to device clipboard", 2000);
   }
 
   public async dispatchCopy() {
@@ -657,7 +657,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       env.clipboard.writeText(text);
     }
     // For consistency between iOS and Android, we always display toast message
-    await this.editorManager.showToast("Copied from device clipboard", 2000);
+    await this.editorBindings.showToast("Copied from device clipboard", 2000);
   }
 
   // #endregion Device Input
@@ -801,27 +801,27 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region Editor
 
   public getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined> {
-    return this.editorManager.getCommandsCurrentKeyBinding(commandName);
+    return this.editorBindings.getCommandsCurrentKeyBinding(commandName);
   }
 
   public movePanelTo(location: IDEPanelMoveTarget): Promise<void> {
-    return this.editorManager.movePanelTo(location);
+    return this.editorBindings.movePanelTo(location);
   }
 
   public openExternalUrl(uriString: string): Promise<void> {
-    return this.editorManager.openExternalUrl(uriString);
+    return this.editorBindings.openExternalUrl(uriString);
   }
 
   public openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void> {
-    return this.editorManager.openFileAt(filePath, line0Based, column0Based);
+    return this.editorBindings.openFileAt(filePath, line0Based, column0Based);
   }
 
   public showDismissableError(errorMessage: string): Promise<void> {
-    return this.editorManager.showDismissableError(errorMessage);
+    return this.editorBindings.showDismissableError(errorMessage);
   }
 
   public showToast(message: string, timeout: number): Promise<void> {
-    return this.editorManager.showToast(message, timeout);
+    return this.editorBindings.showToast(message, timeout);
   }
 
   // #endregion Editor

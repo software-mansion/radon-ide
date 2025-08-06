@@ -11,7 +11,7 @@ import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 import { Telemetry } from "./telemetry";
-import { EditorManager } from "./EditorManager";
+import { EditorBindings } from "./EditorBindings";
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
@@ -23,7 +23,7 @@ export class IDE implements Disposable {
   private onStateChangedEmitter = new EventEmitter<RecursivePartial<State>>();
 
   public readonly deviceManager: DeviceManager;
-  public readonly editorManager: EditorManager;
+  public readonly editorBindings: EditorBindings;
   public readonly project: Project;
   public readonly workspaceConfigController: WorkspaceConfigController;
   public readonly outputChannelRegistry = new OutputChannelRegistry();
@@ -50,7 +50,7 @@ export class IDE implements Disposable {
       this.stateManager.getDerived("devicesState"),
       this.outputChannelRegistry
     );
-    this.editorManager = new EditorManager();
+    this.editorBindings = new EditorBindings();
 
     this.environmentDependencyManager = new EnvironmentDependencyManager(
       this.stateManager.getDerived("environmentDependencies")
@@ -60,7 +60,7 @@ export class IDE implements Disposable {
       this.stateManager.getDerived("workspaceConfiguration"),
       this.stateManager.getDerived("devicesState"),
       this.deviceManager,
-      this.editorManager,
+      this.editorBindings,
       this.outputChannelRegistry,
       this.environmentDependencyManager,
       this.telemetry,

@@ -16,7 +16,7 @@ type KeybindingType = {
   when?: string;
 };
 
-export class EditorManager {
+export class EditorBindings {
   public async getCommandsCurrentKeyBinding(commandName: string) {
     const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
     const extensionPackageJson = require(packageJsonPath);
@@ -28,7 +28,7 @@ export class EditorManager {
         homedir(),
         Platform.select({
           macos: path.join("Library", "Application Support"),
-          windows: path.join("AppDat", "Roaming"),
+          windows: path.join("AppData", "Roaming"),
           linux: path.join(".config"),
         }),
         ideName,
