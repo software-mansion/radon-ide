@@ -13,7 +13,6 @@ import { getAndroidSourceDir } from "../builders/buildAndroid";
 import { Platform } from "../utilities/platform";
 import { requireNoCache } from "../utilities/requireNoCache";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { DevicePlatform } from "../common/DeviceManager";
 import { isEasCliInstalled } from "../builders/easCommand";
 import { getMinimumSupportedNodeVersion } from "../utilities/getMinimumSupportedNodeVersion";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
@@ -22,7 +21,7 @@ import { ResolvedLaunchConfig } from "../project/ApplicationContext";
 import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
 import { MinSupportedVersion } from "../common/Constants";
-import { ApplicationDependencyStatuses } from "../common/State";
+import { ApplicationDependencyStatuses, DevicePlatform } from "../common/State";
 
 export class ApplicationDependencyManager implements Disposable {
   private disposables: Disposable[] = [];

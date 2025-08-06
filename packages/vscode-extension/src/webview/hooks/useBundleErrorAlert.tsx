@@ -1,12 +1,10 @@
 import { BundleErrorDescriptor } from "../../common/Project";
 import IconButton from "../components/shared/IconButton";
 import { useToggleableAlert } from "../providers/AlertProvider";
-import { useDevices } from "../providers/DevicesProvider";
 import { useProject } from "../providers/ProjectProvider";
 
 function BundleErrorActions() {
   const { project } = useProject();
-  const { deviceSessionsManager } = useDevices();
   return (
     <>
       <IconButton
@@ -20,7 +18,7 @@ function BundleErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          deviceSessionsManager.reloadCurrentSession("autoReload");
+          project.reloadCurrentSession("autoReload");
         }}
         tooltip={{ label: "Reload Metro", side: "bottom" }}>
         <span className="codicon codicon-refresh" />

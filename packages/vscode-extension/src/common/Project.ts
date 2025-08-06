@@ -1,7 +1,14 @@
+import { ReloadAction, SelectDeviceOptions } from "../project/DeviceSessionsManager";
 import { BuildType } from "./BuildConfig";
-import { DeviceInfo, DevicePlatform } from "./DeviceManager";
 import { LaunchConfiguration } from "./LaunchConfig";
 import { Output } from "./OutputChannel";
+import {
+  AndroidSystemImageInfo,
+  DeviceInfo,
+  DevicePlatform,
+  IOSDeviceTypeInfo,
+  IOSRuntimeInfo,
+} from "./State";
 
 export type Locale = string;
 
@@ -245,7 +252,6 @@ export type MultimediaData = {
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
   /**
@@ -280,10 +286,12 @@ export interface ProjectInterface {
   stepOverDebugger(): Promise<void>;
   focusOutput(channel: Output): Promise<void>;
   focusDebugConsole(): Promise<void>;
+
   openNavigation(navigationItemID: string): Promise<void>;
   navigateBack(): Promise<void>;
   navigateHome(): Promise<void>;
   removeNavigationHistoryEntry(id: string): Promise<void>;
+
   openDevMenu(): Promise<void>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
@@ -301,7 +309,6 @@ export interface ProjectInterface {
 
   startProfilingCPU(): void;
   stopProfilingCPU(): void;
-
   startProfilingReact(): void;
   stopProfilingReact(): void;
 
@@ -312,12 +319,32 @@ export interface ProjectInterface {
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;
 
+  reloadCurrentSession(type: ReloadAction): Promise<void>;
+  startOrActivateSessionForDevice(
+    deviceInfo: DeviceInfo,
+    selectDeviceOptions?: SelectDeviceOptions
+  ): Promise<void>;
+  terminateSession(deviceId: DeviceId): Promise<void>;
+
   inspectElementAt(
     xRatio: number,
     yRatio: number,
     requestStack: boolean,
     callback: (inspectData: InspectData) => void
   ): Promise<void>;
+
+  createAndroidDevice(
+    modelId: string,
+    displayName: string,
+    systemImage: AndroidSystemImageInfo
+  ): Promise<DeviceInfo>;
+  createIOSDevice(
+    deviceType: IOSDeviceTypeInfo,
+    displayName: string,
+    runtime: IOSRuntimeInfo
+  ): Promise<DeviceInfo>;
+  renameDevice(device: DeviceInfo, newDisplayName: string): Promise<void>;
+  removeDevice(device: DeviceInfo): Promise<void>;
 
   addListener<K extends keyof ProjectEventMap>(
     eventType: K,

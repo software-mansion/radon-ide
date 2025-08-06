@@ -46,7 +46,10 @@ export class IDE implements Disposable {
 
     this.telemetry = new Telemetry(this.stateManager.getDerived("telemetry"));
 
-    this.deviceManager = new DeviceManager(this.outputChannelRegistry);
+    this.deviceManager = new DeviceManager(
+      this.stateManager.getDerived("devicesState"),
+      this.outputChannelRegistry
+    );
     this.utils = new Utils();
     this.environmentDependencyManager = new EnvironmentDependencyManager(
       this.stateManager.getDerived("environmentDependencies")
@@ -54,6 +57,7 @@ export class IDE implements Disposable {
     this.project = new Project(
       this.stateManager.getDerived("projectState"),
       this.stateManager.getDerived("workspaceConfiguration"),
+      this.stateManager.getDerived("devicesState"),
       this.deviceManager,
       this.utils,
       this.outputChannelRegistry,

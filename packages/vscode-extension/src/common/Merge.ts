@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { RecursivePartial } from "../common/State";
 
 /**
@@ -10,7 +9,7 @@ import { RecursivePartial } from "../common/State";
  * @returns {[T, RecursivePartial<T>]} A tuple where the first element is the new state object post-merge, and the second
  * element is an object describing changes made.
  */
-export function mergeAndCalculateChanges<T extends object>(
+export function mergeAndCalculateChanges<T extends { [P in keyof T]: T[P] }>(
   oldNode: T,
   newNode: RecursivePartial<T>
 ): [T, RecursivePartial<T>] {
@@ -30,7 +29,7 @@ export function mergeAndCalculateChanges<T extends object>(
 
       if (oldNode[key] !== newChild) {
         wasChanged = true;
-        changes[key] = childChanges;
+        changes[key] = childChanges as (typeof changes)[typeof key];
       }
       result[key] = newChild;
       continue;
@@ -45,7 +44,23 @@ export function mergeAndCalculateChanges<T extends object>(
   }
 
   if (wasChanged) {
-    return [result, changes] as [T, Partial<T>];
+    return [result, changes] as [T, RecursivePartial<T>];
   }
   return [oldNode, {}];
+}
+
+/**
+ * Merges an existing state object with updates from a new partial state.
+ *
+ * @param {T} oldNode - The original state object.
+ * @param {RecursivePartial<T>} newNode - A partial state object containing updates.
+ *
+ * @returns {T} The new state object post-merge.
+ */
+export function merge<T extends { [P in keyof T]: T[P] }>(
+  oldNode: T,
+  newNode: RecursivePartial<T>
+): T {
+  const [result] = mergeAndCalculateChanges(oldNode, newNode);
+  return result;
 }

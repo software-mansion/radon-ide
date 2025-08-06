@@ -11,12 +11,12 @@ import { CancelToken } from "../utilities/cancelToken";
 import { extensionContext } from "../utilities/extensionContext";
 import { BuildAndroidProgressProcessor } from "./BuildAndroidProgressProcessor";
 import { EXPO_GO_PACKAGE_NAME, downloadExpoGo } from "./expoGo";
-import { DevicePlatform } from "../common/DeviceManager";
 import { getReactNativeVersion } from "../utilities/reactNative";
 import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild, performLocalEasBuild } from "./eas";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { AndroidBuildConfig, AndroidLocalBuildConfig, BuildType } from "../common/BuildConfig";
+import { DevicePlatform } from "../common/State";
 
 export type AndroidBuildResult = {
   platform: DevicePlatform.Android;

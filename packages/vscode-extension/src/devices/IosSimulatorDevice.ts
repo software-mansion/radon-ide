@@ -7,13 +7,13 @@ import { Preview } from "./preview";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
-import { IOSDeviceInfo, IOSRuntimeInfo, DevicePlatform, DeviceInfo } from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
+import { DeviceInfo, DevicePlatform, IOSDeviceInfo, IOSRuntimeInfo } from "../common/State";
 
 interface SimulatorInfo {
   availability?: string;

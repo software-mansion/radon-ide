@@ -1,6 +1,5 @@
 import { Disposable, window } from "vscode";
 import _ from "lodash";
-import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
@@ -8,18 +7,29 @@ import { ApplicationContext } from "./ApplicationContext";
 import { DeviceSession } from "./deviceSession";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
-import {
-  DeviceSessionsManagerInterface,
-  ReloadAction,
-  SelectDeviceOptions,
-} from "../common/DeviceSessionsManager";
 import { disposeAll } from "../utilities/disposables";
 import { DeviceId, DeviceRotation, DeviceSessionsManagerState } from "../common/Project";
 import { Connector } from "../connect/Connector";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
+import { StateManager } from "./StateManager";
+import { DeviceInfo, DevicePlatform, DevicesState } from "../common/State";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
+
+export type SelectDeviceOptions = {
+  stopPreviousDevices?: boolean;
+};
+
+export type ReloadAction =
+  | "autoReload" // automatic reload mode
+  | "restartMetro"
+  | "clearMetro" // clear metro cache, boot device, install app
+  | "rebuild" // clean build, boot device, install app
+  | "reboot" // reboots device, launch app
+  | "reinstall" // force reinstall app
+  | "restartProcess" // relaunch app
+  | "reloadJs"; // refetch JS scripts from metro
 
 export type DeviceSessionsManagerDelegate = {
   onInitialized(): void;
@@ -30,7 +40,8 @@ export type DeviceSessionsManagerDelegate = {
 const MAX_ALLOWED_IOS_DEVICES = 3;
 const MAX_ALLOWED_ANDROID_DEVICES = 1;
 
-export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerInterface {
+export class DeviceSessionsManager implements Disposable {
+  private disposables: Disposable[] = [];
   private deviceSessions: Map<DeviceId, DeviceSession> = new Map();
   private activeSessionId: DeviceId | undefined;
   private findingDevice: boolean = false;
@@ -39,11 +50,18 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   constructor(
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
+    private readonly devicesStateManager: StateManager<DevicesState>,
     private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
-    this.deviceManager.addListener("deviceRemoved", this.removeDeviceListener);
-    this.deviceManager.addListener("devicesChanged", this.devicesChangedListener);
+    this.disposables.push(
+      this.devicesStateManager.onSetState((partialState) => {
+        const devices = partialState.devices;
+        if (devices !== undefined && devices !== null) {
+          this.devicesChangedListener(devices);
+        }
+      })
+    );
   }
 
   public get selectedDeviceSession(): DeviceSession | undefined {
@@ -201,7 +219,11 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
     try {
       this.findingDevice = true;
 
-      const devices = await this.deviceManager.listAllDevices();
+      const devices = this.devicesStateManager.getState().devices;
+      if (devices === null) {
+        // If no devices are found, we can return early
+        return;
+      }
       this.previousDevices = devices;
 
       // we try to pick the last selected device that we saved in the persistent state, otherwise
@@ -225,18 +247,25 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   };
 
   // used in callbacks, needs to be an arrow function
-  private removeDeviceListener = async (device: DeviceInfo) => {
-    const activeSessionId = this.activeSessionId;
-    // if the deleted device was running an active session, we need to terminate that session
-    await this.terminateSession(device.id);
-    // if the deleted device was the selected one, we try to select a new device
-    if (activeSessionId === device.id) {
-      this.findInitialDeviceAndStartSession();
-    }
-  };
-
   private devicesChangedListener = async (devices: DeviceInfo[]) => {
     const previousDevices = this.previousDevices;
+    const removedDevices = previousDevices.filter(
+      (prevDevice) => !devices.some((device) => device.id === prevDevice.id)
+    );
+
+    if (removedDevices.length > 1) {
+      Logger.warn(
+        "Multiple devices were removed in one update, the results might be unpredictable. These devices were removed:",
+        removedDevices
+      );
+    }
+
+    await Promise.all(
+      removedDevices.map((device) => {
+        this.terminateSession(device.id);
+      })
+    );
+
     this.previousDevices = devices;
     // if this event is triggered due to the first device being created, we want to select it immediately.
     if (previousDevices.length === 0) {
@@ -299,8 +328,6 @@ export class DeviceSessionsManager implements Disposable, DeviceSessionsManagerI
   }, SWITCH_DEVICE_THROTTLE_MS);
 
   dispose() {
-    disposeAll(this.deviceSessions.values().toArray());
-    this.deviceManager.removeListener("deviceRemoved", this.removeDeviceListener);
-    this.deviceManager.removeListener("devicesChanged", this.devicesChangedListener);
+    disposeAll([...this.deviceSessions.values().toArray(), ...this.disposables]);
   }
 }

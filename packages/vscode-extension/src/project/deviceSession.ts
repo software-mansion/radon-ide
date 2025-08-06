@@ -29,15 +29,15 @@ import {
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
-import { DevicePlatform } from "../common/DeviceManager";
 import { ToolKey } from "./tools";
-import { ReloadAction } from "../common/DeviceSessionsManager";
 import { ApplicationContext } from "./ApplicationContext";
 import { BuildCache } from "../builders/BuildCache";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { ApplicationSession } from "./applicationSession";
+import { DevicePlatform } from "../common/State";
+import { ReloadAction } from "./DeviceSessionsManager";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds

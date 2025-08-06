@@ -1,8 +1,8 @@
 import _ from "lodash";
 import { Disposable, EventEmitter } from "vscode";
 import { disposeAll } from "../utilities/disposables";
-import { mergeAndCalculateChanges } from "../utilities/mergeAndCalculateChanges";
 import { RecursivePartial } from "../common/State";
+import { mergeAndCalculateChanges } from "../common/Merge";
 
 export abstract class StateManager<T extends object> implements Disposable {
   static create<T extends object>(initialState: T): StateManager<T> {

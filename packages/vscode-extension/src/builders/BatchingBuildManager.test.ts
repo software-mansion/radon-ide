@@ -3,9 +3,9 @@ import Sinon from "sinon";
 import { describe, beforeEach, it } from "mocha";
 
 import { BatchingBuildManager } from "./BatchingBuildManager";
-import { DevicePlatform } from "../common/DeviceManager";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { CancelToken } from "../utilities/cancelToken";
+import { DevicePlatform } from "../common/State";
 
 describe("BatchingBuildManager", () => {
   let buildAppMock = Sinon.stub();

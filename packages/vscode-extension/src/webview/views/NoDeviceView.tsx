@@ -1,17 +1,18 @@
 import "./NoDeviceView.css";
+import { use$ } from "@legendapp/state/react";
 import { VscodeProgressRing } from "@vscode-elements/react-elements";
 import { useCallback, useState } from "react";
 import SmartphoneIcon from "../components/icons/SmartphoneIcon";
 import Button from "../components/shared/Button";
 import { useModal } from "../providers/ModalProvider";
 import CreateDeviceView from "./CreateDeviceView";
-import { useDevices } from "../providers/DevicesProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
-import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/DeviceManager";
 import { Platform, useUtils } from "../providers/UtilsProvider";
 import ManageDevicesView from "./ManageDevicesView";
 import { useProject } from "../providers/ProjectProvider";
 import { useDependencyErrors } from "../hooks/useDependencyErrors";
+import { IOSDeviceTypeInfo, IOSRuntimeInfo } from "../../common/State";
+import { useStore } from "../providers/storeProvider";
 
 const firstIosDevice = iOSSupportedDevices[0];
 const firstAndroidDevice = AndroidSupportedDevices[0];
@@ -65,8 +66,12 @@ function findNewestIosRuntime(runtimes: IOSRuntimeInfo[]) {
 }
 
 export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }) {
+  const store$ = useStore();
   const { openModal, closeModal } = useModal();
-  const { iOSRuntimes, androidImages, deviceManager } = useDevices();
+
+  const iOSRuntimes = use$(store$.devicesState.iOSRuntimes) ?? [];
+  const androidImages = use$(store$.devicesState.androidImages) ?? [];
+
   const [isIOSCreating, withIosCreating] = useLoadingState();
   const [isAndroidCreating, withAndroidCreating] = useLoadingState();
   const errors = useDependencyErrors();
@@ -106,7 +111,7 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
       }
 
       const { modelId, modelName } = firstAndroidDevice;
-      await deviceManager.createAndroidDevice(modelId, modelName, newestImage);
+      await project.createAndroidDevice(modelId, modelName, newestImage);
     });
   }
 
@@ -123,7 +128,7 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
         return;
       }
       const iOSDeviceType = firstRuntimeSupportedDevice(newestRuntime.supportedDeviceTypes);
-      await deviceManager.createIOSDevice(iOSDeviceType!, iOSDeviceType!.name, newestRuntime);
+      await project.createIOSDevice(iOSDeviceType!, iOSDeviceType!.name, newestRuntime);
     });
   }
   return (

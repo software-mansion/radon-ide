@@ -4,13 +4,13 @@ import { OutputChannel } from "vscode";
 import { BuildCache } from "./BuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
-import { DevicePlatform } from "../common/DeviceManager";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { isExpoGoProject } from "./expoGo";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
+import { DevicePlatform } from "../common/State";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 

@@ -30,8 +30,8 @@ import { disposeAll } from "../utilities/disposables";
 import { ToolKey, ToolPlugin, ToolsDelegate, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
 import { CancelToken } from "../utilities/cancelToken";
-import { DevicePlatform } from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
+import { DevicePlatform } from "../common/State";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
