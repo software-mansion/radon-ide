@@ -118,69 +118,6 @@
   justify-content: flex-start;
 }
 
-.subscription-option {
-  padding: 16px;
-  border: 2px solid var(--vscode-foreground);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background-color: var(--vscode-input-background);
-  user-select: none;
-}
-
-.subscription-option:hover {
-  border-color: var(--vscode-button-background);
-}
-
-.subscription-option.selected {
-  border-color: var(--vscode-button-background);
-  background-color: var(--vscode-button-hoverBackground);
-  color: var(--vscode-button-foreground);
-}
-
-.plan-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-.plan-name {
-  display: flex;
-  align-items: center;
-  font-weight: 600;
-  font-size: 16px;
-}
-
-.plan-saving {
-  display: inline-block;
-  background-color: var(--vscode-button-background);
-  color: var(--vscode-button-foreground);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border-radius: 4px;
-  margin-left: 8px;
-  vertical-align: middle;
-}
-
-.plan-price {
-  display: flex;
-  align-items: center;
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.plan-price span {
-  font-weight: 700;
-  font-size: 18px;
-}
-
-.plan-description {
-  text-align: left;
-  font-size: 14px;
-}
-
 .continue-button-container {
   opacity: 0;
   transform: translateY(12px);

@@ -3,6 +3,7 @@ import "./PaywallView.css";
 import { PricePreviewResponse } from "@paddle/paddle-js";
 import classNames from "classnames";
 import Button from "../components/shared/Button";
+import SubscriptionOption from "../components/shared/SubscriptionOption";
 import RadonBackgroundImage from "../components/RadonBackgroundImage";
 import usePaddle from "../hooks/usePaddle";
 
@@ -101,37 +102,25 @@ function PaywallView() {
               <p className="subscription-options-caption">Start with 2 week trial then:</p>
 
               <div className="subscription-options">
-                <div
-                  className={classNames(
-                    "subscription-option",
-                    selectedPlan === "yearly" && "selected"
-                  )}
-                  onClick={() => setSelectedPlan("yearly")}>
-                  <div className="plan-header">
-                    <span className="plan-name">
-                      Yearly Plan <span className="plan-saving">Save 16%</span>
-                    </span>
-                    <span className="plan-price">
-                      <span>{radonProYearlyPrice?.formattedTotals.total}</span> / year
-                    </span>
-                  </div>
-                  <div className="plan-description">Billed annually</div>
-                </div>
+                <SubscriptionOption
+                  planType="yearly"
+                  planName="Yearly Plan"
+                  planPrice={radonProYearlyPrice?.formattedTotals.total || ""}
+                  planDescription="Billed annually"
+                  showSaving={true}
+                  savingText="Save 16%"
+                  isSelected={selectedPlan === "yearly"}
+                  onClick={() => setSelectedPlan("yearly")}
+                />
 
-                <div
-                  className={classNames(
-                    "subscription-option",
-                    selectedPlan === "monthly" && "selected"
-                  )}
-                  onClick={() => setSelectedPlan("monthly")}>
-                  <div className="plan-header">
-                    <span className="plan-name">Monthly Plan</span>
-                    <span className="plan-price">
-                      <span>{radonProMonthlyPrice?.formattedTotals.total}</span> / month
-                    </span>
-                  </div>
-                  <div className="plan-description">Billed monthly</div>
-                </div>
+                <SubscriptionOption
+                  planType="monthly"
+                  planName="Monthly Plan"
+                  planPrice={radonProMonthlyPrice?.formattedTotals.total || ""}
+                  planDescription="Billed monthly"
+                  isSelected={selectedPlan === "monthly"}
+                  onClick={() => setSelectedPlan("monthly")}
+                />
               </div>
             </div>
           )}
