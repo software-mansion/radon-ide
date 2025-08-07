@@ -1,4 +1,5 @@
 import { until } from "selenium-webdriver";
+import { By } from "vscode-extension-tester";
 
 export async function waitForElement(driver, element, timeout = 5000) {
   await driver.wait(
@@ -21,4 +22,27 @@ export async function findAndWaitForElement(
   );
   await waitForElement(driver, element);
   return element;
+}
+
+export async function findAndWaitForElementByTag(
+  driver,
+  tagName,
+  timeoutMessage = `Timed out waiting for element by tag ${tagName}`,
+  timeout = 5000
+) {
+  const selector = By.css(`[data-test="${tagName}"]`);
+  return findAndWaitForElement(driver, selector, timeoutMessage, timeout);
+}
+
+export async function findAndClickElementByTag(
+  driver,
+  dataTag,
+  message = `Timed out waiting for element with tag name ${dataTag}`
+) {
+  const element = await findAndWaitForElement(
+    driver,
+    By.css(`[data-test="${dataTag}"]`),
+    message
+  );
+  element.click();
 }
