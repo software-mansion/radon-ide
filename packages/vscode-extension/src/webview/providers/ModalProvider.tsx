@@ -6,12 +6,12 @@ interface ModalState {
   component: React.ReactNode;
   open: boolean;
   headerShown: boolean;
-  isFullScreen: boolean;
+  fullscreen: boolean;
 }
 
 interface ModalOptions {
   title?: string;
-  fullScreen?: boolean;
+  fullscreen?: boolean;
 }
 
 interface ModalContextProps {
@@ -27,13 +27,7 @@ const ModalContext = createContext<ModalContextProps>({
 });
 
 export default function ModalProvider({ children }: { children: React.ReactNode }) {
-  const [state, setState] = useState<ModalState>({
-    title: "",
-    component: <></>,
-    open: false,
-    headerShown: true,
-    isFullScreen: false,
-  });
+  const [state, setState] = useState<ModalState | null>(null);
 
   const openModal = (modalComponent: React.ReactNode, options?: ModalOptions) => {
     setState({
@@ -41,38 +35,34 @@ export default function ModalProvider({ children }: { children: React.ReactNode 
       component: modalComponent,
       open: true,
       headerShown: true,
-      isFullScreen: options?.fullScreen || false,
+      fullscreen: options?.fullscreen || false,
     });
   };
 
   const closeModal = () => {
-    setState({
-      title: "",
-      component: null,
-      open: false,
-      headerShown: true,
-      isFullScreen: false,
-    });
+    setState(null);
   };
 
   const showHeader = (value: boolean) => {
-    setState((prevState) => ({
-      ...prevState,
-      headerShown: value,
-    }));
+    if (state === null) {
+      return;
+    }
+    setState({ ...state, headerShown: value });
   };
 
   return (
     <ModalContext.Provider value={{ openModal, closeModal, showHeader }}>
       {children}
-      <Modal
-        title={state.title}
-        component={state.component}
-        isOpen={state.open}
-        onClose={closeModal}
-        headerShown={state.headerShown}
-        isFullScreen={state.isFullScreen}
-      />
+      {state !== null && (
+        <Modal
+          title={state.title}
+          component={state.component}
+          isOpen={state.open}
+          onClose={closeModal}
+          headerShown={state.headerShown}
+          fullscreen={state.fullscreen}
+        />
+      )}
     </ModalContext.Provider>
   );
 }

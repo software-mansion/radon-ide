@@ -8,7 +8,7 @@ export function usePaywall() {
 
   const openPaywall = () => {
     project.sendTelemetry("paywall:open");
-    openModal(<PaywallView />, { fullScreen: true });
+    openModal(<PaywallView />, { fullscreen: true });
   };
 
   return { openPaywall };

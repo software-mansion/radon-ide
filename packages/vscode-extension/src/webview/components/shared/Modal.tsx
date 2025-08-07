@@ -1,5 +1,6 @@
 import React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
 import "./Modal.css";
 import classNames from "classnames";
@@ -11,7 +12,7 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   headerShown?: boolean;
-  isFullScreen?: boolean;
+  fullscreen?: boolean;
 }
 
 export default function Modal({
@@ -20,25 +21,28 @@ export default function Modal({
   isOpen,
   onClose,
   headerShown,
-  isFullScreen,
+  fullscreen,
 }: ModalProps) {
-  if (component === null) {
-    return null;
-  }
-
   return (
     <Dialog.Root open={isOpen}>
       <Dialog.Portal>
         <Dialog.Overlay className="modal-overlay" onClick={onClose} />
         <Dialog.Content
-          className={classNames("modal-content", isFullScreen && "modal-content-fullscreen")}
-          onEscapeKeyDown={onClose}>
-          {headerShown && title && <Dialog.Title className="modal-title">{title}</Dialog.Title>}
+          className={classNames("modal-content", fullscreen && "modal-content-fullscreen")}
+          onEscapeKeyDown={onClose}
+          aria-description={title}>
+          {headerShown && title ? (
+            <Dialog.Title className="modal-title">{title}</Dialog.Title>
+          ) : (
+            <VisuallyHidden.Root>
+              <Dialog.Title className="modal-title">Modal</Dialog.Title>
+            </VisuallyHidden.Root>
+          )}
 
           <div
             className={classNames(
               "modal-content-container",
-              isFullScreen && "modal-content-container-fullscreen"
+              fullscreen && "modal-content-container-fullscreen"
             )}>
             {component}
           </div>
