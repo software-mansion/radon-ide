@@ -35,7 +35,8 @@ function useIsEnabled() {
     return false;
   }
   const isToolEnabled = selectedDeviceSession?.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled;
-  return isToolEnabled;
+  const isInspectorAvailable = selectedDeviceSession?.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.pluginAvailable;
+  return isToolEnabled && isInspectorAvailable;
 }
 
 function RenderOutlinesOverlay() {

@@ -29,7 +29,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
 
   constructor(
     private inspectorBridge: RadonInspectorBridge,
-    private onAvailabilityChange?: () => void
+    private onAvailabilityChange: () => void
   ) {
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("appReady", () => {
@@ -55,7 +55,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
             this.deactivateDueToAvailabilityChange();
           }
 
-          this.onAvailabilityChange?.();
+          this.onAvailabilityChange();
         }
       )
     );

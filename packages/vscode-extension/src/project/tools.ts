@@ -73,6 +73,15 @@ export class ToolsManager implements Disposable {
     this.plugins.set(reactQueryPlugin.id, reactQueryPlugin);
 
     const handleRenderOutlinesAvailabilityChange = () => {
+      // Note that this enables and disables the tool internally,
+      // without updating the tool enabled state (calling updateToolEnabledState)
+      // in order to avoid telemetry events spam and allow for storing the previous state
+      // without refactoring the entire ToolsManager logic.
+
+      // On the frontend, to determine whether tool is actually enabled, we have
+      // to check the inspector availability (this.pluginAvailable) in cases where
+      // it is unavailable, because getToolState() will return the active state from before
+      // availability change.
       this.handleStateChange();
     };
 
