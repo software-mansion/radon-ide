@@ -22,7 +22,7 @@ function DeviceRemovalConfirmation({
     return () => {
       showHeader(true);
     };
-  });
+  }, []);
 
   return (
     <div className="device-removal-wrapper">

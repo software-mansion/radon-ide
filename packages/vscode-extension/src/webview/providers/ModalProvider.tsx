@@ -1,4 +1,4 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useCallback, useState } from "react";
 import Modal from "../components/shared/Modal";
 
 interface ModalState {
@@ -43,12 +43,15 @@ export default function ModalProvider({ children }: { children: React.ReactNode 
     setState(null);
   };
 
-  const showHeader = (value: boolean) => {
-    if (state === null) {
-      return;
-    }
-    setState({ ...state, headerShown: value });
-  };
+  const showHeader = useCallback(
+    (value: boolean) => {
+      if (state === null) {
+        return;
+      }
+      setState({ ...state, headerShown: value });
+    },
+    [state]
+  );
 
   return (
     <ModalContext.Provider value={{ openModal, closeModal, showHeader }}>
