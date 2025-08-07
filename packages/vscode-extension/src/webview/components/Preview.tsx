@@ -15,6 +15,7 @@ import {
   ZoomLevelType,
   InspectStackData,
   MultimediaData,
+  InspectorAvailabilityStatus,
 } from "../../common/Project";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
@@ -185,7 +186,7 @@ function Preview({
     if (selectedDeviceSession?.status !== "running") {
       return;
     }
-    if (selectedDeviceSession?.inspectorAvailability === false) {
+    if (selectedDeviceSession?.inspectorAvailability !== InspectorAvailabilityStatus.Available) {
       return;
     }
     if (type === "Leave") {
@@ -286,7 +287,7 @@ function Preview({
       if (e.button === 2) {
         if (
           selectedDeviceSession?.status === "running" &&
-          selectedDeviceSession?.inspectorAvailability === false
+          selectedDeviceSession?.inspectorAvailability !== InspectorAvailabilityStatus.Available
         ) {
           handleInspectorUnavailable(e);
         } else {

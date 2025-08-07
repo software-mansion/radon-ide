@@ -6,19 +6,30 @@ const inspectorBridge = require("./inspector_bridge");
 // unexpected behavior when the app is not edge-to-edge, because
 // of margins, which are unavailable to fetch using react-native API.
 
+const INSPECTOR_AVAILABLE_STATUS = "available"
+const INSPECTOR_UNAVAILABLE_EDGE_TO_EDGE_STATUS =  "unavailableEdgeToEdge"
+const INSPECTOR_UNAVAILABLE_INACTIVE_STATUS = "unavailableInactive"
+
 let isAppStateActive = true;
 let isEdgeToEdge = true;
 let isFocused = true;
 let lastEstablishedAvailability = null;
 
 const updateAvailabilityAndSendMessage = () => {
-  const availability = isAppStateActive && isEdgeToEdge && isFocused;
 
-  if (availability !== lastEstablishedAvailability) {
-    lastEstablishedAvailability = availability;
+  let availabilityStatus = INSPECTOR_AVAILABLE_STATUS;
+  if (!isEdgeToEdge) {
+    availabilityStatus = INSPECTOR_UNAVAILABLE_EDGE_TO_EDGE_STATUS;
+  }
+  if (!isAppStateActive || !isFocused) {
+    availabilityStatus = INSPECTOR_UNAVAILABLE_INACTIVE_STATUS;
+  }
+
+  if (availabilityStatus !== lastEstablishedAvailability) {
+    lastEstablishedAvailability = availabilityStatus;
     inspectorBridge.sendMessage({
       type: "inspectorAvailabilityChanged",
-      data: availability,
+      data: availabilityStatus,
     });
   }
 };
@@ -36,7 +47,6 @@ const handleDimensionsChange = () => {
 };
 
 const handleAppStateChange = (appState) => {
-  console.log("App state changed:", appState);
   isAppStateActive = appState === "active";
   updateAvailabilityAndSendMessage();
 };
@@ -77,7 +87,7 @@ export function setup() {
     // Upon these actions on android `blur` and `focus` events are fired, which
     // do not change the app state but allow for detecting such situations. More on that:
     // https://reactnative.dev/docs/appstate
-    
+
     appBlurSubscription = AppState.addEventListener("blur", handleBlurChange);
     appFocusSubscription = AppState.addEventListener("focus", handleFocusChange);
   }

@@ -22,6 +22,7 @@ import {
   AppOrientation,
   BundleErrorDescriptor,
   DeviceRotation,
+  InspectorAvailabilityStatus,
   ProfilingState,
   StartupMessage,
   ToolsState,
@@ -53,7 +54,8 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   private profilingReactState: ProfilingState = "stopped";
   private isRefreshing: boolean = false;
   private appOrientation: DeviceRotation | undefined;
-  private inspectorAvailability: boolean = true;
+  private inspectorAvailability: InspectorAvailabilityStatus =
+    InspectorAvailabilityStatus.Available;
   private isActive = false;
 
   private stateChangedEventEmitter = new EventEmitter<void>();
@@ -359,10 +361,13 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
 
         this.emitStateChange();
       }),
-      this.devtools.onEvent("inspectorAvailabilityChanged", (isAvailable: boolean) => {
-        this.inspectorAvailability = isAvailable;
-        this.emitStateChange();
-      })
+      this.devtools.onEvent(
+        "inspectorAvailabilityChanged",
+        (inspectorAvailability: InspectorAvailabilityStatus) => {
+          this.inspectorAvailability = inspectorAvailability;
+          this.emitStateChange();
+        }
+      )
     );
   }
   //#endregion

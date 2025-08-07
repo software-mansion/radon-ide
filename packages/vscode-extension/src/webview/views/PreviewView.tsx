@@ -17,6 +17,7 @@ import Button from "../components/shared/Button";
 import {
   Frame,
   InspectDataStackItem,
+  InspectorAvailabilityStatus,
   InspectStackData,
   ProfilingState,
   ZoomLevelType,
@@ -33,6 +34,14 @@ import AppRootSelect from "../components/AppRootSelect";
 import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
+
+const INSPECTOR_AVAILABILITY_MESSAGES = {
+  [InspectorAvailabilityStatus.Available]: "",
+  [InspectorAvailabilityStatus.UnavailableEdgeToEdge]:
+    "Element Inspector is disabled in apps that don't support Edge-to-Edge.",
+  [InspectorAvailabilityStatus.UnavailableInactive]:
+    "Element Inspector is disabled when the app is inactive.",
+} as const;
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
@@ -119,10 +128,15 @@ function PreviewView() {
   const isStarting = selectedDeviceSession?.status === "starting";
   const isRunning = selectedDeviceSession?.status === "running";
   const isRecording = selectedDeviceSession?.isRecordingScreen ?? false;
+  const inspectorAvailabilityStatus = isRunning
+    ? selectedDeviceSession.inspectorAvailability
+    : InspectorAvailabilityStatus.Available;
 
   const navBarButtonsActive = initialized && !isStarting && !radonConnectEnabled;
   const inspectorAvailable =
-    navBarButtonsActive && isRunning && selectedDeviceSession?.inspectorAvailability;
+    navBarButtonsActive &&
+    isRunning &&
+    selectedDeviceSession?.inspectorAvailability === InspectorAvailabilityStatus.Available;
   const debuggerToolsButtonsActive = navBarButtonsActive; // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
@@ -364,7 +378,7 @@ function PreviewView() {
           tooltip={{
             label: inspectorAvailable
               ? "Select an element to inspect it"
-              : "Render Outlines is disabled in apps that don't support Edge-to-Edge.",
+              : INSPECTOR_AVAILABILITY_MESSAGES[inspectorAvailabilityStatus],
           }}
           onClick={() => {
             sendTelemetry("inspector:button-clicked", {

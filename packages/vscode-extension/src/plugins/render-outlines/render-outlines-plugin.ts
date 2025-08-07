@@ -9,14 +9,28 @@ import {
 import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolPlugin } from "../../project/tools";
 import { disposeAll } from "../../utilities/disposables";
+import { InspectorAvailabilityStatus } from "../../common/Project";
+
+const INSPECTOR_AVAILABILITY_MESSAGES = {
+  [InspectorAvailabilityStatus.Available]: "",
+  [InspectorAvailabilityStatus.UnavailableEdgeToEdge]:
+    "Render Outlines is disabled in apps that don't support Edge-to-Edge.",
+  [InspectorAvailabilityStatus.UnavailableInactive]:
+    "Render Outlines is disabled when the app is inactive.",
+} as const;
 
 export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface, Disposable {
   private eventEmitter = new EventEmitter();
   private isEnabled = false;
   private devtoolsListeners: Disposable[] = [];
-  private _pluginAvailable = true;
+  private inspectorAvailability: InspectorAvailabilityStatus =
+    InspectorAvailabilityStatus.Available;
+  private wasPreviouslyEnabled = false;
 
-  constructor(private inspectorBridge: RadonInspectorBridge) {
+  constructor(
+    private inspectorBridge: RadonInspectorBridge,
+    private onAvailabilityChange?: () => void
+  ) {
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("appReady", () => {
         this.setEnabled(this.isEnabled);
@@ -30,9 +44,20 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
       })
     );
     this.devtoolsListeners.push(
-      this.inspectorBridge.onEvent("inspectorAvailabilityChanged", (isAvailable: boolean) => {
-        this._pluginAvailable = isAvailable;
-      })
+      this.inspectorBridge.onEvent(
+        "inspectorAvailabilityChanged",
+        (inspectorAvailability: InspectorAvailabilityStatus) => {
+          this.inspectorAvailability = inspectorAvailability;
+
+          if (inspectorAvailability === InspectorAvailabilityStatus.Available) {
+            this.activateDueToAvailabilityChange();
+          } else {
+            this.deactivateDueToAvailabilityChange();
+          }
+
+          this.onAvailabilityChange?.();
+        }
+      )
     );
   }
 
@@ -40,19 +65,33 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   public readonly label = "Outline Renders";
   public readonly toolInstalled = true;
   public readonly persist = false;
-  public readonly pluginUnavailableTooltip =
-    "Render Outlines is disabled in apps that don\'t support Edge-to-Edge.";
 
   public get pluginAvailable() {
-    return this._pluginAvailable;
+    return this.inspectorAvailability === InspectorAvailabilityStatus.Available;
+  }
+
+  public get pluginUnavailableTooltip() {
+    return INSPECTOR_AVAILABILITY_MESSAGES[this.inspectorAvailability];
+  }
+
+  private activateDueToAvailabilityChange() {
+    if (this.wasPreviouslyEnabled) {
+      this.setEnabled(true);
+    }
+  }
+
+  private deactivateDueToAvailabilityChange() {
+    this.setEnabled(false);
   }
 
   activate(): void {
     this.setEnabled(true);
+    this.wasPreviouslyEnabled = true;
   }
 
   deactivate(): void {
     this.setEnabled(false);
+    this.wasPreviouslyEnabled = false;
   }
 
   dispose() {

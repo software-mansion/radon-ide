@@ -90,7 +90,7 @@ export interface ApplicationSessionState {
   isRefreshing: boolean;
   bundleError: BundleErrorDescriptor | undefined;
   appOrientation: DeviceRotation | undefined;
-  inspectorAvailability: boolean;
+  inspectorAvailability: InspectorAvailabilityStatus;
 }
 
 export type DeviceSessionStateStarting = DeviceSessionStateCommon & {
@@ -162,6 +162,12 @@ export type AppOrientation = DeviceRotation | "Landscape";
 
 export function isOfEnumDeviceRotation(value: any): value is DeviceRotation {
   return Object.values(DeviceRotation).includes(value);
+}
+
+export enum InspectorAvailabilityStatus {
+  Available = "available",
+  UnavailableEdgeToEdge = "unavailableEdgeToEdge",
+  UnavailableInactive = "unavailableInactive",
 }
 
 // important: order of values in this enum matters

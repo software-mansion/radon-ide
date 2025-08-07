@@ -72,9 +72,16 @@ export class ToolsManager implements Disposable {
     const reactQueryPlugin = createReactQueryDevtools();
     this.plugins.set(reactQueryPlugin.id, reactQueryPlugin);
 
+    const handleRenderOutlinesAvailabilityChange = () => {
+      this.handleStateChange();
+    };
+
     this.plugins.set(REDUX_PLUGIN_ID, new ReduxDevtoolsPlugin(inspectorBridge));
     this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(inspectorBridge));
-    this.plugins.set(RENDER_OUTLINES_PLUGIN_ID, new RenderOutlinesPlugin(inspectorBridge));
+    this.plugins.set(
+      RENDER_OUTLINES_PLUGIN_ID,
+      new RenderOutlinesPlugin(inspectorBridge, handleRenderOutlinesAvailabilityChange)
+    );
 
     this.disposables.push(
       inspectorBridge.onEvent("devtoolPluginsChanged", (payload) => {

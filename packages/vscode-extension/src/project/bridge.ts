@@ -1,5 +1,5 @@
 import { Disposable } from "vscode";
-import { AppOrientation, NavigationRoute } from "../common/Project";
+import { AppOrientation, InspectorAvailabilityStatus, NavigationRoute } from "../common/Project";
 import { Logger } from "../Logger";
 
 export interface RadonInspectorBridgeEvents {
@@ -14,7 +14,7 @@ export interface RadonInspectorBridgeEvents {
   pluginMessage: [{ pluginId: string; type: string; data: any }];
   isProfilingReact: [boolean];
   appOrientationChanged: [AppOrientation];
-  inspectorAvailabilityChanged: [boolean];
+  inspectorAvailabilityChanged: [InspectorAvailabilityStatus];
 }
 
 export interface RadonInspectorBridge {
