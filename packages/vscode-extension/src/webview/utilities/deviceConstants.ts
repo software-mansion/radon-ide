@@ -188,7 +188,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
       width: 2814,
       height: 3894,
       offsetX: 176, // approx width * 0.06276 === height * 0.0453
-      offsetY: 176, // approx height * 0.0453 === width * 0.06276  
+      offsetY: 176, // approx height * 0.0453 === width * 0.06276
       image: ipadA16,
       imageLandscape: ipadA16Landscape,
     },

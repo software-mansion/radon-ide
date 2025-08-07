@@ -595,7 +595,7 @@ function Preview({
         <div style={{ maskImage: `url(${device?.bezel.image})` }} />
         <div style={{ maskImage: `url(${device?.skin.imageLandscape})` }} />
         <div style={{ maskImage: `url(${device?.skin.image})` }} />
-        
+
         <img src={device?.skin.image} alt="" />
         <img src={device?.skin.imageLandscape} alt="" />
         <img src={device?.bezel.image} alt="" />
