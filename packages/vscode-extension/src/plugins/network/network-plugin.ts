@@ -97,6 +97,7 @@ export class NetworkPlugin implements ToolPlugin {
   public readonly id: ToolKey = NETWORK_PLUGIN_ID;
   public readonly label = "Network";
 
+  public pluginAvailable = true;
   public toolInstalled = false;
   public readonly persist = true;
 

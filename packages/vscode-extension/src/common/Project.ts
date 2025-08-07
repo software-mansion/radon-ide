@@ -33,7 +33,7 @@ export type ToolState = {
   enabled: boolean;
   isPanelTool: boolean;
   label: string;
-  pluginAvailable?: boolean;
+  pluginAvailable: boolean;
   pluginUnavailableTooltip?: string;
 };
 

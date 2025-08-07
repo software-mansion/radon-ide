@@ -34,7 +34,7 @@ export interface ToolPlugin extends Disposable {
   label: string;
   toolInstalled: boolean;
   persist: boolean;
-  pluginAvailable?: boolean;
+  pluginAvailable: boolean;
   pluginUnavailableTooltip?: string;
   activate(): void;
   deactivate(): void;

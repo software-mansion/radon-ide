@@ -28,6 +28,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   public readonly id: ToolKey = REDUX_PLUGIN_ID;
   public readonly label = "Redux DevTools";
 
+  public pluginAvailable = true;
   public toolInstalled = false;
   public readonly persist = true;
 

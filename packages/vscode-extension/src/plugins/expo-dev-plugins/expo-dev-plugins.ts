@@ -51,6 +51,7 @@ export function createExpoDevPluginTools(): ToolPlugin[] {
     plugins.push({
       id: id as ExpoDevPluginToolName,
       label: pluginInfo.label,
+      pluginAvailable: true,
       toolInstalled: false,
       persist: true,
       activate() {

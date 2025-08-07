@@ -67,9 +67,9 @@ function ToolsList({
     <DevToolCheckbox
       key={key}
       label={tool.label}
-      checked={tool.enabled && (tool.pluginAvailable ?? true)}
+      checked={tool.enabled && tool.pluginAvailable}
       isPanelTool={tool.isPanelTool}
-      enabled={tool.pluginAvailable ?? true}
+      enabled={tool.pluginAvailable}
       pluginUnavailableTooltip={tool.pluginUnavailableTooltip ?? ""}
       onCheckedChange={async (checked) => {
         await project.updateToolEnabledState(key, checked);
