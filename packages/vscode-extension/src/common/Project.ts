@@ -89,6 +89,12 @@ type DeviceSessionStateCommon = {
   isRecordingScreen: boolean;
 };
 
+export enum InspectorBridgeStatus {
+  Connecting,
+  Connected,
+  Disconnected,
+}
+
 export interface ApplicationSessionState {
   profilingCPUState: ProfilingState;
   profilingReactState: ProfilingState;
@@ -98,7 +104,8 @@ export interface ApplicationSessionState {
   isRefreshing: boolean;
   bundleError: BundleErrorDescriptor | undefined;
   appOrientation: DeviceRotation | undefined;
-  inspectorAvailability: InspectorAvailabilityStatus;
+  elementInspectorAvailability: InspectorAvailabilityStatus;
+  inspectorBridgeStatus: InspectorBridgeStatus;
 }
 
 export type DeviceSessionStateStarting = DeviceSessionStateCommon & {

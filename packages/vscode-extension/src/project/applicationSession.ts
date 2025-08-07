@@ -23,6 +23,7 @@ import {
   AppOrientation,
   BundleErrorDescriptor,
   DeviceRotation,
+  InspectorBridgeStatus,
   InspectData,
   InspectorAvailabilityStatus,
   ProfilingState,
@@ -46,6 +47,7 @@ interface LaunchApplicationSessionDeps {
 }
 
 export class ApplicationSession implements ToolsDelegate, Disposable {
+  private inspectorBridgeStatus: InspectorBridgeStatus = InspectorBridgeStatus.Connecting;
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
   private debugSessionEventSubscription?: Disposable;
@@ -154,7 +156,8 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       isRefreshing: this.isRefreshing,
       bundleError: this.bundleError,
       appOrientation: this.appOrientation,
-      inspectorAvailability: this.inspectorAvailability,
+      elementInspectorAvailability: this.inspectorAvailability,
+      inspectorBridgeStatus: this.inspectorBridgeStatus,
     };
   }
 
@@ -184,7 +187,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
 
   //#region ToolsDelegate implementation
 
-  onToolsStateChange(toolsState: ToolsState): void {
+  onToolsStateChange(_toolsState: ToolsState): void {
     this.emitStateChange();
   }
 
@@ -378,7 +381,19 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
           this.inspectorAvailability = inspectorAvailability;
           this.emitStateChange();
         }
-      )
+      ),
+      this.devtools.onEvent("disconnected", () => {
+        if (this.inspectorBridgeStatus === InspectorBridgeStatus.Connected) {
+          this.inspectorBridgeStatus = InspectorBridgeStatus.Disconnected;
+          this.emitStateChange();
+        }
+      }),
+      this.devtools.onEvent("connected", () => {
+        if (this.inspectorBridgeStatus !== InspectorBridgeStatus.Connected) {
+          this.inspectorBridgeStatus = InspectorBridgeStatus.Connected;
+          this.emitStateChange();
+        }
+      })
     );
   }
   //#endregion
@@ -499,7 +514,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       function testInspectorExcludeGlobPattern(filename: string) {
         return patterns?.some((pattern) => minimatch(filename, pattern));
       }
-      stack.forEach((item: any) => {
+      stack.forEach((item) => {
         item.hide = false;
         if (!isAppSourceFile(item.source.fileName)) {
           item.hide = true;
