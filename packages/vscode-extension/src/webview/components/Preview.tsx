@@ -26,7 +26,6 @@ import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
 import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
-import { useDeviceFrame } from "../Preview/Device/hooks";
 import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
 import InspectorUnavailableBox from "./InspectorUnavailableBox";
@@ -496,7 +495,6 @@ function Preview({
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
   });
-  const frame = useDeviceFrame(device!);
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;
@@ -626,10 +624,17 @@ function Preview({
       so without this in place, when the device rotates, the images are re-fetched from the file system
       which causes the device preview to flicker. */}
       <span className="phone-preload-masks">
-        <div style={{ maskImage: `url(${device?.landscapeScreenImage})` }} />
+        <div style={{ maskImage: `url(${device?.landscapeScreenMaskImage})` }} />
         <div style={{ maskImage: `url(${device?.screenMaskImage})` }} />
-        <img src={frame.imageLandscape} alt="" />
-        <img src={frame.image} alt="" />
+        <div style={{ maskImage: `url(${device?.bezel.imageLandscape})` }} />
+        <div style={{ maskImage: `url(${device?.bezel.image})` }} />
+        <div style={{ maskImage: `url(${device?.skin.imageLandscape})` }} />
+        <div style={{ maskImage: `url(${device?.skin.image})` }} />
+
+        <img src={device?.skin.image} alt="" />
+        <img src={device?.skin.imageLandscape} alt="" />
+        <img src={device?.bezel.image} alt="" />
+        <img src={device?.bezel.imageLandscape} alt="" />
       </span>
     </>
   );
