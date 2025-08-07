@@ -1,7 +1,15 @@
+import { TelemetryEventProperties } from "@vscode/extension-telemetry";
+import { ReloadAction, SelectDeviceOptions } from "../project/DeviceSessionsManager";
 import { BuildType } from "./BuildConfig";
-import { DeviceInfo, DevicePlatform } from "./DeviceManager";
 import { LaunchConfiguration } from "./LaunchConfig";
 import { Output } from "./OutputChannel";
+import {
+  AndroidSystemImageInfo,
+  DeviceInfo,
+  DevicePlatform,
+  IOSDeviceTypeInfo,
+  IOSRuntimeInfo,
+} from "./State";
 
 export type Locale = string;
 
@@ -73,16 +81,22 @@ export type DeviceSessionStatus = "starting" | "running" | "fatalError";
 type DeviceSessionStateCommon = {
   deviceInfo: DeviceInfo;
   previewURL: string | undefined;
-  profilingReactState: ProfilingState;
-  profilingCPUState: ProfilingState;
   navigationHistory: NavigationHistoryItem[];
   navigationRouteList: NavigationRoute[];
-  toolsState: ToolsState;
-  isDebuggerPaused: boolean;
-  logCounter: number;
   hasStaleBuildCache: boolean;
   isRecordingScreen: boolean;
 };
+
+export interface ApplicationSessionState {
+  profilingCPUState: ProfilingState;
+  profilingReactState: ProfilingState;
+  toolsState: ToolsState;
+  isDebuggerPaused: boolean;
+  logCounter: number;
+  isRefreshing: boolean;
+  bundleError: BundleErrorDescriptor | undefined;
+  appOrientation: DeviceRotation | undefined;
+}
 
 export type DeviceSessionStateStarting = DeviceSessionStateCommon & {
   status: "starting";
@@ -95,12 +109,10 @@ export type BundleErrorDescriptor = {
   message: string;
 };
 
-export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
-  status: "running";
-  isRefreshing: boolean;
-  bundleError: BundleErrorDescriptor | undefined;
-  appOrientation: DeviceRotation | undefined;
-};
+export type DeviceSessionStateRunning = DeviceSessionStateCommon &
+  ApplicationSessionState & {
+    status: "running";
+  };
 
 export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {
   status: "fatalError";
@@ -239,9 +251,10 @@ export type MultimediaData = {
   fileName: string;
 };
 
+export type IDEPanelMoveTarget = "new-window" | "editor-tab" | "side-panel";
+
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
   /**
@@ -274,12 +287,13 @@ export interface ProjectInterface {
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
-  focusOutput(channel: Output): Promise<void>;
   focusDebugConsole(): Promise<void>;
+
   openNavigation(navigationItemID: string): Promise<void>;
   navigateBack(): Promise<void>;
   navigateHome(): Promise<void>;
   removeNavigationHistoryEntry(id: string): Promise<void>;
+
   openDevMenu(): Promise<void>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
@@ -294,10 +308,10 @@ export interface ProjectInterface {
   captureAndStopRecording(): void;
   captureReplay(): void;
   captureScreenshot(): void;
+  saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
 
   startProfilingCPU(): void;
   stopProfilingCPU(): void;
-
   startProfilingReact(): void;
   stopProfilingReact(): void;
 
@@ -308,12 +322,40 @@ export interface ProjectInterface {
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;
 
-  inspectElementAt(
-    xRatio: number,
-    yRatio: number,
-    requestStack: boolean,
-    callback: (inspectData: InspectData) => void
+  reloadCurrentSession(type: ReloadAction): Promise<void>;
+  startOrActivateSessionForDevice(
+    deviceInfo: DeviceInfo,
+    selectDeviceOptions?: SelectDeviceOptions
   ): Promise<void>;
+  terminateSession(deviceId: DeviceId): Promise<void>;
+
+  inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<InspectData>;
+
+  createAndroidDevice(
+    modelId: string,
+    displayName: string,
+    systemImage: AndroidSystemImageInfo
+  ): Promise<DeviceInfo>;
+  createIOSDevice(
+    deviceType: IOSDeviceTypeInfo,
+    displayName: string,
+    runtime: IOSRuntimeInfo
+  ): Promise<DeviceInfo>;
+  renameDevice(device: DeviceInfo, newDisplayName: string): Promise<void>;
+  removeDevice(device: DeviceInfo): Promise<void>;
+
+  log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]): Promise<void>;
+  focusOutput(channel: Output): Promise<void>;
+
+  getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;
+  movePanelTo(location: IDEPanelMoveTarget): Promise<void>;
+  openExternalUrl(uriString: string): Promise<void>;
+  openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
+  showDismissableError(errorMessage: string): Promise<void>;
+  showToast(message: string, timeout: number): Promise<void>;
+
+  reportIssue(): Promise<void>;
+  sendTelemetry(eventName: string, properties?: TelemetryEventProperties): Promise<void>;
 
   addListener<K extends keyof ProjectEventMap>(
     eventType: K,

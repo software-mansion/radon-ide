@@ -76,20 +76,11 @@
 
 .touch-area {
   position: absolute;
-  width: var(--phone-touch-area-width);
-  height: var(--phone-touch-area-height);
-  top: var(--phone-touch-area-top);
-  left: var(--phone-touch-area-left);
-  user-select: none;
-}
-
-.phone-screen-background {
-  position: absolute;
-  width: calc(var(--phone-screen-width));
+  width: var(--phone-screen-width);
   height: var(--phone-screen-height);
   top: var(--phone-top);
-  left: calc(var(--phone-left));
-  rotate: var(--frame-rotation);
+  left: var(--phone-left);
+  user-select: none;
 }
 
 .phone-sized {
@@ -103,14 +94,15 @@
   -webkit-mask-size: cover;
   mask-size: cover;
   user-select: none;
+  background-color: black;
 }
 
 .phone-screen {
   position: absolute;
-  width: var(--phone-touch-area-screen-width);
-  height: var(--phone-touch-area-screen-height);
-  top: var(--phone-touch-area-screen-top);
-  left: var(--phone-touch-area-screen-left);
+  width: 100%;
+  height: 100%;
+  top: 0px;
+  left: 0px;
   -webkit-mask-image: var(--phone-mask-image);
   mask-image: var(--phone-mask-image);
   -webkit-mask-size: cover;
@@ -128,6 +120,7 @@
   -webkit-mask-size: cover;
   mask-size: cover;
   background-color: var(--swm-separator);
+  aspect-ratio: var(--phone-aspect-ratio);
 }
 
 .phone-frame {

@@ -48,6 +48,7 @@ enum EditorType {
 type McpEntry = {
   url: `http://127.0.0.1:${number}/mcp`;
   type: "http";
+  headers?: Record<string, string>;
 };
 
 type Session = {

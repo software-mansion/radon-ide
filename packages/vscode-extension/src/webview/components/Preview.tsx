@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
 import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
-import { useProject } from "../providers/ProjectProvider";
+import { Platform, useProject } from "../providers/ProjectProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import PreviewLoader from "./PreviewLoader";
 import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
@@ -18,7 +18,6 @@ import {
 } from "../../common/Project";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
-import { Platform, useUtils } from "../providers/UtilsProvider";
 import InspectOverlay from "./InspectOverlay";
 import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
@@ -89,15 +88,12 @@ function Preview({
 
   const { selectedDeviceSession, project } = useProject();
 
-  const { sendTelemetry } = useUtils();
-
   const hasFatalError = selectedDeviceSession?.status === "fatalError";
   const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
 
-  const debugPaused = selectedDeviceSession?.isDebuggerPaused;
-
   const isRunning = selectedDeviceSession?.status === "running";
   const isRefreshing = isRunning && selectedDeviceSession.isRefreshing;
+  const debugPaused = isRunning && selectedDeviceSession.isDebuggerPaused;
 
   const previewURL = selectedDeviceSession?.previewURL;
 
@@ -187,7 +183,7 @@ function Preview({
       return;
     }
     if (type === "RightButtonDown") {
-      sendTelemetry("inspector:show-component-stack", {});
+      project.sendTelemetry("inspector:show-component-stack", {});
     }
 
     const clampedCoordinates = getNormalizedTouchCoordinates(event);
@@ -199,28 +195,33 @@ function Preview({
 
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
-    project.inspectElementAt(translatedX, translatedY, requestStack, (inspectData) => {
-      if (requestStack && inspectData?.stack) {
-        if (showInspectStackModal) {
-          setInspectStackData({
-            requestLocation: {
-              x: event.clientX,
-              y: event.clientY,
-            },
-            stack: inspectData.stack,
-          });
-        } else {
-          // find first item w/o hide flag and open file
-          const firstItem = inspectData.stack.find((item) => !item.hide);
-          if (firstItem) {
-            onInspectorItemSelected(firstItem);
+    project
+      .inspectElementAt(translatedX, translatedY, requestStack)
+      .then((inspectData) => {
+        if (requestStack && inspectData?.stack) {
+          if (showInspectStackModal) {
+            setInspectStackData({
+              requestLocation: {
+                x: event.clientX,
+                y: event.clientY,
+              },
+              stack: inspectData.stack,
+            });
+          } else {
+            // find first item w/o hide flag and open file
+            const firstItem = inspectData.stack.find((item) => !item.hide);
+            if (firstItem) {
+              onInspectorItemSelected(firstItem);
+            }
           }
         }
-      }
-      if (inspectData.frame) {
-        setInspectFrame(inspectData.frame);
-      }
-    });
+        if (inspectData.frame) {
+          setInspectFrame(inspectData.frame);
+        }
+      })
+      .catch(() => {
+        // NOTE: we can safely ignore errors, we'll simply not show the frame in that case
+      });
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
@@ -483,6 +484,7 @@ function Preview({
     <>
       <div
         className="phone-display-container"
+        data-test="phone-wrapper"
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>
@@ -595,11 +597,9 @@ function Preview({
       which causes the device preview to flicker. */}
       <span className="phone-preload-masks">
         <div style={{ maskImage: `url(${device?.landscapeScreenImage})` }} />
-        <div style={{ maskImage: `url(${device?.screenImage})` }} />
+        <div style={{ maskImage: `url(${device?.screenMaskImage})` }} />
         <img src={frame.imageLandscape} alt="" />
         <img src={frame.image} alt="" />
-        <img src={device?.landscapeScreenImage} alt="" />
-        <img src={device?.screenImage} alt="" />
       </span>
     </>
   );

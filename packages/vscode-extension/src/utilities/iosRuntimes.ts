@@ -1,4 +1,4 @@
-import { IOSRuntimeInfo } from "../common/DeviceManager";
+import { IOSRuntimeInfo } from "../common/State";
 import { exec } from "./subprocess";
 
 type RuntimeInfo = {

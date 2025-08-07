@@ -40,8 +40,6 @@ type DeviceCSSProperties = React.CSSProperties & {
   "--phone-touch-area-left"?: string;
   "--phone-touch-area-screen-height"?: string;
   "--phone-touch-area-screen-width"?: string;
-  "--phone-touch-area-screen-top"?: string;
-  "--phone-touch-area-screen-left"?: string;
   "--frame-rotation"?: string;
 };
 
@@ -96,7 +94,7 @@ function getPortraitDimensions(
     phoneScreenWidth: `${(device.screenWidth / frame.width) * 100}%`,
     phoneTop: `${(frame.offsetY / frame.height) * 100}%`,
     phoneLeft: `${(frame.offsetX / frame.width) * 100}%`,
-    phoneMaskImage: `url(${device.screenImage})`,
+    phoneMaskImage: `url(${device.screenMaskImage})`,
     phoneFrameImage: `url(${frame.image})`,
     phoneAspectRatio: `${config.aspectRatio}`,
   };
@@ -128,32 +126,6 @@ function getLandscapeDimensions(
     phoneMaskImage: `url(${device.landscapeScreenImage})`,
     phoneFrameImage: `url(${frame.imageLandscape})`,
     phoneAspectRatio: `${1 / aspectRatio}`,
-  };
-}
-
-function getPortraitTouchAreaDimensions() {
-  return {
-    phoneTouchAreaWidth: "calc(var(--phone-screen-width) + 14px)",
-    phoneTouchAreaHeight: "var(--phone-screen-height)",
-    phoneTouchAreaTop: "var(--phone-top)",
-    phoneTouchAreaLeft: "calc(var(--phone-left) - 7px)",
-    phoneTouchAreaScreenHeight: "100%",
-    phoneTouchAreaScreenWidth: "calc(100% - 14px)",
-    phoneTouchAreaScreenTop: "0",
-    phoneTouchAreaScreenLeft: "7px",
-  };
-}
-
-function getLandscapeTouchAreaDimensions() {
-  return {
-    phoneTouchAreaWidth: "var(--phone-screen-width)",
-    phoneTouchAreaHeight: "calc(var(--phone-screen-height) + 14px)",
-    phoneTouchAreaTop: "calc(var(--phone-top) - 7px)",
-    phoneTouchAreaLeft: "var(--phone-left)",
-    phoneTouchAreaScreenHeight: "calc(100% - 14px)",
-    phoneTouchAreaScreenWidth: "100%",
-    phoneTouchAreaScreenTop: "7px",
-    phoneTouchAreaScreenLeft: "0",
   };
 }
 
@@ -190,9 +162,6 @@ export default function Device({ device, zoomLevel, children, wrapperDivRef }: D
     const phoneDimensions = layoutConfig.isLandscape
       ? getLandscapeDimensions(layoutConfig, device, frame, zoomLevel)
       : getPortraitDimensions(layoutConfig, device, frame, zoomLevel);
-    const touchAreaDimensions = layoutConfig.isLandscape
-      ? getLandscapeTouchAreaDimensions()
-      : getPortraitTouchAreaDimensions();
 
     const frameRotation = shouldRotateFrame(rotation) ? "180deg" : "0deg";
 
@@ -212,14 +181,6 @@ export default function Device({ device, zoomLevel, children, wrapperDivRef }: D
       "--phone-left": phoneDimensions.phoneLeft,
       "--phone-mask-image": phoneDimensions.phoneMaskImage,
       "--phone-frame-image": phoneDimensions.phoneFrameImage,
-      "--phone-touch-area-width": touchAreaDimensions.phoneTouchAreaWidth,
-      "--phone-touch-area-height": touchAreaDimensions.phoneTouchAreaHeight,
-      "--phone-touch-area-top": touchAreaDimensions.phoneTouchAreaTop,
-      "--phone-touch-area-left": touchAreaDimensions.phoneTouchAreaLeft,
-      "--phone-touch-area-screen-height": touchAreaDimensions.phoneTouchAreaScreenHeight,
-      "--phone-touch-area-screen-width": touchAreaDimensions.phoneTouchAreaScreenWidth,
-      "--phone-touch-area-screen-top": touchAreaDimensions.phoneTouchAreaScreenTop,
-      "--phone-touch-area-screen-left": touchAreaDimensions.phoneTouchAreaScreenLeft,
       "--frame-rotation": frameRotation,
     };
   }, [device, frame, rotation, zoomLevel, wrapperDivRef]);
@@ -248,13 +209,10 @@ export default function Device({ device, zoomLevel, children, wrapperDivRef }: D
     return () => window.removeEventListener("resize", applyStylePropertiesToComponents);
   }, [device, frame, rotation, wrapperDivRef, zoomLevel]);
 
-  const backgroundImageSrc = isLandscape ? device.landscapeScreenImage : device.screenImage;
-
   return (
     <div className="phone-wrapper">
       <div ref={phoneContentRef} className="phone-content">
         <DeviceFrame frame={frame} isLandscape={isLandscape} />
-        <img src={backgroundImageSrc} className="phone-screen-background" alt="Device screen" />
         {children}
       </div>
     </div>

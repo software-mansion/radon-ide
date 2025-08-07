@@ -1,67 +1,53 @@
 import pixel9 from "../../assets/pixel_9/skin.webp";
-import pixel9mask from "../../assets/pixel_9/mask.png";
 import pixel9bezel from "../../assets/pixel_9/bezel.png";
 import pixel9screen from "../../assets/pixel_9/screen.png";
 import pixel9Landscape from "../../assets/pixel_9/landscape/skin.webp";
-import pixel9LandscapeMask from "../../assets/pixel_9/landscape/mask.png";
 import pixel9LandscapeBezel from "../../assets/pixel_9/landscape/bezel.png";
 import pixel9LandscapeScreen from "../../assets/pixel_9/landscape/screen.png";
 
 import pixel8 from "../../assets/pixel_8/skin.webp";
-import pixel8mask from "../../assets/pixel_8/mask.png";
 import pixel8bezel from "../../assets/pixel_8/bezel.png";
 import pixel8screen from "../../assets/pixel_8/screen.png";
 import pixel8Landscape from "../../assets/pixel_8/landscape/skin.webp";
-import pixel8LandscapeMask from "../../assets/pixel_8/landscape/mask.png";
 import pixel8LandscapeBezel from "../../assets/pixel_8/landscape/bezel.png";
 import pixel8LandscapeScreen from "../../assets/pixel_8/landscape/screen.png";
 
 import pixel7 from "../../assets/pixel_7/skin.webp";
-import pixel7mask from "../../assets/pixel_7/mask.png";
 import pixel7bezel from "../../assets/pixel_7/bezel.png";
 import pixel7screen from "../../assets/pixel_7/screen.png";
 import pixel7Landscape from "../../assets/pixel_7/landscape/skin.webp";
-import pixel7LandscapeMask from "../../assets/pixel_7/landscape/mask.png";
 import pixel7LandscapeBezel from "../../assets/pixel_7/landscape/bezel.png";
 import pixel7LandscapeScreen from "../../assets/pixel_7/landscape/screen.png";
 
 import pixel6a from "../../assets/pixel_6a/skin.webp";
-import pixel6amask from "../../assets/pixel_6a/mask.png";
 import pixel6abezel from "../../assets/pixel_6a/bezel.png";
 import pixel6ascreen from "../../assets/pixel_6a/screen.png";
 import pixel6aLandscape from "../../assets/pixel_6a/landscape/skin.webp";
-import pixel6aLandscapeMask from "../../assets/pixel_6a/landscape/mask.png";
 import pixel6aLandscapeBezel from "../../assets/pixel_6a/landscape/bezel.png";
 import pixel6aLandscapeScreen from "../../assets/pixel_6a/landscape/screen.png";
 
 import iphone16pro from "../../assets/iphone_16_pro/skin.png";
-import iphone16promask from "../../assets/iphone_16_pro/mask.png";
 import iphone16probezel from "../../assets/iphone_16_pro/bezel.png";
 import iphone16proscreen from "../../assets/iphone_16_pro/screen.png";
 import iphone16proLandscape from "../../assets/iphone_16_pro/landscape/skin.png";
-import iphone16proLandscapeMask from "../../assets/iphone_16_pro/landscape/mask.png";
 import iphone16proLandscapeBezel from "../../assets/iphone_16_pro/landscape/bezel.png";
 import iphone16proLandscapeScreen from "../../assets/iphone_16_pro/landscape/screen.png";
 
 import iphone15pro from "../../assets/iphone_15_pro/skin.png";
-import iphone15promask from "../../assets/iphone_15_pro/mask.png";
 import iphone15probezel from "../../assets/iphone_15_pro/bezel.png";
 import iphone15proscreen from "../../assets/iphone_15_pro/screen.png";
 import iphone15proLandscape from "../../assets/iphone_15_pro/landscape/skin.png";
-import iphone15proLandscapeMask from "../../assets/iphone_15_pro/landscape/mask.png";
 import iphone15proLandscapeBezel from "../../assets/iphone_15_pro/landscape/bezel.png";
 import iphone15proLandscapeScreen from "../../assets/iphone_15_pro/landscape/screen.png";
 
 import iphoneSE from "../../assets/iphone_SE/skin.webp";
-import iphoneSEmask from "../../assets/iphone_SE/mask.png";
 import iphoneSEbezel from "../../assets/iphone_SE/bezel.png";
 import iphoneSEscreen from "../../assets/iphone_SE/screen.png";
 import iphoneSELandscape from "../../assets/iphone_SE/landscape/skin.webp";
-import iphoneSELandscapeMask from "../../assets/iphone_SE/landscape/mask.png";
 import iphoneSELandscapeBezel from "../../assets/iphone_SE/landscape/bezel.png";
 import iphoneSELandscapeScreen from "../../assets/iphone_SE/landscape/screen.png";
 
-import { DevicePlatform } from "../../common/DeviceManager";
+import { DevicePlatform } from "../../common/State";
 
 export type DevicePropertiesFrame = {
   type: "mask" | "skin";
@@ -79,9 +65,7 @@ export type DeviceProperties = {
   platform: DevicePlatform;
   screenWidth: number;
   screenHeight: number;
-  maskImage: string;
-  screenImage: string;
-  landscapeMaskImage: string;
+  screenMaskImage: string;
   landscapeScreenImage: string;
   minimumAndroidApiLevel?: number;
   bezel: DevicePropertiesFrame;
@@ -100,9 +84,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.IOS,
     screenWidth: 1178,
     screenHeight: 2556,
-    maskImage: iphone16promask,
-    screenImage: iphone16proscreen,
-    landscapeMaskImage: iphone16proLandscapeMask,
+    screenMaskImage: iphone16proscreen,
     landscapeScreenImage: iphone16proLandscapeScreen,
     bezel: {
       type: "mask" as const,
@@ -129,9 +111,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.IOS,
     screenWidth: 1178,
     screenHeight: 2556,
-    maskImage: iphone15promask,
-    screenImage: iphone15proscreen,
-    landscapeMaskImage: iphone15proLandscapeMask,
+    screenMaskImage: iphone15proscreen,
     landscapeScreenImage: iphone15proLandscapeScreen,
     bezel: {
       type: "mask" as const,
@@ -158,9 +138,7 @@ export const iOSSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.IOS,
     screenWidth: 750,
     screenHeight: 1334,
-    maskImage: iphoneSEmask,
-    screenImage: iphoneSEscreen,
-    landscapeMaskImage: iphoneSELandscapeMask,
+    screenMaskImage: iphoneSEscreen,
     landscapeScreenImage: iphoneSELandscapeScreen,
     bezel: {
       type: "mask",
@@ -191,9 +169,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2424,
-    maskImage: pixel9mask,
-    screenImage: pixel9screen,
-    landscapeMaskImage: pixel9LandscapeMask,
+    screenMaskImage: pixel9screen,
     landscapeScreenImage: pixel9LandscapeScreen,
     bezel: {
       type: "mask",
@@ -221,9 +197,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
-    maskImage: pixel8mask,
-    screenImage: pixel8screen,
-    landscapeMaskImage: pixel8LandscapeMask,
+    screenMaskImage: pixel8screen,
     landscapeScreenImage: pixel8LandscapeScreen,
     bezel: {
       type: "mask",
@@ -251,9 +225,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
-    maskImage: pixel7mask,
-    screenImage: pixel7screen,
-    landscapeMaskImage: pixel7LandscapeMask,
+    screenMaskImage: pixel7screen,
     landscapeScreenImage: pixel7LandscapeScreen,
     bezel: {
       type: "mask",
@@ -281,9 +253,7 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
     platform: DevicePlatform.Android,
     screenWidth: 1080,
     screenHeight: 2400,
-    maskImage: pixel6amask,
-    screenImage: pixel6ascreen,
-    landscapeMaskImage: pixel6aLandscapeMask,
+    screenMaskImage: pixel6ascreen,
     landscapeScreenImage: pixel6aLandscapeScreen,
     bezel: {
       type: "mask",

@@ -41,6 +41,8 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
         replayData={replayData}
       />
       {/* Hidden source video for loading the video stream */}
+      {/* Video's dimensions and orientation are dependent on the current device rotation
+          because of how the video saving is handled. */}
       <video
         ref={videoRef}
         src={replayData.url}

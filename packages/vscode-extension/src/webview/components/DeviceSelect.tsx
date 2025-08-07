@@ -3,15 +3,14 @@ import React, { PropsWithChildren } from "react";
 import * as Select from "@radix-ui/react-select";
 import { use$ } from "@legendapp/state/react";
 import { VscodeBadge as Badge } from "@vscode-elements/react-elements";
-import { DeviceInfo, DevicePlatform } from "../../common/DeviceManager";
 import "./DeviceSelect.css";
 import "./shared/Dropdown.css";
 import { useProject } from "../providers/ProjectProvider";
-import { useDevices } from "../providers/DevicesProvider";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
 import { useStore } from "../providers/storeProvider";
+import { DeviceInfo, DevicePlatform } from "../../common/State";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -90,7 +89,8 @@ function DeviceSelect() {
   const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
 
   const { selectedDeviceSession, projectState, project } = useProject();
-  const { devices, deviceSessionsManager } = useDevices();
+
+  const devices = use$(store$.devicesState.devices) ?? [];
   const { openModal } = useModal();
 
   const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
@@ -103,7 +103,7 @@ function DeviceSelect() {
   const { deviceSessions } = projectState;
   const runningSessionIds = Object.keys(deviceSessions);
 
-  const deviceSections = partitionDevices(devices);
+  const deviceSections = partitionDevices(devices ?? []);
 
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
@@ -115,9 +115,9 @@ function DeviceSelect() {
       return;
     }
     if (selectedDevice?.id !== value) {
-      const deviceInfo = devices.find((d) => d.id === value);
+      const deviceInfo = (devices ?? []).find((d) => d.id === value);
       if (deviceInfo) {
-        deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
+        project.startOrActivateSessionForDevice(deviceInfo, {
           stopPreviousDevices,
         });
       }
@@ -125,7 +125,7 @@ function DeviceSelect() {
   };
 
   const handleDeviceStop = (deviceId: string) => {
-    deviceSessionsManager.terminateSession(deviceId);
+    project.terminateSession(deviceId);
   };
 
   const placeholderText = hasNoDevices ? "No devices found" : "Select device";
@@ -143,7 +143,9 @@ function DeviceSelect() {
         <Select.Value>
           <div className="device-select-value">
             <span className={`codicon codicon-${iconClass}`} />
-            <span className="device-select-value-text">{displayName}</span>
+            <span className="device-select-value-text" data-test="device-select-value-text">
+              {displayName}
+            </span>
             {backgroundDeviceCounter > 0 && (
               <span className="device-select-counter">+{backgroundDeviceCounter}</span>
             )}

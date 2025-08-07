@@ -1,4 +1,4 @@
-import { useUtils } from "../../providers/UtilsProvider";
+import { useProject } from "../../providers/ProjectProvider";
 
 interface AnchorProps {
   url: string;
@@ -7,10 +7,10 @@ interface AnchorProps {
 }
 
 function Anchor({ url, children, onClick }: AnchorProps) {
-  const utils = useUtils();
+  const { project } = useProject();
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.preventDefault();
-    utils.openExternalUrl(url);
+    project.openExternalUrl(url);
   };
 
   return (

@@ -29,17 +29,18 @@ export class WorkspaceConfigController implements Disposable {
 
       const config = workspace.getConfiguration("RadonIDE");
 
-      const currentWorkspaceConfig = {
+      const currentWorkspaceConfig: WorkspaceConfiguration = {
         panelLocation: config.get<PanelLocation>("panelLocation")!,
         showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
         stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
         deviceRotation: config.get<DeviceRotation>("deviceRotation")!,
+        inspectorExcludePattern: config.get<string>("inspectorExcludePattern") ?? null,
       };
 
       for (const partialStateEntry of partialStateEntries) {
         const updatedConfig = {
-          [partialStateEntry[0]]: partialStateEntry[1],
           ...currentWorkspaceConfig,
+          [partialStateEntry[0]]: partialStateEntry[1],
         };
 
         const shouldSkipUpdate = _.isEqual(updatedConfig, currentWorkspaceConfig);
@@ -66,6 +67,7 @@ export class WorkspaceConfigController implements Disposable {
       showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
       stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
       deviceRotation: config.get<DeviceRotation>("deviceRotation")!,
+      inspectorExcludePattern: config.get<string>("inspectorExcludePattern") ?? null,
     };
 
     const index = this.workspaceConfigurationUpdatesToIgnore.findIndex((cfg) =>

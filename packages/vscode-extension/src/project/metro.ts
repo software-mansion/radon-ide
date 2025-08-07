@@ -90,7 +90,10 @@ export class Metro {
     source: DebugSource;
     errorModulePath: string;
   }>();
+  protected readonly bundleProgressEventEmitter = new EventEmitter<{ bundleProgress: number }>();
+
   public readonly onBundleError = this.bundleErrorEventEmitter.event;
+  public readonly onBundleProgress = this.bundleProgressEventEmitter.event;
 
   constructor(port: number, watchFolders: string[] | undefined = undefined) {
     this._port = port;
@@ -338,15 +341,14 @@ export class MetroLauncher extends Metro implements Disposable {
   private subprocess?: ChildProcess;
   private startPromise: Promise<void> | undefined;
 
-  constructor(
-    private readonly devtools: Devtools,
-    private readonly delegate: MetroDelegate
-  ) {
+  constructor(private readonly devtools: Devtools) {
     super(0);
   }
 
   public dispose() {
     this.subprocess?.kill(9);
+    this.bundleErrorEventEmitter.dispose();
+    this.bundleProgressEventEmitter.dispose();
   }
 
   public async ready() {
@@ -509,7 +511,8 @@ export class MetroLauncher extends Metro implements Disposable {
           if (event.type === "bundle_transform_progressed") {
             // Because totalFileCount grows as bundle_transform progresses at the beginning there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
-              this.delegate.onBundleProgress(event.transformedFileCount / event.totalFileCount);
+              const bundleProgress = event.transformedFileCount / event.totalFileCount;
+              this.bundleProgressEventEmitter.fire({ bundleProgress });
             }
           } else if (event.type === "client_log" && event.level === "error") {
             Logger.error(stripAnsi(event.data[0]));
@@ -543,7 +546,6 @@ export class MetroLauncher extends Metro implements Disposable {
                 column0based: event.error.columnNumber,
               };
               const errorModulePath = event.error.originModulePath;
-              this.delegate.onBundlingError(message, source, errorModulePath);
               this.bundleErrorEventEmitter.fire({ message, source, errorModulePath });
               break;
           }
