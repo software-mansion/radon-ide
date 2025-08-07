@@ -16,6 +16,7 @@ export type WorkspaceConfiguration = {
   showDeviceFrame: boolean;
   stopPreviousDevices: boolean;
   deviceRotation: DeviceRotation;
+  inspectorExcludePattern: string | null;
 };
 
 // #endregion Workspace Configuration
@@ -172,6 +173,7 @@ export const initialState: State = {
     showDeviceFrame: true,
     stopPreviousDevices: false,
     deviceRotation: DeviceRotation.Portrait,
+    inspectorExcludePattern: null,
   },
 };
 

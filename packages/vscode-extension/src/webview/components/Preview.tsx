@@ -15,6 +15,7 @@ import {
   ZoomLevelType,
   InspectStackData,
   MultimediaData,
+  InspectorAvailabilityStatus,
 } from "../../common/Project";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
@@ -28,6 +29,7 @@ import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
 import { useDeviceFrame } from "../Preview/Device/hooks";
 import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
+import InspectorUnavailableBox from "./InspectorUnavailableBox";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -84,6 +86,8 @@ function Preview({
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLCanvasElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
+  const [inspectorUnavailableBoxPosition, setInspectorUnavailableBoxPosition] =
+    useState<Point | null>(null);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
   const { selectedDeviceSession, project } = useProject();
@@ -179,6 +183,9 @@ function Preview({
     if (selectedDeviceSession?.status !== "running") {
       return;
     }
+    if (selectedDeviceSession?.inspectorAvailability !== InspectorAvailabilityStatus.Available) {
+      return;
+    }
     if (type === "Leave") {
       return;
     }
@@ -195,28 +202,33 @@ function Preview({
 
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
-    project.inspectElementAt(translatedX, translatedY, requestStack, (inspectData) => {
-      if (requestStack && inspectData?.stack) {
-        if (showInspectStackModal) {
-          setInspectStackData({
-            requestLocation: {
-              x: event.clientX,
-              y: event.clientY,
-            },
-            stack: inspectData.stack,
-          });
-        } else {
-          // find first item w/o hide flag and open file
-          const firstItem = inspectData.stack.find((item) => !item.hide);
-          if (firstItem) {
-            onInspectorItemSelected(firstItem);
+    project
+      .inspectElementAt(translatedX, translatedY, requestStack)
+      .then((inspectData) => {
+        if (requestStack && inspectData?.stack) {
+          if (showInspectStackModal) {
+            setInspectStackData({
+              requestLocation: {
+                x: event.clientX,
+                y: event.clientY,
+              },
+              stack: inspectData.stack,
+            });
+          } else {
+            // find first item w/o hide flag and open file
+            const firstItem = inspectData.stack.find((item) => !item.hide);
+            if (firstItem) {
+              onInspectorItemSelected(firstItem);
+            }
           }
         }
-      }
-      if (inspectData.frame) {
-        setInspectFrame(inspectData.frame);
-      }
-    });
+        if (inspectData.frame) {
+          setInspectFrame(inspectData.frame);
+        }
+      })
+      .catch(() => {
+        // NOTE: we can safely ignore errors, we'll simply not show the frame in that case
+      });
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
@@ -224,6 +236,14 @@ function Preview({
   function resetInspector() {
     setInspectFrame(null);
     setInspectStackData(null);
+  }
+
+  function handleInspectorUnavailable(event: MouseEvent<HTMLDivElement>) {
+    if (inspectorUnavailableBoxPosition) {
+      return;
+    }
+    const clampedCoordinates = getNormalizedTouchCoordinates(event);
+    setInspectorUnavailableBoxPosition(clampedCoordinates);
   }
 
   const shouldPreventInputEvents =
@@ -267,7 +287,14 @@ function Preview({
       sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
     } else if (!inspectFrame) {
       if (e.button === 2) {
-        sendInspect(e, "RightButtonDown", true);
+        if (
+          selectedDeviceSession?.status === "running" &&
+          selectedDeviceSession?.inspectorAvailability !== InspectorAvailabilityStatus.Available
+        ) {
+          handleInspectorUnavailable(e);
+        } else {
+          sendInspect(e, "RightButtonDown", true);
+        }
       } else if (isMultiTouching) {
         setIsPressing(true);
         sendMultiTouchForEvent(e, "Down");
@@ -375,7 +402,7 @@ function Preview({
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
     // there is an active backlog item that aims to change the behavior of context menu, so it might not be necessary
     // in the future https://github.com/microsoft/vscode/issues/225411
-    function onContextMenu(e: any) {
+    function onContextMenu(e: Event) {
       e.stopImmediatePropagation();
     }
 
@@ -542,6 +569,14 @@ function Preview({
                   wrapperDivRef={wrapperDivRef}
                 />
               )}
+
+              {inspectorUnavailableBoxPosition && (
+                <InspectorUnavailableBox
+                  clickPosition={inspectorUnavailableBoxPosition}
+                  onClose={() => setInspectorUnavailableBoxPosition(null)}
+                />
+              )}
+
               {isRefreshing && (
                 <div className="phone-screen phone-refreshing-overlay">
                   <div>Project is performing Fast Refresh...</div>
