@@ -3,6 +3,8 @@ import classnames from "classnames";
 import "./IconButton.css";
 import Tooltip from "./Tooltip";
 
+const PING_DURATION = 300; // ms
+
 export interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
   children: React.ReactNode;
@@ -38,12 +40,20 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     ...rest
   } = props;
   const [displayCounter, setDisplayCounter] = useState(counter);
+  const [shouldPing, setShouldPing] = useState(false);
 
   useEffect(() => {
     if (counter !== 0) {
       setDisplayCounter(counter);
     }
-  }, [counter]);
+    if (counterMode === "compact" && counter !== 0) {
+      setShouldPing(true);
+      const timer = setTimeout(() => {
+        setShouldPing(false);
+      }, PING_DURATION);
+      return () => clearTimeout(timer);
+    }
+  }, [counter, counterMode]);
 
   const showCounter = Boolean(counter);
   const button = (
@@ -69,7 +79,13 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
         </span>
       )}
       {counterMode === "compact" && counter !== null && (
-        <span className={classnames("icon-button-indicator", showCounter && "visible")} />
+        <span
+          className={classnames(
+            "icon-button-indicator",
+            showCounter && "visible",
+            shouldPing && "ping"
+          )}
+        />
       )}
     </button>
   );
