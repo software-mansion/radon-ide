@@ -329,12 +329,7 @@ export interface ProjectInterface {
   ): Promise<void>;
   terminateSession(deviceId: DeviceId): Promise<void>;
 
-  inspectElementAt(
-    xRatio: number,
-    yRatio: number,
-    requestStack: boolean,
-    callback: (inspectData: InspectData) => void
-  ): Promise<void>;
+  inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<InspectData>;
 
   createAndroidDevice(
     modelId: string,
