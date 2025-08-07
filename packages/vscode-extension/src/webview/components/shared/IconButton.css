@@ -98,8 +98,8 @@
 .icon-button-indicator {
   box-sizing: border-box;
   position: absolute;
-  top: 1px;
-  right: 1px;
+  top: 2px;
+  right: 2px;
   width: 10px;
   height: 10px;
   background-color: var(--swm-button-counter-background, #ff5555);
