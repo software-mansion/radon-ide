@@ -1,15 +1,24 @@
 import React from "react";
 import styles from "./styles.module.css";
-import { useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
+import { useNavbarMobileSidebar, useLockBodyScroll } from "@docusaurus/theme-common/internal";
 import clsx from "clsx";
-import { NavbarItem } from "../index";
+import { NavbarItem } from "../NavbarContent";
+import ThemeSwitcher from "../../ThemeSwitcher";
 
 interface NavbarMobileSidebarProps {
   navbarItems: NavbarItem[];
+  isThemeSwitcherShown: boolean;
 }
 
-export default function NavbarMobileSidebar({ navbarItems }: NavbarMobileSidebarProps) {
+export default function NavbarMobileSidebar({
+  navbarItems,
+  isThemeSwitcherShown,
+}: NavbarMobileSidebarProps) {
   const mobileSidebar = useNavbarMobileSidebar();
+  useLockBodyScroll(mobileSidebar.shown);
+  if (!mobileSidebar.shouldRender) {
+    return null;
+  }
 
   return (
     <aside
@@ -25,6 +34,9 @@ export default function NavbarMobileSidebar({ navbarItems }: NavbarMobileSidebar
             </a>
           </li>
         ))}
+        <li>
+          <ThemeSwitcher isThemeSwitcherShown={isThemeSwitcherShown} />
+        </li>
       </ul>
     </aside>
   );
