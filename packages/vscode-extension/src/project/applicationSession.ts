@@ -10,6 +10,7 @@ import {
   workspace,
   EventEmitter,
 } from "vscode";
+import { minimatch } from "minimatch";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { ApplicationContext } from "./ApplicationContext";
 import { MetroLauncher } from "./metro";
@@ -22,6 +23,8 @@ import {
   AppOrientation,
   BundleErrorDescriptor,
   DeviceRotation,
+  InspectData,
+  InspectorAvailabilityStatus,
   ProfilingState,
   StartupMessage,
   ToolsState,
@@ -32,6 +35,7 @@ import { focusSource } from "../utilities/focusSource";
 import { CancelToken } from "../utilities/cancelToken";
 import { BuildResult } from "../builders/BuildManager";
 import { DevicePlatform } from "../common/State";
+import { isAppSourceFile } from "../utilities/isAppSourceFile";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
@@ -53,7 +57,10 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   private profilingReactState: ProfilingState = "stopped";
   private isRefreshing: boolean = false;
   private appOrientation: DeviceRotation | undefined;
+  private inspectorAvailability: InspectorAvailabilityStatus =
+    InspectorAvailabilityStatus.Available;
   private isActive = false;
+  private inspectCallID = 7621;
 
   private stateChangedEventEmitter = new EventEmitter<void>();
 
@@ -67,7 +74,13 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   ): Promise<ApplicationSession> {
     const packageNameOrBundleId =
       buildResult.platform === DevicePlatform.IOS ? buildResult.bundleID : buildResult.packageName;
-    const session = new ApplicationSession(device, metro, devtools, packageNameOrBundleId);
+    const session = new ApplicationSession(
+      applicationContext,
+      device,
+      metro,
+      devtools,
+      packageNameOrBundleId
+    );
     if (getIsActive()) {
       // we need to start the parent debug session asap to ensure metro errors are shown in the debug console
       await session.setupDebugSession();
@@ -119,6 +132,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   }
 
   private constructor(
+    private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
     private readonly devtools: Devtools,
@@ -140,6 +154,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       isRefreshing: this.isRefreshing,
       bundleError: this.bundleError,
       appOrientation: this.appOrientation,
+      inspectorAvailability: this.inspectorAvailability,
     };
   }
 
@@ -356,7 +371,14 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
         }
 
         this.emitStateChange();
-      })
+      }),
+      this.devtools.onEvent(
+        "inspectorAvailabilityChanged",
+        (inspectorAvailability: InspectorAvailabilityStatus) => {
+          this.inspectorAvailability = inspectorAvailability;
+          this.emitStateChange();
+        }
+      )
     );
   }
   //#endregion
@@ -445,6 +467,48 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       this.profilingReactState = "stopped";
       this.emitStateChange();
     }
+  }
+  //#endregion
+
+  //#region Element Inspector
+  public async inspectElementAt(
+    xRatio: number,
+    yRatio: number,
+    requestStack: boolean
+  ): Promise<InspectData> {
+    const id = this.inspectCallID++;
+    const { promise, resolve, reject } = Promise.withResolvers<InspectData>();
+    const listener = this.devtools.onEvent("inspectData", (payload) => {
+      if (payload.id === id) {
+        listener.dispose();
+        resolve(payload as unknown as InspectData);
+      } else if (payload.id >= id) {
+        listener.dispose();
+        reject("Inspect request was invalidated by a later request");
+      }
+    });
+    this.devtools.sendInspectRequest(xRatio, yRatio, id, requestStack);
+
+    const inspectData = await promise;
+    let stack = undefined;
+    if (requestStack && inspectData?.stack) {
+      stack = inspectData.stack;
+      const inspectorExcludePattern =
+        this.applicationContext.workspaceConfiguration.inspectorExcludePattern;
+      const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
+      function testInspectorExcludeGlobPattern(filename: string) {
+        return patterns?.some((pattern) => minimatch(filename, pattern));
+      }
+      stack.forEach((item: any) => {
+        item.hide = false;
+        if (!isAppSourceFile(item.source.fileName)) {
+          item.hide = true;
+        } else if (testInspectorExcludeGlobPattern(item.source.fileName)) {
+          item.hide = true;
+        }
+      });
+    }
+    return { frame: inspectData.frame, stack };
   }
   //#endregion
 

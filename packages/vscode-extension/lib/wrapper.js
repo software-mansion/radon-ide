@@ -47,6 +47,9 @@ const InternalImports = {
   get setupOrientationListeners() {
     return require("./orientation").setup;
   },
+  get setupInspectorAvailabilityListeners() {
+    return require("./inspector_availability").setup;
+  }
 };
 
 window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
@@ -345,6 +348,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
     InternalImports.setupRenderOutlinesPlugin();
     InternalImports.setupNetworkPlugin();
     const orientationListenersCleanup = InternalImports.setupOrientationListeners();
+    const inspectorAvailabilityListenersCleanup = InternalImports.setupInspectorAvailabilityListeners();
 
     const originalErrorHandler = global.ErrorUtils.getGlobalHandler();
     LogBox.ignoreAllLogs(true);
@@ -364,6 +368,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
     return () => {
       global.ErrorUtils.setGlobalHandler(originalErrorHandler);
       orientationListenersCleanup();
+      inspectorAvailabilityListenersCleanup();
     };
   }, []);
 

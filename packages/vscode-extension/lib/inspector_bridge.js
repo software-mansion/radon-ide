@@ -1,7 +1,8 @@
-const agent = globalThis.__radon_agent;
+let agent = globalThis.__radon_agent;
 
 if (!agent) {
-  throw new Error("Radon inspector bridge agent is not installed");
+  // if the agent was not loaded yet, we do it here -- hopefully connect had the time to register its bridge already
+  agent = require("./react_devtools_agent");
 }
 
 const messageListeners = [];
