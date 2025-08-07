@@ -156,7 +156,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       isRefreshing: this.isRefreshing,
       bundleError: this.bundleError,
       appOrientation: this.appOrientation,
-      inspectorAvailability: this.inspectorAvailability,
+      elementInspectorAvailability: this.inspectorAvailability,
       inspectorBridgeStatus: this.inspectorBridgeStatus,
     };
   }

@@ -127,14 +127,14 @@ function PreviewView() {
   const isRunning = selectedDeviceSession?.status === "running";
   const isRecording = selectedDeviceSession?.isRecordingScreen ?? false;
   const inspectorAvailabilityStatus = isRunning
-    ? selectedDeviceSession.inspectorAvailability
+    ? selectedDeviceSession.elementInspectorAvailability
     : InspectorAvailabilityStatus.Available;
 
   const navBarButtonsActive = initialized && !isStarting && !radonConnectEnabled;
   const inspectorAvailable =
     navBarButtonsActive &&
     isRunning &&
-    selectedDeviceSession?.inspectorAvailability === InspectorAvailabilityStatus.Available;
+    inspectorAvailabilityStatus === InspectorAvailabilityStatus.Available;
   const debuggerToolsButtonsActive = navBarButtonsActive; // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {

@@ -189,7 +189,9 @@ function Preview({
     if (selectedDeviceSession?.status !== "running") {
       return;
     }
-    if (selectedDeviceSession?.inspectorAvailability !== InspectorAvailabilityStatus.Available) {
+    if (
+      selectedDeviceSession?.elementInspectorAvailability !== InspectorAvailabilityStatus.Available
+    ) {
       return;
     }
     if (type === "Leave") {
@@ -295,7 +297,8 @@ function Preview({
       if (e.button === 2) {
         if (
           selectedDeviceSession?.status === "running" &&
-          selectedDeviceSession?.inspectorAvailability !== InspectorAvailabilityStatus.Available
+          selectedDeviceSession?.elementInspectorAvailability !==
+            InspectorAvailabilityStatus.Available
         ) {
           handleInspectorUnavailable(e);
         } else {

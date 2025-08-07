@@ -104,7 +104,7 @@ export interface ApplicationSessionState {
   isRefreshing: boolean;
   bundleError: BundleErrorDescriptor | undefined;
   appOrientation: DeviceRotation | undefined;
-  inspectorAvailability: InspectorAvailabilityStatus;
+  elementInspectorAvailability: InspectorAvailabilityStatus;
   inspectorBridgeStatus: InspectorBridgeStatus;
 }
 
