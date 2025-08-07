@@ -5,6 +5,7 @@ import path from "path";
 import assert from "assert";
 import { env, Disposable, commands, workspace, window, Uri } from "vscode";
 import _ from "lodash";
+import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import {
   AppPermissionType,
   DeviceButtonType,
@@ -63,11 +64,9 @@ import {
   WorkspaceConfiguration,
 } from "../common/State";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
-import { isAppSourceFile } from "../utilities/isAppSourceFile";
 import { getTimestamp } from "../utilities/getTimestamp";
 import { Platform } from "../utilities/platform";
 import { Telemetry } from "./telemetry";
-import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import { EditorBindings } from "./EditorBindings";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
