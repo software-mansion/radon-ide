@@ -68,7 +68,7 @@ table thead tr {
   margin-right: 1em;
 }
 
-.phone-table{
+.phone-table {
   display: flex;
   overflow-x: auto;
   justify-content: center;
