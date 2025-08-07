@@ -5,7 +5,7 @@ import path from "path";
 import assert from "assert";
 import { env, Disposable, commands, workspace, window, Uri } from "vscode";
 import _ from "lodash";
-import { minimatch } from "minimatch";
+import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import {
   AppPermissionType,
   DeviceButtonType,
@@ -15,7 +15,6 @@ import {
   DeviceSessionState,
   DeviceSettings,
   IDEPanelMoveTarget,
-  InspectData,
   isOfEnumDeviceRotation,
   MultimediaData,
   ProjectEventListener,
@@ -65,11 +64,9 @@ import {
   WorkspaceConfiguration,
 } from "../common/State";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
-import { isAppSourceFile } from "../utilities/isAppSourceFile";
 import { getTimestamp } from "../utilities/getTimestamp";
 import { Platform } from "../utilities/platform";
 import { Telemetry } from "./telemetry";
-import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import { EditorBindings } from "./EditorBindings";
 
 const PREVIEW_ZOOM_KEY = "preview_zoom";
@@ -161,6 +158,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.selectedLaunchConfiguration = initialLaunchConfig;
     this.applicationContext = new ApplicationContext(
       this.stateManager.getDerived("applicationContext"),
+      workspaceStateManager,
       initialLaunchConfig,
       buildCache
     );
@@ -672,34 +670,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Inspector
 
-  public async inspectElementAt(
-    xRatio: number,
-    yRatio: number,
-    requestStack: boolean,
-    callback: (inspectData: InspectData) => void
-  ) {
-    this.deviceSession?.inspectElementAt(xRatio, yRatio, requestStack, (inspectData) => {
-      let stack = undefined;
-      if (requestStack && inspectData?.stack) {
-        stack = inspectData.stack;
-        const inspectorExcludePattern = workspace
-          .getConfiguration("RadonIDE")
-          .get("inspectorExcludePattern") as string | undefined;
-        const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
-        function testInspectorExcludeGlobPattern(filename: string) {
-          return patterns?.some((pattern) => minimatch(filename, pattern));
-        }
-        stack.forEach((item: any) => {
-          item.hide = false;
-          if (!isAppSourceFile(item.source.fileName)) {
-            item.hide = true;
-          } else if (testInspectorExcludeGlobPattern(item.source.fileName)) {
-            item.hide = true;
-          }
-        });
-      }
-      callback({ frame: inspectData.frame, stack });
-    });
+  public async inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean) {
+    if (!this.deviceSession) {
+      throw new Error("A device must be selected to inspect elements");
+    }
+    return this.deviceSession.inspectElementAt(xRatio, yRatio, requestStack);
   }
 
   // #endregion Inspector

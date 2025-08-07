@@ -1,0 +1,22 @@
+.inspector-unavailable-box {
+  --box-transform: translate(-50%, -125%);
+  background-color: var(--dimensions-box-background);
+  color: var(--swm-tooltip-primary);
+
+  /* Transition duration dependent on the code in InspectorUnavailableTooltip.tsx */
+  transition: opacity 0.3s ease-out;
+  pointer-events: none;
+
+  /* Apply dimensions-box styling (DimensionBox.css) for consistency */
+  &.dimensions-box {
+    --box-transform: translate(-50%, -125%);
+  }
+
+  &.visible {
+    opacity: 1;
+  }
+
+  &.fade-out {
+    opacity: 0;
+  }
+}

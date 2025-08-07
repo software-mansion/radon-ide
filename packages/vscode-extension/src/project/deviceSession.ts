@@ -25,6 +25,7 @@ import {
   DeviceSessionStatus,
   FatalErrorDescriptor,
   DeviceRotation,
+  InspectData,
 } from "../common/Project";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
@@ -62,7 +63,6 @@ export class DeviceBootError extends Error {
 export class DeviceSession implements Disposable {
   private isActive = false;
   private metro: MetroLauncher;
-  private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
   private buildManager: BuildManager;
@@ -789,17 +789,12 @@ export class DeviceSession implements Disposable {
   public inspectElementAt(
     xRatio: number,
     yRatio: number,
-    requestStack: boolean,
-    callback: (inspectData: any) => void
-  ) {
-    const id = this.inspectCallID++;
-    const listener = this.devtools.onEvent("inspectData", (payload) => {
-      if (payload.id === id) {
-        listener.dispose();
-        callback(payload);
-      }
-    });
-    this.inspectorBridge.sendInspectRequest(xRatio, yRatio, id, requestStack);
+    requestStack: boolean
+  ): Promise<InspectData> {
+    if (!this.applicationSession) {
+      throw new Error("Cannot inspect element while the application is not running");
+    }
+    return this.applicationSession.inspectElementAt(xRatio, yRatio, requestStack);
   }
 
   public openNavigation(id: string) {
