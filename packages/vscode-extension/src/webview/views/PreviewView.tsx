@@ -312,6 +312,7 @@ function PreviewView() {
           </IconButton>
           <IconButton
             counter={logCounter}
+            counterMode="compact"
             onClick={() => project.focusDebugConsole()}
             tooltip={{
               label: "Open logs panel",

@@ -9,6 +9,7 @@ export interface IconButtonProps {
   disabled?: boolean;
   disableTooltip?: boolean;
   counter?: number;
+  counterMode?: "full" | "compact";
   active?: boolean;
   type?: "primary" | "secondary";
   side?: "left" | "right" | "center";
@@ -24,6 +25,7 @@ export interface IconButtonProps {
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, ref) => {
   const {
     counter,
+    counterMode = "full",
     children,
     onClick,
     tooltip,
@@ -61,10 +63,13 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
       {...rest}
       ref={ref}>
       {children}
-      {counter !== null && (
+      {counterMode === "full" && counter !== null && (
         <span className={classnames("icon-button-counter", showCounter && "visible")}>
           {displayCounter}
         </span>
+      )}
+      {counterMode === "compact" && counter !== null && (
+        <span className={classnames("icon-button-indicator", showCounter && "visible")} />
       )}
     </button>
   );
