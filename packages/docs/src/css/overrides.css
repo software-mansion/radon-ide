@@ -68,6 +68,19 @@ table thead tr {
   margin-right: 1em;
 }
 
+.phone-table{
+  display: flex;
+  overflow-x: auto;
+  justify-content: center;
+  width: 100%;
+}
+
+.phone-table table {
+  max-width: 600px;
+  table-layout: fixed;
+  display: table;
+}
+
 .theme-doc-version-badge {
   color: var(--swm-version-badge);
   background: var(--swm-version-badge-background);

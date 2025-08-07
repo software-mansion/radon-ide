@@ -78,5 +78,29 @@ Due to the complexity and a non-standard nature of the brownfield development th
 
 </div>
 You can use Radon IDE on Windows and Linux using free Beta license.
-<br/>
-<br/>
+
+## Supported Devices
+
+### Device Simulators and Emulators
+
+Radon IDE supports usage of iOS simulators and Android emulators, managing its instances separately from the ones you normally create with Xcode or Android Studio. [Learn more about Device Management.](/docs/guides/device-management)
+
+<div className="phone-table">
+
+| iOS | Android |
+|-----|---------|
+| iPhone 16 Pro | Google Pixel 9 |
+| iPhone 15 Pro | Google Pixel 8 |
+| iPhone SE (3rd generation) | Google Pixel 7 |
+| iPad (A16) | Google Pixel 6a |
+
+</div>
+
+
+
+
+
+
+### Connect Mode
+
+Connect Mode supports any device that can connect to a React Native or Expo development server using [Metro](https://metrobundler.dev/), meaning it allows for connecting devices ranging from traditional mobile phones to the hardware like VR goggles and TVs. [Learn more about Radon Connect.](/docs/getting-started/connect-mode)
