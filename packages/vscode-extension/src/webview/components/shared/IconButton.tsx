@@ -39,14 +39,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     className = "",
     ...rest
   } = props;
-  const [displayCounter, setDisplayCounter] = useState(counter);
   const [shouldPing, setShouldPing] = useState(false);
-
-  useEffect(() => {
-    if (counter !== 0) {
-      setDisplayCounter(counter);
-    }
-  }, [counter]);
 
   useEffect(() => {
     if (counterMode === "compact" && counter !== 0) {
@@ -81,7 +74,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
       {children}
       {counterMode === "full" && counter !== null && (
         <span className={classnames("icon-button-counter", showCounter && "visible")}>
-          {displayCounter}
+          {counter}
         </span>
       )}
       {counterMode === "compact" && counter !== null && (
