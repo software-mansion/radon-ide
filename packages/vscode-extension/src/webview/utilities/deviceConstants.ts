@@ -47,7 +47,7 @@ import iphoneSELandscape from "../../assets/iphone_SE/landscape/skin.webp";
 import iphoneSELandscapeBezel from "../../assets/iphone_SE/landscape/bezel.png";
 import iphoneSELandscapeScreen from "../../assets/iphone_SE/landscape/screen.png";
 
-import { DevicePlatform } from "../../common/DeviceManager";
+import { DevicePlatform } from "../../common/State";
 
 export type DevicePropertiesFrame = {
   type: "mask" | "skin";

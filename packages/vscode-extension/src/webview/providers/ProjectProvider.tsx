@@ -18,6 +18,23 @@ import {
 } from "../../common/Project";
 import { LaunchConfigurationKind } from "../../common/LaunchConfig";
 
+declare global {
+  interface Window {
+    // set in generateWebviewContent()
+    RNIDE_hostOS: "macos" | "windows" | "linux";
+    RNIDE_isDev: boolean;
+  }
+}
+
+export const IS_DEV = window.RNIDE_isDev;
+
+export const Platform = {
+  OS: window.RNIDE_hostOS,
+  select: <R, T>(obj: { macos: R; windows: T; linux: T }) => {
+    return obj[Platform.OS];
+  },
+};
+
 const project = makeProxy<ProjectInterface>("Project");
 
 interface ProjectContextProps {
@@ -125,4 +142,30 @@ export function useProject() {
     throw new Error("useProject must be used within a ProjectProvider");
   }
   return context;
+}
+
+export function installLogOverrides() {
+  function wrapConsole(methodName: "log" | "info" | "warn" | "error") {
+    const consoleMethod = console[methodName];
+    console[methodName] = (message: string, ...args: any[]) => {
+      project.log(methodName, message, ...args);
+      consoleMethod(message, ...args);
+    };
+  }
+
+  (["log", "info", "warn", "error"] as const).forEach(wrapConsole);
+
+  // install uncaught exception handler
+  window.addEventListener("error", (event) => {
+    project.log("error", "Uncaught exception", event.error.stack);
+    // rethrow the error to be caught by the global error handler
+    throw event.error;
+  });
+
+  // install uncaught promise rejection handler
+  window.addEventListener("unhandledrejection", (event) => {
+    project.log("error", "Uncaught promise rejection", event.reason);
+    // rethrow the error to be caught by the global error handler
+    throw event.reason;
+  });
 }

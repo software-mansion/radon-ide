@@ -14,11 +14,10 @@ import {
 } from "../../common/Project";
 import { useProject } from "../providers/ProjectProvider";
 import Button from "./shared/Button";
-import { useDevices } from "../providers/DevicesProvider";
 import { Output } from "../../common/OutputChannel";
-import { DevicePlatform } from "../../common/DeviceManager";
 import { useStore } from "../providers/storeProvider";
 import { use$ } from "@legendapp/state/react";
+import { DevicePlatform } from "../../common/State";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => acc + cur,
@@ -43,7 +42,6 @@ function PreviewLoader({
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 
   const { project, selectedDeviceSession } = useProject();
-  const { deviceSessionsManager } = useDevices();
   const [progress, setProgress] = useState(0);
   const platform = selectedDeviceSession?.deviceInfo.platform;
 
@@ -170,7 +168,7 @@ function PreviewLoader({
           </a>
           <Button
             type="secondary"
-            onClick={() => deviceSessionsManager.reloadCurrentSession("rebuild")}
+            onClick={() => project.reloadCurrentSession("rebuild")}
             tooltip={TOOLTIPS.rebuild}>
             <span className="codicon codicon-refresh" />{" "}
             <span className="button-text">{TOOLTIPS.rebuild.label}</span>

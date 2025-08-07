@@ -9,8 +9,7 @@ import { useModal } from "../providers/ModalProvider";
 import NoDeviceView from "./NoDeviceView";
 import DeviceSettingsDropdown from "../components/DeviceSettingsDropdown";
 import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
-import { useDevices } from "../providers/DevicesProvider";
-import { useProject } from "../providers/ProjectProvider";
+import { Platform, useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import Button from "../components/shared/Button";
@@ -22,7 +21,6 @@ import {
   ProfilingState,
   ZoomLevelType,
 } from "../../common/Project";
-import { Platform, useUtils } from "../providers/UtilsProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import "./View.css";
 import "./PreviewView.css";
@@ -45,12 +43,12 @@ const INSPECTOR_AVAILABILITY_MESSAGES = {
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
-  const { sendTelemetry } = useUtils();
+  const { project } = useProject();
   return (
     <Button
       className="activate-license-button"
       onClick={() => {
-        sendTelemetry("activateLicenseButtonClicked");
+        project.sendTelemetry("activateLicenseButtonClicked");
         openModal("Activate License", <ActivateLicenseView />);
       }}>
       {""} {/* using empty string here as the content is controlled via css */}
@@ -105,7 +103,6 @@ function PreviewView() {
     replayData,
     setReplayData,
   } = useProject();
-  const { showDismissableError, sendTelemetry } = useUtils();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
@@ -118,7 +115,8 @@ function PreviewView() {
     [project]
   );
   const [recordingTime, setRecordingTime] = useState(0);
-  const { devices } = useDevices();
+
+  const devices = use$(store$.devicesState.devices) ?? [];
 
   const initialized = projectState.initialized;
   const radonConnectEnabled = projectState.connectState.enabled;
@@ -142,8 +140,6 @@ function PreviewView() {
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
   });
-
-  const { openFileAt } = useUtils();
 
   useEffect(() => {
     resetInspector();
@@ -188,7 +184,7 @@ function PreviewView() {
     try {
       project.captureAndStopRecording();
     } catch (e) {
-      showDismissableError("Failed to capture recording");
+      project.showDismissableError("Failed to capture recording");
     }
   }
 
@@ -212,7 +208,7 @@ function PreviewView() {
     try {
       await project.captureReplay();
     } catch (e) {
-      showDismissableError("Failed to capture replay");
+      project.showDismissableError("Failed to capture replay");
     }
   }
 
@@ -221,7 +217,7 @@ function PreviewView() {
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
-    openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
+    project.openFileAt(item.source.fileName, item.source.line0Based, item.source.column0Based);
   }
 
   function resetInspector() {
@@ -338,6 +334,7 @@ function PreviewView() {
           </IconButton>
           <IconButton
             counter={logCounter}
+            counterMode="compact"
             onClick={() => project.focusDebugConsole()}
             tooltip={{
               label: "Open logs panel",
@@ -379,7 +376,7 @@ function PreviewView() {
             label: INSPECTOR_AVAILABILITY_MESSAGES[inspectorAvailabilityStatus],
           }}
           onClick={() => {
-            sendTelemetry("inspector:button-clicked", {
+            project.sendTelemetry("inspector:button-clicked", {
               isInspecting: String(!isInspecting),
             });
             setIsInspecting(!isInspecting);

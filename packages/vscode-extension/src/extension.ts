@@ -33,11 +33,10 @@ import { registerRadonChat, registerRadonAi } from "./ai";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
-import { IDEPanelMoveTarget } from "./common/utils";
 import { launchConfigurationFromOptions } from "./project/launchConfigurationsManager";
 import { isIdeConfig } from "./utilities/launchConfiguration";
 import { PanelLocation } from "./common/State";
-import { DeviceRotation, DeviceRotationDirection } from "./common/Project";
+import { DeviceRotation, DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
 import { updatePartialWorkspaceConfig } from "./utilities/updatePartialWorkspaceConfig";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";

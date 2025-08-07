@@ -7,7 +7,7 @@ import { Logger } from "../Logger";
 import { command, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "../utilities/cancelToken";
 import { extractTarApp, isApkFile, isAppFile } from "./utils";
-import { DevicePlatform } from "../common/DeviceManager";
+import { DevicePlatform } from "../common/State";
 
 type Env = Record<string, string> | undefined;
 
