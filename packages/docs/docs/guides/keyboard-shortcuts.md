@@ -17,8 +17,8 @@ Radon IDE lets you perform some repetitive actions through keyboard shortcuts.
 | Close IDE Panel with confirmation      | Command + W                  | Control + W               |
 | Switch to next running device          | Command + Shift + \)         | Control + Shift + \)      |
 | Switch to previous running device      | Command + Shift + \(         | Control + Shift + \(      |
-| Rotate device clockwise                | Option + Command + Shift + 0 | Control + Alt + Shift + 0 |
-| Rotate device anticlockwise            | Option + Command + Shift + 9 | Control + Alt + Shift + 9 |
+| Rotate device clockwise                | Control + Option + 0         | Control + Alt + 0         |
+| Rotate device anticlockwise            | Control + Option + 9         | Control + Alt + 9         |
 
 ## Customize shortcuts
 
