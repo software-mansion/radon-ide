@@ -45,7 +45,14 @@ interface LaunchApplicationSessionDeps {
   devtools: Devtools;
 }
 
+enum DevtoolsStatus {
+  Connecting,
+  Connected,
+  Disconnected,
+}
+
 export class ApplicationSession implements ToolsDelegate, Disposable {
+  private devtoolsStatus: DevtoolsStatus = DevtoolsStatus.Connecting;
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
   private debugSessionEventSubscription?: Disposable;
@@ -184,7 +191,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
 
   //#region ToolsDelegate implementation
 
-  onToolsStateChange(toolsState: ToolsState): void {
+  onToolsStateChange(_toolsState: ToolsState): void {
     this.emitStateChange();
   }
 
@@ -378,7 +385,19 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
           this.inspectorAvailability = inspectorAvailability;
           this.emitStateChange();
         }
-      )
+      ),
+      this.devtools.onEvent("disconnected", () => {
+        if (this.devtoolsStatus === DevtoolsStatus.Connected) {
+          this.devtoolsStatus = DevtoolsStatus.Disconnected;
+          this.emitStateChange();
+        }
+      }),
+      this.devtools.onEvent("connected", () => {
+        if (this.devtoolsStatus !== DevtoolsStatus.Connected) {
+          this.devtoolsStatus = DevtoolsStatus.Connected;
+          this.emitStateChange();
+        }
+      })
     );
   }
   //#endregion
@@ -499,7 +518,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       function testInspectorExcludeGlobPattern(filename: string) {
         return patterns?.some((pattern) => minimatch(filename, pattern));
       }
-      stack.forEach((item: any) => {
+      stack.forEach((item) => {
         item.hide = false;
         if (!isAppSourceFile(item.source.fileName)) {
           item.hide = true;

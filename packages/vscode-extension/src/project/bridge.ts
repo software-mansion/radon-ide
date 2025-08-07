@@ -4,6 +4,8 @@ import { Logger } from "../Logger";
 
 export interface RadonInspectorBridgeEvents {
   appReady: [];
+  connected: [];
+  disconnected: [];
   navigationChanged: [{ displayName: string; id: string }];
   navigationRouteListUpdated: [NavigationRoute[]];
   fastRefreshStarted: [];
