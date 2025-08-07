@@ -71,7 +71,7 @@ describe("Adding device tests", () => {
         driver,
         By.css(`[data-test="device-${deviceName}"]`),
         `Timed out waiting for device with modified name: ${deviceName}`,
-        5000
+        3000
       );
       deviceFound = true;
     } catch (e) {

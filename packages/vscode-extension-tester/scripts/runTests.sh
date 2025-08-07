@@ -53,11 +53,24 @@ done
 
 echo "VM is ready at $VM_IP"
 
-echo "Copying '$LOCAL_PROJECT_PATH' to VM..."
-sshpass -p "$VM_PASSWORD" scp -r "$LOCAL_PROJECT_PATH" "$VM_USER@$VM_IP:/Users/$VM_USER/" || {
-    echo "Failed to copy project files."
-    exit 1
-}
+echo "Running test commands on VM..."
+sshpass -p "$VM_PASSWORD" ssh "$VM_USER@$VM_IP" "rm -rf '$REMOTE_PATH'"
+
+echo "Creating directory on VM..."
+sshpass -p "$VM_PASSWORD" ssh "$VM_USER@$VM_IP" "mkdir -p '$REMOTE_PATH'"
+
+echo "Copying project files to VM..."
+cd "$LOCAL_PROJECT_PATH" || exit 1
+
+# node_modules cannot be copied to the VM, because it may not be compatible with the VM's architecture.
+for item in * .*; do
+    [[ "$item" == "." || "$item" == ".." ]] && continue
+    [[ "$item" == "node_modules" || "$item" == "scripts" || "$item" == ".gitignore" ]] && continue
+
+    echo "Copying: $item"
+    sshpass -p "$VM_PASSWORD" scp -r "$item" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/"
+done
+
 
 echo "Running test commands on VM..."
 sshpass -p "$VM_PASSWORD" ssh "$VM_USER@$VM_IP" <<EOF
@@ -67,5 +80,7 @@ npm run setup-run-tests
 cd ..
 rm -rf "$REMOTE_PATH"
 EOF
+
+pkill -f "UTM.app"
 
 echo "Tests completed."
