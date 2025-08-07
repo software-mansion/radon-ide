@@ -65,19 +65,9 @@ const config = {
         },
         items: [
           {
-            to: "/features",
-            activeBasePath: "features",
-            label: "Features",
-          },
-          {
             to: "/pricing",
             activeBasePath: "pricing",
             label: "Pricing",
-          },
-          {
-            to: "/enterprise",
-            activeBasePath: "enterprise",
-            label: "Enterprise",
           },
           {
             to: "docs/category/getting-started",
