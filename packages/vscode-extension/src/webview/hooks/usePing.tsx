@@ -20,7 +20,7 @@ export function usePing(counter: number, counterMode: "full" | "compact") {
           pingTimeoutRef.current = null;
         }, PING_DURATION);
       }
-    } else if (counter === 0) {
+    } else {
       // Reset animation state when counter goes to 0
       if (pingTimeoutRef.current) {
         clearTimeout(pingTimeoutRef.current);
