@@ -4,7 +4,6 @@ import IconButton from "./shared/IconButton";
 
 function Debugger() {
   const { project } = useProject();
-
   return (
     <div className="debugger-container">
       <p className="debugger-label debugger-shadow">Paused in debugger</p>

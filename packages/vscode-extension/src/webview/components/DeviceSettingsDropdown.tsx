@@ -3,6 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
 import * as Switch from "@radix-ui/react-switch";
+import { use$ } from "@legendapp/state/react";
 
 import "./shared/Dropdown.css";
 import "./shared/RadioGroup.css";
@@ -12,17 +13,23 @@ import "./shared/SwitchGroup.css";
 
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
-import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
-import { AppPermissionType, DeviceSettings, ProjectInterface } from "../../common/Project";
+import {
+  AppPermissionType,
+  DeviceRotationDirection,
+  DeviceRotation,
+  DeviceSettings,
+  ProjectInterface,
+} from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
-import { DevicePlatform } from "../../common/DeviceManager";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import { useStore } from "../providers/storeProvider";
+import { DevicePlatform } from "../../common/State";
 
 const contentSizes = [
   "xsmall",
@@ -51,9 +58,64 @@ const resetOptionsAndroid: Array<{ label: string; value: AppPermissionType; icon
   { label: "Reset All Permissions", value: "all", icon: "check-all" },
 ];
 
+const setOrientationOptions: Array<{
+  label: string;
+  value: DeviceRotation;
+  icon: string;
+  rotation: string;
+}> = [
+  {
+    label: "Portrait",
+    value: DeviceRotation.Portrait,
+    icon: "device-mobile",
+    rotation: "0deg",
+  },
+  {
+    label: "Landscape Left",
+    value: DeviceRotation.LandscapeLeft,
+    icon: "device-mobile",
+    rotation: "-90deg",
+  },
+  {
+    label: "Portait Upside Down",
+    value: DeviceRotation.PortraitUpsideDown,
+    icon: "device-mobile",
+    rotation: "180deg",
+  },
+  {
+    label: "Landscape Right",
+    value: DeviceRotation.LandscapeRight,
+    icon: "device-mobile",
+    rotation: "90deg",
+  },
+];
+const rotateOptions: Array<{
+  label: string;
+  value: DeviceRotationDirection;
+  icon: string;
+  commandName: string;
+}> = [
+  {
+    label: "Clockwise",
+    value: DeviceRotationDirection.Clockwise,
+    icon: "refresh",
+    commandName: "RNIDE.rotateDeviceClockwise",
+  },
+  {
+    label: "Anticlockwise",
+    value: DeviceRotationDirection.Anticlockwise,
+    icon: "refresh mirror",
+    commandName: "RNIDE.rotateDeviceAnticlockwise",
+  },
+];
+
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
+  const store$ = useStore();
+  const showDeviceFrame = use$(store$.workspaceConfiguration.showDeviceFrame);
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+
   const { project, selectedDeviceSession, deviceSettings } = useProject();
-  const { showDeviceFrame, update } = useWorkspaceConfig();
+
   const { openModal } = useModal();
 
   const resetOptions =
@@ -139,6 +201,48 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             label="Open App Switcher"
             icon="chrome-restore"
           />
+          <DropdownMenu.Sub>
+            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+              <span className="codicon codicon-sync" />
+              Rotate Device
+              <span className="codicon codicon-chevron-right right-slot" />
+            </DropdownMenu.SubTrigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.SubContent
+                className="dropdown-menu-subcontent"
+                sideOffset={2}
+                alignOffset={-5}>
+                <Label>Rotate</Label>
+                {rotateOptions.map((option) => (
+                  <CommandItem
+                    project={project}
+                    commandName={option.commandName}
+                    label={option.label}
+                    icon={option.icon}
+                  />
+                ))}
+
+                <div className="device-settings-margin" />
+                <Label>Set Orientation</Label>
+
+                {setOrientationOptions.map((option, index) => (
+                  <DropdownMenu.Item
+                    className="dropdown-menu-item"
+                    key={index}
+                    onSelect={() => store$.workspaceConfiguration.deviceRotation.set(option.value)}>
+                    <span
+                      className={`codicon codicon-${option.icon}`}
+                      style={{ rotate: option.rotation }}
+                    />
+                    {option.label}
+                    {rotation === option.value && (
+                      <span className="codicon codicon-check right-slot" />
+                    )}
+                  </DropdownMenu.Item>
+                ))}
+              </DropdownMenu.SubContent>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Sub>
           {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
@@ -149,6 +253,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Location
           </DropdownMenu.Item>
           <LocalizationItem />
+          <VolumeItem />
           {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.Android && <CameraItem />}
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
@@ -173,6 +278,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
+
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => openModal("Open Deep Link", <OpenDeepLinkView />)}>
@@ -213,7 +319,9 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <Switch.Root
               className="switch-root small-switch"
               id="show-device-frame"
-              onCheckedChange={(checked) => update("showDeviceFrame", checked)}
+              onCheckedChange={(checked) =>
+                store$.workspaceConfiguration.showDeviceFrame.set(checked)
+              }
               defaultChecked={showDeviceFrame}
               style={{ marginLeft: "auto" }}>
               <Switch.Thumb className="switch-thumb" />
@@ -247,18 +355,21 @@ function CommandItem({
   commandName,
   label,
   icon,
+  disabled = false,
 }: {
   project: ProjectInterface;
   commandName: string;
   label: string;
   icon: string;
+  disabled?: boolean;
 }) {
   return (
     <DropdownMenu.Item
       className="dropdown-menu-item"
       onSelect={() => {
         project.runCommand(commandName);
-      }}>
+      }}
+      disabled={disabled}>
       <span className="dropdown-menu-item-wraper">
         <span className={`codicon codicon-${icon}`} />
         <div className="dropdown-menu-item-content">
@@ -302,12 +413,14 @@ const BiometricsItem = () => {
             commandName="RNIDE.performBiometricAuthorization"
             label="Matching ID"
             icon="layout-sidebar-left"
+            disabled={!deviceSettings.hasEnrolledBiometrics}
           />
           <CommandItem
             project={project}
             commandName="RNIDE.performFailedBiometricAuthorization"
             label="Non-Matching ID"
             icon="layout-sidebar-left"
+            disabled={!deviceSettings.hasEnrolledBiometrics}
           />
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
@@ -327,6 +440,59 @@ const CameraItem = () => {
       <span className="codicon codicon-device-camera" />
       Camera Settings
     </DropdownMenu.Item>
+  );
+};
+
+const VolumeItem = () => {
+  const { project } = useProject();
+
+  const handleVolumeIncreaseDown = () => {
+    project.dispatchButton("volumeUp", "Down");
+  };
+
+  const handleVolumeIncreaseUp = () => {
+    project.dispatchButton("volumeUp", "Up");
+  };
+
+  const handleVolumeDecreaseDown = () => {
+    project.dispatchButton("volumeDown", "Down");
+  };
+
+  const handleVolumeDecreaseUp = () => {
+    project.dispatchButton("volumeDown", "Up");
+  };
+
+  // Make sure buttons get unpressed on unmount
+  React.useEffect(() => {
+    return () => {
+      handleVolumeDecreaseUp();
+      handleVolumeIncreaseUp();
+    };
+  }, []);
+
+  return (
+    <div className="dropdown-menu-item">
+      <span className="codicon codicon-unmute" />
+      Volume
+      <div className="volume-controls">
+        <button
+          title="Volume Down"
+          className="volume-button"
+          onMouseDown={handleVolumeDecreaseDown}
+          onMouseUp={handleVolumeDecreaseUp}
+          onMouseLeave={handleVolumeDecreaseUp}>
+          <span className="codicon codicon-remove" />
+        </button>
+        <button
+          title="Volume Up"
+          className="volume-button"
+          onMouseDown={handleVolumeIncreaseDown}
+          onMouseUp={handleVolumeIncreaseUp}
+          onMouseLeave={handleVolumeIncreaseUp}>
+          <span className="codicon codicon-add" />
+        </button>
+      </div>
+    </div>
   );
 };
 

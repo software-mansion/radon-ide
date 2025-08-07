@@ -1,6 +1,15 @@
+import { TelemetryEventProperties } from "@vscode/extension-telemetry";
+import { ReloadAction, SelectDeviceOptions } from "../project/DeviceSessionsManager";
 import { BuildType } from "./BuildConfig";
-import { DeviceInfo, DevicePlatform } from "./DeviceManager";
-import { LaunchConfiguration, LaunchConfigurationOptions } from "./LaunchConfig";
+import { LaunchConfiguration } from "./LaunchConfig";
+import { Output } from "./OutputChannel";
+import {
+  AndroidSystemImageInfo,
+  DeviceInfo,
+  DevicePlatform,
+  IOSDeviceTypeInfo,
+  IOSRuntimeInfo,
+} from "./State";
 
 export type Locale = string;
 
@@ -72,16 +81,22 @@ export type DeviceSessionStatus = "starting" | "running" | "fatalError";
 type DeviceSessionStateCommon = {
   deviceInfo: DeviceInfo;
   previewURL: string | undefined;
-  profilingReactState: ProfilingState;
-  profilingCPUState: ProfilingState;
   navigationHistory: NavigationHistoryItem[];
   navigationRouteList: NavigationRoute[];
-  toolsState: ToolsState;
-  isDebuggerPaused: boolean;
-  logCounter: number;
   hasStaleBuildCache: boolean;
   isRecordingScreen: boolean;
 };
+
+export interface ApplicationSessionState {
+  profilingCPUState: ProfilingState;
+  profilingReactState: ProfilingState;
+  toolsState: ToolsState;
+  isDebuggerPaused: boolean;
+  logCounter: number;
+  isRefreshing: boolean;
+  bundleError: BundleErrorDescriptor | undefined;
+  appOrientation: DeviceRotation | undefined;
+}
 
 export type DeviceSessionStateStarting = DeviceSessionStateCommon & {
   status: "starting";
@@ -94,11 +109,10 @@ export type BundleErrorDescriptor = {
   message: string;
 };
 
-export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
-  status: "running";
-  isRefreshing: boolean;
-  bundleError: BundleErrorDescriptor | undefined;
-};
+export type DeviceSessionStateRunning = DeviceSessionStateCommon &
+  ApplicationSessionState & {
+    status: "running";
+  };
 
 export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {
   status: "fatalError";
@@ -117,19 +131,43 @@ export interface DeviceSessionsManagerState {
   deviceSessions: Record<DeviceId, DeviceSessionState>;
 }
 
+export type ConnectState = {
+  enabled: boolean;
+  connected: boolean;
+};
+
 export type ProjectState = {
   initialized: boolean;
   appRootPath: string | undefined;
   previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
   selectedLaunchConfiguration: LaunchConfiguration;
   customLaunchConfigurations: LaunchConfiguration[];
+  connectState: ConnectState;
 } & DeviceSessionsManagerState;
 
 export type ZoomLevelType = number | "Fit";
 
 export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
 
-export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown";
+export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown" | "power";
+
+export enum DeviceRotation {
+  Portrait = "Portrait",
+  PortraitUpsideDown = "PortraitUpsideDown",
+  LandscapeLeft = "LandscapeLeft",
+  LandscapeRight = "LandscapeRight",
+}
+
+export enum DeviceRotationDirection {
+  Clockwise = -1,
+  Anticlockwise = 1,
+}
+
+export type AppOrientation = DeviceRotation | "Landscape";
+
+export function isOfEnumDeviceRotation(value: any): value is DeviceRotation {
+  return Object.values(DeviceRotation).includes(value);
+}
 
 // important: order of values in this enum matters
 export enum StartupMessage {
@@ -180,7 +218,7 @@ export type InspectStackData = {
 
 export type InspectData = {
   stack: InspectDataStackItem[] | undefined;
-  frame: Frame;
+  frame?: Frame;
 };
 
 export type TouchPoint = {
@@ -213,12 +251,29 @@ export type MultimediaData = {
   fileName: string;
 };
 
+export type IDEPanelMoveTarget = "new-window" | "editor-tab" | "side-panel";
+
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
   updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
-  selectLaunchConfiguration(launchConfig: LaunchConfigurationOptions): Promise<void>;
+  /**
+   * Creates a new launch configuration or updates an existing one.
+   *
+   * If the `oldLaunchConfiguration` matches the currently selected launch configuration,
+   * the newly created or updated configuration will be selected.
+   *
+   * @param newLaunchConfiguration - The options for the new or updated launch configuration. If `undefined`, the existing configuration will be removed.
+   * @param oldLaunchConfiguration - (Optional) The existing launch configuration to update.
+   * @returns A promise that resolves when the operation is complete.
+   */
+  createOrUpdateLaunchConfiguration(
+    newLaunchConfiguration: LaunchConfiguration | undefined,
+    oldLaunchConfiguration?: LaunchConfiguration
+  ): Promise<void>;
+  selectLaunchConfiguration(launchConfig: LaunchConfiguration): Promise<void>;
+
+  runDependencyChecks(): Promise<void>;
 
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
@@ -227,15 +282,18 @@ export interface ProjectInterface {
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
   openTool(toolName: keyof ToolsState): Promise<void>;
 
+  enableRadonConnect(): Promise<void>;
+  disableRadonConnect(): Promise<void>;
+
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
-  focusBuildOutput(): Promise<void>;
-  focusExtensionLogsOutput(): Promise<void>;
   focusDebugConsole(): Promise<void>;
+
   openNavigation(navigationItemID: string): Promise<void>;
   navigateBack(): Promise<void>;
   navigateHome(): Promise<void>;
   removeNavigationHistoryEntry(id: string): Promise<void>;
+
   openDevMenu(): Promise<void>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
@@ -250,24 +308,59 @@ export interface ProjectInterface {
   captureAndStopRecording(): void;
   captureReplay(): void;
   captureScreenshot(): void;
+  saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
 
   startProfilingCPU(): void;
   stopProfilingCPU(): void;
-
   startProfilingReact(): void;
   stopProfilingReact(): void;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): void;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): void;
+  dispatchButton(buttonType: DeviceButtonType, direction: "Up" | "Down"): void;
   dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number): void;
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;
+
+  reloadCurrentSession(type: ReloadAction): Promise<void>;
+  startOrActivateSessionForDevice(
+    deviceInfo: DeviceInfo,
+    selectDeviceOptions?: SelectDeviceOptions
+  ): Promise<void>;
+  terminateSession(deviceId: DeviceId): Promise<void>;
+
   inspectElementAt(
     xRatio: number,
     yRatio: number,
     requestStack: boolean,
     callback: (inspectData: InspectData) => void
   ): Promise<void>;
+
+  createAndroidDevice(
+    modelId: string,
+    displayName: string,
+    systemImage: AndroidSystemImageInfo
+  ): Promise<DeviceInfo>;
+  createIOSDevice(
+    deviceType: IOSDeviceTypeInfo,
+    displayName: string,
+    runtime: IOSRuntimeInfo
+  ): Promise<DeviceInfo>;
+  renameDevice(device: DeviceInfo, newDisplayName: string): Promise<void>;
+  removeDevice(device: DeviceInfo): Promise<void>;
+
+  log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]): Promise<void>;
+  focusOutput(channel: Output): Promise<void>;
+
+  getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;
+  movePanelTo(location: IDEPanelMoveTarget): Promise<void>;
+  openExternalUrl(uriString: string): Promise<void>;
+  openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
+  showDismissableError(errorMessage: string): Promise<void>;
+  showToast(message: string, timeout: number): Promise<void>;
+
+  reportIssue(): Promise<void>;
+  sendTelemetry(eventName: string, properties?: TelemetryEventProperties): Promise<void>;
 
   addListener<K extends keyof ProjectEventMap>(
     eventType: K,

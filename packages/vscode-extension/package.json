@@ -22,7 +22,7 @@
     "workspaceContains:**/app.config.ts",
     "onWebviewPanel:RadonIDETabPanel"
   ],
-  "version": "1.8.0",
+  "version": "1.9.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -100,6 +100,18 @@
         "enablement": "RNIDE.extensionIsActive"
       },
       {
+        "command": "RNIDE.deviceVolumeIncrease",
+        "title": "Increase volume on the current device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.deviceVolumeDecrease",
+        "title": "Decrease volume on the current device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
         "command": "RNIDE.captureReplay",
         "title": "Capture Replay",
         "category": "Radon IDE",
@@ -132,6 +144,18 @@
       {
         "command": "RNIDE.previousRunningDevice",
         "title": "Switch to previous running device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.rotateDeviceClockwise",
+        "title": "Rotate device clockwise",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.rotateDeviceAnticlockwise",
+        "title": "Rotate device anticlockwise",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
@@ -187,6 +211,16 @@
         "command": "RNIDE.previousRunningDevice",
         "key": "ctrl+shift+9",
         "mac": "cmd+shift+9"
+      },
+      {
+        "command": "RNIDE.rotateDeviceClockwise",
+        "key": "ctrl+alt+0",
+        "mac": "ctrl+alt+0"
+      },
+      {
+        "command": "RNIDE.rotateDeviceAnticlockwise",
+        "key": "ctrl+alt+9",
+        "mac": "ctrl+alt+9"
       }
     ],
     "configuration": {
@@ -206,6 +240,7 @@
           "type": "string",
           "scope": "window",
           "default": "vscode",
+          "deprecationMessage": "This setting is deprecated and Radon IDE panel will always use the vscode theme.",
           "enum": [
             "vscode",
             "built-in"
@@ -229,6 +264,24 @@
           "scope": "window",
           "default": false,
           "description": "When set, switching between devices will shut down the previous device instead of leaving it running in the background."
+        },
+        "RadonIDE.enableRadonAI": {
+          "type": "boolean",
+          "scope": "window",
+          "default": true,
+          "description": "Enables the Radon AI functionality in the extension. Note: A full restart of the IDE is required for this setting to take effect."
+        },
+        "RadonIDE.deviceRotation": {
+          "type": "string",
+          "scope": "window",
+          "default": "Portrait",
+          "enum": [
+            "Portrait",
+            "LandscapeLeft",
+            "LandscapeRight",
+            "PortraitUpsideDown"
+          ],
+          "description": "Controls the default device rotation for simulators and emulators when they are created or launched."
         }
       }
     },
@@ -394,11 +447,11 @@
             "properties": {
               "appRoot": {
                 "type": "string",
-                "description": "Location of the React Native application root folder relative to the workspace. This is used for monorepo type setups when the workspace root is not the root of the React Native project. The IDE extension tries to locate the React Native application root automatically, but in case it fails to do so (i.e. there are multiple applications defined in the workspace), you can use this setting to override the location."
+                "description": "Location of the React Native application root folder relative to the workspace. This should be used for monorepo setups to override the automatically detected application root."
               },
               "isExpo": {
                 "type": "boolean",
-                "description": "IDE tries to detect whether project uses Expo or React Native community CLI. This is needed when starting the bundler. If your project uses Expo but IDE fails to automatically detect it, you can set this parameter to `true` to force the use of Expo CLI."
+                "description": "When set, it overrides the automatic detection of Expo projects and forces or disallows the use of Expo CLI."
               },
               "env": {
                 "type": "object",
@@ -406,7 +459,7 @@
               },
               "metroConfigPath": {
                 "type": "string",
-                "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
+                "description": "Location of Metro config relative to the workspace. This is used for customizing metro configuration for e.g. development."
               },
               "expoStartArgs": {
                 "type": "array",
@@ -599,7 +652,7 @@
       {
         "type": "react-native-ide",
         "label": "Radon IDE",
-        "deprecated": "true",
+        "deprecated": "Use `radon-ide` instead",
         "languages": [
           "javascript",
           "typescript",
@@ -612,11 +665,11 @@
             "properties": {
               "appRoot": {
                 "type": "string",
-                "description": "Location of the React Native application root folder relative to the workspace. This is used for monorepo type setups when the workspace root is not the root of the React Native project. The IDE extension tries to locate the React Native application root automatically, but in case it failes to do so (i.e. there are multiple applications defined in the workspace), you can use this setting to override the location."
+                "description": "Location of the React Native application root folder relative to the workspace. This should be used for monorepo setups to override the automatically detected application root."
               },
               "isExpo": {
                 "type": "boolean",
-                "description": "IDE tries to detect whether project uses Expo or React Native community CLI. This is needed when starting the bundler. If your project uses Expo but IDE fails to automatically detect it, you can set this parameter to `true` to force the use of Expo CLI."
+                "description": "When set, it overrides the automatic detection of Expo projects and forces or disallows the use of Expo CLI."
               },
               "env": {
                 "type": "object",
@@ -624,11 +677,93 @@
               },
               "metroConfigPath": {
                 "type": "string",
-                "description": "Location of Metro config relative to the workspace. This is used for using custom configs for e.g. development."
+                "description": "Location of Metro config relative to the workspace. This is used for customizing metro configuration for e.g. development."
               },
               "expoStartArgs": {
                 "type": "array",
                 "description": "Extra arguments to pass to Expo start command."
+              },
+              "customBuild": {
+                "type": "object",
+                "description": "Configuration for using custom scripts for building and fingerprinting the app.",
+                "properties": {
+                  "ios": {
+                    "type": "object",
+                    "description": "Configuration for iOS.",
+                    "properties": {
+                      "buildCommand": {
+                        "type": "string",
+                        "description": "Script used to build the app. It should build the app in debug mode and print path to the built app as a last line of its standard output."
+                      },
+                      "fingerprintCommand": {
+                        "type": "string",
+                        "description": "Script used to fingerprint the app. It should print workspace hash as a last line of its standard output."
+                      }
+                    }
+                  },
+                  "android": {
+                    "type": "object",
+                    "description": "Configuration for Android.",
+                    "properties": {
+                      "buildCommand": {
+                        "type": "string",
+                        "description": "Script used to build the app. It should build the app in debug mode and print path to the built app as a last line of its standard output."
+                      },
+                      "fingerprintCommand": {
+                        "type": "string",
+                        "description": "Script used to fingerprint the app. It should print workspace hash as a last line of its standard output."
+                      }
+                    }
+                  }
+                }
+              },
+              "eas": {
+                "type": "object",
+                "description": "Configuration for EAS build service",
+                "properties": {
+                  "android": {
+                    "type": "object",
+                    "description": "Configuration for EAS build service for Android",
+                    "properties": {
+                      "profile": {
+                        "type": "string",
+                        "description": "Profile used to build the app in EAS. Built app should be in debug version."
+                      },
+                      "buildUUID": {
+                        "type": "string",
+                        "description": "UUID of the EAS build used in `eas build:view` command. If unspecified, will use a build with matching fingerprint if available."
+                      },
+                      "local": {
+                        "type": "boolean",
+                        "description": "When set, builds the app locally using EAS CLI."
+                      }
+                    },
+                    "required": [
+                      "profile"
+                    ]
+                  },
+                  "ios": {
+                    "type": "object",
+                    "description": "Configuration for EAS build service for iOS",
+                    "properties": {
+                      "profile": {
+                        "type": "string",
+                        "description": "Profile used to build the app in EAS. Built app should be in debug version and have '\"ios.simulator\": true' option set."
+                      },
+                      "buildUUID": {
+                        "type": "string",
+                        "description": "UUID of the EAS build used in `eas build:view` command. If unspecified, will use a build with matching fingerprint if available."
+                      },
+                      "local": {
+                        "type": "boolean",
+                        "description": "When set, builds the app locally using EAS CLI."
+                      }
+                    },
+                    "required": [
+                      "profile"
+                    ]
+                  }
+                }
               },
               "ios": {
                 "description": "Provides a way to customize Xcode builds for iOS",
@@ -678,20 +813,7 @@
               }
             }
           }
-        },
-        "initialConfigurations": [
-          {
-            "type": "react-native-ide",
-            "request": "launch",
-            "name": "Radon IDE panel",
-            "ios": {
-              "configuration": "Debug"
-            },
-            "android": {
-              "buildType": "debug"
-            }
-          }
-        ]
+        }
       }
     ],
     "walkthroughs": [
@@ -812,8 +934,10 @@
     "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "^7.27.1",
     "@eslint/compat": "^1.2.8",
+    "@expo/env": "^1.0.7",
     "@expo/fingerprint": "^0.11.11",
     "@expo/package-manager": "^1.7.2",
+    "@legendapp/state": "^3.0.0-beta.31",
     "@modelcontextprotocol/sdk": "^1.12.3",
     "@msgpack/msgpack": "^3.1.1",
     "@radix-ui/react-alert-dialog": "^1.1.7",

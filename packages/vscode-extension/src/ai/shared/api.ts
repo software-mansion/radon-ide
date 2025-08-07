@@ -5,15 +5,16 @@ import { getTelemetryReporter } from "../../utilities/telemetry";
 import { CHAT_LOG } from "../chat";
 import { ToolResponse, ToolResult, ToolsInfo } from "../mcp/models";
 import { textToToolResponse } from "../mcp/utils";
+import { ConnectionListener } from "./ConnectionListener";
 
 const BACKEND_URL = "https://radon-ai-backend.swmansion.com/api/";
 const MCP_LOG = "[MCP]";
-const PLACEHOLDER_ID = "3241"; // this placeholder is needed by the API, but the value doesn't matter
 
 export async function invokeToolCall(
   toolName: string,
   args: unknown,
-  id?: string
+  id: string,
+  connectionListener?: ConnectionListener
 ): Promise<ToolResponse> {
   getTelemetryReporter().sendTelemetryEvent("radon-ai:tool-called", { toolName });
   try {
@@ -29,14 +30,26 @@ export async function invokeToolCall(
         tool_calls: [
           {
             name: toolName,
-            id: id ?? PLACEHOLDER_ID,
+            id,
             args,
           },
         ],
       }),
     });
 
+    if (response.status === 401) {
+      throw Error(`Authorization failed when connecting to the backend.`);
+    }
+
     if (response.status !== 200) {
+      const isOnline = await isServerOnline();
+
+      if (!isOnline) {
+        // Firing without `isOnline` verification could result in one-off network issues causing a full MCP reload.
+        // To prevent this, we verify the connection is down before announcing it.
+        connectionListener?.tryRestoringConnection();
+      }
+
       throw new Error(`Network error with status: ${response.status}`);
     }
 
@@ -58,7 +71,7 @@ export async function invokeToolCall(
   }
 }
 
-export async function getToolSchema(): Promise<ToolsInfo> {
+export async function getToolSchema(connectionListener: ConnectionListener): Promise<ToolsInfo> {
   try {
     const url = new URL("/api/get_tool_schema/", BACKEND_URL);
     const token = await getLicenseToken();
@@ -70,7 +83,12 @@ export async function getToolSchema(): Promise<ToolsInfo> {
       },
     });
 
+    if (response.status === 401) {
+      throw Error(`Authorization failed when connecting to the backend.`);
+    }
+
     if (response.status !== 200) {
+      connectionListener.tryRestoringConnection();
       throw new Error(`Network error with status: ${response.status}`);
     }
 
@@ -118,4 +136,17 @@ export async function getSystemPrompt(userPrompt: string): Promise<SystemRespons
   }
 
   return await response.json();
+}
+
+export async function isServerOnline(): Promise<boolean> {
+  try {
+    const url = new URL("/api/ping/", BACKEND_URL);
+    const response = await fetch(url);
+    return response.status === 200;
+  } catch (error) {
+    let msg = `Failed pinging Radon AI backend: ${error instanceof Error ? error.message : String(error)}`;
+    Logger.error(MCP_LOG, msg);
+    getTelemetryReporter().sendTelemetryEvent("radon-ai:ping-error", { error: msg });
+    return false;
+  }
 }

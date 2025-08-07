@@ -3,8 +3,8 @@ import { readdirSync, statSync } from "fs";
 import { ANDROID_HOME } from "./android";
 import { exec } from "./subprocess";
 import { Logger } from "../Logger";
-import { AndroidSystemImageInfo } from "../common/DeviceManager";
 import { getNativeABI } from "./common";
+import { AndroidSystemImageInfo } from "../common/State";
 export const SYSTEM_IMAGES_PATH = path.join(ANDROID_HOME, "system-images");
 
 const ACCEPTED_SYSTEM_IMAGES_TYPES = ["default", "google_apis_playstore", "google_apis"];

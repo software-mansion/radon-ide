@@ -1,45 +1,86 @@
-.phone-wrapper {
+/*
+ * CSS Custom Properties used by Device.tsx component:
+ * 
+ * Wrapper container positioning and sizing:
+ * --phone-wrapper-min-width: Minimum width for the phone wrapper container (auto)
+ * --phone-wrapper-min-height: Minimum height for the phone wrapper container (350px)
+ * --phone-wrapper-height: Height of the phone wrapper container (100% for fit, calculated px for zoom)
+ * 
+ * Device content positioning and sizing:
+ * --phone-content-min-height: Minimum height for phone content (350px or none)
+ * --phone-content-min-width: Minimum width for phone content (fit-content or calculated px)
+ * --phone-content-width: Current width of phone content (auto for portrait, calculated for landscape)
+ * --phone-content-height: Current height of phone content (calculated based on zoom/fit mode)
+ * --phone-aspect-ratio: Aspect ratio of the device frame (width/height for portrait, inverted for landscape)
+ * 
+ * Screen positioning and sizing:
+ * --phone-screen-height: Height of the screen area as percentage of frame
+ * --phone-screen-width: Width of the screen area as percentage of frame
+ * --phone-top: Top offset of screen area as percentage of frame
+ * --phone-left: Left offset of screen area as percentage of frame
+ * 
+ * Touch area positioning and sizing:
+ * --phone-touch-area-width: Width of the touch area (screen width + padding)
+ * --phone-touch-area-height: Height of the touch area (screen height + padding)
+ * --phone-touch-area-top: Top offset of touch area
+ * --phone-touch-area-left: Left offset of touch area
+ * --phone-touch-area-screen-width: Width of the screen within touch area
+ * --phone-touch-area-screen-height: Height of the screen within touch area
+ * --phone-touch-area-screen-top: Top offset of screen within touch area
+ * --phone-touch-area-screen-left: Left offset of screen within touch area
+ * 
+ * Device appearance:
+ * --phone-mask-image: URL to the device mask image for screen clipping
+ * --phone-frame-image: URL to the device frame image (used in .phone-bezel)
+ * 
+ * Transform properties:
+ * --frame-rotation: CSS rotation for device frame orientation (0deg or 180deg)
+ */
+
+.phone-display-container {
   flex: 1;
   display: flex;
   justify-content: safe center;
   align-items: safe center;
-  overflow: hidden;
+  overflow: auto;
   width: 100%;
   position: relative;
   user-select: none;
 }
 
-.phone-wrapper:hover,
-.phone-wrapper:focus-visible {
+.phone-display-container:hover,
+.phone-display-container:focus-visible {
   outline: none;
+}
+
+.phone-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  min-width: var(--phone-wrapper-min-width);
+  min-height: var(--phone-wrapper-min-height);
+  width: var(--phone-wrapper-width);
+  height: var(--phone-wrapper-height);
 }
 
 .phone-content {
   position: relative;
   display: flex;
   aspect-ratio: var(--phone-aspect-ratio);
-  max-width: 100%;
-  max-height: 100%;
-  min-height: 350px;
-  align-self: center;
-  /* object-fit: scale-down; */
+  width: calc(var(--phone-content-width));
+  height: var(--phone-content-height);
+  min-height: var(--phone-content-min-height); /* 350px */
+  min-width: var(--phone-content-min-width); /* 350px × phones aspect ratio */
+  object-fit: scale-down;
 }
 
 .touch-area {
   position: absolute;
-  width: calc(var(--phone-screen-width) + 14px);
+  width: var(--phone-screen-width);
   height: var(--phone-screen-height);
   top: var(--phone-top);
-  left: calc(var(--phone-left) - 7px);
+  left: var(--phone-left);
   user-select: none;
-}
-
-.phone-screen-background {
-  position: absolute;
-  width: calc(var(--phone-screen-width));
-  height: var(--phone-screen-height);
-  top: var(--phone-top);
-  left: calc(var(--phone-left));
 }
 
 .phone-sized {
@@ -53,14 +94,15 @@
   -webkit-mask-size: cover;
   mask-size: cover;
   user-select: none;
+  background-color: black;
 }
 
 .phone-screen {
   position: absolute;
-  width: calc(100% - 14px);
+  width: 100%;
   height: 100%;
-  top: 0;
-  left: 7px;
+  top: 0px;
+  left: 0px;
   -webkit-mask-image: var(--phone-mask-image);
   mask-image: var(--phone-mask-image);
   -webkit-mask-size: cover;
@@ -78,10 +120,13 @@
   -webkit-mask-size: cover;
   mask-size: cover;
   background-color: var(--swm-separator);
+  aspect-ratio: var(--phone-aspect-ratio);
 }
 
 .phone-frame {
   pointer-events: none;
+  rotate: var(--frame-rotation);
+  width: 100%;
 }
 
 .extension-error-screen {
@@ -193,4 +238,11 @@
 .button-group-left-wrapper:hover .button-group-left,
 .button-group-left:has(.zoom-controls.select-open) {
   transform: translate(0px, 21px);
+}
+
+.phone-preload-masks {
+  visibility: hidden;
+  pointer-events: none;
+  position: fixed;
+  left: -10000px;
 }

@@ -119,8 +119,8 @@ function transformWrapper({ filename, src, ...rest }) {
     if (version.startsWith("0.78") || version.startsWith("0.79")) {
       src = `module.exports = require("__RNIDE_lib__/rn-renderer/react-native-78-79/${rendererFileName}");`;
     }
-    if (version.startsWith("0.80")) {
-      src = `module.exports = require("__RNIDE_lib__/rn-renderer/react-native-80/${rendererFileName}");`;
+    if (version.startsWith("0.80") || version.startsWith("0.81")) {
+      src = `module.exports = require("__RNIDE_lib__/rn-renderer/react-native-80-81/${rendererFileName}");`;
     }
   } else if (isTransforming("node_modules/react/cjs/react-jsx-dev-runtime.development.js")) {
     const { version } = requireFromAppDir("react-native/package.json");
@@ -128,8 +128,8 @@ function transformWrapper({ filename, src, ...rest }) {
     if (version.startsWith("0.78") || version.startsWith("0.79")) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}");`;
     }
-    if (version.startsWith("0.80")) {
-      src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-80/${jsxRuntimeFileName}");`;
+    if (version.startsWith("0.80") || version.startsWith("0.81")) {
+      src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-80-81/${jsxRuntimeFileName}");`;
     }
   } else if (
     isTransforming("node_modules/@tanstack/react-query/src/index.ts") ||

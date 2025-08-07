@@ -1,4 +1,5 @@
 .replay-overlay {
+  z-index: var(--replay-z-index); /* defined in ReplayUI.css */
   position: fixed;
   top: 0;
   left: 0;

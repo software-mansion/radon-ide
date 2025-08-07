@@ -14,10 +14,12 @@ import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 import { getOpenPort } from "../utilities/common";
 import { DebugSource } from "../debugging/DebugSession";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
-import { LaunchConfiguration } from "../common/LaunchConfig";
+import { ResolvedLaunchConfig } from "./ApplicationContext";
+import { CancelToken } from "../utilities/cancelToken";
 
 const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
+const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
 
 export interface MetroDelegate {
   onBundleProgress(bundleProgress: number): void;
@@ -88,7 +90,10 @@ export class Metro {
     source: DebugSource;
     errorModulePath: string;
   }>();
+  protected readonly bundleProgressEventEmitter = new EventEmitter<{ bundleProgress: number }>();
+
   public readonly onBundleError = this.bundleErrorEventEmitter.event;
+  public readonly onBundleProgress = this.bundleProgressEventEmitter.event;
 
   constructor(port: number, watchFolders: string[] | undefined = undefined) {
     this._port = port;
@@ -265,13 +270,24 @@ export class Metro {
     return undefined;
   }
 
-  public async fetchWsTargets(): Promise<CDPTargetDescription[] | undefined> {
-    const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
-
+  public async fetchWsTargets(
+    timeoutMs: number | undefined = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
+    cancelToken: CancelToken = new CancelToken()
+  ): Promise<CDPTargetDescription[] | undefined> {
     let retryCount = 0;
     const startTime = Date.now();
 
-    while (Date.now() - startTime < WAIT_FOR_DEBUGGER_TIMEOUT_MS) {
+    function shouldContinue() {
+      if (timeoutMs !== undefined) {
+        if (Date.now() - startTime > timeoutMs) {
+          return false;
+        }
+      }
+
+      return !cancelToken.cancelled;
+    }
+
+    while (shouldContinue()) {
       retryCount++;
 
       try {
@@ -291,14 +307,19 @@ export class Metro {
         Logger.warn("[METRO] Fetching list of runtimes failed, retrying...");
       }
 
-      await sleep(progressiveRetryTimeout(retryCount));
+      await cancelToken.adapt(sleep(progressiveRetryTimeout(retryCount))).catch(() => {
+        // ignore the CancelError, we'll just break out of the loop after the condition is checked next time
+      });
     }
 
     return undefined;
   }
 
-  public async getDebuggerURL() {
-    const listJson = await this.fetchWsTargets();
+  public async getDebuggerURL(
+    timeoutMs: number | undefined = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
+    cancelToken: CancelToken = new CancelToken()
+  ) {
+    const listJson = await this.fetchWsTargets(timeoutMs, cancelToken);
 
     if (listJson === undefined) {
       return undefined;
@@ -320,15 +341,14 @@ export class MetroLauncher extends Metro implements Disposable {
   private subprocess?: ChildProcess;
   private startPromise: Promise<void> | undefined;
 
-  constructor(
-    private readonly devtools: Devtools,
-    private readonly delegate: MetroDelegate
-  ) {
+  constructor(private readonly devtools: Devtools) {
     super(0);
   }
 
   public dispose() {
     this.subprocess?.kill(9);
+    this.bundleErrorEventEmitter.dispose();
+    this.bundleProgressEventEmitter.dispose();
   }
 
   public async ready() {
@@ -345,7 +365,7 @@ export class MetroLauncher extends Metro implements Disposable {
   }: {
     resetCache: boolean;
     dependencies: Promise<any>[];
-    launchConfiguration: LaunchConfiguration;
+    launchConfiguration: ResolvedLaunchConfig;
   }) {
     if (this.startPromise) {
       throw new Error("metro already started");
@@ -423,7 +443,7 @@ export class MetroLauncher extends Metro implements Disposable {
   public async startInternal(
     resetCache: boolean,
     dependencies: Promise<any>[],
-    launchConfiguration: LaunchConfiguration
+    launchConfiguration: ResolvedLaunchConfig
   ) {
     const appRoot = launchConfiguration.absoluteAppRoot;
     await Promise.all([this.devtools.ready()].concat(dependencies));
@@ -491,7 +511,8 @@ export class MetroLauncher extends Metro implements Disposable {
           if (event.type === "bundle_transform_progressed") {
             // Because totalFileCount grows as bundle_transform progresses at the beginning there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
-              this.delegate.onBundleProgress(event.transformedFileCount / event.totalFileCount);
+              const bundleProgress = event.transformedFileCount / event.totalFileCount;
+              this.bundleProgressEventEmitter.fire({ bundleProgress });
             }
           } else if (event.type === "client_log" && event.level === "error") {
             Logger.error(stripAnsi(event.data[0]));
@@ -525,7 +546,6 @@ export class MetroLauncher extends Metro implements Disposable {
                 column0based: event.error.columnNumber,
               };
               const errorModulePath = event.error.originModulePath;
-              this.delegate.onBundlingError(message, source, errorModulePath);
               this.bundleErrorEventEmitter.fire({ message, source, errorModulePath });
               break;
           }

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { use$ } from "@legendapp/state/react";
 import { CanvasOutlineRenderer, OutlineRenderer } from "react-scan";
 import {
   RenderOutlinesEventListener,
@@ -9,6 +10,9 @@ import {
 import { makeProxy } from "../utilities/rpc";
 import "./RenderOutlinesOverlay.css";
 import { useProject } from "../providers/ProjectProvider";
+import { appToPreviewCoordinates } from "../utilities/transformAppCoordinates";
+import { useStore } from "../providers/storeProvider";
+import { DeviceRotation } from "../../common/Project";
 
 const RenderOutlines = makeProxy<RenderOutlinesInterface>("RenderOutlines");
 
@@ -27,7 +31,10 @@ function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: numbe
 
 function useIsEnabled() {
   const { selectedDeviceSession } = useProject();
-  return selectedDeviceSession?.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled;
+  if (selectedDeviceSession?.status !== "running") {
+    return false;
+  }
+  return selectedDeviceSession.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled;
 }
 
 function RenderOutlinesOverlay() {
@@ -35,6 +42,28 @@ function RenderOutlinesOverlay() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const outlineRendererRef = useRef<OutlineRenderer | null>(null);
   const outlineRendererEnabled = useIsEnabled();
+
+  const store$ = useStore();
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+
+  const { selectedDeviceSession } = useProject();
+
+  const appOrientation =
+    selectedDeviceSession?.status === "running"
+      ? selectedDeviceSession.appOrientation
+      : DeviceRotation.Portrait;
+
+  const orientationRef = useRef({
+    deviceOrientation: rotation,
+    appOrientation: appOrientation,
+  });
+
+  useEffect(() => {
+    orientationRef.current = {
+      deviceOrientation: rotation,
+      appOrientation: appOrientation,
+    };
+  }, [rotation, appOrientation]);
 
   useEffect(() => {
     if (!outlineRendererEnabled) {
@@ -62,14 +91,19 @@ function RenderOutlinesOverlay() {
         const { name, count, boundingRect, didCommit } = blueprint;
         const horizontalScale = size.width;
         const verticalScale = size.height;
+        const frameRect = appToPreviewCoordinates(
+          orientationRef.current.appOrientation,
+          orientationRef.current.deviceOrientation,
+          boundingRect
+        );
         const outline = {
           id: fiberId,
           name: name,
           count: count,
-          x: boundingRect.x * horizontalScale,
-          y: boundingRect.y * verticalScale,
-          width: boundingRect.width * horizontalScale,
-          height: boundingRect.height * verticalScale,
+          x: frameRect.x * horizontalScale,
+          y: frameRect.y * verticalScale,
+          width: frameRect.width * horizontalScale,
+          height: frameRect.height * verticalScale,
           didCommit: didCommit,
         };
         return [outline];

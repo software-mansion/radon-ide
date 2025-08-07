@@ -3,15 +3,14 @@ import Sinon from "sinon";
 import { describe, beforeEach, it } from "mocha";
 
 import { BatchingBuildManager } from "./BatchingBuildManager";
-import { DevicePlatform } from "../common/DeviceManager";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { CancelToken } from "../utilities/cancelToken";
+import { DevicePlatform } from "../common/State";
 
 describe("BatchingBuildManager", () => {
   let buildAppMock = Sinon.stub();
   let buildManagerMock = {
     buildApp: buildAppMock,
-    focusBuildOutput: Sinon.stub(),
     dispose: Sinon.stub(),
   };
   const APP_ROOT = "appRoot";
@@ -25,15 +24,8 @@ describe("BatchingBuildManager", () => {
     buildAppMock = Sinon.stub();
     buildManagerMock = {
       buildApp: buildAppMock,
-      focusBuildOutput: Sinon.stub(),
       dispose: Sinon.stub(),
     };
-  });
-
-  it("should focus the build output of the wrapped build manager", () => {
-    const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
-    batchingBuildManager.focusBuildOutput();
-    assert(buildManagerMock.focusBuildOutput.calledOnce);
   });
 
   it("should dispose the wrapped build manager", () => {
@@ -57,7 +49,11 @@ describe("BatchingBuildManager", () => {
     describe(`for ${platform}`, () => {
       it("should call the wrapped build manager's buildApp method", async () => {
         const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
-        const options = { progressListener, cancelToken: new CancelToken() };
+        const options = {
+          progressListener,
+          cancelToken: new CancelToken(),
+          buildOutputChannel: {} as any,
+        };
 
         buildAppMock.resolves(BUILD_RESULT);
         const result = await batchingBuildManager.buildApp(BUILD_CONFIG, options);
@@ -68,7 +64,11 @@ describe("BatchingBuildManager", () => {
 
       it("should only call the wrapped build manager's buildApp method once for the same configuration", async () => {
         const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
-        const options = { progressListener, cancelToken: new CancelToken() };
+        const options = {
+          progressListener,
+          cancelToken: new CancelToken(),
+          buildOutputChannel: {} as any,
+        };
 
         const { promise, resolve } = Promise.withResolvers();
         buildAppMock.returns(promise);
@@ -89,7 +89,11 @@ describe("BatchingBuildManager", () => {
 
       it("should call the wrapped build manager's buildApp for each different config", async () => {
         const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
-        const options = { progressListener: () => {}, cancelToken: new CancelToken() };
+        const options = {
+          progressListener,
+          cancelToken: new CancelToken(),
+          buildOutputChannel: {} as any,
+        };
 
         const { promise, resolve } = Promise.withResolvers();
         buildAppMock.returns(promise);
@@ -112,7 +116,11 @@ describe("BatchingBuildManager", () => {
 
       it("should call the wrapped build manager a second time after the first build is completed", async () => {
         const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
-        const options = { progressListener, cancelToken: new CancelToken() };
+        const options = {
+          progressListener,
+          cancelToken: new CancelToken(),
+          buildOutputChannel: {} as any,
+        };
 
         const { promise, resolve } = Promise.withResolvers();
         buildAppMock.returns(promise);
@@ -137,7 +145,7 @@ describe("BatchingBuildManager", () => {
       it("should cancel the build in progress when the passed cancel token is cancelled", async () => {
         const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
         const cancelToken = new CancelToken();
-        const options = { progressListener, cancelToken };
+        const options = { progressListener, cancelToken, buildOutputChannel: {} as any };
 
         const { promise } = Promise.withResolvers();
         buildAppMock.returns(promise);
@@ -163,10 +171,15 @@ describe("BatchingBuildManager", () => {
         buildAppMock.returns(promise);
 
         // Start the build
-        batchingBuildManager.buildApp(BUILD_CONFIG, { progressListener, cancelToken });
+        batchingBuildManager.buildApp(BUILD_CONFIG, {
+          progressListener,
+          cancelToken,
+          buildOutputChannel: {} as any,
+        });
         batchingBuildManager.buildApp(BUILD_CONFIG, {
           progressListener,
           cancelToken: new CancelToken(),
+          buildOutputChannel: {} as any,
         });
 
         // Cancel the token
@@ -182,7 +195,11 @@ describe("BatchingBuildManager", () => {
 
       it("should start new build when forceCleanBuild is passed", async () => {
         const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
-        const options = { progressListener, cancelToken: new CancelToken() };
+        const options = {
+          progressListener,
+          cancelToken: new CancelToken(),
+          buildOutputChannel: {} as any,
+        };
 
         const { promise, resolve } = Promise.withResolvers();
         buildAppMock.returns(promise);

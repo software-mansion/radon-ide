@@ -1,4 +1,4 @@
-import { DevicePlatform } from "./DeviceManager";
+import { DevicePlatform } from "./State";
 
 export enum BuildType {
   Local = "local",

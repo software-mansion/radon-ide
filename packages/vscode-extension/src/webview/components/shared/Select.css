@@ -62,8 +62,7 @@ button {
 }
 
 .select-item[data-disabled] {
-  background-color: var(--swm-select-item-disabled-background);
-  color: var(--swm-secondary-text);
+  color: var(--swm-select-disabled);
   pointer-events: none;
 }
 

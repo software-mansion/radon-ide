@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
+import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
-import { useProject } from "../providers/ProjectProvider";
-import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
+import { Platform, useProject } from "../providers/ProjectProvider";
+import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import PreviewLoader from "./PreviewLoader";
 import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
 import { useBundleErrorAlert } from "../hooks/useBundleErrorAlert";
@@ -15,17 +16,18 @@ import {
   InspectStackData,
   MultimediaData,
 } from "../../common/Project";
-import { useResizableProps } from "../hooks/useResizableProps";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
-import { Platform } from "../providers/UtilsProvider";
-import DimensionsBox from "./DimensionsBox";
+import InspectOverlay from "./InspectOverlay";
 import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
 import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
 import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
+import { useDeviceFrame } from "../Preview/Device/hooks";
+import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
+import { useStore } from "../providers/storeProvider";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -71,14 +73,16 @@ function Preview({
   replayData,
   onReplayClose,
 }: Props) {
+  const store$ = useStore();
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+
   const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>(null);
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
-  const [isPanning, setIsPanning] = useState(false);
   const [touchPoint, setTouchPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
-  const previewRef = useRef<HTMLImageElement>(null);
+  const previewRef = useRef<HTMLCanvasElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
@@ -87,10 +91,9 @@ function Preview({
   const hasFatalError = selectedDeviceSession?.status === "fatalError";
   const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
 
-  const debugPaused = selectedDeviceSession?.isDebuggerPaused;
-
   const isRunning = selectedDeviceSession?.status === "running";
   const isRefreshing = isRunning && selectedDeviceSession.isRefreshing;
+  const debugPaused = isRunning && selectedDeviceSession.isDebuggerPaused;
 
   const previewURL = selectedDeviceSession?.previewURL;
 
@@ -104,19 +107,28 @@ function Preview({
 
   const openRebuildAlert = useNativeRebuildAlert();
 
-  function getTouchPosition(event: MouseEvent<HTMLDivElement>) {
+  /**
+   * Converts mouse event coordinates to normalized touch coordinates ([0-1] range)
+   * relative to the device preview image.
+   * Coordinate transformation handling when the device when the device is rotated,
+   * done in the sendTouches method in preview.ts.
+   */
+  function getNormalizedTouchCoordinates(event: MouseEvent<HTMLDivElement>) {
     const imgRect = previewRef.current!.getBoundingClientRect();
+
+    // Normalize coordinates to [0-1] range
     const x = (event.clientX - imgRect.left) / imgRect.width;
     const y = (event.clientY - imgRect.top) / imgRect.height;
-    const clampedX = clamp(x, 0, 1);
-    const clampedY = clamp(y, 0, 1);
+
+    let clampedX = clamp(x, 0, 1);
+    let clampedY = clamp(y, 0, 1);
     return { x: clampedX, y: clampedY };
   }
 
   function moveAnchorPoint(event: MouseEvent<HTMLDivElement>) {
     let { x: anchorX, y: anchorY } = anchorPoint;
     const { x: prevPointX, y: prevPointY } = touchPoint;
-    const { x: newPointX, y: newPointY } = getTouchPosition(event);
+    const { x: newPointX, y: newPointY } = getNormalizedTouchCoordinates(event);
     anchorX += newPointX - prevPointX;
     anchorY += newPointY - prevPointY;
     anchorX = clamp(anchorX, 0, 1);
@@ -133,12 +145,12 @@ function Preview({
       return;
     }
 
-    const { x, y } = getTouchPosition(event);
+    const { x, y } = getNormalizedTouchCoordinates(event);
     project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
   }
 
   function sendMultiTouchForEvent(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
-    const pt = getTouchPosition(event);
+    const pt = getNormalizedTouchCoordinates(event);
     sendMultiTouch(pt, type);
   }
 
@@ -164,13 +176,26 @@ function Preview({
     event: MouseEvent<HTMLDivElement>,
     type: MouseMove | "Leave" | "RightButtonDown"
   ) {
+    if (selectedDeviceSession?.status !== "running") {
+      return;
+    }
     if (type === "Leave") {
       return;
     }
-    const { x: clampedX, y: clampedY } = getTouchPosition(event);
+    if (type === "RightButtonDown") {
+      project.sendTelemetry("inspector:show-component-stack", {});
+    }
+
+    const clampedCoordinates = getNormalizedTouchCoordinates(event);
+    const { x: translatedX, y: translatedY } = previewToAppCoordinates(
+      selectedDeviceSession.appOrientation,
+      rotation,
+      clampedCoordinates
+    );
+
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
-    project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
+    project.inspectElementAt(translatedX, translatedY, requestStack, (inspectData) => {
       if (requestStack && inspectData?.stack) {
         if (showInspectStackModal) {
           setInspectStackData({
@@ -188,11 +213,14 @@ function Preview({
           }
         }
       }
-      setInspectFrame(inspectData.frame);
+      if (inspectData.frame) {
+        setInspectFrame(inspectData.frame);
+      }
     });
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
+
   function resetInspector() {
     setInspectFrame(null);
     setInspectStackData(null);
@@ -208,8 +236,8 @@ function Preview({
     if (isInspecting) {
       sendInspect(e, "Move", false);
     } else if (isMultiTouching) {
-      setTouchPoint(getTouchPosition(e));
-      if (isPanning) {
+      setTouchPoint(getNormalizedTouchCoordinates(e));
+      if (e.shiftKey) {
         moveAnchorPoint(e);
       }
       if (isPressing) {
@@ -226,7 +254,7 @@ function Preview({
       return;
     }
 
-    const { x, y } = getTouchPosition(e);
+    const { x, y } = getNormalizedTouchCoordinates(e);
 
     project.dispatchWheel({ xRatio: x, yRatio: y }, e.deltaX, e.deltaY);
   }
@@ -355,7 +383,6 @@ function Preview({
 
     function onBlurChange() {
       if (!document.hasFocus()) {
-        setIsPanning(false);
         setIsMultiTouching(false);
         setIsPressing(false);
       }
@@ -407,14 +434,12 @@ function Preview({
           linux: e.code === "ControlLeft" || e.code === "ControlRight",
         });
 
-        const isPanningKey = e.code === "ShiftLeft" || e.code === "ShiftRight";
-
         if (isMultiTouchKey && isKeydown) {
           setAnchorPoint({
             x: 0.5,
             y: 0.5,
           });
-          setTouchPoint(getTouchPosition(currentMousePosition.current!));
+          setTouchPoint(getNormalizedTouchCoordinates(currentMousePosition.current!));
           setIsMultiTouching(true);
         }
 
@@ -422,10 +447,6 @@ function Preview({
           sendMultiTouch(touchPoint, "Up");
           setIsPressing(false);
           setIsMultiTouching(false);
-        }
-
-        if (isPanningKey) {
-          setIsPanning(isKeydown);
         }
 
         dispatchKeyPress(e);
@@ -448,13 +469,7 @@ function Preview({
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
   });
-
-  const resizableProps = useResizableProps({
-    wrapperDivRef,
-    zoomLevel,
-    setZoomLevel: onZoomChanged,
-    device: device!,
-  });
+  const frame = useDeviceFrame(device!);
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;
@@ -463,12 +478,13 @@ function Preview({
   return (
     <>
       <div
-        className="phone-wrapper"
+        className="phone-display-container"
+        data-test="phone-wrapper"
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>
         {showDevicePreview && (
-          <Device device={device!} resizableProps={resizableProps}>
+          <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="touch-area" {...touchHandlers}>
               <MjpegImg
                 src={previewURL}
@@ -483,54 +499,48 @@ function Preview({
 
               {isMultiTouching && (
                 <div
-                  style={{
-                    "--x": `${touchPoint.x * 100}%`,
-                    "--y": `${touchPoint.y * 100}%`,
-                    "--size": `${normalTouchIndicatorSize}px`,
-                  }}>
+                  style={
+                    {
+                      "--x": `${touchPoint.x * 100}%`,
+                      "--y": `${touchPoint.y * 100}%`,
+                      "--size": `${normalTouchIndicatorSize}px`,
+                    } as React.CSSProperties
+                  }>
                   <TouchPointIndicator isPressing={isPressing} />
                 </div>
               )}
               {isMultiTouching && (
                 <div
-                  style={{
-                    "--x": `${anchorPoint.x * 100}%`,
-                    "--y": `${anchorPoint.y * 100}%`,
-                    "--size": `${smallTouchIndicatorSize}px`,
-                  }}>
+                  style={
+                    {
+                      "--x": `${anchorPoint.x * 100}%`,
+                      "--y": `${anchorPoint.y * 100}%`,
+                      "--size": `${smallTouchIndicatorSize}px`,
+                    } as React.CSSProperties
+                  }>
                   <TouchPointIndicator isPressing={false} />
                 </div>
               )}
               {isMultiTouching && (
                 <div
-                  style={{
-                    "--x": `${mirroredTouchPosition.x * 100}%`,
-                    "--y": `${mirroredTouchPosition.y * 100}%`,
-                    "--size": `${normalTouchIndicatorSize}px`,
-                  }}>
+                  style={
+                    {
+                      "--x": `${mirroredTouchPosition.x * 100}%`,
+                      "--y": `${mirroredTouchPosition.y * 100}%`,
+                      "--size": `${normalTouchIndicatorSize}px`,
+                    } as React.CSSProperties
+                  }>
                   <TouchPointIndicator isPressing={isPressing} />
                 </div>
               )}
 
               {!replayData && inspectFrame && (
-                <div className="phone-screen phone-inspect-overlay">
-                  <div
-                    className="inspect-area"
-                    style={{
-                      left: `${inspectFrame.x * 100}%`,
-                      top: `${inspectFrame.y * 100}%`,
-                      width: `${inspectFrame.width * 100}%`,
-                      height: `${inspectFrame.height * 100}%`,
-                    }}
-                  />
-                  {isInspecting && (
-                    <DimensionsBox
-                      device={device}
-                      frame={inspectFrame}
-                      wrapperDivRef={wrapperDivRef}
-                    />
-                  )}
-                </div>
+                <InspectOverlay
+                  inspectFrame={inspectFrame}
+                  isInspecting={isInspecting}
+                  device={device!}
+                  wrapperDivRef={wrapperDivRef}
+                />
               )}
               {isRefreshing && (
                 <div className="phone-screen phone-refreshing-overlay">
@@ -547,7 +557,7 @@ function Preview({
           </Device>
         )}
         {!showDevicePreview && selectedDeviceSession?.status === "starting" && (
-          <Device device={device!} resizableProps={resizableProps}>
+          <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="phone-sized phone-content-loading-background" />
             <div className="phone-sized phone-content-loading ">
               <PreviewLoader
@@ -558,7 +568,7 @@ function Preview({
           </Device>
         )}
         {hasFatalError && (
-          <Device device={device!} resizableProps={resizableProps}>
+          <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="phone-sized extension-error-screen" />
           </Device>
         )}
@@ -576,6 +586,16 @@ function Preview({
           />
         </div>
       </div>
+
+      {/* Hack needed for css to cache those images. By default, all the images are not cached on the frontend,
+      so without this in place, when the device rotates, the images are re-fetched from the file system
+      which causes the device preview to flicker. */}
+      <span className="phone-preload-masks">
+        <div style={{ maskImage: `url(${device?.landscapeScreenImage})` }} />
+        <div style={{ maskImage: `url(${device?.screenMaskImage})` }} />
+        <img src={frame.imageLandscape} alt="" />
+        <img src={frame.image} alt="" />
+      </span>
     </>
   );
 }

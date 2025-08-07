@@ -1,12 +1,13 @@
-import { EasBuildConfig } from "./EasConfig";
-
 export type EasConfig = { profile: string; buildUUID?: string; local?: boolean };
 export type CustomBuild = {
   buildCommand?: string;
   fingerprintCommand?: string;
 };
 
-export type LaunchConfigurationOptions = {
+/**
+ * Represents the options for building and launching an application in Radon IDE.
+ */
+export interface LaunchOptions {
   name?: string;
   appRoot?: string;
   metroConfigPath?: string;
@@ -20,70 +21,61 @@ export type LaunchConfigurationOptions = {
     android?: EasConfig;
   };
   env?: Record<string, string>;
-  ios?: IOSLaunchConfiguration;
+  ios?: IOSLaunchOptions;
   isExpo?: boolean;
-  android?: AndroidLaunchConfiguration;
+  android?: AndroidLaunchOptions;
   packageManager?: string;
   preview?: {
     waitForAppLaunch?: boolean;
   };
-};
+}
 
-export interface IOSLaunchConfiguration {
+export const LAUNCH_OPTIONS_KEYS = [
+  "name",
+  "appRoot",
+  "metroConfigPath",
+  "expoStartArgs",
+  "customBuild",
+  "eas",
+  "env",
+  "ios",
+  "isExpo",
+  "android",
+  "packageManager",
+  "preview",
+] as const;
+
+type IsSuperTypeOf<Base, T extends Base> = T;
+// Type level proof that the strings in `LAUNCH_OPTIONS_KEYS` cover all keys `LaunchConfigurationOptions`.
+type _AssertKeysCover = IsSuperTypeOf<
+  Required<LaunchOptions>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Record<(typeof LAUNCH_OPTIONS_KEYS)[number], any>
+>;
+// Type level proof that the strings in `LAUNCH_OPTIONS_KEYS` are valid keys of `LaunchConfigurationOptions`.
+type _AssertKeysValid = IsSuperTypeOf<keyof LaunchOptions, (typeof LAUNCH_OPTIONS_KEYS)[number]>;
+
+export interface IOSLaunchOptions {
   scheme?: string;
   configuration?: string;
   launchArguments?: string[];
 }
 
-export interface AndroidLaunchConfiguration {
+export interface AndroidLaunchOptions {
   buildType?: string;
   productFlavor?: string;
 }
 
-export type LaunchConfiguration = LaunchConfigurationOptions & {
-  absoluteAppRoot: string;
+export enum LaunchConfigurationKind {
+  Custom = "Custom",
+  Detected = "Detected",
+}
+
+/**
+ * A serializable representation of a launch configuration.
+ * Includes the options specified in `LaunchOptions` as well as relevant data useful in the presentation layer.
+ */
+export type LaunchConfiguration = LaunchOptions & {
+  kind: LaunchConfigurationKind;
   appRoot: string;
-  env: Record<string, string>;
-  preview: {
-    waitForAppLaunch: boolean;
-  };
 };
-
-export interface LaunchConfigEventMap {
-  launchConfigChange: LaunchConfigurationOptions;
-  applicationRootsChanged: void;
-}
-
-export interface LaunchConfigEventListener<T> {
-  (event: T): void;
-}
-
-export type LaunchConfigUpdater = <K extends keyof LaunchConfigurationOptions>(
-  key: K,
-  value: LaunchConfigurationOptions[K] | "Auto"
-) => void;
-
-export type AddCustomApplicationRoot = (appRoot: string) => void;
-
-export type ApplicationRoot = {
-  path: string;
-  name: string;
-  displayName?: string;
-};
-
-export interface LaunchConfig {
-  getConfig(): Promise<LaunchConfigurationOptions>;
-  update: LaunchConfigUpdater;
-  addCustomApplicationRoot: AddCustomApplicationRoot;
-  getAvailableXcodeSchemes(): Promise<string[]>;
-  getAvailableApplicationRoots(): Promise<ApplicationRoot[]>;
-  getAvailableEasProfiles(): Promise<EasBuildConfig>;
-  addListener<K extends keyof LaunchConfigEventMap>(
-    eventType: K,
-    listener: LaunchConfigEventListener<LaunchConfigEventMap[K]>
-  ): Promise<void>;
-  removeListener<K extends keyof LaunchConfigEventMap>(
-    eventType: K,
-    listener: LaunchConfigEventListener<LaunchConfigEventMap[K]>
-  ): Promise<void>;
-}

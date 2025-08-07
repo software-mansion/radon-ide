@@ -4,13 +4,11 @@ import { useProject } from "../providers/ProjectProvider";
 import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
-import { useLaunchConfig } from "../providers/LaunchConfigProvider";
 import { BuildType } from "../../common/BuildConfig";
-import { useDevices } from "../providers/DevicesProvider";
-import { BuildErrorDescriptor, FatalErrorDescriptor } from "../../common/Project";
-import { DeviceSessionsManagerInterface } from "../../common/DeviceSessionsManager";
-
-type LogsButtonDestination = "build" | "extension";
+import { BuildErrorDescriptor, FatalErrorDescriptor, ProjectInterface } from "../../common/Project";
+import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
+import { Output } from "../../common/OutputChannel";
+import { DevicePlatform } from "../../common/State";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
 
@@ -18,17 +16,23 @@ function BuildErrorActions({
   logsButtonDestination,
   onReload,
 }: {
-  logsButtonDestination?: LogsButtonDestination;
+  logsButtonDestination?: Output;
   onReload?: () => void;
 }) {
-  const { project } = useProject();
+  const { project, projectState } = useProject();
   const { openModal } = useModal();
   return (
     <>
       <IconButton
         type="secondary"
         onClick={() => {
-          openModal("Launch Configuration", <LaunchConfigurationView />);
+          openModal(
+            "Launch Configuration",
+            <LaunchConfigurationView
+              launchConfig={projectState.selectedLaunchConfiguration}
+              isCurrentConfig
+            />
+          );
         }}
         tooltip={{ label: "Launch Configuration", side: "bottom" }}>
         <span className="codicon codicon-rocket" />
@@ -36,11 +40,7 @@ function BuildErrorActions({
       <IconButton
         type="secondary"
         onClick={() => {
-          if (logsButtonDestination === "extension") {
-            project.focusExtensionLogsOutput();
-          } else {
-            project.focusBuildOutput();
-          }
+          project.focusOutput(logsButtonDestination ?? Output.Ide);
         }}
         tooltip={{ label: "Open build logs", side: "bottom" }}>
         <span className="codicon codicon-symbol-keyword" />
@@ -62,7 +62,7 @@ function BootErrorActions() {
       <IconButton
         type="secondary"
         onClick={() => {
-          project.focusExtensionLogsOutput();
+          project.focusOutput(Output.Ide);
         }}
         tooltip={{ label: "Open IDE logs", side: "bottom" }}>
         <span className="codicon codicon-output" />
@@ -88,24 +88,23 @@ const noErrorAlert = {
 
 function createBuildErrorAlert(
   buildErrorDescriptor: BuildErrorDescriptor,
-  deviceSessionsManager: DeviceSessionsManagerInterface,
   hasSelectedScheme: boolean,
-  xcodeSchemes: string[]
+  xcodeSchemes: string[],
+  project: ProjectInterface
 ) {
   let onReload = () => {
-    deviceSessionsManager.reloadCurrentSession("autoReload");
+    project.reloadCurrentSession("autoReload");
   };
-  let logsButtonDestination: LogsButtonDestination | undefined = undefined;
+  let logsButtonDestination: Output | undefined = undefined;
 
   let description = "Open extension logs to find out what went wrong.";
 
   if (buildErrorDescriptor !== undefined) {
-    const { buildType, message } = buildErrorDescriptor;
+    const { buildType, message, platform } = buildErrorDescriptor;
     description = message;
     if (buildType && [BuildType.Local, BuildType.EasLocal, BuildType.Custom].includes(buildType)) {
-      logsButtonDestination = "build";
-    } else {
-      logsButtonDestination = "extension";
+      logsButtonDestination =
+        platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid;
     }
 
     if (buildType === null && !hasSelectedScheme && xcodeSchemes.length > 1) {
@@ -127,15 +126,16 @@ function createBuildErrorAlert(
 
 export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undefined) {
   let errorAlert = noErrorAlert;
-  const { ios, xcodeSchemes } = useLaunchConfig();
-  const { deviceSessionsManager } = useDevices();
+  const { project, projectState } = useProject();
+  const { appRoot, ios } = projectState.selectedLaunchConfiguration;
+  const { xcodeSchemes } = useAppRootConfig(appRoot);
 
   if (errorDescriptor?.kind === "build") {
     errorAlert = createBuildErrorAlert(
       errorDescriptor,
-      deviceSessionsManager,
       ios?.scheme !== undefined,
-      xcodeSchemes || []
+      xcodeSchemes || [],
+      project
     );
   } else if (errorDescriptor?.kind === "device") {
     errorAlert = bootErrorAlert;

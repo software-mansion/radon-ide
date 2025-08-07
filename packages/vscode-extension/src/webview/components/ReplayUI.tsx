@@ -3,9 +3,11 @@ import "./ReplayUI.css";
 import ReplayOverlay from "./ReplayOverlay";
 import { MultimediaData } from "../../common/Project";
 
+import MediaCanvas from "../Preview/MediaCanvas";
+
 function VHSRewind() {
   return (
-    <div className="phone-screen">
+    <div className="phone-screen vhs-wrapper">
       <div className="vhs-lines"></div>
       <div className="crt-lines"></div>
       <div className="vhs-bg">
@@ -26,10 +28,11 @@ type ReplayVideoProps = {
 
 export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isRewinding, setIsRewinding] = useState(false);
 
   return (
-    <>
+    <span className="replay-ui-wrapper">
       <ReplayOverlay
         isRewinding={isRewinding}
         setIsRewinding={setIsRewinding}
@@ -37,8 +40,24 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
         onClose={onClose}
         replayData={replayData}
       />
-      <video ref={videoRef} src={replayData.url} className="phone-screen replay-video" />
+      {/* Hidden source video for loading the video stream */}
+      {/* Video's dimensions and orientation are dependent on the current device rotation
+          because of how the video saving is handled. */}
+      <video
+        ref={videoRef}
+        src={replayData.url}
+        style={{ display: "none" }}
+        className="phone-screen replay-video"
+      />
+      {/* Main display canvas */}
+      <MediaCanvas
+        ref={canvasRef}
+        mediaRef={videoRef}
+        src={replayData.url}
+        className="phone-screen replay-video"
+      />
+      {/* VHS rewind effect on top of MediaCanvas */}
       {isRewinding && <VHSRewind />}
-    </>
+    </span>
   );
 }

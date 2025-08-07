@@ -2,7 +2,7 @@ import path from "path";
 import { Disposable, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import { MultimediaData, TouchPoint, DeviceButtonType } from "../common/Project";
+import { MultimediaData, TouchPoint, DeviceButtonType, DeviceRotation } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
 
@@ -38,7 +38,11 @@ export class Preview implements Disposable {
     stdin.write(command);
   }
 
-  private saveMultimediaWithID(type: MultimediaType, id: string): Promise<MultimediaData> {
+  private saveMultimediaWithID(
+    type: MultimediaType,
+    id: string,
+    rotation: DeviceRotation
+  ): Promise<MultimediaData> {
     const stdin = this.subprocess?.stdin;
     if (!stdin) {
       throw new Error("sim-server process not available");
@@ -58,7 +62,7 @@ export class Preview implements Disposable {
 
     const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
     this.multimediaPromises.set(id, newPromiseHandler);
-    stdin.write(`${type} ${id} ${type === "video" ? "save" : ""}\n`);
+    stdin.write(`${type} ${id} ${type === "video" ? "save " : ""}-r ${rotation}\n`);
     return promise;
   }
 
@@ -161,12 +165,26 @@ export class Preview implements Disposable {
     this.subprocess?.stdin?.write("pointer show false\n");
   }
 
+  public rotateDevice(rotation: DeviceRotation) {
+    this.subprocess?.stdin?.write(`rotate ${rotation}\n`, (err) => {
+      if (err) {
+        Logger.error("sim-server: Error rotating device:", err);
+        throw new Error(`Failed to rotate device: ${err.message}`);
+      }
+      Logger.info(`sim-server: device rotated to ${rotation}`);
+    });
+  }
+
   public startRecording() {
     this.sendCommandOrThrow(`video recording start -b 2000\n`); // 2000MB buffer for on-disk video
   }
 
-  public captureAndStopRecording() {
-    const recordingDataPromise = this.saveMultimediaWithID(MultimediaType.Video, "recording");
+  public captureAndStopRecording(rotation: DeviceRotation) {
+    const recordingDataPromise = this.saveMultimediaWithID(
+      MultimediaType.Video,
+      "recording",
+      rotation
+    );
     this.sendCommandOrThrow(`video recording stop\n`);
     return recordingDataPromise;
   }
@@ -186,16 +204,40 @@ export class Preview implements Disposable {
     this.sendCommandOrThrow(`video replay stop\n`);
   }
 
-  public captureReplay() {
-    return this.saveMultimediaWithID(MultimediaType.Video, "replay");
+  public captureReplay(rotation: DeviceRotation) {
+    return this.saveMultimediaWithID(MultimediaType.Video, "replay", rotation);
   }
 
-  public captureScreenShot() {
-    return this.saveMultimediaWithID(MultimediaType.Screenshot, "screenshot");
+  public captureScreenShot(rotation: DeviceRotation) {
+    return this.saveMultimediaWithID(MultimediaType.Screenshot, "screenshot", rotation);
   }
 
-  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    const touchesCoords = touches.map((pt) => `${pt.xRatio},${pt.yRatio}`).join(" ");
+  public sendTouches(
+    touches: Array<TouchPoint>,
+    type: "Up" | "Move" | "Down",
+    rotation: DeviceRotation
+  ) {
+    // transform touch coordinates to account for different device orientations before
+    // translation and sending them to the simulator-server.
+    const transformedTouches = touches.map((touch, i) => {
+      const { xRatio: x, yRatio: y } = touch;
+      switch (rotation) {
+        // 90° anticlockwise map (x,y) to (1-y, x)
+        case DeviceRotation.LandscapeLeft:
+          return { xRatio: 1 - y, yRatio: x };
+        case DeviceRotation.LandscapeRight:
+          // 90° clockwise map (x,y) to (y, 1-x)
+          return { xRatio: y, yRatio: 1 - x };
+        case DeviceRotation.PortraitUpsideDown:
+          // 180° map (x,y) to (1-x, 1-y)
+          return { xRatio: 1 - x, yRatio: 1 - y };
+        default:
+          // Portrait mode: no transformation needed
+          return touch;
+      }
+    });
+
+    const touchesCoords = transformedTouches.map((pt) => `${pt.xRatio},${pt.yRatio}`).join(" ");
     this.subprocess?.stdin?.write(`touch ${type} ${touchesCoords}\n`);
   }
 

@@ -4,18 +4,52 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
-import { PanelLocation } from "../common/WorkspaceConfig";
+import { PanelLocation, RecursivePartial, State } from "../common/State";
 
-type CallArgs = {
+type EventBase = Record<string, unknown>;
+
+interface CallCommand extends EventBase {
+  command: "call";
+}
+interface GetStateCommand extends EventBase {
+  command: "RNIDE_get_state";
+}
+interface SetStateCommand extends EventBase {
+  command: "RNIDE_set_state";
+}
+interface FocusPreviewCommand extends EventBase {
+  command: "focusPreview";
+}
+interface BlurPreviewCommand extends EventBase {
+  command: "blurPreview";
+}
+
+interface CallArgs {
   callId: string;
   object: string;
   method: string;
   args: unknown[];
-};
+}
+interface GetStateArgs {
+  callId: string;
+}
+interface SetStateArgs {
+  callId: string;
+  state: RecursivePartial<State>;
+}
 
-export type WebviewEvent = {
-  command: "call";
-} & CallArgs;
+type CallEvent = CallCommand & CallArgs;
+type GetStateEvent = GetStateCommand & GetStateArgs;
+type SetStateEvent = SetStateCommand & SetStateArgs;
+type FocusPreviewEvent = FocusPreviewCommand;
+type BlurPreviewEvent = BlurPreviewCommand;
+
+export type WebviewEvent =
+  | CallEvent
+  | GetStateEvent
+  | SetStateEvent
+  | FocusPreviewEvent
+  | BlurPreviewEvent;
 
 export class WebviewController implements Disposable {
   private disposables: Disposable[] = [];
@@ -33,18 +67,14 @@ export class WebviewController implements Disposable {
 
   constructor(private webview: Webview) {
     this.ide = IDE.attach();
+    this.disposables.push(this.ide.onStateChanged(this.onStateUpdated));
 
     // Set an event listener to listen for messages passed from the webview context
     this.setWebviewMessageListener(webview);
 
     this.callableObjectGetters = new Map([
-      ["DeviceManager", () => this.ide.deviceManager as object],
-      ["DependencyManager", () => this.ide.project.dependencyManager as object],
       ["Project", () => this.ide.project as object],
-      ["DeviceSessionsManager", () => this.ide.project.deviceSessionsManager as object],
-      ["WorkspaceConfig", () => this.ide.workspaceConfigController as object],
-      ["LaunchConfig", () => this.ide.project.launchConfigurationController as object],
-      ["Utils", () => this.ide.utils as object],
+      ["AppRootConfig", () => this.ide.project.appRootConfigController as object],
       [
         "RenderOutlines",
         () => this.ide.project.deviceSession!.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,
@@ -62,6 +92,13 @@ export class WebviewController implements Disposable {
     });
   }
 
+  public onStateUpdated = (partialState: RecursivePartial<State>) => {
+    this.webview.postMessage({
+      command: "RNIDE_state_updated",
+      state: partialState,
+    });
+  };
+
   public asWebviewUri(uri: Uri) {
     return this.webview.asWebviewUri(uri);
   }
@@ -76,12 +113,15 @@ export class WebviewController implements Disposable {
     webview.onDidReceiveMessage(
       (message: WebviewEvent) => {
         // ignore dispatchTouches and log calls from being logged as "Message from webview"
-        if (message.method !== "dispatchTouches" && message.method !== "log") {
+        if (!message.method || (message.method !== "dispatchTouches" && message.method !== "log")) {
           Logger.log("Message from webview", message);
         }
-
         if (message.command === "call") {
           this.handleRemoteCall(message);
+        } else if (message.command === "RNIDE_get_state") {
+          this.handleGetState(message);
+        } else if (message.command === "RNIDE_set_state") {
+          this.handleSetState(message);
         } else if (message.command === "focusPreview") {
           commands.executeCommand("setContext", "RNIDE.isPreviewFocused", true);
         } else if (message.command === "blurPreview") {
@@ -152,5 +192,18 @@ export class WebviewController implements Disposable {
         });
       }
     }
+  }
+
+  private async handleGetState(message: GetStateArgs) {
+    const state = await this.ide.getState();
+    this.webview.postMessage({
+      command: "RNIDE_get_state_result",
+      callId: message.callId,
+      result: state,
+    });
+  }
+
+  private async handleSetState(message: SetStateArgs) {
+    await this.ide.setState(message.state);
   }
 }

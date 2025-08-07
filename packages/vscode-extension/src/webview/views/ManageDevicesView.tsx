@@ -1,21 +1,21 @@
 import "./ManageDevicesView.css";
-import { MouseEventHandler, useEffect, useState } from "react";
+import { MouseEventHandler, useState } from "react";
 import * as Switch from "@radix-ui/react-switch";
+import { use$ } from "@legendapp/state/react";
 import IconButton from "../components/shared/IconButton";
 import DeviceRenameDialog from "../components/DeviceRenameDialog";
 import DeviceRemovalConfirmation from "../components/DeviceRemovalConfirmation";
 import CreateDeviceView from "./CreateDeviceView";
-import { DeviceInfo, DevicePlatform } from "../../common/DeviceManager";
-import { useDevices } from "../providers/DevicesProvider";
 import Tooltip from "../components/shared/Tooltip";
 import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
-import { mapIdToModel } from "../utilities/deviceContants";
-import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
+import { mapIdToModel } from "../utilities/deviceConstants";
 
 import "../components/shared/SwitchGroup.css";
+import { useStore } from "../providers/storeProvider";
+import { DeviceInfo, DevicePlatform } from "../../common/State";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -32,14 +32,15 @@ function DeviceRow({
   isSelected,
   isRunning,
 }: DeviceRowProps) {
-  const { deviceSessionsManager } = useDevices();
-  const { stopPreviousDevices } = useWorkspaceConfig();
+  const store$ = useStore();
+  const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
+  const { project } = useProject();
 
-  const stopDevice = () => deviceSessionsManager.terminateSession(deviceInfo.id);
+  const stopDevice = () => project.terminateSession(deviceInfo.id);
   const selectDevice: MouseEventHandler = (e) => {
     if (!isSelected) {
       e.stopPropagation();
-      deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
+      project.startOrActivateSessionForDevice(deviceInfo, {
         stopPreviousDevices,
       });
       closeModal();
@@ -133,6 +134,8 @@ function DeviceRow({
 }
 
 function ManageDevicesView() {
+  const store$ = useStore();
+  const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
   const { projectState, selectedDeviceSession } = useProject();
   const { deviceSessions } = projectState;
   const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
@@ -141,18 +144,12 @@ function ManageDevicesView() {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
 
-  const { stopPreviousDevices, update } = useWorkspaceConfig();
+  const devices = use$(store$.devicesState.devices) ?? [];
 
-  const { devices, reload } = useDevices();
-
-  useEffect(() => {
-    reload();
-  }, []);
-
-  const iosDevices = devices.filter(
+  const iosDevices = (devices ?? []).filter(
     ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0
   );
-  const androidDevices = devices.filter(
+  const androidDevices = (devices ?? []).filter(
     ({ platform, modelId }) => platform === DevicePlatform.Android && modelId.length > 0
   );
 
@@ -234,7 +231,9 @@ function ManageDevicesView() {
         <Switch.Root
           className="switch-root small-switch"
           checked={stopPreviousDevices}
-          onCheckedChange={(checked) => update("stopPreviousDevices", checked)}>
+          onCheckedChange={(checked) =>
+            store$.workspaceConfiguration.stopPreviousDevices.set(checked)
+          }>
           <Switch.Thumb className="switch-thumb" />
         </Switch.Root>
       </div>
