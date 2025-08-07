@@ -46,3 +46,19 @@ export async function findAndClickElementByTag(
   );
   element.click();
 }
+
+export async function waitUntilElementGone(
+  driver,
+  locator,
+  timeout = 5000,
+  message = "Element did not disappear"
+) {
+  await driver.wait(
+    async () => {
+      const elements = await driver.findElements(locator);
+      return elements.length === 0;
+    },
+    timeout,
+    message
+  );
+}

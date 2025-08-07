@@ -1,6 +1,7 @@
 import {
   findAndWaitForElement,
   findAndClickElementByTag,
+  waitUntilElementGone,
 } from "../utils/helpers.js";
 import { By } from "vscode-extension-tester";
 
@@ -112,8 +113,14 @@ export async function deleteAllDevices(driver) {
         "Timed out waiting for device delete button"
       );
       await deviceDeleteButton.click();
-
       await findAndClickElementByTag(driver, `confirm-delete-device-button`);
+
+      await waitUntilElementGone(
+        driver,
+        By.css(`[data-test="device-removal-wrapper"]`),
+        5000,
+        "delete confirmation modal did not disappear"
+      );
     }
   } catch (e) {}
 }

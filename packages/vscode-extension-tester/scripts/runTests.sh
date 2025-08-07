@@ -81,6 +81,10 @@ cd ..
 rm -rf "$REMOTE_PATH"
 EOF
 
+utmctl stop "$VM_NAME" || {
+    echo "Failed to stop VM '$VM_NAME'."
+    exit 1
+}
 pkill -f "UTM.app"
 
 echo "Tests completed."
