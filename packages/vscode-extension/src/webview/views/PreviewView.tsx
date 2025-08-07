@@ -36,11 +36,11 @@ import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
-  [InspectorAvailabilityStatus.Available]: "",
+  [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
   [InspectorAvailabilityStatus.UnavailableEdgeToEdge]:
-    "Element Inspector is disabled in apps that don't support Edge-to-Edge.",
+    "Element Inspector is disabled in apps that don't support Edge-to-Edge",
   [InspectorAvailabilityStatus.UnavailableInactive]:
-    "Element Inspector is disabled when the app is inactive.",
+    "Element Inspector is disabled when the app is inactive",
 } as const;
 
 function ActivateLicenseButton() {
@@ -376,9 +376,7 @@ function PreviewView() {
           shouldDisplayLabelWhileDisabled={navBarButtonsActive}
           active={isInspecting}
           tooltip={{
-            label: inspectorAvailable
-              ? "Select an element to inspect it"
-              : INSPECTOR_AVAILABILITY_MESSAGES[inspectorAvailabilityStatus],
+            label: INSPECTOR_AVAILABILITY_MESSAGES[inspectorAvailabilityStatus],
           }}
           onClick={() => {
             sendTelemetry("inspector:button-clicked", {

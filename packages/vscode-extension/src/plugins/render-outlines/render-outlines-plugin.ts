@@ -14,9 +14,9 @@ import { InspectorAvailabilityStatus } from "../../common/Project";
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "",
   [InspectorAvailabilityStatus.UnavailableEdgeToEdge]:
-    "Render Outlines is disabled in apps that don't support Edge-to-Edge.",
+    "Render Outlines is disabled in apps that don't support Edge-to-Edge",
   [InspectorAvailabilityStatus.UnavailableInactive]:
-    "Render Outlines is disabled when the app is inactive.",
+    "Render Outlines is disabled when the app is inactive",
 } as const;
 
 export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface, Disposable {
