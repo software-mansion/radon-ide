@@ -41,7 +41,7 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
         <div className={styles.navbar_left}>
           <a href="/">
             <img
-              src={colorMode === "dark" ? logo.srcDark : logo.src}
+              src={colorMode === "dark" ? `/${logo.srcDark}` : `/${logo.src}`}
               className={styles.logo}
               alt={logo.alt}
             />

@@ -4,9 +4,7 @@
   align-items: center;
   gap: 24px;
 
-  /* Blur on/off */
   background-color: transparent;
-  /* background-color: var(--swm-background); */
 
   position: sticky;
   top: 0;

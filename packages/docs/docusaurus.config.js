@@ -58,8 +58,8 @@ const config = {
         hideOnScroll: false,
         logo: {
           alt: "Radon IDE logo",
-          src: "/img/logo.svg",
-          srcDark: "/img/logo-dark.svg",
+          src: "img/logo.svg",
+          srcDark: "img/logo-dark.svg",
           width: 156,
           height: 40,
         },
