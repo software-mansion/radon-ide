@@ -24,6 +24,7 @@ import {
   BundleErrorDescriptor,
   DeviceRotation,
   InspectData,
+  InspectorAvailabilityStatus,
   ProfilingState,
   StartupMessage,
   ToolsState,
@@ -56,6 +57,8 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   private profilingReactState: ProfilingState = "stopped";
   private isRefreshing: boolean = false;
   private appOrientation: DeviceRotation | undefined;
+  private inspectorAvailability: InspectorAvailabilityStatus =
+    InspectorAvailabilityStatus.Available;
   private isActive = false;
   private inspectCallID = 7621;
 
@@ -151,6 +154,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       isRefreshing: this.isRefreshing,
       bundleError: this.bundleError,
       appOrientation: this.appOrientation,
+      inspectorAvailability: this.inspectorAvailability,
     };
   }
 
@@ -367,7 +371,14 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
         }
 
         this.emitStateChange();
-      })
+      }),
+      this.devtools.onEvent(
+        "inspectorAvailabilityChanged",
+        (inspectorAvailability: InspectorAvailabilityStatus) => {
+          this.inspectorAvailability = inspectorAvailability;
+          this.emitStateChange();
+        }
+      )
     );
   }
   //#endregion
