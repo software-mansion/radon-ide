@@ -96,11 +96,12 @@
 }
 
 .icon-button-indicator {
+  box-sizing: border-box;
   position: absolute;
-  top: 2px;
-  right: 2px;
-  width: 8px;
-  height: 8px;
+  top: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
   background-color: var(--swm-button-counter-background, #ff5555);
   border-radius: 50%;
   border: 1px solid var(--swm-button-counter-border, transparent);
