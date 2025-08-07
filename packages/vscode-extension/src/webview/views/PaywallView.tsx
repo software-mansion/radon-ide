@@ -51,7 +51,6 @@ function PaywallView() {
       }
 
       setPrices(response);
-      setIsLoadingPrices(false);
     } catch (error) {
       console.error("Failed to fetch prices from Paddle:", error);
       setPricesError(error instanceof Error ? error.message : "Failed to load pricing information");
