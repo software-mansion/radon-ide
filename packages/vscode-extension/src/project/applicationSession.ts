@@ -23,6 +23,7 @@ import {
   AppOrientation,
   BundleErrorDescriptor,
   DeviceRotation,
+  InspectorBridgeStatus,
   InspectData,
   InspectorAvailabilityStatus,
   ProfilingState,
@@ -45,14 +46,8 @@ interface LaunchApplicationSessionDeps {
   devtools: Devtools;
 }
 
-enum DevtoolsStatus {
-  Connecting,
-  Connected,
-  Disconnected,
-}
-
 export class ApplicationSession implements ToolsDelegate, Disposable {
-  private devtoolsStatus: DevtoolsStatus = DevtoolsStatus.Connecting;
+  private inspectorBridgeStatus: InspectorBridgeStatus = InspectorBridgeStatus.Connecting;
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
   private debugSessionEventSubscription?: Disposable;
@@ -162,6 +157,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       bundleError: this.bundleError,
       appOrientation: this.appOrientation,
       inspectorAvailability: this.inspectorAvailability,
+      inspectorBridgeStatus: this.inspectorBridgeStatus,
     };
   }
 
@@ -387,14 +383,14 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
         }
       ),
       this.devtools.onEvent("disconnected", () => {
-        if (this.devtoolsStatus === DevtoolsStatus.Connected) {
-          this.devtoolsStatus = DevtoolsStatus.Disconnected;
+        if (this.inspectorBridgeStatus === InspectorBridgeStatus.Connected) {
+          this.inspectorBridgeStatus = InspectorBridgeStatus.Disconnected;
           this.emitStateChange();
         }
       }),
       this.devtools.onEvent("connected", () => {
-        if (this.devtoolsStatus !== DevtoolsStatus.Connected) {
-          this.devtoolsStatus = DevtoolsStatus.Connected;
+        if (this.inspectorBridgeStatus !== InspectorBridgeStatus.Connected) {
+          this.inspectorBridgeStatus = InspectorBridgeStatus.Connected;
           this.emitStateChange();
         }
       })

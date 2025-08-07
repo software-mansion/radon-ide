@@ -16,6 +16,7 @@ import {
   InspectStackData,
   MultimediaData,
   InspectorAvailabilityStatus,
+  InspectorBridgeStatus,
 } from "../../common/Project";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
@@ -30,6 +31,7 @@ import { useDeviceFrame } from "../Preview/Device/hooks";
 import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
 import InspectorUnavailableBox from "./InspectorUnavailableBox";
+import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -103,6 +105,10 @@ function Preview({
 
   const showDevicePreview =
     selectedDeviceSession?.previewURL && (showPreviewRequested || isRunning);
+
+  const isAppDisconnected =
+    isRunning && selectedDeviceSession.inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
+  useApplicationDisconnectedAlert(isAppDisconnected);
 
   useFatalErrorAlert(fatalErrorDescriptor);
 
