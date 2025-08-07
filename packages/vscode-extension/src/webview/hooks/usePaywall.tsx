@@ -1,13 +1,13 @@
 import { useModal } from "../providers/ModalProvider";
-import { useUtils } from "../providers/UtilsProvider";
+import { useProject } from "../providers/ProjectProvider";
 import PaywallView from "../views/PaywallView";
 
 export function usePaywall() {
-  const { sendTelemetry } = useUtils();
+  const { project } = useProject();
   const { openModal } = useModal();
 
   const openPaywall = () => {
-    sendTelemetry("paywall:open");
+    project.sendTelemetry("paywall:open");
     openModal(<PaywallView />, { fullScreen: true });
   };
 
