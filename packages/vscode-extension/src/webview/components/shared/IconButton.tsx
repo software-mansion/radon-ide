@@ -46,12 +46,18 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     if (counter !== 0) {
       setDisplayCounter(counter);
     }
+  }, [counter]);
+
+  useEffect(() => {
     if (counterMode === "compact" && counter !== 0) {
       setShouldPing(true);
       const timer = setTimeout(() => {
         setShouldPing(false);
       }, PING_DURATION);
       return () => clearTimeout(timer);
+    } else if (counter === 0) {
+      // Reset ping state when counter goes to 0
+      setShouldPing(false);
     }
   }, [counter, counterMode]);
 
