@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import classnames from "classnames";
 import "./IconButton.css";
 import Tooltip from "./Tooltip";
-
-const PING_DURATION = 300; // ms
+import { usePing } from "../../hooks/usePing";
 
 export interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -39,20 +38,8 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     className = "",
     ...rest
   } = props;
-  const [shouldPing, setShouldPing] = useState(false);
 
-  useEffect(() => {
-    if (counterMode === "compact" && counter !== 0) {
-      setShouldPing(true);
-      const timer = setTimeout(() => {
-        setShouldPing(false);
-      }, PING_DURATION);
-      return () => clearTimeout(timer);
-    } else if (counter === 0) {
-      // Reset ping state when counter goes to 0
-      setShouldPing(false);
-    }
-  }, [counter, counterMode]);
+  const shouldPing = usePing(counter ?? 0, counterMode);
 
   const showCounter = Boolean(counter);
   const button = (
