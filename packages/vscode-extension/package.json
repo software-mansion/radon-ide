@@ -271,7 +271,7 @@
           "default": true,
           "description": "Enables the Radon AI functionality in the extension. Note: A full restart of the IDE is required for this setting to take effect."
         },
-        "RadonIDE.locationOfMcpConfig": {
+        "RadonIDE.MCPConfigLocation": {
           "type": "string",
           "scope": "window",
           "default": "Project",
@@ -279,7 +279,7 @@
             "Project",
             "Global"
           ],
-          "description": "Sets the write location for mcp.json when using Cursor, or a legacy VSCode version (<1.101.0)."
+          "markdownDescription": "Sets the write location for `mcp.json` when using Cursor, or a legacy VSCode version (`<1.101.0`)."
         },
         "RadonIDE.deviceRotation": {
           "type": "string",
