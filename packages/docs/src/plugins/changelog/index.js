@@ -22,7 +22,10 @@ module.exports = function (context, options) {
           content: body,
         };
       });
-      return parsedData;
+      const sortedData = parsedData.sort((a, b) => {
+        return new Date(b.date) - new Date(a.date);
+      });
+      return sortedData;
     },
     async contentLoaded({ content, actions }) {
       const { setGlobalData } = actions;
