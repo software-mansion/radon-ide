@@ -55,7 +55,7 @@ export class BuildCache {
    */
   public async storeBuild(buildFingerprint: string, cacheKey: CacheKey, build: BuildResult) {
     assert(cacheKey.platform === build.platform, "Cache key platform must match build platform");
-    const appPath = await getAppHash(getAppPath(build));
+    const appPath = await getAppHash(build);
     await extensionContext.globalState.update(stringifyCacheKey(cacheKey), {
       fingerprint: buildFingerprint,
       buildHash: appPath,
@@ -91,7 +91,7 @@ export class BuildCache {
         return undefined;
       }
 
-      const appHash = await getAppHash(appPath);
+      const appHash = await getAppHash(build);
       const hashesMatch = appHash === cache.buildHash;
       if (hashesMatch) {
         Logger.info("Using cached build.");
@@ -124,8 +124,10 @@ function getAppPath(build: BuildResult) {
   return build.platform === DevicePlatform.Android ? build.apkPath : build.appPath;
 }
 
-async function getAppHash(appPath: string) {
-  return (await calculateMD5(appPath)).digest("hex");
+async function getAppHash(appBuild: AndroidBuildResult | IOSBuildResult) {
+  const fileHash = (await calculateMD5(getAppPath(appBuild))).digest("hex");
+  const supportedOrientationsHash = appBuild.platform === DevicePlatform.IOS ? appBuild.supportedInterfaceOrientations.join() : "";
+  return `${fileHash}${supportedOrientationsHash}`;
 }
 
 export async function migrateOldBuildCachesToNewStorage(appRoot: string) {

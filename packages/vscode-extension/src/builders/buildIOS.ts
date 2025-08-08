@@ -12,24 +12,49 @@ import { getXcodebuildArch } from "../utilities/common";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildType, IOSBuildConfig, IOSLocalBuildConfig } from "../common/BuildConfig";
 import { DevicePlatform } from "../common/State";
+import { DeviceRotation } from "../common/Project";
+
+// Mapping from iOS interface orientation strings to DeviceRotation enum
+const IOS_ORIENTATION_TO_DEVICE_ROTATION = {
+  UIInterfaceOrientationPortrait: DeviceRotation.Portrait,
+  UIInterfaceOrientationPortraitUpsideDown: DeviceRotation.PortraitUpsideDown,
+  UIInterfaceOrientationLandscapeLeft: DeviceRotation.LandscapeLeft,
+  UIInterfaceOrientationLandscapeRight: DeviceRotation.LandscapeRight,
+} as const;
 
 export type IOSBuildResult = {
   platform: DevicePlatform.IOS;
   appPath: string;
   bundleID: string;
+  supportedInterfaceOrientations: DeviceRotation[];
 };
 
 // Assuming users have ios folder in their project's root
 export const getIosSourceDir = (appRootFolder: string) => path.join(appRootFolder, "ios");
 
-async function getBundleID(appPath: string) {
+async function getDataFromPlistFile(key: string, appPath: string): Promise<string> {
   return (
-    await exec("/usr/libexec/PlistBuddy", [
-      "-c",
-      "Print:CFBundleIdentifier",
-      path.join(appPath, "Info.plist"),
-    ])
+    await exec("/usr/libexec/PlistBuddy", ["-c", `Print:${key}`, path.join(appPath, "Info.plist")])
   ).stdout;
+}
+
+async function getBundleID(appPath: string) {
+  return await getDataFromPlistFile("CFBundleIdentifier", appPath);
+}
+async function getSupportedInterfaceOrientations(appPath: string) {
+  const data = await getDataFromPlistFile("UISupportedInterfaceOrientations", appPath);
+  const lines = data.split("\n");
+
+  let orientations = lines
+    .map((line) => line.trim()) // Trim each line to clean whitespace
+    .filter((line) => line.length > 0 && line !== "Array {" && line !== "}") // Filter out empty lines and braces
+    .map(
+      (line) =>
+        IOS_ORIENTATION_TO_DEVICE_ROTATION[line as keyof typeof IOS_ORIENTATION_TO_DEVICE_ROTATION]
+    )
+    .filter((orientation) => orientation !== undefined) as DeviceRotation[];
+
+  return orientations;
 }
 
 // IPAD BUILDING NOTE:
@@ -88,7 +113,6 @@ export async function buildIos(
   progressListener: (newProgress: number) => void
 ): Promise<IOSBuildResult> {
   const { appRoot, env, type: buildType } = buildConfig;
-
   switch (buildType) {
     case BuildType.Custom: {
       getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
@@ -113,6 +137,7 @@ export async function buildIos(
       return {
         appPath,
         bundleID: await getBundleID(appPath),
+        supportedInterfaceOrientations: await getSupportedInterfaceOrientations(appPath),
         platform: DevicePlatform.IOS,
       };
     }
@@ -132,6 +157,7 @@ export async function buildIos(
       return {
         appPath,
         bundleID: await getBundleID(appPath),
+        supportedInterfaceOrientations: await getSupportedInterfaceOrientations(appPath),
         platform: DevicePlatform.IOS,
       };
     }
@@ -150,6 +176,7 @@ export async function buildIos(
       return {
         appPath,
         bundleID: await getBundleID(appPath),
+        supportedInterfaceOrientations: await getSupportedInterfaceOrientations(appPath),
         platform: DevicePlatform.IOS,
       };
     }
@@ -158,7 +185,13 @@ export async function buildIos(
         platform: DevicePlatform.IOS,
       });
       const appPath = await downloadExpoGo(DevicePlatform.IOS, cancelToken, appRoot);
-      return { appPath, bundleID: EXPO_GO_BUNDLE_ID, platform: DevicePlatform.IOS };
+      const supportedInterfaceOrientations = await getSupportedInterfaceOrientations(appPath);
+      return {
+        appPath,
+        bundleID: EXPO_GO_BUNDLE_ID,
+        supportedInterfaceOrientations,
+        platform: DevicePlatform.IOS,
+      };
     }
     case BuildType.Local: {
       return await buildLocal(buildConfig, cancelToken, outputChannel, progressListener);
@@ -223,7 +256,8 @@ async function buildLocal(
   try {
     const appPath = await getBuildPath(xcodeProject, sourceDir, scheme, configuration, cancelToken);
     const bundleID = await getBundleID(appPath);
-    return { appPath, bundleID, platform: DevicePlatform.IOS };
+    const supportedInterfaceOrientations = await getSupportedInterfaceOrientations(appPath);
+    return { appPath, bundleID, supportedInterfaceOrientations, platform: DevicePlatform.IOS };
   } catch (e) {
     Logger.error("Error getting app path", e);
     throw new Error(

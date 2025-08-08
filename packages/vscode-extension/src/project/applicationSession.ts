@@ -59,6 +59,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   private profilingReactState: ProfilingState = "stopped";
   private isRefreshing: boolean = false;
   private appOrientation: DeviceRotation | undefined;
+  private supportedOrientations: DeviceRotation[] = [];
   private inspectorAvailability: InspectorAvailabilityStatus =
     InspectorAvailabilityStatus.Available;
   private isActive = false;
@@ -76,12 +77,14 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   ): Promise<ApplicationSession> {
     const packageNameOrBundleId =
       buildResult.platform === DevicePlatform.IOS ? buildResult.bundleID : buildResult.packageName;
+    const supportedOrientations = buildResult.platform === DevicePlatform.IOS ? buildResult.supportedInterfaceOrientations : [];
     const session = new ApplicationSession(
       applicationContext,
       device,
       metro,
       devtools,
-      packageNameOrBundleId
+      packageNameOrBundleId,
+      supportedOrientations
     );
     if (getIsActive()) {
       // we need to start the parent debug session asap to ensure metro errors are shown in the debug console
@@ -138,7 +141,8 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
     private readonly devtools: Devtools,
-    private readonly packageNameOrBundleId: string
+    private readonly packageNameOrBundleId: string,
+    private readonly supportedOrientations: DeviceRotation[]
   ) {
     this.registerDevtoolsListeners();
     this.registerMetroListeners();
@@ -250,6 +254,10 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     return new Disposable(() => {
       disposeAll(subscriptions);
     });
+  }
+
+  private determineAppOrientation() {
+    
   }
 
   //#endregion
