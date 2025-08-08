@@ -79,7 +79,9 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           value: runtime.identifier,
           label: runtime.name,
           disabled: !runtime.available,
-          marked: false,
+          marked: runtime.supportedDeviceTypes.every((device) => {
+            return deviceProperties.modelName !== device.name;
+          }),
         }))
       : androidImages.map((systemImage) => ({
           value: systemImage.location,
