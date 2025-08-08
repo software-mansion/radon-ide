@@ -21,6 +21,8 @@ interface CreateDeviceViewProps {
 }
 
 function useSupportedDevices() {
+  const store$ = useStore();
+  const iOSRuntimes = use$(store$.devicesState.iOSRuntimes) ?? [];
   const errors = useDependencyErrors();
 
   return [
@@ -29,10 +31,16 @@ function useSupportedDevices() {
         ? { label: "iOS – error, check diagnostics", items: [] }
         : {
             label: "iOS",
-            items: iOSSupportedDevices.map((device) => ({
-              value: device.modelId,
-              label: device.modelName,
-            })),
+            items: iOSSupportedDevices
+              .filter((device) => {
+                return iOSRuntimes.some((runtime) =>
+                  runtime.supportedDeviceTypes.some((type) => type.identifier === device.modelId)
+                );
+              })
+              .map((device) => ({
+                value: device.modelId,
+                label: device.modelName,
+              })),
           },
       windows: { label: "", items: [] },
       linux: { label: "", items: [] },
