@@ -1,6 +1,7 @@
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import React from "react";
-import { Navbar } from "@swmansion/t-rex-ui";
+import Navbar from "../../components/Navbar";
+
 import { Analytics } from "@vercel/analytics/react";
 import Head from "@docusaurus/Head";
 
@@ -31,12 +32,7 @@ export default function NavbarWrapper(props) {
   };
   return (
     <>
-      <Navbar
-        isAlgoliaActive={true}
-        isThemeSwitcherShown={true}
-        heroImages={heroImages}
-        {...props}
-      />
+      <Navbar isThemeSwitcherShown={false} />
       <Scripts />
       <Analytics />
     </>

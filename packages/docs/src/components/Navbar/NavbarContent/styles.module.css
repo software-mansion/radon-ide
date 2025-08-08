@@ -1,0 +1,154 @@
+.navbarContainer {
+  height: 80px;
+  width: 100%;
+  max-width: 1360px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  border-left: 1px solid var(--swm-border);
+  border-right: 1px solid var(--swm-border);
+  border-bottom: 1px solid var(--swm-border);
+
+  backdrop-filter: blur(20px);
+
+  z-index: 1000;
+}
+
+.navbarLeft {
+  display: flex;
+  padding: 0 24px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+  align-self: stretch;
+  border-right: 1px solid var(--swm-border);
+}
+
+.navbarLeft a {
+  width: 156px;
+  height: 40px;
+}
+
+.logo {
+  width: 156px;
+  height: 40px;
+  color: white;
+}
+
+.navbarCenter {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.navbarCenter .navLinks {
+  list-style-type: none;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  gap: 24px;
+}
+
+.navLinks li a {
+  color: var(--ifm-color-primary);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  opacity: 0.75;
+}
+
+.navLinks li a:hover {
+  opacity: 1;
+}
+
+.navbarRight {
+  display: flex;
+  padding: 0 24px;
+  align-items: center;
+  gap: 24px;
+  align-self: stretch;
+  justify-content: space-between;
+}
+
+.headerGithub:before {
+  display: flex;
+  height: 28px;
+  width: 28px;
+  opacity: 0.75;
+  background-color: var(--ifm-color-primary);
+
+  mask: url(/static/img/github.svg) no-repeat 100% 100%;
+  mask-size: cover;
+  content: "";
+}
+
+.headerGithub:hover:before {
+  opacity: 1;
+}
+
+.download p {
+  font-size: 16px;
+  font-weight: 400;
+
+  color: var(--ifm-color-primary);
+
+  margin: 0;
+  line-height: 24px;
+}
+
+.download {
+  display: flex;
+  height: 40px;
+  padding: 8px 12px;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--ifm-color-primary);
+}
+
+.download:hover {
+  opacity: 0.75;
+}
+
+a:hover {
+  text-decoration: none;
+}
+.menuIcon {
+  display: none;
+}
+
+@media (max-width: 1360px) {
+  .navbar_container {
+    border-left: none;
+    border-right: none;
+  }
+}
+
+@media (max-width: 830px) {
+  .navbarRight {
+    display: none;
+  }
+  .navbarCenter {
+    display: none;
+  }
+  .menuIcon {
+    display: flex;
+    background-color: transparent;
+    border: none;
+    padding: 20px;
+  }
+  .navbarLeft {
+    width: 100%;
+  }
+  .navbarLeft a {
+    width: 140px;
+    height: 36px;
+  }
+
+  .logo {
+    width: 140px;
+    height: 36px;
+  }
+}

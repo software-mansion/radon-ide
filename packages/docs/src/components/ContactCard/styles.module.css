@@ -60,3 +60,9 @@
     padding: 24px;
   }
 }
+
+@media (max-width: 1024px) {
+  .card {
+    padding: 24px;
+  }
+}

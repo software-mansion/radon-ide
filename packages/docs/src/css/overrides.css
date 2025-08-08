@@ -85,14 +85,8 @@ table thead tr {
   color: var(--swm-navy-light-60);
 }
 
-.header-github:before {
-  display: flex;
-  height: 24px;
-  width: 24px;
-
-  mask: url(/static/img/github.svg) no-repeat 100% 100%;
-  mask-size: cover;
-  content: "";
+.header-download {
+  border: 1px solid;
 }
 
 @media (max-height: 768px) {
@@ -101,13 +95,12 @@ table thead tr {
     width: 20px;
   }
 }
-.header-github:before,
-.header-github:hover:before {
-  background-color: var(--swm-navy-light-100);
-}
 
 [class*="navbar__item"] {
   display: flex !important;
+}
+[class*="navbar__item"] {
+  justify-content: center;
 }
 
 [class*="plugin-pages"] [class*="hireUsContainer"] {
