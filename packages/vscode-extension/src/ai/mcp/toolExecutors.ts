@@ -68,9 +68,6 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
     combinedLogs.push("\n\n=== APPLICATION STARTED ===\n", ...deviceLogs.readAll());
   }
 
-  // TODO: Are `bundlerLogs` and `deviceLogs` cleared before build?
-  //       ^ If not, then store timestamps of the latest build, bundle with logs of bundler if they occured after the build.
-
   const text = combinedLogs.join("");
 
   if (session.previewReady) {
