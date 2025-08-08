@@ -101,10 +101,17 @@ function extractComponentStack(startNode, viewDataHierarchy) {
 
     // Optimization: we break after reaching fiber node corresponding to OffscreenComponent
     while (node && node.tag !== OffscreenComponentReactTag) {
-      const data = rendererConfig.getInspectorDataForInstance(node);
-      const item = data.hierarchy[data.hierarchy.length - 1];
-      stackItems.push(item);
-      node = node.return;
+      try {
+        const data = rendererConfig.getInspectorDataForInstance(node);
+        const item = data.hierarchy[data.hierarchy.length - 1];
+        stackItems.push(item);
+        node = node.return;
+      } catch (e) {
+        // In the preview mode getInspectorDataForInstance may throw an error 
+        // in the root node, because it is unmounted. We break the loop in this case,
+        // as there is no more information to extract.
+        break;
+      }
     }
   } else if (viewDataHierarchy && viewDataHierarchy.length > 0) {
     // fallback to using viewDataHierarchy
