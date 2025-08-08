@@ -42,22 +42,3 @@ export function textToToolResponse(text: string): ToolResponse {
     content: [textToToolContent(text)],
   };
 }
-
-export const truncateMiddle = (
-  lines: string[],
-  keepFirstN: number,
-  keepLastN: number
-): string[] => {
-  const keepTotal = keepFirstN + keepLastN;
-
-  if (lines.length <= keepTotal) {
-    return lines;
-  } else {
-    const removedLinesOfLogs = lines.length - keepTotal;
-    return [
-      ...lines.slice(0, keepFirstN),
-      `\n...\n\n[SKIPPED ${removedLinesOfLogs} LINES OF LOGS]\n\n...\n\n`,
-      ...lines.slice(-keepLastN),
-    ];
-  }
-};
