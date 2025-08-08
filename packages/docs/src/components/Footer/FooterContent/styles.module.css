@@ -1,0 +1,157 @@
+.container {
+  display: flex;
+  padding: 40px 80px 80px;
+  justify-content: space-between;
+  max-width: 1360px;
+  width: 100%;
+  border-right: 1px solid var(--swm-border);
+  border-left: 1px solid var(--swm-border);
+  border-top: 1px solid var(--swm-border);
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 600px;
+}
+
+.brandContainer {
+  gap: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.right {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+  gap: 80px;
+}
+
+.footerSection ul.sectionLinks {
+  list-style-type: none;
+  padding: 0;
+  display: flex;
+  gap: 12px;
+  flex-direction: column;
+}
+
+li {
+  opacity: 0.75;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+li:hover {
+  opacity: 1;
+}
+
+.footerSection {
+  display: flex;
+  flex-direction: column;
+  width: 160px;
+  gap: 12px;
+}
+
+p.sectionTitle {
+  color: var(--ifm-color-primary);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  margin: 0;
+}
+
+.sectionLinks {
+  gap: 12px;
+}
+
+.brandiInfo {
+  gap: 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
+  color: var(--radon-subheading);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+}
+
+p.copyright {
+  color: var(--swm-copyright-color);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  max-width: 200px;
+}
+
+.logo {
+  width: 156px;
+  height: 40px;
+}
+
+.socialMedia {
+  display: flex;
+  flex-direction: row;
+  gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    border-right: none;
+    border-left: none;
+  }
+}
+
+.youtubeIcon:before {
+  display: flex;
+  height: 24px;
+  width: 24px;
+  opacity: 0.5;
+
+  background-color: var(--ifm-color-primary);
+
+  mask: url(/static/img/youtube.svg) no-repeat 100% 100%;
+  mask-size: cover;
+  content: "";
+}
+
+.youtubeIcon:hover:before {
+  opacity: 1;
+}
+
+.xIcon:before {
+  display: flex;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  opacity: 0.5;
+  background-color: var(--ifm-color-primary);
+
+  mask: url(/static/img/twitter_x.svg) no-repeat 100% 100%;
+  mask-size: cover;
+  content: "";
+}
+
+.xIcon:hover:before {
+  opacity: 1;
+}
+
+.githubIcon:before {
+  display: flex;
+  height: 24px;
+  width: 24px;
+  opacity: 0.5;
+  flex-shrink: 0;
+  background-color: var(--ifm-color-primary);
+
+  mask: url(/static/img/github.svg) no-repeat 100% 100%;
+  mask-size: cover;
+  content: "";
+}
+
+.githubIcon:hover:before {
+  opacity: 1;
+}
