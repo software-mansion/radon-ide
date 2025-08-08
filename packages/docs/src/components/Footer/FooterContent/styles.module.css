@@ -37,13 +37,13 @@
   flex-direction: column;
 }
 
-li {
+.sectionLinks li {
   opacity: 0.75;
   font-size: 14px;
   line-height: 20px;
 }
 
-li:hover {
+.sectionLinks li:hover {
   opacity: 1;
 }
 
@@ -85,11 +85,6 @@ p.copyright {
   font-weight: 400;
   line-height: 16px;
   max-width: 200px;
-}
-
-.logo {
-  width: 156px;
-  height: 40px;
 }
 
 .socialMedia {

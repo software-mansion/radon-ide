@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./styles.module.css";
-import { useThemeConfig, useColorMode } from "@docusaurus/theme-common";
+import { useThemeConfig } from "@docusaurus/theme-common";
+import Logo from "../../Logo";
 
 interface FooterContentProps {
   title: string;
@@ -57,19 +58,13 @@ const footerNavigation = () => {
 
 export default function FooterContent() {
   const {
-    navbar: { logo },
     footer: { copyright },
   } = useThemeConfig();
-  const { colorMode, setColorMode } = useColorMode();
   return (
     <div className={styles.container}>
       <div className={styles.left}>
         <div className={styles.brandContainer}>
-          <img
-            src={colorMode === "dark" ? `/${logo.srcDark}` : `/${logo.src}`}
-            className={styles.logo}
-            alt={logo.alt}
-          />
+          <Logo className={styles.logo} />
           <div className={styles.brandInfo}>
             <div className={styles.brand}>© 2025 Software Mansion</div>
             <p className={styles.copyright}>{copyright}</p>

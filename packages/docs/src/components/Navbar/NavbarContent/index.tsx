@@ -5,6 +5,7 @@ import MobileSidebarToggle from "../MobileSidebarToggle";
 import NavbarMobileSidebar from "../MobileSidebar";
 import ThemeSwitcher from "../../ThemeSwitcher";
 import NavbarLink from "../NavbarLink";
+import Logo from "../../Logo";
 
 export interface NavbarItem {
   label: string;
@@ -40,11 +41,7 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
       <div className={styles.navbarContainer}>
         <div className={styles.navbarLeft}>
           <a href="/">
-            <img
-              src={colorMode === "dark" ? `/${logo.srcDark}` : `/${logo.src}`}
-              className={styles.logo}
-              alt={logo.alt}
-            />
+            <Logo className={styles.logo} />
           </a>
         </div>
         <div className={styles.navbarCenter}>
