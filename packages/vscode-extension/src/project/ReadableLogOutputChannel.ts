@@ -1,39 +1,11 @@
 import { LogOutputChannel, window } from "vscode";
+import { CircularBuffer } from "./CircularBuffer";
 
 // Some builds churn out +45k lines of logs.
 // We're only interested in the first 50 and last 150 of them.
 // These numbers are arbitriary and work well.
 const KEEP_FIRST_N = 50;
 const KEEP_LAST_N = 150;
-
-class CircularBuffer<T> {
-  private buffer: Array<T>;
-  private capacity: number;
-  private headIndex: number;
-
-  constructor(capacity: number) {
-    this.headIndex = 0;
-    this.capacity = capacity;
-    this.buffer = Array<T>(this.capacity);
-  }
-
-  public write(value: T) {
-    this.buffer[this.headIndex] = value;
-    this.headIndex = (this.headIndex + 1) % this.capacity;
-  }
-
-  public clear() {
-    this.headIndex = 0;
-    this.buffer.length = 0;
-  }
-
-  public readAll(): T[] {
-    return [
-      ...this.buffer.slice(this.headIndex, this.capacity),
-      ...this.buffer.slice(0, this.headIndex),
-    ];
-  }
-}
 
 export interface ReadableLogOutputChannel extends LogOutputChannel {
   readAll: () => string[];
