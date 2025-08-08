@@ -1,4 +1,4 @@
-.navbar_container {
+.navbarContainer {
   height: 80px;
   width: 100%;
   max-width: 1360px;
@@ -11,13 +11,12 @@
   border-right: 1px solid var(--swm-border);
   border-bottom: 1px solid var(--swm-border);
 
-  /* Blur on/off */
   backdrop-filter: blur(20px);
 
   z-index: 1000;
 }
 
-.navbar_left {
+.navbarLeft {
   display: flex;
   padding: 0 24px;
   flex-direction: column;
@@ -28,7 +27,7 @@
   border-right: 1px solid var(--swm-border);
 }
 
-.navbar_left a {
+.navbarLeft a {
   width: 156px;
   height: 40px;
 }
@@ -39,13 +38,13 @@
   color: white;
 }
 
-.navbar_center {
+.navbarCenter {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
 }
 
-.navbar_center .nav_links {
+.navbarCenter .navLinks {
   list-style-type: none;
   display: flex;
   margin: 0;
@@ -53,7 +52,7 @@
   gap: 24px;
 }
 
-.nav_links li a {
+.navLinks li a {
   color: var(--ifm-color-primary);
   font-size: 16px;
   font-weight: 400;
@@ -61,21 +60,20 @@
   opacity: 0.75;
 }
 
-.nav_links li a:hover {
+.navLinks li a:hover {
   opacity: 1;
 }
 
-.navbar_right {
+.navbarRight {
   display: flex;
   padding: 0 24px;
   align-items: center;
   gap: 24px;
   align-self: stretch;
   justify-content: space-between;
-  /* width: 200px; */
 }
 
-.header_github:before {
+.headerGithub:before {
   display: flex;
   height: 28px;
   width: 28px;
@@ -87,7 +85,7 @@
   content: "";
 }
 
-.header_github:hover:before {
+.headerGithub:hover:before {
   opacity: 1;
 }
 
@@ -129,10 +127,10 @@ a:hover {
 }
 
 @media (max-width: 830px) {
-  .navbar_right {
+  .navbarRight {
     display: none;
   }
-  .navbar_center {
+  .navbarCenter {
     display: none;
   }
   .menuIcon {
@@ -141,10 +139,10 @@ a:hover {
     border: none;
     padding: 20px;
   }
-  .navbar_left {
+  .navbarLeft {
     width: 100%;
   }
-  .navbar_left a {
+  .navbarLeft a {
     width: 140px;
     height: 36px;
   }

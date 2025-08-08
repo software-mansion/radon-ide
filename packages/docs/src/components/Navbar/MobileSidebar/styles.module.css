@@ -10,7 +10,6 @@
   padding: 24px;
 
   transform: translateY(-130%);
-  /* transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); */
 
   background: var(--swm-background);
   background-color: transparent;
@@ -39,10 +38,6 @@
   font-size: 32px;
   font-weight: 400;
   transition: color 0.2s;
-}
-
-.mobileNavLinks a:hover {
-  color: #0070f3;
 }
 
 @media (min-width: 900px) {
