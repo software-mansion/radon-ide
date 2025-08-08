@@ -31,3 +31,9 @@ Alternatively, you can use the inspector by right-clicking on the element visibl
 <video autoPlay loop width="600" controls className="shadow-image">
   <source src="/video/ide_element_inspector.mp4" type="video/mp4"/>
 </video>
+
+## Limitations 
+
+Element inspector is disabled in the following scenarios: 
+- Outside of the developed application. 
+- In applications, which do not provide support for Edge-to-Edge display.
