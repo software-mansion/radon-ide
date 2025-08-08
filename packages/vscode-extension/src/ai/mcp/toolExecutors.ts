@@ -48,7 +48,7 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
     isAndroid ? Output.BuildAndroid : Output.BuildIos
   );
 
-  const bundlerLogs = registry.getOrCreateOutputChannel(Output.PackageManager);
+  const packageManagerLogs = registry.getOrCreateOutputChannel(Output.PackageManager);
 
   const deviceLogs = registry.getOrCreateOutputChannel(
     isAndroid ? Output.AndroidDevice : Output.IosDevice
@@ -60,8 +60,8 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
     combinedLogs.push("=== BUILD PROCESS STARTED ===\n", ...buildLogs.readAll());
   }
 
-  if (!bundlerLogs.isEmpty()) {
-    combinedLogs.push("\n\n=== BUNDLING PROCESS STARTED ===\n", ...bundlerLogs.readAll());
+  if (!packageManagerLogs.isEmpty()) {
+    combinedLogs.push("\n\n=== JS PACKAGE MANAGER STARTED ===\n", ...packageManagerLogs.readAll());
   }
 
   if (!deviceLogs.isEmpty()) {
