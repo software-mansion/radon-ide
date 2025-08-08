@@ -16,16 +16,16 @@ function InspectorUnavailableBox({ clickPosition, onClose }: InspectorUnavailabl
     }, 500);
 
     // Call onClose after fade animation completes (additional 0.3s)
-    // as in InspectorUnavailableBox.css transition
+    // as in InspectorUnavailableBox.css transition (0.3s duration)
     const closeTimer = setTimeout(() => {
       onClose();
-    }, 800);
+    }, 500 + 300); // 500ms delay + 300ms transition duration
 
     return () => {
       clearTimeout(fadeTimer);
       clearTimeout(closeTimer);
     };
-  }, []);
+  }, [onClose]);
 
   const cssPropertiesForTooltip = {
     "--top": `${clickPosition.y * 100}%`,
