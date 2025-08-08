@@ -4,7 +4,7 @@ import { IDE } from "../../project/ide";
 import { base64ToToolContent, textToToolContent, textToToolResponse } from "./utils";
 import { ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
-import { DevicePlatform } from "../../common/DeviceManager";
+import { DevicePlatform } from "../../common/State";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
