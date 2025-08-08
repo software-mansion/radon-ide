@@ -6,6 +6,35 @@ import { LogOutputChannel, window } from "vscode";
 const KEEP_FIRST_N = 50;
 const KEEP_LAST_N = 150;
 
+class CircularBuffer<T> {
+  private buffer: Array<T>;
+  private capacity: number;
+  private headIndex: number;
+
+  constructor(capacity: number) {
+    this.headIndex = 0;
+    this.capacity = capacity;
+    this.buffer = Array<T>(this.capacity);
+  }
+
+  public write(value: T) {
+    this.buffer[this.headIndex] = value;
+    this.headIndex = (this.headIndex + 1) % this.capacity;
+  }
+
+  public clear() {
+    this.headIndex = 0;
+    this.buffer.length = 0;
+  }
+
+  public readAll(): T[] {
+    return [
+      ...this.buffer.slice(this.headIndex, this.capacity),
+      ...this.buffer.slice(0, this.headIndex),
+    ];
+  }
+}
+
 export interface ReadableLogOutputChannel extends LogOutputChannel {
   readAll: () => string[];
   isEmpty: () => boolean;
@@ -15,7 +44,8 @@ export function createReadableOutputChannel(channel: string): ReadableLogOutputC
   const outputChannel = window.createOutputChannel(channel, { log: true });
 
   const logTail: string[] = [];
-  const logHead: string[] = [];
+  const logHeadBuffer = new CircularBuffer<string>(KEEP_LAST_N);
+
   let droppedLogsCounter = 0;
 
   const storeLog = (value: string) => {
@@ -24,13 +54,8 @@ export function createReadableOutputChannel(channel: string): ReadableLogOutputC
       return;
     }
 
-    logHead.push(value);
-
-    if (logHead.length >= KEEP_LAST_N) {
-      // FIXME: Method `shift` is inefficient. Consider using a rotating buffer.
-      logHead.shift();
-      droppedLogsCounter++;
-    }
+    logHeadBuffer.write(value);
+    droppedLogsCounter++;
   };
 
   const readAll = (): string[] => {
@@ -38,11 +63,11 @@ export function createReadableOutputChannel(channel: string): ReadableLogOutputC
       return [
         ...logTail,
         `\n...\n\n[SKIPPED ${droppedLogsCounter} LINES OF LOGS]\n\n...\n\n`,
-        ...logHead,
+        ...logHeadBuffer.readAll(),
       ];
     }
 
-    return [...logTail, ...logHead];
+    return [...logTail, ...logHeadBuffer.readAll()];
   };
 
   return {
@@ -52,9 +77,9 @@ export function createReadableOutputChannel(channel: string): ReadableLogOutputC
       return !logTail.length;
     },
     clear: () => {
-      logTail.length = 0;
-      logHead.length = 0;
       droppedLogsCounter = 0;
+      logTail.length = 0;
+      logHeadBuffer.clear();
       outputChannel.clear();
     },
     append: (value: string) => {
