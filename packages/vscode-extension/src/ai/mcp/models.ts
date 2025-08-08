@@ -60,6 +60,7 @@ export {
   EditorType,
   Session,
   McpEntry,
+  ImageContent,
   TextContent,
   ToolResponse,
   ToolResult,
