@@ -1,7 +1,7 @@
 import { OutputChannel } from "vscode";
-import { DevicePlatform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
+import { DevicePlatform } from "../common/State";
 
 type UnixTimestamp = number;
 

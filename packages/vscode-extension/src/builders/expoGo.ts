@@ -3,8 +3,8 @@ import http from "http";
 import fs from "fs";
 import { extensionContext } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
-import { DevicePlatform } from "../common/DeviceManager";
 import { CancelToken } from "../utilities/cancelToken";
+import { DevicePlatform } from "../common/State";
 
 type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 

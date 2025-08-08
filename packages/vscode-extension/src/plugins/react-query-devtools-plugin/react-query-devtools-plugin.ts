@@ -31,7 +31,8 @@ export const createReactQueryDevtools = (): ToolPlugin => {
   const plugin: ToolPlugin = {
     id: REACT_QUERY_PLUGIN_ID,
     label: "React Query DevTools",
-    available: false,
+    toolInstalled: false,
+    pluginAvailable: true,
     persist: true,
     activate() {
       commands.executeCommand("setContext", `${REACT_QUERY_PLUGIN_PREFIX}.available`, true);

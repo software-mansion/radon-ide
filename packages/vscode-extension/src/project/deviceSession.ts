@@ -24,19 +24,20 @@ import {
   DeviceSessionStatus,
   FatalErrorDescriptor,
   DeviceRotation,
+  InspectData,
 } from "../common/Project";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
-import { DevicePlatform } from "../common/DeviceManager";
 import { ToolKey } from "./tools";
-import { ReloadAction } from "../common/DeviceSessionsManager";
 import { ApplicationContext } from "./ApplicationContext";
 import { BuildCache } from "../builders/BuildCache";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { ApplicationSession } from "./applicationSession";
+import { DevicePlatform } from "../common/State";
+import { ReloadAction } from "./DeviceSessionsManager";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -61,7 +62,6 @@ export class DeviceBootError extends Error {
 export class DeviceSession implements Disposable {
   private isActive = false;
   private metro: MetroLauncher;
-  private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
   private buildManager: BuildManager;
@@ -796,17 +796,12 @@ export class DeviceSession implements Disposable {
   public inspectElementAt(
     xRatio: number,
     yRatio: number,
-    requestStack: boolean,
-    callback: (inspectData: any) => void
-  ) {
-    const id = this.inspectCallID++;
-    const listener = this.devtools.onEvent("inspectData", (payload) => {
-      if (payload.id === id) {
-        listener.dispose();
-        callback(payload);
-      }
-    });
-    this.inspectorBridge.sendInspectRequest(xRatio, yRatio, id, requestStack);
+    requestStack: boolean
+  ): Promise<InspectData> {
+    if (!this.applicationSession) {
+      throw new Error("Cannot inspect element while the application is not running");
+    }
+    return this.applicationSession.inspectElementAt(xRatio, yRatio, requestStack);
   }
 
   public openNavigation(id: string) {

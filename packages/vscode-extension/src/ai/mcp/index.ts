@@ -1,18 +1,31 @@
 import { lm, McpHttpServerDefinition, Uri, EventEmitter, version, Disposable } from "vscode";
 import { Logger } from "../../Logger";
 import { getTelemetryReporter } from "../../utilities/telemetry";
-import { insertRadonEntry, newMcpConfig } from "./configCreator";
+import { insertRadonEntry, newMcpConfig, removeRadonEntry } from "./configCreator";
 import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
-import { MCP_LOG } from "./utils";
+import { ConfigLocation, getConfigLocation, MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { LocalMcpServer } from "./LocalMcpServer";
 import { disposeAll } from "../../utilities/disposables";
 import { ConnectionListener } from "../shared/ConnectionListener";
 
 async function updateMcpConfig(port: number) {
-  const mcpConfig = (await readMcpConfig()) || newMcpConfig();
+  const location = getConfigLocation();
+  const mcpConfig = (await readMcpConfig(location)) || newMcpConfig();
   const updatedConfig = insertRadonEntry(mcpConfig, port);
-  await writeMcpConfig(updatedConfig);
+  await writeMcpConfig(updatedConfig, location);
+
+  // Remove MCP entry from the config we no longer write to.
+  const unusedLocation =
+    location === ConfigLocation.Global ? ConfigLocation.Project : ConfigLocation.Global;
+  const unusedMcpConfig = await readMcpConfig(unusedLocation);
+
+  if (!unusedMcpConfig) {
+    return; // No unused config: no-op
+  }
+
+  const updatedUnusedConfig = removeRadonEntry(unusedMcpConfig);
+  await writeMcpConfig(updatedUnusedConfig, unusedLocation);
 }
 
 function directLoadRadonAI(server: LocalMcpServer): Disposable {

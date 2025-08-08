@@ -9,11 +9,11 @@ import {
   DeviceButtonType,
   DeviceRotation,
 } from "../common/Project";
-import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
 import { tryAcquiringLock } from "../utilities/common";
 import { extensionContext } from "../utilities/extensionContext";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { getChanges } from "../utilities/diffing";
+import { DeviceInfo, DevicePlatform } from "../common/State";
 
 const LEFT_META_HID_CODE = 0xe3;
 const RIGHT_META_HID_CODE = 0xe7;
