@@ -37,8 +37,8 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
   const { colorMode, setColorMode } = useColorMode();
   return (
     <>
-      <div className={styles.navbar_container}>
-        <div className={styles.navbar_left}>
+      <div className={styles.navbarContainer}>
+        <div className={styles.navbarLeft}>
           <a href="/">
             <img
               src={colorMode === "dark" ? `/${logo.srcDark}` : `/${logo.src}`}
@@ -47,8 +47,8 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
             />
           </a>
         </div>
-        <div className={styles.navbar_center}>
-          <ul className={styles.nav_links}>
+        <div className={styles.navbarCenter}>
+          <ul className={styles.navLinks}>
             {navbarItems.map((item, index) =>
               item.position == "center" ? (
                 <li key={index}>
@@ -62,10 +62,10 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
         {/* To be changed */}
         <MobileSidebarToggle />
         {/* --------------- */}
-        <div className={styles.navbar_right}>
+        <div className={styles.navbarRight}>
           <a
             href="https://github.com/software-mansion/radon-ide/"
-            className={styles.header_github}></a>
+            className={styles.headerGithub}></a>
           <a
             href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
             className={styles.download}>
