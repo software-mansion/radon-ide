@@ -232,11 +232,19 @@ export default function ReplayOverlay({
         break;
 
       case "ArrowLeft":
-        event.shiftKey ? stepBackward(10) : stepBackward();
+        if (event.shiftKey) {
+          stepBackward(10);
+        } else {
+          stepBackward();
+        }
         break;
 
       case "ArrowRight":
-        event.shiftKey ? stepForward(10) : stepForward();
+        if (event.shiftKey) {
+          stepForward(10);
+        } else {
+          stepForward();
+        }
         break;
 
       case " ":
@@ -249,6 +257,8 @@ export default function ReplayOverlay({
           event.preventDefault();
           saveReplay();
         }
+        break;
+      default:
         break;
     }
   }
