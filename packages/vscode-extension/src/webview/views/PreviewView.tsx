@@ -16,6 +16,7 @@ import Button from "../components/shared/Button";
 import {
   Frame,
   InspectDataStackItem,
+  InspectorAvailabilityStatus,
   InspectStackData,
   ProfilingState,
   ZoomLevelType,
@@ -31,6 +32,14 @@ import AppRootSelect from "../components/AppRootSelect";
 import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
+
+const INSPECTOR_AVAILABILITY_MESSAGES = {
+  [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
+  [InspectorAvailabilityStatus.UnavailableEdgeToEdge]:
+    "Element Inspector is disabled in apps that don't support Edge-to-Edge",
+  [InspectorAvailabilityStatus.UnavailableInactive]:
+    "Element Inspector is disabled when the app is inactive",
+} as const;
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
@@ -117,8 +126,15 @@ function PreviewView() {
   const isStarting = selectedDeviceSession?.status === "starting";
   const isRunning = selectedDeviceSession?.status === "running";
   const isRecording = selectedDeviceSession?.isRecordingScreen ?? false;
+  const inspectorAvailabilityStatus = isRunning
+    ? selectedDeviceSession.elementInspectorAvailability
+    : InspectorAvailabilityStatus.Available;
 
   const navBarButtonsActive = initialized && !isStarting && !radonConnectEnabled;
+  const inspectorAvailable =
+    navBarButtonsActive &&
+    isRunning &&
+    inspectorAvailabilityStatus === InspectorAvailabilityStatus.Available;
   const debuggerToolsButtonsActive = navBarButtonsActive; // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
@@ -128,6 +144,12 @@ function PreviewView() {
   useEffect(() => {
     resetInspector();
   }, [rotation]);
+
+  useEffect(() => {
+    setIsInspecting(false);
+    setInspectFrame(null);
+    setInspectStackData(null);
+  }, [inspectorAvailable]);
 
   useEffect(() => {
     const disableInspectorOnEscape = (event: KeyboardEvent) => {
@@ -348,9 +370,10 @@ function PreviewView() {
 
       <div className="button-group-bottom">
         <IconButton
+          shouldDisplayLabelWhileDisabled={navBarButtonsActive}
           active={isInspecting}
           tooltip={{
-            label: "Select an element to inspect it",
+            label: INSPECTOR_AVAILABILITY_MESSAGES[inspectorAvailabilityStatus],
           }}
           onClick={() => {
             project.sendTelemetry("inspector:button-clicked", {
@@ -358,12 +381,11 @@ function PreviewView() {
             });
             setIsInspecting(!isInspecting);
           }}
-          disabled={!navBarButtonsActive}>
+          disabled={!inspectorAvailable}>
           <span className="codicon codicon-inspect" />
         </IconButton>
 
         <span className="group-separator" />
-
         <div className="app-device-group">
           {!radonConnectEnabled && (
             <>
@@ -373,7 +395,6 @@ function PreviewView() {
           )}
           <DeviceSelect />
         </div>
-
         <div className="spacer" />
         {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
         <DeviceSettingsDropdown disabled={!navBarButtonsActive}>

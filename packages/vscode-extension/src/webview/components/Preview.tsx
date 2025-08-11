@@ -15,6 +15,8 @@ import {
   ZoomLevelType,
   InspectStackData,
   MultimediaData,
+  InspectorAvailabilityStatus,
+  InspectorBridgeStatus,
 } from "../../common/Project";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
@@ -25,9 +27,10 @@ import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
 import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
-import { useDeviceFrame } from "../Preview/Device/hooks";
 import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
+import InspectorUnavailableBox from "./InspectorUnavailableBox";
+import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -84,6 +87,8 @@ function Preview({
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLCanvasElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
+  const [inspectorUnavailableBoxPosition, setInspectorUnavailableBoxPosition] =
+    useState<Point | null>(null);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
   const { selectedDeviceSession, project } = useProject();
@@ -99,6 +104,10 @@ function Preview({
 
   const showDevicePreview =
     selectedDeviceSession?.previewURL && (showPreviewRequested || isRunning);
+
+  const isAppDisconnected =
+    isRunning && selectedDeviceSession.inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
+  useApplicationDisconnectedAlert(isAppDisconnected);
 
   useFatalErrorAlert(fatalErrorDescriptor);
 
@@ -179,6 +188,11 @@ function Preview({
     if (selectedDeviceSession?.status !== "running") {
       return;
     }
+    if (
+      selectedDeviceSession?.elementInspectorAvailability !== InspectorAvailabilityStatus.Available
+    ) {
+      return;
+    }
     if (type === "Leave") {
       return;
     }
@@ -231,6 +245,14 @@ function Preview({
     setInspectStackData(null);
   }
 
+  function handleInspectorUnavailable(event: MouseEvent<HTMLDivElement>) {
+    if (inspectorUnavailableBoxPosition) {
+      return;
+    }
+    const clampedCoordinates = getNormalizedTouchCoordinates(event);
+    setInspectorUnavailableBoxPosition(clampedCoordinates);
+  }
+
   const shouldPreventInputEvents =
     debugPaused || isRefreshing || !showDevicePreview || !!replayData;
 
@@ -272,7 +294,15 @@ function Preview({
       sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
     } else if (!inspectFrame) {
       if (e.button === 2) {
-        sendInspect(e, "RightButtonDown", true);
+        if (
+          selectedDeviceSession?.status === "running" &&
+          selectedDeviceSession?.elementInspectorAvailability !==
+            InspectorAvailabilityStatus.Available
+        ) {
+          handleInspectorUnavailable(e);
+        } else {
+          sendInspect(e, "RightButtonDown", true);
+        }
       } else if (isMultiTouching) {
         setIsPressing(true);
         sendMultiTouchForEvent(e, "Down");
@@ -380,7 +410,7 @@ function Preview({
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
     // there is an active backlog item that aims to change the behavior of context menu, so it might not be necessary
     // in the future https://github.com/microsoft/vscode/issues/225411
-    function onContextMenu(e: any) {
+    function onContextMenu(e: Event) {
       e.stopImmediatePropagation();
     }
 
@@ -474,7 +504,6 @@ function Preview({
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
   });
-  const frame = useDeviceFrame(device!);
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;
@@ -547,6 +576,14 @@ function Preview({
                   wrapperDivRef={wrapperDivRef}
                 />
               )}
+
+              {inspectorUnavailableBoxPosition && (
+                <InspectorUnavailableBox
+                  clickPosition={inspectorUnavailableBoxPosition}
+                  onClose={() => setInspectorUnavailableBoxPosition(null)}
+                />
+              )}
+
               {isRefreshing && (
                 <div className="phone-screen phone-refreshing-overlay">
                   <div>Project is performing Fast Refresh...</div>
@@ -596,10 +633,17 @@ function Preview({
       so without this in place, when the device rotates, the images are re-fetched from the file system
       which causes the device preview to flicker. */}
       <span className="phone-preload-masks">
-        <div style={{ maskImage: `url(${device?.landscapeScreenImage})` }} />
+        <div style={{ maskImage: `url(${device?.landscapeScreenMaskImage})` }} />
         <div style={{ maskImage: `url(${device?.screenMaskImage})` }} />
-        <img src={frame.imageLandscape} alt="" />
-        <img src={frame.image} alt="" />
+        <div style={{ maskImage: `url(${device?.bezel.imageLandscape})` }} />
+        <div style={{ maskImage: `url(${device?.bezel.image})` }} />
+        <div style={{ maskImage: `url(${device?.skin.imageLandscape})` }} />
+        <div style={{ maskImage: `url(${device?.skin.image})` }} />
+
+        <img src={device?.skin.image} alt="" />
+        <img src={device?.skin.imageLandscape} alt="" />
+        <img src={device?.bezel.image} alt="" />
+        <img src={device?.bezel.imageLandscape} alt="" />
       </span>
     </>
   );

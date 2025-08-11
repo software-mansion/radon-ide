@@ -123,7 +123,7 @@ function getLandscapeDimensions(
     phoneScreenWidth: `${(device.screenHeight / frame.height) * 100}%`, // Swapped for landscape
     phoneTop: `${(frame.offsetX / frame.width) * 100}%`, // Swapped for landscape
     phoneLeft: `${(frame.offsetY / frame.height) * 100}%`, // Swapped for landscape
-    phoneMaskImage: `url(${device.landscapeScreenImage})`,
+    phoneMaskImage: `url(${device.landscapeScreenMaskImage})`,
     phoneFrameImage: `url(${frame.imageLandscape})`,
     phoneAspectRatio: `${1 / aspectRatio}`,
   };

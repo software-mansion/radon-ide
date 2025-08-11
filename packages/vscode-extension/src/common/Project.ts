@@ -39,8 +39,10 @@ export type DeviceSettings = {
 
 export type ToolState = {
   enabled: boolean;
-  panelAvailable: boolean;
+  isPanelTool: boolean;
   label: string;
+  pluginAvailable: boolean;
+  pluginUnavailableTooltip?: string;
 };
 
 export type ToolsState = {
@@ -87,6 +89,12 @@ type DeviceSessionStateCommon = {
   isRecordingScreen: boolean;
 };
 
+export enum InspectorBridgeStatus {
+  Connecting,
+  Connected,
+  Disconnected,
+}
+
 export interface ApplicationSessionState {
   profilingCPUState: ProfilingState;
   profilingReactState: ProfilingState;
@@ -96,6 +104,8 @@ export interface ApplicationSessionState {
   isRefreshing: boolean;
   bundleError: BundleErrorDescriptor | undefined;
   appOrientation: DeviceRotation | undefined;
+  elementInspectorAvailability: InspectorAvailabilityStatus;
+  inspectorBridgeStatus: InspectorBridgeStatus;
 }
 
 export type DeviceSessionStateStarting = DeviceSessionStateCommon & {
@@ -167,6 +177,12 @@ export type AppOrientation = DeviceRotation | "Landscape";
 
 export function isOfEnumDeviceRotation(value: any): value is DeviceRotation {
   return Object.values(DeviceRotation).includes(value);
+}
+
+export enum InspectorAvailabilityStatus {
+  Available = "available",
+  UnavailableEdgeToEdge = "unavailableEdgeToEdge",
+  UnavailableInactive = "unavailableInactive",
 }
 
 // important: order of values in this enum matters

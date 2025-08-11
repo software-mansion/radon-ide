@@ -23,7 +23,9 @@ import {
   AppOrientation,
   BundleErrorDescriptor,
   DeviceRotation,
+  InspectorBridgeStatus,
   InspectData,
+  InspectorAvailabilityStatus,
   ProfilingState,
   StartupMessage,
   ToolsState,
@@ -45,6 +47,7 @@ interface LaunchApplicationSessionDeps {
 }
 
 export class ApplicationSession implements ToolsDelegate, Disposable {
+  private inspectorBridgeStatus: InspectorBridgeStatus = InspectorBridgeStatus.Connecting;
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
   private debugSessionEventSubscription?: Disposable;
@@ -56,6 +59,8 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   private profilingReactState: ProfilingState = "stopped";
   private isRefreshing: boolean = false;
   private appOrientation: DeviceRotation | undefined;
+  private inspectorAvailability: InspectorAvailabilityStatus =
+    InspectorAvailabilityStatus.Available;
   private isActive = false;
   private inspectCallID = 7621;
 
@@ -151,6 +156,8 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       isRefreshing: this.isRefreshing,
       bundleError: this.bundleError,
       appOrientation: this.appOrientation,
+      elementInspectorAvailability: this.inspectorAvailability,
+      inspectorBridgeStatus: this.inspectorBridgeStatus,
     };
   }
 
@@ -180,7 +187,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
 
   //#region ToolsDelegate implementation
 
-  onToolsStateChange(toolsState: ToolsState): void {
+  onToolsStateChange(_toolsState: ToolsState): void {
     this.emitStateChange();
   }
 
@@ -367,6 +374,25 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
         }
 
         this.emitStateChange();
+      }),
+      this.devtools.onEvent(
+        "inspectorAvailabilityChanged",
+        (inspectorAvailability: InspectorAvailabilityStatus) => {
+          this.inspectorAvailability = inspectorAvailability;
+          this.emitStateChange();
+        }
+      ),
+      this.devtools.onEvent("disconnected", () => {
+        if (this.inspectorBridgeStatus === InspectorBridgeStatus.Connected) {
+          this.inspectorBridgeStatus = InspectorBridgeStatus.Disconnected;
+          this.emitStateChange();
+        }
+      }),
+      this.devtools.onEvent("connected", () => {
+        if (this.inspectorBridgeStatus !== InspectorBridgeStatus.Connected) {
+          this.inspectorBridgeStatus = InspectorBridgeStatus.Connected;
+          this.emitStateChange();
+        }
       })
     );
   }
@@ -488,7 +514,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       function testInspectorExcludeGlobPattern(filename: string) {
         return patterns?.some((pattern) => minimatch(filename, pattern));
       }
-      stack.forEach((item: any) => {
+      stack.forEach((item) => {
         item.hide = false;
         if (!isAppSourceFile(item.source.fileName)) {
           item.hide = true;

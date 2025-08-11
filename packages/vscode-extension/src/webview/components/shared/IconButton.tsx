@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import classnames from "classnames";
 import "./IconButton.css";
 import Tooltip from "./Tooltip";
+import { usePing } from "../../hooks/usePing";
 
 export interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -20,6 +21,7 @@ export interface IconButtonProps {
     type?: "primary" | "secondary";
   };
   className?: string;
+  shouldDisplayLabelWhileDisabled?: boolean;
 }
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, ref) => {
@@ -35,15 +37,11 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     size = "default",
     side = "center",
     className = "",
+    shouldDisplayLabelWhileDisabled = false,
     ...rest
   } = props;
-  const [displayCounter, setDisplayCounter] = useState(counter);
 
-  useEffect(() => {
-    if (counter !== 0) {
-      setDisplayCounter(counter);
-    }
-  }, [counter]);
+  const shouldPing = usePing(counter ?? 0, counterMode);
 
   const showCounter = Boolean(counter);
   const button = (
@@ -65,11 +63,17 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
       {children}
       {counterMode === "full" && counter !== null && (
         <span className={classnames("icon-button-counter", showCounter && "visible")}>
-          {displayCounter}
+          {counter}
         </span>
       )}
       {counterMode === "compact" && counter !== null && (
-        <span className={classnames("icon-button-indicator", showCounter && "visible")} />
+        <span
+          className={classnames(
+            "icon-button-indicator",
+            showCounter && "visible",
+            shouldPing && "ping"
+          )}
+        />
       )}
     </button>
   );
@@ -81,7 +85,11 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
   const { label, side: tooltipSide, type: tooltipType } = tooltip;
 
   return (
-    <Tooltip label={label} side={tooltipSide} type={tooltipType ?? type}>
+    <Tooltip
+      label={label}
+      disabled={!shouldDisplayLabelWhileDisabled}
+      side={tooltipSide}
+      type={tooltipType ?? type}>
       {button}
     </Tooltip>
   );
