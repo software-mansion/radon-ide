@@ -22,7 +22,18 @@ The opened device settings dropdown looks as follows:
 2. **Text Size** - a slider that allows to change the font size on the device.
 3. **Press Home Button** - simulates a press of the home button.
 4. **Open App Switcher** - allows to quickly switch between opened apps.
-5. **Biometrics** - options for simulating biometric authorization on iOS. This option isn't available on Android. The following options are available:
+5. **Rotate Device** - allows to rotate the device or set its orientation. 
+
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/ide_rotation.mp4" type="video/mp4"/>
+</video>
+
+Settings dropdown allows for rotating the device `Clockwise` and `Anticlockwise` as well as choosing from supported orientations: `Portrait`, `Landscape Left` and `Landscape Right`.
+
+<img width="250" src="/img/docs/ide_rotate.png" className="shadow-image" />
+
+
+6. **Biometrics** - options for simulating biometric authorization on iOS. This option isn't available on Android. The following options are available:
 
    <img width="250" src="/img/docs/ide_biometrics.png" className="shadow-image" />
 
@@ -30,7 +41,7 @@ The opened device settings dropdown looks as follows:
    - _Matching ID_ - simulates Touch ID or Face ID successfully recognizing the user,
    - _Non-matching ID_ - simulates Touch ID or Face ID failing to recognize the user.
 
-6. **Location** - allows to enable location services and set static device geolocation using coordinates.
+7. **Location** - allows to enable location services and set static device geolocation using coordinates.
 
 <img width="450" src="/img/docs/ide_geolocation.png" className="shadow-image" />
 
@@ -65,26 +76,28 @@ N 40 7.38 W 74 7.38
 </details>
 <br/>
 
-7. **Localization** - allows to set the device [localization](https://developer.mozilla.org/en-US/docs/Glossary/Localization). Changing the localization setting reboots the device. This option isn't available on Android.
+8. **Localization** - allows to set the device [localization](https://developer.mozilla.org/en-US/docs/Glossary/Localization). Changing the localization setting reboots the device. This option isn't available on Android.
 
 <img width="450" src="/img/docs/ide_localization.png" className="shadow-image" />
 
-8. **Reset Permissions** - allows to reset the device privacy permissions.
+9. **Volume** - allows to adjust the device volume levels.
+
+10. **Reset Permissions** - allows to reset the device privacy permissions.
 
 On iOS, you can reset all permissions, as well as reset location, photos, contacts and calendar. On Android, only resetting all permissions is supported.
 
 <img width="250" src="/img/docs/ide_permissions.png" className="shadow-image" />
 
-9. **Deep links** - allows opening deep links and website URLs on the device. Website URLs will open in the default device browser.
+11. **Open Deep Link** - allows opening deep links and website URLs on the device. Website URLs will open in the default device browser.
 
 <img width="450" src="/img/docs/ide_deep_link.png" className="shadow-image" />
 
-10. **Enable replays** - enables or disables the "replay" functionality. After switching the `Enable Replays` toggle a `Replay` button appears in the Radon IDE panel.
+12. **Enable replays** - enables or disables the "replay" functionality. After switching the `Enable Replays` toggle a `Replay` button appears in the Radon IDE panel.
 
 <img width="300" src="/img/docs/ide_replays_enabled.png" className="shadow-image" />
 
-11. **Show touches** - whether the touches should be visible on the device preview.
+13. **Show touches** - whether the touches should be visible on the device preview.
 
-12. **Show Device Frame** - allows to hide the frame of the device in the preview.
+14. **Show Device Frame** - allows to hide the frame of the device in the preview.
 
 <img width="370" src="/img/docs/ide_disable_frame.png" className="shadow-image" />

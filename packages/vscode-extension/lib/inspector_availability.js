@@ -7,6 +7,12 @@ const DimensionsObserver = require("./dimensions_observer");
 // unexpected behavior when the app is not edge-to-edge, because
 // of margins, which are unavailable to fetch using react-native API.
 
+// epsilon for dimensions comparison, needed for some cases of Android devices
+// where the screen (Dimensions API) and window (ifnotmation from main View layout)
+// dimensions are differ on the 5th decimal place (for unknown reason)
+// This value is chosen empirically until information about this behavior is found
+const eps = 1;
+
 const INSPECTOR_AVAILABLE_STATUS = "available";
 const INSPECTOR_UNAVAILABLE_EDGE_TO_EDGE_STATUS = "unavailableEdgeToEdge";
 const INSPECTOR_UNAVAILABLE_INACTIVE_STATUS = "unavailableInactive";
@@ -34,7 +40,7 @@ const determineIfEdgeToEdge = () => {
   // This way of determining the edge-to-edge availability does not work on iPads when
   // Stage Manager is used for React Native before version 77 - windowWidth and windowHeight
   // will always be equal to the screenWidth and screenHeight, the onLayout event does not
-  // register the layout change properly. 
+  // register the layout change properly.
   const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
   const { width: windowWidth, height: windowHeight } = DimensionsObserver.getWindowDimensions();
 
@@ -47,7 +53,9 @@ const determineIfEdgeToEdge = () => {
       ? { windowGreater: windowWidth, windowLesser: windowHeight }
       : { windowGreater: windowHeight, windowLesser: windowWidth };
 
-  return screenGreater === windowGreater && screenLesser === windowLesser;
+  return (
+    Math.abs(screenGreater - windowGreater) <= eps && Math.abs(screenLesser - windowLesser) <= eps
+  );
 };
 
 const updateAvailabilityAndSendMessage = () => {
@@ -68,26 +76,6 @@ const updateAvailabilityAndSendMessage = () => {
   }
 };
 
-const handleDimensionsChange = () => {
-  isEdgeToEdge = determineIfEdgeToEdge();
-  updateAvailabilityAndSendMessage();
-};
-
-const handleAppStateChange = (appState) => {
-  isAppStateActive = appState === "active";
-  updateAvailabilityAndSendMessage();
-};
-
-const handleBlurChange = () => {
-  isFocused = false;
-  updateAvailabilityAndSendMessage();
-};
-
-const handleFocusChange = () => {
-  isFocused = true;
-  updateAvailabilityAndSendMessage();
-};
-
 const initializeInspectorAvailability = () => {
   isEdgeToEdge = determineIfEdgeToEdge();
   isAppStateActive = AppState.currentState === "active";
@@ -96,6 +84,28 @@ const initializeInspectorAvailability = () => {
 
 export function setup() {
   initializeInspectorAvailability();
+
+  // Define callbacks inside the setup, in order for dimensionsObserver to be able
+  // to properly differentiate between created functions
+  const handleDimensionsChange = () => {
+    isEdgeToEdge = determineIfEdgeToEdge();
+    updateAvailabilityAndSendMessage();
+  };
+
+  const handleAppStateChange = (appState) => {
+    isAppStateActive = appState === "active";
+    updateAvailabilityAndSendMessage();
+  };
+
+  const handleBlurChange = () => {
+    isFocused = false;
+    updateAvailabilityAndSendMessage();
+  };
+
+  const handleFocusChange = () => {
+    isFocused = true;
+    updateAvailabilityAndSendMessage();
+  };
 
   let appBlurSubscription = null;
   let appFocusSubscription = null;

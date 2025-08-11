@@ -8,6 +8,8 @@ const {
   View,
   Linking,
   findNodeHandle,
+  Platform,
+  Dimensions,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
 require("./react_devtools_agent"); // needs to be loaded before inspector_bridge is used
@@ -49,7 +51,7 @@ const InternalImports = {
   },
   get setupInspectorAvailabilityListeners() {
     return require("./inspector_availability").setup;
-  }
+  },
 };
 
 window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
@@ -101,10 +103,17 @@ function extractComponentStack(startNode, viewDataHierarchy) {
 
     // Optimization: we break after reaching fiber node corresponding to OffscreenComponent
     while (node && node.tag !== OffscreenComponentReactTag) {
-      const data = rendererConfig.getInspectorDataForInstance(node);
-      const item = data.hierarchy[data.hierarchy.length - 1];
-      stackItems.push(item);
-      node = node.return;
+      try {
+        const data = rendererConfig.getInspectorDataForInstance(node);
+        const item = data.hierarchy[data.hierarchy.length - 1];
+        stackItems.push(item);
+        node = node.return;
+      } catch (e) {
+        // In the preview mode getInspectorDataForInstance may throw an error
+        // in the root node, because it is unmounted. We break the loop in this case,
+        // as there is no more information to extract.
+        break;
+      }
     }
   } else if (viewDataHierarchy && viewDataHierarchy.length > 0) {
     // fallback to using viewDataHierarchy
@@ -126,8 +135,7 @@ function extractComponentStack(startNode, viewDataHierarchy) {
 }
 
 function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, callback) {
-  const { width: screenWidth, height: screenHeight } =
-    DimensionsObserver.getScreenDimensions();
+  const { width: screenWidth, height: screenHeight } = DimensionsObserver.getScreenDimensions();
 
   RNInternals.getInspectorDataForViewAtPoint(
     mainContainerRef.current,
@@ -348,7 +356,8 @@ export function AppWrapper({ children, initialProps, fabric }) {
     InternalImports.setupRenderOutlinesPlugin();
     InternalImports.setupNetworkPlugin();
     const orientationListenersCleanup = InternalImports.setupOrientationListeners();
-    const inspectorAvailabilityListenersCleanup = InternalImports.setupInspectorAvailabilityListeners();
+    const inspectorAvailabilityListenersCleanup =
+      InternalImports.setupInspectorAvailabilityListeners();
 
     const originalErrorHandler = global.ErrorUtils.getGlobalHandler();
     LogBox.ignoreAllLogs(true);
@@ -405,9 +414,18 @@ export function AppWrapper({ children, initialProps, fabric }) {
         layoutCallback?.();
         setHasLayout(true);
 
-        // Emit dimensions change event with LayoutEventProps
-        const { width, height } = event.nativeEvent.layout;
-        DimensionsObserver.emitDimensionsChange({ width, height });
+        // iPad has issues with bugged Dimensions API, so we use the onLayout event
+        // {width, height} of the main view wrapper to determine dimension changes
+        // Android, on the other hand, has issues with determining layout {width, height}
+        // after LogBox appears (because LogBox adds StatusBar for some reason),
+        // so we use Dimensions.get("window") to get the current dimensions.
+        if (Platform.OS === "android") {
+          const { width, height } = Dimensions.get("window");
+          DimensionsObserver.emitDimensionsChange({ width, height });
+        } else {
+          const { width, height } = event.nativeEvent.layout;
+          DimensionsObserver.emitDimensionsChange({ width, height });
+        }
       }}>
       {children}
     </View>

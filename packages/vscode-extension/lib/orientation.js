@@ -95,8 +95,7 @@ const getMappedOrientation = (orientation, isLandscape) => {
 // send message to the extension with the information whether the app is in landscape mode or not.
 // This is used to infer the initial orientation of the app, due to IOS limitations.
 const initializeOrientationAndSendInitMessage = () => {
-  const { width: screenWidth, height: screenHeight } =
-    DimensionsObserver.getScreenDimensions();
+  const { width: screenWidth, height: screenHeight } = DimensionsObserver.getScreenDimensions();
   const isLandscape = screenWidth > screenHeight;
   // infer currentOrientation based on the screen dimensions
   // android still fires the namedOrientationDidChangeEvent on app load,
@@ -109,8 +108,7 @@ const initializeOrientationAndSendInitMessage = () => {
 };
 
 const updateOrientationAndSendMessage = (orientation) => {
-  const { width: screenWidth, height: screenHeight } =
-    DimensionsObserver.getScreenDimensions();
+  const { width: screenWidth, height: screenHeight } = DimensionsObserver.getScreenDimensions();
   const isLandscape = screenWidth > screenHeight;
   const mappedOrientation = getMappedOrientation(orientation, isLandscape);
 
@@ -123,19 +121,21 @@ const updateOrientationAndSendMessage = (orientation) => {
   }
 };
 
-const handleOrientationChange = ({ name: orientation }) => {
-  lastRegisteredOrientation = orientation;
-  updateOrientationAndSendMessage(orientation);
-};
-
-// Fire additionally on Dimensions change because of iOS "lag" issue described
-// in the above context.
-const handleDimensionsChange = () => {
-  updateOrientationAndSendMessage(lastRegisteredOrientation);
-};
-
 export function setup() {
   initializeOrientationAndSendInitMessage();
+
+  // Define callbacks inside the setup, in order for dimensionsObserver to be able
+  // to properly differentiate between created functions
+  const handleOrientationChange = ({ name: orientation }) => {
+    lastRegisteredOrientation = orientation;
+    updateOrientationAndSendMessage(orientation);
+  };
+
+  // Fire additionally on Dimensions change because of iOS "lag" issue described
+  // in the above context.
+  const handleDimensionsChange = () => {
+    updateOrientationAndSendMessage(lastRegisteredOrientation);
+  };
 
   // Suppress warnings about UIManager not implementing proper methods by overwriting console.warn temporarily.
   // This is needed, because UIManager.addListener and UIManager.removeListeners methods
