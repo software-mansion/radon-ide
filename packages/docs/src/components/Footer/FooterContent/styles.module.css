@@ -13,7 +13,15 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  width: 600px;
+  min-width: 260px;
+  padding-right: 40px;
+  justify-content: flex-end;
+}
+
+.right {
+  display: grid;
+  grid-template-columns: 160px 160px 120px;
+  gap: 80px;
 }
 
 .brandContainer {
@@ -22,19 +30,19 @@
   flex-direction: column;
 }
 
-.right {
+.footerSection {
   display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
-  gap: 80px;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.footerSection ul.sectionLinks {
+ul.sectionLinks {
   list-style-type: none;
   padding: 0;
   display: flex;
   gap: 12px;
   flex-direction: column;
+  margin-bottom: 0;
 }
 
 .sectionLinks li {
@@ -45,13 +53,6 @@
 
 .sectionLinks li:hover {
   opacity: 1;
-}
-
-.footerSection {
-  display: flex;
-  flex-direction: column;
-  width: 160px;
-  gap: 12px;
 }
 
 p.sectionTitle {
@@ -66,7 +67,7 @@ p.sectionTitle {
   gap: 12px;
 }
 
-.brandiInfo {
+.brandInfo {
   gap: 8px;
   display: flex;
   flex-direction: column;
@@ -91,13 +92,6 @@ p.copyright {
   display: flex;
   flex-direction: row;
   gap: 16px;
-}
-
-@media (max-width: 1024px) {
-  .container {
-    border-right: none;
-    border-left: none;
-  }
 }
 
 .youtubeIcon:before {
@@ -149,4 +143,20 @@ p.copyright {
 
 .githubIcon:hover:before {
   opacity: 1;
+}
+
+@media (max-width: 1024px) {
+  .container {
+    border-right: none;
+    border-left: none;
+    flex-direction: column;
+    gap: 40px;
+  }
+}
+
+@media (max-width: 710px) {
+  .right {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
 }
