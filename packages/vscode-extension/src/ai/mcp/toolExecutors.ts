@@ -29,18 +29,20 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
 export async function readLogsToolExec(): Promise<ToolResponse> {
   const ideInstance = IDE.getInstanceIfExists();
 
-  const errorMessage =
-    "Couldn't retrieve build logs - Radon IDE is not launched. Open Radon IDE first.";
-
   if (!ideInstance) {
-    return textToToolResponse(errorMessage);
+    return textToToolResponse(
+      "Couldn't retrieve build logs - Radon IDE is not launched. Open Radon IDE first."
+    );
   }
 
   const registry = ideInstance.outputChannelRegistry;
   const session = ideInstance.project.deviceSession;
 
   if (!session) {
-    return textToToolResponse(errorMessage);
+    return textToToolResponse(
+      "Couldn't retrieve build logs - Radon IDE hasn't run any build. " +
+        "You need to select a project and a device in Radon IDE panel."
+    );
   }
 
   const isAndroid = session.platform === DevicePlatform.Android;
