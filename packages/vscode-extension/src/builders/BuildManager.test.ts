@@ -3,11 +3,11 @@ import Sinon from "sinon";
 import { describe, afterEach, beforeEach, it } from "mocha";
 
 import { BuildType } from "../common/BuildConfig";
-import { DevicePlatform } from "../common/DeviceManager";
 import { CustomBuild, EasConfig } from "../common/LaunchConfig";
 import { createBuildConfig, inferBuildType } from "./BuildManager";
 import * as ExpoGo from "./expoGo";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
+import { DevicePlatform } from "../common/State";
 
 const APP_ROOT = "appRoot";
 const APP_ROOT_ABSOLUTE = "/appRoot";

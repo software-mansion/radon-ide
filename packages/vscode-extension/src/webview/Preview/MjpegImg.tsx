@@ -1,7 +1,7 @@
 import { useEffect, forwardRef, useRef } from "react";
 
 import MediaCanvas from "./MediaCanvas";
-import { IS_DEV } from "../providers/UtilsProvider";
+import { IS_DEV } from "../providers/ProjectProvider";
 
 const NO_IMAGE_DATA_PRODUCTION =
   "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><rect width='100%' height='100%' fill='black'/></svg>";

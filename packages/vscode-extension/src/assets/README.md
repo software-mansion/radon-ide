@@ -30,7 +30,7 @@ Make sure mask matches screen width and height and there is no gap on the edge.
 
 Open
 
-`/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/CoreSimulator/Profiles/DeviceTypes/{deviceType}/Contents/Resources/{WEIRD_HASH}.pdf`
+`/Library/Developer/CoreSimulator/Profiles/DeviceTypes/{deviceType}/Contents/Resources/{WEIRD_HASH}.pdf`
 
 And export it with 72 DPI. 72 DPI should produce the same size as `width` and `height` stated in `Profile.plist`.
 
@@ -40,7 +40,7 @@ Make sure mask matches screen width and height and there is no gap on the edge.
 
 ### iOS frames
 
-Open `/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Library/Developer/DeviceKit/Chrome/{device}/Contents/Resources/PhoneComposite.pdf`
+Open `/Library/Developer/DeviceKit/Chrome/{device}/Contents/Resources/PhoneComposite.pdf`
 
 Where `{device}` is taken from `.plist` file mentioned above.
 

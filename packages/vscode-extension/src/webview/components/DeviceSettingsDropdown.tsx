@@ -22,7 +22,6 @@ import {
 } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
-import { DevicePlatform } from "../../common/DeviceManager";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
@@ -30,6 +29,7 @@ import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
+import { DevicePlatform } from "../../common/State";
 
 const contentSizes = [
   "xsmall",
@@ -75,12 +75,6 @@ const setOrientationOptions: Array<{
     value: DeviceRotation.LandscapeLeft,
     icon: "device-mobile",
     rotation: "-90deg",
-  },
-  {
-    label: "Portait Upside Down",
-    value: DeviceRotation.PortraitUpsideDown,
-    icon: "device-mobile",
-    rotation: "180deg",
   },
   {
     label: "Landscape Right",

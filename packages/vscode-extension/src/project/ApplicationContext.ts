@@ -8,7 +8,7 @@ import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
 import { BatchingBuildManager } from "../builders/BatchingBuildManager";
 import { LaunchConfiguration, LaunchOptions } from "../common/LaunchConfig";
 import { StateManager } from "./StateManager";
-import { ApplicationContextState } from "../common/State";
+import { ApplicationContextState, WorkspaceConfiguration } from "../common/State";
 import { ApplicationDependencyManager } from "../dependency/ApplicationDependencyManager";
 import { Logger } from "../Logger";
 
@@ -70,6 +70,7 @@ export class ApplicationContext implements Disposable {
 
   constructor(
     private readonly stateManager: StateManager<ApplicationContextState>,
+    private readonly workspaceConfigState: StateManager<WorkspaceConfiguration>, // owned by `Project`, do not dispose
     launchConfig: LaunchConfiguration,
     public readonly buildCache: BuildCache
   ) {
@@ -82,6 +83,10 @@ export class ApplicationContext implements Disposable {
     this.buildManager = buildManager;
 
     this.disposables.push(this.applicationDependencyManager, buildManager);
+  }
+
+  public get workspaceConfiguration(): WorkspaceConfiguration {
+    return this.workspaceConfigState.getState();
   }
 
   public get appRootFolder(): string {

@@ -83,7 +83,8 @@ The AI models automatically discover and invoke tools when they decide it will b
 
 - `get_library_description` Provides a detailed description of a library and its use cases.
 - `query_documentation` Retrieves documentation snippets relevant to a provided query.
-- `view_screenshot` Captures a device preview screenshot. Can help the agent to debug issues or make UI adjustements. Currenlty only supported in Gemini and Claude models.
+- `view_application_logs` Returns all the build, bundling and runtime logs available to Radon IDE. If the app builds and launches successfully, this tool will also attach a screenshot of the app.
+- `view_screenshot` Captures a device preview screenshot. Can help the agent with debugging issues and making UI adjustments. Currently only supported in GPT, Gemini and Claude models.
 
 ## Limitations
 
@@ -102,6 +103,14 @@ To change the location of `mcp.json` file, navigate to the editor settings.
 Open the command palette by pressing Cmd+Shift+P (or Ctrl+Shift+P on Linux and Windows), then type "Preferences: Open User Settings".
 
 Within editor settings, type "Radon IDE: Location Of Mcp Config" and choose whether the server entry should be written to the project's `.cursor` directory, or the global `~/.cursor` directory.
+
+## Disabling Radon AI
+
+To disable Radon AI assistant navigate to the editor settings.
+
+You can type "Preferences: Open User Settings" in the command palette (Ctrl+Shift+P or Cmd+Shift+P).
+
+Within editor settings, type "Radon IDE: Enable Radon AI" and uncheck the checkbox.
 
 ## Privacy
 

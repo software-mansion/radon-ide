@@ -2,7 +2,7 @@ import * as Select from "@radix-ui/react-select";
 import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
 import _ from "lodash";
-import React, { PropsWithChildren, useEffect } from "react";
+import React, { PropsWithChildren, useEffect, useMemo } from "react";
 import { use$ } from "@legendapp/state/react";
 import { useProject } from "../providers/ProjectProvider";
 import { LaunchConfiguration, LaunchConfigurationKind } from "../../common/LaunchConfig";
@@ -159,14 +159,18 @@ function AppRootSelect() {
     );
   }
 
-  const detectedConfigurations = applicationRoots.map(({ path, displayName, name }) => {
-    return {
-      appRoot: path,
-      name: displayName || name,
-      kind: LaunchConfigurationKind.Detected,
-      env: {},
-    };
-  });
+  const detectedConfigurations = useMemo(
+    () =>
+      applicationRoots.map(({ path, displayName, name }) => {
+        return {
+          appRoot: path,
+          name: displayName || name,
+          kind: LaunchConfigurationKind.Detected,
+          env: {},
+        };
+      }),
+    [applicationRoots]
+  );
 
   const handleAppRootChange = async (value: string) => {
     if (value === "manage") {
