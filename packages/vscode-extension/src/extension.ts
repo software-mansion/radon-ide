@@ -45,6 +45,7 @@ const ROTATIONS: DeviceRotation[] = [
   DeviceRotation.LandscapeLeft,
   DeviceRotation.Portrait,
   DeviceRotation.LandscapeRight,
+  DeviceRotation.PortraitUpsideDown,
 ] as const;
 
 function handleUncaughtErrors(context: ExtensionContext) {
