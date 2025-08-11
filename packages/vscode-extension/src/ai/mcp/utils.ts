@@ -22,10 +22,10 @@ export function getEditorType(): EditorType {
   return EditorType.VSCODE;
 }
 
-export function base64ToToolContent(data: string): ImageContent {
+export function pngToToolContent(base64Encoded: string): ImageContent {
   return {
     type: "image",
-    data,
+    data: base64Encoded,
     mimeType: "image/png",
   };
 }
