@@ -82,6 +82,7 @@
   flex-direction: row;
   gap: 5px;
   align-items: center;
+  z-index: var(--replay-controls-z-index); /* defined in ReplayUI.css */
 }
 
 .replay-controls-pad {
@@ -125,6 +126,7 @@
   background-color: var(--swm-replay-len-select-background);
   border-radius: 18px 18px 18px 18px;
   transform: translateY(4px);
+  z-index: 2; /* must equal --replay-controls-z-index, does not have access to variable because of portal */
 }
 
 .len-select-viewport {
