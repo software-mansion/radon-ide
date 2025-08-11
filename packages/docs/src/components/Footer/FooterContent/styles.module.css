@@ -3,6 +3,7 @@
   padding: 40px 80px 80px;
   justify-content: space-between;
   border-top: 1px solid var(--swm-border);
+  align-items: center;
 }
 
 .left {
@@ -145,6 +146,7 @@ p.copyright {
   .container {
     flex-direction: column;
     gap: 40px;
+    align-items: flex-start;
   }
 }
 
