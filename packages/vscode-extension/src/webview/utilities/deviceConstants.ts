@@ -54,6 +54,13 @@ import ipadA16Landscape from "../../assets/ipad_a16/landscape/skin.png";
 import ipadA16LandscapeBezel from "../../assets/ipad_a16/landscape/bezel.png";
 import ipadA16LandscapeScreen from "../../assets/ipad_a16/landscape/screen.png";
 
+import ipadPro11 from "../../assets/ipad_pro_11_inch/skin.png";
+import ipadPro11bezel from "../../assets/ipad_pro_11_inch/bezel.png";
+import ipadPro11screen from "../../assets/ipad_pro_11_inch/screen.png";
+import ipadPro11Landscape from "../../assets/ipad_pro_11_inch/landscape/skin.png";
+import ipadPro11LandscapeBezel from "../../assets/ipad_pro_11_inch/landscape/bezel.png";
+import ipadPro11LandscapeScreen from "../../assets/ipad_pro_11_inch/landscape/screen.png";
+
 import { DevicePlatform } from "../../common/State";
 
 export type DevicePropertiesFrame = {
@@ -191,6 +198,33 @@ export const iOSSupportedDevices: DeviceProperties[] = [
       offsetY: 176, // approx height * 0.0453 === width * 0.06276
       image: ipadA16,
       imageLandscape: ipadA16Landscape,
+    },
+  },
+  {
+    modelName: "iPad Pro 11-inch (4th generation)",
+    modelId: "com.apple.CoreSimulator.SimDeviceType.iPad-Pro-11-inch-4th-generation-8GB",
+    platform: DevicePlatform.IOS,
+    screenWidth: 1668,
+    screenHeight: 2388,
+    screenMaskImage: ipadPro11screen,
+    landscapeScreenMaskImage: ipadPro11LandscapeScreen,
+    bezel: {
+      type: "mask",
+      width: 1676,
+      height: 2396,
+      offsetX: 4,
+      offsetY: 4,
+      image: ipadPro11bezel,
+      imageLandscape: ipadPro11LandscapeBezel,
+    },
+    skin: {
+      type: "skin",
+      width: 1844,
+      height: 2563,
+      offsetX: 88,
+      offsetY: 88,
+      image: ipadPro11,
+      imageLandscape: ipadPro11Landscape,
     },
   },
 ] as const;

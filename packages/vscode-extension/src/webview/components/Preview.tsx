@@ -16,6 +16,7 @@ import {
   InspectStackData,
   MultimediaData,
   InspectorAvailabilityStatus,
+  InspectorBridgeStatus,
 } from "../../common/Project";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
@@ -29,6 +30,7 @@ import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
 import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
 import InspectorUnavailableBox from "./InspectorUnavailableBox";
+import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -102,6 +104,10 @@ function Preview({
 
   const showDevicePreview =
     selectedDeviceSession?.previewURL && (showPreviewRequested || isRunning);
+
+  const isAppDisconnected =
+    isRunning && selectedDeviceSession.inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
+  useApplicationDisconnectedAlert(isAppDisconnected);
 
   useFatalErrorAlert(fatalErrorDescriptor);
 
@@ -182,7 +188,9 @@ function Preview({
     if (selectedDeviceSession?.status !== "running") {
       return;
     }
-    if (selectedDeviceSession?.inspectorAvailability !== InspectorAvailabilityStatus.Available) {
+    if (
+      selectedDeviceSession?.elementInspectorAvailability !== InspectorAvailabilityStatus.Available
+    ) {
       return;
     }
     if (type === "Leave") {
@@ -288,7 +296,8 @@ function Preview({
       if (e.button === 2) {
         if (
           selectedDeviceSession?.status === "running" &&
-          selectedDeviceSession?.inspectorAvailability !== InspectorAvailabilityStatus.Available
+          selectedDeviceSession?.elementInspectorAvailability !==
+            InspectorAvailabilityStatus.Available
         ) {
           handleInspectorUnavailable(e);
         } else {

@@ -2,7 +2,7 @@ import { Change, Observable, observable } from "@legendapp/state";
 import { synced, SyncedSetParams, SyncedSubscribeParams } from "@legendapp/state/sync";
 import { vscode } from "../utilities/vscode";
 import { createContext, PropsWithChildren, useContext } from "react";
-import { initialState, State } from "../../common/State";
+import { initialState, RecursivePartial, State } from "../../common/State";
 import { merge } from "../../common/Merge";
 
 let instanceToken = Math.floor(Math.random() * 1000000);
@@ -70,11 +70,17 @@ const setState = async (params: SyncedSetParams<State>) => {
 };
 
 const subscribeToState = (params: SyncedSubscribeParams<State>) => {
-  const { update, value$ } = params;
+  const { update } = params;
   const listener = (event: any) => {
     if (event.data.command === "RNIDE_state_updated") {
-      const newState = merge(value$.get(), event.data.state);
-      update({ value: newState, mode: "set" });
+      const changes = event.data.state as RecursivePartial<State>;
+      update({
+        //@ts-ignore Legend State is mistyping the param, but it works. _Trust me_.
+        value: (prev) => {
+          return merge(prev, changes);
+        },
+        mode: "set",
+      });
     }
   };
 

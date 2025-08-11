@@ -62,8 +62,10 @@ class RootStateManager<T extends object> extends StateManager<T> {
 
   setState(partialState: RecursivePartial<T>): void {
     const [newState, changes] = mergeAndCalculateChanges(this.state, partialState);
-    this.state = newState;
-    this.onSetStateEmitter.fire(changes);
+    if (this.state !== newState) {
+      this.state = newState;
+      this.onSetStateEmitter.fire(changes);
+    }
   }
 
   getState(): T {
