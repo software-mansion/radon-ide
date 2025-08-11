@@ -17,7 +17,10 @@ describe("CircularBuffer", () => {
       const contents = buffer.readAll();
 
       for (let j = 0; j < bufferSize; j++) {
-        assert.strictEqual(contents[bufferSize - j - 1], i - j);
+        const expectedValue = i - j;
+        const actualValue = contents[bufferSize - j - 1];
+
+        assert.strictEqual(expectedValue, actualValue);
       }
     }
   });
@@ -32,6 +35,7 @@ describe("CircularBuffer", () => {
     buffer.clear();
 
     const contents = buffer.readAll();
+
     assert.strictEqual(contents.length, 0);
   });
 });
