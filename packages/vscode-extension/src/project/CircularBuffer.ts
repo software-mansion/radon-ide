@@ -20,6 +20,7 @@ export class CircularBuffer<T> {
   public clear() {
     this.headIndex = 0;
     this.buffer.length = 0;
+    this.size = 0;
   }
 
   public readAll(): T[] {
