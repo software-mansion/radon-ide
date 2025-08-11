@@ -2,6 +2,7 @@ import React from "react";
 import styles from "./styles.module.css";
 import { useThemeConfig } from "@docusaurus/theme-common";
 import Logo from "../../Logo";
+import clsx from "clsx";
 
 interface FooterContentProps {
   title: string;
@@ -61,7 +62,7 @@ export default function FooterContent() {
     footer: { copyright },
   } = useThemeConfig();
   return (
-    <div className={styles.container}>
+    <div className={clsx(styles.container, "border-layout")}>
       <div className={styles.left}>
         <div className={styles.brandContainer}>
           <Logo className={styles.logo} />

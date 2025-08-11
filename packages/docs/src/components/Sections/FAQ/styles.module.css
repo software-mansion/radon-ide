@@ -1,8 +1,9 @@
 .faq {
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: 1.5fr 2fr;
   padding: 40px 80px 80px;
   gap: 80px;
+  justify-content: center;
 }
 .faqMain {
   display: flex;
@@ -29,10 +30,9 @@
 
 @media (max-width: 1024px) {
   .faq {
-    flex-direction: column;
-    justify-content: center;
-    padding: 0 24px;
+    padding: 0;
     gap: 24px;
+    grid-template-columns: 1fr;
   }
   .faqMain {
     gap: 16px;

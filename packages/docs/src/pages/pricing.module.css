@@ -1,9 +1,8 @@
 .container {
-  max-width: 1360px;
+  max-width: var(--radon-border-width);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 5rem;
 }
 
 .preventfulContainer {

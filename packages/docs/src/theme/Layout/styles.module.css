@@ -5,7 +5,4 @@
 }
 .spacerBorder {
   flex: 1;
-  max-width: 1360px;
-  border-right: 1px solid var(--swm-border);
-  border-left: 1px solid var(--swm-border);
 }

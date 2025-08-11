@@ -9,6 +9,7 @@ import Footer from "@theme/Footer";
 import LayoutProvider from "@theme/Layout/Provider";
 import ErrorPageContent from "@theme/ErrorPageContent";
 import styles from "./styles.module.css";
+import clsx from "clsx";
 
 export default function LayoutWrapper({ children, noFooter, title, description }) {
   useKeyboardNavigation();
@@ -26,7 +27,7 @@ export default function LayoutWrapper({ children, noFooter, title, description }
         {children}
       </ErrorBoundary>
       <div className={styles.spacer}>
-        <div className={styles.spacerBorder}></div>
+        <div className={clsx(styles.spacerBorder, "border-layout")}></div>
       </div>
 
       {!noFooter && <Footer />}

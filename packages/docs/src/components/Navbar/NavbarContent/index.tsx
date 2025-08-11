@@ -6,6 +6,7 @@ import NavbarMobileSidebar from "../MobileSidebar";
 import ThemeSwitcher from "../../ThemeSwitcher";
 import NavbarLink from "../NavbarLink";
 import Logo from "../../Logo";
+import clsx from "clsx";
 
 export interface NavbarItem {
   label: string;
@@ -38,7 +39,7 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
   const { colorMode, setColorMode } = useColorMode();
   return (
     <>
-      <div className={styles.navbarContainer}>
+      <div className={clsx(styles.navbarContainer, "border-layout")}>
         <div className={styles.navbarLeft}>
           <a href="/">
             <Logo className={styles.logo} />

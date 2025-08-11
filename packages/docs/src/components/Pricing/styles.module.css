@@ -1,11 +1,8 @@
 .container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  max-width: 1360px;
   justify-content: center;
-  border-left: 1px solid var(--swm-border);
-  border-right: 1px solid var(--swm-border);
+  gap: 24px;
 }
 
 .headingLabel {
@@ -46,8 +43,7 @@
     max-width: 100%;
   }
   .container {
-    padding: 0 24px;
-    border: none;
+    padding: 0 24px 60px;
   }
 }
 @media (max-width: 480px) {

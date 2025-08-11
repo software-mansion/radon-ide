@@ -2,10 +2,6 @@
   display: flex;
   padding: 40px 80px 80px;
   justify-content: space-between;
-  max-width: 1360px;
-  width: 100%;
-  border-right: 1px solid var(--swm-border);
-  border-left: 1px solid var(--swm-border);
   border-top: 1px solid var(--swm-border);
 }
 
@@ -147,8 +143,6 @@ p.copyright {
 
 @media (max-width: 1024px) {
   .container {
-    border-right: none;
-    border-left: none;
     flex-direction: column;
     gap: 40px;
   }
@@ -158,5 +152,8 @@ p.copyright {
   .right {
     grid-template-columns: 1fr;
     gap: 40px;
+  }
+  .container {
+    padding: 40px 24px 80px;
   }
 }
