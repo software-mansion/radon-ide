@@ -1,9 +1,10 @@
 const inspectorBridge = require("../inspector_bridge");
 
 let OrientationLocker;
+// let OrientationLockerConstants;
 
 try {
-    OrientationLocker = require("react-native-orientation-locker");
+    OrientationLocker = require("react-native-orientation-locker").default;
 } catch {
     // Library not available
 }
@@ -13,7 +14,7 @@ try {
  * @returns {boolean} true if library is available, false otherwise
  */
 export function isStrategyAvailable() {
-  return !!OrientationLocker;
+  return !!OrientationLocker.getOrientation;
 }
 
 let currentAppOrientation = null;

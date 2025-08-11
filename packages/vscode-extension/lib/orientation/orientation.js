@@ -19,7 +19,6 @@ const getOrientationStrategy = () => {
   if (OrientationLockerStrategy.isStrategyAvailable()) {
     return OrientationLockerStrategy.getStrategy();
   }
-
   return DefaultOrientationStrategy.getStrategy();
 };
 
@@ -35,10 +34,7 @@ export function setup() {
   orientationStrategy.initializeOrientationAndSendInitMessage();
 
   // Setup orientation listener using the strategy
-  const cleanup = orientationStrategy.setupOrientationListener((orientation) => {
-    // Optional callback for additional processing if needed
-    console.log("Orientation changed:", orientation);
-  });
+  const cleanup = orientationStrategy.setupOrientationListener();
 
   return cleanup;
 }

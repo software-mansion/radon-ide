@@ -12,7 +12,7 @@ try {
  * @returns {boolean} true if library is available, false otherwise
  */
 export function isStrategyAvailable() {
-  return !!ExpoOrientation;
+  return !!ExpoOrientation.getOrientationAsync;
 }
 
 let currentAppOrientation = null;
