@@ -1,31 +1,20 @@
+/**
+ * Default orientation strategy using React Native core APIs.
+ * 
+ * This fallback strategy uses UIManager events and DimensionsObserver to track orientation changes.
+ * The approach has limitations due to lack of sync orientation getter in React Native core:
+ * 
+ * Android: Orientation events fire after app rotation and are distinct from device orientation.
+ * iOS: Events fire when DEVICE rotates (based on sensors), not when APP rotates, creating timing issues.
+ * 
+ * To handle iOS limitations, we use DimensionsObserver for additional tracking and make assumptions
+ * about supported orientations (e.g., portrait-secondary typically not supported).
+ */
+
 const { Platform, UIManager, NativeEventEmitter, NativeModules } = require("react-native");
 const NativeUIManager = NativeModules.UIManager ?? UIManager;
-const inspectorBridge = require("./inspector_bridge");
-const DimensionsObserver = require("./dimensions_observer");
-
-// The approach implemented below is best we can do as of today, becuase of lack
-// of support for orientation getter sync requests in the React Native core.
-// Hence, the orientation is determined by the event listener via NativeEventEmitter(UIManager)
-// and the DimensionsObserver, which is not 100% reliable and works differently across platforms.
-
-// The orientation events on Android work as one would expect - the orientation change
-// is reported after the app actually rotates and is distinct from the device orientation.
-// The event is fired on the first app load and every time the orientation changes.
-// If orientation is not supported by the app (the app is not rotated when the device rotates, for example),
-// the orientation change is not reported.
-
-// On iOS, the orientation events are fired when the DEVICE ROTATES, because the API is based on device sensors.
-// Hence, orientation change event is not fired when the app starts,
-// and the app's initial orientation is not known until the first rotation occurs - this
-// is why we need to use the DimensionsObserver and appOrientationInit to properly handle it on the frontend.
-// Additionally, when app does not support given orientation, the event still fires (new orientation is reported
-// even though the app remains in previous mode, only because the device was rotated). This is why, we need to
-// infer information about the app's orientation based on the device orientation and ASSUME THAT PORTRAIT-SECONDARY IS NOT SET.
-// We also assume that, if one of the landscape orientations is supported, the other one is supported as well.
-
-// For IOS the orientation event is fired after the DEVICE rotates, but before the APP actually rotates.
-// This means, we are experiencing a lag between current orientation and information from DimensionsObserver,
-// which is why additional listener is added to the DimensionsObserver to amend the effect.
+const inspectorBridge = require("../inspector_bridge");
+const DimensionsObserver = require("../dimensions_observer");
 
 /**
  * Mapping from namedOrientationDidChangeEvent names to DeviceRotation names or "Landscape" specific case
@@ -51,30 +40,39 @@ let lastRegisteredOrientation = null;
  * Android -> "landscape-primary" === LandscapeRight
  */
 const getMappedOrientation = (orientation, isLandscape) => {
-  if (Platform.OS === "ios") {
-    // If the app is not Landscape, then we always wish to return "Portrait"
-    // because the app is not rotated and no matter the device rotation
-    if (!isLandscape) {
-      return "Portrait";
-    }
+  // No previous namedOrientationDidChangeEvent fired
+  // -> we only return partial information about the orientation
+  // This is fine in the cases we can handle, because it only happens during intialization
+  // and cases when the user forces app orientation programatically, without firing the event on iOS
+  // and later if the orientation does not change, further messages with this state
+  // are not sent to the extension.
+  if (orientation === null) {
+    return isLandscape ? "Landscape" : "Portrait";
+  }
 
+  if (Platform.OS === "ios") {
     // If the app is landscape and device is rotated to portrait-primary or portrait-secondary,
     // return the previous rotation
     if (
       isLandscape &&
       (orientation === "portrait-primary" || orientation === "portrait-secondary")
     ) {
-      return currentAppOrientation;
+      if (currentAppOrientation === "LandscapeLeft" || currentAppOrientation === "LandscapeRight") {
+        return currentAppOrientation;
+      } else {
+        return "Landscape"; // fallback to Landscape, we have no means to determine the exact orientation
+      }
     }
 
-    // No previous namedOrientationDidChangeEvent fired
-    // -> we only return partial information about the orientation
-    // This is fine in the cases we can handle, because it only happens during intialization
-    // and cases when the user forces app orientation programatically, without firing the event on iOS
-    // and later if the orientation does not change, further messages with this state
-    // are not sent to the extension.
-    if (orientation === null) {
-      return isLandscape ? "Landscape" : "Portrait";
+    if (
+      !isLandscape &&
+      (orientation === "landscape-primary" || orientation === "landscape-secondary")
+    ) {
+      if (currentAppOrientation === "Portrait" || currentAppOrientation === "PortraitUpsideDown") {
+        return currentAppOrientation;
+      } else {
+        return "Portrait"; // fallback to Portrait, we have no means to determine the exact orientation
+      }
     }
 
     // for ios landscape-secondary -> LandscapeLeft
@@ -92,9 +90,7 @@ const getMappedOrientation = (orientation, isLandscape) => {
   return androidOrientationMapping[orientation];
 };
 
-// send message to the extension with the information whether the app is in landscape mode or not.
-// This is used to infer the initial orientation of the app, due to IOS limitations.
-const initializeOrientationAndSendInitMessage = () => {
+function initializeOrientationAndSendInitMessage() {
   const { width: screenWidth, height: screenHeight } = DimensionsObserver.getScreenDimensions();
   const isLandscape = screenWidth > screenHeight;
   // infer currentOrientation based on the screen dimensions
@@ -105,9 +101,9 @@ const initializeOrientationAndSendInitMessage = () => {
     type: "appOrientationChanged",
     data: currentAppOrientation,
   });
-};
+}
 
-const updateOrientationAndSendMessage = (orientation) => {
+function updateOrientationAndSendMessage(orientation) {
   const { width: screenWidth, height: screenHeight } = DimensionsObserver.getScreenDimensions();
   const isLandscape = screenWidth > screenHeight;
   const mappedOrientation = getMappedOrientation(orientation, isLandscape);
@@ -119,22 +115,26 @@ const updateOrientationAndSendMessage = (orientation) => {
       data: mappedOrientation,
     });
   }
-};
+}
 
-export function setup() {
-  initializeOrientationAndSendInitMessage();
-
+function setupOrientationListener(callback) {
   // Define callbacks inside the setup, in order for dimensionsObserver to be able
   // to properly differentiate between created functions
   const handleOrientationChange = ({ name: orientation }) => {
     lastRegisteredOrientation = orientation;
     updateOrientationAndSendMessage(orientation);
+    if (callback) {
+      callback(orientation);
+    }
   };
 
   // Fire additionally on Dimensions change because of iOS "lag" issue described
   // in the above context.
   const handleDimensionsChange = () => {
     updateOrientationAndSendMessage(lastRegisteredOrientation);
+    if (callback) {
+      callback(lastRegisteredOrientation);
+    }
   };
 
   // Suppress warnings about UIManager not implementing proper methods by overwriting console.warn temporarily.
@@ -165,5 +165,13 @@ export function setup() {
     if (dimensionsChangeSubscription) {
       dimensionsChangeSubscription.remove();
     }
+  };
+}
+
+export function getStrategy() {
+  return {
+    initializeOrientationAndSendInitMessage,
+    updateOrientationAndSendMessage,
+    setupOrientationListener,
   };
 }

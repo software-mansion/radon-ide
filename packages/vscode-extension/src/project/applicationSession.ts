@@ -59,7 +59,6 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   private profilingReactState: ProfilingState = "stopped";
   private isRefreshing: boolean = false;
   private appOrientation: DeviceRotation | undefined;
-  private supportedOrientations: DeviceRotation[] = [];
   private inspectorAvailability: InspectorAvailabilityStatus =
     InspectorAvailabilityStatus.Available;
   private isActive = false;
@@ -256,8 +255,37 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     });
   }
 
-  private determineAppOrientation() {
-    
+  private determineAppOrientation(orientation: AppOrientation): DeviceRotation {
+
+    if(this.device.deviceInfo.platform !== DevicePlatform.IOS) {
+      if(orientation === "Landscape") {
+        return DeviceRotation.LandscapeLeft;
+      }
+      return orientation;
+    }
+
+
+    if (orientation === "Landscape") {
+      if (this.supportedOrientations.includes(DeviceRotation.LandscapeLeft)) {
+        return DeviceRotation.LandscapeLeft;
+      } else {
+        return DeviceRotation.LandscapeRight;
+      }
+    }
+
+    if (orientation === "Portrait") {
+      if (this.supportedOrientations.includes(DeviceRotation.Portrait)) {
+        return DeviceRotation.Portrait;
+      } else {
+        return DeviceRotation.PortraitUpsideDown;
+      }
+    }
+    console.log(this.supportedOrientations)
+    if (!this.supportedOrientations.includes(orientation)) {
+      return this.appOrientation!;
+    }
+
+    return orientation;
   }
 
   //#endregion
@@ -361,26 +389,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
         }
       }),
       this.devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
-        const isLandscape =
-          this.device.rotation === DeviceRotation.LandscapeLeft ||
-          this.device.rotation === DeviceRotation.LandscapeRight;
-
-        if (orientation === "Landscape") {
-          // if the app orientation is equal to "Landscape", it means we do not have enough
-          // information on the application side to infer the detailed orientation.
-          if (isLandscape) {
-            // if the device is in landscape mode, we assume that the app orientation is correct with device rotation
-            this.appOrientation = this.device.rotation;
-          } else {
-            // if the device is not in landscape mode we set app orientation to the last known orientation.
-            // if the last orientation is not known, we assume the application was started in Landscape mode
-            // while the device was oriented in Portrait, and we pick `LandscapeLeft` as the default orientation in that case.
-            this.appOrientation = this.appOrientation ?? DeviceRotation.LandscapeLeft;
-          }
-        } else {
-          this.appOrientation = orientation;
-        }
-
+        this.appOrientation = this.determineAppOrientation(orientation);
         this.emitStateChange();
       }),
       this.devtools.onEvent(
