@@ -2,7 +2,7 @@ import { readFileSync } from "fs";
 
 import { IDE } from "../../project/ide";
 import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils";
-import { ToolResponse } from "./models";
+import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
 
@@ -54,30 +54,33 @@ export async function buildLogsToolExec(): Promise<ToolResponse> {
     isAndroid ? Output.AndroidDevice : Output.IosDevice
   );
 
-  const combinedLogs = [];
+  const combinedLogsContent: TextContent[] = [];
 
   if (!buildLogs.isEmpty()) {
-    combinedLogs.push("=== BUILD PROCESS STARTED ===\n", ...buildLogs.readAll());
+    const rawLogs = ["=== BUILD PROCESS LOGS ===\n\n", ...buildLogs.readAll()];
+    combinedLogsContent.push(textToToolContent(rawLogs.join("")));
   }
 
   if (!packageManagerLogs.isEmpty()) {
-    combinedLogs.push("\n\n=== JS PACKAGE MANAGER STARTED ===\n", ...packageManagerLogs.readAll());
+    const rawLogs = ["=== JS PACKAGER LOGS ===\n\n", ...packageManagerLogs.readAll()];
+    combinedLogsContent.push(textToToolContent(rawLogs.join("")));
   }
 
   if (!deviceLogs.isEmpty()) {
-    combinedLogs.push("\n\n=== APPLICATION STARTED ===\n", ...deviceLogs.readAll());
+    const rawLogs = ["=== APPLICATION LOGS ===\n\n", ...deviceLogs.readAll()];
+    combinedLogsContent.push(textToToolContent(rawLogs.join("")));
   }
-
-  const text = combinedLogs.join("");
 
   if (session.previewReady) {
     const screenshot = await session.captureScreenshot(session.deviceRotation);
     const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
 
     return {
-      content: [textToToolContent(text), pngToToolContent(contents)],
+      content: [...combinedLogsContent, pngToToolContent(contents)],
     };
   }
 
-  return textToToolResponse(text);
+  return {
+    content: [...combinedLogsContent],
+  };
 }
