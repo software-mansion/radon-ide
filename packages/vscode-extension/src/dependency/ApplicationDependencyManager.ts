@@ -8,7 +8,7 @@ import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
 import { PackageManager } from "./packageManager";
 import { runPrebuild, shouldUseExpoCLI } from "../utilities/expoCli";
-import { CancelToken } from "../utilities/cancelToken";
+import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { getAndroidSourceDir } from "../builders/buildAndroid";
 import { Platform } from "../utilities/platform";
 import { requireNoCache } from "../utilities/requireNoCache";
@@ -22,6 +22,7 @@ import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
 import { MinSupportedVersion } from "../common/Constants";
 import { ApplicationDependencyStatuses, DevicePlatform } from "../common/State";
+import { BuildError } from "../builders/BuildManager";
 
 export class ApplicationDependencyManager implements Disposable {
   private disposables: Disposable[] = [];
@@ -108,7 +109,17 @@ export class ApplicationDependencyManager implements Disposable {
   ) {
     if (buildConfig.type === BuildType.Local) {
       if (buildConfig.usePrebuild) {
-        await cancelToken.adapt(runPrebuild(buildConfig, outputChannel));
+        try {
+          await cancelToken.adapt(runPrebuild(buildConfig, outputChannel));
+        } catch (e) {
+          if (e instanceof BuildError || e instanceof CancelError) {
+            throw e;
+          }
+          throw new BuildError(
+            "Running Prebuild failed. Check the build logs for details.",
+            buildConfig.type
+          );
+        }
       }
       if (buildConfig.platform === DevicePlatform.Android) {
         if (!(await this.checkAndroidDirectoryExits())) {

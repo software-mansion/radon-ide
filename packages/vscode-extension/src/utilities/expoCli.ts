@@ -5,6 +5,7 @@ import { ResolvedLaunchConfig } from "../project/ApplicationContext";
 import { AndroidLocalBuildConfig, IOSLocalBuildConfig } from "../common/BuildConfig";
 import { exec, lineReader } from "./subprocess";
 import { DevicePlatform } from "../common/State";
+import { BuildError } from "../builders/BuildManager";
 
 export function shouldUseExpoCLI(launchConfig: ResolvedLaunchConfig) {
   // The mechanism for detecting whether the project should use Expo CLI or React Native Community CLI works as follows:
@@ -73,8 +74,9 @@ export function runPrebuild(
   const appRoot = buildConfig.appRoot;
   const cliPath = getExpoCliPath(appRoot);
   if (!cliPath) {
-    throw new Error(
-      "Prebuild could not run because Expo CLI not installed in the project. Verify you have `@expo/cli` in your dependencies."
+    throw new BuildError(
+      "Prebuild could not run because Expo CLI not installed in the project. Verify you have `@expo/cli` in your dependencies.",
+      buildConfig.type
     );
   }
   const platform = buildConfig.platform === DevicePlatform.Android ? "android" : "ios";
