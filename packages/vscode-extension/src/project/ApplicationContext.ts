@@ -21,6 +21,7 @@ export type ResolvedLaunchConfig = LaunchOptions & {
     waitForAppLaunch: boolean;
   };
   env: Record<string, string>;
+  usePrebuild: boolean;
 };
 
 function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunchConfig {
@@ -59,6 +60,7 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
     preview: {
       waitForAppLaunch: configuration.preview?.waitForAppLaunch ?? true,
     },
+    usePrebuild: configuration.usePrebuild ?? false,
   };
 }
 

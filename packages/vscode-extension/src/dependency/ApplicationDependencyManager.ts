@@ -7,7 +7,7 @@ import { exec } from "../utilities/subprocess";
 import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
 import { PackageManager } from "./packageManager";
-import { shouldUseExpoCLI } from "../utilities/expoCli";
+import { runPrebuild, shouldUseExpoCLI } from "../utilities/expoCli";
 import { CancelToken } from "../utilities/cancelToken";
 import { getAndroidSourceDir } from "../builders/buildAndroid";
 import { Platform } from "../utilities/platform";
@@ -107,6 +107,9 @@ export class ApplicationDependencyManager implements Disposable {
     cancelToken: CancelToken
   ) {
     if (buildConfig.type === BuildType.Local) {
+      if (buildConfig.usePrebuild) {
+        await cancelToken.adapt(runPrebuild(buildConfig, outputChannel));
+      }
       if (buildConfig.platform === DevicePlatform.Android) {
         if (!(await this.checkAndroidDirectoryExits())) {
           throw new Error(

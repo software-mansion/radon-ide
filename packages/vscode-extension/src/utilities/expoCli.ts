@@ -1,6 +1,10 @@
 import path from "path";
+import { OutputChannel } from "vscode";
 import { requireNoCache } from "./requireNoCache";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
+import { AndroidLocalBuildConfig, IOSLocalBuildConfig } from "../common/BuildConfig";
+import { exec, lineReader } from "./subprocess";
+import { DevicePlatform } from "../common/State";
 
 export function shouldUseExpoCLI(launchConfig: ResolvedLaunchConfig) {
   // The mechanism for detecting whether the project should use Expo CLI or React Native Community CLI works as follows:
@@ -50,4 +54,42 @@ export function shouldUseExpoCLI(launchConfig: ResolvedLaunchConfig) {
     hasExpoCLIInstalled &&
     (hasExpoCommandsInScripts || hasExpoConfigInAppJson || hasExpoConfigInAppConfigJs)
   );
+}
+
+function getExpoCliPath(appRoot: string) {
+  try {
+    return require.resolve("@expo/cli", {
+      paths: [appRoot],
+    });
+  } catch {
+    return undefined;
+  }
+}
+
+export function runPrebuild(
+  buildConfig: IOSLocalBuildConfig | AndroidLocalBuildConfig,
+  outputChannel: OutputChannel
+) {
+  const appRoot = buildConfig.appRoot;
+  const cliPath = getExpoCliPath(appRoot);
+  if (!cliPath) {
+    throw new Error(
+      "Prebuild could not run because Expo CLI not installed in the project. Verify you have `@expo/cli` in your dependencies."
+    );
+  }
+  const platform = buildConfig.platform === DevicePlatform.Android ? "android" : "ios";
+  const args = [cliPath, "prebuild", "-p", platform];
+  // NOTE: We handle installing node dependencies and pods ourselves, so we skip it in the prebuild.
+  args.push("--no-install");
+  if (buildConfig.forceCleanBuild) {
+    args.push("--clean");
+  }
+
+  const process = exec("node", args, { cwd: appRoot });
+
+  lineReader(process).onLineRead((line) => {
+    outputChannel.appendLine(line);
+  });
+
+  return process;
 }
