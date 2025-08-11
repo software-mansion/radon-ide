@@ -29,7 +29,8 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
 export async function readLogsToolExec(): Promise<ToolResponse> {
   const ideInstance = IDE.getInstanceIfExists();
 
-  const errorMessage = "Could not view the build logs! Radon IDE extension has not been opened.";
+  const errorMessage =
+    "Couldn't retrieve build logs - Radon IDE is not launched. Open Radon IDE first.";
 
   if (!ideInstance) {
     return textToToolResponse(errorMessage);
