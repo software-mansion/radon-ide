@@ -268,7 +268,7 @@ export default function ReplayOverlay({
     return () => {
       document.removeEventListener("keydown", handleKeyboardControls, false);
     };
-  }, []);
+  }, [handleKeyboardControls]);
 
   useEffect(() => {
     const video = videoRef.current;
