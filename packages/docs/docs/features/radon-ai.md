@@ -96,7 +96,15 @@ The AI models automatically discover and invoke tools when they decide it will b
 
 4. GitHub Copilot Free is limited to 50 chat messages per month. When you reach this limit, you can upgrade to Copilot Pro to continue using Radon AI.
 
-## Disabling Radon AI 
+## Changing `mcp.json` write location
+
+To change the location of `mcp.json` file, navigate to the editor settings.
+
+Open the command palette by pressing Cmd+Shift+P (or Ctrl+Shift+P on Linux and Windows), then type "Preferences: Open User Settings".
+
+Within editor settings, type "Radon IDE: Location Of Mcp Config" and choose whether the server entry should be written to the project's `.cursor` directory, or the global `~/.cursor` directory.
+
+## Disabling Radon AI
 
 To disable Radon AI assistant navigate to the editor settings.
 
