@@ -1,5 +1,5 @@
 const { useEffect, useState } = require("react");
-const { AppRegistry, SafeAreaView, View } = require("react-native");
+const { AppRegistry, View } = require("react-native");
 
 export const PREVIEW_APP_KEY = "RNIDE_preview";
 
@@ -23,9 +23,9 @@ export function Preview({ previewKey }) {
   }, [previewData]);
 
   return (
-    <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       {previewData.component}
-    </SafeAreaView>
+    </View>
   );
 }
 
