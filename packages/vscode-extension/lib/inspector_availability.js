@@ -76,26 +76,6 @@ const updateAvailabilityAndSendMessage = () => {
   }
 };
 
-const handleDimensionsChange = () => {
-  isEdgeToEdge = determineIfEdgeToEdge();
-  updateAvailabilityAndSendMessage();
-};
-
-const handleAppStateChange = (appState) => {
-  isAppStateActive = appState === "active";
-  updateAvailabilityAndSendMessage();
-};
-
-const handleBlurChange = () => {
-  isFocused = false;
-  updateAvailabilityAndSendMessage();
-};
-
-const handleFocusChange = () => {
-  isFocused = true;
-  updateAvailabilityAndSendMessage();
-};
-
 const initializeInspectorAvailability = () => {
   isEdgeToEdge = determineIfEdgeToEdge();
   isAppStateActive = AppState.currentState === "active";
@@ -104,6 +84,28 @@ const initializeInspectorAvailability = () => {
 
 export function setup() {
   initializeInspectorAvailability();
+
+  // Define callbacks inside the setup, in order for dimensionsObserver to be able
+  // to properly differentiate between created functions
+  const handleDimensionsChange = () => {
+    isEdgeToEdge = determineIfEdgeToEdge();
+    updateAvailabilityAndSendMessage();
+  };
+
+  const handleAppStateChange = (appState) => {
+    isAppStateActive = appState === "active";
+    updateAvailabilityAndSendMessage();
+  };
+
+  const handleBlurChange = () => {
+    isFocused = false;
+    updateAvailabilityAndSendMessage();
+  };
+
+  const handleFocusChange = () => {
+    isFocused = true;
+    updateAvailabilityAndSendMessage();
+  };
 
   let appBlurSubscription = null;
   let appFocusSubscription = null;
