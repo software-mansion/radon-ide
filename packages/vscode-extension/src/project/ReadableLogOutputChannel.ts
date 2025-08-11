@@ -15,43 +15,43 @@ export interface ReadableLogOutputChannel extends LogOutputChannel {
 export function createReadableOutputChannel(channel: string): ReadableLogOutputChannel {
   const outputChannel = window.createOutputChannel(channel, { log: true });
 
-  const logTail: string[] = [];
-  const logHeadBuffer = new CircularBuffer<string>(KEEP_LAST_N);
+  const logHead: string[] = [];
+  const logTailBuffer = new CircularBuffer<string>(KEEP_LAST_N);
 
   let droppedLogsCounter = 0;
 
   const storeLog = (value: string) => {
-    if (logTail.length < KEEP_FIRST_N) {
-      logTail.push(value);
+    if (logHead.length < KEEP_FIRST_N) {
+      logHead.push(value);
       return;
     }
 
-    logHeadBuffer.write(value);
+    logTailBuffer.write(value);
     droppedLogsCounter++;
   };
 
   const readAll = (): string[] => {
     if (droppedLogsCounter > 0) {
       return [
-        ...logTail,
+        ...logHead,
         `\n...\n\n[SKIPPED ${droppedLogsCounter} LINES OF LOGS]\n\n...\n\n`,
-        ...logHeadBuffer.readAll(),
+        ...logTailBuffer.readAll(),
       ];
     }
 
-    return [...logTail, ...logHeadBuffer.readAll()];
+    return [...logHead, ...logTailBuffer.readAll()];
   };
 
   return {
     ...outputChannel,
     readAll,
     isEmpty: () => {
-      return !logTail.length;
+      return !logHead.length;
     },
     clear: () => {
       droppedLogsCounter = 0;
-      logTail.length = 0;
-      logHeadBuffer.clear();
+      logHead.length = 0;
+      logTailBuffer.clear();
       outputChannel.clear();
     },
     append: (value: string) => {
