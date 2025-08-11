@@ -84,6 +84,34 @@
   align-items: center;
 }
 
+.replay-controls-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+}
+
+.replay-controls-steps {
+  display: flex;
+  flex-direction: row;
+  gap: 1px;
+}
+
+.replay-controls-left {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.replay-controls-right {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.replay-controls-step-separator {
+  width: 1px;
+  height: 20px;
+  background-color: #aaa;
+}
+
 .replay-controls-pad {
   width: 0%;
 }
