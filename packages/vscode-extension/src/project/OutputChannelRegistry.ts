@@ -1,12 +1,9 @@
 import { Disposable } from "vscode";
 import { Output } from "../common/OutputChannel";
-import { Logger } from "../Logger";
 import { createReadableOutputChannel, ReadableLogOutputChannel } from "./ReadableLogOutputChannel";
 
 export class OutputChannelRegistry implements Disposable {
-  private channelByName = new Map<Output, ReadableLogOutputChannel>([
-    [Output.Ide, Logger.rawOutputChannel],
-  ]);
+  private channelByName = new Map<Output, ReadableLogOutputChannel>([]);
 
   getOrCreateOutputChannel(channel: Output): ReadableLogOutputChannel {
     const logOutput = this.channelByName.get(channel);
