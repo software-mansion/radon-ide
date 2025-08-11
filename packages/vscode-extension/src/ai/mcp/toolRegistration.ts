@@ -3,7 +3,7 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { getToolSchema, invokeToolCall } from "../shared/api";
 import { ToolSchema } from "./models";
-import { buildLogsToolExec, screenshotToolExec } from "./toolExecutors";
+import { readLogsToolExec, screenshotToolExec } from "./toolExecutors";
 import { ConnectionListener } from "../shared/ConnectionListener";
 
 const PLACEHOLDER_ID = "3241"; // This placeholder is needed by the API, but the value doesn't matter
@@ -33,7 +33,7 @@ export async function registerMcpTools(server: McpServer, connectionListener: Co
         "if it's builds are failing, or when there are errors in the console. These logs are always a useful debugging aid.",
       inputSchema: {},
     },
-    buildLogsToolExec
+    readLogsToolExec
   );
 
   const toolSchema = await getToolSchema(connectionListener);
