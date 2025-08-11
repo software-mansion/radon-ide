@@ -50,6 +50,11 @@
   opacity: 0.75;
 }
 
+.navLinks li.activeLink a {
+  color: var(--radon-active-tab);
+  opacity: 1;
+}
+
 .navLinks li a:hover {
   opacity: 1;
 }

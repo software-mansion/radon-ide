@@ -110,6 +110,7 @@
   --radon-border-grid-subtle: var(--swm-border);
   --radon-button-text: var(--radon-color-button-text);
   --radon-icon: var(--swm-green-light-100);
+  --radon-active-tab: var(--swm-green-light-100);
 
   /* Infima main colors */
   --ifm-color-primary: var(--swm-navy-light-100);

@@ -1,6 +1,6 @@
 import React from "react";
 import styles from "./styles.module.css";
-import { useThemeConfig, useColorMode } from "@docusaurus/theme-common";
+import { useLocation } from "@docusaurus/router";
 import MobileSidebarToggle from "../MobileSidebarToggle";
 import NavbarMobileSidebar from "../MobileSidebar";
 import ThemeSwitcher from "../../ThemeSwitcher";
@@ -33,10 +33,8 @@ export interface NavbarContentProps {
 }
 
 export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentProps) {
-  const {
-    navbar: { logo },
-  } = useThemeConfig();
-  const { colorMode, setColorMode } = useColorMode();
+  const location = useLocation();
+  const active = location.pathname;
   return (
     <>
       <div className={clsx(styles.navbarContainer, "border-layout")}>
@@ -49,7 +47,7 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
           <ul className={styles.navLinks}>
             {navbarItems.map((item, index) =>
               item.position == "center" ? (
-                <li key={index}>
+                <li key={index} className={active == item.to ? styles.activeLink : null}>
                   <NavbarLink item={item} />
                 </li>
               ) : null

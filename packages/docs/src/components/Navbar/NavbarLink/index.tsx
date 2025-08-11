@@ -1,5 +1,7 @@
 import React from "react";
 import { NavbarItem } from "../NavbarContent";
+import clsx from "clsx";
+import styles from "./styles.module.css";
 
 export interface NavbarLinkProps {
   item: NavbarItem;
