@@ -224,7 +224,12 @@ export function previewToAppCoordinates(
     newY = 1 - coords.x;
   }
 
-  if (actualUpsideDownAppPortrait || actualPortraitAppUpsideDown || actualLeftAppRight || actualRightAppLeft) {
+  if (
+    actualUpsideDownAppPortrait ||
+    actualPortraitAppUpsideDown ||
+    actualLeftAppRight ||
+    actualRightAppLeft
+  ) {
     newX = 1 - coords.x;
     newY = 1 - coords.y;
   }
