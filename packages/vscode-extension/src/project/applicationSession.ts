@@ -76,7 +76,8 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   ): Promise<ApplicationSession> {
     const packageNameOrBundleId =
       buildResult.platform === DevicePlatform.IOS ? buildResult.bundleID : buildResult.packageName;
-    const supportedOrientations = buildResult.platform === DevicePlatform.IOS ? buildResult.supportedInterfaceOrientations : [];
+    const supportedOrientations =
+      buildResult.platform === DevicePlatform.IOS ? buildResult.supportedInterfaceOrientations : [];
     const session = new ApplicationSession(
       applicationContext,
       device,
@@ -256,15 +257,18 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   }
 
   private determineAppOrientation(orientation: AppOrientation): DeviceRotation {
-
-    if(this.device.deviceInfo.platform !== DevicePlatform.IOS) {
-      if(orientation === "Landscape") {
+    // Android case - the API is reliable, we do not need supportedOrientations array
+    // so we just consider the situation in which during the initialization,
+    // the orientation sent is landscape, which will later be corrected by
+    // on the lib side anyways
+    if (this.device.deviceInfo.platform === DevicePlatform.Android) {
+      if (orientation === "Landscape") {
         return DeviceRotation.LandscapeLeft;
       }
       return orientation;
     }
 
-
+    // IOS case
     if (orientation === "Landscape") {
       if (this.supportedOrientations.includes(DeviceRotation.LandscapeLeft)) {
         return DeviceRotation.LandscapeLeft;
@@ -274,15 +278,23 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     }
 
     if (orientation === "Portrait") {
+      // iPhone case - expo always reports portraitUpsideDown as portrait on iPads
+      if (
+        this.device.rotation === DeviceRotation.PortraitUpsideDown &&
+        this.supportedOrientations.includes(DeviceRotation.PortraitUpsideDown)
+      ) {
+        return DeviceRotation.PortraitUpsideDown;
+      }
+
       if (this.supportedOrientations.includes(DeviceRotation.Portrait)) {
         return DeviceRotation.Portrait;
       } else {
         return DeviceRotation.PortraitUpsideDown;
       }
     }
-    console.log(this.supportedOrientations)
-    if (!this.supportedOrientations.includes(orientation)) {
-      return this.appOrientation!;
+
+    if (this.appOrientation && !this.supportedOrientations.includes(orientation)) {
+      return this.appOrientation;
     }
 
     return orientation;

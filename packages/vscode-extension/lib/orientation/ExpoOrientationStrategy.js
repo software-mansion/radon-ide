@@ -3,16 +3,13 @@ let ExpoOrientation;
 
 try {
   ExpoOrientation = require("expo-screen-orientation");
+  // Verify whether the import is correct and exposes one of the functions
+  if (!ExpoOrientation.getOrientationAsync) {
+    ExpoOrientation = null;
+  }
 } catch {
   // Library not available
-}
-
-/**
- * Checks if expo-screen-orientation library is available.
- * @returns {boolean} true if library is available, false otherwise
- */
-export function isStrategyAvailable() {
-  return !!ExpoOrientation.getOrientationAsync;
+  ExpoOrientation = null;
 }
 
 let currentAppOrientation = null;
@@ -24,15 +21,15 @@ let currentAppOrientation = null;
  */
 const mapExpoOrientationToAppOrientation = (expoOrientation) => {
   switch (expoOrientation) {
-    case ExpoOrientation.Orientation.PORTRAIT_UP:
-      return "Portrait";
-    case ExpoOrientation.Orientation.PORTRAIT_DOWN:
-      return "PortraitUpsideDown";
+    // Landscape Left and Right are swapped, this is no mistake
     case ExpoOrientation.Orientation.LANDSCAPE_RIGHT:
       return "LandscapeLeft";
     case ExpoOrientation.Orientation.LANDSCAPE_LEFT:
       return "LandscapeRight";
+    case ExpoOrientation.Orientation.PORTRAIT_DOWN:
+      return "PortraitUpsideDown";
     default:
+    case ExpoOrientation.Orientation.PORTRAIT_UP:
       return "Portrait"; // fallback
   }
 };
@@ -58,7 +55,7 @@ function initializeOrientationAndSendInitMessage() {
 
 function updateOrientationAndSendMessage(orientationInfo) {
   const mappedOrientation = mapExpoOrientationToAppOrientation(orientationInfo.orientation);
-  
+
   if (currentAppOrientation !== mappedOrientation) {
     currentAppOrientation = mappedOrientation;
     inspectorBridge.sendMessage({
@@ -69,12 +66,14 @@ function updateOrientationAndSendMessage(orientationInfo) {
 }
 
 function setupOrientationListener(callback) {
-  const subscription = ExpoOrientation.addOrientationChangeListener((event) => {
+  function handleOrientationChange(event) {
     updateOrientationAndSendMessage(event.orientationInfo);
     if (callback) {
       callback(event.orientationInfo);
     }
-  });
+  }
+
+  const subscription = ExpoOrientation.addOrientationChangeListener(handleOrientationChange);
 
   return function cleanup() {
     if (subscription) {
@@ -83,10 +82,16 @@ function setupOrientationListener(callback) {
   };
 }
 
-export function getStrategy() {
-  return {
-    initializeOrientationAndSendInitMessage,
-    updateOrientationAndSendMessage,
-    setupOrientationListener,
+if (!ExpoOrientation) {
+  module.exports = undefined;
+} else {
+  module.exports = {
+    getStrategy() {
+      return {
+        initializeOrientationAndSendInitMessage,
+        updateOrientationAndSendMessage,
+        setupOrientationListener,
+      };
+    },
   };
 }

@@ -1,21 +1,33 @@
+const { Platform, UIManager, NativeEventEmitter, NativeModules } = require("react-native");
 const inspectorBridge = require("../inspector_bridge");
+const NativeUIManager = NativeModules.UIManager ?? UIManager;
 
 let OrientationLocker;
-// let OrientationLockerConstants;
 
 try {
-    OrientationLocker = require("react-native-orientation-locker").default;
+  OrientationLocker = require("react-native-orientation-locker").default;
+  // Verify whether the import is correct and exposes one of the functions
+  if (!OrientationLocker.getOrientation) {
+    OrientationLocker = null;
+  }
 } catch {
-    // Library not available
+  // Library not available
+  OrientationLocker = null;
 }
 
-/**
- * Checks if react-native-orientation-locker library is available.
- * @returns {boolean} true if library is available, false otherwise
- */
-export function isStrategyAvailable() {
-  return !!OrientationLocker.getOrientation;
-}
+const androidOrientationMapping = {
+  "portrait-primary": "Portrait",
+  "portrait-secondary": "PortraitUpsideDown",
+  "landscape-primary": "LandscapeLeft",
+  "landscape-secondary": "LandscapeRight",
+};
+
+const iosOrientationMapping = {
+  "LANDSCAPE-LEFT": "LandscapeLeft",
+  "LANDSCAPE-RIGHT": "LandscapeRight",
+  "PORTRAIT-UPSIDEDOWN": "PortraitUpsideDown",
+  "PORTRAIT": "Portrait",
+};
 
 let currentAppOrientation = null;
 
@@ -25,18 +37,11 @@ let currentAppOrientation = null;
  * @returns {string} App orientation string
  */
 const mapOrientationLockerToAppOrientation = (orientation) => {
-  switch (orientation) {
-    case "PORTRAIT":
-      return "Portrait";
-    case "PORTRAIT-UPSIDEDOWN":
-      return "PortraitUpsideDown";
-    case "LANDSCAPE-LEFT":
-      return "LandscapeLeft";
-    case "LANDSCAPE-RIGHT":
-      return "LandscapeRight";
-    default:
-      return "Portrait"; // fallback
-  }
+  const mappedOrientation =
+    Platform.OS === "ios"
+      ? iosOrientationMapping[orientation]
+      : androidOrientationMapping[orientation];
+  return mappedOrientation || "Portrait"; // Fallback to Portrait if mapping fails
 };
 
 function initializeOrientationAndSendInitMessage() {
@@ -51,7 +56,7 @@ function initializeOrientationAndSendInitMessage() {
 
 function updateOrientationAndSendMessage(orientation) {
   const mappedOrientation = mapOrientationLockerToAppOrientation(orientation);
-  
+
   if (currentAppOrientation !== mappedOrientation) {
     currentAppOrientation = mappedOrientation;
     inspectorBridge.sendMessage({
@@ -69,18 +74,39 @@ function setupOrientationListener(callback) {
     }
   };
 
-  // Add orientation listener
-  OrientationLocker.addOrientationListener(handleOrientationChange);
+  if (Platform.OS === "ios") {
+    // on iOS orientation-locker can be relied upon
+    OrientationLocker.addOrientationListener(handleOrientationChange);
 
-  return function cleanup() {
-    OrientationLocker.removeOrientationListener(handleOrientationChange);
-  };
+    return function cleanup() {
+      OrientationLocker.removeOrientationListener(handleOrientationChange);
+    };
+  } else {
+    // on Android, native event emitter is used, because orientation-locker
+    // lags behind recording the orientation
+    const orientationEventSubscription = new NativeEventEmitter(NativeUIManager).addListener(
+      "namedOrientationDidChange",
+      ({ name: orientation }) => {
+        handleOrientationChange(orientation);
+      }
+    );
+
+    return function cleanup() {
+      orientationEventSubscription.remove();
+    };
+  }
 }
 
-export function getStrategy() {
-  return {
-    initializeOrientationAndSendInitMessage,
-    updateOrientationAndSendMessage,
-    setupOrientationListener,
+if (!OrientationLocker) {
+  module.exports = undefined;
+} else {
+  module.exports = {
+    getStrategy() {
+      return {
+        initializeOrientationAndSendInitMessage,
+        updateOrientationAndSendMessage,
+        setupOrientationListener,
+      };
+    },
   };
 }

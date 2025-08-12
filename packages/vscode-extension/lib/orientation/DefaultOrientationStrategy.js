@@ -1,12 +1,16 @@
 /**
  * Default orientation strategy using React Native core APIs.
- * 
+ *
  * This fallback strategy uses UIManager events and DimensionsObserver to track orientation changes.
  * The approach has limitations due to lack of sync orientation getter in React Native core:
- * 
- * Android: Orientation events fire after app rotation and are distinct from device orientation.
- * iOS: Events fire when DEVICE rotates (based on sensors), not when APP rotates, creating timing issues.
- * 
+ *
+ * Android: Orientation events fire after app rotation and are distinct from device orientation. In case of
+ * android, the event fires on app start and can be relied on during the app lifecycle.
+ *
+ * iOS: Events fire when DEVICE rotates (based on sensors), not when APP rotates, creating not only
+ * timing issues, but also firing events event when the application's UI is not rotated. This means
+ * we cannot rely on the events entirely and the frontend must properly interpret the messages sent.
+ *
  * To handle iOS limitations, we use DimensionsObserver for additional tracking and make assumptions
  * about supported orientations (e.g., portrait-secondary typically not supported).
  */
@@ -19,7 +23,7 @@ const DimensionsObserver = require("../dimensions_observer");
 /**
  * Mapping from namedOrientationDidChangeEvent names to DeviceRotation names or "Landscape" specific case
  * sent to the extension.
- * "Landscape" case happens when we cannot infer the detailed landscape orientation of the app and
+ * "Landscape" and "Portrait" cases may happen when we cannot infer the detailed orientation of the app and
  * leave the interpretation to the frontend of the extension.
  */
 const androidOrientationMapping = {
