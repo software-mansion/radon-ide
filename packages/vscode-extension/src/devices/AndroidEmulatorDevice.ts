@@ -26,7 +26,7 @@ import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { extensionContext } from "../utilities/extensionContext";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
-import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform } from "../common/State";
+import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform, DeviceType } from "../common/State";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -801,6 +801,7 @@ export async function createEmulator(
     modelId: modelId,
     systemName: systemImage.name,
     displayName: displayName,
+    deviceType: DeviceType.Phone,
     available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
   } as DeviceInfo;
 }

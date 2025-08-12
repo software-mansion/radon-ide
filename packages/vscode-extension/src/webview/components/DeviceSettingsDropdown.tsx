@@ -77,6 +77,12 @@ const setOrientationOptions: Array<{
     rotation: "-90deg",
   },
   {
+    label: "Portait Upside Down",
+    value: DeviceRotation.PortraitUpsideDown,
+    icon: "device-mobile",
+    rotation: "180deg",
+  },
+  {
     label: "Landscape Right",
     value: DeviceRotation.LandscapeRight,
     icon: "device-mobile",

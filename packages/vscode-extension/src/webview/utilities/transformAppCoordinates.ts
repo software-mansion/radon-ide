@@ -15,11 +15,16 @@ type NormalizedCoordinates = {
 type OrientationPredicates = {
   actualPortaitAppLeft: boolean;
   actualPortaitAppRight: boolean;
+  actualPortraitAppUpsideDown: boolean;
   actualUpsideDownAppPortrait: boolean;
   actualUpsideDownAppLeft: boolean;
   actualUpsideDownAppRight: boolean;
   actualLeftAppPortrait: boolean;
+  actualLeftAppPortraitUpsideDown: boolean;
+  actualLeftAppRight: boolean;
   actualRightAppPortrait: boolean;
+  actualRightAppPortraitUpsideDown: boolean;
+  actualRightAppLeft: boolean;
 };
 
 function getOrientationPredicates(
@@ -29,10 +34,12 @@ function getOrientationPredicates(
   const actualPortaitAppLeft =
     deviceOrientation === DeviceRotation.Portrait &&
     appOrientation === DeviceRotation.LandscapeLeft;
-
   const actualPortaitAppRight =
     deviceOrientation === DeviceRotation.Portrait &&
     appOrientation === DeviceRotation.LandscapeRight;
+  const actualPortraitAppUpsideDown =
+    deviceOrientation === DeviceRotation.Portrait &&
+    appOrientation === DeviceRotation.PortraitUpsideDown;
   const actualUpsideDownAppPortrait =
     deviceOrientation === DeviceRotation.PortraitUpsideDown &&
     appOrientation === DeviceRotation.Portrait;
@@ -45,18 +52,35 @@ function getOrientationPredicates(
   const actualLeftAppPortrait =
     deviceOrientation === DeviceRotation.LandscapeLeft &&
     appOrientation === DeviceRotation.Portrait;
+  const actualLeftAppPortraitUpsideDown =
+    deviceOrientation === DeviceRotation.LandscapeLeft &&
+    appOrientation === DeviceRotation.PortraitUpsideDown;
+  const actualLeftAppRight =
+    deviceOrientation === DeviceRotation.LandscapeLeft &&
+    appOrientation === DeviceRotation.LandscapeRight;
   const actualRightAppPortrait =
     deviceOrientation === DeviceRotation.LandscapeRight &&
     appOrientation === DeviceRotation.Portrait;
+  const actualRightAppPortraitUpsideDown =
+    deviceOrientation === DeviceRotation.LandscapeRight &&
+    appOrientation === DeviceRotation.PortraitUpsideDown;
+  const actualRightAppLeft =
+    deviceOrientation === DeviceRotation.LandscapeRight &&
+    appOrientation === DeviceRotation.LandscapeLeft;
 
   return {
     actualPortaitAppLeft,
+    actualPortraitAppUpsideDown,
     actualPortaitAppRight,
     actualUpsideDownAppPortrait,
     actualUpsideDownAppLeft,
     actualUpsideDownAppRight,
     actualLeftAppPortrait,
     actualRightAppPortrait,
+    actualLeftAppRight,
+    actualRightAppLeft,
+    actualLeftAppPortraitUpsideDown,
+    actualRightAppPortraitUpsideDown,
   };
 }
 
@@ -93,6 +117,11 @@ export function appToPreviewCoordinates(
     actualUpsideDownAppRight,
     actualLeftAppPortrait,
     actualRightAppPortrait,
+    actualLeftAppRight,
+    actualRightAppLeft,
+    actualPortraitAppUpsideDown,
+    actualLeftAppPortraitUpsideDown,
+    actualRightAppPortraitUpsideDown,
   } = getOrientationPredicates(appOrientation, deviceOrientation);
 
   if (actualPortaitAppRight || actualUpsideDownAppLeft) {
@@ -110,25 +139,30 @@ export function appToPreviewCoordinates(
     newHeight = frameRect.width;
   }
 
-  if (actualUpsideDownAppPortrait) {
+  if (actualUpsideDownAppPortrait || actualPortraitAppUpsideDown) {
     newX = 1 - frameRect.x - frameRect.width;
     newY = 1 - frameRect.y - frameRect.height;
     newWidth = frameRect.width;
     newHeight = frameRect.height;
   }
 
-  if (actualLeftAppPortrait) {
+  if (actualLeftAppPortrait || actualRightAppPortraitUpsideDown) {
     newX = newY;
     newY = 1 - frameRect.x - frameRect.width;
     newWidth = newHeight;
     newHeight = frameRect.width;
   }
 
-  if (actualRightAppPortrait) {
+  if (actualRightAppPortrait || actualLeftAppPortraitUpsideDown) {
     newX = 1 - newY - frameRect.height;
     newY = frameRect.x;
     newWidth = newHeight;
     newHeight = frameRect.width;
+  }
+
+  if (actualLeftAppRight || actualRightAppLeft) {
+    newX = 1 - frameRect.x - frameRect.width;
+    newY = 1 - frameRect.y - frameRect.height;
   }
 
   // implicitly handles isLandscape &&  deviceOrientation === DeviceRotation.LandscapeLeft ||
@@ -173,6 +207,11 @@ export function previewToAppCoordinates(
     actualUpsideDownAppRight,
     actualLeftAppPortrait,
     actualRightAppPortrait,
+    actualLeftAppRight,
+    actualRightAppLeft,
+    actualPortraitAppUpsideDown,
+    actualLeftAppPortraitUpsideDown,
+    actualRightAppPortraitUpsideDown,
   } = getOrientationPredicates(appOrientation, deviceOrientation);
 
   if (actualPortaitAppRight || actualUpsideDownAppLeft) {
@@ -185,17 +224,22 @@ export function previewToAppCoordinates(
     newY = 1 - coords.x;
   }
 
-  if (actualUpsideDownAppPortrait) {
+  if (
+    actualUpsideDownAppPortrait ||
+    actualPortraitAppUpsideDown ||
+    actualLeftAppRight ||
+    actualRightAppLeft
+  ) {
     newX = 1 - coords.x;
     newY = 1 - coords.y;
   }
 
-  if (actualLeftAppPortrait) {
+  if (actualLeftAppPortrait || actualRightAppPortraitUpsideDown) {
     newX = 1 - coords.y;
     newY = coords.x;
   }
 
-  if (actualRightAppPortrait) {
+  if (actualRightAppPortrait || actualLeftAppPortraitUpsideDown) {
     newX = coords.y;
     newY = 1 - coords.x;
   }
