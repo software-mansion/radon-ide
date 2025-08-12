@@ -13,7 +13,7 @@ import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
-import { DeviceInfo, DevicePlatform, IOSDeviceInfo, IOSRuntimeInfo } from "../common/State";
+import { DeviceInfo, DevicePlatform, DeviceType, IOSDeviceInfo, IOSRuntimeInfo } from "../common/State";
 
 interface SimulatorInfo {
   availability?: string;
@@ -614,6 +614,7 @@ export async function listSimulators(
           modelId: device.deviceTypeIdentifier,
           systemName: runtime?.name ?? "Unknown",
           displayName: device.name,
+          deviceType: device.deviceTypeIdentifier.includes("iPad") ? DeviceType.Tablet : DeviceType.Phone,
           available: device.isAvailable ?? false,
           runtimeInfo: runtime!,
         };

@@ -87,6 +87,11 @@ export enum DevicePlatform {
   Android = "Android",
 }
 
+export enum DeviceType {
+  Phone = "Phone",
+  Tablet = "Tablet",
+}
+
 export type DeviceInfo = AndroidDeviceInfo | IOSDeviceInfo;
 
 export type AndroidDeviceInfo = {
@@ -96,6 +101,7 @@ export type AndroidDeviceInfo = {
   modelId: string;
   systemName: string;
   displayName: string;
+  deviceType: DeviceType;
   available: boolean;
 };
 
@@ -107,6 +113,7 @@ export type IOSDeviceInfo = {
   systemName: string;
   displayName: string;
   available: boolean;
+  deviceType: DeviceType;
   runtimeInfo: IOSRuntimeInfo;
 };
 
