@@ -35,6 +35,8 @@ export class WorkspaceConfigController implements Disposable {
         stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
         deviceRotation: config.get<DeviceRotation>("deviceRotation")!,
         inspectorExcludePattern: config.get<string>("inspectorExcludePattern") ?? null,
+        defaultMultimediaSavingLocation:
+          config.get<string>("defaultMultimediaSavingLocation") ?? null,
       };
 
       for (const partialStateEntry of partialStateEntries) {
@@ -68,6 +70,8 @@ export class WorkspaceConfigController implements Disposable {
       stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
       deviceRotation: config.get<DeviceRotation>("deviceRotation")!,
       inspectorExcludePattern: config.get<string>("inspectorExcludePattern") ?? null,
+      defaultMultimediaSavingLocation:
+        config.get<string>("defaultMultimediaSavingLocation") ?? null,
     };
 
     const index = this.workspaceConfigurationUpdatesToIgnore.findIndex((cfg) =>

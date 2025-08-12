@@ -551,11 +551,18 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       multimediaData.fileName.length - extension.length
     );
     const newFileName = `${baseFileName} ${timestamp}${extension}`;
-    const defaultFolder = Platform.select({
-      macos: path.join(homedir(), "Desktop"),
-      windows: homedir(),
-      linux: homedir(),
-    });
+
+    const defaultMultimediaSavingLocation =
+      this.workspaceStateManager.getState().defaultMultimediaSavingLocation;
+
+    const defaultFolder =
+      defaultMultimediaSavingLocation && fs.existsSync(defaultMultimediaSavingLocation)
+        ? defaultMultimediaSavingLocation
+        : Platform.select({
+            macos: path.join(homedir(), "Desktop"),
+            windows: homedir(),
+            linux: homedir(),
+          });
     const defaultUri = Uri.file(path.join(defaultFolder, newFileName));
 
     // save dialog open the location dialog, it also warns the user if the file already exists
