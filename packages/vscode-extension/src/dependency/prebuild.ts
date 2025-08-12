@@ -9,10 +9,31 @@ import { FingerprintProvider } from "../project/FingerprintProvider";
 import { lineReader } from "../utilities/subprocess";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 
-interface PrebuildProcess {
-  fingerprint: string;
-  process: Promise<void>;
-  cancelToken: CancelToken;
+class PrebuildProcess {
+  private attachedCounter = 0;
+  public finished: Promise<void>;
+
+  constructor(
+    public fingerprint: string,
+    process: Promise<void>,
+    private cancelToken: CancelToken
+  ) {
+    this.finished = this.cancelToken.adapt(process);
+  }
+
+  public attach(cancelToken: CancelToken) {
+    this.attachedCounter++;
+    cancelToken.onCancel(() => {
+      this.attachedCounter--;
+      if (this.attachedCounter === 0) {
+        this.cancel();
+      }
+    });
+  }
+
+  public cancel() {
+    this.cancelToken.cancel();
+  }
 }
 
 export class Prebuild implements Disposable {
@@ -22,7 +43,7 @@ export class Prebuild implements Disposable {
 
   dispose() {
     this.prebuildProcessByPlatform.forEach((prebuildProcess) => {
-      prebuildProcess.cancelToken.cancel();
+      prebuildProcess.cancel();
     });
   }
 
@@ -42,40 +63,41 @@ export class Prebuild implements Disposable {
     outputChannel: OutputChannel,
     cancelToken: CancelToken
   ) {
+    const [currentFingerprint, nativeDirectoryExists] = await Promise.all([
+      this.fingerprintProvider.calculateFingerprint(buildConfig),
+      this.nativeDirectoryExists(buildConfig),
+    ]);
+    // NOTE: we do this after the asynchronous tasks to ensure we didn't grab a process which cancels/fails while we're checking other things
     const ongoingPrebuild = this.prebuildProcessByPlatform.get(buildConfig.platform);
-    const currentFingerprint = await this.fingerprintProvider.calculateFingerprint(buildConfig);
 
     const canSkipPrebuild =
       !buildConfig.forceCleanBuild &&
       ongoingPrebuild &&
-      ongoingPrebuild.fingerprint !== currentFingerprint &&
-      !(await this.nativeDirectoryExists(buildConfig));
+      ongoingPrebuild.fingerprint === currentFingerprint &&
+      nativeDirectoryExists;
     if (canSkipPrebuild) {
-      return await ongoingPrebuild.process;
+      ongoingPrebuild.attach(cancelToken);
+      return await ongoingPrebuild.finished;
     }
 
-    ongoingPrebuild?.cancelToken.cancel();
+    ongoingPrebuild?.cancel();
 
-    // NOTE: we create a new cancel token so that cancelling the prebuild does not cancel the calling process.
     const prebuildCancelToken = new CancelToken();
-    cancelToken.onCancel(() => {
-      prebuildCancelToken.cancel();
-    });
-
-    const prebuildProcess = this.runPrebuild(buildConfig, outputChannel, prebuildCancelToken);
-    this.prebuildProcessByPlatform.set(buildConfig.platform, {
-      fingerprint: currentFingerprint,
-      process: prebuildProcess,
-      cancelToken: prebuildCancelToken,
-    });
+    const prebuildProcess = new PrebuildProcess(
+      currentFingerprint,
+      this.runPrebuild(buildConfig, outputChannel, prebuildCancelToken),
+      prebuildCancelToken
+    );
+    prebuildProcess.attach(cancelToken);
+    this.prebuildProcessByPlatform.set(buildConfig.platform, prebuildProcess);
 
     // NOTE: on error, we need remove the process from the map so that later requests can start a new one.
-    prebuildProcess.catch(() => {
-      if (this.prebuildProcessByPlatform.get(buildConfig.platform)?.process === prebuildProcess) {
+    prebuildProcess.finished.catch(() => {
+      if (this.prebuildProcessByPlatform.get(buildConfig.platform) === prebuildProcess) {
         this.prebuildProcessByPlatform.delete(buildConfig.platform);
       }
     });
-    return await prebuildProcess;
+    return await prebuildProcess.finished;
   }
 
   private async runPrebuild(
