@@ -259,6 +259,41 @@ describe("BatchingBuildManager", () => {
           "The first build should be cancelled"
         );
       });
+
+      it("should not cancel the ongoing build when forceCleanBuild is passed for different configuration", async () => {
+        const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
+        const options = {
+          progressListener,
+          cancelToken: new CancelToken(),
+          buildOutputChannel: {} as any,
+        };
+
+        const { promise, resolve } = Promise.withResolvers();
+        buildAppMock.returns(promise);
+
+        // First call
+        const result1 = batchingBuildManager.buildApp(BUILD_CONFIG, options);
+
+        const { promise: promise2, resolve: resolve2 } = Promise.withResolvers();
+        buildAppMock.returns(promise2);
+
+        // Second call with the same configuration but forceCleanBuild is true
+        const result2 = batchingBuildManager.buildApp(
+          { ...BUILD_CONFIG_2, forceCleanBuild: true },
+          options
+        );
+
+        resolve(BUILD_RESULT);
+        resolve2(BUILD_RESULT_2);
+        await result1;
+        await result2;
+
+        assert(buildAppMock.calledTwice);
+        assert(
+          !buildAppMock.getCall(0).args[1].cancelToken.cancelled,
+          "The first build should not be cancelled"
+        );
+      });
     });
   }
 });
