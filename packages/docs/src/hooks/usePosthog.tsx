@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 
 const isProduction = process.env.NODE_ENV === "production";
 
+const PUBLIC_POSTHOG_KEY = "phc_tfuWCtrXJ8OFqvy3eT0ehYAoJWQ0KLQhGeOVqbPdIiJ";
+
 const posthogOptions: Partial<PostHogConfig> = isProduction
   ? {
       // production api_host must match rewrites in vercel.json
@@ -22,7 +24,7 @@ function usePosthog() {
   const [posthog, setPosthog] = useState<typeof PostHog | undefined>();
 
   useEffect(() => {
-    const p = PostHog.init("phc_tfuWCtrXJ8OFqvy3eT0ehYAoJWQ0KLQhGeOVqbPdIiJ", {
+    const p = PostHog.init(PUBLIC_POSTHOG_KEY, {
       ...posthogOptions,
       ...commonPosthogOptions,
     });
