@@ -174,7 +174,7 @@ export async function inferBuildType(
     }
   }
 
-  if (!usePrebuild && (await isExpoGoProject(absoluteAppRoot))) {
+  if (!usePrebuild && (await isExpoGoProject(absoluteAppRoot, platform))) {
     return BuildType.ExpoGo;
   }
 

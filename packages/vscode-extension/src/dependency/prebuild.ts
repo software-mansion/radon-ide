@@ -1,5 +1,3 @@
-import path from "path";
-import fs from "fs";
 import assert from "assert";
 import { Disposable, OutputChannel } from "vscode";
 import { exec } from "../utilities/subprocess";
@@ -10,6 +8,9 @@ import { FingerprintProvider } from "../project/FingerprintProvider";
 import { lineReader } from "../utilities/subprocess";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { extensionContext } from "../utilities/extensionContext";
+import _ from "lodash";
+import crypto from "crypto";
+import { checkNativeDirectoryExists } from "../utilities/checkNativeDirectoryExists";
 
 class PrebuildProcess {
   private attachedCounter = 0;
@@ -37,8 +38,17 @@ class PrebuildProcess {
   }
 }
 
-function persistKey(platform: DevicePlatform, appRoot: string) {
-  const key = `prebuild:${platform}:${appRoot}`;
+function getEnvHash(env: Record<string, string>) {
+  const sortedEnv = _.sortBy(Object.entries(env), ([key, _value]) => key);
+  const envHash = crypto.createHash("md5");
+  sortedEnv.forEach(([k, v]) => {
+    envHash.update(`${k}=${v}`);
+  });
+  return envHash.digest("hex");
+}
+
+function getPersistKey(platform: DevicePlatform, appRoot: string, env?: Record<string, string>) {
+  const key = `prebuild:${platform}:${appRoot}:${getEnvHash(env ?? {})}`;
   return key;
 }
 
@@ -53,17 +63,6 @@ export class Prebuild implements Disposable {
     });
   }
 
-  private async nativeDirectoryExists(buildConfig: IOSLocalBuildConfig | AndroidLocalBuildConfig) {
-    const directoryName = buildConfig.platform === DevicePlatform.Android ? "android" : "ios";
-    const nativeDirectoryPath = path.join(buildConfig.appRoot, directoryName);
-    try {
-      const stat = await fs.promises.stat(nativeDirectoryPath);
-      return stat.isDirectory();
-    } catch {
-      return false;
-    }
-  }
-
   public async runPrebuildIfNeeded(
     buildConfig: IOSLocalBuildConfig | AndroidLocalBuildConfig,
     outputChannel: OutputChannel,
@@ -71,11 +70,10 @@ export class Prebuild implements Disposable {
   ) {
     const [currentFingerprint, nativeDirectoryExists] = await Promise.all([
       this.fingerprintProvider.calculateFingerprint(buildConfig),
-      this.nativeDirectoryExists(buildConfig),
+      checkNativeDirectoryExists(buildConfig.appRoot, buildConfig.platform),
     ]);
-    const lastSuccessfulFingerprint = extensionContext.workspaceState.get<string>(
-      persistKey(buildConfig.platform, buildConfig.appRoot)
-    );
+    const persistKey = getPersistKey(buildConfig.platform, buildConfig.appRoot, buildConfig.env);
+    const lastSuccessfulFingerprint = extensionContext.workspaceState.get<string>(persistKey);
     // NOTE: we do this after the asynchronous tasks to ensure we didn't grab a process which cancels/fails while we're checking other things
     const ongoingPrebuild = this.prebuildProcessByPlatform.get(buildConfig.platform);
 
@@ -111,10 +109,7 @@ export class Prebuild implements Disposable {
     prebuildProcess.finished
       .then(async () => {
         const fingerprint = await this.fingerprintProvider.calculateFingerprint(buildConfig);
-        extensionContext.workspaceState.update(
-          persistKey(buildConfig.platform, buildConfig.appRoot),
-          fingerprint
-        );
+        extensionContext.workspaceState.update(persistKey, fingerprint);
       })
       .finally(() => {
         if (this.prebuildProcessByPlatform.get(buildConfig.platform) === prebuildProcess) {

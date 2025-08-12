@@ -605,7 +605,7 @@
               },
               "usePrebuild": {
                 "type": "boolean",
-                "description": "When set, Radon will run Expo Prebuild before building the application."
+                "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
               }
             }
           }
@@ -827,7 +827,7 @@
               },
               "usePrebuild": {
                 "type": "boolean",
-                "description": "When set, Radon will run Expo Prebuild before building the application."
+                "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
               }
             }
           }
