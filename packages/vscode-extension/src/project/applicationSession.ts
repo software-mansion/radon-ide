@@ -280,6 +280,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     if (orientation === "Portrait") {
       // iPhone case - expo always reports portraitUpsideDown as portrait on iPads
       if (
+        this.device.deviceInfo.deviceType === "Tablet" &&
         this.device.rotation === DeviceRotation.PortraitUpsideDown &&
         this.supportedOrientations.includes(DeviceRotation.PortraitUpsideDown)
       ) {
