@@ -79,7 +79,10 @@ const StartScreen = () => {
           </div>
 
           <div className={styles.gradient}>
-            <img src="../img/hero_screenshot.png" className={styles.heroImage} />
+            <div className={styles.imageContainer}>
+              <img src="../img/hero_screenshot.png" className={styles.heroImage} />
+              <SecondaryButton title="Watch the Demo" />
+            </div>
           </div>
         </div>
       </section>
