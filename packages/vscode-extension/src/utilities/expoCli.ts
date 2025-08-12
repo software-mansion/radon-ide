@@ -1,11 +1,6 @@
 import path from "path";
-import { OutputChannel } from "vscode";
 import { requireNoCache } from "./requireNoCache";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
-import { AndroidLocalBuildConfig, IOSLocalBuildConfig } from "../common/BuildConfig";
-import { exec, lineReader } from "./subprocess";
-import { DevicePlatform } from "../common/State";
-import { BuildError } from "../builders/BuildManager";
 
 export function shouldUseExpoCLI(launchConfig: ResolvedLaunchConfig) {
   // The mechanism for detecting whether the project should use Expo CLI or React Native Community CLI works as follows:
