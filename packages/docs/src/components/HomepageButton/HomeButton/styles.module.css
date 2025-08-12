@@ -1,0 +1,32 @@
+.container {
+  display: flex;
+  background-color: var(--radon-button);
+}
+
+.iconContainer {
+  display: flex;
+  width: 60px;
+  padding: 18px 18px 0 18px;
+}
+
+.titleContainer {
+  display: flex;
+  padding: 16px 24px 16px 0;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  align-self: stretch;
+}
+
+.titleContainer p {
+  color: var(--ifm-color-primary);
+  text-align: center;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28px;
+  margin: 0;
+}
+
+.container:hover {
+  background-color: var(--radon-button-hover);
+}

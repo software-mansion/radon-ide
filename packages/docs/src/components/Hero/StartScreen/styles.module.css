@@ -1,90 +1,74 @@
 .hero {
   display: flex;
-  flex-direction: column;
-  margin-bottom: 2rem;
+  align-items: center;
+  padding-top: 60px;
+  justify-content: center;
 }
 
-.heading {
-  margin-top: 12.25rem;
+.heading p {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.heading p span.left {
+  color: var(--radon-color-grey-dark);
+}
+
+.heading p span.center {
+  color: var(--ifm-color-primary);
+  font-weight: 700;
+  margin: 0 4px;
 }
 
 .headingLabel {
-  position: relative; /* needed for headingSwoosh */
-  display: flex;
-  flex-direction: row;
-  gap: 10px;
-  flex-wrap: wrap;
-  font-family: var(--swm-title-landing-font);
-  font-size: 45px;
-  font-weight: 700;
-
-  line-height: 1.1;
-  letter-spacing: 0;
-  color: var(--swm-landing-heading);
+  color: var(--ifm-color-primary);
+  text-align: center;
+  font-size: 64px;
+  font-weight: 400;
+  line-height: 72px;
+  padding: 24px 0;
 }
+
 .headingLabel span {
   color: var(--swm-green-light-100);
 }
 
-.headingSwoosh {
-  position: absolute;
-  left: 0;
-  width: 50px;
-  height: 100%;
-  background: linear-gradient(70deg, transparent, var(--swm-white), transparent);
-}
-
-.poweredBy {
-  display: flex;
-  gap: 1rem;
-  align-items: center;
-  margin-bottom: 2rem;
-}
-.poweredBy p {
-  margin: 0;
-}
-
-.heroImageContainer {
-  position: relative;
-}
-
-.heroImageWrapper {
-  border-radius: 2rem;
-  border-color: var(--swm-green-light-100);
-  border-width: 1rem;
-  border-style: solid;
-  position: absolute;
-  transform: translateX(70%) translateY(30px);
-  width: 1088px;
-}
-.heroImage {
-  border-color: #000;
-  border-width: 0.5rem;
-  border-style: solid;
-  border-radius: 1rem;
+.gradient {
   width: 100%;
-  height: auto;
-  margin-bottom: -10px;
-  background-color: #232736;
-}
-
-.logo {
-  width: 140px;
-  height: auto;
-}
-
-.swmLogoWrapper {
+  width: 1360px;
+  height: 682px;
+  flex-shrink: 0;
+  background: var(
+    --Radial-green,
+    radial-gradient(50% 50% at 50% 50%, #38a880 55.29%, rgba(17, 17, 17, 0) 100%)
+  );
   display: flex;
-  align-items: center;
+  justify-content: center;
+}
+
+.heroImage {
+  width: 100%;
+  max-width: 1200px;
+  height: auto;
+  aspect-ratio: 16/9;
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  position: relative;
+  top: 83px;
 }
 
 .headingDisclaimer {
-  margin-top: 1rem;
+  color: var(--radon-color-grey-dark);
+  text-align: center;
+
   font-size: 16px;
   font-weight: 400;
-  display: flex;
-  align-items: center;
-  color: var(--swm-navy-light-60);
+  line-height: 24px;
+  padding: 16px 0;
 }
 
 .headingDisclaimerIcon {
@@ -92,23 +76,19 @@
 }
 
 .subheadingLabel {
-  font-family: var(--swm-h2-font-size);
-  font-size: var(--swm-h3-font-size);
+  color: var(--radon-subheading);
+  text-align: center;
+  font-size: 20px;
   font-weight: 400;
-  line-height: 1.5;
-  letter-spacing: var(--swm-heading-letter-spacing-bigger);
-
-  margin-top: 3rem;
-  margin-bottom: 5.5rem;
-  width: 60%;
-  color: var(--swm-landing-heading);
-  text-wrap: balance;
+  line-height: 32px;
+  padding-bottom: 40px;
 }
 
 .buttonContainer {
   display: flex;
-  justify-content: flex-start;
-  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
 }
 
 @media (min-width: 2920px) {
@@ -248,8 +228,7 @@ because the nesting selector cannot represent pseudo-elements. */
 
 .responsiveIframe {
   aspect-ratio: 16 / 9;
-  height: 100%;
-  width: 100%;
+  max-width: 1200px;
 }
 
 html:has(dialog[open]) {

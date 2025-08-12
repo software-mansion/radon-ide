@@ -13,15 +13,10 @@
   justify-content: center;
 
   text-wrap: balance;
-  border: 1px solid var(--swm-navy-light-100);
+  border: 1px solid var(--ifm-color-primary);
   background-color: transparent;
-  color: var(--swm-navy-light-100);
+  color: var(--ifm-color-primary);
   transition: all 0.3s;
-}
-
-.secondaryButton:hover {
-  background-color: var(--swm-navy-light-100);
-  color: var(--swm-white);
 }
 
 @media (max-width: 996px) {
