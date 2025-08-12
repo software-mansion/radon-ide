@@ -1,11 +1,8 @@
 /**
  * Default orientation strategy using React Native core APIs.
  *
- * This fallback strategy uses UIManager events and DimensionsObserver to track orientation changes.
+ * This strategy uses UIManager events and DimensionsObserver to track orientation changes.
  * The approach has limitations due to lack of sync orientation getter in React Native core:
- *
- * Android: Orientation events fire after app rotation and are distinct from device orientation. In case of
- * android, the event fires on app start and can be relied on during the app lifecycle.
  *
  * iOS: Events fire when DEVICE rotates (based on sensors), not when APP rotates, creating not only
  * timing issues, but also firing events event when the application's UI is not rotated. This means
@@ -15,7 +12,7 @@
  * about supported orientations (e.g., portrait-secondary typically not supported).
  */
 
-const { Platform, UIManager, NativeEventEmitter, NativeModules } = require("react-native");
+const { UIManager, NativeEventEmitter, NativeModules } = require("react-native");
 const NativeUIManager = NativeModules.UIManager ?? UIManager;
 const inspectorBridge = require("../inspector_bridge");
 const DimensionsObserver = require("../dimensions_observer");
@@ -26,11 +23,11 @@ const DimensionsObserver = require("../dimensions_observer");
  * "Landscape" and "Portrait" cases may happen when we cannot infer the detailed orientation of the app and
  * leave the interpretation to the frontend of the extension.
  */
-const androidOrientationMapping = {
+const iosOrientationMapping = {
   "portrait-primary": "Portrait",
   "portrait-secondary": "PortraitUpsideDown",
-  "landscape-primary": "LandscapeLeft",
-  "landscape-secondary": "LandscapeRight",
+  "landscape-primary": "LandscapeRight",
+  "landscape-secondary": "LandscapeLeft",
 };
 
 let currentAppOrientation = null;
@@ -41,7 +38,6 @@ let lastRegisteredOrientation = null;
  * used by the AppOrientation in the extension, as the landscape orientation
  * from the eventListener object is different on iOS and Android.
  * iOs -> "landscape-secondary" === LandscapeLeft
- * Android -> "landscape-primary" === LandscapeRight
  */
 const getMappedOrientation = (orientation, isLandscape) => {
   // No previous namedOrientationDidChangeEvent fired
@@ -53,8 +49,6 @@ const getMappedOrientation = (orientation, isLandscape) => {
   if (orientation === null) {
     return isLandscape ? "Landscape" : "Portrait";
   }
-
-  if (Platform.OS === "ios") {
     // If the app is landscape and device is rotated to portrait-primary or portrait-secondary,
     // return the previous rotation
     if (
@@ -79,27 +73,13 @@ const getMappedOrientation = (orientation, isLandscape) => {
       }
     }
 
-    // for ios landscape-secondary -> LandscapeLeft
-    if (orientation === "landscape-secondary") {
-      return "LandscapeLeft";
-    }
-
-    // for ios landscape-primary -> LandscapeRight
-    if (orientation === "landscape-primary") {
-      return "LandscapeRight";
-    }
-  }
-
-  // for android simply return the mapping
-  return androidOrientationMapping[orientation];
+  return iosOrientationMapping[orientation];
 };
 
 function initializeOrientationAndSendInitMessage() {
   const { width: screenWidth, height: screenHeight } = DimensionsObserver.getScreenDimensions();
   const isLandscape = screenWidth > screenHeight;
   // infer currentOrientation based on the screen dimensions
-  // android still fires the namedOrientationDidChangeEvent on app load,
-  // but for safety still set it here first
   currentAppOrientation = isLandscape ? "Landscape" : "Portrait";
   inspectorBridge.sendMessage({
     type: "appOrientationChanged",

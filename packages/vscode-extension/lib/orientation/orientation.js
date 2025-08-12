@@ -1,18 +1,27 @@
+const { Platform } = require("react-native");
 const ExpoOrientationStrategy = require("./ExpoOrientationStrategy");
 const OrientationLockerStrategy = require("./OrientationLockerStrategy");
-const DefaultOrientationStrategy = require("./DefaultOrientationStrategy");
+const IosDefaultOrientationStrategy = require("./IosDefaultOrientationStrategy");
+const AndroidDefaultOrientationStrategy = require("./AndroidDefaultOrientationStrategy");
 
 /**
  * Selects the appropriate orientation strategy based on available libraries.
- * Priority order:
+ * iOS Priority order:
  * 1. Expo Screen Orientation (expo-screen-orientation)
  * 2. React Native Orientation Locker (react-native-orientation-locker)
  * 3. Default strategy using React Native core APIs
  *
  * Only one of the external libraries will be available at a time.
+ *
+ * For android, we use default AndroidOrientationStrategy, as the API
+ * provided by React Native is reliable and also fires on app start.
  */
 
 const getOrientationStrategy = () => {
+  if(Platform.OS === "android") {
+    return AndroidDefaultOrientationStrategy.getStrategy();
+  }
+
   if (ExpoOrientationStrategy) {
     return ExpoOrientationStrategy.getStrategy();
   }
@@ -21,7 +30,7 @@ const getOrientationStrategy = () => {
     return OrientationLockerStrategy.getStrategy();
   }
 
-  return DefaultOrientationStrategy.getStrategy();
+  return IosDefaultOrientationStrategy.getStrategy();
 };
 
 const orientationStrategy = getOrientationStrategy();
