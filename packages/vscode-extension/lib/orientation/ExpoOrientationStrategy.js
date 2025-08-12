@@ -36,8 +36,8 @@ const mapExpoOrientationToAppOrientation = (expoOrientation) => {
 
 function initializeOrientationAndSendInitMessage() {
   ExpoOrientation.getOrientationAsync()
-    .then((orientationInfo) => {
-      currentAppOrientation = mapExpoOrientationToAppOrientation(orientationInfo.orientation);
+    .then((orientation) => {
+      currentAppOrientation = mapExpoOrientationToAppOrientation(orientation);
       inspectorBridge.sendMessage({
         type: "appOrientationChanged",
         data: currentAppOrientation,
