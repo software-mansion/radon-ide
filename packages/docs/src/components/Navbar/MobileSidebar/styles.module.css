@@ -40,8 +40,14 @@
   transition: color 0.2s;
 }
 
-@media (min-width: 900px) {
-  .mobileSidebar {
+@media (min-width: 830px) {
+  .container {
     display: none;
+  }
+}
+
+@media (max-width: 830px) {
+  .container {
+    top: 72px;
   }
 }
