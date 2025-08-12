@@ -70,7 +70,8 @@ p.sectionTitle {
   flex-direction: column;
 }
 
-.brand {
+.brand,
+.brand a {
   color: var(--radon-subheading);
   font-size: 14px;
   font-weight: 400;
@@ -82,7 +83,7 @@ p.copyright {
   font-size: 12px;
   font-weight: 400;
   line-height: 16px;
-  max-width: 200px;
+  max-width: 190px;
 }
 
 .socialMedia {

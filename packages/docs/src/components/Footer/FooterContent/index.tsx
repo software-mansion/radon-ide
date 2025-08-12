@@ -67,7 +67,9 @@ export default function FooterContent() {
         <div className={styles.brandContainer}>
           <Logo className={styles.logo} />
           <div className={styles.brandInfo}>
-            <div className={styles.brand}>© 2025 Software Mansion</div>
+            <div className={styles.brand}>
+              © 2025 <a href="https://swmansion.com/">Software Mansion</a>
+            </div>
             <p className={styles.copyright}>{copyright}</p>
           </div>
         </div>
