@@ -11,6 +11,7 @@ import { StateManager } from "./StateManager";
 import { ApplicationContextState, WorkspaceConfiguration } from "../common/State";
 import { ApplicationDependencyManager } from "../dependency/ApplicationDependencyManager";
 import { Logger } from "../Logger";
+import { FingerprintProvider } from "./FingerprintProvider";
 
 /**
  * Represents a launch configuration that has been resolved with additional properties.
@@ -68,20 +69,23 @@ export class ApplicationContext implements Disposable {
   public applicationDependencyManager: ApplicationDependencyManager;
   public buildManager: BuildManager;
   public launchConfig: ResolvedLaunchConfig;
+  public readonly buildCache: BuildCache;
   private disposables: Disposable[] = [];
 
   constructor(
     private readonly stateManager: StateManager<ApplicationContextState>,
     private readonly workspaceConfigState: StateManager<WorkspaceConfiguration>, // owned by `Project`, do not dispose
     launchConfig: LaunchConfiguration,
-    public readonly buildCache: BuildCache
+    fingerprintProvider: FingerprintProvider
   ) {
+    this.buildCache = new BuildCache(fingerprintProvider);
     this.launchConfig = resolveLaunchConfig(launchConfig);
     this.applicationDependencyManager = new ApplicationDependencyManager(
       this.stateManager.getDerived("applicationDependencies"),
-      this.launchConfig
+      this.launchConfig,
+      fingerprintProvider
     );
-    const buildManager = new BatchingBuildManager(new BuildManagerImpl(buildCache));
+    const buildManager = new BatchingBuildManager(new BuildManagerImpl(this.buildCache));
     this.buildManager = buildManager;
 
     this.disposables.push(this.applicationDependencyManager, buildManager);
