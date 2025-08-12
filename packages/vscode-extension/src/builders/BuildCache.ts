@@ -126,7 +126,8 @@ function getAppPath(build: BuildResult) {
 
 async function getAppHash(appBuild: AndroidBuildResult | IOSBuildResult) {
   const fileHash = (await calculateMD5(getAppPath(appBuild))).digest("hex");
-  const supportedOrientationsHash = appBuild.platform === DevicePlatform.IOS ? appBuild.supportedInterfaceOrientations.join() : "";
+  const supportedOrientationsHash =
+    appBuild.platform === DevicePlatform.IOS ? appBuild.supportedInterfaceOrientations.join() : "";
   return `${fileHash}${supportedOrientationsHash}`;
 }
 
