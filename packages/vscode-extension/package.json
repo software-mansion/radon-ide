@@ -602,6 +602,10 @@
                     "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
                   }
                 }
+              },
+              "usePrebuild": {
+                "type": "boolean",
+                "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
               }
             }
           }
@@ -820,6 +824,10 @@
                     "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
                   }
                 }
+              },
+              "usePrebuild": {
+                "type": "boolean",
+                "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
               }
             }
           }

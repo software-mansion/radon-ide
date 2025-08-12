@@ -47,7 +47,6 @@ import {
 } from "./DeviceSessionsManager";
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 import { FingerprintProvider } from "./FingerprintProvider";
-import { BuildCache } from "../builders/BuildCache";
 import { Connector } from "../connect/Connector";
 import { LaunchConfigurationsManager } from "./launchConfigurationsManager";
 import { LaunchConfiguration } from "../common/LaunchConfig";
@@ -117,10 +116,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.applicationContext.appRootFolder;
   }
 
-  public get buildCache() {
-    return this.applicationContext.buildCache;
-  }
-
   private get selectedDeviceSessionState(): DeviceSessionState | undefined {
     if (this.projectState.selectedSessionId === null) {
       return undefined;
@@ -151,7 +146,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     initialLaunchConfigOptions?: LaunchConfiguration
   ) {
     const fingerprintProvider = new FingerprintProvider();
-    const buildCache = new BuildCache(fingerprintProvider);
     const initialLaunchConfig = initialLaunchConfigOptions
       ? initialLaunchConfigOptions
       : this.launchConfigsManager.initialLaunchConfiguration;
@@ -160,7 +154,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this.stateManager.getDerived("applicationContext"),
       workspaceStateManager,
       initialLaunchConfig,
-      buildCache
+      fingerprintProvider
     );
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
