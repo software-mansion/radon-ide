@@ -12,13 +12,17 @@ import { DevicePlatform } from "../common/State";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const BASE_IOS_BUILD_CACHE_KEY = "ios_build_cache";
-const IPAD_SUPPORT_BUILD_CACHE_KEY = "ipad_support_build_cache";
 // Add a key for new builds that support iPad since 1.10.0
 // This is to ensure that old cached iOS builds that do not support iPad
 // (made before 1.10.0) are not used when the user opens a project using iPad
 // New builds support both iPhone and iPad, without having to rebuild,
 // so we can use the same cache key from that point on
-const IOS_BUILD_CACHE_KEY = BASE_IOS_BUILD_CACHE_KEY + IPAD_SUPPORT_BUILD_CACHE_KEY;
+const IPAD_SUPPORT_BUILD_CACHE_KEY = "ipad_support_build_cache";
+// Add a key for new builds that support iOS supported orientations for >1.10.0
+// to invalidate old builds that do not have supportedInterfaceOrientations field
+const IOS_SUPPORTED_ORIENTATIONS_KEY = "ios_supported_orientations";
+const IOS_BUILD_CACHE_KEY =
+  BASE_IOS_BUILD_CACHE_KEY + IPAD_SUPPORT_BUILD_CACHE_KEY + IOS_SUPPORTED_ORIENTATIONS_KEY;
 
 export type BuildCacheInfo = {
   fingerprint: string;
@@ -55,7 +59,7 @@ export class BuildCache {
    */
   public async storeBuild(buildFingerprint: string, cacheKey: CacheKey, build: BuildResult) {
     assert(cacheKey.platform === build.platform, "Cache key platform must match build platform");
-    const appPath = await getAppHash(build);
+    const appPath = await getAppHash(getAppPath(build));
     await extensionContext.globalState.update(stringifyCacheKey(cacheKey), {
       fingerprint: buildFingerprint,
       buildHash: appPath,
@@ -91,7 +95,7 @@ export class BuildCache {
         return undefined;
       }
 
-      const appHash = await getAppHash(build);
+      const appHash = await getAppHash(appPath);
       const hashesMatch = appHash === cache.buildHash;
       if (hashesMatch) {
         Logger.info("Using cached build.");
@@ -124,11 +128,8 @@ function getAppPath(build: BuildResult) {
   return build.platform === DevicePlatform.Android ? build.apkPath : build.appPath;
 }
 
-async function getAppHash(appBuild: AndroidBuildResult | IOSBuildResult) {
-  const fileHash = (await calculateMD5(getAppPath(appBuild))).digest("hex");
-  const supportedOrientationsHash =
-    appBuild.platform === DevicePlatform.IOS ? appBuild.supportedInterfaceOrientations.join() : "";
-  return `${fileHash}${supportedOrientationsHash}`;
+async function getAppHash(appPath: string) {
+  return (await calculateMD5(appPath)).digest("hex");
 }
 
 export async function migrateOldBuildCachesToNewStorage(appRoot: string) {
