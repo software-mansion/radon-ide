@@ -51,10 +51,10 @@ export class Prebuild implements Disposable {
     const directoryName = buildConfig.platform === DevicePlatform.Android ? "android" : "ios";
     const nativeDirectoryPath = path.join(buildConfig.appRoot, directoryName);
     try {
-      const { isDirectory } = await fs.promises.stat(nativeDirectoryPath);
-      return !isDirectory;
+      const stat = await fs.promises.stat(nativeDirectoryPath);
+      return stat.isDirectory();
     } catch {
-      return true;
+      return false;
     }
   }
 
@@ -72,7 +72,7 @@ export class Prebuild implements Disposable {
 
     const canSkipPrebuild =
       !buildConfig.forceCleanBuild &&
-      ongoingPrebuild &&
+      ongoingPrebuild !== undefined &&
       ongoingPrebuild.fingerprint === currentFingerprint &&
       nativeDirectoryExists;
     if (canSkipPrebuild) {
