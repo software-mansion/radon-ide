@@ -35,7 +35,7 @@ import { ToolKey, ToolPlugin, ToolsDelegate, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
 import { CancelToken } from "../utilities/cancelToken";
 import { BuildResult } from "../builders/BuildManager";
-import { DevicePlatform } from "../common/State";
+import { DevicePlatform, DeviceType } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
 
 interface LaunchApplicationSessionDeps {
@@ -280,7 +280,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     if (orientation === "Portrait") {
       // iPhone case - expo always reports portraitUpsideDown as portrait on iPads
       if (
-        this.device.deviceInfo.deviceType === "Tablet" &&
+        this.device.deviceInfo.deviceType === DeviceType.Tablet &&
         this.device.rotation === DeviceRotation.PortraitUpsideDown &&
         this.supportedOrientations.includes(DeviceRotation.PortraitUpsideDown)
       ) {
