@@ -16,7 +16,6 @@ class PrebuildProcess {
   public finished: Promise<void>;
 
   constructor(
-    public fingerprint: string,
     process: Promise<void>,
     private cancelToken: CancelToken
   ) {
@@ -82,8 +81,7 @@ export class Prebuild implements Disposable {
 
     const hasAlreadyPrebuild =
       ongoingPrebuild === undefined && lastSuccessfulFingerprint === currentFingerprint;
-    const isCurrentlyPrebuilding =
-      ongoingPrebuild !== undefined && ongoingPrebuild.fingerprint === currentFingerprint;
+    const isCurrentlyPrebuilding = ongoingPrebuild !== undefined;
 
     const canSkipPrebuild =
       !buildConfig.forceCleanBuild &&
@@ -104,7 +102,6 @@ export class Prebuild implements Disposable {
 
     const prebuildCancelToken = new CancelToken();
     const prebuildProcess = new PrebuildProcess(
-      currentFingerprint,
       this.runPrebuild(buildConfig, outputChannel, prebuildCancelToken),
       prebuildCancelToken
     );
