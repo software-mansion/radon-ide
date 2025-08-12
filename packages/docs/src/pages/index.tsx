@@ -18,6 +18,7 @@ import usePosthog from "@site/src/hooks/usePosthog";
 export default function Home(): JSX.Element {
   // We need to initialize on the landing coz Paddle redirects here when the user wants to change the card info, there's no way to change it
   usePaddle();
+  // Sets up PostHog for A/B testing (and analytics) on the landing page
   usePosthog();
 
   return (
