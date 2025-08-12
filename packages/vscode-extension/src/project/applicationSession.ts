@@ -287,10 +287,14 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
         return DeviceRotation.PortraitUpsideDown;
       }
 
-      if (this.supportedOrientations.includes(DeviceRotation.Portrait)) {
-        return DeviceRotation.Portrait;
-      } else {
+      if (
+        (this.supportedOrientations.includes(DeviceRotation.PortraitUpsideDown) &&
+          this.device.rotation === DeviceRotation.PortraitUpsideDown) ||
+        !this.supportedOrientations.includes(DeviceRotation.Portrait)
+      ) {
         return DeviceRotation.PortraitUpsideDown;
+      } else {
+        return DeviceRotation.Portrait;
       }
     }
 

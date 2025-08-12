@@ -18,8 +18,9 @@ import { DeviceRotation } from "../common/Project";
 const IOS_ORIENTATION_TO_DEVICE_ROTATION = {
   UIInterfaceOrientationPortrait: DeviceRotation.Portrait,
   UIInterfaceOrientationPortraitUpsideDown: DeviceRotation.PortraitUpsideDown,
-  UIInterfaceOrientationLandscapeLeft: DeviceRotation.LandscapeLeft,
-  UIInterfaceOrientationLandscapeRight: DeviceRotation.LandscapeRight,
+  // Landscape orientations are swapped on IOS
+  UIInterfaceOrientationLandscapeLeft: DeviceRotation.LandscapeRight,
+  UIInterfaceOrientationLandscapeRight: DeviceRotation.LandscapeLeft,
 } as const;
 
 export type IOSBuildResult = {
