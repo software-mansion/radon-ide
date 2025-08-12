@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import assert from "assert";
 import { Disposable, OutputChannel } from "vscode";
 import { exec } from "../utilities/subprocess";
 import { BuildError } from "../builders/BuildManager";
@@ -8,6 +9,7 @@ import { DevicePlatform } from "../common/State";
 import { FingerprintProvider } from "../project/FingerprintProvider";
 import { lineReader } from "../utilities/subprocess";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
+import { extensionContext } from "../utilities/extensionContext";
 
 class PrebuildProcess {
   private attachedCounter = 0;
@@ -34,6 +36,11 @@ class PrebuildProcess {
   public cancel() {
     this.cancelToken.cancel();
   }
+}
+
+function persistKey(platform: DevicePlatform, appRoot: string) {
+  const key = `prebuild:${platform}:${appRoot}`;
+  return key;
 }
 
 export class Prebuild implements Disposable {
@@ -67,17 +74,30 @@ export class Prebuild implements Disposable {
       this.fingerprintProvider.calculateFingerprint(buildConfig),
       this.nativeDirectoryExists(buildConfig),
     ]);
+    const lastSuccessfulFingerprint = extensionContext.workspaceState.get<string>(
+      persistKey(buildConfig.platform, buildConfig.appRoot)
+    );
     // NOTE: we do this after the asynchronous tasks to ensure we didn't grab a process which cancels/fails while we're checking other things
     const ongoingPrebuild = this.prebuildProcessByPlatform.get(buildConfig.platform);
 
+    const hasAlreadyPrebuild =
+      ongoingPrebuild === undefined && lastSuccessfulFingerprint === currentFingerprint;
+    const isCurrentlyPrebuilding =
+      ongoingPrebuild !== undefined && ongoingPrebuild.fingerprint === currentFingerprint;
+
     const canSkipPrebuild =
       !buildConfig.forceCleanBuild &&
-      ongoingPrebuild !== undefined &&
-      ongoingPrebuild.fingerprint === currentFingerprint &&
-      nativeDirectoryExists;
+      nativeDirectoryExists &&
+      (hasAlreadyPrebuild || isCurrentlyPrebuilding);
     if (canSkipPrebuild) {
-      ongoingPrebuild.attach(cancelToken);
-      return await ongoingPrebuild.finished;
+      if (isCurrentlyPrebuilding) {
+        ongoingPrebuild.attach(cancelToken);
+        return await ongoingPrebuild.finished;
+      } else {
+        // NOTE: follows from `canSkipPrebuild` and `!isCurrentlyPrebuilding`
+        assert(hasAlreadyPrebuild);
+        return;
+      }
     }
 
     ongoingPrebuild?.cancel();
@@ -91,12 +111,19 @@ export class Prebuild implements Disposable {
     prebuildProcess.attach(cancelToken);
     this.prebuildProcessByPlatform.set(buildConfig.platform, prebuildProcess);
 
-    // NOTE: on error, we need remove the process from the map so that later requests can start a new one.
-    prebuildProcess.finished.catch(() => {
-      if (this.prebuildProcessByPlatform.get(buildConfig.platform) === prebuildProcess) {
-        this.prebuildProcessByPlatform.delete(buildConfig.platform);
-      }
-    });
+    prebuildProcess.finished
+      .then(async () => {
+        const fingerprint = await this.fingerprintProvider.calculateFingerprint(buildConfig);
+        extensionContext.workspaceState.update(
+          persistKey(buildConfig.platform, buildConfig.appRoot),
+          fingerprint
+        );
+      })
+      .finally(() => {
+        if (this.prebuildProcessByPlatform.get(buildConfig.platform) === prebuildProcess) {
+          this.prebuildProcessByPlatform.delete(buildConfig.platform);
+        }
+      });
     return await prebuildProcess.finished;
   }
 
