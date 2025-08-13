@@ -41,12 +41,6 @@
   max-width: 650px;
 }
 
-.learnMoreSectionFooter a {
-  display: flex;
-  align-items: center;
-  z-index: 3;
-}
-
 @media (max-width: 996px) {
   .learnMoreSectionFooter {
     flex-direction: column;

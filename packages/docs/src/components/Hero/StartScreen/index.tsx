@@ -1,12 +1,9 @@
 import React from "react";
 import styles from "./styles.module.css";
-import useBaseUrl from "@docusaurus/useBaseUrl";
-import HomepageButton from "@site/src/components/HomepageButton";
-import { motion } from "motion/react";
 import { track } from "@vercel/analytics";
 import SecondaryButton from "../../SecondaryButton";
 import CloseIcon from "../../CloseIcon";
-import HomeButton from "../../HomepageButton/HomeButton";
+import DownloadButtons from "@site/src/components/DownloadButtons";
 
 const StartScreen = () => {
   const dialogRef = React.useRef<HTMLDialogElement>(null);
@@ -54,26 +51,7 @@ const StartScreen = () => {
             Radon IDE extension turns your VSCode or Cursor editor <br /> into fully-featured IDE
             for faster and more efficient development
           </h2>
-          <div className={styles.buttonContainer}>
-            <div>
-              <HomeButton
-                target="_blank"
-                href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
-                title="Download for VSCode"
-                icon="vscode"
-                onClick={handleCTAClick}
-              />
-            </div>
-            <div>
-              <HomeButton
-                target="_blank"
-                href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
-                title="Download for Cursor"
-                icon="cursor"
-                onClick={handleCTAClick}
-              />
-            </div>
-          </div>
+          <DownloadButtons isModal={false} />
           <div className={styles.headingDisclaimer}>
             Try 30 days for free. No sign up or credit card required.
           </div>
@@ -81,11 +59,30 @@ const StartScreen = () => {
           <div className={styles.gradient}>
             <div className={styles.imageContainer}>
               <img src="../img/hero_screenshot.png" className={styles.heroImage} />
-              <SecondaryButton title="Watch the Demo" />
+              <SecondaryButton title="Watch the Demo" onClick={handleDialogOpen} />
             </div>
           </div>
         </div>
       </section>
+      {isOpen && (
+        <dialog ref={dialogRef} onClick={handleDialogClose}>
+          <button onClick={handleDialogClose} className={styles.dialogCloseButton}>
+            <CloseIcon />
+          </button>
+          <iframe
+            className={styles.responsiveIframe}
+            width="1280"
+            height="720"
+            loading="lazy"
+            src="https://www.youtube.com/embed/07Un9EfE8D4?si=h1-7o5e3StOjRZf8"
+            title="YouTube video player"
+            // @ts-ignore it's a valid attribute & type, typescript is wrong
+            allowFullScreen="1"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"></iframe>
+        </dialog>
+      )}
     </>
   );
 };

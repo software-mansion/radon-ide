@@ -1,21 +1,26 @@
 .container {
   display: flex;
   background-color: var(--radon-button);
+  height: 60px;
+  padding: 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.modalContainer {
+  display: flex;
+  background-color: var(--radon-button);
+  height: 60px;
+  padding: 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
 }
 
 .iconContainer {
   display: flex;
-  width: 60px;
-  padding: 18px 18px 0 18px;
-}
-
-.titleContainer {
-  display: flex;
-  padding: 16px 24px 16px 0;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  align-self: stretch;
 }
 
 .titleContainer p {

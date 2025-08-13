@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./styles.module.css";
-import HomepageButton from "@site/src/components/HomepageButton";
-import { ButtonStyling, BorderStyling } from "@site/src/components/HomepageButton";
+import HomeButton from "@site/src/components/DownloadButtons/HomeButton";
+// import { ButtonStyling, BorderStyling } from "@site/src/components/HomepageButtons";
 import Elipse from "@site/src/components/Elipse";
 
 const LearnMoreHero = () => {
@@ -13,13 +13,7 @@ const LearnMoreHero = () => {
       </div>
       <div className={styles.learnMoreSectionHero}>
         <p>Learn more about Software Mansion</p>
-        <HomepageButton
-          target="_blank"
-          href="https://swmansion.com/"
-          backgroundStyling={ButtonStyling.TO_NAVY}
-          borderStyling={BorderStyling.NAVY}
-          title="See our website"
-        />
+        <HomeButton target="_blank" href="https://swmansion.com/" title="See our website" />
       </div>
     </section>
   );

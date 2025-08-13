@@ -11,7 +11,6 @@
   align-items: center;
   justify-content: center;
 
-  text-wrap: balance;
   background-color: var(--swm-background);
   color: var(--ifm-color-primary);
 
@@ -19,4 +18,9 @@
   gap: 12px;
   line-height: 28px;
   border: none;
+  z-index: 10;
+}
+
+.secondaryButton:hover {
+  background-color: var(--radon-button);
 }

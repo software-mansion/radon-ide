@@ -1,7 +1,7 @@
 .hero {
   display: flex;
   align-items: center;
-  padding-top: 60px;
+  padding-top: 64px;
   justify-content: center;
 }
 
@@ -38,25 +38,25 @@
 }
 
 .gradient {
-  width: 100%;
   width: 1360px;
-  height: 682px;
-  flex-shrink: 0;
+  /* height: 682px; */
   background: var(
     --Radial-green,
     radial-gradient(50% 50% at 50% 50%, #38a880 55.29%, rgba(17, 17, 17, 0) 100%)
   );
   display: flex;
   justify-content: center;
+  z-index: 4;
 }
 
 .heroImage {
-  width: 100%;
-  max-width: 1200px;
+  width: 1200px;
   height: auto;
-  aspect-ratio: 16/9;
+  /* height: 675px; */
+  /* aspect-ratio: 16/9; */
   border-right: 1px solid rgba(255, 255, 255, 0.05);
   border-left: 1px solid rgba(255, 255, 255, 0.05);
+  z-index: 5;
 }
 
 .imageContainer {
@@ -73,7 +73,8 @@
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
-  padding: 16px 0;
+  padding-top: 16px;
+  /* padding: 16px 0; */
 }
 
 .headingDisclaimerIcon {
