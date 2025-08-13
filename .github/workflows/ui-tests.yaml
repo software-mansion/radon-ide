@@ -21,6 +21,9 @@ jobs:
         with:
           node-version: ${{ github.event.inputs.node || '20' }}
 
+      - name: Enforce HTTPS for submodules
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
       - name: Install dependencies (extension)
         run: npm ci
         working-directory: packages/vscode-extension
