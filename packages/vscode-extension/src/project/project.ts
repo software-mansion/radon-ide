@@ -491,10 +491,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region File Transfer
 
-  public async sendFileToDevice() {
+  public async openSendFileDialog() {
     const pickerResult = await window.showOpenDialog({
       canSelectMany: true,
       canSelectFolders: false,
+      title: "Select files to send to device",
     });
     if (!pickerResult) {
       return; // no files selected
@@ -503,6 +504,29 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       return this.deviceSession?.sendFile(fileUri.fsPath);
     });
     await Promise.all(sendFilePromises);
+  }
+
+  public async sendFileToDevice({
+    fileName,
+    data,
+  }: {
+    fileName: string;
+    data: ArrayBuffer;
+  }): Promise<void> {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    const tempDir = await fs.promises.mkdtemp(os.tmpdir());
+    try {
+      const tempFileLocation = path.join(tempDir, fileName);
+      await fs.promises.writeFile(tempFileLocation, new Uint8Array(data));
+      await this.deviceSession.sendFile(tempFileLocation);
+    } finally {
+      // NOTE: no `await` here, this can safely go in the background
+      fs.promises.rm(tempDir, { recursive: true }).catch((_e) => {
+        /* silence the errors, it's fine */
+      });
+    }
   }
 
   // #endregion

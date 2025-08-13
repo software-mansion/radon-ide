@@ -246,7 +246,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
-            onSelect={() => project.sendFileToDevice()}>
+            onSelect={() => project.openSendFileDialog()}>
             <span className="codicon codicon-share" />
             Send File
           </DropdownMenu.Item>
