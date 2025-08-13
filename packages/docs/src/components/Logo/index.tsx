@@ -9,7 +9,7 @@ export default function Logo({ className }: LogoProps) {
   const {
     navbar: { logo },
   } = useThemeConfig();
-  const { colorMode, setColorMode } = useColorMode();
+  const { colorMode } = useColorMode();
   return (
     <img
       src={colorMode === "dark" ? `/${logo.srcDark}` : `/${logo.src}`}
