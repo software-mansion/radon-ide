@@ -7,12 +7,13 @@ import MessageIcon from "../components/MessageIcon";
 import FlagIcon from "../components/FlagIcon";
 import UserIcon from "../components/UserIcon";
 import ContactCard from "../components/ContactCard";
+import clsx from "clsx";
 
 export default function Contact(): JSX.Element {
   return (
     <Layout description="Contact Us – Radon IDE: VSCode Extension for React Native">
       <div className={styles.preventfulContainer}>
-        <div className={styles.wrapper}>
+        <div className={clsx(styles.wrapper, "border-layout")}>
           <div className={styles.titleContainer}>
             <h1 className={styles.headingLabel}>Contact</h1>
             <h3 className={styles.subheadingLabel}>Get in touch with our sales or support team.</h3>

@@ -1,10 +1,12 @@
 import React from "react";
 import styles from "./styles.module.css";
-import { useThemeConfig, useColorMode } from "@docusaurus/theme-common";
+import { useLocation } from "@docusaurus/router";
 import MobileSidebarToggle from "../MobileSidebarToggle";
 import NavbarMobileSidebar from "../MobileSidebar";
 import ThemeSwitcher from "../../ThemeSwitcher";
 import NavbarLink from "../NavbarLink";
+import Logo from "../../Logo";
+import clsx from "clsx";
 
 export interface NavbarItem {
   label: string;
@@ -31,27 +33,21 @@ export interface NavbarContentProps {
 }
 
 export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentProps) {
-  const {
-    navbar: { logo },
-  } = useThemeConfig();
-  const { colorMode, setColorMode } = useColorMode();
+  const location = useLocation();
+  const active = location.pathname;
   return (
     <>
-      <div className={styles.navbarContainer}>
+      <div className={clsx(styles.navbarContainer, "border-layout")}>
         <div className={styles.navbarLeft}>
           <a href="/">
-            <img
-              src={colorMode === "dark" ? `/${logo.srcDark}` : `/${logo.src}`}
-              className={styles.logo}
-              alt={logo.alt}
-            />
+            <Logo className={styles.logo} />
           </a>
         </div>
         <div className={styles.navbarCenter}>
           <ul className={styles.navLinks}>
             {navbarItems.map((item, index) =>
               item.position == "center" ? (
-                <li key={index}>
+                <li key={index} className={active == item.to ? styles.activeLink : null}>
                   <NavbarLink item={item} />
                 </li>
               ) : null

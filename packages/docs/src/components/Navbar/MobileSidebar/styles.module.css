@@ -3,7 +3,7 @@
   flex-direction: column;
   position: fixed;
 
-  top: 80px;
+  top: 72px;
   left: 0;
   height: 100%;
   width: 100%;
@@ -40,8 +40,9 @@
   transition: color 0.2s;
 }
 
-@media (min-width: 900px) {
-  .mobileSidebar {
+@media (min-width: 830px) {
+  .container {
     display: none;
+    top: 80px;
   }
 }

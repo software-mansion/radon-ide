@@ -15,3 +15,9 @@
 
   z-index: 1000;
 }
+
+@media (max-width: 830px) {
+  .navbar {
+    height: 72px;
+  }
+}

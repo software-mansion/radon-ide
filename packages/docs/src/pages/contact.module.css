@@ -5,14 +5,11 @@
 }
 .wrapper {
   margin: 0 auto;
-  max-width: 1360px;
   display: flex;
   flex-direction: column;
   gap: 24px;
   padding: 0 40px;
   align-items: center;
-  border-left: 1px solid var(--swm-border);
-  border-right: 1px solid var(--swm-border);
 }
 .titleContainer {
   gap: 24px;
@@ -40,6 +37,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 50px 40px;
   justify-content: center;
+  padding-bottom: 40px;
 }
 
 @media (max-width: 1360px) {
@@ -50,7 +48,6 @@
   }
   .wrapper {
     padding: 0 24px;
-    border: none;
   }
 }
 
