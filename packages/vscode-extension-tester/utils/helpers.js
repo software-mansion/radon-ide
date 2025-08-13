@@ -42,7 +42,8 @@ export async function findAndClickElementByTag(
   const element = await findAndWaitForElement(
     driver,
     By.css(`[data-test="${dataTag}"]`),
-    message
+    message,
+    60000
   );
   element.click();
 }

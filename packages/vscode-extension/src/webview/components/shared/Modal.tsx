@@ -23,7 +23,11 @@ export default function Modal({ title, component, open, setOpen, headerShown }: 
 
           <div className="modal-content-container">{component}</div>
           <Dialog.Close asChild>
-            <IconButton className="modal-close-button" aria-label="Close" onClick={close}>
+            <IconButton
+              className="modal-close-button"
+              data-test="modal-close-button"
+              aria-label="Close"
+              onClick={close}>
               <span className="codicon codicon-close" />
             </IconButton>
           </Dialog.Close>

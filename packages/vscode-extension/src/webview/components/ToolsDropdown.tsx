@@ -37,6 +37,7 @@ function DevToolCheckbox({
       )}
       <Switch.Root
         className="switch-root small-switch"
+        data-test={`dev-tool-${label}`}
         onCheckedChange={onCheckedChange}
         defaultChecked={checked}
         style={{ marginLeft: "auto" }}>
