@@ -20,6 +20,27 @@ interface NetworkRequestLogProps {
   parentHeight: number | undefined;
 }
 
+/**
+ * Navigates through the shadow DOM hierarchy to find the scrollable container within a VSCode table element.
+ *
+ * VSCode table elements use shadow DOM structures where the actual scrollable container
+ * is nested. The element may be null, as it needs some time after component mount (useEffects)
+ * to be rendered, probably due to inner logic of VscodeElements.
+ *
+ * @param table - The VSCode table element to search within
+ * @returns The scrollable container div element if found, null if the table has no shadow root,
+ *          or undefined if any intermediate elements in the shadow DOM hierarchy are missing
+ */
+function getScrollableTableContainer(table: VscodeTableElement): HTMLDivElement | null | undefined {
+  const tableShadowRoot = table.shadowRoot;
+  const scrollableShadowRoot =
+    tableShadowRoot?.querySelector<HTMLDivElement>(".scrollable")?.shadowRoot;
+  const scrollableContainer =
+    scrollableShadowRoot?.querySelector<HTMLDivElement>(".scrollable-container");
+
+  return scrollableContainer;
+}
+
 const NetworkRequestLog = ({
   networkLogs,
   handleSelectedRequest,
@@ -28,19 +49,14 @@ const NetworkRequestLog = ({
 }: NetworkRequestLogProps) => {
   const tableRef = useRef<VscodeTableElement>(null);
 
+  // Scroll to the selected element when user clicks on it
   useLayoutEffect(() => {
     const table = tableRef.current;
     if (!table) {
       return;
     }
 
-    // Accessing the Shadow DOM of the VscodeTable to be able to access scrollable container
-    const tableShadowRoot = table.shadowRoot;
-    const scrollableShadowRoot =
-      tableShadowRoot?.querySelector<HTMLDivElement>(".scrollable")?.shadowRoot;
-    const scrollableContainer =
-      scrollableShadowRoot?.querySelector<HTMLDivElement>(".scrollable-container");
-
+    const scrollableContainer = getScrollableTableContainer(table);
     const selectedElement = table.querySelector<HTMLDivElement>(".selected");
 
     if (!selectedElement || !scrollableContainer) {
@@ -52,6 +68,34 @@ const NetworkRequestLog = ({
       behavior: "smooth",
     });
   }, [selectedNetworkLog?.requestId]);
+
+  // If table's height changes and something is selected, scroll to the selected element
+  useLayoutEffect(() => {
+    const table = tableRef.current;
+    if (!table) {
+      return;
+    }
+
+    const selectedElement = table.querySelector<HTMLDivElement>(".selected");
+    if (!selectedElement) {
+      return;
+    }
+
+    const timeout = setTimeout(() => {
+      const scrollableContainer = getScrollableTableContainer(table);
+
+      if (selectedElement.offsetTop > table.clientHeight) {
+        scrollableContainer?.scrollTo({
+          top: selectedElement.offsetTop - table.clientHeight / 2,
+          behavior: "smooth",
+        });
+      }
+    }, 200);
+
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, [parentHeight]);
 
   const getStatusClass = (status: number | string | undefined) => {
     if (!status) {
@@ -112,14 +156,12 @@ const NetworkRequestLog = ({
   return (
     <div className="table-container">
       <div style={{ width: "100%", overflowX: "hidden" }}>
-        {/* DIRTY HACK: table rerenders on window resize */}
         <VscodeTable
           zebra
           bordered-columns
           resizable
           responsive
           style={{ height: parentHeight }}
-          key={parentHeight}
           ref={tableRef}>
           <VscodeTableHeader slot="header">
             {logDetailsConfig.map(({ title }) => (
