@@ -489,6 +489,21 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #endregion DeepLinks
 
+  // #region File Transfer
+
+  public async sendFileToDevice() {
+    const pickerResult = await window.showOpenDialog({ canSelectFolders: false });
+    if (!pickerResult) {
+      return; // no files selected
+    }
+    const sendFilePromises = pickerResult.map((fileUri) => {
+      return this.deviceSession?.sendFile(fileUri.fsPath);
+    });
+    await Promise.all(sendFilePromises);
+  }
+
+  // #endregion
+
   // #region Recording
 
   private recordingTimeout: NodeJS.Timeout | undefined = undefined;

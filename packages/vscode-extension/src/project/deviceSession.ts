@@ -893,4 +893,8 @@ export class DeviceSession implements Disposable {
   public getMetroPort() {
     return this.metro.port;
   }
+
+  public sendFile(filePath: string) {
+    return this.device.sendFile(filePath);
+  }
 }

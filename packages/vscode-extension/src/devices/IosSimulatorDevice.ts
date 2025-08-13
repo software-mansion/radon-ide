@@ -519,6 +519,22 @@ export class IosSimulatorDevice extends DeviceBase {
       getOrCreateDeviceSet(this.deviceUDID),
     ]);
   }
+
+  public async sendFile(filePath: string): Promise<void> {
+    const args = ["simctl", "--set", getOrCreateDeviceSet(this.deviceUDID)];
+    if (isMediaFile(filePath)) {
+      args.push("addmedia", this.deviceUDID, filePath);
+    } else {
+      args.push("openurl", this.deviceUDID, `file://${filePath}`);
+    }
+    await exec("xcrun", args);
+  }
+}
+
+function isMediaFile(filePath: string): boolean {
+  const mediaFileExtensions = [".jpg", ".jpeg", ".png", ".gif", ".mp4", ".mov"];
+  const fileExtension = path.extname(filePath).toLowerCase();
+  return mediaFileExtensions.includes(fileExtension);
 }
 
 export async function getNewestAvailableIosRuntime() {
