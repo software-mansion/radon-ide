@@ -333,14 +333,6 @@ function PreviewView() {
             <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
           <IconButton
-            tooltip={{
-              label: "Send a file to the device",
-            }}
-            onClick={() => project.sendFileToDevice()}
-            disabled={!navBarButtonsActive}>
-            <span slot="start" className="codicon codicon-share" />
-          </IconButton>
-          <IconButton
             counter={logCounter}
             counterMode="compact"
             onClick={() => project.focusDebugConsole()}

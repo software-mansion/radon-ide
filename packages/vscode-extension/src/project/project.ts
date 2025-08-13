@@ -492,7 +492,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region File Transfer
 
   public async sendFileToDevice() {
-    const pickerResult = await window.showOpenDialog({ canSelectFolders: false });
+    const pickerResult = await window.showOpenDialog({
+      canSelectMany: true,
+      canSelectFolders: false,
+    });
     if (!pickerResult) {
       return; // no files selected
     }

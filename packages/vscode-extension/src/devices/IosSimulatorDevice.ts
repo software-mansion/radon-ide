@@ -522,12 +522,17 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   public async sendFile(filePath: string): Promise<void> {
-    const args = ["simctl", "--set", getOrCreateDeviceSet(this.deviceUDID)];
-    if (isMediaFile(filePath)) {
-      args.push("addmedia", this.deviceUDID, filePath);
-    } else {
-      args.push("openurl", this.deviceUDID, `file://${filePath}`);
+    if (!isMediaFile(filePath)) {
+      throw new Error("Only media file transfer is supported on iOS.");
     }
+    const args = [
+      "simctl",
+      "--set",
+      getOrCreateDeviceSet(this.deviceUDID),
+      "addmedia",
+      this.deviceUDID,
+      filePath,
+    ];
     await exec("xcrun", args);
   }
 }
