@@ -59,6 +59,7 @@ function renderDevices(
           key={device.id}
           icon={<span className="codicon codicon-device-mobile" />}
           title={device.displayName}
+          data-test={`device-${device.displayName}`}
           subtitle={device.systemName}
           disabled={!device.available}
           isSelected={device.id === selectedProjectDevice?.id}>
@@ -139,7 +140,7 @@ function DeviceSelect() {
 
   return (
     <Select.Root onValueChange={handleDeviceDropdownChange} value={value}>
-      <Select.Trigger className="device-select-trigger">
+      <Select.Trigger className="device-select-trigger" data-test="device-select-trigger">
         <Select.Value>
           <div className="device-select-value">
             <span className={`codicon codicon-${iconClass}`} />
@@ -156,6 +157,7 @@ function DeviceSelect() {
       <Select.Portal>
         <Select.Content
           className="device-select-content"
+          data-test="device-select-content"
           position="popper"
           align="center"
           onCloseAutoFocus={(e) => e.preventDefault()}>
@@ -183,7 +185,9 @@ function DeviceSelect() {
               />
             </Select.Group>
             <Select.Separator className="device-select-separator" />
-            <SelectItem value="manage">Manage devices...</SelectItem>
+            <SelectItem value="manage" data-test="manage-devices-button">
+              Manage devices...
+            </SelectItem>
           </Select.Viewport>
           <Select.ScrollDownButton className="device-select-scroll">
             <span className="codicon codicon-chevron-down" />

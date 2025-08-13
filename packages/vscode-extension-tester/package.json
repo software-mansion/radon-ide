@@ -13,7 +13,7 @@
     "get-test-app": "./scripts/downloadRepo.sh",
     "extest": "extest run-tests -h",
     "set-up-VM-environment": "cd ./scripts && ./setupVM.sh && cd ..",
-    "run-tests-on-VM": "cd ./scripts && ./runTests.sh && cd .."
+    "run-tests-on-VM": "npm run build-vsix-package && cd ./scripts && ./runTests.sh && cd .."
   },
   "keywords": [],
   "author": "",
@@ -25,7 +25,7 @@
     "chai": "^5.2.0",
     "mocha": "^11.7.1",
     "typescript": "^5.8.3",
-    "vscode-extension-tester": "^8.15.0"
+    "vscode-extension-tester": "^8.17.0"
   },
   "directories": {
     "test": "tests"
@@ -38,6 +38,7 @@
     "onStartupFinished"
   ],
   "dependencies": {
+    "@vscode/vsce": "^3.6.0",
     "agent-base": "^7.1.3",
     "ajv": "^8.17.1",
     "ansi-escapes": "^4.3.2",

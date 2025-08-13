@@ -23,6 +23,7 @@ interface DeviceRowProps {
   onDeviceDelete: (device: DeviceInfo) => void;
   isSelected: boolean;
   isRunning: boolean;
+  dataTest?: string;
 }
 
 function DeviceRow({
@@ -31,6 +32,7 @@ function DeviceRow({
   onDeviceDelete,
   isSelected,
   isRunning,
+  dataTest,
 }: DeviceRowProps) {
   const store$ = useStore();
   const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
@@ -55,7 +57,11 @@ function DeviceRow({
 
   const { closeModal } = useModal();
   return (
-    <button className="device-row" onClick={selectDevice} data-selected={isSelected}>
+    <button
+      className="device-row"
+      onClick={selectDevice}
+      data-selected={isSelected}
+      data-test={dataTest}>
       <div className={isSelected ? "device-icon-selected" : "device-icon"}>
         {!deviceInfo.available ? (
           <Tooltip
@@ -108,6 +114,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
+          data-test={`rename-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceRename(deviceInfo);
@@ -122,6 +129,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
+          data-test={`delete-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceDelete(deviceInfo);
@@ -193,6 +201,7 @@ function ManageDevicesView() {
       <DeviceRow
         key={deviceInfo.id}
         deviceInfo={deviceInfo}
+        dataTest={`device-${deviceInfo.displayName}`}
         onDeviceRename={handleDeviceRename}
         onDeviceDelete={handleDeviceDelete}
         isSelected={deviceInfo.id === selectedProjectDevice?.id}
@@ -202,7 +211,7 @@ function ManageDevicesView() {
   }
 
   return (
-    <div className="manage-devices-container">
+    <div className="manage-devices-container" data-test="manage-devices-view">
       {iosDevices.length > 0 && (
         <>
           <Label>iOS Devices</Label>
@@ -215,7 +224,11 @@ function ManageDevicesView() {
           {androidDevices.map(renderRow)}
         </>
       )}
-      <Button autoFocus className="create-button" onClick={() => setCreateDeviceViewOpen(true)}>
+      <Button
+        autoFocus
+        className="create-button"
+        dataTest="create-new-device-button"
+        onClick={() => setCreateDeviceViewOpen(true)}>
         <span className="codicon codicon-add" />
         <div className="create-button-text">Create new device</div>
       </Button>

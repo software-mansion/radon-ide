@@ -25,7 +25,7 @@ function DeviceRemovalConfirmation({
   });
 
   return (
-    <div className="device-removal-wrapper">
+    <div className="device-removal-wrapper" data-test="device-removal-wrapper">
       <h2 className="device-removal-title">
         Are you sure you want to remove the <i>{deviceInfo.displayName}</i> device?
       </h2>
@@ -40,6 +40,7 @@ function DeviceRemovalConfirmation({
         </Button>
         <Button
           className="device-removal-button"
+          dataTest="confirm-delete-device-button"
           type="ternary"
           disabled={loading}
           onClick={async () => {

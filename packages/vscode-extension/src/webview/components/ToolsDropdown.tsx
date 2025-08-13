@@ -103,6 +103,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="dropdown-menu-content device-settings-content"
+          data-test="radon-tools-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Tools</h4>
           <Label>Utilities</Label>
