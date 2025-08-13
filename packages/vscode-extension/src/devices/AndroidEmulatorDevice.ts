@@ -727,7 +727,21 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   public async sendFile(filePath: string): Promise<void> {
-    throw new Error("Method not implemented.");
+    const args = ["push", "-q", filePath, `/sdcard/Download/${path.basename(filePath)}`];
+    await exec(ADB_PATH, ["-s", this.serial!, ...args]);
+    // Notify the media scanner about the new file
+    await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "shell",
+      "am",
+      "broadcast",
+      "-a",
+      "android.intent.action.MEDIA_SCANNER_SCAN_FILE",
+      "--receiver-include-background",
+      "-d",
+      `file:///sdcard/Download`,
+    ]);
   }
 }
 

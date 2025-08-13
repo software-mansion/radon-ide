@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { ExecaChildProcess, ExecaError } from "execa";
+import mime from "mime";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
@@ -532,9 +533,8 @@ export class IosSimulatorDevice extends DeviceBase {
 }
 
 function isMediaFile(filePath: string): boolean {
-  const mediaFileExtensions = [".jpg", ".jpeg", ".png", ".gif", ".mp4", ".mov"];
-  const fileExtension = path.extname(filePath).toLowerCase();
-  return mediaFileExtensions.includes(fileExtension);
+  const type = mime.lookup(filePath);
+  return type.startsWith("image/") || type.startsWith("video/");
 }
 
 export async function getNewestAvailableIosRuntime() {
