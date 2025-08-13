@@ -4,5 +4,5 @@ export const paths = {
 
 export const texts = {
   pageTitle: paths.projectPath.split("/").pop(),
-  expectedProjectName: "reactNative77aaaa",
+  expectedProjectName: "reactNative77",
 };
