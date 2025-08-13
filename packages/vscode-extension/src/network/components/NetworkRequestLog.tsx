@@ -8,6 +8,7 @@ import {
   VscodeTableHeaderCell,
   VscodeTableRow,
 } from "@vscode-elements/react-elements";
+import type { VscodeTable as VscodeTableElement } from "@vscode-elements/elements/dist/vscode-table/vscode-table";
 
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import "./NetworkRequestLog.css";
@@ -25,54 +26,31 @@ const NetworkRequestLog = ({
   selectedNetworkLog,
   parentHeight,
 }: NetworkRequestLogProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<VscodeTableElement>(null);
 
   useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-    const { scrollTop } = container;
-
-    if (
-      !selectedNetworkLog &&
-      scrollTop >= container.scrollHeight - container.clientHeight * 1.25
-    ) {
-      container.scrollTo({
-        top: container.scrollHeight,
-      });
-    }
-  }, [networkLogs, selectedNetworkLog]);
-
-  useLayoutEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
+    const table = tableRef.current;
+    if (!table) {
       return;
     }
 
-    const selectedElement = container.querySelector(".selected");
-    const { scrollTop } = container;
+    // Accessing the Shadow DOM of the VscodeTable to be able to access scrollable container
+    const tableShadowRoot = table.shadowRoot;
+    const scrollableShadowRoot =
+      tableShadowRoot?.querySelector<HTMLDivElement>(".scrollable")?.shadowRoot;
+    const scrollableContainer =
+      scrollableShadowRoot?.querySelector<HTMLDivElement>(".scrollable-container");
 
-    const handleScrollToSelectedElement = () => {
-      if (!selectedElement) {
-        return;
-      }
+    const selectedElement = table.querySelector<HTMLDivElement>(".selected");
 
-      const containerRect = container.getBoundingClientRect();
-      const selectedElementRect = selectedElement.getBoundingClientRect();
+    if (!selectedElement || !scrollableContainer) {
+      return;
+    }
 
-      if (
-        selectedElementRect.top < containerRect.top ||
-        selectedElementRect.bottom > containerRect.bottom
-      ) {
-        container.scrollTo({
-          top: scrollTop + (selectedElementRect.top - containerRect.top - 100),
-          behavior: "smooth",
-        });
-      }
-    };
-
-    handleScrollToSelectedElement();
+    scrollableContainer.scrollTo({
+      top: selectedElement.offsetTop - table.clientHeight / 2,
+      behavior: "smooth",
+    });
   }, [selectedNetworkLog?.requestId]);
 
   const getStatusClass = (status: number | string | undefined) => {
@@ -132,16 +110,17 @@ const NetworkRequestLog = ({
   );
 
   return (
-    <div className="table-container" ref={containerRef}>
+    <div className="table-container">
       <div style={{ width: "100%", overflowX: "hidden" }}>
-        {/* DIRTY HACK: table rerenders on window resize, including scroll position which sucks */}
+        {/* DIRTY HACK: table rerenders on window resize */}
         <VscodeTable
           zebra
           bordered-columns
           resizable
           responsive
           style={{ height: parentHeight }}
-          key={parentHeight}>
+          key={parentHeight}
+          ref={tableRef}>
           <VscodeTableHeader slot="header">
             {logDetailsConfig.map(({ title }) => (
               <VscodeTableHeaderCell key={title}>{title}</VscodeTableHeaderCell>
