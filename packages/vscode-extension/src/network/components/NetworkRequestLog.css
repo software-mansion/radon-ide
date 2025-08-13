@@ -10,6 +10,7 @@
   background-color: var(--vscode-list-hoverBackground);
 }
 
-.selected, .selected:hover {
+.selected,
+.selected:hover {
   background-color: var(--vscode-terminal-selectionBackground);
 }

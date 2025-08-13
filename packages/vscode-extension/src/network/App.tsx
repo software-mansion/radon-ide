@@ -10,31 +10,12 @@ import { useNetwork } from "./providers/NetworkProvider";
 
 function App() {
   const networkLogContainerRef = useRef<HTMLDivElement | null>(null);
-  const networkLogDetailsContainerRef = useRef<HTMLDivElement>(null);
+  const networkDetailsContainerRef = useRef<HTMLDivElement>(null);
   const networkLogDetailsSize = useRef<string>("50%");
+
   const [networkLogContainerHeight, setNetworkLogContainerHeight] = useState<number | undefined>(
     networkLogContainerRef?.current?.clientHeight
   );
-
-  useEffect(() => {
-    // debounce the resize event to avoid performance issues
-    const handleResize = debounce(() => {
-      if (networkLogContainerRef.current) {
-        console.log("Resizing network log container");
-        setNetworkLogContainerHeight(networkLogContainerRef.current.clientHeight);
-      }
-    }, 30);
-
-    handleResize();
-    handleResize.flush();
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      handleResize.cancel();
-    };
-  }, []);
 
   const { networkLogs } = useNetwork();
 
@@ -51,19 +32,40 @@ function App() {
   const isNetworkLogDetailsVisible = !!selectedNetworkLog;
 
   useEffect(() => {
+    // debounce the resize event to avoid performance issues
     const handleResize = debounce(() => {
-      if (!networkLogContainerRef.current || !networkLogDetailsContainerRef.current) {
+      if (networkLogContainerRef.current) {
+        setNetworkLogContainerHeight(networkLogContainerRef.current.clientHeight);
+      }
+    }, 30);
+
+    handleResize();
+    handleResize.flush();
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      handleResize.cancel();
+    };
+  }, []);
+
+  useEffect(() => {
+    // Set the size of the network log details container, after users decides to resize it
+    // https://vscode-elements.github.io/components/split-layout/api/
+    const handleResize = debounce(() => {
+      if (!networkLogContainerRef.current || !networkDetailsContainerRef.current) {
         return;
       }
       const containerWidth = networkLogContainerRef.current.clientWidth;
-      const detailsWidth = networkLogDetailsContainerRef.current?.clientWidth;
+      const detailsWidth = networkDetailsContainerRef.current?.clientWidth;
       networkLogDetailsSize.current = `${((containerWidth - detailsWidth) / containerWidth) * 100}%`;
     });
 
     const detailsResizeObserver = new ResizeObserver(handleResize);
 
-    if (networkLogDetailsContainerRef.current) {
-      detailsResizeObserver.observe(networkLogDetailsContainerRef.current);
+    if (networkDetailsContainerRef.current) {
+      detailsResizeObserver.observe(networkDetailsContainerRef.current);
     }
 
     return () => {
@@ -89,9 +91,8 @@ function App() {
               parentHeight={networkLogContainerHeight}
             />
           </div>
-
           {isNetworkLogDetailsVisible ? (
-            <div ref={networkLogDetailsContainerRef} slot="end">
+            <div ref={networkDetailsContainerRef} slot="end">
               <NetworkLogDetails
                 key={selectedNetworkLog.requestId}
                 networkLog={selectedNetworkLog}
