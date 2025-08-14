@@ -3,7 +3,7 @@ import {
   findAndClickElementByTag,
   waitUntilElementGone,
 } from "../utils/helpers.js";
-import { By } from "vscode-extension-tester";
+import { By, until } from "vscode-extension-tester";
 
 export async function openDeviceCreationModal(driver) {
   await findAndClickElementByTag(driver, "device-select-trigger");
@@ -20,9 +20,10 @@ export async function openRadonSettingsMenu(driver) {
 export async function fillDeviceCreationForm(driver, deviceName) {
   await findAndClickElementByTag(driver, "device-type-select");
 
+  // first ios device from the list
   const selectedDevice = await findAndWaitForElement(
     driver,
-    By.css('[data-test^="device-type-select-item-"]'),
+    By.css('[data-test^="device-type-select-item-com.apple.CoreSimulator"]'),
     "Timed out waiting for an element matching from devices list"
   );
   await selectedDevice.click();
@@ -31,7 +32,7 @@ export async function fillDeviceCreationForm(driver, deviceName) {
 
   const selectedSystemImage = await findAndWaitForElement(
     driver,
-    By.css('[data-test^="system-image-select-item-"]'),
+    By.css('[data-test^="system-image-select-item-"]:not(.select-item-marked)'),
     "Timed out waiting for an element matching from system image list"
   );
   await selectedSystemImage.click();
@@ -50,6 +51,11 @@ export async function fillDeviceCreationForm(driver, deviceName) {
 }
 
 export async function openRadonIDEPanel(driver) {
+  await driver.wait(
+    until.elementLocated(By.css("div#swmansion\\.react-native-ide")),
+    10000,
+    "Timed out waiting for Radon IDE statusbar item"
+  );
   await driver.findElement(By.css("div#swmansion\\.react-native-ide")).click();
 
   const webview = await findAndWaitForElement(
@@ -76,7 +82,7 @@ export async function addNewDevice(driver, newDeviceName) {
 }
 
 export async function modifyDeviceName(driver, deviceName, modifiedDeviceName) {
-  await findAndClickElementByTag(driver, `rename-device-${deviceName}`);
+  await findAndClickElementByTag(driver, `rename-device-${deviceName}`, 20000);
 
   const deviceNameInput = await findAndWaitForElement(
     driver,
@@ -94,31 +100,40 @@ export async function modifyDeviceName(driver, deviceName, modifiedDeviceName) {
 }
 
 export async function deleteDevice(driver, deviceName) {
-  await findAndClickElementByTag(driver, `delete-button-device-${deviceName}`);
+  await findAndClickElementByTag(
+    driver,
+    `delete-button-device-${deviceName}`,
+    15000
+  );
 
   await findAndClickElementByTag(driver, `confirm-delete-device-button`);
 }
 
 export async function deleteAllDevices(driver) {
   await openRadonIDEPanel(driver);
-  await findAndClickElementByTag(driver, `device-select-trigger`);
+  await findAndClickElementByTag(driver, `device-select-trigger`, 20000);
 
-  await findAndClickElementByTag(driver, `manage-devices-button`);
+  await findAndClickElementByTag(driver, `manage-devices-button`, 20000);
 
   try {
     while (true) {
       const deviceDeleteButton = await findAndWaitForElement(
         driver,
         By.css(`[data-test^="delete-button-device-"]`),
-        "Timed out waiting for device delete button"
+        "Timed out waiting for device delete button",
+        3000
       );
       await deviceDeleteButton.click();
-      await findAndClickElementByTag(driver, `confirm-delete-device-button`);
+      await findAndClickElementByTag(
+        driver,
+        `confirm-delete-device-button`,
+        5000
+      );
 
       await waitUntilElementGone(
         driver,
         By.css(`[data-test="device-removal-wrapper"]`),
-        5000,
+        10000,
         "delete confirmation modal did not disappear"
       );
     }

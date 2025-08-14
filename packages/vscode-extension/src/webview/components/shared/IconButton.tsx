@@ -21,11 +21,8 @@ export interface IconButtonProps {
     type?: "primary" | "secondary";
   };
   className?: string;
-<<<<<<< HEAD
   shouldDisplayLabelWhileDisabled?: boolean;
-=======
   dataTest?: string;
->>>>>>> @KeyJayY/UITesting
 }
 
 const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, ref) => {
@@ -41,11 +38,8 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
     size = "default",
     side = "center",
     className = "",
-<<<<<<< HEAD
     shouldDisplayLabelWhileDisabled = false,
-=======
     dataTest,
->>>>>>> @KeyJayY/UITesting
     ...rest
   } = props;
 

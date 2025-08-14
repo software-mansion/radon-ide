@@ -7,10 +7,11 @@
     "install-vsix": "extest install-vsix -f ./data/radon-ide.vsix --extensions_dir ./data/vscode-extensions",
     "build-vsix-package": "cd ../vscode-extension && vsce package --out ../vscode-extension-tester/data/radon-ide.vsix && cd ../vscode-extension-tester",
     "setup": "extest get-vscode && extest get-chromedriver && npm run install-vsix",
-    "ui-tests": "extest run-tests ./ui-tests/*.test.js --extensions_dir ./data/vscode-extensions -r ./data/react-native-77",
+    "ui-tests": "extest run-tests ./ui-tests/*.test.js --extensions_dir ./data/vscode-extensions -r ./data/react-native-app",
     "clean": "rm -rf ./data/vscode-storage",
     "setup-run-tests": "npm run clean && npm run setup && npm run ui-tests",
     "get-test-app": "./scripts/downloadRepo.sh",
+    "prepare-and-run-tests": "npm run get-test-app -- react-native-77 && npm run build-vsix-package && npm run setup-run-tests",
     "extest": "extest run-tests -h",
     "set-up-VM-environment": "cd ./scripts && ./setupVM.sh && cd ..",
     "run-tests-on-VM": "npm run build-vsix-package && cd ./scripts && ./runTests.sh && cd .."
