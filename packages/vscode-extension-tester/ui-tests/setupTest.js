@@ -1,7 +1,13 @@
-import { VSBrowser, WebView, Workbench } from "vscode-extension-tester";
+import {
+  VSBrowser,
+  WebView,
+  Workbench,
+  EditorView,
+} from "vscode-extension-tester";
 import { paths } from "../data/testData.js";
 import { openProjectInVSCode } from "../utils/projectLauncher.js";
-import { EditorView } from "vscode-extension-tester";
+import path from "path";
+import fs from "fs";
 
 export function sharedTestLifecycle() {
   let browser, driver, workbench, view;
@@ -25,7 +31,6 @@ export function sharedTestLifecycle() {
     }
 
     await browser.waitForWorkbench();
-
     workbench = new Workbench();
 
     view = new WebView();
@@ -33,6 +38,21 @@ export function sharedTestLifecycle() {
   });
 
   afterEach(async function () {
+    if (this.currentTest.state === "failed") {
+      const driver = VSBrowser.instance.driver;
+      const image = await driver.takeScreenshot();
+
+      const screenshotDir = path.join(process.cwd(), "screenshots");
+      const filePath = path.join(
+        screenshotDir,
+        `${this.currentTest.title}.png`
+      );
+
+      fs.mkdirSync(screenshotDir, { recursive: true });
+      fs.writeFileSync(filePath, image, "base64");
+      console.log(`Saved screenshot: ${filePath}`);
+    }
+
     await view.switchBack();
     await new EditorView().closeAllEditors();
   });

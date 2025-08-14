@@ -45,11 +45,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Show Xcode and available simulators
-        run: |
-          xcodebuild -version
-          xcrun simctl list devices
-
       - name: Run setup-run-tests
         run: npm run setup-run-tests
         working-directory: packages/vscode-extension-tester
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-ui-screenshots
+          path: packages/vscode-extension-tester/screenshots/
