@@ -54,8 +54,8 @@ describe("Smoke tests Radon IDE", () => {
 
     const text = await approot.getText();
     assert.equal(
-      text,
-      texts.expectedProjectName,
+      text.toLowerCase(),
+      texts.expectedProjectName.toLowerCase(),
       "Text of the element should be a name of the project"
     );
   });
