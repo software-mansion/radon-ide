@@ -37,7 +37,7 @@ import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { ApplicationSession } from "./applicationSession";
-import { DevicePlatform } from "../common/State";
+import { DevicePlatform, FramerateReport } from "../common/State";
 import { ReloadAction } from "./DeviceSessionsManager";
 
 const MAX_URL_HISTORY_SIZE = 20;
@@ -731,6 +731,14 @@ export class DeviceSession implements Disposable {
 
       await this.device.sendDeepLink(link, this.maybeBuildResult, terminateApp);
     }
+  }
+
+  public startFrameRateReporting(onFpsReport: (report: FramerateReport) => void) {
+    this.device.startFrameRateReporting(onFpsReport);
+  }
+
+  public stopFrameRateReporting() {
+    this.device.stopFrameRateReporting();
   }
 
   public startRecording() {

@@ -61,6 +61,10 @@ export type ApplicationDependencyStatuses = Partial<
 
 export type ProjectStore = {
   applicationContext: ApplicationContextState;
+  frameReporting:{
+    enabled: boolean;
+    frameReport: FramerateReport | null;
+  }
 };
 
 // #endregion Project State
@@ -82,6 +86,13 @@ export type TelemetryState = {
 // #endregion Telemetry State
 
 // #region Devices State
+
+export type FramerateReport = {
+  fps: number;
+  received: number;
+  dropped: number;
+  timestamp: number;
+};
 
 export enum DevicePlatform {
   IOS = "iOS",
@@ -172,6 +183,10 @@ export const initialState: State = {
     applicationContext: {
       applicationDependencies: {},
     },
+    frameReporting: {
+      enabled: false,
+      frameReport: null
+    }
   },
   telemetry: {
     enabled: false,

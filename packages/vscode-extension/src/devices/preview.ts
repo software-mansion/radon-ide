@@ -6,6 +6,7 @@ import { MultimediaData, TouchPoint, DeviceButtonType, DeviceRotation } from "..
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
 import { disposeAll } from "../utilities/disposables";
+import { FramerateReport } from "../common/State";
 
 interface MultimediaPromiseHandlers {
   resolve: (value: MultimediaData) => void;
@@ -16,13 +17,6 @@ enum MultimediaType {
   Video = "video",
   Screenshot = "screenshot",
 }
-
-type FramerateReport = {
-  fps: number;
-  received: number;
-  dropped: number;
-  timestamp: number;
-};
 
 export class Preview implements Disposable {
   private disposables: Disposable[] = [];
@@ -139,7 +133,6 @@ export class Preview implements Disposable {
             return;
           }
           this.fpsReportListener(frameRateData);
-
         } else if (
           line.includes("video_ready") ||
           line.includes("video_error") ||
