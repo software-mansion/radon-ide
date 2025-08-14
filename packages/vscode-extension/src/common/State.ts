@@ -18,6 +18,7 @@ export type WorkspaceConfiguration = {
   deviceRotation: DeviceRotation;
   inspectorExcludePattern: string | null;
   defaultMultimediaSavingLocation: string | null;
+  startDeviceOnLaunch: boolean;
 };
 
 // #endregion Workspace Configuration
