@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./styles.module.css";
 import { useLocation } from "@docusaurus/router";
 import MobileSidebarToggle from "../MobileSidebarToggle";
@@ -7,6 +7,8 @@ import ThemeSwitcher from "../../ThemeSwitcher";
 import NavbarLink from "../NavbarLink";
 import Logo from "../../Logo";
 import clsx from "clsx";
+import CloseIcon from "../../CloseIcon";
+import DownloadButtons from "../../DownloadButtons";
 
 export interface NavbarItem {
   label: string;
@@ -33,8 +35,18 @@ export interface NavbarContentProps {
 }
 
 export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  const handleDialogOpen = () => {
+    dialogRef.current?.showModal();
+  };
+  const handleDialogClose = () => {
+    dialogRef.current?.close();
+  };
+
   const location = useLocation();
   const active = location.pathname;
+
   return (
     <>
       <div className={clsx(styles.navbarContainer, "border-layout")}>
@@ -67,9 +79,22 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
             className={styles.download}>
             <p>Download</p>
           </a>
+          <button className={styles.download} onClick={handleDialogOpen}>
+            <p>Download</p>
+          </button>
         </div>
       </div>
       <NavbarMobileSidebar navbarItems={navbarItems} isThemeSwitcherShown={isThemeSwitcherShown} />
+      <dialog className={styles.modalContainer} ref={dialogRef} onClick={handleDialogClose}>
+        <div className={styles.modalHead}>
+          <p>Download</p>
+          <button onClick={handleDialogClose} className={styles.dialogCloseButton}>
+            <CloseIcon />
+          </button>
+        </div>
+        <p className={styles.modalSubheading}>Choose how you want to use Radon IDE:</p>
+        <DownloadButtons vertical={true} />
+      </dialog>
     </>
   );
 }
