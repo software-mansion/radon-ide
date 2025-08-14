@@ -908,7 +908,7 @@ export class DeviceSession implements Disposable {
       title: "Select files to send to device",
     });
     if (!pickerResult) {
-      return; // no files selected
+      throw new Error("No files selected");
     }
     const sendFilePromises = pickerResult.map((fileUri) => {
       return this.sendFile(fileUri.fsPath);
