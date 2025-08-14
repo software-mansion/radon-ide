@@ -74,7 +74,7 @@ describe("Adding device tests", () => {
       await findAndWaitForElement(
         driver,
         By.css(`[data-test="device-${deviceName}"]`),
-        `Timed out waiting for device with modified name: ${deviceName}`,
+        `Timed out waiting for device with name: ${deviceName}`,
         3000
       );
       deviceFound = true;

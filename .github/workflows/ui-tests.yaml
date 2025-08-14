@@ -1,4 +1,4 @@
-name: Build VSIX and Run Tests (macOS + Video)
+name: Build VSIX and Run Tests (macOS)
 
 on:
   workflow_dispatch:
@@ -53,11 +53,8 @@ jobs:
         run: brew install ffmpeg
 
       - name: Start screen recording
-        run: |
-          mkdir -p videos
-          # Nagrywanie tylko obrazu z ekranu (bez dźwięku), format avfoundation
-          ffmpeg -f avfoundation -framerate 15 -i "1:0" -preset ultrafast -t 600 videos/vscode-ui-recording.mp4 > /dev/null 2>&1 &
-          echo $! > ffmpeg_pid.txt
+        run: ./scripts/screenRecording.sh
+        working-directory: packages/vscode-extension-tester
 
       - name: Run setup-run-tests
         run: npm run setup-run-tests
@@ -69,6 +66,7 @@ jobs:
         if: always()
         run: |
           kill $(cat ffmpeg_pid.txt) || true
+        working-directory: packages/vscode-extension-tester/videos
 
       - name: Upload screenshots on failure
         if: failure()
