@@ -898,6 +898,10 @@ export class DeviceSession implements Disposable {
   }
 
   public sendFile(filePath: string) {
+    getTelemetryReporter().sendTelemetryEvent("device:send-file", {
+      platform: this.device.deviceInfo.platform,
+      extension: path.extname(filePath),
+    });
     return this.device.sendFile(filePath);
   }
 
