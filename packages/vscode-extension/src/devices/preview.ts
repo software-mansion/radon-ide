@@ -27,7 +27,7 @@ export class Preview implements Disposable {
   public streamURL?: string;
   private replaysStarted = false;
 
-  constructor(private args: string[]) { }
+  constructor(private args: string[]) {}
 
   dispose() {
     disposeAll(this.disposables);
@@ -118,18 +118,19 @@ export class Preview implements Disposable {
           const match = line.match(frameRateRegex);
           if (!match) {
             return;
-
           }
           const jsonString = match[1];
           let frameRateData: FramerateReport;
-          try{
+          try {
             frameRateData = JSON.parse(jsonString) as FramerateReport;
           } catch (error) {
             Logger.error("[Preview] Error parsing frame rate JSON:", error);
             return;
           }
-          if(!this.fpsReportListener){
-            Logger.warn("[Preview] No FPS report listener registered but received frame rate data, this should not be reachable.");
+          if (!this.fpsReportListener) {
+            Logger.warn(
+              "[Preview] No FPS report listener registered but received frame rate data, this should not be reachable."
+            );
             return;
           }
           this.fpsReportListener(frameRateData);

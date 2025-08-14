@@ -37,8 +37,11 @@ import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { ApplicationSession } from "./applicationSession";
-import { DevicePlatform, FramerateReport } from "../common/State";
+import { DevicePlatform, DeviceSessionStore, FramerateReport } from "../common/State";
 import { ReloadAction } from "./DeviceSessionsManager";
+import { StateManager } from "./StateManager";
+import { FrameReporter } from "./FrameReporter";
+import { disposeAll } from "../utilities/disposables";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -61,6 +64,8 @@ export class DeviceBootError extends Error {
 }
 
 export class DeviceSession implements Disposable {
+  private disposables: Disposable[] = [];
+
   private isActive = false;
   private metro: MetroLauncher;
   private maybeBuildResult: BuildResult | undefined;
@@ -69,6 +74,7 @@ export class DeviceSession implements Disposable {
   private buildCache: BuildCache;
   private cancelToken: CancelToken = new CancelToken();
   private watchProjectSubscription: Disposable;
+  private frameReporter: FrameReporter;
 
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
@@ -101,12 +107,19 @@ export class DeviceSession implements Disposable {
   }
 
   constructor(
+    private readonly stateManager: StateManager<DeviceSessionStore>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     initialRotation: DeviceRotation,
     private readonly deviceSessionDelegate: DeviceSessionDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
+    this.frameReporter = new FrameReporter(
+      this.stateManager.getDerived("frameReporting"),
+      this.device
+    );
+    this.disposables.push(this.frameReporter);
+
     this.devtools = this.makeDevtools();
     this.metro = new MetroLauncher(this.devtools);
     this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
@@ -116,6 +129,8 @@ export class DeviceSession implements Disposable {
 
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
     this.device.sendRotate(initialRotation);
+
+    this.disposables.push(this.stateManager);
   }
 
   public getState(): DeviceSessionState {
@@ -260,6 +275,8 @@ export class DeviceSession implements Disposable {
     this.metro?.dispose();
     this.devtools?.dispose();
     this.watchProjectSubscription.dispose();
+
+    disposeAll(this.disposables);
   }
 
   public async activate() {

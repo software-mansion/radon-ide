@@ -157,6 +157,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       fingerprintProvider
     );
     this.deviceSessionsManager = new DeviceSessionsManager(
+      this.stateManager.getDerived("deviceSessions"),
       this.applicationContext,
       this.deviceManager,
       this.devicesStateManager,
@@ -302,6 +303,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     // and only close the applications, but the API we have right now does not allow that.
     const oldDeviceSessionsManager = this.deviceSessionsManager;
     this.deviceSessionsManager = new DeviceSessionsManager(
+      this.stateManager.getDerived("deviceSessions"),
       this.applicationContext,
       this.deviceManager,
       this.devicesStateManager,

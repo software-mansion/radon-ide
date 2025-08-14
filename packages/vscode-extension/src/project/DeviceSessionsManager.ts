@@ -12,7 +12,13 @@ import { DeviceId, DeviceRotation, DeviceSessionsManagerState } from "../common/
 import { Connector } from "../connect/Connector";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
-import { DeviceInfo, DevicePlatform, DevicesState } from "../common/State";
+import {
+  DeviceInfo,
+  DevicePlatform,
+  DeviceSessions,
+  DevicesState,
+  initialDeviceSessionStore,
+} from "../common/State";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -48,6 +54,7 @@ export class DeviceSessionsManager implements Disposable {
   private previousDevices: DeviceInfo[] = [];
 
   constructor(
+    private readonly stateManager: StateManager<DeviceSessions>,
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
     private readonly devicesStateManager: StateManager<DevicesState>,
@@ -62,6 +69,8 @@ export class DeviceSessionsManager implements Disposable {
         }
       })
     );
+
+    this.disposables.push(this.stateManager);
   }
 
   public get selectedDeviceSession(): DeviceSession | undefined {
@@ -144,7 +153,11 @@ export class DeviceSessionsManager implements Disposable {
     }
     Logger.debug("Selected device is ready");
 
+    // we need to initialize the device session state before adding it to the state object
+    this.stateManager.setState({ [deviceInfo.id]: initialDeviceSessionStore });
+
     const newDeviceSession = new DeviceSession(
+      this.stateManager.getDerived(deviceInfo.id),
       this.applicationContext,
       device,
       this.deviceSessionManagerDelegate.getDeviceRotation(),

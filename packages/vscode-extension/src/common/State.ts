@@ -1,5 +1,5 @@
 import { ApplicationRoot } from "./AppRootConfig";
-import { DeviceRotation } from "./Project";
+import { DeviceId, DeviceRotation } from "./Project";
 
 export type RecursivePartial<T> = {
   [P in keyof T]?: NonNullable<T[P]> extends Array<infer U>
@@ -57,14 +57,37 @@ export type ApplicationDependencyStatuses = Partial<
 
 // #endregion Dependencies
 
+// #region Frame Reporting State
+
+export type FramerateReport = {
+  fps: number;
+  received: number;
+  dropped: number;
+  timestamp: number;
+};
+
+export type FrameReportingState = {
+  enabled: boolean;
+  frameReport: FramerateReport | null;
+};
+
+// #endregion Frame Reporting State
+
+// #region Device Session
+
+export type DeviceSessionStore = {
+  frameReporting: FrameReportingState;
+};
+
+// #endregion Device Session
+
 // #region Project State
+
+export type DeviceSessions = Record<DeviceId, DeviceSessionStore>;
 
 export type ProjectStore = {
   applicationContext: ApplicationContextState;
-  frameReporting:{
-    enabled: boolean;
-    frameReport: FramerateReport | null;
-  }
+  deviceSessions: DeviceSessions;
 };
 
 // #endregion Project State
@@ -86,13 +109,6 @@ export type TelemetryState = {
 // #endregion Telemetry State
 
 // #region Devices State
-
-export type FramerateReport = {
-  fps: number;
-  received: number;
-  dropped: number;
-  timestamp: number;
-};
 
 export enum DevicePlatform {
   IOS = "iOS",
@@ -171,6 +187,13 @@ export type StateListener = (state: RecursivePartial<State>) => void;
 
 // #region Initial State
 
+export const initialDeviceSessionStore: DeviceSessionStore = {
+  frameReporting: {
+    enabled: false,
+    frameReport: null,
+  },
+};
+
 export const initialState: State = {
   applicationRoots: [],
   devicesState: {
@@ -183,10 +206,7 @@ export const initialState: State = {
     applicationContext: {
       applicationDependencies: {},
     },
-    frameReporting: {
-      enabled: false,
-      frameReport: null
-    }
+    deviceSessions: {},
   },
   telemetry: {
     enabled: false,
