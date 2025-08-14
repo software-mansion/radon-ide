@@ -97,10 +97,7 @@ function NetworkBar() {
             onInput={handleValueChange}
             placeholder={`Filter by ${filters.filterType}`}
           />
-          <VscodeCheckbox
-            onChange={handleInvertChange}
-            label="Invert"
-          />
+          <VscodeCheckbox onChange={handleInvertChange} label="Invert" />
         </div>
       )}
     </div>

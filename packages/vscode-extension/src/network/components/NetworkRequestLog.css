@@ -35,8 +35,8 @@
 
 .table-header-cell > span {
   flex-shrink: 0;
-  
-  &.codicon{
+
+  &.codicon {
     font-weight: bold;
   }
 

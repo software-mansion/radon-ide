@@ -35,55 +35,57 @@ const NetworkRequestLog = ({
   parentHeight,
 }: NetworkRequestLogProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const tableRef = useRef<VscodeTableElement>(null);
   const [sortState, setSortState] = useState<SortState>({
     column: null,
     direction: null,
   });
-
   const [cellWidths, setCellWidths] = useState<number[]>([]);
-  const tableRef = useRef<VscodeTableElement>(null);
-
-  /**
-   * Updates the cell widths based on the current sash (column bars) positions from the table component.
-   * 
-   * This function accesses the private `_sashPositions` property from the table reference
-   * to calculate relative column widths as percentages. It converts absolute sash positions
-   * into relative width percentages for each column, in order to comply with current workings of 
-   * VscodeTable.
-   * 
-   * This workaround is necessary to prevent improper rendering when modifying row order,
-   * because VscodeTableCell does not update properly upon rearranging the columns.
-   *
-   */
-  
-  const updateCellWidths = () => {
-    const table = tableRef.current;
-    if (!table) {
-      return;
-    }
-    // @ts-ignore - private property, but needs to be accessed due to problems with lack
-    // of VscodeTableCell keys, which causes improper rendering upon modifying order of the rows
-    const sashPositions = table._sashPositions || [];
-
-    if( sashPositions.length === 0) {
-      return []
-    }
-
-    const sashArray = sashPositions.map((pos: number, i: number, array: number[]) => {
-      if (i === 0) {
-        return `${pos}%`;
-      }
-      return `${pos - array[i - 1]}%`;
-    });
-    sashArray.push(`${100 - sashPositions[sashPositions.length - 1]}%`);
-
-    setCellWidths(sashArray);
-  };
 
   // Sort the network logs based on current sort state
   const sortedNetworkLogs = useMemo(() => {
     return sortNetworkLogs(networkLogs, sortState.column, sortState.direction);
   }, [networkLogs, sortState]);
+
+  /**
+   * Updates the cell widths based on the current sash (column bars) positions from the table component.
+   *
+   * This function accesses the private `_sashPositions` property from the table reference
+   * to calculate relative column widths as percentages. It converts absolute sash positions
+   * into relative width percentages for each column, in order to comply with current workings of
+   * VscodeTable.
+   *
+   * This workaround is necessary to prevent improper rendering when modifying row order,
+   * because VscodeTableCell does not update properly upon rearranging the columns.
+   *
+   */
+  const updateCellWidths = () => {
+    const table = tableRef.current;
+    if (!table) {
+      return;
+    }
+
+    // @ts-ignore - private property, but needs to be accessed due to problems with lack
+    // of VscodeTableCell keys, which causes improper rendering upon modifying order of the rows
+    // Sash positions are stored as float array of percentage-offset from the left side of the table.
+    const sashPositions = table._sashPositions || [];
+
+    if (sashPositions.length === 0) {
+      return;
+    }
+
+    // Convert absolute sash positions to relative column widths
+    const columnWidths = sashPositions.map((currentPos: number, index: number) => {
+      const previousPos = index === 0 ? 0 : sashPositions[index - 1];
+      return `${currentPos - previousPos}%`;
+    });
+
+    // Add the width of the last column
+    const lastSashPosition = sashPositions[sashPositions.length - 1];
+    columnWidths.push(`${100 - lastSashPosition}%`);
+
+    setCellWidths(columnWidths);
+  };
 
   useLayoutEffect(() => {
     updateCellWidths();
