@@ -1,4 +1,4 @@
-name: Build VSIX and Run Tests (macOS)
+name: Build VSIX and Run Tests (macOS + Video)
 
 on:
   workflow_dispatch:
@@ -39,7 +39,7 @@ jobs:
       - name: Install vsce CLI
         run: npm i -g @vscode/vsce
 
-      - name: get test app
+      - name: Get test app
         run: npm run get-test-app -- ${{ github.event.inputs.testApp }}
         working-directory: packages/vscode-extension-tester
 
@@ -49,11 +49,26 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
+      - name: Install ffmpeg
+        run: brew install ffmpeg
+
+      - name: Start screen recording
+        run: |
+          mkdir -p videos
+          # Nagrywanie tylko obrazu z ekranu (bez dźwięku), format avfoundation
+          ffmpeg -f avfoundation -framerate 15 -i "1:0" -preset ultrafast -t 600 videos/vscode-ui-recording.mp4 > /dev/null 2>&1 &
+          echo $! > ffmpeg_pid.txt
+
       - name: Run setup-run-tests
         run: npm run setup-run-tests
         working-directory: packages/vscode-extension-tester
         env:
           PROJECT_NAME: ${{ github.event.inputs.testApp }}
+
+      - name: Stop screen recording
+        if: always()
+        run: |
+          kill $(cat ffmpeg_pid.txt) || true
 
       - name: Upload screenshots on failure
         if: failure()
@@ -61,3 +76,10 @@ jobs:
         with:
           name: vscode-ui-screenshots
           path: packages/vscode-extension-tester/screenshots/
+
+      - name: Upload video recording
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-ui-recording
+          path: videos/vscode-ui-recording.mp4
