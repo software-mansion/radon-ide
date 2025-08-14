@@ -11,6 +11,7 @@
     "clean": "rm -rf ./data/vscode-storage",
     "setup-run-tests": "npm run clean && npm run setup && npm run ui-tests",
     "get-test-app": "./scripts/downloadRepo.sh",
+    "prepare-and-run-tests": "npm run get-test-app && npm run build-vsix-package && npm run setup-run-tests",
     "extest": "extest run-tests -h",
     "set-up-VM-environment": "cd ./scripts && ./setupVM.sh && cd ..",
     "run-tests-on-VM": "npm run build-vsix-package && cd ./scripts && ./runTests.sh && cd .."
