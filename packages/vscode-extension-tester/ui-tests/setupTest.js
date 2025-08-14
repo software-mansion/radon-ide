@@ -9,7 +9,7 @@ import fs from "fs";
 
 let driver, workbench, view, browser;
 
-beforeEach(async function () {
+before(async function () {
   console.log("Initializing VSBrowser...");
   browser = VSBrowser.instance;
   if (!browser) {
@@ -24,9 +24,10 @@ beforeEach(async function () {
 
   await browser.waitForWorkbench();
   workbench = new Workbench();
+  await workbench.executeCommand("Notifications: Clear All Notifications");
+  await workbench.executeCommand("View: Close All Editors");
 
   view = new WebView();
-  // await openProjectInVSCode(browser, driver, paths.projectPath, workbench);
 });
 
 afterEach(async function () {
