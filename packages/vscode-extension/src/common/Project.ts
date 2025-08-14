@@ -320,6 +320,9 @@ export interface ProjectInterface {
   getDeepLinksHistory(): Promise<string[]>;
   openDeepLink(link: string, terminateApp: boolean): Promise<void>;
 
+  openSendFileDialog(): Promise<void>;
+  sendFileToDevice(fileDescription: { fileName: string; data: ArrayBuffer }): Promise<void>;
+
   startRecording(): void;
   captureAndStopRecording(): void;
   captureReplay(): void;

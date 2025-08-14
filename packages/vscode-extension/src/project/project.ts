@@ -489,6 +489,30 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #endregion DeepLinks
 
+  // #region File Transfer
+
+  public async openSendFileDialog() {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.openSendFileDialog();
+  }
+
+  public async sendFileToDevice({
+    fileName,
+    data,
+  }: {
+    fileName: string;
+    data: ArrayBuffer;
+  }): Promise<void> {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.sendFileToDevice(fileName, data);
+  }
+
+  // #endregion
+
   // #region Recording
 
   private recordingTimeout: NodeJS.Timeout | undefined = undefined;

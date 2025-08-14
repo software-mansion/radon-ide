@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { ExecaChildProcess, ExecaError } from "execa";
+import mime from "mime";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
@@ -519,6 +520,26 @@ export class IosSimulatorDevice extends DeviceBase {
       getOrCreateDeviceSet(this.deviceUDID),
     ]);
   }
+
+  public async sendFile(filePath: string): Promise<void> {
+    if (!isMediaFile(filePath)) {
+      throw new Error("Only media file transfer is supported on iOS.");
+    }
+    const args = [
+      "simctl",
+      "--set",
+      getOrCreateDeviceSet(this.deviceUDID),
+      "addmedia",
+      this.deviceUDID,
+      filePath,
+    ];
+    await exec("xcrun", args);
+  }
+}
+
+function isMediaFile(filePath: string): boolean {
+  const type = mime.lookup(filePath);
+  return type.startsWith("image/") || type.startsWith("video/");
 }
 
 export async function getNewestAvailableIosRuntime() {

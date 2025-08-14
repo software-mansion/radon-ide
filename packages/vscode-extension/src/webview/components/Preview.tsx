@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
+import { useState, useRef, useEffect, MouseEvent, WheelEvent, useMemo } from "react";
 import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
@@ -509,6 +509,31 @@ function Preview({
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
 
+  const dragHandlers = useMemo(() => {
+    return {
+      onDrop(ev: React.DragEvent) {
+        ev.preventDefault();
+        const files = ev.dataTransfer.files;
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          file.arrayBuffer().then((buf) => {
+            project.sendFileToDevice({
+              fileName: file.name,
+              data: buf,
+            });
+          });
+        }
+      },
+      onDragOver(ev: React.DragEvent) {
+        ev.stopPropagation();
+        ev.preventDefault();
+      },
+      onDragEnter(ev: React.DragEvent) {
+        ev.preventDefault();
+      },
+    } as const;
+  }, [project]);
+
   return (
     <>
       <div
@@ -519,7 +544,7 @@ function Preview({
         {...wrapperTouchHandlers}>
         {showDevicePreview && (
           <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
-            <div className="touch-area" {...touchHandlers}>
+            <div className="touch-area" {...touchHandlers} {...dragHandlers}>
               <MjpegImg
                 src={previewURL}
                 ref={previewRef}
