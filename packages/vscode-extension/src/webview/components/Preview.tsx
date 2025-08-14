@@ -116,8 +116,6 @@ function Preview({
 
   const openRebuildAlert = useNativeRebuildAlert();
 
-  useEffect(() => {});
-
   /**
    * Converts mouse event coordinates to normalized touch coordinates ([0-1] range)
    * relative to the device preview image.
@@ -622,9 +620,6 @@ function Preview({
                   <Debugger />
                 </div>
               )}
-              {/* <div
-                style={{ position: "absolute", height: "100%", width: "100%" }}
-                {...dragHandlers}></div> */}
             </div>
           </Device>
         )}
