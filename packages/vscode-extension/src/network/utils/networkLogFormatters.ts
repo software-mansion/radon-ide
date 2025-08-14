@@ -1,7 +1,7 @@
 import { NetworkLog } from "../hooks/useNetworkTracker";
-import { NetworkLogColumn, FilterType } from "../types/network";
+import { NetworkLogColumn, FilterType, SortDirection } from "../types/network";
 
-export const NetworkLogFormatters = {
+const NetworkLogFormatters = {
   Name: (log: NetworkLog): string => {
     return log.request?.url.split("/").pop() || "(pending)";
   },
@@ -41,9 +41,86 @@ export const NetworkLogFormatters = {
 /**
  * Helper function to get the formatted value for a specific column from a NetworkLog
  */
-export const getNetworkLogValue = (log: NetworkLog, column: NetworkLogColumn): string => {
+export function getNetworkLogValue(log: NetworkLog, column: NetworkLogColumn): string {
   return NetworkLogFormatters[column](log);
-};
+}
+
+export function sortNetworkLogs(
+  networkLogs: NetworkLog[],
+  column: NetworkLogColumn | null,
+  direction: SortDirection | null
+): NetworkLog[] {
+  if (!column || !direction) {
+    return networkLogs;
+  }
+
+  const compare = (a: NetworkLog, b: NetworkLog) => {
+    const aValue = getNetworkLogValue(a, column);
+    const bValue = getNetworkLogValue(b, column);
+    let comparison = 0;
+
+    // Handle numeric sorting for Status, Size, and Time columns
+    switch (column) {
+      case NetworkLogColumn.Status: {
+        const aNum = parseInt(aValue) || 0;
+        const bNum = parseInt(bValue) || 0;
+        comparison = aNum - bNum;
+        break;
+      }
+      case NetworkLogColumn.Size: {
+        /** Extract numeric value from size string ("1.5 KB" -> 1536) */
+        const getSizeInBytes = (sizeStr: string): number => {
+          if (sizeStr === "(pending)") {
+            return 0;
+          }
+
+          /**
+           * Extracts numeric value and unit.
+           * The pattern captures a number (with optional decimal places) followed by optional whitespace and a unit string.
+           *
+           * @example
+           * // Matches strings like "1.5 MB", "250KB", "10 bytes"
+           * // Returns: ["1.5 MB", "1.5", "MB"] or null if no match
+           */
+          const match = sizeStr.match(/^(\d+(?:\.\d+)?)\s*(\w+)$/);
+          if (!match) {
+            return 0;
+          }
+
+          const value = parseFloat(match[1]);
+          const unit = match[2];
+          const multipliers: Record<string, number> = {
+            B: 1,
+            KB: 1024,
+            MB: Math.pow(1024, 2),
+            GB: Math.pow(1024, 3),
+            TB: Math.pow(1024, 4),
+          };
+          return value * (multipliers[unit] || 0);
+        };
+
+        comparison = getSizeInBytes(aValue) - getSizeInBytes(bValue);
+        break;
+      }
+      case NetworkLogColumn.Time: {
+        // Extract numeric value from time string ("150 ms" -> 150)
+        const aNum = parseInt(aValue) || 0;
+        const bNum = parseInt(bValue) || 0;
+        comparison = aNum - bNum;
+        break;
+      }
+      default: {
+        // String comparison for other columns
+        comparison = aValue.localeCompare(bValue);
+        break;
+      }
+    }
+
+    return direction === SortDirection.Asc ? comparison : -comparison;
+  };
+
+  return [...networkLogs].sort(compare);
+}
 
 /**
  * Array of all available network log columns for use in filters, tables

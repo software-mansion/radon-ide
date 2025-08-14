@@ -1,5 +1,5 @@
 import classNames from "classnames";
-import { useMemo, useLayoutEffect, useRef } from "react";
+import { useMemo, useLayoutEffect, useRef, useState } from "react";
 import {
   VscodeTable,
   VscodeTableBody,
@@ -8,11 +8,17 @@ import {
   VscodeTableHeaderCell,
   VscodeTableRow,
 } from "@vscode-elements/react-elements";
+import { SortDirection } from "../types/network";
 
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import "./NetworkRequestLog.css";
-import { getNetworkLogValue } from "../utils/networkLogFormatters";
+import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogFormatters";
 import { NetworkLogColumn } from "../types/network";
+
+interface SortState {
+  column: NetworkLogColumn | null;
+  direction: SortDirection | null;
+}
 
 interface NetworkRequestLogProps {
   networkLogs: NetworkLog[];
@@ -28,6 +34,15 @@ const NetworkRequestLog = ({
   parentHeight,
 }: NetworkRequestLogProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [sortState, setSortState] = useState<SortState>({
+    column: null,
+    direction: null,
+  });
+
+  // Sort the network logs based on current sort state
+  const sortedNetworkLogs = useMemo(() => {
+    return sortNetworkLogs(networkLogs, sortState.column, sortState.direction);
+  }, [networkLogs, sortState]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -44,7 +59,7 @@ const NetworkRequestLog = ({
         top: container.scrollHeight,
       });
     }
-  }, [networkLogs, selectedNetworkLog]);
+  }, [sortedNetworkLogs, selectedNetworkLog]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -109,6 +124,34 @@ const NetworkRequestLog = ({
     []
   );
 
+  const headerClickHandler = (column: NetworkLogColumn) => {
+    setSortState((prevState) => {
+      // If clicking on the same column, cycle through: asc -> desc -> null
+      if (prevState.column === column) {
+        switch (prevState.direction) {
+          case SortDirection.Asc:
+            return { column, direction: SortDirection.Desc };
+          case SortDirection.Desc:
+            return { column: null, direction: null };
+          case null:
+          default:
+            return { column, direction: SortDirection.Asc };
+        }
+      }
+      // If clicking on a different column or no current sort, start with ascending
+      return { column, direction: SortDirection.Asc };
+    });
+  };
+
+  
+
+  const getSortIcon = (column: NetworkLogColumn) => {
+    if (sortState.column !== column) {
+      return "hidden"; // No icon when not sorting by this column
+    }
+    return sortState.direction === SortDirection.Asc ? "codicon-chevron-up" : "codicon-chevron-down";
+  };
+
   return (
     <div className="table-container" ref={containerRef}>
       <div style={{ width: "100%", overflowX: "hidden" }}>
@@ -117,16 +160,23 @@ const NetworkRequestLog = ({
           zebra
           bordered-columns
           resizable
-          responsive
           style={{ height: parentHeight }}
           key={parentHeight}>
           <VscodeTableHeader slot="header">
             {logDetailsConfig.map(({ title }) => (
-              <VscodeTableHeaderCell key={title}>{title}</VscodeTableHeaderCell>
+              <VscodeTableHeaderCell
+                key={title}
+                onClick={() => headerClickHandler(title)}
+                style={{ cursor: "pointer" }}>
+                <div className="table-header-cell">
+                  <div>{title}</div>
+                  <span className={`codicon ${getSortIcon(title)}`}></span>
+                </div>
+              </VscodeTableHeaderCell>
             ))}
           </VscodeTableHeader>
           <VscodeTableBody slot="body">
-            {networkLogs.map((log) => (
+            {sortedNetworkLogs.map((log) => (
               <VscodeTableRow
                 key={log.requestId}
                 className={classNames(

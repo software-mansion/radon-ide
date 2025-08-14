@@ -20,3 +20,8 @@ export enum NetworkLogColumn {
 }
 
 export type FilterType = "All" | NetworkLogColumn;
+
+export enum SortDirection {
+  Asc = "asc",
+  Desc = "desc",
+}

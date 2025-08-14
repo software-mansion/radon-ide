@@ -9,3 +9,38 @@
   cursor: pointer;
   background-color: var(--vscode-list-hoverBackground);
 }
+
+.table-header-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: row;
+  min-width: 0; /* Allow flex items to shrink below their content size */
+  padding-right: 10px;
+}
+
+.table-header-cell > div:first-child {
+  /* Title container */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0; /* Allow this to shrink */
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.table-header-cell > span {
+  flex-shrink: 0;
+
+  .hidden {
+    display: none;
+  }
+}
+
+vscode-table-header-cell:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
