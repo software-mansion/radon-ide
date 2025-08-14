@@ -10,17 +10,15 @@ import {
 import { get } from "./setupTest.js";
 
 describe("Adding device tests", () => {
-  let driver;
+  let driver, view;
 
   beforeEach(async function () {
-    ({ driver } = get());
-  });
-
-  afterEach(async function () {
-    const view = new WebView();
+    ({ driver, view } = get());
     await view.switchBack();
     await new EditorView().closeAllEditors();
     await deleteAllDevices(driver);
+    await view.switchBack();
+    await new EditorView().closeAllEditors();
   });
 
   it("should add device to Radon IDE", async function () {
