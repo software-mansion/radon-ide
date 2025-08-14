@@ -5,6 +5,7 @@ import { Logger } from "../Logger";
 import { MultimediaData, TouchPoint, DeviceButtonType, DeviceRotation } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
+import { disposeAll } from "../utilities/disposables";
 
 interface MultimediaPromiseHandlers {
   resolve: (value: MultimediaData) => void;
@@ -16,18 +17,26 @@ enum MultimediaType {
   Screenshot = "screenshot",
 }
 
+type FramerateReport = {
+  fps: number;
+  received: number;
+  dropped: number;
+  timestamp: number;
+};
+
 export class Preview implements Disposable {
+  private disposables: Disposable[] = [];
   private multimediaPromises = new Map<string, MultimediaPromiseHandlers>();
   private subprocess?: ChildProcess;
   private tokenChangeListener?: Disposable;
+  private fpsReportListener?: (report: FramerateReport) => void;
   public streamURL?: string;
   private replaysStarted = false;
 
-  constructor(private args: string[]) {}
+  constructor(private args: string[]) { }
 
   dispose() {
-    this.subprocess?.kill();
-    this.tokenChangeListener?.dispose();
+    disposeAll(this.disposables);
   }
 
   private sendCommandOrThrow(command: string) {
@@ -75,12 +84,14 @@ export class Preview implements Disposable {
       buffer: false,
     });
     this.subprocess = subprocess;
+    this.disposables.push(new Disposable(() => subprocess.kill()));
 
     this.tokenChangeListener = watchLicenseTokenChange((token) => {
       if (token) {
         this.sendCommandOrThrow(`token ${token}\n`);
       }
     });
+    this.disposables.push(this.tokenChangeListener);
 
     return new Promise<string>((resolve, reject) => {
       subprocess.catch(reject).then(() => {
@@ -106,6 +117,29 @@ export class Preview implements Disposable {
             this.streamURL = match[1];
             resolve(this.streamURL);
           }
+        } else if (line.includes("fps_report")) {
+          // the frame rate report format is as follows:
+          // fps_report {"fps":number ,"received":number,"dropped":number,"timestamp":number}
+          const frameRateRegex = /fps_report\s+(\{.*\})/;
+          const match = line.match(frameRateRegex);
+          if (!match) {
+            return;
+
+          }
+          const jsonString = match[1];
+          let frameRateData: FramerateReport;
+          try{
+            frameRateData = JSON.parse(jsonString) as FramerateReport;
+          } catch (error) {
+            Logger.error("[Preview] Error parsing frame rate JSON:", error);
+            return;
+          }
+          if(!this.fpsReportListener){
+            Logger.warn("[Preview] No FPS report listener registered but received frame rate data, this should not be reachable.");
+            return;
+          }
+          this.fpsReportListener(frameRateData);
+
         } else if (
           line.includes("video_ready") ||
           line.includes("video_error") ||
@@ -153,7 +187,17 @@ export class Preview implements Disposable {
     });
   }
 
-  setUpKeyboard() {
+  public startFrameRateReporting(onFpsReport: (report: FramerateReport) => void) {
+    this.subprocess?.stdin?.write("fps true\n");
+    this.fpsReportListener = onFpsReport;
+  }
+
+  public stopFrameRateReporting() {
+    this.subprocess?.stdin?.write("fps false\n");
+    this.fpsReportListener = undefined;
+  }
+
+  public setUpKeyboard() {
     this.subprocess?.stdin?.write("setUpKeyboard\n");
   }
 
