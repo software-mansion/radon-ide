@@ -40,25 +40,30 @@ const StartScreen = () => {
     <>
       <section className={styles.hero}>
         <div className={styles.heading}>
-          <p>
+          <p className={styles.preheadingLabel}>
             <span className={styles.left}>Trusted by</span>
             <span className={styles.center}>24,000+ engineers</span> worldwide
           </p>
           <h1 className={styles.headingLabel}>
-            The Best <span>IDE</span> <br /> for&nbsp;React Native & Expo
+            The Best <span className={styles.headingIde}>IDE</span> <br /> for&nbsp;
+            <span className={styles.headingRN}>React Native</span> & Expo
           </h1>
           <h2 className={styles.subheadingLabel}>
             Radon IDE extension turns your VSCode or Cursor editor <br /> into fully-featured IDE
-            for faster and more efficient development
+            for faster and more efficient development.{" "}
+            <p>
+              Trusted by <span>24,000+ engineers worldwide</span>.
+            </p>
           </h2>
-          <DownloadButtons isModal={false} />
+          <div className={styles.buttonContainer}>
+            <DownloadButtons vertical={false} />
+          </div>
           <div className={styles.headingDisclaimer}>
             Try 30 days for free. No sign up or credit card required.
           </div>
-
           <div className={styles.gradient}>
             <div className={styles.imageContainer}>
-              <img src="../img/hero_screenshot.png" className={styles.heroImage} />
+              <img src="../img/screenshot_hero.png" className={styles.heroImage} />
               <SecondaryButton title="Watch the Demo" onClick={handleDialogOpen} />
             </div>
           </div>

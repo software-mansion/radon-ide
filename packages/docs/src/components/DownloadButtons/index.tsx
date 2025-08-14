@@ -3,25 +3,25 @@ import styles from "./styles.module.css";
 import HomeButton from "./HomeButton";
 
 interface HomepageButtonsProps {
-  isModal?: boolean;
+  vertical?: boolean;
 }
 
-const DownloadButtons = ({ isModal }: HomepageButtonsProps) => {
+const DownloadButtons = ({ vertical }: HomepageButtonsProps) => {
   return (
-    <div className={isModal ? styles.modalButtonContainer : styles.buttonContainer}>
+    <div className={vertical ? styles.verticalButtonContainer : styles.buttonContainer}>
       <HomeButton
         target="_blank"
         href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
         title="Download for VSCode"
         icon="vscode"
-        isModal={isModal}
+        vertical={vertical}
       />
       <HomeButton
         target="_blank"
         href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
         title="Download for Cursor"
         icon="cursor"
-        isModal={isModal}
+        vertical={vertical}
       />
     </div>
   );

@@ -5,10 +5,20 @@
   gap: 24px;
 }
 
-.modalButtonContainer {
+.verticalButtonContainer {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 16px;
   align-self: stretch;
+}
+
+@media (max-width: 580px) {
+  .buttonContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    align-self: stretch;
+  }
 }

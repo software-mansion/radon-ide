@@ -1,11 +1,14 @@
 .hero {
   display: flex;
   align-items: center;
-  padding-top: 64px;
+  padding: 64px 24px 0;
   justify-content: center;
 }
+.heading {
+  color: var(--ifm-color-primary);
+}
 
-.heading p {
+.preheadingLabel {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,14 +17,16 @@
   line-height: 24px;
 }
 
-.heading p span.left {
+.preheadingLabel span.left {
   color: var(--radon-color-grey-dark);
 }
 
-.heading p span.center {
-  color: var(--ifm-color-primary);
+.preheadingLabel span.center {
   font-weight: 700;
-  margin: 0 4px;
+}
+p.preheadingLabel {
+  gap: 8px;
+  margin: 0 auto;
 }
 
 .headingLabel {
@@ -33,37 +38,64 @@
   padding: 24px 0;
 }
 
-.headingLabel span {
+.headingLabel span.headingIde {
   color: var(--swm-green-light-100);
+  font-weight: 700;
+}
+.headingLabel span.headingRN {
+  font-weight: 500;
 }
 
 .gradient {
-  width: 1360px;
-  /* height: 682px; */
+  max-width: 1360px;
   background: var(
     --Radial-green,
-    radial-gradient(50% 50% at 50% 50%, #38a880 55.29%, rgba(17, 17, 17, 0) 100%)
+    radial-gradient(
+      50% 50% at 50% 50%,
+      var(--radon-gradient-green) 55.29%,
+      var(--radon-gradient-black) 100%
+    )
   );
   display: flex;
   justify-content: center;
   z-index: 4;
 }
 
-.heroImage {
-  width: 1200px;
-  height: auto;
-  /* height: 675px; */
-  /* aspect-ratio: 16/9; */
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
-  z-index: 5;
-}
-
 .imageContainer {
   display: flex;
   justify-content: center;
   position: relative;
-  top: 83px;
+  margin-top: 6%;
+  padding: 0 60px;
+}
+
+.heroImage {
+  max-width: 1200px;
+  width: 100%;
+  height: auto;
+  z-index: 5;
+}
+
+.subheadingLabel {
+  color: var(--radon-subheading);
+  text-align: center;
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 32px;
+}
+
+.subheadingLabel p {
+  display: none;
+  font-size: inherit;
+  margin: 0;
+}
+
+.subheadingLabel p span {
+  font-weight: 500;
+}
+
+.buttonContainer {
+  padding: 32px 0;
 }
 
 .headingDisclaimer {
@@ -73,114 +105,44 @@
   font-size: 16px;
   font-weight: 400;
   line-height: 24px;
-  padding-top: 16px;
-  /* padding: 16px 0; */
 }
 
-.headingDisclaimerIcon {
-  margin-right: 5px;
-}
-
-.subheadingLabel {
-  color: var(--radon-subheading);
-  text-align: center;
-  font-size: 20px;
-  font-weight: 400;
-  line-height: 32px;
-  padding-bottom: 40px;
-}
-
-.buttonContainer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 24px;
-}
-
-@media (min-width: 2920px) {
-  .heroImageWrapper {
-    width: auto;
-    position: static;
-    transform: none;
+@media (max-width: 800px) {
+  .imageContainer {
+    padding: 0;
   }
+}
+
+@media (max-width: 730px) {
   .hero {
-    flex-direction: row-reverse;
-    margin-bottom: 0;
-    align-items: center;
+    padding: 24px 24px 0;
   }
-  .subheadingLabel {
-    width: 100%;
-  }
-  .heading {
-    margin: 0;
-  }
-}
 
-@media (max-width: 2400px) {
-  .heroImageWrapper {
-    transform: translateX(60%) translateY(5%);
+  .heading p {
+    text-align: left;
   }
-}
 
-@media (max-width: 996px) {
-  .hero {
-    margin-bottom: 1rem;
+  .preheadingLabel {
+    display: none;
   }
-  .heading {
-    margin-top: 4rem;
-  }
+
   .headingLabel {
-    font-size: 42px;
+    font-size: 32px;
+    line-height: normal;
+    text-align: left;
   }
+
   .subheadingLabel {
-    margin: 2rem 0 3.5rem 0;
-    font-size: 26px;
-    width: 100%;
+    display: inline-block;
+    text-align: left;
   }
 
-  .heroImageWrapper {
-    width: auto;
-    position: static;
-    margin-top: 4rem;
-    border-width: 1rem;
-    border-radius: 2.5rem;
-    transform: none;
-  }
-  .heroImage {
-    border-width: 0.5rem;
-    border-radius: 1.5rem;
-  }
-}
-
-@media (max-width: 430px) {
-  .hero {
-    margin-bottom: 0;
-  }
-  .headingLabel {
-    font-size: 28px;
-  }
-  .subheadingLabel {
-    margin: 1rem 0 2rem 0;
-    font-size: 18px;
+  .subheadingLabel p {
+    display: inline;
   }
 
-  .heroImageWrapper {
-    border-width: 8px;
-    border-radius: 16px;
-  }
-  .heroImage {
-    border-width: 4px;
-    border-radius: 8px;
-  }
-  .headingDisclaimer {
-    align-items: flex-start;
-  }
-  .headingDisclaimer svg {
-    margin-top: 2px;
-  }
-
-  .buttonContainer {
-    flex-direction: column;
+  br {
+    display: none;
   }
 }
 

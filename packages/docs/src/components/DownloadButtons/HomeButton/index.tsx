@@ -7,7 +7,7 @@ interface HomeButtonProps {
   href: string;
   target?: "_blank" | "_parent" | "_self" | "_top";
   icon?: "vscode" | "cursor";
-  isModal?: boolean;
+  vertical?: boolean;
   onClick?: () => void;
 }
 
@@ -16,14 +16,14 @@ export default function HomeButton({
   href,
   target,
   icon,
-  isModal,
+  vertical,
   onClick,
 }: HomeButtonProps) {
   return (
     <a
       href={href}
       target={target}
-      className={isModal ? styles.modalContainer : styles.container}
+      className={vertical ? styles.verticalContainer : styles.container}
       onClick={onClick}>
       <div className={styles.iconContainer}>
         {icon == "vscode" ? <VSCodeIcon /> : icon == "cursor" ? <CursorIcon /> : null}

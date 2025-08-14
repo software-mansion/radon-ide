@@ -100,6 +100,8 @@
   --radon-button: #248363;
   --radon-button-hover: #186e51;
   --radon-color-grey-dark: #737373;
+  --radon-gradient-green: #38a880;
+  --radon-gradient-black: #11111100;
 
   /* --- Text rebranding --- */
   --radon-color-primary: #fafafa;

@@ -12,7 +12,7 @@
   justify-content: center;
 
   background-color: var(--swm-background);
-  color: var(--ifm-color-primary);
+  color: var(--radon-button-text);
 
   padding: 16px;
   gap: 12px;
