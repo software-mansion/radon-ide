@@ -1,8 +1,11 @@
 import classNames from "classnames";
-import { useEffect, useRef } from "react";
 import "./NetworkBar.css";
-import { VscodeTextfield, VscodeSingleSelect, VscodeOption } from "@vscode-elements/react-elements";
-import type { VscodeSingleSelect as VscodeSingleSelectElement } from "@vscode-elements/elements/dist/vscode-single-select/vscode-single-select";
+import {
+  VscodeTextfield,
+  VscodeSingleSelect,
+  VscodeOption,
+  VscodeCheckbox,
+} from "@vscode-elements/react-elements";
 import IconButton from "../../webview/components/shared/IconButton";
 import { useNetwork } from "../providers/NetworkProvider";
 import { FILTER_TYPES } from "../utils/networkLogFormatters";
@@ -18,25 +21,21 @@ function NetworkBar() {
     setFilters,
   } = useNetwork();
 
-  const selectRef = useRef<VscodeSingleSelectElement>(null);
+  const handleTypeChange = (e: Event) => {
+    // @ts-ignore - ignore type warning for web component
+    setFilters({ ...filters, filterType: e.target.value });
+  };
 
-  useEffect(() => {
-    const selectElement = selectRef.current;
-    if (!selectElement) {
-      return;
-    }
+  const handleInvertChange = (e: Event) => {
+    // @ts-ignore - ignore type warning for web component
+    setFilters({ ...filters, invert: e.target.checked });
+  };
 
-    const handleChange = () => {
-      // @ts-ignore - ignore type warning for web component
-      setFilters({ ...filters, filterType: selectElement.value });
-    };
-
-    selectElement.addEventListener("change", handleChange);
-
-    return () => {
-      selectElement.removeEventListener("change", handleChange);
-    };
-  }, [filters, setFilters]);
+  const handleValueChange = (e: Event) => {
+    // @ts-ignore - ignore type warning for web component
+    const value = e.target.value;
+    setFilters({ ...filters, filterValue: value.trim() });
+  };
 
   return (
     <div className="network-bar">
@@ -84,7 +83,7 @@ function NetworkBar() {
         <div className="network-filter">
           <VscodeSingleSelect
             className="network-filter-select"
-            ref={selectRef}
+            onChange={handleTypeChange}
             value={filters.filterType}>
             {FILTER_TYPES.map((filterType) => (
               <VscodeOption key={filterType} value={filterType}>
@@ -95,11 +94,12 @@ function NetworkBar() {
 
           <VscodeTextfield
             value={filters.filterValue ?? ""}
-            onInput={(e) => {
-              // @ts-ignore it works, types seem to be incorrect here
-              setFilters({ ...filters, filterValue: e.target.value });
-            }}
+            onInput={handleValueChange}
             placeholder={`Filter by ${filters.filterType}`}
+          />
+          <VscodeCheckbox
+            onChange={handleInvertChange}
+            label="Invert"
           />
         </div>
       )}

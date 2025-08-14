@@ -15,12 +15,14 @@ interface Filters {
   timestampRange?: TimestampRange;
   filterType: FilterType;
   filterValue?: string;
+  invert: boolean;
 }
 
 const DEFAULT_FILTER: Filters = {
   timestampRange: undefined,
   filterType: "All",
   filterValue: "",
+  invert: false,
 } as const;
 
 interface NetworkProviderProps extends NetworkTracker {
@@ -77,7 +79,8 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
   const networkLogs = useMemo(() => {
     return networkTracker.networkLogs.filter((log) => {
-      const { timestampRange, filterType, filterValue } = filters;
+      const { timestampRange, filterType, filterValue, invert } = filters;
+      console.log("mleko", invert)
 
       // Timestamp range filter
       const matchesTimestampRange =
@@ -93,18 +96,20 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
         // If "All", search in all columns
         if (filterType === "All") {
-          return NETWORK_LOG_COLUMNS.some((column) =>
+          const matches = NETWORK_LOG_COLUMNS.some((column) =>
             getNetworkLogValue(log, column).toLowerCase().includes(filterValue.toLowerCase())
           );
+          return matches !== invert; // XOR invert logic
         }
 
         // Otherwise, search specific column
-        return getNetworkLogValue(log, filterType)
+        const matches = getNetworkLogValue(log, filterType)
           .toLowerCase()
           .includes(filterValue.toLowerCase());
+        return matches !== invert; // XOR invert logic
       })();
 
-      return matchesTimestampRange && matchesNewFilter;
+      return matchesNewFilter && matchesTimestampRange;
     });
   }, [networkTracker.networkLogs, filters]);
 
