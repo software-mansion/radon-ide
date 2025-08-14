@@ -35,6 +35,10 @@
 
 .table-header-cell > span {
   flex-shrink: 0;
+  
+  &.codicon{
+    font-weight: bold;
+  }
 
   .hidden {
     display: none;
