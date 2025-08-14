@@ -80,7 +80,6 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkLogs = useMemo(() => {
     return networkTracker.networkLogs.filter((log) => {
       const { timestampRange, filterType, filterValue, invert } = filters;
-      console.log("mleko", invert)
 
       // Timestamp range filter
       const matchesTimestampRange =
