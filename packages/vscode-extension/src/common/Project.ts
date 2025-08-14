@@ -303,6 +303,8 @@ export interface ProjectInterface {
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
+  stepIntoDebugger(): Promise<void>;
+  stepOutDebugger(): Promise<void>;
   focusDebugConsole(): Promise<void>;
 
   openNavigation(navigationItemID: string): Promise<void>;

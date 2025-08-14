@@ -297,6 +297,34 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
     this.sendResponse(response);
   }
 
+  protected override async stepInRequest(
+    response: DebugProtocol.StepInResponse,
+    args: DebugProtocol.StepInArguments
+  ): Promise<void> {
+    if (!this.cdpSession) {
+      Logger.warn("[DebugAdapter] [stepInRequest] The CDPSession was not initialized yet");
+      this.sendResponse(response);
+      return;
+    }
+
+    await this.cdpSession.sendCDPMessage("Debugger.stepInto", {});
+    this.sendResponse(response);
+  }
+
+  protected override async stepOutRequest(
+    response: DebugProtocol.StepOutResponse,
+    args: DebugProtocol.StepOutArguments
+  ): Promise<void> {
+    if (!this.cdpSession) {
+      Logger.warn("[DebugAdapter] [stepOutRequest] The CDPSession was not initialized yet");
+      this.sendResponse(response);
+      return;
+    }
+
+    await this.cdpSession.sendCDPMessage("Debugger.stepOut", {});
+    this.sendResponse(response);
+  }
+
   protected disconnectRequest(
     response: DebugProtocol.DisconnectResponse,
     args: DebugProtocol.DisconnectArguments

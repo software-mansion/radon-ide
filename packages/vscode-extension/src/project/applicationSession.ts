@@ -361,6 +361,12 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   public stepOverDebugger() {
     this.debugSession?.stepOverDebugger();
   }
+  public stepOutDebugger() {
+    this.debugSession?.stepOutDebugger();
+  }
+  public stepIntoDebugger() {
+    this.debugSession?.stepIntoDebugger();
+  }
 
   private async connectJSDebugger() {
     const websocketAddress = await this.metro.getDebuggerURL();
