@@ -298,6 +298,12 @@
             "PortraitUpsideDown"
           ],
           "description": "Controls the default device rotation for simulators and emulators when they are created or launched."
+        },
+        "RadonIDE.startDeviceOnLaunch": {
+          "type": "boolean",
+          "scope": "window",
+          "default": true,
+          "description": "Automatically starts the last used device when opening the IDE Panel."
         }
       }
     },

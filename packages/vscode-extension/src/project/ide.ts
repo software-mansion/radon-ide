@@ -55,6 +55,11 @@ export class IDE implements Disposable {
     this.environmentDependencyManager = new EnvironmentDependencyManager(
       this.stateManager.getDerived("environmentDependencies")
     );
+
+    this.workspaceConfigController = new WorkspaceConfigController(
+      this.stateManager.getDerived("workspaceConfiguration")
+    );
+
     this.project = new Project(
       this.stateManager.getDerived("projectState"),
       this.stateManager.getDerived("workspaceConfiguration"),
@@ -70,10 +75,6 @@ export class IDE implements Disposable {
     this.project.appRootConfigController.getAvailableApplicationRoots().then((applicationRoots) => {
       this.stateManager.setState({ applicationRoots });
     });
-
-    this.workspaceConfigController = new WorkspaceConfigController(
-      this.stateManager.getDerived("workspaceConfiguration")
-    );
 
     this.disposables.push(
       this.project,
