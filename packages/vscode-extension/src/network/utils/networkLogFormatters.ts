@@ -1,5 +1,5 @@
 import { NetworkLog } from "../hooks/useNetworkTracker";
-import { NetworkLogColumn, FilterType, SortDirection } from "../types/network";
+import { NetworkLogColumn, SortDirection, ParsedFilter } from "../types/network";
 
 const NetworkLogFormatters = {
   Name: (log: NetworkLog): string => {
@@ -43,6 +43,91 @@ const NetworkLogFormatters = {
  */
 export function getNetworkLogValue(log: NetworkLog, column: NetworkLogColumn): string {
   return NetworkLogFormatters[column](log);
+}
+
+/**
+ * Parse filter text in format "column:value column2:value2" or plain text for global search
+ */
+export function parseFilterText(filterText: string): { 
+  parsedFilters: ParsedFilter[], 
+  globalSearchTerm: string 
+} {
+  const parsedFilters: ParsedFilter[] = [];
+  let remainingText = filterText.trim();
+  
+  // Column name mapping for case-insensitive matching
+  const columnMapping: Record<string, NetworkLogColumn> = {
+    'name': NetworkLogColumn.Name,
+    'status': NetworkLogColumn.Status,
+    'method': NetworkLogColumn.Method,
+    'type': NetworkLogColumn.Type,
+    'size': NetworkLogColumn.Size,
+    'time': NetworkLogColumn.Time,
+  };
+
+  // Regex to match "column:value" patterns, handling values with spaces
+  // This matches column names followed by : and captures everything until the next column: pattern or end of string
+  const filterRegex = /(\w+):\s*([^]*?)(?=\s+\w+:|$)/g;
+  let match;
+  let matchedPositions: Array<{ start: number, end: number }> = [];
+  
+  while ((match = filterRegex.exec(filterText)) !== null) {
+    const [fullMatch, columnName, value] = match;
+    const normalizedColumn = columnMapping[columnName.toLowerCase()];
+    
+    if (normalizedColumn) {
+      parsedFilters.push({
+        columnName: normalizedColumn,
+        value: value.trim(),
+      });
+      
+      // Track matched positions to remove from remaining text
+      matchedPositions.push({
+        start: match.index,
+        end: match.index + fullMatch.length
+      });
+    }
+  }
+  
+  // Remove matched filters from remaining text
+  if (matchedPositions.length > 0) {
+    // Sort by position descending to remove from end to start
+    matchedPositions.sort((a, b) => b.start - a.start);
+    
+    for (const pos of matchedPositions) {
+      remainingText = filterText.substring(0, pos.start) + filterText.substring(pos.end);
+      filterText = remainingText; // Update for next iteration
+    }
+  }
+  
+  return {
+    parsedFilters,
+    globalSearchTerm: remainingText.trim(),
+  };
+}
+
+/**
+ * Get autocomplete suggestion for partial filter text
+ */
+export function getFilterAutocompleteSuggestion(filterText: string): string {
+  if (!filterText) {
+    return '';
+  }
+  
+  const words = filterText.split(/\s+/);
+  const lastWord = words[words.length - 1];
+  
+  // Check if the last word looks like it's starting a filter
+  if (!lastWord.includes(':') && lastWord.length > 0) {
+    const columnNames = ['name', 'status', 'method', 'type', 'size', 'time'];
+    const match = columnNames.find(col => col.startsWith(lastWord.toLowerCase()));
+    
+    if (match && match !== lastWord.toLowerCase()) {
+      return match.substring(lastWord.length) + ':';
+    }
+  }
+  
+  return '';
 }
 
 export function sortNetworkLogs(
@@ -133,8 +218,3 @@ export const NETWORK_LOG_COLUMNS: NetworkLogColumn[] = [
   NetworkLogColumn.Size,
   NetworkLogColumn.Time,
 ];
-
-/**
- * Array of all filter types
- */
-export const FILTER_TYPES: FilterType[] = ["All", ...NETWORK_LOG_COLUMNS];

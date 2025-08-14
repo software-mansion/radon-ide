@@ -1,14 +1,11 @@
 import classNames from "classnames";
+import { useState } from "react";
 import "./NetworkBar.css";
-import {
-  VscodeTextfield,
-  VscodeSingleSelect,
-  VscodeOption,
-  VscodeCheckbox,
-} from "@vscode-elements/react-elements";
+import { VscodeCheckbox } from "@vscode-elements/react-elements";
 import IconButton from "../../webview/components/shared/IconButton";
+import FilterInput from "./FilterInput";
 import { useNetwork } from "../providers/NetworkProvider";
-import { FILTER_TYPES } from "../utils/networkLogFormatters";
+import { getFilterAutocompleteSuggestion } from "../utils/networkLogFormatters";
 
 function NetworkBar() {
   const {
@@ -21,20 +18,19 @@ function NetworkBar() {
     setFilters,
   } = useNetwork();
 
-  const handleTypeChange = (e: Event) => {
-    // @ts-ignore - ignore type warning for web component
-    setFilters({ ...filters, filterType: e.target.value });
-  };
+  const [suggestion, setSuggestion] = useState("");
 
   const handleInvertChange = (e: Event) => {
     // @ts-ignore - ignore type warning for web component
     setFilters({ ...filters, invert: e.target.checked });
   };
 
-  const handleValueChange = (e: Event) => {
-    // @ts-ignore - ignore type warning for web component
-    const value = e.target.value;
-    setFilters({ ...filters, filterValue: value.trim() });
+  const handleFilterTextChange = (value: string) => {
+    setFilters({ ...filters, filterText: value });
+    
+    // Update autocomplete suggestion
+    const newSuggestion = getFilterAutocompleteSuggestion(value);
+    setSuggestion(newSuggestion);
   };
 
   return (
@@ -69,7 +65,7 @@ function NetworkBar() {
       <IconButton
         onClick={toggleFilterVisible}
         tooltip={{
-          label: "Filter network requests",
+          label: "Filter network requests (supports column:value format like 'status:200 method:post')",
           side: "bottom",
         }}>
         <span
@@ -81,21 +77,12 @@ function NetworkBar() {
       </IconButton>
       {isFilterVisible && (
         <div className="network-filter">
-          <VscodeSingleSelect
-            className="network-filter-select"
-            onChange={handleTypeChange}
-            value={filters.filterType}>
-            {FILTER_TYPES.map((filterType) => (
-              <VscodeOption key={filterType} value={filterType}>
-                {filterType}
-              </VscodeOption>
-            ))}
-          </VscodeSingleSelect>
-
-          <VscodeTextfield
-            value={filters.filterValue ?? ""}
-            onInput={handleValueChange}
-            placeholder={`Filter by ${filters.filterType}`}
+          <FilterInput
+            value={filters.filterText}
+            onChange={handleFilterTextChange}
+            placeholder="Filter: status:200 method:post or search all columns"
+            suggestion={suggestion}
+            className="network-filter-input"
           />
           <VscodeCheckbox onChange={handleInvertChange} label="Invert" />
         </div>

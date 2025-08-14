@@ -21,6 +21,11 @@ export enum NetworkLogColumn {
 
 export type FilterType = "All" | NetworkLogColumn;
 
+export interface ParsedFilter {
+  columnName: NetworkLogColumn;
+  value: string;
+}
+
 export enum SortDirection {
   Asc = "asc",
   Desc = "desc",

@@ -1,0 +1,87 @@
+.filter-input-container {
+  position: relative;
+  flex-grow: 1;
+  min-width: 150px;
+  max-width: 300px;
+}
+
+.filter-input {
+  width: 100%;
+  padding: 6px 8px;
+  background-color: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
+  color: var(--vscode-input-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  font-weight: var(--vscode-font-weight);
+  line-height: normal;
+  border-radius: 2px;
+  outline: none;
+  box-sizing: border-box;
+  position: relative;
+  display: inline-block;
+}
+
+/* When there's a suggestion, make background transparent to show the hint */
+.filter-input-container--has-suggestion .filter-input:not(:focus) {
+  background-color: transparent;
+}
+
+/* Hide the suggestion when input is not focused */
+.filter-input-container:not(:focus-within) .filter-input-suggestion {
+  display: none;
+}
+
+/* Restore background on focus to hide the suggestion */
+.filter-input:focus {
+  background-color: var(--vscode-input-background);
+}
+
+.filter-input::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+.filter-input:focus,
+.filter-input--focused {
+  border-color: var(--vscode-focusBorder);
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+.filter-input:disabled {
+  background-color: var(--vscode-input-background);
+  color: var(--vscode-disabledForeground);
+  cursor: not-allowed;
+}
+
+.filter-input-suggestion {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  padding: 6px 8px;
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  font-weight: var(--vscode-font-weight);
+  line-height: normal;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  z-index: 3;
+  border: 1px solid transparent; /* Match input border to align text */
+  box-sizing: border-box;
+  background-color: transparent;
+}
+
+.filter-input-suggestion__existing {
+  color: transparent; /* Hide the existing text, just for positioning */
+  white-space: pre; /* Preserve spaces for accurate positioning */
+}
+
+.filter-input-suggestion__hint {
+  color: var(--vscode-input-placeholderForeground);
+  opacity: 0.7;
+}
