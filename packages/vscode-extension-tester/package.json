@@ -12,6 +12,7 @@
     "setup-run-tests": "npm run clean && npm run setup && npm run ui-tests",
     "get-test-app": "./scripts/downloadRepo.sh",
     "prepare-and-run-tests": "npm run get-test-app -- react-native-77 && npm run build-vsix-package && npm run setup-run-tests",
+    "start-recording-and-tests": "./scripts/screenRecording.sh && npm run setup-run-tests && kill $(cat videos/ffmpeg_pid.txt) || true",
     "extest": "extest run-tests -h",
     "set-up-VM-environment": "cd ./scripts && ./setupVM.sh && cd ..",
     "run-tests-on-VM": "npm run build-vsix-package && cd ./scripts && ./runTests.sh && cd .."

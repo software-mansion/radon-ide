@@ -52,21 +52,11 @@ jobs:
       - name: Install ffmpeg
         run: brew install ffmpeg
 
-      - name: Start screen recording
-        run: ./scripts/screenRecording.sh
-        working-directory: packages/vscode-extension-tester
-
-      - name: Run setup-run-tests
-        run: npm run setup-run-tests
+      - name: Run start-recording-and-tests
+        run: npm run start-recording-and-tests
         working-directory: packages/vscode-extension-tester
         env:
           PROJECT_NAME: ${{ github.event.inputs.testApp }}
-
-      - name: Stop screen recording
-        if: always()
-        run: |
-          kill $(cat ffmpeg_pid.txt) || true
-        working-directory: packages/vscode-extension-tester/videos
 
       - name: Upload screenshots on failure
         if: failure()
