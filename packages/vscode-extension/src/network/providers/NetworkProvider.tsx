@@ -3,6 +3,8 @@ import useNetworkTracker, {
   NetworkTracker,
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
+import { getNetworkLogValue, NETWORK_LOG_COLUMNS } from "../utils/networkLogFormatters";
+import { FilterType } from "../types/network";
 
 type TimestampRange = {
   start: number;
@@ -11,8 +13,15 @@ type TimestampRange = {
 
 interface Filters {
   timestampRange?: TimestampRange;
-  url?: string;
+  filterType: FilterType;
+  filterValue?: string;
 }
+
+const DEFAULT_FILTER: Filters = {
+  timestampRange: undefined,
+  filterType: "All",
+  filterValue: "",
+} as const;
 
 interface NetworkProviderProps extends NetworkTracker {
   unfilteredNetworkLogs: NetworkTracker["networkLogs"];
@@ -34,10 +43,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
   unfilteredNetworkLogs: [],
   isRecording: true,
   isFilterVisible: false,
-  filters: {
-    url: undefined,
-    timestampRange: undefined,
-  },
+  filters: DEFAULT_FILTER,
   isScrolling: false,
   toggleRecording: () => {},
   toggleFilterVisible: () => {},
@@ -56,10 +62,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
 
   const [isRecording, setIsRecording] = useState(true);
-  const [filters, setFilters] = useState<Filters>({
-    timestampRange: undefined,
-    url: undefined,
-  });
+  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTER);
 
   const clearActivity = () => {
     networkTracker.clearLogs();
@@ -74,15 +77,34 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
   const networkLogs = useMemo(() => {
     return networkTracker.networkLogs.filter((log) => {
-      const { url, timestampRange } = filters;
+      const { timestampRange, filterType, filterValue } = filters;
 
-      const matchesUrl = !url || log.request?.url.includes(url);
+      // Timestamp range filter
       const matchesTimestampRange =
         !timestampRange ||
         (log.timeline.timestamp >= timestampRange.start &&
           log.timeline.timestamp <= timestampRange.end);
 
-      return matchesUrl && matchesTimestampRange;
+      const matchesNewFilter = (() => {
+        // If no filter, show all logs
+        if (!filterValue) {
+          return true;
+        }
+
+        // If "All", search in all columns
+        if (filterType === "All") {
+          return NETWORK_LOG_COLUMNS.some((column) =>
+            getNetworkLogValue(log, column).toLowerCase().includes(filterValue.toLowerCase())
+          );
+        }
+
+        // Otherwise, search specific column
+        return getNetworkLogValue(log, filterType)
+          .toLowerCase()
+          .includes(filterValue.toLowerCase());
+      })();
+
+      return matchesTimestampRange && matchesNewFilter;
     });
   }, [networkTracker.networkLogs, filters]);
 

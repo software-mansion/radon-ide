@@ -9,3 +9,14 @@ export interface NetworkLog {
   duration: number;
   headers: Record<string, string>;
 }
+
+export enum NetworkLogColumn {
+  Name = "Name",
+  Status = "Status",
+  Method = "Method",
+  Type = "Type",
+  Size = "Size",
+  Time = "Time",
+}
+
+export type FilterType = "All" | NetworkLogColumn;

@@ -11,6 +11,8 @@ import {
 
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import "./NetworkRequestLog.css";
+import { getNetworkLogValue } from "../utils/networkLogFormatters";
+import { NetworkLogColumn } from "../types/network";
 
 interface NetworkRequestLogProps {
   networkLogs: NetworkLog[];
@@ -94,39 +96,15 @@ const NetworkRequestLog = ({
 
   const logDetailsConfig = useMemo(
     () => [
+      { title: NetworkLogColumn.Name },
       {
-        title: "Name",
-        getValue: (log: NetworkLog) => log.request?.url.split("/").pop() || "(pending)",
-      },
-      {
-        title: "Status",
-        getValue: (log: NetworkLog) => log.response?.status || "(pending)",
+        title: NetworkLogColumn.Status,
         getClass: (log: NetworkLog) => getStatusClass(log.response?.status) + " status",
       },
-      { title: "Method", getValue: (log: NetworkLog) => log.request?.method || "(pending)" },
-      { title: "Type", getValue: (log: NetworkLog) => log.type || "(pending)" },
-      {
-        title: "Size",
-        getValue: (log: NetworkLog) => {
-          const size = log.encodedDataLength;
-          if (!size) {
-            return "(pending)";
-          }
-          const units = ["B", "KB", "MB", "GB", "TB"];
-          let unitIndex = 0;
-          let formattedSize = size;
-          while (formattedSize >= 1024 && unitIndex < units.length - 1) {
-            formattedSize /= 1024;
-            unitIndex++;
-          }
-          return `${parseFloat(formattedSize.toFixed(2) || "")} ${units[unitIndex]}`;
-        },
-      },
-      {
-        title: "Time",
-        getValue: (log: NetworkLog) =>
-          log.timeline?.durationMs ? `${log.timeline?.durationMs} ms` : "(pending)",
-      },
+      { title: NetworkLogColumn.Method },
+      { title: NetworkLogColumn.Type },
+      { title: NetworkLogColumn.Size },
+      { title: NetworkLogColumn.Time },
     ],
     []
   );
@@ -160,9 +138,9 @@ const NetworkRequestLog = ({
                     selectedNetworkLog?.requestId === log.requestId ? null : log.requestId
                   )
                 }>
-                {logDetailsConfig.map(({ title, getValue, getClass }) => (
+                {logDetailsConfig.map(({ title, getClass }) => (
                   <VscodeTableCell key={title} className={getClass ? getClass(log) : ""}>
-                    {getValue(log)}
+                    {getNetworkLogValue(log, title)}
                   </VscodeTableCell>
                 ))}
               </VscodeTableRow>
