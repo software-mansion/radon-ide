@@ -25,6 +25,22 @@ function Debugger() {
           <span className="codicon codicon-debug-step-over" />
         </IconButton>
         <IconButton
+          onClick={() => project.stepIntoDebugger()}
+          tooltip={{
+            label: "Step into",
+            side: "bottom",
+          }}>
+          <span className="codicon codicon-debug-step-into" />
+        </IconButton>
+        <IconButton
+          onClick={() => project.stepOutDebugger()}
+          tooltip={{
+            label: "Step out",
+            side: "bottom",
+          }}>
+          <span className="codicon codicon-debug-step-out" />
+        </IconButton>
+        <IconButton
           onClick={() => project.focusDebugConsole()}
           tooltip={{
             label: "Open debugger console",

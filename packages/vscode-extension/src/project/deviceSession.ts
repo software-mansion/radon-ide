@@ -863,6 +863,12 @@ export class DeviceSession implements Disposable {
   public stepOverDebugger() {
     this.applicationSession?.stepOverDebugger();
   }
+  public stepOutDebugger() {
+    this.applicationSession?.stepOutDebugger();
+  }
+  public stepIntoDebugger() {
+    this.applicationSession?.stepIntoDebugger();
+  }
 
   public async startProfilingCPU() {
     await this.applicationSession?.startProfilingCPU();
