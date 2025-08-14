@@ -31,6 +31,7 @@ import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
 import InspectorUnavailableBox from "./InspectorUnavailableBox";
 import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
+import { SendFilesOverlay } from "./SendFilesOverlay";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -512,6 +513,7 @@ function Preview({
   const dragHandlers = useMemo(() => {
     return {
       onDrop(ev: React.DragEvent) {
+        console.log("File Dropped!");
         ev.preventDefault();
         const files = ev.dataTransfer.files;
         for (let i = 0; i < files.length; i++) {
@@ -525,10 +527,12 @@ function Preview({
         }
       },
       onDragOver(ev: React.DragEvent) {
+        console.log("File Dragged Over!");
         ev.stopPropagation();
         ev.preventDefault();
       },
       onDragEnter(ev: React.DragEvent) {
+        console.log("File Dragged Enter!");
         ev.preventDefault();
       },
     } as const;
@@ -553,6 +557,7 @@ function Preview({
                 }}
                 className="phone-screen"
               />
+              <SendFilesOverlay />
               <RenderOutlinesOverlay />
               {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 

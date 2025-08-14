@@ -1,0 +1,85 @@
+:root {
+  --chevron-offset: 16px;
+  --chevron-animation-offset: 2px;
+}
+
+.send-files-overlay {
+  background: var(--vscode-disabledForeground);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  font-weight: bold;
+  position: relative;
+  color: var(--vscode-focusBorder);
+}
+
+.chevron {
+  font-weight: bold;
+  position: absolute;
+  font-size: 64px !important;
+  color: var(--vscode-focusBorder);
+}
+
+.chevron-left-up {
+  transform: rotate(-45deg);
+  animation: bounceLeftUp 2s infinite;
+}
+.chevron-left-down {
+  transform: rotate(225deg);
+  animation: bounceLeftDown 2s infinite;
+}
+.chevron-right-up {
+  transform: rotate(45deg);
+  animation: bounceRightUp 2s infinite;
+}
+.chevron-right-down {
+  transform: rotate(135deg);
+  animation: bounceRightDown 2s infinite;
+}
+
+@keyframes bounceLeftUp {
+  0%,
+  100% {
+    left: var(--chevron-offset);
+    top: var(--chevron-offset);
+  }
+  50% {
+    left: calc(var(--chevron-offset) + var(--chevron-animation-offset));
+    top: calc(var(--chevron-offset) + var(--chevron-animation-offset));
+  }
+}
+@keyframes bounceRightDown {
+  0%,
+  100% {
+    right: var(--chevron-offset);
+    bottom: var(--chevron-offset);
+  }
+  50% {
+    right: calc(var(--chevron-offset) + var(--chevron-animation-offset));
+    bottom: calc(var(--chevron-offset) + var(--chevron-animation-offset));
+  }
+}
+@keyframes bounceLeftDown {
+  0%,
+  100% {
+    left: var(--chevron-offset);
+    bottom: var(--chevron-offset);
+  }
+  50% {
+    left: calc(var(--chevron-offset) + var(--chevron-animation-offset));
+    bottom: calc(var(--chevron-offset) + var(--chevron-animation-offset));
+  }
+}
+
+@keyframes bounceRightUp {
+  0%,
+  100% {
+    right: var(--chevron-offset);
+    top: var(--chevron-offset);
+  }
+  50% {
+    right: calc(var(--chevron-offset) + var(--chevron-animation-offset));
+    top: calc(var(--chevron-offset) + var(--chevron-animation-offset));
+  }
+}
