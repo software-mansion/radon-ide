@@ -4,3 +4,6 @@ data/*.vsix
 .vscode
 config.json
 screenshots/
+data/vscode-extensions/
+data/react-native-app
+

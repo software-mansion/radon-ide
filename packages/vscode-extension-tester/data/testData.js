@@ -1,5 +1,5 @@
 export const paths = {
-  projectPath: "../data/react-native-77",
+  projectPath: "../data/react-native-app",
 };
 
 export const texts = {

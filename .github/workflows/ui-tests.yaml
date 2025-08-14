@@ -36,7 +36,7 @@ jobs:
         run: npm i -g @vscode/vsce
 
       - name: get test app
-        run: npm run get-test-app
+        run: npm run get-test-app -- react-native-77
         working-directory: packages/vscode-extension-tester
 
       - name: Build VSIX package
