@@ -750,12 +750,12 @@ export class DeviceSession implements Disposable {
     }
   }
 
-  public startFrameRateReporting(onFpsReport: (report: FramerateReport) => void) {
-    this.device.startFrameRateReporting(onFpsReport);
+  public startFrameRateReporting() {
+    this.frameReporter.startFrameRateReporting();
   }
 
   public stopFrameRateReporting() {
-    this.device.stopFrameRateReporting();
+    this.frameReporter.stopFrameRateReporting();
   }
 
   public startRecording() {

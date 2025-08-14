@@ -7,6 +7,7 @@ import {
   AndroidSystemImageInfo,
   DeviceInfo,
   DevicePlatform,
+  FramerateReport,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
 } from "./State";
@@ -325,6 +326,9 @@ export interface ProjectInterface {
   captureReplay(): void;
   captureScreenshot(): void;
   saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
+
+  startFrameRateReporting(): void;
+  stopFrameRateReporting(): void;
 
   startProfilingCPU(): void;
   stopProfilingCPU(): void;

@@ -57,6 +57,7 @@ import {
   AndroidSystemImageInfo,
   DeviceInfo,
   DevicesState,
+  FramerateReport,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
   ProjectStore,
@@ -596,6 +597,27 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   // #endregion Recording
+
+  // #region Frame Reporting
+
+  public startFrameRateReporting() {
+    getTelemetryReporter().sendTelemetryEvent("performance:start-frame-rate-reporting", {
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+    });
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.startFrameRateReporting();
+  }
+
+  public stopFrameRateReporting() {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.stopFrameRateReporting();
+  }
+
+  // #endregion Frame Reporting
 
   // #region Profiling
 
