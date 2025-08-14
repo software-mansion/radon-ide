@@ -7,8 +7,8 @@ import ThemeSwitcher from "../../ThemeSwitcher";
 import NavbarLink from "../NavbarLink";
 import Logo from "../../Logo";
 import clsx from "clsx";
-import CloseIcon from "../../CloseIcon";
-import DownloadButtons from "../../DownloadButtons";
+import DownloadModal from "../../DownloadModal";
+import NavbarDownloadButton from "../NavbarDownloadButton";
 
 export interface NavbarItem {
   label: string;
@@ -36,14 +36,6 @@ export interface NavbarContentProps {
 
 export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-
-  const handleDialogOpen = () => {
-    dialogRef.current?.showModal();
-  };
-  const handleDialogClose = () => {
-    dialogRef.current?.close();
-  };
-
   const location = useLocation();
   const active = location.pathname;
 
@@ -74,27 +66,16 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
           <a
             href="https://github.com/software-mansion/radon-ide/"
             className={styles.headerGithub}></a>
-          <a
+          {/* <a
             href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
             className={styles.download}>
             <p>Download</p>
-          </a>
-          <button className={styles.download} onClick={handleDialogOpen}>
-            <p>Download</p>
-          </button>
+          </a> */}
+          <NavbarDownloadButton dialogRef={dialogRef} />
         </div>
       </div>
       <NavbarMobileSidebar navbarItems={navbarItems} isThemeSwitcherShown={isThemeSwitcherShown} />
-      <dialog className={styles.modalContainer} ref={dialogRef} onClick={handleDialogClose}>
-        <div className={styles.modalHead}>
-          <p>Download</p>
-          <button onClick={handleDialogClose} className={styles.dialogCloseButton}>
-            <CloseIcon />
-          </button>
-        </div>
-        <p className={styles.modalSubheading}>Choose how you want to use Radon IDE:</p>
-        <DownloadButtons vertical={true} />
-      </dialog>
+      <DownloadModal dialogRef={dialogRef} />
     </>
   );
 }

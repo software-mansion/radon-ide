@@ -47,4 +47,7 @@
     gap: 12px;
     align-self: stretch;
   }
+  .titleContainer {
+    font-size: 16px;
+  }
 }

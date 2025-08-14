@@ -1,0 +1,23 @@
+.download p {
+  font-size: 16px;
+  font-weight: 400;
+
+  color: var(--ifm-color-primary);
+
+  margin: 0;
+  line-height: 24px;
+}
+
+.download {
+  display: flex;
+  height: 40px;
+  padding: 8px 12px;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--ifm-color-primary);
+  background-color: transparent;
+}
+
+.download:hover {
+  opacity: 0.75;
+}
