@@ -8,6 +8,7 @@ import {
   VscodeTableHeaderCell,
   VscodeTableRow,
 } from "@vscode-elements/react-elements";
+import type { VscodeTable as VscodeTableElement } from "@vscode-elements/elements/dist/vscode-table/vscode-table.js";
 import { SortDirection } from "../types/network";
 
 import { NetworkLog } from "../hooks/useNetworkTracker";
@@ -39,10 +40,54 @@ const NetworkRequestLog = ({
     direction: null,
   });
 
+  const [cellWidths, setCellWidths] = useState<number[]>([]);
+  const tableRef = useRef<VscodeTableElement>(null);
+
+  /**
+   * Updates the cell widths based on the current sash (column bars) positions from the table component.
+   * 
+   * This function accesses the private `_sashPositions` property from the table reference
+   * to calculate relative column widths as percentages. It converts absolute sash positions
+   * into relative width percentages for each column, in order to comply with current workings of 
+   * VscodeTable.
+   * 
+   * This workaround is necessary to prevent improper rendering when modifying row order,
+   * because VscodeTableCell does not update properly upon rearranging the columns.
+   *
+   */
+  
+  const updateCellWidths = () => {
+    const table = tableRef.current;
+    if (!table) {
+      return;
+    }
+    // @ts-ignore - private property, but needs to be accessed due to problems with lack
+    // of VscodeTableCell keys, which causes improper rendering upon modifying order of the rows
+    const sashPositions = table._sashPositions || [];
+
+    if( sashPositions.length === 0) {
+      return []
+    }
+
+    const sashArray = sashPositions.map((pos: number, i: number, array: number[]) => {
+      if (i === 0) {
+        return `${pos}%`;
+      }
+      return `${pos - array[i - 1]}%`;
+    });
+    sashArray.push(`${100 - sashPositions[sashPositions.length - 1]}%`);
+
+    setCellWidths(sashArray);
+  };
+
   // Sort the network logs based on current sort state
   const sortedNetworkLogs = useMemo(() => {
     return sortNetworkLogs(networkLogs, sortState.column, sortState.direction);
   }, [networkLogs, sortState]);
+
+  useLayoutEffect(() => {
+    updateCellWidths();
+  }, [sortedNetworkLogs]);
 
   useLayoutEffect(() => {
     const container = containerRef.current;
@@ -143,13 +188,13 @@ const NetworkRequestLog = ({
     });
   };
 
-  
-
   const getSortIcon = (column: NetworkLogColumn) => {
     if (sortState.column !== column) {
       return "hidden"; // No icon when not sorting by this column
     }
-    return sortState.direction === SortDirection.Asc ? "codicon-chevron-up" : "codicon-chevron-down";
+    return sortState.direction === SortDirection.Asc
+      ? "codicon-chevron-up"
+      : "codicon-chevron-down";
   };
 
   return (
@@ -160,8 +205,9 @@ const NetworkRequestLog = ({
           zebra
           bordered-columns
           resizable
+          borderedColumns
           style={{ height: parentHeight }}
-          key={parentHeight}>
+          ref={tableRef}>
           <VscodeTableHeader slot="header">
             {logDetailsConfig.map(({ title }) => (
               <VscodeTableHeaderCell
@@ -188,9 +234,12 @@ const NetworkRequestLog = ({
                     selectedNetworkLog?.requestId === log.requestId ? null : log.requestId
                   )
                 }>
-                {logDetailsConfig.map(({ title, getClass }) => (
-                  <VscodeTableCell key={title} className={getClass ? getClass(log) : ""}>
-                    {getNetworkLogValue(log, title)}
+                {logDetailsConfig.map(({ title, getClass }, i) => (
+                  <VscodeTableCell
+                    key={`${log.requestId}-${title}`}
+                    className={getClass ? getClass(log) : ""}
+                    style={{ width: cellWidths[i] || "auto" }}>
+                    <div>{getNetworkLogValue(log, title)}</div>
                   </VscodeTableCell>
                 ))}
               </VscodeTableRow>
