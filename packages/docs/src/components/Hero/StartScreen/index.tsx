@@ -50,7 +50,7 @@ const StartScreen = () => {
           </h1>
           <h2 className={styles.subheadingLabel}>
             Radon IDE extension turns your VSCode or Cursor editor <br /> into fully-featured IDE
-            for faster and more efficient development.{" "}
+            for faster and more efficient development<span className={styles.dot}>.</span>{" "}
             <p>
               Trusted by <span>24,000+ engineers worldwide</span>.
             </p>
@@ -61,12 +61,13 @@ const StartScreen = () => {
           <div className={styles.headingDisclaimer}>
             Try 30 days for free. No sign up or credit card required.
           </div>
-          <div className={styles.gradient}>
-            <div className={styles.imageContainer}>
-              <img src="../img/screenshot_hero.png" className={styles.heroImage} />
-              <SecondaryButton title="Watch the Demo" onClick={handleDialogOpen} />
-            </div>
+        </div>
+        <div className={styles.gradientContainer}>
+          <div className={styles.imageContainer}>
+            <img src="../img/screenshot_hero.png" className={styles.heroImage} />
+            <SecondaryButton title="Watch the Demo" onClick={handleDialogOpen} />
           </div>
+          <div className={styles.gradient}></div>
         </div>
       </section>
       {isOpen && (
