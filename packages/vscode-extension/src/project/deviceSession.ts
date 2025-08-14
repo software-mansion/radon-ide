@@ -1,6 +1,9 @@
 import assert from "assert";
+import os from "os";
+import path from "path";
+import fs from "fs";
 import _ from "lodash";
-import { Disposable } from "vscode";
+import { Disposable, window } from "vscode";
 import { MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
 import { RadonInspectorBridge } from "./bridge";
@@ -896,5 +899,34 @@ export class DeviceSession implements Disposable {
 
   public sendFile(filePath: string) {
     return this.device.sendFile(filePath);
+  }
+
+  public async openSendFileDialog() {
+    const pickerResult = await window.showOpenDialog({
+      canSelectMany: true,
+      canSelectFolders: false,
+      title: "Select files to send to device",
+    });
+    if (!pickerResult) {
+      return; // no files selected
+    }
+    const sendFilePromises = pickerResult.map((fileUri) => {
+      return this.sendFile(fileUri.fsPath);
+    });
+    await Promise.all(sendFilePromises);
+  }
+
+  public async sendFileToDevice(fileName: string, data: ArrayBuffer): Promise<void> {
+    const tempDir = await fs.promises.mkdtemp(os.tmpdir());
+    try {
+      const tempFileLocation = path.join(tempDir, fileName);
+      await fs.promises.writeFile(tempFileLocation, new Uint8Array(data));
+      await this.sendFile(tempFileLocation);
+    } finally {
+      // NOTE: no `await` here, this can safely go in the background
+      fs.promises.rm(tempDir, { recursive: true }).catch((_e) => {
+        /* silence the errors, it's fine */
+      });
+    }
   }
 }
