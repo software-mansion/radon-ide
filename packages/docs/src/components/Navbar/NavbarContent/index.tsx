@@ -23,11 +23,6 @@ const navbarItems: NavbarItem[] = [
   { label: "Docs", to: "/docs/category/getting-started", position: "center" },
   { label: "Contact", to: "/contact", position: "center" },
   { label: "GitHub", to: "https://github.com/software-mansion/radon-ide/", position: "right" },
-  {
-    label: "Download",
-    to: "https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide",
-    position: "right",
-  },
 ];
 
 export interface NavbarContentProps {
@@ -66,15 +61,14 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
           <a
             href="https://github.com/software-mansion/radon-ide/"
             className={styles.headerGithub}></a>
-          {/* <a
-            href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
-            className={styles.download}>
-            <p>Download</p>
-          </a> */}
-          <NavbarDownloadButton dialogRef={dialogRef} />
+          <NavbarDownloadButton isMobile={false} dialogRef={dialogRef} />
         </div>
       </div>
-      <NavbarMobileSidebar navbarItems={navbarItems} isThemeSwitcherShown={isThemeSwitcherShown} />
+      <NavbarMobileSidebar
+        navbarItems={navbarItems}
+        isThemeSwitcherShown={isThemeSwitcherShown}
+        dialogRef={dialogRef}
+      />
       <DownloadModal dialogRef={dialogRef} />
     </>
   );

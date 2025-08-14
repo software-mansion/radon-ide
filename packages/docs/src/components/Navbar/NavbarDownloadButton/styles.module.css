@@ -21,3 +21,19 @@
 .download:hover {
   opacity: 0.75;
 }
+
+.mobileDownload {
+  transition: color 0.2s;
+  background-color: transparent;
+  border: none;
+  padding: 0;
+}
+
+.mobileDownload p {
+  color: var(--ifm-color-primary);
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--ifm-color-primary);
+
+  margin: 0;
+}

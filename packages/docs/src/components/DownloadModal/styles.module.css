@@ -11,12 +11,15 @@ dialog.modalContainer {
 dialog.modalContainer[open]::backdrop {
   backdrop-filter: blur(5px);
 }
+
 .modalContainer p {
   margin: 0;
 }
+
 .modalHead p {
   font-size: 24px;
 }
+
 .modalHead {
   display: flex;
   justify-content: space-between;
@@ -36,4 +39,10 @@ dialog.modalContainer[open]::backdrop {
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+@media (max-width: 630px) {
+  dialog.modalContainer {
+    max-width: 327px;
+  }
 }

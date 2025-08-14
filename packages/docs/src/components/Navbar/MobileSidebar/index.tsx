@@ -1,18 +1,21 @@
-import React from "react";
+import React, { RefObject } from "react";
 import styles from "./styles.module.css";
 import { useNavbarMobileSidebar, useLockBodyScroll } from "@docusaurus/theme-common/internal";
 import clsx from "clsx";
 import { NavbarItem } from "../NavbarContent";
 import ThemeSwitcher from "../../ThemeSwitcher";
+import NavbarDownloadButton from "../NavbarDownloadButton";
 
 interface NavbarMobileSidebarProps {
   navbarItems: NavbarItem[];
   isThemeSwitcherShown: boolean;
+  dialogRef: RefObject<HTMLDialogElement>;
 }
 
 export default function NavbarMobileSidebar({
   navbarItems,
   isThemeSwitcherShown,
+  dialogRef,
 }: NavbarMobileSidebarProps) {
   const mobileSidebar = useNavbarMobileSidebar();
   useLockBodyScroll(mobileSidebar.shown);
@@ -34,6 +37,9 @@ export default function NavbarMobileSidebar({
             </a>
           </li>
         ))}
+        <li>
+          <NavbarDownloadButton isMobile={true} dialogRef={dialogRef} />
+        </li>
         <li>
           <ThemeSwitcher isThemeSwitcherShown={isThemeSwitcherShown} />
         </li>
