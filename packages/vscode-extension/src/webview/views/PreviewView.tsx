@@ -29,7 +29,7 @@ import AppRootSelect from "../components/AppRootSelect";
 import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
-import { useFrameReporting } from "../hooks/useFrameReporting";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -102,7 +102,8 @@ function PreviewView() {
 
   const devices = use$(store$.devicesState.devices) ?? [];
 
-  const { enabled: frameReportingEnabled, fps } = useFrameReporting();
+  const frameReportingEnabled = use$(useSelectedDeviceSessionState().frameReporting.enabled);
+  const fps = use$(useSelectedDeviceSessionState().frameReporting.frameReport.fps);
 
   const initialized = projectState.initialized;
   const radonConnectEnabled = projectState.connectState.enabled;

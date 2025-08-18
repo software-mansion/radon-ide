@@ -11,6 +11,10 @@ export class FrameReporter implements Disposable {
     private readonly stateManager: StateManager<FrameReportingState>,
     private device: DeviceBase
   ) {
+    this.disposables.push(new Disposable(() => {
+      this.stopFrameRateReporting();
+    }));
+
     this.disposables.push(this.stateManager);
   }
 

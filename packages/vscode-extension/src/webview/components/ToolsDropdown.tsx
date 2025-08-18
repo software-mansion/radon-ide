@@ -12,7 +12,8 @@ import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import Label from "./shared/Label";
 import { ProjectInterface, ToolState } from "../../common/Project";
 import Tooltip from "./shared/Tooltip";
-import { useFrameReporting } from "../hooks/useFrameReporting";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { use$ } from "@legendapp/state/react";
 
 interface DevToolCheckboxProps {
   label: string;
@@ -95,7 +96,8 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
 
   const isProfilingCPU = isRunning && selectedDeviceSession.profilingCPUState !== "stopped";
   const isProfilingReact = isRunning && selectedDeviceSession.profilingReactState !== "stopped";
-  const { enabled: frameRateReportingEnabled } = useFrameReporting();
+
+  const frameRateReportingEnabled = use$(useSelectedDeviceSessionState().frameReporting.enabled);
 
   return (
     <DropdownMenuRoot>
