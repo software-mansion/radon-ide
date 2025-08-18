@@ -46,8 +46,14 @@ export async function fillDeviceCreationForm(driver, deviceName) {
   await driver.wait(async () => {
     const value = await deviceNameInput.getAttribute("value");
     return value === "";
-  }, 1000);
-  deviceNameInput.sendKeys(deviceName);
+  }, 3000);
+
+  // Without the sleep below, there are situations (quite rare) where the input keys are sent
+  // before the default text is deleted. The line above should ensure that the input is empty,
+  // but it doesn't always work as expected.
+  // At the moment, I don't know a better way to fix it.
+  await driver.sleep(500);
+  await deviceNameInput.sendKeys(deviceName);
 }
 
 export async function openRadonIDEPanel(driver) {
