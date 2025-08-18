@@ -52,14 +52,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              console.log("Frytki", store$.peek());
-            }}>
-            <DoctorIcon color="var(--swm-default-text)" />
-            test store
-          </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() => {
               openModal("Manage Devices", <ManageDevicesView />);
             }}>
             <span className="codicon codicon-device-mobile" />
