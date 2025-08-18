@@ -23,10 +23,6 @@ const StartScreen = () => {
     };
   }, [isOpen]);
 
-  const handleCTAClick = () => {
-    track("Main CTA");
-  };
-
   const handleDialogOpen = () => {
     track("Secondary CTA");
     setOpen(true);

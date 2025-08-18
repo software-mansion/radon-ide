@@ -18,6 +18,7 @@ dialog.modalContainer[open]::backdrop {
 
 .modalHead p {
   font-size: 24px;
+  color: var(--ifm-color-primary);
 }
 
 .modalHead {
