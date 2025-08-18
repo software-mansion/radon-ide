@@ -5,81 +5,78 @@
 
 .send-files-overlay {
   background: var(--vscode-disabledForeground);
+  backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  font-weight: bold;
+  z-index: 0;
   position: relative;
-  color: var(--vscode-focusBorder);
+  padding: 2px;
+  transform: translateX(-2px) translateY(-2px);
 }
 
-.chevron {
-  font-weight: bold;
+.send-files-overlay-container {
   position: absolute;
-  font-size: 64px !important;
-  color: var(--vscode-focusBorder);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  background-color: transparent;
+  color: var(--vscode-foreground);
 }
 
-.chevron-left-up {
-  transform: rotate(-45deg);
-  animation: bounceLeftUp 2s infinite;
-}
-.chevron-left-down {
-  transform: rotate(225deg);
-  animation: bounceLeftDown 2s infinite;
-}
-.chevron-right-up {
-  transform: rotate(45deg);
-  animation: bounceRightUp 2s infinite;
-}
-.chevron-right-down {
-  transform: rotate(135deg);
-  animation: bounceRightDown 2s infinite;
+.send-files-overlay-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--vscode-dropdown-background);
+  width: 80%;
+  height: 90%;
+  border-radius: 20px;
+  animation: breathe 3s infinite ease;
 }
 
-@keyframes bounceLeftUp {
-  0%,
-  100% {
-    left: var(--chevron-offset);
-    top: var(--chevron-offset);
-  }
-  50% {
-    left: calc(var(--chevron-offset) + var(--chevron-animation-offset));
-    top: calc(var(--chevron-offset) + var(--chevron-animation-offset));
-  }
-}
-@keyframes bounceRightDown {
-  0%,
-  100% {
-    right: var(--chevron-offset);
-    bottom: var(--chevron-offset);
-  }
-  50% {
-    right: calc(var(--chevron-offset) + var(--chevron-animation-offset));
-    bottom: calc(var(--chevron-offset) + var(--chevron-animation-offset));
-  }
-}
-@keyframes bounceLeftDown {
-  0%,
-  100% {
-    left: var(--chevron-offset);
-    bottom: var(--chevron-offset);
-  }
-  50% {
-    left: calc(var(--chevron-offset) + var(--chevron-animation-offset));
-    bottom: calc(var(--chevron-offset) + var(--chevron-animation-offset));
-  }
+.send-files-content-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-direction: column;
+  background: var(--vscode-input-background);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 }
 
-@keyframes bounceRightUp {
-  0%,
-  100% {
-    right: var(--chevron-offset);
-    top: var(--chevron-offset);
+.send-files-content-inner p {
+  margin: 0;
+}
+
+.send-files-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  transform: rotate(-90deg);
+}
+.send-files-icon span {
+  color: var(--vscode-foreground);
+  scale: 1.3;
+  transform: translateX(-0.5px);
+}
+
+@keyframes breathe {
+  0% {
+    width: 80%;
+    height: 90%;
   }
   50% {
-    right: calc(var(--chevron-offset) + var(--chevron-animation-offset));
-    top: calc(var(--chevron-offset) + var(--chevron-animation-offset));
+    width: 81%;
+    height: 91%;
+  }
+  100% {
+    width: 80%;
+    height: 90%;
   }
 }
