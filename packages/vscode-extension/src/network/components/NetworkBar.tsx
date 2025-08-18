@@ -7,6 +7,12 @@ import FilterInput from "./FilterInput";
 import { useNetwork } from "../providers/NetworkProvider";
 import { getFilterAutocompleteSuggestion } from "../utils/networkLogFormatters";
 
+interface FilterBadge {
+  id: string;
+  columnName: string;
+  value: string;
+}
+
 function NetworkBar() {
   const {
     isRecording,
@@ -31,6 +37,15 @@ function NetworkBar() {
     // Update autocomplete suggestion
     const newSuggestion = getFilterAutocompleteSuggestion(value);
     setSuggestion(newSuggestion);
+  };
+
+  const handleBadgesChange = (badges: FilterBadge[]) => {
+    setFilters({ 
+      ...filters, 
+      filterBadges: badges,
+      filterText: '' // Clear the text input when badges change
+    });
+    setSuggestion(''); // Also clear any suggestions
   };
 
   return (
@@ -80,6 +95,7 @@ function NetworkBar() {
           <FilterInput
             value={filters.filterText}
             onChange={handleFilterTextChange}
+            onBadgesChange={handleBadgesChange}
             placeholder="Filter: status:200 method:post or search all columns"
             suggestion={suggestion}
             className="network-filter-input"

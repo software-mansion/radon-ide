@@ -114,17 +114,40 @@ export function getFilterAutocompleteSuggestion(filterText: string): string {
     return '';
   }
   
-  const words = filterText.split(/\s+/);
-  const lastWord = words[words.length - 1];
+  // Parse the text to extract any complete filters
+  const filterRegex = /(\w+):\s*([^:]*?)(?=\s+\w+:|$)/g;
+  let lastIndex = 0;
+  let match;
   
-  // Check if the last word looks like it's starting a filter
-  if (!lastWord.includes(':') && lastWord.length > 0) {
-    const columnNames = ['name', 'status', 'method', 'type', 'size', 'time'];
-    const match = columnNames.find(col => col.startsWith(lastWord.toLowerCase()));
+  // Find the last complete filter
+  while ((match = filterRegex.exec(filterText)) !== null) {
+    const [fullMatch] = match;
+    lastIndex = match.index + fullMatch.length;
+  }
+  
+  // Get the remaining text after the last complete filter
+  const remainingText = filterText.substring(lastIndex).trim();
+  
+  // If there's remaining text, check if it looks like the start of a new filter
+  if (remainingText.length > 0) {
+    const words = remainingText.split(/\s+/);
+    const firstWord = words[0];
     
-    if (match && match !== lastWord.toLowerCase()) {
-      return match.substring(lastWord.length) + ':';
+    // Only suggest filter completion if:
+    // 1. There's only one word (no spaces), AND
+    // 2. It doesn't contain a colon, AND  
+    // 3. It matches the start of a column name
+    if (words.length === 1 && !firstWord.includes(':')) {
+      const columnNames = ['name', 'status', 'method', 'type', 'size', 'time'];
+      const matchingColumn = columnNames.find(col => col.startsWith(firstWord.toLowerCase()));
+      
+      if (matchingColumn && matchingColumn !== firstWord.toLowerCase()) {
+        return matchingColumn.substring(firstWord.length) + ':';
+      }
     }
+    
+    // If there are multiple words or other patterns, treat as search text
+    // Don't show filter suggestions
   }
   
   return '';

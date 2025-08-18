@@ -4,21 +4,30 @@ import useNetworkTracker, {
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
 import { getNetworkLogValue, NETWORK_LOG_COLUMNS, parseFilterText } from "../utils/networkLogFormatters";
+import { NetworkLogColumn } from "../types/network";
 
 type TimestampRange = {
   start: number;
   end: number;
 };
 
+interface FilterBadge {
+  id: string;
+  columnName: string;
+  value: string;
+}
+
 interface Filters {
   timestampRange?: TimestampRange;
   filterText: string;
+  filterBadges?: FilterBadge[];
   invert: boolean;
 }
 
 const DEFAULT_FILTER: Filters = {
   timestampRange: undefined,
   filterText: "",
+  filterBadges: [],
   invert: false,
 } as const;
 
@@ -76,7 +85,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
   const networkLogs = useMemo(() => {
     return networkTracker.networkLogs.filter((log) => {
-      const { timestampRange, filterText, invert } = filters;
+      const { timestampRange, filterText, filterBadges, invert } = filters;
 
       // Timestamp range filter
       const matchesTimestampRange =
@@ -85,25 +94,45 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
           log.timeline.timestamp <= timestampRange.end);
 
       const matchesFilter = (() => {
-        // If no filter text, show all logs
-        if (!filterText.trim()) {
-          return true;
-        }
-
-        const { parsedFilters, globalSearchTerm } = parseFilterText(filterText);
-        
-        // Check specific column filters
-        const columnMatches = parsedFilters.every(({ columnName, value }) => {
-          const columnValue = getNetworkLogValue(log, columnName);
+        // Check badge filters (specific column:value pairs)
+        const badgeMatches = !filterBadges?.length || filterBadges.every(({ columnName, value }) => {
+          // Map string column name to NetworkLogColumn enum
+          const columnMapping: Record<string, NetworkLogColumn> = {
+            'name': NetworkLogColumn.Name,
+            'status': NetworkLogColumn.Status,
+            'method': NetworkLogColumn.Method,
+            'type': NetworkLogColumn.Type,
+            'size': NetworkLogColumn.Size,
+            'time': NetworkLogColumn.Time,
+          };
+          const mappedColumn = columnMapping[columnName];
+          if (!mappedColumn) {
+            return true;
+          }
+          
+          const columnValue = getNetworkLogValue(log, mappedColumn);
           return columnValue.toLowerCase().includes(value.toLowerCase());
         });
-        
-        // Check global search term (if any remaining text after parsing filters)
-        const globalMatches = !globalSearchTerm.trim() || NETWORK_LOG_COLUMNS.some((column) =>
-          getNetworkLogValue(log, column).toLowerCase().includes(globalSearchTerm.toLowerCase())
-        );
 
-        const finalMatch = columnMatches && globalMatches;
+        // Check text filter (global search or remaining text after parsing)
+        const textMatches = !filterText.trim() || (() => {
+          const { parsedFilters, globalSearchTerm } = parseFilterText(filterText);
+          
+          // Check specific column filters from current text input
+          const columnMatches = parsedFilters.every(({ columnName, value }) => {
+            const columnValue = getNetworkLogValue(log, columnName);
+            return columnValue.toLowerCase().includes(value.toLowerCase());
+          });
+          
+          // Check global search term (if any remaining text after parsing filters)
+          const globalMatches = !globalSearchTerm.trim() || NETWORK_LOG_COLUMNS.some((column) =>
+            getNetworkLogValue(log, column).toLowerCase().includes(globalSearchTerm.toLowerCase())
+          );
+
+          return columnMatches && globalMatches;
+        })();
+
+        const finalMatch = badgeMatches && textMatches;
         return finalMatch !== invert; // XOR invert logic
       })();
 

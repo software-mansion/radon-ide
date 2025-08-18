@@ -3,55 +3,123 @@
   flex-grow: 1;
   min-width: 150px;
   max-width: 300px;
+  cursor: text;
+}
+
+.filter-input-wrapper {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 4px 8px;
+  background-color: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 2px;
+  min-height: 28px;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE/Edge */
+}
+
+.filter-input-wrapper::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Webkit */
+}
+
+.filter-input-wrapper:focus-within {
+  border-color: var(--vscode-focusBorder);
 }
 
 .filter-input {
-  width: 100%;
-  padding: 6px 8px;
-  background-color: var(--vscode-input-background);
-  border: 1px solid var(--vscode-input-border, transparent);
+  background: transparent;
+  border: none;
+  outline: none;
   color: var(--vscode-input-foreground);
   font-family: var(--vscode-font-family);
   font-size: var(--vscode-font-size);
   font-weight: var(--vscode-font-weight);
   line-height: normal;
-  border-radius: 2px;
-  outline: none;
-  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
   position: relative;
-  display: inline-block;
+  white-space: nowrap;
+  min-width: 0;
+  flex-shrink: 0;
+  width: auto;
 }
 
-/* When there's a suggestion, make background transparent to show the hint */
-.filter-input-container--has-suggestion .filter-input:not(:focus) {
-  background-color: transparent;
-}
-
-/* Hide the suggestion when input is not focused */
-.filter-input-container:not(:focus-within) .filter-input-suggestion {
-  display: none;
-}
-
-/* Restore background on focus to hide the suggestion */
 .filter-input:focus {
-  background-color: var(--vscode-input-background);
+  outline: none;
 }
 
 .filter-input::placeholder {
   color: var(--vscode-input-placeholderForeground);
 }
 
-.filter-input:focus,
-.filter-input--focused {
-  border-color: var(--vscode-focusBorder);
-  outline: 1px solid var(--vscode-focusBorder);
-  outline-offset: -1px;
+.filter-input-with-suggestion {
+  position: relative;
+  flex-grow: 1;
+  min-width: 50px;
 }
 
-.filter-input:disabled {
-  background-color: var(--vscode-input-background);
-  color: var(--vscode-disabledForeground);
-  cursor: not-allowed;
+.filter-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-family: var(--vscode-font-family);
+  white-space: nowrap;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.filter-badge:hover {
+  background-color: var(--vscode-inputOption-hoverBackground, var(--vscode-badge-background));
+}
+
+.filter-badge__text {
+  transition: padding-right 0.2s ease;
+}
+
+.filter-badge:hover .filter-badge__text {
+  padding-right: 16px; /* Make space for the X button on hover */
+}
+
+.filter-badge__remove {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.filter-badge:hover .filter-badge__remove {
+  opacity: 1;
+}
+
+.filter-badge__remove:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
 .filter-input-suggestion {
@@ -59,9 +127,7 @@
   top: 0;
   left: 0;
   right: 0;
-  bottom: 0;
   pointer-events: none;
-  padding: 6px 8px;
   font-family: var(--vscode-font-family);
   font-size: var(--vscode-font-size);
   font-weight: var(--vscode-font-weight);
@@ -70,15 +136,13 @@
   align-items: center;
   white-space: nowrap;
   overflow: hidden;
-  z-index: 3;
-  border: 1px solid transparent; /* Match input border to align text */
-  box-sizing: border-box;
-  background-color: transparent;
+  z-index: 1;
+  height: 100%;
 }
 
 .filter-input-suggestion__existing {
-  color: transparent; /* Hide the existing text, just for positioning */
-  white-space: pre; /* Preserve spaces for accurate positioning */
+  color: transparent;
+  white-space: pre;
 }
 
 .filter-input-suggestion__hint {
