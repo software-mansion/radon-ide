@@ -56,7 +56,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, 
         size === "small" && "icon-button-small",
         side === "left" && "icon-button-left",
         side === "right" && "icon-button-right",
-        className
+        className,
       )}
       {...rest}
       ref={ref}>

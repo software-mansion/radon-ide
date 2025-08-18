@@ -159,6 +159,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.stateManager.getDerived("deviceSessions"),
+      this.stateManager,
       this.applicationContext,
       this.deviceManager,
       this.devicesStateManager,
@@ -305,6 +306,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     const oldDeviceSessionsManager = this.deviceSessionsManager;
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.stateManager.getDerived("deviceSessions"),
+      this.stateManager,
       this.applicationContext,
       this.deviceManager,
       this.devicesStateManager,

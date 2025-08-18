@@ -8,7 +8,7 @@ import { DeviceSession } from "./deviceSession";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceId, DeviceRotation, DeviceSessionsManagerState } from "../common/Project";
+import { DeviceId, DeviceRotation, DeviceSessionsManagerState, ProjectState } from "../common/Project";
 import { Connector } from "../connect/Connector";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
@@ -18,6 +18,7 @@ import {
   DeviceSessions,
   DevicesState,
   initialDeviceSessionStore,
+  ProjectStore,
 } from "../common/State";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
@@ -55,6 +56,8 @@ export class DeviceSessionsManager implements Disposable {
 
   constructor(
     private readonly stateManager: StateManager<DeviceSessions>,
+    // note: this manager is owned by the project
+    private readonly projectStateManager: StateManager<ProjectStore>,
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
     private readonly devicesStateManager: StateManager<DevicesState>,
@@ -153,8 +156,10 @@ export class DeviceSessionsManager implements Disposable {
     }
     Logger.debug("Selected device is ready");
 
-    // we need to initialize the device session state before adding it to the state object
-    this.stateManager.setState({ [deviceInfo.id]: initialDeviceSessionStore });
+    if (!this.stateManager.getState()[deviceInfo.id]) {
+      // we need to initialize the device session state before deriving a new state manager
+      this.stateManager.setState({ [deviceInfo.id]: initialDeviceSessionStore });
+    }
 
     const newDeviceSession = new DeviceSession(
       this.stateManager.getDerived(deviceInfo.id),
@@ -208,7 +213,7 @@ export class DeviceSessionsManager implements Disposable {
       window
         .showWarningMessage(
           "You have multiple devices running. This may cause performance issues. " +
-            "Consider stopping some of them.",
+          "Consider stopping some of them.",
           "Don't show this again",
           "Dismiss"
         )
@@ -293,12 +298,14 @@ export class DeviceSessionsManager implements Disposable {
       return;
     }
     if (session === undefined) {
+      this.projectStateManager.setState({ selectedDeviceSessionId: null });
       this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
       return;
     }
     await previousSession?.deactivate();
     await session.activate();
     extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, this.activeSessionId);
+    this.projectStateManager.setState({ selectedDeviceSessionId: this.activeSessionId });
     this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
   }
 

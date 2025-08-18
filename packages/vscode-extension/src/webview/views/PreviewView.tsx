@@ -5,14 +5,12 @@ import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
 import SettingsDropdown from "../components/SettingsDropdown";
-import { useModal } from "../providers/ModalProvider";
 import NoDeviceView from "./NoDeviceView";
 import DeviceSettingsDropdown from "../components/DeviceSettingsDropdown";
 import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
-import { Platform, useProject } from "../providers/ProjectProvider";
+import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
-import Button from "../components/shared/Button";
 import {
   Frame,
   InspectDataStackItem,
@@ -32,6 +30,7 @@ import AppRootSelect from "../components/AppRootSelect";
 import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
+import { useFrameReporting } from "../hooks/useFrameReporting";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -41,44 +40,31 @@ const INSPECTOR_AVAILABILITY_MESSAGES = {
     "Element Inspector is disabled when the app is inactive",
 } as const;
 
-function ActivateLicenseButton() {
-  const { openModal } = useModal();
-  const { project } = useProject();
-  return (
-    <Button
-      className="activate-license-button"
-      onClick={() => {
-        project.sendTelemetry("activateLicenseButtonClicked");
-        openModal("Activate License", <ActivateLicenseView />);
-      }}>
-      {""} {/* using empty string here as the content is controlled via css */}
-    </Button>
-  );
-}
+type ActiveToolState = ProfilingState;
 
-function ProfilingButton({
-  profilingState,
+function ActiveToolButton({
+  toolState,
   title,
   onClick,
 }: {
-  profilingState: ProfilingState;
+  toolState: ActiveToolState;
   title: string;
   onClick: () => void;
 }) {
-  const showButton = profilingState !== "stopped";
+  const showButton = toolState !== "stopped";
   return (
     <IconButton
-      className={showButton ? "button-recording-on button-recording" : "button-recording"}
+      className={showButton ? "button-recording-on" : "button-recording-off"}
       tooltip={{
         label: title,
       }}
-      disabled={profilingState !== "profiling"}
+      disabled={toolState !== "profiling"}
       onClick={onClick}>
       {showButton && (
         <>
           <span
             className={
-              profilingState === "saving"
+              toolState === "saving"
                 ? "codicon codicon-loading codicon-modifier-spin"
                 : "recording-rec-dot"
             }
@@ -99,7 +85,6 @@ function PreviewView() {
     projectState,
     project,
     deviceSettings,
-    hasActiveLicense,
     replayData,
     setReplayData,
   } = useProject();
@@ -117,6 +102,8 @@ function PreviewView() {
   const [recordingTime, setRecordingTime] = useState(0);
 
   const devices = use$(store$.devicesState.devices) ?? [];
+
+  const {enabled: frameReportingEnabled, fps} = useFrameReporting();
 
   const initialized = projectState.initialized;
   const radonConnectEnabled = projectState.connectState.enabled;
@@ -204,6 +191,10 @@ function PreviewView() {
     project.stopProfilingReact();
   }
 
+  function stopFrameRateReporting() {
+    project.stopFrameRateReporting();
+  }
+
   async function handleReplay() {
     try {
       await project.captureReplay();
@@ -282,16 +273,21 @@ function PreviewView() {
         <div className="button-group-top-left">
           <UrlBar disabled={!selectedDeviceSession} />
         </div>
-        <div className="button-group-top-right">
-          <ProfilingButton
-            profilingState={profilingCPUState}
+        <div className="button-group-top-right">  
+          <ActiveToolButton
+            toolState={profilingCPUState}
             title="Stop profiling CPU"
             onClick={stopProfilingCPU}
           />
-          <ProfilingButton
-            profilingState={profilingReactState}
+          <ActiveToolButton
+            toolState={profilingReactState}
             title="Stop profiling React"
             onClick={stopProfilingReact}
+          />
+          <ActiveToolButton
+            toolState={frameReportingEnabled ? "profiling" : "stopped"}
+            title={"FPS: " + (fps ?? 0)}
+            onClick={stopFrameRateReporting}
           />
           <ToolsDropdown disabled={!debuggerToolsButtonsActive}>
             <IconButton tooltip={{ label: "Tools", type: "primary" }}>
@@ -395,8 +391,7 @@ function PreviewView() {
           )}
           <DeviceSelect />
         </div>
-        <div className="spacer" />
-        {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
+        <div className="spacer" /> 
         <DeviceSettingsDropdown disabled={!navBarButtonsActive}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon />

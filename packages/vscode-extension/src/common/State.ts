@@ -88,6 +88,7 @@ export type DeviceSessions = Record<DeviceId, DeviceSessionStore>;
 export type ProjectStore = {
   applicationContext: ApplicationContextState;
   deviceSessions: DeviceSessions;
+  selectedDeviceSessionId: DeviceId | null;
 };
 
 // #endregion Project State
@@ -207,6 +208,7 @@ export const initialState: State = {
       applicationDependencies: {},
     },
     deviceSessions: {},
+    selectedDeviceSessionId: null,
   },
   telemetry: {
     enabled: false,
