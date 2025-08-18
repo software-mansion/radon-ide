@@ -12,7 +12,6 @@ import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import Label from "./shared/Label";
 import { ProjectInterface, ToolState } from "../../common/Project";
 import Tooltip from "./shared/Tooltip";
-import { useStore } from "../providers/storeProvider";
 import { useFrameReporting } from "../hooks/useFrameReporting";
 
 interface DevToolCheckboxProps {
@@ -96,7 +95,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
 
   const isProfilingCPU = isRunning && selectedDeviceSession.profilingCPUState !== "stopped";
   const isProfilingReact = isRunning && selectedDeviceSession.profilingReactState !== "stopped";
-  const {enabled: frameRateReportingEnabled} = useFrameReporting();
+  const { enabled: frameRateReportingEnabled } = useFrameReporting();
 
   return (
     <DropdownMenuRoot>
@@ -126,10 +125,12 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
 
             {isProfilingReact ? "Stop React Profiler" : "Start React Profiler"}
           </DropdownMenu.Item>
-           <DropdownMenu.Item
+          <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() =>
-              frameRateReportingEnabled ? project.stopFrameRateReporting() : project.startFrameRateReporting()
+              frameRateReportingEnabled
+                ? project.stopFrameRateReporting()
+                : project.startFrameRateReporting()
             }>
             <span className="codicon codicon-rocket" />
 

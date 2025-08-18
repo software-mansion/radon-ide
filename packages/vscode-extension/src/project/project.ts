@@ -57,7 +57,6 @@ import {
   AndroidSystemImageInfo,
   DeviceInfo,
   DevicesState,
-  FramerateReport,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
   ProjectStore,

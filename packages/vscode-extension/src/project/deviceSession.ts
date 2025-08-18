@@ -37,7 +37,7 @@ import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { ApplicationSession } from "./applicationSession";
-import { DevicePlatform, DeviceSessionStore, FramerateReport } from "../common/State";
+import { DevicePlatform, DeviceSessionStore } from "../common/State";
 import { ReloadAction } from "./DeviceSessionsManager";
 import { StateManager } from "./StateManager";
 import { FrameReporter } from "./FrameReporter";

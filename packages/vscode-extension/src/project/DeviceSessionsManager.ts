@@ -8,7 +8,7 @@ import { DeviceSession } from "./deviceSession";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceId, DeviceRotation, DeviceSessionsManagerState, ProjectState } from "../common/Project";
+import { DeviceId, DeviceRotation, DeviceSessionsManagerState } from "../common/Project";
 import { Connector } from "../connect/Connector";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
@@ -213,7 +213,7 @@ export class DeviceSessionsManager implements Disposable {
       window
         .showWarningMessage(
           "You have multiple devices running. This may cause performance issues. " +
-          "Consider stopping some of them.",
+            "Consider stopping some of them.",
           "Don't show this again",
           "Dismiss"
         )

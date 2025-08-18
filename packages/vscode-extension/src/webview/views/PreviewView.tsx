@@ -24,7 +24,6 @@ import "./View.css";
 import "./PreviewView.css";
 import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
-import { ActivateLicenseView } from "./ActivateLicenseView";
 import ToolsDropdown from "../components/ToolsDropdown";
 import AppRootSelect from "../components/AppRootSelect";
 import { vscode } from "../utilities/vscode";
@@ -103,7 +102,7 @@ function PreviewView() {
 
   const devices = use$(store$.devicesState.devices) ?? [];
 
-  const {enabled: frameReportingEnabled, fps} = useFrameReporting();
+  const { enabled: frameReportingEnabled, fps } = useFrameReporting();
 
   const initialized = projectState.initialized;
   const radonConnectEnabled = projectState.connectState.enabled;
@@ -273,7 +272,7 @@ function PreviewView() {
         <div className="button-group-top-left">
           <UrlBar disabled={!selectedDeviceSession} />
         </div>
-        <div className="button-group-top-right">  
+        <div className="button-group-top-right">
           <ActiveToolButton
             toolState={profilingCPUState}
             title="Stop profiling CPU"
@@ -391,7 +390,7 @@ function PreviewView() {
           )}
           <DeviceSelect />
         </div>
-        <div className="spacer" /> 
+        <div className="spacer" />
         <DeviceSettingsDropdown disabled={!navBarButtonsActive}>
           <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
             <DeviceSettingsIcon />

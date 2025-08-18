@@ -7,7 +7,6 @@ import {
   AndroidSystemImageInfo,
   DeviceInfo,
   DevicePlatform,
-  FramerateReport,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
 } from "./State";
