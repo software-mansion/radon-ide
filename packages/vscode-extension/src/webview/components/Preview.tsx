@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, MouseEvent, WheelEvent, useMemo } from "react";
+import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
 import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
