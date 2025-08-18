@@ -112,32 +112,42 @@ function FilterInput({ value, onChange, onBadgesChange, placeholder, suggestion,
       return { badges: [], remainingText: text, foundValidFilters: false, duplicateBadgeIds: [] };
     }
     
-    // Check if the text starts with a valid filter pattern
+    // Extract filters from the beginning of the text
     // Support both quoted and unquoted values: method:value or method:"quoted value"
     // No spaces allowed before or immediately after the colon
     // Empty quotes are not considered valid
     // Unquoted values cannot start with a quote character
-    const filterRegex = /^(\w+:(?:"[^"]+"|[^\s:"][^:]*?))(\s+\w+:(?:"[^"]+"|[^\s:"][^:]*?))*$/;
-    const isValidFilterText = filterRegex.test(trimmedText);
-    
-    if (!isValidFilterText) {
-      return { badges: [], remainingText: text, foundValidFilters: false, duplicateBadgeIds: [] };
-    }
-    
-    // Now extract individual filters, supporting quoted values
-    // No spaces allowed before or immediately after the colon
-    // Empty quotes are not considered valid
-    // Unquoted values cannot start with a quote character
-    const individualFilterRegex = /(\w+):("([^"]+)"|([^\s:"][^:]*?))(?=\s+\w+:|$)/g;
     const newBadges: FilterBadge[] = [];
     const duplicateBadgeIds: string[] = [];
     let remainingText = trimmedText;
     let foundValidFilters = false;
-    let match;
     
-    while ((match = individualFilterRegex.exec(trimmedText)) !== null) {
-      const [fullMatch, columnName, , quotedValue, unquotedValue] = match;
-      const filterValue = quotedValue !== undefined ? quotedValue : unquotedValue;
+    // Keep extracting filters from the beginning until we can't find any more
+    while (remainingText.length > 0) {
+      let fullMatch = '';
+      let columnName = '';
+      let filterValue = '';
+      
+      // Try to match quoted value first: column:"value"
+      const quotedMatch = remainingText.match(/^(\w+):"([^"]+)"/);
+      if (quotedMatch) {
+        fullMatch = quotedMatch[0];
+        columnName = quotedMatch[1];
+        filterValue = quotedMatch[2];
+      } else {
+        // Try to match unquoted value: column:value (until space or end)
+        const unquotedMatch = remainingText.match(/^(\w+):([^\s:"][^\s]*?)(?=\s|$)/);
+        if (unquotedMatch) {
+          fullMatch = unquotedMatch[0];
+          columnName = unquotedMatch[1];
+          filterValue = unquotedMatch[2];
+        }
+      }
+      
+      if (!fullMatch || !columnName || !filterValue) {
+        // No more valid filters at the beginning, stop processing
+        break;
+      }
       const columnNames = ['name', 'status', 'method', 'type', 'size', 'time'];
       
       if (columnNames.includes(columnName.toLowerCase()) && filterValue.trim()) {
@@ -163,8 +173,11 @@ function FilterInput({ value, onChange, onBadgesChange, placeholder, suggestion,
           });
         }
         
-        // Remove this filter from remaining text regardless of whether we added it
-        remainingText = remainingText.replace(fullMatch, '').trim();
+        // Remove this filter from the beginning of remaining text
+        remainingText = remainingText.substring(fullMatch.length).trim();
+      } else {
+        // Invalid column name or empty value, stop processing
+        break;
       }
     }
     
@@ -216,6 +229,38 @@ function FilterInput({ value, onChange, onBadgesChange, placeholder, suggestion,
         }
       }
     }
+  };
+
+  // Helper function to extract partial filter up to cursor position
+  const parsePartialFilter = (text: string, cursorPosition: number): 
+    | { found: true; columnName: string; value: string; beforeText: string; afterText: string }
+    | { found: false } => {
+    // Get text up to cursor position
+    const textToCursor = text.substring(0, cursorPosition);
+    
+    // Try to match a partial filter pattern at the end of the text
+    // For unquoted values: column:partialvalue
+    const partialMatch = textToCursor.match(/(\w+):([^\s:"]*?)$/);
+    
+    if (partialMatch && partialMatch[2]) { // Ensure there's some value
+      const [fullMatch, columnName, partialValue] = partialMatch;
+      const columnNames = ['name', 'status', 'method', 'type', 'size', 'time'];
+      
+      if (columnNames.includes(columnName.toLowerCase())) {
+        const remainingText = text.substring(cursorPosition);
+        const beforeFilter = textToCursor.substring(0, textToCursor.length - fullMatch.length);
+        
+        return {
+          found: true,
+          columnName: columnName.toLowerCase(),
+          value: partialValue,
+          beforeText: beforeFilter,
+          afterText: remainingText
+        };
+      }
+    }
+    
+    return { found: false };
   };
 
   // Helper function to check if cursor is inside quoted value
@@ -408,7 +453,95 @@ function FilterInput({ value, onChange, onBadgesChange, placeholder, suggestion,
       const insideQuotes = isInsideQuotes(value, currentPosition);
       
       if (!insideQuotes) {
+        // If cursor is not at the end, prioritize partial filter extraction
+        const isAtEnd = currentPosition === value.length;
+        
+        if (!isAtEnd) {
+          // Try to extract partial filter at cursor position first
+          const partialResult = parsePartialFilter(value, currentPosition);
+          
+          if (partialResult.found) {
+            e.preventDefault();
+            
+            // Check if this badge already exists
+            const existingBadge = badges.find(badge => 
+              badge.columnName === partialResult.columnName && 
+              badge.value === partialResult.value
+            );
+            
+            if (existingBadge) {
+              // Highlight existing badge
+              const badgeIndex = badges.findIndex(badge => badge.id === existingBadge.id);
+              setHighlightedBadgeId(existingBadge.id);
+              setFocusedBadgeIndex(badgeIndex);
+              
+              if (inputRef.current) {
+                inputRef.current.blur();
+              }
+              
+              // Scroll to the duplicate badge
+              setTimeout(() => {
+                if (badgeIndex >= 0 && containerRef.current) {
+                  const wrapper = containerRef.current.querySelector('.filter-input-wrapper');
+                  const badgeElements = containerRef.current.querySelectorAll('.filter-badge');
+                  const duplicateBadge = badgeElements[badgeIndex] as HTMLElement;
+                  
+                  if (wrapper && duplicateBadge) {
+                    const wrapperRect = wrapper.getBoundingClientRect();
+                    const badgeRect = duplicateBadge.getBoundingClientRect();
+                    const wrapperScrollLeft = wrapper.scrollLeft;
+                    
+                    const badgeLeft = badgeRect.left - wrapperRect.left + wrapperScrollLeft;
+                    const badgeRight = badgeLeft + badgeRect.width;
+                    const visibleLeft = wrapperScrollLeft;
+                    const visibleRight = wrapperScrollLeft + wrapperRect.width;
+                    
+                    let newScrollLeft = wrapperScrollLeft;
+                    
+                    if (badgeLeft < visibleLeft || badgeRight > visibleRight) {
+                      newScrollLeft = badgeLeft - (wrapperRect.width / 2) + (badgeRect.width / 2);
+                    }
+                    
+                    wrapper.scrollTo({
+                      left: Math.max(0, newScrollLeft),
+                      behavior: 'smooth'
+                    });
+                  }
+                }
+              }, 10);
+              
+              setTimeout(() => {
+                setHighlightedBadgeId(null);
+              }, 600);
+              
+              // Update input with remaining text
+              onChange(partialResult.beforeText + partialResult.afterText);
+            } else {
+              // Create new badge from partial filter
+              const newBadge: FilterBadge = {
+                id: `${partialResult.columnName}-${partialResult.value}-${Date.now()}-${Math.random()}`,
+                columnName: partialResult.columnName,
+                value: partialResult.value,
+              };
+              
+              const updatedBadges = [...badges, newBadge];
+              setBadges(updatedBadges);
+              onBadgesChange?.(updatedBadges);
+              
+              // Update input with remaining text
+              onChange(partialResult.beforeText + partialResult.afterText);
+              
+              setTimeout(() => {
+                scrollInputIntoView();
+              }, 10);
+            }
+            return; // Exit early, don't check for complete filters
+          }
+        }
+        
+        // If at end or no partial filter found, try to parse complete filters
         const { foundValidFilters } = parseTextToBadges(value);
+        
         if (foundValidFilters) {
           e.preventDefault();
           createBadgesFromValue();
@@ -480,7 +613,9 @@ function FilterInput({ value, onChange, onBadgesChange, placeholder, suggestion,
             title={`${badge.columnName}:${badge.value}`}
           >
             <span className="filter-badge__text">
-              {badge.columnName}:{badge.value}
+              <span className="filter-badge__name">{badge.columnName}</span>
+              <span className="filter-badge__separator">:</span>
+              <span className="filter-badge__value">{badge.value}</span>
             </span>
             <button
               className="filter-badge__remove"

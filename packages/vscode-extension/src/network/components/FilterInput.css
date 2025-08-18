@@ -85,8 +85,7 @@
 }
 
 .filter-badge--focused {
-  background-color: var(--vscode-focusBorder);
-  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-inputOption-hoverBackground, var(--vscode-badge-background));
   box-shadow: 0 0 0 1px var(--vscode-focusBorder);
 }
 
@@ -96,8 +95,7 @@
 
 /* When highlighted, apply focus styling but let focused state override if both are present */
 .filter-badge--highlighted:not(.filter-badge--focused) {
-  background-color: var(--vscode-focusBorder) !important;
-  color: var(--vscode-input-foreground) !important;
+  background-color: var(--vscode-inputOption-hoverBackground, var(--vscode-badge-background)) !important;
   box-shadow: 0 0 0 1px var(--vscode-focusBorder) !important;
 }
 
@@ -107,6 +105,7 @@
   }
   50% {
     transform: scale(1.02);
+    background-color:  var(--vscode-focusBorder);
   }
   100% {
     transform: scale(1);
@@ -115,6 +114,20 @@
 
 .filter-badge__text {
   transition: padding-right 0.2s ease;
+}
+
+.filter-badge__name {
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.filter-badge__separator {
+  opacity: 0.4;
+  margin: 0 2px;
+}
+
+.filter-badge__value {
+  opacity: 0.7;
 }
 
 .filter-badge:hover .filter-badge__text {
