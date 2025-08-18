@@ -28,11 +28,11 @@ function NetworkBar() {
 
   const handleInvertChange = (e: Event) => {
     // @ts-ignore - ignore type warning for web component
-    setFilters({ ...filters, invert: e.target.checked });
+    setFilters(prevFilters => ({ ...prevFilters, invert: e.target.checked }));
   };
 
   const handleFilterTextChange = (value: string) => {
-    setFilters({ ...filters, filterText: value });
+    setFilters(prevFilters => ({ ...prevFilters, filterText: value }));
     
     // Update autocomplete suggestion
     const newSuggestion = getFilterAutocompleteSuggestion(value);
@@ -40,12 +40,7 @@ function NetworkBar() {
   };
 
   const handleBadgesChange = (badges: FilterBadge[]) => {
-    setFilters({ 
-      ...filters, 
-      filterBadges: badges,
-      filterText: '' // Clear the text input when badges change
-    });
-    setSuggestion(''); // Also clear any suggestions
+    setFilters(prevFilters => ({ ...prevFilters, filterBadges: badges }));
   };
 
   return (

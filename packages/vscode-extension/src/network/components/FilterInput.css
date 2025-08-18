@@ -44,7 +44,7 @@
   margin: 0;
   position: relative;
   white-space: nowrap;
-  min-width: 0;
+  min-width: 20px;
   flex-shrink: 0;
   width: auto;
 }
@@ -59,8 +59,9 @@
 
 .filter-input-with-suggestion {
   position: relative;
-  flex-grow: 1;
-  min-width: 50px;
+  flex-shrink: 0;
+  min-width: 20px;
+  overflow: visible;
 }
 
 .filter-badge {
@@ -81,6 +82,35 @@
 
 .filter-badge:hover {
   background-color: var(--vscode-inputOption-hoverBackground, var(--vscode-badge-background));
+}
+
+.filter-badge--focused {
+  background-color: var(--vscode-focusBorder);
+  color: var(--vscode-input-foreground);
+  box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+}
+
+.filter-badge--highlighted {
+  animation: duplicateHighlight 0.6s ease-out;
+}
+
+/* When highlighted, apply focus styling but let focused state override if both are present */
+.filter-badge--highlighted:not(.filter-badge--focused) {
+  background-color: var(--vscode-focusBorder) !important;
+  color: var(--vscode-input-foreground) !important;
+  box-shadow: 0 0 0 1px var(--vscode-focusBorder) !important;
+}
+
+@keyframes duplicateHighlight {
+  0% {
+    transform: scale(1.02);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .filter-badge__text {
@@ -126,7 +156,6 @@
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
   pointer-events: none;
   font-family: var(--vscode-font-family);
   font-size: var(--vscode-font-size);
@@ -135,9 +164,9 @@
   display: flex;
   align-items: center;
   white-space: nowrap;
-  overflow: hidden;
   z-index: 1;
   height: 100%;
+  min-width: 100%;
 }
 
 .filter-input-suggestion__existing {

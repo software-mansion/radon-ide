@@ -20,7 +20,7 @@ interface FilterBadge {
 interface Filters {
   timestampRange?: TimestampRange;
   filterText: string;
-  filterBadges?: FilterBadge[];
+  filterBadges: FilterBadge[];
   invert: boolean;
 }
 
@@ -37,7 +37,7 @@ interface NetworkProviderProps extends NetworkTracker {
   filters: Filters;
   isScrolling: boolean;
   toggleRecording: () => void;
-  setFilters: (filters: Filters) => void;
+  setFilters: (filters: Filters | ((prevFilters: Filters) => Filters)) => void;
   clearActivity: () => void;
   toggleScrolling: () => void;
   isFilterVisible: boolean;
@@ -70,7 +70,16 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
 
   const [isRecording, setIsRecording] = useState(true);
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTER);
+  const [filters, setFiltersState] = useState<Filters>(DEFAULT_FILTER);
+
+  // Wrapper function to handle both direct objects and callback functions
+  const setFilters = (filtersOrCallback: Filters | ((prevFilters: Filters) => Filters)) => {
+    if (typeof filtersOrCallback === 'function') {
+      setFiltersState(filtersOrCallback);
+    } else {
+      setFiltersState(filtersOrCallback);
+    }
+  };
 
   const clearActivity = () => {
     networkTracker.clearLogs();
@@ -94,25 +103,39 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
           log.timeline.timestamp <= timestampRange.end);
 
       const matchesFilter = (() => {
-        // Check badge filters (specific column:value pairs)
-        const badgeMatches = !filterBadges?.length || filterBadges.every(({ columnName, value }) => {
-          // Map string column name to NetworkLogColumn enum
-          const columnMapping: Record<string, NetworkLogColumn> = {
-            'name': NetworkLogColumn.Name,
-            'status': NetworkLogColumn.Status,
-            'method': NetworkLogColumn.Method,
-            'type': NetworkLogColumn.Type,
-            'size': NetworkLogColumn.Size,
-            'time': NetworkLogColumn.Time,
-          };
-          const mappedColumn = columnMapping[columnName];
-          if (!mappedColumn) {
-            return true;
-          }
-          
-          const columnValue = getNetworkLogValue(log, mappedColumn);
-          return columnValue.toLowerCase().includes(value.toLowerCase());
-        });
+        // Check badge filters (specific column:value pairs) with OR logic for same columns
+        const badgeMatches = !filterBadges?.length || (() => {
+          // Group badges by column name
+          const badgesByColumn: Record<string, string[]> = {};
+          filterBadges.forEach(({ columnName, value }) => {
+            if (!badgesByColumn[columnName]) {
+              badgesByColumn[columnName] = [];
+            }
+            badgesByColumn[columnName].push(value.toLowerCase());
+          });
+
+          // For each column group, check if ANY value matches (OR within column)
+          // ALL column groups must have at least one match (AND between columns)
+          return Object.entries(badgesByColumn).every(([columnName, values]) => {
+            // Map string column name to NetworkLogColumn enum
+            const columnMapping: Record<string, NetworkLogColumn> = {
+              'name': NetworkLogColumn.Name,
+              'status': NetworkLogColumn.Status,
+              'method': NetworkLogColumn.Method,
+              'type': NetworkLogColumn.Type,
+              'size': NetworkLogColumn.Size,
+              'time': NetworkLogColumn.Time,
+            };
+            const mappedColumn = columnMapping[columnName];
+            if (!mappedColumn) {
+              return true;
+            }
+            
+            const columnValue = getNetworkLogValue(log, mappedColumn).toLowerCase();
+            // Check if ANY of the values for this column match (OR logic)
+            return values.some(value => columnValue.includes(value));
+          });
+        })();
 
         // Check text filter (global search or remaining text after parsing)
         const textMatches = !filterText.trim() || (() => {
