@@ -77,7 +77,7 @@ p.preheadingLabel {
   display: flex;
   justify-content: center;
   position: absolute;
-  margin-top: 6.5%;
+  margin-top: 6%;
   padding: 0 60px;
   width: 100%;
 }
@@ -128,7 +128,7 @@ span.dot {
 @media (max-width: 800px) {
   .imageContainer {
     padding: 0 24px;
-    margin-top: 9%;
+    margin-top: 8%;
   }
 }
 

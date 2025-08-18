@@ -34,7 +34,9 @@
   .container {
     align-self: stretch;
   }
-  .titleContainer {
+}
+@media (max-width: 375px) {
+  .titleContainer p {
     font-size: 16px;
   }
 }

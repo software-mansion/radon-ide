@@ -1,7 +1,6 @@
 import React from "react";
 import styles from "./styles.module.css";
 import HomeButton from "@site/src/components/DownloadButtons/HomeButton";
-// import { ButtonStyling, BorderStyling } from "@site/src/components/HomepageButtons";
 import Elipse from "@site/src/components/Elipse";
 
 const LearnMoreHero = () => {
