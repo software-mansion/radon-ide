@@ -184,6 +184,7 @@ export const initialState: State = {
     deviceRotation: DeviceRotation.Portrait,
     inspectorExcludePattern: null,
     defaultMultimediaSavingLocation: null,
+    startDeviceOnLaunch: true,
   },
 };
 
