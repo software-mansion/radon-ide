@@ -7,47 +7,42 @@ import {
 import path from "path";
 import fs from "fs";
 
-async function startRecording(driver, options = {}) {
+function startRecording(driver, options = {}) {
   const screenshotsDir = path.join(process.cwd(), "videos");
+  if (fs.existsSync(screenshotsDir)) {
+    fs.rmSync(screenshotsDir, { recursive: true, force: true });
+  }
   fs.mkdirSync(screenshotsDir, { recursive: true });
 
-  let running = true;
+  let frame = 0;
+  const interval = options.interval || 100;
 
-  async function recordLoop() {
-    let frame = 0;
-    while (running) {
-      try {
-        const image = await driver.takeScreenshot();
-        const filePath = path.join(
-          screenshotsDir,
-          `frame-${String(frame).padStart(4, "0")}.png`
+  const intervalId = setInterval(async () => {
+    try {
+      const image = await driver.takeScreenshot();
+      const filePath = path.join(
+        screenshotsDir,
+        `frame-${String(frame).padStart(4, "0")}.png`
+      );
+      fs.writeFileSync(filePath, image, "base64");
+      frame++;
+    } catch (error) {
+      if (
+        error.name === "NoSuchSessionError" ||
+        error.message.includes("invalid session id")
+      ) {
+        console.warn(
+          "Session ended during recording. Stopping screenshot capture."
         );
-        fs.writeFileSync(filePath, image, "base64");
-        frame++;
-      } catch (error) {
-        if (
-          error.name === "NoSuchSessionError" ||
-          error.message.includes("invalid session id")
-        ) {
-          console.warn(
-            "Session ended during recording. Stopping screenshot capture."
-          );
-          break;
-        } else {
-          console.error("Error while taking screenshot:", error);
-        }
+        clearInterval(intervalId);
+      } else {
+        console.error("Error while taking screenshot:", error);
       }
-      await new Promise((r) => setTimeout(r, options.interval || 100));
     }
-  }
-
-  const recordingPromise = recordLoop();
+  }, interval);
 
   return {
-    stop: () => {
-      running = false;
-      return recordingPromise;
-    },
+    stop: () => clearInterval(intervalId),
   };
 }
 
@@ -73,7 +68,7 @@ before(async function () {
   await workbench.executeCommand("View: Close All Editors");
 
   view = new WebView();
-  recorder = await startRecording(driver, { interval: 100 });
+  recorder = await startRecording(driver, { interval: 200 });
 });
 
 afterEach(async function () {
