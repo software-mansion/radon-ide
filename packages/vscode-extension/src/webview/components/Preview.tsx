@@ -430,7 +430,7 @@ function Preview({
       window.removeEventListener("contextmenu", onContextMenu);
       document.removeEventListener("blur", onBlurChange, true);
     };
-  }, [clearPressedKeys]);
+  }, []);
 
   useEffect(() => {
     function synchronizeClipboard(e: ClipboardEvent) {
