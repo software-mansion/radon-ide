@@ -589,6 +589,11 @@ function FilterInput({ value, onChange, onBadgesChange, placeholder, suggestion,
     }
   };
 
+  const handleBadgeClick = (index: number) => {
+    setFocusedBadgeIndex(index);
+    containerRef.current?.focus(); // Focus the container so keyboard navigation works
+  };
+
   const handleContainerKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     // Only handle keys when a badge is focused
     if (focusedBadgeIndex >= 0) {
@@ -611,6 +616,11 @@ function FilterInput({ value, onChange, onBadgesChange, placeholder, suggestion,
             key={badge.id} 
             className={`filter-badge ${focusedBadgeIndex === index ? 'filter-badge--focused' : ''} ${highlightedBadgeId === badge.id ? 'filter-badge--highlighted' : ''}`} 
             title={`${badge.columnName}:${badge.value}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleBadgeClick(index);
+            }}
+            style={{ cursor: 'pointer' }}
           >
             <span className="filter-badge__text">
               <span className="filter-badge__name">{badge.columnName}</span>

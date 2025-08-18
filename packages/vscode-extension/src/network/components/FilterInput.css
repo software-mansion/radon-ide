@@ -1,8 +1,9 @@
 .filter-input-container {
   position: relative;
   flex-grow: 1;
-  min-width: 150px;
-  max-width: 300px;
+  min-width: 100px;
+  max-width: 600px; /* Prevent the input from becoming too wide on large screens */
+  width: 100%;
   cursor: text;
 }
 
@@ -10,17 +11,19 @@
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
-  gap: 4px;
+  gap: 6px; /* Increased from 4px to provide more space between badges and input */
   padding: 4px 8px;
   background-color: var(--vscode-input-background);
   border: 1px solid var(--vscode-input-border, transparent);
   border-radius: 2px;
   min-height: 28px;
+  max-height: 28px;
   box-sizing: border-box;
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE/Edge */
+  width: 100%;
 }
 
 .filter-input-wrapper::-webkit-scrollbar {
@@ -78,6 +81,14 @@
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
+  max-width: 200px; /* Prevent very long badges from taking up too much space */
+}
+
+.filter-badge__text {
+  transition: padding-right 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .filter-badge:hover {
@@ -114,6 +125,9 @@
 
 .filter-badge__text {
   transition: padding-right 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 
 .filter-badge__name {
@@ -190,4 +204,47 @@
 .filter-input-suggestion__hint {
   color: var(--vscode-input-placeholderForeground);
   opacity: 0.7;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 600px) {
+  .filter-input-container {
+    min-width: 80px;
+    max-width: 400px; /* Reduce max-width on medium screens */
+  }
+  
+  .filter-badge {
+    max-width: 150px;
+    padding: 2px 6px;
+    font-size: 11px;
+  }
+  
+  .filter-input-wrapper {
+    gap: 5px; /* Maintain proportional spacing on medium screens */
+    padding: 3px 6px;
+  }
+}
+
+@media (max-width: 400px) {
+  .filter-input-container {
+    min-width: 60px;
+    max-width: 300px; /* Further reduce max-width on small screens */
+  }
+  
+  .filter-badge {
+    max-width: 120px;
+    padding: 1px 4px;
+    font-size: 10px;
+  }
+  
+  .filter-badge__separator {
+    margin: 0 1px;
+  }
+  
+  .filter-input-wrapper {
+    gap: 4px; /* Maintain reasonable spacing even on small screens */
+    padding: 2px 4px;
+    min-height: 24px;
+    max-height: 24px;
+  }
 }

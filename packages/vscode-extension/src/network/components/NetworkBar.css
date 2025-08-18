@@ -5,6 +5,7 @@
   margin: 6px;
   gap: 4px;
   align-items: center;
+  min-width: 0; /* Allow shrinking */
 }
 
 .network-filter {
@@ -14,10 +15,37 @@
   align-items: center;
   gap: 8px;
   flex-grow: 1;
+  min-width: 0; /* Allow shrinking */
+  max-width: 100%;
 }
 
 .network-filter-input {
   flex-grow: 1;
-  min-width: 200px;
-  max-width: 400px;
+  min-width: 100px;
+  max-width: 600px; /* Match the FilterInput container max-width */
+  width: 100%;
+}
+
+/* Responsive behavior for small screens */
+@media (max-width: 600px) {
+  .network-bar {
+    gap: 2px;
+    margin: 4px;
+  }
+  
+  .network-filter {
+    gap: 4px;
+  }
+  
+  .network-filter-input {
+    min-width: 80px;
+    max-width: 400px; /* Match FilterInput responsive max-width */
+  }
+}
+
+@media (max-width: 400px) {
+  .network-filter-input {
+    min-width: 60px;
+    max-width: 300px; /* Match FilterInput responsive max-width */
+  }
 }
