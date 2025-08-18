@@ -21,43 +21,11 @@ import {
   IOSDeviceInfo,
   IOSRuntimeInfo,
 } from "../common/State";
-
-interface SimulatorInfo {
-  availability?: string;
-  state?: string;
-  isAvailable?: boolean;
-  name: string;
-  udid: string;
-  version?: string;
-  displayName: string;
-  availabilityError?: string;
-  type?: "simulator" | "device" | "catalyst";
-  booted?: boolean;
-  lastBootedAt?: string;
-  deviceTypeIdentifier: string;
-}
-
-interface SimulatorData {
-  devices: { [runtimeID: string]: SimulatorInfo[] };
-}
-
-type PrivacyServiceName =
-  | "all"
-  | "calendar"
-  | "contacts-limited"
-  | "contacts"
-  | "location"
-  | "location-always"
-  | "photos-add"
-  | "photos"
-  | "media-library"
-  | "microphone"
-  | "motion"
-  | "reminders"
-  | "siri";
+import { SimCtl } from "../utilities/simctl";
 
 export class IosSimulatorDevice extends DeviceBase {
   private runningAppProcess: ExecaChildProcess | undefined;
+  private simCtl: SimCtl;
 
   constructor(
     private readonly deviceUDID: string,
@@ -65,6 +33,7 @@ export class IosSimulatorDevice extends DeviceBase {
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     super();
+    this.simCtl = new SimCtl(this.deviceUDID, getOrCreateDeviceSet(this.deviceUDID));
   }
 
   public get platform(): DevicePlatform {
@@ -76,7 +45,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   public get lockFilePath(): string {
-    const deviceSetLocation = getDeviceSetLocation(this.deviceUDID);
+    const deviceSetLocation = this.simCtl.deviceSetLocation;
     const pidFile = path.join(deviceSetLocation, this.deviceUDID, "lock.pid");
     return pidFile;
   }
@@ -88,26 +57,20 @@ export class IosSimulatorDevice extends DeviceBase {
   public dispose() {
     super.dispose();
     this.runningAppProcess?.cancel();
-    return exec("xcrun", [
-      "simctl",
-      "--set",
-      getOrCreateDeviceSet(this.deviceUDID),
-      "shutdown",
-      this.deviceUDID,
-    ]);
+    this.simCtl.shutdown();
   }
 
   public async reboot() {
     super.reboot();
     this.runningAppProcess?.cancel();
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      getOrCreateDeviceSet(this.deviceUDID),
-      "shutdown",
-      this.deviceUDID,
-    ]);
-
+    try {
+      await this.simCtl.shutdown();
+    } catch (e) {
+      const isAlreadyShutdown = (e as ExecaError).stderr?.includes("current state: Shutdown");
+      if (!isAlreadyShutdown) {
+        throw e;
+      }
+    }
     await this.internalBootDevice();
   }
 
@@ -116,11 +79,8 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   private async internalBootDevice() {
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     try {
-      await exec("xcrun", ["simctl", "--set", deviceSetLocation, "boot", this.deviceUDID], {
-        allowNonZeroExit: true,
-      });
+      await this.simCtl.boot();
     } catch (e) {
       const isAlreadyBooted = (e as ExecaError).stderr?.includes("current state: Booted");
       if (isAlreadyBooted) {
@@ -142,7 +102,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   private async shouldUpdateLocale(locale: Locale): Promise<boolean> {
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+    const deviceSetLocation = this.simCtl.deviceSetLocation;
     const deviceLocale = await exec("/usr/libexec/PlistBuddy", [
       "-c",
       `print :AppleLocale`,
@@ -163,114 +123,34 @@ export class IosSimulatorDevice extends DeviceBase {
 
   async changeSettings(settings: DeviceSettings): Promise<boolean> {
     let shouldRestart = false;
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
     if (await this.shouldUpdateLocale(settings.locale)) {
       shouldRestart = true;
       this.changeLocale(settings.locale);
     }
 
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "ui",
-      this.deviceUDID,
-      "appearance",
-      settings.appearance,
-    ]);
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "ui",
-      this.deviceUDID,
-      "content_size",
-      convertToSimctlSize(settings.contentSize),
-    ]);
-    if (settings.location.isDisabled) {
-      await exec("xcrun", [
-        "simctl",
-        "--set",
-        deviceSetLocation,
-        "location",
-        this.deviceUDID,
-        "clear",
-      ]);
-    } else {
-      await exec("xcrun", [
-        "simctl",
-        "--set",
-        deviceSetLocation,
-        "location",
-        this.deviceUDID,
-        "set",
-        `${settings.location.latitude.toString()},${settings.location.longitude.toString()}`,
-      ]);
-    }
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "spawn",
-      this.deviceUDID,
-      "notifyutil",
-      "-s",
-      "com.apple.BiometricKit.enrollmentChanged",
-      settings.hasEnrolledBiometrics ? "1" : "0",
-    ]);
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "spawn",
-      this.deviceUDID,
-      "notifyutil",
-      "-p",
-      "com.apple.BiometricKit.enrollmentChanged",
-    ]);
+    await this.simCtl.setAppearance(settings.appearance);
+    await this.simCtl.setContentSize(settings.contentSize);
+    await this.simCtl.setLocation(settings.location);
+    await this.simCtl.notifyBiometricEnrollmentChanged(settings.hasEnrolledBiometrics);
 
     return shouldRestart;
   }
 
   async sendBiometricAuthorization(isMatch: boolean) {
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "spawn",
-      this.deviceUDID,
-      "notifyutil",
-      "-p",
-      isMatch
-        ? "com.apple.BiometricKit_Sim.fingerTouch.match"
-        : "com.apple.BiometricKit_Sim.fingerTouch.nomatch",
-    ]);
+    this.simCtl.sendBiometricAuthorization(isMatch);
   }
 
   public async sendClipboard(text: string) {
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-    await exec("xcrun", ["simctl", "--set", deviceSetLocation, "pbcopy", this.deviceUDID], {
-      input: text,
-    });
+    await this.simCtl.clipboardCopy(text);
   }
 
   public async getClipboard() {
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-    const { stdout } = await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "pbpaste",
-      this.deviceUDID,
-    ]);
-
-    return stdout;
+    return await this.simCtl.clipboardPaste();
   }
 
   private async changeLocale(newLocale: Locale): Promise<boolean> {
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+    const deviceSetLocation = this.simCtl.deviceSetLocation;
     const languageCode = newLocale.match(/([^_-]*)/)![1];
     await exec("/usr/libexec/PlistBuddy", [
       "-c",
@@ -290,16 +170,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async configureMetroPort(bundleID: string, metroPort: number) {
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-    const { stdout: appDataLocation } = await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "get_app_container",
-      this.deviceUDID,
-      bundleID,
-      "data",
-    ]);
+    const appDataLocation = await this.simCtl.getAppContainer(bundleID, "data");
     const userDefaultsLocation = path.join(
       appDataLocation,
       "Library",
@@ -325,16 +196,10 @@ export class IosSimulatorDevice extends DeviceBase {
     }
   }
 
-  async terminateApp(bundleID: string) {
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-
+  public async terminateApp(bundleID: string) {
     // Terminate the app if it's running:
     try {
-      await exec(
-        "xcrun",
-        ["simctl", "--set", deviceSetLocation, "terminate", this.deviceUDID, bundleID],
-        { allowNonZeroExit: true }
-      );
+      this.simCtl.terminateApp(bundleID);
     } catch (e) {
       // terminate will exit with non-zero code when the app wasn't running. we ignore this error
     }
@@ -345,20 +210,13 @@ export class IosSimulatorDevice extends DeviceBase {
    * before terminating the previous one.
    */
   async terminateAnyRunningApplications() {
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-    const { stdout } = await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "listapps",
-      this.deviceUDID,
-    ]);
+    const runningApps = await this.simCtl.listApps();
 
     const regex = /ApplicationType = User;\s*[^{}]*?\bCFBundleIdentifier = "([^"]+)/g;
 
     const matches = [];
     let match;
-    while ((match = regex.exec(stdout)) !== null) {
+    while ((match = regex.exec(runningApps)) !== null) {
       matches.push(match[1]);
     }
 
@@ -366,8 +224,6 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async launchWithBuild(build: IOSBuildResult, launchArguments: string[]) {
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-
     await this.terminateAnyRunningApplications();
 
     if (this.runningAppProcess) {
@@ -376,20 +232,7 @@ export class IosSimulatorDevice extends DeviceBase {
 
     this.nativeLogsOutputChannel.clear();
 
-    const launchAppArgs = [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "launch",
-      "--console",
-      "--terminate-running-process",
-      this.deviceUDID,
-      build.bundleID,
-      ...launchArguments,
-    ];
-
-    this.runningAppProcess = exec("xcrun", launchAppArgs);
-
+    this.runningAppProcess = this.simCtl.launchApp(build.bundleID, launchArguments);
     lineReader(this.runningAppProcess).onLineRead((line) =>
       this.nativeLogsOutputChannel?.appendLine(line)
     );
@@ -400,37 +243,26 @@ export class IosSimulatorDevice extends DeviceBase {
     // 1. Add the deeplink to the scheme approval list via defaults
     // 2. Terminate any app if it's running
     // 3. Open the deeplink
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
     // Add the deeplink to the scheme approval list:
     const schema = new URL(expoDeeplink).protocol.slice(0, -1);
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "spawn",
-      this.deviceUDID,
+    await this.simCtl.spawn(
       "defaults",
       "write",
       "com.apple.launchservices.schemeapproval",
       `com.apple.CoreSimulator.CoreSimulatorBridge-->${schema}`,
       "-string",
-      bundleID,
-    ]);
+      bundleID
+    );
 
     await this.terminateAnyRunningApplications();
 
     // Use openurl to open the deeplink:
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "openurl",
-      this.deviceUDID,
-      expoDeeplink,
+    await this.simCtl.openUrl(
+      expoDeeplink
       // TODO: disableOnboarding param causes error while launching
       // + "&disableOnboarding=1", // disable onboarding dialog via deeplink query param
-    ]);
+    );
   }
 
   async launchApp(
@@ -456,43 +288,21 @@ export class IosSimulatorDevice extends DeviceBase {
     if (build.platform !== DevicePlatform.IOS) {
       throw new Error("Invalid platform");
     }
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     if (forceReinstall) {
       try {
-        await exec(
-          "xcrun",
-          ["simctl", "--set", deviceSetLocation, "uninstall", this.deviceUDID, build.bundleID],
-          { allowNonZeroExit: true }
-        );
+        await this.simCtl.uninstallApp(build.bundleID);
       } catch (e) {
-        Logger.error("Error while uninstalling will be ignored", e);
+        // NOTE: Error while uninstalling will be ignored
       }
     }
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "install",
-      this.deviceUDID,
-      build.appPath,
-    ]);
+    await this.simCtl.installApp(build.appPath);
   }
 
   async resetAppPermissions(appPermission: AppPermissionType, build: BuildResult) {
     if (build.platform !== DevicePlatform.IOS) {
       throw new Error("Invalid platform");
     }
-    const privacyServiceName: PrivacyServiceName = appPermission;
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      getOrCreateDeviceSet(this.deviceUDID),
-      "privacy",
-      this.deviceUDID,
-      "reset",
-      privacyServiceName,
-      build.bundleID,
-    ]);
+    await this.simCtl.resetPrivacyService(appPermission, build.bundleID);
     return false;
   }
 
@@ -501,14 +311,7 @@ export class IosSimulatorDevice extends DeviceBase {
       throw new Error("Invalid platform");
     }
 
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      getOrCreateDeviceSet(this.deviceUDID),
-      "openurl",
-      this.deviceUDID,
-      link,
-    ]);
+    await this.simCtl.openUrl(link);
   }
 
   makePreview(): Preview {
@@ -517,7 +320,7 @@ export class IosSimulatorDevice extends DeviceBase {
       "--id",
       this.deviceUDID,
       "--device-set",
-      getOrCreateDeviceSet(this.deviceUDID),
+      this.simCtl.deviceSetLocation,
     ]);
   }
 
@@ -525,15 +328,7 @@ export class IosSimulatorDevice extends DeviceBase {
     if (!isMediaFile(filePath)) {
       throw new Error("Only media file transfer is supported on iOS.");
     }
-    const args = [
-      "simctl",
-      "--set",
-      getOrCreateDeviceSet(this.deviceUDID),
-      "addmedia",
-      this.deviceUDID,
-      filePath,
-    ];
-    await exec("xcrun", args);
+    await this.simCtl.addMedia(filePath);
   }
 }
 
@@ -542,90 +337,36 @@ function isMediaFile(filePath: string): boolean {
   return type.startsWith("image/") || type.startsWith("video/");
 }
 
-export async function getNewestAvailableIosRuntime() {
-  const runtimesData = await getAvailableIosRuntimes();
-
-  // sort available runtimes by version
-  runtimesData.sort((a, b) => (a.version.localeCompare(b.version) ? -1 : 1));
-
-  // pick the newest runtime
-  return runtimesData[0];
+export async function renameIosSimulator(udid: string, newDisplayName: string) {
+  await new SimCtl(udid, getOrCreateDeviceSet(udid)).renameSimulator(newDisplayName);
 }
 
-export async function removeIosRuntimes(runtimeIDs: string[]) {
-  const removalPromises = runtimeIDs.map((runtimeID) => {
-    return exec("xcrun", ["simctl", "runtime", "delete", runtimeID], {});
-  });
-  return Promise.all(removalPromises);
-}
-
-export async function renameIosSimulator(udid: string | undefined, newDisplayName: string) {
-  if (!udid) {
-    return;
-  }
-
-  return await exec("xcrun", [
-    "simctl",
-    "--set",
-    getOrCreateDeviceSet(udid),
-    "rename",
-    udid,
-    newDisplayName,
-  ]);
-}
-
-export async function removeIosSimulator(udid: string | undefined, location: SimulatorDeviceSet) {
-  if (!udid) {
-    return;
-  }
-
-  let deviceSetArgs: string[] = [];
-  if (location === SimulatorDeviceSet.RN_IDE) {
-    const setDirectory = getOrCreateDeviceSet(udid);
-    deviceSetArgs = ["--set", setDirectory];
-  }
-
-  return exec("xcrun", ["simctl", ...deviceSetArgs, "delete", udid]);
+export async function removeIosSimulator(udid: string) {
+  await SimCtl.deleteSimulator(udid, getOrCreateDeviceSet(udid));
 }
 
 async function listSimulatorsForLocation(location?: string) {
-  let deviceSetArgs: string[] = [];
-  if (location) {
-    deviceSetArgs = ["--set", location];
-  }
   try {
-    const { stdout } = await exec(
-      "xcrun",
-      ["simctl", ...deviceSetArgs, "list", "devices", "--json"],
-      { allowNonZeroExit: true }
-    );
-    const parsedData: SimulatorData = JSON.parse(stdout);
-
-    const { devices: devicesPerRuntime } = parsedData;
+    const simulatorData = await SimCtl.listSimulatorsForLocation(location);
+    const { devices: devicesPerRuntime } = simulatorData;
 
     return Object.entries(devicesPerRuntime);
   } catch (e) {
     // ignore errors because some locations might not exist
+    return [];
   }
-  return [];
 }
 
-export async function listSimulators(
-  location: SimulatorDeviceSet = SimulatorDeviceSet.RN_IDE
-): Promise<IOSDeviceInfo[]> {
+export async function listSimulators(): Promise<IOSDeviceInfo[]> {
   let devicesPerRuntime;
-  if (location === SimulatorDeviceSet.RN_IDE) {
-    const deviceSetLocation = getOrCreateDeviceSet();
+  const deviceSetLocation = getOrCreateDeviceSet();
 
-    devicesPerRuntime = await listSimulatorsForLocation(deviceSetLocation);
+  devicesPerRuntime = await listSimulatorsForLocation(deviceSetLocation);
 
-    const oldDeviceSetLocation = getOldDeviceSetLocation();
-    const oldDevicesPerRuntime = await listSimulatorsForLocation(oldDeviceSetLocation);
+  const oldDeviceSetLocation = getOldDeviceSetLocation();
+  const oldDevicesPerRuntime = await listSimulatorsForLocation(oldDeviceSetLocation);
 
-    devicesPerRuntime = devicesPerRuntime.concat(oldDevicesPerRuntime);
-  } else {
-    devicesPerRuntime = await listSimulatorsForLocation();
-  }
+  devicesPerRuntime = devicesPerRuntime.concat(oldDevicesPerRuntime);
 
   const runtimes = await getAvailableIosRuntimes();
 
@@ -653,34 +394,20 @@ export async function listSimulators(
   return simulators;
 }
 
-export enum SimulatorDeviceSet {
-  Default,
-  RN_IDE,
-}
-
 export async function createSimulator(
   modelId: string,
   displayName: string,
-  runtime: IOSRuntimeInfo,
-  deviceSet: SimulatorDeviceSet
+  runtime: IOSRuntimeInfo
 ) {
   Logger.debug(`Create simulator ${modelId} with runtime ${runtime.identifier}`);
 
-  let locationArgs: string[] = [];
-  if (deviceSet === SimulatorDeviceSet.RN_IDE) {
-    const deviceSetLocation = getOrCreateDeviceSet();
-    locationArgs = ["--set", deviceSetLocation];
-  }
-
   // create new simulator with selected runtime
-  const { stdout: UDID } = await exec("xcrun", [
-    "simctl",
-    ...locationArgs,
-    "create",
+  const UDID = await SimCtl.createSimulator(
+    getOrCreateDeviceSet(),
     displayName,
     modelId,
-    runtime.identifier,
-  ]);
+    runtime.identifier
+  );
 
   return {
     id: `ios-${UDID}`,
@@ -723,23 +450,4 @@ function getOrCreateDeviceSet(deviceUDID?: string) {
   }
 
   return deviceSetLocation;
-}
-
-function convertToSimctlSize(size: DeviceSettings["contentSize"]): string {
-  switch (size) {
-    case "xsmall":
-      return "extra-small";
-    case "small":
-      return "small";
-    case "normal":
-      return "medium";
-    case "large":
-      return "large";
-    case "xlarge":
-      return "extra-large";
-    case "xxlarge":
-      return "extra-extra-large";
-    case "xxxlarge":
-      return "extra-extra-extra-large";
-  }
 }

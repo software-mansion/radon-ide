@@ -1,8 +1,8 @@
 import _ from "lodash";
+import { Disposable } from "vscode";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import {
   IosSimulatorDevice,
-  SimulatorDeviceSet,
   createSimulator,
   listSimulators,
   renameIosSimulator,
@@ -31,7 +31,6 @@ import {
   IOSRuntimeInfo,
 } from "../common/State";
 import { StateManager } from "../project/StateManager";
-import { Disposable } from "vscode";
 import { disposeAll } from "../utilities/disposables";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
@@ -195,12 +194,7 @@ export class DeviceManager implements Disposable {
       systemName: String(runtime.version),
     });
 
-    const simulator = await createSimulator(
-      deviceType.identifier,
-      displayName,
-      runtime,
-      SimulatorDeviceSet.RN_IDE
-    );
+    const simulator = await createSimulator(deviceType.identifier, displayName, runtime);
     await this.loadDevices(true);
     return simulator;
   }
@@ -227,7 +221,7 @@ export class DeviceManager implements Disposable {
     this.stateManager.setState({ devices });
 
     if (device.platform === DevicePlatform.IOS) {
-      await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
+      await removeIosSimulator(device.UDID);
     }
     if (device.platform === DevicePlatform.Android) {
       await removeEmulator(device.avdId);
