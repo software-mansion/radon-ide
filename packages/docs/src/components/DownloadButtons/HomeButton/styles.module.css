@@ -6,16 +6,10 @@
   justify-content: center;
   align-items: center;
   gap: 12px;
+  flex-direction: row;
 }
 
-.verticalContainer {
-  display: flex;
-  background-color: var(--radon-button);
-  height: 60px;
-  padding: 16px;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
+.container.vertical {
   align-self: stretch;
 }
 
@@ -38,13 +32,6 @@
 
 @media (max-width: 580px) {
   .container {
-    display: flex;
-    background-color: var(--radon-button);
-    height: 60px;
-    padding: 16px;
-    justify-content: center;
-    align-items: center;
-    gap: 12px;
     align-self: stretch;
   }
   .titleContainer {

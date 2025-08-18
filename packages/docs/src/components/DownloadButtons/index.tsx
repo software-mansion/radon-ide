@@ -8,7 +8,7 @@ interface HomepageButtonsProps {
 
 const DownloadButtons = ({ vertical }: HomepageButtonsProps) => {
   return (
-    <div className={vertical ? styles.verticalButtonContainer : styles.buttonContainer}>
+    <div className={`${styles.buttonContainer} ${vertical ? styles.vertical : ""}`}>
       <HomeButton
         target="_blank"
         href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
@@ -18,7 +18,7 @@ const DownloadButtons = ({ vertical }: HomepageButtonsProps) => {
       />
       <HomeButton
         target="_blank"
-        href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
+        href="https://open-vsx.org/extension/swmansion/react-native-ide"
         title="Download for Cursor"
         icon="cursor"
         vertical={vertical}

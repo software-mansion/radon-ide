@@ -23,7 +23,7 @@ export default function HomeButton({
     <a
       href={href}
       target={target}
-      className={vertical ? styles.verticalContainer : styles.container}
+      className={`${styles.container} ${vertical ? styles.vertical : ""}`}
       onClick={onClick}>
       <div className={styles.iconContainer}>
         {icon == "vscode" ? <VSCodeIcon /> : icon == "cursor" ? <CursorIcon /> : null}
