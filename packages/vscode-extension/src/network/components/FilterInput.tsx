@@ -113,16 +113,22 @@ function FilterInput({ value, onChange, onBadgesChange, placeholder, suggestion,
     }
     
     // Check if the text starts with a valid filter pattern
-    // Only process if the entire text consists of valid filter patterns and spaces
-    const filterRegex = /^(\w+:\s*[^:]*?)(\s+\w+:\s*[^:]*?)*$/;
+    // Support both quoted and unquoted values: method:value or method:"quoted value"
+    // No spaces allowed before or immediately after the colon
+    // Empty quotes are not considered valid
+    // Unquoted values cannot start with a quote character
+    const filterRegex = /^(\w+:(?:"[^"]+"|[^\s:"][^:]*?))(\s+\w+:(?:"[^"]+"|[^\s:"][^:]*?))*$/;
     const isValidFilterText = filterRegex.test(trimmedText);
     
     if (!isValidFilterText) {
       return { badges: [], remainingText: text, foundValidFilters: false, duplicateBadgeIds: [] };
     }
     
-    // Now extract individual filters
-    const individualFilterRegex = /(\w+):\s*([^:]*?)(?=\s+\w+:|$)/g;
+    // Now extract individual filters, supporting quoted values
+    // No spaces allowed before or immediately after the colon
+    // Empty quotes are not considered valid
+    // Unquoted values cannot start with a quote character
+    const individualFilterRegex = /(\w+):("([^"]+)"|([^\s:"][^:]*?))(?=\s+\w+:|$)/g;
     const newBadges: FilterBadge[] = [];
     const duplicateBadgeIds: string[] = [];
     let remainingText = trimmedText;
@@ -130,7 +136,8 @@ function FilterInput({ value, onChange, onBadgesChange, placeholder, suggestion,
     let match;
     
     while ((match = individualFilterRegex.exec(trimmedText)) !== null) {
-      const [fullMatch, columnName, filterValue] = match;
+      const [fullMatch, columnName, , quotedValue, unquotedValue] = match;
+      const filterValue = quotedValue !== undefined ? quotedValue : unquotedValue;
       const columnNames = ['name', 'status', 'method', 'type', 'size', 'time'];
       
       if (columnNames.includes(columnName.toLowerCase()) && filterValue.trim()) {
@@ -209,6 +216,20 @@ function FilterInput({ value, onChange, onBadgesChange, placeholder, suggestion,
         }
       }
     }
+  };
+
+  // Helper function to check if cursor is inside quoted value
+  const isInsideQuotes = (text: string, cursorPosition: number) => {
+    let quoteCount = 0;
+    
+    for (let i = 0; i < cursorPosition; i++) {
+      if (text[i] === '"') {
+        quoteCount++;
+      }
+    }
+    
+    // If we have an odd number of quotes before cursor, we're inside quotes
+    return quoteCount % 2 === 1;
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -379,17 +400,21 @@ function FilterInput({ value, onChange, onBadgesChange, placeholder, suggestion,
         e.preventDefault();
       }
     } else if (e.key === 'Enter') {
-      // Enter - create badge
+      // Enter - create badge (always, even inside quotes)
       e.preventDefault();
       createBadgesFromValue();
     } else if (e.key === ' ') {
-      // Space - create badge if there's a valid filter
-      const { foundValidFilters } = parseTextToBadges(value);
-      if (foundValidFilters) {
-        e.preventDefault();
-        createBadgesFromValue();
+      // Space - create badge if there's a valid filter AND we're not inside quotes
+      const insideQuotes = isInsideQuotes(value, currentPosition);
+      
+      if (!insideQuotes) {
+        const { foundValidFilters } = parseTextToBadges(value);
+        if (foundValidFilters) {
+          e.preventDefault();
+          createBadgesFromValue();
+        }
       }
-      // If no valid filter, let space be typed normally
+      // If inside quotes or no valid filter, let space be typed normally
     } else if (e.key === 'Backspace' && currentPosition === 0 && badges.length > 0 && focusedBadgeIndex === -1 && !hasSelection) {
       // Remove last badge when backspace at beginning of input (only if no text is selected)
       e.preventDefault();
