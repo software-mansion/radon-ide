@@ -12,8 +12,6 @@ import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import Label from "./shared/Label";
 import { ProjectInterface, ToolState } from "../../common/Project";
 import Tooltip from "./shared/Tooltip";
-import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
-import { use$ } from "@legendapp/state/react";
 
 interface DevToolCheckboxProps {
   label: string;
@@ -97,8 +95,6 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
   const isProfilingCPU = isRunning && selectedDeviceSession.profilingCPUState !== "stopped";
   const isProfilingReact = isRunning && selectedDeviceSession.profilingReactState !== "stopped";
 
-  const frameRateReportingEnabled = use$(useSelectedDeviceSessionState().frameReporting.enabled);
-
   return (
     <DropdownMenuRoot>
       <DropdownMenu.Trigger asChild disabled={disabled}>
@@ -127,7 +123,9 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
 
             {isProfilingReact ? "Stop React Profiler" : "Start React Profiler"}
           </DropdownMenu.Item>
-          <DropdownMenu.Item
+          {/* note: This is removed as the information we get from the frame reporter is not useful
+          for the user, but the infrastructure here will be useful once we have a way of counting ios dropped frames */}
+          {/* <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() =>
               frameRateReportingEnabled
@@ -137,7 +135,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
             <span className="codicon codicon-rocket" />
 
             {frameRateReportingEnabled ? "Stop Frame Rate Reporting" : "Start Frame Rate Reporting"}
-          </DropdownMenu.Item>
+          </DropdownMenu.Item> */}
           <ToolsList project={project} tools={nonPanelTools} />
           <Label>Tool Panels</Label>
           <ToolsList project={project} tools={panelTools} />
