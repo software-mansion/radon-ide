@@ -90,8 +90,6 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const [inspectorUnavailableBoxPosition, setInspectorUnavailableBoxPosition] =
     useState<Point | null>(null);
-  const [showSendFilesOverlay, setShowSendFilesOverlay] = useState(false);
-  const dragLeaveTimeoutRef = useRef<number | null>(null);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
   const { selectedDeviceSession, project } = useProject();
@@ -431,10 +429,6 @@ function Preview({
     return () => {
       window.removeEventListener("contextmenu", onContextMenu);
       document.removeEventListener("blur", onBlurChange, true);
-      // Clean up timeout on unmount
-      if (dragLeaveTimeoutRef.current) {
-        clearTimeout(dragLeaveTimeoutRef.current);
-      }
     };
   }, [clearPressedKeys]);
 
@@ -516,113 +510,6 @@ function Preview({
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
 
-  const dragHandlers = useMemo(() => {
-    return {
-      onDrop(ev: React.DragEvent) {
-        console.log("File Dropped!");
-        ev.preventDefault();
-        if (dragLeaveTimeoutRef.current) {
-          clearTimeout(dragLeaveTimeoutRef.current);
-          dragLeaveTimeoutRef.current = null;
-        }
-        const files = ev.dataTransfer.files;
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          file.arrayBuffer().then((buf) => {
-            project.sendFileToDevice({
-              fileName: file.name,
-              data: buf,
-            });
-          });
-        }
-        setShowSendFilesOverlay(false);
-      },
-      onDragOver(ev: React.DragEvent) {
-        console.log("File Dragged Over!");
-        ev.stopPropagation();
-        ev.preventDefault();
-        // Cancel any pending hide
-        if (dragLeaveTimeoutRef.current) {
-          clearTimeout(dragLeaveTimeoutRef.current);
-          dragLeaveTimeoutRef.current = null;
-        }
-      },
-      onDragEnter(ev: React.DragEvent) {
-        console.log("File Dragged Enter!");
-        ev.preventDefault();
-        // Cancel any pending hide
-        if (dragLeaveTimeoutRef.current) {
-          clearTimeout(dragLeaveTimeoutRef.current);
-          dragLeaveTimeoutRef.current = null;
-        }
-        setShowSendFilesOverlay(true);
-      },
-      onDragLeave(ev: React.DragEvent) {
-        ev.preventDefault();
-        // Use a small timeout to allow for movement between elements
-        dragLeaveTimeoutRef.current = window.setTimeout(() => {
-          setShowSendFilesOverlay(false);
-          dragLeaveTimeoutRef.current = null;
-        }, 100);
-      },
-    } as const;
-  }, [project]);
-
-  const overlayDragHandlers = useMemo(() => {
-    return {
-      onDrop(ev: React.DragEvent) {
-        console.log("File Dropped on Overlay!");
-        ev.preventDefault();
-        ev.stopPropagation();
-        if (dragLeaveTimeoutRef.current) {
-          clearTimeout(dragLeaveTimeoutRef.current);
-          dragLeaveTimeoutRef.current = null;
-        }
-        const files = ev.dataTransfer.files;
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          file.arrayBuffer().then((buf) => {
-            project.sendFileToDevice({
-              fileName: file.name,
-              data: buf,
-            });
-          });
-        }
-        setShowSendFilesOverlay(false);
-      },
-      onDragOver(ev: React.DragEvent) {
-        console.log("File Dragged Over Overlay!");
-        ev.stopPropagation();
-        ev.preventDefault();
-        // Cancel any pending hide
-        if (dragLeaveTimeoutRef.current) {
-          clearTimeout(dragLeaveTimeoutRef.current);
-          dragLeaveTimeoutRef.current = null;
-        }
-      },
-      onDragEnter(ev: React.DragEvent) {
-        console.log("File Dragged Enter Overlay!");
-        ev.preventDefault();
-        ev.stopPropagation();
-        // Cancel any pending hide
-        if (dragLeaveTimeoutRef.current) {
-          clearTimeout(dragLeaveTimeoutRef.current);
-          dragLeaveTimeoutRef.current = null;
-        }
-      },
-      onDragLeave(ev: React.DragEvent) {
-        console.log("File Dragged Leave Overlay!");
-        ev.preventDefault();
-        ev.stopPropagation();
-        // Use a small timeout to allow for movement between elements
-        dragLeaveTimeoutRef.current = window.setTimeout(() => {
-          setShowSendFilesOverlay(false);
-          dragLeaveTimeoutRef.current = null;
-        }, 100);
-      },
-    } as const;
-  }, [project]);
-
   return (
     <>
       <div
@@ -633,7 +520,8 @@ function Preview({
         {...wrapperTouchHandlers}>
         {showDevicePreview && (
           <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
-            <div className="touch-area" {...touchHandlers} {...dragHandlers}>
+            <div className="touch-area" {...touchHandlers}>
+              <SendFilesOverlay />
               <MjpegImg
                 src={previewURL}
                 ref={previewRef}
@@ -642,7 +530,6 @@ function Preview({
                 }}
                 className="phone-screen"
               />
-              {showSendFilesOverlay && <SendFilesOverlay dragHandlers={overlayDragHandlers} />}
               <RenderOutlinesOverlay />
               {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 

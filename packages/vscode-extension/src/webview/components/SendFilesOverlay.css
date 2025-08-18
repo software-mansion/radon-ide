@@ -8,21 +8,20 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 0;
+  z-index: 1;
   position: relative;
   padding: 2px;
   transform: translateX(-2px) translateY(-2px);
-  animation: fadeIn 0.3s ease-in-out;
-  pointer-events: auto;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
 }
 
-@keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+.send-files-overlay.visible {
+  opacity: 1 !important;
+}
+
+.send-files-overlay.hidden {
+  opacity: 0;
 }
 
 .send-files-overlay-container {
@@ -30,9 +29,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
+  z-index: 2;
   background-color: transparent;
-  pointer-events: auto;
 }
 
 .send-files-overlay-content {
