@@ -18,6 +18,7 @@ export type WorkspaceConfiguration = {
   deviceRotation: DeviceRotation;
   inspectorExcludePattern: string | null;
   defaultMultimediaSavingLocation: string | null;
+  startDeviceOnLaunch: boolean;
 };
 
 // #endregion Workspace Configuration
@@ -183,6 +184,7 @@ export const initialState: State = {
     deviceRotation: DeviceRotation.Portrait,
     inspectorExcludePattern: null,
     defaultMultimediaSavingLocation: null,
+    startDeviceOnLaunch: true,
   },
 };
 
