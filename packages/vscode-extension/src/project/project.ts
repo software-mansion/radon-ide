@@ -47,7 +47,6 @@ import {
 } from "./DeviceSessionsManager";
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 import { FingerprintProvider } from "./FingerprintProvider";
-import { BuildCache } from "../builders/BuildCache";
 import { Connector } from "../connect/Connector";
 import { LaunchConfigurationsManager } from "./launchConfigurationsManager";
 import { LaunchConfiguration } from "../common/LaunchConfig";
@@ -117,10 +116,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.applicationContext.appRootFolder;
   }
 
-  public get buildCache() {
-    return this.applicationContext.buildCache;
-  }
-
   private get selectedDeviceSessionState(): DeviceSessionState | undefined {
     if (this.projectState.selectedSessionId === null) {
       return undefined;
@@ -151,7 +146,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     initialLaunchConfigOptions?: LaunchConfiguration
   ) {
     const fingerprintProvider = new FingerprintProvider();
-    const buildCache = new BuildCache(fingerprintProvider);
     const initialLaunchConfig = initialLaunchConfigOptions
       ? initialLaunchConfigOptions
       : this.launchConfigsManager.initialLaunchConfiguration;
@@ -160,7 +154,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this.stateManager.getDerived("applicationContext"),
       workspaceStateManager,
       initialLaunchConfig,
-      buildCache
+      fingerprintProvider
     );
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.applicationContext,
@@ -390,6 +384,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public async stepOverDebugger() {
     this.deviceSession?.stepOverDebugger();
   }
+  public async stepOutDebugger() {
+    this.deviceSession?.stepOutDebugger();
+  }
+  public async stepIntoDebugger() {
+    this.deviceSession?.stepIntoDebugger();
+  }
 
   public async focusDebugConsole() {
     this.deviceSession?.resetLogCounter();
@@ -495,6 +495,30 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #endregion DeepLinks
 
+  // #region File Transfer
+
+  public async openSendFileDialog() {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.openSendFileDialog();
+  }
+
+  public async sendFileToDevice({
+    fileName,
+    data,
+  }: {
+    fileName: string;
+    data: ArrayBuffer;
+  }): Promise<void> {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.sendFileToDevice(fileName, data);
+  }
+
+  // #endregion
+
   // #region Recording
 
   private recordingTimeout: NodeJS.Timeout | undefined = undefined;
@@ -557,11 +581,18 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       multimediaData.fileName.length - extension.length
     );
     const newFileName = `${baseFileName} ${timestamp}${extension}`;
-    const defaultFolder = Platform.select({
-      macos: path.join(homedir(), "Desktop"),
-      windows: homedir(),
-      linux: homedir(),
-    });
+
+    const defaultMultimediaSavingLocation =
+      this.workspaceStateManager.getState().defaultMultimediaSavingLocation;
+
+    const defaultFolder =
+      defaultMultimediaSavingLocation && fs.existsSync(defaultMultimediaSavingLocation)
+        ? defaultMultimediaSavingLocation
+        : Platform.select({
+            macos: path.join(homedir(), "Desktop"),
+            windows: homedir(),
+            linux: homedir(),
+          });
     const defaultUri = Uri.file(path.join(defaultFolder, newFileName));
 
     // save dialog open the location dialog, it also warns the user if the file already exists

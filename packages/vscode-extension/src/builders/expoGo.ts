@@ -5,6 +5,7 @@ import { extensionContext } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 import { CancelToken } from "../utilities/cancelToken";
 import { DevicePlatform } from "../common/State";
+import { checkNativeDirectoryExists } from "../utilities/checkNativeDirectoryExists";
 
 type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 
@@ -15,7 +16,7 @@ function fileExists(filePath: string, ...additionalPaths: string[]) {
   return fs.existsSync(path.join(filePath, ...additionalPaths));
 }
 
-export async function isExpoGoProject(appRoot: string): Promise<boolean> {
+export async function isExpoGoProject(appRoot: string, platform: DevicePlatform): Promise<boolean> {
   // There is no straightforward way to tell apart different react native project
   // setups. i.e. expo-go, expo-dev-client, bare react native, etc.
   // Here, we are using a heuristic to determine if the project is expo-go based
@@ -30,7 +31,8 @@ export async function isExpoGoProject(appRoot: string): Promise<boolean> {
     return false;
   }
 
-  if (fileExists(appRoot, "android") || fileExists(appRoot, "ios")) {
+  const nativeDirectoryExists = await checkNativeDirectoryExists(appRoot, platform);
+  if (nativeDirectoryExists) {
     // expo-go projects don't have android or ios folders
     return false;
   }

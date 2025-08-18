@@ -208,6 +208,10 @@ export class DeviceSessionsManager implements Disposable {
   }
 
   public findInitialDeviceAndStartSession = async () => {
+    if (!this.applicationContext.workspaceConfiguration.startDeviceOnLaunch) {
+      this.deviceSessionManagerDelegate.onInitialized();
+      return;
+    }
     if (Connector.getInstance().isEnabled) {
       // when radon connect is enabled, we don't want to automatically select and start a device
       return;
