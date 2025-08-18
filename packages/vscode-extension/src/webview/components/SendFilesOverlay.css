@@ -13,7 +13,7 @@
   padding: 2px;
   transform: translateX(-2px) translateY(-2px);
   animation: fadeIn 0.3s ease-in-out;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 @keyframes fadeIn {
@@ -32,6 +32,7 @@
   justify-content: center;
   z-index: 1;
   background-color: transparent;
+  pointer-events: auto;
 }
 
 .send-files-overlay-content {
