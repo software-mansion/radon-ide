@@ -90,6 +90,7 @@ function Preview({
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
   const [inspectorUnavailableBoxPosition, setInspectorUnavailableBoxPosition] =
     useState<Point | null>(null);
+  const [showSendFilesOverlay, setShowSendFilesOverlay] = useState(false);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
   const { selectedDeviceSession, project } = useProject();
@@ -525,6 +526,7 @@ function Preview({
             });
           });
         }
+        setShowSendFilesOverlay(false);
       },
       onDragOver(ev: React.DragEvent) {
         console.log("File Dragged Over!");
@@ -534,6 +536,11 @@ function Preview({
       onDragEnter(ev: React.DragEvent) {
         console.log("File Dragged Enter!");
         ev.preventDefault();
+        setShowSendFilesOverlay(true);
+      },
+      onDragLeave(ev: React.DragEvent) {
+        ev.preventDefault();
+        setShowSendFilesOverlay(false);
       },
     } as const;
   }, [project]);
@@ -557,7 +564,7 @@ function Preview({
                 }}
                 className="phone-screen"
               />
-              <SendFilesOverlay />
+              {showSendFilesOverlay && <SendFilesOverlay />}
               <RenderOutlinesOverlay />
               {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
