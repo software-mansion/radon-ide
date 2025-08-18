@@ -12,6 +12,17 @@
   position: relative;
   padding: 2px;
   transform: translateX(-2px) translateY(-2px);
+  animation: fadeIn 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 .send-files-overlay-container {
@@ -31,7 +42,7 @@
   width: 80%;
   height: 90%;
   border-radius: 20px;
-  animation: breathe 3s infinite ease;
+  animation: breathe 2s infinite ease;
 }
 
 .send-files-content-inner {
