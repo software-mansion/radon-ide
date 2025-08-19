@@ -90,6 +90,7 @@ export type ProjectStore = {
   applicationContext: ApplicationContextState;
   deviceSessions: DeviceSessions;
   selectedDeviceSessionId: DeviceId | null;
+  sendingFiles: string[];
 };
 
 // #endregion Project State
@@ -210,6 +211,7 @@ export const initialState: State = {
     },
     deviceSessions: {},
     selectedDeviceSessionId: null,
+    sendingFiles: [],
   },
   telemetry: {
     enabled: false,
