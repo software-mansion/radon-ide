@@ -124,3 +124,26 @@ export async function deleteAllDevices(driver) {
     }
   } catch (e) {}
 }
+
+export async function findWebViewIFrame(driver, iframeTitle) {
+  await driver.switchTo().defaultContent();
+  const webviews = await driver.findElements(
+    By.css('iframe[class*="webview"]')
+  );
+  for (let webview of webviews) {
+    await driver.switchTo().frame(webview);
+    try {
+      const iframe = await findAndWaitForElement(
+        driver,
+        By.css(`iframe[title="${iframeTitle}"]`),
+        `Timed out waiting for Radon IDE iframe with title ${iframeTitle}`
+      );
+      return iframe;
+    } catch (error) {
+      await driver.switchTo().defaultContent();
+    }
+  }
+  throw new Error(
+    `Could not find iframe with title ${iframeTitle} in any webview`
+  );
+}

@@ -287,7 +287,8 @@ function PreviewView() {
               label: isRecording ? "Stop screen recording" : "Start screen recording",
             }}
             onClick={toggleRecording}
-            disabled={!navBarButtonsActive}>
+            disabled={!navBarButtonsActive}
+            dataTest="toggle-recording-button">
             {isRecording ? (
               <div className="recording-rec-indicator">
                 <div className="recording-rec-dot" />
@@ -312,7 +313,8 @@ function PreviewView() {
               label: "Capture a screenshot of the app",
             }}
             onClick={captureScreenshot}
-            disabled={!navBarButtonsActive}>
+            disabled={!navBarButtonsActive}
+            dataTest="capture-screenshot-button">
             <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
           <IconButton

@@ -350,7 +350,7 @@
         {
           "type": "webview",
           "id": "RNIDE.Tool.Network.view",
-          "name": "",
+          "name": "Radon Network Inspector",
           "when": "RNIDE.Tool.Network.available && RNIDE.panelIsOpen"
         }
       ],

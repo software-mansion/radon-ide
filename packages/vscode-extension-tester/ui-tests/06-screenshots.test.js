@@ -1,12 +1,15 @@
 import { By } from "vscode-extension-tester";
-import { findAndWaitForElement } from "../utils/helpers.js";
+import {
+  findAndWaitForElement,
+  findAndClickElementByTag,
+} from "../utils/helpers.js";
 import { openRadonIDEPanel } from "./interactions.js";
 import { sharedTestLifecycle } from "./setupTest.js";
 
-describe("Network panel tests", () => {
+describe("screenshots panel tests", () => {
   const get = sharedTestLifecycle();
 
-  it("Should open the network panel", async () => {
+  it("Should take a screenshot", async () => {
     const { driver } = get();
     await openRadonIDEPanel(driver);
     await findAndWaitForElement(
@@ -15,5 +18,6 @@ describe("Network panel tests", () => {
       "Timed out waiting for phone-screen",
       600000
     );
+    await findAndClickElementByTag(driver, "capture-screenshot-button");
   });
 });
