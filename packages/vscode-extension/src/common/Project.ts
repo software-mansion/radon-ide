@@ -331,6 +331,9 @@ export interface ProjectInterface {
   captureScreenshot(): void;
   saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
 
+  startReportingFrameRate(): void;
+  stopReportingFrameRate(): void;
+
   startProfilingCPU(): void;
   stopProfilingCPU(): void;
   startProfilingReact(): void;

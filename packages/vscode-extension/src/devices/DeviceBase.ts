@@ -13,7 +13,7 @@ import { tryAcquiringLock } from "../utilities/common";
 import { extensionContext } from "../utilities/extensionContext";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { getChanges } from "../utilities/diffing";
-import { DeviceInfo, DevicePlatform } from "../common/State";
+import { DeviceInfo, DevicePlatform, FrameRateReport } from "../common/State";
 
 const LEFT_META_HID_CODE = 0xe3;
 const RIGHT_META_HID_CODE = 0xe7;
@@ -143,6 +143,14 @@ export abstract class DeviceBase implements Disposable {
       }
     }
     this.preview?.dispose();
+  }
+
+  public startReportingFrameRate(onFpsReport: (report: FrameRateReport) => void) {
+    this.preview?.startReportingFrameRate(onFpsReport);
+  }
+
+  public stopReportingFrameRate() {
+    this.preview?.stopReportingFrameRate();
   }
 
   public showTouches() {
