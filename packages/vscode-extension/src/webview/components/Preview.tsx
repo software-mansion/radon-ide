@@ -521,7 +521,6 @@ function Preview({
         {showDevicePreview && (
           <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="touch-area" {...touchHandlers}>
-              <SendFilesOverlay />
               <MjpegImg
                 src={previewURL}
                 ref={previewRef}
@@ -597,6 +596,7 @@ function Preview({
                   <Debugger />
                 </div>
               )}
+              <SendFilesOverlay />
             </div>
           </Device>
         )}
