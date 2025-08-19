@@ -384,33 +384,55 @@ function FilterInput({
     createBadgesFromValue(value);
   };
 
+  const countOfQuotes = (text: string, cursorPosition: number) => {
+    let quoteCount = 0;
+    for (let i = 0; i < cursorPosition; i++) {
+      if (text[i] === '"') {
+        quoteCount++;
+      }
+    }
+    return quoteCount;
+  };
+
+  const isInsideQuotes = (text: string, cursorPosition: number) => {
+    return countOfQuotes(text, cursorPosition) % 2 === 1;
+  };
+
+  const createNewBadgeFromSubstring = (
+    e: React.KeyboardEvent<HTMLInputElement>,
+    currentPosition: number,
+    preventDefault?: boolean
+  ) => {
+    const textBeforeCursor = value.substring(0, currentPosition);
+    const textAfterCursor = value.substring(currentPosition);
+    const newBadge = createBadgesFromValue(textBeforeCursor);
+    if (newBadge) {
+      if (preventDefault) {
+        e.preventDefault();
+      }
+      onChange(textAfterCursor);
+    }
+  };
+
   /**
    * Space - Create badge if there's a valid filter and not inside quotes
    */
   const handleSpace = (e: React.KeyboardEvent<HTMLInputElement>, currentPosition: number) => {
-    const isCursorInsideQuotes = (text: string, cursorPosition: number) => {
-      let quoteCount = 0;
-      for (let i = 0; i < cursorPosition; i++) {
-        if (text[i] === '"') {
-          quoteCount++;
-        }
-      }
-      return quoteCount % 2 === 1;
-    };
-
-    if (isCursorInsideQuotes(value, currentPosition)) {
+    if (isInsideQuotes(value, currentPosition)) {
       // If inside quotes, let space be typed normally
       return;
     }
+    createNewBadgeFromSubstring(e, currentPosition, true);
+  };
 
-    const textBeforeCursor = value.substring(0, currentPosition);
-    const textAfterCursor = value.substring(currentPosition);
-    const newBadge = createBadgesFromValue(textBeforeCursor);
-
-    if (newBadge) {
-      e.preventDefault();
-      onChange(textAfterCursor);
+  /**
+   * Other Keys - Create badge if there's a valid filter and quotes have been just closed
+   */
+  const handleOtherKeys = (e: React.KeyboardEvent<HTMLInputElement>, currentPosition: number) => {
+    if (countOfQuotes(value, currentPosition) === 0 || isInsideQuotes(value, currentPosition)) {
+      return;
     }
+    createNewBadgeFromSubstring(e, currentPosition, false);
   };
 
   // EVENT HANDLERS
@@ -435,6 +457,8 @@ function FilterInput({
       handleEnter(e);
     } else if (e.key === " ") {
       handleSpace(e, currentPosition);
+    } else {
+      handleOtherKeys(e, currentPosition);
     }
   };
 
