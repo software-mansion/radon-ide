@@ -42,6 +42,7 @@ const COMMON_CONFIG: ResolvedLaunchConfig = {
   preview: {
     waitForAppLaunch: true,
   },
+  usePrebuild: false,
 };
 
 describe("BuildManager", () => {

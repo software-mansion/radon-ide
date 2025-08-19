@@ -1,5 +1,6 @@
 .replay-ui-wrapper {
   --replay-z-index: 1;
+  --replay-controls-z-index: 2;
 }
 
 .replay-video,

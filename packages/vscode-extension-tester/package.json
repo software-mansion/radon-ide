@@ -6,9 +6,10 @@
     "setup-dev": "extest setup-tests --extensions_dir ./data/vscode-extensions",
     "install-vsix": "extest install-vsix -f ./data/react-native-ide-1.9.0.vsix --extensions_dir ./data/vscode-extensions",
     "setup": "extest get-vscode && extest get-chromedriver && npm run install-vsix",
-    "ui-tests": "extest run-tests ./ui-tests/*.test.js --extensions_dir ./data/vscode-extensions -r ../react-native-80",
+    "ui-tests": "extest run-tests ./ui-tests/*.test.js --extensions_dir ./data/vscode-extensions -r ./data/react-native-77",
     "clean": "rm -rf ./data/vscode-storage",
     "setup-run-tests": "npm run clean && npm run setup && npm run ui-tests",
+    "get-test-app": "./scripts/downloadRepo.sh",
     "extest": "extest run-tests -h",
     "set-up-VM-environment": "cd ./scripts && ./setupVM.sh && cd ..",
     "run-tests-on-VM": "cd ./scripts && ./runTests.sh && cd .."

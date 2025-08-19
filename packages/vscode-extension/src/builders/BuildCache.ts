@@ -12,13 +12,17 @@ import { DevicePlatform } from "../common/State";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const BASE_IOS_BUILD_CACHE_KEY = "ios_build_cache";
-const IPAD_SUPPORT_BUILD_CACHE_KEY = "ipad_support_build_cache";
 // Add a key for new builds that support iPad since 1.10.0
 // This is to ensure that old cached iOS builds that do not support iPad
 // (made before 1.10.0) are not used when the user opens a project using iPad
 // New builds support both iPhone and iPad, without having to rebuild,
 // so we can use the same cache key from that point on
-const IOS_BUILD_CACHE_KEY = BASE_IOS_BUILD_CACHE_KEY + IPAD_SUPPORT_BUILD_CACHE_KEY;
+const IPAD_SUPPORT_BUILD_CACHE_KEY = "ipad_support_build_cache";
+// Add a key for new builds that support iOS supported orientations for >1.10.0
+// to invalidate old builds that do not have supportedInterfaceOrientations field
+const IOS_SUPPORTED_ORIENTATIONS_KEY = "ios_supported_orientations";
+const IOS_BUILD_CACHE_KEY =
+  BASE_IOS_BUILD_CACHE_KEY + IPAD_SUPPORT_BUILD_CACHE_KEY + IOS_SUPPORTED_ORIENTATIONS_KEY;
 
 export type BuildCacheInfo = {
   fingerprint: string;

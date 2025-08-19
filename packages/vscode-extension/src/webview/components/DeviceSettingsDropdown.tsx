@@ -77,6 +77,12 @@ const setOrientationOptions: Array<{
     rotation: "-90deg",
   },
   {
+    label: "Portait Upside Down",
+    value: DeviceRotation.PortraitUpsideDown,
+    icon: "device-mobile",
+    rotation: "180deg",
+  },
+  {
     label: "Landscape Right",
     value: DeviceRotation.LandscapeRight,
     icon: "device-mobile",
@@ -238,6 +244,12 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
           {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.IOS && <BiometricsItem />}
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => project.openSendFileDialog()}>
+            <span className="codicon codicon-share" />
+            Send File
+          </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
