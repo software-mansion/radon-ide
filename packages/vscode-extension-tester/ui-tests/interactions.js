@@ -41,12 +41,17 @@ export async function fillDeviceCreationForm(driver, deviceName) {
     By.css('[data-test="device-name-input"]'),
     "Timed out waiting for an element matching from system image list"
   );
+  deviceNameInput.click();
+
+  await driver.executeScript("arguments[0].value = '';", deviceNameInput);
   await deviceNameInput.clear();
+
   await driver.wait(async () => {
     const value = await deviceNameInput.getAttribute("value");
     return value === "";
-  }, 1000);
-  deviceNameInput.sendKeys(deviceName);
+  }, 3000);
+
+  await deviceNameInput.sendKeys(deviceName);
 }
 
 export async function openRadonIDEPanel(driver) {

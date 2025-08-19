@@ -54,10 +54,10 @@ done
 echo "VM is ready at $VM_IP"
 
 echo "Running test commands on VM..."
-sshpass -p "$VM_PASSWORD" ssh "$VM_USER@$VM_IP" "rm -rf '$REMOTE_PATH'"
+ssh -i ./id_vm_mac "$VM_USER@$VM_IP" "rm -rf '$REMOTE_PATH'"
 
 echo "Creating directory on VM..."
-sshpass -p "$VM_PASSWORD" ssh "$VM_USER@$VM_IP" "mkdir -p '$REMOTE_PATH'"
+ssh -i ./id_vm_mac "$VM_USER@$VM_IP" "mkdir -p '$REMOTE_PATH'"
 
 echo "Copying project files to VM..."
 cd "$LOCAL_PROJECT_PATH" || exit 1
@@ -68,12 +68,12 @@ for item in * .*; do
     [[ "$item" == "node_modules" || "$item" == "scripts" || "$item" == ".gitignore" ]] && continue
 
     echo "Copying: $item"
-    sshpass -p "$VM_PASSWORD" scp -r "$item" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/"
+    scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/"
 done
 
-
+    
 echo "Running test commands on VM..."
-sshpass -p "$VM_PASSWORD" ssh "$VM_USER@$VM_IP" <<EOF
+ssh -i ./scripts/id_vm_mac "$VM_USER@$VM_IP" <<EOF
 cd "$REMOTE_PATH"
 npm install
 npm run setup-run-tests
