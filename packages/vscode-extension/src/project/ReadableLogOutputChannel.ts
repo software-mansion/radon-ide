@@ -7,11 +7,6 @@ import { CircularBuffer } from "./CircularBuffer";
 const KEEP_FIRST_N = 50;
 const KEEP_LAST_N = 150;
 
-export enum OutputChannelVisibility {
-  Visible = "visible",
-  Hidden = "hidden",
-}
-
 export interface ReadableLogOutputChannel extends LogOutputChannel {
   readAll: () => string[];
   isEmpty: () => boolean;
@@ -23,12 +18,11 @@ function createMockOutputChannel(): ReadableLogOutputChannel {
 
 export function createReadableOutputChannel(
   channel: string,
-  visibility: OutputChannelVisibility = OutputChannelVisibility.Visible
+  isVisible: boolean = true
 ): ReadableLogOutputChannel {
-  const outputChannel =
-    visibility === OutputChannelVisibility.Visible
-      ? window.createOutputChannel(channel, { log: true })
-      : createMockOutputChannel();
+  const outputChannel = isVisible
+    ? window.createOutputChannel(channel, { log: true })
+    : createMockOutputChannel();
 
   const logHead: string[] = [];
   const logTailBuffer = new CircularBuffer<string>(KEEP_LAST_N);

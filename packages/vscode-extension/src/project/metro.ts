@@ -18,7 +18,6 @@ import { ResolvedLaunchConfig } from "./ApplicationContext";
 import { CancelToken } from "../utilities/cancelToken";
 import { Output } from "../common/OutputChannel";
 import { IDE } from "./ide";
-import { OutputChannelVisibility } from "./ReadableLogOutputChannel";
 
 const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
@@ -484,7 +483,7 @@ export class MetroLauncher extends Metro implements Disposable {
     const metroOutputChannel =
       IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(
         Output.MetroBundler,
-        OutputChannelVisibility.Hidden
+        { visible: false }
       );
 
     // Clearing logs shortly before the new bundler process is started.

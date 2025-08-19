@@ -5,7 +5,6 @@ import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils
 import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
-import { OutputChannelVisibility } from "../../project/ReadableLogOutputChannel";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -54,10 +53,7 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
 
   const packageManagerLogs = registry.getOrCreateOutputChannel(Output.PackageManager);
 
-  const metroLogs = registry.getOrCreateOutputChannel(
-    Output.MetroBundler,
-    OutputChannelVisibility.Hidden
-  );
+  const metroLogs = registry.getOrCreateOutputChannel(Output.MetroBundler, { visible: false });
 
   const deviceLogs = registry.getOrCreateOutputChannel(
     isAndroid ? Output.AndroidDevice : Output.IosDevice

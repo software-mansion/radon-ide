@@ -1,17 +1,13 @@
 import { Disposable } from "vscode";
 import { Output } from "../common/OutputChannel";
-import {
-  createReadableOutputChannel,
-  OutputChannelVisibility,
-  ReadableLogOutputChannel,
-} from "./ReadableLogOutputChannel";
+import { createReadableOutputChannel, ReadableLogOutputChannel } from "./ReadableLogOutputChannel";
 
 export class OutputChannelRegistry implements Disposable {
   private channelByName = new Map<Output, ReadableLogOutputChannel>([]);
 
   getOrCreateOutputChannel(
     channel: Output,
-    visibility: OutputChannelVisibility = OutputChannelVisibility.Visible
+    options?: { visible: boolean }
   ): ReadableLogOutputChannel {
     const logOutput = this.channelByName.get(channel);
 
@@ -19,7 +15,7 @@ export class OutputChannelRegistry implements Disposable {
       return logOutput;
     }
 
-    const newOutputChannel = createReadableOutputChannel(channel, visibility);
+    const newOutputChannel = createReadableOutputChannel(channel, options?.visible !== false);
     this.channelByName.set(channel, newOutputChannel);
 
     return newOutputChannel;
