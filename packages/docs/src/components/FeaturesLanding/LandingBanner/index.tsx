@@ -1,10 +1,10 @@
 import React from "react";
 import styles from "./styles.module.css";
-import ReactNativeIcon from "../ReactNativeIcon";
-import ExpoIcon from "../ExpoIcon";
-import FillPattern from "../FillPattern";
+import ReactNativeIcon from "../../ReactNativeIcon";
+import ExpoIcon from "../../ExpoIcon";
+import FillPattern from "../../FillPattern";
 
-export default function Features() {
+export default function LandingBanner() {
   return (
     <div className={styles.container}>
       <div className={styles.left}>
@@ -16,11 +16,11 @@ export default function Features() {
         <div className={styles.spacer}></div>
       </div>
       <div className={styles.right}>
-        <div className={styles.buildForContainer}>
+        <div className={styles.builtForContainer}>
           <div className={styles.pattern}>
             <FillPattern />
           </div>
-          <div className={styles.buildFor}>BUILT FOR</div>
+          <div className={styles.builtFor}>BUILT FOR</div>
         </div>
         <div className={styles.iconContainer}>
           <div className={styles.reactNativeIcon}>

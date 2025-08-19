@@ -1,0 +1,48 @@
+.cardContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 500px;
+  padding: 10px;
+}
+.cardContainer button {
+  cursor: pointer;
+  width: 100%;
+  border: none;
+  padding: 0;
+  background-color: transparent;
+}
+
+.cardBadge {
+  display: flex;
+  padding: 8px 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+
+  background: var(--badge-background, #333);
+}
+.cardBadge p {
+  font-size: 14px;
+  line-height: 20px;
+  margin: 0;
+}
+
+.cardTitle {
+  font-size: 28px;
+  line-height: normal;
+  display: flex;
+  justify-content: left;
+}
+
+.cardContent {
+  color: var(--radon-subheading);
+  font-size: 18px;
+  line-height: 28px;
+}
+
+.hideContainer {
+  overflow: hidden;
+  transition: all 200ms ease-in-out;
+}

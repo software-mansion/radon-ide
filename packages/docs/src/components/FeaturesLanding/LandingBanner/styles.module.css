@@ -4,6 +4,7 @@
   border-top: var(--radon-border-layout);
   border-bottom: var(--radon-border-layout);
   max-height: 240px;
+  margin-top: 30px;
 }
 
 .left {
@@ -56,7 +57,7 @@
   display: none;
 }
 
-.buildFor {
+.builtFor {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -134,13 +135,13 @@
     border-top: var(--radon-border-layout);
   }
 
-  .buildForContainer {
+  .builtForContainer {
     display: flex;
     flex: 1;
     flex-direction: column;
   }
 
-  .buildFor {
+  .builtFor {
     height: 60px;
     border-bottom: none;
     border-top: var(--radon-border-layout);
