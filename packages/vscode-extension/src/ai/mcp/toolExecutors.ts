@@ -84,6 +84,6 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
   }
 
   return {
-    content: [...combinedLogsContent],
+    content: combinedLogsContent,
   };
 }
