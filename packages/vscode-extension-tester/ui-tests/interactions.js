@@ -42,17 +42,17 @@ export async function fillDeviceCreationForm(driver, deviceName) {
     By.css('[data-test="device-name-input"]'),
     "Timed out waiting for an element matching from system image list"
   );
+  deviceNameInput.click();
+
+  // there are situations where clear method alone doesn't work as expected
+  await driver.executeScript("arguments[0].value = '';", deviceNameInput);
   await deviceNameInput.clear();
+
   await driver.wait(async () => {
     const value = await deviceNameInput.getAttribute("value");
     return value === "";
   }, 3000);
 
-  // Without the sleep below, there are situations (quite rare) where the input keys are sent
-  // before the default text is deleted. The line above should ensure that the input is empty,
-  // but it doesn't always work as expected.
-  // At the moment, I don't know a better way to fix it.
-  await driver.sleep(500);
   await deviceNameInput.sendKeys(deviceName);
 }
 
