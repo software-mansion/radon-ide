@@ -36,7 +36,6 @@ function startRecording(driver, options = {}) {
         );
         clearInterval(intervalId);
       } else {
-        console.error("Error while taking screenshot:", error);
       }
     }
   }, interval);
