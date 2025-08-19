@@ -16,6 +16,9 @@ import { DebugSource } from "../debugging/DebugSession";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
 import { CancelToken } from "../utilities/cancelToken";
+import { Output } from "../common/OutputChannel";
+import { IDE } from "./ide";
+import { OutputChannelVisibility } from "./ReadableLogOutputChannel";
 
 const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
@@ -492,6 +495,12 @@ export class MetroLauncher extends Metro implements Disposable {
     }
     this.subprocess = bundlerProcess;
 
+    const metroOutputChannel =
+      IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(
+        Output.MetroBundler,
+        OutputChannelVisibility.Hidden
+      );
+
     const initPromise = new Promise<void>((resolve, reject) => {
       // reject if process exits
       bundlerProcess
@@ -508,6 +517,8 @@ export class MetroLauncher extends Metro implements Disposable {
 
       lineReader(bundlerProcess).onLineRead((line) => {
         const handleMetroEvent = (event: MetroEvent) => {
+          metroOutputChannel?.appendLine("[METRO BUNDLER EVENT]: " + event.type);
+
           if (event.type === "bundle_transform_progressed") {
             // Because totalFileCount grows as bundle_transform progresses at the beginning there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
@@ -562,6 +573,7 @@ export class MetroLauncher extends Metro implements Disposable {
         }
 
         Logger.debug("Metro", line);
+        metroOutputChannel?.appendLine(line);
 
         if (line.startsWith("__RNIDE__open_editor__ ")) {
           this.handleOpenEditor(line.slice("__RNIDE__open_editor__ ".length));

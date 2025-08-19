@@ -5,6 +5,7 @@ import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils
 import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
+import { OutputChannelVisibility } from "../../project/ReadableLogOutputChannel";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -53,6 +54,11 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
 
   const packageManagerLogs = registry.getOrCreateOutputChannel(Output.PackageManager);
 
+  const metroLogs = registry.getOrCreateOutputChannel(
+    Output.MetroBundler,
+    OutputChannelVisibility.Hidden
+  );
+
   const deviceLogs = registry.getOrCreateOutputChannel(
     isAndroid ? Output.AndroidDevice : Output.IosDevice
   );
@@ -66,6 +72,11 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
 
   if (!packageManagerLogs.isEmpty()) {
     const rawLogs = ["=== JS PACKAGER LOGS ===\n\n", ...packageManagerLogs.readAll()];
+    combinedLogsContent.push(textToToolContent(rawLogs.join("")));
+  }
+
+  if (!metroLogs.isEmpty()) {
+    const rawLogs = ["=== METRO LOGS ===\n\n", ...metroLogs.readAll()];
     combinedLogsContent.push(textToToolContent(rawLogs.join("")));
   }
 

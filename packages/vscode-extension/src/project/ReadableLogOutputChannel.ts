@@ -7,13 +7,28 @@ import { CircularBuffer } from "./CircularBuffer";
 const KEEP_FIRST_N = 50;
 const KEEP_LAST_N = 150;
 
+export enum OutputChannelVisibility {
+  Visible = "visible",
+  Hidden = "hidden",
+}
+
 export interface ReadableLogOutputChannel extends LogOutputChannel {
   readAll: () => string[];
   isEmpty: () => boolean;
 }
 
-export function createReadableOutputChannel(channel: string): ReadableLogOutputChannel {
-  const outputChannel = window.createOutputChannel(channel, { log: true });
+function createMockOutputChannel(): ReadableLogOutputChannel {
+  return {} as unknown as ReadableLogOutputChannel;
+}
+
+export function createReadableOutputChannel(
+  channel: string,
+  visibility: OutputChannelVisibility = OutputChannelVisibility.Visible
+): ReadableLogOutputChannel {
+  const outputChannel =
+    visibility === OutputChannelVisibility.Visible
+      ? window.createOutputChannel(channel, { log: true })
+      : createMockOutputChannel();
 
   const logHead: string[] = [];
   const logTailBuffer = new CircularBuffer<string>(KEEP_LAST_N);
@@ -52,15 +67,15 @@ export function createReadableOutputChannel(channel: string): ReadableLogOutputC
       droppedLogsCounter = 0;
       logHead.length = 0;
       logTailBuffer.clear();
-      outputChannel.clear();
+      outputChannel.clear?.();
     },
     append: (value: string) => {
       storeLog(value);
-      outputChannel.append(value);
+      outputChannel.append?.(value);
     },
     appendLine: (value: string) => {
       storeLog(value + "\n");
-      outputChannel.appendLine(value);
+      outputChannel.appendLine?.(value);
     },
   };
 }
