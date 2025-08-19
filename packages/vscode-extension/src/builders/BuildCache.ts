@@ -58,16 +58,7 @@ export class BuildCache {
    */
   public async storeBuild(buildFingerprint: string, cacheKey: CacheKey, build: BuildResult) {
     assert(cacheKey.platform === build.platform, "Cache key platform must match build platform");
-    const stringifiedCacheKey = stringifyCacheKey(cacheKey);
-    Logger.info(
-      "Storing build in cache",
-      build,
-      "fingerprint:",
-      buildFingerprint,
-      "cacheKey:",
-      stringifiedCacheKey
-    );
-    await extensionContext.globalState.update(stringifiedCacheKey, {
+    await extensionContext.globalState.update(stringifyCacheKey(cacheKey), {
       fingerprint: buildFingerprint,
       buildResult: build,
     });
