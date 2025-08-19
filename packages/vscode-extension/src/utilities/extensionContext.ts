@@ -43,7 +43,17 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
 
   const searchDirectories: SearchItem[] = workspaceFolders
     .filter((workspaceFolder) => {
-      return fs.statSync(workspaceFolder.uri.fsPath).isDirectory();
+      try {
+        const workspaceFolderStat = fs.statSync(workspaceFolder.uri.fsPath);
+        return (
+          !workspaceFolderStat.isSymbolicLink() &&
+          workspaceFolderStat.isDirectory() &&
+          !workspaceFolderStat.isFile()
+        );
+      } catch (e) {
+        Logger.error("[AppRoot] Error checking workspace folder:", e);
+        return false;
+      }
     })
     .map((workspaceFolder) => {
       return { path: workspaceFolder.uri.fsPath, searchDepth: 0 };
@@ -82,7 +92,14 @@ function searchForFilesDirectory(
       break;
     }
 
-    const filesAndDirs = fs.readdirSync(currentDir.path.toString(), { withFileTypes: true });
+    let filesAndDirs: fs.Dirent[];
+
+    try {
+      filesAndDirs = fs.readdirSync(currentDir.path.toString(), { withFileTypes: true });
+    } catch (e) {
+      Logger.error("[AppRoot] Error reading directory:", e);
+      continue;
+    }
 
     const isCandidate = filesAndDirs.some((dirEntry) => {
       return dirEntry.isFile() && searchedFileNames.includes(dirEntry.name);
@@ -95,7 +112,7 @@ function searchForFilesDirectory(
     filesAndDirs
       .filter((dirEntry) => {
         return (
-          !dirEntry.isFile() &&
+          dirEntry.isDirectory() &&
           !excludedDirectoryPatterns.some((pattern) => pattern.test(dirEntry.name))
         );
       })
