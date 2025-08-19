@@ -16,6 +16,12 @@ interface FilterInputProps {
   className?: string;
 }
 
+type ScrollingOptions = {
+  centerInViewport?: boolean | undefined;
+  padding?: number | undefined;
+  behavior?: "auto" | "smooth" | undefined;
+};
+
 function FilterInput({
   value,
   onChange,
@@ -34,7 +40,47 @@ function FilterInput({
   const [focusedBadgeIndex, setFocusedBadgeIndex] = useState<number>(-1); // -1 means input is focused
   const [highlightedBadgeId, setHighlightedBadgeId] = useState<string | null>(null);
 
-  // Helper function to scroll input into view
+  // Common scrolling logic
+  const scrollElementIntoView = (
+    elementRect: DOMRect,
+    wrapperRect: DOMRect,
+    wrapperScrollLeft: number,
+    options: ScrollingOptions = {},
+    centerInViewport: boolean = false
+  ) => {
+    const { padding = 10, behavior = "smooth" } = options;
+
+    const elementLeft = elementRect.left - wrapperRect.left + wrapperScrollLeft;
+    const elementRight = elementLeft + elementRect.width;
+    const visibleLeft = wrapperScrollLeft;
+    const visibleRight = wrapperScrollLeft + wrapperRect.width;
+
+    let newScrollLeft = wrapperScrollLeft;
+
+    if (centerInViewport) {
+      // Center the element in the viewport
+      if (elementLeft < visibleLeft || elementRight > visibleRight) {
+        newScrollLeft = elementLeft - wrapperRect.width / 2 + elementRect.width / 2;
+      }
+    } else {
+      // Scroll left if element is off the left edge
+      if (elementLeft < visibleLeft) {
+        newScrollLeft = elementLeft - padding;
+      }
+      // Scroll right if element is off the right edge
+      else if (elementRight > visibleRight) {
+        newScrollLeft = elementRight - wrapperRect.width + padding;
+      }
+    }
+
+    if (newScrollLeft !== wrapperScrollLeft && wrapperRef.current) {
+      wrapperRef.current.scrollTo({
+        left: Math.max(0, newScrollLeft),
+        behavior,
+      });
+    }
+  };
+
   const scrollInputIntoView = () => {
     if (containerRef.current && inputRef.current) {
       const wrapper = wrapperRef.current;
@@ -45,38 +91,14 @@ function FilterInput({
         const inputRect = inputWrapper.getBoundingClientRect();
         const wrapperScrollLeft = wrapper.scrollLeft;
 
-        // Calculate if input is out of view
-        const inputLeft = inputRect.left - wrapperRect.left + wrapperScrollLeft;
-        const inputRight = inputLeft + inputRect.width;
-        const visibleLeft = wrapperScrollLeft;
-        const visibleRight = wrapperScrollLeft + wrapperRect.width;
-
-        let newScrollLeft = wrapperScrollLeft;
-
-        // If no badges, ensure there's consistent padding from the left
-        if (badges.length === 0) {
-          // Add 10px padding from the left edge to match badge behavior
-          newScrollLeft = Math.max(0, inputLeft - 10);
-        } else {
-          // Scroll to show input if it's out of view
-          if (inputRight > visibleRight) {
-            newScrollLeft = inputRight - wrapperRect.width + 10; // Add some padding
-          } else if (inputLeft < visibleLeft) {
-            newScrollLeft = Math.max(0, inputLeft - 10); // Add some padding
-          }
-        }
-
-        if (newScrollLeft !== wrapperScrollLeft) {
-          wrapper.scrollTo({
-            left: newScrollLeft,
-            behavior: badges.length === 0 ? "auto" : "smooth",
-          });
-        }
+        // If no badges, add left padding
+        const scrollingOptions: ScrollingOptions =
+          badges.length === 0 ? { behavior: "auto", padding: 10 } : { padding: 10 };
+        scrollElementIntoView(inputRect, wrapperRect, wrapperScrollLeft, scrollingOptions);
       }
     }
   };
 
-  // Helper function to scroll badge into view
   const scrollBadgeIntoView = (badgeIndex: number, centerInViewport: boolean = false) => {
     if (badgeIndex >= 0 && containerRef.current) {
       const wrapper = wrapperRef.current;
@@ -87,41 +109,19 @@ function FilterInput({
         const wrapperRect = wrapper.getBoundingClientRect();
         const badgeRect = targetBadge.getBoundingClientRect();
         const wrapperScrollLeft = wrapper.scrollLeft;
+        const scrollingOptions: ScrollingOptions = { padding: 10 };
 
-        const badgeLeft = badgeRect.left - wrapperRect.left + wrapperScrollLeft;
-        const badgeRight = badgeLeft + badgeRect.width;
-        const visibleLeft = wrapperScrollLeft;
-        const visibleRight = wrapperScrollLeft + wrapperRect.width;
-
-        let newScrollLeft = wrapperScrollLeft;
-
-        if (centerInViewport) {
-          // Center the badge in the viewport
-          if (badgeLeft < visibleLeft || badgeRight > visibleRight) {
-            newScrollLeft = badgeLeft - wrapperRect.width / 2 + badgeRect.width / 2;
-          }
-        } else {
-          // Scroll left if badge is off the left edge
-          if (badgeLeft < visibleLeft) {
-            newScrollLeft = badgeLeft - 10; // Add some padding
-          }
-          // Scroll right if badge is off the right edge
-          else if (badgeRight > visibleRight) {
-            newScrollLeft = badgeRight - wrapperRect.width + 10; // Add some padding
-          }
-        }
-
-        if (newScrollLeft !== wrapperScrollLeft) {
-          wrapper.scrollTo({
-            left: Math.max(0, newScrollLeft),
-            behavior: "smooth",
-          });
-        }
+        scrollElementIntoView(
+          badgeRect,
+          wrapperRect,
+          wrapperScrollLeft,
+          scrollingOptions,
+          centerInViewport
+        );
       }
     }
   };
 
-  // Parse text to extract completed filters as badges
   const parseTextToBadges = (text: string) => {
     const trimmedText = text.trim();
     if (!trimmedText) {
@@ -139,12 +139,6 @@ function FilterInput({
     let newBadge: FilterBadge | null = null;
     let remainingText = trimmedText;
 
-    // Extract the first filter from the beginning of the text
-    // Support both quoted and unquoted values: method:value or method:"quoted value"
-    // No spaces allowed before or immediately after the colon
-    // Empty quotes are not considered valid
-    // Unquoted values cannot start with a quote character
-
     let fullMatch = "";
     let columnName = "";
     let filterValue = "";
@@ -156,7 +150,7 @@ function FilterInput({
       columnName = quotedMatch[1];
       filterValue = quotedMatch[2];
     } else {
-      // Try to match unquoted value: column:value (until space or end)
+      // Try to match unquoted value: column:value (until space)
       const unquotedMatch = remainingText.match(/^(\w+):([^\s:"][^\s]*?)(?=\s|$)/);
       if (unquotedMatch) {
         fullMatch = unquotedMatch[0];
@@ -178,7 +172,6 @@ function FilterInput({
           value: normalizedValue,
         };
 
-        // Remove this filter from the beginning of remaining text
         remainingText = remainingText.substring(fullMatch.length).trim();
       }
     }
@@ -190,7 +183,6 @@ function FilterInput({
   const createBadgesFromValue = (textValue: string) => {
     const { newBadge, remainingText } = parseTextToBadges(textValue);
 
-    // Always update the input with remaining text if valid filters were found
     if (newBadge) {
       onChange(remainingText);
     }
@@ -209,16 +201,10 @@ function FilterInput({
 
       setHighlightedBadgeId(duplicateBadge.id);
       setFocusedBadgeIndex(duplicateBadgeIndex);
+      inputRef.current?.blur();
+      scrollBadgeIntoView(duplicateBadgeIndex, true);
 
-      // Remove focus from input field to prevent navigation conflicts
-      if (inputRef.current) {
-        inputRef.current.blur();
-      }
-
-      // Scroll to the duplicate badge
-      scrollBadgeIntoView(duplicateBadgeIndex, true); // Center the duplicate badge in viewport
-
-      // Remove highlight after animation (but keep focus)
+      // Remove highlight after animation
       setTimeout(() => {
         setHighlightedBadgeId(null);
       }, 600);
@@ -228,6 +214,7 @@ function FilterInput({
       onBadgesChange?.(updatedBadges);
 
       // Scroll to ensure the input (now positioned after the new badge) is visible
+      // 10 ms timeout for useEffect to fire
       setTimeout(() => {
         scrollInputIntoView();
       }, 10);
@@ -261,30 +248,35 @@ function FilterInput({
     }
   };
 
-  // Calculate input width based on content using OffscreenCanvas
+  /**
+   * Calculate input width based on content using OffscreenCanvas. This approach is needed,
+   * because the text needs static value in px for the layout with badges to behave
+   * as expected from input field.
+   */
   useEffect(() => {
-    if (inputRef.current) {
-      const canvas = new OffscreenCanvas(0, 0);
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        return;
-      }
-
-      // Get the computed font from the input element
-      const computedStyle = window.getComputedStyle(inputRef.current);
-      ctx.font = computedStyle.font;
-
-      // Measure based on current value + suggestion for proper width
-      const textToMeasure = value + (suggestion || "");
-      const textToUse = textToMeasure || (badges.length === 0 ? placeholder : "") || "W";
-
-      const textMetrics = ctx.measureText(textToUse);
-      const measuredWidth = textMetrics.width;
-
-      // Set minimum width and add some padding for natural flow
-      const calculatedWidth = Math.max(20, measuredWidth + 10);
-      setInputWidth(calculatedWidth);
+    if (!inputRef.current) {
+      return;
     }
+
+    const canvas = new OffscreenCanvas(0, 0);
+    const ctx = canvas.getContext("2d");
+    if (!ctx) {
+      return;
+    }
+
+    const computedStyle = window.getComputedStyle(inputRef.current);
+    ctx.font = computedStyle.font;
+
+    // Measure based on current value + suggestion for proper width
+    const textToMeasure = value + (suggestion || "");
+    const textToUse = textToMeasure || (badges.length === 0 ? placeholder : "") || "W";
+
+    const textMetrics = ctx.measureText(textToUse);
+    const measuredWidth = textMetrics.width;
+
+    // Set minimum width and add padding for natural flow
+    const calculatedWidth = Math.max(20, measuredWidth + 10);
+    setInputWidth(calculatedWidth);
   }, [value, placeholder, badges.length, suggestion]);
 
   // Focus container when navigating to badges, but avoid interfering with input focus
@@ -294,13 +286,6 @@ function FilterInput({
       scrollBadgeIntoView(focusedBadgeIndex);
     }
   }, [focusedBadgeIndex]);
-
-  // Reset scroll position when no badges are present
-  useEffect(() => {
-    if (badges.length === 0 && containerRef.current) {
-      scrollInputIntoView();
-    }
-  }, [badges.length]);
 
   // KEY HANDLERS
 
@@ -428,6 +413,8 @@ function FilterInput({
     }
   };
 
+  // EVENT HANDLERS
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
     const currentPosition = target.selectionStart || 0;
@@ -472,8 +459,8 @@ function FilterInput({
   const handleBadgeClick = (index: number) => {
     setFocusedBadgeIndex(index);
     containerRef.current?.focus(); // Focus the container so keyboard navigation works
-    // wait for useEffect to run first, then scroll to the center of view
     setTimeout(() => {
+      // wait for useEffect to run first, then scroll to the center of view
       scrollBadgeIntoView(index, true);
     }, 10);
   };
@@ -488,11 +475,10 @@ function FilterInput({
   return (
     <div
       ref={containerRef}
-      className={`filter-input-container ${suggestion ? "filter-input-container--has-suggestion" : ""} ${className || ""}`}
+      className={`filter-input-container ${className || ""}`}
       onClick={handleInputContainerClick}
       onKeyDown={handleContainerKeyDown}
-      tabIndex={focusedBadgeIndex >= 0 ? 0 : -1}
-      style={{ outline: "none" }}>
+      tabIndex={focusedBadgeIndex >= 0 ? 0 : -1}>
       <div className="filter-input-wrapper" ref={wrapperRef}>
         {badges.map((badge, index) => (
           <div
@@ -502,8 +488,7 @@ function FilterInput({
             onClick={(e) => {
               e.stopPropagation();
               handleBadgeClick(index);
-            }}
-            style={{ cursor: "pointer" }}>
+            }}>
             <span className="filter-badge__text">
               <span className="filter-badge__name">{badge.columnName}</span>
               <span className="filter-badge__separator">:</span>
