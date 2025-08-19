@@ -480,6 +480,16 @@ export class MetroLauncher extends Metro implements Disposable {
       EXPO_EDITOR: FAKE_EDITOR,
       ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
     };
+
+    const metroOutputChannel =
+      IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(
+        Output.MetroBundler,
+        OutputChannelVisibility.Hidden
+      );
+
+    // Clearing logs shortly before the new bundler process is started.
+    metroOutputChannel?.clear();
+
     let bundlerProcess: ChildProcess;
 
     if (shouldUseExpoCLI(launchConfiguration)) {
@@ -494,12 +504,6 @@ export class MetroLauncher extends Metro implements Disposable {
       bundlerProcess = this.launchPackager(appRoot, port, libPath, resetCache, metroEnv);
     }
     this.subprocess = bundlerProcess;
-
-    const metroOutputChannel =
-      IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(
-        Output.MetroBundler,
-        OutputChannelVisibility.Hidden
-      );
 
     const initPromise = new Promise<void>((resolve, reject) => {
       // reject if process exits
