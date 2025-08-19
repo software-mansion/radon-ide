@@ -518,32 +518,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    // TODO: move state mutations to DeviceSession
-    this.addFileToState(fileName);
-    try {
-      await this.deviceSession.sendFileToDevice(fileName, data);
-      // NOTE: sleep to simulate long sends
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    } finally {
-      this.removeFileFromState(fileName);
-    }
-  }
-
-  private addFileToState(fileName: string) {
-    const sendingFiles = [...this.stateManager.getState().sendingFiles, fileName];
-    this.stateManager.setState({ sendingFiles });
-  }
-
-  private removeFileFromState(fileName: string) {
-    const sendingFiles = this.stateManager.getState().sendingFiles;
-    const fileIndex = sendingFiles.indexOf(fileName);
-    if (fileIndex === -1) {
-      Logger.debug("Inconsistent `sendingFiles` state, expected file not found.", fileName);
-      return;
-    }
-    const withoutFile = [...sendingFiles];
-    withoutFile.splice(fileIndex, 1);
-    this.stateManager.setState({ sendingFiles: withoutFile });
+    await this.deviceSession.sendFileToDevice(fileName, data);
   }
 
   // #endregion

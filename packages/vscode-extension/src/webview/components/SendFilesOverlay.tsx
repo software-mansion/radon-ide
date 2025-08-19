@@ -5,7 +5,7 @@ import "./SendFilesOverlay.css";
 import { use$ } from "@legendapp/state/react";
 import { useProject } from "../providers/ProjectProvider";
 import classNames from "classnames";
-import { useStore } from "../providers/storeProvider";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const RETAIN_SUCCESS_SCREEN = 1000; // ms
 const RETAIN_ERROR_SCREEN = 3000; // ms
@@ -15,14 +15,14 @@ const RETAIN_ERROR_SCREEN = 3000; // ms
 // but it doesn't show this when Preview is in the Side Panel
 export function SendFilesOverlay() {
   const { project } = useProject();
-  const store$ = useStore();
-  const sendingFiles = use$(store$.projectState.sendingFiles);
   const [isVisible, setIsVisible] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("error");
+  const store$ = useSelectedDeviceSessionState();
+  const sendingFiles = use$(store$.sendingFiles);
   const fileCount = sendingFiles.length;
   const isLoading = fileCount > 0;
-  const [errorMessage, setErrorMessage] = useState("error");
 
   const resetOverlayState = useCallback(() => {
     setIsSuccess(false);

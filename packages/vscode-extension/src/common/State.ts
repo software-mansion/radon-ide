@@ -78,6 +78,7 @@ export type FrameReportingState = {
 
 export type DeviceSessionStore = {
   frameReporting: FrameReportingState;
+  sendingFiles: string[];
 };
 
 // #endregion Device Session
@@ -90,7 +91,6 @@ export type ProjectStore = {
   applicationContext: ApplicationContextState;
   deviceSessions: DeviceSessions;
   selectedDeviceSessionId: DeviceId | null;
-  sendingFiles: string[];
 };
 
 // #endregion Project State
@@ -195,6 +195,7 @@ export const initialDeviceSessionStore: DeviceSessionStore = {
     enabled: false,
     frameReport: null,
   },
+  sendingFiles: [],
 };
 
 export const initialState: State = {
@@ -211,7 +212,6 @@ export const initialState: State = {
     },
     deviceSessions: {},
     selectedDeviceSessionId: null,
-    sendingFiles: [],
   },
   telemetry: {
     enabled: false,

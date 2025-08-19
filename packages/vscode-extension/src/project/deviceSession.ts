@@ -928,12 +928,37 @@ export class DeviceSession implements Disposable {
     return this.metro.port;
   }
 
-  public sendFile(filePath: string) {
+  public async sendFile(filePath: string) {
     getTelemetryReporter().sendTelemetryEvent("device:send-file", {
       platform: this.device.deviceInfo.platform,
       extension: path.extname(filePath),
     });
-    return this.device.sendFile(filePath);
+
+    this.addFileToState(path.basename(filePath));
+    try {
+      // NOTE: sleep to simulate long sends
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      return await this.device.sendFile(filePath);
+    } finally {
+      this.removeFileFromState(path.basename(filePath));
+    }
+  }
+
+  private addFileToState(fileName: string) {
+    const sendingFiles = [...this.stateManager.getState().sendingFiles, fileName];
+    this.stateManager.setState({ sendingFiles });
+  }
+
+  private removeFileFromState(fileName: string) {
+    const sendingFiles = this.stateManager.getState().sendingFiles;
+    const fileIndex = sendingFiles.indexOf(fileName);
+    if (fileIndex === -1) {
+      Logger.debug("Inconsistent `sendingFiles` state, expected file not found.", fileName);
+      return;
+    }
+    const withoutFile = [...sendingFiles];
+    withoutFile.splice(fileIndex, 1);
+    this.stateManager.setState({ sendingFiles: withoutFile });
   }
 
   public async openSendFileDialog() {
