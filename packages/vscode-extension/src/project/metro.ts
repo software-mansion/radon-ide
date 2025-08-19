@@ -569,7 +569,6 @@ export class MetroLauncher extends Metro implements Disposable {
               };
               const errorModulePath = event.error.originModulePath;
               this.bundleErrorEventEmitter.fire({ message, source, errorModulePath });
-
               metroOutputChannel?.appendLine(
                 `[Bundling Error]: ${filename}:${source.line1based}:${source.column0based}: ${message}`
               );
@@ -588,6 +587,10 @@ export class MetroLauncher extends Metro implements Disposable {
         }
 
         Logger.debug("Metro", line);
+
+        if (!line.startsWith("__RNIDE__")) {
+          metroOutputChannel?.appendLine(line);
+        }
 
         if (line.startsWith("__RNIDE__open_editor__ ")) {
           this.handleOpenEditor(line.slice("__RNIDE__open_editor__ ".length));
