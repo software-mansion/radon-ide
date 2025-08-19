@@ -41,9 +41,13 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
     return [];
   }
 
-  const searchDirectories: SearchItem[] = workspaceFolders.map((workspaceFolder) => {
-    return { path: workspaceFolder.uri.fsPath, searchDepth: 0 };
-  });
+  const searchDirectories: SearchItem[] = workspaceFolders
+    .filter((workspaceFolder) => {
+      return fs.statSync(workspaceFolder.uri.fsPath).isDirectory();
+    })
+    .map((workspaceFolder) => {
+      return { path: workspaceFolder.uri.fsPath, searchDepth: 0 };
+    });
 
   const candidates = searchForFilesDirectory(
     searchedFileNames,
