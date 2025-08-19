@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./styles.module.css";
 import FeatureCardLanding, { ActiveItem } from "./FeatureCardLanding";
 
@@ -30,12 +30,21 @@ const features = [
 ];
 
 export default function FeatureScrollLanding() {
-  const [activeItems, setActiveItems] = useState<ActiveItem[]>([
-    {
-      index: null,
-      height: 0,
-    },
-  ]);
+  const [activeItem, setActiveItem] = useState<ActiveItem>({
+    index: 0,
+    height: 0,
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveItem((prev) => {
+        const nextIndex = (prev.index + 1) % features.length;
+        return { index: nextIndex, height: 0 };
+      });
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [activeItem]);
 
   return (
     <div className={styles.container}>
@@ -47,8 +56,8 @@ export default function FeatureScrollLanding() {
             badge={feature.badge}
             title={feature.title}
             content={feature.content}
-            activeItems={activeItems}
-            setActiveItems={setActiveItems}
+            isExpanded={activeItem.index === index}
+            setActiveItem={setActiveItem}
           />
         ))}
       </div>

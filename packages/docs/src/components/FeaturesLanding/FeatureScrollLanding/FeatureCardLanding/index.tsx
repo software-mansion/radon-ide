@@ -11,8 +11,8 @@ interface FeatureCardLandingProps {
   badge: string;
   title: string;
   content: string;
-  activeItems: ActiveItem[];
-  setActiveItems: (items: ActiveItem[]) => void;
+  isExpanded: boolean;
+  setActiveItem: (value: ActiveItem | null) => void;
 }
 
 export default function FeatureCardLanding({
@@ -20,44 +20,29 @@ export default function FeatureCardLanding({
   badge,
   title,
   content,
-  activeItems,
-  setActiveItems,
+  isExpanded,
+  setActiveItem,
 }: FeatureCardLandingProps) {
   const contentRef = useRef<HTMLDivElement | null>(null);
-
-  const isExpanded = activeItems.some((item) => item.index === index);
+  const badgeRef = useRef<HTMLDivElement | null>(null);
 
   const toggleAnswer = () => {
-    if (isExpanded) {
-      setActiveItems(activeItems.filter((item) => item.index !== index));
-    } else {
-      const height = contentRef.current?.clientHeight;
-      setActiveItems([...activeItems, { index, height }]);
+    if (!isExpanded) {
+      setActiveItem({ index: index, height: contentRef.current?.clientHeight });
     }
   };
 
-  function contentShow() {
-    return { __html: content };
-  }
-  function badgeShow() {
-    return { __html: badge };
-  }
   return (
     <div className={styles.cardContainer}>
       <div role="region" aria-labelledby={`feature-${index}`}>
         <div
           className={styles.hideContainer}
           style={{
-            maxHeight:
-              isExpanded && contentRef.current?.clientHeight
-                ? `calc(${contentRef.current?.clientHeight}px + 0.5rem)`
-                : 0,
+            maxHeight: isExpanded ? badgeRef.current?.clientHeight ?? 0 : 0,
           }}>
-          <div
-            className={styles.cardBadge}
-            ref={contentRef}
-            dangerouslySetInnerHTML={badgeShow()}
-          />
+          <div className={styles.cardBadge} ref={badgeRef}>
+            {badge}
+          </div>
         </div>
       </div>
       <button id={`feature-${index}`} aria-expanded={isExpanded} onClick={() => toggleAnswer()}>
@@ -67,18 +52,20 @@ export default function FeatureCardLanding({
         <div
           className={styles.hideContainer}
           style={{
-            maxHeight:
-              isExpanded && contentRef.current?.clientHeight
-                ? `calc(${contentRef.current?.clientHeight}px + 0.5rem)`
-                : 0,
+            maxHeight: isExpanded ? contentRef.current?.clientHeight ?? 0 : 0,
           }}>
-          <div
-            className={styles.cardContent}
-            ref={contentRef}
-            dangerouslySetInnerHTML={contentShow()}
-          />
+          <div className={styles.cardContent} ref={contentRef}>
+            {content}
+          </div>
         </div>
       </div>
+      {isExpanded && (
+        <div className={styles.progressContainer}>
+          <div className={`${styles.progress} ${styles.progressMoved}`}>
+            <div className={styles.progressBar}></div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
