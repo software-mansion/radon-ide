@@ -534,10 +534,6 @@ export class MetroLauncher extends Metro implements Disposable {
             Logger.debug("Metro", line);
           }
 
-          if (!line.startsWith("RNIDE_")) {
-            metroOutputChannel?.appendLine(line);
-          }
-
           let log;
 
           switch (event.type) {
