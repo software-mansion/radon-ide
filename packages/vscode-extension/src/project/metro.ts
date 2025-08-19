@@ -520,8 +520,6 @@ export class MetroLauncher extends Metro implements Disposable {
 
       lineReader(bundlerProcess).onLineRead((line) => {
         const handleMetroEvent = (event: MetroEvent) => {
-          metroOutputChannel?.appendLine("[METRO BUNDLER EVENT]: " + event.type);
-
           if (event.type === "bundle_transform_progressed") {
             // Because totalFileCount grows as bundle_transform progresses at the beginning there are a few logs that indicate 100% progress thats why we ignore them
             if (event.totalFileCount > 10) {
@@ -529,10 +527,18 @@ export class MetroLauncher extends Metro implements Disposable {
               this.bundleProgressEventEmitter.fire({ bundleProgress });
             }
           } else if (event.type === "client_log" && event.level === "error") {
-            Logger.error(stripAnsi(event.data[0]));
+            const err = stripAnsi(event.data[0]);
+            Logger.error(err);
+            metroOutputChannel?.appendLine(err);
           } else {
             Logger.debug("Metro", line);
           }
+
+          if (!line.startsWith("RNIDE_")) {
+            metroOutputChannel?.appendLine(line);
+          }
+
+          let log;
 
           switch (event.type) {
             case "RNIDE_expo_env_prelude_lines":
@@ -541,7 +547,9 @@ export class MetroLauncher extends Metro implements Disposable {
               break;
             case "initialize_done":
               this._port = event.port;
-              Logger.info(`Metro started on port ${this._port}`);
+              log = `Metro started on port ${this._port}`;
+              metroOutputChannel?.appendLine(log);
+              Logger.info(log);
               resolve();
               break;
             case "RNIDE_watch_folders":
@@ -561,6 +569,10 @@ export class MetroLauncher extends Metro implements Disposable {
               };
               const errorModulePath = event.error.originModulePath;
               this.bundleErrorEventEmitter.fire({ message, source, errorModulePath });
+
+              metroOutputChannel?.appendLine(
+                `[Bundling Error]: ${filename}:${source.line1based}:${source.column0based}: ${message}`
+              );
               break;
           }
         };
@@ -576,7 +588,6 @@ export class MetroLauncher extends Metro implements Disposable {
         }
 
         Logger.debug("Metro", line);
-        metroOutputChannel?.appendLine(line);
 
         if (line.startsWith("__RNIDE__open_editor__ ")) {
           this.handleOpenEditor(line.slice("__RNIDE__open_editor__ ".length));
