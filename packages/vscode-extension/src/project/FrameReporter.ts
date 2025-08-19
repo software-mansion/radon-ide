@@ -1,5 +1,5 @@
 import { Disposable } from "vscode";
-import { FramerateReport, FrameReportingState } from "../common/State";
+import { FrameRateReport, FrameReportingState } from "../common/State";
 import { StateManager } from "./StateManager";
 import { DeviceBase } from "../devices/DeviceBase";
 import { disposeAll } from "../utilities/disposables";
@@ -13,24 +13,24 @@ export class FrameReporter implements Disposable {
   ) {
     this.disposables.push(
       new Disposable(() => {
-        this.stopFrameRateReporting();
+        this.stopReportingFrameRate();
       })
     );
 
     this.disposables.push(this.stateManager);
   }
 
-  public startFrameRateReporting() {
+  public startReportingFrameRate() {
     this.stateManager.setState({ enabled: true, frameReport: null });
-    const onFrameReport = (report: FramerateReport) => {
+    const onFrameReport = (report: FrameRateReport) => {
       this.stateManager.setState({ frameReport: report });
     };
-    this.device.startFrameRateReporting(onFrameReport);
+    this.device.startReportingFrameRate(onFrameReport);
   }
 
-  public stopFrameRateReporting() {
+  public stopReportingFrameRate() {
     this.stateManager.setState({ enabled: false, frameReport: null });
-    this.device.stopFrameRateReporting();
+    this.device.stopReportingFrameRate();
   }
 
   public dispose() {

@@ -59,7 +59,7 @@ export type ApplicationDependencyStatuses = Partial<
 
 // #region Frame Reporting State
 
-export type FramerateReport = {
+export type FrameRateReport = {
   fps: number;
   received: number;
   dropped: number;
@@ -68,7 +68,7 @@ export type FramerateReport = {
 
 export type FrameReportingState = {
   enabled: boolean;
-  frameReport: FramerateReport | null;
+  frameReport: FrameRateReport | null;
 };
 
 // #endregion Frame Reporting State

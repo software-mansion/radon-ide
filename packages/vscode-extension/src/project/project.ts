@@ -601,21 +601,21 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Frame Reporting
 
-  public startFrameRateReporting() {
+  public startReportingFrameRate() {
     getTelemetryReporter().sendTelemetryEvent("performance:start-frame-rate-reporting", {
       platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    this.deviceSession.startFrameRateReporting();
+    this.deviceSession.startReportingFrameRate();
   }
 
-  public stopFrameRateReporting() {
+  public stopReportingFrameRate() {
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    this.deviceSession.stopFrameRateReporting();
+    this.deviceSession.stopReportingFrameRate();
   }
 
   // #endregion Frame Reporting

@@ -123,19 +123,6 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
 
             {isProfilingReact ? "Stop React Profiler" : "Start React Profiler"}
           </DropdownMenu.Item>
-          {/* note: This is removed as the information we get from the frame reporter is not useful
-          for the user, but the infrastructure here will be useful once we have a way of counting ios dropped frames */}
-          {/* <DropdownMenu.Item
-            className="dropdown-menu-item"
-            onSelect={() =>
-              frameRateReportingEnabled
-                ? project.stopFrameRateReporting()
-                : project.startFrameRateReporting()
-            }>
-            <span className="codicon codicon-rocket" />
-
-            {frameRateReportingEnabled ? "Stop Frame Rate Reporting" : "Start Frame Rate Reporting"}
-          </DropdownMenu.Item> */}
           <ToolsList project={project} tools={nonPanelTools} />
           <Label>Tool Panels</Label>
           <ToolsList project={project} tools={panelTools} />

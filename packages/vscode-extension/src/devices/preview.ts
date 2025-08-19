@@ -6,7 +6,7 @@ import { MultimediaData, TouchPoint, DeviceButtonType, DeviceRotation } from "..
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
 import { disposeAll } from "../utilities/disposables";
-import { FramerateReport } from "../common/State";
+import { FrameRateReport } from "../common/State";
 
 interface MultimediaPromiseHandlers {
   resolve: (value: MultimediaData) => void;
@@ -23,7 +23,7 @@ export class Preview implements Disposable {
   private multimediaPromises = new Map<string, MultimediaPromiseHandlers>();
   private subprocess?: ChildProcess;
   private tokenChangeListener?: Disposable;
-  private fpsReportListener?: (report: FramerateReport) => void;
+  private fpsReportListener?: (report: FrameRateReport) => void;
   public streamURL?: string;
   private replaysStarted = false;
 
@@ -120,16 +120,16 @@ export class Preview implements Disposable {
             return;
           }
           const jsonString = match[1];
-          let frameRateData: FramerateReport;
+          let frameRateData: FrameRateReport;
           try {
-            frameRateData = JSON.parse(jsonString) as FramerateReport;
+            frameRateData = JSON.parse(jsonString) as FrameRateReport;
           } catch (error) {
             Logger.error("[Preview] Error parsing frame rate JSON:", error);
             return;
           }
           if (!this.fpsReportListener) {
-            Logger.warn(
-              "[Preview] No FPS report listener registered but received frame rate data, this should not be reachable."
+            Logger.debug(
+              "[Preview] No FPS report listener registered, but received frame rate data."
             );
             return;
           }
@@ -181,12 +181,12 @@ export class Preview implements Disposable {
     });
   }
 
-  public startFrameRateReporting(onFpsReport: (report: FramerateReport) => void) {
+  public startReportingFrameRate(onFpsReport: (report: FrameRateReport) => void) {
     this.subprocess?.stdin?.write("fps true\n");
     this.fpsReportListener = onFpsReport;
   }
 
-  public stopFrameRateReporting() {
+  public stopReportingFrameRate() {
     this.subprocess?.stdin?.write("fps false\n");
     this.fpsReportListener = undefined;
   }

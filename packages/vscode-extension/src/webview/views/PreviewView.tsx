@@ -191,8 +191,8 @@ function PreviewView() {
     project.stopProfilingReact();
   }
 
-  function stopFrameRateReporting() {
-    project.stopFrameRateReporting();
+  function stopReportingFrameRate() {
+    project.stopReportingFrameRate();
   }
 
   async function handleReplay() {
@@ -287,7 +287,7 @@ function PreviewView() {
           <ActiveToolButton
             toolState={frameReportingEnabled ? "profiling" : "stopped"}
             title={"FPS: " + (fps ?? 0)}
-            onClick={stopFrameRateReporting}
+            onClick={stopReportingFrameRate}
           />
           <ToolsDropdown disabled={!debuggerToolsButtonsActive}>
             <IconButton tooltip={{ label: "Tools", type: "primary" }}>
