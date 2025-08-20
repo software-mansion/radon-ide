@@ -8,6 +8,7 @@ import { createBuildConfig, inferBuildType } from "./BuildManager";
 import * as ExpoGo from "./expoGo";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
 import { DevicePlatform } from "../common/State";
+import { DeviceBase } from "../devices/DeviceBase";
 
 const APP_ROOT = "appRoot";
 const APP_ROOT_ABSOLUTE = "/appRoot";
@@ -166,7 +167,11 @@ describe("BuildManager", () => {
 
         it(`should include passed information`, async function () {
           launchConfigByType.entries().forEach(([buildType, launchConfig]) => {
-            const buildConfig = createBuildConfig(platform, false, launchConfig, buildType);
+            const device = {
+              id: "some-device",
+              platform,
+            };
+            const buildConfig = createBuildConfig(device, false, launchConfig, buildType);
             assert.equal(buildConfig.platform, platform);
             assert.equal(buildConfig.type, buildType);
             assert.equal(buildConfig.appRoot, APP_ROOT_ABSOLUTE);

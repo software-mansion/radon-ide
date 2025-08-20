@@ -52,7 +52,7 @@ export class BatchingBuildManager implements BuildManager, Disposable {
   public async buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult> {
     const { progressListener, cancelToken } = options;
     const buildKey = this.makeBuildKey(buildConfig);
-    const { forceCleanBuild } = buildConfig;
+    const { forceCleanBuild } = options;
 
     const existingBuild = this.buildsInProgress.get(buildKey);
     // NOTE: if forceCleanBuild is true, we always start a new build
@@ -75,6 +75,7 @@ export class BatchingBuildManager implements BuildManager, Disposable {
         progressListener: (newProgress) => {
           buildInProgress.onProgress(newProgress);
         },
+        forceCleanBuild,
         buildOutputChannel: options.buildOutputChannel,
       }),
       cancelTokenForBuild

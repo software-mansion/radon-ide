@@ -42,6 +42,7 @@ import { Output } from "../common/OutputChannel";
 import { ApplicationSession } from "./applicationSession";
 import { DevicePlatform, DeviceSessionStore } from "../common/State";
 import { ReloadAction } from "./DeviceSessionsManager";
+import { BuildConfig } from "../common/BuildConfig";
 import { StateManager } from "./StateManager";
 import { FrameReporter } from "./FrameReporter";
 import { disposeAll } from "../utilities/disposables";
@@ -77,6 +78,7 @@ export class DeviceSession implements Disposable {
   private buildCache: BuildCache;
   private cancelToken: CancelToken = new CancelToken();
   private watchProjectSubscription: Disposable;
+  private buildConfig?: BuildConfig;
   private frameReporter: FrameReporter;
 
   private status: DeviceSessionStatus = "starting";
@@ -187,30 +189,13 @@ export class DeviceSession implements Disposable {
   }
 
   private onProjectFilesChanged = throttleAsync(async () => {
-    const appRoot = this.applicationContext.appRootFolder;
-    const launchConfig = this.applicationContext.launchConfig;
-    const hasCachedBuild = this.applicationContext.buildCache.hasCachedBuild({
-      platform: this.platform,
-      appRoot,
-      env: launchConfig.env,
-    });
-    const platformKey: "ios" | "android" = this.platform === DevicePlatform.IOS ? "ios" : "android";
-    const fingerprintCommand = launchConfig.customBuild?.[platformKey]?.fingerprintCommand;
-    if (hasCachedBuild) {
-      const fingerprint = await this.applicationContext.buildCache.calculateFingerprint({
-        appRoot,
-        env: launchConfig.env,
-        fingerprintCommand,
-      });
-      const isCacheStale = await this.applicationContext.buildCache.isCacheStale(fingerprint, {
-        platform: this.platform,
-        appRoot,
-        env: launchConfig.env,
-      });
-
-      if (isCacheStale) {
-        this.onCacheStale();
-      }
+    const buildConfig = this.buildConfig;
+    if (!buildConfig) {
+      // build config is not available yet, we don't need to check for stale cache
+      return;
+    }
+    if (await this.buildCache.isCacheStale(buildConfig)) {
+      this.onCacheStale();
     }
   }, CACHE_STALE_THROTTLE_MS);
 
@@ -269,7 +254,6 @@ export class DeviceSession implements Disposable {
   public async dispose() {
     this.cancelToken?.cancel();
     await this.deactivate();
-    this.watchProjectSubscription.dispose();
 
     await this.applicationSession?.dispose();
     this.applicationSession = undefined;
@@ -458,14 +442,8 @@ export class DeviceSession implements Disposable {
     };
 
     this.resetStartingState();
-    const currentFingerprint = await this.buildCache.calculateFingerprint(fingerprintOptions);
-    if (
-      await this.buildCache.isCacheStale(currentFingerprint, {
-        platform: this.platform,
-        appRoot: this.applicationContext.appRootFolder,
-        env: launchConfig.env,
-      })
-    ) {
+    const buildConfig = this.buildConfig;
+    if (buildConfig && (await this.buildCache.isCacheStale(buildConfig))) {
       await this.restartDevice({ forceClean: false });
       return;
     }
@@ -601,40 +579,34 @@ export class DeviceSession implements Disposable {
     const buildStartTime = Date.now();
     this.updateStartupMessage(StartupMessage.Building);
     this.maybeBuildResult = undefined;
-    const launchConfiguration = this.applicationContext.launchConfig;
-    const buildType = await inferBuildType(this.platform, launchConfiguration);
 
     // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
     const buildDependenciesChanged = await this.checkBuildDependenciesChanged(this.platform);
 
-    const buildConfig = createBuildConfig(
-      this.platform,
-      clean || buildDependenciesChanged,
-      launchConfiguration,
-      buildType
-    );
-    const buildOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
-      this.platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
-    );
-
-    const dependencyManager = this.applicationContext.applicationDependencyManager;
-    await dependencyManager.ensureDependenciesForBuild(
-      buildConfig,
-      buildOutputChannel,
-      cancelToken
-    );
-
-    this.hasStaleBuildCache = false;
-    this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, {
+    const buildOptions = {
+      forceCleanBuild: clean || buildDependenciesChanged,
+      buildOutputChannel: this.outputChannelRegistry.getOrCreateOutputChannel(
+        this.platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
+      ),
+      cancelToken,
       progressListener: throttle((stageProgress: number) => {
         if (this.startupMessage === StartupMessage.Building) {
           this.stageProgress = stageProgress;
           this.emitStateChange();
         }
       }, 100),
-      cancelToken,
-      buildOutputChannel,
-    });
+    };
+
+    const buildConfig = this.buildConfig;
+    if (!buildConfig) {
+      throw new Error("Unable to build the app: build config is not available");
+    }
+
+    const dependencyManager = this.applicationContext.applicationDependencyManager;
+    await dependencyManager.ensureDependenciesForBuild(buildConfig, buildOptions);
+
+    this.hasStaleBuildCache = false;
+    this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, buildOptions);
     const buildDurationSec = (Date.now() - buildStartTime) / 1000;
     Logger.info("Build completed in", buildDurationSec.toFixed(2), "sec.");
     getTelemetryReporter().sendTelemetryEvent(
@@ -660,6 +632,10 @@ export class DeviceSession implements Disposable {
 
   public async start() {
     try {
+      const launchConfiguration = this.applicationContext.launchConfig;
+      const buildType = await inferBuildType(this.platform, launchConfiguration);
+      this.buildConfig = createBuildConfig(this.device, launchConfiguration, buildType);
+
       this.resetStartingState(StartupMessage.InitializingDevice);
 
       this.cancelOngoingOperations();

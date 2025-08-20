@@ -17,6 +17,7 @@ import { fetchEasBuild, performLocalEasBuild } from "./eas";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { AndroidBuildConfig, AndroidLocalBuildConfig, BuildType } from "../common/BuildConfig";
 import { DevicePlatform } from "../common/State";
+import { BuildOptions } from "./BuildManager";
 
 export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
@@ -80,9 +81,7 @@ function makeBuildTaskName(productFlavor: string, buildType: string, appName?: s
 
 export async function buildAndroid(
   buildConfig: AndroidBuildConfig,
-  cancelToken: CancelToken,
-  outputChannel: OutputChannel,
-  progressListener: (newProgress: number) => void
+  buildOptions: BuildOptions
 ): Promise<AndroidBuildResult> {
   const { appRoot, env, type: buildType } = buildConfig;
 
@@ -92,12 +91,12 @@ export async function buildAndroid(
         platform: DevicePlatform.Android,
       });
       const apkPath = await runExternalBuild(
-        cancelToken,
+        buildOptions.cancelToken,
         buildConfig.buildCommand,
         env,
         DevicePlatform.Android,
         appRoot,
-        outputChannel
+        buildOptions.buildOutputChannel
       );
       if (!apkPath) {
         throw new Error(
@@ -107,7 +106,7 @@ export async function buildAndroid(
 
       return {
         apkPath,
-        packageName: await extractPackageName(apkPath, cancelToken),
+        packageName: await extractPackageName(apkPath, buildOptions.cancelToken),
         platform: DevicePlatform.Android,
       };
     }
@@ -116,16 +115,16 @@ export async function buildAndroid(
         platform: DevicePlatform.Android,
       });
       const apkPath = await fetchEasBuild(
-        cancelToken,
+        buildOptions.cancelToken,
         buildConfig.config,
         DevicePlatform.Android,
         appRoot,
-        outputChannel
+        buildOptions.buildOutputChannel
       );
 
       return {
         apkPath,
-        packageName: await extractPackageName(apkPath, cancelToken),
+        packageName: await extractPackageName(apkPath, buildOptions.cancelToken),
         platform: DevicePlatform.Android,
       };
     }
@@ -137,13 +136,13 @@ export async function buildAndroid(
         buildConfig.profile,
         DevicePlatform.Android,
         appRoot,
-        outputChannel,
-        cancelToken
+        buildOptions.buildOutputChannel,
+        buildOptions.cancelToken
       );
 
       return {
         apkPath,
-        packageName: await extractPackageName(apkPath, cancelToken),
+        packageName: await extractPackageName(apkPath, buildOptions.cancelToken),
         platform: DevicePlatform.Android,
       };
     }
@@ -151,22 +150,25 @@ export async function buildAndroid(
       getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
         platform: DevicePlatform.Android,
       });
-      const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken, appRoot);
+      const apkPath = await downloadExpoGo(
+        DevicePlatform.Android,
+        buildOptions.cancelToken,
+        appRoot
+      );
       return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
     }
     case BuildType.Local: {
-      return await buildLocal(buildConfig, cancelToken, outputChannel, progressListener);
+      return await buildLocal(buildConfig, buildOptions);
     }
   }
 }
 
 async function buildLocal(
   buildConfig: AndroidLocalBuildConfig,
-  cancelToken: CancelToken,
-  outputChannel: OutputChannel,
-  progressListener: (newProgress: number) => void
+  buildOptions: BuildOptions
 ): Promise<AndroidBuildResult> {
-  let { appRoot, forceCleanBuild, env, productFlavor = "", buildType = "debug" } = buildConfig;
+  let { appRoot, env, productFlavor = "", buildType = "debug" } = buildConfig;
+  const { progressListener, cancelToken, buildOutputChannel, forceCleanBuild } = buildOptions;
   const androidSourceDir = getAndroidSourceDir(appRoot);
   const androidAppName = loadConfig({
     projectRoot: appRoot,
@@ -210,7 +212,7 @@ async function buildLocal(
   );
   const buildAndroidProgressProcessor = new BuildAndroidProgressProcessor(progressListener);
   lineReader(buildProcess).onLineRead((line) => {
-    outputChannel.appendLine(line);
+    buildOutputChannel.appendLine(line);
     buildAndroidProgressProcessor.processLine(line);
   });
 

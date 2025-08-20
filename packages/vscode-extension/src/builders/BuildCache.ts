@@ -1,14 +1,15 @@
 import fs from "fs";
-import assert from "assert";
 import crypto from "crypto";
+import stableStringify from "fast-json-stable-stringify";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { IOSBuildResult } from "./buildIOS";
 import { AndroidBuildResult } from "./buildAndroid";
 import { calculateMD5 } from "../utilities/common";
 import { BuildResult } from "./BuildManager";
-import { FingerprintOptions, FingerprintProvider } from "../project/FingerprintProvider";
+import { FingerprintProvider } from "../project/FingerprintProvider";
 import { DevicePlatform } from "../common/State";
+import { BuildConfig } from "../common/BuildConfig";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
 const BASE_IOS_BUILD_CACHE_KEY = "ios_build_cache";
@@ -30,25 +31,15 @@ export type BuildCacheInfo = {
   buildResult: AndroidBuildResult | IOSBuildResult;
 };
 
-export interface CacheKey {
-  platform: DevicePlatform;
-  appRoot: string;
-  env: Record<string, string>;
-}
-
-function hashEnvironment(env: Record<string, string>) {
-  const envHash = crypto.createHash("md5");
-  const envEntries = Object.entries(env).sort(([k], [k2]) => k.localeCompare(k2));
-  envEntries.map(([k, v]) => `${k}=${v}`).forEach((entry) => envHash.update(entry));
-  return envHash.digest("hex");
-}
-
-function stringifyCacheKey({ platform, appRoot, env }: CacheKey) {
+function buildCacheKey(buildConfig: BuildConfig) {
   const keyPrefix =
-    platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
-  const envHash = hashEnvironment(env);
+    buildConfig.platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
 
-  return `${keyPrefix}:${appRoot}:${envHash}`;
+  const buildConfigHash = crypto.createHash("md5");
+  buildConfigHash.update(stableStringify(buildConfig));
+  const hash = buildConfigHash.digest("hex");
+
+  return `${keyPrefix}:${hash}`;
 }
 
 export class BuildCache {
@@ -57,22 +48,21 @@ export class BuildCache {
   /**
    * Passed fingerprint should be calculated at the time build is started.
    */
-  public async storeBuild(buildFingerprint: string, cacheKey: CacheKey, build: BuildResult) {
-    assert(cacheKey.platform === build.platform, "Cache key platform must match build platform");
+  public async storeBuild(buildFingerprint: string, buildConfig: BuildConfig, build: BuildResult) {
     const appPath = await getAppHash(getAppPath(build));
-    await extensionContext.globalState.update(stringifyCacheKey(cacheKey), {
+    await extensionContext.globalState.update(buildCacheKey(buildConfig), {
       fingerprint: buildFingerprint,
       buildHash: appPath,
       buildResult: build,
     });
   }
 
-  public async clearCache(cacheKey: CacheKey) {
-    await extensionContext.globalState.update(stringifyCacheKey(cacheKey), undefined);
+  public async clearCache(cacheKey: BuildConfig) {
+    await extensionContext.globalState.update(buildCacheKey(cacheKey), undefined);
   }
 
-  public async getBuild(currentFingerprint: string, cacheKey: CacheKey) {
-    const cache = extensionContext.globalState.get<BuildCacheInfo>(stringifyCacheKey(cacheKey));
+  public async getBuild(currentFingerprint: string, buildConfig: BuildConfig) {
+    const cache = extensionContext.globalState.get<BuildCacheInfo>(buildCacheKey(buildConfig));
     if (!cache) {
       Logger.debug("No cached build found.");
       return undefined;
@@ -108,19 +98,20 @@ export class BuildCache {
     }
   }
 
-  public async calculateFingerprint(options: FingerprintOptions) {
-    return this.fingerprintProvider.calculateFingerprint(options);
+  public async calculateFingerprint(buildConfig: BuildConfig) {
+    return this.fingerprintProvider.calculateFingerprint(buildConfig);
   }
 
-  public async isCacheStale(currentFingerprint: string, cacheKey: CacheKey) {
+  public async isCacheStale(buildConfig: BuildConfig) {
+    const currentFingerprint = await this.calculateFingerprint(buildConfig);
     const { fingerprint } =
-      extensionContext.globalState.get<BuildCacheInfo>(stringifyCacheKey(cacheKey)) ?? {};
+      extensionContext.globalState.get<BuildCacheInfo>(buildCacheKey(buildConfig)) ?? {};
 
     return currentFingerprint !== fingerprint;
   }
 
-  public hasCachedBuild(cacheKey: CacheKey) {
-    return !!extensionContext.globalState.get<BuildCacheInfo>(stringifyCacheKey(cacheKey));
+  public hasCachedBuild(buildConfig: BuildConfig) {
+    return !!extensionContext.globalState.get<BuildCacheInfo>(buildCacheKey(buildConfig));
   }
 }
 
@@ -130,29 +121,4 @@ function getAppPath(build: BuildResult) {
 
 async function getAppHash(appPath: string) {
   return (await calculateMD5(appPath)).digest("hex");
-}
-
-export async function migrateOldBuildCachesToNewStorage(appRoot: string) {
-  try {
-    for (const platform of [DevicePlatform.Android, DevicePlatform.IOS]) {
-      const oldKey =
-        platform === DevicePlatform.Android ? ANDROID_BUILD_CACHE_KEY : IOS_BUILD_CACHE_KEY;
-      const cache = extensionContext.workspaceState.get<BuildCacheInfo>(oldKey);
-      if (cache) {
-        await extensionContext.globalState.update(
-          stringifyCacheKey({
-            platform,
-            appRoot,
-            env: {},
-          }),
-          cache
-        );
-        await extensionContext.workspaceState.update(oldKey, undefined);
-      }
-    }
-  } catch (e) {
-    // we ignore all potential errors in this phase as it isn't critical and it is
-    // better to not block the extension from starting in case of any issues when
-    // migrating the caches
-  }
 }

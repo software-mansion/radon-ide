@@ -1,9 +1,11 @@
 import fs from "fs";
 import path from "path";
-import { OutputChannel, Disposable } from "vscode";
+import { Disposable } from "vscode";
 import { command, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "../utilities/cancelToken";
 import { getIosSourceDir } from "../builders/buildIOS";
+import { BuildConfig } from "../common/BuildConfig";
+import { BuildOptions } from "../builders/BuildManager";
 
 /**
  * Utility class for managing CocoaPods dependencies in an iOS project workspace.
@@ -46,7 +48,8 @@ export class Pods implements Disposable {
    * @param outputChannel - The channel to which installation output will be appended.
    * @param cancelToken - A token that can be used to cancel the pod installation process.
    */
-  public async installPods(outputChannel: OutputChannel, cancelToken: CancelToken): Promise<void> {
+  public async installPods(buildOptions: BuildOptions) {
+    const { cancelToken, buildOutputChannel } = buildOptions;
     if (this.podsInstallationProcess) {
       this.podsInstallationProcess.cancelToken.cancel();
     }
@@ -76,7 +79,7 @@ export class Pods implements Disposable {
         cwd: iosDirPath,
         env: { ...env, LANG: "en_US.UTF-8" },
       });
-      lineReader(process).onLineRead((line) => outputChannel.appendLine(line));
+      lineReader(process).onLineRead((line) => buildOutputChannel.appendLine(line));
       await cancelToken.adapt(process);
     } finally {
       this.podsInstallationProcess = undefined;
