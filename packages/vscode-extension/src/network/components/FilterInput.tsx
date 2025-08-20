@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import "./FilterInput.css";
 import { useNetworkFilter } from "../providers/NetworkFilterProvider";
-import { getFilterAutocompleteSuggestion, parseTextToBadge } from "../utils/networkLogFormatters";
+import { NETWORK_LOG_COLUMNS, parseTextToBadge } from "../utils/networkLogFormatters";
 
 interface FilterInputProps {
   placeholder?: string;
@@ -13,6 +13,32 @@ type ScrollingOptions = {
   padding?: number | undefined;
   behavior?: "auto" | "smooth" | undefined;
 };
+
+/**
+ * Get autocomplete suggestion for partial filter text
+ */
+function getFilterAutocompleteSuggestion(filterText: string): string {
+  // No suggestion if empty or ends with whitespace
+  if (!filterText || filterText !== filterText.trimEnd()) {
+    return "";
+  }
+  const trimmed = filterText.trim();
+  // No suggestion if contains internal whitespace (spaces mean it's not a partial column name)
+  if (/\s/.test(trimmed)) {
+    return "";
+  }
+
+  // Check if the input starts to match any column name
+  const columnNames = NETWORK_LOG_COLUMNS.map((col) => col.toLowerCase());
+  const matchingColumn = columnNames.find((col) => col.startsWith(trimmed.toLowerCase()));
+
+  // Only suggest if there's a match and it's not already complete
+  if (matchingColumn && matchingColumn !== trimmed.toLowerCase()) {
+    return matchingColumn.substring(trimmed.length) + ":";
+  }
+
+  return "";
+}
 
 function FilterInput({ placeholder, className }: FilterInputProps) {
   const {
@@ -115,13 +141,17 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
     }
   };
 
-
   // Helper function to create badges from current value
   const createBadgesFromValue = (textValue: string) => {
     const { newBadge, remainingText } = parseTextToBadge(textValue);
 
     if (newBadge) {
       handleFilterTextChange(remainingText);
+    }
+
+    // Don't create badge if value is empty string
+    if (!newBadge || newBadge.value === "") {
+      return;
     }
 
     // Handle duplicate badge highlighting

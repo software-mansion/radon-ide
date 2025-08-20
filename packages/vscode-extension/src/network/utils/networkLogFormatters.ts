@@ -49,87 +49,61 @@ export function getNetworkLogValue(log: NetworkLog, column: NetworkLogColumn): s
 /**
  * Parse filter text in format "column:value column2:value2" or plain text for global search
  */
-export function parseTextToBadge(text: string){
-    const trimmedText = text.trim();
-    if (!trimmedText) {
-      return {
-        newBadge: null,
-        remainingText: text,
+export function parseTextToBadge(text: string) {
+  const trimmedText = text.trim();
+  if (!trimmedText) {
+    return {
+      newBadge: null,
+      remainingText: text,
+    };
+  }
+
+  // Extract filters from the beginning of the text
+  // Support both quoted and unquoted values: method:value or method:"quoted value"
+  // No spaces allowed before or immediately after the colon
+  // Empty quotes are not considered valid
+  // Unquoted values cannot start with a quote character
+  let newBadge: FilterBadge | null = null;
+  let remainingText = trimmedText;
+
+  let fullMatch = "";
+  let columnName = "";
+  let filterValue = "";
+
+  // Try to match quoted value first: column:"value"
+  const quotedMatch = remainingText.match(/^(\w+):"([^"]*)"/);
+  if (quotedMatch) {
+    fullMatch = quotedMatch[0];
+    columnName = quotedMatch[1];
+    filterValue = quotedMatch[2];
+  } else {
+    // Try to match unquoted value: column:value (until space)
+    const unquotedMatch = remainingText.match(/^(\w+):([^\s:"][^\s]*?|)(?=\s|$)/);
+    if (unquotedMatch) {
+      fullMatch = unquotedMatch[0];
+      columnName = unquotedMatch[1];
+      filterValue = unquotedMatch[2];
+    }
+  }
+
+  if (fullMatch && columnName) {
+    const columnNames = ["name", "status", "method", "type", "size", "time"];
+
+    if (columnNames.includes(columnName.toLowerCase())) {
+      const normalizedColumnName = columnName.toLowerCase();
+      const normalizedValue = filterValue;
+
+      newBadge = {
+        id: `${normalizedColumnName}-${normalizedValue}-${Date.now()}-${Math.random()}`,
+        columnName: normalizedColumnName,
+        value: normalizedValue,
       };
+
+      remainingText = remainingText.substring(fullMatch.length).trim();
     }
-
-    // Extract filters from the beginning of the text
-    // Support both quoted and unquoted values: method:value or method:"quoted value"
-    // No spaces allowed before or immediately after the colon
-    // Empty quotes are not considered valid
-    // Unquoted values cannot start with a quote character
-    let newBadge: FilterBadge | null = null;
-    let remainingText = trimmedText;
-
-    let fullMatch = "";
-    let columnName = "";
-    let filterValue = "";
-
-    // Try to match quoted value first: column:"value"
-    const quotedMatch = remainingText.match(/^(\w+):"([^"]+)"/);
-    if (quotedMatch) {
-      fullMatch = quotedMatch[0];
-      columnName = quotedMatch[1];
-      filterValue = quotedMatch[2];
-    } else {
-      // Try to match unquoted value: column:value (until space)
-      const unquotedMatch = remainingText.match(/^(\w+):([^\s:"][^\s]*?)(?=\s|$)/);
-      if (unquotedMatch) {
-        fullMatch = unquotedMatch[0];
-        columnName = unquotedMatch[1];
-        filterValue = unquotedMatch[2];
-      }
-    }
-
-    if (fullMatch && columnName && filterValue) {
-      const columnNames = ["name", "status", "method", "type", "size", "time"];
-
-      if (columnNames.includes(columnName.toLowerCase()) && filterValue.trim()) {
-        const normalizedColumnName = columnName.toLowerCase();
-        const normalizedValue = filterValue.trim();
-
-        newBadge = {
-          id: `${normalizedColumnName}-${normalizedValue}-${Date.now()}-${Math.random()}`,
-          columnName: normalizedColumnName,
-          value: normalizedValue,
-        };
-
-        remainingText = remainingText.substring(fullMatch.length).trim();
-      }
-    }
-
-    return { newBadge, remainingText };
-  };
-
-/**
- * Get autocomplete suggestion for partial filter text
- */
-export function getFilterAutocompleteSuggestion(filterText: string): string {
-  // No suggestion if empty or ends with whitespace
-  if (!filterText || filterText !== filterText.trimEnd()) {
-    return "";
-  }
-  const trimmed = filterText.trim();
-  // No suggestion if contains internal whitespace (spaces mean it's not a partial column name)
-  if (/\s/.test(trimmed)) {
-    return "";
   }
 
-  // Check if the input starts to match any column name
-  const columnNames = ["name", "status", "method", "type", "size", "time"];
-  const matchingColumn = columnNames.find((col) => col.startsWith(trimmed.toLowerCase()));
-
-  // Only suggest if there's a match and it's not already complete
-  if (matchingColumn && matchingColumn !== trimmed.toLowerCase()) {
-    return matchingColumn.substring(trimmed.length) + ":";
-  }
-
-  return "";
+  return { newBadge, remainingText };
 }
 
 export function sortNetworkLogs(

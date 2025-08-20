@@ -60,15 +60,16 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
   const [filterText, setFilterText] = useState<string>("");
   const [filterBadges, setFilterBadges] = useState<FilterBadge[]>([]);
   const [invert, setInvert] = useState<boolean>(false);
-  const [wasColumnFilterAdded, setWasColumnFilterAdded] = useState<boolean>(false);
+  const [wasColumnFilterAddedToInputField, setWasColumnFilterAddedToInputField] =
+    useState<boolean>(false);
   const [isFilterVisible, setIsFilterVisible] = useState<boolean>(false);
   const filterInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (wasColumnFilterAdded) {
-      setWasColumnFilterAdded(false);
+    if (wasColumnFilterAddedToInputField) {
+      setWasColumnFilterAddedToInputField(false);
     }
-  }, [wasColumnFilterAdded]);
+  }, [wasColumnFilterAddedToInputField]);
 
   useEffect(() => {
     if (!isFilterVisible) {
@@ -91,8 +92,8 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
     return columnValueSets;
   }, [filterBadges]);
 
-  const addColumnFilter = (column: string) => {
-    setWasColumnFilterAdded(true);
+  const addColumnFilterToInputField = (column: string) => {
+    setWasColumnFilterAddedToInputField(true);
     setIsFilterVisible(true);
     setFilterText((prev) => {
       // Check if any column filter pattern (COLUMN:"") exists and replace it
@@ -109,12 +110,9 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
   };
 
   const computeBadgeFilterMatches = (badge: FilterBadge | null, log: NetworkLog): boolean => {
-    // Parse current input text to get partial filter being typed
-    console.log(badge)
     if (!badgeFiltersPresent && !badge) {
       return true;
     }
-
     // AND between columns, OR within column values
     return Object.values(columnMapping).every((_columnName) => {
       const columnValue = getNetworkLogValue(log, _columnName).toLowerCase();
@@ -150,7 +148,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
   };
 
   const getFilterMatches = (log: NetworkLog): boolean => {
-    const {newBadge: badge, remainingText} = parseTextToBadge(filterText)
+    const { newBadge: badge, remainingText } = parseTextToBadge(filterText);
 
     const badgeMatches = computeBadgeFilterMatches(badge, log);
 
@@ -183,11 +181,11 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
     filterInputRef: filterInputRef,
     filterInvert: invert,
     isFilterVisible,
-    wasColumnFilterAdded,
+    wasColumnFilterAdded: wasColumnFilterAddedToInputField,
 
     // Filter management functions
     setFilterText,
-    addColumnFilter,
+    addColumnFilter: addColumnFilterToInputField,
     getFilterMatches,
     toggleInvert,
     clearAllFilters,
