@@ -7,16 +7,8 @@ import { CustomBuild, EasConfig } from "../common/LaunchConfig";
 import { createBuildConfig, inferBuildType } from "./BuildManager";
 import * as ExpoGo from "./expoGo";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
-import {
-  DevicePlatform,
-  DeviceInfo,
-  DeviceType,
-  AndroidDeviceInfo,
-  IOSDeviceInfo,
-} from "../common/State";
+import { DevicePlatform, DeviceType, AndroidDeviceInfo, IOSDeviceInfo } from "../common/State";
 import { DeviceBase } from "../devices/DeviceBase";
-import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 
 const APP_ROOT = "appRoot";
 const APP_ROOT_ABSOLUTE = "/appRoot";
@@ -193,7 +185,6 @@ describe("BuildManager", () => {
           for (const [buildType, launchConfig] of entries) {
             const mockDevice = Sinon.createStubInstance(DeviceBase);
 
-            // Override the getter properties
             Object.defineProperty(mockDevice, "platform", {
               get: () => platform,
             });
