@@ -19,30 +19,43 @@
   padding-right: 10px;
 }
 
-.table-header-cell > div:first-child {
-  /* Title container */
+.table-header-title {
+  /* Title element */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
   min-width: 0; /* Allow this to shrink */
-  display: flex;
-  align-items: center;
 
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
 
-  button {
-    margin-left: 6px;
-    opacity: 0;
-  }
+.table-header-cell button {
+  opacity: 0;
+  flex-shrink: 0;
+}
 
-  .icon-button:focus,
-  .icon-button {
-    box-shadow: none;
+/* Hide filter button when header is too small to prevent overflow */
+.table-header-cell {
+  container: header / inline-size;
+
+  @container header (width < 80px) {
+   button {
+    visibility: hidden;
+    width: 0px;
+    min-width: 0px;
   }
+}
+}
+
+
+
+.table-header-cell .icon-button:focus,
+.table-header-cell .icon-button {
+  box-shadow: none;
 }
 
 .table-header-cell > span {
@@ -62,8 +75,6 @@ vscode-table-header-cell:hover:not(:has(button:hover)) {
   background-color: var(--vscode-list-hoverBackground);
 }
 
-vscode-table-header-cell:hover > .table-header-cell > div:first-child {
-  button {
-    opacity: 1;
-  }
+vscode-table-header-cell:hover .table-header-cell button {
+  opacity: 1;
 }

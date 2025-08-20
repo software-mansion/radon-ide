@@ -226,12 +226,10 @@ const NetworkRequestLog = ({
                 onClick={() => handleHeaderClick(title)}
                 style={{ cursor: "pointer" }}>
                 <div className="table-header-cell">
-                  <div>
-                    {title}
-                    <IconButton onClick={(e) => handleHeaderFilterClick(e, title)}>
-                      <span className={`codicon codicon-filter-filled`}></span>
-                    </IconButton>
-                  </div>
+                  <span className="table-header-title">{title}</span>
+                  <IconButton onClick={(e) => handleHeaderFilterClick(e, title)}>
+                    <span className={`codicon codicon-filter-filled`}></span>
+                  </IconButton>
                   <span className={`codicon ${getSortIcon(title)}`}></span>
                 </div>
               </VscodeTableHeaderCell>
