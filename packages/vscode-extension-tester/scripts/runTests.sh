@@ -3,7 +3,6 @@
 # Settings
 VM_NAME="macOS"
 VM_USER="test"
-VM_PASSWORD="123456"
 LOCAL_PROJECT_PATH="../../vscode-extension-tester"
 REMOTE_PATH="./vscode-extension-tester"
 CONFIG_PATH="$HOME/Library/Containers/com.utmapp.UTM/Data/Documents/${VM_NAME}.utm/Config.plist"
@@ -52,6 +51,9 @@ until nc -z "$VM_IP" 22 &>/dev/null; do
 done
 
 echo "VM is ready at $VM_IP"
+
+#The key cannot have write permissions; Git does not track them. It only tracks whether a file is executable.
+chmod 400 ./id_vm_mac
 
 echo "Running test commands on VM..."
 ssh -i ./id_vm_mac "$VM_USER@$VM_IP" "rm -rf '$REMOTE_PATH'"
