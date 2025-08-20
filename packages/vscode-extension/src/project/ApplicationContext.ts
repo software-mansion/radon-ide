@@ -39,7 +39,11 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
     // load the dotenv files for the project into `mergedEnv`
     const loadEnvResult = loadProjectEnv(absoluteAppRoot, { force: true, systemEnv: mergedEnv });
 
-    if (loadEnvResult.result === "loaded" && !_.isEqual(loadEnvResult.files, lastLoadedEnvFiles)) {
+    if (loadEnvResult.result !== "loaded") {
+      return configuredEnv;
+    }
+
+    if (!_.isEqual(loadEnvResult.files, lastLoadedEnvFiles)) {
       lastLoadedEnvFiles = loadEnvResult.files;
       Logger.info(
         `Project in "${appRoot}" loaded environment variables from .env files:`,
@@ -47,8 +51,7 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
       );
     }
 
-    // filter out any `undefined` values from the environment variables
-    const env = _.pickBy(mergedEnv, _.isString);
+    const env = { ...loadEnvResult.env, ...configuredEnv };
     return env;
   }
 
