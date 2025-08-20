@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import semver from "semver";
 import loadConfig from "@react-native-community/cli-config";
-import { getNativeABI } from "../utilities/common";
+import { calculateAppHash, getNativeABI } from "../utilities/common";
 import { ANDROID_HOME, findJavaHome } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
@@ -22,6 +22,7 @@ export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
   apkPath: string;
   packageName: string;
+  buildHash: string;
 };
 
 const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
@@ -83,6 +84,7 @@ export async function buildAndroid(
   buildOptions: BuildOptions
 ): Promise<AndroidBuildResult> {
   const { appRoot, env, type: buildType } = buildConfig;
+  const { cancelToken, buildOutputChannel } = buildOptions;
 
   switch (buildType) {
     case BuildType.Custom: {
@@ -90,12 +92,12 @@ export async function buildAndroid(
         platform: DevicePlatform.Android,
       });
       const apkPath = await runExternalBuild(
-        buildOptions.cancelToken,
+        cancelToken,
         buildConfig.buildCommand,
         env,
         DevicePlatform.Android,
         appRoot,
-        buildOptions.buildOutputChannel
+        buildOutputChannel
       );
       if (!apkPath) {
         throw new Error(
@@ -105,8 +107,9 @@ export async function buildAndroid(
 
       return {
         apkPath,
-        packageName: await extractPackageName(apkPath, buildOptions.cancelToken),
+        packageName: await extractPackageName(apkPath, cancelToken),
         platform: DevicePlatform.Android,
+        buildHash: await calculateAppHash(apkPath),
       };
     }
     case BuildType.Eas: {
@@ -114,17 +117,18 @@ export async function buildAndroid(
         platform: DevicePlatform.Android,
       });
       const apkPath = await fetchEasBuild(
-        buildOptions.cancelToken,
+        cancelToken,
         buildConfig.config,
         DevicePlatform.Android,
         appRoot,
-        buildOptions.buildOutputChannel
+        buildOutputChannel
       );
 
       return {
         apkPath,
-        packageName: await extractPackageName(apkPath, buildOptions.cancelToken),
+        packageName: await extractPackageName(apkPath, cancelToken),
         platform: DevicePlatform.Android,
+        buildHash: await calculateAppHash(apkPath),
       };
     }
     case BuildType.EasLocal: {
@@ -135,26 +139,28 @@ export async function buildAndroid(
         buildConfig.profile,
         DevicePlatform.Android,
         appRoot,
-        buildOptions.buildOutputChannel,
-        buildOptions.cancelToken
+        buildOutputChannel,
+        cancelToken
       );
 
       return {
         apkPath,
-        packageName: await extractPackageName(apkPath, buildOptions.cancelToken),
+        packageName: await extractPackageName(apkPath, cancelToken),
         platform: DevicePlatform.Android,
+        buildHash: await calculateAppHash(apkPath),
       };
     }
     case BuildType.ExpoGo: {
       getTelemetryReporter().sendTelemetryEvent("build:expo-go-requested", {
         platform: DevicePlatform.Android,
       });
-      const apkPath = await downloadExpoGo(
-        DevicePlatform.Android,
-        buildOptions.cancelToken,
-        appRoot
-      );
-      return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
+      const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken, appRoot);
+      return {
+        apkPath,
+        packageName: EXPO_GO_PACKAGE_NAME,
+        platform: DevicePlatform.Android,
+        buildHash: await calculateAppHash(apkPath),
+      };
     }
     case BuildType.Local: {
       return await buildLocal(buildConfig, buildOptions);
@@ -224,7 +230,11 @@ async function buildLocal(
   Logger.debug("Android build successful");
   try {
     const apkInfo = await getAndroidBuildPaths(appRoot, cancelToken, productFlavor, buildType);
-    return { ...apkInfo, platform: DevicePlatform.Android };
+    return {
+      ...apkInfo,
+      platform: DevicePlatform.Android,
+      buildHash: await calculateAppHash(apkInfo.apkPath),
+    };
   } catch (e) {
     Logger.error("Failed to extract package name from APK", e);
     throw new Error(
