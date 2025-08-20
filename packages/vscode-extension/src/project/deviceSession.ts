@@ -952,16 +952,32 @@ export class DeviceSession implements Disposable {
   }
 
   public async sendFileToDevice(fileName: string, data: ArrayBuffer): Promise<void> {
-    const tempDir = await fs.promises.mkdtemp(os.tmpdir());
-    try {
-      const tempFileLocation = path.join(tempDir, fileName);
-      await fs.promises.writeFile(tempFileLocation, new Uint8Array(data));
-      await this.sendFile(tempFileLocation);
-    } finally {
-      // NOTE: no `await` here, this can safely go in the background
-      fs.promises.rm(tempDir, { recursive: true }).catch((_e) => {
-        /* silence the errors, it's fine */
-      });
+    const tempDir = await this.getTemporaryFilesDirectory();
+    const tempFileLocation = path.join(tempDir, fileName);
+    await fs.promises.writeFile(tempFileLocation, new Uint8Array(data));
+    await this.sendFile(tempFileLocation);
+  }
+
+  private tempDir: string | undefined;
+  /**
+   * Returns the path to a temporary directory, creating it if it does not already exist.
+   * The directory is created using the system's temporary directory and is cleaned up
+   * automatically when the device session is disposed. Subsequent calls return the same directory path.
+   *
+   * @returns {Promise<string>} The path to the temporary directory.
+   */
+  private async getTemporaryFilesDirectory(): Promise<string> {
+    if (this.tempDir === undefined) {
+      const tempDir = await fs.promises.mkdtemp(os.tmpdir());
+      this.tempDir = tempDir;
+      this.disposables.push(
+        new Disposable(() => {
+          fs.promises.rm(tempDir, { recursive: true }).catch((_e) => {
+            /* silence the errors, it's fine */
+          });
+        })
+      );
     }
+    return this.tempDir;
   }
 }
