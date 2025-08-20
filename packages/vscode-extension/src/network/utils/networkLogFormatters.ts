@@ -48,58 +48,58 @@ export function getNetworkLogValue(log: NetworkLog, column: NetworkLogColumn): s
 /**
  * Parse filter text in format "column:value column2:value2" or plain text for global search
  */
-export function parseFilterText(filterText: string): { 
-  parsedFilters: ParsedFilter[], 
-  globalSearchTerm: string 
+export function parseFilterText(filterText: string): {
+  parsedFilters: ParsedFilter[];
+  globalSearchTerm: string;
 } {
   const parsedFilters: ParsedFilter[] = [];
   let remainingText = filterText.trim();
-  
+
   // Column name mapping for case-insensitive matching
   const columnMapping: Record<string, NetworkLogColumn> = {
-    'name': NetworkLogColumn.Name,
-    'status': NetworkLogColumn.Status,
-    'method': NetworkLogColumn.Method,
-    'type': NetworkLogColumn.Type,
-    'size': NetworkLogColumn.Size,
-    'time': NetworkLogColumn.Time,
+    name: NetworkLogColumn.Name,
+    status: NetworkLogColumn.Status,
+    method: NetworkLogColumn.Method,
+    type: NetworkLogColumn.Type,
+    size: NetworkLogColumn.Size,
+    time: NetworkLogColumn.Time,
   };
 
   // Regex to match "column:value" patterns, handling values with spaces
   // This matches column names followed by : and captures everything until the next column: pattern or end of string
   const filterRegex = /(\w+):\s*([^]*?)(?=\s+\w+:|$)/g;
   let match;
-  let matchedPositions: Array<{ start: number, end: number }> = [];
-  
+  let matchedPositions: Array<{ start: number; end: number }> = [];
+
   while ((match = filterRegex.exec(filterText)) !== null) {
     const [fullMatch, columnName, value] = match;
     const normalizedColumn = columnMapping[columnName.toLowerCase()];
-    
+
     if (normalizedColumn) {
       parsedFilters.push({
         columnName: normalizedColumn,
         value: value.trim(),
       });
-      
+
       // Track matched positions to remove from remaining text
       matchedPositions.push({
         start: match.index,
-        end: match.index + fullMatch.length
+        end: match.index + fullMatch.length,
       });
     }
   }
-  
+
   // Remove matched filters from remaining text
   if (matchedPositions.length > 0) {
     // Sort by position descending to remove from end to start
     matchedPositions.sort((a, b) => b.start - a.start);
-    
+
     for (const pos of matchedPositions) {
       remainingText = filterText.substring(0, pos.start) + filterText.substring(pos.end);
       filterText = remainingText; // Update for next iteration
     }
   }
-  
+
   return {
     parsedFilters,
     globalSearchTerm: remainingText.trim(),
@@ -112,24 +112,24 @@ export function parseFilterText(filterText: string): {
 export function getFilterAutocompleteSuggestion(filterText: string): string {
   // No suggestion if empty or ends with whitespace
   if (!filterText || filterText !== filterText.trimEnd()) {
-    return '';
+    return "";
   }
   const trimmed = filterText.trim();
   // No suggestion if contains internal whitespace (spaces mean it's not a partial column name)
   if (/\s/.test(trimmed)) {
-    return '';
+    return "";
   }
-  
+
   // Check if the input starts to match any column name
-  const columnNames = ['name', 'status', 'method', 'type', 'size', 'time'];
-  const matchingColumn = columnNames.find(col => col.startsWith(trimmed.toLowerCase()));
-  
+  const columnNames = ["name", "status", "method", "type", "size", "time"];
+  const matchingColumn = columnNames.find((col) => col.startsWith(trimmed.toLowerCase()));
+
   // Only suggest if there's a match and it's not already complete
   if (matchingColumn && matchingColumn !== trimmed.toLowerCase()) {
-    return matchingColumn.substring(trimmed.length) + ':';
+    return matchingColumn.substring(trimmed.length) + ":";
   }
-  
-  return '';
+
+  return "";
 }
 
 export function sortNetworkLogs(

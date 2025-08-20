@@ -191,7 +191,6 @@
 @media (max-width: 600px) {
   .filter-input-container {
     min-width: 80px;
-    max-width: 400px; /* Reduce max-width on medium screens */
   }
 
   .filter-badge {
@@ -209,7 +208,6 @@
 @media (max-width: 400px) {
   .filter-input-container {
     min-width: 60px;
-    max-width: 300px;
   }
 
   .filter-badge {

@@ -26,26 +26,14 @@
   width: 100%;
 }
 
+.invert-checkbox {
+  padding-right: 8px;
+}
+
 /* Responsive behavior for small screens */
 @media (max-width: 600px) {
   .network-bar {
     gap: 2px;
     margin: 4px;
-  }
-  
-  .network-filter {
-    gap: 4px;
-  }
-  
-  .network-filter-input {
-    min-width: 80px;
-    max-width: 400px; /* Match FilterInput responsive max-width */
-  }
-}
-
-@media (max-width: 400px) {
-  .network-filter-input {
-    min-width: 60px;
-    max-width: 300px; /* Match FilterInput responsive max-width */
   }
 }

@@ -26,7 +26,7 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputWithSuggestionRef = useRef<HTMLDivElement>(null);
-  const inputRemainingSpaceRef = useRef<number>(0);
+  const inputOccupiedSpaceRef = useRef<number>(0);
   const [isFocused, setIsFocused] = useState(false);
   const [suggestion, setSuggestion] = useState("");
   const [inputWidth, setInputWidth] = useState<number>(20);
@@ -239,8 +239,8 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
     }
   };
 
-  // Measuring the width left in the inputContainer for input to take
-  // used in reliable input resizing. More below.
+  // Measuring the width taken in the inputContainer
+  // used in reliable input field resizing. More below.
   useLayoutEffect(() => {
     const wrapper = wrapperRef.current;
     const container = containerRef.current;
@@ -260,22 +260,22 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
       badgesWidth += badge.clientWidth + badgeGap;
     });
 
-    const containerWidth = container.clientWidth;
-
-    inputRemainingSpaceRef.current = containerWidth - badgesWidth - containerPaddingX;
+    inputOccupiedSpaceRef.current = badgesWidth + containerPaddingX;
   }, [filterBadges]);
 
   /**
    * Calculate input width based on content using OffscreenCanvas. This approach is needed,
    * because the text needs static value in px for the layout with badges to behave
-   * as expected from input field. 
-   * 
-   * The need for use of inputRemainingSpaceRef arises
-   * from the fact, that we wish for the input to take the remaining space of the component
-   * for its expected behaviour, instead of it being very small and inaccessible.
+   * as expected from input field.
+   *
+   * The need for use of occupiedSpaceRef arises from the fact, that we wish for the input
+   * to take the remaining space of the component for its expected behaviour,
+   * instead of it being very small and inaccessible.
    */
   useEffect(() => {
-    if (!filterInputRef.current) {
+    const filterInput = filterInputRef.current;
+    const container = containerRef.current;
+    if (!filterInput || !container) {
       return;
     }
 
@@ -285,7 +285,7 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
       return;
     }
 
-    const computedStyle = window.getComputedStyle(filterInputRef.current);
+    const computedStyle = window.getComputedStyle(filterInput);
     ctx.font = computedStyle.font;
 
     // Measure based on current value + suggestion for proper width
@@ -295,8 +295,9 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
     const textMetrics = ctx.measureText(textToUse);
     const measuredWidth = textMetrics.width;
 
+    const remainingWidth = container.clientWidth - inputOccupiedSpaceRef.current;
     // Set minimum width and add padding for natural flow
-    const calculatedWidth = Math.max(inputRemainingSpaceRef.current, measuredWidth + 10);
+    const calculatedWidth = Math.max(remainingWidth, measuredWidth + 10);
     setInputWidth(calculatedWidth);
   }, [filterText, placeholder, filterBadges, suggestion]);
 

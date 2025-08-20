@@ -61,10 +61,15 @@ function NetworkBar() {
       {isFilterVisible && (
         <div className="network-filter">
           <FilterInput
-            placeholder="Filter: status:200 method:post or search all columns"
+            placeholder="Filter: search all columns or <column>:<value>"
             className="network-filter-input"
           />
-          <VscodeCheckbox onChange={handleInvertChange} label="Invert" checked={filterInvert} />
+          <VscodeCheckbox
+            onChange={handleInvertChange}
+            className="invert-checkbox"
+            label="Invert"
+            checked={filterInvert}
+          />
         </div>
       )}
     </div>
