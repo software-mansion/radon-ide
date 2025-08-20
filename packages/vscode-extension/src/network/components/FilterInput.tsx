@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import "./FilterInput.css";
-import { useNetworkFilter, FilterBadge } from "../providers/NetworkFilterProvider";
-import { getFilterAutocompleteSuggestion } from "../utils/networkLogFormatters";
+import { useNetworkFilter } from "../providers/NetworkFilterProvider";
+import { getFilterAutocompleteSuggestion, parseTextToBadge } from "../utils/networkLogFormatters";
 
 interface FilterInputProps {
   placeholder?: string;
@@ -115,66 +115,10 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
     }
   };
 
-  const parseTextToBadges = (text: string) => {
-    const trimmedText = text.trim();
-    if (!trimmedText) {
-      return {
-        newBadge: null,
-        remainingText: text,
-      };
-    }
-
-    // Extract filters from the beginning of the text
-    // Support both quoted and unquoted values: method:value or method:"quoted value"
-    // No spaces allowed before or immediately after the colon
-    // Empty quotes are not considered valid
-    // Unquoted values cannot start with a quote character
-    let newBadge: FilterBadge | null = null;
-    let remainingText = trimmedText;
-
-    let fullMatch = "";
-    let columnName = "";
-    let filterValue = "";
-
-    // Try to match quoted value first: column:"value"
-    const quotedMatch = remainingText.match(/^(\w+):"([^"]+)"/);
-    if (quotedMatch) {
-      fullMatch = quotedMatch[0];
-      columnName = quotedMatch[1];
-      filterValue = quotedMatch[2];
-    } else {
-      // Try to match unquoted value: column:value (until space)
-      const unquotedMatch = remainingText.match(/^(\w+):([^\s:"][^\s]*?)(?=\s|$)/);
-      if (unquotedMatch) {
-        fullMatch = unquotedMatch[0];
-        columnName = unquotedMatch[1];
-        filterValue = unquotedMatch[2];
-      }
-    }
-
-    if (fullMatch && columnName && filterValue) {
-      const columnNames = ["name", "status", "method", "type", "size", "time"];
-
-      if (columnNames.includes(columnName.toLowerCase()) && filterValue.trim()) {
-        const normalizedColumnName = columnName.toLowerCase();
-        const normalizedValue = filterValue.trim();
-
-        newBadge = {
-          id: `${normalizedColumnName}-${normalizedValue}-${Date.now()}-${Math.random()}`,
-          columnName: normalizedColumnName,
-          value: normalizedValue,
-        };
-
-        remainingText = remainingText.substring(fullMatch.length).trim();
-      }
-    }
-
-    return { newBadge, remainingText };
-  };
 
   // Helper function to create badges from current value
   const createBadgesFromValue = (textValue: string) => {
-    const { newBadge, remainingText } = parseTextToBadges(textValue);
+    const { newBadge, remainingText } = parseTextToBadge(textValue);
 
     if (newBadge) {
       handleFilterTextChange(remainingText);

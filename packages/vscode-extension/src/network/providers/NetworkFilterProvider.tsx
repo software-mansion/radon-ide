@@ -11,7 +11,7 @@ import {
 import {
   getNetworkLogValue,
   NETWORK_LOG_COLUMNS,
-  parseFilterText,
+  parseTextToBadge,
 } from "../utils/networkLogFormatters";
 import { NetworkLogColumn } from "../types/network";
 import { NetworkLog } from "../hooks/useNetworkTracker";
@@ -108,54 +108,54 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
     });
   };
 
-  const computeBadgeFilterMatches = (log: NetworkLog): boolean => {
-    if (!badgeFiltersPresent) {
+  const computeBadgeFilterMatches = (badge: FilterBadge | null, log: NetworkLog): boolean => {
+    // Parse current input text to get partial filter being typed
+    console.log(badge)
+    if (!badgeFiltersPresent && !badge) {
       return true;
     }
 
     // AND between columns, OR within column values
-    return Object.entries(badgeFilterLookup).every(([columnName, valueSet]) => {
-      const mappedColumn = columnMapping[columnName];
-      if (!mappedColumn) {
+    return Object.values(columnMapping).every((_columnName) => {
+      const columnValue = getNetworkLogValue(log, _columnName).toLowerCase();
+      const columnName = _columnName.toLowerCase();
+
+      if (!badgeFilterLookup[columnName] && !(badge?.columnName === columnName)) {
         return true;
       }
 
-      const columnValue = getNetworkLogValue(log, mappedColumn).toLowerCase();
-
-      for (const filterValue of valueSet) {
-        if (columnValue.includes(filterValue)) {
+      if (badge && badge.columnName === columnName) {
+        if (columnValue.includes(badge.value)) {
           return true;
         }
       }
-      return false;
+
+      return badgeFilterLookup[columnName]?.some((value) => {
+        if (columnValue.includes(value)) {
+          return true;
+        }
+      });
     });
   };
 
   const computeTextMatches = (filterTextValue: string, log: NetworkLog) => {
-    const { parsedFilters, globalSearchTerm } = parseFilterText(filterTextValue);
-
-    // Check specific column filters from current text input
-    const columnMatches = parsedFilters.every(({ columnName, value }) => {
-      const columnValue = getNetworkLogValue(log, columnName);
-      return columnValue.toLowerCase().includes(value.toLowerCase());
-    });
-
     // Check global search term (if any remaining text after parsing filters)
     const globalMatches =
-      !globalSearchTerm.trim() ||
+      !filterTextValue.trim() ||
       NETWORK_LOG_COLUMNS.some((column) =>
-        getNetworkLogValue(log, column).toLowerCase().includes(globalSearchTerm.toLowerCase())
+        getNetworkLogValue(log, column).toLowerCase().includes(filterTextValue.toLowerCase())
       );
 
-    return columnMatches && globalMatches;
+    return globalMatches;
   };
 
   const getFilterMatches = (log: NetworkLog): boolean => {
-    // Check badge filters using optimized lookup
-    const badgeMatches = computeBadgeFilterMatches(log);
+    const {newBadge: badge, remainingText} = parseTextToBadge(filterText)
+
+    const badgeMatches = computeBadgeFilterMatches(badge, log);
 
     // Check text filter (global search or remaining text after parsing)
-    const textMatches = !filterText.trim() || computeTextMatches(filterText, log);
+    const textMatches = !filterText.trim() || computeTextMatches(remainingText, log);
 
     const finalMatch = badgeMatches && textMatches;
 

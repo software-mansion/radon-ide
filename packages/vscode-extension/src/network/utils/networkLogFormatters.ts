@@ -1,5 +1,6 @@
 import { NetworkLog } from "../hooks/useNetworkTracker";
-import { NetworkLogColumn, SortDirection, ParsedFilter } from "../types/network";
+import { FilterBadge } from "../providers/NetworkFilterProvider";
+import { NetworkLogColumn, SortDirection } from "../types/network";
 
 const NetworkLogFormatters = {
   Name: (log: NetworkLog): string => {
@@ -48,63 +49,62 @@ export function getNetworkLogValue(log: NetworkLog, column: NetworkLogColumn): s
 /**
  * Parse filter text in format "column:value column2:value2" or plain text for global search
  */
-export function parseFilterText(filterText: string): {
-  parsedFilters: ParsedFilter[];
-  globalSearchTerm: string;
-} {
-  const parsedFilters: ParsedFilter[] = [];
-  let remainingText = filterText.trim();
-
-  // Column name mapping for case-insensitive matching
-  const columnMapping: Record<string, NetworkLogColumn> = {
-    name: NetworkLogColumn.Name,
-    status: NetworkLogColumn.Status,
-    method: NetworkLogColumn.Method,
-    type: NetworkLogColumn.Type,
-    size: NetworkLogColumn.Size,
-    time: NetworkLogColumn.Time,
-  };
-
-  // Regex to match "column:value" patterns, handling values with spaces
-  // This matches column names followed by : and captures everything until the next column: pattern or end of string
-  const filterRegex = /(\w+):\s*([^]*?)(?=\s+\w+:|$)/g;
-  let match;
-  let matchedPositions: Array<{ start: number; end: number }> = [];
-
-  while ((match = filterRegex.exec(filterText)) !== null) {
-    const [fullMatch, columnName, value] = match;
-    const normalizedColumn = columnMapping[columnName.toLowerCase()];
-
-    if (normalizedColumn) {
-      parsedFilters.push({
-        columnName: normalizedColumn,
-        value: value.trim(),
-      });
-
-      // Track matched positions to remove from remaining text
-      matchedPositions.push({
-        start: match.index,
-        end: match.index + fullMatch.length,
-      });
+export function parseTextToBadge(text: string){
+    const trimmedText = text.trim();
+    if (!trimmedText) {
+      return {
+        newBadge: null,
+        remainingText: text,
+      };
     }
-  }
 
-  // Remove matched filters from remaining text
-  if (matchedPositions.length > 0) {
-    // Sort by position descending to remove from end to start
-    matchedPositions.sort((a, b) => b.start - a.start);
+    // Extract filters from the beginning of the text
+    // Support both quoted and unquoted values: method:value or method:"quoted value"
+    // No spaces allowed before or immediately after the colon
+    // Empty quotes are not considered valid
+    // Unquoted values cannot start with a quote character
+    let newBadge: FilterBadge | null = null;
+    let remainingText = trimmedText;
 
-    for (const pos of matchedPositions) {
-      remainingText = filterText.substring(0, pos.start) + filterText.substring(pos.end);
-      filterText = remainingText; // Update for next iteration
+    let fullMatch = "";
+    let columnName = "";
+    let filterValue = "";
+
+    // Try to match quoted value first: column:"value"
+    const quotedMatch = remainingText.match(/^(\w+):"([^"]+)"/);
+    if (quotedMatch) {
+      fullMatch = quotedMatch[0];
+      columnName = quotedMatch[1];
+      filterValue = quotedMatch[2];
+    } else {
+      // Try to match unquoted value: column:value (until space)
+      const unquotedMatch = remainingText.match(/^(\w+):([^\s:"][^\s]*?)(?=\s|$)/);
+      if (unquotedMatch) {
+        fullMatch = unquotedMatch[0];
+        columnName = unquotedMatch[1];
+        filterValue = unquotedMatch[2];
+      }
     }
-  }
 
-  return {
-    parsedFilters,
-    globalSearchTerm: remainingText.trim(),
+    if (fullMatch && columnName && filterValue) {
+      const columnNames = ["name", "status", "method", "type", "size", "time"];
+
+      if (columnNames.includes(columnName.toLowerCase()) && filterValue.trim()) {
+        const normalizedColumnName = columnName.toLowerCase();
+        const normalizedValue = filterValue.trim();
+
+        newBadge = {
+          id: `${normalizedColumnName}-${normalizedValue}-${Date.now()}-${Math.random()}`,
+          columnName: normalizedColumnName,
+          value: normalizedValue,
+        };
+
+        remainingText = remainingText.substring(fullMatch.length).trim();
+      }
+    }
+
+    return { newBadge, remainingText };
   };
-}
 
 /**
  * Get autocomplete suggestion for partial filter text

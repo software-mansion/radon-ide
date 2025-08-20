@@ -62,7 +62,7 @@ function NetworkProviderInner({ children }: PropsWithChildren) {
 
   const networkLogs = useMemo(() => {
     return networkTracker.networkLogs.filter(getFilterMatches);
-  }, [networkTracker.networkLogs, getFilterMatches]);
+  }, [networkTracker.networkLogs]);
 
   const contextValue = useMemo(() => {
     return {
