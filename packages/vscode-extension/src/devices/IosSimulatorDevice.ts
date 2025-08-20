@@ -610,7 +610,9 @@ async function listSimulatorsForLocation(location?: string) {
   return [];
 }
 
-export async function listSimulators(location: SimulatorDeviceSet): Promise<IOSDeviceInfo[]> {
+export async function listSimulators(
+  location: SimulatorDeviceSet = SimulatorDeviceSet.RN_IDE
+): Promise<IOSDeviceInfo[]> {
   let devicesPerRuntime;
   if (location === SimulatorDeviceSet.RN_IDE) {
     const deviceSetLocation = getOrCreateDeviceSet();
@@ -643,7 +645,7 @@ export async function listSimulators(location: SimulatorDeviceSet): Promise<IOSD
             ? DeviceType.Tablet
             : DeviceType.Phone,
           available: device.isAvailable ?? false,
-          runtimeInfo: runtime,
+          runtimeInfo: runtime!,
         };
       });
     })
@@ -656,13 +658,13 @@ export enum SimulatorDeviceSet {
   RN_IDE,
 }
 
-export async function createSimulatorWithRuntimeId(
-  deviceTypeId: string,
+export async function createSimulator(
+  modelId: string,
   displayName: string,
-  runtimeId: string,
+  runtime: IOSRuntimeInfo,
   deviceSet: SimulatorDeviceSet
 ) {
-  Logger.debug(`Create simulator ${deviceTypeId} with runtime ${runtimeId}`);
+  Logger.debug(`Create simulator ${modelId} with runtime ${runtime.identifier}`);
 
   let locationArgs: string[] = [];
   if (deviceSet === SimulatorDeviceSet.RN_IDE) {
@@ -676,31 +678,15 @@ export async function createSimulatorWithRuntimeId(
     ...locationArgs,
     "create",
     displayName,
-    deviceTypeId,
-    runtimeId,
-  ]);
-
-  return UDID;
-}
-
-export async function createSimulator(
-  deviceTypeId: string,
-  displayName: string,
-  runtime: IOSRuntimeInfo,
-  deviceSet: SimulatorDeviceSet
-) {
-  const UDID = await createSimulatorWithRuntimeId(
-    deviceTypeId,
-    displayName,
+    modelId,
     runtime.identifier,
-    deviceSet
-  );
+  ]);
 
   return {
     id: `ios-${UDID}`,
     platform: DevicePlatform.IOS,
     UDID,
-    modelId: deviceTypeId,
+    modelId: modelId,
     systemName: runtime.name,
     displayName: displayName,
     available: true, // assuming if create command went through, it's available

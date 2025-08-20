@@ -65,7 +65,7 @@ export class DeviceManager implements Disposable {
         throw new Error("Invalid platform. Expected macos.");
       }
 
-      const simulators = await listSimulators(SimulatorDeviceSet.RN_IDE);
+      const simulators = await listSimulators();
       const simulatorInfo = simulators.find((device) => device.id === deviceInfo.id);
       if (!simulatorInfo || simulatorInfo.platform !== DevicePlatform.IOS) {
         throw new Error(`Simulator ${deviceInfo.id} not found`);
@@ -139,7 +139,7 @@ export class DeviceManager implements Disposable {
     }
 
     const simulators = shouldLoadSimulators
-      ? listSimulators(SimulatorDeviceSet.RN_IDE).catch((e) => {
+      ? listSimulators().catch((e) => {
           Logger.error("Error fetching simulators", e);
           return [];
         })

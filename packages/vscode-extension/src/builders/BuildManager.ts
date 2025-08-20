@@ -68,7 +68,6 @@ export function createBuildConfig(
           type: BuildType.Local,
           scheme: ios?.scheme,
           configuration: ios?.configuration,
-          runtimeId: runtime.identifier,
           fingerprintCommand,
           usePrebuild,
         };

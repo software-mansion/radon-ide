@@ -49,7 +49,6 @@ export type IOSLocalBuildConfig = {
   usePrebuild: boolean;
   scheme?: string;
   configuration?: string;
-  runtimeId: string;
 } & BuildConfigCommon;
 
 export type BuildConfig =
