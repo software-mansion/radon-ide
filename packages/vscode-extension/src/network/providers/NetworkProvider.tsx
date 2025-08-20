@@ -10,7 +10,7 @@ import useNetworkTracker, {
   NetworkTracker,
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
-import { useNetworkFilter, NetworkFilterProvider } from "./NetworkFilterProvider";
+import { NetworkFilterProvider } from "./NetworkFilterProvider";
 
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;
@@ -34,16 +34,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
-  return (
-    <NetworkFilterProvider>
-      <NetworkProviderInner>{children}</NetworkProviderInner>
-    </NetworkFilterProvider>
-  );
-}
-
-function NetworkProviderInner({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
-  const { getFilterMatches } = useNetworkFilter();
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
@@ -61,7 +52,7 @@ function NetworkProviderInner({ children }: PropsWithChildren) {
   };
 
   const networkLogs = useMemo(() => {
-    return networkTracker.networkLogs.filter(getFilterMatches);
+    return networkTracker.networkLogs;
   }, [networkTracker.networkLogs]);
 
   const contextValue = useMemo(() => {
@@ -78,7 +69,11 @@ function NetworkProviderInner({ children }: PropsWithChildren) {
     };
   }, [isRecording, isScrolling, isTimelineVisible, networkLogs, networkTracker]);
 
-  return <NetworkContext.Provider value={contextValue}>{children}</NetworkContext.Provider>;
+  return (
+    <NetworkContext.Provider value={contextValue}>
+      <NetworkFilterProvider>{children}</NetworkFilterProvider>
+    </NetworkContext.Provider>
+  );
 }
 
 export function useNetwork() {

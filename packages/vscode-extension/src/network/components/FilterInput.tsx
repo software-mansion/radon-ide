@@ -23,7 +23,7 @@ function getFilterAutocompleteSuggestion(filterText: string): string {
     return "";
   }
   const trimmed = filterText.trim();
-  // No suggestion if contains internal whitespace (spaces mean it's not a partial column name)
+  // No suggestion if contains internal whitespace
   if (/\s/.test(trimmed)) {
     return "";
   }
@@ -45,7 +45,7 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
     filterInputRef,
     filterText,
     filterBadges,
-    wasColumnFilterAdded,
+    wasColumnFilterAddedToInputField: wasColumnFilterAdded,
     setFilterBadges,
     setFilterText,
   } = useNetworkFilter();
@@ -143,7 +143,7 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
 
   // Helper function to create badges from current value
   const createBadgesFromValue = (textValue: string) => {
-    const { newBadge, remainingText } = parseTextToBadge(textValue);
+    const { badge: newBadge, remainingText } = parseTextToBadge(textValue);
 
     if (newBadge) {
       handleFilterTextChange(remainingText);
@@ -299,7 +299,6 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
   }, [wasColumnFilterAdded]);
 
   // KEY HANDLERS
-
   /**
    * ArrowLeft - Navigate from input to last badge or between badges
    */

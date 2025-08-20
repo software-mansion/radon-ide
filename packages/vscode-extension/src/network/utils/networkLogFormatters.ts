@@ -53,7 +53,7 @@ export function parseTextToBadge(text: string) {
   const trimmedText = text.trim();
   if (!trimmedText) {
     return {
-      newBadge: null,
+      badge: null,
       remainingText: text,
     };
   }
@@ -63,7 +63,7 @@ export function parseTextToBadge(text: string) {
   // No spaces allowed before or immediately after the colon
   // Empty quotes are not considered valid
   // Unquoted values cannot start with a quote character
-  let newBadge: FilterBadge | null = null;
+  let badge: FilterBadge | null = null;
   let remainingText = trimmedText;
 
   let fullMatch = "";
@@ -93,7 +93,7 @@ export function parseTextToBadge(text: string) {
       const normalizedColumnName = columnName.toLowerCase();
       const normalizedValue = filterValue;
 
-      newBadge = {
+      badge = {
         id: `${normalizedColumnName}-${normalizedValue}-${Date.now()}-${Math.random()}`,
         columnName: normalizedColumnName,
         value: normalizedValue,
@@ -103,7 +103,7 @@ export function parseTextToBadge(text: string) {
     }
   }
 
-  return { newBadge, remainingText };
+  return { badge, remainingText };
 }
 
 export function sortNetworkLogs(

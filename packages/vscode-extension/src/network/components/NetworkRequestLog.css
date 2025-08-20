@@ -43,15 +43,13 @@
   container: header / inline-size;
 
   @container header (width < 80px) {
-   button {
-    visibility: hidden;
-    width: 0px;
-    min-width: 0px;
+    button {
+      visibility: hidden;
+      width: 0px;
+      min-width: 0px;
+    }
   }
 }
-}
-
-
 
 .table-header-cell .icon-button:focus,
 .table-header-cell .icon-button {

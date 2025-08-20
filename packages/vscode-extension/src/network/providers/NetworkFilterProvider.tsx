@@ -14,6 +14,7 @@ import {
   parseTextToBadge,
 } from "../utils/networkLogFormatters";
 import { NetworkLog } from "../hooks/useNetworkTracker";
+import { useNetwork } from "./NetworkProvider";
 
 export interface FilterBadge {
   id: string;
@@ -31,12 +32,12 @@ interface NetworkFilterContextValue {
   filterInvert: boolean;
   filterInputRef: RefObject<HTMLInputElement | null>;
   isFilterVisible: boolean;
-  wasColumnFilterAdded: boolean;
+  wasColumnFilterAddedToInputField: boolean;
+  filteredNetworkLogs: NetworkLog[];
 
   // Filter management functions
   setFilterText: (value: string | ((prev: string) => string)) => void;
-  addColumnFilter: (column: string) => void;
-  getFilterMatches: (log: NetworkLog) => boolean;
+  addColumnFilterToInputField: (column: string) => void;
   toggleInvert: () => void;
   clearAllFilters: () => void;
   setFilterBadges: (badges: FilterBadge[]) => void;
@@ -48,11 +49,13 @@ const NetworkFilterContext = createContext<NetworkFilterContextValue | null>(nul
 export function NetworkFilterProvider({ children }: PropsWithChildren) {
   const [filterText, setFilterText] = useState<string>("");
   const [filterBadges, setFilterBadges] = useState<FilterBadge[]>([]);
-  const [invert, setInvert] = useState<boolean>(false);
+  const [filterInvert, setInvert] = useState<boolean>(false);
   const [wasColumnFilterAddedToInputField, setWasColumnFilterAddedToInputField] =
     useState<boolean>(false);
   const [isFilterVisible, setIsFilterVisible] = useState<boolean>(false);
   const filterInputRef = useRef<HTMLInputElement>(null);
+
+  const { networkLogs } = useNetwork();
 
   useEffect(() => {
     if (wasColumnFilterAddedToInputField) {
@@ -98,36 +101,6 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
     });
   };
 
-  // const computeBadgeFilterMatches = (badge: FilterBadge | null, log: NetworkLog): boolean => {
-  //   if (!badgeFiltersPresent && !badge) {
-  //     return true;
-  //   }
-  //   // AND between columns, OR within column values
-  //   const networkColumns = NETWORK_LOG_COLUMNS;
-
-  //   for (const columnName of networkColumns) {
-  //     const columnValue = getNetworkLogValue(log, columnName).toLowerCase();
-
-  //     if (!badgeFilterLookup[columnName] && !(badge?.columnName === columnName)) {
-  //       continue;
-  //     }
-
-  //     if (badge && badge.columnName === columnName) {
-  //       if (!columnValue.includes(badge.value)) {
-  //         return false;
-  //       }
-  //     }
-
-  //     badgeFilterLookup[columnName]?.some((value) => {
-  //       if (columnValue.includes(value)) {
-  //         return true;
-  //       }
-  //     });
-
-  //     return false;
-  //   }
-  // };
-
   const computeBadgeFilterMatches = (badge: FilterBadge | null, log: NetworkLog): boolean => {
     if (!badgeFiltersPresent && !badge) {
       return true;
@@ -166,7 +139,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
   };
 
   const getFilterMatches = (log: NetworkLog): boolean => {
-    const { newBadge: badge, remainingText } = parseTextToBadge(filterText);
+    const { badge, remainingText } = parseTextToBadge(filterText);
 
     const badgeMatches = computeBadgeFilterMatches(badge, log);
 
@@ -175,7 +148,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
 
     const finalMatch = badgeMatches && textMatches;
 
-    return finalMatch !== invert;
+    return finalMatch !== filterInvert;
   };
 
   const toggleInvert = () => {
@@ -192,19 +165,23 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
     setIsFilterVisible((prev) => !prev);
   };
 
+  const filteredNetworkLogs = useMemo(() => {
+    return networkLogs.filter(getFilterMatches);
+  }, [networkLogs, filterText, filterBadges, filterInvert]);
+
   const contextValue: NetworkFilterContextValue = {
     // Filter state
     filterText,
     filterBadges,
-    filterInputRef: filterInputRef,
-    filterInvert: invert,
+    filterInputRef,
+    filterInvert,
     isFilterVisible,
-    wasColumnFilterAdded: wasColumnFilterAddedToInputField,
+    wasColumnFilterAddedToInputField,
+    filteredNetworkLogs,
 
     // Filter management functions
     setFilterText,
-    addColumnFilter: addColumnFilterToInputField,
-    getFilterMatches,
+    addColumnFilterToInputField,
     toggleInvert,
     clearAllFilters,
     setFilterBadges,

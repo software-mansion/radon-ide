@@ -44,7 +44,7 @@ const NetworkRequestLog = ({
   });
   const [cellWidths, setCellWidths] = useState<number[]>([]);
 
-  const { addColumnFilter } = useNetworkFilter();
+  const { addColumnFilterToInputField: addColumnFilter } = useNetworkFilter();
 
   // Sort the network logs based on current sort state
   const sortedNetworkLogs = useMemo(() => {

@@ -6,7 +6,7 @@ import { debounce } from "lodash";
 import NetworkBar from "./components/NetworkBar";
 import NetworkRequestLog from "./components/NetworkRequestLog";
 import NetworkLogDetails from "./components/NetworkLogDetails";
-import { useNetwork } from "./providers/NetworkProvider";
+import { useNetworkFilter } from "./providers/NetworkFilterProvider";
 
 function App() {
   const networkLogContainerRef = useRef<HTMLDivElement | null>(null);
@@ -33,17 +33,17 @@ function App() {
     };
   }, []);
 
-  const { networkLogs } = useNetwork();
+  const { filteredNetworkLogs } = useNetworkFilter();
 
   const [selectedNetworkLogId, setSelectedNetworkLogId] = useState<string | null>(null);
 
   const selectedNetworkLog = useMemo(() => {
-    const fullLog = networkLogs.find((log) => log.requestId === selectedNetworkLogId);
+    const fullLog = filteredNetworkLogs.find((log) => log.requestId === selectedNetworkLogId);
     if (!fullLog) {
       setSelectedNetworkLogId(null);
     }
     return fullLog || null;
-  }, [selectedNetworkLogId, networkLogs]);
+  }, [selectedNetworkLogId, filteredNetworkLogs]);
 
   const isNetworkLogDetailsVisible = !!selectedNetworkLog;
 
@@ -57,7 +57,7 @@ function App() {
             <div slot="start">
               <NetworkRequestLog
                 selectedNetworkLog={selectedNetworkLog}
-                networkLogs={networkLogs}
+                networkLogs={filteredNetworkLogs}
                 handleSelectedRequest={setSelectedNetworkLogId}
                 parentHeight={networkLogContainerHeight}
               />
@@ -74,7 +74,7 @@ function App() {
         ) : (
           <NetworkRequestLog
             selectedNetworkLog={selectedNetworkLog}
-            networkLogs={networkLogs}
+            networkLogs={filteredNetworkLogs}
             handleSelectedRequest={setSelectedNetworkLogId}
             parentHeight={networkLogContainerHeight}
           />
