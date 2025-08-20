@@ -229,12 +229,12 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
       parseInt(wrapperStyle.getPropertyValue("padding-right"));
 
     let badgesWidth = 0;
-    console.log(container.querySelectorAll(".filter-badge"));
     container.querySelectorAll(".filter-badge").forEach((badge) => {
       badgesWidth += badge.clientWidth + badgeGap;
     });
 
-    inputOccupiedSpaceRef.current = badgesWidth + containerPaddingX;
+    const safetyPadding = 5;
+    inputOccupiedSpaceRef.current = badgesWidth + containerPaddingX + safetyPadding;
   }, [filterBadges]);
 
   /**
