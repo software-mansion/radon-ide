@@ -1,19 +1,19 @@
-import { useEffect, useRef } from "react";
+import { useSyncExternalStore, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
-import { store, useRouteInfo } from "expo-router/build/global-state/router-store.js";
+import { store } from "expo-router/src/global-state/router-store";
 import { 
   computeRouteIdentifier,
   extractNestedRouteList,
   sendNavigationChange
-} from "./expo_router_helpers.js";
+} from "../expo_router_helpers.js";
 
 function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   const router = useRouter();
-  const routeInfo = useRouteInfo();
-
-  // This always holds the second latest routeInfo to check if the navigation
-  // has really changed, as sometimes the effect is called despite no actual
-  // navigation change, sending duplicate events breaking the history.
+  const routeInfo = useSyncExternalStore(
+    store.subscribeToRootState,
+    store.routeInfoSnapshot,
+    store.routeInfoSnapshot
+  );
   const previousRouteInfo = useRef();
 
   const pathname = routeInfo?.pathname;
@@ -38,13 +38,13 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
       }
       return;
     }
-    router.navigate(pathname);
+    router.push(pathname);
     router.setParams(params);
   }
 
   return {
     getCurrentNavigationDescriptor: () => {
-      const snapshot = store.getRouteInfo();
+      const snapshot = store.routeInfoSnapshot();
       return {
         name: snapshot.pathname,
         pathname: snapshot.pathname,

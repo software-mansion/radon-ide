@@ -67,11 +67,13 @@ function transformWrapper({ filename, src, ...rest }) {
     // expo-router v2 and v3 integration
     const { version } = requireFromAppDir("expo-router/package.json");
     if (version.startsWith("2.")) {
-      src = `${src};require("__RNIDE_lib__/expo_router_v2_plugin.js");`;
+      src = `${src};require("__RNIDE_lib__/expo_router/expo_router_v2_plugin.js");`;
     } else if (version.startsWith("3.") || version.startsWith("4.")) {
-      src = `${src};require("__RNIDE_lib__/expo_router_plugin.js");`;
+      src = `${src};require("__RNIDE_lib__/expo_router/expo_router_plugin.js");`;
     } else if (version.startsWith("5.")) {
-      src = `${src};require("__RNIDE_lib__/expo_router_v5_plugin.js");`;
+      src = `${src};require("__RNIDE_lib__/expo_router/expo_router_v5_plugin.js");`;
+    } else if (version.startsWith("6.")) {
+      src = `${src};require("__RNIDE_lib__/expo_router/expo_router_v6_plugin.js");`;
     }
   } else if (
     isTransforming("node_modules/react-native-ide/index.js") || // using react-native-ide for compatibility with old NPM package name
