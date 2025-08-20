@@ -11,16 +11,13 @@ export interface NetworkLog {
 }
 
 export enum NetworkLogColumn {
-  Name = "Name",
-  Status = "Status",
-  Method = "Method",
-  Type = "Type",
-  Size = "Size",
-  Time = "Time",
+  Name = "name",
+  Status = "status",
+  Method = "method",
+  Type = "type",
+  Size = "size",
+  Time = "time",
 }
-
-export type FilterType = "All" | NetworkLogColumn;
-
 export interface ParsedFilter {
   columnName: NetworkLogColumn;
   value: string;

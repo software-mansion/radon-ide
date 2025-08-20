@@ -13,7 +13,6 @@ import {
   NETWORK_LOG_COLUMNS,
   parseTextToBadge,
 } from "../utils/networkLogFormatters";
-import { NetworkLogColumn } from "../types/network";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 
 export interface FilterBadge {
@@ -24,16 +23,6 @@ export interface FilterBadge {
 
 // lookup structure for badge filters
 type BadgeFilterLookup = Record<string, string[]>;
-
-// Map string column name to NetworkLogColumn enum
-const columnMapping: Record<string, NetworkLogColumn> = {
-  name: NetworkLogColumn.Name,
-  status: NetworkLogColumn.Status,
-  method: NetworkLogColumn.Method,
-  type: NetworkLogColumn.Type,
-  size: NetworkLogColumn.Size,
-  time: NetworkLogColumn.Time,
-} as const;
 
 interface NetworkFilterContextValue {
   // Filter state
@@ -109,14 +98,43 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
     });
   };
 
+  // const computeBadgeFilterMatches = (badge: FilterBadge | null, log: NetworkLog): boolean => {
+  //   if (!badgeFiltersPresent && !badge) {
+  //     return true;
+  //   }
+  //   // AND between columns, OR within column values
+  //   const networkColumns = NETWORK_LOG_COLUMNS;
+
+  //   for (const columnName of networkColumns) {
+  //     const columnValue = getNetworkLogValue(log, columnName).toLowerCase();
+
+  //     if (!badgeFilterLookup[columnName] && !(badge?.columnName === columnName)) {
+  //       continue;
+  //     }
+
+  //     if (badge && badge.columnName === columnName) {
+  //       if (!columnValue.includes(badge.value)) {
+  //         return false;
+  //       }
+  //     }
+
+  //     badgeFilterLookup[columnName]?.some((value) => {
+  //       if (columnValue.includes(value)) {
+  //         return true;
+  //       }
+  //     });
+
+  //     return false;
+  //   }
+  // };
+
   const computeBadgeFilterMatches = (badge: FilterBadge | null, log: NetworkLog): boolean => {
     if (!badgeFiltersPresent && !badge) {
       return true;
     }
     // AND between columns, OR within column values
-    return Object.values(columnMapping).every((_columnName) => {
-      const columnValue = getNetworkLogValue(log, _columnName).toLowerCase();
-      const columnName = _columnName.toLowerCase();
+    return NETWORK_LOG_COLUMNS.every((columnName) => {
+      const columnValue = getNetworkLogValue(log, columnName).toLowerCase();
 
       if (!badgeFilterLookup[columnName] && !(badge?.columnName === columnName)) {
         return true;

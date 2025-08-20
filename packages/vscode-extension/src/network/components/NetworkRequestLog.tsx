@@ -9,9 +9,9 @@ import {
   VscodeTableRow,
 } from "@vscode-elements/react-elements";
 import type { VscodeTable as VscodeTableElement } from "@vscode-elements/elements/dist/vscode-table/vscode-table.js";
+import { capitalize } from "lodash";
 import IconButton from "../../webview/components/shared/IconButton";
 import { SortDirection } from "../types/network";
-
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import "./NetworkRequestLog.css";
 import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogFormatters";
@@ -226,7 +226,7 @@ const NetworkRequestLog = ({
                 onClick={() => handleHeaderClick(title)}
                 style={{ cursor: "pointer" }}>
                 <div className="table-header-cell">
-                  <span className="table-header-title">{title}</span>
+                  <span className="table-header-title">{capitalize(title)}</span>
                   <IconButton onClick={(e) => handleHeaderFilterClick(e, title)}>
                     <span className={`codicon codicon-filter-filled`}></span>
                   </IconButton>

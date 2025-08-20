@@ -3,23 +3,23 @@ import { FilterBadge } from "../providers/NetworkFilterProvider";
 import { NetworkLogColumn, SortDirection } from "../types/network";
 
 const NetworkLogFormatters = {
-  Name: (log: NetworkLog): string => {
+  name: (log: NetworkLog): string => {
     return log.request?.url.split("/").pop() || "(pending)";
   },
 
-  Status: (log: NetworkLog): string => {
+  status: (log: NetworkLog): string => {
     return String(log.response?.status || "(pending)");
   },
 
-  Method: (log: NetworkLog): string => {
+  method: (log: NetworkLog): string => {
     return log.request?.method || "(pending)";
   },
 
-  Type: (log: NetworkLog): string => {
+  type: (log: NetworkLog): string => {
     return log.type || "(pending)";
   },
 
-  Size: (log: NetworkLog): string => {
+  size: (log: NetworkLog): string => {
     const size = log.encodedDataLength;
     if (!size) {
       return "(pending)";
@@ -34,7 +34,7 @@ const NetworkLogFormatters = {
     return `${parseFloat(formattedSize.toFixed(2) || "")} ${units[unitIndex]}`;
   },
 
-  Time: (log: NetworkLog): string => {
+  time: (log: NetworkLog): string => {
     return log.timeline?.durationMs ? `${log.timeline?.durationMs} ms` : "(pending)";
   },
 } as const;
@@ -87,7 +87,7 @@ export function parseTextToBadge(text: string) {
   }
 
   if (fullMatch && columnName) {
-    const columnNames = ["name", "status", "method", "type", "size", "time"];
+    const columnNames = NETWORK_LOG_COLUMNS.map((col) => col.toLowerCase());
 
     if (columnNames.includes(columnName.toLowerCase())) {
       const normalizedColumnName = columnName.toLowerCase();
