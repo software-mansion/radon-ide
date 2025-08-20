@@ -13,6 +13,7 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildType, IOSBuildConfig, IOSLocalBuildConfig } from "../common/BuildConfig";
 import { DevicePlatform } from "../common/State";
 import { DeviceRotation } from "../common/Project";
+import { BuildOptions } from "./BuildManager";
 
 // Mapping from iOS interface orientation strings to DeviceRotation enum
 const IOS_ORIENTATION_TO_DEVICE_ROTATION = {
@@ -109,11 +110,10 @@ function buildProject(
 
 export async function buildIos(
   buildConfig: IOSBuildConfig,
-  cancelToken: CancelToken,
-  outputChannel: OutputChannel,
-  progressListener: (newProgress: number) => void
+  buildOptions: BuildOptions
 ): Promise<IOSBuildResult> {
   const { appRoot, env, type: buildType } = buildConfig;
+  const { cancelToken, buildOutputChannel } = buildOptions;
   switch (buildType) {
     case BuildType.Custom: {
       getTelemetryReporter().sendTelemetryEvent("build:custom-build-requested", {
@@ -127,7 +127,7 @@ export async function buildIos(
         env,
         DevicePlatform.IOS,
         appRoot,
-        outputChannel
+        buildOutputChannel
       );
       if (!appPath) {
         throw new Error(
@@ -152,7 +152,7 @@ export async function buildIos(
         buildConfig.config,
         DevicePlatform.IOS,
         appRoot,
-        outputChannel
+        buildOutputChannel
       );
 
       return {
@@ -170,7 +170,7 @@ export async function buildIos(
         buildConfig.profile,
         DevicePlatform.IOS,
         appRoot,
-        outputChannel,
+        buildOutputChannel,
         cancelToken
       );
 
@@ -195,18 +195,17 @@ export async function buildIos(
       };
     }
     case BuildType.Local: {
-      return await buildLocal(buildConfig, cancelToken, outputChannel, progressListener);
+      return await buildLocal(buildConfig, buildOptions);
     }
   }
 }
 
 async function buildLocal(
   buildConfig: IOSLocalBuildConfig,
-  cancelToken: CancelToken,
-  outputChannel: OutputChannel,
-  progressListener: (newProgress: number) => void
+  buildOptions: BuildOptions
 ): Promise<IOSBuildResult> {
-  const { appRoot, forceCleanBuild, configuration = "Debug" } = buildConfig;
+  const { appRoot, configuration = "Debug" } = buildConfig;
+  const { progressListener, cancelToken, buildOutputChannel, forceCleanBuild } = buildOptions;
 
   const sourceDir = getIosSourceDir(appRoot);
 
@@ -241,7 +240,7 @@ async function buildLocal(
 
   const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
   lineReader(buildProcess).onLineRead((line) => {
-    outputChannel.appendLine(line);
+    buildOutputChannel.appendLine(line);
     buildIOSProgressProcessor.processLine(line);
   });
 
