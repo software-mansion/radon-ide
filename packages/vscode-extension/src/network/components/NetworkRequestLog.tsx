@@ -14,7 +14,7 @@ import IconButton from "../../webview/components/shared/IconButton";
 import { SortDirection } from "../types/network";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import "./NetworkRequestLog.css";
-import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogFormatters";
+import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogUtils";
 import { NetworkLogColumn } from "../types/network";
 import { useNetworkFilter } from "../providers/NetworkFilterProvider";
 

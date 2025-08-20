@@ -12,7 +12,7 @@ import {
   getNetworkLogValue,
   NETWORK_LOG_COLUMNS,
   parseTextToBadge,
-} from "../utils/networkLogFormatters";
+} from "../utils/networkLogUtils";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork } from "./NetworkProvider";
 

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import "./FilterInput.css";
 import { useNetworkFilter } from "../providers/NetworkFilterProvider";
-import { NETWORK_LOG_COLUMNS, parseTextToBadge } from "../utils/networkLogFormatters";
+import { NETWORK_LOG_COLUMNS, parseTextToBadge } from "../utils/networkLogUtils";
 
 interface FilterInputProps {
   placeholder?: string;
