@@ -3,7 +3,7 @@ import path from "path";
 import semver from "semver";
 import { OutputChannel } from "vscode";
 import loadConfig from "@react-native-community/cli-config";
-import { getNativeABI } from "../utilities/common";
+import { calculateAppHash, getNativeABI } from "../utilities/common";
 import { ANDROID_HOME, findJavaHome } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
@@ -22,6 +22,7 @@ export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
   apkPath: string;
   packageName: string;
+  buildHash: string;
 };
 
 const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
@@ -109,6 +110,7 @@ export async function buildAndroid(
         apkPath,
         packageName: await extractPackageName(apkPath, cancelToken),
         platform: DevicePlatform.Android,
+        buildHash: await calculateAppHash(apkPath),
       };
     }
     case BuildType.Eas: {
@@ -127,6 +129,7 @@ export async function buildAndroid(
         apkPath,
         packageName: await extractPackageName(apkPath, cancelToken),
         platform: DevicePlatform.Android,
+        buildHash: await calculateAppHash(apkPath),
       };
     }
     case BuildType.EasLocal: {
@@ -145,6 +148,7 @@ export async function buildAndroid(
         apkPath,
         packageName: await extractPackageName(apkPath, cancelToken),
         platform: DevicePlatform.Android,
+        buildHash: await calculateAppHash(apkPath),
       };
     }
     case BuildType.ExpoGo: {
@@ -152,7 +156,12 @@ export async function buildAndroid(
         platform: DevicePlatform.Android,
       });
       const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken, appRoot);
-      return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
+      return {
+        apkPath,
+        packageName: EXPO_GO_PACKAGE_NAME,
+        platform: DevicePlatform.Android,
+        buildHash: await calculateAppHash(apkPath),
+      };
     }
     case BuildType.Local: {
       return await buildLocal(buildConfig, cancelToken, outputChannel, progressListener);
@@ -223,7 +232,11 @@ async function buildLocal(
   Logger.debug("Android build successful");
   try {
     const apkInfo = await getAndroidBuildPaths(appRoot, cancelToken, productFlavor, buildType);
-    return { ...apkInfo, platform: DevicePlatform.Android };
+    return {
+      ...apkInfo,
+      platform: DevicePlatform.Android,
+      buildHash: await calculateAppHash(apkInfo.apkPath),
+    };
   } catch (e) {
     Logger.error("Failed to extract package name from APK", e);
     throw new Error(
