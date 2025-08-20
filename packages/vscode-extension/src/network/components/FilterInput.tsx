@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import "./FilterInput.css";
 import { useNetworkFilter, FilterBadge } from "../providers/NetworkFilterProvider";
 import { getFilterAutocompleteSuggestion } from "../utils/networkLogFormatters";
@@ -18,13 +18,15 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
   const {
     filterInputRef,
     filterText,
-    filterBadges: badges,
+    filterBadges,
+    wasColumnFilterAdded,
     setFilterBadges,
     setFilterText,
   } = useNetworkFilter();
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputWithSuggestionRef = useRef<HTMLDivElement>(null);
+  const inputRemainingSpaceRef = useRef<number>(0);
   const [isFocused, setIsFocused] = useState(false);
   const [suggestion, setSuggestion] = useState("");
   const [inputWidth, setInputWidth] = useState<number>(20);
@@ -84,7 +86,7 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
 
         // If no badges, add left padding
         const scrollingOptions: ScrollingOptions =
-          badges.length === 0 ? { behavior: "auto", padding: 10 } : { padding: 10 };
+          filterBadges.length === 0 ? { behavior: "auto", padding: 10 } : { padding: 10 };
         scrollElementIntoView(inputRect, wrapperRect, wrapperScrollLeft, scrollingOptions);
       }
     }
@@ -181,14 +183,14 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
     // Handle duplicate badge highlighting
     const newBadgeName = newBadge?.columnName;
     const newBadgeValue = newBadge?.value;
-    const existingBadge = badges.find(
+    const existingBadge = filterBadges.find(
       (badge) => badge.columnName === newBadgeName && badge.value === newBadgeValue
     );
 
     if (existingBadge) {
       // Highlight and focus the duplicate badge
       const duplicateBadge = existingBadge;
-      const duplicateBadgeIndex = badges.findIndex((badge) => badge.id === duplicateBadge.id);
+      const duplicateBadgeIndex = filterBadges.findIndex((badge) => badge.id === duplicateBadge.id);
 
       setHighlightedBadgeId(duplicateBadge.id);
       setFocusedBadgeIndex(duplicateBadgeIndex);
@@ -200,7 +202,7 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
         setHighlightedBadgeId(null);
       }, 600);
     } else if (newBadge) {
-      const updatedBadges = [...badges, newBadge];
+      const updatedBadges = [...filterBadges, newBadge];
       setFilterBadges(updatedBadges);
 
       // Scroll to ensure the input (now positioned after the new badge) is visible
@@ -215,8 +217,8 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
   };
 
   const removeBadge = (index: number) => {
-    const badgeId = badges[index].id;
-    const newBadges = badges.filter((badge) => badge.id !== badgeId);
+    const badgeId = filterBadges[index].id;
+    const newBadges = filterBadges.filter((badge) => badge.id !== badgeId);
     setFilterBadges(newBadges);
 
     // Reset focus to input
@@ -227,20 +229,50 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
       setFocusedBadgeIndex(-1);
       filterInputRef.current?.focus();
     } else if (index === focusedBadgeIndex) {
-      const newFocusIndex = index === badges.length - 1 ? index - 1 : index;
+      const newFocusIndex = index === filterBadges.length - 1 ? index - 1 : index;
       setFocusedBadgeIndex(newFocusIndex);
     } else {
       const newBadgeIndex = newBadges.findIndex(
-        (badge) => badge.id === badges[focusedBadgeIndex].id
+        (badge) => badge.id === filterBadges[focusedBadgeIndex].id
       );
       setFocusedBadgeIndex(newBadgeIndex);
     }
   };
 
+  // Measuring the width left in the inputContainer for input to take
+  // used in reliable input resizing. More below.
+  useLayoutEffect(() => {
+    const wrapper = wrapperRef.current;
+    const container = containerRef.current;
+    if (!wrapper || !container) {
+      return;
+    }
+
+    const wrapperStyle = window.getComputedStyle(wrapper);
+    const badgeGap = parseInt(wrapperStyle.getPropertyValue("gap"));
+    const containerPaddingX =
+      parseInt(wrapperStyle.getPropertyValue("padding-left")) +
+      parseInt(wrapperStyle.getPropertyValue("padding-right"));
+
+    let badgesWidth = 0;
+    console.log(container.querySelectorAll(".filter-badge"));
+    container.querySelectorAll(".filter-badge").forEach((badge) => {
+      badgesWidth += badge.clientWidth + badgeGap;
+    });
+
+    const containerWidth = container.clientWidth;
+
+    inputRemainingSpaceRef.current = containerWidth - badgesWidth - containerPaddingX;
+  }, [filterBadges]);
+
   /**
    * Calculate input width based on content using OffscreenCanvas. This approach is needed,
    * because the text needs static value in px for the layout with badges to behave
-   * as expected from input field.
+   * as expected from input field. 
+   * 
+   * The need for use of inputRemainingSpaceRef arises
+   * from the fact, that we wish for the input to take the remaining space of the component
+   * for its expected behaviour, instead of it being very small and inaccessible.
    */
   useEffect(() => {
     if (!filterInputRef.current) {
@@ -258,15 +290,15 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
 
     // Measure based on current value + suggestion for proper width
     const textToMeasure = filterText + (suggestion || "");
-    const textToUse = textToMeasure || (badges.length === 0 ? placeholder : "") || "W";
+    const textToUse = textToMeasure || (filterBadges.length === 0 ? placeholder : "") || "W";
 
     const textMetrics = ctx.measureText(textToUse);
     const measuredWidth = textMetrics.width;
 
     // Set minimum width and add padding for natural flow
-    const calculatedWidth = Math.max(20, measuredWidth + 10);
+    const calculatedWidth = Math.max(inputRemainingSpaceRef.current, measuredWidth + 10);
     setInputWidth(calculatedWidth);
-  }, [filterText, placeholder, badges.length, suggestion]);
+  }, [filterText, placeholder, filterBadges, suggestion]);
 
   // Focus container when navigating to badges, but avoid interfering with input focus
   useEffect(() => {
@@ -277,8 +309,19 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
   }, [focusedBadgeIndex]);
 
   useEffect(() => {
+    if (wasColumnFilterAdded) {
+      filterInputRef.current?.focus();
+      const firstQuoteIndex = filterText.indexOf('"');
+      if (firstQuoteIndex !== -1) {
+        filterInputRef.current?.setSelectionRange(firstQuoteIndex + 1, firstQuoteIndex + 1);
+      }
 
-  }, [filterText]);
+      // Timeout for useEffect recalculating input's width
+      setTimeout(() => {
+        scrollInputIntoView();
+      }, 10);
+    }
+  }, [wasColumnFilterAdded]);
 
   // KEY HANDLERS
 
@@ -286,10 +329,10 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
    * ArrowLeft - Navigate from input to last badge or between badges
    */
   const handleArrowLeft = (e: React.KeyboardEvent<HTMLInputElement>, currentPosition: number) => {
-    if (currentPosition === 0 && badges.length > 0 && focusedBadgeIndex === -1) {
+    if (currentPosition === 0 && filterBadges.length > 0 && focusedBadgeIndex === -1) {
       // Move from input to last badge
       e.preventDefault();
-      setFocusedBadgeIndex(badges.length - 1);
+      setFocusedBadgeIndex(filterBadges.length - 1);
       filterInputRef.current?.blur();
     } else if (focusedBadgeIndex > 0) {
       // Move to previous badge
@@ -304,7 +347,7 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
   const handleArrowRight = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (focusedBadgeIndex >= 0) {
       e.preventDefault();
-      if (focusedBadgeIndex === badges.length - 1) {
+      if (focusedBadgeIndex === filterBadges.length - 1) {
         // Move from last badge to input
         setFocusedBadgeIndex(-1);
         filterInputRef.current?.focus();
@@ -339,13 +382,13 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
       removeBadge(focusedBadgeIndex);
     } else if (
       currentPosition === 0 &&
-      badges.length > 0 &&
+      filterBadges.length > 0 &&
       focusedBadgeIndex === -1 &&
       !hasSelection
     ) {
       // Remove last badge when backspace at beginning of input (only if no text is selected)
       e.preventDefault();
-      removeBadge(badges.length - 1);
+      removeBadge(filterBadges.length - 1);
     }
   };
 
@@ -508,7 +551,7 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
       onKeyDown={handleContainerKeyDown}
       tabIndex={focusedBadgeIndex >= 0 ? 0 : -1}>
       <div className="filter-input-wrapper" ref={wrapperRef}>
-        {badges.map((badge, index) => (
+        {filterBadges.map((badge, index) => (
           <div
             key={badge.id}
             className={`filter-badge ${focusedBadgeIndex === index ? "filter-badge--focused" : ""} ${highlightedBadgeId === badge.id ? "filter-badge--highlighted" : ""}`}
@@ -543,7 +586,7 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
             onKeyDown={handleKeyDown}
-            placeholder={badges.length === 0 ? placeholder : ""}
+            placeholder={filterBadges.length === 0 ? placeholder : ""}
             className="filter-input"
             style={{ width: `${inputWidth}px` }}
           />

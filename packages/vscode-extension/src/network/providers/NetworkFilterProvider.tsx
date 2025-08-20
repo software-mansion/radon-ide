@@ -42,6 +42,7 @@ interface NetworkFilterContextValue {
   filterInvert: boolean;
   filterInputRef: RefObject<HTMLInputElement | null>;
   isFilterVisible: boolean;
+  wasColumnFilterAdded: boolean;
 
   // Filter management functions
   setFilterText: (value: string | ((prev: string) => string)) => void;
@@ -65,11 +66,6 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
 
   useEffect(() => {
     if (wasColumnFilterAdded) {
-      filterInputRef.current?.focus();
-      const firstQuoteIndex = filterText.indexOf('"');
-      if (firstQuoteIndex !== -1) {
-        filterInputRef.current?.setSelectionRange(firstQuoteIndex + 1, firstQuoteIndex + 1);
-      }
       setWasColumnFilterAdded(false);
     }
   }, [wasColumnFilterAdded]);
@@ -187,6 +183,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
     filterInputRef: filterInputRef,
     filterInvert: invert,
     isFilterVisible,
+    wasColumnFilterAdded,
 
     // Filter management functions
     setFilterText,
