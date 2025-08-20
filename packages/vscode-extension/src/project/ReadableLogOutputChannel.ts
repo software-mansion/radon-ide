@@ -18,7 +18,7 @@ function createMockOutputChannel(): ReadableLogOutputChannel {
 
 export function createReadableOutputChannel(
   channel: string,
-  isVisible: boolean = true
+  isVisible: boolean
 ): ReadableLogOutputChannel {
   const outputChannel = isVisible
     ? window.createOutputChannel(channel, { log: true })

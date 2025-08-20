@@ -482,8 +482,7 @@ export class MetroLauncher extends Metro implements Disposable {
 
     const metroOutputChannel =
       IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(
-        Output.MetroBundler,
-        { visible: false }
+        Output.MetroBundler
       );
 
     // Clearing logs shortly before the new bundler process is started.

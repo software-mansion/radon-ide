@@ -53,7 +53,7 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
 
   const packageManagerLogs = registry.getOrCreateOutputChannel(Output.PackageManager);
 
-  const metroLogs = registry.getOrCreateOutputChannel(Output.MetroBundler, { visible: false });
+  const metroLogs = registry.getOrCreateOutputChannel(Output.MetroBundler);
 
   const deviceLogs = registry.getOrCreateOutputChannel(
     isAndroid ? Output.AndroidDevice : Output.IosDevice
