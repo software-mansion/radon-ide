@@ -71,7 +71,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
 
   const badgeFiltersPresent = filterBadges.length > 0;
 
-  const badgeFilterLookup: BadgeFilterLookup = useMemo(() => {
+  const badgeFiltersByColumnLookup: BadgeFilterLookup = useMemo(() => {
     const columnValueSets: Record<string, string[]> = {};
 
     filterBadges.forEach(({ columnName, value }) => {
@@ -109,7 +109,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
     return NETWORK_LOG_COLUMNS.every((columnName) => {
       const columnValue = getNetworkLogValue(log, columnName).toLowerCase();
 
-      if (!badgeFilterLookup[columnName] && !(badge?.columnName === columnName)) {
+      if (!badgeFiltersByColumnLookup[columnName] && !(badge?.columnName === columnName)) {
         return true;
       }
 
@@ -119,7 +119,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
         }
       }
 
-      return badgeFilterLookup[columnName]?.some((value) => {
+      return badgeFiltersByColumnLookup[columnName]?.some((value) => {
         if (columnValue.includes(value)) {
           return true;
         }
