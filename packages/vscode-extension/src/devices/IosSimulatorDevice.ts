@@ -472,11 +472,7 @@ export class IosSimulatorDevice extends DeviceBase {
       const buildHash = await fs.promises.readFile(buildHashFileLocation, "utf8");
       return buildHash === build.buildHash;
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-        return null;
-      } else {
-        throw error;
-      }
+      return null;
     }
   }
 
