@@ -521,7 +521,7 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  public async sendFile(filePath: string): Promise<void> {
+  public async sendFile(filePath: string) {
     const fileExtension = path.extname(filePath);
     if (SUPPORTED_FILE_URL_EXTS.includes(fileExtension)) {
       await exec("xcrun", [
@@ -532,7 +532,7 @@ export class IosSimulatorDevice extends DeviceBase {
         this.deviceUDID,
         `file://${filePath}`,
       ]);
-      return;
+      return { canSafelyRemove: false };
     }
     if (!isMediaFile(filePath)) {
       throw new Error(
@@ -549,6 +549,7 @@ export class IosSimulatorDevice extends DeviceBase {
       filePath,
     ];
     await exec("xcrun", args);
+    return { canSafelyRemove: true };
   }
 }
 

@@ -952,10 +952,21 @@ export class DeviceSession implements Disposable {
   }
 
   public async sendFileToDevice(fileName: string, data: ArrayBuffer): Promise<void> {
+    let canSafelyRemove = true;
     const tempDir = await this.getTemporaryFilesDirectory();
     const tempFileLocation = path.join(tempDir, fileName);
-    await fs.promises.writeFile(tempFileLocation, new Uint8Array(data));
-    await this.sendFile(tempFileLocation);
+    try {
+      await fs.promises.writeFile(tempFileLocation, new Uint8Array(data));
+      const result = await this.sendFile(tempFileLocation);
+      canSafelyRemove = result.canSafelyRemove;
+    } finally {
+      if (canSafelyRemove) {
+        // NOTE: no need to await this, it can run in the background
+        fs.promises.rm(tempFileLocation, { force: true }).catch((_e) => {
+          // NOTE: we can ignore errors here, as the file might not exist
+        });
+      }
+    }
   }
 
   private tempDir: string | undefined;

@@ -115,7 +115,11 @@ export abstract class DeviceBase implements Disposable {
   ): Promise<void>;
   abstract terminateApp(packageNameOrBundleID: string): Promise<void>;
   protected abstract makePreview(): Preview;
-  abstract sendFile(filePath: string): Promise<void>;
+
+  /**
+   * @returns whether the file can be safely removed after the operation finished.
+   */
+  abstract sendFile(filePath: string): Promise<{ canSafelyRemove: boolean }>;
   abstract get platform(): DevicePlatform;
   abstract get deviceInfo(): DeviceInfo;
   abstract resetAppPermissions(
