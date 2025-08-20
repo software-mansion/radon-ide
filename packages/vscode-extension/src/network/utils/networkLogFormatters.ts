@@ -110,44 +110,23 @@ export function parseFilterText(filterText: string): {
  * Get autocomplete suggestion for partial filter text
  */
 export function getFilterAutocompleteSuggestion(filterText: string): string {
-  if (!filterText) {
+  // No suggestion if empty or ends with whitespace
+  if (!filterText || filterText !== filterText.trimEnd()) {
+    return '';
+  }
+  const trimmed = filterText.trim();
+  // No suggestion if contains internal whitespace (spaces mean it's not a partial column name)
+  if (/\s/.test(trimmed)) {
     return '';
   }
   
-  // Parse the text to extract any complete filters
-  const filterRegex = /(\w+):\s*([^:]*?)(?=\s+\w+:|$)/g;
-  let lastIndex = 0;
-  let match;
+  // Check if the input starts to match any column name
+  const columnNames = ['name', 'status', 'method', 'type', 'size', 'time'];
+  const matchingColumn = columnNames.find(col => col.startsWith(trimmed.toLowerCase()));
   
-  // Find the last complete filter
-  while ((match = filterRegex.exec(filterText)) !== null) {
-    const [fullMatch] = match;
-    lastIndex = match.index + fullMatch.length;
-  }
-  
-  // Get the remaining text after the last complete filter
-  const remainingText = filterText.substring(lastIndex).trim();
-  
-  // If there's remaining text, check if it looks like the start of a new filter
-  if (remainingText.length > 0) {
-    const words = remainingText.split(/\s+/);
-    const firstWord = words[0];
-    
-    // Only suggest filter completion if:
-    // 1. There's only one word (no spaces), AND
-    // 2. It doesn't contain a colon, AND  
-    // 3. It matches the start of a column name
-    if (words.length === 1 && !firstWord.includes(':')) {
-      const columnNames = ['name', 'status', 'method', 'type', 'size', 'time'];
-      const matchingColumn = columnNames.find(col => col.startsWith(firstWord.toLowerCase()));
-      
-      if (matchingColumn && matchingColumn !== firstWord.toLowerCase()) {
-        return matchingColumn.substring(firstWord.length) + ':';
-      }
-    }
-    
-    // If there are multiple words or other patterns, treat as search text
-    // Don't show filter suggestions
+  // Only suggest if there's a match and it's not already complete
+  if (matchingColumn && matchingColumn !== trimmed.toLowerCase()) {
+    return matchingColumn.substring(trimmed.length) + ':';
   }
   
   return '';
