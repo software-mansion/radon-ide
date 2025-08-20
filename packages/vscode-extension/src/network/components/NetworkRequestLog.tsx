@@ -9,12 +9,14 @@ import {
   VscodeTableRow,
 } from "@vscode-elements/react-elements";
 import type { VscodeTable as VscodeTableElement } from "@vscode-elements/elements/dist/vscode-table/vscode-table.js";
+import IconButton from "../../webview/components/shared/IconButton";
 import { SortDirection } from "../types/network";
 
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import "./NetworkRequestLog.css";
 import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogFormatters";
 import { NetworkLogColumn } from "../types/network";
+import { useNetworkFilter } from "../providers/NetworkFilterProvider";
 
 interface SortState {
   column: NetworkLogColumn | null;
@@ -41,6 +43,8 @@ const NetworkRequestLog = ({
     direction: null,
   });
   const [cellWidths, setCellWidths] = useState<number[]>([]);
+
+  const { addColumnFilter } = useNetworkFilter();
 
   // Sort the network logs based on current sort state
   const sortedNetworkLogs = useMemo(() => {
@@ -171,7 +175,7 @@ const NetworkRequestLog = ({
     []
   );
 
-  const headerClickHandler = (column: NetworkLogColumn) => {
+  const handleHeaderClick = (column: NetworkLogColumn) => {
     setSortState((prevState) => {
       // If clicking on the same column, cycle through: asc -> desc -> null
       if (prevState.column === column) {
@@ -188,6 +192,11 @@ const NetworkRequestLog = ({
       // If clicking on a different column or no current sort, start with ascending
       return { column, direction: SortDirection.Asc };
     });
+  };
+
+  const handleHeaderFilterClick = (e: React.MouseEvent, column: NetworkLogColumn) => {
+    e.stopPropagation();
+    addColumnFilter(column);
   };
 
   const getSortIcon = (column: NetworkLogColumn) => {
@@ -214,10 +223,15 @@ const NetworkRequestLog = ({
             {logDetailsConfig.map(({ title }) => (
               <VscodeTableHeaderCell
                 key={title}
-                onClick={() => headerClickHandler(title)}
+                onClick={() => handleHeaderClick(title)}
                 style={{ cursor: "pointer" }}>
                 <div className="table-header-cell">
-                  <div>{title}</div>
+                  <div>
+                    {title}
+                    <IconButton onClick={(e) => handleHeaderFilterClick(e, title)}>
+                      <span className={`codicon codicon-filter-filled`}></span>
+                    </IconButton>
+                  </div>
                   <span className={`codicon ${getSortIcon(title)}`}></span>
                 </div>
               </VscodeTableHeaderCell>

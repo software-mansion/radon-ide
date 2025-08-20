@@ -1,0 +1,214 @@
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useRef,
+  useState,
+  RefObject,
+  useMemo,
+  useEffect,
+} from "react";
+import {
+  getNetworkLogValue,
+  NETWORK_LOG_COLUMNS,
+  parseFilterText,
+} from "../utils/networkLogFormatters";
+import { NetworkLogColumn } from "../types/network";
+import { NetworkLog } from "../hooks/useNetworkTracker";
+
+export interface FilterBadge {
+  id: string;
+  columnName: string;
+  value: string;
+}
+
+// lookup structure for badge filters
+type BadgeFilterLookup = Record<string, string[]>;
+
+// Map string column name to NetworkLogColumn enum
+const columnMapping: Record<string, NetworkLogColumn> = {
+  name: NetworkLogColumn.Name,
+  status: NetworkLogColumn.Status,
+  method: NetworkLogColumn.Method,
+  type: NetworkLogColumn.Type,
+  size: NetworkLogColumn.Size,
+  time: NetworkLogColumn.Time,
+} as const;
+
+interface NetworkFilterContextValue {
+  // Filter state
+  filterText: string;
+  filterBadges: FilterBadge[];
+  filterInvert: boolean;
+  filterInputRef: RefObject<HTMLInputElement | null>;
+  isFilterVisible: boolean;
+
+  // Filter management functions
+  setFilterText: (value: string | ((prev: string) => string)) => void;
+  addColumnFilter: (column: string) => void;
+  getFilterMatches: (log: NetworkLog) => boolean;
+  toggleInvert: () => void;
+  clearAllFilters: () => void;
+  setFilterBadges: (badges: FilterBadge[]) => void;
+  toggleFilterVisible: () => void;
+}
+
+const NetworkFilterContext = createContext<NetworkFilterContextValue | null>(null);
+
+export function NetworkFilterProvider({ children }: PropsWithChildren) {
+  const [filterText, setFilterText] = useState<string>("");
+  const [filterBadges, setFilterBadges] = useState<FilterBadge[]>([]);
+  const [invert, setInvert] = useState<boolean>(false);
+  const [wasColumnFilterAdded, setWasColumnFilterAdded] = useState<boolean>(false);
+  const [isFilterVisible, setIsFilterVisible] = useState<boolean>(false);
+  const filterInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (wasColumnFilterAdded) {
+      filterInputRef.current?.focus();
+      const firstQuoteIndex = filterText.indexOf('"');
+      if (firstQuoteIndex !== -1) {
+        filterInputRef.current?.setSelectionRange(firstQuoteIndex + 1, firstQuoteIndex + 1);
+      }
+      setWasColumnFilterAdded(false);
+    }
+  }, [wasColumnFilterAdded]);
+
+  useEffect(() => {
+    if (!isFilterVisible) {
+      clearAllFilters();
+    }
+  }, [isFilterVisible]);
+
+  const badgeFiltersPresent = filterBadges.length > 0;
+
+  const badgeFilterLookup: BadgeFilterLookup = useMemo(() => {
+    const columnValueSets: Record<string, string[]> = {};
+
+    filterBadges.forEach(({ columnName, value }) => {
+      if (!columnValueSets[columnName]) {
+        columnValueSets[columnName] = [];
+      }
+      columnValueSets[columnName].push(value.toLowerCase());
+    });
+
+    return columnValueSets;
+  }, [filterBadges]);
+
+  const addColumnFilter = (column: string) => {
+    setWasColumnFilterAdded(true);
+    setIsFilterVisible(true);
+    setFilterText((prev) => {
+      // Check if any column filter pattern (COLUMN:"") exists and replace it
+      const filterPattern = /(\w+):""/;
+      const match = prev.match(filterPattern);
+
+      if (match) {
+        return prev.replace(filterPattern, `${column}:""`);
+      }
+
+      // If no existing filter pattern, add the new one at the beginning
+      return `${column}:"" ${prev}`;
+    });
+  };
+
+  const computeBadgeFilterMatches = (log: NetworkLog): boolean => {
+    if (!badgeFiltersPresent) {
+      return true;
+    }
+
+    // AND between columns, OR within column values
+    return Object.entries(badgeFilterLookup).every(([columnName, valueSet]) => {
+      const mappedColumn = columnMapping[columnName];
+      if (!mappedColumn) {
+        return true;
+      }
+
+      const columnValue = getNetworkLogValue(log, mappedColumn).toLowerCase();
+
+      for (const filterValue of valueSet) {
+        if (columnValue.includes(filterValue)) {
+          return true;
+        }
+      }
+      return false;
+    });
+  };
+
+  const computeTextMatches = (filterTextValue: string, log: NetworkLog) => {
+    const { parsedFilters, globalSearchTerm } = parseFilterText(filterTextValue);
+
+    // Check specific column filters from current text input
+    const columnMatches = parsedFilters.every(({ columnName, value }) => {
+      const columnValue = getNetworkLogValue(log, columnName);
+      return columnValue.toLowerCase().includes(value.toLowerCase());
+    });
+
+    // Check global search term (if any remaining text after parsing filters)
+    const globalMatches =
+      !globalSearchTerm.trim() ||
+      NETWORK_LOG_COLUMNS.some((column) =>
+        getNetworkLogValue(log, column).toLowerCase().includes(globalSearchTerm.toLowerCase())
+      );
+
+    return columnMatches && globalMatches;
+  };
+
+  const getFilterMatches = (log: NetworkLog): boolean => {
+    // Check badge filters using optimized lookup
+    const badgeMatches = computeBadgeFilterMatches(log);
+
+    // Check text filter (global search or remaining text after parsing)
+    const textMatches = !filterText.trim() || computeTextMatches(filterText, log);
+
+    const finalMatch = badgeMatches && textMatches;
+
+    return finalMatch !== invert;
+  };
+
+  const toggleInvert = () => {
+    setInvert((prev) => !prev);
+  };
+
+  const clearAllFilters = () => {
+    setFilterText("");
+    setFilterBadges([]);
+    setInvert(false);
+  };
+
+  const toggleFilterVisible = () => {
+    setIsFilterVisible((prev) => !prev);
+  };
+
+  const contextValue: NetworkFilterContextValue = {
+    // Filter state
+    filterText,
+    filterBadges,
+    filterInputRef: filterInputRef,
+    filterInvert: invert,
+    isFilterVisible,
+
+    // Filter management functions
+    setFilterText,
+    addColumnFilter,
+    getFilterMatches,
+    toggleInvert,
+    clearAllFilters,
+    setFilterBadges,
+    toggleFilterVisible,
+  };
+
+  return (
+    <NetworkFilterContext.Provider value={contextValue}>{children}</NetworkFilterContext.Provider>
+  );
+}
+
+export function useNetworkFilter() {
+  const context = useContext(NetworkFilterContext);
+
+  if (!context) {
+    throw new Error("useNetworkFilter must be used within a NetworkFilterProvider");
+  }
+
+  return context;
+}

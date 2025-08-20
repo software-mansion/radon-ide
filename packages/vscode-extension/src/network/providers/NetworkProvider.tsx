@@ -1,61 +1,32 @@
-import { createContext, PropsWithChildren, useContext, useMemo, useReducer, useState } from "react";
+import React, {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useMemo,
+  useReducer,
+  useState,
+} from "react";
 import useNetworkTracker, {
   NetworkTracker,
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
-import { getNetworkLogValue, NETWORK_LOG_COLUMNS, parseFilterText } from "../utils/networkLogFormatters";
-import { NetworkLogColumn } from "../types/network";
-
-type TimestampRange = {
-  start: number;
-  end: number;
-};
-
-interface FilterBadge {
-  id: string;
-  columnName: string;
-  value: string;
-}
-
-interface Filters {
-  timestampRange?: TimestampRange;
-  filterText: string;
-  filterBadges: FilterBadge[];
-  invert: boolean;
-}
-
-const DEFAULT_FILTER: Filters = {
-  timestampRange: undefined,
-  filterText: "",
-  filterBadges: [],
-  invert: false,
-} as const;
+import { useNetworkFilter, NetworkFilterProvider } from "./NetworkFilterProvider";
 
 interface NetworkProviderProps extends NetworkTracker {
-  unfilteredNetworkLogs: NetworkTracker["networkLogs"];
   isRecording: boolean;
-  filters: Filters;
   isScrolling: boolean;
   toggleRecording: () => void;
-  setFilters: (filters: Filters | ((prevFilters: Filters) => Filters)) => void;
   clearActivity: () => void;
   toggleScrolling: () => void;
-  isFilterVisible: boolean;
-  toggleFilterVisible: () => void;
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
   ...networkTrackerInitialState,
-  unfilteredNetworkLogs: [],
   isRecording: true,
-  isFilterVisible: false,
-  filters: DEFAULT_FILTER,
   isScrolling: false,
   toggleRecording: () => {},
-  toggleFilterVisible: () => {},
-  setFilters: () => {},
   clearActivity: () => {},
   toggleScrolling: () => {},
   isTimelineVisible: true,
@@ -63,23 +34,20 @@ const NetworkContext = createContext<NetworkProviderProps>({
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
+  return (
+    <NetworkFilterProvider>
+      <NetworkProviderInner>{children}</NetworkProviderInner>
+    </NetworkFilterProvider>
+  );
+}
+
+function NetworkProviderInner({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
+  const { getFilterMatches } = useNetworkFilter();
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
-  const [isFilterVisible, toggleFilterVisible] = useReducer((state) => !state, false);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
-
   const [isRecording, setIsRecording] = useState(true);
-  const [filters, setFiltersState] = useState<Filters>(DEFAULT_FILTER);
-
-  // Wrapper function to handle both direct objects and callback functions
-  const setFilters = (filtersOrCallback: Filters | ((prevFilters: Filters) => Filters)) => {
-    if (typeof filtersOrCallback === 'function') {
-      setFiltersState(filtersOrCallback);
-    } else {
-      setFiltersState(filtersOrCallback);
-    }
-  };
 
   const clearActivity = () => {
     networkTracker.clearLogs();
@@ -93,94 +61,22 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   };
 
   const networkLogs = useMemo(() => {
-    return networkTracker.networkLogs.filter((log) => {
-      const { timestampRange, filterText, filterBadges, invert } = filters;
-
-      // Timestamp range filter
-      const matchesTimestampRange =
-        !timestampRange ||
-        (log.timeline.timestamp >= timestampRange.start &&
-          log.timeline.timestamp <= timestampRange.end);
-
-      const matchesFilter = (() => {
-        // Check badge filters (specific column:value pairs) with OR logic for same columns
-        const badgeMatches = !filterBadges?.length || (() => {
-          // Group badges by column name
-          const badgesByColumn: Record<string, string[]> = {};
-          filterBadges.forEach(({ columnName, value }) => {
-            if (!badgesByColumn[columnName]) {
-              badgesByColumn[columnName] = [];
-            }
-            badgesByColumn[columnName].push(value.toLowerCase());
-          });
-
-          // For each column group, check if ANY value matches (OR within column)
-          // ALL column groups must have at least one match (AND between columns)
-          return Object.entries(badgesByColumn).every(([columnName, values]) => {
-            // Map string column name to NetworkLogColumn enum
-            const columnMapping: Record<string, NetworkLogColumn> = {
-              'name': NetworkLogColumn.Name,
-              'status': NetworkLogColumn.Status,
-              'method': NetworkLogColumn.Method,
-              'type': NetworkLogColumn.Type,
-              'size': NetworkLogColumn.Size,
-              'time': NetworkLogColumn.Time,
-            };
-            const mappedColumn = columnMapping[columnName];
-            if (!mappedColumn) {
-              return true;
-            }
-            
-            const columnValue = getNetworkLogValue(log, mappedColumn).toLowerCase();
-            // Check if ANY of the values for this column match (OR logic)
-            return values.some(value => columnValue.includes(value));
-          });
-        })();
-
-        // Check text filter (global search or remaining text after parsing)
-        const textMatches = !filterText.trim() || (() => {
-          const { parsedFilters, globalSearchTerm } = parseFilterText(filterText);
-          
-          // Check specific column filters from current text input
-          const columnMatches = parsedFilters.every(({ columnName, value }) => {
-            const columnValue = getNetworkLogValue(log, columnName);
-            return columnValue.toLowerCase().includes(value.toLowerCase());
-          });
-          
-          // Check global search term (if any remaining text after parsing filters)
-          const globalMatches = !globalSearchTerm.trim() || NETWORK_LOG_COLUMNS.some((column) =>
-            getNetworkLogValue(log, column).toLowerCase().includes(globalSearchTerm.toLowerCase())
-          );
-
-          return columnMatches && globalMatches;
-        })();
-
-        const finalMatch = badgeMatches && textMatches;
-        return finalMatch !== invert; // XOR invert logic
-      })();
-
-      return matchesFilter && matchesTimestampRange;
-    });
-  }, [networkTracker.networkLogs, filters]);
+    return networkTracker.networkLogs.filter(getFilterMatches);
+  }, [networkTracker.networkLogs, getFilterMatches]);
 
   const contextValue = useMemo(() => {
     return {
       ...networkTracker,
-      unfilteredNetworkLogs: networkTracker.networkLogs,
       networkLogs,
       isRecording,
       toggleRecording,
-      filters,
-      setFilters,
       isScrolling,
       clearActivity,
       toggleScrolling,
-      isFilterVisible,
-      toggleFilterVisible,
       isTimelineVisible,
       toggleTimelineVisible,
     };
-  }, [isRecording, filters, isFilterVisible, isScrolling, isTimelineVisible, networkLogs]);
+  }, [isRecording, isScrolling, isTimelineVisible, networkLogs, networkTracker]);
 
   return <NetworkContext.Provider value={contextValue}>{children}</NetworkContext.Provider>;
 }

@@ -1,46 +1,18 @@
 import classNames from "classnames";
-import { useState } from "react";
 import "./NetworkBar.css";
 import { VscodeCheckbox } from "@vscode-elements/react-elements";
 import IconButton from "../../webview/components/shared/IconButton";
 import FilterInput from "./FilterInput";
 import { useNetwork } from "../providers/NetworkProvider";
-import { getFilterAutocompleteSuggestion } from "../utils/networkLogFormatters";
-
-interface FilterBadge {
-  id: string;
-  columnName: string;
-  value: string;
-}
+import { useNetworkFilter } from "../providers/NetworkFilterProvider";
 
 function NetworkBar() {
-  const {
-    isRecording,
-    toggleRecording,
-    clearActivity,
-    toggleFilterVisible,
-    isFilterVisible,
-    filters,
-    setFilters,
-  } = useNetwork();
+  const { isRecording, toggleRecording, clearActivity } = useNetwork();
 
-  const [suggestion, setSuggestion] = useState("");
+  const { filterInvert, isFilterVisible, toggleInvert, toggleFilterVisible } = useNetworkFilter();
 
   const handleInvertChange = (e: Event) => {
-    // @ts-ignore - ignore type warning for web component
-    setFilters(prevFilters => ({ ...prevFilters, invert: e.target.checked }));
-  };
-
-  const handleFilterTextChange = (value: string) => {
-    setFilters(prevFilters => ({ ...prevFilters, filterText: value }));
-    
-    // Update autocomplete suggestion
-    const newSuggestion = getFilterAutocompleteSuggestion(value);
-    setSuggestion(newSuggestion);
-  };
-
-  const handleBadgesChange = (badges: FilterBadge[]) => {
-    setFilters(prevFilters => ({ ...prevFilters, filterBadges: badges }));
+    toggleInvert();
   };
 
   return (
@@ -75,7 +47,8 @@ function NetworkBar() {
       <IconButton
         onClick={toggleFilterVisible}
         tooltip={{
-          label: "Filter network requests (supports column:value format like 'status:200 method:post')",
+          label:
+            "Filter network requests (supports column:value format like 'status:200 method:post')",
           side: "bottom",
         }}>
         <span
@@ -88,14 +61,10 @@ function NetworkBar() {
       {isFilterVisible && (
         <div className="network-filter">
           <FilterInput
-            value={filters.filterText}
-            onChange={handleFilterTextChange}
-            onBadgesChange={handleBadgesChange}
             placeholder="Filter: status:200 method:post or search all columns"
-            suggestion={suggestion}
             className="network-filter-input"
           />
-          <VscodeCheckbox onChange={handleInvertChange} label="Invert" />
+          <VscodeCheckbox onChange={handleInvertChange} label="Invert" checked={filterInvert} />
         </div>
       )}
     </div>
