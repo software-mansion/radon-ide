@@ -6,7 +6,7 @@ on:
       node:
         description: Node.js version to use
         required: false
-        default: "20"
+        default: "22"
       testApp:
         description: Project app name to test
         required: true
@@ -23,7 +23,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ github.event.inputs.node || '20' }}
+          node-version: ${{ github.event.inputs.node || '22' }}
 
       - name: Enforce HTTPS for submodules
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
