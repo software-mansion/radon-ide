@@ -7,7 +7,7 @@
     "build-vsix-package": "cd ../vscode-extension && vsce package --out ../vscode-extension-tester/data/radon-ide.vsix && cd ../vscode-extension-tester",
     "install-vsix": "extest install-vsix -f ./data/radon-ide.vsix --extensions_dir ./data/vscode-extensions",
     "setup": "extest get-vscode && extest get-chromedriver && npm run install-vsix",
-    "ui-tests": "extest run-tests ./ui-tests/*.test.js --extensions_dir ./data/vscode-extensions -r ../react-native-78",
+    "ui-tests": "extest run-tests ./ui-tests/*.test.js --extensions_dir ./data/vscode-extensions -r ../react-native-80",
     "ui-tests2": "extest run-tests ./ui-tests/06-screenshots.test.js --extensions_dir ./data/vscode-extensions -r /Users/krzysztof/test/radon-ide-test-apps/react-native-78",
     "clean": "rm -rf ./data/vscode-storage",
     "setup-run-tests": "npm run clean && npm run setup && npm run ui-tests2",

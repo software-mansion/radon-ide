@@ -1,4 +1,4 @@
-import { By } from "vscode-extension-tester";
+import { By, EditorView } from "vscode-extension-tester";
 import { findAndWaitForElement } from "../utils/helpers.js";
 import {
   openRadonIDEPanel,
@@ -10,11 +10,13 @@ import {
 import { sharedTestLifecycle } from "./setupTest.js";
 
 describe("Adding device tests", () => {
-  const get = sharedTestLifecycle();
+  const { get, view } = sharedTestLifecycle();
 
   after(async function () {
     const { driver } = get();
     await deleteAllDevices(driver);
+    await view.switchBack();
+    await new EditorView().closeAllEditors();
   });
 
   it("should add device to Radon IDE", async function () {

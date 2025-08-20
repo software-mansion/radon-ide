@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Settings
-VM_NAME="macOSVM"
+VM_NAME="macOS"
 VM_USER="test"
 VM_PASSWORD="123456"
 LOCAL_PROJECT_PATH="../../vscode-extension-tester"

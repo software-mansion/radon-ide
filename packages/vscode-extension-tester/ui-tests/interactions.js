@@ -3,7 +3,7 @@ import {
   findAndClickElementByTag,
   waitUntilElementGone,
 } from "../utils/helpers.js";
-import { By } from "vscode-extension-tester";
+import { By, Key } from "vscode-extension-tester";
 
 export async function openDeviceCreationModal(driver) {
   await findAndClickElementByTag(driver, "device-select-trigger");
@@ -146,4 +146,19 @@ export async function findWebViewIFrame(driver, iframeTitle) {
   throw new Error(
     `Could not find iframe with title ${iframeTitle} in any webview`
   );
+}
+
+export async function findAndFillSaveFileForm(driver, filename) {
+  await driver.switchTo().defaultContent();
+
+  const quickInput = await findAndWaitForElement(
+    driver,
+    By.css(".quick-input-widget input"),
+    "Timed out waiting for quick input",
+    10000
+  );
+
+  await quickInput.click();
+  await quickInput.sendKeys(Key.chord(Key.COMMAND, "a"), "~");
+  await quickInput.sendKeys(filename, Key.ENTER);
 }
