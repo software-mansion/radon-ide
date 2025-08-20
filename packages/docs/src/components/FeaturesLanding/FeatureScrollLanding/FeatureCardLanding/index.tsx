@@ -36,7 +36,7 @@ export default function FeatureCardLanding({
     <div className={styles.cardContainer}>
       <div role="region" aria-labelledby={`feature-${index}`}>
         <div
-          className={styles.hideContainer}
+          className={`${styles.hiddenBadge} ${isExpanded ? styles.slide : ""}`}
           style={{
             maxHeight: isExpanded ? badgeRef.current?.clientHeight ?? 0 : 0,
           }}>
@@ -46,7 +46,9 @@ export default function FeatureCardLanding({
         </div>
       </div>
       <button id={`feature-${index}`} aria-expanded={isExpanded} onClick={() => toggleAnswer()}>
-        <div className={styles.cardTitle}>{title}</div>
+        <div className={`${styles.cardTitle} ${isExpanded ? styles.activeTitle : null}`}>
+          {title}
+        </div>
       </button>
       <div role="region" aria-labelledby={`feature-${index}`}>
         <div

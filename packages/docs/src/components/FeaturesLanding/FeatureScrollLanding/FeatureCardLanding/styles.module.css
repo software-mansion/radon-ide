@@ -2,8 +2,9 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  width: 500px;
+  width: 400px;
   padding: 10px;
+  position: relative;
 }
 .cardContainer button {
   cursor: pointer;
@@ -22,8 +23,6 @@
   width: fit-content;
 
   background: var(--badge-background, #333);
-}
-.cardBadge p {
   font-size: 14px;
   line-height: 20px;
   margin: 0;
@@ -34,6 +33,12 @@
   line-height: normal;
   display: flex;
   justify-content: left;
+  opacity: 0.5;
+  background-color: transparent;
+}
+
+.activeTitle {
+  opacity: 1;
 }
 
 .cardContent {
@@ -44,36 +49,53 @@
 
 .hideContainer {
   overflow: hidden;
-  transition: all 200ms ease-in-out;
+  transition: all 600ms ease-in-out;
+}
+
+.hiddenBadge {
+  position: relative;
+  opacity: 0;
+  overflow: hidden;
+  /* transition:
+    all 800ms ease-in-out,
+    opacity 0.8s; */
+  transform: translateY(100%);
+  transition:
+    opacity 0.8s ease,
+    transform 0.8s ease;
+  z-index: -10;
+}
+
+.hiddenBadge.slide {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .progressContainer {
   margin: 40px auto;
-  width: 500px;
+  width: 400px;
   text-align: center;
 }
 
 .progress {
-  padding: 4px;
-  border-radius: 30px;
-  background: rgba(0, 0, 0, 0.25);
-  box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.25),
-    0 1px rgba(255, 255, 255, 0.08);
+  display: flex;
+  height: 4px;
+  background: transparent;
+  border-bottom: var(--radon-border-layout);
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  align-self: stretch;
 }
 
 .progressBar {
-  height: 6px;
-  border-radius: 30px;
-  background-image: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.05));
-  transition: 0.4s linear;
-  transition-property: width, background-color;
+  height: 4px;
 }
 
 .progressMoved .progressBar {
   width: 100%;
   background-color: var(--radon-gradient-green);
-  animation: progressAnimation 10s infinite;
+  animation: progressAnimation 6s infinite;
 }
 
 @keyframes progressAnimation {

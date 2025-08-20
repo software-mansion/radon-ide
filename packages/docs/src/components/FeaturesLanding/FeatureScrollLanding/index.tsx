@@ -36,14 +36,14 @@ export default function FeatureScrollLanding() {
   });
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const timeout = setTimeout(() => {
       setActiveItem((prev) => {
         const nextIndex = (prev.index + 1) % features.length;
         return { index: nextIndex, height: 0 };
       });
-    }, 10000);
+    }, 6000);
 
-    return () => clearInterval(interval);
+    return () => clearTimeout(timeout);
   }, [activeItem]);
 
   return (

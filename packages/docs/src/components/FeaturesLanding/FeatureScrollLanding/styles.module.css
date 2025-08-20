@@ -3,4 +3,5 @@
   align-self: stretch;
   border-bottom: var(--radon-border-layout);
   display: flex;
+  padding: 80px;
 }
