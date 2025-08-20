@@ -4,7 +4,6 @@ import { Disposable } from "vscode";
 import { command, lineReader } from "../utilities/subprocess";
 import { CancelToken } from "../utilities/cancelToken";
 import { getIosSourceDir } from "../builders/buildIOS";
-import { BuildConfig } from "../common/BuildConfig";
 import { BuildOptions } from "../builders/BuildManager";
 
 /**

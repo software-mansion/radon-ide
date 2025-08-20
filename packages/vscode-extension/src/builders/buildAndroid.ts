@@ -1,7 +1,6 @@
 import fs from "fs";
 import path from "path";
 import semver from "semver";
-import { OutputChannel } from "vscode";
 import loadConfig from "@react-native-community/cli-config";
 import { getNativeABI } from "../utilities/common";
 import { ANDROID_HOME, findJavaHome } from "../utilities/android";

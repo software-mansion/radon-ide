@@ -53,6 +53,7 @@ describe("BatchingBuildManager", () => {
           progressListener,
           cancelToken: new CancelToken(),
           buildOutputChannel: {} as any,
+          forceCleanBuild: false,
         };
 
         buildAppMock.resolves(BUILD_RESULT);
@@ -68,6 +69,7 @@ describe("BatchingBuildManager", () => {
           progressListener,
           cancelToken: new CancelToken(),
           buildOutputChannel: {} as any,
+          forceCleanBuild: false,
         };
 
         const { promise, resolve } = Promise.withResolvers();
@@ -93,6 +95,7 @@ describe("BatchingBuildManager", () => {
           progressListener,
           cancelToken: new CancelToken(),
           buildOutputChannel: {} as any,
+          forceCleanBuild: false,
         };
 
         const { promise, resolve } = Promise.withResolvers();
@@ -120,6 +123,7 @@ describe("BatchingBuildManager", () => {
           progressListener,
           cancelToken: new CancelToken(),
           buildOutputChannel: {} as any,
+          forceCleanBuild: false,
         };
 
         const { promise, resolve } = Promise.withResolvers();
@@ -145,7 +149,12 @@ describe("BatchingBuildManager", () => {
       it("should cancel the build in progress when the passed cancel token is cancelled", async () => {
         const batchingBuildManager = new BatchingBuildManager(buildManagerMock);
         const cancelToken = new CancelToken();
-        const options = { progressListener, cancelToken, buildOutputChannel: {} as any };
+        const options = {
+          progressListener,
+          cancelToken,
+          buildOutputChannel: {} as any,
+          forceCleanBuild: false,
+        };
 
         const { promise } = Promise.withResolvers();
         buildAppMock.returns(promise);
@@ -175,11 +184,13 @@ describe("BatchingBuildManager", () => {
           progressListener,
           cancelToken,
           buildOutputChannel: {} as any,
+          forceCleanBuild: false,
         });
         batchingBuildManager.buildApp(BUILD_CONFIG, {
           progressListener,
           cancelToken: new CancelToken(),
           buildOutputChannel: {} as any,
+          forceCleanBuild: false,
         });
 
         // Cancel the token
@@ -199,6 +210,7 @@ describe("BatchingBuildManager", () => {
           progressListener,
           cancelToken: new CancelToken(),
           buildOutputChannel: {} as any,
+          forceCleanBuild: false,
         };
 
         const { promise, resolve } = Promise.withResolvers();
@@ -211,10 +223,10 @@ describe("BatchingBuildManager", () => {
         buildAppMock.returns(promise2);
 
         // Second call with the same configuration but forceCleanBuild is true
-        const result2 = batchingBuildManager.buildApp(
-          { ...BUILD_CONFIG, forceCleanBuild: true },
-          options
-        );
+        const result2 = batchingBuildManager.buildApp(BUILD_CONFIG, {
+          ...options,
+          forceCleanBuild: true,
+        });
 
         resolve(BUILD_RESULT);
         resolve2(BUILD_RESULT_2);
@@ -231,6 +243,7 @@ describe("BatchingBuildManager", () => {
           progressListener,
           cancelToken: new CancelToken(),
           buildOutputChannel: {} as any,
+          forceCleanBuild: false,
         };
 
         const { promise, resolve } = Promise.withResolvers();
@@ -243,10 +256,10 @@ describe("BatchingBuildManager", () => {
         buildAppMock.returns(promise2);
 
         // Second call with the same configuration but forceCleanBuild is true
-        const result2 = batchingBuildManager.buildApp(
-          { ...BUILD_CONFIG, forceCleanBuild: true },
-          options
-        );
+        const result2 = batchingBuildManager.buildApp(BUILD_CONFIG, {
+          ...options,
+          forceCleanBuild: true,
+        });
 
         resolve(BUILD_RESULT);
         resolve2(BUILD_RESULT_2);
@@ -266,6 +279,7 @@ describe("BatchingBuildManager", () => {
           progressListener,
           cancelToken: new CancelToken(),
           buildOutputChannel: {} as any,
+          forceCleanBuild: false,
         };
 
         const { promise, resolve } = Promise.withResolvers();
@@ -278,10 +292,10 @@ describe("BatchingBuildManager", () => {
         buildAppMock.returns(promise2);
 
         // Second call with the same configuration but forceCleanBuild is true
-        const result2 = batchingBuildManager.buildApp(
-          { ...BUILD_CONFIG_2, forceCleanBuild: true },
-          options
-        );
+        const result2 = batchingBuildManager.buildApp(BUILD_CONFIG_2, {
+          ...options,
+          forceCleanBuild: true,
+        });
 
         resolve(BUILD_RESULT);
         resolve2(BUILD_RESULT_2);

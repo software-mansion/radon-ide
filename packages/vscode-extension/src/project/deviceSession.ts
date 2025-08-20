@@ -433,14 +433,6 @@ export class DeviceSession implements Disposable {
       platform: this.platform,
     });
 
-    const launchConfig = this.applicationContext.launchConfig;
-    const platformKey = this.platform === DevicePlatform.IOS ? "ios" : "android";
-    const fingerprintOptions = {
-      appRoot: this.applicationContext.appRootFolder,
-      env: launchConfig.env,
-      fingerprintCommand: launchConfig.customBuild?.[platformKey]?.fingerprintCommand,
-    };
-
     this.resetStartingState();
     const buildConfig = this.buildConfig;
     if (buildConfig && (await this.buildCache.isCacheStale(buildConfig))) {

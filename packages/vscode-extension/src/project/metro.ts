@@ -3,7 +3,7 @@ import fs from "fs";
 import WebSocket from "ws";
 import { Disposable, EventEmitter, ExtensionMode, Uri, workspace } from "vscode";
 import stripAnsi from "strip-ansi";
-import { exec, ChildProcess, lineReader, execSync } from "../utilities/subprocess";
+import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { shouldUseExpoCLI } from "../utilities/expoCli";

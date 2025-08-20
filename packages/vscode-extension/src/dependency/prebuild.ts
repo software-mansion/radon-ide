@@ -1,5 +1,5 @@
 import assert from "assert";
-import { Disposable, OutputChannel } from "vscode";
+import { Disposable } from "vscode";
 import { exec } from "../utilities/subprocess";
 import { BuildError, BuildOptions } from "../builders/BuildManager";
 import { IOSLocalBuildConfig, AndroidLocalBuildConfig } from "../common/BuildConfig";
