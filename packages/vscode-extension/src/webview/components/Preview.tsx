@@ -596,7 +596,7 @@ function Preview({
                   <Debugger />
                 </div>
               )}
-              <SendFilesOverlay />
+              {isRunning && <SendFilesOverlay />}
             </div>
           </Device>
         )}
