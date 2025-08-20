@@ -5,7 +5,6 @@ import { NETWORK_LOG_COLUMNS, parseTextToBadge } from "../utils/networkLogUtils"
 
 interface FilterInputProps {
   placeholder?: string;
-  className?: string;
 }
 
 type ScrollingOptions = {
@@ -40,7 +39,7 @@ function getFilterAutocompleteSuggestion(filterText: string): string {
   return "";
 }
 
-function FilterInput({ placeholder, className }: FilterInputProps) {
+function FilterInput({ placeholder }: FilterInputProps) {
   const {
     filterInputRef,
     filterText,
@@ -298,7 +297,6 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
     }
   }, [wasColumnFilterAdded]);
 
-  // KEY HANDLERS
   /**
    * ArrowLeft - Navigate from input to last badge or between badges
    */
@@ -448,8 +446,6 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
     createNewBadgeFromSubstring(e, currentPosition, false);
   };
 
-  // EVENT HANDLERS
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const target = e.target as HTMLInputElement;
     const currentPosition = target.selectionStart || 0;
@@ -520,7 +516,7 @@ function FilterInput({ placeholder, className }: FilterInputProps) {
   return (
     <div
       ref={containerRef}
-      className={`filter-input-container ${className || ""}`}
+      className={`filter-input-container network-filter-input`}
       onClick={handleInputContainerClick}
       onKeyDown={handleContainerKeyDown}
       tabIndex={focusedBadgeIndex >= 0 ? 0 : -1}>

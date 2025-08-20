@@ -60,10 +60,7 @@ function NetworkBar() {
       </IconButton>
       {isFilterVisible && (
         <div className="network-filter">
-          <FilterInput
-            placeholder="Filter: search all columns or <column>:<value>"
-            className="network-filter-input"
-          />
+          <FilterInput placeholder="Filter: search all columns or <column>:<value>" />
           <VscodeCheckbox
             onChange={handleInvertChange}
             className="invert-checkbox"

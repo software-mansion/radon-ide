@@ -18,10 +18,6 @@ export enum NetworkLogColumn {
   Size = "size",
   Time = "time",
 }
-export interface ParsedFilter {
-  columnName: NetworkLogColumn;
-  value: string;
-}
 
 export enum SortDirection {
   Asc = "asc",

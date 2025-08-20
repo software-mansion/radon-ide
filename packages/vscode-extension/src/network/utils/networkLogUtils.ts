@@ -70,14 +70,14 @@ export function parseTextToBadge(text: string) {
   let columnName = "";
   let filterValue = "";
 
-  // Try to match quoted value first: column:"value"
+  // Try to match quoted value first: column:"value" (including empty value)
   const quotedMatch = remainingText.match(/^(\w+):"([^"]*)"/);
   if (quotedMatch) {
     fullMatch = quotedMatch[0];
     columnName = quotedMatch[1];
     filterValue = quotedMatch[2];
   } else {
-    // Try to match unquoted value: column:value (until space)
+    // Try to match unquoted value: column:value (including empty value)
     const unquotedMatch = remainingText.match(/^(\w+):([^\s:"][^\s]*?|)(?=\s|$)/);
     if (unquotedMatch) {
       fullMatch = unquotedMatch[0];
@@ -87,16 +87,14 @@ export function parseTextToBadge(text: string) {
   }
 
   if (fullMatch && columnName) {
-    const columnNames = NETWORK_LOG_COLUMNS.map((col) => col.toLowerCase());
+    const columnNames = NETWORK_LOG_COLUMNS as string[];
 
-    if (columnNames.includes(columnName.toLowerCase())) {
-      const normalizedColumnName = columnName.toLowerCase();
-      const normalizedValue = filterValue;
-
+    const normalizedColumnName = columnName.toLowerCase();
+    if (columnNames.includes(normalizedColumnName)) {
       badge = {
-        id: `${normalizedColumnName}-${normalizedValue}-${Date.now()}-${Math.random()}`,
+        id: `${normalizedColumnName}-${filterValue}-${Date.now()}-${Math.random()}`,
         columnName: normalizedColumnName,
-        value: normalizedValue,
+        value: filterValue,
       };
 
       remainingText = remainingText.substring(fullMatch.length).trim();
