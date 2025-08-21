@@ -20,6 +20,8 @@ interface NetworkRequestLogProps {
   parentHeight: number | undefined;
 }
 
+const SCROLL_TO_TOP_TIMEOUT = 200;
+
 /**
  * Navigates through the shadow DOM hierarchy to find the scrollable container within a VSCode table element.
  *
@@ -85,7 +87,7 @@ const NetworkRequestLog = ({
           behavior: "smooth",
         });
       }
-    }, 200);
+    }, SCROLL_TO_TOP_TIMEOUT);
 
     return () => {
       clearTimeout(timeout);

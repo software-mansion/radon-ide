@@ -8,6 +8,8 @@ import NetworkRequestLog from "./components/NetworkRequestLog";
 import NetworkLogDetails from "./components/NetworkLogDetails";
 import { useNetwork } from "./providers/NetworkProvider";
 
+const DEBOUNCE_TIME = 30;
+
 function App() {
   const networkLogContainerRef = useRef<HTMLDivElement | null>(null);
   const networkDetailsContainerRef = useRef<HTMLDivElement>(null);
@@ -26,7 +28,7 @@ function App() {
       return null;
     }
     const fullLog = networkLogs.find((log) => log.requestId === selectedNetworkLogId);
-    
+
     if (!fullLog) {
       setSelectedNetworkLogId(null);
       return null;
@@ -42,7 +44,7 @@ function App() {
       if (networkLogContainerRef.current) {
         setNetworkLogContainerHeight(networkLogContainerRef.current.clientHeight);
       }
-    }, 30);
+    }, DEBOUNCE_TIME);
 
     handleResize();
     handleResize.flush();
@@ -65,7 +67,7 @@ function App() {
       const containerWidth = networkLogContainerRef.current.clientWidth;
       const detailsWidth = networkDetailsContainerRef.current?.clientWidth;
       networkLogDetailsSize.current = `${((containerWidth - detailsWidth) / containerWidth) * 100}%`;
-    });
+    }, DEBOUNCE_TIME);
 
     const detailsResizeObserver = new ResizeObserver(handleResize);
 
