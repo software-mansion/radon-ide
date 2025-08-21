@@ -22,14 +22,19 @@ function App() {
   const [selectedNetworkLogId, setSelectedNetworkLogId] = useState<string | null>(null);
 
   const selectedNetworkLog = useMemo(() => {
+    if(!selectedNetworkLogId){
+      return null;
+    }
     const fullLog = networkLogs.find((log) => log.requestId === selectedNetworkLogId);
+    
     if (!fullLog) {
       setSelectedNetworkLogId(null);
+      return null;
     }
-    return fullLog || null;
+    return fullLog;
   }, [selectedNetworkLogId, networkLogs]);
 
-  const isNetworkLogDetailsVisible = !!selectedNetworkLog;
+  const areNetworkLogDetailsVisible = !!selectedNetworkLog;
 
   useEffect(() => {
     // debounce the resize event to avoid performance issues
@@ -72,7 +77,7 @@ function App() {
       detailsResizeObserver.disconnect();
       handleResize.cancel();
     };
-  }, [isNetworkLogDetailsVisible]);
+  }, [areNetworkLogDetailsVisible]);
 
   return (
     <main>
@@ -81,8 +86,8 @@ function App() {
       <div className="network-log-container" ref={networkLogContainerRef}>
         <VscodeSplitLayout
           className="network-log-split-layout"
-          handleSize={isNetworkLogDetailsVisible ? 4 : 0}
-          handlePosition={isNetworkLogDetailsVisible ? networkLogDetailsSize.current : "100%"}>
+          handleSize={areNetworkLogDetailsVisible ? 4 : 0}
+          handlePosition={areNetworkLogDetailsVisible ? networkLogDetailsSize.current : "100%"}>
           <div slot="start">
             <NetworkRequestLog
               selectedNetworkLog={selectedNetworkLog}
@@ -91,7 +96,7 @@ function App() {
               parentHeight={networkLogContainerHeight}
             />
           </div>
-          {isNetworkLogDetailsVisible ? (
+          {areNetworkLogDetailsVisible ? (
             <div ref={networkDetailsContainerRef} slot="end">
               <NetworkLogDetails
                 key={selectedNetworkLog.requestId}
