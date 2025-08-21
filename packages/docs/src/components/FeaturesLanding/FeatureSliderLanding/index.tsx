@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./styles.module.css";
 import FeatureCardLanding, { ActiveItem } from "./FeatureCardLanding";
+import { motion } from "motion/react";
 
 const features = [
   {
@@ -29,17 +30,48 @@ const features = [
   },
 ];
 
-export default function FeatureScrollLanding() {
+export default function FeatureSliderLanding() {
   const [activeItem, setActiveItem] = useState<ActiveItem>({
     index: 0,
-    height: 0,
   });
+
+  // const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // const resetAutoSlide = () => {
+  //   if (timeoutRef.current) {
+  //     clearTimeout(timeoutRef.current);
+  //   }
+
+  //   timeoutRef.current = setTimeout(() => {
+  //     setActiveItem((prev) => {
+  //       const nextIndex = (prev.index + 1) % features.length;
+  //       return { index: nextIndex };
+  //     });
+  //   }, 6000);
+  // };
+
+  // useEffect(() => {
+  //   resetAutoSlide();
+
+  //   return () => {
+  //     if (timeoutRef.current) {
+  //       clearTimeout(timeoutRef.current);
+  //     }
+  //   };
+  // }, [activeItem]);
+
+  // const handleSetActiveItem = (value: ActiveItem | null) => {
+  //   if (value) {
+  //     setActiveItem(value);
+  //     resetAutoSlide();
+  //   }
+  // };
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       setActiveItem((prev) => {
         const nextIndex = (prev.index + 1) % features.length;
-        return { index: nextIndex, height: 0 };
+        return { index: nextIndex };
       });
     }, 6000);
 
@@ -48,7 +80,7 @@ export default function FeatureScrollLanding() {
 
   return (
     <div className={styles.container}>
-      <div>
+      <div className={styles.sliderContainer}>
         {features.map((feature, index) => (
           <FeatureCardLanding
             key={index}
@@ -60,6 +92,18 @@ export default function FeatureScrollLanding() {
             setActiveItem={setActiveItem}
           />
         ))}
+      </div>
+      <div className={styles.imageBackground}>
+        <div
+          className={`${styles.imageContainer} ${activeItem.index % 2 !== 0 ? styles.rightWindow : ""}`}>
+          <motion.img
+            key={activeItem.index}
+            initial={{ opacity: 0.7 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6 }}
+            src="../img/screenshot_hero.png"></motion.img>
+        </div>
       </div>
     </div>
   );

@@ -1,13 +1,12 @@
 import React from "react";
-import styles from "./styles.module.css";
 import LandingBanner from "./LandingBanner";
-import FeatureScrollLanding from "./FeatureScrollLanding";
+import FeatureSliderLanding from "./FeatureSliderLanding";
 
 export default function FeaturesLanding() {
   return (
     <div>
       <LandingBanner />
-      <FeatureScrollLanding />
+      <FeatureSliderLanding />
     </div>
   );
 }
