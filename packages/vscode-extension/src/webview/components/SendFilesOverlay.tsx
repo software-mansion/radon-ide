@@ -19,7 +19,6 @@ export function SendFilesOverlay() {
   const [fileCount, setFileCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Reusable function to reset overlay state
   const resetOverlayState = useCallback(() => {
     setIsSuccess(false);
     setIsError(false);
