@@ -188,12 +188,7 @@ export class DeviceSession implements Disposable {
     this.emitStateChange();
   }
 
-  private onProjectFilesChanged = throttleAsync(async () => {
-    const lastSuccessfulBuild = this.maybeBuildResult;
-    if (!lastSuccessfulBuild || this.status !== "running") {
-      // we only monitor for stale builds when the session is in 'running' state
-      return;
-    }
+  private async isBuildStale(build: BuildResult) {
     const buildType = await inferBuildType(this.platform, this.applicationContext.launchConfig);
     const currentBuildConfig = createBuildConfig(
       this.device,
@@ -202,7 +197,16 @@ export class DeviceSession implements Disposable {
     );
     const currentFingerprint =
       await this.buildManager.calculateBuildFingerprint(currentBuildConfig);
-    if (currentFingerprint !== lastSuccessfulBuild.fingerprint) {
+    return currentFingerprint !== build.fingerprint;
+  }
+
+  private onProjectFilesChanged = throttleAsync(async () => {
+    const lastSuccessfulBuild = this.maybeBuildResult;
+    if (!lastSuccessfulBuild || this.status !== "running") {
+      // we only monitor for stale builds when the session is in 'running' state
+      return;
+    }
+    if (await this.isBuildStale(lastSuccessfulBuild)) {
       this.isUsingStaleBuild = true;
       this.emitStateChange();
     }
@@ -432,11 +436,10 @@ export class DeviceSession implements Disposable {
     });
 
     this.resetStartingState();
-    // const buildConfig = this.buildConfig;
-    // if (buildConfig && (await this.buildCache.isCacheStale(buildConfig))) {
-    //   await this.restartDevice({ forceClean: false });
-    //   return;
-    // }
+    if (this.maybeBuildResult && (await this.isBuildStale(this.maybeBuildResult))) {
+      await this.restartDevice({ forceClean: false });
+      return;
+    }
 
     // if reloading JS is possible, we try to do it first and exit in case of success
     // otherwise we continue to restart using more invasive methods

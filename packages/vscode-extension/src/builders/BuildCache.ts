@@ -6,6 +6,7 @@ import { BuildFingerprint, BuildResult } from "./BuildManager";
 import { DevicePlatform } from "../common/State";
 
 const GLOBAL_STATE_BUILD_CACHE_KEY_PREFIX = "build-cache";
+const GLOBAL_STATE_LGACY_BUILD_CACHE_PREFIXES = ["android_build_cache", "ios_build_cache"];
 
 function globalStateKey(fingerprint: BuildFingerprint) {
   return `${GLOBAL_STATE_BUILD_CACHE_KEY_PREFIX}:${fingerprint}`;
@@ -24,6 +25,16 @@ export class BuildCache {
 
   public async clearCache(fingerprint: BuildFingerprint) {
     await extensionContext.globalState.update(globalStateKey(fingerprint), undefined);
+  }
+
+  public static async clearLegacyCacheEntries() {
+    const keys = await extensionContext.globalState.keys();
+    const keysToRemove = keys.filter((key) =>
+      GLOBAL_STATE_LGACY_BUILD_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix))
+    );
+    await Promise.all(
+      keysToRemove.map((key) => extensionContext.globalState.update(key, undefined))
+    );
   }
 
   private async collectGarbageCacheEntriesNow() {
