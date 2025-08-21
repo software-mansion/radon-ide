@@ -686,9 +686,7 @@ async function listSimulatorsForLocation(location?: string) {
   return [];
 }
 
-export async function listSimulators(
-  location: SimulatorDeviceSet = SimulatorDeviceSet.RN_IDE
-): Promise<IOSDeviceInfo[]> {
+export async function listSimulators(location: SimulatorDeviceSet): Promise<IOSDeviceInfo[]> {
   let devicesPerRuntime;
   if (location === SimulatorDeviceSet.RN_IDE) {
     const deviceSetLocation = getOrCreateDeviceSet();
@@ -721,7 +719,7 @@ export async function listSimulators(
             ? DeviceType.Tablet
             : DeviceType.Phone,
           available: device.isAvailable ?? false,
-          runtimeInfo: runtime!,
+          runtimeInfo: runtime,
         };
       });
     })
@@ -734,13 +732,13 @@ export enum SimulatorDeviceSet {
   RN_IDE,
 }
 
-export async function createSimulator(
-  modelId: string,
+export async function createSimulatorWithRuntimeId(
+  deviceTypeId: string,
   displayName: string,
-  runtime: IOSRuntimeInfo,
+  runtimeId: string,
   deviceSet: SimulatorDeviceSet
 ) {
-  Logger.debug(`Create simulator ${modelId} with runtime ${runtime.identifier}`);
+  Logger.debug(`Create simulator ${deviceTypeId} with runtime ${runtimeId}`);
 
   let locationArgs: string[] = [];
   if (deviceSet === SimulatorDeviceSet.RN_IDE) {
@@ -754,15 +752,30 @@ export async function createSimulator(
     ...locationArgs,
     "create",
     displayName,
-    modelId,
-    runtime.identifier,
+    deviceTypeId,
+    runtimeId,
   ]);
 
+  return UDID;
+}
+
+export async function createSimulator(
+  deviceTypeId: string,
+  displayName: string,
+  runtime: IOSRuntimeInfo,
+  deviceSet: SimulatorDeviceSet
+) {
+  const UDID = await createSimulatorWithRuntimeId(
+    deviceTypeId,
+    displayName,
+    runtime.identifier,
+    deviceSet
+  );
   return {
     id: `ios-${UDID}`,
     platform: DevicePlatform.IOS,
     UDID,
-    modelId: modelId,
+    modelId: deviceTypeId,
     systemName: runtime.name,
     displayName: displayName,
     available: true, // assuming if create command went through, it's available
