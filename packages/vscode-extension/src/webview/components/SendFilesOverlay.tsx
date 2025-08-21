@@ -102,36 +102,52 @@ export function SendFilesOverlay() {
     [project, setIsVisible, isLoading, isSuccess, isError]
   );
 
+  const getOverlayContent = () => {
+    if (isLoading) {
+      return {
+        icon: <VscodeProgressRing />,
+        message: "Sending files...",
+      };
+    }
+
+    if (isSuccess) {
+      return {
+        icon: (
+          <div className="success-icon-container">
+            <span className="codicon codicon-check success-checkmark"></span>
+          </div>
+        ),
+        message: `${fileCount} file${fileCount !== 1 ? "s" : ""} sent successfully!`,
+      };
+    }
+
+    if (isError) {
+      return {
+        icon: (
+          <div className="error-icon-container">
+            <span className="codicon codicon-error error-icon"></span>
+          </div>
+        ),
+        message: errorMessage,
+      };
+    }
+
+    return {
+      icon: <span className="codicon codicon-keyboard-tab rotate"></span>,
+      message: "Drop files here",
+    };
+  };
+
+  const { icon, message } = getOverlayContent();
+
   return (
     <div
       {...dragHandlers}
       className={`phone-screen send-files-overlay ${isVisible ? "visible" : "hidden"} ${isSuccess ? "success" : ""} ${isError ? "error" : ""}`}>
       <div className="send-files-overlay-container">
         <div className={`send-files-overlay-content ${!isLoading ? "breathe" : ""}`}>
-          <div className="send-files-icon">
-            {isLoading ? (
-              <VscodeProgressRing />
-            ) : isSuccess ? (
-              <div className="success-icon-container">
-                <span className="codicon codicon-check success-checkmark"></span>
-              </div>
-            ) : isError ? (
-              <div className="error-icon-container">
-                <span className="codicon codicon-error error-icon"></span>
-              </div>
-            ) : (
-              <span className="codicon codicon-keyboard-tab rotate"></span>
-            )}
-          </div>
-          <p>
-            {isLoading
-              ? "Sending files..."
-              : isSuccess
-                ? `${fileCount} file${fileCount !== 1 ? "s" : ""} sent successfully!`
-                : isError
-                  ? errorMessage
-                  : "Drop files here"}
-          </p>
+          <div className="send-files-icon">{icon}</div>
+          <p>{message}</p>
         </div>
       </div>
     </div>
