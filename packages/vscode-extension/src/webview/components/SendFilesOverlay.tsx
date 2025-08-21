@@ -4,8 +4,8 @@ import "./Preview.css";
 import "./SendFilesOverlay.css";
 import { useProject } from "../providers/ProjectProvider";
 
-const RETAIN_SUCCESS_SCREEN = 1000; // 1 second
-const RETAIN_ERROR_SCREEN = 3000; // 3 seconds
+const RETAIN_SUCCESS_SCREEN = 1000; // ms
+const RETAIN_ERROR_SCREEN = 3000; // ms
 
 // Important! You need to hold shift to drag files onto the panel
 // VSCode displays a "Hold shift to drop into editor" message when Preview is in the Editor Tab

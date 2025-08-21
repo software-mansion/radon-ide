@@ -42,7 +42,7 @@
   z-index: 2;
   background-color: transparent;
   max-width: 90%;
-  word-break: break-all;
+  word-break: break-word;
 }
 
 .send-files-overlay-content {
@@ -70,6 +70,7 @@
 }
 
 .send-files-overlay.error .send-files-overlay-content {
+  text-align: center;
   border-color: var(--vscode-errorForeground);
   background-color: rgba(var(--vscode-errorForeground-rgb, 244, 71, 71), 0.1);
   animation: errorShake 0.6s ease-out;
