@@ -217,7 +217,12 @@ async function getOrMakeSimulator(buildConfig: IOSLocalBuildConfig) {
   );
   if (matchingDevice) {
     Logger.info("Using existing simulator for iOS build:", matchingDevice);
-    return { simulatorUdid: matchingDevice.UDID };
+    return {
+      simulatorUdid: matchingDevice.UDID,
+      cleanupSimulator: async () => {
+        /* noop - don't delete simulators from default device set */
+      },
+    };
   }
   Logger.info("Creating new simulator for iOS build:", runtimeId);
   // It is unlikely we will reach this point as it may only happen when user doesn't have simulator for the selected runtime available
@@ -233,8 +238,12 @@ async function getOrMakeSimulator(buildConfig: IOSLocalBuildConfig) {
   if (simulatorUdid) {
     return {
       simulatorUdid,
-      cleanupSimulator: () => {
-        removeIosSimulator(simulatorUdid, SimulatorDeviceSet.Default);
+      cleanupSimulator: async () => {
+        try {
+          await removeIosSimulator(simulatorUdid, SimulatorDeviceSet.Default);
+        } catch (e) {
+          Logger.error("Error removing simulator", e);
+        }
       },
     };
   } else {
@@ -270,67 +279,62 @@ async function buildLocal(
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 
   const { simulatorUdid, cleanupSimulator } = await getOrMakeSimulator(buildConfig);
-  if (cleanupSimulator) {
-    if (cancelToken.cancelled) {
-      cleanupSimulator();
-    } else {
-      cancelToken.onCancel(cleanupSimulator);
+
+  try {
+    const buildProcess = cancelToken.adapt(
+      buildProject(
+        xcodeProject,
+        sourceDir,
+        scheme,
+        configuration,
+        simulatorUdid,
+        forceCleanBuild,
+        buildConfig.env ?? {}
+      )
+    );
+
+    const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
+    lineReader(buildProcess).onLineRead((line) => {
+      buildOutputChannel.appendLine(line);
+      buildIOSProgressProcessor.processLine(line);
+    });
+
+    try {
+      await buildProcess;
+    } catch (e) {
+      Logger.error("Error building iOS project", e);
+      throw new Error(
+        "Failed to build the iOS app with xcodebuild. Check the build logs for details."
+      );
     }
-  }
 
-  const buildProcess = cancelToken.adapt(
-    buildProject(
-      xcodeProject,
-      sourceDir,
-      scheme,
-      configuration,
-      simulatorUdid,
-      forceCleanBuild,
-      buildConfig.env ?? {}
-    )
-  );
-
-  const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
-  lineReader(buildProcess).onLineRead((line) => {
-    buildOutputChannel.appendLine(line);
-    buildIOSProgressProcessor.processLine(line);
-  });
-
-  try {
-    await buildProcess;
-  } catch (e) {
-    Logger.error("Error building iOS project", e);
-    throw new Error(
-      "Failed to build the iOS app with xcodebuild. Check the build logs for details."
-    );
-  }
-
-  try {
-    const appPath = await getBuildPath(
-      xcodeProject,
-      sourceDir,
-      scheme,
-      configuration,
-      simulatorUdid,
-      cancelToken
-    );
-    const bundleID = await getBundleID(appPath);
-    const supportedInterfaceOrientations = await getSupportedInterfaceOrientations(appPath);
-    const buildHash = (await calculateMD5(appPath)).digest("hex");
-    return {
-      appPath,
-      bundleID,
-      buildHash,
-      supportedInterfaceOrientations,
-      platform: DevicePlatform.IOS,
-    };
-  } catch (e) {
-    Logger.error("Error getting app path", e);
-    throw new Error(
-      "The iOS app build was successful, but the app file could not be accessed. See the build logs for details."
-    );
+    try {
+      const appPath = await getBuildPath(
+        xcodeProject,
+        sourceDir,
+        scheme,
+        configuration,
+        simulatorUdid,
+        cancelToken
+      );
+      const bundleID = await getBundleID(appPath);
+      const supportedInterfaceOrientations = await getSupportedInterfaceOrientations(appPath);
+      const buildHash = (await calculateMD5(appPath)).digest("hex");
+      return {
+        appPath,
+        bundleID,
+        buildHash,
+        supportedInterfaceOrientations,
+        platform: DevicePlatform.IOS,
+      };
+    } catch (e) {
+      Logger.error("Error getting app path", e);
+      throw new Error(
+        "The iOS app build was successful, but the app file could not be accessed. See the build logs for details."
+      );
+    }
   } finally {
-    cleanupSimulator?.();
+    await cleanupSimulator();
   }
 }
 
