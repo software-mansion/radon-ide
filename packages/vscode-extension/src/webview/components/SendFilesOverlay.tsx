@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { VscodeProgressRing } from "@vscode-elements/react-elements";
 import "./Preview.css";
 import "./SendFilesOverlay.css";
 import { useProject } from "../providers/ProjectProvider";
@@ -9,6 +10,7 @@ import { useProject } from "../providers/ProjectProvider";
 export function SendFilesOverlay() {
   const { project } = useProject();
   const [isVisible, setIsVisible] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const dragHandlers = useMemo(
     () =>
@@ -21,17 +23,25 @@ export function SendFilesOverlay() {
         onDrop: (ev: React.DragEvent) => {
           ev.preventDefault();
           ev.stopPropagation();
+          setIsLoading(true);
           const files = ev.dataTransfer.files;
+
+          const filePromises = [];
           for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            file.arrayBuffer().then((buf) => {
-              project.sendFileToDevice({
+            const promise = file.arrayBuffer().then((buf) => {
+              return project.sendFileToDevice({
                 fileName: file.name,
                 data: buf,
               });
             });
+            filePromises.push(promise);
           }
-          setIsVisible(false);
+
+          Promise.all(filePromises).finally(() => {
+            setIsLoading(false);
+            setIsVisible(false);
+          });
         },
         onDragOver: (ev: React.DragEvent) => {
           ev.stopPropagation();
@@ -40,10 +50,12 @@ export function SendFilesOverlay() {
         onDragLeave: (ev: React.DragEvent) => {
           ev.preventDefault();
           ev.stopPropagation();
-          setIsVisible(false);
+          if (!isLoading) {
+            setIsVisible(false);
+          }
         },
       }) as const,
-    [project, setIsVisible]
+    [project, setIsVisible, isLoading]
   );
 
   return (
@@ -53,9 +65,13 @@ export function SendFilesOverlay() {
       <div className="send-files-overlay-container">
         <div className="send-files-overlay-content">
           <div className="send-files-icon">
-            <span className="codicon codicon-keyboard-tab"></span>
+            {isLoading ? (
+              <VscodeProgressRing />
+            ) : (
+              <span className="codicon codicon-keyboard-tab"></span>
+            )}
           </div>
-          <p>Drop files here</p>
+          <p>{isLoading ? "Sending files..." : "Drop files here"}</p>
         </div>
       </div>
     </div>
