@@ -17,7 +17,6 @@ import {
   InspectorAvailabilityStatus,
   InspectStackData,
   ProfilingState,
-  ZoomLevelType,
 } from "../../common/Project";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import "./View.css";
@@ -30,6 +29,7 @@ import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { ZoomLevelType } from "../../common/State";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -79,40 +79,40 @@ function PreviewView() {
   const store$ = useStore();
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 
-  const {
-    selectedDeviceSession,
-    projectState,
-    project,
-    deviceSettings,
-    replayData,
-    setReplayData,
-  } = useProject();
+  const { selectedDeviceSession, projectState, project, deviceSettings } = useProject();
+
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
-  const zoomLevel = projectState.previewZoom ?? "Fit";
+
+  const zoomLevel = use$(store$.projectState.previewZoom);
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
-      project.updatePreviewZoomLevel(zoom);
+      store$.projectState.previewZoom.set(zoom);
     },
     [project]
   );
-  const [recordingTime, setRecordingTime] = useState(0);
 
   const devices = use$(store$.devicesState.devices) ?? [];
 
   const frameReportingEnabled = use$(useSelectedDeviceSessionState().frameReporting.enabled);
   const fps = use$(useSelectedDeviceSessionState().frameReporting.frameReport.fps);
 
-  const initialized = projectState.initialized;
+  const initialized = use$(store$.projectState.initialized);
+
   const radonConnectEnabled = projectState.connectState.enabled;
   const radonConnectConnected = projectState.connectState.connected;
   const selectedDevice = selectedDeviceSession?.deviceInfo;
   const hasNoDevices = projectState !== undefined && devices.length === 0;
   const isStarting = selectedDeviceSession?.status === "starting";
   const isRunning = selectedDeviceSession?.status === "running";
-  const isRecording = selectedDeviceSession?.isRecordingScreen ?? false;
+
+  const [recordingTime, setRecordingTime] = useState(0);
+  const isRecording = use$(selectedDeviceSessionState.multimedia.isRecording);
+  const replayData = use$(selectedDeviceSessionState.multimedia.replayData);
+
   const inspectorAvailabilityStatus = isRunning
     ? selectedDeviceSession.elementInspectorAvailability
     : InspectorAvailabilityStatus.Available;
@@ -243,7 +243,7 @@ function PreviewView() {
         onInspectorItemSelected={onInspectorItemSelected}
         zoomLevel={zoomLevel}
         replayData={replayData}
-        onReplayClose={() => setReplayData(undefined)}
+        onReplayClose={() => selectedDeviceSessionState.multimedia.replayData.set(null)}
         onZoomChanged={onZoomChanged}
       />
     );

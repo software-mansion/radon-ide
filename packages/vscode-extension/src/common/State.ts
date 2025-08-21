@@ -74,10 +74,26 @@ export type FrameReportingState = {
 
 // #endregion Frame Reporting State
 
+// #region Multimedia
+
+export type MultimediaData = {
+  url: string;
+  tempFileLocation: string;
+  fileName: string;
+};
+
+export type MultimediaState = {
+  isRecording: boolean;
+  replayData: MultimediaData | null;
+};
+
+// #endregion Multimedia
+
 // #region Device Session
 
 export type DeviceSessionStore = {
   frameReporting: FrameReportingState;
+  multimedia: MultimediaState;
 };
 
 // #endregion Device Session
@@ -86,9 +102,13 @@ export type DeviceSessionStore = {
 
 export type DeviceSessions = Record<DeviceId, DeviceSessionStore>;
 
+export type ZoomLevelType = number | "Fit";
+
 export type ProjectStore = {
   applicationContext: ApplicationContextState;
   deviceSessions: DeviceSessions;
+  initialized: boolean;
+  previewZoom: ZoomLevelType;
   selectedDeviceSessionId: DeviceId | null;
 };
 
@@ -194,6 +214,10 @@ export const initialDeviceSessionStore: DeviceSessionStore = {
     enabled: false,
     frameReport: null,
   },
+  multimedia: {
+    isRecording: false,
+    replayData: null,
+  },
 };
 
 export const initialState: State = {
@@ -209,6 +233,8 @@ export const initialState: State = {
       applicationDependencies: {},
     },
     deviceSessions: {},
+    initialized: false,
+    previewZoom: "Fit",
     selectedDeviceSessionId: null,
   },
   telemetry: {
