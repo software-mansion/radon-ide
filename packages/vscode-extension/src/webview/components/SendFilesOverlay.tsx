@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { VscodeProgressRing } from "@vscode-elements/react-elements";
 import "./Preview.css";
 import "./SendFilesOverlay.css";
@@ -19,30 +19,25 @@ export function SendFilesOverlay() {
   const [fileCount, setFileCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
 
-  // Hide overlay after success animation
-  useEffect(() => {
-    if (isSuccess) {
-      const timer = setTimeout(() => {
-        setIsSuccess(false);
-        setIsVisible(false);
-        setFileCount(0);
-      }, RETAIN_SUCCESS_SCREEN);
-      return () => clearTimeout(timer);
-    }
-  }, [isSuccess]);
+  // Reusable function to reset overlay state
+  const resetOverlayState = useCallback(() => {
+    setIsSuccess(false);
+    setIsError(false);
+    setIsVisible(false);
+    setFileCount(0);
+    setErrorMessage("");
+  }, []);
 
-  // Hide overlay after error display
+  // Hide overlay after success and error animations
   useEffect(() => {
-    if (isError) {
-      const timer = setTimeout(() => {
-        setIsError(false);
-        setIsVisible(false);
-        setFileCount(0);
-        setErrorMessage("");
-      }, RETAIN_ERROR_SCREEN);
+    if (isSuccess || isError) {
+      const timer = setTimeout(
+        resetOverlayState,
+        isSuccess ? RETAIN_SUCCESS_SCREEN : RETAIN_ERROR_SCREEN
+      );
       return () => clearTimeout(timer);
     }
-  }, [isError]);
+  }, [isSuccess, isError, resetOverlayState]);
 
   const dragHandlers = useMemo(
     () =>
