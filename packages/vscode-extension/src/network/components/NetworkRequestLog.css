@@ -14,3 +14,8 @@
 .selected:hover {
   background-color: var(--vscode-terminal-selectionBackground);
 }
+
+.hack-table-row{
+  visibility: hidden;
+  pointer-events: none;
+}

@@ -249,7 +249,10 @@ function TableBody({
           </VscodeTableRow>
         );
       })}
-      <VscodeTableRow>a</VscodeTableRow>
+      {/* Below row, renedered unconditionally, is needed, because the scrollable-container
+          (requested by getScrollableTableContainer method) is mounted only after
+          at least one of the rows is present */}
+      <VscodeTableRow className="hack-table-row">mleko</VscodeTableRow>
     </VscodeTableBody>
   );
 }
