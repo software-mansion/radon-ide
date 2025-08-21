@@ -51,41 +51,40 @@ export function SendFilesOverlay() {
           }
           setIsVisible(true);
         },
-        onDrop: (ev: React.DragEvent) => {
+        onDrop: async (ev: React.DragEvent) => {
           ev.preventDefault();
           ev.stopPropagation();
           setIsLoading(true);
           const files = ev.dataTransfer.files;
           setFileCount(files.length);
 
-          const filePromises = [];
-          for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            const promise = file.arrayBuffer().then((buf) => {
-              return project.sendFileToDevice({
-                fileName: file.name,
-                data: buf,
+          try {
+            const filePromises = [];
+            for (let i = 0; i < files.length; i++) {
+              const file = files[i];
+              const promise = file.arrayBuffer().then((buf) => {
+                return project.sendFileToDevice({
+                  fileName: file.name,
+                  data: buf,
+                });
               });
-            });
-            filePromises.push(promise);
-          }
+              filePromises.push(promise);
+            }
 
-          Promise.all(filePromises)
-            .then(() => {
-              setIsLoading(false);
-              setIsSuccess(true);
-            })
-            .catch((error) => {
-              setIsLoading(false);
-              setIsError(true);
-              // Set a user-friendly error message
-              if (error?.message) {
-                setErrorMessage(error.message);
-              } else {
-                setErrorMessage("Failed to send files. Please try again.");
-              }
-              console.error("File sending failed:", error);
-            });
+            await Promise.all(filePromises);
+            setIsLoading(false);
+            setIsSuccess(true);
+          } catch (error) {
+            setIsLoading(false);
+            setIsError(true);
+            // Set a user-friendly error message
+            if (error instanceof Error && error.message) {
+              setErrorMessage(error.message);
+            } else {
+              setErrorMessage("Failed to send files. Please try again.");
+            }
+            console.error("File sending failed:", error);
+          }
         },
         onDragOver: (ev: React.DragEvent) => {
           ev.stopPropagation();
