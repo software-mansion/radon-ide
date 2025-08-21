@@ -60,24 +60,24 @@
 }
 
 .send-files-overlay.success .send-files-overlay-content {
-  border-color: var(--vscode-charts-green);
-  background-color: rgba(var(--vscode-charts-green-rgb, 22, 122, 51), 0.1);
+  border-color: var(--vscode-testing-iconPassed);
+  background-color: rgba(115, 201, 145, 0.1);
   animation: successPulse 0.6s ease-out;
 }
 
 .send-files-overlay.success .send-files-overlay-content p {
-  color: var(--vscode-charts-green);
+  color: var(--vscode-testing-iconPassed);
 }
 
 .send-files-overlay.error .send-files-overlay-content {
   text-align: center;
-  border-color: var(--vscode-errorForeground);
-  background-color: rgba(var(--vscode-errorForeground-rgb, 244, 71, 71), 0.1);
+  border-color: var(--vscode-testing-iconFailed);
+  background-color: rgba(255, 76, 76, 0.1);
   animation: errorShake 0.6s ease-out;
 }
 
 .send-files-overlay.error .send-files-overlay-content p {
-  color: var(--vscode-errorForeground);
+  color: var(--vscode-testing-iconFailed);
 }
 
 .success-icon-container {
@@ -97,14 +97,14 @@
 }
 
 .success-checkmark {
-  color: var(--vscode-charts-green) !important;
+  color: var(--vscode-testing-iconPassed) !important;
   scale: 1.5 !important;
   transform: none !important;
   animation: checkmarkPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
 .error-icon {
-  color: var(--vscode-errorForeground) !important;
+  color: var(--vscode-testing-iconFailed) !important;
   scale: 1.5 !important;
   transform: none !important;
   animation: errorPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
