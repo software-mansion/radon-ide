@@ -566,9 +566,24 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  public async sendFile(filePath: string): Promise<void> {
+  public async sendFile(filePath: string) {
+    const fileExtension = path.extname(filePath);
+    if (SUPPORTED_FILE_URL_EXTS.includes(fileExtension)) {
+      await exec("xcrun", [
+        "simctl",
+        "--set",
+        getOrCreateDeviceSet(this.deviceUDID),
+        "openurl",
+        this.deviceUDID,
+        `file://${filePath}`,
+      ]);
+      return { canSafelyRemove: false };
+    }
     if (!isMediaFile(filePath)) {
-      throw new Error("Only media file transfer is supported on iOS.");
+      throw new Error(
+        `Unsupported file type "${fileExtension}". ` +
+          `Only images, video files and SSL certificates are currently supported.`
+      );
     }
     const args = [
       "simctl",
@@ -579,8 +594,15 @@ export class IosSimulatorDevice extends DeviceBase {
       filePath,
     ];
     await exec("xcrun", args);
+    return { canSafelyRemove: true };
   }
 }
+
+const SUPPORTED_FILE_URL_EXTS = [
+  // SSL Certificates:
+  ".cer",
+  ".pem",
+];
 
 function isMediaFile(filePath: string): boolean {
   const type = mime.lookup(filePath);
