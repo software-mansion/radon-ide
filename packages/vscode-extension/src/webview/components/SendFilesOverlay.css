@@ -41,8 +41,6 @@
   justify-content: center;
   z-index: 2;
   background-color: transparent;
-  width: 80%;
-  height: 90%;
 }
 
 .send-files-overlay-content {
@@ -53,16 +51,16 @@
   flex-direction: column;
   border-radius: 20px;
   gap: 8px;
-  padding: 16px;
+  padding: 24px 32px;
+}
+.send-files-overlay-content.breathe {
   animation: breathe 2s infinite ease;
 }
 
 .send-files-overlay.success .send-files-overlay-content {
   border-color: var(--vscode-charts-green);
   background-color: rgba(var(--vscode-charts-green-rgb, 22, 122, 51), 0.1);
-  animation:
-    successPulse 0.6s ease-out,
-    breathe 2s infinite ease;
+  animation: successPulse 0.6s ease-out;
 }
 
 .send-files-overlay.success .send-files-overlay-content p {
@@ -116,16 +114,13 @@
 
 @keyframes breathe {
   0% {
-    width: 80%;
-    height: 90%;
+    scale: 1;
   }
   50% {
-    width: 81%;
-    height: 91%;
+    scale: 1.02;
   }
   100% {
-    width: 80%;
-    height: 90%;
+    scale: 1;
   }
 }
 

@@ -85,7 +85,7 @@ export function SendFilesOverlay() {
       {...dragHandlers}
       className={`phone-screen send-files-overlay ${isVisible ? "visible" : "hidden"} ${isSuccess ? "success" : ""}`}>
       <div className="send-files-overlay-container">
-        <div className="send-files-overlay-content">
+        <div className={`send-files-overlay-content ${!isLoading ? "breathe" : ""}`}>
           <div className="send-files-icon">
             {isLoading ? (
               <VscodeProgressRing />
