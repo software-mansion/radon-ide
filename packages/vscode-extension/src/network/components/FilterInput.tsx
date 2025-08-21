@@ -35,7 +35,7 @@ function getFilterAutocompleteSuggestion(filterText: string): string {
   const matchingColumn = NETWORK_LOG_COLUMNS.find((col) => col.startsWith(trimmed.toLowerCase()));
 
   // Only suggest if there's a match and it's not already complete
-  if (matchingColumn && matchingColumn !== trimmed.toLowerCase()) {
+  if (matchingColumn && `${matchingColumn}:` !== trimmed.toLowerCase()) {
     return matchingColumn.substring(trimmed.length) + ":";
   }
 
