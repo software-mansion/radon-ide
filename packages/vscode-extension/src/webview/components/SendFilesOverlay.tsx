@@ -1,43 +1,50 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import "./Preview.css";
 import "./SendFilesOverlay.css";
 import { useProject } from "../providers/ProjectProvider";
 
+// Important! You need to hold shift to drag files onto the panel
+// VSCode displays a "Hold shift to drop into editor" message when Preview is in the Editor Tab
+// but it doesn't show this when Preview is in the Side Panel
 export function SendFilesOverlay() {
   const { project } = useProject();
   const [isVisible, setIsVisible] = useState(false);
 
-  const dragHandlers = {
-    onDragEnter: (ev: React.DragEvent) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      setIsVisible(true);
-    },
-    onDrop: (ev: React.DragEvent) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      const files = ev.dataTransfer.files;
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        file.arrayBuffer().then((buf) => {
-          project.sendFileToDevice({
-            fileName: file.name,
-            data: buf,
-          });
-        });
-      }
-      setIsVisible(false);
-    },
-    onDragOver: (ev: React.DragEvent) => {
-      ev.stopPropagation();
-      ev.preventDefault();
-    },
-    onDragLeave: (ev: React.DragEvent) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      setIsVisible(false);
-    },
-  } as const;
+  const dragHandlers = useMemo(
+    () =>
+      ({
+        onDragEnter: (ev: React.DragEvent) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          setIsVisible(true);
+        },
+        onDrop: (ev: React.DragEvent) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          const files = ev.dataTransfer.files;
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            file.arrayBuffer().then((buf) => {
+              project.sendFileToDevice({
+                fileName: file.name,
+                data: buf,
+              });
+            });
+          }
+          setIsVisible(false);
+        },
+        onDragOver: (ev: React.DragEvent) => {
+          ev.stopPropagation();
+          ev.preventDefault();
+        },
+        onDragLeave: (ev: React.DragEvent) => {
+          ev.preventDefault();
+          ev.stopPropagation();
+          setIsVisible(false);
+        },
+      }) as const,
+    [project, setIsVisible]
+  );
 
   return (
     <div
