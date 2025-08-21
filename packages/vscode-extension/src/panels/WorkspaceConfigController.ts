@@ -18,6 +18,7 @@ export class WorkspaceConfigController implements Disposable {
       showDeviceFrame: configuration.get<boolean>("showDeviceFrame")!,
       stopPreviousDevices: configuration.get<boolean>("stopPreviousDevices")!,
       deviceRotation: configuration.get<DeviceRotation>("deviceRotation")!,
+      startDeviceOnLaunch: configuration.get<boolean>("startDeviceOnLaunch") ?? true,
     };
 
     this.stateManager.setState(workspaceConfig);
@@ -29,11 +30,15 @@ export class WorkspaceConfigController implements Disposable {
 
       const config = workspace.getConfiguration("RadonIDE");
 
-      const currentWorkspaceConfig = {
+      const currentWorkspaceConfig: WorkspaceConfiguration = {
         panelLocation: config.get<PanelLocation>("panelLocation")!,
         showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
         stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
         deviceRotation: config.get<DeviceRotation>("deviceRotation")!,
+        inspectorExcludePattern: config.get<string>("inspectorExcludePattern") ?? null,
+        defaultMultimediaSavingLocation:
+          config.get<string>("defaultMultimediaSavingLocation") ?? null,
+        startDeviceOnLaunch: config.get<boolean>("startDeviceOnLaunch") ?? true,
       };
 
       for (const partialStateEntry of partialStateEntries) {
@@ -66,6 +71,10 @@ export class WorkspaceConfigController implements Disposable {
       showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
       stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
       deviceRotation: config.get<DeviceRotation>("deviceRotation")!,
+      inspectorExcludePattern: config.get<string>("inspectorExcludePattern") ?? null,
+      defaultMultimediaSavingLocation:
+        config.get<string>("defaultMultimediaSavingLocation") ?? null,
+      startDeviceOnLaunch: config.get<boolean>("startDeviceOnLaunch") ?? true,
     };
 
     const index = this.workspaceConfigurationUpdatesToIgnore.findIndex((cfg) =>

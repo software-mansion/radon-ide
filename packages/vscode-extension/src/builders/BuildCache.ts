@@ -3,19 +3,29 @@ import assert from "assert";
 import crypto from "crypto";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
-import { DevicePlatform } from "../common/DeviceManager";
 import { IOSBuildResult } from "./buildIOS";
 import { AndroidBuildResult } from "./buildAndroid";
-import { calculateMD5 } from "../utilities/common";
+import { calculateAppHash } from "../utilities/common";
 import { BuildResult } from "./BuildManager";
 import { FingerprintOptions, FingerprintProvider } from "../project/FingerprintProvider";
+import { DevicePlatform } from "../common/State";
 
 const ANDROID_BUILD_CACHE_KEY = "android_build_cache";
-const IOS_BUILD_CACHE_KEY = "ios_build_cache";
+const BASE_IOS_BUILD_CACHE_KEY = "ios_build_cache";
+// Add a key for new builds that support iPad since 1.10.0
+// This is to ensure that old cached iOS builds that do not support iPad
+// (made before 1.10.0) are not used when the user opens a project using iPad
+// New builds support both iPhone and iPad, without having to rebuild,
+// so we can use the same cache key from that point on
+const IPAD_SUPPORT_BUILD_CACHE_KEY = "ipad_support_build_cache";
+// Add a key for new builds that support iOS supported orientations for >1.10.0
+// to invalidate old builds that do not have supportedInterfaceOrientations field
+const IOS_SUPPORTED_ORIENTATIONS_KEY = "ios_supported_orientations";
+const IOS_BUILD_CACHE_KEY =
+  BASE_IOS_BUILD_CACHE_KEY + IPAD_SUPPORT_BUILD_CACHE_KEY + IOS_SUPPORTED_ORIENTATIONS_KEY;
 
 export type BuildCacheInfo = {
   fingerprint: string;
-  buildHash: string;
   buildResult: AndroidBuildResult | IOSBuildResult;
 };
 
@@ -48,10 +58,8 @@ export class BuildCache {
    */
   public async storeBuild(buildFingerprint: string, cacheKey: CacheKey, build: BuildResult) {
     assert(cacheKey.platform === build.platform, "Cache key platform must match build platform");
-    const appPath = await getAppHash(getAppPath(build));
     await extensionContext.globalState.update(stringifyCacheKey(cacheKey), {
       fingerprint: buildFingerprint,
-      buildHash: appPath,
       buildResult: build,
     });
   }
@@ -76,7 +84,7 @@ export class BuildCache {
     }
 
     const build = cache.buildResult;
-    const appPath = getAppPath(build);
+    const appPath = build.platform === DevicePlatform.Android ? build.apkPath : build.appPath;
     try {
       const builtAppExists = fs.existsSync(appPath);
       if (!builtAppExists) {
@@ -84,8 +92,8 @@ export class BuildCache {
         return undefined;
       }
 
-      const appHash = await getAppHash(appPath);
-      const hashesMatch = appHash === cache.buildHash;
+      const appHash = await calculateAppHash(appPath);
+      const hashesMatch = appHash === build.buildHash;
       if (hashesMatch) {
         Logger.info("Using cached build.");
         return build;
@@ -111,14 +119,6 @@ export class BuildCache {
   public hasCachedBuild(cacheKey: CacheKey) {
     return !!extensionContext.globalState.get<BuildCacheInfo>(stringifyCacheKey(cacheKey));
   }
-}
-
-function getAppPath(build: BuildResult) {
-  return build.platform === DevicePlatform.Android ? build.apkPath : build.appPath;
-}
-
-async function getAppHash(appPath: string) {
-  return (await calculateMD5(appPath)).digest("hex");
 }
 
 export async function migrateOldBuildCachesToNewStorage(appRoot: string) {

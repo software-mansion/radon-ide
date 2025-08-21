@@ -1,4 +1,4 @@
-import { DevicePlatform } from "./DeviceManager";
+import { DevicePlatform } from "./State";
 
 export enum BuildType {
   Local = "local",
@@ -39,6 +39,7 @@ export type AndroidLocalBuildConfig = {
   type: BuildType.Local;
   platform: DevicePlatform.Android;
   forceCleanBuild: boolean;
+  usePrebuild: boolean;
   buildType?: string;
   productFlavor?: string;
 } & BuildConfigCommon;
@@ -47,6 +48,7 @@ export type IOSLocalBuildConfig = {
   type: BuildType.Local;
   platform: DevicePlatform.IOS;
   forceCleanBuild: boolean;
+  usePrebuild: boolean;
   scheme?: string;
   configuration?: string;
 } & BuildConfigCommon;

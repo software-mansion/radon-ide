@@ -7,10 +7,10 @@ const { applyEdits, modify }: typeof import("jsonc-parser/lib/esm/main") = requi
 
 const CURSOR_KEY = "mcpServers";
 const VSCODE_KEY = "servers";
+const ENTRY_KEY = "RadonAi";
 
 export function insertRadonEntry(incompleteConfig: string, port: number): string {
   const rootKey = getEditorType() === EditorType.VSCODE ? VSCODE_KEY : CURSOR_KEY;
-  const entryKey = "RadonAi";
   const radonMcpEntry: McpEntry = {
     url: `http://127.0.0.1:${port}/mcp` as const,
     type: "http" as const,
@@ -20,11 +20,28 @@ export function insertRadonEntry(incompleteConfig: string, port: number): string
   };
 
   try {
-    const edits = modify(incompleteConfig, [rootKey, entryKey], radonMcpEntry, {
+    const edits = modify(incompleteConfig, [rootKey, ENTRY_KEY], radonMcpEntry, {
       formattingOptions: { insertSpaces: true, tabSize: 2 },
     });
     const config = applyEdits(incompleteConfig, edits);
     return config;
+  } catch {
+    // mcp.json syntax error
+    throw new Error(`Failed updating MCP config - existing mcp.json file is corrupted.`);
+  }
+}
+
+export function removeRadonEntry(config: string): string {
+  const rootKey = getEditorType() === EditorType.VSCODE ? VSCODE_KEY : CURSOR_KEY;
+
+  try {
+    const edits = modify(config, [rootKey, ENTRY_KEY], undefined, {
+      formattingOptions: { insertSpaces: true, tabSize: 2 },
+    });
+
+    const newConfig = applyEdits(config, edits);
+
+    return newConfig;
   } catch {
     // mcp.json syntax error
     throw new Error(`Failed updating MCP config - existing mcp.json file is corrupted.`);

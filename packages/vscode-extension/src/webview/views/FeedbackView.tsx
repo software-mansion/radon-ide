@@ -4,9 +4,9 @@ import Button from "../components/shared/Button";
 import { FeedbackButton } from "../components/Feedback";
 import "./FeedbackView.css";
 import { useModal } from "../providers/ModalProvider";
-import { useUtils } from "../providers/UtilsProvider";
 import { Sentiment } from "../components/SendFeedbackItem";
 import { Textarea } from "../components/shared/Textarea";
+import { useProject } from "../providers/ProjectProvider";
 
 const CLOSE_MODAL_AFTER = 2400;
 
@@ -18,12 +18,12 @@ function FeedbackView({ initialSentiment }: FeedbackViewProps) {
   const [isFeedbackSent, setFeedbackSent] = useState(false);
   const { closeModal, showHeader } = useModal();
   const { register, handleSubmit } = useForm();
-  const { sendTelemetry } = useUtils();
+  const { project } = useProject();
   const [sentiment, setSentiment] = useState(initialSentiment);
 
   const onSubmit: SubmitHandler<FieldValues> = (e) => {
     const { message } = e;
-    sendTelemetry(`feedback:${sentiment}`, { message });
+    project.sendTelemetry(`feedback:${sentiment}`, { message });
     showHeader(false);
     setFeedbackSent(true);
   };

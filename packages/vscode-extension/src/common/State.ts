@@ -1,9 +1,13 @@
 import { ApplicationRoot } from "./AppRootConfig";
-import { DeviceRotation } from "./Project";
+import { DeviceId, DeviceRotation } from "./Project";
 
 export type RecursivePartial<T> = {
-  [P in keyof T]?: RecursivePartial<T[P]>;
+  [P in keyof T]?: NonNullable<T[P]> extends Array<infer U>
+    ? Array<U> | undefined
+    : RecursivePartial<T[P]>;
 };
+
+// #region Workspace Configuration
 
 export type PanelLocation = "tab" | "side-panel";
 
@@ -12,7 +16,14 @@ export type WorkspaceConfiguration = {
   showDeviceFrame: boolean;
   stopPreviousDevices: boolean;
   deviceRotation: DeviceRotation;
+  inspectorExcludePattern: string | null;
+  defaultMultimediaSavingLocation: string | null;
+  startDeviceOnLaunch: boolean;
 };
+
+// #endregion Workspace Configuration
+
+// #region Dependencies
 
 export type EnvironmentDependency = "androidEmulator" | "xcode" | "nodejs";
 
@@ -45,20 +56,129 @@ export type ApplicationDependencyStatuses = Partial<
   Record<ApplicationDependency, DependencyStatus>
 >;
 
+// #endregion Dependencies
+
+// #region Frame Reporting State
+
+export type FrameRateReport = {
+  fps: number;
+  received: number;
+  dropped: number;
+  timestamp: number;
+};
+
+export type FrameReportingState = {
+  enabled: boolean;
+  frameReport: FrameRateReport | null;
+};
+
+// #endregion Frame Reporting State
+
+// #region Device Session
+
+export type DeviceSessionStore = {
+  frameReporting: FrameReportingState;
+};
+
+// #endregion Device Session
+
+// #region Project State
+
+export type DeviceSessions = Record<DeviceId, DeviceSessionStore>;
+
 export type ProjectStore = {
   applicationContext: ApplicationContextState;
+  deviceSessions: DeviceSessions;
+  selectedDeviceSessionId: DeviceId | null;
 };
+
+// #endregion Project State
+
+// #region ApplicationContext State
 
 export type ApplicationContextState = {
   applicationDependencies: ApplicationDependencyStatuses;
 };
 
+// #endregion ApplicationContext State
+
+// #region Telemetry State
+
 export type TelemetryState = {
   enabled: boolean;
 };
 
+// #endregion Telemetry State
+
+// #region Devices State
+
+export enum DevicePlatform {
+  IOS = "iOS",
+  Android = "Android",
+}
+
+export enum DeviceType {
+  Phone = "Phone",
+  Tablet = "Tablet",
+}
+
+export type DeviceInfo = AndroidDeviceInfo | IOSDeviceInfo;
+
+export type AndroidDeviceInfo = {
+  id: string;
+  platform: DevicePlatform.Android;
+  avdId: string;
+  modelId: string;
+  systemName: string;
+  displayName: string;
+  deviceType: DeviceType;
+  available: boolean;
+};
+
+export type IOSDeviceInfo = {
+  id: string;
+  platform: DevicePlatform.IOS;
+  UDID: string;
+  modelId: string;
+  systemName: string;
+  displayName: string;
+  available: boolean;
+  deviceType: DeviceType;
+  runtimeInfo: IOSRuntimeInfo;
+};
+
+export type AndroidSystemImageInfo = {
+  name: string;
+  location: string;
+  apiLevel: number;
+  available: boolean;
+};
+
+export type IOSDeviceTypeInfo = {
+  name: string;
+  identifier: string;
+};
+
+export type IOSRuntimeInfo = {
+  platform: "iOS" | "tvOS" | "watchOS";
+  identifier: string;
+  name: string;
+  version: string;
+  supportedDeviceTypes: IOSDeviceTypeInfo[];
+  available: boolean;
+};
+
+export type DevicesState = {
+  devices: DeviceInfo[] | null;
+  androidImages: AndroidSystemImageInfo[] | null;
+  iOSRuntimes: IOSRuntimeInfo[] | null;
+};
+
+// #endregion Devices State
+
 export type State = {
   applicationRoots: ApplicationRoot[];
+  devicesState: DevicesState;
   environmentDependencies: EnvironmentDependencyStatuses;
   projectState: ProjectStore;
   telemetry: TelemetryState;
@@ -67,13 +187,29 @@ export type State = {
 
 export type StateListener = (state: RecursivePartial<State>) => void;
 
+// #region Initial State
+
+export const initialDeviceSessionStore: DeviceSessionStore = {
+  frameReporting: {
+    enabled: false,
+    frameReport: null,
+  },
+};
+
 export const initialState: State = {
   applicationRoots: [],
+  devicesState: {
+    devices: null,
+    androidImages: null,
+    iOSRuntimes: null,
+  },
   environmentDependencies: {},
   projectState: {
     applicationContext: {
       applicationDependencies: {},
     },
+    deviceSessions: {},
+    selectedDeviceSessionId: null,
   },
   telemetry: {
     enabled: false,
@@ -83,5 +219,10 @@ export const initialState: State = {
     showDeviceFrame: true,
     stopPreviousDevices: false,
     deviceRotation: DeviceRotation.Portrait,
+    inspectorExcludePattern: null,
+    defaultMultimediaSavingLocation: null,
+    startDeviceOnLaunch: true,
   },
 };
+
+// #endregion Initial State

@@ -67,7 +67,7 @@ cd "$LOCAL_PROJECT_PATH" || exit 1
 # node_modules cannot be copied to the VM, because it may not be compatible with the VM's architecture.
 for item in * .*; do
     [[ "$item" == "." || "$item" == ".." ]] && continue
-    [[ "$item" == "node_modules" || "$item" == "scripts" || "$item" == ".gitignore" ]] && continue
+    [[ "$item" == "node_modules" || "$item" == ".gitignore" ]] && continue
 
     echo "Copying: $item"
     scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/"
@@ -77,6 +77,7 @@ echo "installing test dependencies on VM and running tests..."
 ssh -i ./scripts/id_vm_mac "$VM_USER@$VM_IP" <<EOF
 cd "$REMOTE_PATH"
 npm install
+npm run get-test-app
 npm run setup-run-tests
 cd ..
 rm -rf "$REMOTE_PATH"

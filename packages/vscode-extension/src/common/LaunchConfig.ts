@@ -28,6 +28,7 @@ export interface LaunchOptions {
   preview?: {
     waitForAppLaunch?: boolean;
   };
+  usePrebuild?: boolean;
 }
 
 export const LAUNCH_OPTIONS_KEYS = [
@@ -43,6 +44,7 @@ export const LAUNCH_OPTIONS_KEYS = [
   "android",
   "packageManager",
   "preview",
+  "usePrebuild",
 ] as const;
 
 type IsSuperTypeOf<Base, T extends Base> = T;

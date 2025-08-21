@@ -4,13 +4,13 @@ import { OutputChannel } from "vscode";
 import { BuildCache } from "./BuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
-import { DevicePlatform } from "../common/DeviceManager";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { Logger } from "../Logger";
 import { BuildConfig, BuildType } from "../common/BuildConfig";
 import { isExpoGoProject } from "./expoGo";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
+import { DevicePlatform } from "../common/State";
 
 export type BuildResult = IOSBuildResult | AndroidBuildResult;
 
@@ -40,7 +40,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
   buildType: BuildType
 ): BuildConfig & { platform: Platform } {
   const appRoot = launchConfiguration.absoluteAppRoot;
-  const { customBuild, eas, env, android, ios } = launchConfiguration;
+  const { customBuild, eas, env, android, ios, usePrebuild } = launchConfiguration;
   const platformMapping = {
     [DevicePlatform.Android]: "android",
     [DevicePlatform.IOS]: "ios",
@@ -60,6 +60,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
           scheme: ios?.scheme,
           configuration: ios?.configuration,
           fingerprintCommand,
+          usePrebuild,
         };
       } else {
         return {
@@ -71,6 +72,7 @@ export function createBuildConfig<Platform extends DevicePlatform>(
           productFlavor: android?.productFlavor,
           buildType: android?.buildType,
           fingerprintCommand,
+          usePrebuild,
         };
       }
     }
@@ -145,7 +147,7 @@ export async function inferBuildType(
   platform: DevicePlatform,
   launchConfiguration: ResolvedLaunchConfig
 ): Promise<BuildType> {
-  const { absoluteAppRoot, customBuild, eas } = launchConfiguration;
+  const { absoluteAppRoot, customBuild, eas, usePrebuild } = launchConfiguration;
   const platformMapping = {
     [DevicePlatform.Android]: "android",
     [DevicePlatform.IOS]: "ios",
@@ -172,7 +174,7 @@ export async function inferBuildType(
     }
   }
 
-  if (await isExpoGoProject(absoluteAppRoot)) {
+  if (!usePrebuild && (await isExpoGoProject(absoluteAppRoot, platform))) {
     return BuildType.ExpoGo;
   }
 

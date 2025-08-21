@@ -8,7 +8,6 @@ import ManageDevicesView from "../views/ManageDevicesView";
 import { ProjectInterface } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
-import { useUtils } from "../providers/UtilsProvider";
 import "./shared/SwitchGroup.css";
 import { SendFeedbackItem } from "./SendFeedbackItem";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
@@ -27,7 +26,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
   const telemetryEnabled = use$(store$.telemetry.enabled);
 
   const { openModal } = useModal();
-  const { movePanelTo, reportIssue } = useUtils();
 
   const extensionVersion = document.querySelector<HTMLMetaElement>(
     "meta[name='radon-ide-version']"
@@ -90,20 +88,20 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                 {panelLocation !== "side-panel" && (
                   <DropdownMenu.Item
                     className="dropdown-menu-item"
-                    onSelect={() => movePanelTo("side-panel")}>
+                    onSelect={() => project.movePanelTo("side-panel")}>
                     <span className="codicon codicon-layout-sidebar-right" />
                     Move to Side Panel
                   </DropdownMenu.Item>
                 )}
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
-                  onSelect={() => movePanelTo("editor-tab")}>
+                  onSelect={() => project.movePanelTo("editor-tab")}>
                   <span className="codicon codicon-layout-centered" />
                   Move to Editor Tab
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
-                  onSelect={() => movePanelTo("new-window")}>
+                  onSelect={() => project.movePanelTo("new-window")}>
                   <span className="codicon codicon-multiple-windows" />
                   Move to New Window
                 </DropdownMenu.Item>
@@ -114,7 +112,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              reportIssue();
+              project.reportIssue();
             }}>
             <span className="dropdown-menu-item-wraper">
               <span className="codicon codicon-report" />

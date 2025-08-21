@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
+import { useState, useRef, useEffect, MouseEvent, WheelEvent, useMemo } from "react";
 import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
-import { useProject } from "../providers/ProjectProvider";
+import { Platform, useProject } from "../providers/ProjectProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import PreviewLoader from "./PreviewLoader";
 import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
@@ -15,10 +15,11 @@ import {
   ZoomLevelType,
   InspectStackData,
   MultimediaData,
+  InspectorAvailabilityStatus,
+  InspectorBridgeStatus,
 } from "../../common/Project";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
-import { Platform, useUtils } from "../providers/UtilsProvider";
 import InspectOverlay from "./InspectOverlay";
 import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
@@ -26,9 +27,10 @@ import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
 import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
-import { useDeviceFrame } from "../Preview/Device/hooks";
 import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
+import InspectorUnavailableBox from "./InspectorUnavailableBox";
+import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -85,11 +87,11 @@ function Preview({
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLCanvasElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
+  const [inspectorUnavailableBoxPosition, setInspectorUnavailableBoxPosition] =
+    useState<Point | null>(null);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
   const { selectedDeviceSession, project } = useProject();
-
-  const { sendTelemetry } = useUtils();
 
   const hasFatalError = selectedDeviceSession?.status === "fatalError";
   const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
@@ -102,6 +104,10 @@ function Preview({
 
   const showDevicePreview =
     selectedDeviceSession?.previewURL && (showPreviewRequested || isRunning);
+
+  const isAppDisconnected =
+    isRunning && selectedDeviceSession.inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
+  useApplicationDisconnectedAlert(isAppDisconnected);
 
   useFatalErrorAlert(fatalErrorDescriptor);
 
@@ -182,11 +188,16 @@ function Preview({
     if (selectedDeviceSession?.status !== "running") {
       return;
     }
+    if (
+      selectedDeviceSession?.elementInspectorAvailability !== InspectorAvailabilityStatus.Available
+    ) {
+      return;
+    }
     if (type === "Leave") {
       return;
     }
     if (type === "RightButtonDown") {
-      sendTelemetry("inspector:show-component-stack", {});
+      project.sendTelemetry("inspector:show-component-stack", {});
     }
 
     const clampedCoordinates = getNormalizedTouchCoordinates(event);
@@ -198,28 +209,33 @@ function Preview({
 
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
-    project.inspectElementAt(translatedX, translatedY, requestStack, (inspectData) => {
-      if (requestStack && inspectData?.stack) {
-        if (showInspectStackModal) {
-          setInspectStackData({
-            requestLocation: {
-              x: event.clientX,
-              y: event.clientY,
-            },
-            stack: inspectData.stack,
-          });
-        } else {
-          // find first item w/o hide flag and open file
-          const firstItem = inspectData.stack.find((item) => !item.hide);
-          if (firstItem) {
-            onInspectorItemSelected(firstItem);
+    project
+      .inspectElementAt(translatedX, translatedY, requestStack)
+      .then((inspectData) => {
+        if (requestStack && inspectData?.stack) {
+          if (showInspectStackModal) {
+            setInspectStackData({
+              requestLocation: {
+                x: event.clientX,
+                y: event.clientY,
+              },
+              stack: inspectData.stack,
+            });
+          } else {
+            // find first item w/o hide flag and open file
+            const firstItem = inspectData.stack.find((item) => !item.hide);
+            if (firstItem) {
+              onInspectorItemSelected(firstItem);
+            }
           }
         }
-      }
-      if (inspectData.frame) {
-        setInspectFrame(inspectData.frame);
-      }
-    });
+        if (inspectData.frame) {
+          setInspectFrame(inspectData.frame);
+        }
+      })
+      .catch(() => {
+        // NOTE: we can safely ignore errors, we'll simply not show the frame in that case
+      });
   }
 
   const sendInspect = throttle(sendInspectUnthrottled, 50);
@@ -227,6 +243,14 @@ function Preview({
   function resetInspector() {
     setInspectFrame(null);
     setInspectStackData(null);
+  }
+
+  function handleInspectorUnavailable(event: MouseEvent<HTMLDivElement>) {
+    if (inspectorUnavailableBoxPosition) {
+      return;
+    }
+    const clampedCoordinates = getNormalizedTouchCoordinates(event);
+    setInspectorUnavailableBoxPosition(clampedCoordinates);
   }
 
   const shouldPreventInputEvents =
@@ -270,7 +294,15 @@ function Preview({
       sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
     } else if (!inspectFrame) {
       if (e.button === 2) {
-        sendInspect(e, "RightButtonDown", true);
+        if (
+          selectedDeviceSession?.status === "running" &&
+          selectedDeviceSession?.elementInspectorAvailability !==
+            InspectorAvailabilityStatus.Available
+        ) {
+          handleInspectorUnavailable(e);
+        } else {
+          sendInspect(e, "RightButtonDown", true);
+        }
       } else if (isMultiTouching) {
         setIsPressing(true);
         sendMultiTouchForEvent(e, "Down");
@@ -378,7 +410,7 @@ function Preview({
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
     // there is an active backlog item that aims to change the behavior of context menu, so it might not be necessary
     // in the future https://github.com/microsoft/vscode/issues/225411
-    function onContextMenu(e: any) {
+    function onContextMenu(e: Event) {
       e.stopImmediatePropagation();
     }
 
@@ -472,11 +504,35 @@ function Preview({
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
   });
-  const frame = useDeviceFrame(device!);
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
+
+  const dragHandlers = useMemo(() => {
+    return {
+      onDrop(ev: React.DragEvent) {
+        ev.preventDefault();
+        const files = ev.dataTransfer.files;
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          file.arrayBuffer().then((buf) => {
+            project.sendFileToDevice({
+              fileName: file.name,
+              data: buf,
+            });
+          });
+        }
+      },
+      onDragOver(ev: React.DragEvent) {
+        ev.stopPropagation();
+        ev.preventDefault();
+      },
+      onDragEnter(ev: React.DragEvent) {
+        ev.preventDefault();
+      },
+    } as const;
+  }, [project]);
 
   return (
     <>
@@ -488,7 +544,7 @@ function Preview({
         {...wrapperTouchHandlers}>
         {showDevicePreview && (
           <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
-            <div className="touch-area" {...touchHandlers}>
+            <div className="touch-area" {...touchHandlers} {...dragHandlers}>
               <MjpegImg
                 src={previewURL}
                 ref={previewRef}
@@ -545,6 +601,14 @@ function Preview({
                   wrapperDivRef={wrapperDivRef}
                 />
               )}
+
+              {inspectorUnavailableBoxPosition && (
+                <InspectorUnavailableBox
+                  clickPosition={inspectorUnavailableBoxPosition}
+                  onClose={() => setInspectorUnavailableBoxPosition(null)}
+                />
+              )}
+
               {isRefreshing && (
                 <div className="phone-screen phone-refreshing-overlay">
                   <div>Project is performing Fast Refresh...</div>
@@ -594,10 +658,17 @@ function Preview({
       so without this in place, when the device rotates, the images are re-fetched from the file system
       which causes the device preview to flicker. */}
       <span className="phone-preload-masks">
-        <div style={{ maskImage: `url(${device?.landscapeScreenImage})` }} />
+        <div style={{ maskImage: `url(${device?.landscapeScreenMaskImage})` }} />
         <div style={{ maskImage: `url(${device?.screenMaskImage})` }} />
-        <img src={frame.imageLandscape} alt="" />
-        <img src={frame.image} alt="" />
+        <div style={{ maskImage: `url(${device?.bezel.imageLandscape})` }} />
+        <div style={{ maskImage: `url(${device?.bezel.image})` }} />
+        <div style={{ maskImage: `url(${device?.skin.imageLandscape})` }} />
+        <div style={{ maskImage: `url(${device?.skin.image})` }} />
+
+        <img src={device?.skin.image} alt="" />
+        <img src={device?.skin.imageLandscape} alt="" />
+        <img src={device?.bezel.image} alt="" />
+        <img src={device?.bezel.imageLandscape} alt="" />
       </span>
     </>
   );

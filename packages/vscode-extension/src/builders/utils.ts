@@ -2,7 +2,7 @@ import { readdir } from "fs/promises";
 import path from "path";
 import * as tar from "tar";
 import { Logger } from "../Logger";
-import { DevicePlatform } from "../common/DeviceManager";
+import { DevicePlatform } from "../common/State";
 
 export function isAppFile(name: string) {
   return name.endsWith(".app");

@@ -1,6 +1,9 @@
 import assert from "assert";
+import os from "os";
+import path from "path";
+import fs from "fs";
 import _ from "lodash";
-import { Disposable } from "vscode";
+import { Disposable, window } from "vscode";
 import { MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
 import { RadonInspectorBridge } from "./bridge";
@@ -25,19 +28,23 @@ import {
   DeviceSessionStatus,
   FatalErrorDescriptor,
   DeviceRotation,
+  InspectData,
 } from "../common/Project";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
-import { DevicePlatform } from "../common/DeviceManager";
 import { ToolKey } from "./tools";
-import { ReloadAction } from "../common/DeviceSessionsManager";
 import { ApplicationContext } from "./ApplicationContext";
 import { BuildCache } from "../builders/BuildCache";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { ApplicationSession } from "./applicationSession";
+import { DevicePlatform, DeviceSessionStore } from "../common/State";
+import { ReloadAction } from "./DeviceSessionsManager";
+import { StateManager } from "./StateManager";
+import { FrameReporter } from "./FrameReporter";
+import { disposeAll } from "../utilities/disposables";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -60,15 +67,17 @@ export class DeviceBootError extends Error {
 }
 
 export class DeviceSession implements Disposable {
+  private disposables: Disposable[] = [];
+
   private isActive = false;
   private metro: MetroLauncher;
-  private inspectCallID = 7621;
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
   private buildManager: BuildManager;
   private buildCache: BuildCache;
   private cancelToken: CancelToken = new CancelToken();
   private watchProjectSubscription: Disposable;
+  private frameReporter: FrameReporter;
 
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
@@ -101,12 +110,19 @@ export class DeviceSession implements Disposable {
   }
 
   constructor(
+    private readonly stateManager: StateManager<DeviceSessionStore>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     initialRotation: DeviceRotation,
     private readonly deviceSessionDelegate: DeviceSessionDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
+    this.frameReporter = new FrameReporter(
+      this.stateManager.getDerived("frameReporting"),
+      this.device
+    );
+    this.disposables.push(this.frameReporter);
+
     this.devtools = this.makeDevtools();
     this.metro = new MetroLauncher(this.devtools);
     this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
@@ -116,6 +132,8 @@ export class DeviceSession implements Disposable {
 
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
     this.device.sendRotate(initialRotation);
+
+    this.disposables.push(this.stateManager);
   }
 
   public getState(): DeviceSessionState {
@@ -260,6 +278,8 @@ export class DeviceSession implements Disposable {
     this.metro?.dispose();
     this.devtools?.dispose();
     this.watchProjectSubscription.dispose();
+
+    disposeAll(this.disposables);
   }
 
   public async activate() {
@@ -733,6 +753,14 @@ export class DeviceSession implements Disposable {
     }
   }
 
+  public startReportingFrameRate() {
+    this.frameReporter.startReportingFrameRate();
+  }
+
+  public stopReportingFrameRate() {
+    this.frameReporter.stopReportingFrameRate();
+  }
+
   public startRecording() {
     this.isRecordingScreen = true;
     this.emitStateChange();
@@ -789,17 +817,12 @@ export class DeviceSession implements Disposable {
   public inspectElementAt(
     xRatio: number,
     yRatio: number,
-    requestStack: boolean,
-    callback: (inspectData: any) => void
-  ) {
-    const id = this.inspectCallID++;
-    const listener = this.devtools.onEvent("inspectData", (payload) => {
-      if (payload.id === id) {
-        listener.dispose();
-        callback(payload);
-      }
-    });
-    this.inspectorBridge.sendInspectRequest(xRatio, yRatio, id, requestStack);
+    requestStack: boolean
+  ): Promise<InspectData> {
+    if (!this.applicationSession) {
+      throw new Error("Cannot inspect element while the application is not running");
+    }
+    return this.applicationSession.inspectElementAt(xRatio, yRatio, requestStack);
   }
 
   public openNavigation(id: string) {
@@ -865,6 +888,12 @@ export class DeviceSession implements Disposable {
   public stepOverDebugger() {
     this.applicationSession?.stepOverDebugger();
   }
+  public stepOutDebugger() {
+    this.applicationSession?.stepOutDebugger();
+  }
+  public stepIntoDebugger() {
+    this.applicationSession?.stepIntoDebugger();
+  }
 
   public async startProfilingCPU() {
     await this.applicationSession?.startProfilingCPU();
@@ -897,5 +926,69 @@ export class DeviceSession implements Disposable {
 
   public getMetroPort() {
     return this.metro.port;
+  }
+
+  public sendFile(filePath: string) {
+    getTelemetryReporter().sendTelemetryEvent("device:send-file", {
+      platform: this.device.deviceInfo.platform,
+      extension: path.extname(filePath),
+    });
+    return this.device.sendFile(filePath);
+  }
+
+  public async openSendFileDialog() {
+    const pickerResult = await window.showOpenDialog({
+      canSelectMany: true,
+      canSelectFolders: false,
+      title: "Select files to send to device",
+    });
+    if (!pickerResult) {
+      throw new Error("No files selected");
+    }
+    const sendFilePromises = pickerResult.map((fileUri) => {
+      return this.sendFile(fileUri.fsPath);
+    });
+    await Promise.all(sendFilePromises);
+  }
+
+  public async sendFileToDevice(fileName: string, data: ArrayBuffer): Promise<void> {
+    let canSafelyRemove = true;
+    const tempDir = await this.getTemporaryFilesDirectory();
+    const tempFileLocation = path.join(tempDir, fileName);
+    try {
+      await fs.promises.writeFile(tempFileLocation, new Uint8Array(data));
+      const result = await this.sendFile(tempFileLocation);
+      canSafelyRemove = result.canSafelyRemove;
+    } finally {
+      if (canSafelyRemove) {
+        // NOTE: no need to await this, it can run in the background
+        fs.promises.rm(tempFileLocation, { force: true }).catch((_e) => {
+          // NOTE: we can ignore errors here, as the file might not exist
+        });
+      }
+    }
+  }
+
+  private tempDir: string | undefined;
+  /**
+   * Returns the path to a temporary directory, creating it if it does not already exist.
+   * The directory is created using the system's temporary directory and is cleaned up
+   * automatically when the device session is disposed. Subsequent calls return the same directory path.
+   *
+   * @returns {Promise<string>} The path to the temporary directory.
+   */
+  private async getTemporaryFilesDirectory(): Promise<string> {
+    if (this.tempDir === undefined) {
+      const tempDir = await fs.promises.mkdtemp(os.tmpdir());
+      this.tempDir = tempDir;
+      this.disposables.push(
+        new Disposable(() => {
+          fs.promises.rm(tempDir, { recursive: true }).catch((_e) => {
+            /* silence the errors, it's fine */
+          });
+        })
+      );
+    }
+    return this.tempDir;
   }
 }

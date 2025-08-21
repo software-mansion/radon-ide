@@ -1,0 +1,55 @@
+name: Build VSIX and Run Tests (macOS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      node:
+        description: Node.js version to use
+        required: false
+        default: "22"
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest-xlarge
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ github.event.inputs.node || '22' }}
+
+      - name: Enforce HTTPS for submodules
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Install dependencies (extension)
+        run: npm ci
+        working-directory: packages/vscode-extension
+
+      - name: Install dependencies (tester)
+        run: npm ci
+        working-directory: packages/vscode-extension-tester
+
+      - name: Install vsce CLI
+        run: npm i -g @vscode/vsce
+
+      - name: get test app
+        run: npm run get-test-app
+        working-directory: packages/vscode-extension-tester
+
+      - name: Build VSIX package
+        run: npm run build-vsix-package
+        working-directory: packages/vscode-extension-tester
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Show Xcode and available simulators
+        run: |
+          xcodebuild -version
+          xcrun simctl list devices
+
+      - name: Run setup-run-tests
+        run: npm run setup-run-tests
+        working-directory: packages/vscode-extension-tester

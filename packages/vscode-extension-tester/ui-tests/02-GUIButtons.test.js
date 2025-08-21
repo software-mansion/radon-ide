@@ -67,16 +67,6 @@ describe("Main interface buttons tests", () => {
     await findAndWaitForElementByTag(driver, "radon-tools-dropdown-menu");
   });
 
-  it("Should open radon activate license window", async function () {
-    const { driver } = get();
-    await findAndClickElementByTag(
-      driver,
-      "radon-bottom-bar-activate-license-button"
-    );
-
-    await findAndWaitForElementByTag(driver, "activate-license-window");
-  });
-
   it("Should open radon select device menu", async function () {
     await findAndClickElementByTag(
       driver,

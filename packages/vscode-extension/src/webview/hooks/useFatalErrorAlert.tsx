@@ -5,12 +5,10 @@ import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { BuildType } from "../../common/BuildConfig";
-import { useDevices } from "../providers/DevicesProvider";
-import { BuildErrorDescriptor, FatalErrorDescriptor } from "../../common/Project";
-import { DeviceSessionsManagerInterface } from "../../common/DeviceSessionsManager";
+import { BuildErrorDescriptor, FatalErrorDescriptor, ProjectInterface } from "../../common/Project";
 import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
 import { Output } from "../../common/OutputChannel";
-import { DevicePlatform } from "../../common/DeviceManager";
+import { DevicePlatform } from "../../common/State";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
 
@@ -90,12 +88,12 @@ const noErrorAlert = {
 
 function createBuildErrorAlert(
   buildErrorDescriptor: BuildErrorDescriptor,
-  deviceSessionsManager: DeviceSessionsManagerInterface,
   hasSelectedScheme: boolean,
-  xcodeSchemes: string[]
+  xcodeSchemes: string[],
+  project: ProjectInterface
 ) {
   let onReload = () => {
-    deviceSessionsManager.reloadCurrentSession("autoReload");
+    project.reloadCurrentSession("autoReload");
   };
   let logsButtonDestination: Output | undefined = undefined;
 
@@ -128,17 +126,16 @@ function createBuildErrorAlert(
 
 export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undefined) {
   let errorAlert = noErrorAlert;
-  const { projectState } = useProject();
+  const { project, projectState } = useProject();
   const { appRoot, ios } = projectState.selectedLaunchConfiguration;
   const { xcodeSchemes } = useAppRootConfig(appRoot);
-  const { deviceSessionsManager } = useDevices();
 
   if (errorDescriptor?.kind === "build") {
     errorAlert = createBuildErrorAlert(
       errorDescriptor,
-      deviceSessionsManager,
       ios?.scheme !== undefined,
-      xcodeSchemes || []
+      xcodeSchemes || [],
+      project
     );
   } else if (errorDescriptor?.kind === "device") {
     errorAlert = bootErrorAlert;

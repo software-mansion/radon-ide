@@ -1,9 +1,9 @@
 import "./DeviceRemovalConfirmation.css";
 import { useEffect, useState } from "react";
-import { DeviceInfo } from "../../common/DeviceManager";
-import { useDevices } from "../providers/DevicesProvider";
 import Button from "./shared/Button";
 import { useModal } from "../providers/ModalProvider";
+import { DeviceInfo } from "../../common/State";
+import { useProject } from "../providers/ProjectProvider";
 
 function DeviceRemovalConfirmation({
   deviceInfo,
@@ -14,7 +14,7 @@ function DeviceRemovalConfirmation({
 }) {
   const [loading, setLoading] = useState(false);
 
-  const { deviceManager, deviceSessionsManager } = useDevices();
+  const { project } = useProject();
 
   const { showHeader } = useModal();
   useEffect(() => {
@@ -46,8 +46,8 @@ function DeviceRemovalConfirmation({
           onClick={async () => {
             setLoading(true);
             try {
-              await deviceSessionsManager.terminateSession(deviceInfo.id);
-              await deviceManager.removeDevice(deviceInfo);
+              await project.terminateSession(deviceInfo.id);
+              await project.removeDevice(deviceInfo);
             } finally {
               onClose();
             }

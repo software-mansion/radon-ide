@@ -1,13 +1,11 @@
 import "./ManageDevicesView.css";
-import { MouseEventHandler, useEffect, useState } from "react";
+import { MouseEventHandler, useState } from "react";
 import * as Switch from "@radix-ui/react-switch";
 import { use$ } from "@legendapp/state/react";
 import IconButton from "../components/shared/IconButton";
 import DeviceRenameDialog from "../components/DeviceRenameDialog";
 import DeviceRemovalConfirmation from "../components/DeviceRemovalConfirmation";
 import CreateDeviceView from "./CreateDeviceView";
-import { DeviceInfo, DevicePlatform } from "../../common/DeviceManager";
-import { useDevices } from "../providers/DevicesProvider";
 import Tooltip from "../components/shared/Tooltip";
 import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
@@ -18,6 +16,7 @@ import { mapIdToModel } from "../utilities/deviceConstants";
 import "../components/shared/SwitchGroup.css";
 import { useStore } from "../providers/storeProvider";
 import { PropsWithDataTest } from "../../common/types";
+import { DeviceInfo, DevicePlatform } from "../../common/State";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -37,13 +36,13 @@ function DeviceRow({
 }: PropsWithDataTest<DeviceRowProps>) {
   const store$ = useStore();
   const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
-  const { deviceSessionsManager } = useDevices();
+  const { project } = useProject();
 
-  const stopDevice = () => deviceSessionsManager.terminateSession(deviceInfo.id);
+  const stopDevice = () => project.terminateSession(deviceInfo.id);
   const selectDevice: MouseEventHandler = (e) => {
     if (!isSelected) {
       e.stopPropagation();
-      deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
+      project.startOrActivateSessionForDevice(deviceInfo, {
         stopPreviousDevices,
       });
       closeModal();
@@ -153,16 +152,12 @@ function ManageDevicesView() {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
 
-  const { devices, reload } = useDevices();
+  const devices = use$(store$.devicesState.devices) ?? [];
 
-  useEffect(() => {
-    reload();
-  }, []);
-
-  const iosDevices = devices.filter(
+  const iosDevices = (devices ?? []).filter(
     ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0
   );
-  const androidDevices = devices.filter(
+  const androidDevices = (devices ?? []).filter(
     ({ platform, modelId }) => platform === DevicePlatform.Android && modelId.length > 0
   );
 
