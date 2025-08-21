@@ -37,7 +37,11 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
     const systemEnv = process.env as NodeJS.ProcessEnv;
     const mergedEnv = { ...systemEnv, ...configuredEnv };
     // load the dotenv files for the project into `mergedEnv`
-    const loadEnvResult = loadProjectEnv(absoluteAppRoot, { force: true, systemEnv: mergedEnv });
+    const loadEnvResult = loadProjectEnv(absoluteAppRoot, {
+      silent: true,
+      force: true,
+      systemEnv: mergedEnv,
+    });
 
     if (loadEnvResult.result !== "loaded") {
       return configuredEnv;
