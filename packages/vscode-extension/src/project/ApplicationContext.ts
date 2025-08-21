@@ -81,14 +81,16 @@ export class ApplicationContext implements Disposable {
     launchConfig: LaunchConfiguration,
     fingerprintProvider: FingerprintProvider
   ) {
-    this.buildCache = new BuildCache(fingerprintProvider);
+    this.buildCache = new BuildCache();
     this.launchConfig = resolveLaunchConfig(launchConfig);
     this.applicationDependencyManager = new ApplicationDependencyManager(
       this.stateManager.getDerived("applicationDependencies"),
       this.launchConfig,
       fingerprintProvider
     );
-    const buildManager = new BatchingBuildManager(new BuildManagerImpl(this.buildCache));
+    const buildManager = new BatchingBuildManager(
+      new BuildManagerImpl(this.buildCache, fingerprintProvider)
+    );
     this.buildManager = buildManager;
 
     this.disposables.push(this.applicationDependencyManager, buildManager);

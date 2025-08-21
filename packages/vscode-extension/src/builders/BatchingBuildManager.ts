@@ -1,7 +1,7 @@
 import { Disposable } from "vscode";
 import { BuildConfig } from "../common/BuildConfig";
 import { Logger } from "../Logger";
-import { BuildManager, BuildOptions, BuildResult } from "./BuildManager";
+import { BuildFingerprint, BuildManager, BuildOptions, BuildResult } from "./BuildManager";
 import { CancelToken } from "../utilities/cancelToken";
 
 class BuildInProgress {
@@ -47,6 +47,10 @@ export class BatchingBuildManager implements BuildManager, Disposable {
 
   private makeBuildKey(buildConfig: BuildConfig) {
     return `${buildConfig.platform}:${buildConfig.type}:${buildConfig.appRoot}`;
+  }
+
+  public async calculateBuildFingerprint(buildConfig: BuildConfig): Promise<BuildFingerprint> {
+    return this.wrappedBuildManager.calculateBuildFingerprint(buildConfig);
   }
 
   public async buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult> {

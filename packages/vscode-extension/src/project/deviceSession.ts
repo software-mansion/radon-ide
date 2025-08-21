@@ -78,7 +78,7 @@ export class DeviceSession implements Disposable {
   private buildCache: BuildCache;
   private cancelToken: CancelToken = new CancelToken();
   private watchProjectSubscription: Disposable;
-  private buildConfig?: BuildConfig;
+  private lastSuccessfulBuildConfig?: BuildConfig;
   private frameReporter: FrameReporter;
 
   private status: DeviceSessionStatus = "starting";
@@ -88,7 +88,7 @@ export class DeviceSession implements Disposable {
   private navigationHistory: NavigationHistoryItem[] = [];
   private navigationRouteList: NavigationRoute[] = [];
   private navigationHomeTarget: NavigationHistoryItem | undefined;
-  private hasStaleBuildCache = false;
+  private isUsingStaleBuild = false;
   private isRecordingScreen = false;
   private applicationSession: ApplicationSession | undefined;
 
@@ -144,7 +144,7 @@ export class DeviceSession implements Disposable {
       navigationRouteList: this.navigationRouteList,
       deviceInfo: this.device.deviceInfo,
       previewURL: this.previewURL,
-      hasStaleBuildCache: this.hasStaleBuildCache,
+      isUsingStaleBuild: this.isUsingStaleBuild,
       isRecordingScreen: this.isRecordingScreen,
     };
     if (this.status === "starting") {
@@ -177,7 +177,7 @@ export class DeviceSession implements Disposable {
     this.startupMessage = startupMessage;
     this.stageProgress = undefined;
     this.fatalError = undefined;
-    this.hasStaleBuildCache = false;
+    this.isUsingStaleBuild = false;
     this.navigationHomeTarget = undefined;
     this.emitStateChange();
   }
@@ -189,13 +189,22 @@ export class DeviceSession implements Disposable {
   }
 
   private onProjectFilesChanged = throttleAsync(async () => {
-    const buildConfig = this.buildConfig;
-    if (!buildConfig) {
-      // build config is not available yet, we don't need to check for stale cache
+    const lastSuccessfulBuild = this.maybeBuildResult;
+    if (!lastSuccessfulBuild || this.status !== "running") {
+      // we only monitor for stale builds when the session is in 'running' state
       return;
     }
-    if (await this.buildCache.isCacheStale(buildConfig)) {
-      this.onCacheStale();
+    const buildType = await inferBuildType(this.platform, this.applicationContext.launchConfig);
+    const currentBuildConfig = createBuildConfig(
+      this.device,
+      this.applicationContext.launchConfig,
+      buildType
+    );
+    const currentFingerprint =
+      await this.buildManager.calculateBuildFingerprint(currentBuildConfig);
+    if (currentFingerprint !== lastSuccessfulBuild.fingerprint) {
+      this.isUsingStaleBuild = true;
+      this.emitStateChange();
     }
   }, CACHE_STALE_THROTTLE_MS);
 
@@ -209,17 +218,6 @@ export class DeviceSession implements Disposable {
   }, 100);
 
   //#endregion
-
-  onCacheStale = () => {
-    if (this.status === "running") {
-      // we only consider "stale cache" in a non-error state that happens
-      // after the launch phase if complete. Otherwsie, it may be a result of
-      // the build process that triggers the callback in which case we don't want
-      // to warn users about it.
-      this.hasStaleBuildCache = true;
-      this.emitStateChange();
-    }
-  };
 
   private makeDevtools() {
     const devtools = new Devtools();
@@ -434,11 +432,11 @@ export class DeviceSession implements Disposable {
     });
 
     this.resetStartingState();
-    const buildConfig = this.buildConfig;
-    if (buildConfig && (await this.buildCache.isCacheStale(buildConfig))) {
-      await this.restartDevice({ forceClean: false });
-      return;
-    }
+    // const buildConfig = this.buildConfig;
+    // if (buildConfig && (await this.buildCache.isCacheStale(buildConfig))) {
+    //   await this.restartDevice({ forceClean: false });
+    //   return;
+    // }
 
     // if reloading JS is possible, we try to do it first and exit in case of success
     // otherwise we continue to restart using more invasive methods
@@ -571,9 +569,13 @@ export class DeviceSession implements Disposable {
     const buildStartTime = Date.now();
     this.updateStartupMessage(StartupMessage.Building);
     this.maybeBuildResult = undefined;
+    const launchConfiguration = this.applicationContext.launchConfig;
+    const buildType = await inferBuildType(this.platform, launchConfiguration);
 
     // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
     const buildDependenciesChanged = await this.checkBuildDependenciesChanged(this.platform);
+
+    const buildConfig = createBuildConfig(this.device, launchConfiguration, buildType);
 
     const buildOptions = {
       forceCleanBuild: clean || buildDependenciesChanged,
@@ -589,15 +591,10 @@ export class DeviceSession implements Disposable {
       }, 100),
     };
 
-    const buildConfig = this.buildConfig;
-    if (!buildConfig) {
-      throw new Error("Unable to build the app: build config is not available");
-    }
-
     const dependencyManager = this.applicationContext.applicationDependencyManager;
     await dependencyManager.ensureDependenciesForBuild(buildConfig, buildOptions);
 
-    this.hasStaleBuildCache = false;
+    this.isUsingStaleBuild = false;
     this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, buildOptions);
     const buildDurationSec = (Date.now() - buildStartTime) / 1000;
     Logger.info("Build completed in", buildDurationSec.toFixed(2), "sec.");
@@ -624,10 +621,6 @@ export class DeviceSession implements Disposable {
 
   public async start() {
     try {
-      const launchConfiguration = this.applicationContext.launchConfig;
-      const buildType = await inferBuildType(this.platform, launchConfiguration);
-      this.buildConfig = createBuildConfig(this.device, launchConfiguration, buildType);
-
       this.resetStartingState(StartupMessage.InitializingDevice);
 
       this.cancelOngoingOperations();

@@ -1,6 +1,8 @@
 import assert from "assert";
 import _ from "lodash";
 import { OutputChannel } from "vscode";
+import crypto from "crypto";
+import stableStringify from "fast-json-stable-stringify";
 import { BuildCache } from "./BuildCache";
 import { AndroidBuildResult, buildAndroid } from "./buildAndroid";
 import { IOSBuildResult, buildIos } from "./buildIOS";
@@ -12,11 +14,16 @@ import { isExpoGoProject } from "./expoGo";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
 import { DevicePlatform, IOSDeviceInfo } from "../common/State";
 import { DeviceBase } from "../devices/DeviceBase";
+import { FingerprintProvider } from "../project/FingerprintProvider";
 
-export type BuildResult = IOSBuildResult | AndroidBuildResult;
+// Branded type for build fingerprints to ensure type safety
+export type BuildFingerprint = string & { readonly __brand: "BuildFingerprint" };
+
+export type BuildResult = { fingerprint: BuildFingerprint } & (IOSBuildResult | AndroidBuildResult);
 
 export interface BuildManager {
   buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult>;
+  calculateBuildFingerprint(buildConfig: BuildConfig): Promise<BuildFingerprint>;
 }
 
 export type BuildOptions = {
@@ -186,7 +193,22 @@ export async function inferBuildType(
 }
 
 export class BuildManagerImpl implements BuildManager {
-  constructor(private readonly buildCache: BuildCache) {}
+  constructor(
+    private readonly buildCache: BuildCache,
+    private readonly fingerprintProvider: FingerprintProvider
+  ) {}
+
+  public async calculateBuildFingerprint(buildConfig: BuildConfig): Promise<BuildFingerprint> {
+    // the build fingerprint that we use need to include all inputs that may result in the
+    // build output being different. We use a combination of the 'project fingerprint' as returned
+    // by expo-fingerprint (or the custom fingerprint command) and a deterministic hash of the
+    // build config options.
+    // finally, for readability we add platform prefix to the fingerprint.
+    const buildConfigDeterministicHash = crypto.createHash("md5");
+    buildConfigDeterministicHash.update(stableStringify(buildConfig));
+    const appFingerprint = await this.fingerprintProvider.calculateFingerprint(buildConfig);
+    return `${buildConfig.platform}:${appFingerprint}:${buildConfigDeterministicHash.digest("hex")}` as BuildFingerprint;
+  }
 
   public async buildApp(buildConfig: BuildConfig, options: BuildOptions): Promise<BuildResult> {
     const { forceCleanBuild, buildOutputChannel } = options;
@@ -197,7 +219,7 @@ export class BuildManagerImpl implements BuildManager {
       type: forceCleanBuild ? "clean" : "incremental",
     });
 
-    const currentFingerprint = await this.buildCache.calculateFingerprint(buildConfig);
+    const currentFingerprint = await this.calculateBuildFingerprint(buildConfig);
 
     if (forceCleanBuild) {
       // we reset the cache when force clean build is requested as the newly
@@ -206,9 +228,9 @@ export class BuildManagerImpl implements BuildManager {
         "Build cache is being invalidated",
         forceCleanBuild ? "on request" : "due to build dependencies change"
       );
-      await this.buildCache.clearCache(buildConfig);
+      await this.buildCache.clearCache(currentFingerprint);
     } else {
-      const cachedBuild = await this.buildCache.getBuild(currentFingerprint, buildConfig);
+      const cachedBuild = await this.buildCache.getBuild(currentFingerprint);
       if (cachedBuild) {
         Logger.debug("Skipping native build – using cached");
         getTelemetryReporter().sendTelemetryEvent("build:cache-hit", { platform });
@@ -222,7 +244,6 @@ export class BuildManagerImpl implements BuildManager {
     getTelemetryReporter().sendTelemetryEvent("build:start", { platform });
 
     let buildResult: BuildResult;
-    let buildFingerprint = currentFingerprint;
     try {
       if (platform === DevicePlatform.Android) {
         buildOutputChannel.clear();
@@ -231,10 +252,14 @@ export class BuildManagerImpl implements BuildManager {
           buildConfig.platform === DevicePlatform.Android,
           "Expected build config platform to be Android"
         );
-        buildResult = await buildAndroid(
+        const androidBuildResult = await buildAndroid(
           buildConfig as BuildConfig & { platform: DevicePlatform.Android },
           options
         );
+        buildResult = {
+          fingerprint: currentFingerprint,
+          ...androidBuildResult,
+        };
       } else {
         buildOutputChannel.clear();
 
@@ -242,10 +267,14 @@ export class BuildManagerImpl implements BuildManager {
           buildConfig.platform === DevicePlatform.IOS,
           "Expected build config platform to be iOS"
         );
-        buildResult = await buildIos(
+        const iosBuildResult = await buildIos(
           buildConfig as BuildConfig & { platform: DevicePlatform.IOS },
           options
         );
+        buildResult = {
+          fingerprint: currentFingerprint,
+          ...iosBuildResult,
+        };
       }
     } catch (e) {
       if (e instanceof CancelError) {
@@ -255,7 +284,7 @@ export class BuildManagerImpl implements BuildManager {
     }
 
     try {
-      await this.buildCache.storeBuild(buildFingerprint, buildConfig, buildResult);
+      await this.buildCache.storeBuild(buildResult);
     } catch (e) {
       // NOTE: this is a fallible operation (since it does file system operations), but we don't want to fail the whole build if we fail to store it in a cache.
       Logger.warn("Failed to store the build in cache.", e);

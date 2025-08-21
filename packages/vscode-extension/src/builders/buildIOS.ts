@@ -7,7 +7,7 @@ import { EXPO_GO_BUNDLE_ID, downloadExpoGo } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
 import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild, performLocalEasBuild } from "./eas";
-import { calculateAppHash, calculateMD5, getXcodebuildArch } from "../utilities/common";
+import { calculateAppArtifactHash, calculateMD5, getXcodebuildArch } from "../utilities/common";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildType, IOSBuildConfig, IOSLocalBuildConfig } from "../common/BuildConfig";
 import { DevicePlatform } from "../common/State";
@@ -140,7 +140,7 @@ export async function buildIos(
         bundleID: await getBundleID(appPath),
         supportedInterfaceOrientations: await getSupportedInterfaceOrientations(appPath),
         platform: DevicePlatform.IOS,
-        buildHash: await calculateAppHash(appPath),
+        buildHash: await calculateAppArtifactHash(appPath),
       };
     }
     case BuildType.Eas: {
@@ -161,7 +161,7 @@ export async function buildIos(
         bundleID: await getBundleID(appPath),
         supportedInterfaceOrientations: await getSupportedInterfaceOrientations(appPath),
         platform: DevicePlatform.IOS,
-        buildHash: await calculateAppHash(appPath),
+        buildHash: await calculateAppArtifactHash(appPath),
       };
     }
     case BuildType.EasLocal: {
@@ -181,7 +181,7 @@ export async function buildIos(
         bundleID: await getBundleID(appPath),
         supportedInterfaceOrientations: await getSupportedInterfaceOrientations(appPath),
         platform: DevicePlatform.IOS,
-        buildHash: await calculateAppHash(appPath),
+        buildHash: await calculateAppArtifactHash(appPath),
       };
     }
     case BuildType.ExpoGo: {
@@ -195,7 +195,7 @@ export async function buildIos(
         bundleID: EXPO_GO_BUNDLE_ID,
         supportedInterfaceOrientations,
         platform: DevicePlatform.IOS,
-        buildHash: await calculateAppHash(appPath),
+        buildHash: await calculateAppArtifactHash(appPath),
       };
     }
     case BuildType.Local: {
