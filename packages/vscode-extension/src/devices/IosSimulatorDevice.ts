@@ -466,7 +466,6 @@ export class IosSimulatorDevice extends DeviceBase {
       ]);
       return path.join(appContainerLocation, ".radonide.buildhash");
     } catch (error) {
-      Logger.debug("[iosSimulatorDevice] Error locating app build hash file location:", error);
       return undefined;
     }
   }
@@ -486,10 +485,9 @@ export class IosSimulatorDevice extends DeviceBase {
 
   async updateInstalledAppBuildHash(build: IOSBuildResult) {
     const buildHashFileLocation = await this.locateInstalledAppBuildHashFile(build);
-    if (buildHashFileLocation === undefined) {
-      return;
+    if (buildHashFileLocation !== undefined) {
+      await fs.promises.writeFile(buildHashFileLocation, build.buildHash);
     }
-    await fs.promises.writeFile(buildHashFileLocation, build.buildHash);
   }
 
   async installApp(build: BuildResult, forceReinstall: boolean) {
