@@ -4,7 +4,8 @@
   "main": "./src/extension.ts",
   "scripts": {
     "setup-dev": "extest setup-tests --extensions_dir ./data/vscode-extensions",
-    "install-vsix": "extest install-vsix -f ./data/react-native-ide-1.9.0.vsix --extensions_dir ./data/vscode-extensions",
+    "install-vsix": "extest install-vsix -f ./data/radon-ide.vsix --extensions_dir ./data/vscode-extensions",
+    "build-vsix-package": "cd ../vscode-extension && vsce package --out ../vscode-extension-tester/data/radon-ide.vsix && cd ../vscode-extension-tester",
     "setup": "extest get-vscode && extest get-chromedriver && npm run install-vsix",
     "ui-tests": "extest run-tests ./ui-tests/*.test.js --extensions_dir ./data/vscode-extensions -r ./data/react-native-77",
     "clean": "rm -rf ./data/vscode-storage",
