@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import { ExecaChildProcess, ExecaError } from "execa";
+import mime from "mime";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
@@ -451,10 +452,49 @@ export class IosSimulatorDevice extends DeviceBase {
     }
   }
 
+  async locateInstalledAppBuildHashFile(build: IOSBuildResult) {
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+    try {
+      const { stdout: appContainerLocation } = await exec("xcrun", [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "get_app_container",
+        this.deviceUDID,
+        build.bundleID,
+        "app",
+      ]);
+      return path.join(appContainerLocation, ".radonide.buildhash");
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  async checkInstalledAppBuildHashFile(build: IOSBuildResult) {
+    const buildHashFileLocation = await this.locateInstalledAppBuildHashFile(build);
+    if (buildHashFileLocation === undefined) {
+      return null;
+    }
+    try {
+      const buildHash = await fs.promises.readFile(buildHashFileLocation, "utf8");
+      return buildHash === build.buildHash;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async updateInstalledAppBuildHash(build: IOSBuildResult) {
+    const buildHashFileLocation = await this.locateInstalledAppBuildHashFile(build);
+    if (buildHashFileLocation !== undefined) {
+      await fs.promises.writeFile(buildHashFileLocation, build.buildHash);
+    }
+  }
+
   async installApp(build: BuildResult, forceReinstall: boolean) {
     if (build.platform !== DevicePlatform.IOS) {
       throw new Error("Invalid platform");
     }
+    const startTime = performance.now();
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     if (forceReinstall) {
       try {
@@ -466,7 +506,19 @@ export class IosSimulatorDevice extends DeviceBase {
       } catch (e) {
         Logger.error("Error while uninstalling will be ignored", e);
       }
+    } else {
+      const isInstalled = await this.checkInstalledAppBuildHashFile(build);
+      if (isInstalled) {
+        const skipInstallDurationSec = (performance.now() - startTime) / 1000;
+        Logger.info(
+          `App is already installed, skipping installation. Took ${skipInstallDurationSec.toFixed(
+            2
+          )} sec.`
+        );
+        return;
+      }
     }
+
     await exec("xcrun", [
       "simctl",
       "--set",
@@ -475,6 +527,9 @@ export class IosSimulatorDevice extends DeviceBase {
       this.deviceUDID,
       build.appPath,
     ]);
+    const installDurationSec = (performance.now() - startTime) / 1000;
+    Logger.info(`App installed. Took ${installDurationSec.toFixed(2)} sec.`);
+    await this.updateInstalledAppBuildHash(build);
   }
 
   async resetAppPermissions(appPermission: AppPermissionType, build: BuildResult) {
@@ -519,6 +574,48 @@ export class IosSimulatorDevice extends DeviceBase {
       getOrCreateDeviceSet(this.deviceUDID),
     ]);
   }
+
+  public async sendFile(filePath: string) {
+    const fileExtension = path.extname(filePath);
+    if (SUPPORTED_FILE_URL_EXTS.includes(fileExtension)) {
+      await exec("xcrun", [
+        "simctl",
+        "--set",
+        getOrCreateDeviceSet(this.deviceUDID),
+        "openurl",
+        this.deviceUDID,
+        `file://${filePath}`,
+      ]);
+      return { canSafelyRemove: false };
+    }
+    if (!isMediaFile(filePath)) {
+      throw new Error(
+        `Unsupported file type "${fileExtension}". ` +
+          `Only images, video files and SSL certificates are currently supported.`
+      );
+    }
+    const args = [
+      "simctl",
+      "--set",
+      getOrCreateDeviceSet(this.deviceUDID),
+      "addmedia",
+      this.deviceUDID,
+      filePath,
+    ];
+    await exec("xcrun", args);
+    return { canSafelyRemove: true };
+  }
+}
+
+const SUPPORTED_FILE_URL_EXTS = [
+  // SSL Certificates:
+  ".cer",
+  ".pem",
+];
+
+function isMediaFile(filePath: string): boolean {
+  const type = mime.lookup(filePath);
+  return type.startsWith("image/") || type.startsWith("video/");
 }
 
 export async function getNewestAvailableIosRuntime() {

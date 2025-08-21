@@ -31,9 +31,8 @@ describe("Adding device tests", () => {
 
     await findAndWaitForElement(
       driver,
-      By.css(`[data-test="device-${newDeviceName}"]`),
-      `Timed out waiting for device with name: ${newDeviceName}`,
-      20000
+      By.css(`[data-test="manage-devices-menu-row-device-${newDeviceName}"]`),
+      `Timed out waiting for device with name: ${newDeviceName}`, 20000
     );
   });
 
@@ -49,7 +48,9 @@ describe("Adding device tests", () => {
 
     await findAndWaitForElement(
       driver,
-      By.css(`[data-test="device-${modifiedDeviceName}"]`),
+      By.css(
+        `[data-test="manage-devices-menu-row-device-${modifiedDeviceName}"]`
+      ),
       `Timed out waiting for device with modified name: ${modifiedDeviceName}`
     );
   });
@@ -65,7 +66,7 @@ describe("Adding device tests", () => {
 
     const deviceSelectButton = await findAndWaitForElement(
       driver,
-      By.css('[data-test="device-select-trigger"]'),
+      By.css('[data-test="radon-bottom-bar-device-select-dropdown-trigger"]'),
       "Timed out waiting for 'Select device button' element"
     );
     deviceSelectButton.click();
@@ -73,8 +74,8 @@ describe("Adding device tests", () => {
     try {
       await findAndWaitForElement(
         driver,
-        By.css(`[data-test="device-${deviceName}"]`),
-        `Timed out waiting for device with name: ${deviceName}`,
+        By.css(`[data-test="manage-devices-menu-row-device-${deviceName}"]`),
+        `Timed out waiting for device to delete: ${deviceName}`,
         3000
       );
       deviceFound = true;

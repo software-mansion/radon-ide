@@ -140,7 +140,9 @@ function DeviceSelect() {
 
   return (
     <Select.Root onValueChange={handleDeviceDropdownChange} value={value}>
-      <Select.Trigger className="device-select-trigger" data-test="device-select-trigger">
+      <Select.Trigger
+        className="device-select-trigger"
+        data-test="radon-bottom-bar-device-select-dropdown-trigger">
         <Select.Value>
           <div className="device-select-value">
             <span className={`codicon codicon-${iconClass}`} />
@@ -157,7 +159,7 @@ function DeviceSelect() {
       <Select.Portal>
         <Select.Content
           className="device-select-content"
-          data-test="device-select-content"
+          data-test="device-select-menu"
           position="popper"
           align="center"
           onCloseAutoFocus={(e) => e.preventDefault()}>
@@ -185,7 +187,7 @@ function DeviceSelect() {
               />
             </Select.Group>
             <Select.Separator className="device-select-separator" />
-            <SelectItem value="manage" data-test="manage-devices-button">
+            <SelectItem value="manage" data-test="device-select-menu-manage-devices-button">
               Manage devices...
             </SelectItem>
           </Select.Viewport>

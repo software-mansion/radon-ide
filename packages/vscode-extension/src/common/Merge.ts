@@ -20,7 +20,13 @@ export function mergeAndCalculateChanges<T extends { [P in keyof T]: T[P] }>(
   const allKeys = [...Object.keys(oldNode), ...Object.keys(newNode)] as (keyof T)[];
 
   for (const key of allKeys) {
-    if (newNode[key] === undefined || newNode[key] === null) {
+    if (newNode[key] === null) {
+      result[key] = newNode[key];
+      changes[key] = newNode[key];
+      wasChanged = true;
+      continue;
+    }
+    if (newNode[key] === undefined) {
       result[key] = oldNode[key];
       continue;
     }

@@ -3,6 +3,7 @@ import classnames from "classnames";
 import "./IconButton.css";
 import Tooltip from "./Tooltip";
 import { usePing } from "../../hooks/usePing";
+import { PropsWithDataTest } from "../../../common/types";
 
 export interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -25,77 +26,79 @@ export interface IconButtonProps {
   dataTest?: string;
 }
 
-const IconButton = React.forwardRef<HTMLButtonElement, IconButtonProps>((props, ref) => {
-  const {
-    counter,
-    counterMode = "full",
-    children,
-    onClick,
-    tooltip,
-    disabled,
-    active,
-    type = "primary",
-    size = "default",
-    side = "center",
-    className = "",
-    shouldDisplayLabelWhileDisabled = false,
-    dataTest,
-    ...rest
-  } = props;
+const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconButtonProps>>(
+  (props, ref) => {
+    const {
+      counter,
+      counterMode = "full",
+      children,
+      onClick,
+      tooltip,
+      disabled,
+      active,
+      type = "primary",
+      size = "default",
+      side = "center",
+      className = "",
+      shouldDisplayLabelWhileDisabled = false,
+      dataTest,
+      ...rest
+    } = props;
 
-  const shouldPing = usePing(counter ?? 0, counterMode);
+    const shouldPing = usePing(counter ?? 0, counterMode);
 
-  const showCounter = Boolean(counter);
-  const button = (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={classnames(
-        "icon-button",
-        type === "secondary" && "icon-button-secondary",
-        active && "icon-button-selected",
-        size === "default" && "icon-button-default",
-        size === "small" && "icon-button-small",
-        side === "left" && "icon-button-left",
-        side === "right" && "icon-button-right",
-        className
-      )}
-      data-test={dataTest}
-      {...rest}
-      ref={ref}>
-      {children}
-      {counterMode === "full" && counter !== null && (
-        <span className={classnames("icon-button-counter", showCounter && "visible")}>
-          {counter}
-        </span>
-      )}
-      {counterMode === "compact" && counter !== null && (
-        <span
-          className={classnames(
-            "icon-button-indicator",
-            showCounter && "visible",
-            shouldPing && "ping"
-          )}
-        />
-      )}
-    </button>
-  );
+    const showCounter = Boolean(counter);
+    const button = (
+      <button
+        onClick={onClick}
+        disabled={disabled}
+        className={classnames(
+          "icon-button",
+          type === "secondary" && "icon-button-secondary",
+          active && "icon-button-selected",
+          size === "default" && "icon-button-default",
+          size === "small" && "icon-button-small",
+          side === "left" && "icon-button-left",
+          side === "right" && "icon-button-right",
+          className
+        )}
+        data-test={dataTest}
+        {...rest}
+        ref={ref}>
+        {children}
+        {counterMode === "full" && counter !== null && (
+          <span className={classnames("icon-button-counter", showCounter && "visible")}>
+            {counter}
+          </span>
+        )}
+        {counterMode === "compact" && counter !== null && (
+          <span
+            className={classnames(
+              "icon-button-indicator",
+              showCounter && "visible",
+              shouldPing && "ping"
+            )}
+          />
+        )}
+      </button>
+    );
 
-  if (!tooltip) {
-    return button;
+    if (!tooltip) {
+      return button;
+    }
+
+    const { label, side: tooltipSide, type: tooltipType } = tooltip;
+
+    return (
+      <Tooltip
+        label={label}
+        disabled={!shouldDisplayLabelWhileDisabled}
+        side={tooltipSide}
+        type={tooltipType ?? type}>
+        {button}
+      </Tooltip>
+    );
   }
-
-  const { label, side: tooltipSide, type: tooltipType } = tooltip;
-
-  return (
-    <Tooltip
-      label={label}
-      disabled={!shouldDisplayLabelWhileDisabled}
-      side={tooltipSide}
-      type={tooltipType ?? type}>
-      {button}
-    </Tooltip>
-  );
-});
+);
 
 export default IconButton;

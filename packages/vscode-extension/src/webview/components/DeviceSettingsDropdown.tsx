@@ -130,7 +130,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="dropdown-menu-content device-settings-content"
-          data-test="device-settings-menu"
+          data-test="device-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
           <form>
@@ -245,6 +245,12 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
           {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.IOS && <BiometricsItem />}
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={() => project.openSendFileDialog()}>
+            <span className="codicon codicon-share" />
+            Send File
+          </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {

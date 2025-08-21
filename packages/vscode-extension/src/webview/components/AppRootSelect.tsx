@@ -216,7 +216,7 @@ function AppRootSelect() {
     <Select.Root onValueChange={handleAppRootChange} value={selectedValue}>
       <Select.Trigger
         className="approot-select-trigger"
-        data-test="approot-select-trigger"
+        data-test="radon-bottom-bar-approot-select-dropdown-trigger"
         disabled={configurationsCount === 0}>
         <Select.Value placeholder={placeholder}>
           <div className="approot-select-value" data-test="approot-select-value">
@@ -229,7 +229,7 @@ function AppRootSelect() {
       <Select.Portal>
         <Select.Content
           className="approot-select-content"
-          data-test="approot-select-content"
+          data-test="approot-select-dropdown-content"
           position="popper"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <Select.ScrollUpButton className="approot-select-scroll">
