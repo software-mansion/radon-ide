@@ -5,6 +5,34 @@ import {
 } from "../utils/helpers.js";
 import { By } from "vscode-extension-tester";
 
+// #region Opening radon views
+export async function openRadonIDEPanel(driver) {
+  await driver.findElement(By.css("div#swmansion\\.react-native-ide")).click();
+
+  const webview = await findAndWaitForElement(
+    driver,
+    By.css('iframe[class*="webview"]'),
+    "Timed out waiting for Radon IDE webview"
+  );
+  await driver.switchTo().frame(webview);
+
+  const iframe = await findAndWaitForElement(
+    driver,
+    By.css('iframe[title="Radon IDE"]'),
+    "Timed out waiting for Radon IDE iframe"
+  );
+  await driver.switchTo().frame(iframe);
+}
+export async function openRadonSettingsMenu(driver) {
+  await findAndClickElementByTag(
+    driver,
+    "radon-top-bar-settings-dropdown-trigger"
+  );
+}
+//#endregion
+
+// #region Managing devices
+// #region Adding devices
 export async function openDeviceCreationModal(driver) {
   await findAndClickElementByTag(
     driver,
@@ -19,13 +47,6 @@ export async function openDeviceCreationModal(driver) {
   await findAndClickElementByTag(
     driver,
     "manage-devices-menu-create-new-device-button"
-  );
-}
-
-export async function openRadonSettingsMenu(driver) {
-  await findAndClickElementByTag(
-    driver,
-    "radon-top-bar-settings-dropdown-trigger"
   );
 }
 
@@ -72,24 +93,6 @@ export async function fillDeviceCreationForm(driver, deviceName) {
   await deviceNameInput.sendKeys(deviceName);
 }
 
-export async function openRadonIDEPanel(driver) {
-  await driver.findElement(By.css("div#swmansion\\.react-native-ide")).click();
-
-  const webview = await findAndWaitForElement(
-    driver,
-    By.css('iframe[class*="webview"]'),
-    "Timed out waiting for Radon IDE webview"
-  );
-  await driver.switchTo().frame(webview);
-
-  const iframe = await findAndWaitForElement(
-    driver,
-    By.css('iframe[title="Radon IDE"]'),
-    "Timed out waiting for Radon IDE iframe"
-  );
-  await driver.switchTo().frame(iframe);
-}
-
 export async function addNewDevice(driver, newDeviceName) {
   await openDeviceCreationModal(driver);
 
@@ -100,28 +103,9 @@ export async function addNewDevice(driver, newDeviceName) {
     "creating-device-form-confirmation-button"
   );
 }
+// #endregion
 
-export async function modifyDeviceName(driver, deviceName, modifiedDeviceName) {
-  await findAndClickElementByTag(
-    driver,
-    `manage-devices-menu-rename-button-device-${deviceName}`
-  );
-
-  const deviceNameInput = await findAndWaitForElement(
-    driver,
-    By.css('[data-test="renaming-device-view-input"]'),
-    "Timed out waiting for device name input"
-  );
-  await deviceNameInput.clear();
-  await driver.wait(async () => {
-    const value = await deviceNameInput.getAttribute("value");
-    return value === "";
-  }, 1000);
-  deviceNameInput.sendKeys(modifiedDeviceName);
-
-  await findAndClickElementByTag(driver, `renaming-device-view-save-button`);
-}
-
+// #region Deleting devices
 export async function deleteDevice(driver, deviceName) {
   await findAndClickElementByTag(
     driver,
@@ -162,3 +146,29 @@ export async function deleteAllDevices(driver) {
     }
   } catch (e) {}
 }
+// #endregion
+
+// #region Modifying devices
+export async function modifyDeviceName(driver, deviceName, modifiedDeviceName) {
+  await findAndClickElementByTag(
+    driver,
+    `manage-devices-menu-rename-button-device-${deviceName}`
+  );
+
+  const deviceNameInput = await findAndWaitForElement(
+    driver,
+    By.css('[data-test="renaming-device-view-input"]'),
+    "Timed out waiting for device name input"
+  );
+  await deviceNameInput.clear();
+  await driver.wait(async () => {
+    const value = await deviceNameInput.getAttribute("value");
+    return value === "";
+  }, 1000);
+  deviceNameInput.sendKeys(modifiedDeviceName);
+
+  await findAndClickElementByTag(driver, `renaming-device-view-save-button`);
+}
+
+// #endregion
+// #endregion
