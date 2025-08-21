@@ -11,6 +11,10 @@ on:
         description: Project app name to test
         required: true
         default: "react-native-77"
+      isRecording:
+        description: Whether to record video
+        required: false
+        default: "false"
 
 jobs:
   build-and-test:
@@ -50,6 +54,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Install ffmpeg
+        if: ${{ github.event.inputs.isRecording == 'true' }}
         run: brew install ffmpeg
 
       - name: Run setup-run-tests
@@ -59,7 +64,7 @@ jobs:
           PROJECT_NAME: ${{ github.event.inputs.testApp }}
 
       - name: make video
-        if: always()
+        if: ${{ github.event.inputs.isRecording == 'true' }}
         run: ffmpeg -framerate 10 -i frame-%04d.png -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
         working-directory: packages/vscode-extension-tester/videos
 
@@ -71,7 +76,7 @@ jobs:
           path: packages/vscode-extension-tester/screenshots/
 
       - name: Upload video recording
-        if: always()
+        if: ${{ github.event.inputs.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: vscode-ui-recording
