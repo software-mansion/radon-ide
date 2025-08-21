@@ -24,7 +24,7 @@ function App() {
   const [selectedNetworkLogId, setSelectedNetworkLogId] = useState<string | null>(null);
 
   const selectedNetworkLog = useMemo(() => {
-    if(!selectedNetworkLogId){
+    if (!selectedNetworkLogId) {
       return null;
     }
     const fullLog = networkLogs.find((log) => log.requestId === selectedNetworkLogId);
@@ -60,20 +60,24 @@ function App() {
   useEffect(() => {
     // Set the size of the network log details container, after users decides to resize it
     // https://vscode-elements.github.io/components/split-layout/api/
+
+    const networkDetailsContainer = networkDetailsContainerRef.current;
+    if (!networkDetailsContainer) {
+      return;
+    }
+
     const handleResize = debounce(() => {
-      if (!networkLogContainerRef.current || !networkDetailsContainerRef.current) {
+      const networkLogContainer = networkLogContainerRef.current;
+      if (!networkLogContainer || !networkDetailsContainer) {
         return;
       }
-      const containerWidth = networkLogContainerRef.current.clientWidth;
-      const detailsWidth = networkDetailsContainerRef.current?.clientWidth;
+      const containerWidth = networkLogContainer.clientWidth;
+      const detailsWidth = networkDetailsContainer?.clientWidth;
       networkLogDetailsSize.current = `${((containerWidth - detailsWidth) / containerWidth) * 100}%`;
     }, DEBOUNCE_TIME);
 
     const detailsResizeObserver = new ResizeObserver(handleResize);
-
-    if (networkDetailsContainerRef.current) {
-      detailsResizeObserver.observe(networkDetailsContainerRef.current);
-    }
+    detailsResizeObserver.observe(networkDetailsContainer);
 
     return () => {
       detailsResizeObserver.disconnect();
