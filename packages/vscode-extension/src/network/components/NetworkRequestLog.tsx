@@ -32,13 +32,8 @@ interface NetworkRequestLogProps {
  *          or undefined if any intermediate elements in the shadow DOM hierarchy are missing
  */
 function getScrollableTableContainer(table: VscodeTableElement): HTMLDivElement | null | undefined {
-  const tableShadowRoot = table.shadowRoot;
-  const scrollableShadowRoot =
-    tableShadowRoot?.querySelector<HTMLDivElement>(".scrollable")?.shadowRoot;
-  const scrollableContainer =
-    scrollableShadowRoot?.querySelector<HTMLDivElement>(".scrollable-container");
-
-  return scrollableContainer;
+  //@ts-ignore - ignore accessing the private property - needed to avoid ugly selectors
+  return table._scrollableElement?._scrollableContainer;
 }
 
 const NetworkRequestLog = ({
