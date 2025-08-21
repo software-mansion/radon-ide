@@ -1,9 +1,9 @@
+import path from "path";
+import fs from "fs/promises";
 import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-cdp-proxy";
 import { EventEmitter } from "vscode";
 import { Minimatch } from "minimatch";
 import _ from "lodash";
-import path from "path";
-import fs from "fs/promises";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { Logger } from "../Logger";
@@ -155,7 +155,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   ): Promise<IProtocolCommand> {
     const { method } = command;
     switch (method) {
-      case "Debugger.stepOver": {
+      case "Debugger.stepOver":
+      case "Debugger.stepOut":
+      case "Debugger.stepInto": {
         // setting this will cause the "resume" event from being slightly delayed as we
         // expect the "paused" event to be fired almost immediately.
         this.justCalledStepOver = true;

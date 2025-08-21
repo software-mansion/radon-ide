@@ -235,6 +235,12 @@ export async function calculateMD5(fsPath: string, hash: Hash = createHash("md5"
   return hash;
 }
 
+export async function calculateAppHash(appPath: string) {
+  const hash = createHash("md5");
+  await calculateMD5(appPath, hash);
+  return hash.digest("hex");
+}
+
 export async function getOpenPort(): Promise<number> {
   const { promise, resolve, reject } = Promise.withResolvers<number>();
 

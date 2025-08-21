@@ -246,6 +246,12 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            onSelect={() => project.openSendFileDialog()}>
+            <span className="codicon codicon-share" />
+            Send File
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
             onSelect={() => {
               openModal("Location", <DeviceLocationView />);
             }}>

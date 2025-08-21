@@ -157,6 +157,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       fingerprintProvider
     );
     this.deviceSessionsManager = new DeviceSessionsManager(
+      this.stateManager.getDerived("deviceSessions"),
+      this.stateManager,
       this.applicationContext,
       this.deviceManager,
       this.devicesStateManager,
@@ -302,6 +304,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     // and only close the applications, but the API we have right now does not allow that.
     const oldDeviceSessionsManager = this.deviceSessionsManager;
     this.deviceSessionsManager = new DeviceSessionsManager(
+      this.stateManager.getDerived("deviceSessions"),
+      this.stateManager,
       this.applicationContext,
       this.deviceManager,
       this.devicesStateManager,
@@ -383,6 +387,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async stepOverDebugger() {
     this.deviceSession?.stepOverDebugger();
+  }
+  public async stepOutDebugger() {
+    this.deviceSession?.stepOutDebugger();
+  }
+  public async stepIntoDebugger() {
+    this.deviceSession?.stepIntoDebugger();
   }
 
   public async focusDebugConsole() {
@@ -489,6 +499,30 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #endregion DeepLinks
 
+  // #region File Transfer
+
+  public async openSendFileDialog() {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.openSendFileDialog();
+  }
+
+  public async sendFileToDevice({
+    fileName,
+    data,
+  }: {
+    fileName: string;
+    data: ArrayBuffer;
+  }): Promise<void> {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.sendFileToDevice(fileName, data);
+  }
+
+  // #endregion
+
   // #region Recording
 
   private recordingTimeout: NodeJS.Timeout | undefined = undefined;
@@ -594,6 +628,27 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   // #endregion Recording
+
+  // #region Frame Reporting
+
+  public startReportingFrameRate() {
+    getTelemetryReporter().sendTelemetryEvent("performance:start-frame-rate-reporting", {
+      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+    });
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.startReportingFrameRate();
+  }
+
+  public stopReportingFrameRate() {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.stopReportingFrameRate();
+  }
+
+  // #endregion Frame Reporting
 
   // #region Profiling
 

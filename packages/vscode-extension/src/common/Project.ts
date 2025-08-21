@@ -303,6 +303,8 @@ export interface ProjectInterface {
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
+  stepIntoDebugger(): Promise<void>;
+  stepOutDebugger(): Promise<void>;
   focusDebugConsole(): Promise<void>;
 
   openNavigation(navigationItemID: string): Promise<void>;
@@ -320,11 +322,17 @@ export interface ProjectInterface {
   getDeepLinksHistory(): Promise<string[]>;
   openDeepLink(link: string, terminateApp: boolean): Promise<void>;
 
+  openSendFileDialog(): Promise<void>;
+  sendFileToDevice(fileDescription: { fileName: string; data: ArrayBuffer }): Promise<void>;
+
   startRecording(): void;
   captureAndStopRecording(): void;
   captureReplay(): void;
   captureScreenshot(): void;
   saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
+
+  startReportingFrameRate(): void;
+  stopReportingFrameRate(): void;
 
   startProfilingCPU(): void;
   stopProfilingCPU(): void;
