@@ -57,6 +57,63 @@
   animation: breathe 2s infinite ease;
 }
 
+.send-files-overlay.success .send-files-overlay-content {
+  border-color: var(--vscode-charts-green);
+  background-color: rgba(var(--vscode-charts-green-rgb, 22, 122, 51), 0.1);
+  animation:
+    successPulse 0.6s ease-out,
+    breathe 2s infinite ease;
+}
+
+.send-files-overlay.success .send-files-overlay-content p {
+  color: var(--vscode-charts-green);
+}
+
+.success-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+}
+
+.success-checkmark {
+  color: var(--vscode-charts-green) !important;
+  scale: 1.5 !important;
+  transform: none !important;
+  animation: checkmarkPop 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(var(--vscode-charts-green-rgb, 22, 122, 51), 0.7);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(var(--vscode-charts-green-rgb, 22, 122, 51), 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(var(--vscode-charts-green-rgb, 22, 122, 51), 0);
+  }
+}
+
+@keyframes checkmarkPop {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 1;
+  }
+}
+
 @keyframes breathe {
   0% {
     width: 80%;
@@ -84,6 +141,8 @@
   justify-content: center;
   width: 32px;
   height: 32px;
+}
+.send-files-icon span.rotate {
   transform: rotate(-90deg);
 }
 .send-files-icon span {
