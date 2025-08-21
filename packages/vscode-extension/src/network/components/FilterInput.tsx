@@ -70,6 +70,10 @@ function FilterInput({ placeholder }: FilterInputProps) {
     filterInputRef.current?.focus();
   };
 
+  const setFilterInputCursorPosition = (position: number) => {
+    filterInputRef.current?.setSelectionRange(position, position);
+  };
+
   const scrollElementIntoView = (
     element: HTMLElement,
     options: ScrollingOptions = {},
@@ -156,20 +160,34 @@ function FilterInput({ placeholder }: FilterInputProps) {
    * When a duplicate badge is detected, it will be highlighted for 600ms and scrolled into view.
    * For new badges, the input field will be scrolled into view after a brief timeout.
    *
+   * If cursorPosition is provided, the badge will be created from the text up to this position.
+   *
    * @param textValue - The text input to parse into a badge
+   * @param cursorPosition - Optional cursor position, which defines the end of the badge text
    * @returns `true` if a badge was successfully created or a duplicate was found and highlighted, `false` if the badge creation failed
    */
-  const createBadgesFromValue = (textValue: string): boolean => {
-    const { badge: newBadge, remainingText } = parseTextToBadge(textValue);
+  const createNewBadgeFromValue = (textValue: string, cursorPosition?: number): boolean => {
+    const cursorPositionSet = cursorPosition !== undefined;
+    const badgeTextValue = cursorPositionSet ? textValue.substring(0, cursorPosition) : textValue;
+    const afterBadgeTextValue = cursorPositionSet ? textValue.substring(cursorPosition) : "";
+
+    const { badge: newBadge, remainingText } = parseTextToBadge(badgeTextValue);
+    const remainingTextToInsert = remainingText + afterBadgeTextValue;
 
     // Don't create badge if value is empty string
-    if (!newBadge || newBadge.value === "") {
+    if (!newBadge) {
       return false;
+    }
+
+    // No new badge added, but return true for handlers to cancel event default behaviour
+    if (newBadge.value === "") {
+      handleFilterTextChange(remainingTextToInsert);
+      return true;
     }
 
     // Set filterText upon successfully creating a badge
     if (newBadge) {
-      handleFilterTextChange(remainingText);
+      handleFilterTextChange(remainingTextToInsert);
     }
 
     // Handle duplicate badge highlighting
@@ -312,7 +330,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
       focusFilterInput();
       const firstQuoteIndex = filterText.indexOf('"');
       if (firstQuoteIndex !== -1) {
-        filterInputRef.current?.setSelectionRange(firstQuoteIndex + 1, firstQuoteIndex + 1);
+        setFilterInputCursorPosition(firstQuoteIndex + 1);
       }
 
       // Timeout for useEffect recalculating input's width
@@ -349,7 +367,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
         // Move from last badge to input
         setFocusedBadgeIndex(-1);
         focusFilterInput();
-        filterInputRef.current?.setSelectionRange(0, 0);
+        setFilterInputCursorPosition(0);
       } else {
         // Move to next badge
         setFocusedBadgeIndex(focusedBadgeIndex + 1);
@@ -403,8 +421,8 @@ function FilterInput({ placeholder }: FilterInputProps) {
       scrollInputIntoView();
     } else {
       // Tab without suggestion - try to create badge
-      const created = createBadgesFromValue(filterText);
-      if (created) {
+      const wasCreated = createNewBadgeFromValue(filterText);
+      if (wasCreated) {
         e.preventDefault();
       }
     }
@@ -415,7 +433,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
    */
   const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    createBadgesFromValue(filterText);
+    createNewBadgeFromValue(filterText);
   };
 
   const countOfQuotes = (text: string, cursorPosition: number) => {
@@ -432,22 +450,6 @@ function FilterInput({ placeholder }: FilterInputProps) {
     return countOfQuotes(text, cursorPosition) % 2 === 1;
   };
 
-  const createNewBadgeFromSubstring = (
-    e: React.KeyboardEvent<HTMLInputElement>,
-    currentPosition: number,
-    preventDefault?: boolean
-  ) => {
-    const textBeforeCursor = filterText.substring(0, currentPosition);
-    const textAfterCursor = filterText.substring(currentPosition);
-    const newBadge = createBadgesFromValue(textBeforeCursor);
-    if (newBadge) {
-      if (preventDefault) {
-        e.preventDefault();
-      }
-      handleFilterTextChange(textAfterCursor);
-    }
-  };
-
   /**
    * Space - Create badge if there's a valid filter and not inside quotes
    */
@@ -456,7 +458,13 @@ function FilterInput({ placeholder }: FilterInputProps) {
       // If inside quotes, let space be typed normally
       return;
     }
-    createNewBadgeFromSubstring(e, currentPosition, true);
+    const wasCreated = createNewBadgeFromValue(filterText, currentPosition);
+    if (wasCreated) {
+      e.preventDefault();
+      setTimeout(() => {
+        setFilterInputCursorPosition(0);
+      }, INPUT_UPDATE_TIMEOUT);
+    }
   };
 
   /**
@@ -469,7 +477,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
     ) {
       return;
     }
-    createNewBadgeFromSubstring(e, currentPosition, false);
+    createNewBadgeFromValue(filterText, currentPosition);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
