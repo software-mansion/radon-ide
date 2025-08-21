@@ -42,6 +42,9 @@ export class BuildCache {
 
   private async collectGarbageCacheEntriesNow() {
     const keys = await extensionContext.globalState.keys();
+    Logger.info(
+      `Collecting garbage cache entries. ${keys.length} keys present in the global state.`
+    );
     const keysToRemove = keys.filter((key) => key.startsWith(GLOBAL_STATE_BUILD_CACHE_KEY_PREFIX));
     const buildResultsForAppPaths = new Map<string, [BuildResult]>();
     const promises = [];
