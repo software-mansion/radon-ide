@@ -43,7 +43,6 @@ interface SelectProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
-  dataTest?: string;
 }
 
 function Select({

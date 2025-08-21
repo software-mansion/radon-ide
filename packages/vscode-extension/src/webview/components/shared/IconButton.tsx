@@ -23,7 +23,6 @@ export interface IconButtonProps {
   };
   className?: string;
   shouldDisplayLabelWhileDisabled?: boolean;
-  dataTest?: string;
 }
 
 const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconButtonProps>>(

@@ -16,7 +16,6 @@ interface ButtonProps {
   };
   className?: string;
   autoFocus?: boolean;
-  dataTest?: string;
 }
 
 function Button({

@@ -24,7 +24,6 @@ interface DeviceRowProps {
   onDeviceDelete: (device: DeviceInfo) => void;
   isSelected: boolean;
   isRunning: boolean;
-  dataTest?: string;
 }
 
 function DeviceRow({
