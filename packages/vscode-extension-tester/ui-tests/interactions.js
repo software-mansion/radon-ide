@@ -70,7 +70,9 @@ export async function fillDeviceCreationForm(driver, deviceName) {
 
   const selectedSystemImage = await findAndWaitForElement(
     driver,
-    By.css('[data-test^="creating-device-form-system-image-select-item-"]'),
+    By.css(
+      '[data-test^="creating-device-form-system-image-select-item-"]:not(.select-item-marked)'
+    ),
     "Timed out waiting for an element matching from system image list"
   );
   await selectedSystemImage.click();
