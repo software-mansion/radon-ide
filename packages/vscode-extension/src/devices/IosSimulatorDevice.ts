@@ -323,6 +323,24 @@ export class IosSimulatorDevice extends DeviceBase {
       // Delete command fails if the key doesn't exists, but later commands run regardless,
       // despite that process exits with non-zero code. We can ignore this error.
     }
+    try {
+      // Simulator may keep the defaults in memory with cfprefsd, we restart the deamon to make sure
+      // it reads the latest values from disk.
+      // We'd normally try to use defaults command that would write the updates via the daemon, however
+      // for some reason that doesn't work with custom device sets.
+      await exec("xcrun", [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "spawn",
+        this.deviceUDID,
+        "launchctl",
+        "stop",
+        "com.apple.cfprefsd.xpc.daemon",
+      ]);
+    } catch (e) {
+      // ignore errors here and hope for the best
+    }
   }
 
   async terminateApp(bundleID: string) {
