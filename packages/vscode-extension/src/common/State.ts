@@ -84,6 +84,7 @@ export type MultimediaData = {
 
 export type MultimediaState = {
   isRecording: boolean;
+  recordingTime: number; // in seconds
   replayData: MultimediaData | null;
 };
 
@@ -216,6 +217,7 @@ export const initialDeviceSessionStore: DeviceSessionStore = {
   },
   multimedia: {
     isRecording: false,
+    recordingTime: 0,
     replayData: null,
   },
 };

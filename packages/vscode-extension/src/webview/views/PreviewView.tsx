@@ -109,8 +109,8 @@ function PreviewView() {
   const isStarting = selectedDeviceSession?.status === "starting";
   const isRunning = selectedDeviceSession?.status === "running";
 
-  const [recordingTime, setRecordingTime] = useState(0);
   const isRecording = use$(selectedDeviceSessionState.multimedia.isRecording);
+  const recordingTime = use$(selectedDeviceSessionState.multimedia.recordingTime);
   const replayData = use$(selectedDeviceSessionState.multimedia.replayData);
 
   const inspectorAvailabilityStatus = isRunning
@@ -150,18 +150,6 @@ function PreviewView() {
       document.removeEventListener("keydown", disableInspectorOnEscape, false);
     };
   }, []);
-
-  useEffect(() => {
-    if (isRecording) {
-      const interval = setInterval(() => {
-        setRecordingTime((prevRecordingTime) => prevRecordingTime + 1);
-      }, 1000);
-      return () => {
-        setRecordingTime(0);
-        clearInterval(interval);
-      };
-    }
-  }, [isRecording]);
 
   function startRecording() {
     project.startRecording();

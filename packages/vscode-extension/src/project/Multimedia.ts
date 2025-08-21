@@ -11,6 +11,7 @@ const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 export class Multimedia implements Disposable {
   private disposables: Disposable[] = [];
   private recordingTimeout: NodeJS.Timeout | undefined = undefined;
+  private recordingTimer: NodeJS.Timeout | undefined = undefined;
 
   constructor(
     private stateManager: StateManager<MultimediaState>,
@@ -27,9 +28,16 @@ export class Multimedia implements Disposable {
   }
 
   public startRecording(): void {
-    this.stateManager.setState({ isRecording: true });
+    this.stateManager.setState({ isRecording: true, recordingTime: 0 });
 
     this.device.startRecording();
+
+    this.recordingTimer = setInterval(() => {
+      const recordingTime = this.stateManager.getState().recordingTime;
+      this.stateManager.setState({
+        recordingTime: recordingTime + 1,
+      });
+    }, 1000);
 
     this.recordingTimeout = setTimeout(() => {
       this.stopRecording();
@@ -37,8 +45,6 @@ export class Multimedia implements Disposable {
   }
 
   public async captureAndStopRecording() {
-    this.stateManager.setState({ isRecording: false });
-
     const recording = await this.stopRecording();
     await this.saveMultimedia(recording);
   }
@@ -79,6 +85,9 @@ export class Multimedia implements Disposable {
 
   private async stopRecording() {
     clearTimeout(this.recordingTimeout);
+    clearInterval(this.recordingTimer);
+
+    this.stateManager.setState({ isRecording: false, recordingTime: 0 });
 
     return this.device.captureAndStopRecording(
       this.applicationContext.workspaceConfiguration.deviceRotation
