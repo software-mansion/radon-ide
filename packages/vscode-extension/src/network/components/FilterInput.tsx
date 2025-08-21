@@ -17,14 +17,19 @@ const INPUT_LEFT_PADDING = 10;
 const INPUT_UPDATE_TIMEOUT = 10;
 const BADGE_HIGHLIGHT_TIMEOUT = 600;
 
+function isWhitespace(str: string) {
+  return str.trim() === "";
+}
+
 /**
  * Get autocomplete suggestion for partial filter text
  */
 function getFilterAutocompleteSuggestion(filterText: string): string {
   // No suggestion if empty or ends with whitespace
-  if (!filterText || filterText !== filterText.trimEnd()) {
+  if (!filterText || isWhitespace(filterText.at(-1) ?? "")) {
     return "";
   }
+
   const trimmed = filterText.trim();
   // No suggestion if contains internal whitespace
   if (/\s/.test(trimmed)) {
@@ -36,7 +41,7 @@ function getFilterAutocompleteSuggestion(filterText: string): string {
 
   // Only suggest if there's a match and it's not already complete
   if (matchingColumn && `${matchingColumn}:` !== trimmed.toLowerCase()) {
-    return matchingColumn.substring(trimmed.length) + ":";
+    return `${matchingColumn.substring(trimmed.length)}:`;
   }
 
   return "";
