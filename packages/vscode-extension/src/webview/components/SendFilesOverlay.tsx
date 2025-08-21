@@ -3,6 +3,7 @@ import { VscodeProgressRing } from "@vscode-elements/react-elements";
 import "./Preview.css";
 import "./SendFilesOverlay.css";
 import { useProject } from "../providers/ProjectProvider";
+import classNames from "classnames";
 
 const RETAIN_SUCCESS_SCREEN = 1000; // ms
 const RETAIN_ERROR_SCREEN = 3000; // ms
@@ -142,9 +143,14 @@ export function SendFilesOverlay() {
   return (
     <div
       {...dragHandlers}
-      className={`phone-screen send-files-overlay ${isVisible ? "visible" : "hidden"} ${isSuccess ? "success" : ""} ${isError ? "error" : ""}`}>
+      className={classNames("phone-screen send-files-overlay", {
+        visible: isVisible,
+        hidden: !isVisible,
+        success: isSuccess,
+        error: isError,
+      })}>
       <div className="send-files-overlay-container">
-        <div className={`send-files-overlay-content ${!isLoading ? "breathe" : ""}`}>
+        <div className={classNames("send-files-overlay-content", { breathe: !isLoading })}>
           <div className="send-files-icon">{icon}</div>
           <p>{message}</p>
         </div>
