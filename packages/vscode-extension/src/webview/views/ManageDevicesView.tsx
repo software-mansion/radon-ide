@@ -115,7 +115,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
-          data-test={`rename-device-${deviceInfo.displayName}`}
+          data-test={`manage-devices-menu-rename-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceRename(deviceInfo);
@@ -130,7 +130,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
-          data-test={`delete-button-device-${deviceInfo.displayName}`}
+          data-test={`manage-devices-menu-delete-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceDelete(deviceInfo);
@@ -206,7 +206,7 @@ function ManageDevicesView() {
       <DeviceRow
         key={deviceInfo.id}
         deviceInfo={deviceInfo}
-        dataTest={`device-${deviceInfo.displayName}`}
+        dataTest={`manage-devices-menu-row-device-${deviceInfo.displayName}`}
         onDeviceRename={handleDeviceRename}
         onDeviceDelete={handleDeviceDelete}
         isSelected={deviceInfo.id === selectedProjectDevice?.id}
@@ -232,7 +232,7 @@ function ManageDevicesView() {
       <Button
         autoFocus
         className="create-button"
-        dataTest="create-new-device-button"
+        dataTest="manage-devices-menu-create-new-device-button"
         onClick={() => setCreateDeviceViewOpen(true)}>
         <span className="codicon codicon-add" />
         <div className="create-button-text">Create new device</div>

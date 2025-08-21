@@ -42,11 +42,11 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="dropdown-menu-content"
-          data-test="radon-settings-menu"
+          data-test="radon-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenu.Item
             className="dropdown-menu-item"
-            data-test="run-diagnostics-button"
+            data-test="settings-dropdown-run-diagnostics-button"
             onSelect={() => {
               openModal("Diagnostics", <DiagnosticView />);
             }}>
@@ -55,7 +55,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
-            data-test="manage-devices-button"
+            data-test="settings-dropdown-manage-devices-button"
             onSelect={() => {
               openModal("Manage Devices", <ManageDevicesView />);
             }}>

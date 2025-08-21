@@ -55,7 +55,7 @@ echo "VM is ready at $VM_IP"
 #The key cannot have write permissions; Git does not track them. It only tracks whether a file is executable.
 chmod 400 ./id_vm_mac
 
-echo "Running test commands on VM..."
+echo "preparing VM environment..."
 ssh -i ./id_vm_mac "$VM_USER@$VM_IP" "rm -rf '$REMOTE_PATH'"
 
 echo "Creating directory on VM..."
@@ -73,8 +73,7 @@ for item in * .*; do
     scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/"
 done
 
-    
-echo "Running test commands on VM..."
+echo "installing test dependencies on VM and running tests..."
 ssh -i ./scripts/id_vm_mac "$VM_USER@$VM_IP" <<EOF
 cd "$REMOTE_PATH"
 npm install
