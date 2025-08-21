@@ -13,6 +13,9 @@ function globalStateKey(fingerprint: BuildFingerprint) {
 }
 
 export class BuildCache {
+  constructor() {
+    BuildCache.clearLegacyCacheEntries();
+  }
   /**
    * Passed fingerprint should be calculated at the time build is started.
    */
