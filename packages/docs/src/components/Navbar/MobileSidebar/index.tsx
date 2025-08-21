@@ -9,13 +9,13 @@ import NavbarDownloadButton from "../NavbarDownloadButton";
 interface NavbarMobileSidebarProps {
   navbarItems: NavbarItem[];
   isThemeSwitcherShown: boolean;
-  dialogRef: RefObject<HTMLDialogElement>;
+  onOpen: () => void;
 }
 
 export default function NavbarMobileSidebar({
   navbarItems,
   isThemeSwitcherShown,
-  dialogRef,
+  onOpen,
 }: NavbarMobileSidebarProps) {
   const mobileSidebar = useNavbarMobileSidebar();
   useLockBodyScroll(mobileSidebar.shown);
@@ -38,7 +38,7 @@ export default function NavbarMobileSidebar({
           </li>
         ))}
         <li>
-          <NavbarDownloadButton isMobile={true} dialogRef={dialogRef} />
+          <NavbarDownloadButton isMobile={true} onOpen={onOpen} />
         </li>
         <li>
           <ThemeSwitcher isThemeSwitcherShown={isThemeSwitcherShown} />

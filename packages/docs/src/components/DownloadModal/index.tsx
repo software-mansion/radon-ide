@@ -1,19 +1,23 @@
-import React, { RefObject } from "react";
+import React, { RefObject, useEffect } from "react";
 import styles from "./styles.module.css";
 import DownloadButtons from "../DownloadButtons";
 import CloseIcon from "../CloseIcon";
 
 interface DownloadButtonProps {
   dialogRef: RefObject<HTMLDialogElement>;
+  onClose: () => void;
 }
 
-export default function DownloadModal({ dialogRef }: DownloadButtonProps) {
+export default function DownloadModal({ dialogRef, onClose }: DownloadButtonProps) {
+  useEffect(() => {
+    dialogRef.current?.showModal();
+  }, []);
   const handleDialogClose = () => {
-    dialogRef.current?.close();
+    onClose();
   };
   const handleBackdropClose = (e: React.MouseEvent) => {
     if (e.target === dialogRef.current) {
-      dialogRef.current?.close();
+      onClose();
     }
   };
   return (

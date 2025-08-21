@@ -1,13 +1,13 @@
-import React, { RefObject } from "react";
+import React from "react";
 import styles from "./styles.module.css";
 
 interface NavbarDownloadButtonProps {
-  dialogRef: RefObject<HTMLDialogElement>;
   isMobile: boolean;
+  onOpen: () => void;
 }
-export default function NavbarDownloadButton({ dialogRef, isMobile }: NavbarDownloadButtonProps) {
+export default function NavbarDownloadButton({ isMobile, onOpen }: NavbarDownloadButtonProps) {
   const handleDialogOpen = () => {
-    dialogRef.current?.showModal();
+    onOpen();
   };
   return (
     <button
