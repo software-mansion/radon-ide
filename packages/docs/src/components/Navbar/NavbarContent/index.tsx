@@ -33,6 +33,7 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
   const dialogRef = useRef<HTMLDialogElement>(null);
   const location = useLocation();
   const active = location.pathname;
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
@@ -61,15 +62,22 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
           <a
             href="https://github.com/software-mansion/radon-ide/"
             className={styles.headerGithub}></a>
-          <NavbarDownloadButton isMobile={false} dialogRef={dialogRef} />
+          <NavbarDownloadButton
+            isMobile={false}
+            onOpen={() => {
+              setIsOpen(true);
+            }}
+          />
         </div>
       </div>
       <NavbarMobileSidebar
         navbarItems={navbarItems}
         isThemeSwitcherShown={isThemeSwitcherShown}
-        dialogRef={dialogRef}
+        onOpen={() => {
+          setIsOpen(true);
+        }}
       />
-      <DownloadModal dialogRef={dialogRef} />
+      {isOpen && <DownloadModal dialogRef={dialogRef} onClose={() => setIsOpen(false)} />}
     </>
   );
 }
