@@ -142,19 +142,19 @@
 
 @keyframes errorShake {
   0% {
-    transform: scale(1) translateX(0);
+    transform: translateX(0);
   }
   25% {
-    transform: scale(1.02) translateX(-3px);
+    transform: translateX(-2px);
   }
   50% {
-    transform: scale(1.02) translateX(3px);
+    transform: translateX(2px);
   }
   75% {
-    transform: scale(1.02) translateX(-3px);
+    transform: translateX(-2px);
   }
   100% {
-    transform: scale(1) translateX(0);
+    transform: translateX(0);
   }
 }
 
