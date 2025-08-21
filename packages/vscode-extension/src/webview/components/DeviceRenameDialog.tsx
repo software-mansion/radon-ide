@@ -43,6 +43,7 @@ function DeviceRenameDialog({
         <Input
           value={displayName}
           className="device-name-input"
+          data-test="renaming-device-view-input"
           data-error={!isDisplayNameValid}
           type="string"
           onChange={handleDisplayNameChange}
@@ -61,6 +62,7 @@ function DeviceRenameDialog({
         </Button>
         <Button
           className="device-rename-button"
+          dataTest="renaming-device-view-save-button"
           type="ternary"
           disabled={!isDisplayNameValid}
           onClick={async () => {
