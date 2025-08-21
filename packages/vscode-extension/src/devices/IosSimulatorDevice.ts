@@ -434,7 +434,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async launchApp(
-    build: IOSBuildResult,
+    build: BuildResult,
     metroPort: number,
     _devtoolsPort: number,
     launchArguments: string[]

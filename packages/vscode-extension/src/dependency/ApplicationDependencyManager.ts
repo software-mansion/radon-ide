@@ -19,7 +19,7 @@ import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
 import { MinSupportedVersion } from "../common/Constants";
 import { ApplicationDependencyStatuses, DevicePlatform } from "../common/State";
-import { BuildError } from "../builders/BuildManager";
+import { BuildError, BuildOptions } from "../builders/BuildManager";
 import { Prebuild } from "./prebuild";
 import { FingerprintProvider } from "../project/FingerprintProvider";
 import { checkNativeDirectoryExists } from "../utilities/checkNativeDirectoryExists";
@@ -108,15 +108,11 @@ export class ApplicationDependencyManager implements Disposable {
     });
   }
 
-  public async ensureDependenciesForBuild(
-    buildConfig: BuildConfig,
-    outputChannel: OutputChannel,
-    cancelToken: CancelToken
-  ) {
+  public async ensureDependenciesForBuild(buildConfig: BuildConfig, buildOptions: BuildOptions) {
     if (buildConfig.type === BuildType.Local) {
       if (buildConfig.usePrebuild) {
         try {
-          await this.prebuild.runPrebuildIfNeeded(buildConfig, outputChannel, cancelToken);
+          await this.prebuild.runPrebuildIfNeeded(buildConfig, buildOptions);
         } catch (e) {
           if (e instanceof BuildError || e instanceof CancelError) {
             throw e;
@@ -140,7 +136,7 @@ export class ApplicationDependencyManager implements Disposable {
             'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.'
           );
         }
-        await this.installPodsIfNeeded(buildConfig, outputChannel, cancelToken);
+        await this.installPodsIfNeeded(buildOptions);
       }
     }
   }
@@ -268,13 +264,13 @@ export class ApplicationDependencyManager implements Disposable {
     }
   }
 
-  private async installPods(outputChannel: OutputChannel, cancelToken: CancelToken) {
+  private async installPods(buildOptions: BuildOptions) {
     getTelemetryReporter().sendTelemetryEvent("build:install-pods", {
       platform: DevicePlatform.IOS,
     });
 
     try {
-      await this.pods.installPods(outputChannel, cancelToken);
+      await this.pods.installPods(buildOptions);
     } catch (e) {
       Logger.error("Pods not installed", e);
       getTelemetryReporter().sendTelemetryEvent("build:pod-install-failed", {
@@ -288,11 +284,8 @@ export class ApplicationDependencyManager implements Disposable {
     Logger.debug("Project pods installed");
   }
 
-  private async installPodsIfNeeded(
-    { forceCleanBuild }: BuildConfig,
-    outputChannel: OutputChannel,
-    cancelToken: CancelToken
-  ) {
+  private async installPodsIfNeeded(buildOptions: BuildOptions) {
+    const { forceCleanBuild } = buildOptions;
     let shouldInstall = false;
     if (forceCleanBuild) {
       Logger.info("Clean build requested: installing pods");
@@ -304,7 +297,7 @@ export class ApplicationDependencyManager implements Disposable {
     if (!shouldInstall) {
       return;
     }
-    await this.installPods(outputChannel, cancelToken);
+    await this.installPods(buildOptions);
     const installed = await this.checkPodsInstallationStatus();
     if (!installed) {
       throw new Error(

@@ -496,10 +496,10 @@ function Preview({
   }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
-    if (selectedDeviceSession?.hasStaleBuildCache) {
+    if (selectedDeviceSession?.isUsingStaleBuild) {
       openRebuildAlert();
     }
-  }, [selectedDeviceSession?.hasStaleBuildCache]);
+  }, [selectedDeviceSession?.isUsingStaleBuild]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
