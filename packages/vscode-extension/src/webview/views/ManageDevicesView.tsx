@@ -17,6 +17,7 @@ import { mapIdToModel } from "../utilities/deviceConstants";
 
 import "../components/shared/SwitchGroup.css";
 import { useStore } from "../providers/storeProvider";
+import { PropsWithDataTest } from "../../common/types";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -24,7 +25,6 @@ interface DeviceRowProps {
   onDeviceDelete: (device: DeviceInfo) => void;
   isSelected: boolean;
   isRunning: boolean;
-  dataTest?: string;
 }
 
 function DeviceRow({
@@ -34,7 +34,7 @@ function DeviceRow({
   isSelected,
   isRunning,
   dataTest,
-}: DeviceRowProps) {
+}: PropsWithDataTest<DeviceRowProps>) {
   const store$ = useStore();
   const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
   const { deviceSessionsManager } = useDevices();

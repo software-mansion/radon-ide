@@ -2,6 +2,7 @@ import * as RadixSelect from "@radix-ui/react-select";
 import { PropsWithChildren, ReactNode, forwardRef } from "react";
 import classnames from "classnames";
 import "./Select.css";
+import { PropsWithDataTest } from "../../../common/types";
 
 const SelectItem = forwardRef<
   HTMLDivElement,
@@ -42,7 +43,6 @@ interface SelectProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
-  dataTest?: string;
 }
 
 function Select({
@@ -53,7 +53,7 @@ function Select({
   className,
   disabled,
   dataTest,
-}: SelectProps) {
+}: PropsWithDataTest<SelectProps>) {
   return (
     <RadixSelect.Root value={value} onValueChange={onChange} disabled={disabled}>
       <RadixSelect.Trigger
