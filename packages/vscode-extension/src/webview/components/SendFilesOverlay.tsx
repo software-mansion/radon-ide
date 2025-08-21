@@ -8,6 +8,11 @@ export function SendFilesOverlay() {
   const [isVisible, setIsVisible] = useState(false);
 
   const dragHandlers = {
+    onDragEnter: (ev: React.DragEvent) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      setIsVisible(true);
+    },
     onDrop: (ev: React.DragEvent) => {
       ev.preventDefault();
       ev.stopPropagation();
@@ -27,16 +32,10 @@ export function SendFilesOverlay() {
       ev.stopPropagation();
       ev.preventDefault();
     },
-    onDragEnter: (ev: React.DragEvent) => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      setIsVisible(true);
-    },
     onDragLeave: (ev: React.DragEvent) => {
       ev.preventDefault();
       ev.stopPropagation();
-      // FIXME: gets incorrectly triggered immediately, why??
-      // setIsVisible(false);
+      setIsVisible(false);
     },
   } as const;
 
