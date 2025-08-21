@@ -46,3 +46,9 @@
     top: 80px;
   }
 }
+
+@media (max-width: 830px) {
+  .container {
+    top: 72px;
+  }
+}

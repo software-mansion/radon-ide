@@ -94,23 +94,32 @@
   --swm-navy: #232736;
 
   /* Rebranding colors */
-  --radon-color-background: #111111;
+  --radon-color-black: #111111;
   --radon-color-border: #333333;
   --radon-color-border-grid-subtle: #222222;
+  --radon-color-grey-dark: #737373;
+
   --radon-button: #248363;
   --radon-button-hover: #186e51;
-  --radon-copyright-color: #737373;
+
+  --radon-gradient-green: #38a880;
+  --radon-gradient-black: #11111100;
 
   /* --- Text rebranding --- */
   --radon-color-primary: #fafafa;
   --radon-color-secondary: #a1a1a1;
-  --radon-color-button-text: #ffffff;
+  --radon-color-tertiary: #777777;
 
+  --radon-color-background: var(--radon-color-black);
   --radon-subheading: var(--swm-navy-light-100);
   --radon-border-grid-subtle: var(--swm-border);
-  --radon-button-text: var(--radon-color-button-text);
+
+  --radon-button-tertiary: var(--radon-color-black);
+  --radon-button-text: var(--radon-color-primary);
+
   --radon-icon: var(--swm-green-light-100);
   --radon-active-tab: var(--swm-green-light-100);
+  --radon-copyright: var(--radon-color-grey-dark);
 
   /* Infima main colors */
   --ifm-color-primary: var(--swm-navy-light-100);
@@ -139,6 +148,7 @@
   /* Typography */
   --ifm-heading-color: var(--ifm-color-primary);
   --ifm-font-color-base: var(--swm-navy-light-100);
+  --radon-sub-subheading: var(--ifm-color-primary);
 
   /* Tabs */
   --swm-tab: var(--swm-navy-light-20);
@@ -336,6 +346,7 @@
   /* Typography */
   --ifm-font-color-base: var(--radon-color-primary);
   --radon-subheading: var(--radon-color-secondary);
+  --radon-sub-subheading: var(--radon-color-tertiary);
 
   /* Tabs */
   --swm-tab: var(--swm-navy-light-60);
@@ -404,8 +415,8 @@
   --swm-paginator-label-hover: var(--swm-green-light-40);
 
   /* Footer */
-  --swm-brand-copyright-color: var(--radon-copyright-color);
-  --swm-copyright-color: var(--radon-copyright-color);
+  --swm-brand-copyright-color: var(--radon-copyright);
+  --swm-copyright-color: var(--radon-copyright);
 
   --swm-brand-copyright-color-landing: var(--swm-navy-light-20);
   --swm-copyright-color-landing: var(--swm-off-white);

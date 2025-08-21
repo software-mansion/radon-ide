@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./styles.module.css";
 import { useLocation } from "@docusaurus/router";
 import MobileSidebarToggle from "../MobileSidebarToggle";
@@ -7,6 +7,8 @@ import ThemeSwitcher from "../../ThemeSwitcher";
 import NavbarLink from "../NavbarLink";
 import Logo from "../../Logo";
 import clsx from "clsx";
+import DownloadModal from "../../DownloadModal";
+import NavbarDownloadButton from "../NavbarDownloadButton";
 
 export interface NavbarItem {
   label: string;
@@ -21,11 +23,6 @@ const navbarItems: NavbarItem[] = [
   { label: "Docs", to: "/docs/category/getting-started", position: "center" },
   { label: "Contact", to: "/contact", position: "center" },
   { label: "GitHub", to: "https://github.com/software-mansion/radon-ide/", position: "right" },
-  {
-    label: "Download",
-    to: "https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide",
-    position: "right",
-  },
 ];
 
 export interface NavbarContentProps {
@@ -33,8 +30,11 @@ export interface NavbarContentProps {
 }
 
 export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const location = useLocation();
   const active = location.pathname;
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <>
       <div className={clsx(styles.navbarContainer, "border-layout")}>
@@ -62,14 +62,22 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
           <a
             href="https://github.com/software-mansion/radon-ide/"
             className={styles.headerGithub}></a>
-          <a
-            href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
-            className={styles.download}>
-            <p>Download</p>
-          </a>
+          <NavbarDownloadButton
+            isMobile={false}
+            onOpen={() => {
+              setIsOpen(true);
+            }}
+          />
         </div>
       </div>
-      <NavbarMobileSidebar navbarItems={navbarItems} isThemeSwitcherShown={isThemeSwitcherShown} />
+      <NavbarMobileSidebar
+        navbarItems={navbarItems}
+        isThemeSwitcherShown={isThemeSwitcherShown}
+        onOpen={() => {
+          setIsOpen(true);
+        }}
+      />
+      {isOpen && <DownloadModal dialogRef={dialogRef} onClose={() => setIsOpen(false)} />}
     </>
   );
 }

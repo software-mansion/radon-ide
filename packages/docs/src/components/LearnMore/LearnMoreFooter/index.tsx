@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
-import HomepageButton, { ButtonStyling, BorderStyling } from "@site/src/components/HomepageButton";
 import styles from "./styles.module.css";
 import { track } from "@vercel/analytics";
+import DownloadButtons from "../../DownloadButtons";
 
 const RADON_IDE_MARKETPLACE_URL =
   "https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide";
@@ -49,14 +49,7 @@ const LearnMoreFooter = () => {
           Join {installs} engineers using Radon IDE for faster, more efficient app development.
         </h2>
       </div>
-      <HomepageButton
-        target="_blank"
-        href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
-        backgroundStyling={ButtonStyling.TO_WHITE}
-        borderStyling={BorderStyling.NAVY}
-        title="Try Radon IDE for Free"
-        onClick={handleBottomCTAClick}
-      />
+      <DownloadButtons />
     </div>
   );
 };

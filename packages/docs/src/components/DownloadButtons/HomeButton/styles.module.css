@@ -1,0 +1,42 @@
+.container {
+  display: flex;
+  background-color: var(--radon-button);
+  height: 60px;
+  padding: 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-direction: row;
+}
+
+.container.vertical {
+  align-self: stretch;
+}
+
+.iconContainer {
+  display: flex;
+}
+
+.titleContainer p {
+  color: var(--radon-button-text);
+  text-align: center;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 28px;
+  margin: 0;
+}
+
+.container:hover {
+  background-color: var(--radon-button-hover);
+}
+
+@media (max-width: 580px) {
+  .container {
+    align-self: stretch;
+  }
+}
+@media (max-width: 375px) {
+  .titleContainer p {
+    font-size: 16px;
+  }
+}
