@@ -13,9 +13,9 @@ const RETAIN_ERROR_SCREEN = 3000; // ms
 // but it doesn't show this when Preview is in the Side Panel
 export function SendFilesOverlay() {
   const { project } = useProject();
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(true);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
   const [fileCount, setFileCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState("error");
@@ -29,15 +29,15 @@ export function SendFilesOverlay() {
   }, []);
 
   // Hide overlay after success and error animations
-  // useEffect(() => {
-  //   if (isSuccess || isError) {
-  //     const timer = setTimeout(
-  //       resetOverlayState,
-  //       isSuccess ? RETAIN_SUCCESS_SCREEN : RETAIN_ERROR_SCREEN
-  //     );
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [isSuccess, isError, resetOverlayState]);
+  useEffect(() => {
+    if (isSuccess || isError) {
+      const timer = setTimeout(
+        resetOverlayState,
+        isSuccess ? RETAIN_SUCCESS_SCREEN : RETAIN_ERROR_SCREEN
+      );
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccess, isError, resetOverlayState]);
 
   const dragHandlers = useMemo(
     () =>
