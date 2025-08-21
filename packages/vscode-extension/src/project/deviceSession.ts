@@ -35,14 +35,12 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { ToolKey } from "./tools";
 import { ApplicationContext } from "./ApplicationContext";
-import { BuildCache } from "../builders/BuildCache";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { ApplicationSession } from "./applicationSession";
 import { DevicePlatform, DeviceSessionStore } from "../common/State";
 import { ReloadAction } from "./DeviceSessionsManager";
-import { BuildConfig } from "../common/BuildConfig";
 import { StateManager } from "./StateManager";
 import { FrameReporter } from "./FrameReporter";
 import { disposeAll } from "../utilities/disposables";
@@ -75,10 +73,8 @@ export class DeviceSession implements Disposable {
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
   private buildManager: BuildManager;
-  private buildCache: BuildCache;
   private cancelToken: CancelToken = new CancelToken();
   private watchProjectSubscription: Disposable;
-  private lastSuccessfulBuildConfig?: BuildConfig;
   private frameReporter: FrameReporter;
 
   private status: DeviceSessionStatus = "starting";
@@ -129,7 +125,6 @@ export class DeviceSession implements Disposable {
     this.metro = new MetroLauncher(this.devtools);
     this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
 
-    this.buildCache = this.applicationContext.buildCache;
     this.buildManager = this.applicationContext.buildManager;
 
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);

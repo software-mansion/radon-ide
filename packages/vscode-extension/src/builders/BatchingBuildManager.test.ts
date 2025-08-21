@@ -11,6 +11,7 @@ describe("BatchingBuildManager", () => {
   let buildAppMock = Sinon.stub();
   let buildManagerMock = {
     buildApp: buildAppMock,
+    calculateBuildFingerprint: Sinon.stub(),
     dispose: Sinon.stub(),
   };
   const APP_ROOT = "appRoot";
@@ -24,6 +25,7 @@ describe("BatchingBuildManager", () => {
     buildAppMock = Sinon.stub();
     buildManagerMock = {
       buildApp: buildAppMock,
+      calculateBuildFingerprint: Sinon.stub(),
       dispose: Sinon.stub(),
     };
   });
