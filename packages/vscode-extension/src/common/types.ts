@@ -1,1 +1,1 @@
-export type PropsWithDataTest<P = {}> = P & { dataTest?: string };
+export type PropsWithDataTest<P = unknown> = P & { dataTest?: string };
