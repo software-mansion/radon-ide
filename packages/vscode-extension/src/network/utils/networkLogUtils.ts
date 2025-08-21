@@ -1,7 +1,15 @@
 import { NetworkLog } from "../hooks/useNetworkTracker";
-import { FilterBadge } from "../providers/NetworkFilterProvider";
+import { FilterBadge } from "../types/network";
 import { NetworkLogColumn, SortDirection } from "../types/network";
 
+interface ParsedText {
+  badge: FilterBadge | null;
+  remainingText: string;
+}
+
+/**
+ * Define value formatting for specific columns, as they differ in representation
+ */
 const NetworkLogFormatters = {
   name: (log: NetworkLog): string => {
     return log.request?.url.split("/").pop() || "(pending)";
@@ -47,9 +55,18 @@ export function getNetworkLogValue(log: NetworkLog, column: NetworkLogColumn): s
 }
 
 /**
- * Parse filter text in format "column:value column2:value2" or plain text for global search
+ * Parses text input to extract a filter badge from the beginning of the string.
+ *
+ * Supports two filter formats:
+ * - Quoted values: `column:"value"` (allows spaces inside)
+ * - Unquoted values: `column:value` (no spaces, cannot start with quote)
+ *
+ * @param text - The input text to parse for filter badges
+ * @returns An object containing:
+ *   - `badge`: A FilterBadge object if a valid filter is found, null otherwise
+ *   - `remainingText`: The input text with the parsed badge trimmed
  */
-export function parseTextToBadge(text: string) {
+export function parseTextToBadge(text: string): ParsedText {
   const trimmedText = text.trim();
   if (!trimmedText) {
     return {
@@ -92,7 +109,7 @@ export function parseTextToBadge(text: string) {
     const normalizedColumnName = columnName.toLowerCase();
     if (columnNames.includes(normalizedColumnName)) {
       badge = {
-        id: `${normalizedColumnName}-${filterValue}-${Date.now()}-${Math.random()}`,
+        id: `${normalizedColumnName}-${filterValue}`,
         columnName: normalizedColumnName,
         value: filterValue,
       };
@@ -178,7 +195,7 @@ export function sortNetworkLogs(
     return direction === SortDirection.Asc ? comparison : -comparison;
   };
 
-  return [...networkLogs].sort(compare);
+  return networkLogs.toSorted(compare);
 }
 
 /**

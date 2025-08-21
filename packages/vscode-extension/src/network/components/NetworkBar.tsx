@@ -11,7 +11,7 @@ function NetworkBar() {
 
   const { filterInvert, isFilterVisible, toggleInvert, toggleFilterVisible } = useNetworkFilter();
 
-  const handleInvertChange = (e: Event) => {
+  const handleInvertChange = () => {
     toggleInvert();
   };
 
@@ -48,7 +48,7 @@ function NetworkBar() {
         onClick={toggleFilterVisible}
         tooltip={{
           label:
-            "Filter network requests (supports column:value format like 'status:200 method:post')",
+            "Filter network requests",
           side: "bottom",
         }}>
         <span

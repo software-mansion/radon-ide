@@ -1,5 +1,7 @@
 import classNames from "classnames";
 import { useMemo, useLayoutEffect, useRef, useState } from "react";
+import { capitalize } from "lodash";
+import type { VscodeTable as VscodeTableElement } from "@vscode-elements/elements/dist/vscode-table/vscode-table.js";
 import {
   VscodeTable,
   VscodeTableBody,
@@ -8,16 +10,13 @@ import {
   VscodeTableHeaderCell,
   VscodeTableRow,
 } from "@vscode-elements/react-elements";
-import type { VscodeTable as VscodeTableElement } from "@vscode-elements/elements/dist/vscode-table/vscode-table.js";
-import { capitalize } from "lodash";
 import IconButton from "../../webview/components/shared/IconButton";
-import { SortDirection } from "../types/network";
-
-import { NetworkLog } from "../hooks/useNetworkTracker";
-import "./NetworkRequestLog.css";
 import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogUtils";
 import { NetworkLogColumn } from "../types/network";
 import { useNetworkFilter } from "../providers/NetworkFilterProvider";
+import { SortDirection } from "../types/network";
+import { NetworkLog } from "../hooks/useNetworkTracker";
+import "./NetworkRequestLog.css";
 
 interface SortState {
   column: NetworkLogColumn | null;
@@ -32,6 +31,10 @@ interface NetworkRequestLogProps {
 }
 
 const SCROLL_TO_TOP_TIMEOUT = 200;
+const DEFAULT_SORT_STATE: SortState = {
+  column: null,
+  direction: null,
+};
 
 /**
  * Navigates through the shadow DOM hierarchy to find the scrollable container within a VSCode table element.
@@ -55,15 +58,10 @@ const NetworkRequestLog = ({
   selectedNetworkLog,
   parentHeight,
 }: NetworkRequestLogProps) => {
-  const containerRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<VscodeTableElement>(null);
-  const [sortState, setSortState] = useState<SortState>({
-    column: null,
-    direction: null,
-  });
+  const [sortState, setSortState] = useState<SortState>(DEFAULT_SORT_STATE);
   const [cellWidths, setCellWidths] = useState<number[]>([]);
-
-  const { addColumnFilterToInputField: addColumnFilter } = useNetworkFilter();
+  const { addColumnFilterToInputField } = useNetworkFilter();
 
   // Sort the network logs based on current sort state
   const sortedNetworkLogs = useMemo(() => {
@@ -214,8 +212,9 @@ const NetworkRequestLog = ({
   };
 
   const handleHeaderFilterClick = (e: React.MouseEvent, column: NetworkLogColumn) => {
+    // If filter was clicked, do not trigger sorting by stopping propagation
     e.stopPropagation();
-    addColumnFilter(column);
+    addColumnFilterToInputField(column);
   };
 
   const getSortIcon = (column: NetworkLogColumn) => {
@@ -234,15 +233,12 @@ const NetworkRequestLog = ({
           zebra
           bordered-columns
           resizable
-          borderedColumns
+          responsive
           style={{ height: parentHeight }}
           ref={tableRef}>
           <VscodeTableHeader slot="header">
             {logDetailsConfig.map(({ title }) => (
-              <VscodeTableHeaderCell
-                key={title}
-                onClick={() => handleHeaderClick(title)}
-                style={{ cursor: "pointer" }}>
+              <VscodeTableHeaderCell key={title} onClick={() => handleHeaderClick(title)}>
                 <div className="table-header-cell">
                   <span className="table-header-title">{capitalize(title)}</span>
                   <IconButton onClick={(e) => handleHeaderFilterClick(e, title)}>
@@ -269,7 +265,7 @@ const NetworkRequestLog = ({
                 {logDetailsConfig.map(({ title, getClass }, i) => (
                   <VscodeTableCell
                     key={`${log.requestId}-${title}`}
-                    className={getClass ? getClass(log) : ""}
+                    className={getClass?.(log) ?? ""}
                     style={{ width: cellWidths[i] || "auto" }}>
                     <div>{getNetworkLogValue(log, title)}</div>
                   </VscodeTableCell>

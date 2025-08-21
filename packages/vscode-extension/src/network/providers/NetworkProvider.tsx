@@ -51,14 +51,10 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     });
   };
 
-  const networkLogs = useMemo(() => {
-    return networkTracker.networkLogs;
-  }, [networkTracker.networkLogs]);
-
   const contextValue = useMemo(() => {
     return {
       ...networkTracker,
-      networkLogs,
+      networkLogs: networkTracker.networkLogs,
       isRecording,
       toggleRecording,
       isScrolling,
@@ -67,7 +63,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       isTimelineVisible,
       toggleTimelineVisible,
     };
-  }, [isRecording, isScrolling, isTimelineVisible, networkLogs, networkTracker]);
+  }, [isRecording, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
 
   return (
     <NetworkContext.Provider value={contextValue}>

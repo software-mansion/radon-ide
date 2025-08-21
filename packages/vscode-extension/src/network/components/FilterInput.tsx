@@ -13,6 +13,10 @@ type ScrollingOptions = {
   behavior?: "auto" | "smooth" | undefined;
 };
 
+const INPUT_LEFT_PADDING = 10;
+const INPUT_UPDATE_TIMEOUT = 10;
+const BADGE_HIGHLIGHT_TIMEOUT = 600;
+
 /**
  * Get autocomplete suggestion for partial filter text
  */
@@ -28,8 +32,7 @@ function getFilterAutocompleteSuggestion(filterText: string): string {
   }
 
   // Check if the input starts to match any column name
-  const columnNames = NETWORK_LOG_COLUMNS.map((col) => col.toLowerCase());
-  const matchingColumn = columnNames.find((col) => col.startsWith(trimmed.toLowerCase()));
+  const matchingColumn = NETWORK_LOG_COLUMNS.find((col) => col.startsWith(trimmed.toLowerCase()));
 
   // Only suggest if there's a match and it's not already complete
   if (matchingColumn && matchingColumn !== trimmed.toLowerCase()) {
@@ -44,7 +47,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
     filterInputRef,
     filterText,
     filterBadges,
-    wasColumnFilterAddedToInputField: wasColumnFilterAdded,
+    wasColumnFilterAddedToInputField,
     setFilterBadges,
     setFilterText,
   } = useNetworkFilter();
@@ -55,18 +58,27 @@ function FilterInput({ placeholder }: FilterInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [suggestion, setSuggestion] = useState("");
   const [inputWidth, setInputWidth] = useState<number>(20);
-  const [focusedBadgeIndex, setFocusedBadgeIndex] = useState<number>(-1); // -1 means input is focused
+  const [focusedBadgeIndex, setFocusedBadgeIndex] = useState<number>(-1); // -1 means no badge is focused
   const [highlightedBadgeId, setHighlightedBadgeId] = useState<string | null>(null);
 
-  // Common scrolling logic
+  const focusFilterInput = () => {
+    filterInputRef.current?.focus();
+  };
+
   const scrollElementIntoView = (
-    elementRect: DOMRect,
-    wrapperRect: DOMRect,
-    wrapperScrollLeft: number,
+    element: HTMLElement,
     options: ScrollingOptions = {},
     centerInViewport: boolean = false
   ) => {
-    const { padding = 10, behavior = "smooth" } = options;
+    const wrapper = wrapperRef.current;
+    if (!wrapper) {
+      return;
+    }
+
+    const { padding = INPUT_LEFT_PADDING, behavior = "smooth" } = options;
+    const wrapperRect = wrapper.getBoundingClientRect();
+    const wrapperScrollLeft = wrapper.scrollLeft;
+    const elementRect = element.getBoundingClientRect();
 
     const elementLeft = elementRect.left - wrapperRect.left + wrapperScrollLeft;
     const elementRight = elementLeft + elementRect.width;
@@ -91,8 +103,8 @@ function FilterInput({ placeholder }: FilterInputProps) {
       }
     }
 
-    if (newScrollLeft !== wrapperScrollLeft && wrapperRef.current) {
-      wrapperRef.current.scrollTo({
+    if (newScrollLeft !== wrapperScrollLeft) {
+      wrapper.scrollTo({
         left: Math.max(0, newScrollLeft),
         behavior,
       });
@@ -104,62 +116,63 @@ function FilterInput({ placeholder }: FilterInputProps) {
       const wrapper = wrapperRef.current;
       const inputWrapper = inputWithSuggestionRef.current;
 
-      if (wrapper && inputWrapper) {
-        const wrapperRect = wrapper.getBoundingClientRect();
-        const inputRect = inputWrapper.getBoundingClientRect();
-        const wrapperScrollLeft = wrapper.scrollLeft;
-
-        // If no badges, add left padding
-        const scrollingOptions: ScrollingOptions =
-          filterBadges.length === 0 ? { behavior: "auto", padding: 10 } : { padding: 10 };
-        scrollElementIntoView(inputRect, wrapperRect, wrapperScrollLeft, scrollingOptions);
+      if (!wrapper || !inputWrapper) {
+        return;
       }
+      // If no badges, add left padding
+      const scrollingOptions: ScrollingOptions =
+        filterBadges.length === 0
+          ? { behavior: "auto", padding: INPUT_LEFT_PADDING }
+          : { padding: INPUT_LEFT_PADDING };
+      scrollElementIntoView(inputWrapper, scrollingOptions);
     }
   };
 
   const scrollBadgeIntoView = (badgeIndex: number, centerInViewport: boolean = false) => {
-    if (badgeIndex >= 0 && containerRef.current) {
-      const wrapper = wrapperRef.current;
-      const badgeElements = containerRef.current.querySelectorAll(".filter-badge");
-      const targetBadge = badgeElements[badgeIndex] as HTMLElement;
-
-      if (wrapper && targetBadge) {
-        const wrapperRect = wrapper.getBoundingClientRect();
-        const badgeRect = targetBadge.getBoundingClientRect();
-        const wrapperScrollLeft = wrapper.scrollLeft;
-        const scrollingOptions: ScrollingOptions = { padding: 10 };
-
-        scrollElementIntoView(
-          badgeRect,
-          wrapperRect,
-          wrapperScrollLeft,
-          scrollingOptions,
-          centerInViewport
-        );
-      }
+    const wrapper = wrapperRef.current;
+    const container = containerRef.current;
+    if (!wrapper || !container || badgeIndex < 0) {
+      return;
     }
+
+    const badgeElements = container.querySelectorAll<HTMLDivElement>(".filter-badge");
+    const targetBadge = badgeElements[badgeIndex];
+    if (!targetBadge) {
+      return;
+    }
+
+    const scrollingOptions: ScrollingOptions = { padding: INPUT_LEFT_PADDING };
+    scrollElementIntoView(targetBadge, scrollingOptions, centerInViewport);
   };
 
-  // Helper function to create badges from current value
-  const createBadgesFromValue = (textValue: string) => {
+  /**
+   * Creates filter badges from a text value by parsing the input string.
+   *
+   * When a duplicate badge is detected, it will be highlighted for 600ms and scrolled into view.
+   * For new badges, the input field will be scrolled into view after a brief timeout.
+   *
+   * @param textValue - The text input to parse into a badge
+   * @returns `true` if a badge was successfully created or a duplicate was found and highlighted, `false` if the badge creation failed
+   */
+  const createBadgesFromValue = (textValue: string): boolean => {
     const { badge: newBadge, remainingText } = parseTextToBadge(textValue);
 
+    // Don't create badge if value is empty string
+    if (!newBadge || newBadge.value === "") {
+      return false;
+    }
+
+    // Set filterText upon successfully creating a badge
     if (newBadge) {
       handleFilterTextChange(remainingText);
     }
 
-    // Don't create badge if value is empty string
-    if (!newBadge || newBadge.value === "") {
-      return;
-    }
-
     // Handle duplicate badge highlighting
-    const newBadgeName = newBadge?.columnName;
+    const newBadgeColumn = newBadge?.columnName;
     const newBadgeValue = newBadge?.value;
     const existingBadge = filterBadges.find(
-      (badge) => badge.columnName === newBadgeName && badge.value === newBadgeValue
+      (badge) => badge.columnName === newBadgeColumn && badge.value === newBadgeValue
     );
-
     if (existingBadge) {
       // Highlight and focus the duplicate badge
       const duplicateBadge = existingBadge;
@@ -173,20 +186,21 @@ function FilterInput({ placeholder }: FilterInputProps) {
       // Remove highlight after animation
       setTimeout(() => {
         setHighlightedBadgeId(null);
-      }, 600);
-    } else if (newBadge) {
-      const updatedBadges = [...filterBadges, newBadge];
-      setFilterBadges(updatedBadges);
-
-      // Scroll to ensure the input (now positioned after the new badge) is visible
-      // 10 ms timeout for useEffect to fire
-      setTimeout(() => {
-        scrollInputIntoView();
-      }, 10);
+      }, BADGE_HIGHLIGHT_TIMEOUT);
+      return true;
     }
 
-    // Return true if there were any valid filter patterns (even if duplicates)
-    return !!newBadge;
+    // badge is not duplicate - update badges
+    const updatedBadges = [...filterBadges, newBadge];
+    setFilterBadges(updatedBadges);
+
+    // Scroll to ensure the input (now positioned after the new badge) is visible
+    // timeout for useEffect to fire, hack but reliable
+    setTimeout(() => {
+      scrollInputIntoView();
+    }, INPUT_UPDATE_TIMEOUT);
+
+    return true;
   };
 
   const removeBadge = (index: number) => {
@@ -194,13 +208,13 @@ function FilterInput({ placeholder }: FilterInputProps) {
     const newBadges = filterBadges.filter((badge) => badge.id !== badgeId);
     setFilterBadges(newBadges);
 
-    // Reset focus to input
+    // Set proper focus
     if (focusedBadgeIndex === -1) {
-      filterInputRef.current?.focus();
+      focusFilterInput();
       scrollInputIntoView();
     } else if (newBadges.length === 0) {
       setFocusedBadgeIndex(-1);
-      filterInputRef.current?.focus();
+      focusFilterInput();
     } else if (index === focusedBadgeIndex) {
       const newFocusIndex = index === filterBadges.length - 1 ? index - 1 : index;
       setFocusedBadgeIndex(newFocusIndex);
@@ -269,8 +283,8 @@ function FilterInput({ placeholder }: FilterInputProps) {
     const measuredWidth = textMetrics.width;
 
     const remainingWidth = container.clientWidth - inputOccupiedSpaceRef.current;
-    // Set minimum width and add padding for natural flow
-    const calculatedWidth = Math.max(remainingWidth, measuredWidth + 10);
+    const safetyPadding = 10; // Additional padding to ensure input is not too small
+    const calculatedWidth = Math.max(remainingWidth, measuredWidth + safetyPadding);
     setInputWidth(calculatedWidth);
   }, [filterText, placeholder, filterBadges, suggestion]);
 
@@ -282,9 +296,15 @@ function FilterInput({ placeholder }: FilterInputProps) {
     }
   }, [focusedBadgeIndex]);
 
+  /**
+   * Below useEffect is meant to work like an event listener - it triggers when a column filter is added.
+   * wasColumnFilterAddedToInputField after set true is immediately set false afterwards within the NetworkFilter provider,
+   * which results in the input field being focused and the cursor positioned correctly after the addColumntToInputField
+   * from the provider is called
+   */
   useEffect(() => {
-    if (wasColumnFilterAdded) {
-      filterInputRef.current?.focus();
+    if (wasColumnFilterAddedToInputField) {
+      focusFilterInput();
       const firstQuoteIndex = filterText.indexOf('"');
       if (firstQuoteIndex !== -1) {
         filterInputRef.current?.setSelectionRange(firstQuoteIndex + 1, firstQuoteIndex + 1);
@@ -293,9 +313,9 @@ function FilterInput({ placeholder }: FilterInputProps) {
       // Timeout for useEffect recalculating input's width
       setTimeout(() => {
         scrollInputIntoView();
-      }, 10);
+      }, INPUT_UPDATE_TIMEOUT);
     }
-  }, [wasColumnFilterAdded]);
+  }, [wasColumnFilterAddedToInputField]);
 
   /**
    * ArrowLeft - Navigate from input to last badge or between badges
@@ -319,10 +339,11 @@ function FilterInput({ placeholder }: FilterInputProps) {
   const handleArrowRight = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (focusedBadgeIndex >= 0) {
       e.preventDefault();
+
       if (focusedBadgeIndex === filterBadges.length - 1) {
         // Move from last badge to input
         setFocusedBadgeIndex(-1);
-        filterInputRef.current?.focus();
+        focusFilterInput();
         filterInputRef.current?.setSelectionRange(0, 0);
       } else {
         // Move to next badge
@@ -373,7 +394,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
       e.preventDefault();
       const newValue = filterText + suggestion;
       handleFilterTextChange(newValue);
-      filterInputRef.current?.focus();
+      focusFilterInput();
       scrollInputIntoView();
     } else {
       // Tab without suggestion - try to create badge
@@ -385,7 +406,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
   };
 
   /**
-   * Enter - Create badge (always, even inside quotes)
+   * Enter - Create badge
    */
   const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
     e.preventDefault();
@@ -473,15 +494,13 @@ function FilterInput({ placeholder }: FilterInputProps) {
 
   const handleFilterTextChange = (value: string) => {
     setFilterText(value);
-
     // Update autocomplete suggestion
     const newSuggestion = getFilterAutocompleteSuggestion(value);
     setSuggestion(newSuggestion);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    handleFilterTextChange(newValue);
+    handleFilterTextChange(e.target.value);
   };
 
   const handleInputFocus = () => {
@@ -494,7 +513,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
   };
 
   const handleInputContainerClick = () => {
-    filterInputRef.current?.focus();
+    focusFilterInput();
   };
 
   const handleBadgeClick = (index: number) => {
@@ -503,7 +522,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
     setTimeout(() => {
       // wait for useEffect to run first, then scroll to the center of view
       scrollBadgeIntoView(index, true);
-    }, 10);
+    }, INPUT_UPDATE_TIMEOUT);
   };
 
   const handleContainerKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {

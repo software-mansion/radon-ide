@@ -23,3 +23,9 @@ export enum SortDirection {
   Asc = "asc",
   Desc = "desc",
 }
+
+export interface FilterBadge {
+  id: string;
+  columnName: string;
+  value: string;
+}
