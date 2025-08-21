@@ -17,8 +17,6 @@ import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork } from "./NetworkProvider";
 import { FilterBadge } from "../types/network";
 
-
-
 // lookup structure for badge filters
 type BadgeByColumnsLookup = Record<string, string[]>;
 

@@ -47,8 +47,7 @@ function NetworkBar() {
       <IconButton
         onClick={toggleFilterVisible}
         tooltip={{
-          label:
-            "Filter network requests",
+          label: "Filter network requests",
           side: "bottom",
         }}>
         <span
