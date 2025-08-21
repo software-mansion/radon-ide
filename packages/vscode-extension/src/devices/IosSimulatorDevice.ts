@@ -454,20 +454,28 @@ export class IosSimulatorDevice extends DeviceBase {
 
   async locateInstalledAppBuildHashFile(build: IOSBuildResult) {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-    const { stdout: appContainerLocation } = await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "get_app_container",
-      this.deviceUDID,
-      build.bundleID,
-      "app",
-    ]);
-    return path.join(appContainerLocation, ".radonide.buildhash");
+    try {
+      const { stdout: appContainerLocation } = await exec("xcrun", [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "get_app_container",
+        this.deviceUDID,
+        build.bundleID,
+        "app",
+      ]);
+      return path.join(appContainerLocation, ".radonide.buildhash");
+    } catch (error) {
+      Logger.debug("[iosSimulatorDevice] Error locating app build hash file location:", error);
+      return undefined;
+    }
   }
 
   async checkInstalledAppBuildHashFile(build: IOSBuildResult) {
     const buildHashFileLocation = await this.locateInstalledAppBuildHashFile(build);
+    if (buildHashFileLocation === undefined) {
+      return null;
+    }
     try {
       const buildHash = await fs.promises.readFile(buildHashFileLocation, "utf8");
       return buildHash === build.buildHash;
@@ -478,6 +486,9 @@ export class IosSimulatorDevice extends DeviceBase {
 
   async updateInstalledAppBuildHash(build: IOSBuildResult) {
     const buildHashFileLocation = await this.locateInstalledAppBuildHashFile(build);
+    if (buildHashFileLocation === undefined) {
+      return;
+    }
     await fs.promises.writeFile(buildHashFileLocation, build.buildHash);
   }
 
