@@ -5,7 +5,7 @@ import {
   computeRouteIdentifier,
   extractNestedRouteList,
   sendNavigationChange
-} from "./expo_router_helpers.js";
+} from "../expo_router_helpers.js";
 
 function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   const router = useRouter();

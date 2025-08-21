@@ -12,7 +12,14 @@ import { DeviceId, DeviceRotation, DeviceSessionsManagerState } from "../common/
 import { Connector } from "../connect/Connector";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
-import { DeviceInfo, DevicePlatform, DevicesState } from "../common/State";
+import {
+  DeviceInfo,
+  DevicePlatform,
+  DeviceSessions,
+  DevicesState,
+  initialDeviceSessionStore,
+  ProjectStore,
+} from "../common/State";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -48,6 +55,9 @@ export class DeviceSessionsManager implements Disposable {
   private previousDevices: DeviceInfo[] = [];
 
   constructor(
+    private readonly stateManager: StateManager<DeviceSessions>,
+    // note: this manager is owned by the project
+    private readonly projectStateManager: StateManager<ProjectStore>,
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
     private readonly devicesStateManager: StateManager<DevicesState>,
@@ -62,6 +72,8 @@ export class DeviceSessionsManager implements Disposable {
         }
       })
     );
+
+    this.disposables.push(this.stateManager);
   }
 
   public get selectedDeviceSession(): DeviceSession | undefined {
@@ -144,7 +156,13 @@ export class DeviceSessionsManager implements Disposable {
     }
     Logger.debug("Selected device is ready");
 
+    if (!this.stateManager.getState()[deviceInfo.id]) {
+      // we need to initialize the device session state before deriving a new state manager
+      this.stateManager.setState({ [deviceInfo.id]: initialDeviceSessionStore });
+    }
+
     const newDeviceSession = new DeviceSession(
+      this.stateManager.getDerived(deviceInfo.id),
       this.applicationContext,
       device,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
@@ -208,6 +226,10 @@ export class DeviceSessionsManager implements Disposable {
   }
 
   public findInitialDeviceAndStartSession = async () => {
+    if (!this.applicationContext.workspaceConfiguration.startDeviceOnLaunch) {
+      this.deviceSessionManagerDelegate.onInitialized();
+      return;
+    }
     if (Connector.getInstance().isEnabled) {
       // when radon connect is enabled, we don't want to automatically select and start a device
       return;
@@ -280,12 +302,14 @@ export class DeviceSessionsManager implements Disposable {
       return;
     }
     if (session === undefined) {
+      this.projectStateManager.setState({ selectedDeviceSessionId: null });
       this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
       return;
     }
     await previousSession?.deactivate();
     await session.activate();
     extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, this.activeSessionId);
+    this.projectStateManager.setState({ selectedDeviceSessionId: this.activeSessionId });
     this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
   }
 

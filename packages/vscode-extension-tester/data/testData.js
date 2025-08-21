@@ -1,8 +1,8 @@
 export const paths = {
-  projectPath: "../../react-native-80",
+  projectPath: "../data/react-native-77",
 };
 
 export const texts = {
   pageTitle: paths.projectPath.split("/").pop(),
-  expectedProjectName: "reactNative80",
+  expectedProjectName: "reactNative77",
 };

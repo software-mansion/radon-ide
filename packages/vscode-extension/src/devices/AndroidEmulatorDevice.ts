@@ -725,6 +725,25 @@ export class AndroidEmulatorDevice extends DeviceBase {
   async getClipboard() {
     // No need to copy clipboard, Android Emulator syncs it for us whenever a user clicks on 'Copy'
   }
+
+  public async sendFile(filePath: string) {
+    const args = ["push", "-q", filePath, `/sdcard/Download/${path.basename(filePath)}`];
+    await exec(ADB_PATH, ["-s", this.serial!, ...args]);
+    // Notify the media scanner about the new file
+    await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "shell",
+      "am",
+      "broadcast",
+      "-a",
+      "android.intent.action.MEDIA_SCANNER_SCAN_FILE",
+      "--receiver-include-background",
+      "-d",
+      `file:///sdcard/Download`,
+    ]);
+    return { canSafelyRemove: true };
+  }
 }
 
 export async function createEmulator(
