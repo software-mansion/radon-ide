@@ -85,7 +85,7 @@ type DeviceSessionStateCommon = {
   previewURL: string | undefined;
   navigationHistory: NavigationHistoryItem[];
   navigationRouteList: NavigationRoute[];
-  hasStaleBuildCache: boolean;
+  isUsingStaleBuild: boolean;
   isRecordingScreen: boolean;
 };
 
