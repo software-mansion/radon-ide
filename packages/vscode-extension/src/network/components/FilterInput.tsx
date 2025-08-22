@@ -70,6 +70,10 @@ function FilterInput({ placeholder }: FilterInputProps) {
     filterInputRef.current?.focus();
   };
 
+  const blurFilterInput = () => {
+    filterInputRef.current?.blur();
+  };
+
   const setFilterInputCursorPosition = (position: number) => {
     filterInputRef.current?.setSelectionRange(position, position);
   };
@@ -203,7 +207,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
 
       setHighlightedBadgeId(duplicateBadge.id);
       setFocusedBadgeIndex(duplicateBadgeIndex);
-      filterInputRef.current?.blur();
+      blurFilterInput();
       scrollBadgeIntoView(duplicateBadgeIndex, true);
 
       // Remove highlight after animation
@@ -348,7 +352,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
       // Move from input to last badge
       e.preventDefault();
       setFocusedBadgeIndex(filterBadges.length - 1);
-      filterInputRef.current?.blur();
+      blurFilterInput();
     } else if (focusedBadgeIndex !== null && focusedBadgeIndex > 0) {
       // Move to previous badge
       e.preventDefault();
