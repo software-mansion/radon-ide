@@ -144,45 +144,15 @@ export function sortNetworkLogs(
         break;
       }
       case NetworkLogColumn.Size: {
-        /** Extract numeric value from size string ("1.5 KB" -> 1536) */
-        const getSizeInBytes = (sizeStr: string): number => {
-          if (sizeStr === "(pending)") {
-            return 0;
-          }
-
-          /**
-           * Extracts numeric value and unit.
-           * The pattern captures a number (with optional decimal places) followed by optional whitespace and a unit string.
-           *
-           * @example
-           * // Matches strings like "1.5 MB", "250KB", "10 bytes"
-           * // Returns: ["1.5 MB", "1.5", "MB"] or null if no match
-           */
-          const match = sizeStr.match(/^(\d+(?:\.\d+)?)\s*(\w+)$/);
-          if (!match) {
-            return 0;
-          }
-
-          const value = parseFloat(match[1]);
-          const unit = match[2];
-          const multipliers: Record<string, number> = {
-            B: 1,
-            KB: 1024,
-            MB: Math.pow(1024, 2),
-            GB: Math.pow(1024, 3),
-            TB: Math.pow(1024, 4),
-          };
-          return value * (multipliers[unit] || 0);
-        };
-
-        comparison = getSizeInBytes(aValue) - getSizeInBytes(bValue);
+        const aSize = a.encodedDataLength ?? 0;
+        const bSize = b.encodedDataLength ?? 0;
+        comparison = aSize - bSize;
         break;
       }
       case NetworkLogColumn.Time: {
-        // Extract numeric value from time string ("150 ms" -> 150)
-        const aNum = parseInt(aValue) || 0;
-        const bNum = parseInt(bValue) || 0;
-        comparison = aNum - bNum;
+        const aTime = a.timeline?.durationMs ?? 0;
+        const bTime = b.timeline?.durationMs ?? 0;
+        comparison = aTime - bTime;
         break;
       }
       default: {
