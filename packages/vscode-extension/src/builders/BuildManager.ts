@@ -77,6 +77,7 @@ export function createBuildConfig(
           configuration: ios?.configuration,
           fingerprintCommand,
           usePrebuild,
+          runtimeId: runtime.identifier,
         };
       } else {
         return {

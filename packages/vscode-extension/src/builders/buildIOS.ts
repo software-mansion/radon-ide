@@ -7,12 +7,18 @@ import { EXPO_GO_BUNDLE_ID, downloadExpoGo } from "./expoGo";
 import { findXcodeProject, findXcodeScheme, IOSProjectInfo } from "../utilities/xcode";
 import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild, performLocalEasBuild } from "./eas";
-import { calculateAppArtifactHash, calculateMD5, getXcodebuildArch } from "../utilities/common";
+import { calculateAppArtifactHash, calculateMD5 } from "../utilities/common";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildType, IOSBuildConfig, IOSLocalBuildConfig } from "../common/BuildConfig";
 import { DevicePlatform } from "../common/State";
 import { DeviceRotation } from "../common/Project";
 import { BuildOptions } from "./BuildManager";
+import {
+  createSimulatorWithRuntimeId,
+  listSimulators,
+  removeIosSimulator,
+  SimulatorDeviceSet,
+} from "../devices/IosSimulatorDevice";
 
 // Mapping from iOS interface orientation strings to DeviceRotation enum
 const IOS_ORIENTATION_TO_DEVICE_ROTATION = {
@@ -74,6 +80,7 @@ function buildProject(
   buildDir: string,
   scheme: string,
   configuration: string,
+  simulatorId: string,
   cleanBuild: boolean,
   env: Record<string, string>
 ) {
@@ -85,13 +92,11 @@ function buildProject(
     "TARGETED_DEVICE_FAMILY=1,2",
     "-scheme",
     scheme,
-    "-arch",
-    getXcodebuildArch(),
-    "-sdk",
-    "iphonesimulator",
+    "-destination",
+    `id=${simulatorId}`,
     "-showBuildTimingSummary",
     "-destination-timeout",
-    "0",
+    "1", // this is the lowest possible value, using "0" means no timeout at all. This timeout allows us to fail fast when simulator with provided ID doesn't exists. Otherwise xcodebuild wait for USB connected device with such ID.
     ...(cleanBuild ? ["clean"] : []),
     "build",
   ];
@@ -204,6 +209,48 @@ export async function buildIos(
   }
 }
 
+async function getOrMakeSimulator(buildConfig: IOSLocalBuildConfig) {
+  const { runtimeId } = buildConfig;
+  const devices = await listSimulators(SimulatorDeviceSet.Default); // use default location becuase xcodebuild can't use custom device sets
+  const matchingDevice = devices.find(
+    (deviceInfo) => deviceInfo.runtimeInfo?.identifier === runtimeId && deviceInfo.available
+  );
+  if (matchingDevice) {
+    Logger.info("Using existing simulator for iOS build:", matchingDevice);
+    return {
+      simulatorUdid: matchingDevice.UDID,
+      cleanupSimulator: async () => {
+        /* noop - don't delete simulators from default device set */
+      },
+    };
+  }
+  Logger.info("Creating new simulator for iOS build:", runtimeId);
+  // It is unlikely we will reach this point as it may only happen when user doesn't have simulator for the selected runtime available
+  // The above is possible but when Xcode installs new SDK, it also creates a set of simulators for it
+  // Thereofre, this can only happen when the user has deleted all of the simulator or if they deleted the runtime
+  // in which case we won't be able to create a new simulator for it anyways and the build should fail.
+  const simulatorUdid = await createSimulatorWithRuntimeId(
+    "iPhone 16 Pro", // device type doesn't matter as long as it supports the runtime, we choose iPhone 16 as it is recent and will be available for a while
+    "Radon IDE Temp Simulator",
+    runtimeId,
+    SimulatorDeviceSet.Default
+  );
+  if (simulatorUdid) {
+    return {
+      simulatorUdid,
+      cleanupSimulator: async () => {
+        try {
+          await removeIosSimulator(simulatorUdid, SimulatorDeviceSet.Default);
+        } catch (e) {
+          Logger.error("Error removing simulator", e);
+        }
+      },
+    };
+  } else {
+    throw new Error("Failed to create simulator for build");
+  }
+}
+
 async function buildLocal(
   buildConfig: IOSLocalBuildConfig,
   buildOptions: BuildOptions
@@ -231,49 +278,63 @@ async function buildLocal(
 
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 
-  const buildProcess = cancelToken.adapt(
-    buildProject(
-      xcodeProject,
-      sourceDir,
-      scheme,
-      configuration,
-      forceCleanBuild,
-      buildConfig.env ?? {}
-    )
-  );
-
-  const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
-  lineReader(buildProcess).onLineRead((line) => {
-    buildOutputChannel.appendLine(line);
-    buildIOSProgressProcessor.processLine(line);
-  });
+  const { simulatorUdid, cleanupSimulator } = await getOrMakeSimulator(buildConfig);
 
   try {
-    await buildProcess;
-  } catch (e) {
-    Logger.error("Error building iOS project", e);
-    throw new Error(
-      "Failed to build the iOS app with xcodebuild. Check the build logs for details."
+    const buildProcess = cancelToken.adapt(
+      buildProject(
+        xcodeProject,
+        sourceDir,
+        scheme,
+        configuration,
+        simulatorUdid,
+        forceCleanBuild,
+        buildConfig.env ?? {}
+      )
     );
-  }
 
-  try {
-    const appPath = await getBuildPath(xcodeProject, sourceDir, scheme, configuration, cancelToken);
-    const bundleID = await getBundleID(appPath);
-    const supportedInterfaceOrientations = await getSupportedInterfaceOrientations(appPath);
-    const buildHash = (await calculateMD5(appPath)).digest("hex");
-    return {
-      appPath,
-      bundleID,
-      buildHash,
-      supportedInterfaceOrientations,
-      platform: DevicePlatform.IOS,
-    };
-  } catch (e) {
-    Logger.error("Error getting app path", e);
-    throw new Error(
-      "The iOS app build was successful, but the app file could not be accessed. See the build logs for details."
-    );
+    const buildIOSProgressProcessor = new BuildIOSProgressProcessor(progressListener);
+    lineReader(buildProcess).onLineRead((line) => {
+      buildOutputChannel.appendLine(line);
+      buildIOSProgressProcessor.processLine(line);
+    });
+
+    try {
+      await buildProcess;
+    } catch (e) {
+      Logger.error("Error building iOS project", e);
+      throw new Error(
+        "Failed to build the iOS app with xcodebuild. Check the build logs for details."
+      );
+    }
+
+    try {
+      const appPath = await getBuildPath(
+        xcodeProject,
+        sourceDir,
+        scheme,
+        configuration,
+        simulatorUdid,
+        cancelToken
+      );
+      const bundleID = await getBundleID(appPath);
+      const supportedInterfaceOrientations = await getSupportedInterfaceOrientations(appPath);
+      const buildHash = (await calculateMD5(appPath)).digest("hex");
+      return {
+        appPath,
+        bundleID,
+        buildHash,
+        supportedInterfaceOrientations,
+        platform: DevicePlatform.IOS,
+      };
+    } catch (e) {
+      Logger.error("Error getting app path", e);
+      throw new Error(
+        "The iOS app build was successful, but the app file could not be accessed. See the build logs for details."
+      );
+    }
+  } finally {
+    await cleanupSimulator();
   }
 }
 
@@ -282,6 +343,7 @@ async function getBuildPath(
   projectDir: string,
   scheme: string,
   configuration: string,
+  simulatorId: string,
   cancelToken: CancelToken
 ) {
   type KnownSettings = "WRAPPER_EXTENSION" | "TARGET_BUILD_DIR" | "EXECUTABLE_FOLDER_PATH";
@@ -299,8 +361,10 @@ async function getBuildPath(
         xcodeProject.xcodeProjectLocation,
         "-scheme",
         scheme,
-        "-sdk",
-        "iphonesimulator",
+        "-destination",
+        `id=${simulatorId}`,
+        "-destination-timeout",
+        "1",
         "-configuration",
         configuration,
         "-showBuildSettings",
