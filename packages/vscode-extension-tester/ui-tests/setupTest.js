@@ -69,7 +69,9 @@ before(async function () {
   await workbench.executeCommand("View: Close All Editors");
 
   view = new WebView();
-  if (IS_RECORDING) recorder = await startRecording(driver, { interval: 200 });
+  if (IS_RECORDING) {
+    recorder = await startRecording(driver, { interval: 200 });
+  }
 });
 
 afterEach(async function () {
@@ -90,7 +92,9 @@ afterEach(async function () {
 });
 
 after(async function () {
-  if (IS_RECORDING && recorder) await recorder.stop();
+  if (IS_RECORDING && recorder) {
+    await recorder.stop();
+  }
 });
 
 export function get() {
