@@ -9,6 +9,7 @@ on:
         default: "22"
       testApp:
         description: Project app name to test
+        type: choice
         required: true
         default: "react-native-77"
         options:
@@ -41,7 +42,6 @@ on:
         description: Space-separated list of test numbers to run (none runs all tests)
         required: false
         default: ""
-        type: choice
 
 jobs:
   build-and-test:
