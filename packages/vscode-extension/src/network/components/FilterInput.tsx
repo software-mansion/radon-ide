@@ -408,31 +408,22 @@ function FilterInput({ placeholder }: FilterInputProps) {
   };
 
   /**
-   * Tab - Autocomplete suggestion or create badge
+   * Tab and Enter - Autocomplete suggestion or create badge
    */
-  const handleTab = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleSuggestionAndCreation = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // Always prevent default if user is focused, to avoid unintentional
+    // navigation beyond the input field
+    e.preventDefault();
     if (suggestion) {
       // Tab with suggestion - autocomplete
-      e.preventDefault();
       const newValue = filterText + suggestion;
       handleFilterTextChange(newValue);
       focusFilterInput();
       scrollInputIntoView();
     } else {
       // Tab without suggestion - try to create badge
-      const wasCreated = createNewBadgeFromValue(filterText);
-      if (wasCreated) {
-        e.preventDefault();
-      }
+      createNewBadgeFromValue(filterText);
     }
-  };
-
-  /**
-   * Enter - Create badge
-   */
-  const handleEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    createNewBadgeFromValue(filterText);
   };
 
   const countOfQuotes = (text: string, cursorPosition: number) => {
@@ -467,9 +458,17 @@ function FilterInput({ placeholder }: FilterInputProps) {
   };
 
   /**
+   * Escape - Remove focus from the filter input, escaping from focus trap introduced
+   * by preventing default on Tab key.
+   */
+  const handleEscape = () => {
+    blurFilterInput();
+  };
+
+  /**
    * Other Keys - Create badge if there's a valid filter and quotes have been just closed
    */
-  const handleOtherKeys = (e: React.KeyboardEvent<HTMLInputElement>, currentPosition: number) => {
+  const handleOtherKeys = (currentPosition: number) => {
     if (
       countOfQuotes(filterText, currentPosition) === 0 ||
       isInsideQuotes(filterText, currentPosition)
@@ -493,14 +492,14 @@ function FilterInput({ placeholder }: FilterInputProps) {
       handleDelete(e);
     } else if (e.key === "Backspace") {
       handleBackspace(e, currentPosition, hasSelection);
-    } else if (e.key === "Tab") {
-      handleTab(e);
-    } else if (e.key === "Enter") {
-      handleEnter(e);
     } else if (e.key === " ") {
       handleSpace(e, currentPosition);
+    } else if (e.key === "Escape") {
+      handleEscape();
+    } else if (e.key === "Enter" || e.key === "Tab") {
+      handleSuggestionAndCreation(e);
     } else {
-      handleOtherKeys(e, currentPosition);
+      handleOtherKeys(currentPosition);
     }
   };
 
