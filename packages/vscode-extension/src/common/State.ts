@@ -82,7 +82,7 @@ export type MultimediaData = {
   fileName: string;
 };
 
-export type MultimediaState = {
+export type ScreenCaptureState = {
   isRecording: boolean;
   recordingTime: number; // in seconds
   replayData: MultimediaData | null;
@@ -94,7 +94,7 @@ export type MultimediaState = {
 
 export type DeviceSessionStore = {
   frameReporting: FrameReportingState;
-  multimedia: MultimediaState;
+  screenCapture: ScreenCaptureState;
 };
 
 // #endregion Device Session
@@ -215,7 +215,7 @@ export const initialDeviceSessionStore: DeviceSessionStore = {
     enabled: false,
     frameReport: null,
   },
-  multimedia: {
+  screenCapture: {
     isRecording: false,
     recordingTime: 0,
     replayData: null,

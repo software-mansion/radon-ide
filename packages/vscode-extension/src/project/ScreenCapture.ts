@@ -1,5 +1,5 @@
 import { Disposable } from "vscode";
-import { MultimediaData, MultimediaState } from "../common/State";
+import { MultimediaData, ScreenCaptureState } from "../common/State";
 import { ApplicationContext } from "./ApplicationContext";
 import { StateManager } from "./StateManager";
 import { DeviceBase } from "../devices/DeviceBase";
@@ -8,13 +8,13 @@ import { saveMultimedia } from "../utilities/saveMultimedia";
 
 const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 
-export class Multimedia implements Disposable {
+export class ScreenCapture implements Disposable {
   private disposables: Disposable[] = [];
   private recordingTimeout: NodeJS.Timeout | undefined = undefined;
   private recordingTimer: NodeJS.Timeout | undefined = undefined;
 
   constructor(
-    private stateManager: StateManager<MultimediaState>,
+    private stateManager: StateManager<ScreenCaptureState>,
     private device: DeviceBase,
     private applicationContext: ApplicationContext
   ) {

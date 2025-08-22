@@ -517,27 +517,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Recording
 
-  public startRecording(): void {
-    getTelemetryReporter().sendTelemetryEvent("recording:start-recording", {
-      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
-    });
-    if (!this.deviceSession) {
-      throw new Error("No device session available");
-    }
-    this.deviceSession.startRecording();
-  }
-
-  public async captureAndStopRecording() {
-    getTelemetryReporter().sendTelemetryEvent("recording:stop-recording", {
-      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
-    });
-
-    if (!this.deviceSession) {
-      throw new Error("No device session available");
-    }
-    this.deviceSession.captureAndStopRecording();
-  }
-
   public async toggleRecording() {
     getTelemetryReporter().sendTelemetryEvent("recording:toggle-recording", {
       platform: this.selectedDeviceSessionState?.deviceInfo.platform,
@@ -545,7 +524,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    this.deviceSession?.toggleRecording();
+    this.deviceSession.toggleRecording();
   }
 
   public async captureReplay() {

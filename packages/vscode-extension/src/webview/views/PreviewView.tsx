@@ -109,9 +109,9 @@ function PreviewView() {
   const isStarting = selectedDeviceSession?.status === "starting";
   const isRunning = selectedDeviceSession?.status === "running";
 
-  const isRecording = use$(selectedDeviceSessionState.multimedia.isRecording);
-  const recordingTime = use$(selectedDeviceSessionState.multimedia.recordingTime);
-  const replayData = use$(selectedDeviceSessionState.multimedia.replayData);
+  const isRecording = use$(selectedDeviceSessionState.screenCapture.isRecording);
+  const recordingTime = use$(selectedDeviceSessionState.screenCapture.recordingTime);
+  const replayData = use$(selectedDeviceSessionState.screenCapture.replayData);
 
   const inspectorAvailabilityStatus = isRunning
     ? selectedDeviceSession.elementInspectorAvailability
@@ -151,23 +151,13 @@ function PreviewView() {
     };
   }, []);
 
-  function startRecording() {
-    project.startRecording();
-  }
-
-  async function stopRecording() {
-    try {
-      project.captureAndStopRecording();
-    } catch (e) {
-      project.showDismissableError("Failed to capture recording");
-    }
-  }
-
   function toggleRecording() {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
+    try {
+      project.toggleRecording();
+    } catch (e) {
+      if (isRecording) {
+        project.showDismissableError("Failed to capture recording");
+      }
     }
   }
 
@@ -231,7 +221,7 @@ function PreviewView() {
         onInspectorItemSelected={onInspectorItemSelected}
         zoomLevel={zoomLevel}
         replayData={replayData}
-        onReplayClose={() => selectedDeviceSessionState.multimedia.replayData.set(null)}
+        onReplayClose={() => selectedDeviceSessionState.screenCapture.replayData.set(null)}
         onZoomChanged={onZoomChanged}
       />
     );

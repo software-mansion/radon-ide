@@ -313,8 +313,7 @@ export interface ProjectInterface {
   openSendFileDialog(): Promise<void>;
   sendFileToDevice(fileDescription: { fileName: string; data: ArrayBuffer }): Promise<void>;
 
-  startRecording(): void;
-  captureAndStopRecording(): void;
+  toggleRecording(): void;
   captureReplay(): void;
   captureScreenshot(): void;
   saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;

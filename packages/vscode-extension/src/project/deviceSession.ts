@@ -44,7 +44,7 @@ import { DevicePlatform, DeviceSessionStore } from "../common/State";
 import { ReloadAction } from "./DeviceSessionsManager";
 import { StateManager } from "./StateManager";
 import { FrameReporter } from "./FrameReporter";
-import { Multimedia } from "./Multimedia";
+import { ScreenCapture } from "./ScreenCapture";
 import { disposeAll } from "../utilities/disposables";
 
 const MAX_URL_HISTORY_SIZE = 20;
@@ -79,7 +79,7 @@ export class DeviceSession implements Disposable {
   private cancelToken: CancelToken = new CancelToken();
   private watchProjectSubscription: Disposable;
   private frameReporter: FrameReporter;
-  private multimedia: Multimedia;
+  private screenCapture: ScreenCapture;
 
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
@@ -125,12 +125,12 @@ export class DeviceSession implements Disposable {
     );
     this.disposables.push(this.frameReporter);
 
-    this.multimedia = new Multimedia(
-      this.stateManager.getDerived("multimedia"),
+    this.screenCapture = new ScreenCapture(
+      this.stateManager.getDerived("screenCapture"),
       this.device,
       this.applicationContext
     );
-    this.disposables.push(this.multimedia);
+    this.disposables.push(this.screenCapture);
 
     this.devtools = this.makeDevtools();
     this.metro = new MetroLauncher(this.devtools);
@@ -773,27 +773,27 @@ export class DeviceSession implements Disposable {
   // #region Recording
 
   public async toggleRecording() {
-    this.multimedia.toggleRecording();
+    this.screenCapture.toggleRecording();
   }
 
   public startRecording() {
-    this.multimedia.startRecording();
+    this.screenCapture.startRecording();
   }
 
   public async captureAndStopRecording() {
-    this.multimedia.captureAndStopRecording();
+    this.screenCapture.captureAndStopRecording();
   }
 
   public async captureReplay() {
-    this.multimedia.captureReplay();
+    this.screenCapture.captureReplay();
   }
 
   public async captureScreenshot() {
-    this.multimedia.captureScreenshot();
+    this.screenCapture.captureScreenshot();
   }
 
   public async getScreenshot() {
-    return this.multimedia.getScreenshot();
+    return this.screenCapture.getScreenshot();
   }
 
   // #endregion Recording
