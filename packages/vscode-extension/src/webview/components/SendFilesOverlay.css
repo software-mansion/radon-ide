@@ -8,12 +8,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1;
   position: relative;
   padding: 2px;
   transform: translateX(-2px) translateY(-2px);
   opacity: 0;
   transition: opacity 0.3s ease-in-out;
+}
+
+.send-files-overlay * {
+  pointer-events: none;
 }
 
 .send-files-overlay.visible {
@@ -39,7 +42,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2;
   background-color: transparent;
   max-width: 90%;
   word-break: break-word;

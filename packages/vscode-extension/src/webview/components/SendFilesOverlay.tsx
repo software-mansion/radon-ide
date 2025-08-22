@@ -2,8 +2,10 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 import { VscodeProgressRing } from "@vscode-elements/react-elements";
 import "./Preview.css";
 import "./SendFilesOverlay.css";
+import { use$ } from "@legendapp/state/react";
 import { useProject } from "../providers/ProjectProvider";
 import classNames from "classnames";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const RETAIN_SUCCESS_SCREEN = 1000; // ms
 const RETAIN_ERROR_SCREEN = 3000; // ms
@@ -14,17 +16,18 @@ const RETAIN_ERROR_SCREEN = 3000; // ms
 export function SendFilesOverlay() {
   const { project } = useProject();
   const [isVisible, setIsVisible] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
-  const [fileCount, setFileCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState("error");
+  const store$ = useSelectedDeviceSessionState();
+  const sendingFiles = use$(store$.sendingFiles);
+  const fileCount = sendingFiles.length;
+  const isLoading = fileCount > 0;
 
   const resetOverlayState = useCallback(() => {
     setIsSuccess(false);
     setIsError(false);
     setIsVisible(false);
-    setFileCount(0);
     setErrorMessage("");
   }, []);
 
@@ -54,9 +57,7 @@ export function SendFilesOverlay() {
         onDrop: async (ev: React.DragEvent) => {
           ev.preventDefault();
           ev.stopPropagation();
-          setIsLoading(true);
           const files = ev.dataTransfer.files;
-          setFileCount(files.length);
 
           try {
             const filePromises = [];
@@ -72,10 +73,8 @@ export function SendFilesOverlay() {
             }
 
             await Promise.all(filePromises);
-            setIsLoading(false);
             setIsSuccess(true);
           } catch (error) {
-            setIsLoading(false);
             setIsError(true);
             // Set a user-friendly error message
             if (error instanceof Error && error.message) {

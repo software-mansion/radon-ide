@@ -518,7 +518,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    this.deviceSession.sendFileToDevice(fileName, data);
+    await this.deviceSession.sendFileToDevice(fileName, data);
   }
 
   // #endregion

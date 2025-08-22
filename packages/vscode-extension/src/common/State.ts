@@ -78,6 +78,7 @@ export type FrameReportingState = {
 
 export type DeviceSessionStore = {
   frameReporting: FrameReportingState;
+  sendingFiles: string[];
 };
 
 // #endregion Device Session
@@ -194,6 +195,7 @@ export const initialDeviceSessionStore: DeviceSessionStore = {
     enabled: false,
     frameReport: null,
   },
+  sendingFiles: [],
 };
 
 export const initialState: State = {
