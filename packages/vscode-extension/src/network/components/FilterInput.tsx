@@ -16,6 +16,7 @@ type ScrollingOptions = {
 const INPUT_LEFT_PADDING = 10;
 const INPUT_UPDATE_TIMEOUT = 10;
 const BADGE_HIGHLIGHT_TIMEOUT = 600;
+const SCROLL_SAFETY_PADDING = 50;
 
 function isWhitespace(str: string) {
   return str.trim() === "";
@@ -88,7 +89,9 @@ function FilterInput({ placeholder }: FilterInputProps) {
       return;
     }
 
+    // Declare default options if not provided
     const { padding = INPUT_LEFT_PADDING, behavior = "smooth" } = options;
+
     const wrapperRect = wrapper.getBoundingClientRect();
     const wrapperScrollLeft = wrapper.scrollLeft;
     const elementRect = element.getBoundingClientRect();
@@ -125,20 +128,25 @@ function FilterInput({ placeholder }: FilterInputProps) {
   };
 
   const scrollInputIntoView = () => {
-    if (containerRef.current && filterInputRef.current) {
-      const wrapper = wrapperRef.current;
-      const inputWrapper = inputWithSuggestionRef.current;
-
-      if (!wrapper || !inputWrapper) {
-        return;
-      }
-      // If no badges, add left padding
-      const scrollingOptions: ScrollingOptions =
-        filterBadges.length === 0
-          ? { behavior: "auto", padding: INPUT_LEFT_PADDING }
-          : { padding: INPUT_LEFT_PADDING };
-      scrollElementIntoView(inputWrapper, scrollingOptions);
+    if (!containerRef.current || !filterInputRef.current) {
+      return;
     }
+
+    const outerWrapper = wrapperRef.current;
+    const inputWrapper = inputWithSuggestionRef.current;
+    if (!outerWrapper || !inputWrapper) {
+      return;
+    }
+
+    // Quit early if input is already visible, prevents unwanted behaviour
+    const isInputVisible =
+      inputWrapper.offsetLeft < outerWrapper.clientWidth - SCROLL_SAFETY_PADDING;
+    if (isInputVisible) {
+      return;
+    }
+
+    const scrollingOptions: ScrollingOptions = { padding: INPUT_LEFT_PADDING };
+    scrollElementIntoView(inputWrapper, scrollingOptions);
   };
 
   const scrollBadgeIntoView = (badgeIndex: number, centerInViewport: boolean = false) => {
