@@ -35,7 +35,6 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { ToolKey } from "./tools";
 import { ApplicationContext } from "./ApplicationContext";
-import { BuildCache } from "../builders/BuildCache";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
@@ -44,6 +43,7 @@ import { DevicePlatform, DeviceSessionStore } from "../common/State";
 import { ReloadAction } from "./DeviceSessionsManager";
 import { StateManager } from "./StateManager";
 import { FrameReporter } from "./FrameReporter";
+import { ScreenCapture } from "./ScreenCapture";
 import { disposeAll } from "../utilities/disposables";
 
 const MAX_URL_HISTORY_SIZE = 20;
@@ -74,10 +74,10 @@ export class DeviceSession implements Disposable {
   private maybeBuildResult: BuildResult | undefined;
   private devtools: Devtools;
   private buildManager: BuildManager;
-  private buildCache: BuildCache;
   private cancelToken: CancelToken = new CancelToken();
   private watchProjectSubscription: Disposable;
   private frameReporter: FrameReporter;
+  private screenCapture: ScreenCapture;
 
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
@@ -86,7 +86,7 @@ export class DeviceSession implements Disposable {
   private navigationHistory: NavigationHistoryItem[] = [];
   private navigationRouteList: NavigationRoute[] = [];
   private navigationHomeTarget: NavigationHistoryItem | undefined;
-  private hasStaleBuildCache = false;
+  private isUsingStaleBuild = false;
   private isRecordingScreen = false;
   private applicationSession: ApplicationSession | undefined;
 
@@ -123,11 +123,17 @@ export class DeviceSession implements Disposable {
     );
     this.disposables.push(this.frameReporter);
 
+    this.screenCapture = new ScreenCapture(
+      this.stateManager.getDerived("screenCapture"),
+      this.device,
+      this.applicationContext
+    );
+    this.disposables.push(this.screenCapture);
+
     this.devtools = this.makeDevtools();
     this.metro = new MetroLauncher(this.devtools);
     this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
 
-    this.buildCache = this.applicationContext.buildCache;
     this.buildManager = this.applicationContext.buildManager;
 
     this.watchProjectSubscription = watchProjectFiles(this.onProjectFilesChanged);
@@ -142,7 +148,7 @@ export class DeviceSession implements Disposable {
       navigationRouteList: this.navigationRouteList,
       deviceInfo: this.device.deviceInfo,
       previewURL: this.previewURL,
-      hasStaleBuildCache: this.hasStaleBuildCache,
+      isUsingStaleBuild: this.isUsingStaleBuild,
       isRecordingScreen: this.isRecordingScreen,
     };
     if (this.status === "starting") {
@@ -175,7 +181,7 @@ export class DeviceSession implements Disposable {
     this.startupMessage = startupMessage;
     this.stageProgress = undefined;
     this.fatalError = undefined;
-    this.hasStaleBuildCache = false;
+    this.isUsingStaleBuild = false;
     this.navigationHomeTarget = undefined;
     this.emitStateChange();
   }
@@ -186,31 +192,27 @@ export class DeviceSession implements Disposable {
     this.emitStateChange();
   }
 
-  private onProjectFilesChanged = throttleAsync(async () => {
-    const appRoot = this.applicationContext.appRootFolder;
-    const launchConfig = this.applicationContext.launchConfig;
-    const hasCachedBuild = this.applicationContext.buildCache.hasCachedBuild({
-      platform: this.platform,
-      appRoot,
-      env: launchConfig.env,
-    });
-    const platformKey: "ios" | "android" = this.platform === DevicePlatform.IOS ? "ios" : "android";
-    const fingerprintCommand = launchConfig.customBuild?.[platformKey]?.fingerprintCommand;
-    if (hasCachedBuild) {
-      const fingerprint = await this.applicationContext.buildCache.calculateFingerprint({
-        appRoot,
-        env: launchConfig.env,
-        fingerprintCommand,
-      });
-      const isCacheStale = await this.applicationContext.buildCache.isCacheStale(fingerprint, {
-        platform: this.platform,
-        appRoot,
-        env: launchConfig.env,
-      });
+  private async isBuildStale(build: BuildResult) {
+    const buildType = await inferBuildType(this.platform, this.applicationContext.launchConfig);
+    const currentBuildConfig = createBuildConfig(
+      this.device,
+      this.applicationContext.launchConfig,
+      buildType
+    );
+    const currentFingerprint =
+      await this.buildManager.calculateBuildFingerprint(currentBuildConfig);
+    return currentFingerprint !== build.fingerprint;
+  }
 
-      if (isCacheStale) {
-        this.onCacheStale();
-      }
+  private onProjectFilesChanged = throttleAsync(async () => {
+    const lastSuccessfulBuild = this.maybeBuildResult;
+    if (!lastSuccessfulBuild || this.status !== "running") {
+      // we only monitor for stale builds when the session is in 'running' state
+      return;
+    }
+    if (await this.isBuildStale(lastSuccessfulBuild)) {
+      this.isUsingStaleBuild = true;
+      this.emitStateChange();
     }
   }, CACHE_STALE_THROTTLE_MS);
 
@@ -224,17 +226,6 @@ export class DeviceSession implements Disposable {
   }, 100);
 
   //#endregion
-
-  onCacheStale = () => {
-    if (this.status === "running") {
-      // we only consider "stale cache" in a non-error state that happens
-      // after the launch phase if complete. Otherwsie, it may be a result of
-      // the build process that triggers the callback in which case we don't want
-      // to warn users about it.
-      this.hasStaleBuildCache = true;
-      this.emitStateChange();
-    }
-  };
 
   private makeDevtools() {
     const devtools = new Devtools();
@@ -269,7 +260,6 @@ export class DeviceSession implements Disposable {
   public async dispose() {
     this.cancelToken?.cancel();
     await this.deactivate();
-    this.watchProjectSubscription.dispose();
 
     await this.applicationSession?.dispose();
     this.applicationSession = undefined;
@@ -449,23 +439,8 @@ export class DeviceSession implements Disposable {
       platform: this.platform,
     });
 
-    const launchConfig = this.applicationContext.launchConfig;
-    const platformKey = this.platform === DevicePlatform.IOS ? "ios" : "android";
-    const fingerprintOptions = {
-      appRoot: this.applicationContext.appRootFolder,
-      env: launchConfig.env,
-      fingerprintCommand: launchConfig.customBuild?.[platformKey]?.fingerprintCommand,
-    };
-
     this.resetStartingState();
-    const currentFingerprint = await this.buildCache.calculateFingerprint(fingerprintOptions);
-    if (
-      await this.buildCache.isCacheStale(currentFingerprint, {
-        platform: this.platform,
-        appRoot: this.applicationContext.appRootFolder,
-        env: launchConfig.env,
-      })
-    ) {
+    if (this.maybeBuildResult && (await this.isBuildStale(this.maybeBuildResult))) {
       await this.restartDevice({ forceClean: false });
       return;
     }
@@ -607,34 +582,27 @@ export class DeviceSession implements Disposable {
     // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
     const buildDependenciesChanged = await this.checkBuildDependenciesChanged(this.platform);
 
-    const buildConfig = createBuildConfig(
-      this.platform,
-      clean || buildDependenciesChanged,
-      launchConfiguration,
-      buildType
-    );
-    const buildOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
-      this.platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
-    );
+    const buildConfig = createBuildConfig(this.device, launchConfiguration, buildType);
 
-    const dependencyManager = this.applicationContext.applicationDependencyManager;
-    await dependencyManager.ensureDependenciesForBuild(
-      buildConfig,
-      buildOutputChannel,
-      cancelToken
-    );
-
-    this.hasStaleBuildCache = false;
-    this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, {
+    const buildOptions = {
+      forceCleanBuild: clean || buildDependenciesChanged,
+      buildOutputChannel: this.outputChannelRegistry.getOrCreateOutputChannel(
+        this.platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
+      ),
+      cancelToken,
       progressListener: throttle((stageProgress: number) => {
         if (this.startupMessage === StartupMessage.Building) {
           this.stageProgress = stageProgress;
           this.emitStateChange();
         }
       }, 100),
-      cancelToken,
-      buildOutputChannel,
-    });
+    };
+
+    const dependencyManager = this.applicationContext.applicationDependencyManager;
+    await dependencyManager.ensureDependenciesForBuild(buildConfig, buildOptions);
+
+    this.isUsingStaleBuild = false;
+    this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, buildOptions);
     const buildDurationSec = (Date.now() - buildStartTime) / 1000;
     Logger.info("Build completed in", buildDurationSec.toFixed(2), "sec.");
     getTelemetryReporter().sendTelemetryEvent(
@@ -761,25 +729,33 @@ export class DeviceSession implements Disposable {
     this.frameReporter.stopReportingFrameRate();
   }
 
+  // #region Recording
+
+  public async toggleRecording() {
+    this.screenCapture.toggleRecording();
+  }
+
   public startRecording() {
-    this.isRecordingScreen = true;
-    this.emitStateChange();
-    return this.device.startRecording();
+    this.screenCapture.startRecording();
   }
 
-  public async captureAndStopRecording(rotation: DeviceRotation) {
-    this.isRecordingScreen = false;
-    this.emitStateChange();
-    return this.device.captureAndStopRecording(rotation);
+  public async captureAndStopRecording() {
+    this.screenCapture.captureAndStopRecording();
   }
 
-  public async captureReplay(rotation: DeviceRotation) {
-    return this.device.captureReplay(rotation);
+  public async captureReplay() {
+    this.screenCapture.captureReplay();
   }
 
-  public async captureScreenshot(rotation: DeviceRotation) {
-    return this.device.captureScreenshot(rotation);
+  public async captureScreenshot() {
+    this.screenCapture.captureScreenshot();
   }
+
+  public async getScreenshot() {
+    return this.screenCapture.getScreenshot();
+  }
+
+  // #endregion Recording
 
   public sendTouches(
     touches: Array<TouchPoint>,
@@ -876,7 +852,8 @@ export class DeviceSession implements Disposable {
     this.inspectorBridge.sendShowStorybookStoryRequest(componentTitle, storyName);
   }
 
-  //#region Methods delegated to Application Session
+  //#region Application Session
+
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
     this.applicationSession?.updateToolEnabledState(toolName, enabled);
   }
