@@ -35,38 +35,6 @@ export default function FeatureSliderLanding() {
     index: 0,
   });
 
-  // const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // const resetAutoSlide = () => {
-  //   if (timeoutRef.current) {
-  //     clearTimeout(timeoutRef.current);
-  //   }
-
-  //   timeoutRef.current = setTimeout(() => {
-  //     setActiveItem((prev) => {
-  //       const nextIndex = (prev.index + 1) % features.length;
-  //       return { index: nextIndex };
-  //     });
-  //   }, 6000);
-  // };
-
-  // useEffect(() => {
-  //   resetAutoSlide();
-
-  //   return () => {
-  //     if (timeoutRef.current) {
-  //       clearTimeout(timeoutRef.current);
-  //     }
-  //   };
-  // }, [activeItem]);
-
-  // const handleSetActiveItem = (value: ActiveItem | null) => {
-  //   if (value) {
-  //     setActiveItem(value);
-  //     resetAutoSlide();
-  //   }
-  // };
-
   useEffect(() => {
     const timeout = setTimeout(() => {
       setActiveItem((prev) => {
@@ -100,8 +68,8 @@ export default function FeatureSliderLanding() {
             key={activeItem.index}
             initial={{ opacity: 0.7 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.6 }}
+            exit={{ opacity: 0.7 }}
+            transition={{ duration: 1 }}
             src="../img/screenshot_hero.png"></motion.img>
         </div>
       </div>

@@ -1,25 +1,24 @@
 .cardContainer {
   display: flex;
   flex-direction: column;
-  gap: 40px;
-  max-width: 400px;
   width: 100%;
-  background-color: transparent;
+  max-width: 400px;
+  gap: 40px;
 }
 
-.space {
+.cardContainer.active {
   padding-top: 40px;
 }
 
 .cardInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  position: relative;
+  gap: 8px;
 }
 
-.smallGap {
-  gap: 8px;
+.cardInfo.active {
+  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
 .cardInfo button {
@@ -67,7 +66,16 @@
 
 .hiddenContainer {
   overflow: hidden;
-  transition: all 600ms ease-in-out;
+  transition: all 2000ms ease;
+  opacity: 0;
+}
+
+.hiddenContainer.slide {
+  opacity: 1;
+}
+
+.fadeInUp_animation {
+  animation: 1.5s fadeInUp;
 }
 
 .hiddenBadge {

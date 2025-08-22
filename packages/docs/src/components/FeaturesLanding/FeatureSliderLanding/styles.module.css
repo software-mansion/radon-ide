@@ -5,10 +5,16 @@
   border-bottom: var(--radon-border-layout);
   padding: 80px 0 80px 80px;
   justify-content: space-between;
-  align-items: center;
+  align-items: stretch;
   gap: 80px;
 }
 
+.sliderContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 40px;
+}
 .imageBackground {
   background-color: var(--radon-gradient-green);
   overflow: hidden;

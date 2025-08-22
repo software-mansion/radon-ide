@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import styles from "./styles.module.css";
 import clsx from "clsx";
+import { motion, LayoutGroup } from "motion/react";
 
 export interface ActiveItem {
   index: number;
@@ -41,9 +42,14 @@ export default function FeatureCardLanding({
   };
 
   return (
-    <div className={clsx(styles.cardContainer, isExpanded && styles.space)}>
-      <div className={clsx(styles.cardInfo, !isExpanded && styles.smallGap)}>
-        <div role="region" aria-labelledby={`feature-${index}`}>
+    <div className={clsx(styles.cardContainer, isExpanded && index !== 0 && styles.active)}>
+      <LayoutGroup>
+        <motion.div
+          layout
+          key={index}
+          role="region"
+          aria-labelledby={`feature-${index}`}
+          className={clsx(styles.cardInfo, isExpanded && styles.active)}>
           <div
             className={clsx(styles.hiddenBadge, isExpanded && styles.slide)}
             style={{
@@ -53,13 +59,11 @@ export default function FeatureCardLanding({
               {badge}
             </div>
           </div>
-        </div>
-        <button id={`feature-${index}`} aria-expanded={isExpanded} onClick={() => toggleAnswer()}>
-          <div className={clsx(styles.cardTitle, isExpanded && styles.activeTitle)}>{title}</div>
-        </button>
-        <div role="region" aria-labelledby={`feature-${index}`}>
+          <button id={`feature-${index}`} aria-expanded={isExpanded} onClick={() => toggleAnswer()}>
+            <div className={clsx(styles.cardTitle, isExpanded && styles.activeTitle)}>{title}</div>
+          </button>
           <div
-            className={styles.hiddenContainer}
+            className={clsx(styles.hiddenContainer, isExpanded && styles.slide)}
             style={{
               maxHeight: isExpanded ? contentRef.current?.clientHeight ?? 0 : 0,
             }}>
@@ -72,8 +76,8 @@ export default function FeatureCardLanding({
               </div>
             </div>
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </LayoutGroup>
     </div>
   );
 }
