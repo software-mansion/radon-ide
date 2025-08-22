@@ -14,7 +14,7 @@ on:
       isRecording:
         description: Whether to record video
         required: false
-        default: "false"
+        default: "true"
 
 jobs:
   build-and-test:
