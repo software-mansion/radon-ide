@@ -70,7 +70,9 @@ export async function fillDeviceCreationForm(driver, deviceName) {
 
   const selectedSystemImage = await findAndWaitForElement(
     driver,
-    By.css('[data-test^="creating-device-form-system-image-select-item-"]'),
+    By.css(
+      '[data-test^="creating-device-form-system-image-select-item-"]:not(.select-item-marked)'
+    ),
     "Timed out waiting for an element matching from system image list"
   );
   await selectedSystemImage.click();
@@ -140,7 +142,7 @@ export async function deleteAllDevices(driver) {
       await waitUntilElementGone(
         driver,
         By.css(`[data-test="device-removing-confirmation-view"]`),
-        5000,
+        3000,
         "delete confirmation modal did not disappear"
       );
     }

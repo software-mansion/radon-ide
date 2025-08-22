@@ -3,10 +3,11 @@ import {
   findAndWaitForElementByTag,
 } from "../utils/helpers.js";
 import { openRadonIDEPanel, openRadonSettingsMenu } from "./interactions.js";
-import { sharedTestLifecycle } from "./setupTest.js";
+import { VSBrowser } from "vscode-extension-tester";
+
+import { get } from "./setupTest.js";
 
 describe("Main interface buttons tests", () => {
-  const get = sharedTestLifecycle();
   let driver;
 
   beforeEach(async function () {
@@ -40,7 +41,6 @@ describe("Main interface buttons tests", () => {
   });
 
   it("Should open manage devices window", async function () {
-    const { driver } = get();
     await openRadonSettingsMenu(driver);
     await findAndClickElementByTag(
       driver,

@@ -77,7 +77,7 @@ echo "installing test dependencies on VM and running tests..."
 ssh -i ./scripts/id_vm_mac "$VM_USER@$VM_IP" <<EOF
 cd "$REMOTE_PATH"
 npm install
-npm run get-test-app
+npm run get-test-app -- react-native-77
 npm run setup-run-tests
 cd ..
 rm -rf "$REMOTE_PATH"

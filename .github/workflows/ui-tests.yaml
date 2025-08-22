@@ -7,6 +7,32 @@ on:
         description: Node.js version to use
         required: false
         default: "22"
+      testApp:
+        type: choice
+        description: Project app name to test
+        required: true
+        default: "react-native-77"
+        options:
+          - "react-native-73"
+          - "react-native-74"
+          - "react-native-75"
+          - "react-native-76"
+          - "react-native-77"
+          - "react-native-78"
+          - "react-native-79"
+          - "react-native-80"
+          - "react-native-81"
+          - "expo-50-dev-client"
+          - "expo-51-dev-client"
+          - "expo-51"
+          - "expo-52-eas"
+          - "expo-52-prebuild-with-plugins"
+          - "expo-53"
+          - "expo-54"
+          - "expo-go"
+          - "expo-router"
+          - "nx-monorepo"
+          - "pnpm-monorepo"
 
 jobs:
   build-and-test:
@@ -35,8 +61,8 @@ jobs:
       - name: Install vsce CLI
         run: npm i -g @vscode/vsce
 
-      - name: get test app
-        run: npm run get-test-app
+      - name: Get test app
+        run: npm run get-test-app -- ${{ github.event.inputs.testApp }}
         working-directory: packages/vscode-extension-tester
 
       - name: Build VSIX package
@@ -45,11 +71,30 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Show Xcode and available simulators
-        run: |
-          xcodebuild -version
-          xcrun simctl list devices
+      - name: Install ffmpeg
+        run: brew install ffmpeg
 
       - name: Run setup-run-tests
         run: npm run setup-run-tests
         working-directory: packages/vscode-extension-tester
+        env:
+          PROJECT_NAME: ${{ github.event.inputs.testApp }}
+
+      - name: make video
+        if: always()
+        run: ffmpeg -framerate 10 -i frame-%04d.png -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
+        working-directory: packages/vscode-extension-tester/videos
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-ui-screenshots
+          path: packages/vscode-extension-tester/screenshots/
+
+      - name: Upload video recording
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-ui-recording
+          path: packages/vscode-extension-tester/videos/vscode-ui-recording.mp4
