@@ -63,7 +63,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [suggestion, setSuggestion] = useState("");
   const [inputWidth, setInputWidth] = useState<number>(20);
-  const [focusedBadgeIndex, setFocusedBadgeIndex] = useState<number>(-1); // -1 means no badge is focused
+  const [focusedBadgeIndex, setFocusedBadgeIndex] = useState<number | null>(null);
   const [highlightedBadgeId, setHighlightedBadgeId] = useState<string | null>(null);
 
   const focusFilterInput = () => {
@@ -232,11 +232,11 @@ function FilterInput({ placeholder }: FilterInputProps) {
     setFilterBadges(newBadges);
 
     // Set proper focus
-    if (focusedBadgeIndex === -1) {
+    if (focusedBadgeIndex === null) {
       focusFilterInput();
       scrollInputIntoView();
     } else if (newBadges.length === 0) {
-      setFocusedBadgeIndex(-1);
+      setFocusedBadgeIndex(null);
       focusFilterInput();
     } else if (index === focusedBadgeIndex) {
       const newFocusIndex = index === filterBadges.length - 1 ? index - 1 : index;
@@ -313,7 +313,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
 
   // Focus container when navigating to badges, but avoid interfering with input focus
   useEffect(() => {
-    if (focusedBadgeIndex >= 0) {
+    if (focusedBadgeIndex !== null) {
       containerRef.current?.focus();
       scrollBadgeIntoView(focusedBadgeIndex);
     }
@@ -344,12 +344,12 @@ function FilterInput({ placeholder }: FilterInputProps) {
    * ArrowLeft - Navigate from input to last badge or between badges
    */
   const handleArrowLeft = (e: React.KeyboardEvent<HTMLInputElement>, currentPosition: number) => {
-    if (currentPosition === 0 && filterBadges.length > 0 && focusedBadgeIndex === -1) {
+    if (currentPosition === 0 && filterBadges.length > 0 && focusedBadgeIndex === null) {
       // Move from input to last badge
       e.preventDefault();
       setFocusedBadgeIndex(filterBadges.length - 1);
       filterInputRef.current?.blur();
-    } else if (focusedBadgeIndex > 0) {
+    } else if (focusedBadgeIndex !== null && focusedBadgeIndex > 0) {
       // Move to previous badge
       e.preventDefault();
       setFocusedBadgeIndex(focusedBadgeIndex - 1);
@@ -360,12 +360,12 @@ function FilterInput({ placeholder }: FilterInputProps) {
    * ArrowRight - Navigate from badge to input or next badge
    */
   const handleArrowRight = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (focusedBadgeIndex >= 0) {
+    if (focusedBadgeIndex !== null) {
       e.preventDefault();
 
       if (focusedBadgeIndex === filterBadges.length - 1) {
         // Move from last badge to input
-        setFocusedBadgeIndex(-1);
+        setFocusedBadgeIndex(null);
         focusFilterInput();
         setFilterInputCursorPosition(0);
       } else {
@@ -379,7 +379,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
    * Delete - Remove focused badge
    */
   const handleDelete = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (focusedBadgeIndex >= 0) {
+    if (focusedBadgeIndex !== null) {
       e.preventDefault();
       removeBadge(focusedBadgeIndex);
     }
@@ -393,13 +393,13 @@ function FilterInput({ placeholder }: FilterInputProps) {
     currentPosition: number,
     hasSelection: boolean
   ) => {
-    if (focusedBadgeIndex >= 0) {
+    if (focusedBadgeIndex !== null) {
       // Functionality the same as when pressing Delete button
       removeBadge(focusedBadgeIndex);
     } else if (
       currentPosition === 0 &&
       filterBadges.length > 0 &&
-      focusedBadgeIndex === -1 &&
+      focusedBadgeIndex === null &&
       !hasSelection
     ) {
       // Remove last badge when backspace at beginning of input (only if no text is selected)
@@ -518,7 +518,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
 
   const handleInputFocus = () => {
     setIsFocused(true);
-    setFocusedBadgeIndex(-1);
+    setFocusedBadgeIndex(null);
   };
 
   const handleInputBlur = () => {
@@ -540,7 +540,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
 
   const handleContainerKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     // Only handle keys when a badge is focused
-    if (focusedBadgeIndex >= 0) {
+    if (focusedBadgeIndex !== null) {
       handleKeyDown(e as React.KeyboardEvent<HTMLInputElement>);
     }
   };
@@ -551,7 +551,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
       className={`filter-input-container network-filter-input`}
       onClick={handleInputContainerClick}
       onKeyDown={handleContainerKeyDown}
-      tabIndex={focusedBadgeIndex >= 0 ? 0 : -1}>
+      tabIndex={focusedBadgeIndex !== null ? 0 : -1}>
       <div className="filter-input-wrapper" ref={wrapperRef}>
         {filterBadges.map((badge, index) => (
           <div
