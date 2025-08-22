@@ -5,8 +5,7 @@ if [ "$#" -eq 0 ]; then
 else
   TEST_FILES=""
   for num in "$@"; do
-    # dodaj wiodące zero do numerów <10
-    if [ "$num" -lt 10 ]; then
+    if (( num < 10 )); then
       num="0$num"
     fi
     TEST_FILES="$TEST_FILES ./ui-tests/${num}-*.test.js"
