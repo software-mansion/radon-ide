@@ -32,9 +32,25 @@ jobs:
       - name: Enforce HTTPS for submodules
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
+      - name: Cache npm (extension)
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('packages/vscode-extension/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install dependencies (extension)
         run: npm ci
         working-directory: packages/vscode-extension
+
+      - name: Cache npm (tester)
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('packages/vscode-extension-tester/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Install dependencies (tester)
         run: npm ci
@@ -53,9 +69,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Install ffmpeg
+      - name: Setup ffmpeg
         if: ${{ github.event.inputs.isRecording == 'true' }}
-        run: brew install ffmpeg
+        uses: AnimMouse/setup-ffmpeg@v1
 
       - name: Run setup-run-tests
         run: npm run setup-run-tests
