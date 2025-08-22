@@ -1,18 +1,8 @@
-import {
-  PropsWithChildren,
-  useContext,
-  createContext,
-  useState,
-  useEffect,
-  Dispatch,
-  SetStateAction,
-  useMemo,
-} from "react";
+import { PropsWithChildren, useContext, createContext, useState, useEffect, useMemo } from "react";
 import { makeProxy } from "../utilities/rpc";
 import {
   DeviceSessionState,
   DeviceSettings,
-  MultimediaData,
   ProjectInterface,
   ProjectState,
 } from "../../common/Project";
@@ -43,16 +33,12 @@ interface ProjectContextProps {
   deviceSettings: DeviceSettings;
   project: ProjectInterface;
   hasActiveLicense: boolean;
-  replayData: MultimediaData | undefined;
-  setReplayData: Dispatch<SetStateAction<MultimediaData | undefined>>;
 }
 
 const defaultProjectState: ProjectState = {
   selectedSessionId: null,
   deviceSessions: {},
-  previewZoom: undefined,
   appRootPath: "./",
-  initialized: false,
   customLaunchConfigurations: [],
   selectedLaunchConfiguration: {
     kind: LaunchConfigurationKind.Detected,
@@ -89,15 +75,12 @@ const ProjectContext = createContext<ProjectContextProps>({
   selectedDeviceSession: undefined,
   project,
   hasActiveLicense: false,
-  replayData: undefined,
-  setReplayData: () => {},
 });
 
 export default function ProjectProvider({ children }: PropsWithChildren) {
   const [projectState, setProjectState] = useState<ProjectState>(defaultProjectState);
   const [deviceSettings, setDeviceSettings] = useState<DeviceSettings>(defaultDeviceSettings);
   const [hasActiveLicense, setHasActiveLicense] = useState(true);
-  const [replayData, setReplayData] = useState<MultimediaData | undefined>(undefined);
 
   useEffect(() => {
     project.getProjectState().then(setProjectState);
@@ -109,7 +92,6 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     project.hasActiveLicense().then(setHasActiveLicense);
     project.addListener("licenseActivationChanged", setHasActiveLicense);
 
-    project.addListener("replayDataCreated", setReplayData);
     return () => {
       project.removeListener("projectStateChanged", setProjectState);
       project.removeListener("deviceSettingsChanged", setDeviceSettings);
@@ -127,10 +109,8 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
       deviceSettings,
       project,
       hasActiveLicense,
-      replayData,
-      setReplayData,
     };
-  }, [projectState, deviceSettings, project, hasActiveLicense, replayData, setReplayData]);
+  }, [projectState, deviceSettings, project, hasActiveLicense]);
 
   return <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>;
 }

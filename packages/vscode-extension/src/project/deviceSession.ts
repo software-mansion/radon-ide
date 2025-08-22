@@ -43,6 +43,7 @@ import { DevicePlatform, DeviceSessionStore } from "../common/State";
 import { ReloadAction } from "./DeviceSessionsManager";
 import { StateManager } from "./StateManager";
 import { FrameReporter } from "./FrameReporter";
+import { ScreenCapture } from "./ScreenCapture";
 import { disposeAll } from "../utilities/disposables";
 
 const MAX_URL_HISTORY_SIZE = 20;
@@ -76,6 +77,7 @@ export class DeviceSession implements Disposable {
   private cancelToken: CancelToken = new CancelToken();
   private watchProjectSubscription: Disposable;
   private frameReporter: FrameReporter;
+  private screenCapture: ScreenCapture;
 
   private status: DeviceSessionStatus = "starting";
   private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
@@ -120,6 +122,13 @@ export class DeviceSession implements Disposable {
       this.device
     );
     this.disposables.push(this.frameReporter);
+
+    this.screenCapture = new ScreenCapture(
+      this.stateManager.getDerived("screenCapture"),
+      this.device,
+      this.applicationContext
+    );
+    this.disposables.push(this.screenCapture);
 
     this.devtools = this.makeDevtools();
     this.metro = new MetroLauncher(this.devtools);
@@ -720,25 +729,33 @@ export class DeviceSession implements Disposable {
     this.frameReporter.stopReportingFrameRate();
   }
 
+  // #region Recording
+
+  public async toggleRecording() {
+    this.screenCapture.toggleRecording();
+  }
+
   public startRecording() {
-    this.isRecordingScreen = true;
-    this.emitStateChange();
-    return this.device.startRecording();
+    this.screenCapture.startRecording();
   }
 
-  public async captureAndStopRecording(rotation: DeviceRotation) {
-    this.isRecordingScreen = false;
-    this.emitStateChange();
-    return this.device.captureAndStopRecording(rotation);
+  public async captureAndStopRecording() {
+    this.screenCapture.captureAndStopRecording();
   }
 
-  public async captureReplay(rotation: DeviceRotation) {
-    return this.device.captureReplay(rotation);
+  public async captureReplay() {
+    this.screenCapture.captureReplay();
   }
 
-  public async captureScreenshot(rotation: DeviceRotation) {
-    return this.device.captureScreenshot(rotation);
+  public async captureScreenshot() {
+    this.screenCapture.captureScreenshot();
   }
+
+  public async getScreenshot() {
+    return this.screenCapture.getScreenshot();
+  }
+
+  // #endregion Recording
 
   public sendTouches(
     touches: Array<TouchPoint>,
@@ -835,7 +852,8 @@ export class DeviceSession implements Disposable {
     this.inspectorBridge.sendShowStorybookStoryRequest(componentTitle, storyName);
   }
 
-  //#region Methods delegated to Application Session
+  //#region Application Session
+
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
     this.applicationSession?.updateToolEnabledState(toolName, enabled);
   }

@@ -143,6 +143,8 @@ function AppRootSelect() {
   const store$ = useStore();
   const applicationRoots = use$(store$.applicationRoots);
 
+  const projectInitialized = use$(store$.projectState.initialized);
+
   const {
     selectedLaunchConfiguration: selectedConfiguration,
     customLaunchConfigurations: customConfigurations,
@@ -203,7 +205,7 @@ function AppRootSelect() {
     }
   })();
 
-  useUnknownConfigurationAlert(projectState.initialized && selectedValue === "unknown");
+  useUnknownConfigurationAlert(projectInitialized && selectedValue === "unknown");
 
   const configurationsCount = detectedConfigurations.length + customConfigurations.length;
   const placeholder = configurationsCount === 0 ? "No applications found" : "Select application";
