@@ -11,10 +11,6 @@ function NetworkBar() {
 
   const { filterInvert, isFilterVisible, toggleInvert, toggleFilterVisible } = useNetworkFilter();
 
-  const handleInvertChange = () => {
-    toggleInvert();
-  };
-
   return (
     <div className="network-bar">
       <IconButton
@@ -61,7 +57,7 @@ function NetworkBar() {
         <div className="network-filter">
           <FilterInput placeholder="Filter: search all columns or <column>:<value>" />
           <VscodeCheckbox
-            onChange={handleInvertChange}
+            onChange={toggleInvert}
             className="invert-checkbox"
             label="Invert"
             checked={filterInvert}
