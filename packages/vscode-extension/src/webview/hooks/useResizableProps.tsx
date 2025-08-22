@@ -1,9 +1,9 @@
 import { ResizeCallback } from "re-resizable";
 import { CSSProperties, useCallback, useEffect, useState } from "react";
 import { DeviceProperties } from "../utilities/deviceConstants";
-import { ZoomLevelType } from "../../common/Project";
 import { DEVICE_DEFAULT_SCALE } from "../components/ZoomControls";
 import { useDeviceFrame } from "../Preview/Device/hooks";
+import { ZoomLevelType } from "../../common/State";
 
 type UseResizableProps = {
   wrapperDivRef: React.Ref<HTMLDivElement>;

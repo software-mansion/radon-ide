@@ -235,7 +235,10 @@ export async function calculateMD5(fsPath: string, hash: Hash = createHash("md5"
   return hash;
 }
 
-export async function calculateAppHash(appPath: string) {
+/**
+ * Calculates the md5 hash of the app artifact.
+ */
+export async function calculateAppArtifactHash(appPath: string) {
   const hash = createHash("md5");
   await calculateMD5(appPath, hash);
   return hash.digest("hex");
