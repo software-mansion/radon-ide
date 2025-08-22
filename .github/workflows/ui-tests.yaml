@@ -8,9 +8,26 @@ on:
         required: false
         default: "22"
       testApp:
+        type: choice
         description: Project app name to test
         required: true
         default: "react-native-77"
+        options:
+          - "react-native-76"
+          - "react-native-77"
+          - "react-native-78"
+          - "react-native-79"
+          - "react-native-80"
+          - "react-native-81"
+          - "expo-50-dev-client"
+          - "expo-51-dev-client"
+          - "expo-51"
+          - "expo-52-eas"
+          - "expo-52-prebuild-with-plugins"
+          - "expo-53"
+          - "expo-54"
+          - "expo-go"
+          - "expo-router"
 
 jobs:
   build-and-test:
