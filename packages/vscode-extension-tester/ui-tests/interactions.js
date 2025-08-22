@@ -162,11 +162,14 @@ export async function modifyDeviceName(driver, deviceName, modifiedDeviceName) {
     By.css('[data-test="renaming-device-view-input"]'),
     "Timed out waiting for device name input"
   );
+
+  await driver.executeScript("arguments[0].value = '';", deviceNameInput);
   await deviceNameInput.clear();
+
   await driver.wait(async () => {
     const value = await deviceNameInput.getAttribute("value");
     return value === "";
-  }, 1000);
+  }, 3000);
   deviceNameInput.sendKeys(modifiedDeviceName);
 
   await findAndClickElementByTag(driver, `renaming-device-view-save-button`);
