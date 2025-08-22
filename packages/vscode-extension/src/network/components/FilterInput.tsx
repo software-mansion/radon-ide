@@ -231,8 +231,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
   };
 
   const removeBadge = (index: number) => {
-    const badgeId = filterBadges[index].id;
-    const newBadges = filterBadges.filter((badge) => badge.id !== badgeId);
+    const newBadges = filterBadges.toSpliced(index, 1);
     setFilterBadges(newBadges);
 
     // Set proper focus
@@ -242,14 +241,10 @@ function FilterInput({ placeholder }: FilterInputProps) {
     } else if (newBadges.length === 0) {
       setFocusedBadgeIndex(null);
       focusFilterInput();
-    } else if (index === focusedBadgeIndex) {
-      const newFocusIndex = index === filterBadges.length - 1 ? index - 1 : index;
-      setFocusedBadgeIndex(newFocusIndex);
     } else {
-      const newBadgeIndex = newBadges.findIndex(
-        (badge) => badge.id === filterBadges[focusedBadgeIndex].id
-      );
-      setFocusedBadgeIndex(newBadgeIndex);
+      let newFocusIndex = focusedBadgeIndex > index ? index - 1 : index;
+      newFocusIndex = Math.min(newFocusIndex, newBadges.length - 1);
+      setFocusedBadgeIndex(newFocusIndex);
     }
   };
 
