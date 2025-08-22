@@ -35,6 +35,15 @@
 .table-header-cell button {
   opacity: 0;
   flex-shrink: 0;
+
+  min-width: 20px;
+  min-height: 20px;
+  padding: 5px;
+  border-radius: 5px;
+
+  .codicon{
+    font-size: 13px;
+  }
 }
 
 /* Hide filter button when header is too small to prevent overflow */
