@@ -1,6 +1,9 @@
 import classNames from "classnames";
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useLayoutEffect, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { capitalize } from "lodash";
+import type { VscodeTable as VscodeTableElement } from "@vscode-elements/elements/dist/vscode-table/vscode-table.js";
+import type { VscodeTableRow as VscodeTableRowElement } from "@vscode-elements/elements/dist/vscode-table-row/vscode-table-row";
 import {
   VscodeTable,
   VscodeTableBody,
@@ -9,11 +12,18 @@ import {
   VscodeTableHeaderCell,
   VscodeTableRow,
 } from "@vscode-elements/react-elements";
-import type { VscodeTable as VscodeTableElement } from "@vscode-elements/elements/dist/vscode-table/vscode-table";
-import type { VscodeTableRow as VscodeTableRowElement } from "@vscode-elements/elements/dist/vscode-table-row/vscode-table-row";
-
+import IconButton from "../../webview/components/shared/IconButton";
+import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogUtils";
+import { NetworkLogColumn } from "../types/network";
+import { useNetworkFilter } from "../providers/NetworkFilterProvider";
+import { SortDirection } from "../types/network";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import "./NetworkRequestLog.css";
+
+interface SortState {
+  column: NetworkLogColumn | null;
+  direction: SortDirection | null;
+}
 
 interface NetworkRequestLogProps {
   networkLogs: NetworkLog[];
@@ -23,26 +33,15 @@ interface NetworkRequestLogProps {
 }
 
 type logDetails = {
-  title: string;
-  getValue: (log: NetworkLog) => string | number | undefined;
+  title: NetworkLogColumn;
   getClass?: (log: NetworkLog) => string;
 };
 
-/**
- * Navigates through the shadow DOM hierarchy to find the scrollable container within a VSCode table element.
- *
- * VSCode table elements use shadow DOM structures where the actual scrollable container
- * is nested. The element may be null, as it needs some time after component mount (useEffects)
- * to be rendered, probably due to inner logic of VscodeElements.
- *
- * @param table - The VSCode table element to search within
- * @returns The scrollable container div element if found, null if the table has no shadow root,
- *          or undefined if any intermediate elements in the shadow DOM hierarchy are missing
- */
-function getScrollableTableContainer(table: VscodeTableElement): HTMLDivElement | null | undefined {
-  //@ts-ignore - ignore accessing the private property - needed to avoid ugly selectors
-  return table?._scrollableElement?._scrollableContainer;
-}
+const SCROLL_TO_TOP_TIMEOUT = 200;
+const DEFAULT_SORT_STATE: SortState = {
+  column: null,
+  direction: null,
+};
 
 function getStatusClass(status: number | string | undefined) {
   if (!status) {
@@ -62,42 +61,32 @@ function getStatusClass(status: number | string | undefined) {
 }
 
 const LOG_DETAILS_CONFIG: logDetails[] = [
+  { title: NetworkLogColumn.Name },
   {
-    title: "Name",
-    getValue: (log: NetworkLog) => log.request?.url.split("/").pop() || "(pending)",
-  },
-  {
-    title: "Status",
-    getValue: (log: NetworkLog) => log.response?.status || "(pending)",
+    title: NetworkLogColumn.Status,
     getClass: (log: NetworkLog) => getStatusClass(log.response?.status) + " status",
   },
-  { title: "Method", getValue: (log: NetworkLog) => log.request?.method || "(pending)" },
-  { title: "Type", getValue: (log: NetworkLog) => log.type || "(pending)" },
-  {
-    title: "Size",
-    getValue: (log: NetworkLog) => {
-      const size = log.encodedDataLength;
-      if (!size) {
-        return "(pending)";
-      }
-      const units = ["B", "KB", "MB", "GB", "TB"];
-      let unitIndex = 0;
-      let formattedSize = size;
-      while (formattedSize >= 1024 && unitIndex < units.length - 1) {
-        formattedSize /= 1024;
-        unitIndex++;
-      }
-      return `${parseFloat(formattedSize.toFixed(2) || "")} ${units[unitIndex]}`;
-    },
-  },
-  {
-    title: "Time",
-    getValue: (log: NetworkLog) =>
-      log.timeline?.durationMs ? `${log.timeline?.durationMs} ms` : "(pending)",
-  },
+  { title: NetworkLogColumn.Method },
+  { title: NetworkLogColumn.Type },
+  { title: NetworkLogColumn.Size },
+  { title: NetworkLogColumn.Time },
 ];
 
-const SCROLL_TO_TOP_TIMEOUT = 200;
+/**
+ * Navigates through the shadow DOM hierarchy to find the scrollable container within a VSCode table element.
+ *
+ * VSCode table elements use shadow DOM structures where the actual scrollable container
+ * is nested. The element may be null, as it needs some time after component mount (useEffects)
+ * to be rendered, probably due to inner logic of VscodeElements.
+ *
+ * @param table - The VSCode table element to search within
+ * @returns The scrollable container div element if found, null if the table has no shadow root,
+ *          or undefined if any intermediate elements in the shadow DOM hierarchy are missing
+ */
+function getScrollableTableContainer(table: VscodeTableElement): HTMLDivElement | null | undefined {
+  //@ts-ignore - ignore accessing the private property - needed to avoid ugly selectors
+  return table?._scrollableElement?._scrollableContainer;
+}
 
 const NetworkRequestLog = ({
   networkLogs,
@@ -106,6 +95,47 @@ const NetworkRequestLog = ({
   parentHeight,
 }: NetworkRequestLogProps) => {
   const tableRef = useRef<VscodeTableElement>(null);
+  const [sortState, setSortState] = useState<SortState>(DEFAULT_SORT_STATE);
+  const { addColumnFilterToInputField } = useNetworkFilter();
+
+  // Sort the network logs based on current sort state
+  const sortedNetworkLogs = useMemo(() => {
+    return sortNetworkLogs(networkLogs, sortState.column, sortState.direction);
+  }, [networkLogs, sortState]);
+
+  const handleHeaderClick = (column: NetworkLogColumn) => {
+    setSortState((prevState) => {
+      // If clicking on the same column, cycle through: asc -> desc -> null
+      if (prevState.column === column) {
+        switch (prevState.direction) {
+          case SortDirection.Asc:
+            return { column, direction: SortDirection.Desc };
+          case SortDirection.Desc:
+            return { column: null, direction: null };
+          case null:
+          default:
+            return { column, direction: SortDirection.Asc };
+        }
+      }
+      // If clicking on a different column or no current sort, start with ascending
+      return { column, direction: SortDirection.Asc };
+    });
+  };
+
+  const handleHeaderFilterClick = (e: React.MouseEvent, column: NetworkLogColumn) => {
+    // If filter was clicked, do not trigger sorting by stopping propagation
+    e.stopPropagation();
+    addColumnFilterToInputField(column);
+  };
+
+  const getSortIcon = (column: NetworkLogColumn) => {
+    if (sortState.column !== column) {
+      return "hidden"; // No icon when not sorting by this column
+    }
+    return sortState.direction === SortDirection.Asc
+      ? "codicon-chevron-up"
+      : "codicon-chevron-down";
+  };
 
   return (
     <div className="table-container">
@@ -119,11 +149,19 @@ const NetworkRequestLog = ({
           ref={tableRef}>
           <VscodeTableHeader slot="header">
             {LOG_DETAILS_CONFIG.map(({ title }) => (
-              <VscodeTableHeaderCell key={title}>{title}</VscodeTableHeaderCell>
+              <VscodeTableHeaderCell key={title} onClick={() => handleHeaderClick(title)}>
+                <div className="table-header-cell">
+                  <span className="table-header-title">{capitalize(title)}</span>
+                  <IconButton onClick={(e) => handleHeaderFilterClick(e, title)}>
+                    <span className={`codicon codicon-filter-filled`}></span>
+                  </IconButton>
+                  <span className={`codicon ${getSortIcon(title)}`}></span>
+                </div>
+              </VscodeTableHeaderCell>
             ))}
           </VscodeTableHeader>
           <TableBody
-            networkLogs={networkLogs}
+            networkLogs={sortedNetworkLogs}
             selectedNetworkLog={selectedNetworkLog}
             handleSelectedRequest={handleSelectedRequest}
             tableRef={tableRef}
@@ -154,6 +192,7 @@ function TableBody({
   parentHeight,
 }: TableBodyProps) {
   const [selectedRequestOffset, setSelectedRequestOffset] = useState<number>(0);
+  const [cellWidths, setCellWidths] = useState<number[]>([]);
 
   const rowVirtualizer = useVirtualizer<HTMLDivElement, VscodeTableRowElement>({
     count: networkLogs.length,
@@ -162,6 +201,50 @@ function TableBody({
       tableRef.current && (getScrollableTableContainer(tableRef.current) ?? null),
     overscan: ROW_OVERSCAN,
   });
+
+  /**
+   * Updates the cell widths based on the current sash (column bars) positions from the table component.
+   *
+   * This function accesses the private `_sashPositions` property from the table reference
+   * to calculate relative column widths as percentages. It converts absolute sash positions
+   * into relative width percentages for each column, in order to comply with current workings of
+   * VscodeTable.
+   *
+   * This workaround is necessary to prevent improper rendering when modifying row order,
+   * because VscodeTableCell does not update properly upon rearranging the columns.
+   *
+   */
+  const updateCellWidths = () => {
+    const table = tableRef.current;
+    if (!table) {
+      return;
+    }
+
+    // @ts-ignore - private property, but needs to be accessed due to problems with lack
+    // of VscodeTableCell keys, which causes improper rendering upon modifying order of the rows
+    // Sash positions are stored as float array of percentage-offset from the left side of the table.
+    const sashPositions = table._sashPositions || [];
+
+    if (sashPositions.length === 0) {
+      return;
+    }
+
+    // Convert absolute sash positions to relative column widths
+    const columnWidths = sashPositions.map((currentPos: number, index: number) => {
+      const previousPos = index === 0 ? 0 : sashPositions[index - 1];
+      return `${currentPos - previousPos}%`;
+    });
+
+    // Add the width of the last column
+    const lastSashPosition = sashPositions[sashPositions.length - 1];
+    columnWidths.push(`${100 - lastSashPosition}%`);
+
+    setCellWidths(columnWidths);
+  };
+
+  useLayoutEffect(() => {
+    updateCellWidths();
+  }, [networkLogs]);
 
   // If table's height changes and something is selected, scroll to the selected element
   useEffect(() => {
@@ -241,9 +324,12 @@ function TableBody({
                 virtualRow.index
               )
             }>
-            {LOG_DETAILS_CONFIG.map(({ title, getValue, getClass }) => (
-              <VscodeTableCell key={title} className={getClass ? getClass(log) : ""}>
-                {getValue(log)}
+            {LOG_DETAILS_CONFIG.map(({ title, getClass }, i) => (
+              <VscodeTableCell
+                key={`${log.requestId}-${title}`}
+                className={getClass?.(log) ?? ""}
+                style={{ width: cellWidths[i] || "auto" }}>
+                <div>{getNetworkLogValue(log, title)}</div>
               </VscodeTableCell>
             ))}
           </VscodeTableRow>

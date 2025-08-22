@@ -9,3 +9,23 @@ export interface NetworkLog {
   duration: number;
   headers: Record<string, string>;
 }
+
+export enum NetworkLogColumn {
+  Name = "name",
+  Status = "status",
+  Method = "method",
+  Type = "type",
+  Size = "size",
+  Time = "time",
+}
+
+export enum SortDirection {
+  Asc = "asc",
+  Desc = "desc",
+}
+
+export interface FilterBadge {
+  id: string;
+  columnName: string;
+  value: string;
+}

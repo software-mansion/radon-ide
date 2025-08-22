@@ -1,4 +1,4 @@
-import { By } from "vscode-extension-tester";
+import { By, VSBrowser, WebView, EditorView } from "vscode-extension-tester";
 import { findAndWaitForElement } from "../utils/helpers.js";
 import {
   openRadonIDEPanel,
@@ -7,38 +7,42 @@ import {
   deleteDevice,
   deleteAllDevices,
 } from "./interactions.js";
-import { sharedTestLifecycle } from "./setupTest.js";
+import { get } from "./setupTest.js";
 
 describe("Adding device tests", () => {
-  const get = sharedTestLifecycle();
+  let driver;
 
-  after(async function () {
-    const { driver } = get();
+  beforeEach(async function () {
+    ({ driver } = get());
+    const view = new WebView();
+
+    await view.switchBack();
+    await new EditorView().closeAllEditors();
     await deleteAllDevices(driver);
+    await view.switchBack();
+    await new EditorView().closeAllEditors();
   });
 
   it("should add device to Radon IDE", async function () {
-    const { driver } = get();
     await openRadonIDEPanel(driver);
-    const newDeviceName = `TestDevice-${Date.now()}`;
+    const newDeviceName = `${Date.now()}`;
 
     addNewDevice(driver, newDeviceName);
 
     await findAndWaitForElement(
       driver,
       By.css(`[data-test="manage-devices-menu-row-device-${newDeviceName}"]`),
-      `Timed out waiting for device with name: ${newDeviceName}`
+      `Timed out waiting for device with name: ${newDeviceName}`, 20000
     );
   });
 
   it("should modify device name in Radon IDE", async function () {
-    const { driver } = get();
     await openRadonIDEPanel(driver);
-    const deviceName = `TestDevice-${Date.now()}`;
+    const deviceName = `${Date.now()}`;
 
     await addNewDevice(driver, deviceName);
 
-    const modifiedDeviceName = `ModifiedDevice-${Date.now()}`;
+    const modifiedDeviceName = `${Date.now()}`;
 
     await modifyDeviceName(driver, deviceName, modifiedDeviceName);
 
@@ -52,9 +56,8 @@ describe("Adding device tests", () => {
   });
 
   it("should delete device from Radon IDE", async function () {
-    const { driver } = get();
     await openRadonIDEPanel(driver);
-    const deviceName = `deviceToDelete-${Date.now()}`;
+    const deviceName = `${Date.now()}`;
     let deviceFound = false;
 
     await addNewDevice(driver, deviceName);
@@ -72,7 +75,7 @@ describe("Adding device tests", () => {
       await findAndWaitForElement(
         driver,
         By.css(`[data-test="manage-devices-menu-row-device-${deviceName}"]`),
-        `Timed out waiting for device with modified name: ${deviceName}`,
+        `Timed out waiting for device to delete: ${deviceName}`,
         3000
       );
       deviceFound = true;

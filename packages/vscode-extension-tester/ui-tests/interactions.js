@@ -70,7 +70,9 @@ export async function fillDeviceCreationForm(driver, deviceName) {
 
   const selectedSystemImage = await findAndWaitForElement(
     driver,
-    By.css('[data-test^="creating-device-form-system-image-select-item-"]'),
+    By.css(
+      '[data-test^="creating-device-form-system-image-select-item-"]:not(.select-item-marked)'
+    ),
     "Timed out waiting for an element matching from system image list"
   );
   await selectedSystemImage.click();
@@ -121,7 +123,6 @@ export async function deleteAllDevices(driver) {
     driver,
     `radon-bottom-bar-device-select-dropdown-trigger`
   );
-
   await findAndClickElementByTag(
     driver,
     `device-select-menu-manage-devices-button`
@@ -132,7 +133,8 @@ export async function deleteAllDevices(driver) {
       const deviceDeleteButton = await findAndWaitForElement(
         driver,
         By.css(`[data-test^="manage-devices-menu-delete-button-device-"]`),
-        "Timed out waiting for device delete button"
+        "Timed out waiting for device delete button",
+        5000
       );
       await deviceDeleteButton.click();
       await findAndClickElementByTag(driver, `confirm-delete-device-button`);
@@ -140,7 +142,7 @@ export async function deleteAllDevices(driver) {
       await waitUntilElementGone(
         driver,
         By.css(`[data-test="device-removing-confirmation-view"]`),
-        5000,
+        3000,
         "delete confirmation modal did not disappear"
       );
     }
@@ -160,11 +162,14 @@ export async function modifyDeviceName(driver, deviceName, modifiedDeviceName) {
     By.css('[data-test="renaming-device-view-input"]'),
     "Timed out waiting for device name input"
   );
+
+  await driver.executeScript("arguments[0].value = '';", deviceNameInput);
   await deviceNameInput.clear();
+
   await driver.wait(async () => {
     const value = await deviceNameInput.getAttribute("value");
     return value === "";
-  }, 1000);
+  }, 3000);
   deviceNameInput.sendKeys(modifiedDeviceName);
 
   await findAndClickElementByTag(driver, `renaming-device-view-save-button`);

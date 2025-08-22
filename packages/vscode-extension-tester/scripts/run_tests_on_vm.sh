@@ -12,6 +12,9 @@ open -a "UTM" && sleep 3 && utmctl start "$VM_NAME" || {
     exit 1
 }
 
+npm run build-vsix-package
+cd ./scripts
+
 # finding the VM's ip address using Mac address and arp
 normalize_mac() {
     echo "$1" | awk -F: '{for(i=1;i<=NF;i++){printf "%x%s", "0x"$i, (i==NF ? "\n" : ":")}}'
@@ -59,7 +62,7 @@ echo "preparing VM environment..."
 ssh -i ./id_vm_mac "$VM_USER@$VM_IP" "rm -rf '$REMOTE_PATH'"
 
 echo "Creating directory on VM..."
-ssh -i ./id_vm_mac "$VM_USER@$VM_IP" "mkdir -p '$REMOTE_PATH'"
+ssh -i ./id_vm_mac "$VM_USER@$VM_IP" "mkdir -p '$REMOTE_PATH' && mkdir -p '$REMOTE_PATH/data'"
 
 echo "Copying project files to VM..."
 cd "$LOCAL_PROJECT_PATH" || exit 1
@@ -68,17 +71,29 @@ cd "$LOCAL_PROJECT_PATH" || exit 1
 for item in * .*; do
     [[ "$item" == "." || "$item" == ".." ]] && continue
     [[ "$item" == "node_modules" || "$item" == ".gitignore" ]] && continue
+    
+    if [[ "$item" == "data" ]]; then
+        for sub in "$item"/*; do
+            [[ "$sub" == "$item/react-native-app" || "$sub" == "$item/vscode-extensions" ]] && continue
+            echo "Copying: $sub"
+            scp -i ./scripts/id_vm_mac -r "$sub" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/data/"
+        done
+        continue
+    fi
 
     echo "Copying: $item"
     scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/"
 done
 
+APP="$1"
+shift
+
 echo "installing test dependencies on VM and running tests..."
 ssh -i ./scripts/id_vm_mac "$VM_USER@$VM_IP" <<EOF
 cd "$REMOTE_PATH"
 npm install
-npm run get-test-app
-npm run setup-run-tests
+npm run get-test-app -- $APP
+PROJECT_NAME=$APP npm run setup-run-tests -- $@
 cd ..
 rm -rf "$REMOTE_PATH"
 EOF
@@ -88,5 +103,7 @@ utmctl stop "$VM_NAME" || {
     exit 1
 }
 pkill -f "UTM.app"
+
+cd ..
 
 echo "Tests completed."
