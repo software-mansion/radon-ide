@@ -73,12 +73,16 @@ for item in * .*; do
     scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/"
 done
 
+APP="$1"
+shift
+TEST_NUMS="$*"
+
 echo "installing test dependencies on VM and running tests..."
 ssh -i ./scripts/id_vm_mac "$VM_USER@$VM_IP" <<EOF
 cd "$REMOTE_PATH"
 npm install
-npm run get-test-app -- react-native-77
-npm run setup-run-tests
+npm run get-test-app -- "$APP"
+npm run setup-run-tests -- "$TEST_NUMS"
 cd ..
 rm -rf "$REMOTE_PATH"
 EOF
