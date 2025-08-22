@@ -144,7 +144,7 @@ interface TableBodyProps {
 }
 
 const CELL_DEFAULT_HEIGHT = 24;
-const ROW_OVERSCAN = 10;
+const ROW_OVERSCAN = 15;
 
 function TableBody({
   networkLogs,
