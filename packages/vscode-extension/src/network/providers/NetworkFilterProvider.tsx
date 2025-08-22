@@ -97,7 +97,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
    * @param log - The network log entry to check against filters
    * @returns True if the log matches all active filters, false otherwise
    */
-  const computeBadgeFilterMatches = (
+  const checkBadgeFilterMatches = (
     inputTextBadge: FilterBadge | null,
     log: NetworkLog
   ): boolean => {
@@ -139,7 +139,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
    * @param log - The network log entry to search within
    * @returns True if the filter text matches any column value in the network log, or if the filter text is empty/whitespace
    */
-  const computeTextMatches = (filterTextValue: string, log: NetworkLog) => {
+  const checkTextMatches = (filterTextValue: string, log: NetworkLog) => {
     // Check global search term (if any remaining text after parsing badge filters)
     const globalMatches =
       !filterTextValue.trim() ||
@@ -160,14 +160,13 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
   const getFilterMatches = (log: NetworkLog): boolean => {
     const { badge, remainingText } = parseTextToBadge(filterText);
 
-    const badgeMatches = computeBadgeFilterMatches(badge, log);
+    const badgeMatches = checkBadgeFilterMatches(badge, log);
 
     // Check text filter (global search or remaining text after parsing)
-    const textMatches = !filterText.trim() || computeTextMatches(remainingText, log);
+    const textMatches = !filterText.trim() || checkTextMatches(remainingText, log);
 
     const finalMatch = badgeMatches && textMatches;
 
-    // apply the invert by XOR
     return finalMatch !== filterInvert;
   };
 
