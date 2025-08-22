@@ -268,7 +268,9 @@ function PreviewView() {
             onClick={stopReportingFrameRate}
           />
           <ToolsDropdown disabled={!debuggerToolsButtonsActive}>
-            <IconButton tooltip={{ label: "Tools", type: "primary" }}>
+            <IconButton
+              tooltip={{ label: "Tools", type: "primary" }}
+              dataTest="radon-top-bar-tools-dropdown-trigger">
               <span className="codicon codicon-tools" />
             </IconButton>
           </ToolsDropdown>
@@ -317,7 +319,9 @@ function PreviewView() {
             <span slot="start" className="codicon codicon-debug-console" />
           </IconButton>
           <SettingsDropdown project={project} isDeviceRunning={isRunning || radonConnectConnected}>
-            <IconButton tooltip={{ label: "Settings", type: "primary" }}>
+            <IconButton
+              tooltip={{ label: "Settings", type: "primary" }}
+              dataTest="radon-top-bar-settings-dropdown-trigger">
               <span className="codicon codicon-settings-gear" />
             </IconButton>
           </SettingsDropdown>
@@ -371,7 +375,9 @@ function PreviewView() {
         </div>
         <div className="spacer" />
         <DeviceSettingsDropdown disabled={!navBarButtonsActive}>
-          <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
+          <IconButton
+            tooltip={{ label: "Device settings", type: "primary" }}
+            dataTest="radon-bottom-bar-device-settings-dropdown-trigger">
             <DeviceSettingsIcon />
           </IconButton>
         </DeviceSettingsDropdown>

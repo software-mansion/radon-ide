@@ -1,15 +1,18 @@
 #!/bin/bash
 
-LINK="https://drive.google.com/file/d/1jL1MDcGv1UrN7xppVO6bGabl6b0VTZKu/view?usp=share_link"
+LINK="https://drive.google.com/file/d/1Je1nPkgUAE44T_gsBPgJ71baE38i6Ezj/view?usp=sharing"
 DEST_DIR="$HOME/Library/Containers/com.utmapp.UTM/Data/Documents"
 
 pkill -f "UTM"
 
 if [ -d "$DEST_DIR/macOS.utm" ]; then
-    read -p "'macOS.utm' directory already exists. Do you want to continue the download? (y/n): " CONFIRM
+    read -p "'macOS.utm' directory already exists. Do you want to delete old version and continue the download? (y/n): " CONFIRM
     if [[ "$CONFIRM" != "y" && "$CONFIRM" != "Y" ]]; then
         echo "Download canceled."
         exit 0
+    else
+        echo "Removing existing 'macOS.utm' directory..."
+        rm -rf "$DEST_DIR/macOS.utm"
     fi
 fi
 

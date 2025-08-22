@@ -3,7 +3,6 @@
 # Settings
 VM_NAME="macOS"
 VM_USER="test"
-VM_PASSWORD="123456"
 LOCAL_PROJECT_PATH="../../vscode-extension-tester"
 REMOTE_PATH="./vscode-extension-tester"
 CONFIG_PATH="$HOME/Library/Containers/com.utmapp.UTM/Data/Documents/${VM_NAME}.utm/Config.plist"
@@ -53,19 +52,41 @@ done
 
 echo "VM is ready at $VM_IP"
 
-echo "Copying '$LOCAL_PROJECT_PATH' to VM..."
-sshpass -p "$VM_PASSWORD" scp -r "$LOCAL_PROJECT_PATH" "$VM_USER@$VM_IP:/Users/$VM_USER/" || {
-    echo "Failed to copy project files."
-    exit 1
-}
+#The key cannot have write permissions; Git does not track them. It only tracks whether a file is executable.
+chmod 400 ./id_vm_mac
 
-echo "Running test commands on VM..."
-sshpass -p "$VM_PASSWORD" ssh "$VM_USER@$VM_IP" <<EOF
+echo "preparing VM environment..."
+ssh -i ./id_vm_mac "$VM_USER@$VM_IP" "rm -rf '$REMOTE_PATH'"
+
+echo "Creating directory on VM..."
+ssh -i ./id_vm_mac "$VM_USER@$VM_IP" "mkdir -p '$REMOTE_PATH'"
+
+echo "Copying project files to VM..."
+cd "$LOCAL_PROJECT_PATH" || exit 1
+
+# node_modules cannot be copied to the VM, because it may not be compatible with the VM's architecture.
+for item in * .*; do
+    [[ "$item" == "." || "$item" == ".." ]] && continue
+    [[ "$item" == "node_modules" || "$item" == ".gitignore" ]] && continue
+
+    echo "Copying: $item"
+    scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/"
+done
+
+echo "installing test dependencies on VM and running tests..."
+ssh -i ./scripts/id_vm_mac "$VM_USER@$VM_IP" <<EOF
 cd "$REMOTE_PATH"
 npm install
+npm run get-test-app
 npm run setup-run-tests
 cd ..
 rm -rf "$REMOTE_PATH"
 EOF
+
+utmctl stop "$VM_NAME" || {
+    echo "Failed to stop VM '$VM_NAME'."
+    exit 1
+}
+pkill -f "UTM.app"
 
 echo "Tests completed."

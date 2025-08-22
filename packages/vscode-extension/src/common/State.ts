@@ -165,7 +165,7 @@ export type IOSDeviceInfo = {
   displayName: string;
   available: boolean;
   deviceType: DeviceType;
-  runtimeInfo: IOSRuntimeInfo;
+  runtimeInfo?: IOSRuntimeInfo;
 };
 
 export type AndroidSystemImageInfo = {
