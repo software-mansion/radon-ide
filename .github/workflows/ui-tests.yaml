@@ -13,6 +13,9 @@ on:
         required: true
         default: "react-native-77"
         options:
+          - "react-native-73"
+          - "react-native-74"
+          - "react-native-75"
           - "react-native-76"
           - "react-native-77"
           - "react-native-78"
@@ -28,6 +31,8 @@ on:
           - "expo-54"
           - "expo-go"
           - "expo-router"
+          - "nx-monorepo"
+          - "pnpm-monorepo"
 
 jobs:
   build-and-test:
