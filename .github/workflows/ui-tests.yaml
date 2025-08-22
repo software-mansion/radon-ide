@@ -8,8 +8,8 @@ on:
         required: false
         default: "22"
       testApp:
-        type: choice
         description: Project app name to test
+        type: choice
         required: true
         default: "react-native-77"
         options:
@@ -33,6 +33,19 @@ on:
           - "expo-router"
           - "nx-monorepo"
           - "pnpm-monorepo"
+      isRecording:
+        description: Whether to record video
+        type: boolean
+        required: false
+        default: "true"
+      testsToRun:
+        description: Space-separated list of test numbers to run (none runs all tests)
+        required: false
+        default: ""
+      testsToExclude:
+        description: Space-separated list of test numbers to exclude (none excludes nothing)
+        required: false
+        default: ""
 
 jobs:
   build-and-test:
@@ -50,9 +63,25 @@ jobs:
       - name: Enforce HTTPS for submodules
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
+      - name: Cache npm (extension)
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('packages/vscode-extension/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
       - name: Install dependencies (extension)
         run: npm ci
         working-directory: packages/vscode-extension
+
+      - name: Cache npm (tester)
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('packages/vscode-extension-tester/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Install dependencies (tester)
         run: npm ci
@@ -71,17 +100,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Install ffmpeg
-        run: brew install ffmpeg
+      - name: Setup ffmpeg
+        if: ${{ github.event.inputs.isRecording == 'true' }}
+        uses: AnimMouse/setup-ffmpeg@v1
 
       - name: Run setup-run-tests
-        run: npm run setup-run-tests
+        run: npm run setup-run-tests -- ${{ github.event.inputs.testsToRun }} --exclude ${{ github.event.inputs.testsToExclude }}
         working-directory: packages/vscode-extension-tester
         env:
           PROJECT_NAME: ${{ github.event.inputs.testApp }}
+          IS_RECORDING: ${{ github.event.inputs.isRecording }}
 
       - name: make video
-        if: always()
+        if: ${{ github.event.inputs.isRecording == 'true' }}
         run: ffmpeg -framerate 10 -i frame-%04d.png -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
         working-directory: packages/vscode-extension-tester/videos
 
@@ -93,7 +124,7 @@ jobs:
           path: packages/vscode-extension-tester/screenshots/
 
       - name: Upload video recording
-        if: always()
+        if: ${{ github.event.inputs.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: vscode-ui-recording

@@ -7,6 +7,8 @@ import {
 import path from "path";
 import fs from "fs";
 
+const IS_RECORDING = process.env.IS_RECORDING === "true";
+
 function startRecording(driver, options = {}) {
   const screenshotsDir = path.join(process.cwd(), "videos");
   if (fs.existsSync(screenshotsDir)) {
@@ -67,7 +69,9 @@ before(async function () {
   await workbench.executeCommand("View: Close All Editors");
 
   view = new WebView();
-  recorder = await startRecording(driver, { interval: 200 });
+  if (IS_RECORDING) {
+    recorder = await startRecording(driver, { interval: 200 });
+  }
 });
 
 afterEach(async function () {
@@ -88,7 +92,9 @@ afterEach(async function () {
 });
 
 after(async function () {
-  await recorder.stop();
+  if (IS_RECORDING && recorder) {
+    await recorder.stop();
+  }
 });
 
 export function get() {

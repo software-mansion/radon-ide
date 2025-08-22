@@ -1,12 +1,14 @@
 #!/bin/bash
 set -e
 
+APP="$1"
+
 if [ -z "$1" ]; then
-  echo "Usage: $0 <folder-name>"
-  exit 1
+  APP="react-native-77"
 fi
 
-FOLDER_NAME="$1"
+
+FOLDER_NAME="$APP"
 TARGET_DIR="./data/react-native-app"
 REPO_URL="https://github.com/software-mansion-labs/radon-ide-test-apps.git"
 TMP_DIR="./tmp-radon-ide-test-apps"
