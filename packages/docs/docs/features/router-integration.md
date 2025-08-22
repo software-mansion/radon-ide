@@ -4,10 +4,8 @@ title: Router integration
 sidebar_position: 3
 ---
 
-The Radon IDE integrates with your deep-linked application allowing you to jump around the navigation structure.
+The Radon IDE integrates with your Expo Router application allowing you to jump around the navigation structure.
 The extension scans your routing structure, sees the changes in the navigation state and keeps track of the visited routes.
-
-Radon IDE router integration supports both Expo Router and React Navigation projects.
 
 <video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/ide_router_integration.mp4" type="video/mp4"/>
