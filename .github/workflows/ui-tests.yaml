@@ -15,6 +15,10 @@ on:
         description: Whether to record video
         required: false
         default: "true"
+      testsToRun:
+        description: Space-separated list of test numbers to run (none runs all tests)
+        required: false
+        default: ""
 
 jobs:
   build-and-test:
@@ -74,7 +78,7 @@ jobs:
         uses: AnimMouse/setup-ffmpeg@v1
 
       - name: Run setup-run-tests
-        run: npm run setup-run-tests
+        run: npm run setup-run-tests -- ${{ github.event.inputs.testsToRun }}
         working-directory: packages/vscode-extension-tester
         env:
           PROJECT_NAME: ${{ github.event.inputs.testApp }}
