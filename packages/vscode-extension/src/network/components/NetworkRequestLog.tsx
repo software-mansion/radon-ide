@@ -43,6 +43,18 @@ const DEFAULT_SORT_STATE: SortState = {
   direction: null,
 };
 
+const LOG_DETAILS_CONFIG: logDetails[] = [
+  { title: NetworkLogColumn.Name },
+  {
+    title: NetworkLogColumn.Status,
+    getClass: (log: NetworkLog) => getStatusClass(log.response?.status) + " status",
+  },
+  { title: NetworkLogColumn.Method },
+  { title: NetworkLogColumn.Type },
+  { title: NetworkLogColumn.Size },
+  { title: NetworkLogColumn.Time },
+];
+
 function getStatusClass(status: number | string | undefined) {
   if (!status) {
     return "";
@@ -59,18 +71,6 @@ function getStatusClass(status: number | string | undefined) {
 
   return "";
 }
-
-const LOG_DETAILS_CONFIG: logDetails[] = [
-  { title: NetworkLogColumn.Name },
-  {
-    title: NetworkLogColumn.Status,
-    getClass: (log: NetworkLog) => getStatusClass(log.response?.status) + " status",
-  },
-  { title: NetworkLogColumn.Method },
-  { title: NetworkLogColumn.Type },
-  { title: NetworkLogColumn.Size },
-  { title: NetworkLogColumn.Time },
-];
 
 /**
  * Navigates through the shadow DOM hierarchy to find the scrollable container within a VSCode table element.
@@ -144,7 +144,6 @@ const NetworkRequestLog = ({
           zebra
           bordered-columns
           resizable
-          responsive
           style={{ height: parentHeight }}
           ref={tableRef}>
           <VscodeTableHeader slot="header">
@@ -191,16 +190,8 @@ function TableBody({
   tableRef,
   parentHeight,
 }: TableBodyProps) {
-  const [selectedRequestOffset, setSelectedRequestOffset] = useState<number>(0);
+  const [selectedRequestIndex, setSelectedRequestIndex] = useState<number>(0);
   const [cellWidths, setCellWidths] = useState<number[]>([]);
-
-  const rowVirtualizer = useVirtualizer<HTMLDivElement, VscodeTableRowElement>({
-    count: networkLogs.length,
-    estimateSize: () => CELL_DEFAULT_HEIGHT,
-    getScrollElement: () =>
-      tableRef.current && (getScrollableTableContainer(tableRef.current) ?? null),
-    overscan: ROW_OVERSCAN,
-  });
 
   /**
    * Updates the cell widths based on the current sash (column bars) positions from the table component.
@@ -246,6 +237,19 @@ function TableBody({
     updateCellWidths();
   }, [networkLogs]);
 
+  /**
+   * Creates a virtual row renderer for the network request log table.
+   * Uses TanStack Virtual to handle large lists by only rendering visible rows.
+   * https://tanstack.com/virtual/latest/docs/api/virtualizer
+   */
+  const rowVirtualizer = useVirtualizer<HTMLDivElement, VscodeTableRowElement>({
+    count: networkLogs.length,
+    overscan: ROW_OVERSCAN,
+    estimateSize: () => CELL_DEFAULT_HEIGHT,
+    getScrollElement: () =>
+      tableRef.current && (getScrollableTableContainer(tableRef.current) ?? null),
+  });
+
   // If table's height changes and something is selected, scroll to the selected element
   useEffect(() => {
     const table = tableRef.current;
@@ -266,7 +270,7 @@ function TableBody({
         selectedElementTop > tableTotalHeight ||
         selectedElementTop < tableTop
       ) {
-        rowVirtualizer.scrollToIndex(selectedRequestOffset, {
+        rowVirtualizer.scrollToIndex(selectedRequestIndex, {
           behavior: "smooth",
           align: "center",
         });
@@ -290,14 +294,14 @@ function TableBody({
       return;
     }
 
-    rowVirtualizer.scrollToIndex(selectedRequestOffset, {
+    rowVirtualizer.scrollToIndex(selectedRequestIndex, {
       behavior: "smooth",
       align: "center",
     });
   }, [selectedNetworkLog?.requestId]);
 
   const innerHandleSelectedRequest = (id: string | null, offset: number) => {
-    setSelectedRequestOffset(offset);
+    setSelectedRequestIndex(offset);
     handleSelectedRequest(id);
   };
 
@@ -309,7 +313,7 @@ function TableBody({
           <VscodeTableRow
             data-index={virtualRow.index}
             key={log.requestId}
-            ref={(node) => rowVirtualizer.measureElement(node)}
+            // Style needs to be overwritten using virtualizer values
             style={{
               height: `${virtualRow.size}px`,
               transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
@@ -329,7 +333,7 @@ function TableBody({
                 key={`${log.requestId}-${title}`}
                 className={getClass?.(log) ?? ""}
                 style={{ width: cellWidths[i] || "auto" }}>
-                <div>{getNetworkLogValue(log, title)}</div>
+                {getNetworkLogValue(log, title)}
               </VscodeTableCell>
             ))}
           </VscodeTableRow>
