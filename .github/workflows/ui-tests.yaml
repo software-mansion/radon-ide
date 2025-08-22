@@ -78,6 +78,7 @@ jobs:
         working-directory: packages/vscode-extension-tester
         env:
           PROJECT_NAME: ${{ github.event.inputs.testApp }}
+          IS_RECORDING: ${{ github.event.inputs.isRecording }}
 
       - name: make video
         if: ${{ github.event.inputs.isRecording == 'true' }}
