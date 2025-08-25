@@ -212,19 +212,6 @@ export class ProxyDebugAdapter extends DebugSession {
     });
   }
 
-  protected nextRequest(
-    response: DebugProtocol.NextResponse,
-    args: DebugProtocol.NextArguments,
-    request?: DebugProtocol.Request
-  ): void {
-    if (!this.nodeDebugSession) {
-      return;
-    }
-    vscode.commands.executeCommand("workbench.action.debug.stepOver", undefined, {
-      sessionId: this.nodeDebugSession.id,
-    });
-  }
-
   protected async disconnectRequest(
     response: DebugProtocol.DisconnectResponse,
     args: DebugProtocol.DisconnectArguments,

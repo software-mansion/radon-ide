@@ -35,7 +35,7 @@ import { ToolKey, ToolPlugin, ToolsDelegate, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
 import { CancelToken } from "../utilities/cancelToken";
 import { BuildResult } from "../builders/BuildManager";
-import { DevicePlatform } from "../common/State";
+import { DevicePlatform, DeviceType } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
 
 interface LaunchApplicationSessionDeps {
@@ -76,12 +76,15 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   ): Promise<ApplicationSession> {
     const packageNameOrBundleId =
       buildResult.platform === DevicePlatform.IOS ? buildResult.bundleID : buildResult.packageName;
+    const supportedOrientations =
+      buildResult.platform === DevicePlatform.IOS ? buildResult.supportedInterfaceOrientations : [];
     const session = new ApplicationSession(
       applicationContext,
       device,
       metro,
       devtools,
-      packageNameOrBundleId
+      packageNameOrBundleId,
+      supportedOrientations
     );
     if (getIsActive()) {
       // we need to start the parent debug session asap to ensure metro errors are shown in the debug console
@@ -138,7 +141,8 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
     private readonly devtools: Devtools,
-    private readonly packageNameOrBundleId: string
+    private readonly packageNameOrBundleId: string,
+    private readonly supportedOrientations: DeviceRotation[]
   ) {
     this.registerDevtoolsListeners();
     this.registerMetroListeners();
@@ -252,6 +256,55 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     });
   }
 
+  private determineAppOrientation(orientation: AppOrientation): DeviceRotation {
+    // Android case - the API is reliable, we do not need supportedOrientations array
+    // so we just consider the situation in which during the initialization,
+    // the orientation sent is landscape, which will later be corrected by
+    // on the lib side anyways
+    if (this.device.deviceInfo.platform === DevicePlatform.Android) {
+      if (orientation === "Landscape") {
+        return DeviceRotation.LandscapeLeft;
+      }
+      return orientation;
+    }
+
+    // IOS case
+    if (orientation === "Landscape") {
+      if (this.supportedOrientations.includes(DeviceRotation.LandscapeLeft)) {
+        return DeviceRotation.LandscapeLeft;
+      } else {
+        return DeviceRotation.LandscapeRight;
+      }
+    }
+
+    if (orientation === "Portrait") {
+      // iPhone case - expo always reports portraitUpsideDown as portrait on iPads
+      if (
+        this.device.deviceInfo.deviceType === DeviceType.Tablet &&
+        this.device.rotation === DeviceRotation.PortraitUpsideDown &&
+        this.supportedOrientations.includes(DeviceRotation.PortraitUpsideDown)
+      ) {
+        return DeviceRotation.PortraitUpsideDown;
+      }
+
+      if (
+        (this.supportedOrientations.includes(DeviceRotation.PortraitUpsideDown) &&
+          this.device.rotation === DeviceRotation.PortraitUpsideDown) ||
+        !this.supportedOrientations.includes(DeviceRotation.Portrait)
+      ) {
+        return DeviceRotation.PortraitUpsideDown;
+      } else {
+        return DeviceRotation.Portrait;
+      }
+    }
+
+    if (this.appOrientation && !this.supportedOrientations.includes(orientation)) {
+      return this.appOrientation;
+    }
+
+    return orientation;
+  }
+
   //#endregion
 
   //#region Metro event listeners
@@ -308,6 +361,12 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   public stepOverDebugger() {
     this.debugSession?.stepOverDebugger();
   }
+  public stepOutDebugger() {
+    this.debugSession?.stepOutDebugger();
+  }
+  public stepIntoDebugger() {
+    this.debugSession?.stepIntoDebugger();
+  }
 
   private async connectJSDebugger() {
     const websocketAddress = await this.metro.getDebuggerURL();
@@ -353,26 +412,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
         }
       }),
       this.devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
-        const isLandscape =
-          this.device.rotation === DeviceRotation.LandscapeLeft ||
-          this.device.rotation === DeviceRotation.LandscapeRight;
-
-        if (orientation === "Landscape") {
-          // if the app orientation is equal to "Landscape", it means we do not have enough
-          // information on the application side to infer the detailed orientation.
-          if (isLandscape) {
-            // if the device is in landscape mode, we assume that the app orientation is correct with device rotation
-            this.appOrientation = this.device.rotation;
-          } else {
-            // if the device is not in landscape mode we set app orientation to the last known orientation.
-            // if the last orientation is not known, we assume the application was started in Landscape mode
-            // while the device was oriented in Portrait, and we pick `LandscapeLeft` as the default orientation in that case.
-            this.appOrientation = this.appOrientation ?? DeviceRotation.LandscapeLeft;
-          }
-        } else {
-          this.appOrientation = orientation;
-        }
-
+        this.appOrientation = this.determineAppOrientation(orientation);
         this.emitStateChange();
       }),
       this.devtools.onEvent(

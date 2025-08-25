@@ -259,6 +259,12 @@
           "default": null,
           "description": "Files matching this pattern fill be excluded for the inspector jump to file functionality. This can be used if your codebase has some design system primitives that are used everywhere in your codebase and that you don't want to always get opened when using inspect functionality."
         },
+        "RadonIDE.defaultMultimediaSavingLocation": {
+          "type": "string",
+          "scope": "window",
+          "default": null,
+          "description": "Controls the default saving location for multimedia files."
+        },
         "RadonIDE.stopPreviousDevices": {
           "type": "string",
           "scope": "window",
@@ -292,6 +298,12 @@
             "PortraitUpsideDown"
           ],
           "description": "Controls the default device rotation for simulators and emulators when they are created or launched."
+        },
+        "RadonIDE.startDeviceOnLaunch": {
+          "type": "boolean",
+          "scope": "window",
+          "default": true,
+          "description": "Automatically starts the last used device when opening the IDE Panel."
         }
       }
     },
@@ -602,6 +614,10 @@
                     "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
                   }
                 }
+              },
+              "usePrebuild": {
+                "type": "boolean",
+                "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
               }
             }
           }
@@ -820,6 +836,10 @@
                     "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
                   }
                 }
+              },
+              "usePrebuild": {
+                "type": "boolean",
+                "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
               }
             }
           }
@@ -1008,6 +1028,7 @@
     "execa": "^5.1.1",
     "express": "^5.1.0",
     "fantasticon": "^3.0.0",
+    "fast-json-stable-stringify": "^2.1.0",
     "file-loader": "^6.2.0",
     "globals": "^16.1.0",
     "jsonc-parser": "^3.3.1",
@@ -1048,5 +1069,8 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.40.0"
+  },
+  "dependencies": {
+    "@tanstack/react-virtual": "^3.13.12"
   }
 }

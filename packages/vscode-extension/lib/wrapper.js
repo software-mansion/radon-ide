@@ -47,7 +47,7 @@ const InternalImports = {
     return require("./render_outlines").setup;
   },
   get setupOrientationListeners() {
-    return require("./orientation").setup;
+    return require("./orientation/orientation").setup;
   },
   get setupInspectorAvailabilityListeners() {
     return require("./inspector_availability").setup;

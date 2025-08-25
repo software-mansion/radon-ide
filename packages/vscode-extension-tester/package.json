@@ -4,14 +4,16 @@
   "main": "./src/extension.ts",
   "scripts": {
     "setup-dev": "extest setup-tests --extensions_dir ./data/vscode-extensions",
-    "install-vsix": "extest install-vsix -f ./data/react-native-ide-1.9.0.vsix --extensions_dir ./data/vscode-extensions",
+    "install-vsix": "extest install-vsix -f ./data/radon-ide.vsix --extensions_dir ./data/vscode-extensions",
+    "build-vsix-package": "cd ../vscode-extension && vsce package --out ../vscode-extension-tester/data/radon-ide.vsix && cd ../vscode-extension-tester",
     "setup": "extest get-vscode && extest get-chromedriver && npm run install-vsix",
-    "ui-tests": "extest run-tests ./ui-tests/*.test.js --extensions_dir ./data/vscode-extensions -r ../react-native-80",
-    "clean": "rm -rf ./data/vscode-storage",
-    "setup-run-tests": "npm run clean && npm run setup && npm run ui-tests",
-    "extest": "extest run-tests -h",
+    "ui-tests": "./scripts/run_ui_tests.sh",
+    "clean": "rm -rf ./data/react-native-app && rm -rf ./data/vscode-extensions",
+    "setup-run-tests": "npm run setup && npm run ui-tests -- ",
+    "get-test-app": "./scripts/downloadRepo.sh",
+    "prepare-and-run-tests": "./scripts/prepare_and_run_tests.sh",
     "set-up-VM-environment": "cd ./scripts && ./setupVM.sh && cd ..",
-    "run-tests-on-VM": "cd ./scripts && ./runTests.sh && cd .."
+    "run-tests-on-VM": "./scripts/run_tests_on_vm.sh"
   },
   "keywords": [],
   "author": "",
@@ -23,7 +25,7 @@
     "chai": "^5.2.0",
     "mocha": "^11.7.1",
     "typescript": "^5.8.3",
-    "vscode-extension-tester": "^8.15.0"
+    "vscode-extension-tester": "^8.17.0"
   },
   "directories": {
     "test": "tests"
@@ -36,6 +38,7 @@
     "onStartupFinished"
   ],
   "dependencies": {
+    "@vscode/vsce": "^3.6.0",
     "agent-base": "^7.1.3",
     "ajv": "^8.17.1",
     "ansi-escapes": "^4.3.2",

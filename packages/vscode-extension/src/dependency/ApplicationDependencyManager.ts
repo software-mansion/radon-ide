@@ -1,15 +1,12 @@
-import fs from "fs";
 import path from "path";
 import { Disposable, OutputChannel } from "vscode";
 import semver, { SemVer } from "semver";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
-import { getIosSourceDir } from "../builders/buildIOS";
 import { isExpoGoProject } from "../builders/expoGo";
 import { PackageManager } from "./packageManager";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
-import { CancelToken } from "../utilities/cancelToken";
-import { getAndroidSourceDir } from "../builders/buildAndroid";
+import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { Platform } from "../utilities/platform";
 import { requireNoCache } from "../utilities/requireNoCache";
 import { getTelemetryReporter } from "../utilities/telemetry";
@@ -22,19 +19,26 @@ import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
 import { MinSupportedVersion } from "../common/Constants";
 import { ApplicationDependencyStatuses, DevicePlatform } from "../common/State";
+import { BuildError, BuildOptions } from "../builders/BuildManager";
+import { Prebuild } from "./prebuild";
+import { FingerprintProvider } from "../project/FingerprintProvider";
+import { checkNativeDirectoryExists } from "../utilities/checkNativeDirectoryExists";
 
 export class ApplicationDependencyManager implements Disposable {
   private disposables: Disposable[] = [];
 
   private pods: Pods;
   private packageManager: PackageManager;
+  private prebuild: Prebuild;
 
   constructor(
     private stateManager: StateManager<ApplicationDependencyStatuses>,
-    private launchConfiguration: ResolvedLaunchConfig
+    private launchConfiguration: ResolvedLaunchConfig,
+    private fingerprintProvider: FingerprintProvider
   ) {
     this.pods = new Pods(launchConfiguration.absoluteAppRoot, launchConfiguration.env);
     this.packageManager = new PackageManager(launchConfiguration);
+    this.prebuild = new Prebuild(fingerprintProvider);
 
     this.runAllDependencyChecks();
 
@@ -50,6 +54,9 @@ export class ApplicationDependencyManager implements Disposable {
     const oldPods = this.pods;
     this.pods = new Pods(newRoot, newLaunchConfiguration.env);
     oldPods.dispose();
+    const oldPrebuild = this.prebuild;
+    this.prebuild = new Prebuild(this.fingerprintProvider);
+    oldPrebuild.dispose();
 
     this.runAllDependencyChecks();
   }
@@ -101,12 +108,21 @@ export class ApplicationDependencyManager implements Disposable {
     });
   }
 
-  public async ensureDependenciesForBuild(
-    buildConfig: BuildConfig,
-    outputChannel: OutputChannel,
-    cancelToken: CancelToken
-  ) {
+  public async ensureDependenciesForBuild(buildConfig: BuildConfig, buildOptions: BuildOptions) {
     if (buildConfig.type === BuildType.Local) {
+      if (buildConfig.usePrebuild) {
+        try {
+          await this.prebuild.runPrebuildIfNeeded(buildConfig, buildOptions);
+        } catch (e) {
+          if (e instanceof BuildError || e instanceof CancelError) {
+            throw e;
+          }
+          throw new BuildError(
+            "Running Prebuild failed. Check the build logs for details.",
+            buildConfig.type
+          );
+        }
+      }
       if (buildConfig.platform === DevicePlatform.Android) {
         if (!(await this.checkAndroidDirectoryExits())) {
           throw new Error(
@@ -120,7 +136,7 @@ export class ApplicationDependencyManager implements Disposable {
             'Your project does not have "ios" directory. If this is an Expo project, you may need to run `expo prebuild` to generate missing files, or configure an external build source using launch configuration.'
           );
         }
-        await this.installPodsIfNeeded(buildConfig, outputChannel, cancelToken);
+        await this.installPodsIfNeeded(buildOptions);
       }
     }
   }
@@ -173,33 +189,32 @@ export class ApplicationDependencyManager implements Disposable {
 
   public async checkAndroidDirectoryExits() {
     const appRoot = this.launchConfiguration.absoluteAppRoot;
-    const androidDirPath = getAndroidSourceDir(appRoot);
 
-    const isOptional = !(await projectRequiresNativeBuild(this.launchConfiguration));
+    const isOptional = !(await projectRequiresNativeBuild(
+      this.launchConfiguration,
+      DevicePlatform.Android
+    ));
 
-    try {
-      await fs.promises.access(androidDirPath);
-      this.stateManager.setState({ android: { status: "installed", isOptional } });
-      return true;
-    } catch (e) {
-      this.stateManager.setState({ android: { status: "notInstalled", isOptional } });
-      return isOptional;
-    }
+    const exists = await checkNativeDirectoryExists(appRoot, DevicePlatform.Android);
+    this.stateManager.setState({
+      android: { status: exists ? "installed" : "notInstalled", isOptional },
+    });
+    return exists || isOptional;
   }
 
   public async checkIOSDirectoryExists() {
     const appRoot = this.launchConfiguration.absoluteAppRoot;
-    const iosDirPath = getIosSourceDir(appRoot);
 
-    const isOptional = !(await projectRequiresNativeBuild(this.launchConfiguration));
-    try {
-      await fs.promises.access(iosDirPath);
-      this.stateManager.setState({ ios: { status: "installed", isOptional } });
-      return true;
-    } catch (e) {
-      this.stateManager.setState({ ios: { status: "notInstalled", isOptional } });
-      return isOptional;
-    }
+    const isOptional = !(await projectRequiresNativeBuild(
+      this.launchConfiguration,
+      DevicePlatform.IOS
+    ));
+
+    const exists = await checkNativeDirectoryExists(appRoot, DevicePlatform.IOS);
+    this.stateManager.setState({
+      ios: { status: exists ? "installed" : "notInstalled", isOptional },
+    });
+    return exists || isOptional;
   }
 
   public async checkProjectUsesExpoRouter() {
@@ -249,13 +264,13 @@ export class ApplicationDependencyManager implements Disposable {
     }
   }
 
-  private async installPods(outputChannel: OutputChannel, cancelToken: CancelToken) {
+  private async installPods(buildOptions: BuildOptions) {
     getTelemetryReporter().sendTelemetryEvent("build:install-pods", {
       platform: DevicePlatform.IOS,
     });
 
     try {
-      await this.pods.installPods(outputChannel, cancelToken);
+      await this.pods.installPods(buildOptions);
     } catch (e) {
       Logger.error("Pods not installed", e);
       getTelemetryReporter().sendTelemetryEvent("build:pod-install-failed", {
@@ -269,11 +284,8 @@ export class ApplicationDependencyManager implements Disposable {
     Logger.debug("Project pods installed");
   }
 
-  private async installPodsIfNeeded(
-    { forceCleanBuild }: BuildConfig,
-    outputChannel: OutputChannel,
-    cancelToken: CancelToken
-  ) {
+  private async installPodsIfNeeded(buildOptions: BuildOptions) {
+    const { forceCleanBuild } = buildOptions;
     let shouldInstall = false;
     if (forceCleanBuild) {
       Logger.info("Clean build requested: installing pods");
@@ -285,7 +297,7 @@ export class ApplicationDependencyManager implements Disposable {
     if (!shouldInstall) {
       return;
     }
-    await this.installPods(outputChannel, cancelToken);
+    await this.installPods(buildOptions);
     const installed = await this.checkPodsInstallationStatus();
     if (!installed) {
       throw new Error(
@@ -299,7 +311,10 @@ export class ApplicationDependencyManager implements Disposable {
     this.stateManager.setState({
       cocoaPods: {
         status: installed ? "installed" : "notInstalled",
-        isOptional: !(await projectRequiresNativeBuild(this.launchConfiguration)),
+        isOptional: !(await projectRequiresNativeBuild(
+          this.launchConfiguration,
+          DevicePlatform.IOS
+        )),
       },
     });
   }
@@ -404,10 +419,13 @@ function appDependsOnExpoRouter(appRoot: string) {
  * or uses Expo Go, the IDE is not responsible for building the project, and hence
  * we don't want to report missing directories or tools as errors.
  */
-async function projectRequiresNativeBuild(launchConfiguration: ResolvedLaunchConfig) {
+async function projectRequiresNativeBuild(
+  launchConfiguration: ResolvedLaunchConfig,
+  platform: DevicePlatform
+) {
   if (launchConfiguration.customBuild || launchConfiguration.eas) {
     return false;
   }
 
-  return !(await isExpoGoProject(launchConfiguration.absoluteAppRoot));
+  return !(await isExpoGoProject(launchConfiguration.absoluteAppRoot, platform));
 }

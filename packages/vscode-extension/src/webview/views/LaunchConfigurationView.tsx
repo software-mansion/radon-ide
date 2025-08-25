@@ -74,6 +74,10 @@ function undefinedIfEmpty(value: string) {
   return value === "" ? undefined : value;
 }
 
+function valueAsBoolean(value: string) {
+  return value === "true" ? true : value === "false" ? false : undefined;
+}
+
 function serializeLaunchConfig(formData: FormData, defaultAppRoot: string) {
   const data = Object.fromEntries(formData as any);
   const appRoot = data.appRoot || defaultAppRoot;
@@ -82,8 +86,9 @@ function serializeLaunchConfig(formData: FormData, defaultAppRoot: string) {
     name: undefinedIfEmpty(data.name),
     appRoot,
     metroConfigPath: undefinedIfEmpty(data.metroConfigPath),
-    isExpo: data.isExpo === "true" ? true : data.isExpo === "false" ? false : undefined,
+    isExpo: valueAsBoolean(data.isExpo),
     env: data.env ? JSON.parse(data.env) : {},
+    usePrebuild: valueAsBoolean(data.usePrebuild),
   };
 
   for (const platform of ["ios", "android"] as const) {
@@ -261,6 +266,17 @@ function LaunchConfigurationView({
               launchConfig?.isExpo === undefined ? "" : launchConfig.isExpo ? "true" : "false"
             }>
             <Option value="">Detect automatically</Option>
+            <Option value="true">Yes</Option>
+            <Option value="false">No</Option>
+          </SingleSelect>
+        </FormGroup>
+
+        <FormGroup variant="settings-group">
+          <Label>Use Expo Prebuild</Label>
+          <FormHelper>{launchConfigAttrs?.properties?.usePrebuild?.description}</FormHelper>
+          <SingleSelect
+            name="usePrebuild"
+            initialValue={launchConfig?.usePrebuild ? "true" : "false"}>
             <Option value="true">Yes</Option>
             <Option value="false">No</Option>
           </SingleSelect>

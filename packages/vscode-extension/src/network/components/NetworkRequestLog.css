@@ -9,3 +9,92 @@
   cursor: pointer;
   background-color: var(--vscode-list-hoverBackground);
 }
+
+.table-header-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: row;
+  min-width: 0; /* Allow flex items to shrink below their content size */
+  padding-right: 10px;
+}
+
+.table-header-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0; /* Allow this to shrink */
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.table-header-cell button {
+  opacity: 0;
+  flex-shrink: 0;
+
+  min-width: 20px;
+  min-height: 20px;
+  padding: 5px;
+  border-radius: 5px;
+
+  .codicon {
+    font-size: 13px;
+  }
+}
+
+/* Hide filter button when header is too small to prevent overflow */
+.table-header-cell {
+  container: header / inline-size;
+
+  @container header (width < 80px) {
+    button {
+      visibility: hidden;
+      width: 0px;
+      min-width: 0px;
+    }
+  }
+}
+
+.table-header-cell .icon-button:focus,
+.table-header-cell .icon-button {
+  box-shadow: none;
+}
+
+.table-header-cell > span {
+  flex-shrink: 0;
+
+  &.codicon {
+    font-weight: bold;
+  }
+
+  .hidden {
+    display: none;
+  }
+}
+
+vscode-table-header-cell {
+  cursor: pointer;
+}
+
+/* make sure the background is not highlit when the user hovers over the button */
+vscode-table-header-cell:hover:not(:has(button:hover)) {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+vscode-table-header-cell:hover .table-header-cell button {
+  opacity: 1;
+}
+
+.selected,
+.selected:hover {
+  background-color: var(--vscode-terminal-selectionBackground);
+}
+
+.hack-table-row {
+  visibility: hidden;
+  pointer-events: none;
+}

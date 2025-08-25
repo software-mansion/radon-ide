@@ -88,7 +88,7 @@ const TRANSFORM_CONFIGS = {
   [DeviceRotation.LandscapeLeft]: {
     // Transformations based on current device rotation
     [DeviceRotation.Portrait]: {
-      angle: -Math.PI / 2, // Rotate 90° counter-clockwise
+      angle: Math.PI / 2, // Rotate 90° counter-clockwise
       dimensionsSwapped: true,
       shouldDrawWithoutTransform: false,
     },
@@ -103,7 +103,7 @@ const TRANSFORM_CONFIGS = {
       shouldDrawWithoutTransform: false,
     },
     [DeviceRotation.PortraitUpsideDown]: {
-      angle: Math.PI / 2, // Rotate 90° clockwise
+      angle: -Math.PI / 2, // Rotate 90° clockwise
       dimensionsSwapped: true,
       shouldDrawWithoutTransform: false,
     },
@@ -113,7 +113,7 @@ const TRANSFORM_CONFIGS = {
   [DeviceRotation.LandscapeRight]: {
     // Transformations based on current device rotation
     [DeviceRotation.Portrait]: {
-      angle: Math.PI / 2, // Rotate 90° clockwise
+      angle: -Math.PI / 2, // Rotate 90° clockwise
       dimensionsSwapped: true,
       shouldDrawWithoutTransform: false,
     },
@@ -128,7 +128,7 @@ const TRANSFORM_CONFIGS = {
       shouldDrawWithoutTransform: true, // Native orientation
     },
     [DeviceRotation.PortraitUpsideDown]: {
-      angle: -Math.PI / 2, // Rotate 90° counter-clockwise
+      angle: Math.PI / 2, // Rotate 90° counter-clockwise
       dimensionsSwapped: true,
       shouldDrawWithoutTransform: false,
     },

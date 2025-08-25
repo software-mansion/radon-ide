@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
+import { useState, useRef, useEffect, MouseEvent, WheelEvent, useMemo } from "react";
 import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
@@ -12,9 +12,7 @@ import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
   Frame,
   InspectDataStackItem,
-  ZoomLevelType,
   InspectStackData,
-  MultimediaData,
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
 } from "../../common/Project";
@@ -31,6 +29,7 @@ import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
 import InspectorUnavailableBox from "./InspectorUnavailableBox";
 import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
+import { MultimediaData, ZoomLevelType } from "../../common/State";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -45,7 +44,7 @@ type Props = {
   onInspectorItemSelected: (item: InspectDataStackItem) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
-  replayData: MultimediaData | undefined;
+  replayData: MultimediaData | null;
   onReplayClose: () => void;
 };
 
@@ -496,10 +495,10 @@ function Preview({
   }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
-    if (selectedDeviceSession?.hasStaleBuildCache) {
+    if (selectedDeviceSession?.isUsingStaleBuild) {
       openRebuildAlert();
     }
-  }, [selectedDeviceSession?.hasStaleBuildCache]);
+  }, [selectedDeviceSession?.isUsingStaleBuild]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
@@ -508,6 +507,31 @@ function Preview({
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
+
+  const dragHandlers = useMemo(() => {
+    return {
+      onDrop(ev: React.DragEvent) {
+        ev.preventDefault();
+        const files = ev.dataTransfer.files;
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          file.arrayBuffer().then((buf) => {
+            project.sendFileToDevice({
+              fileName: file.name,
+              data: buf,
+            });
+          });
+        }
+      },
+      onDragOver(ev: React.DragEvent) {
+        ev.stopPropagation();
+        ev.preventDefault();
+      },
+      onDragEnter(ev: React.DragEvent) {
+        ev.preventDefault();
+      },
+    } as const;
+  }, [project]);
 
   return (
     <>
@@ -519,7 +543,7 @@ function Preview({
         {...wrapperTouchHandlers}>
         {showDevicePreview && (
           <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
-            <div className="touch-area" {...touchHandlers}>
+            <div className="touch-area" {...touchHandlers} {...dragHandlers}>
               <MjpegImg
                 src={previewURL}
                 ref={previewRef}
