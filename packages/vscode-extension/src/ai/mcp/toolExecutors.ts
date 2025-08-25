@@ -82,7 +82,7 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
   }
 
   if (session.previewReady) {
-    const screenshot = await session.captureScreenshot(session.deviceRotation);
+    const screenshot = await session.getScreenshot();
     const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
 
     return {
