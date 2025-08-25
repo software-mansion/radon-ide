@@ -61,11 +61,11 @@ The replay overlay provides the following controls:
 <img width="500" src="/img/docs/ide_replays.png" className="shadow-image" />
 
 1. **Replay length** - Select recording duration: 5s, 10s, 30s, or full length
-2. **Play/Pause button** - Control playback
-3. **Seekbar** - Navigate to specific timestamps
-4. **Previous frame** - Step backward one frame
-5. **Next frame** - Step forward one frame
-6. **Save replay** - Export the recording to file
+2. **Play/Pause button** - Control playback (`Space`).
+3. **Seekbar** - Navigate to specific timestamps.
+4. **Previous frame** - Step backward one frame (`Left Arrow`). Use `Shift + Left Arrow` to step backward 10 frames.
+5. **Next frame** - Step forward one frame (`Right Arrow`). Use `Shift + Right Arrow` to step forward 10 frames.
+6. **Save replay** - Export the recording to file (`Ctrl + S`/`Cmd + S`).
 
 ### Closing the Replay overlay
 
