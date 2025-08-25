@@ -128,7 +128,7 @@ function Preview({
 
   useFatalErrorAlert(fatalErrorDescriptor);
 
-  const bundleErrorDescriptor = isRunning ? bundleError : undefined;
+  const bundleErrorDescriptor = isRunning ? bundleError : null;
   useBundleErrorAlert(bundleErrorDescriptor);
 
   const openRebuildAlert = useNativeRebuildAlert();

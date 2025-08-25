@@ -351,10 +351,10 @@ export class ApplicationSession implements Disposable {
         // we can assume that if it fires, the bundle loaded successfully.
         // This is necessary to reset the bundle error state when the app reload
         // is triggered from the app itself (e.g. by in-app dev menu or redbox).
-        this.stateManager.setState({ bundleError: undefined });
+        this.stateManager.setState({ bundleError: null });
       }),
       this.devtools.onEvent("fastRefreshStarted", () => {
-        this.stateManager.setState({ bundleError: undefined, isRefreshing: true });
+        this.stateManager.setState({ bundleError: null, isRefreshing: true });
       }),
       this.devtools.onEvent("fastRefreshComplete", () => {
         this.stateManager.setState({ isRefreshing: false });

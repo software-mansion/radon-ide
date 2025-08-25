@@ -103,8 +103,8 @@ export enum InspectorBridgeStatus {
 export type ProfilingState = "stopped" | "profiling" | "saving";
 
 export type ApplicationSessionState = {
-  appOrientation: DeviceRotation | undefined;
-  bundleError: BundleErrorDescriptor | undefined;
+  appOrientation: DeviceRotation | null;
+  bundleError: BundleErrorDescriptor | null;
   elementInspectorAvailability: InspectorAvailabilityStatus;
   inspectorBridgeStatus: InspectorBridgeStatus;
   isDebuggerPaused: boolean;
@@ -271,8 +271,8 @@ export type StateListener = (state: RecursivePartial<State>) => void;
 // #region Initial State
 
 export const initialApplicationSessionState: ApplicationSessionState = {
-  appOrientation: undefined,
-  bundleError: undefined,
+  appOrientation: null,
+  bundleError: null,
   elementInspectorAvailability: InspectorAvailabilityStatus.Available,
   inspectorBridgeStatus: InspectorBridgeStatus.Connecting,
   isDebuggerPaused: false,
