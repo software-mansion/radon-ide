@@ -41,6 +41,28 @@ export function SendFilesOverlay() {
     }
   }, [isLoading, erroredFiles, sentFiles, resetOverlayState]);
 
+  const sendFile = async (file: File) => {
+    let buf: ArrayBuffer;
+    try {
+      buf = await file.arrayBuffer();
+    } catch (e) {
+      // NOTE: `arrayBuffer()` may fail when the file cannot be read.
+      // Since we don't send anything to the extension in that case, we need to handle it here.
+      console.error("Error when reading file:", file.name, e);
+      store$.fileTransfer.erroredFiles.set((prev) => [
+        ...prev,
+        { fileName: file.name, errorMessage: "Could not read the file." },
+      ]);
+      return;
+    }
+    try {
+      await project.sendFileToDevice({
+        fileName: file.name,
+        data: buf,
+      });
+    } catch {}
+  };
+
   const dragHandlers = useMemo(
     () =>
       ({
@@ -58,26 +80,7 @@ export function SendFilesOverlay() {
           const files = ev.dataTransfer.files;
 
           for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            file
-              .arrayBuffer()
-              .then(async (buf) => {
-                try {
-                  await project.sendFileToDevice({
-                    fileName: file.name,
-                    data: buf,
-                  });
-                } catch {}
-              })
-              .catch((e) => {
-                // NOTE: `arrayBuffer()` may fail when the file cannot be read.
-                // Since we don't send anything to the extension in that case, we need to handle it here.
-                console.error("Error when sending file:", file.name, e);
-                store$.fileTransfer.erroredFiles.set((prev) => [
-                  ...prev,
-                  { fileName: file.name, errorMessage: "Failed to read the file to be sent." },
-                ]);
-              });
+            sendFile(files[i]);
           }
         },
         onDragOver: (ev: React.DragEvent) => {
