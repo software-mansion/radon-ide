@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import IconButton from "../../webview/components/shared/IconButton";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
+import { formatJSONBody } from "../utils/requestFormatUtils";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
@@ -18,19 +19,7 @@ const ResponseTab = ({ networkLog }: ResponseTabProps) => {
     });
   }, [networkLog.requestId]);
 
-  const formatResponseBody = (body: unknown): string => {
-    if (typeof body !== "string") {
-      return "No response body";
-    }
-    try {
-      const parsed = JSON.parse(body);
-      return JSON.stringify(parsed, null, 2);
-    } catch {
-      return body;
-    }
-  };
-
-  const responseData = formatResponseBody(responseBody);
+  const responseData = formatJSONBody(responseBody);
 
   return (
     <>

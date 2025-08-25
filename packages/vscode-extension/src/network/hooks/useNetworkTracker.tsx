@@ -91,6 +91,7 @@ const useNetworkTracker = (): NetworkTracker => {
   const processServerMessage = (msg: string, newLogs: NetworkLog[]): void => {
     try {
       const parsedMsg: WebSocketMessage = JSON.parse(msg);
+
       const { method, params } = parsedMsg;
 
       if (!params?.requestId) {
