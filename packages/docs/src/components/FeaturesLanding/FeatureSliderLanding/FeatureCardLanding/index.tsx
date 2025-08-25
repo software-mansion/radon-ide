@@ -50,7 +50,7 @@ export default function FeatureCardLanding({
           role="region"
           aria-labelledby={`feature-${index}`}
           className={clsx(styles.cardInfo, isExpanded && styles.active)}>
-          <div
+          <motion.div
             className={clsx(styles.hiddenBadge, isExpanded && styles.slide)}
             style={{
               maxHeight: isExpanded ? badgeRef.current?.clientHeight ?? 0 : 0,
@@ -58,11 +58,17 @@ export default function FeatureCardLanding({
             <div className={styles.cardBadge} ref={badgeRef}>
               {badge}
             </div>
-          </div>
-          <button id={`feature-${index}`} aria-expanded={isExpanded} onClick={() => toggleAnswer()}>
+          </motion.div>
+
+          <motion.button
+            layout
+            id={`feature-${index}`}
+            aria-expanded={isExpanded}
+            onClick={() => toggleAnswer()}>
             <div className={clsx(styles.cardTitle, isExpanded && styles.activeTitle)}>{title}</div>
-          </button>
-          <div
+          </motion.button>
+          <motion.div
+            id={`content-${index}`}
             className={clsx(styles.hiddenContainer, isExpanded && styles.slide)}
             style={{
               maxHeight: isExpanded ? contentRef.current?.clientHeight ?? 0 : 0,
@@ -75,7 +81,7 @@ export default function FeatureCardLanding({
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       </LayoutGroup>
     </div>

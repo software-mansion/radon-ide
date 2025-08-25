@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./styles.module.css";
 import FeatureCardLanding, { ActiveItem } from "./FeatureCardLanding";
 import { motion } from "motion/react";

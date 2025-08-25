@@ -14,7 +14,9 @@
   flex-direction: column;
   gap: 16px;
   padding-top: 40px;
+  height: 600px;
 }
+
 .imageBackground {
   background-color: var(--radon-gradient-green);
   overflow: hidden;
