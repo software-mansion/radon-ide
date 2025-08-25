@@ -6,6 +6,7 @@ import DimensionsBox from "./DimensionsBox";
 import { appToPreviewCoordinates } from "../utilities/transformAppCoordinates";
 import { useProject } from "../providers/ProjectProvider";
 import { useStore } from "../providers/storeProvider";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 interface InspectOverlayProps {
   inspectFrame: Frame;
@@ -32,16 +33,16 @@ function InspectOverlay({
   wrapperDivRef,
 }: InspectOverlayProps) {
   const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const appOrientation = use$(selectedDeviceSessionState.applicationSession.appOrientation);
+
   const { selectedDeviceSession } = useProject();
   if (selectedDeviceSession?.status !== "running") {
     return null;
   }
-  const translatedInspectFrame = appToPreviewCoordinates(
-    selectedDeviceSession?.appOrientation,
-    rotation,
-    inspectFrame
-  );
+
+  const translatedInspectFrame = appToPreviewCoordinates(appOrientation, rotation, inspectFrame);
 
   const cssProperties = getCssProperties(translatedInspectFrame);
   return (

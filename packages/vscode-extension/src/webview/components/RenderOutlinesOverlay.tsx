@@ -12,7 +12,8 @@ import "./RenderOutlinesOverlay.css";
 import { useProject } from "../providers/ProjectProvider";
 import { appToPreviewCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
-import { DeviceRotation } from "../../common/Project";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { DeviceRotation } from "../../common/State";
 
 const RenderOutlines = makeProxy<RenderOutlinesInterface>("RenderOutlines");
 
@@ -30,13 +31,18 @@ function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: numbe
 }
 
 function useIsEnabled() {
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
   const { selectedDeviceSession } = useProject();
   if (selectedDeviceSession?.status !== "running") {
     return false;
   }
-  const isToolEnabled = selectedDeviceSession?.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled;
-  const isInspectorAvailable =
-    selectedDeviceSession?.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.pluginAvailable;
+  const isToolEnabled = use$(
+    selectedDeviceSessionState.applicationSession.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled
+  );
+  const isInspectorAvailable = use$(
+    selectedDeviceSessionState.applicationSession.toolsState[RENDER_OUTLINES_PLUGIN_ID]
+      ?.pluginAvailable
+  );
   return isToolEnabled && isInspectorAvailable;
 }
 
@@ -47,14 +53,16 @@ function RenderOutlinesOverlay() {
   const outlineRendererEnabled = useIsEnabled();
 
   const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 
   const { selectedDeviceSession } = useProject();
 
-  const appOrientation =
+  const appOrientation = use$(
     selectedDeviceSession?.status === "running"
-      ? selectedDeviceSession.appOrientation
-      : DeviceRotation.Portrait;
+      ? selectedDeviceSessionState.applicationSession.appOrientation
+      : DeviceRotation.Portrait
+  );
 
   const orientationRef = useRef({
     deviceOrientation: rotation,

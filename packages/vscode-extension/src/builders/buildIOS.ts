@@ -10,8 +10,7 @@ import { fetchEasBuild, performLocalEasBuild } from "./eas";
 import { calculateAppArtifactHash, calculateMD5 } from "../utilities/common";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { BuildType, IOSBuildConfig, IOSLocalBuildConfig } from "../common/BuildConfig";
-import { DevicePlatform } from "../common/State";
-import { DeviceRotation } from "../common/Project";
+import { DevicePlatform, DeviceRotation } from "../common/State";
 import { BuildOptions } from "./BuildManager";
 import {
   createSimulatorWithRuntimeId,

@@ -1,4 +1,4 @@
-import { BundleErrorDescriptor } from "../../common/Project";
+import { BundleErrorDescriptor } from "../../common/State";
 import IconButton from "../components/shared/IconButton";
 import { useToggleableAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
@@ -34,6 +34,6 @@ export const bundleErrorAlert = {
   actions: <BundleErrorActions />,
 };
 
-export function useBundleErrorAlert(errorDescriptor: BundleErrorDescriptor | undefined) {
-  useToggleableAlert(errorDescriptor !== undefined, bundleErrorAlert);
+export function useBundleErrorAlert(errorDescriptor: BundleErrorDescriptor | null) {
+  useToggleableAlert(errorDescriptor !== null, bundleErrorAlert);
 }

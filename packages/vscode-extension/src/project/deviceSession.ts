@@ -27,7 +27,6 @@ import {
   NavigationRoute,
   DeviceSessionStatus,
   FatalErrorDescriptor,
-  DeviceRotation,
   InspectData,
 } from "../common/Project";
 import { throttle, throttleAsync } from "../utilities/throttle";
@@ -39,7 +38,7 @@ import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { ApplicationSession } from "./applicationSession";
-import { DevicePlatform, DeviceSessionStore } from "../common/State";
+import { DevicePlatform, DeviceRotation, DeviceSessionStore } from "../common/State";
 import { ReloadAction } from "./DeviceSessionsManager";
 import { StateManager } from "./StateManager";
 import { FrameReporter } from "./FrameReporter";
@@ -87,7 +86,6 @@ export class DeviceSession implements Disposable {
   private navigationRouteList: NavigationRoute[] = [];
   private navigationHomeTarget: NavigationHistoryItem | undefined;
   private isUsingStaleBuild = false;
-  private isRecordingScreen = false;
   private applicationSession: ApplicationSession | undefined;
 
   private get buildResult() {
@@ -149,7 +147,6 @@ export class DeviceSession implements Disposable {
       deviceInfo: this.device.deviceInfo,
       previewURL: this.previewURL,
       isUsingStaleBuild: this.isUsingStaleBuild,
-      isRecordingScreen: this.isRecordingScreen,
     };
     if (this.status === "starting") {
       return {
@@ -159,11 +156,9 @@ export class DeviceSession implements Disposable {
         stageProgress: this.stageProgress,
       };
     } else if (this.status === "running") {
-      const applicationState = this.applicationSession!.state;
       return {
         ...commonState,
         status: "running",
-        ...applicationState,
       };
     } else if (this.status === "fatalError") {
       assert(this.fatalError, "Expected error to be defined in fatal error state");
@@ -487,6 +482,7 @@ export class DeviceSession implements Disposable {
     });
 
     const applicationSessionPromise = ApplicationSession.launch(
+      this.stateManager.getDerived("applicationSession"),
       {
         applicationContext: this.applicationContext,
         device: this.device,
@@ -504,7 +500,6 @@ export class DeviceSession implements Disposable {
       }
 
       this.applicationSession = applicationSession;
-      applicationSession.onStateChanged(() => this.emitStateChange());
       this.status = "running";
       this.emitStateChange();
 
