@@ -1,4 +1,4 @@
-import { DeviceRotation } from "../../common/Project";
+import { DeviceRotation } from "../../common/State";
 
 type NormalizedFrameRect = {
   width: number;

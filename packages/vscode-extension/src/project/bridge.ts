@@ -1,6 +1,7 @@
 import { Disposable } from "vscode";
-import { AppOrientation, InspectorAvailabilityStatus, NavigationRoute } from "../common/Project";
+import { AppOrientation, NavigationRoute } from "../common/Project";
 import { Logger } from "../Logger";
+import { InspectorAvailabilityStatus } from "../common/State";
 
 export interface RadonInspectorBridgeEvents {
   appReady: [];

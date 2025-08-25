@@ -8,13 +8,14 @@ import { DeviceSession } from "./deviceSession";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceId, DeviceRotation, DeviceSessionsManagerState } from "../common/Project";
+import { DeviceId, DeviceSessionsManagerState } from "../common/Project";
 import { Connector } from "../connect/Connector";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
 import {
   DeviceInfo,
   DevicePlatform,
+  DeviceRotation,
   DeviceSessions,
   DevicesState,
   initialDeviceSessionStore,

@@ -8,7 +8,6 @@ import {
   extensions,
   Uri,
   workspace,
-  EventEmitter,
 } from "vscode";
 import { minimatch } from "minimatch";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
@@ -18,25 +17,22 @@ import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession"
 import { DeviceBase } from "../devices/DeviceBase";
 import { Devtools } from "./devtools";
 import { Logger } from "../Logger";
-import {
-  ApplicationSessionState,
-  AppOrientation,
-  BundleErrorDescriptor,
-  DeviceRotation,
-  InspectorBridgeStatus,
-  InspectData,
-  InspectorAvailabilityStatus,
-  ProfilingState,
-  StartupMessage,
-  ToolsState,
-} from "../common/Project";
+import { AppOrientation, InspectData, StartupMessage } from "../common/Project";
 import { disposeAll } from "../utilities/disposables";
-import { ToolKey, ToolPlugin, ToolsDelegate, ToolsManager } from "./tools";
+import { ToolKey, ToolPlugin, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
 import { CancelToken } from "../utilities/cancelToken";
 import { BuildResult } from "../builders/BuildManager";
-import { DevicePlatform, DeviceType } from "../common/State";
+import {
+  ApplicationSessionState,
+  DevicePlatform,
+  DeviceRotation,
+  DeviceType,
+  InspectorAvailabilityStatus,
+  InspectorBridgeStatus,
+} from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
+import { StateManager } from "./StateManager";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
@@ -46,29 +42,16 @@ interface LaunchApplicationSessionDeps {
   devtools: Devtools;
 }
 
-export class ApplicationSession implements ToolsDelegate, Disposable {
-  private inspectorBridgeStatus: InspectorBridgeStatus = InspectorBridgeStatus.Connecting;
+export class ApplicationSession implements Disposable {
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
   private debugSessionEventSubscription?: Disposable;
   private toolsManager: ToolsManager;
-  private bundleError: BundleErrorDescriptor | undefined;
-  private logCounter = 0;
-  private isDebuggerPaused = false;
-  private profilingCPUState: ProfilingState = "stopped";
-  private profilingReactState: ProfilingState = "stopped";
-  private isRefreshing: boolean = false;
-  private appOrientation: DeviceRotation | undefined;
-  private inspectorAvailability: InspectorAvailabilityStatus =
-    InspectorAvailabilityStatus.Available;
   private isActive = false;
   private inspectCallID = 7621;
 
-  private stateChangedEventEmitter = new EventEmitter<void>();
-
-  public readonly onStateChanged = this.stateChangedEventEmitter.event;
-
   public static async launch(
+    stateManager: StateManager<ApplicationSessionState>,
     { applicationContext, device, buildResult, metro, devtools }: LaunchApplicationSessionDeps,
     getIsActive: () => boolean,
     onLaunchStage: (stage: StartupMessage) => void,
@@ -79,6 +62,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     const supportedOrientations =
       buildResult.platform === DevicePlatform.IOS ? buildResult.supportedInterfaceOrientations : [];
     const session = new ApplicationSession(
+      stateManager,
       applicationContext,
       device,
       metro,
@@ -118,7 +102,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
 
       if (getIsActive()) {
         const activatePromise = session.activate();
-        const hasBundleError = session.bundleError !== undefined;
+        const hasBundleError = stateManager.getState().bundleError !== undefined;
         // NOTE: if an initial bundle error occurred, the app won't connect to Metro
         // and we won't be able to attach the debugger anyway, so there's no point in waiting
         if (!hasBundleError) {
@@ -137,6 +121,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   }
 
   private constructor(
+    private readonly stateManager: StateManager<ApplicationSessionState>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
@@ -146,27 +131,9 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   ) {
     this.registerDevtoolsListeners();
     this.registerMetroListeners();
-    this.toolsManager = new ToolsManager(this.devtools, this);
-    this.disposables.push(this.stateChangedEventEmitter);
-  }
+    this.toolsManager = new ToolsManager(this.stateManager.getDerived("toolsState"), this.devtools);
 
-  public get state(): ApplicationSessionState {
-    return {
-      profilingCPUState: this.profilingCPUState,
-      profilingReactState: this.profilingReactState,
-      toolsState: this.toolsManager.getToolsState(),
-      isDebuggerPaused: this.isDebuggerPaused,
-      logCounter: this.logCounter,
-      isRefreshing: this.isRefreshing,
-      bundleError: this.bundleError,
-      appOrientation: this.appOrientation,
-      elementInspectorAvailability: this.inspectorAvailability,
-      inspectorBridgeStatus: this.inspectorBridgeStatus,
-    };
-  }
-
-  private emitStateChange() {
-    this.stateChangedEventEmitter.fire();
+    this.disposables.push(this.stateManager);
   }
 
   private async setupDebugSession(): Promise<void> {
@@ -189,13 +156,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     return session;
   }
 
-  //#region ToolsDelegate implementation
-
-  onToolsStateChange(_toolsState: ToolsState): void {
-    this.emitStateChange();
-  }
-
-  //#endregion
+  // #region Tools
 
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
     this.toolsManager.updateToolEnabledState(toolName, enabled);
@@ -209,16 +170,17 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     return this.toolsManager.getPlugin(toolName);
   }
 
+  // #endregion Tools
+
   //#region Debug session event listeners
 
   private onConsoleLog = (event: DebugSessionCustomEvent): void => {
-    this.logCounter += 1;
-    this.emitStateChange();
+    const currentLogCount = this.stateManager.getState().logCounter;
+    this.stateManager.setState({ logCounter: currentLogCount + 1 });
   };
 
   private onDebuggerPaused = (event: DebugSessionCustomEvent): void => {
-    this.isDebuggerPaused = true;
-    this.emitStateChange();
+    this.stateManager.setState({ isDebuggerPaused: true });
 
     if (this.isActive) {
       commands.executeCommand("workbench.view.debug");
@@ -226,18 +188,15 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   };
 
   private onDebuggerResumed = (event: DebugSessionCustomEvent): void => {
-    this.isDebuggerPaused = false;
-    this.emitStateChange();
+    this.stateManager.setState({ isDebuggerPaused: false });
   };
 
   private onProfilingCPUStarted = (event: DebugSessionCustomEvent): void => {
-    this.profilingCPUState = "profiling";
-    this.emitStateChange();
+    this.stateManager.setState({ profilingCPUState: "profiling" });
   };
 
   private onProfilingCPUStopped = (event: DebugSessionCustomEvent): void => {
-    this.profilingCPUState = "stopped";
-    this.emitStateChange();
+    this.stateManager.setState({ profilingCPUState: "stopped" });
     if (event.body?.filePath) {
       this.saveAndOpenCPUProfile(event.body.filePath);
     }
@@ -298,8 +257,10 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       }
     }
 
-    if (this.appOrientation && !this.supportedOrientations.includes(orientation)) {
-      return this.appOrientation;
+    const currentAppOrientation = this.stateManager.getState().appOrientation;
+
+    if (currentAppOrientation && !this.supportedOrientations.includes(orientation)) {
+      return currentAppOrientation;
     }
 
     return orientation;
@@ -311,11 +272,12 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
 
   private async onBundleError(message: string, source: DebugSource) {
     Logger.error("[Bundling Error]", message);
-    this.bundleError = {
-      kind: "bundle",
-      message,
-    };
-    this.emitStateChange();
+    this.stateManager.setState({
+      bundleError: {
+        kind: "bundle",
+        message,
+      },
+    });
     await this.debugSession?.appendDebugConsoleEntry(message, "error", source);
   }
 
@@ -341,11 +303,6 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   public async deactivate(): Promise<void> {
     this.isActive = false;
     this.toolsManager.deactivate();
-    // detaching debugger will also stop the debug console, after switching back
-    // to the device session, we won't be able to see the logs from the previous session
-    // hence we reset the log counter.
-    this.logCounter = 0;
-    this.emitStateChange();
     this.debugSessionEventSubscription?.dispose();
     const debugSession = this.debugSession;
     this.debugSession = undefined;
@@ -394,44 +351,42 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
         // we can assume that if it fires, the bundle loaded successfully.
         // This is necessary to reset the bundle error state when the app reload
         // is triggered from the app itself (e.g. by in-app dev menu or redbox).
-        this.bundleError = undefined;
+        this.stateManager.setState({ bundleError: undefined });
       }),
       this.devtools.onEvent("fastRefreshStarted", () => {
-        this.isRefreshing = true;
-        this.bundleError = undefined;
-        this.emitStateChange();
+        this.stateManager.setState({ bundleError: undefined, isRefreshing: true });
       }),
       this.devtools.onEvent("fastRefreshComplete", () => {
-        this.isRefreshing = false;
-        this.emitStateChange();
+        this.stateManager.setState({ isRefreshing: false });
       }),
       this.devtools.onEvent("isProfilingReact", (isProfiling) => {
-        if (this.profilingReactState !== "saving") {
-          this.profilingReactState = isProfiling ? "profiling" : "stopped";
-          this.emitStateChange();
+        if (this.stateManager.getState().profilingReactState !== "saving") {
+          this.stateManager.setState({
+            profilingReactState: isProfiling ? "profiling" : "stopped",
+          });
         }
       }),
       this.devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
-        this.appOrientation = this.determineAppOrientation(orientation);
-        this.emitStateChange();
+        this.stateManager.setState({ appOrientation: this.determineAppOrientation(orientation) });
       }),
       this.devtools.onEvent(
         "inspectorAvailabilityChanged",
         (inspectorAvailability: InspectorAvailabilityStatus) => {
-          this.inspectorAvailability = inspectorAvailability;
-          this.emitStateChange();
+          this.stateManager.setState({ elementInspectorAvailability: inspectorAvailability });
         }
       ),
       this.devtools.onEvent("disconnected", () => {
-        if (this.inspectorBridgeStatus === InspectorBridgeStatus.Connected) {
-          this.inspectorBridgeStatus = InspectorBridgeStatus.Disconnected;
-          this.emitStateChange();
+        if (
+          this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected
+        ) {
+          this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Disconnected });
         }
       }),
       this.devtools.onEvent("connected", () => {
-        if (this.inspectorBridgeStatus !== InspectorBridgeStatus.Connected) {
-          this.inspectorBridgeStatus = InspectorBridgeStatus.Connected;
-          this.emitStateChange();
+        if (
+          this.stateManager.getState().inspectorBridgeStatus !== InspectorBridgeStatus.Connected
+        ) {
+          this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
         }
       })
     );
@@ -519,8 +474,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     try {
       return await this.devtools.stopProfilingReact();
     } finally {
-      this.profilingReactState = "stopped";
-      this.emitStateChange();
+      this.stateManager.setState({ profilingReactState: "stopped" });
     }
   }
   //#endregion
@@ -568,8 +522,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   //#endregion
 
   public resetLogCounter() {
-    this.logCounter = 0;
-    this.emitStateChange();
+    this.stateManager.setState({ logCounter: 0 });
   }
 
   public async dispose() {

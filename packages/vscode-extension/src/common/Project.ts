@@ -7,9 +7,11 @@ import {
   AndroidSystemImageInfo,
   DeviceInfo,
   DevicePlatform,
+  DeviceRotation,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
   MultimediaData,
+  ToolsState,
 } from "./State";
 
 export type Locale = string;
@@ -38,18 +40,6 @@ export type DeviceSettings = {
   camera?: CameraSettings;
 };
 
-export type ToolState = {
-  enabled: boolean;
-  isPanelTool: boolean;
-  label: string;
-  pluginAvailable: boolean;
-  pluginUnavailableTooltip?: string;
-};
-
-export type ToolsState = {
-  [key: string]: ToolState;
-};
-
 export type BuildErrorDescriptor = {
   kind: "build";
   message: string;
@@ -63,8 +53,6 @@ export type DeviceErrorDescriptor = {
 };
 
 export type FatalErrorDescriptor = BuildErrorDescriptor | DeviceErrorDescriptor;
-
-export type ProfilingState = "stopped" | "profiling" | "saving";
 
 export type NavigationHistoryItem = {
   displayName: string;
@@ -89,40 +77,15 @@ type DeviceSessionStateCommon = {
   isUsingStaleBuild: boolean;
 };
 
-export enum InspectorBridgeStatus {
-  Connecting,
-  Connected,
-  Disconnected,
-}
-
-export interface ApplicationSessionState {
-  profilingCPUState: ProfilingState;
-  profilingReactState: ProfilingState;
-  toolsState: ToolsState;
-  isDebuggerPaused: boolean;
-  logCounter: number;
-  isRefreshing: boolean;
-  bundleError: BundleErrorDescriptor | undefined;
-  appOrientation: DeviceRotation | undefined;
-  elementInspectorAvailability: InspectorAvailabilityStatus;
-  inspectorBridgeStatus: InspectorBridgeStatus;
-}
-
 export type DeviceSessionStateStarting = DeviceSessionStateCommon & {
   status: "starting";
   startupMessage: StartupMessage | undefined;
   stageProgress: number | undefined;
 };
 
-export type BundleErrorDescriptor = {
-  kind: "bundle";
-  message: string;
+export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
+  status: "running";
 };
-
-export type DeviceSessionStateRunning = DeviceSessionStateCommon &
-  ApplicationSessionState & {
-    status: "running";
-  };
 
 export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {
   status: "fatalError";
@@ -157,13 +120,6 @@ export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "ca
 
 export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown" | "power";
 
-export enum DeviceRotation {
-  Portrait = "Portrait",
-  PortraitUpsideDown = "PortraitUpsideDown",
-  LandscapeLeft = "LandscapeLeft",
-  LandscapeRight = "LandscapeRight",
-}
-
 export enum DeviceRotationDirection {
   Clockwise = -1,
   Anticlockwise = 1,
@@ -173,12 +129,6 @@ export type AppOrientation = DeviceRotation | "Landscape";
 
 export function isOfEnumDeviceRotation(value: any): value is DeviceRotation {
   return Object.values(DeviceRotation).includes(value);
-}
-
-export enum InspectorAvailabilityStatus {
-  Available = "available",
-  UnavailableEdgeToEdge = "unavailableEdgeToEdge",
-  UnavailableInactive = "unavailableInactive",
 }
 
 // important: order of values in this enum matters

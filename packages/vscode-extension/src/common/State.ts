@@ -1,5 +1,5 @@
 import { ApplicationRoot } from "./AppRootConfig";
-import { DeviceId, DeviceRotation } from "./Project";
+import { DeviceId } from "./Project";
 
 export type RecursivePartial<T> = {
   [P in keyof T]?: NonNullable<T[P]> extends Array<infer U>
@@ -58,6 +58,65 @@ export type ApplicationDependencyStatuses = Partial<
 
 // #endregion Dependencies
 
+// #region Tools State
+
+export type ToolState = {
+  enabled: boolean;
+  isPanelTool: boolean;
+  label: string;
+  pluginAvailable: boolean;
+  pluginUnavailableTooltip?: string;
+};
+
+export type ToolsState = {
+  [key: string]: ToolState;
+};
+
+// #endregion Tools State
+
+// #region Application Session
+
+export type BundleErrorDescriptor = {
+  kind: "bundle";
+  message: string;
+};
+
+export enum DeviceRotation {
+  Portrait = "Portrait",
+  PortraitUpsideDown = "PortraitUpsideDown",
+  LandscapeLeft = "LandscapeLeft",
+  LandscapeRight = "LandscapeRight",
+}
+
+export enum InspectorAvailabilityStatus {
+  Available = "available",
+  UnavailableEdgeToEdge = "unavailableEdgeToEdge",
+  UnavailableInactive = "unavailableInactive",
+}
+
+export enum InspectorBridgeStatus {
+  Connecting,
+  Connected,
+  Disconnected,
+}
+
+export type ProfilingState = "stopped" | "profiling" | "saving";
+
+export type ApplicationSessionState = {
+  appOrientation: DeviceRotation | undefined;
+  bundleError: BundleErrorDescriptor | undefined;
+  elementInspectorAvailability: InspectorAvailabilityStatus;
+  inspectorBridgeStatus: InspectorBridgeStatus;
+  isDebuggerPaused: boolean;
+  isRefreshing: boolean;
+  logCounter: number;
+  profilingCPUState: ProfilingState;
+  profilingReactState: ProfilingState;
+  toolsState: ToolsState;
+};
+
+// #endregion Application Session
+
 // #region Frame Reporting State
 
 export type FrameRateReport = {
@@ -93,6 +152,7 @@ export type ScreenCaptureState = {
 // #region Device Session
 
 export type DeviceSessionStore = {
+  applicationSession: ApplicationSessionState;
   frameReporting: FrameReportingState;
   screenCapture: ScreenCaptureState;
 };
@@ -210,7 +270,21 @@ export type StateListener = (state: RecursivePartial<State>) => void;
 
 // #region Initial State
 
+export const initialApplicationSessionState: ApplicationSessionState = {
+  appOrientation: undefined,
+  bundleError: undefined,
+  elementInspectorAvailability: InspectorAvailabilityStatus.Available,
+  inspectorBridgeStatus: InspectorBridgeStatus.Connecting,
+  isDebuggerPaused: false,
+  isRefreshing: false,
+  logCounter: 0,
+  profilingCPUState: "stopped",
+  profilingReactState: "stopped",
+  toolsState: {},
+};
+
 export const initialDeviceSessionStore: DeviceSessionStore = {
+  applicationSession: initialApplicationSessionState,
   frameReporting: {
     enabled: false,
     frameReport: null,

@@ -1,4 +1,4 @@
-import { BundleErrorDescriptor } from "../../common/Project";
+import { BundleErrorDescriptor } from "../../common/State";
 import IconButton from "../components/shared/IconButton";
 import { useToggleableAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";

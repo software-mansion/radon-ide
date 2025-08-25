@@ -6,8 +6,7 @@ import { useDeviceFrame } from "./hooks";
 import { DeviceProperties, DevicePropertiesFrame } from "../../utilities/deviceConstants";
 import { DEVICE_DEFAULT_SCALE } from "../../components/ZoomControls";
 import { useStore } from "../../providers/storeProvider";
-import { ZoomLevelType } from "../../../common/State";
-import { DeviceRotation } from "../../../common/Project";
+import { DeviceRotation, ZoomLevelType } from "../../../common/State";
 
 const MIN_HEIGHT = 350;
 
