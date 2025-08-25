@@ -11,10 +11,23 @@ const PayloadTab = ({ networkLog }: PayloadTabProps) => {
     return null;
   }
 
-  const payloadData =
-    networkLog.request.method === "GET"
-      ? formatGETParams(networkLog.request.url)
-      : formatJSONBody(networkLog.request.postData);
+  const getPayloadData = () => {
+    const { method, url, postData } = networkLog.request!;
+
+    if (method === "GET") {
+      return formatGETParams(url);
+    }
+
+    // Handle other requests with no body (HEAD, OPTIONS, etc.)
+    if (!postData || postData === "") {
+      return "No request body";
+    }
+
+    // Handle requests with body data
+    return formatJSONBody(postData);
+  };
+
+  const payloadData = getPayloadData();
 
   return (
     <>
