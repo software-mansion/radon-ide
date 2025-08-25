@@ -529,6 +529,7 @@ function Preview({
                 className="phone-screen"
               />
               <RenderOutlinesOverlay />
+              {isRunning && <SendFilesOverlay />}
               {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
               {isMultiTouching && (
@@ -595,7 +596,6 @@ function Preview({
                   <Debugger />
                 </div>
               )}
-              {isRunning && <SendFilesOverlay />}
             </div>
           </Device>
         )}
