@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import styles from "./styles.module.css";
 import FeatureCardLanding, { ActiveItem } from "./FeatureCardLanding";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 const features = [
   {
@@ -9,24 +9,28 @@ const features = [
     title: "Integrated Experience",
     content:
       "See the preview of your application right where you need it the most – close to your codebase. Radon IDE runs iOS Simulator and Android emulator directly in your Visual Studio Code and Cursor project.",
+    imageSrc: "../img/screenshot_hero.png",
   },
   {
     badge: "Element Inspector",
     title: "Click to Inspect",
     content:
       "Jump directly from preview to a file where your React Native component is defined. It can't really get simpler than that.",
+    imageSrc: "../img/screenshot_hero.png",
   },
   {
     badge: "Network Inspector",
     title: "Inspect Network Requests",
     content:
       "Use the built-in network panel to inspect your application network activity right in the editor.",
+    imageSrc: "../img/hero.webp",
   },
   {
     badge: "React Scan Integration",
     title: "Outline Renders",
     content:
       "Radon IDE can highlight components that re-render too frequently. See for yourself what parts of your application need optimization.",
+    imageSrc: "../img/screenshot_hero.png",
   },
 ];
 
@@ -64,13 +68,16 @@ export default function FeatureSliderLanding() {
       <div className={styles.imageBackground}>
         <div
           className={`${styles.imageContainer} ${activeItem.index % 2 !== 0 ? styles.rightWindow : ""}`}>
-          <motion.img
-            key={activeItem.index}
-            initial={{ opacity: 0.7 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0.7 }}
-            transition={{ duration: 1 }}
-            src="../img/screenshot_hero.png"></motion.img>
+          <AnimatePresence>
+            <motion.img
+              key={activeItem.index}
+              src={features[activeItem.index].imageSrc}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1 }}
+            />
+          </AnimatePresence>
         </div>
       </div>
     </div>
