@@ -72,3 +72,11 @@ The replay overlay provides the following controls:
 Click the `x` button in the top-right corner to close the replay overlay.
 
 <img width="250" src="/img/docs/ide_close_overlay.png" className="shadow-image" />
+
+### Configuring default saving path
+
+To configure where screenshots and screen recordings are saved:
+
+- Navigate to your editor settings
+- Look up `Radon IDE`
+- The `Default Multimedia Saving Location` option will allow you to configure the default saving path. 
