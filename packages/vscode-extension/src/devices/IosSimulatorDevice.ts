@@ -323,6 +323,24 @@ export class IosSimulatorDevice extends DeviceBase {
       // Delete command fails if the key doesn't exists, but later commands run regardless,
       // despite that process exits with non-zero code. We can ignore this error.
     }
+    try {
+      // Simulator may keep the defaults in memory with cfprefsd, we restart the deamon to make sure
+      // it reads the latest values from disk.
+      // We'd normally try to use defaults command that would write the updates via the daemon, however
+      // for some reason that doesn't work with custom device sets.
+      await exec("xcrun", [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "spawn",
+        this.deviceUDID,
+        "launchctl",
+        "stop",
+        "com.apple.cfprefsd.xpc.daemon",
+      ]);
+    } catch (e) {
+      // ignore errors here and hope for the best
+    }
   }
 
   async terminateApp(bundleID: string) {
@@ -434,7 +452,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async launchApp(
-    build: IOSBuildResult,
+    build: BuildResult,
     metroPort: number,
     _devtoolsPort: number,
     launchArguments: string[]
@@ -452,10 +470,49 @@ export class IosSimulatorDevice extends DeviceBase {
     }
   }
 
+  async locateInstalledAppBuildHashFile(build: IOSBuildResult) {
+    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+    try {
+      const { stdout: appContainerLocation } = await exec("xcrun", [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "get_app_container",
+        this.deviceUDID,
+        build.bundleID,
+        "app",
+      ]);
+      return path.join(appContainerLocation, ".radonide.buildhash");
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  async checkInstalledAppBuildHashFile(build: IOSBuildResult) {
+    const buildHashFileLocation = await this.locateInstalledAppBuildHashFile(build);
+    if (buildHashFileLocation === undefined) {
+      return null;
+    }
+    try {
+      const buildHash = await fs.promises.readFile(buildHashFileLocation, "utf8");
+      return buildHash === build.buildHash;
+    } catch (error) {
+      return null;
+    }
+  }
+
+  async updateInstalledAppBuildHash(build: IOSBuildResult) {
+    const buildHashFileLocation = await this.locateInstalledAppBuildHashFile(build);
+    if (buildHashFileLocation !== undefined) {
+      await fs.promises.writeFile(buildHashFileLocation, build.buildHash);
+    }
+  }
+
   async installApp(build: BuildResult, forceReinstall: boolean) {
     if (build.platform !== DevicePlatform.IOS) {
       throw new Error("Invalid platform");
     }
+    const startTime = performance.now();
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
     if (forceReinstall) {
       try {
@@ -467,7 +524,19 @@ export class IosSimulatorDevice extends DeviceBase {
       } catch (e) {
         Logger.error("Error while uninstalling will be ignored", e);
       }
+    } else {
+      const isInstalled = await this.checkInstalledAppBuildHashFile(build);
+      if (isInstalled) {
+        const skipInstallDurationSec = (performance.now() - startTime) / 1000;
+        Logger.info(
+          `App is already installed, skipping installation. Took ${skipInstallDurationSec.toFixed(
+            2
+          )} sec.`
+        );
+        return;
+      }
     }
+
     await exec("xcrun", [
       "simctl",
       "--set",
@@ -476,6 +545,9 @@ export class IosSimulatorDevice extends DeviceBase {
       this.deviceUDID,
       build.appPath,
     ]);
+    const installDurationSec = (performance.now() - startTime) / 1000;
+    Logger.info(`App installed. Took ${installDurationSec.toFixed(2)} sec.`);
+    await this.updateInstalledAppBuildHash(build);
   }
 
   async resetAppPermissions(appPermission: AppPermissionType, build: BuildResult) {
@@ -521,9 +593,24 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  public async sendFile(filePath: string): Promise<void> {
+  public async sendFile(filePath: string) {
+    const fileExtension = path.extname(filePath);
+    if (SUPPORTED_FILE_URL_EXTS.includes(fileExtension)) {
+      await exec("xcrun", [
+        "simctl",
+        "--set",
+        getOrCreateDeviceSet(this.deviceUDID),
+        "openurl",
+        this.deviceUDID,
+        `file://${filePath}`,
+      ]);
+      return { canSafelyRemove: false };
+    }
     if (!isMediaFile(filePath)) {
-      throw new Error("Only media file transfer is supported on iOS.");
+      throw new Error(
+        `Unsupported file type "${fileExtension}". ` +
+          `Only images, video files and SSL certificates are currently supported.`
+      );
     }
     const args = [
       "simctl",
@@ -534,8 +621,15 @@ export class IosSimulatorDevice extends DeviceBase {
       filePath,
     ];
     await exec("xcrun", args);
+    return { canSafelyRemove: true };
   }
 }
+
+const SUPPORTED_FILE_URL_EXTS = [
+  // SSL Certificates:
+  ".cer",
+  ".pem",
+];
 
 function isMediaFile(filePath: string): boolean {
   const type = mime.lookup(filePath);
@@ -610,9 +704,7 @@ async function listSimulatorsForLocation(location?: string) {
   return [];
 }
 
-export async function listSimulators(
-  location: SimulatorDeviceSet = SimulatorDeviceSet.RN_IDE
-): Promise<IOSDeviceInfo[]> {
+export async function listSimulators(location: SimulatorDeviceSet): Promise<IOSDeviceInfo[]> {
   let devicesPerRuntime;
   if (location === SimulatorDeviceSet.RN_IDE) {
     const deviceSetLocation = getOrCreateDeviceSet();
@@ -645,7 +737,7 @@ export async function listSimulators(
             ? DeviceType.Tablet
             : DeviceType.Phone,
           available: device.isAvailable ?? false,
-          runtimeInfo: runtime!,
+          runtimeInfo: runtime,
         };
       });
     })
@@ -658,13 +750,13 @@ export enum SimulatorDeviceSet {
   RN_IDE,
 }
 
-export async function createSimulator(
-  modelId: string,
+export async function createSimulatorWithRuntimeId(
+  deviceTypeId: string,
   displayName: string,
-  runtime: IOSRuntimeInfo,
+  runtimeId: string,
   deviceSet: SimulatorDeviceSet
 ) {
-  Logger.debug(`Create simulator ${modelId} with runtime ${runtime.identifier}`);
+  Logger.debug(`Create simulator ${deviceTypeId} with runtime ${runtimeId}`);
 
   let locationArgs: string[] = [];
   if (deviceSet === SimulatorDeviceSet.RN_IDE) {
@@ -678,15 +770,30 @@ export async function createSimulator(
     ...locationArgs,
     "create",
     displayName,
-    modelId,
-    runtime.identifier,
+    deviceTypeId,
+    runtimeId,
   ]);
 
+  return UDID;
+}
+
+export async function createSimulator(
+  deviceTypeId: string,
+  displayName: string,
+  runtime: IOSRuntimeInfo,
+  deviceSet: SimulatorDeviceSet
+) {
+  const UDID = await createSimulatorWithRuntimeId(
+    deviceTypeId,
+    displayName,
+    runtime.identifier,
+    deviceSet
+  );
   return {
     id: `ios-${UDID}`,
     platform: DevicePlatform.IOS,
     UDID,
-    modelId: modelId,
+    modelId: deviceTypeId,
     systemName: runtime.name,
     displayName: displayName,
     available: true, // assuming if create command went through, it's available

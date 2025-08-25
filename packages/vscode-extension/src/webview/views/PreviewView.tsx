@@ -5,33 +5,31 @@ import Preview from "../components/Preview";
 import IconButton from "../components/shared/IconButton";
 import UrlBar from "../components/UrlBar";
 import SettingsDropdown from "../components/SettingsDropdown";
-import { useModal } from "../providers/ModalProvider";
 import NoDeviceView from "./NoDeviceView";
 import DeviceSettingsDropdown from "../components/DeviceSettingsDropdown";
 import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
-import { Platform, useProject } from "../providers/ProjectProvider";
+import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
-import Button from "../components/shared/Button";
 import {
   Frame,
   InspectDataStackItem,
   InspectorAvailabilityStatus,
   InspectStackData,
   ProfilingState,
-  ZoomLevelType,
 } from "../../common/Project";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import "./View.css";
 import "./PreviewView.css";
 import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
-import { ActivateLicenseView } from "./ActivateLicenseView";
 import ToolsDropdown from "../components/ToolsDropdown";
 import AppRootSelect from "../components/AppRootSelect";
 import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { ZoomLevelType } from "../../common/State";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -41,44 +39,31 @@ const INSPECTOR_AVAILABILITY_MESSAGES = {
     "Element Inspector is disabled when the app is inactive",
 } as const;
 
-function ActivateLicenseButton() {
-  const { openModal } = useModal();
-  const { project } = useProject();
-  return (
-    <Button
-      className="activate-license-button"
-      onClick={() => {
-        project.sendTelemetry("activateLicenseButtonClicked");
-        openModal("Activate License", <ActivateLicenseView />);
-      }}>
-      {""} {/* using empty string here as the content is controlled via css */}
-    </Button>
-  );
-}
+type ActiveToolState = ProfilingState;
 
-function ProfilingButton({
-  profilingState,
+function ActiveToolButton({
+  toolState,
   title,
   onClick,
 }: {
-  profilingState: ProfilingState;
+  toolState: ActiveToolState;
   title: string;
   onClick: () => void;
 }) {
-  const showButton = profilingState !== "stopped";
+  const showButton = toolState !== "stopped";
   return (
     <IconButton
-      className={showButton ? "button-recording-on button-recording" : "button-recording"}
+      className={showButton ? "button-recording-on" : "button-recording-off"}
       tooltip={{
         label: title,
       }}
-      disabled={profilingState !== "profiling"}
+      disabled={toolState !== "profiling"}
       onClick={onClick}>
       {showButton && (
         <>
           <span
             className={
-              profilingState === "saving"
+              toolState === "saving"
                 ? "codicon codicon-loading codicon-modifier-spin"
                 : "recording-rec-dot"
             }
@@ -94,38 +79,40 @@ function PreviewView() {
   const store$ = useStore();
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 
-  const {
-    selectedDeviceSession,
-    projectState,
-    project,
-    deviceSettings,
-    hasActiveLicense,
-    replayData,
-    setReplayData,
-  } = useProject();
+  const { selectedDeviceSession, projectState, project, deviceSettings } = useProject();
+
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
-  const zoomLevel = projectState.previewZoom ?? "Fit";
+
+  const zoomLevel = use$(store$.projectState.previewZoom);
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
-      project.updatePreviewZoomLevel(zoom);
+      store$.projectState.previewZoom.set(zoom);
     },
     [project]
   );
-  const [recordingTime, setRecordingTime] = useState(0);
 
   const devices = use$(store$.devicesState.devices) ?? [];
 
-  const initialized = projectState.initialized;
+  const frameReportingEnabled = use$(useSelectedDeviceSessionState().frameReporting.enabled);
+  const fps = use$(useSelectedDeviceSessionState().frameReporting.frameReport.fps);
+
+  const initialized = use$(store$.projectState.initialized);
+
   const radonConnectEnabled = projectState.connectState.enabled;
   const radonConnectConnected = projectState.connectState.connected;
   const selectedDevice = selectedDeviceSession?.deviceInfo;
   const hasNoDevices = projectState !== undefined && devices.length === 0;
   const isStarting = selectedDeviceSession?.status === "starting";
   const isRunning = selectedDeviceSession?.status === "running";
-  const isRecording = selectedDeviceSession?.isRecordingScreen ?? false;
+
+  const isRecording = use$(selectedDeviceSessionState.screenCapture.isRecording);
+  const recordingTime = use$(selectedDeviceSessionState.screenCapture.recordingTime);
+  const replayData = use$(selectedDeviceSessionState.screenCapture.replayData);
+
   const inspectorAvailabilityStatus = isRunning
     ? selectedDeviceSession.elementInspectorAvailability
     : InspectorAvailabilityStatus.Available;
@@ -164,35 +151,13 @@ function PreviewView() {
     };
   }, []);
 
-  useEffect(() => {
-    if (isRecording) {
-      const interval = setInterval(() => {
-        setRecordingTime((prevRecordingTime) => prevRecordingTime + 1);
-      }, 1000);
-      return () => {
-        setRecordingTime(0);
-        clearInterval(interval);
-      };
-    }
-  }, [isRecording]);
-
-  function startRecording() {
-    project.startRecording();
-  }
-
-  async function stopRecording() {
-    try {
-      project.captureAndStopRecording();
-    } catch (e) {
-      project.showDismissableError("Failed to capture recording");
-    }
-  }
-
   function toggleRecording() {
-    if (isRecording) {
-      stopRecording();
-    } else {
-      startRecording();
+    try {
+      project.toggleRecording();
+    } catch (e) {
+      if (isRecording) {
+        project.showDismissableError("Failed to capture recording");
+      }
     }
   }
 
@@ -202,6 +167,10 @@ function PreviewView() {
 
   function stopProfilingReact() {
     project.stopProfilingReact();
+  }
+
+  function stopReportingFrameRate() {
+    project.stopReportingFrameRate();
   }
 
   async function handleReplay() {
@@ -252,7 +221,7 @@ function PreviewView() {
         onInspectorItemSelected={onInspectorItemSelected}
         zoomLevel={zoomLevel}
         replayData={replayData}
-        onReplayClose={() => setReplayData(undefined)}
+        onReplayClose={() => selectedDeviceSessionState.screenCapture.replayData.set(null)}
         onZoomChanged={onZoomChanged}
       />
     );
@@ -283,18 +252,25 @@ function PreviewView() {
           <UrlBar disabled={!selectedDeviceSession} />
         </div>
         <div className="button-group-top-right">
-          <ProfilingButton
-            profilingState={profilingCPUState}
+          <ActiveToolButton
+            toolState={profilingCPUState}
             title="Stop profiling CPU"
             onClick={stopProfilingCPU}
           />
-          <ProfilingButton
-            profilingState={profilingReactState}
+          <ActiveToolButton
+            toolState={profilingReactState}
             title="Stop profiling React"
             onClick={stopProfilingReact}
           />
+          <ActiveToolButton
+            toolState={frameReportingEnabled ? "profiling" : "stopped"}
+            title={"FPS: " + (fps ?? 0)}
+            onClick={stopReportingFrameRate}
+          />
           <ToolsDropdown disabled={!debuggerToolsButtonsActive}>
-            <IconButton tooltip={{ label: "Tools", type: "primary" }}>
+            <IconButton
+              tooltip={{ label: "Tools", type: "primary" }}
+              dataTest="radon-top-bar-tools-dropdown-trigger">
               <span className="codicon codicon-tools" />
             </IconButton>
           </ToolsDropdown>
@@ -343,7 +319,9 @@ function PreviewView() {
             <span slot="start" className="codicon codicon-debug-console" />
           </IconButton>
           <SettingsDropdown project={project} isDeviceRunning={isRunning || radonConnectConnected}>
-            <IconButton tooltip={{ label: "Settings", type: "primary" }}>
+            <IconButton
+              tooltip={{ label: "Settings", type: "primary" }}
+              dataTest="radon-top-bar-settings-dropdown-trigger">
               <span className="codicon codicon-settings-gear" />
             </IconButton>
           </SettingsDropdown>
@@ -396,9 +374,10 @@ function PreviewView() {
           <DeviceSelect />
         </div>
         <div className="spacer" />
-        {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
         <DeviceSettingsDropdown disabled={!navBarButtonsActive}>
-          <IconButton tooltip={{ label: "Device settings", type: "primary" }}>
+          <IconButton
+            tooltip={{ label: "Device settings", type: "primary" }}
+            dataTest="radon-bottom-bar-device-settings-dropdown-trigger">
             <DeviceSettingsIcon />
           </IconButton>
         </DeviceSettingsDropdown>

@@ -2,9 +2,11 @@ import path from "path";
 import { Disposable, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import { MultimediaData, TouchPoint, DeviceButtonType, DeviceRotation } from "../common/Project";
+import { TouchPoint, DeviceButtonType, DeviceRotation } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
+import { disposeAll } from "../utilities/disposables";
+import { FrameRateReport, MultimediaData } from "../common/State";
 
 interface MultimediaPromiseHandlers {
   resolve: (value: MultimediaData) => void;
@@ -17,17 +19,18 @@ enum MultimediaType {
 }
 
 export class Preview implements Disposable {
+  private disposables: Disposable[] = [];
   private multimediaPromises = new Map<string, MultimediaPromiseHandlers>();
   private subprocess?: ChildProcess;
   private tokenChangeListener?: Disposable;
+  private fpsReportListener?: (report: FrameRateReport) => void;
   public streamURL?: string;
   private replaysStarted = false;
 
   constructor(private args: string[]) {}
 
   dispose() {
-    this.subprocess?.kill();
-    this.tokenChangeListener?.dispose();
+    disposeAll(this.disposables);
   }
 
   private sendCommandOrThrow(command: string) {
@@ -75,12 +78,14 @@ export class Preview implements Disposable {
       buffer: false,
     });
     this.subprocess = subprocess;
+    this.disposables.push(new Disposable(() => subprocess.kill()));
 
     this.tokenChangeListener = watchLicenseTokenChange((token) => {
       if (token) {
         this.sendCommandOrThrow(`token ${token}\n`);
       }
     });
+    this.disposables.push(this.tokenChangeListener);
 
     return new Promise<string>((resolve, reject) => {
       subprocess.catch(reject).then(() => {
@@ -106,6 +111,29 @@ export class Preview implements Disposable {
             this.streamURL = match[1];
             resolve(this.streamURL);
           }
+        } else if (line.includes("fps_report")) {
+          // the frame rate report format is as follows:
+          // fps_report {"fps":number ,"received":number,"dropped":number,"timestamp":number}
+          const frameRateRegex = /fps_report\s+(\{.*\})/;
+          const match = line.match(frameRateRegex);
+          if (!match) {
+            return;
+          }
+          const jsonString = match[1];
+          let frameRateData: FrameRateReport;
+          try {
+            frameRateData = JSON.parse(jsonString) as FrameRateReport;
+          } catch (error) {
+            Logger.error("[Preview] Error parsing frame rate JSON:", error);
+            return;
+          }
+          if (!this.fpsReportListener) {
+            Logger.debug(
+              "[Preview] No FPS report listener registered, but received frame rate data."
+            );
+            return;
+          }
+          this.fpsReportListener(frameRateData);
         } else if (
           line.includes("video_ready") ||
           line.includes("video_error") ||
@@ -153,7 +181,17 @@ export class Preview implements Disposable {
     });
   }
 
-  setUpKeyboard() {
+  public startReportingFrameRate(onFpsReport: (report: FrameRateReport) => void) {
+    this.subprocess?.stdin?.write("fps true\n");
+    this.fpsReportListener = onFpsReport;
+  }
+
+  public stopReportingFrameRate() {
+    this.subprocess?.stdin?.write("fps false\n");
+    this.fpsReportListener = undefined;
+  }
+
+  public setUpKeyboard() {
     this.subprocess?.stdin?.write("setUpKeyboard\n");
   }
 

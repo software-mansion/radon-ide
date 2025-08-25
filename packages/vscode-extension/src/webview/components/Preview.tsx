@@ -12,9 +12,7 @@ import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import {
   Frame,
   InspectDataStackItem,
-  ZoomLevelType,
   InspectStackData,
-  MultimediaData,
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
 } from "../../common/Project";
@@ -31,6 +29,7 @@ import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
 import InspectorUnavailableBox from "./InspectorUnavailableBox";
 import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
+import { MultimediaData, ZoomLevelType } from "../../common/State";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -45,7 +44,7 @@ type Props = {
   onInspectorItemSelected: (item: InspectDataStackItem) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
-  replayData: MultimediaData | undefined;
+  replayData: MultimediaData | null;
   onReplayClose: () => void;
 };
 
@@ -496,10 +495,10 @@ function Preview({
   }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
-    if (selectedDeviceSession?.hasStaleBuildCache) {
+    if (selectedDeviceSession?.isUsingStaleBuild) {
       openRebuildAlert();
     }
-  }, [selectedDeviceSession?.hasStaleBuildCache]);
+  }, [selectedDeviceSession?.isUsingStaleBuild]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
