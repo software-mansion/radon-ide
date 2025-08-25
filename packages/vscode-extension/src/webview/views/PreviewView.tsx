@@ -228,11 +228,11 @@ function PreviewView() {
   }
 
   const logCounter = use$(isRunning ? selectedDeviceSessionState.applicationSession.logCounter : 0);
-  const profilingCPUState = use$(
-    isRunning ? selectedDeviceSessionState.applicationSession.profilingCPUState : "stopped"
+  const profilingCPUState = use$(() =>
+    isRunning ? selectedDeviceSessionState.applicationSession.profilingCPUState.get() : "stopped"
   );
-  const profilingReactState = use$(
-    isRunning ? selectedDeviceSessionState.applicationSession.profilingReactState : "stopped"
+  const profilingReactState = use$(() =>
+    isRunning ? selectedDeviceSessionState.applicationSession.profilingReactState.get() : "stopped"
   );
 
   return (

@@ -110,11 +110,11 @@ function Preview({
 
   const isRunning = selectedDeviceSession?.status === "running";
 
-  const isRefreshing = use$(
-    isRunning ? selectedDeviceSessionState.applicationSession.isRefreshing : false
+  const isRefreshing = use$(() =>
+    isRunning ? selectedDeviceSessionState.applicationSession.isRefreshing.get() : false
   );
-  const debugPaused = use$(
-    isRunning ? selectedDeviceSessionState.applicationSession.isDebuggerPaused : false
+  const debugPaused = use$(() =>
+    isRunning ? selectedDeviceSessionState.applicationSession.isDebuggerPaused.get() : false
   );
 
   const previewURL = selectedDeviceSession?.previewURL;
