@@ -76,12 +76,7 @@ export class IDE implements Disposable {
       this.stateManager.setState({ applicationRoots });
     });
 
-    this.disposables.push(
-      this.project,
-      this.workspaceConfigController,
-      this.outputChannelRegistry,
-      this.telemetry
-    );
+    this.disposables.push(this.project, this.workspaceConfigController, this.telemetry);
     // register disposable with context
     extensionContext.subscriptions.push(this);
   }

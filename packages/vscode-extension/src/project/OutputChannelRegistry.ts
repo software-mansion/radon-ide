@@ -5,6 +5,7 @@ import { createReadableOutputChannel, ReadableLogOutputChannel } from "./Readabl
 const hiddenOutputChannels = [Output.MetroBundler];
 
 export class OutputChannelRegistry implements Disposable {
+  private static instance: OutputChannelRegistry | null = null;
   private channelByName = new Map<Output, ReadableLogOutputChannel>([]);
 
   getOrCreateOutputChannel(channel: Output): ReadableLogOutputChannel {
@@ -24,13 +25,20 @@ export class OutputChannelRegistry implements Disposable {
     return newOutputChannel;
   }
 
+  public static getInstance(): OutputChannelRegistry {
+    if (!OutputChannelRegistry.instance) {
+      OutputChannelRegistry.instance = new OutputChannelRegistry();
+    }
+    return OutputChannelRegistry.instance;
+  }
+
+  public static getInstanceIfExists(): OutputChannelRegistry | null {
+    return OutputChannelRegistry.instance;
+  }
+
   dispose() {
-    this.channelByName.entries().forEach(([k, c]) => {
-      // NOTE: we special-case the IDE output channel to keep it open
-      // even when the IDE is disposed.
-      if (k !== Output.Ide) {
-        c.dispose();
-      }
-    });
+    this.channelByName.values().forEach((channel) => channel.dispose());
+    this.channelByName.clear();
+    OutputChannelRegistry.instance = null;
   }
 }

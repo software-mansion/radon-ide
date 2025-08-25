@@ -38,6 +38,7 @@ import { isIdeConfig } from "./utilities/launchConfiguration";
 import { PanelLocation } from "./common/State";
 import { DeviceRotation, DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
 import { updatePartialWorkspaceConfig } from "./utilities/updatePartialWorkspaceConfig";
+import { OutputChannelRegistry } from "./project/OutputChannelRegistry";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -74,6 +75,7 @@ export function deactivate(context: ExtensionContext): undefined {
   IDE.getInstanceIfExists()?.dispose();
   commands.executeCommand("setContext", "RNIDE.extensionIsActive", false);
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
+  OutputChannelRegistry.getInstanceIfExists()?.dispose();
   return undefined;
 }
 

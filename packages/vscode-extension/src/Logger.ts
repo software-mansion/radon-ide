@@ -1,8 +1,8 @@
 import { Output } from "./common/OutputChannel";
-import { IDE } from "./project/ide";
+import { OutputChannelRegistry } from "./project/OutputChannelRegistry";
 
 const getIdeOutputChannel = () => {
-  return IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(Output.Ide);
+  return OutputChannelRegistry.getInstance().getOrCreateOutputChannel(Output.Ide);
 };
 
 const logger = {
