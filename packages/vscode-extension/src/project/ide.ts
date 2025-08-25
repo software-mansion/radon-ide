@@ -26,7 +26,7 @@ export class IDE implements Disposable {
   public readonly editorBindings: EditorBindings;
   public readonly project: Project;
   public readonly workspaceConfigController: WorkspaceConfigController;
-  public readonly outputChannelRegistry = new OutputChannelRegistry();
+  public readonly outputChannelRegistry: OutputChannelRegistry;
 
   private environmentDependencyManager: EnvironmentDependencyManager;
 
@@ -45,6 +45,14 @@ export class IDE implements Disposable {
     this.disposables.push(this.stateManager.onSetState(this.handleStateChanged));
 
     this.telemetry = new Telemetry(this.stateManager.getDerived("telemetry"));
+
+    const outputChannelRegistry = OutputChannelRegistry.getInstanceIfExists();
+
+    if (!outputChannelRegistry) {
+      throw new Error("Cannot create IDE instance. OutputChannelRegistry hasn't been initialized.");
+    }
+
+    this.outputChannelRegistry = outputChannelRegistry;
 
     this.deviceManager = new DeviceManager(
       this.stateManager.getDerived("devicesState"),

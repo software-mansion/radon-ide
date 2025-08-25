@@ -2,7 +2,7 @@ import { Output } from "./common/OutputChannel";
 import { OutputChannelRegistry } from "./project/OutputChannelRegistry";
 
 const getIdeOutputChannel = () => {
-  return OutputChannelRegistry.getInstance().getOrCreateOutputChannel(Output.Ide);
+  return OutputChannelRegistry.getInstanceIfExists()?.getOrCreateOutputChannel(Output.Ide);
 };
 
 const logger = {

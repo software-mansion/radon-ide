@@ -80,6 +80,8 @@ export function deactivate(context: ExtensionContext): undefined {
 }
 
 export async function activate(context: ExtensionContext) {
+  OutputChannelRegistry.initializeInstance();
+
   // We reset RNIDE.panelIsOpen context to false on activation
   // to avoid situations when "Open IDE Panel" button is not shown
   // after improper deactivation of the extension.

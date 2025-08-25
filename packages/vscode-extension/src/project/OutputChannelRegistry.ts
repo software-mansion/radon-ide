@@ -25,14 +25,17 @@ export class OutputChannelRegistry implements Disposable {
     return newOutputChannel;
   }
 
-  public static getInstance(): OutputChannelRegistry {
-    if (!this.instance) {
-      this.instance = new OutputChannelRegistry();
-    }
+  public static getInstanceIfExists(): OutputChannelRegistry | null {
     return this.instance;
   }
 
-  public static getInstanceIfExists(): OutputChannelRegistry | null {
+  public static initializeInstance(): OutputChannelRegistry {
+    // Using `initializeInstance` in combination with `getInstanceIfExists` instead of a single `getInstance`
+    // prevents Logger from constructing OutputChannelRegistry after `dispose` has been already called.
+    if (this.getInstanceIfExists()) {
+      throw new Error("OutputChannelRegistry instance already exists.");
+    }
+    this.instance = new OutputChannelRegistry();
     return this.instance;
   }
 
