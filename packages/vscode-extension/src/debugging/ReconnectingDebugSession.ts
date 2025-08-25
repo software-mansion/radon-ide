@@ -110,6 +110,12 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   public stepOverDebugger(): void {
     this.debugSession.stepOverDebugger();
   }
+  public stepOutDebugger() {
+    this.debugSession.stepOutDebugger();
+  }
+  public stepIntoDebugger() {
+    this.debugSession.stepIntoDebugger();
+  }
   public async startProfilingCPU(): Promise<void> {
     return this.debugSession.startProfilingCPU();
   }

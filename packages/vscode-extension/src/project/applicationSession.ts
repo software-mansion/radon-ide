@@ -10,6 +10,7 @@ import {
   workspace,
   EventEmitter,
 } from "vscode";
+import { minimatch } from "minimatch";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { ApplicationContext } from "./ApplicationContext";
 import { MetroLauncher } from "./metro";
@@ -22,6 +23,9 @@ import {
   AppOrientation,
   BundleErrorDescriptor,
   DeviceRotation,
+  InspectorBridgeStatus,
+  InspectData,
+  InspectorAvailabilityStatus,
   ProfilingState,
   StartupMessage,
   ToolsState,
@@ -30,8 +34,9 @@ import { disposeAll } from "../utilities/disposables";
 import { ToolKey, ToolPlugin, ToolsDelegate, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
 import { CancelToken } from "../utilities/cancelToken";
-import { DevicePlatform } from "../common/DeviceManager";
 import { BuildResult } from "../builders/BuildManager";
+import { DevicePlatform, DeviceType } from "../common/State";
+import { isAppSourceFile } from "../utilities/isAppSourceFile";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
@@ -42,6 +47,7 @@ interface LaunchApplicationSessionDeps {
 }
 
 export class ApplicationSession implements ToolsDelegate, Disposable {
+  private inspectorBridgeStatus: InspectorBridgeStatus = InspectorBridgeStatus.Connecting;
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
   private debugSessionEventSubscription?: Disposable;
@@ -53,7 +59,10 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   private profilingReactState: ProfilingState = "stopped";
   private isRefreshing: boolean = false;
   private appOrientation: DeviceRotation | undefined;
+  private inspectorAvailability: InspectorAvailabilityStatus =
+    InspectorAvailabilityStatus.Available;
   private isActive = false;
+  private inspectCallID = 7621;
 
   private stateChangedEventEmitter = new EventEmitter<void>();
 
@@ -67,7 +76,16 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   ): Promise<ApplicationSession> {
     const packageNameOrBundleId =
       buildResult.platform === DevicePlatform.IOS ? buildResult.bundleID : buildResult.packageName;
-    const session = new ApplicationSession(device, metro, devtools, packageNameOrBundleId);
+    const supportedOrientations =
+      buildResult.platform === DevicePlatform.IOS ? buildResult.supportedInterfaceOrientations : [];
+    const session = new ApplicationSession(
+      applicationContext,
+      device,
+      metro,
+      devtools,
+      packageNameOrBundleId,
+      supportedOrientations
+    );
     if (getIsActive()) {
       // we need to start the parent debug session asap to ensure metro errors are shown in the debug console
       await session.setupDebugSession();
@@ -119,10 +137,12 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   }
 
   private constructor(
+    private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
     private readonly devtools: Devtools,
-    private readonly packageNameOrBundleId: string
+    private readonly packageNameOrBundleId: string,
+    private readonly supportedOrientations: DeviceRotation[]
   ) {
     this.registerDevtoolsListeners();
     this.registerMetroListeners();
@@ -140,6 +160,8 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       isRefreshing: this.isRefreshing,
       bundleError: this.bundleError,
       appOrientation: this.appOrientation,
+      elementInspectorAvailability: this.inspectorAvailability,
+      inspectorBridgeStatus: this.inspectorBridgeStatus,
     };
   }
 
@@ -169,7 +191,7 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
 
   //#region ToolsDelegate implementation
 
-  onToolsStateChange(toolsState: ToolsState): void {
+  onToolsStateChange(_toolsState: ToolsState): void {
     this.emitStateChange();
   }
 
@@ -234,6 +256,55 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
     });
   }
 
+  private determineAppOrientation(orientation: AppOrientation): DeviceRotation {
+    // Android case - the API is reliable, we do not need supportedOrientations array
+    // so we just consider the situation in which during the initialization,
+    // the orientation sent is landscape, which will later be corrected by
+    // on the lib side anyways
+    if (this.device.deviceInfo.platform === DevicePlatform.Android) {
+      if (orientation === "Landscape") {
+        return DeviceRotation.LandscapeLeft;
+      }
+      return orientation;
+    }
+
+    // IOS case
+    if (orientation === "Landscape") {
+      if (this.supportedOrientations.includes(DeviceRotation.LandscapeLeft)) {
+        return DeviceRotation.LandscapeLeft;
+      } else {
+        return DeviceRotation.LandscapeRight;
+      }
+    }
+
+    if (orientation === "Portrait") {
+      // iPhone case - expo always reports portraitUpsideDown as portrait on iPads
+      if (
+        this.device.deviceInfo.deviceType === DeviceType.Tablet &&
+        this.device.rotation === DeviceRotation.PortraitUpsideDown &&
+        this.supportedOrientations.includes(DeviceRotation.PortraitUpsideDown)
+      ) {
+        return DeviceRotation.PortraitUpsideDown;
+      }
+
+      if (
+        (this.supportedOrientations.includes(DeviceRotation.PortraitUpsideDown) &&
+          this.device.rotation === DeviceRotation.PortraitUpsideDown) ||
+        !this.supportedOrientations.includes(DeviceRotation.Portrait)
+      ) {
+        return DeviceRotation.PortraitUpsideDown;
+      } else {
+        return DeviceRotation.Portrait;
+      }
+    }
+
+    if (this.appOrientation && !this.supportedOrientations.includes(orientation)) {
+      return this.appOrientation;
+    }
+
+    return orientation;
+  }
+
   //#endregion
 
   //#region Metro event listeners
@@ -290,6 +361,12 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
   public stepOverDebugger() {
     this.debugSession?.stepOverDebugger();
   }
+  public stepOutDebugger() {
+    this.debugSession?.stepOutDebugger();
+  }
+  public stepIntoDebugger() {
+    this.debugSession?.stepIntoDebugger();
+  }
 
   private async connectJSDebugger() {
     const websocketAddress = await this.metro.getDebuggerURL();
@@ -335,27 +412,27 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
         }
       }),
       this.devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
-        const isLandscape =
-          this.device.rotation === DeviceRotation.LandscapeLeft ||
-          this.device.rotation === DeviceRotation.LandscapeRight;
-
-        if (orientation === "Landscape") {
-          // if the app orientation is equal to "Landscape", it means we do not have enough
-          // information on the application side to infer the detailed orientation.
-          if (isLandscape) {
-            // if the device is in landscape mode, we assume that the app orientation is correct with device rotation
-            this.appOrientation = this.device.rotation;
-          } else {
-            // if the device is not in landscape mode we set app orientation to the last known orientation.
-            // if the last orientation is not known, we assume the application was started in Landscape mode
-            // while the device was oriented in Portrait, and we pick `LandscapeLeft` as the default orientation in that case.
-            this.appOrientation = this.appOrientation ?? DeviceRotation.LandscapeLeft;
-          }
-        } else {
-          this.appOrientation = orientation;
-        }
-
+        this.appOrientation = this.determineAppOrientation(orientation);
         this.emitStateChange();
+      }),
+      this.devtools.onEvent(
+        "inspectorAvailabilityChanged",
+        (inspectorAvailability: InspectorAvailabilityStatus) => {
+          this.inspectorAvailability = inspectorAvailability;
+          this.emitStateChange();
+        }
+      ),
+      this.devtools.onEvent("disconnected", () => {
+        if (this.inspectorBridgeStatus === InspectorBridgeStatus.Connected) {
+          this.inspectorBridgeStatus = InspectorBridgeStatus.Disconnected;
+          this.emitStateChange();
+        }
+      }),
+      this.devtools.onEvent("connected", () => {
+        if (this.inspectorBridgeStatus !== InspectorBridgeStatus.Connected) {
+          this.inspectorBridgeStatus = InspectorBridgeStatus.Connected;
+          this.emitStateChange();
+        }
       })
     );
   }
@@ -445,6 +522,48 @@ export class ApplicationSession implements ToolsDelegate, Disposable {
       this.profilingReactState = "stopped";
       this.emitStateChange();
     }
+  }
+  //#endregion
+
+  //#region Element Inspector
+  public async inspectElementAt(
+    xRatio: number,
+    yRatio: number,
+    requestStack: boolean
+  ): Promise<InspectData> {
+    const id = this.inspectCallID++;
+    const { promise, resolve, reject } = Promise.withResolvers<InspectData>();
+    const listener = this.devtools.onEvent("inspectData", (payload) => {
+      if (payload.id === id) {
+        listener.dispose();
+        resolve(payload as unknown as InspectData);
+      } else if (payload.id >= id) {
+        listener.dispose();
+        reject("Inspect request was invalidated by a later request");
+      }
+    });
+    this.devtools.sendInspectRequest(xRatio, yRatio, id, requestStack);
+
+    const inspectData = await promise;
+    let stack = undefined;
+    if (requestStack && inspectData?.stack) {
+      stack = inspectData.stack;
+      const inspectorExcludePattern =
+        this.applicationContext.workspaceConfiguration.inspectorExcludePattern;
+      const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
+      function testInspectorExcludeGlobPattern(filename: string) {
+        return patterns?.some((pattern) => minimatch(filename, pattern));
+      }
+      stack.forEach((item) => {
+        item.hide = false;
+        if (!isAppSourceFile(item.source.fileName)) {
+          item.hide = true;
+        } else if (testInspectorExcludeGlobPattern(item.source.fileName)) {
+          item.hide = true;
+        }
+      });
+    }
+    return { frame: inspectData.frame, stack };
   }
   //#endregion
 

@@ -2,12 +2,9 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
 
-import DevicesProvider from "./providers/DevicesProvider";
 import ModalProvider from "./providers/ModalProvider";
-import ProjectProvider from "./providers/ProjectProvider";
+import ProjectProvider, { installLogOverrides } from "./providers/ProjectProvider";
 import AlertProvider from "./providers/AlertProvider";
-
-import { UtilsProvider, installLogOverrides } from "./providers/UtilsProvider";
 
 import "./styles/theme.css";
 import StoreProvider from "./providers/storeProvider";
@@ -21,15 +18,11 @@ root.render(
   <React.StrictMode>
     <StoreProvider>
       <ProjectProvider>
-        <UtilsProvider>
-          <DevicesProvider>
-            <ModalProvider>
-              <AlertProvider>
-                <App />
-              </AlertProvider>
-            </ModalProvider>
-          </DevicesProvider>
-        </UtilsProvider>
+        <ModalProvider>
+          <AlertProvider>
+            <App />
+          </AlertProvider>
+        </ModalProvider>
       </ProjectProvider>
     </StoreProvider>
   </React.StrictMode>

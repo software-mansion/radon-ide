@@ -3,11 +3,12 @@ import Sinon from "sinon";
 import { describe, afterEach, beforeEach, it } from "mocha";
 
 import { BuildType } from "../common/BuildConfig";
-import { DevicePlatform } from "../common/DeviceManager";
 import { CustomBuild, EasConfig } from "../common/LaunchConfig";
 import { createBuildConfig, inferBuildType } from "./BuildManager";
 import * as ExpoGo from "./expoGo";
 import { ResolvedLaunchConfig } from "../project/ApplicationContext";
+import { DevicePlatform, DeviceType, AndroidDeviceInfo, IOSDeviceInfo } from "../common/State";
+import { DeviceBase } from "../devices/DeviceBase";
 
 const APP_ROOT = "appRoot";
 const APP_ROOT_ABSOLUTE = "/appRoot";
@@ -42,7 +43,38 @@ const COMMON_CONFIG: ResolvedLaunchConfig = {
   preview: {
     waitForAppLaunch: true,
   },
+  usePrebuild: false,
 };
+
+const ANDROID_MOCK_DEVICE_INFO = {
+  id: "mock-device",
+  platform: DevicePlatform.Android,
+  avdId: "mock-avd-id",
+  modelId: "mock-model-id",
+  systemName: "mock-system",
+  displayName: "Mock Android Device",
+  deviceType: DeviceType.Phone,
+  available: true,
+} as AndroidDeviceInfo;
+
+const IOS_MOCK_DEVICE_INFO = {
+  id: "mock-device",
+  platform: DevicePlatform.IOS,
+  UDID: "mock-udid",
+  modelId: "mock-model-id",
+  systemName: "mock-system",
+  displayName: "Mock iOS Device",
+  deviceType: DeviceType.Phone,
+  available: true,
+  runtimeInfo: {
+    platform: DevicePlatform.IOS,
+    identifier: "mock-runtime-id",
+    name: "Mock iOS Runtime",
+    version: "0.0",
+    supportedDeviceTypes: [],
+    available: true,
+  },
+} as IOSDeviceInfo;
 
 describe("BuildManager", () => {
   Object.values(DevicePlatform).forEach((platform) => {
@@ -123,54 +155,52 @@ describe("BuildManager", () => {
       });
 
       describe("createBuildConfig", function () {
-        const launchConfigByType = new Map<BuildType, ResolvedLaunchConfig>([
-          [
-            BuildType.Custom,
-            {
-              ...COMMON_CONFIG,
-              customBuild: toPlatformConfig(platform, CUSTOM_BUILD_CONFIG),
-            },
-          ],
-          [
-            BuildType.Eas,
-            {
-              ...COMMON_CONFIG,
-              eas: toPlatformConfig(platform, EAS_CONFIG),
-            },
-          ],
-          [
-            BuildType.EasLocal,
-            {
-              ...COMMON_CONFIG,
-              eas: toPlatformConfig(platform, EAS_LOCAL_CONFIG),
-            },
-          ],
-          [
-            BuildType.ExpoGo,
-            {
-              ...COMMON_CONFIG,
-            },
-          ],
-          [
-            BuildType.Local,
-            {
-              ...COMMON_CONFIG,
-              env: {
-                OPTION: "value",
-                ANOTHER_OPTION: "another value",
-              },
-            },
-          ],
-        ]);
+        const launchConfigByType = new Map<BuildType, ResolvedLaunchConfig>();
+        launchConfigByType.set(BuildType.Custom, {
+          ...COMMON_CONFIG,
+          customBuild: toPlatformConfig(platform, CUSTOM_BUILD_CONFIG),
+        });
+        launchConfigByType.set(BuildType.Eas, {
+          ...COMMON_CONFIG,
+          eas: toPlatformConfig(platform, EAS_CONFIG),
+        });
+        launchConfigByType.set(BuildType.EasLocal, {
+          ...COMMON_CONFIG,
+          eas: toPlatformConfig(platform, EAS_LOCAL_CONFIG),
+        });
+        launchConfigByType.set(BuildType.ExpoGo, {
+          ...COMMON_CONFIG,
+        });
+        launchConfigByType.set(BuildType.Local, {
+          ...COMMON_CONFIG,
+          env: {
+            OPTION: "value",
+            ANOTHER_OPTION: "another value",
+          },
+        });
 
         it(`should include passed information`, async function () {
-          launchConfigByType.entries().forEach(([buildType, launchConfig]) => {
-            const buildConfig = createBuildConfig(platform, false, launchConfig, buildType);
+          // Test all build types to ensure they all work correctly
+          const entries = Array.from(launchConfigByType.entries());
+          for (const [buildType, launchConfig] of entries) {
+            const mockDevice = Sinon.createStubInstance(DeviceBase);
+
+            Object.defineProperty(mockDevice, "platform", {
+              get: () => platform,
+            });
+            Object.defineProperty(mockDevice, "deviceInfo", {
+              get: () =>
+                platform === DevicePlatform.Android
+                  ? ANDROID_MOCK_DEVICE_INFO
+                  : IOS_MOCK_DEVICE_INFO,
+            });
+
+            const buildConfig = createBuildConfig(mockDevice, launchConfig, buildType);
             assert.equal(buildConfig.platform, platform);
             assert.equal(buildConfig.type, buildType);
             assert.equal(buildConfig.appRoot, APP_ROOT_ABSOLUTE);
             assert.equal(buildConfig.env, launchConfig.env);
-          });
+          }
         });
       });
     });

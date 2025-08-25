@@ -1,11 +1,9 @@
 import { By } from "vscode-extension-tester";
 import { findAndWaitForElement } from "../utils/helpers.js";
 import { addNewDevice, openRadonIDEPanel } from "./interactions.js";
-import { sharedTestLifecycle } from "./setupTest.js";
+import { get } from "./setupTest.js";
 
 describe("Network panel tests", () => {
-  const get = sharedTestLifecycle();
-
   it("Should build app", async () => {
     const { driver } = get();
     await openRadonIDEPanel(driver);

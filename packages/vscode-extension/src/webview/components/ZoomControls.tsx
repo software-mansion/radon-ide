@@ -1,10 +1,10 @@
 import { RefObject, useCallback, useState } from "react";
 import * as Select from "@radix-ui/react-select";
 import IconButton from "./shared/IconButton";
-import { ZoomLevelType } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import "./ZoomControls.css";
 import { useDeviceFrame } from "../Preview/Device/hooks";
+import { ZoomLevelType } from "../../common/State";
 
 const ZOOM_STEP = 0.05;
 const ZOOM_SELECT_NUMERIC_VALUES = [0.5, 0.6, 0.7, 0.8, 0.9, 1];

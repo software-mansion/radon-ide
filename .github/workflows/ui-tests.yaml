@@ -1,0 +1,131 @@
+name: Build VSIX and Run Tests (macOS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      node:
+        description: Node.js version to use
+        required: false
+        default: "22"
+      testApp:
+        description: Project app name to test
+        type: choice
+        required: true
+        default: "react-native-77"
+        options:
+          - "react-native-73"
+          - "react-native-74"
+          - "react-native-75"
+          - "react-native-76"
+          - "react-native-77"
+          - "react-native-78"
+          - "react-native-79"
+          - "react-native-80"
+          - "react-native-81"
+          - "expo-50-dev-client"
+          - "expo-51-dev-client"
+          - "expo-51"
+          - "expo-52-eas"
+          - "expo-52-prebuild-with-plugins"
+          - "expo-53"
+          - "expo-54"
+          - "expo-go"
+          - "expo-router"
+          - "nx-monorepo"
+          - "pnpm-monorepo"
+      isRecording:
+        description: Whether to record video
+        type: boolean
+        required: false
+        default: "true"
+      testsToRun:
+        description: Space-separated list of test numbers to run (none runs all tests)
+        required: false
+        default: ""
+      testsToExclude:
+        description: Space-separated list of test numbers to exclude (none excludes nothing)
+        required: false
+        default: ""
+
+jobs:
+  build-and-test:
+    runs-on: macos-latest-xlarge
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ github.event.inputs.node || '22' }}
+
+      - name: Enforce HTTPS for submodules
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Cache npm (extension)
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('packages/vscode-extension/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies (extension)
+        run: npm ci
+        working-directory: packages/vscode-extension
+
+      - name: Cache npm (tester)
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('packages/vscode-extension-tester/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies (tester)
+        run: npm ci
+        working-directory: packages/vscode-extension-tester
+
+      - name: Install vsce CLI
+        run: npm i -g @vscode/vsce
+
+      - name: Get test app
+        run: npm run get-test-app -- ${{ github.event.inputs.testApp }}
+        working-directory: packages/vscode-extension-tester
+
+      - name: Build VSIX package
+        run: npm run build-vsix-package
+        working-directory: packages/vscode-extension-tester
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Setup ffmpeg
+        if: ${{ github.event.inputs.isRecording == 'true' }}
+        uses: AnimMouse/setup-ffmpeg@v1
+
+      - name: Run setup-run-tests
+        run: npm run setup-run-tests -- ${{ github.event.inputs.testsToRun }} --exclude ${{ github.event.inputs.testsToExclude }}
+        working-directory: packages/vscode-extension-tester
+        env:
+          PROJECT_NAME: ${{ github.event.inputs.testApp }}
+          IS_RECORDING: ${{ github.event.inputs.isRecording }}
+
+      - name: make video
+        if: ${{ github.event.inputs.isRecording == 'true' }}
+        run: ffmpeg -framerate 10 -i frame-%04d.png -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
+        working-directory: packages/vscode-extension-tester/videos
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-ui-screenshots
+          path: packages/vscode-extension-tester/screenshots/
+
+      - name: Upload video recording
+        if: ${{ github.event.inputs.isRecording == 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-ui-recording
+          path: packages/vscode-extension-tester/videos/vscode-ui-recording.mp4

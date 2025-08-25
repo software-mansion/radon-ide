@@ -13,7 +13,7 @@ export async function findAndWaitForElement(
   driver,
   selector,
   timeoutMessage,
-  timeout = 5000
+  timeout = 10000
 ) {
   const element = await driver.wait(
     until.elementLocated(selector),
@@ -28,7 +28,7 @@ export async function findAndWaitForElementByTag(
   driver,
   tagName,
   timeoutMessage = `Timed out waiting for element by tag ${tagName}`,
-  timeout = 5000
+  timeout = 10000
 ) {
   const selector = By.css(`[data-test="${tagName}"]`);
   return findAndWaitForElement(driver, selector, timeoutMessage, timeout);
@@ -37,13 +37,14 @@ export async function findAndWaitForElementByTag(
 export async function findAndClickElementByTag(
   driver,
   dataTag,
+  timeout = 15000,
   message = `Timed out waiting for element with tag name ${dataTag}`
 ) {
   const element = await findAndWaitForElement(
     driver,
     By.css(`[data-test="${dataTag}"]`),
     message,
-    60000
+    timeout
   );
   element.click();
 }

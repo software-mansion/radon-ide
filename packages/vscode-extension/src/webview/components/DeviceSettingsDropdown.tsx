@@ -22,7 +22,6 @@ import {
 } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
-import { DevicePlatform } from "../../common/DeviceManager";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
@@ -30,6 +29,7 @@ import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
+import { DevicePlatform } from "../../common/State";
 
 const contentSizes = [
   "xsmall",
@@ -130,7 +130,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="dropdown-menu-content device-settings-content"
-          data-test="device-settings-menu"
+          data-test="device-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
           <form>
@@ -257,7 +257,12 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
-            data-test="device-location-button"
+            onSelect={() => project.openSendFileDialog()}>
+            <span className="codicon codicon-share" />
+            Send File
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
             onSelect={() => {
               openModal("Location", <DeviceLocationView />);
             }}>

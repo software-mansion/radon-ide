@@ -1,9 +1,8 @@
 import fs from "fs";
 import path from "path";
 import semver from "semver";
-import { OutputChannel } from "vscode";
 import loadConfig from "@react-native-community/cli-config";
-import { getNativeABI } from "../utilities/common";
+import { calculateAppArtifactHash, getNativeABI } from "../utilities/common";
 import { ANDROID_HOME, findJavaHome } from "../utilities/android";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
@@ -11,17 +10,19 @@ import { CancelToken } from "../utilities/cancelToken";
 import { extensionContext } from "../utilities/extensionContext";
 import { BuildAndroidProgressProcessor } from "./BuildAndroidProgressProcessor";
 import { EXPO_GO_PACKAGE_NAME, downloadExpoGo } from "./expoGo";
-import { DevicePlatform } from "../common/DeviceManager";
 import { getReactNativeVersion } from "../utilities/reactNative";
 import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild, performLocalEasBuild } from "./eas";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { AndroidBuildConfig, AndroidLocalBuildConfig, BuildType } from "../common/BuildConfig";
+import { DevicePlatform } from "../common/State";
+import { BuildOptions } from "./BuildManager";
 
 export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
   apkPath: string;
   packageName: string;
+  buildHash: string;
 };
 
 const BUILD_TOOLS_PATH = path.join(ANDROID_HOME, "build-tools");
@@ -80,11 +81,10 @@ function makeBuildTaskName(productFlavor: string, buildType: string, appName?: s
 
 export async function buildAndroid(
   buildConfig: AndroidBuildConfig,
-  cancelToken: CancelToken,
-  outputChannel: OutputChannel,
-  progressListener: (newProgress: number) => void
+  buildOptions: BuildOptions
 ): Promise<AndroidBuildResult> {
   const { appRoot, env, type: buildType } = buildConfig;
+  const { cancelToken, buildOutputChannel } = buildOptions;
 
   switch (buildType) {
     case BuildType.Custom: {
@@ -97,7 +97,7 @@ export async function buildAndroid(
         env,
         DevicePlatform.Android,
         appRoot,
-        outputChannel
+        buildOutputChannel
       );
       if (!apkPath) {
         throw new Error(
@@ -109,6 +109,7 @@ export async function buildAndroid(
         apkPath,
         packageName: await extractPackageName(apkPath, cancelToken),
         platform: DevicePlatform.Android,
+        buildHash: await calculateAppArtifactHash(apkPath),
       };
     }
     case BuildType.Eas: {
@@ -120,13 +121,14 @@ export async function buildAndroid(
         buildConfig.config,
         DevicePlatform.Android,
         appRoot,
-        outputChannel
+        buildOutputChannel
       );
 
       return {
         apkPath,
         packageName: await extractPackageName(apkPath, cancelToken),
         platform: DevicePlatform.Android,
+        buildHash: await calculateAppArtifactHash(apkPath),
       };
     }
     case BuildType.EasLocal: {
@@ -137,7 +139,7 @@ export async function buildAndroid(
         buildConfig.profile,
         DevicePlatform.Android,
         appRoot,
-        outputChannel,
+        buildOutputChannel,
         cancelToken
       );
 
@@ -145,6 +147,7 @@ export async function buildAndroid(
         apkPath,
         packageName: await extractPackageName(apkPath, cancelToken),
         platform: DevicePlatform.Android,
+        buildHash: await calculateAppArtifactHash(apkPath),
       };
     }
     case BuildType.ExpoGo: {
@@ -152,21 +155,25 @@ export async function buildAndroid(
         platform: DevicePlatform.Android,
       });
       const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken, appRoot);
-      return { apkPath, packageName: EXPO_GO_PACKAGE_NAME, platform: DevicePlatform.Android };
+      return {
+        apkPath,
+        packageName: EXPO_GO_PACKAGE_NAME,
+        platform: DevicePlatform.Android,
+        buildHash: await calculateAppArtifactHash(apkPath),
+      };
     }
     case BuildType.Local: {
-      return await buildLocal(buildConfig, cancelToken, outputChannel, progressListener);
+      return await buildLocal(buildConfig, buildOptions);
     }
   }
 }
 
 async function buildLocal(
   buildConfig: AndroidLocalBuildConfig,
-  cancelToken: CancelToken,
-  outputChannel: OutputChannel,
-  progressListener: (newProgress: number) => void
+  buildOptions: BuildOptions
 ): Promise<AndroidBuildResult> {
-  let { appRoot, forceCleanBuild, env, productFlavor = "", buildType = "debug" } = buildConfig;
+  let { appRoot, env, productFlavor = "", buildType = "debug" } = buildConfig;
+  const { progressListener, cancelToken, buildOutputChannel, forceCleanBuild } = buildOptions;
   const androidSourceDir = getAndroidSourceDir(appRoot);
   const androidAppName = loadConfig({
     projectRoot: appRoot,
@@ -210,7 +217,7 @@ async function buildLocal(
   );
   const buildAndroidProgressProcessor = new BuildAndroidProgressProcessor(progressListener);
   lineReader(buildProcess).onLineRead((line) => {
-    outputChannel.appendLine(line);
+    buildOutputChannel.appendLine(line);
     buildAndroidProgressProcessor.processLine(line);
   });
 
@@ -223,7 +230,11 @@ async function buildLocal(
   Logger.debug("Android build successful");
   try {
     const apkInfo = await getAndroidBuildPaths(appRoot, cancelToken, productFlavor, buildType);
-    return { ...apkInfo, platform: DevicePlatform.Android };
+    return {
+      ...apkInfo,
+      platform: DevicePlatform.Android,
+      buildHash: await calculateAppArtifactHash(apkInfo.apkPath),
+    };
   } catch (e) {
     Logger.error("Failed to extract package name from APK", e);
     throw new Error(

@@ -1,13 +1,11 @@
 import "./ManageDevicesView.css";
-import { MouseEventHandler, useEffect, useState } from "react";
+import { MouseEventHandler, useState } from "react";
 import * as Switch from "@radix-ui/react-switch";
 import { use$ } from "@legendapp/state/react";
 import IconButton from "../components/shared/IconButton";
 import DeviceRenameDialog from "../components/DeviceRenameDialog";
 import DeviceRemovalConfirmation from "../components/DeviceRemovalConfirmation";
 import CreateDeviceView from "./CreateDeviceView";
-import { DeviceInfo, DevicePlatform } from "../../common/DeviceManager";
-import { useDevices } from "../providers/DevicesProvider";
 import Tooltip from "../components/shared/Tooltip";
 import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
@@ -17,6 +15,8 @@ import { mapIdToModel } from "../utilities/deviceConstants";
 
 import "../components/shared/SwitchGroup.css";
 import { useStore } from "../providers/storeProvider";
+import { PropsWithDataTest } from "../../common/types";
+import { DeviceInfo, DevicePlatform } from "../../common/State";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -34,16 +34,16 @@ function DeviceRow({
   isSelected,
   isRunning,
   dataTest,
-}: DeviceRowProps) {
+}: PropsWithDataTest<DeviceRowProps>) {
   const store$ = useStore();
   const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
-  const { deviceSessionsManager } = useDevices();
+  const { project } = useProject();
 
-  const stopDevice = () => deviceSessionsManager.terminateSession(deviceInfo.id);
+  const stopDevice = () => project.terminateSession(deviceInfo.id);
   const selectDevice: MouseEventHandler = (e) => {
     if (!isSelected) {
       e.stopPropagation();
-      deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
+      project.startOrActivateSessionForDevice(deviceInfo, {
         stopPreviousDevices,
       });
       closeModal();
@@ -115,7 +115,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
-          data-test={`rename-device-${deviceInfo.displayName}`}
+          data-test={`manage-devices-menu-rename-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceRename(deviceInfo);
@@ -130,7 +130,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
-          data-test={`delete-button-device-${deviceInfo.displayName}`}
+          data-test={`manage-devices-menu-delete-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceDelete(deviceInfo);
@@ -153,16 +153,12 @@ function ManageDevicesView() {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
 
-  const { devices, reload } = useDevices();
+  const devices = use$(store$.devicesState.devices) ?? [];
 
-  useEffect(() => {
-    reload();
-  }, []);
-
-  const iosDevices = devices.filter(
+  const iosDevices = (devices ?? []).filter(
     ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0
   );
-  const androidDevices = devices.filter(
+  const androidDevices = (devices ?? []).filter(
     ({ platform, modelId }) => platform === DevicePlatform.Android && modelId.length > 0
   );
 
@@ -206,7 +202,7 @@ function ManageDevicesView() {
       <DeviceRow
         key={deviceInfo.id}
         deviceInfo={deviceInfo}
-        dataTest={`device-${deviceInfo.displayName}`}
+        dataTest={`manage-devices-menu-row-device-${deviceInfo.displayName}`}
         onDeviceRename={handleDeviceRename}
         onDeviceDelete={handleDeviceDelete}
         isSelected={deviceInfo.id === selectedProjectDevice?.id}
@@ -232,7 +228,7 @@ function ManageDevicesView() {
       <Button
         autoFocus
         className="create-button"
-        dataTest="create-new-device-button"
+        dataTest="manage-devices-menu-create-new-device-button"
         onClick={() => setCreateDeviceViewOpen(true)}>
         <span className="codicon codicon-add" />
         <div className="create-button-text">Create new device</div>

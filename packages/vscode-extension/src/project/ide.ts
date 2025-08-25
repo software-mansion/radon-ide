@@ -2,7 +2,6 @@ import { Disposable, EventEmitter } from "vscode";
 import { Project } from "./project";
 import { DeviceManager } from "../devices/DeviceManager";
 import { WorkspaceConfigController } from "../panels/WorkspaceConfigController";
-import { Utils } from "../utilities/utils";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
@@ -12,6 +11,7 @@ import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 import { Telemetry } from "./telemetry";
+import { EditorBindings } from "./EditorBindings";
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
@@ -23,9 +23,9 @@ export class IDE implements Disposable {
   private onStateChangedEmitter = new EventEmitter<RecursivePartial<State>>();
 
   public readonly deviceManager: DeviceManager;
+  public readonly editorBindings: EditorBindings;
   public readonly project: Project;
   public readonly workspaceConfigController: WorkspaceConfigController;
-  public readonly utils: Utils;
   public readonly outputChannelRegistry = new OutputChannelRegistry();
 
   private environmentDependencyManager: EnvironmentDependencyManager;
@@ -46,28 +46,35 @@ export class IDE implements Disposable {
 
     this.telemetry = new Telemetry(this.stateManager.getDerived("telemetry"));
 
-    this.deviceManager = new DeviceManager(this.outputChannelRegistry);
-    this.utils = new Utils();
+    this.deviceManager = new DeviceManager(
+      this.stateManager.getDerived("devicesState"),
+      this.outputChannelRegistry
+    );
+    this.editorBindings = new EditorBindings();
+
     this.environmentDependencyManager = new EnvironmentDependencyManager(
       this.stateManager.getDerived("environmentDependencies")
     );
+
+    this.workspaceConfigController = new WorkspaceConfigController(
+      this.stateManager.getDerived("workspaceConfiguration")
+    );
+
     this.project = new Project(
       this.stateManager.getDerived("projectState"),
       this.stateManager.getDerived("workspaceConfiguration"),
+      this.stateManager.getDerived("devicesState"),
       this.deviceManager,
-      this.utils,
+      this.editorBindings,
       this.outputChannelRegistry,
       this.environmentDependencyManager,
+      this.telemetry,
       initialLaunchConfig
     );
 
     this.project.appRootConfigController.getAvailableApplicationRoots().then((applicationRoots) => {
       this.stateManager.setState({ applicationRoots });
     });
-
-    this.workspaceConfigController = new WorkspaceConfigController(
-      this.stateManager.getDerived("workspaceConfiguration")
-    );
 
     this.disposables.push(
       this.project,

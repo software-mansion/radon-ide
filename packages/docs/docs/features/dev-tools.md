@@ -22,10 +22,10 @@ Tool on/off setting is persisted locally for the scope of your project (VSCode o
 Therefore when you open the project next time in the IDE, the tool panel will launch automatically.
 It will also be kept open when you switch between different devices across that project.
 
-## Redux
+## Redux Toolkit
 
 This plugin doesn't require any additional configuration.
-If your app uses Redux, the IDE will automatically detect that, and Redux plugin will be listed in the Dev Tools menu where you can enable it.
+If your app uses Redux Toolkit, the IDE will automatically detect that, and Redux plugin will be listed in the Dev Tools menu where you can enable it.
 Once enabled you will be able to use the official Redux UI (same one as the Redux Chrome extension) from within your editor panel:
 
 <img width="700" src="/img/docs/ide_devtools_redux.png" className="shadow-image" />

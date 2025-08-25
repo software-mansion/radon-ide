@@ -47,6 +47,8 @@ export interface DebugSession {
   // debugger controls
   resumeDebugger(): void;
   stepOverDebugger(): void;
+  stepOutDebugger(): void;
+  stepIntoDebugger(): void;
   evaluateExpression(params: Cdp.Runtime.EvaluateParams): Promise<Cdp.Runtime.EvaluateResult>;
 
   // Profiling controls
@@ -249,6 +251,16 @@ export class DebugSessionImpl implements DebugSession, Disposable {
 
   public stepOverDebugger() {
     commands.executeCommand("workbench.action.debug.stepOver", undefined, {
+      sessionId: this.jsDebugSession?.id,
+    });
+  }
+  public stepOutDebugger() {
+    commands.executeCommand("workbench.action.debug.stepOut", undefined, {
+      sessionId: this.jsDebugSession?.id,
+    });
+  }
+  public stepIntoDebugger() {
+    commands.executeCommand("workbench.action.debug.stepInto", undefined, {
       sessionId: this.jsDebugSession?.id,
     });
   }

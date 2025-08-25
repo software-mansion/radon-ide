@@ -4,9 +4,10 @@ import { use$ } from "@legendapp/state/react";
 import DeviceFrame from "./DeviceFrame";
 import { useDeviceFrame } from "./hooks";
 import { DeviceProperties, DevicePropertiesFrame } from "../../utilities/deviceConstants";
-import { DeviceRotation, ZoomLevelType } from "../../../common/Project";
 import { DEVICE_DEFAULT_SCALE } from "../../components/ZoomControls";
 import { useStore } from "../../providers/storeProvider";
+import { ZoomLevelType } from "../../../common/State";
+import { DeviceRotation } from "../../../common/Project";
 
 const MIN_HEIGHT = 350;
 
@@ -123,7 +124,7 @@ function getLandscapeDimensions(
     phoneScreenWidth: `${(device.screenHeight / frame.height) * 100}%`, // Swapped for landscape
     phoneTop: `${(frame.offsetX / frame.width) * 100}%`, // Swapped for landscape
     phoneLeft: `${(frame.offsetY / frame.height) * 100}%`, // Swapped for landscape
-    phoneMaskImage: `url(${device.landscapeScreenImage})`,
+    phoneMaskImage: `url(${device.landscapeScreenMaskImage})`,
     phoneFrameImage: `url(${frame.imageLandscape})`,
     phoneAspectRatio: `${1 / aspectRatio}`,
   };

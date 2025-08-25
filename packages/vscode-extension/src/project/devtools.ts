@@ -94,6 +94,7 @@ export class Devtools extends BaseInspectorBridge implements Disposable {
       ws.on("close", () => {
         if (this.socket === ws) {
           this.socket = undefined;
+          this.emitEvent("disconnected", []);
         }
         bridge.shutdown();
         if (this.store === store) {
@@ -111,6 +112,8 @@ export class Devtools extends BaseInspectorBridge implements Disposable {
         // @ts-ignore - isProfilingBasedOnUserInput exists but types are outdated
         this.emitEvent("isProfilingReact", store.profilerStore.isProfilingBasedOnUserInput);
       });
+
+      this.emitEvent("connected", []);
     });
 
     return new Promise<void>((resolve) => {

@@ -1,9 +1,10 @@
 export const paths = {
-  projectPath: "../../react-native-80",
-  // projectPath: "/Users/krzysztof/test/radon-ide-test-apps/react-native-78",
+  projectPath: "../data/react-native-app",
 };
 
 export const texts = {
   pageTitle: paths.projectPath.split("/").pop(),
-  expectedProjectName: "reactNative80",
+  expectedProjectName: process.env.PROJECT_NAME
+    ? process.env.PROJECT_NAME.replace(/[-_]/g, "")
+    : "reactNative77",
 };

@@ -1,6 +1,7 @@
 import classNames from "classnames";
 import "./Button.css";
 import Tooltip from "./Tooltip";
+import { PropsWithDataTest } from "../../../common/types";
 
 interface ButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -28,7 +29,7 @@ function Button({
   tooltip,
   autoFocus,
   dataTest,
-}: ButtonProps) {
+}: PropsWithDataTest<ButtonProps>) {
   const button = (
     <button
       autoFocus={autoFocus}

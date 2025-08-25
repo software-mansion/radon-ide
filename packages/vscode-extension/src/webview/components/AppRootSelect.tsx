@@ -2,7 +2,7 @@ import * as Select from "@radix-ui/react-select";
 import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
 import _ from "lodash";
-import React, { PropsWithChildren, useEffect } from "react";
+import React, { PropsWithChildren, useEffect, useMemo } from "react";
 import { use$ } from "@legendapp/state/react";
 import { useProject } from "../providers/ProjectProvider";
 import { LaunchConfiguration, LaunchConfigurationKind } from "../../common/LaunchConfig";
@@ -143,6 +143,8 @@ function AppRootSelect() {
   const store$ = useStore();
   const applicationRoots = use$(store$.applicationRoots);
 
+  const projectInitialized = use$(store$.projectState.initialized);
+
   const {
     selectedLaunchConfiguration: selectedConfiguration,
     customLaunchConfigurations: customConfigurations,
@@ -159,14 +161,18 @@ function AppRootSelect() {
     );
   }
 
-  const detectedConfigurations = applicationRoots.map(({ path, displayName, name }) => {
-    return {
-      appRoot: path,
-      name: displayName || name,
-      kind: LaunchConfigurationKind.Detected,
-      env: {},
-    };
-  });
+  const detectedConfigurations = useMemo(
+    () =>
+      applicationRoots.map(({ path, displayName, name }) => {
+        return {
+          appRoot: path,
+          name: displayName || name,
+          kind: LaunchConfigurationKind.Detected,
+          env: {},
+        };
+      }),
+    [applicationRoots]
+  );
 
   const handleAppRootChange = async (value: string) => {
     if (value === "manage") {
@@ -199,7 +205,7 @@ function AppRootSelect() {
     }
   })();
 
-  useUnknownConfigurationAlert(projectState.initialized && selectedValue === "unknown");
+  useUnknownConfigurationAlert(projectInitialized && selectedValue === "unknown");
 
   const configurationsCount = detectedConfigurations.length + customConfigurations.length;
   const placeholder = configurationsCount === 0 ? "No applications found" : "Select application";
@@ -212,7 +218,7 @@ function AppRootSelect() {
     <Select.Root onValueChange={handleAppRootChange} value={selectedValue}>
       <Select.Trigger
         className="approot-select-trigger"
-        data-test="approot-select-trigger"
+        data-test="radon-bottom-bar-approot-select-dropdown-trigger"
         disabled={configurationsCount === 0}>
         <Select.Value placeholder={placeholder}>
           <div className="approot-select-value" data-test="approot-select-value">
@@ -225,7 +231,7 @@ function AppRootSelect() {
       <Select.Portal>
         <Select.Content
           className="approot-select-content"
-          data-test="approot-select-content"
+          data-test="approot-select-dropdown-content"
           position="popper"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <Select.ScrollUpButton className="approot-select-scroll">

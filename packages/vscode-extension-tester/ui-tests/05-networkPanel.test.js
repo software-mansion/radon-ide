@@ -5,13 +5,12 @@ import {
   findAndWaitForElement,
 } from "../utils/helpers.js";
 import { openRadonIDEPanel, findWebViewIFrame } from "./interactions.js";
-import { sharedTestLifecycle } from "./setupTest.js";
+import { get } from "./setupTest.js";
 
 describe("Network panel tests", () => {
-  const get = sharedTestLifecycle();
+  const { driver } = get();
 
   it("Should open the network panel", async () => {
-    const { driver } = get();
     await openRadonIDEPanel(driver);
     await findAndWaitForElement(
       driver,

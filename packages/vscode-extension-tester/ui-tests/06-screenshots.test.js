@@ -4,13 +4,13 @@ import {
   findAndClickElementByTag,
 } from "../utils/helpers.js";
 import { openRadonIDEPanel, findAndFillSaveFileForm } from "./interactions.js";
-import { sharedTestLifecycle } from "./setupTest.js";
+import { get } from "./setupTest.js";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
 describe("screenshots panel tests", () => {
-  const get = sharedTestLifecycle();
+  const { driver } = get();
   const homeDir = os.homedir();
 
   it("Should take a screenshot", async () => {
@@ -18,7 +18,6 @@ describe("screenshots panel tests", () => {
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    const { driver } = get();
     await openRadonIDEPanel(driver);
 
     await findAndWaitForElement(
@@ -47,7 +46,6 @@ describe("screenshots panel tests", () => {
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    const { driver } = get();
     await openRadonIDEPanel(driver);
 
     await findAndWaitForElement(
