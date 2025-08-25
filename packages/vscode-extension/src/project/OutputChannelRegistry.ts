@@ -26,14 +26,14 @@ export class OutputChannelRegistry implements Disposable {
   }
 
   public static getInstance(): OutputChannelRegistry {
-    if (!OutputChannelRegistry.instance) {
-      OutputChannelRegistry.instance = new OutputChannelRegistry();
+    if (!this.instance) {
+      this.instance = new OutputChannelRegistry();
     }
-    return OutputChannelRegistry.instance;
+    return this.instance;
   }
 
   public static getInstanceIfExists(): OutputChannelRegistry | null {
-    return OutputChannelRegistry.instance;
+    return this.instance;
   }
 
   dispose() {
