@@ -339,10 +339,11 @@ function TableBody({
           </VscodeTableRow>
         );
       })}
-      {/* Below row, renedered unconditionally, is needed, because the scrollable-container
-          (requested by getScrollableTableContainer method) is mounted only after
-          at least one of the rows is present */}
-      <VscodeTableRow className="hack-table-row">mleko</VscodeTableRow>
+      {/* Below row, renedered unconditionally, is needed, because the VscodeTableBody
+      is styled with display:table, which causes rows to stretch to fit the container, despite
+      set size. As we will always have total low height lesser than the table-body height (because
+      virtualization) an additional row is needed to fill the remaining space */}
+      <VscodeTableRow className="hack-table-row"></VscodeTableRow>
     </VscodeTableBody>
   );
 }

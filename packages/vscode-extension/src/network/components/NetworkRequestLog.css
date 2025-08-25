@@ -94,7 +94,7 @@ vscode-table-header-cell:hover .table-header-cell button {
   background-color: var(--vscode-terminal-selectionBackground);
 }
 
-.hack-table-row{
+.hack-table-row {
   visibility: hidden;
   pointer-events: none;
 }
