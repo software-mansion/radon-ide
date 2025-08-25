@@ -750,6 +750,14 @@ export class DeviceSession implements Disposable {
     return this.screenCapture.getScreenshot();
   }
 
+  public get previewReady() {
+    return this.device.previewReady;
+  }
+
+  public get deviceRotation() {
+    return this.device.rotation;
+  }
+
   // #endregion Recording
 
   public sendTouches(
