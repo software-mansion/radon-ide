@@ -161,7 +161,6 @@ const useNetworkTracker = (): NetworkTracker => {
     if (serverMessages.length === 0) {
       return;
     }
-
     setNetworkLogs((prevLogs) => {
       const newLogs = [...prevLogs];
       serverMessages.map((msg) => processServerMessage(msg, newLogs));

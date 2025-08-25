@@ -16616,10 +16616,10 @@ __DEV__ &&
     (function () {
       var internals = {
         bundleType: 1,
-        version: "19.1.0-canary-7fa3d1db-20250613",
+        version: "19.1.0",
         rendererPackageName: "react-native-renderer",
         currentDispatcherRef: ReactSharedInternals,
-        reconcilerVersion: "19.1.0-canary-7fa3d1db-20250613"
+        reconcilerVersion: "19.1.0"
       };
       null !== extraDevToolsConfig &&
         (internals.rendererConfig = extraDevToolsConfig);

@@ -1,9 +1,8 @@
-import fs from "fs";
 import { EventEmitter } from "stream";
-import os, { homedir } from "os";
+import os from "os";
 import path from "path";
 import assert from "assert";
-import { env, Disposable, commands, workspace, window, Uri } from "vscode";
+import { env, Disposable, commands, workspace, window } from "vscode";
 import _ from "lodash";
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import {
@@ -16,14 +15,12 @@ import {
   DeviceSettings,
   IDEPanelMoveTarget,
   isOfEnumDeviceRotation,
-  MultimediaData,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
   ToolsState,
   TouchPoint,
-  ZoomLevelType,
 } from "../common/Project";
 import { AppRootConfigController } from "../panels/AppRootConfigController";
 import { Logger } from "../Logger";
@@ -59,21 +56,18 @@ import {
   DevicesState,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
+  MultimediaData,
   ProjectStore,
   WorkspaceConfiguration,
 } from "../common/State";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
-import { getTimestamp } from "../utilities/getTimestamp";
-import { Platform } from "../utilities/platform";
 import { Telemetry } from "./telemetry";
 import { EditorBindings } from "./EditorBindings";
+import { saveMultimedia } from "../utilities/saveMultimedia";
 
-const PREVIEW_ZOOM_KEY = "preview_zoom";
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 
 const DEEP_LINKS_HISTORY_LIMIT = 50;
-
-const MAX_RECORDING_TIME_SEC = 10 * 60; // 10 minutes
 
 export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
   // #region Properties
@@ -157,6 +151,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       fingerprintProvider
     );
     this.deviceSessionsManager = new DeviceSessionsManager(
+      this.stateManager.getDerived("deviceSessions"),
+      this.stateManager,
       this.applicationContext,
       this.deviceManager,
       this.devicesStateManager,
@@ -169,9 +165,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.projectState = {
       selectedSessionId: null,
       deviceSessions: {},
-      initialized: false,
       appRootPath: this.relativeAppRootPath,
-      previewZoom: undefined,
       selectedLaunchConfiguration: this.selectedLaunchConfiguration,
       customLaunchConfigurations: this.launchConfigsManager.launchConfigurations,
       connectState: {
@@ -230,7 +224,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region Device Session
 
   public onInitialized(): void {
-    this.updateProjectState({ initialized: true });
+    this.stateManager.setState({ initialized: true });
   }
 
   public onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
@@ -302,6 +296,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     // and only close the applications, but the API we have right now does not allow that.
     const oldDeviceSessionsManager = this.deviceSessionsManager;
     this.deviceSessionsManager = new DeviceSessionsManager(
+      this.stateManager.getDerived("deviceSessions"),
+      this.stateManager,
       this.applicationContext,
       this.deviceManager,
       this.devicesStateManager,
@@ -521,33 +517,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Recording
 
-  private recordingTimeout: NodeJS.Timeout | undefined = undefined;
-
-  public startRecording(): void {
-    getTelemetryReporter().sendTelemetryEvent("recording:start-recording", {
+  public async toggleRecording() {
+    getTelemetryReporter().sendTelemetryEvent("recording:toggle-recording", {
       platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    this.deviceSession.startRecording();
-
-    this.recordingTimeout = setTimeout(() => {
-      this.stopRecording();
-    }, MAX_RECORDING_TIME_SEC * 1000);
-  }
-
-  public async captureAndStopRecording() {
-    const recording = await this.stopRecording();
-    await this.saveMultimedia(recording);
-  }
-
-  public async toggleRecording() {
-    if (this.recordingTimeout) {
-      this.captureAndStopRecording();
-    } else {
-      this.startRecording();
-    }
+    this.deviceSession.toggleRecording();
   }
 
   public async captureReplay() {
@@ -557,8 +534,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    const replay = await this.deviceSession.captureReplay(this.getDeviceRotation());
-    this.eventEmitter.emit("replayDataCreated", replay);
+    this.deviceSession.captureReplay();
   }
 
   public async captureScreenshot() {
@@ -568,62 +544,45 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-
-    const screenshot = await this.deviceSession.captureScreenshot(this.getDeviceRotation());
-    await this.saveMultimedia(screenshot);
+    this.deviceSession.captureScreenshot();
   }
 
   public async saveMultimedia(multimediaData: MultimediaData) {
-    const extension = path.extname(multimediaData.tempFileLocation);
-    const timestamp = getTimestamp();
-    const baseFileName = multimediaData.fileName.substring(
-      0,
-      multimediaData.fileName.length - extension.length
-    );
-    const newFileName = `${baseFileName} ${timestamp}${extension}`;
-
-    const defaultMultimediaSavingLocation =
-      this.workspaceStateManager.getState().defaultMultimediaSavingLocation;
-
-    const defaultFolder =
-      defaultMultimediaSavingLocation && fs.existsSync(defaultMultimediaSavingLocation)
-        ? defaultMultimediaSavingLocation
-        : Platform.select({
-            macos: path.join(homedir(), "Desktop"),
-            windows: homedir(),
-            linux: homedir(),
-          });
-    const defaultUri = Uri.file(path.join(defaultFolder, newFileName));
-
-    // save dialog open the location dialog, it also warns the user if the file already exists
-    let saveUri = await window.showSaveDialog({
-      defaultUri: defaultUri,
-      filters: {
-        "Video Files": [extension],
-      },
-    });
-
-    if (!saveUri) {
-      return false;
-    }
-
-    await fs.promises.copyFile(multimediaData.tempFileLocation, saveUri.fsPath);
-    return true;
+    const defaultSavingPath = this.workspaceStateManager.getState().defaultMultimediaSavingLocation;
+    return saveMultimedia(multimediaData, defaultSavingPath ?? undefined);
   }
 
-  private async stopRecording() {
-    clearTimeout(this.recordingTimeout);
+  // note: this method is used by the radon AI functionality to capture screenshots of the application
+  // thats why it is not part of the ProjectInterface
+  public async getScreenshot() {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    return this.deviceSession.getScreenshot();
+  }
 
-    getTelemetryReporter().sendTelemetryEvent("recording:stop-recording", {
+  // #endregion Recording
+
+  // #region Frame Reporting
+
+  public startReportingFrameRate() {
+    getTelemetryReporter().sendTelemetryEvent("performance:start-frame-rate-reporting", {
       platform: this.selectedDeviceSessionState?.deviceInfo.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    return this.deviceSession.captureAndStopRecording(this.getDeviceRotation());
+    this.deviceSession.startReportingFrameRate();
   }
 
-  // #endregion Recording
+  public stopReportingFrameRate() {
+    if (!this.deviceSession) {
+      throw new Error("No device session available");
+    }
+    this.deviceSession.stopReportingFrameRate();
+  }
+
+  // #endregion Frame Reporting
 
   // #region Profiling
 
@@ -875,12 +834,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #endregion Dispose
 
   // #region To Be Removed
-
-  // TODO: this should be moved to new state management
-  public async updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void> {
-    this.updateProjectState({ previewZoom: zoom });
-    extensionContext.workspaceState.update(PREVIEW_ZOOM_KEY, zoom);
-  }
 
   // TODO: this should be removed from our public API
   // to control it's surface

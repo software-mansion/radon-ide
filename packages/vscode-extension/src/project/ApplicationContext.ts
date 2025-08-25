@@ -37,9 +37,17 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
     const systemEnv = process.env as NodeJS.ProcessEnv;
     const mergedEnv = { ...systemEnv, ...configuredEnv };
     // load the dotenv files for the project into `mergedEnv`
-    const loadEnvResult = loadProjectEnv(absoluteAppRoot, { force: true, systemEnv: mergedEnv });
+    const loadEnvResult = loadProjectEnv(absoluteAppRoot, {
+      silent: true,
+      force: true,
+      systemEnv: mergedEnv,
+    });
 
-    if (loadEnvResult.result === "loaded" && !_.isEqual(loadEnvResult.files, lastLoadedEnvFiles)) {
+    if (loadEnvResult.result !== "loaded") {
+      return configuredEnv;
+    }
+
+    if (!_.isEqual(loadEnvResult.files, lastLoadedEnvFiles)) {
       lastLoadedEnvFiles = loadEnvResult.files;
       Logger.info(
         `Project in "${appRoot}" loaded environment variables from .env files:`,
@@ -47,8 +55,7 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
       );
     }
 
-    // filter out any `undefined` values from the environment variables
-    const env = _.pickBy(mergedEnv, _.isString);
+    const env = { ...loadEnvResult.env, ...configuredEnv };
     return env;
   }
 
@@ -78,14 +85,16 @@ export class ApplicationContext implements Disposable {
     launchConfig: LaunchConfiguration,
     fingerprintProvider: FingerprintProvider
   ) {
-    this.buildCache = new BuildCache(fingerprintProvider);
+    this.buildCache = new BuildCache();
     this.launchConfig = resolveLaunchConfig(launchConfig);
     this.applicationDependencyManager = new ApplicationDependencyManager(
       this.stateManager.getDerived("applicationDependencies"),
       this.launchConfig,
       fingerprintProvider
     );
-    const buildManager = new BatchingBuildManager(new BuildManagerImpl(this.buildCache));
+    const buildManager = new BatchingBuildManager(
+      new BuildManagerImpl(this.buildCache, fingerprintProvider)
+    );
     this.buildManager = buildManager;
 
     this.disposables.push(this.applicationDependencyManager, buildManager);

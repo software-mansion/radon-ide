@@ -70,8 +70,9 @@
   min-width: 200px;
 }
 
-.button-recording:not(.button-recording-on) {
+.button-recording-off {
   width: 0;
+  min-width: 0;
 }
 
 .button-recording-on,

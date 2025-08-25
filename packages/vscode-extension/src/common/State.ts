@@ -1,5 +1,5 @@
 import { ApplicationRoot } from "./AppRootConfig";
-import { DeviceRotation } from "./Project";
+import { DeviceId, DeviceRotation } from "./Project";
 
 export type RecursivePartial<T> = {
   [P in keyof T]?: NonNullable<T[P]> extends Array<infer U>
@@ -58,10 +58,59 @@ export type ApplicationDependencyStatuses = Partial<
 
 // #endregion Dependencies
 
+// #region Frame Reporting State
+
+export type FrameRateReport = {
+  fps: number;
+  received: number;
+  dropped: number;
+  timestamp: number;
+};
+
+export type FrameReportingState = {
+  enabled: boolean;
+  frameReport: FrameRateReport | null;
+};
+
+// #endregion Frame Reporting State
+
+// #region Multimedia
+
+export type MultimediaData = {
+  url: string;
+  tempFileLocation: string;
+  fileName: string;
+};
+
+export type ScreenCaptureState = {
+  isRecording: boolean;
+  recordingTime: number; // in seconds
+  replayData: MultimediaData | null;
+};
+
+// #endregion Multimedia
+
+// #region Device Session
+
+export type DeviceSessionStore = {
+  frameReporting: FrameReportingState;
+  screenCapture: ScreenCaptureState;
+};
+
+// #endregion Device Session
+
 // #region Project State
+
+export type DeviceSessions = Record<DeviceId, DeviceSessionStore>;
+
+export type ZoomLevelType = number | "Fit";
 
 export type ProjectStore = {
   applicationContext: ApplicationContextState;
+  deviceSessions: DeviceSessions;
+  initialized: boolean;
+  previewZoom: ZoomLevelType;
+  selectedDeviceSessionId: DeviceId | null;
 };
 
 // #endregion Project State
@@ -116,7 +165,7 @@ export type IOSDeviceInfo = {
   displayName: string;
   available: boolean;
   deviceType: DeviceType;
-  runtimeInfo: IOSRuntimeInfo;
+  runtimeInfo?: IOSRuntimeInfo;
 };
 
 export type AndroidSystemImageInfo = {
@@ -161,6 +210,18 @@ export type StateListener = (state: RecursivePartial<State>) => void;
 
 // #region Initial State
 
+export const initialDeviceSessionStore: DeviceSessionStore = {
+  frameReporting: {
+    enabled: false,
+    frameReport: null,
+  },
+  screenCapture: {
+    isRecording: false,
+    recordingTime: 0,
+    replayData: null,
+  },
+};
+
 export const initialState: State = {
   applicationRoots: [],
   devicesState: {
@@ -173,6 +234,10 @@ export const initialState: State = {
     applicationContext: {
       applicationDependencies: {},
     },
+    deviceSessions: {},
+    initialized: false,
+    previewZoom: "Fit",
+    selectedDeviceSessionId: null,
   },
   telemetry: {
     enabled: false,

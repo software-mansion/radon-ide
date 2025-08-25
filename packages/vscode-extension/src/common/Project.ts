@@ -9,6 +9,7 @@ import {
   DevicePlatform,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
+  MultimediaData,
 } from "./State";
 
 export type Locale = string;
@@ -85,8 +86,7 @@ type DeviceSessionStateCommon = {
   previewURL: string | undefined;
   navigationHistory: NavigationHistoryItem[];
   navigationRouteList: NavigationRoute[];
-  hasStaleBuildCache: boolean;
-  isRecordingScreen: boolean;
+  isUsingStaleBuild: boolean;
 };
 
 export enum InspectorBridgeStatus {
@@ -147,15 +147,11 @@ export type ConnectState = {
 };
 
 export type ProjectState = {
-  initialized: boolean;
   appRootPath: string | undefined;
-  previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
   selectedLaunchConfiguration: LaunchConfiguration;
   customLaunchConfigurations: LaunchConfiguration[];
   connectState: ConnectState;
 } & DeviceSessionsManagerState;
-
-export type ZoomLevelType = number | "Fit";
 
 export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
 
@@ -254,24 +250,16 @@ export interface ProjectEventMap {
   projectStateChanged: ProjectState;
   deviceSettingsChanged: DeviceSettings;
   licenseActivationChanged: boolean;
-  replayDataCreated: MultimediaData;
 }
 
 export interface ProjectEventListener<T> {
   (event: T): void;
 }
 
-export type MultimediaData = {
-  url: string;
-  tempFileLocation: string;
-  fileName: string;
-};
-
 export type IDEPanelMoveTarget = "new-window" | "editor-tab" | "side-panel";
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
   /**
    * Creates a new launch configuration or updates an existing one.
@@ -325,11 +313,13 @@ export interface ProjectInterface {
   openSendFileDialog(): Promise<void>;
   sendFileToDevice(fileDescription: { fileName: string; data: ArrayBuffer }): Promise<void>;
 
-  startRecording(): void;
-  captureAndStopRecording(): void;
+  toggleRecording(): void;
   captureReplay(): void;
   captureScreenshot(): void;
   saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
+
+  startReportingFrameRate(): void;
+  stopReportingFrameRate(): void;
 
   startProfilingCPU(): void;
   stopProfilingCPU(): void;
