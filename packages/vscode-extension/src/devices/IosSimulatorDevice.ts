@@ -323,6 +323,24 @@ export class IosSimulatorDevice extends DeviceBase {
       // Delete command fails if the key doesn't exists, but later commands run regardless,
       // despite that process exits with non-zero code. We can ignore this error.
     }
+    try {
+      // Simulator may keep the defaults in memory with cfprefsd, we restart the deamon to make sure
+      // it reads the latest values from disk.
+      // We'd normally try to use defaults command that would write the updates via the daemon, however
+      // for some reason that doesn't work with custom device sets.
+      await exec("xcrun", [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "spawn",
+        this.deviceUDID,
+        "launchctl",
+        "stop",
+        "com.apple.cfprefsd.xpc.daemon",
+      ]);
+    } catch (e) {
+      // ignore errors here and hope for the best
+    }
   }
 
   async terminateApp(bundleID: string) {
@@ -434,7 +452,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   async launchApp(
-    build: IOSBuildResult,
+    build: BuildResult,
     metroPort: number,
     _devtoolsPort: number,
     launchArguments: string[]
@@ -686,9 +704,7 @@ async function listSimulatorsForLocation(location?: string) {
   return [];
 }
 
-export async function listSimulators(
-  location: SimulatorDeviceSet = SimulatorDeviceSet.RN_IDE
-): Promise<IOSDeviceInfo[]> {
+export async function listSimulators(location: SimulatorDeviceSet): Promise<IOSDeviceInfo[]> {
   let devicesPerRuntime;
   if (location === SimulatorDeviceSet.RN_IDE) {
     const deviceSetLocation = getOrCreateDeviceSet();
@@ -721,7 +737,7 @@ export async function listSimulators(
             ? DeviceType.Tablet
             : DeviceType.Phone,
           available: device.isAvailable ?? false,
-          runtimeInfo: runtime!,
+          runtimeInfo: runtime,
         };
       });
     })
@@ -734,13 +750,13 @@ export enum SimulatorDeviceSet {
   RN_IDE,
 }
 
-export async function createSimulator(
-  modelId: string,
+export async function createSimulatorWithRuntimeId(
+  deviceTypeId: string,
   displayName: string,
-  runtime: IOSRuntimeInfo,
+  runtimeId: string,
   deviceSet: SimulatorDeviceSet
 ) {
-  Logger.debug(`Create simulator ${modelId} with runtime ${runtime.identifier}`);
+  Logger.debug(`Create simulator ${deviceTypeId} with runtime ${runtimeId}`);
 
   let locationArgs: string[] = [];
   if (deviceSet === SimulatorDeviceSet.RN_IDE) {
@@ -754,15 +770,30 @@ export async function createSimulator(
     ...locationArgs,
     "create",
     displayName,
-    modelId,
-    runtime.identifier,
+    deviceTypeId,
+    runtimeId,
   ]);
 
+  return UDID;
+}
+
+export async function createSimulator(
+  deviceTypeId: string,
+  displayName: string,
+  runtime: IOSRuntimeInfo,
+  deviceSet: SimulatorDeviceSet
+) {
+  const UDID = await createSimulatorWithRuntimeId(
+    deviceTypeId,
+    displayName,
+    runtime.identifier,
+    deviceSet
+  );
   return {
     id: `ios-${UDID}`,
     platform: DevicePlatform.IOS,
     UDID,
-    modelId: modelId,
+    modelId: deviceTypeId,
     systemName: runtime.name,
     displayName: displayName,
     available: true, // assuming if create command went through, it's available

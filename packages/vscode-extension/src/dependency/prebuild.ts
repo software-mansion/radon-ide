@@ -1,7 +1,7 @@
 import assert from "assert";
-import { Disposable, OutputChannel } from "vscode";
+import { Disposable } from "vscode";
 import { exec } from "../utilities/subprocess";
-import { BuildError } from "../builders/BuildManager";
+import { BuildError, BuildOptions } from "../builders/BuildManager";
 import { IOSLocalBuildConfig, AndroidLocalBuildConfig } from "../common/BuildConfig";
 import { DevicePlatform } from "../common/State";
 import { FingerprintProvider } from "../project/FingerprintProvider";
@@ -65,9 +65,9 @@ export class Prebuild implements Disposable {
 
   public async runPrebuildIfNeeded(
     buildConfig: IOSLocalBuildConfig | AndroidLocalBuildConfig,
-    outputChannel: OutputChannel,
-    cancelToken: CancelToken
+    buildOptions: BuildOptions
   ) {
+    const { forceCleanBuild, cancelToken } = buildOptions;
     const [currentFingerprint, nativeDirectoryExists] = await Promise.all([
       this.fingerprintProvider.calculateFingerprint(buildConfig),
       checkNativeDirectoryExists(buildConfig.appRoot, buildConfig.platform),
@@ -82,9 +82,7 @@ export class Prebuild implements Disposable {
     const isCurrentlyPrebuilding = ongoingPrebuild !== undefined;
 
     const canSkipPrebuild =
-      !buildConfig.forceCleanBuild &&
-      nativeDirectoryExists &&
-      (hasAlreadyPrebuild || isCurrentlyPrebuilding);
+      !forceCleanBuild && nativeDirectoryExists && (hasAlreadyPrebuild || isCurrentlyPrebuilding);
     if (canSkipPrebuild) {
       if (isCurrentlyPrebuilding) {
         ongoingPrebuild.attach(cancelToken);
@@ -100,7 +98,7 @@ export class Prebuild implements Disposable {
 
     const prebuildCancelToken = new CancelToken();
     const prebuildProcess = new PrebuildProcess(
-      this.runPrebuild(buildConfig, outputChannel, prebuildCancelToken),
+      this.runPrebuild(buildConfig, buildOptions, prebuildCancelToken),
       prebuildCancelToken
     );
     prebuildProcess.attach(cancelToken);
@@ -121,9 +119,10 @@ export class Prebuild implements Disposable {
 
   private async runPrebuild(
     buildConfig: IOSLocalBuildConfig | AndroidLocalBuildConfig,
-    outputChannel: OutputChannel,
+    buildOptions: BuildOptions,
     cancelToken: CancelToken
   ) {
+    const { buildOutputChannel, forceCleanBuild } = buildOptions;
     const appRoot = buildConfig.appRoot;
     const cliPath = getExpoCliPath(appRoot);
     if (!cliPath) {
@@ -136,7 +135,7 @@ export class Prebuild implements Disposable {
     const args = [cliPath, "prebuild", "-p", platform];
     // NOTE: We handle installing node dependencies and pods ourselves, so we skip it in the prebuild.
     args.push("--no-install");
-    if (buildConfig.forceCleanBuild) {
+    if (forceCleanBuild) {
       args.push("--clean");
     }
 
@@ -147,7 +146,7 @@ export class Prebuild implements Disposable {
     const process = exec("node", args, { cwd: appRoot });
 
     lineReader(process).onLineRead((line) => {
-      outputChannel.appendLine(line);
+      buildOutputChannel.appendLine(line);
     });
 
     await cancelToken.adapt(process);

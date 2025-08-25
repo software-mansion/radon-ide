@@ -1,6 +1,7 @@
 import classNames from "classnames";
 import "./Button.css";
 import Tooltip from "./Tooltip";
+import { PropsWithDataTest } from "../../../common/types";
 
 interface ButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -26,12 +27,14 @@ function Button({
   active,
   tooltip,
   autoFocus,
-}: ButtonProps) {
+  dataTest,
+}: PropsWithDataTest<ButtonProps>) {
   const button = (
     <button
       autoFocus={autoFocus}
       onClick={onClick}
       disabled={disabled}
+      data-test={dataTest}
       className={classNames(
         "button",
         type === "secondary" && "button-secondary",

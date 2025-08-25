@@ -83,12 +83,28 @@ export type FileTransferState = {
 };
 
 // #endregion File Transfer State
+// #region Multimedia
+
+export type MultimediaData = {
+  url: string;
+  tempFileLocation: string;
+  fileName: string;
+};
+
+export type ScreenCaptureState = {
+  isRecording: boolean;
+  recordingTime: number; // in seconds
+  replayData: MultimediaData | null;
+};
+
+// #endregion Multimedia
 
 // #region Device Session
 
 export type DeviceSessionStore = {
   frameReporting: FrameReportingState;
   fileTransfer: FileTransferState;
+  screenCapture: ScreenCaptureState;
 };
 
 // #endregion Device Session
@@ -97,9 +113,13 @@ export type DeviceSessionStore = {
 
 export type DeviceSessions = Record<DeviceId, DeviceSessionStore>;
 
+export type ZoomLevelType = number | "Fit";
+
 export type ProjectStore = {
   applicationContext: ApplicationContextState;
   deviceSessions: DeviceSessions;
+  initialized: boolean;
+  previewZoom: ZoomLevelType;
   selectedDeviceSessionId: DeviceId | null;
 };
 
@@ -155,7 +175,7 @@ export type IOSDeviceInfo = {
   displayName: string;
   available: boolean;
   deviceType: DeviceType;
-  runtimeInfo: IOSRuntimeInfo;
+  runtimeInfo?: IOSRuntimeInfo;
 };
 
 export type AndroidSystemImageInfo = {
@@ -205,6 +225,11 @@ export const initialDeviceSessionStore: DeviceSessionStore = {
     enabled: false,
     frameReport: null,
   },
+  screenCapture: {
+    isRecording: false,
+    recordingTime: 0,
+    replayData: null,
+  },
   fileTransfer: {
     sendingFiles: [],
     sentFiles: [],
@@ -225,6 +250,8 @@ export const initialState: State = {
       applicationDependencies: {},
     },
     deviceSessions: {},
+    initialized: false,
+    previewZoom: "Fit",
     selectedDeviceSessionId: null,
   },
   telemetry: {
