@@ -936,8 +936,6 @@ export class DeviceSession implements Disposable {
 
     this.addFileToState(path.basename(filePath));
     try {
-      // NOTE: sleep to simulate long sends
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       return await this.device.sendFile(filePath);
     } finally {
       this.removeFileFromState(path.basename(filePath));
