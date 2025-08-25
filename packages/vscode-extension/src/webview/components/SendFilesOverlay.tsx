@@ -3,44 +3,43 @@ import { VscodeProgressRing } from "@vscode-elements/react-elements";
 import "./Preview.css";
 import "./SendFilesOverlay.css";
 import { use$ } from "@legendapp/state/react";
-import { useProject } from "../providers/ProjectProvider";
 import classNames from "classnames";
+import { useProject } from "../providers/ProjectProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const RETAIN_SUCCESS_SCREEN = 1000; // ms
-const RETAIN_ERROR_SCREEN = 3000; // ms
+const RETAIN_ERROR_SCREEN = 5000; // ms
 
 // Important! You need to hold shift to drag files onto the panel
 // VSCode displays a "Hold shift to drop into editor" message when Preview is in the Editor Tab
 // but it doesn't show this when Preview is in the Side Panel
 export function SendFilesOverlay() {
   const { project } = useProject();
-  const [isVisible, setIsVisible] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [isError, setIsError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("error");
+  const [isDragging, setIsDragging] = useState(false);
   const store$ = useSelectedDeviceSessionState();
-  const sendingFiles = use$(store$.sendingFiles);
-  const fileCount = sendingFiles.length;
-  const isLoading = fileCount > 0;
+  const sendingFiles = use$(store$.fileTransfer.sendingFiles);
+  const erroredFiles = use$(store$.fileTransfer.erroredFiles);
+  const sentFiles = use$(store$.fileTransfer.sentFiles);
+  const isLoading = sendingFiles.length > 0;
+  const isError = erroredFiles.length > 0;
+  const isSuccess = sentFiles.length > 0;
+  const isVisible = isDragging || isLoading || isError || isSuccess;
 
   const resetOverlayState = useCallback(() => {
-    setIsSuccess(false);
-    setIsError(false);
-    setIsVisible(false);
-    setErrorMessage("");
+    store$.fileTransfer.erroredFiles.set([]);
+    store$.fileTransfer.sentFiles.set([]);
   }, []);
 
   // Hide overlay after success and error animations
   useEffect(() => {
-    if (isSuccess || isError) {
+    if (!isLoading && (erroredFiles.length > 0 || sentFiles.length > 0)) {
       const timer = setTimeout(
         resetOverlayState,
         isSuccess ? RETAIN_SUCCESS_SCREEN : RETAIN_ERROR_SCREEN
       );
       return () => clearTimeout(timer);
     }
-  }, [isSuccess, isError, resetOverlayState]);
+  }, [isLoading, erroredFiles, sentFiles, resetOverlayState]);
 
   const dragHandlers = useMemo(
     () =>
@@ -48,74 +47,59 @@ export function SendFilesOverlay() {
         onDragEnter: (ev: React.DragEvent) => {
           ev.preventDefault();
           ev.stopPropagation();
-          if (isError) {
-            setIsError(false);
-            setErrorMessage("");
-          }
-          setIsVisible(true);
         },
-        onDrop: async (ev: React.DragEvent) => {
+        onDrop: (ev: React.DragEvent) => {
           ev.preventDefault();
           ev.stopPropagation();
+          setIsDragging(false);
+          if (!ev.shiftKey) {
+            return;
+          }
           const files = ev.dataTransfer.files;
 
-          try {
-            const filePromises = [];
-            for (let i = 0; i < files.length; i++) {
-              const file = files[i];
-              const promise = file.arrayBuffer().then((buf) => {
-                return project.sendFileToDevice({
-                  fileName: file.name,
-                  data: buf,
-                });
+          for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            file
+              .arrayBuffer()
+              .then(async (buf) => {
+                try {
+                  await project.sendFileToDevice({
+                    fileName: file.name,
+                    data: buf,
+                  });
+                } catch {}
+              })
+              .catch((e) => {
+                // NOTE: `arrayBuffer()` may fail when the file cannot be read.
+                // Since we don't send anything to the extension in that case, we need to handle it here.
+                console.error("Error when sending file:", file.name, e);
+                store$.fileTransfer.erroredFiles.set((prev) => [
+                  ...prev,
+                  { fileName: file.name, errorMessage: "Failed to read the file to be sent." },
+                ]);
               });
-              filePromises.push(promise);
-            }
-
-            await Promise.all(filePromises);
-            setIsSuccess(true);
-          } catch (error) {
-            setIsError(true);
-            // Set a user-friendly error message
-            if (error instanceof Error && error.message) {
-              setErrorMessage(error.message);
-            } else {
-              setErrorMessage("Failed to send files. Please try again.");
-            }
-            console.error("File sending failed:", error);
           }
         },
         onDragOver: (ev: React.DragEvent) => {
           ev.stopPropagation();
           ev.preventDefault();
+          setIsDragging(ev.shiftKey);
         },
         onDragLeave: (ev: React.DragEvent) => {
           ev.preventDefault();
           ev.stopPropagation();
-          if (!isLoading && !isSuccess && !isError) {
-            setIsVisible(false);
-          }
+          setIsDragging(false);
         },
       }) as const,
-    [project, setIsVisible, isLoading, isSuccess, isError]
+    [project, isLoading, isSuccess, isError]
   );
 
   const getOverlayContent = () => {
     if (isLoading) {
+      const fileCount = sendingFiles.length;
       return {
         icon: <VscodeProgressRing />,
-        message: "Sending files...",
-      };
-    }
-
-    if (isSuccess) {
-      return {
-        icon: (
-          <div className="success-icon-container">
-            <span className="codicon codicon-check success-checkmark"></span>
-          </div>
-        ),
-        message: `${fileCount} file${fileCount !== 1 ? "s" : ""} sent successfully!`,
+        message: `Sending ${fileCount} file${fileCount !== 1 ? "s" : ""}...`,
       };
     }
 
@@ -126,7 +110,19 @@ export function SendFilesOverlay() {
             <span className="codicon codicon-error error-icon"></span>
           </div>
         ),
-        message: errorMessage,
+        message: erroredFiles[0].errorMessage || "Failed to send files. Check logs for details.",
+      };
+    }
+
+    if (isSuccess) {
+      const fileCount = sentFiles.length;
+      return {
+        icon: (
+          <div className="success-icon-container">
+            <span className="codicon codicon-check success-checkmark"></span>
+          </div>
+        ),
+        message: `${fileCount} file${fileCount !== 1 ? "s" : ""} sent successfully!`,
       };
     }
 

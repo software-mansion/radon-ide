@@ -15,6 +15,8 @@
   transition: opacity 0.3s ease-in-out;
 }
 
+/* prevents children elements of overlay to trigger onDragLeave */
+/* https://stackoverflow.com/a/18582960/9999202 */
 .send-files-overlay * {
   pointer-events: none;
 }
@@ -23,18 +25,8 @@
   opacity: 1 !important;
 }
 
-/* prevents children elements of overlay to trigger onDragLeave */
-/* https://stackoverflow.com/a/18582960/9999202 */
-.send-files-overlay.visible * {
-  pointer-events: none;
-}
-
 .send-files-overlay.hidden {
   opacity: 0;
-}
-
-.send-files-overlay.hidden * {
-  pointer-events: auto;
 }
 
 .send-files-overlay-container {

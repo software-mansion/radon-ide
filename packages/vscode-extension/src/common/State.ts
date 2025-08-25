@@ -74,11 +74,21 @@ export type FrameReportingState = {
 
 // #endregion Frame Reporting State
 
+// #region File Transfer State
+
+export type FileTransferState = {
+  sendingFiles: string[];
+  sentFiles: string[];
+  erroredFiles: Array<{ fileName: string; errorMessage: string }>;
+};
+
+// #endregion File Transfer State
+
 // #region Device Session
 
 export type DeviceSessionStore = {
   frameReporting: FrameReportingState;
-  sendingFiles: string[];
+  fileTransfer: FileTransferState;
 };
 
 // #endregion Device Session
@@ -195,7 +205,11 @@ export const initialDeviceSessionStore: DeviceSessionStore = {
     enabled: false,
     frameReport: null,
   },
-  sendingFiles: [],
+  fileTransfer: {
+    sendingFiles: [],
+    sentFiles: [],
+    erroredFiles: [],
+  },
 };
 
 export const initialState: State = {

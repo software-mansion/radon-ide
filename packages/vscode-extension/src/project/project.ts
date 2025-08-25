@@ -505,7 +505,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    this.deviceSession.openSendFileDialog();
+    this.deviceSession.fileTransfer.openSendFileDialog();
   }
 
   public async sendFileToDevice({
@@ -518,7 +518,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!this.deviceSession) {
       throw new Error("No device session available");
     }
-    await this.deviceSession.sendFileToDevice(fileName, data);
+    await this.deviceSession.fileTransfer.sendFileToDevice(fileName, data);
   }
 
   // #endregion
@@ -823,7 +823,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.outputChannelRegistry.getOrCreateOutputChannel(channel).show();
   }
 
-  public async log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]) {
+  public async log(type: "info" | "error" | "warn" | "log", message: string, ...args: unknown[]) {
     Logger[type]("[WEBVIEW LOG]", message, ...args);
   }
 
