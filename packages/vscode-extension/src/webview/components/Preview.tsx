@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, MouseEvent, WheelEvent, useMemo } from "react";
+import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
 import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
@@ -23,6 +23,7 @@ import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
 import InspectorUnavailableBox from "./InspectorUnavailableBox";
 import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
+import { SendFilesOverlay } from "./SendFilesOverlay";
 import {
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
@@ -523,31 +524,6 @@ function Preview({
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
 
-  const dragHandlers = useMemo(() => {
-    return {
-      onDrop(ev: React.DragEvent) {
-        ev.preventDefault();
-        const files = ev.dataTransfer.files;
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          file.arrayBuffer().then((buf) => {
-            project.sendFileToDevice({
-              fileName: file.name,
-              data: buf,
-            });
-          });
-        }
-      },
-      onDragOver(ev: React.DragEvent) {
-        ev.stopPropagation();
-        ev.preventDefault();
-      },
-      onDragEnter(ev: React.DragEvent) {
-        ev.preventDefault();
-      },
-    } as const;
-  }, [project]);
-
   return (
     <>
       <div
@@ -558,7 +534,7 @@ function Preview({
         {...wrapperTouchHandlers}>
         {showDevicePreview && (
           <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
-            <div className="touch-area" {...touchHandlers} {...dragHandlers}>
+            <div className="touch-area" {...touchHandlers}>
               <MjpegImg
                 src={previewURL}
                 ref={previewRef}
@@ -568,6 +544,7 @@ function Preview({
                 className="phone-screen"
               />
               <RenderOutlinesOverlay />
+              {isRunning && <SendFilesOverlay />}
               {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
               {isMultiTouching && (

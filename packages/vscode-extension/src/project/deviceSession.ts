@@ -1,9 +1,6 @@
 import assert from "assert";
-import os from "os";
-import path from "path";
-import fs from "fs";
 import _ from "lodash";
-import { Disposable, window } from "vscode";
+import { Disposable } from "vscode";
 import { MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
 import { RadonInspectorBridge } from "./bridge";
@@ -44,6 +41,7 @@ import { StateManager } from "./StateManager";
 import { FrameReporter } from "./FrameReporter";
 import { ScreenCapture } from "./ScreenCapture";
 import { disposeAll } from "../utilities/disposables";
+import { FileTransfer } from "./FileTransfer";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -87,6 +85,8 @@ export class DeviceSession implements Disposable {
   private navigationHomeTarget: NavigationHistoryItem | undefined;
   private isUsingStaleBuild = false;
   private applicationSession: ApplicationSession | undefined;
+
+  public fileTransfer: FileTransfer;
 
   private get buildResult() {
     if (!this.maybeBuildResult) {
@@ -138,6 +138,9 @@ export class DeviceSession implements Disposable {
     this.device.sendRotate(initialRotation);
 
     this.disposables.push(this.stateManager);
+
+    this.fileTransfer = new FileTransfer(stateManager.getDerived("fileTransfer"), device);
+    this.disposables.push(this.fileTransfer);
   }
 
   public getState(): DeviceSessionState {
@@ -898,69 +901,5 @@ export class DeviceSession implements Disposable {
 
   public getMetroPort() {
     return this.metro.port;
-  }
-
-  public sendFile(filePath: string) {
-    getTelemetryReporter().sendTelemetryEvent("device:send-file", {
-      platform: this.device.deviceInfo.platform,
-      extension: path.extname(filePath),
-    });
-    return this.device.sendFile(filePath);
-  }
-
-  public async openSendFileDialog() {
-    const pickerResult = await window.showOpenDialog({
-      canSelectMany: true,
-      canSelectFolders: false,
-      title: "Select files to send to device",
-    });
-    if (!pickerResult) {
-      throw new Error("No files selected");
-    }
-    const sendFilePromises = pickerResult.map((fileUri) => {
-      return this.sendFile(fileUri.fsPath);
-    });
-    await Promise.all(sendFilePromises);
-  }
-
-  public async sendFileToDevice(fileName: string, data: ArrayBuffer): Promise<void> {
-    let canSafelyRemove = true;
-    const tempDir = await this.getTemporaryFilesDirectory();
-    const tempFileLocation = path.join(tempDir, fileName);
-    try {
-      await fs.promises.writeFile(tempFileLocation, new Uint8Array(data));
-      const result = await this.sendFile(tempFileLocation);
-      canSafelyRemove = result.canSafelyRemove;
-    } finally {
-      if (canSafelyRemove) {
-        // NOTE: no need to await this, it can run in the background
-        fs.promises.rm(tempFileLocation, { force: true }).catch((_e) => {
-          // NOTE: we can ignore errors here, as the file might not exist
-        });
-      }
-    }
-  }
-
-  private tempDir: string | undefined;
-  /**
-   * Returns the path to a temporary directory, creating it if it does not already exist.
-   * The directory is created using the system's temporary directory and is cleaned up
-   * automatically when the device session is disposed. Subsequent calls return the same directory path.
-   *
-   * @returns {Promise<string>} The path to the temporary directory.
-   */
-  private async getTemporaryFilesDirectory(): Promise<string> {
-    if (this.tempDir === undefined) {
-      const tempDir = await fs.promises.mkdtemp(os.tmpdir());
-      this.tempDir = tempDir;
-      this.disposables.push(
-        new Disposable(() => {
-          fs.promises.rm(tempDir, { recursive: true }).catch((_e) => {
-            /* silence the errors, it's fine */
-          });
-        })
-      );
-    }
-    return this.tempDir;
   }
 }

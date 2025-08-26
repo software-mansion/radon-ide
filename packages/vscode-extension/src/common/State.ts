@@ -133,6 +133,15 @@ export type FrameReportingState = {
 
 // #endregion Frame Reporting State
 
+// #region File Transfer State
+
+export type FileTransferState = {
+  sendingFiles: string[];
+  sentFiles: string[];
+  erroredFiles: Array<{ fileName: string; errorMessage: string }>;
+};
+
+// #endregion File Transfer State
 // #region Multimedia
 
 export type MultimediaData = {
@@ -154,6 +163,7 @@ export type ScreenCaptureState = {
 export type DeviceSessionStore = {
   applicationSession: ApplicationSessionState;
   frameReporting: FrameReportingState;
+  fileTransfer: FileTransferState;
   screenCapture: ScreenCaptureState;
 };
 
@@ -293,6 +303,11 @@ export const initialDeviceSessionStore: DeviceSessionStore = {
     isRecording: false,
     recordingTime: 0,
     replayData: null,
+  },
+  fileTransfer: {
+    sendingFiles: [],
+    sentFiles: [],
+    erroredFiles: [],
   },
 };
 
