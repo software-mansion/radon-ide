@@ -9,12 +9,8 @@
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 2px;
-  transform: translateX(-2px) translateY(-2px);
   opacity: 0;
   transition: opacity 0.3s ease-in-out;
-  width: var(--phone-screen-width);
-  height: var(--phone-screen-height);
 }
 
 /* prevents children elements of overlay to trigger onDragLeave */
