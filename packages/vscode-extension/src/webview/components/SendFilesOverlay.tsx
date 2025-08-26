@@ -22,7 +22,7 @@ export function SendFilesOverlay() {
   const sentFiles = use$(store$.fileTransfer.sentFiles);
   const isLoading = sendingFiles.length > 0;
   const isError = erroredFiles.length > 0;
-  const isSuccess = sentFiles.length > 0;
+  const isSuccess = !isError && sentFiles.length > 0;
   const isVisible = isDragging || isLoading || isError || isSuccess;
 
   const resetOverlayState = useCallback(() => {
@@ -113,7 +113,8 @@ export function SendFilesOverlay() {
             <span className="codicon codicon-error error-icon"></span>
           </div>
         ),
-        message: erroredFiles[0].errorMessage || "Failed to send files. Check logs for details.",
+        message:
+          erroredFiles[0].errorMessage || "Failed to send some files. Check logs for details.",
       };
     }
 
