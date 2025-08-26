@@ -7,8 +7,8 @@ import classNames from "classnames";
 import { useProject } from "../providers/ProjectProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
-const RETAIN_SUCCESS_SCREEN = 1000; // ms
-const RETAIN_ERROR_SCREEN = 5000; // ms
+const RETAIN_SUCCESS_SCREEN_TIMEOUT = 1000; // ms
+const RETAIN_ERROR_SCREEN_TIMEOUT = 5000; // ms
 
 // Important! You need to hold shift to drag files onto the panel
 // VSCode displays a "Hold shift to drop into editor" message when Preview is in the Editor Tab
@@ -28,14 +28,14 @@ export function SendFilesOverlay() {
   const resetOverlayState = useCallback(() => {
     store$.fileTransfer.erroredFiles.set([]);
     store$.fileTransfer.sentFiles.set([]);
-  }, []);
+  }, [store$]);
 
   // Hide overlay after success and error animations
   useEffect(() => {
     if (!isLoading && (erroredFiles.length > 0 || sentFiles.length > 0)) {
       const timer = setTimeout(
         resetOverlayState,
-        isSuccess ? RETAIN_SUCCESS_SCREEN : RETAIN_ERROR_SCREEN
+        isSuccess ? RETAIN_SUCCESS_SCREEN_TIMEOUT : RETAIN_ERROR_SCREEN_TIMEOUT
       );
       return () => clearTimeout(timer);
     }
