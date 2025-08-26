@@ -1,5 +1,6 @@
 const RNInternals = require("./rn-internals/rn-internals");
 const { PluginMessageBridge } = require("./plugins/PluginMessageBridge");
+const TextDecoder = require("./polyfills").TextDecoder;
 
 function mimeTypeFromResponseType(responseType) {
   switch (responseType) {
@@ -102,6 +103,7 @@ function deserializeDataContent(data, contentType) {
     return data;
   }
 
+  
   // Handle native typed Uint8Arrays
   if (data instanceof Uint8Array) {
     return shouldDecodeAsText(contentType) ? decode(data) : dataToBase64(data);
