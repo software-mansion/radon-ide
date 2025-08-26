@@ -1,36 +1,51 @@
 import { NetworkLog } from "../hooks/useNetworkTracker";
+import IconButton from "../../webview/components/shared/IconButton";
+import { formatJSONBody, formatUrlParams } from "../utils/requestFormatUtils";
 
 interface PayloadTabProps {
   networkLog: NetworkLog;
 }
-
-const getParams = (url: string): Record<string, string> => {
-  try {
-    const urlObj = new URL(url);
-    const params: Record<string, string> = {};
-    urlObj.searchParams.forEach((value, key) => {
-      params[key] = value;
-    });
-    return params;
-  } catch {
-    return {};
-  }
-};
 
 const PayloadTab = ({ networkLog }: PayloadTabProps) => {
   if (!networkLog.request) {
     return null;
   }
 
-  const payloadData = JSON.stringify(
-    networkLog.request.method === "GET"
-      ? getParams(networkLog.request.url)
-      : JSON.parse(networkLog.request.postData || "{}"),
-    null,
-    2
-  );
+  const getPayloadData = () => {
+    const { url, postData } = networkLog.request!;
 
-  return <pre>{payloadData}</pre>;
+    const urlParams = formatUrlParams(url);
+    const hasUrlParams = urlParams !== "{}";
+
+    if (postData && postData !== "") {
+      const bodyData = formatJSONBody(postData);
+
+      if (hasUrlParams) {
+        return `URL Parameters:\n${urlParams}\n\nRequest Body:\n${bodyData}`;
+      }
+      return bodyData;
+    }
+
+    if (hasUrlParams) {
+      return urlParams;
+    }
+
+    return "No request body";
+  };
+
+  const payloadData = getPayloadData();
+
+  return (
+    <>
+      <IconButton
+        className="response-tab-copy-button"
+        tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
+        onClick={() => navigator.clipboard.writeText(payloadData)}>
+        <span className="codicon codicon-copy" />
+      </IconButton>
+      <pre className="response-tab-pre">{payloadData}</pre>
+    </>
+  );
 };
 
 export default PayloadTab;

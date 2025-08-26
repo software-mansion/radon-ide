@@ -1,5 +1,11 @@
 .response-tab-copy-button {
   position: absolute;
-  top: 6px;
-  right: 12px;
+  top: 4px;
+  right: 14px;
+  background-color: var(--vscode-diffEditor-unchangedRegionBackground);
+}
+
+.response-tab-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
