@@ -16,21 +16,21 @@ const features = [
     title: "Click to Inspect",
     content:
       "Jump directly from preview to a file where your React Native component is defined. It can't really get simpler than that.",
-    imageSrc: "../img/screenshot_hero.png",
+    imageSrc: "../img/hero.webp",
   },
   {
     badge: "Network Inspector",
     title: "Inspect Network Requests",
     content:
       "Use the built-in network panel to inspect your application network activity right in the editor.",
-    imageSrc: "../img/hero.webp",
+    imageSrc: "../img/screenshot_hero.png",
   },
   {
     badge: "React Scan Integration",
     title: "Outline Renders",
     content:
       "Radon IDE can highlight components that re-render too frequently. See for yourself what parts of your application need optimization.",
-    imageSrc: "../img/screenshot_hero.png",
+    imageSrc: "../img/hero.webp",
   },
 ];
 
@@ -66,8 +66,7 @@ export default function FeatureSliderLanding() {
         ))}
       </div>
       <div className={styles.imageBackground}>
-        <div
-          className={`${styles.imageContainer} ${activeItem.index % 2 !== 0 ? styles.rightWindow : ""}`}>
+        <div className={styles.imageContainer}>
           <AnimatePresence>
             <motion.img
               key={activeItem.index}

@@ -23,7 +23,7 @@
 }
 
 .radonText p {
-  color: var(--text-primary, #fafafa);
+  color: var(--ifm-color-primary);
 
   font-size: 48px;
   font-weight: 250;
@@ -32,7 +32,7 @@
 }
 
 .radonText p span {
-  color: var(--text-accent, #57b495);
+  color: var(--swm-green-light-100);
   font-size: 48px;
   font-weight: 500;
   line-height: normal;
@@ -93,7 +93,7 @@
   display: flex;
   width: 200px;
   height: 200px;
-  padding: 0 32.711px 0 32.71px;
+  padding: 0 33px 0 33px;
   justify-content: center;
   align-items: center;
 }

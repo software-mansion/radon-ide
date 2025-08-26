@@ -7,11 +7,11 @@
 }
 
 .cardContainer.active {
-  padding-top: 40px;
+  padding-top: 32px;
 }
 
 .cardInfo {
-  gap: 8px;
+  gap: 16px;
 }
 
 .cardInfo.active {
@@ -36,9 +36,10 @@
   gap: 8px;
   width: fit-content;
 
-  background: var(--badge-background, #333);
+  background: var(--swm-card-border);
   font-size: 14px;
   line-height: 20px;
+  color: var(--radon-color-primary);
 }
 
 .cardTitle {
@@ -50,6 +51,7 @@
   text-align: left;
   font-family: Aeonik;
   transition: opacity 0.6s ease;
+  color: var(--ifm-color-primary);
 }
 
 .activeTitle {
@@ -134,7 +136,7 @@
 
 @media (max-width: 1024px) {
   .progressContainer {
-    padding: 40px 0;
+    padding: 40px 0 24px 0;
   }
   .cardTitle {
     font-size: 24px;
