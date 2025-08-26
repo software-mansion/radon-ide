@@ -28,10 +28,8 @@ export default function Home(): JSX.Element {
           {/* <Disclaimer /> */}
           {/* <LearnMoreHero /> */}
           {/* <Installation /> */}
-          {/* <Overview /> */}
           <FeaturesLanding />
           <Testimonials />
-          {/* <FAQ /> */}
           <LearnMoreFooter />
         </div>
       </div>
