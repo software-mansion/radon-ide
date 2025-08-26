@@ -11,8 +11,8 @@ import {
   VscodeTableHeaderCell,
   VscodeTableRow,
 } from "@vscode-elements/react-elements";
+import VscodeTable from "./VscodeTableInternalFix";
 import IconButton from "../../webview/components/shared/IconButton";
-import VscodeTable from "./VscodeTableInternal";
 import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogUtils";
 import { NetworkLogColumn } from "../types/network";
 import { useNetworkFilter } from "../providers/NetworkFilterProvider";
