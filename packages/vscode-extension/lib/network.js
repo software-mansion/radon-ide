@@ -195,17 +195,15 @@ function enableNetworkInspect(networkProxy) {
 
         readResponseBodyContent(xhr)
           .then((body) => {
-            try {
-              networkProxy.sendMessage(
-                "cdp-message",
-                JSON.stringify({
-                  id: message.id,
-                  result: { body },
-                })
-              );
-            } catch (error) {}
+            networkProxy.sendMessage(
+              "cdp-message",
+              JSON.stringify({
+                id: message.id,
+                result: { body },
+              })
+            );
           })
-          .catch((error) => {});
+          .catch(() => {});
       }
     } catch (error) {}
   }
