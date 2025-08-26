@@ -54,40 +54,19 @@ export type DeviceErrorDescriptor = {
 
 export type FatalErrorDescriptor = BuildErrorDescriptor | DeviceErrorDescriptor;
 
-export type NavigationHistoryItem = {
-  displayName: string;
-  id: string;
-};
-
-export type NavigationRoute = {
-  path: string;
-  filePath: string;
-  children: NavigationRoute[];
-  dynamic: { name: string; deep: boolean; notFound?: boolean }[] | null;
-  type: string;
-};
-
 export type DeviceSessionStatus = "starting" | "running" | "fatalError";
 
-type DeviceSessionStateCommon = {
-  deviceInfo: DeviceInfo;
-  previewURL: string | undefined;
-  navigationHistory: NavigationHistoryItem[];
-  navigationRouteList: NavigationRoute[];
-  isUsingStaleBuild: boolean;
-};
-
-export type DeviceSessionStateStarting = DeviceSessionStateCommon & {
+export type DeviceSessionStateStarting = {
   status: "starting";
   startupMessage: StartupMessage | undefined;
   stageProgress: number | undefined;
 };
 
-export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
+export type DeviceSessionStateRunning = {
   status: "running";
 };
 
-export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {
+export type DeviceSessionStateFatalError = {
   status: "fatalError";
   error: FatalErrorDescriptor;
 };

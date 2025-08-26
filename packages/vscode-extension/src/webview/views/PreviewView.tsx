@@ -71,16 +71,21 @@ function ActiveToolButton({
 
 function PreviewView() {
   const store$ = useStore();
-  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
   const { selectedDeviceSession, projectState, project, deviceSettings } = useProject();
-
-  const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
 
+  const devices = use$(store$.devicesState.devices) ?? [];
+  const fps = use$(useSelectedDeviceSessionState().frameReporting.frameReport.fps);
+  const frameReportingEnabled = use$(useSelectedDeviceSessionState().frameReporting.enabled);
+  const initialized = use$(store$.projectState.initialized);
+  const radonConnectConnected = projectState.connectState.connected;
+  const radonConnectEnabled = projectState.connectState.enabled;
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
   const zoomLevel = use$(store$.projectState.previewZoom);
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
@@ -89,23 +94,15 @@ function PreviewView() {
     [project]
   );
 
-  const devices = use$(store$.devicesState.devices) ?? [];
-
-  const frameReportingEnabled = use$(useSelectedDeviceSessionState().frameReporting.enabled);
-  const fps = use$(useSelectedDeviceSessionState().frameReporting.frameReport.fps);
-
-  const initialized = use$(store$.projectState.initialized);
-
-  const radonConnectEnabled = projectState.connectState.enabled;
-  const radonConnectConnected = projectState.connectState.connected;
-  const selectedDevice = selectedDeviceSession?.deviceInfo;
   const hasNoDevices = projectState !== undefined && devices.length === 0;
   const isStarting = selectedDeviceSession?.status === "starting";
   const isRunning = selectedDeviceSession?.status === "running";
 
   const isRecording = use$(selectedDeviceSessionState.screenCapture.isRecording);
+  const modelId = use$(selectedDeviceSessionState.deviceInfo.modelId);
   const recordingTime = use$(selectedDeviceSessionState.screenCapture.recordingTime);
   const replayData = use$(selectedDeviceSessionState.screenCapture.replayData);
+  const selectedDevice = use$(selectedDeviceSessionState.deviceInfo);
 
   const elementInspectorAvailability = use$(
     selectedDeviceSessionState.applicationSession.elementInspectorAvailability
@@ -123,7 +120,7 @@ function PreviewView() {
   const debuggerToolsButtonsActive = navBarButtonsActive; // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
+    return sd.modelId === modelId;
   });
 
   useEffect(() => {

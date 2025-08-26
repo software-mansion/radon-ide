@@ -18,7 +18,7 @@ import {
   DeviceRotation,
   DeviceSessions,
   DevicesState,
-  initialDeviceSessionStore,
+  generateInitialDeviceSessionStore,
   ProjectStore,
 } from "../common/State";
 
@@ -159,7 +159,9 @@ export class DeviceSessionsManager implements Disposable {
 
     if (!this.stateManager.getState()[deviceInfo.id]) {
       // we need to initialize the device session state before deriving a new state manager
-      this.stateManager.setState({ [deviceInfo.id]: initialDeviceSessionStore });
+      this.stateManager.setState({
+        [deviceInfo.id]: generateInitialDeviceSessionStore({ deviceInfo }),
+      });
     }
 
     const newDeviceSession = new DeviceSession(
@@ -168,8 +170,8 @@ export class DeviceSessionsManager implements Disposable {
       device,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
       {
-        onStateChange: (state) => {
-          if (!this.deviceSessions.has(state.deviceInfo.id)) {
+        onStateChange: () => {
+          if (!this.deviceSessions.has(deviceInfo.id)) {
             // NOTE: the device is being removed, we shouldn't report state updates
             return;
           }
@@ -204,7 +206,7 @@ export class DeviceSessionsManager implements Disposable {
 
     const [iosDevices, androidDevices] = _.partition(
       this.deviceSessions.values().toArray(),
-      (session) => session.getState().deviceInfo.platform === DevicePlatform.IOS
+      (session) => session.platform === DevicePlatform.IOS
     );
 
     if (
@@ -298,7 +300,7 @@ export class DeviceSessionsManager implements Disposable {
 
   private async updateSelectedSession(session: DeviceSession | undefined) {
     const previousSession = this.selectedDeviceSession;
-    this.activeSessionId = session?.getState().deviceInfo.id;
+    this.activeSessionId = session?.id;
     if (previousSession === session) {
       return;
     }
