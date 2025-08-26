@@ -17,22 +17,22 @@ export function SendFilesOverlay() {
   const { project } = useProject();
   const [isDragging, setIsDragging] = useState(false);
   const store$ = useSelectedDeviceSessionState();
-  const sendingFiles = use$(store$.fileTransfer.sendingFiles);
-  const erroredFiles = use$(store$.fileTransfer.erroredFiles);
-  const sentFiles = use$(store$.fileTransfer.sentFiles);
-  const isLoading = sendingFiles.length > 0;
-  const isError = erroredFiles.length > 0;
-  const isSuccess = !isError && sentFiles.length > 0;
+  const sendingFiles = use$(store$?.fileTransfer.sendingFiles);
+  const erroredFiles = use$(store$?.fileTransfer.erroredFiles);
+  const sentFiles = use$(store$?.fileTransfer.sentFiles);
+  const isLoading = sendingFiles ? sendingFiles.length > 0 : false;
+  const isError = erroredFiles ? erroredFiles.length > 0 : false;
+  const isSuccess = !isError && sentFiles ? sentFiles.length > 0 : false;
   const isVisible = isDragging || isLoading || isError || isSuccess;
 
   const resetOverlayState = useCallback(() => {
-    store$.fileTransfer.erroredFiles.set([]);
-    store$.fileTransfer.sentFiles.set([]);
+    store$?.fileTransfer.erroredFiles.set([]);
+    store$?.fileTransfer.sentFiles.set([]);
   }, [store$]);
 
   // Hide overlay after success and error animations
   useEffect(() => {
-    if (!isLoading && (erroredFiles.length > 0 || sentFiles.length > 0)) {
+    if (!isLoading && ((erroredFiles?.length ?? 0) > 0 || (sentFiles?.length ?? 0) > 0)) {
       const timer = setTimeout(
         resetOverlayState,
         isSuccess ? RETAIN_SUCCESS_SCREEN_TIMEOUT : RETAIN_ERROR_SCREEN_TIMEOUT
@@ -49,8 +49,8 @@ export function SendFilesOverlay() {
       // NOTE: `arrayBuffer()` may fail when the file cannot be read.
       // Since we don't send anything to the extension in that case, we need to handle it here.
       console.error("Error when reading file:", file.name, e);
-      store$.fileTransfer.erroredFiles.set((prev) => [
-        ...prev,
+      store$?.fileTransfer.erroredFiles.set((prev) => [
+        ...(prev ?? []),
         { fileName: file.name, errorMessage: "Could not read the file." },
       ]);
       return;
@@ -99,7 +99,7 @@ export function SendFilesOverlay() {
 
   const getOverlayContent = () => {
     if (isLoading) {
-      const fileCount = sendingFiles.length;
+      const fileCount = sendingFiles?.length;
       return {
         icon: <VscodeProgressRing />,
         message: `Sending ${fileCount} file${fileCount !== 1 ? "s" : ""}...`,
@@ -114,12 +114,12 @@ export function SendFilesOverlay() {
           </div>
         ),
         message:
-          erroredFiles[0].errorMessage || "Failed to send some files. Check logs for details.",
+          erroredFiles?.[0]?.errorMessage || "Failed to send some files. Check logs for details.",
       };
     }
 
     if (isSuccess) {
-      const fileCount = sentFiles.length;
+      const fileCount = sentFiles?.length;
       return {
         icon: (
           <div className="success-icon-container">

@@ -34,6 +34,6 @@ export const bundleErrorAlert = {
   actions: <BundleErrorActions />,
 };
 
-export function useBundleErrorAlert(errorDescriptor: BundleErrorDescriptor | null) {
-  useToggleableAlert(errorDescriptor !== null, bundleErrorAlert);
+export function useBundleErrorAlert(errorDescriptor: BundleErrorDescriptor | null | undefined) {
+  useToggleableAlert(errorDescriptor !== null && errorDescriptor !== undefined, bundleErrorAlert);
 }
