@@ -1,5 +1,7 @@
 import { use$ } from "@legendapp/state/react";
 import { useStore } from "../providers/storeProvider";
+import { Observable } from "@legendapp/state";
+import { DeviceSessionStore } from "../../common/State";
 
 export const useSelectedSessionId = () => {
   const store$ = useStore();
@@ -12,5 +14,5 @@ export const useSelectedDeviceSessionState = () => {
 
   const deviceSessionState = store$.projectState.deviceSessions[selectedSessionId!];
 
-  return deviceSessionState;
+  return deviceSessionState as Observable<DeviceSessionStore | undefined>;
 };

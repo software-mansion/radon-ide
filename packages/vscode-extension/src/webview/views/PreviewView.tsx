@@ -104,12 +104,12 @@ function PreviewView() {
   const isRunning = selectedDeviceSession?.status === "running";
 
   const isRecording = use$(selectedDeviceSessionState.screenCapture.isRecording);
-  const recordingTime = use$(selectedDeviceSessionState.screenCapture.recordingTime);
-  const replayData = use$(selectedDeviceSessionState.screenCapture.replayData);
+  const recordingTime = use$(selectedDeviceSessionState.screenCapture.recordingTime) ?? 0;
+  const replayData = use$(selectedDeviceSessionState.screenCapture.replayData) ?? null;
 
-  const elementInspectorAvailability = use$(
-    selectedDeviceSessionState.applicationSession.elementInspectorAvailability
-  );
+  const elementInspectorAvailability =
+    use$(selectedDeviceSessionState.applicationSession.elementInspectorAvailability) ??
+    InspectorAvailabilityStatus.Available;
 
   const inspectorAvailabilityStatus = isRunning
     ? elementInspectorAvailability
@@ -229,10 +229,14 @@ function PreviewView() {
 
   const logCounter = use$(isRunning ? selectedDeviceSessionState.applicationSession.logCounter : 0);
   const profilingCPUState = use$(() =>
-    isRunning ? selectedDeviceSessionState.applicationSession.profilingCPUState.get() : "stopped"
+    isRunning
+      ? (selectedDeviceSessionState.applicationSession.profilingCPUState.get() ?? "stopped")
+      : "stopped"
   );
   const profilingReactState = use$(() =>
-    isRunning ? selectedDeviceSessionState.applicationSession.profilingReactState.get() : "stopped"
+    isRunning
+      ? (selectedDeviceSessionState.applicationSession.profilingReactState.get() ?? "stopped")
+      : "stopped"
   );
 
   return (

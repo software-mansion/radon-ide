@@ -35,7 +35,7 @@ function InspectOverlay({
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
-  const appOrientation = use$(selectedDeviceSessionState.applicationSession.appOrientation);
+  const appOrientation = use$(selectedDeviceSessionState.applicationSession.appOrientation) ?? null;
 
   const { selectedDeviceSession } = useProject();
   if (selectedDeviceSession?.status !== "running") {

@@ -93,18 +93,18 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
 
   const isRunning = selectedDeviceSession?.status === "running";
 
-  const profilingCPUState = use$(selectedDeviceSessionState.applicationSession.profilingCPUState);
+  const profilingCPUState = use$(selectedDeviceSessionState?.applicationSession.profilingCPUState);
   const profilingReactState = use$(
-    selectedDeviceSessionState.applicationSession.profilingReactState
+    selectedDeviceSessionState?.applicationSession.profilingReactState
   );
 
   const toolsState = use$(
     isRunning
-      ? selectedDeviceSessionState.applicationSession.toolsState
+      ? selectedDeviceSessionState?.applicationSession.toolsState
       : observable<ToolsState>({})
   );
 
-  const allTools = Object.entries(toolsState);
+  const allTools = Object.entries(toolsState ?? {});
   const panelTools = allTools.filter(([key, tool]) => tool.isPanelTool);
   const nonPanelTools = allTools.filter(([key, tool]) => !tool.isPanelTool);
 

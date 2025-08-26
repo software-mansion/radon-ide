@@ -80,7 +80,7 @@ function Preview({
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
-  const appOrientation = use$(selectedDeviceSessionState.applicationSession.appOrientation);
+  const appOrientation = use$(selectedDeviceSessionState.applicationSession.appOrientation) ?? null;
 
   const bundleError = use$(selectedDeviceSessionState.applicationSession.bundleError);
 
@@ -129,7 +129,7 @@ function Preview({
 
   useFatalErrorAlert(fatalErrorDescriptor);
 
-  const bundleErrorDescriptor = isRunning ? bundleError : null;
+  const bundleErrorDescriptor = isRunning ? (bundleError ?? null) : null;
   useBundleErrorAlert(bundleErrorDescriptor);
 
   const openRebuildAlert = useNativeRebuildAlert();
