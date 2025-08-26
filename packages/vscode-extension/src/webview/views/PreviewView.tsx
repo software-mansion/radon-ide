@@ -105,7 +105,7 @@ function PreviewView() {
 
   const isRecording = use$(selectedDeviceSessionState.screenCapture.isRecording);
   const recordingTime = use$(selectedDeviceSessionState.screenCapture.recordingTime) ?? 0;
-  const replayData = use$(selectedDeviceSessionState.screenCapture.replayData) ?? null;
+  const replayData = use$(selectedDeviceSessionState.screenCapture.replayData);
 
   const elementInspectorAvailability =
     use$(selectedDeviceSessionState.applicationSession.elementInspectorAvailability) ??
