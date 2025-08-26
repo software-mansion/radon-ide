@@ -94,7 +94,7 @@ function getOrientationPredicates(
  *  and app orientation - change, synchronizing the app's coordinate system with the preview's coordinate system.
  * */
 export function appToPreviewCoordinates(
-  appOrientation: DeviceRotation | null,
+  appOrientation: DeviceRotation | null | undefined,
   deviceOrientation: DeviceRotation,
   frameRect: NormalizedFrameRect
 ): NormalizedFrameRect {
@@ -185,7 +185,7 @@ export function appToPreviewCoordinates(
  *  and app orientation - change, synchronizing the preview's coordinate system with the app's coordinate system.
  * */
 export function previewToAppCoordinates(
-  appOrientation: DeviceRotation | null,
+  appOrientation: DeviceRotation | null | undefined,
   deviceOrientation: DeviceRotation,
   coords: NormalizedCoordinates
 ): NormalizedCoordinates {

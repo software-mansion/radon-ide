@@ -60,9 +60,10 @@ function RenderOutlinesOverlay() {
 
   const { selectedDeviceSession } = useProject();
 
-  const appOrientation = use$(
+  const appOrientation = use$(() =>
     selectedDeviceSession?.status === "running"
-      ? selectedDeviceSessionState.applicationSession.appOrientation
+      ? (selectedDeviceSessionState.applicationSession.appOrientation.get() ??
+        DeviceRotation.Portrait)
       : DeviceRotation.Portrait
   );
 
