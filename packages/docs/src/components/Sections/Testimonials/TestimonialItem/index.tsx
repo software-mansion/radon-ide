@@ -24,9 +24,7 @@ export default function TestimonialItem({ testimonial }: Props) {
           className={styles.testimonialAvatar}
         />
         <div className={styles.authorWrapper}>
-          <p className={styles.testimonialAuthor}>
-            {testimonial.author} <img src={icons[testimonial.type]} className={styles.icon} />
-          </p>
+          <p className={styles.testimonialAuthor}>{testimonial.author}</p>
           <p className={styles.testimonialHandle}>{testimonial.handle}</p>
         </div>
       </div>

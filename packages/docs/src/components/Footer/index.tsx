@@ -7,6 +7,7 @@ import FooterNavigation from "./FooterNavigation";
 import GitHubIcon from "../GitHubIcon";
 import YouTubeIcon from "../YouTubeIcon";
 import XIcon from "../XIcon";
+import ThemeSwitcher from "../ThemeSwitcher";
 
 export default function Footer() {
   const {
@@ -46,6 +47,7 @@ export default function Footer() {
         <div className={styles.right}>
           <FooterNavigation />
         </div>
+        <ThemeSwitcher isThemeSwitcherShown={true} />
       </div>
     </footer>
   );

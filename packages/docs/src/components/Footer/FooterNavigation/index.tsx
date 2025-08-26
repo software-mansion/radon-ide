@@ -53,7 +53,7 @@ export default function FooterNavigation() {
             ))}
           </ul>
         </div>
-      ))}{" "}
+      ))}
     </>
   );
 }

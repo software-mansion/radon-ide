@@ -4,6 +4,7 @@
   padding-top: 64px;
   justify-content: center;
   flex-direction: column;
+  padding-bottom: 10%;
 }
 .heading {
   color: var(--ifm-color-primary);
@@ -135,6 +136,7 @@ span.dot {
 @media (max-width: 730px) {
   .hero {
     padding-top: 24px;
+    padding-bottom: 8%;
   }
 
   .heading {
