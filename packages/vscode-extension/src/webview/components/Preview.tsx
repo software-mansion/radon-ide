@@ -9,13 +9,7 @@ import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
 import { useBundleErrorAlert } from "../hooks/useBundleErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
-import {
-  Frame,
-  InspectDataStackItem,
-  InspectStackData,
-  InspectorAvailabilityStatus,
-  InspectorBridgeStatus,
-} from "../../common/Project";
+import { Frame, InspectDataStackItem, InspectStackData } from "../../common/Project";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import InspectOverlay from "./InspectOverlay";
@@ -30,7 +24,13 @@ import { useStore } from "../providers/storeProvider";
 import InspectorUnavailableBox from "./InspectorUnavailableBox";
 import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
 import { SendFilesOverlay } from "./SendFilesOverlay";
-import { MultimediaData, ZoomLevelType } from "../../common/State";
+import {
+  InspectorAvailabilityStatus,
+  InspectorBridgeStatus,
+  MultimediaData,
+  ZoomLevelType,
+} from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -77,7 +77,20 @@ function Preview({
   onReplayClose,
 }: Props) {
   const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const appOrientation = use$(selectedDeviceSessionState.applicationSession.appOrientation);
+
+  const bundleError = use$(selectedDeviceSessionState.applicationSession.bundleError);
+
+  const elementInspectorAvailability = use$(
+    selectedDeviceSessionState.applicationSession.elementInspectorAvailability
+  );
+
+  const inspectorBridgeStatus = use$(
+    selectedDeviceSessionState.applicationSession.inspectorBridgeStatus
+  );
 
   const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>(null);
   const wrapperDivRef = useRef<HTMLDivElement>(null);
@@ -97,8 +110,13 @@ function Preview({
   const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
 
   const isRunning = selectedDeviceSession?.status === "running";
-  const isRefreshing = isRunning && selectedDeviceSession.isRefreshing;
-  const debugPaused = isRunning && selectedDeviceSession.isDebuggerPaused;
+
+  const isRefreshing = use$(() =>
+    isRunning ? selectedDeviceSessionState.applicationSession.isRefreshing.get() : false
+  );
+  const debugPaused = use$(() =>
+    isRunning ? selectedDeviceSessionState.applicationSession.isDebuggerPaused.get() : false
+  );
 
   const previewURL = selectedDeviceSession?.previewURL;
 
@@ -106,12 +124,12 @@ function Preview({
     selectedDeviceSession?.previewURL && (showPreviewRequested || isRunning);
 
   const isAppDisconnected =
-    isRunning && selectedDeviceSession.inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
+    isRunning && inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
   useApplicationDisconnectedAlert(isAppDisconnected);
 
   useFatalErrorAlert(fatalErrorDescriptor);
 
-  const bundleErrorDescriptor = isRunning ? selectedDeviceSession?.bundleError : undefined;
+  const bundleErrorDescriptor = isRunning ? bundleError : null;
   useBundleErrorAlert(bundleErrorDescriptor);
 
   const openRebuildAlert = useNativeRebuildAlert();
@@ -188,9 +206,7 @@ function Preview({
     if (selectedDeviceSession?.status !== "running") {
       return;
     }
-    if (
-      selectedDeviceSession?.elementInspectorAvailability !== InspectorAvailabilityStatus.Available
-    ) {
+    if (elementInspectorAvailability !== InspectorAvailabilityStatus.Available) {
       return;
     }
     if (type === "Leave") {
@@ -202,7 +218,7 @@ function Preview({
 
     const clampedCoordinates = getNormalizedTouchCoordinates(event);
     const { x: translatedX, y: translatedY } = previewToAppCoordinates(
-      selectedDeviceSession.appOrientation,
+      appOrientation,
       rotation,
       clampedCoordinates
     );
@@ -296,8 +312,7 @@ function Preview({
       if (e.button === 2) {
         if (
           selectedDeviceSession?.status === "running" &&
-          selectedDeviceSession?.elementInspectorAvailability !==
-            InspectorAvailabilityStatus.Available
+          elementInspectorAvailability !== InspectorAvailabilityStatus.Available
         ) {
           handleInspectorUnavailable(e);
         } else {

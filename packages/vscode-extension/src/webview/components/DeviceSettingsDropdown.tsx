@@ -16,7 +16,6 @@ import { useProject } from "../providers/ProjectProvider";
 import {
   AppPermissionType,
   DeviceRotationDirection,
-  DeviceRotation,
   DeviceSettings,
   ProjectInterface,
 } from "../../common/Project";
@@ -29,7 +28,7 @@ import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
-import { DevicePlatform } from "../../common/State";
+import { DevicePlatform, DeviceRotation } from "../../common/State";
 
 const contentSizes = [
   "xsmall",

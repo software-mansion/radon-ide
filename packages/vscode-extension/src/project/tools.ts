@@ -2,7 +2,6 @@ import { Disposable } from "vscode";
 import _ from "lodash";
 import { RadonInspectorBridge } from "./bridge";
 import { extensionContext } from "../utilities/extensionContext";
-import { ToolsState } from "../common/Project";
 import {
   createExpoDevPluginTools,
   ExpoDevPluginToolName,
@@ -20,6 +19,8 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { RenderOutlinesPlugin } from "../plugins/render-outlines/render-outlines-plugin";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 import { disposeAll } from "../utilities/disposables";
+import { ToolsState } from "../common/State";
+import { StateManager } from "./StateManager";
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
 export type ToolKey =
@@ -50,10 +51,6 @@ export function reportToolOpened(toolName: ToolKey) {
   getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:opened`);
 }
 
-export interface ToolsDelegate {
-  onToolsStateChange(toolsState: ToolsState): void;
-}
-
 export class ToolsManager implements Disposable {
   private toolsSettings: Partial<Record<ToolKey, boolean>> = {};
   private plugins: Map<ToolKey, ToolPlugin> = new Map();
@@ -61,8 +58,8 @@ export class ToolsManager implements Disposable {
   private disposables: Disposable[] = [];
 
   public constructor(
-    public readonly inspectorBridge: RadonInspectorBridge,
-    private readonly delegate: ToolsDelegate
+    private readonly stateManager: StateManager<ToolsState>,
+    public readonly inspectorBridge: RadonInspectorBridge
   ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
 
@@ -147,10 +144,11 @@ export class ToolsManager implements Disposable {
       }
     }
 
-    this.delegate.onToolsStateChange(this.getToolsState());
+    this.setToolsState();
   }
 
-  public getToolsState(): ToolsState {
+  // TODO: we should consider using a more sophisticated approach to manage tool states
+  private setToolsState() {
     const toolsState: ToolsState = {};
     for (const [id, plugin] of this.plugins) {
       if (plugin.toolInstalled) {
@@ -163,7 +161,8 @@ export class ToolsManager implements Disposable {
         };
       }
     }
-    return toolsState;
+
+    this.stateManager.setState(toolsState);
   }
 
   public updateToolEnabledState(toolName: ToolKey, enabled: boolean) {

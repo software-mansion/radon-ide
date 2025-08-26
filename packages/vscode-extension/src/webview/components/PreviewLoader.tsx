@@ -8,7 +8,6 @@ import ProgressBar from "./shared/ProgressBar";
 
 import {
   DeviceSessionStateStarting,
-  DeviceRotation,
   StartupMessage,
   StartupStageWeight,
 } from "../../common/Project";
@@ -17,7 +16,7 @@ import Button from "./shared/Button";
 import { Output } from "../../common/OutputChannel";
 import { useStore } from "../providers/storeProvider";
 import { use$ } from "@legendapp/state/react";
-import { DevicePlatform } from "../../common/State";
+import { DevicePlatform, DeviceRotation } from "../../common/State";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => acc + cur,

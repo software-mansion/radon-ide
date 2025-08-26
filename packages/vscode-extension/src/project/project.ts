@@ -9,7 +9,6 @@ import {
   AppPermissionType,
   DeviceButtonType,
   DeviceId,
-  DeviceRotation,
   DeviceSessionsManagerState,
   DeviceSessionState,
   DeviceSettings,
@@ -19,7 +18,6 @@ import {
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
-  ToolsState,
   TouchPoint,
 } from "../common/Project";
 import { AppRootConfigController } from "../panels/AppRootConfigController";
@@ -53,6 +51,7 @@ import { StateManager } from "./StateManager";
 import {
   AndroidSystemImageInfo,
   DeviceInfo,
+  DeviceRotation,
   DevicesState,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
@@ -256,14 +255,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   // #endregion Device Session
-
-  // #region Tools Delegate
-
-  public onToolsStateChange = (toolsState: ToolsState) => {
-    this.eventEmitter.emit("toolsStateChanged", toolsState);
-  };
-
-  // #endregion Tools Delegate
 
   // #region Launch Configuration
 
