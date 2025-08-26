@@ -33,16 +33,18 @@ function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: numbe
 function useIsEnabled() {
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
   const { selectedDeviceSession } = useProject();
-  if (selectedDeviceSession?.status !== "running") {
+
+  const renderOutlinesPluginState = use$(
+    selectedDeviceSessionState.applicationSession.toolsState[RENDER_OUTLINES_PLUGIN_ID]
+  );
+
+  if (selectedDeviceSession?.status !== "running" || !renderOutlinesPluginState) {
     return false;
   }
-  const isToolEnabled = use$(
-    selectedDeviceSessionState.applicationSession.toolsState[RENDER_OUTLINES_PLUGIN_ID]?.enabled
-  );
-  const isInspectorAvailable = use$(
-    selectedDeviceSessionState.applicationSession.toolsState[RENDER_OUTLINES_PLUGIN_ID]
-      ?.pluginAvailable
-  );
+
+  const isToolEnabled = renderOutlinesPluginState.enabled;
+  const isInspectorAvailable = renderOutlinesPluginState.pluginAvailable;
+
   return isToolEnabled && isInspectorAvailable;
 }
 
