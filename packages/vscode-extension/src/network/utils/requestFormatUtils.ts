@@ -14,7 +14,7 @@ export function formatJSONBody(body: unknown): string {
   }
 }
 
-export function formatGETParams(url: string): string {
+export function formatUrlParams(url: string): string {
   try {
     const urlObj = new URL(url);
     const params: Record<string, string> = {};
