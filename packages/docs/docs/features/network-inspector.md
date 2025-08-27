@@ -30,7 +30,24 @@ You can customize the Network Inspector behaviour using the following buttons:
 
 1. **Toggle network activity recording** - starts or stops the capture of network requests made by your application.
 2. **Clear network log** - erases all currently displayed network requests displayed in a list.
-3. **Filter domains** - allows you to show only the requests associated with the specified domain.
+3. **Filter domains** - opens input field allowing for filtering the displayed logs. Read more about filters here.
+ 
+
+## Filtering and sorting
+
+Clicking on the **Filter** button opens an input field where you can define filters for the logs displayed. Alongside the field, an **Invert** toggle allows to reverse the filter criteria.
+
+<img width="500" src="/img/docs/ide_network_inspector_filter.png" className="shadow-image"/>
+
+- Apply filters globally across all columns by entering plain-text.
+- Apply filters to specified columns using the syntax `column:value` for simple filters, or `column:"value with spaces"` for values that include spaces.
+
+
+Hovering over a column header also displays a filter icon. Clicking it inserts a filter template directly into the filter input field for you.
+
+<img width="500" src="/img/docs/ide_network_inspector_filter_button.png" className="shadow-image"/>
+
+Clicking directly on a column header will additionally **Sort** the logs according to the values in that column.
 
 ## Exploring network request details
 
