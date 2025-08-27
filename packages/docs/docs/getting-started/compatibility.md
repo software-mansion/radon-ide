@@ -26,11 +26,11 @@ Radon IDE supports Expo projects starting from Expo SDK 50.
 
 <div className="compatibility">
 
-|                 | Expo SDK 50 | Expo SDK 51 | Expo SDK 52 | Expo SDK 53 |
-| --------------- | ----------- | ----------- | ----------- | ----------- |
-| Expo Dev Client | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      |
-| Expo Prebuild   | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      |
-| Expo Go         | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      |
+|                 | Expo SDK 50 | Expo SDK 51 | Expo SDK 52 | Expo SDK 53 | Expo SDK 54 |
+| --------------- | ----------- | ----------- | ----------- | ----------- | ----------- |
+| Expo Dev Client | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      |
+| Expo Prebuild   | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      |
+| Expo Go         | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      |
 
 </div>
 
