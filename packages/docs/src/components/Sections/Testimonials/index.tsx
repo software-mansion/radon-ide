@@ -95,6 +95,8 @@ const rightColumn: Testimonial[] = [
   },
 ];
 
+const data = leftColumn.concat(middleColumn, rightColumn);
+
 export default function Testimonials() {
   return (
     <section>
@@ -103,9 +105,14 @@ export default function Testimonials() {
         <div className={styles.testimonialsContainer}>
           <div className={styles.gradientStart} />
           <div className={styles.gradientEnd} />
-          <TestimonialCarousel data={leftColumn} scrollUp={true} />
-          <TestimonialCarousel data={middleColumn} scrollUp={false} />
-          <TestimonialCarousel data={rightColumn} scrollUp={true} />
+          <div className={styles.webActive}>
+            <TestimonialCarousel data={leftColumn} scrollUp={true} />
+            <TestimonialCarousel data={middleColumn} scrollUp={false} />
+            <TestimonialCarousel data={rightColumn} scrollUp={true} />
+          </div>
+          <div className={styles.mobileActive}>
+            <TestimonialCarousel data={data} scrollUp={true} />
+          </div>
         </div>
       </div>
     </section>
