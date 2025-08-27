@@ -40,6 +40,21 @@ export type DeviceSettings = {
   camera?: CameraSettings;
 };
 
+export enum InstallationErrorReason {
+  NotEnoughStorage = "not_enough_storage",
+  InvalidPlatform = "invalid_platform",
+  Unknown = "unknown",
+}
+
+export class InstallationError extends Error {
+  constructor(
+    message: string,
+    public readonly reason: InstallationErrorReason
+  ) {
+    super(message);
+  }
+}
+
 export type BuildErrorDescriptor = {
   kind: "build";
   message: string;
@@ -52,7 +67,17 @@ export type DeviceErrorDescriptor = {
   message: string;
 };
 
-export type FatalErrorDescriptor = BuildErrorDescriptor | DeviceErrorDescriptor;
+export type InstallationErrorDescriptor = {
+  kind: "installation";
+  message: string;
+  platform: DevicePlatform;
+  reason: InstallationErrorReason;
+};
+
+export type FatalErrorDescriptor =
+  | BuildErrorDescriptor
+  | DeviceErrorDescriptor
+  | InstallationErrorDescriptor;
 
 export type NavigationHistoryItem = {
   displayName: string;
