@@ -7,10 +7,6 @@
   margin-bottom: 20px;
 }
 
-/* .testimonial + .testimonial {
-  margin-top: 1rem;
-} */
-
 .testimonial:hover {
   background-color: var(--swm-border);
   text-decoration: none;

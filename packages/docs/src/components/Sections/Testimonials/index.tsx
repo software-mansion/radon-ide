@@ -1,6 +1,6 @@
 import React from "react";
 import styles from "./styles.module.css";
-import TestimonialItem from "./TestimonialItem";
+import TestimonialCarousel from "./TestimonialCarousel";
 
 export interface Testimonial {
   type: "linkedin" | "x" | "producthunt";
@@ -11,7 +11,7 @@ export interface Testimonial {
   avatar: string;
 }
 
-const data: Testimonial[] = [
+const leftColumn: Testimonial[] = [
   {
     type: "x",
     link: "https://x.com/mironcatalin/status/1863908433293938930",
@@ -37,6 +37,8 @@ const data: Testimonial[] = [
     body: "Radon IDE by @swmansion is the React Native IDE we've all been waiting for! 🚀 The setup was incredibly simple, and it has everything you need to build amazing apps. https://ide.swmansion.com #ReactNative #devtools",
     avatar: "https://pbs.twimg.com/profile_images/1518484915381223426/eqsKVMxQ_400x400.jpg",
   },
+];
+const middleColumn: Testimonial[] = [
   {
     type: "x",
     link: "https://x.com/czystyl/status/1863843093004337526",
@@ -63,6 +65,8 @@ const data: Testimonial[] = [
     avatar:
       "https://ph-avatars.imgix.net/6047108/original.jpeg?auto=compress&codec=mozjpeg&cs=strip&auto=format&w=120&h=120&fit=crop&dpr=1",
   },
+];
+const rightColumn: Testimonial[] = [
   {
     type: "x",
     link: "https://x.com/felippewick/status/1863630901579506065",
@@ -97,11 +101,11 @@ export default function Testimonials() {
       <div className={styles.testimonials}>
         <h1 className={styles.testimonialsHeading}>What Engineers Say</h1>
         <div className={styles.testimonialsContainer}>
-          <div className={styles.gradientStart}></div>
-          <div className={styles.gradientEnd}></div>
-          {data.map((testimonial) => (
-            <TestimonialItem testimonial={testimonial} key={testimonial.handle} />
-          ))}
+          <div className={styles.gradientStart} />
+          <div className={styles.gradientEnd} />
+          <TestimonialCarousel data={leftColumn} scrollUp={true} />
+          <TestimonialCarousel data={middleColumn} scrollUp={false} />
+          <TestimonialCarousel data={rightColumn} scrollUp={true} />
         </div>
       </div>
     </section>

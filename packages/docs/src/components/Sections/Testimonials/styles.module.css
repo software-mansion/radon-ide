@@ -1,7 +1,7 @@
 .testimonialsContainer {
-  column-count: 3;
+  display: flex;
+  gap: 20px;
   padding: 0 60px 80px;
-  column-gap: 20px;
   position: relative;
 }
 
@@ -25,6 +25,7 @@
   );
   left: 0;
   top: -38px;
+  z-index: 1;
 }
 .gradientEnd {
   position: absolute;
@@ -39,4 +40,5 @@
   );
   bottom: 0;
   left: 0;
+  z-index: 1;
 }

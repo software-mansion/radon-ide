@@ -1,0 +1,41 @@
+.carouselContainer {
+  width: 400px;
+  height: 570px;
+  overflow: hidden;
+  border: 1px solid black;
+}
+
+.carouselContent {
+  display: flex;
+  flex-direction: column;
+}
+
+.up {
+  animation: scrollUp 50s linear infinite;
+}
+
+.down {
+  animation: scrollDown 50s linear infinite;
+}
+
+.carouselContainer:hover .carouselContent {
+  animation-play-state: paused;
+}
+
+@keyframes scrollUp {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes scrollDown {
+  100% {
+    transform: translateY(0);
+  }
+  0% {
+    transform: translateY(-50%);
+  }
+}
