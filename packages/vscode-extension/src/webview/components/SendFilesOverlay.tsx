@@ -17,10 +17,12 @@ export function SendFilesOverlay() {
   const { project } = useProject();
   const [isDragging, setIsDragging] = useState(false);
   const store$ = useSelectedDeviceSessionState();
+  const [readingFilesCount, setReadingFilesCount] = useState(0);
   const sendingFiles = use$(store$?.fileTransfer.sendingFiles);
   const erroredFiles = use$(store$?.fileTransfer.erroredFiles);
   const sentFiles = use$(store$?.fileTransfer.sentFiles);
-  const isLoading = sendingFiles ? sendingFiles.length > 0 : false;
+  const sendingFilesCount = sendingFiles ? sendingFiles.length : 0;
+  const isLoading = sendingFilesCount + readingFilesCount > 0;
   const isError = erroredFiles ? erroredFiles.length > 0 : false;
   const isSuccess = !isError && sentFiles ? sentFiles.length > 0 : false;
   const isVisible = isDragging || isLoading || isError || isSuccess;
@@ -44,6 +46,7 @@ export function SendFilesOverlay() {
   const sendFile = async (file: File) => {
     let buf: ArrayBuffer;
     try {
+      setReadingFilesCount((count) => count + 1);
       buf = await file.arrayBuffer();
     } catch (e) {
       // NOTE: `arrayBuffer()` may fail when the file cannot be read.
@@ -54,6 +57,8 @@ export function SendFilesOverlay() {
         { fileName: file.name, errorMessage: "Could not read the file." },
       ]);
       return;
+    } finally {
+      setReadingFilesCount((count) => count - 1);
     }
     try {
       await project.sendFileToDevice({
