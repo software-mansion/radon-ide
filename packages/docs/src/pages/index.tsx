@@ -14,6 +14,7 @@ import styles from "./index.module.css";
 import Testimonials from "../components/Sections/Testimonials";
 import clsx from "clsx";
 import FeaturesLanding from "../components/FeaturesLanding";
+import AI from "../components/Sections/AI";
 
 export default function Home(): JSX.Element {
   // We need to initialize on the landing coz Paddle redirects here when the user wants to change the card info, there's no way to change it
@@ -29,6 +30,7 @@ export default function Home(): JSX.Element {
           {/* <LearnMoreHero /> */}
           {/* <Installation /> */}
           <FeaturesLanding />
+          <AI />
           <Testimonials />
           <LearnMoreFooter />
         </div>

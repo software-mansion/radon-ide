@@ -1,0 +1,139 @@
+.container {
+  display: flex;
+  justify-content: space-between;
+  border-top: var(--radon-border-layout);
+  border-bottom: var(--radon-border-layout);
+  max-width: 1360px;
+  height: 600px;
+  overflow: hidden;
+}
+
+.left span {
+  color: var(--swm-green-light-100);
+  font-size: 128px;
+  font-weight: 600;
+  line-height: normal;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 80px;
+}
+
+.left p {
+  margin: 0;
+}
+
+.textContent {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 480px;
+  gap: 16px;
+}
+
+.heading {
+  color: var(--ifm-color-primary);
+  font-size: 36px;
+  font-weight: 400;
+}
+
+.subheading {
+  color: var(--radon-subheading);
+
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 28px;
+}
+
+.right {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+.content {
+  padding: 0 40px 0 110px;
+  flex: 1;
+}
+
+.radonIcon {
+  position: absolute;
+  right: 0;
+}
+
+.chat {
+  display: flex;
+  padding: 16px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  width: 100%;
+  background: #111111bf;
+  backdrop-filter: blur(2px);
+  border-radius: 8px;
+}
+
+.chat::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(to right, var(--radon-gradient-green), #111111bf);
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: destination-out;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.message {
+  display: flex;
+  padding: 8px;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--swm-card-border);
+  font-size: 12px;
+}
+.message p {
+  margin: 0;
+}
+
+.question span {
+  color: var(--swm-green-light-100);
+  margin-right: 8px;
+}
+
+.question {
+  color: var(--ifm-color-primary);
+  font-size: 16px;
+  line-height: normal;
+}
+
+.icon {
+  height: 12px;
+  width: 13px;
+
+  display: flex;
+}
+
+.messageHeading {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+}
+
+.current {
+  color: var(--radon-color-grey-90);
+  font-weight: 400;
+  line-height: normal;
+}
