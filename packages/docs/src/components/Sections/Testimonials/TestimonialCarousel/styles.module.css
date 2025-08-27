@@ -39,3 +39,13 @@
     transform: translateY(-50%);
   }
 }
+
+@media (max-width: 1024px) {
+  .carouselContainer {
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+  .carouselContainer::-webkit-scrollbar {
+    display: none;
+  }
+}
