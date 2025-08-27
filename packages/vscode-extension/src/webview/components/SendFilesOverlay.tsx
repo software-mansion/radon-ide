@@ -7,6 +7,7 @@ import classNames from "classnames";
 import _ from "lodash";
 import { useProject } from "../providers/ProjectProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { merge } from "../../common/Merge";
 
 const RETAIN_SUCCESS_SCREEN_TIMEOUT = 1000; // ms
 const RETAIN_ERROR_SCREEN_TIMEOUT = 5000; // ms
@@ -41,8 +42,12 @@ export function SendFilesOverlay() {
   const isVisible = isDragging || isLoading || isError || isSuccess;
 
   const resetOverlayState = useCallback(() => {
-    store$.fileTransfer.erroredFiles.set([]);
-    store$.fileTransfer.sentFiles.set([]);
+    store$.set((prev) => {
+      if (!prev) {
+        return undefined;
+      }
+      return merge(prev, { fileTransfer: { erroredFiles: [], sentFiles: [] } });
+    });
   }, [store$]);
 
   // Hide overlay after success and error animations
