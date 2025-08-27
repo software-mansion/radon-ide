@@ -22,8 +22,6 @@ export function SendFilesOverlay() {
   const sendingFiles = use$(store$?.fileTransfer.sendingFiles) ?? [];
   const erroredFiles = use$(store$?.fileTransfer.erroredFiles) ?? [];
   const sentFiles = use$(store$?.fileTransfer.sentFiles) ?? [];
-  const isError = erroredFiles.length > 0;
-  const isSuccess = sentFiles.length > 0;
 
   const inProgressCount = useMemo(
     () =>
@@ -37,6 +35,8 @@ export function SendFilesOverlay() {
     [droppedFiles, sendingFiles]
   );
   const isLoading = inProgressCount > 0;
+  const isError = erroredFiles.length > 0;
+  const isSuccess = !isLoading && !isError && sentFiles.length > 0;
 
   const isVisible = isDragging || isLoading || isError || isSuccess;
 
