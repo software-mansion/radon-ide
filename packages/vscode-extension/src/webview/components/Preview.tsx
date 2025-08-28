@@ -542,6 +542,7 @@ function Preview({
                   cursor: isInspecting ? "crosshair" : "default",
                 }}
                 className="phone-screen"
+                data-test="phone-screen"
               />
               <RenderOutlinesOverlay />
               {isRunning && <SendFilesOverlay />}

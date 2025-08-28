@@ -39,6 +39,7 @@ function BuildErrorActions({
       </IconButton>
       <IconButton
         type="secondary"
+        dataTest="alert-open-logs-button"
         onClick={() => {
           project.focusOutput(logsButtonDestination ?? Output.Ide);
         }}

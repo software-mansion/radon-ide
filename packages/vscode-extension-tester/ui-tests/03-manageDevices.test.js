@@ -32,7 +32,8 @@ describe("Adding device tests", () => {
     await findAndWaitForElement(
       driver,
       By.css(`[data-test="manage-devices-menu-row-device-${newDeviceName}"]`),
-      `Timed out waiting for device with name: ${newDeviceName}`, 20000
+      `Timed out waiting for device with name: ${newDeviceName}`,
+      20000
     );
   });
 

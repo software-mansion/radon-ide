@@ -310,6 +310,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Show Touches
             <Switch.Root
               className="switch-root small-switch"
+              data-test="device-settings-show-touches-switch"
               id="show-touches"
               onCheckedChange={(checked) =>
                 project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })

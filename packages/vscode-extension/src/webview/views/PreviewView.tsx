@@ -204,7 +204,7 @@ function PreviewView() {
   } else if (!initialized) {
     content = (
       <div className="preview-content-placeholder">
-        <VscodeProgressRing />
+        <VscodeProgressRing data-test="vscode-progress-ring" />
       </div>
     );
   } else if (selectedDevice) {
@@ -313,6 +313,7 @@ function PreviewView() {
           <IconButton
             counter={logCounter}
             counterMode="compact"
+            dataTest="radon-top-bar-debug-console-button"
             onClick={() => project.focusDebugConsole()}
             tooltip={{
               label: "Open logs panel",

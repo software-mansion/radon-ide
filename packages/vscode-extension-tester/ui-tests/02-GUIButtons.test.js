@@ -2,17 +2,33 @@ import {
   findAndClickElementByTag,
   findAndWaitForElementByTag,
 } from "../utils/helpers.js";
-import { openRadonIDEPanel, openRadonSettingsMenu } from "./interactions.js";
-import { VSBrowser } from "vscode-extension-tester";
+import {
+  openRadonIDEPanel,
+  openRadonSettingsMenu,
+  deleteAllDevices,
+} from "./interactions.js";
+import { WebView, EditorView } from "vscode-extension-tester";
 
 import { get } from "./setupTest.js";
 
 describe("Main interface buttons tests", () => {
   let driver;
 
+  before(async () => {
+    driver = get().driver;
+    await deleteAllDevices(driver);
+    const view = new WebView();
+    await view.switchBack();
+    await new EditorView().closeAllEditors();
+  });
+
   beforeEach(async function () {
     ({ driver } = get());
     await openRadonIDEPanel(driver);
+    await findAndWaitForElementByTag(
+      driver,
+      "radon-top-bar-settings-dropdown-trigger"
+    );
   });
 
   it("Should open device settings window", async function () {

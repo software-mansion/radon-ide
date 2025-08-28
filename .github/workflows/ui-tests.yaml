@@ -11,28 +11,28 @@ on:
         description: Project app name to test
         type: choice
         required: true
-        default: "react-native-77"
+        default: "react-native-81"
         options:
-          - "react-native-73"
-          - "react-native-74"
-          - "react-native-75"
-          - "react-native-76"
-          - "react-native-77"
-          - "react-native-78"
-          - "react-native-79"
-          - "react-native-80"
+          # - "react-native-73"
+          # - "react-native-74"
+          # - "react-native-75"
+          # - "react-native-76"
+          # - "react-native-77"
+          # - "react-native-78"
+          # - "react-native-79"
+          # - "react-native-80"
           - "react-native-81"
-          - "expo-50-dev-client"
-          - "expo-51-dev-client"
-          - "expo-51"
-          - "expo-52-eas"
-          - "expo-52-prebuild-with-plugins"
-          - "expo-53"
-          - "expo-54"
-          - "expo-go"
-          - "expo-router"
-          - "nx-monorepo"
-          - "pnpm-monorepo"
+          # - "expo-50-dev-client"
+          # - "expo-51-dev-client"
+          # - "expo-51"
+          # - "expo-52-eas"
+          # - "expo-52-prebuild-with-plugins"
+          # - "expo-53"
+          # - "expo-54"
+          # - "expo-go"
+          # - "expo-router"
+          # - "nx-monorepo"
+          # - "pnpm-monorepo"
       isRecording:
         description: Whether to record video
         type: boolean
@@ -54,6 +54,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: check sdk
+        run: |
+          xcodebuild -showsdks
+
+      - name: Show Xcode version
+        run: xcodebuild -version
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -112,8 +119,8 @@ jobs:
           IS_RECORDING: ${{ github.event.inputs.isRecording }}
 
       - name: make video
-        if: ${{ github.event.inputs.isRecording == 'true' }}
-        run: ffmpeg -framerate 10 -i frame-%04d.png -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
+        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
+        run: ffmpeg -framerate 10 -i frame-%04d.png -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
         working-directory: packages/vscode-extension-tester/videos
 
       - name: Upload screenshots on failure
@@ -123,8 +130,15 @@ jobs:
           name: vscode-ui-screenshots
           path: packages/vscode-extension-tester/screenshots/
 
+      - name: build output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: output
+          path: packages/vscode-extension-tester/output.txt
+
       - name: Upload video recording
-        if: ${{ github.event.inputs.isRecording == 'true' }}
+        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: vscode-ui-recording
