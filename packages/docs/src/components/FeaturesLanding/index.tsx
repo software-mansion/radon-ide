@@ -8,7 +8,6 @@ export default function FeaturesLanding() {
     <div>
       <LandingBanner />
       <FeatureSliderLanding />
-      <FeaturesGrid />
     </div>
   );
 }
