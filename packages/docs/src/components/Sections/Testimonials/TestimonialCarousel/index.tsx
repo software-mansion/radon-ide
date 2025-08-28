@@ -13,8 +13,8 @@ export default function TestimonialCarousel({ data, scrollUp }: TestimonialCarou
   return (
     <div className={styles.carouselContainer}>
       <div className={clsx(styles.carouselContent, scrollUp ? styles.up : styles.down)}>
-        {data.concat(data).map((testimonial) => (
-          <TestimonialItem testimonial={testimonial} key={testimonial.handle} />
+        {data.concat(data).map((testimonial, index) => (
+          <TestimonialItem key={index} testimonial={testimonial} />
         ))}
       </div>
     </div>

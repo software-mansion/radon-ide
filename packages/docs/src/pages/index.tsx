@@ -6,8 +6,6 @@ import LearnMoreHero from "@site/src/components/LearnMore/LearnMoreHero";
 import LearnMoreFooter from "@site/src/components/LearnMore/LearnMoreFooter";
 import Installation from "@site/src/components/Sections/Installation";
 import LandingBackground from "@site/src/components/Hero/LandingBackground";
-import Overview from "@site/src/components/Sections/Overview";
-import FAQ from "@site/src/components/Sections/FAQ";
 
 import usePaddle from "@site/src/hooks/usePaddle";
 import styles from "./index.module.css";

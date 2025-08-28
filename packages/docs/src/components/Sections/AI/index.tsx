@@ -10,19 +10,19 @@ export default function AI() {
       <div className={styles.left}>
         <span>AI</span>
         <div className={styles.textContent}>
-          <h2 className={styles.heading}>
-            Your expert React Native
-            <br /> AI assistant inside Radon IDE
-          </h2>
+          <div className={styles.heading}>
+            <p>Your expert React Native</p>
+            <p>AI assistant inside Radon IDE</p>
+          </div>
           <p className={styles.subheading}>
             Enhance your favorite LLM with up-to-date knowledge about the React Native ecosystem.
           </p>
         </div>
       </div>
+      <div className={styles.radonIcon}>
+        <RadonIcon />
+      </div>
       <div className={styles.right}>
-        <div className={styles.radonIcon}>
-          <RadonIcon />
-        </div>
         <div className={styles.content}>
           <p>/help What can you do?</p>
           <div className={styles.chat}>
