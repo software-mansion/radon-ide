@@ -2,8 +2,9 @@ import http from "http";
 import path from "path";
 import fs from "fs";
 import os from "os";
-import { Disposable, Uri } from "vscode";
-import { WebSocketServer, WebSocket } from "ws";
+import assert from "assert";
+import { Disposable, EventEmitter, Uri } from "vscode";
+import { WebSocketServer } from "ws";
 import { Logger } from "../Logger";
 import {
   createBridge,
@@ -11,6 +12,7 @@ import {
   prepareProfilingDataExport,
   Store,
   Wall,
+  FrontendBridge,
 } from "../../third-party/react-devtools/headless";
 import { BaseInspectorBridge } from "./bridge";
 
@@ -20,108 +22,36 @@ function filePathForProfile() {
   return filePath;
 }
 
-export class Devtools extends BaseInspectorBridge implements Disposable {
-  private _port = 0;
-  private server: any;
-  private socket?: WebSocket;
-  private startPromise: Promise<void> | undefined;
-  private store: Store | undefined;
+export class DevtoolsConnection extends BaseInspectorBridge implements Disposable {
+  bridge: FrontendBridge;
+  store: Store;
+  appReady: Promise<void>;
+  connected: boolean = true;
 
-  public get port() {
-    return this._port;
-  }
+  constructor(private readonly wall: Wall) {
+    super();
 
-  public get hasConnectedClient() {
-    return this.socket !== undefined;
-  }
-
-  public async ready() {
-    if (!this.startPromise) {
-      throw new Error("Devtools not started");
-    }
-    await this.startPromise;
-  }
-
-  public async appReady() {
-    const { resolve, promise } = Promise.withResolvers<void>();
-    const listener = this.onEvent("appReady", () => {
-      resolve();
-      listener.dispose();
-    });
-    return promise;
-  }
-
-  public async start() {
-    if (this.startPromise) {
-      throw new Error("Devtools already started");
-    }
-    this.startPromise = this.startInternal();
-    return this.startPromise;
-  }
-
-  private async startInternal() {
-    this.server = http.createServer(() => {});
-    const wss = new WebSocketServer({ server: this.server });
-
-    wss.on("connection", (ws) => {
-      if (this.socket !== undefined) {
-        Logger.error("Devtools client already connected");
-        this.socket.close();
-      }
-      Logger.debug("Devtools client connected");
-      this.socket = ws;
-
-      const wall: Wall = {
-        listen(fn) {
-          function listener(message: string) {
-            const parsedMessage = JSON.parse(message);
-            return fn(parsedMessage);
-          }
-          ws.on("message", listener);
-          return () => {
-            ws.off("message", listener);
-          };
-        },
-        send(event, payload) {
-          ws.send(JSON.stringify({ event, payload }));
-        },
-      };
-
-      const bridge = createBridge(wall);
-      const store = createStore(bridge);
-      this.store = store;
-
-      ws.on("close", () => {
-        if (this.socket === ws) {
-          this.socket = undefined;
-          this.emitEvent("disconnected", []);
-        }
-        bridge.shutdown();
-        if (this.store === store) {
-          this.store = undefined;
-        }
-      });
-
-      bridge.addListener("RNIDE_message", (payload: any) => {
-        const { type, data } = payload;
-        this.emitEvent(type, data);
-      });
-
-      // Register for isProfiling event on the profiler store
-      store.profilerStore.addListener("isProfiling", () => {
-        // @ts-ignore - isProfilingBasedOnUserInput exists but types are outdated
-        this.emitEvent("isProfilingReact", store.profilerStore.isProfilingBasedOnUserInput);
-      });
-
-      this.emitEvent("connected", []);
+    // set up `appReady` promise
+    const { promise: appReady, resolve: resolveAppReady } = Promise.withResolvers<void>();
+    this.appReady = appReady;
+    const appReadyListener = this.onEvent("appReady", () => {
+      resolveAppReady();
+      appReadyListener.dispose();
     });
 
-    return new Promise<void>((resolve) => {
-      this.server.listen(0, () => {
-        this._port = this.server.address().port;
-        Logger.info(`Devtools started on port ${this._port}`);
-        resolve();
-      });
+    // create the DevTools frontend for the connection
+    this.bridge = createBridge(wall);
+    this.store = createStore(this.bridge);
+
+    this.bridge.addListener("RNIDE_message", (payload: any) => {
+      const { type, data } = payload;
+      this.emitEvent(type, data);
+    });
+
+    // Register for isProfiling event on the profiler store
+    this.store.profilerStore.addListener("isProfiling", () => {
+      // @ts-ignore - isProfilingBasedOnUserInput exists but types are outdated
+      this.emitEvent("isProfilingReact", this.store.profilerStore.isProfilingBasedOnUserInput);
     });
   }
 
@@ -152,11 +82,90 @@ export class Devtools extends BaseInspectorBridge implements Disposable {
     return promise;
   }
 
-  public dispose() {
-    this.server?.close();
+  public send(message: unknown) {
+    this.wall.send("RNIDE_message", message);
   }
 
-  protected send(message: any) {
-    this.socket?.send(JSON.stringify({ event: "RNIDE_message", payload: message }));
+  public close() {
+    this.dispose();
+    this.emitEvent("disconnected", []);
   }
+
+  public dispose() {
+    if (!this.connected) {
+      return;
+    }
+    this.connected = false;
+    this.bridge.shutdown();
+  }
+}
+
+export abstract class DevtoolsServer implements Disposable {
+  protected readonly connectionEventEmitter: EventEmitter<DevtoolsConnection> = new EventEmitter();
+
+  public readonly onConnection = this.connectionEventEmitter.event;
+
+  public dispose(): void {
+    this.connectionEventEmitter.dispose();
+  }
+}
+
+class WebSocketDevtoolsServer extends DevtoolsServer implements Disposable {
+  private wss: WebSocketServer;
+
+  constructor(private server: http.Server) {
+    super();
+    this.wss = new WebSocketServer({ server });
+
+    this.wss.on("connection", (ws) => {
+      const wall: Wall = {
+        listen(fn) {
+          function listener(message: string) {
+            const parsedMessage = JSON.parse(message);
+            return fn(parsedMessage);
+          }
+          ws.on("message", listener);
+          return () => {
+            ws.off("message", listener);
+          };
+        },
+        send(event, payload) {
+          ws.send(JSON.stringify({ event, payload }));
+        },
+      };
+
+      const session = new DevtoolsConnection(wall);
+      ws.on("close", () => {
+        session.close();
+      });
+
+      this.connectionEventEmitter.fire(session);
+    });
+  }
+
+  public dispose() {
+    super.dispose();
+    this.wss.close();
+    this.server.close();
+  }
+}
+
+export async function createWebSocketDevtoolsServer() {
+  const server = http.createServer(() => {});
+  const devtoolsServer = new WebSocketDevtoolsServer(server);
+  const { promise, resolve } = Promise.withResolvers<number>();
+
+  server.listen(0, () => {
+    const address = server.address();
+    assert(
+      address !== null && typeof address !== "string",
+      "The address is an instance of `AddressInfo`"
+    );
+    const serverPort = address.port;
+    Logger.info(`Devtools started on port ${serverPort}`);
+    resolve(serverPort);
+  });
+
+  const port = await promise;
+  return { port, devtoolsServer };
 }

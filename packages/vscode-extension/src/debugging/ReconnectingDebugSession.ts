@@ -4,8 +4,8 @@ import { Metro } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
 import { sleep } from "../utilities/retry";
 import { DebugSession, DebugSource, JSDebugConfiguration } from "./DebugSession";
-import { Devtools } from "../project/devtools";
 import { disposeAll } from "../utilities/disposables";
+import { DevtoolsServer } from "../project/devtools";
 
 const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {
@@ -17,10 +17,12 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   constructor(
     private readonly debugSession: DebugSession & Partial<Disposable>,
     private readonly metro: Metro,
-    devtools: Devtools
+    devtoolsServer: DevtoolsServer
   ) {
     this.disposables.push(debugSession.onDebugSessionTerminated(this.maybeReconnect));
-    this.disposables.push(devtools.onEvent("appReady", this.maybeReconnect));
+    // NOTE: with Expo Go on Android, the debugger can become unresponsive after a JS reload.
+    // Since a JS reload causes the devtools to reconnect, we can use that as a hint to reconnect the debugger.
+    this.disposables.push(devtoolsServer.onConnection(this.maybeReconnect));
   }
 
   public async startJSDebugSession(configuration: JSDebugConfiguration) {
