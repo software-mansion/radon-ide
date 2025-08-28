@@ -1,0 +1,148 @@
+.cardContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  gap: 40px;
+}
+
+.cardContainer.active {
+  padding-top: 32px;
+}
+
+.cardInfo {
+  gap: 16px;
+}
+
+.cardInfo.active {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.cardInfo button {
+  cursor: pointer;
+  width: 100%;
+  border: none;
+  padding: 0;
+  background-color: transparent;
+}
+
+.cardBadge {
+  display: flex;
+  padding: 8px 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+
+  background: var(--swm-card-border);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--radon-color-primary);
+}
+
+.cardTitle {
+  font-size: 28px;
+  line-height: normal;
+  display: flex;
+  opacity: 0.5;
+  background-color: transparent;
+  text-align: left;
+  font-family: Aeonik;
+  transition: opacity 0.6s ease;
+  color: var(--ifm-color-primary);
+}
+
+.activeTitle {
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+.cardContent {
+  color: var(--radon-subheading);
+  font-size: 18px;
+  line-height: 28px;
+}
+
+.hiddenContainer {
+  overflow: hidden;
+  transition: opacity 0.6s ease;
+  opacity: 0;
+}
+
+.hiddenContainer.slide {
+  opacity: 1;
+}
+
+.hiddenBadge {
+  position: relative;
+  opacity: 0;
+  overflow: hidden;
+  transform: translateY(100%);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+  z-index: -10;
+}
+
+.hiddenBadge.slide {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.progressContainer {
+  width: 100%;
+  text-align: center;
+  display: flex;
+  padding: 40px 0 64px 0;
+  flex-direction: column;
+  align-items: flex-end;
+  align-self: stretch;
+  overflow: hidden;
+}
+
+.progress {
+  display: flex;
+  height: 4px;
+  background: transparent;
+  border-bottom: var(--radon-border-layout);
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  align-self: stretch;
+}
+
+.progressBar {
+  height: 4px;
+}
+
+.progressMoved .progressBar {
+  width: 100%;
+  background-color: var(--radon-gradient-green);
+  animation: progressAnimation 6.6s infinite;
+}
+
+@keyframes progressAnimation {
+  0% {
+    width: 0%;
+    background-color: var(--radon-gradient-green);
+  }
+  100% {
+    width: 100%;
+    background-color: var(--radon-gradient-green);
+  }
+}
+
+@media (max-width: 1024px) {
+  .progressContainer {
+    padding: 40px 0 24px 0;
+  }
+  .cardTitle {
+    font-size: 24px;
+  }
+  .cardContent {
+    font-size: 16px;
+    line-height: 24px;
+  }
+}
