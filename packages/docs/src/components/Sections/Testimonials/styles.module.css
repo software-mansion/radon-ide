@@ -1,6 +1,7 @@
 .testimonialsContainer {
   padding: 0 60px 80px;
   position: relative;
+  overflow: hidden;
 }
 
 .testimonialsHeading {

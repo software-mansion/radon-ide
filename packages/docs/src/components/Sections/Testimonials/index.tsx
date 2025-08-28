@@ -18,7 +18,7 @@ const leftColumn: Testimonial[] = [
     author: "Catalin Miron - AnimateReactNative.com",
     handle: "@mironcatalin",
     body: `
-    In my opinion, the must have Extension for React Native developers.`,
+    In my opinion, the must have Extension for React Native developers.`,
     avatar: "https://pbs.twimg.com/profile_images/1276570366555684865/7J55FrYi_400x400.jpg",
   },
   {
