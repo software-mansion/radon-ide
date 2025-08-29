@@ -32,7 +32,7 @@ export default function NavbarWrapper(props) {
   };
   return (
     <>
-      <Navbar isThemeSwitcherShown={false} />
+      <Navbar />
       <Scripts />
       <Analytics />
     </>

@@ -23,7 +23,7 @@
 
 .right {
   display: grid;
-  grid-template-columns: 160px 160px 120px;
+  grid-template-columns: 160px 160px 160px 104px;
   gap: 80px;
 }
 
@@ -76,6 +76,11 @@ a.icon:hover {
   opacity: 1;
 }
 
+@media (max-width: 1360px) {
+  .right {
+    gap: 5.8vw;
+  }
+}
 @media (max-width: 1024px) {
   .container {
     flex-direction: column;
@@ -84,7 +89,7 @@ a.icon:hover {
   }
 }
 
-@media (max-width: 710px) {
+@media (max-width: 840px) {
   .right {
     grid-template-columns: 1fr;
     gap: 40px;

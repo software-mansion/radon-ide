@@ -9,7 +9,6 @@
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
-  border-bottom: var(--radon-border-layout);
   border-top: var(--radon-border-layout);
   height: 440px;
   align-items: center;

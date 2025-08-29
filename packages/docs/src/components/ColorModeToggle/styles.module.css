@@ -1,0 +1,21 @@
+.toggle {
+  border: var(--radon-border-layout);
+  padding: 4px;
+  display: flex;
+}
+
+button {
+  padding: 8px;
+  background-color: transparent;
+  border: none;
+  align-items: center;
+  display: flex;
+}
+
+button:hover {
+  background-color: var(--swm-border);
+}
+
+button.active {
+  background-color: var(--radon-button);
+}
