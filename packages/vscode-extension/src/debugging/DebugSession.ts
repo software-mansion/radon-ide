@@ -63,6 +63,7 @@ export interface DebugSession {
   onProfilingCPUStopped(listener: DebugSessionCustomEventListener): Disposable;
   onBindingCalled(listener: DebugSessionCustomEventListener): Disposable;
   onDebugSessionTerminated(listener: () => void): Disposable;
+  onNetworkEvent(listener: DebugSessionCustomEventListener): Disposable;
 }
 
 export class DebugSessionImpl implements DebugSession, Disposable {
@@ -79,6 +80,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   private profilingCPUStoppedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
   private bindingCalledEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
   private debugSessionTerminatedEventEmitter = new vscode.EventEmitter<void>();
+  private networkEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
 
   public onConsoleLog = this.consoleLogEventEmitter.event;
   public onDebuggerPaused = this.debuggerPausedEventEmitter.event;
@@ -87,6 +89,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   public onProfilingCPUStopped = this.profilingCPUStoppedEventEmitter.event;
   public onBindingCalled = this.bindingCalledEventEmitter.event;
   public onDebugSessionTerminated = this.debugSessionTerminatedEventEmitter.event;
+  public onNetworkEvent = this.networkEventEmitter.event;
 
   constructor(private options: DebugSessionOptions = { displayName: "Radon IDE Debugger" }) {
     this.disposables.push(
@@ -116,6 +119,9 @@ export class DebugSessionImpl implements DebugSession, Disposable {
             break;
           case "RNIDE_bindingCalled":
             this.bindingCalledEventEmitter.fire(event);
+            break;
+          case "RNIDE_networkEvent":
+            this.networkEventEmitter.fire(event);
             break;
           default:
             // ignore other events

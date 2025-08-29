@@ -10,6 +10,7 @@ import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider
 import { disposeAll } from "../../utilities/disposables";
 
 export const NETWORK_PLUGIN_ID = "network";
+// const NEW_ARCHITECTURE = true;
 
 let initialized = false;
 async function initialize() {
@@ -111,6 +112,10 @@ export class NetworkPlugin implements ToolPlugin {
 
   public get websocketPort() {
     return this.websocketBackend.port;
+  }
+
+  public onToolEvent(body: any): void {
+    console.log("Request", body);
   }
 
   sendCDPMessage = (messageData: any) => {

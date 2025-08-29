@@ -40,6 +40,7 @@ export interface ToolPlugin extends Disposable {
   activate(): void;
   deactivate(): void;
   openTool?(): void;
+  onToolEvent?(body: any): void;
 }
 
 export function reportToolVisibilityChanged(toolName: ToolKey, visible: boolean) {
@@ -181,6 +182,13 @@ export class ToolsManager implements Disposable {
     const plugin = this.plugins.get(toolName);
     if (plugin && this.toolsSettings[toolName] && this.activePlugins.has(plugin)) {
       plugin.openTool?.();
+    }
+  }
+
+  public emitPluginEvent(pluginId: ToolKey, body: any) {
+    const plugin = this.plugins.get(pluginId);
+    if (plugin) {
+      plugin.onToolEvent?.(body);
     }
   }
 

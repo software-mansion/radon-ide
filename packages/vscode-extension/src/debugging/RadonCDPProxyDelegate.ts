@@ -15,6 +15,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerResumedEmitter = new EventEmitter();
   private consoleAPICalledEmitter = new EventEmitter();
   private bindingCalledEmitter = new EventEmitter<{ name: string; payload: any }>();
+  private networkEventEmitter = new EventEmitter();
   private ignoredPatterns: Minimatch[] = [];
 
   private justCalledStepOver = false;
@@ -24,6 +25,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   public onDebuggerResumed = this.debuggerResumedEmitter.event;
   public onConsoleAPICalled = this.consoleAPICalledEmitter.event;
   public onBindingCalled = this.bindingCalledEmitter.event;
+  public onNetworkEvent = this.networkEventEmitter.event;
 
   constructor(
     private sourceMapRegistry: SourceMapsRegistry,
@@ -58,6 +60,12 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       case "Runtime.executionContextsCleared": {
         this.sourceMapRegistry.clearSourceMaps();
         return applicationCommand;
+      }
+      case "Network.requestWillBeSent":
+      case "Network.requestWillBeSentExtraInfo":
+      case "Network.responseReceived":
+      case "Network.loadingFinished": {
+        return this.handleNetworkEvent(applicationCommand);
       }
     }
     return applicationCommand;
@@ -196,6 +204,11 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     return command;
   }
 
+  private handleNetworkEvent(command: IProtocolCommand) {
+    this.networkEventEmitter.fire(command);
+    return command;
+  }
+
   // NOTE: sometimes on Fast Refresh, when we try to set a new breakpoint with the new location,
   // the breakpoint is not set correctly by the application.
   // To mitigate this, we retry setting the breakpoint one time.
@@ -253,6 +266,11 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         params: {},
       })
       .catch(_.noop);
+
+    await tunnel.injectDebuggerCommand({
+      method: "Network.enable",
+      params: {},
+    });
   }
 
   private async getSourceMapData(sourceMapURL: string) {

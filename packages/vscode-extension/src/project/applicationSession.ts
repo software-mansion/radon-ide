@@ -33,6 +33,7 @@ import {
 } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
 import { StateManager } from "./StateManager";
+import { NETWORK_PLUGIN_ID } from "../plugins/network/network-plugin";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
@@ -202,6 +203,10 @@ export class ApplicationSession implements Disposable {
     }
   };
 
+  private onNetworkEvent = (event: DebugSessionCustomEvent): void => {
+    this.toolsManager.emitPluginEvent(NETWORK_PLUGIN_ID, event);
+  };
+
   private registerDebugSessionListeners(debugSession: DebugSession): Disposable {
     const subscriptions: Disposable[] = [
       debugSession.onConsoleLog(this.onConsoleLog),
@@ -209,6 +214,7 @@ export class ApplicationSession implements Disposable {
       debugSession.onDebuggerResumed(this.onDebuggerResumed),
       debugSession.onProfilingCPUStarted(this.onProfilingCPUStarted),
       debugSession.onProfilingCPUStopped(this.onProfilingCPUStopped),
+      debugSession.onNetworkEvent(this.onNetworkEvent),
     ];
     return new Disposable(() => {
       disposeAll(subscriptions);

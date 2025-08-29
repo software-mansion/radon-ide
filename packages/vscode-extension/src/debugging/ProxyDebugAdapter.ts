@@ -114,6 +114,12 @@ export class ProxyDebugAdapter extends DebugSession {
         this.sendEvent(new Event("RNIDE_bindingCalled", { name, payload }));
       })
     );
+
+    this.disposables.push(
+      proxyDelegate.onNetworkEvent((e) => {
+        this.sendEvent(new Event("RNIDE_networkEvent", e));
+      })
+    );
   }
 
   protected initializeRequest(
