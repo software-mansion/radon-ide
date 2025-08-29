@@ -10,7 +10,7 @@ export default function CloseIcon(props) {
       {...props}>
       <path
         d="M18 6L6 18M6 6L18 18"
-        stroke="#FAFAFA"
+        stroke="var(--ifm-color-primary)"
         stroke-width="2"
         stroke-linecap="round"
         stroke-linejoin="round"

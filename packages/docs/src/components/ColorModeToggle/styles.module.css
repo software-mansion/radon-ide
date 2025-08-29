@@ -2,6 +2,7 @@
   border: var(--radon-border-layout);
   padding: 4px;
   display: flex;
+  width: fit-content;
 }
 
 button {

@@ -49,6 +49,18 @@
   right: 0;
 }
 
+@media (max-width: 1270px) {
+  .sliderContainer {
+    height: 580px;
+  }
+}
+
+@media (max-width: 1220px) {
+  .sliderContainer {
+    height: 653px;
+  }
+}
+
 @media (max-width: 1024px) {
   .container {
     flex-wrap: wrap-reverse;

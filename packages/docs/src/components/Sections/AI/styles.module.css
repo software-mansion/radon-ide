@@ -1,7 +1,6 @@
 .container {
   display: flex;
   justify-content: space-between;
-  border-top: var(--radon-border-layout);
   border-bottom: var(--radon-border-layout);
   max-width: 1360px;
   height: 600px;
@@ -21,6 +20,7 @@
   flex-direction: column;
   justify-content: center;
   padding: 80px;
+  z-index: 1;
 }
 
 .left p {
@@ -78,7 +78,7 @@
   max-width: 1000px;
   width: 100%;
   min-width: 500px;
-  z-index: -1;
+  z-index: 0;
 }
 
 .chat {
@@ -91,6 +91,7 @@
   background: #111111bf;
   backdrop-filter: blur(2px);
   border-radius: 8px;
+  position: relative;
 }
 
 .chat::before {
