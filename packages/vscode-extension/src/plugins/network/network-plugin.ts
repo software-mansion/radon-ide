@@ -1,16 +1,26 @@
 import http, { Server } from "http";
-import { commands, Disposable, window } from "vscode";
+import { Disposable, window } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
 import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
-
 import { Logger } from "../../Logger";
 import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider";
-import { disposeAll } from "../../utilities/disposables";
+
+import LegacyArchitecture from "./LegacyArchitectureStrategy";
+import NewArchitecture from "./NewArchitectureStrategy";
 
 export const NETWORK_PLUGIN_ID = "network";
-// const NEW_ARCHITECTURE = true;
+export interface ArchitectureStrategy {
+  activate(): void;
+  deactivate(): void;
+  openTool(): void;
+  dispose(): void;
+  websocketMessageHandler(message: unknown): void;
+  readonly pluginAvailable: boolean;
+}
+
+const NEW_ARCHITECTURE = false;
 
 let initialized = false;
 async function initialize() {
@@ -32,7 +42,7 @@ class NetworkCDPWebsocketBackend implements Disposable {
   private server: Server;
   private sessions: Set<WebSocket> = new Set();
 
-  constructor(private readonly sendCDPMessage: (messageData: any) => void) {
+  constructor(private readonly websocketMessageHandler: (message: unknown) => void) {
     this.server = http.createServer(() => {});
     const wss = new WebSocketServer({ server: this.server });
 
@@ -44,7 +54,7 @@ class NetworkCDPWebsocketBackend implements Disposable {
           const payload = JSON.parse(message.toString());
           if (payload.method.startsWith("Network.")) {
             // forward message to devtools
-            this.sendCDPMessage(payload);
+            this.websocketMessageHandler(payload);
           } else if (payload.id) {
             // send empty response otherwise
             const response = { id: payload.id, result: {} };
@@ -97,61 +107,45 @@ class NetworkCDPWebsocketBackend implements Disposable {
 export class NetworkPlugin implements ToolPlugin {
   public readonly id: ToolKey = NETWORK_PLUGIN_ID;
   public readonly label = "Network";
-
-  public pluginAvailable = true;
   public toolInstalled = false;
   public readonly persist = true;
 
-  private readonly websocketBackend;
-  private devtoolsListeners: Disposable[] = [];
+  public readonly websocketBackend;
+  private readonly strategy: ArchitectureStrategy;
 
-  constructor(private readonly inspectorBridge: RadonInspectorBridge) {
-    this.websocketBackend = new NetworkCDPWebsocketBackend(this.sendCDPMessage);
+  constructor(readonly inspectorBridge: RadonInspectorBridge) {
+    this.strategy = NEW_ARCHITECTURE ? new NewArchitecture(this) : new LegacyArchitecture(this);
+    this.websocketBackend = new NetworkCDPWebsocketBackend((msg) =>
+      this.strategy.websocketMessageHandler(msg)
+    );
     initialize();
+  }
+
+  public onToolEvent(body: unknown): void {
+    console.log("Request", body);
   }
 
   public get websocketPort() {
     return this.websocketBackend.port;
   }
 
-  public onToolEvent(body: any): void {
-    console.log("Request", body);
+  public get pluginAvailable(): boolean {
+    return this.strategy.pluginAvailable;
   }
 
-  sendCDPMessage = (messageData: any) => {
-    this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
-  };
-
   activate(): void {
-    this.websocketBackend.start().then(() => {
-      commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
-      this.devtoolsListeners.push(
-        this.inspectorBridge.onEvent("pluginMessage", (payload) => {
-          if (payload.pluginId === "network") {
-            this.websocketBackend.broadcast(payload.data);
-          }
-        })
-      );
-      this.devtoolsListeners.push(
-        this.inspectorBridge.onEvent("appReady", () => {
-          this.sendCDPMessage({ method: "Network.enable", params: {} });
-        })
-      );
-      this.sendCDPMessage({ method: "Network.enable", params: {} });
-    });
+    this.strategy.activate();
   }
 
   deactivate(): void {
-    disposeAll(this.devtoolsListeners);
-    this.sendCDPMessage({ method: "Network.disable", params: {} });
-    commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
+    this.strategy.deactivate();
   }
 
   openTool(): void {
-    commands.executeCommand(`RNIDE.Tool.Network.view.focus`);
+    this.strategy.openTool();
   }
 
   dispose() {
-    disposeAll(this.devtoolsListeners);
+    this.strategy.dispose();
   }
 }
