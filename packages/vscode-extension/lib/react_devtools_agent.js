@@ -17,10 +17,14 @@ const setDevtoolsAgent = (newDevtoolsAgent) => {
     return;
   }
   devtoolsAgent = newDevtoolsAgent;
+  // TODO: clean these up if the devtools agent changes
   devtoolsAgent._bridge.addListener("RNIDE_message", (message) => {
     if (agent.onmessage) {
       agent.onmessage(message);
     }
+  });
+  devtoolsAgent._bridge.addListener("shutdown", () => {
+    devtoolsAgent = undefined;
   });
   const messages = messageQueue;
   messageQueue = [];
@@ -32,9 +36,8 @@ const setDevtoolsAgent = (newDevtoolsAgent) => {
 const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
 if (hook.reactDevtoolsAgent) {
   setDevtoolsAgent(hook.reactDevtoolsAgent);
-} else {
-  hook.on("react-devtools", setDevtoolsAgent);
 }
+hook.on("react-devtools", setDevtoolsAgent);
 
 globalThis.__radon_agent = agent;
 

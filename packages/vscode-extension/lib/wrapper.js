@@ -304,6 +304,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
   useEffect(() => {
     const listener = (message) => {
       const { type, data } = message;
+      console.log("DEBUG_LOG inspector bridge recv message", message);
       switch (type) {
         case "openPreview":
           openPreview(data.previewId);
@@ -320,6 +321,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
         case "inspect":
           const { id, x, y, requestStack } = data;
           getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, (inspectorData) => {
+            console.log("DEBUG_LOG inspector bridge send message");
             inspectorBridge.sendMessage({
               type: "inspectData",
               data: {

@@ -14,7 +14,7 @@ class DebugSessionInspectorBridge extends BaseInspectorBridge {
   }
 
   onBindingCalled(event: any) {
-    const { name, payload } = event.body as { name: string; payload: string };
+    const { name, payload } = event as { name: string; payload: string };
     if (name === "__radon_binding") {
       const { type, data } = JSON.parse(payload);
       this.emitEvent(type, data);

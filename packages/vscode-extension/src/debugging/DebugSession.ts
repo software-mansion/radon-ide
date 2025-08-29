@@ -61,7 +61,8 @@ export interface DebugSession {
   onDebuggerResumed(listener: DebugSessionCustomEventListener): Disposable;
   onProfilingCPUStarted(listener: DebugSessionCustomEventListener): Disposable;
   onProfilingCPUStopped(listener: DebugSessionCustomEventListener): Disposable;
-  onBindingCalled(listener: DebugSessionCustomEventListener): Disposable;
+  onBindingCalled(listener: (event: Cdp.Runtime.BindingCalledEvent) => void): Disposable;
+  onBundleParsed(listener: (event: { isMainBundle: boolean }) => void): Disposable;
   onDebugSessionTerminated(listener: () => void): Disposable;
 }
 
@@ -77,8 +78,9 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   private debuggerResumedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
   private profilingCPUStartedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
   private profilingCPUStoppedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
-  private bindingCalledEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
+  private bindingCalledEventEmitter = new vscode.EventEmitter<Cdp.Runtime.BindingCalledEvent>();
   private debugSessionTerminatedEventEmitter = new vscode.EventEmitter<void>();
+  private bundleParsedEventEmitter = new vscode.EventEmitter<{ isMainBundle: boolean }>();
 
   public onConsoleLog = this.consoleLogEventEmitter.event;
   public onDebuggerPaused = this.debuggerPausedEventEmitter.event;
@@ -87,6 +89,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   public onProfilingCPUStopped = this.profilingCPUStoppedEventEmitter.event;
   public onBindingCalled = this.bindingCalledEventEmitter.event;
   public onDebugSessionTerminated = this.debugSessionTerminatedEventEmitter.event;
+  public onBundleParsed = this.bundleParsedEventEmitter.event;
 
   constructor(private options: DebugSessionOptions = { displayName: "Radon IDE Debugger" }) {
     this.disposables.push(
@@ -98,6 +101,9 @@ export class DebugSessionImpl implements DebugSession, Disposable {
     );
     this.disposables.push(
       debug.onDidReceiveDebugSessionCustomEvent((event) => {
+        if (event.session.id !== this.jsDebugSession?.id) {
+          return;
+        }
         switch (event.event) {
           case DEBUG_CONSOLE_LOG:
             this.consoleLogEventEmitter.fire(event);
@@ -115,7 +121,10 @@ export class DebugSessionImpl implements DebugSession, Disposable {
             this.profilingCPUStoppedEventEmitter.fire(event);
             break;
           case "RNIDE_bindingCalled":
-            this.bindingCalledEventEmitter.fire(event);
+            this.bindingCalledEventEmitter.fire(event.body);
+            break;
+          case "RNIDE_bundleParsed":
+            this.bundleParsedEventEmitter.fire(event.body);
             break;
           default:
             // ignore other events

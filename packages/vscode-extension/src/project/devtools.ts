@@ -15,6 +15,7 @@ import {
   FrontendBridge,
 } from "../../third-party/react-devtools/headless";
 import { BaseInspectorBridge, RadonInspectorBridgeEvents } from "./bridge";
+import { DebugSession } from "../debugging/DebugSession";
 import { disposeAll } from "../utilities/disposables";
 
 function filePathForProfile() {
@@ -126,6 +127,9 @@ export class DevtoolsConnection implements Disposable {
 
     this.store?.profilerStore.addListener("isProcessingData", saveProfileListener);
     this.store?.profilerStore.stopProfiling();
+    this.bridge.addListener("shutdown", () => {
+      this.close();
+    });
     return promise;
   }
 
@@ -172,6 +176,58 @@ export abstract class DevtoolsServer implements Disposable {
 
   public dispose(): void {
     this.connectionEventEmitter.dispose();
+  }
+}
+
+export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
+  private disposables: Disposable[] = [];
+  constructor(private readonly debugSession: DebugSession) {
+    super();
+    this.disposables.push(
+      debugSession.onBundleParsed(({ isMainBundle }) => {
+        if (isMainBundle) {
+          this.createConnection();
+        }
+      })
+    );
+  }
+
+  private createConnection() {
+    const debugSession = this.debugSession;
+
+    const wall: Wall = {
+      listen(fn) {
+        function listener(payload: string) {
+          const parsedPayload = JSON.parse(payload);
+          return fn(parsedPayload.message);
+        }
+        const subscription = debugSession.onBindingCalled((ev) => {
+          if (ev.name === "__CHROME_DEVTOOLS_FRONTEND_BINDING__") {
+            listener(ev.payload);
+          }
+        });
+        return () => subscription.dispose();
+      },
+      send(event, payload, transferable) {
+        const serializedMessage = JSON.stringify({ event, payload });
+        debugSession.evaluateExpression({
+          expression: `__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.sendMessage("react-devtools", '${serializedMessage}')`,
+        });
+      },
+    };
+
+    const session = new DevtoolsConnection(wall);
+    const shutdownListener = this.debugSession.onDebugSessionTerminated(() => {
+      session.close();
+      shutdownListener.dispose();
+    });
+
+    this.connectionEventEmitter.fire(session);
+  }
+
+  public dispose() {
+    super.dispose();
+    disposeAll(this.disposables);
   }
 }
 
@@ -252,4 +308,42 @@ export async function createWebSocketDevtoolsServer(): Promise<DevtoolsServer & 
 
   const devtoolsServer = new WebSocketDevtoolsServer(server);
   return devtoolsServer;
+}
+
+export class AnyDevtoolsServer extends DevtoolsServer implements Disposable {
+  private connectionSubscriptions = new Map<DevtoolsServer, Disposable>();
+
+  constructor(servers: DevtoolsServer[]) {
+    super();
+    servers
+      .map(
+        (server) =>
+          [server, server.onConnection((c) => this.connectionEventEmitter.fire(c))] as const
+      )
+      .forEach(([server, subscription]) => {
+        this.connectionSubscriptions.set(server, subscription);
+      });
+  }
+
+  public addServer(server: DevtoolsServer) {
+    if (this.connectionSubscriptions.has(server)) {
+      return;
+    }
+    this.connectionSubscriptions.set(
+      server,
+      server.onConnection((c) => this.connectionEventEmitter.fire(c))
+    );
+  }
+
+  public removeServer(server: DevtoolsServer) {
+    const subscription = this.connectionSubscriptions.get(server);
+    subscription?.dispose();
+    this.connectionSubscriptions.delete(server);
+  }
+
+  public dispose() {
+    super.dispose();
+    disposeAll(this.connectionSubscriptions.values().toArray());
+    this.connectionSubscriptions.clear();
+  }
 }
