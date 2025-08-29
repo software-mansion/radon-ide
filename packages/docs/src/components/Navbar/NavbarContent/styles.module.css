@@ -5,9 +5,10 @@
   align-items: center;
   justify-content: space-between;
 
+  opacity: 0.9;
   border-bottom: var(--radon-border-layout);
-
-  backdrop-filter: blur(20px);
+  background: var(--swm-background);
+  backdrop-filter: blur(2px);
 
   z-index: 1000;
 }

@@ -8,7 +8,7 @@ export default function AI() {
   return (
     <div className={styles.container}>
       <div className={styles.left}>
-        <span>AI</span>
+        <span>Ai</span>
         <div className={styles.textContent}>
           <div className={styles.heading}>
             <p>Your expert React Native</p>

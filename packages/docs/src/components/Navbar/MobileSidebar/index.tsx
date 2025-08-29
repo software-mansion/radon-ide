@@ -1,4 +1,4 @@
-import React, { RefObject } from "react";
+import React from "react";
 import styles from "./styles.module.css";
 import { useNavbarMobileSidebar, useLockBodyScroll } from "@docusaurus/theme-common/internal";
 import clsx from "clsx";
