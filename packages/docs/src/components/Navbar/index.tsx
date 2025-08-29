@@ -1,11 +1,11 @@
 import React from "react";
 import NavbarContent from "./NavbarContent";
-import NavbarLayout from "./NavbarLayout";
+import styles from "./styles.module.css";
 
 export default function Navbar() {
   return (
-    <NavbarLayout>
+    <nav aria-label="Naigation bar" className={`navbar ${styles.navbar}`}>
       <NavbarContent />
-    </NavbarLayout>
+    </nav>
   );
 }
