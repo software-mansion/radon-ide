@@ -14,7 +14,8 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter<{ reason: "breakpoint" | "exception" }>();
   private debuggerResumedEmitter = new EventEmitter();
   private consoleAPICalledEmitter = new EventEmitter();
-  private bindingCalledEmitter = new EventEmitter<{ name: string; payload: any }>();
+  private bindingCalledEmitter = new EventEmitter<Cdp.Runtime.BindingCalledEvent>();
+  private bundleParsedEmitter = new EventEmitter<{ isMainBundle: boolean }>();
   private ignoredPatterns: Minimatch[] = [];
 
   private justCalledStepOver = false;
@@ -24,6 +25,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   public onDebuggerResumed = this.debuggerResumedEmitter.event;
   public onConsoleAPICalled = this.consoleAPICalledEmitter.event;
   public onBindingCalled = this.bindingCalledEmitter.event;
+  public onBundleParsed = this.bundleParsedEmitter.event;
 
   constructor(
     private sourceMapRegistry: SourceMapsRegistry,
@@ -328,6 +330,23 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       if (isMainBundle && this.installConnectRuntime) {
         await this.setupRadonConnectRuntime(tunnel);
       }
+      if (isMainBundle) {
+        await tunnel.injectDebuggerCommand({
+          method: "Runtime.addBinding",
+          params: {
+            name: "__CHROME_DEVTOOLS_FRONTEND_BINDING__",
+          },
+        });
+
+        await tunnel.injectDebuggerCommand({
+          method: "Runtime.evaluate",
+          params: {
+            expression:
+              'void __FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.initializeDomain("react-devtools")',
+          },
+        });
+      }
+      this.bundleParsedEmitter.fire({ isMainBundle });
     } catch (e) {
       Logger.error("Could not process the source map", e);
     }

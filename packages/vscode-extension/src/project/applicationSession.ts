@@ -32,7 +32,12 @@ import {
 } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
 import { StateManager } from "./StateManager";
-import { DevtoolsConnection, DevtoolsServer } from "./devtools";
+import {
+  AnyDevtoolsServer,
+  CDPDevtoolsServer,
+  DevtoolsConnection,
+  DevtoolsServer,
+} from "./devtools";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
@@ -107,12 +112,12 @@ export class ApplicationSession implements Disposable {
       );
 
       onLaunchStage(StartupMessage.WaitingForAppToLoad);
-      const appReadyPromise = new Promise<void>((resolve, reject) => {
-        devtoolsServer.onConnection((devtools) => {
-          devtools.appReady.then(resolve, reject);
-        });
-      });
-      await cancelToken.adapt(Promise.race([appReadyPromise, bundleErrorPromise]));
+      // const appReadyPromise = new Promise<void>((resolve, reject) => {
+      //   devtoolsServer.onConnection((devtools) => {
+      //     devtools.appReady.then(resolve, reject);
+      //   });
+      // });
+      // await cancelToken.adapt(Promise.race([appReadyPromise, bundleErrorPromise]));
 
       if (getIsActive()) {
         const activatePromise = session.activate();
@@ -134,15 +139,19 @@ export class ApplicationSession implements Disposable {
     }
   }
 
+  private readonly devtoolsServer: AnyDevtoolsServer;
+  private cdpDevtoolsServer?: CDPDevtoolsServer;
+
   private constructor(
     private readonly stateManager: StateManager<ApplicationSessionState>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
-    private readonly devtoolsServer: DevtoolsServer,
+    devtoolsServer: DevtoolsServer,
     private readonly packageNameOrBundleId: string,
     private readonly supportedOrientations: DeviceRotation[]
   ) {
+    this.devtoolsServer = new AnyDevtoolsServer([devtoolsServer]);
     this.disposables.push(
       this.devtoolsServer.onConnection((devtools) => {
         this.devtools?.dispose();
@@ -165,6 +174,12 @@ export class ApplicationSession implements Disposable {
   private async setupDebugSession(): Promise<void> {
     this.debugSession = await this.createDebugSession();
     this.debugSessionEventSubscription = this.registerDebugSessionListeners(this.debugSession);
+    if (this.cdpDevtoolsServer) {
+      this.devtoolsServer.removeServer(this.cdpDevtoolsServer);
+      this.cdpDevtoolsServer.dispose();
+    }
+    this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
+    this.devtoolsServer.addServer(this.cdpDevtoolsServer);
   }
 
   private async createDebugSession(): Promise<DebugSession & Disposable> {
