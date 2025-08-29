@@ -172,6 +172,9 @@
   .left {
     padding: 40px 24px;
   }
+  .content {
+    padding: 0 40px;
+  }
 }
 
 @media (max-width: 1024px) {
