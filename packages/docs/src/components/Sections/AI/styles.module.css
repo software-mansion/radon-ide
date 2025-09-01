@@ -70,7 +70,7 @@
   margin: 0;
 }
 
-.radonIcon {
+.radonBackgroundImage {
   position: absolute;
   top: 53%;
   transform: translateY(-50%);
@@ -89,7 +89,7 @@
   align-items: flex-start;
   gap: 12px;
   width: 560px;
-  background: #111111bf;
+  background: var(--radon-background-75);
   backdrop-filter: blur(2px);
   border-radius: 8px;
   position: relative;
@@ -103,13 +103,9 @@
   border-radius: inherit;
   opacity: 0.5;
   background: linear-gradient(to right, var(--radon-gradient-green), #111111bf);
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
   mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
-  -webkit-mask-composite: destination-out;
   mask-composite: exclude;
   pointer-events: none;
 }
@@ -197,7 +193,7 @@
 }
 
 @media (max-width: 590px) {
-  .radonIcon {
+  .radonBackgroundImage {
     right: -250px;
     top: 310px;
   }

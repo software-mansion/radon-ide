@@ -95,13 +95,13 @@ const rightColumn: Testimonial[] = [
   },
 ];
 
-const data = leftColumn.concat(middleColumn, rightColumn);
+const data = [...leftColumn, ...middleColumn, ...rightColumn];
 
 export default function Testimonials() {
   return (
     <section>
       <div className={styles.testimonials}>
-        <h1 className={styles.testimonialsHeading}>What Engineers Say</h1>
+        <h2 className={styles.testimonialsHeading}>What Engineers Say</h2>
         <div className={styles.testimonialsContainer}>
           <div className={styles.gradientStart} />
           <div className={styles.gradientEnd} />

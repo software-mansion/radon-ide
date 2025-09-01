@@ -3,7 +3,6 @@
   padding: 20px;
   background-color: var(--swm-background);
   border: var(--radon-border-layout);
-  break-inside: avoid;
   margin-bottom: 20px;
 }
 

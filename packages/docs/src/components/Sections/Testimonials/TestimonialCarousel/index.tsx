@@ -10,10 +10,11 @@ interface TestimonialCarouselProps {
 }
 
 export default function TestimonialCarousel({ data, scrollUp }: TestimonialCarouselProps) {
+  const doubleData = [...data, ...data];
   return (
     <div className={styles.carouselContainer}>
       <div className={clsx(styles.carouselContent, scrollUp ? styles.up : styles.down)}>
-        {data.concat(data).map((testimonial, index) => (
+        {doubleData.map((testimonial, index) => (
           <TestimonialItem key={index} testimonial={testimonial} />
         ))}
       </div>

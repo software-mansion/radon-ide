@@ -19,7 +19,7 @@ export default function AI() {
           </p>
         </div>
       </div>
-      <div className={styles.radonIcon}>
+      <div className={styles.radonBackgroundImage}>
         <RadonIcon />
       </div>
       <div className={styles.right}>
