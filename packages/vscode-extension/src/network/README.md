@@ -61,6 +61,7 @@
    ```
 
 The experimental network inspector should now be enabled on IOS device. The user must send message with method `Network.enable` command through debugger web socket connection to enable network request recording:
+
 ```ts
 {method: "Network.enable", params: {}}
 ```

@@ -19,7 +19,7 @@ export const DEBUG_RESUMED = "RNIDE_continued";
 export enum DebugNetworkEvent {
   Enable = "RNIDE_enableNetworkInspector",
   Disable = "RNIDE_disableNetworkInspector",
-  GetResponseBody = "RNIDE_getResponseBody"
+  GetResponseBody = "RNIDE_getResponseBody",
 }
 
 export interface JSDebugConfiguration {

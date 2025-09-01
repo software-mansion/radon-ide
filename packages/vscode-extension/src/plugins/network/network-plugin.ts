@@ -1,7 +1,7 @@
 import http, { Server } from "http";
 import { Disposable, window } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
-import { NetworkInspectorBridge, RadonInspectorBridge} from "../../project/bridge";
+import { NetworkInspectorBridge, RadonInspectorBridge } from "../../project/bridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { Logger } from "../../Logger";
