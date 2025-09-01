@@ -1,6 +1,6 @@
 import { Disposable } from "vscode";
 import _ from "lodash";
-import { RadonInspectorBridge } from "./bridge";
+import { NetworkInspectorBridge, RadonInspectorBridge } from "./bridge";
 import { extensionContext } from "../utilities/extensionContext";
 import {
   createExpoDevPluginTools,
@@ -60,7 +60,8 @@ export class ToolsManager implements Disposable {
 
   public constructor(
     private readonly stateManager: StateManager<ToolsState>,
-    public readonly inspectorBridge: RadonInspectorBridge
+    public readonly inspectorBridge: RadonInspectorBridge,
+    public readonly networkBridge: NetworkInspectorBridge
   ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
 
@@ -84,7 +85,7 @@ export class ToolsManager implements Disposable {
     };
 
     this.plugins.set(REDUX_PLUGIN_ID, new ReduxDevtoolsPlugin(inspectorBridge));
-    this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(inspectorBridge));
+    this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(inspectorBridge, networkBridge));
     this.plugins.set(
       RENDER_OUTLINES_PLUGIN_ID,
       new RenderOutlinesPlugin(inspectorBridge, handleRenderOutlinesAvailabilityChange)

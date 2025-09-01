@@ -33,8 +33,7 @@ import {
 } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
 import { StateManager } from "./StateManager";
-import { NETWORK_PLUGIN_ID } from "../plugins/network/network-plugin";
-
+import { NETWORK_EVENT_MAP, NetworkCommandMethod, NetworkInspectorBridge } from "./bridge";
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
   device: DeviceBase;
@@ -48,6 +47,7 @@ export class ApplicationSession implements Disposable {
   private debugSession?: DebugSession & Disposable;
   private debugSessionEventSubscription?: Disposable;
   private toolsManager: ToolsManager;
+  private networkBridge: NetworkInspectorBridge;
   private isActive = false;
   private inspectCallID = 7621;
 
@@ -132,7 +132,12 @@ export class ApplicationSession implements Disposable {
   ) {
     this.registerDevtoolsListeners();
     this.registerMetroListeners();
-    this.toolsManager = new ToolsManager(this.stateManager.getDerived("toolsState"), this.devtools);
+    this.networkBridge = new NetworkInspectorBridge();
+    this.toolsManager = new ToolsManager(
+      this.stateManager.getDerived("toolsState"),
+      this.devtools,
+      this.networkBridge
+    );
 
     this.disposables.push(this.stateManager);
   }
@@ -140,6 +145,7 @@ export class ApplicationSession implements Disposable {
   private async setupDebugSession(): Promise<void> {
     this.debugSession = await this.createDebugSession();
     this.debugSessionEventSubscription = this.registerDebugSessionListeners(this.debugSession);
+    this.networkBridge.setDebugSession(this.debugSession);
   }
 
   private async createDebugSession(): Promise<DebugSession & Disposable> {
@@ -204,7 +210,8 @@ export class ApplicationSession implements Disposable {
   };
 
   private onNetworkEvent = (event: DebugSessionCustomEvent): void => {
-    this.toolsManager.emitPluginEvent(NETWORK_PLUGIN_ID, event);
+    const method = event.body?.method as NetworkCommandMethod;
+    this.networkBridge.emitEvent(NETWORK_EVENT_MAP[method], event.body);
   };
 
   private registerDebugSessionListeners(debugSession: DebugSession): Disposable {

@@ -3,7 +3,7 @@ import { Cdp } from "vscode-cdp-proxy";
 import { Metro } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
 import { sleep } from "../utilities/retry";
-import { DebugSession, DebugSource, JSDebugConfiguration } from "./DebugSession";
+import { DebugNetworkEvent, DebugSession, DebugSource, JSDebugConfiguration } from "./DebugSession";
 import { Devtools } from "../project/devtools";
 import { disposeAll } from "../utilities/disposables";
 
@@ -134,5 +134,9 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
     params: Cdp.Runtime.EvaluateParams
   ): Promise<Cdp.Runtime.EvaluateResult> {
     return this.debugSession.evaluateExpression(params);
+  }
+
+  public sendNetworkCommandRequest(request: DebugNetworkEvent): Promise<void> {
+    return this.debugSession.sendNetworkCommandRequest(request);
   }
 }

@@ -1,7 +1,7 @@
 import http, { Server } from "http";
 import { Disposable, window } from "vscode";
 import { WebSocketServer, WebSocket } from "ws";
-import { RadonInspectorBridge } from "../../project/bridge";
+import { NetworkInspectorBridge, RadonInspectorBridge} from "../../project/bridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { Logger } from "../../Logger";
@@ -20,7 +20,7 @@ export interface ArchitectureStrategy {
   readonly pluginAvailable: boolean;
 }
 
-const NEW_ARCHITECTURE = false;
+const NEW_ARCHITECTURE = true;
 
 let initialized = false;
 async function initialize() {
@@ -113,16 +113,15 @@ export class NetworkPlugin implements ToolPlugin {
   public readonly websocketBackend;
   private readonly strategy: ArchitectureStrategy;
 
-  constructor(readonly inspectorBridge: RadonInspectorBridge) {
+  constructor(
+    readonly inspectorBridge: RadonInspectorBridge,
+    readonly networkBridge: NetworkInspectorBridge
+  ) {
     this.strategy = NEW_ARCHITECTURE ? new NewArchitecture(this) : new LegacyArchitecture(this);
     this.websocketBackend = new NetworkCDPWebsocketBackend((msg) =>
       this.strategy.websocketMessageHandler(msg)
     );
     initialize();
-  }
-
-  public onToolEvent(body: unknown): void {
-    console.log("Request", body);
   }
 
   public get websocketPort() {

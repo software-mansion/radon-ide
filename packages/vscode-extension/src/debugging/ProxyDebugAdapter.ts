@@ -261,6 +261,16 @@ export class ProxyDebugAdapter extends DebugSession {
     this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
   }
 
+  private async enableNetworkInspector() {
+    await this.cdpProxy.injectDebuggerCommand({ method: "Network.enable", params: {} });
+  }
+  private async disableNetworkInspector() {
+    await this.cdpProxy.injectDebuggerCommand({ method: "Network.disable", params: {} });
+  }
+  private async getResponseBody(args: any) {
+    await this.cdpProxy.injectDebuggerCommand({ method: "Network.getResponseBody", params: args });
+  }
+
   private async dispatchRadonAgentMessage(args: any) {
     this.cdpProxy.injectDebuggerCommand({
       method: "Runtime.evaluate",
@@ -304,6 +314,15 @@ export class ProxyDebugAdapter extends DebugSession {
         break;
       case "RNIDE_evaluate":
         response.body.result = await this.evaluateExpression(args);
+        break;
+      case "RNIDE_enableNetworkInspector":
+        await this.enableNetworkInspector();
+        break;
+      case "RNIDE_disableNetworkInspector":
+        await this.disableNetworkInspector();
+        break;
+      case "RNIDE_getResponseBody":
+        await this.getResponseBody(args);
         break;
     }
     this.sendResponse(response);

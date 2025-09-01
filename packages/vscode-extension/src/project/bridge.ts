@@ -2,6 +2,7 @@ import { Disposable } from "vscode";
 import { AppOrientation, NavigationRoute } from "../common/Project";
 import { Logger } from "../Logger";
 import { InspectorAvailabilityStatus } from "../common/State";
+import { DebugSession, DebugNetworkEvent } from "../debugging/DebugSession";
 
 type BridgeEventsMap<K extends string> = Record<K, unknown[]>;
 
@@ -21,7 +22,7 @@ abstract class GenericBridge<E extends BridgeEventsMap<K>, K extends string> {
 
   protected abstract send(message: any): void;
 
-  emitEvent<L extends K>(event: L, payload: E[L]) {
+  public emitEvent<L extends K>(event: L, payload: E[L]) {
     const listeners = this.listeners.get(event);
     if (!listeners) {
       return;
@@ -40,7 +41,7 @@ abstract class GenericBridge<E extends BridgeEventsMap<K>, K extends string> {
     });
   }
 
-  onEvent<L extends K>(event: L, listener: (...payload: E[L]) => void): Disposable {
+  public onEvent<L extends K>(event: L, listener: (...payload: E[L]) => void): Disposable {
     const listeners = this.listeners.get(event);
     if (!listeners) {
       this.listeners.set(event, [listener]);
@@ -64,6 +65,8 @@ abstract class GenericBridge<E extends BridgeEventsMap<K>, K extends string> {
   }
 }
 
+// --- InspectorBridge ---
+
 export interface RadonInspectorBridgeEvents {
   appReady: [];
   connected: [];
@@ -82,7 +85,6 @@ export interface RadonInspectorBridgeEvents {
 }
 
 export type RadonInspectorEventName = keyof RadonInspectorBridgeEvents;
-
 
 export interface RadonInspectorBridge {
   sendPluginMessage(pluginId: string, type: string, data: any): void;
@@ -133,5 +135,83 @@ export abstract class BaseInspectorBridge
       type: "showStorybookStory",
       data: { componentTitle, storyName },
     });
+  }
+}
+
+// --- NetworkBridge ---
+
+export enum NetworkCommandMethod {
+  Enable = "Network.enable",
+  Disable = "Network.disable",
+  RuntimeEnable = "Runtime.enable",
+  RequestWillBeSent = "Network.requestWillBeSent",
+  RequestWillBeSentExtraInfo = "Network.requestWillBeSentExtraInfo",
+  ResponseReceived = "Network.responseReceived",
+  LoadingFinished = "Network.loadingFinished",
+}
+
+export interface RadonNetworkBridgeEvents {
+  enable: [];
+  disable: [];
+  runtimeEnable: [];
+  requestWillBeSent: [{ data: any }];
+  requestWillBeSentExtraInfo: [{ data: any }];
+  responseReceived: [{ data: any }];
+  loadingFinished: [{ data: any }];
+}
+
+export type NetworkEventNames = keyof RadonNetworkBridgeEvents;
+
+export const NETWORK_EVENT_MAP = {
+  [NetworkCommandMethod.Enable]: "enable",
+  [NetworkCommandMethod.Disable]: "disable",
+  [NetworkCommandMethod.RuntimeEnable]: "runtimeEnable",
+  [NetworkCommandMethod.RequestWillBeSent]: "requestWillBeSent",
+  [NetworkCommandMethod.RequestWillBeSentExtraInfo]: "requestWillBeSentExtraInfo",
+  [NetworkCommandMethod.ResponseReceived]: "responseReceived",
+  [NetworkCommandMethod.LoadingFinished]: "loadingFinished",
+} as const;
+
+export interface RadonNetworkBridge {
+  enableNetworkInspector(): void;
+  disableNetworkInspector(): void;
+  onEvent<K extends NetworkEventNames>(
+    event: K,
+    listener: (...payload: RadonNetworkBridgeEvents[K]) => void
+  ): Disposable;
+}
+
+export class NetworkInspectorBridge
+  extends GenericBridge<RadonNetworkBridgeEvents, NetworkEventNames>
+  implements RadonNetworkBridge
+{
+  private debugSession?: (DebugSession & Disposable) | undefined;
+
+  public get bridgeAvailable(): boolean {
+    return !!this.debugSession;
+  }
+
+  public setDebugSession(debugSession: DebugSession & Disposable) {
+    this.debugSession = debugSession;
+  }
+
+  protected send(request: DebugNetworkEvent): void {
+    this.debugSession?.sendNetworkCommandRequest(request);
+  }
+
+  public enableNetworkInspector(): void {
+    if (!this.bridgeAvailable) {
+      return;
+    }
+    this.send(DebugNetworkEvent.Enable);
+    this.emitEvent("enable", []);
+  }
+
+  public disableNetworkInspector(): void {
+    if (!this.bridgeAvailable) {
+      return;
+    }
+    this.send(DebugNetworkEvent.Disable);
+    this.emitEvent("disable", []);
   }
 }

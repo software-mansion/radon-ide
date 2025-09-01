@@ -155,6 +155,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     this.debuggerPausedEmitter.fire({ reason: "breakpoint" });
     return command;
   }
+
   private setBreakpointCommands = new Map<number, Cdp.Debugger.SetBreakpointByUrlParams>();
 
   public async handleDebuggerCommand(
@@ -178,6 +179,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       }
       case "Runtime.enable": {
         await this.onRuntimeEnable(tunnel);
+        await this.handleNetworkEvent(command);
         return command;
       }
       // NOTE: setBlackbox* commands (as of 0.78) are not handled correctly by the Hermes debugger, so we need to disable them.
@@ -266,11 +268,6 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         params: {},
       })
       .catch(_.noop);
-
-    await tunnel.injectDebuggerCommand({
-      method: "Network.enable",
-      params: {},
-    });
   }
 
   private async getSourceMapData(sourceMapURL: string) {

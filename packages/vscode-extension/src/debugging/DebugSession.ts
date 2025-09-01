@@ -16,6 +16,12 @@ export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
 export const DEBUG_PAUSED = "RNIDE_paused";
 export const DEBUG_RESUMED = "RNIDE_continued";
 
+export enum DebugNetworkEvent {
+  Enable = "RNIDE_enableNetworkInspector",
+  Disable = "RNIDE_disableNetworkInspector",
+  GetResponseBody = "RNIDE_getResponseBody"
+}
+
 export interface JSDebugConfiguration {
   websocketAddress: string;
   sourceMapPathOverrides: Record<string, string>;
@@ -50,6 +56,7 @@ export interface DebugSession {
   stepOutDebugger(): void;
   stepIntoDebugger(): void;
   evaluateExpression(params: Cdp.Runtime.EvaluateParams): Promise<Cdp.Runtime.EvaluateResult>;
+  sendNetworkCommandRequest(request: any): Promise<void>;
 
   // Profiling controls
   startProfilingCPU(): Promise<void>;
@@ -291,6 +298,10 @@ export class DebugSessionImpl implements DebugSession, Disposable {
     }
     const response = await this.jsDebugSession.customRequest("RNIDE_evaluate", params);
     return response;
+  }
+
+  public async sendNetworkCommandRequest(request: DebugNetworkEvent) {
+    await this.jsDebugSession?.customRequest(request);
   }
 
   private cancelStartingDebugSession() {
