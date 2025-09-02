@@ -7,7 +7,7 @@
 
 .table-row:hover {
   cursor: pointer;
-  background-color: var(--vscode-list-hoverBackground);
+  background-color: var(--swm-url-select-highlighted-background);
 }
 
 .table-header-cell {

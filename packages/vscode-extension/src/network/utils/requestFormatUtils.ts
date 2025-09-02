@@ -31,7 +31,7 @@ export function formatJSONBody(body: unknown): string {
 
 export function getRequestJson(log: NetworkLog): string {
   if (!log.request) {
-    return JSON.stringify({ error: "No request data available" }, null, 2);
+    return JSON.stringify({ error: "No request data" }, null, 2);
   }
 
   const requestData: Record<string, unknown> = {
@@ -53,7 +53,7 @@ export function getRequestJson(log: NetworkLog): string {
 
 export function getResponseJson(log: NetworkLog): string {
   if (!log.response) {
-    return JSON.stringify({ error: "No response data available" }, null, 2);
+    return JSON.stringify({ error: "No response data" }, null, 2);
   }
 
   const responseData: Record<string, unknown> = {
@@ -71,26 +71,35 @@ export function getResponseJson(log: NetworkLog): string {
 
 export function getRequestPayload(log: NetworkLog): string {
   if (!log.request) {
-    return "No request data available";
+    return "No request payload";
   }
 
   const { url, postData } = log.request;
 
   const urlParams = formatUrlParams(url);
-  const hasUrlParams = urlParams !== "{}";
+  const _hasUrlParams = hasUrlParams(log);
 
   if (postData && postData !== "") {
     const bodyData = formatJSONBody(postData);
 
-    if (hasUrlParams) {
+    if (_hasUrlParams) {
       return `URL Parameters:\n${urlParams}\n\nRequest Body:\n${bodyData}`;
     }
     return bodyData;
   }
 
-  if (hasUrlParams) {
+  if (_hasUrlParams) {
     return urlParams;
   }
 
-  return "No request body";
+  return "No request payload";
+}
+
+export function hasUrlParams(log: NetworkLog | null): boolean {
+  if (!log?.request) {
+    return false;
+  }
+
+  const urlParams = formatUrlParams(log.request.url);
+  return urlParams !== "{}";
 }

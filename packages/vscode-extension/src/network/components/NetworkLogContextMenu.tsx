@@ -17,6 +17,7 @@ import {
   getResponseJson,
   formatJSONBody,
   getRequestPayload,
+  hasUrlParams,
 } from "../utils/requestFormatUtils";
 import "./NetworkLogContextMenu.css";
 
@@ -81,8 +82,11 @@ function NetworkLogContextMenu({
       return;
     }
     const responseBody = await getResponseBody(networkLog);
-    const formattedBody = formatJSONBody(responseBody);
-    await copyToClipboard(formattedBody);
+    if (typeof responseBody !== "string") {
+      await copyToClipboard("{}");
+    } else {
+      await copyToClipboard(formatJSONBody(responseBody));
+    }
   };
 
   const handleCopyRequestPayload = async () => {
@@ -154,7 +158,7 @@ function NetworkLogContextMenu({
                 <ContextMenu.Item
                   className="radix-context-menu-item"
                   onSelect={handleCopyRequestPayload}
-                  disabled={!networkLog || !networkLog.request?.postData}>
+                  disabled={!networkLog?.request?.postData && !hasUrlParams(networkLog)}>
                   <span className="codicon codicon-file-text"></span>
                   Copy Request Payload
                 </ContextMenu.Item>
@@ -179,8 +183,6 @@ function NetworkLogContextMenu({
               </ContextMenu.SubContent>
             </ContextMenu.Portal>
           </ContextMenu.Sub>
-
-          <ContextMenu.Separator className="radix-context-menu-separator" />
 
           <ContextMenu.Sub>
             <ContextMenu.SubTrigger className="radix-context-menu-item radix-context-menu-subtrigger">
