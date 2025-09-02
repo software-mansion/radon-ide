@@ -10,13 +10,13 @@ import {
   generateCurlCommand,
   generateFetchCommand,
   getUrl,
-  getRequestPayload,
   copyToClipboard,
 } from "../utils/contextMenuUtils";
 import {
   getRequestJson,
   getResponseJson,
-  formatResponseBodyForCopy,
+  formatJSONBody,
+  getRequestPayload,
 } from "../utils/requestFormatUtils";
 import "./NetworkLogContextMenu.css";
 
@@ -81,7 +81,7 @@ function NetworkLogContextMenu({
       return;
     }
     const responseBody = await getResponseBody(networkLog);
-    const formattedBody = formatResponseBodyForCopy(responseBody);
+    const formattedBody = formatJSONBody(responseBody);
     await copyToClipboard(formattedBody);
   };
 

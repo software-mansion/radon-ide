@@ -1,6 +1,6 @@
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import IconButton from "../../webview/components/shared/IconButton";
-import { formatJSONBody, formatUrlParams } from "../utils/requestFormatUtils";
+import { getRequestPayload } from "../utils/requestFormatUtils";
 
 interface PayloadTabProps {
   networkLog: NetworkLog;
@@ -11,29 +11,7 @@ const PayloadTab = ({ networkLog }: PayloadTabProps) => {
     return null;
   }
 
-  const getPayloadData = () => {
-    const { url, postData } = networkLog.request!;
-
-    const urlParams = formatUrlParams(url);
-    const hasUrlParams = urlParams !== "{}";
-
-    if (postData && postData !== "") {
-      const bodyData = formatJSONBody(postData);
-
-      if (hasUrlParams) {
-        return `URL Parameters:\n${urlParams}\n\nRequest Body:\n${bodyData}`;
-      }
-      return bodyData;
-    }
-
-    if (hasUrlParams) {
-      return urlParams;
-    }
-
-    return "No request body";
-  };
-
-  const payloadData = getPayloadData();
+  const payloadData = getRequestPayload(networkLog);
 
   return (
     <>

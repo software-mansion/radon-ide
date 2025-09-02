@@ -2,13 +2,11 @@
 
 .radix-context-menu-content {
   min-width: 160px;
-  background-color: var(--vscode-menu-background);
+  background-color: var(--vscode-dropdown-background);
   border: 1px solid var(--vscode-menu-border);
-  border-radius: 4px;
+  border-radius: 6px;
+  box-shadow: 0 0 8px 2px var(--vscode-widget-shadow);
   padding: 4px;
-  box-shadow: 
-    0 2px 8px rgba(0, 0, 0, 0.15),
-    0 0 0 1px var(--vscode-widget-border);
   z-index: 1000;
   animation-duration: 200ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
@@ -39,7 +37,7 @@
   font-size: 13px;
   line-height: 1;
   color: var(--vscode-menu-foreground);
-  border-radius: 3px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   height: 24px;
@@ -98,31 +96,16 @@
 
 /* Icon colors for different copy types */
 .radix-context-menu-item .codicon-terminal {
-  color: var(--vscode-terminal-ansiGreen);
+  /* color: var(--vscode-terminal-ansiGreen); */
+  color: var(--green-dark-100);
 }
 
 .radix-context-menu-item .codicon-code {
-  color: var(--vscode-symbolIcon-functionForeground);
+  color: var(--purple-dark-100);
 }
 
 .radix-context-menu-item .codicon-link {
-  color: var(--vscode-textLink-foreground);
-}
-
-.radix-context-menu-item .codicon-json {
-  color: var(--vscode-symbolIcon-keywordForeground);
-}
-
-.radix-context-menu-item .codicon-file-text {
-  color: var(--vscode-symbolIcon-textForeground);
-}
-
-.radix-context-menu-item .codicon-copy {
-  color: var(--vscode-symbolIcon-colorForeground);
-}
-
-.radix-context-menu-item .codicon-list-ordered {
-  color: var(--vscode-symbolIcon-arrayForeground);
+  color: var(--blue-dark-100);
 }
 
 /* Animations */

@@ -1,8 +1,5 @@
 import { NetworkLog } from "../hooks/useNetworkTracker";
 
-/**
- * Generates a cURL command from a network log entry
- */
 export function generateCurlCommand(log: NetworkLog): string {
   if (!log.request) {
     return "# No request data available";
@@ -39,9 +36,6 @@ export function generateCurlCommand(log: NetworkLog): string {
   return curlCommand;
 }
 
-/**
- * Generates a fetch command from a network log entry
- */
 export function generateFetchCommand(log: NetworkLog): string {
   if (!log.request) {
     return "// No request data available";
@@ -73,34 +67,10 @@ export function generateFetchCommand(log: NetworkLog): string {
   return fetchCode;
 }
 
-/**
- * Extracts the URL from a network log entry
- */
 export function getUrl(log: NetworkLog): string {
   return log.request?.url || "No URL available";
 }
 
-/**
- * Extracts the request payload/body from a network log entry
- */
-export function getRequestPayload(log: NetworkLog): string {
-  if (!log.request?.postData) {
-    return "No request payload";
-  }
-
-  try {
-    // Try to format as JSON if it's valid
-    const parsed = JSON.parse(log.request.postData);
-    return JSON.stringify(parsed, null, 2);
-  } catch {
-    // Return as-is if not valid JSON
-    return log.request.postData;
-  }
-}
-
-/**
- * Copies text to clipboard using the navigator clipboard API
- */
 export async function copyToClipboard(text: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
