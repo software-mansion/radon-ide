@@ -160,30 +160,53 @@ export class ApplicationDependencyManager implements Disposable {
       Logger.debug("Node modules already installed - skipping");
     }
 
-    const supportedNodeInstalled = await this.checkSupportedNodeVersionInstalled();
-    if (!supportedNodeInstalled) {
+    const { requiredNodeInstalled, installedVersion, minimumVersion } =
+      await this.checkRequiredNodeVersionInstalled();
+    if (!requiredNodeInstalled) {
+      if (installedVersion) {
+        throw new Error(
+          `Node.js version mismatch: Found version ${installedVersion} but minimum required is ${minimumVersion}`
+        );
+      }
       throw new Error(
         "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements."
       );
     }
   }
 
-  public async checkSupportedNodeVersionInstalled(): Promise<boolean> {
+  private async checkRequiredNodeVersionInstalled() {
     const appRoot = this.launchConfiguration.absoluteAppRoot;
+    const minimumNodeVersion = getMinimumSupportedNodeVersion(appRoot);
     try {
       const { stdout: nodeVersion } = await exec("node", ["-v"]);
-      const minimumNodeVersion = getMinimumSupportedNodeVersion(appRoot);
       const isMinimumNodeVersion = semver.satisfies(nodeVersion, minimumNodeVersion);
       this.stateManager.setState({
         nodeVersion: {
           status: isMinimumNodeVersion ? "installed" : "notInstalled",
+          details: isMinimumNodeVersion
+            ? undefined
+            : `Found version ${nodeVersion} but minimum required is ${minimumNodeVersion}`,
           isOptional: false,
         },
       });
-      return isMinimumNodeVersion;
+      return {
+        requiredNodeInstalled: isMinimumNodeVersion,
+        installedVersion: nodeVersion,
+        minimumVersion: minimumNodeVersion,
+      };
     } catch {
-      this.stateManager.setState({ nodeVersion: { status: "notInstalled", isOptional: false } });
-      return false;
+      this.stateManager.setState({
+        nodeVersion: {
+          status: "notInstalled",
+          details: "Node.js installation not found in the path",
+          isOptional: false,
+        },
+      });
+      return {
+        requiredNodeInstalled: false,
+        installedVersion: undefined,
+        minimumVersion: minimumNodeVersion,
+      };
     }
   }
 
