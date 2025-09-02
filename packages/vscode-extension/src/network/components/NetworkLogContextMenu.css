@@ -64,12 +64,17 @@
   position: relative;
 }
 
+.radix-context-sort-arrow,
 .radix-context-menu-arrow {
   margin-left: auto;
   color: inherit;
   font-size: 12px;
   display: flex;
   align-items: center;
+
+  .codicon {
+    font-weight: bold;
+  }
 }
 
 .radix-context-menu-separator {

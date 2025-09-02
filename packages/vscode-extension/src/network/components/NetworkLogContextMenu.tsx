@@ -1,4 +1,5 @@
 import * as ContextMenu from "@radix-ui/react-context-menu";
+import { useState } from "react";
 import { capitalize } from "lodash";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../hooks/useNetworkTracker";
@@ -35,8 +36,16 @@ function NetworkLogContextMenu({
   sortState,
 }: NetworkLogContextMenuProps) {
   const { getResponseBody } = useNetwork();
+  const [responseBody, setResponseBody] = useState<string | unknown>(null);
 
-  // Context menu handlers
+  const handleOpenChange = async (open: boolean) => {
+    // prefetch response body only when needed
+    if (!networkLog || !open) {
+      return;
+    }
+    setResponseBody(await getResponseBody(networkLog));
+  };
+
   const handleCopyCurl = async () => {
     if (!networkLog) {
       return;
@@ -81,8 +90,8 @@ function NetworkLogContextMenu({
     if (!networkLog) {
       return;
     }
-    const responseBody = await getResponseBody(networkLog);
-    if (typeof responseBody !== "string") {
+
+    if (responseBody === null || typeof responseBody !== "string") {
       await copyToClipboard("{}");
     } else {
       await copyToClipboard(formatJSONBody(responseBody));
@@ -98,7 +107,7 @@ function NetworkLogContextMenu({
   };
 
   return (
-    <ContextMenu.Root>
+    <ContextMenu.Root onOpenChange={handleOpenChange}>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
 
       <ContextMenu.Portal>
@@ -204,7 +213,7 @@ function NetworkLogContextMenu({
                       onSelect={() => onSort(column)}
                       className="radix-context-menu-item ">
                       {capitalize(column)}
-                      <span className="radix-context-menu-arrow">
+                      <span className="radix-context-sort-arrow">
                         <span className={`codicon ${getSortIcon(column, sortState)}`}></span>
                       </span>
                     </ContextMenu.Item>
