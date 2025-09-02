@@ -29,3 +29,8 @@ export interface FilterBadge {
   columnName: string;
   value: string;
 }
+
+export interface SortState {
+  column: NetworkLogColumn | null;
+  direction: SortDirection | null;
+}

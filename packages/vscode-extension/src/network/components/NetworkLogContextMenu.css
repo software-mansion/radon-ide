@@ -1,0 +1,185 @@
+/* Radix Context Menu Styles with VSCode theming */
+
+.radix-context-menu-content {
+  min-width: 160px;
+  background-color: var(--vscode-menu-background);
+  border: 1px solid var(--vscode-menu-border);
+  border-radius: 4px;
+  padding: 4px;
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.15),
+    0 0 0 1px var(--vscode-widget-border);
+  z-index: 1000;
+  animation-duration: 200ms;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform, opacity;
+}
+
+.radix-context-menu-content[data-side="top"] {
+  animation-name: slideDownAndFade;
+}
+
+.radix-context-menu-content[data-side="right"] {
+  animation-name: slideLeftAndFade;
+}
+
+.radix-context-menu-content[data-side="bottom"] {
+  animation-name: slideUpAndFade;
+}
+
+.radix-context-menu-content[data-side="left"] {
+  animation-name: slideRightAndFade;
+}
+
+.radix-context-menu-subcontent {
+  min-width: 140px;
+}
+
+.radix-context-menu-item {
+  font-size: 13px;
+  line-height: 1;
+  color: var(--vscode-menu-foreground);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  position: relative;
+  user-select: none;
+  outline: none;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.radix-context-menu-item[data-disabled] {
+  color: var(--vscode-disabledForeground);
+  pointer-events: none;
+  cursor: default;
+}
+
+.radix-context-menu-item[data-highlighted] {
+  background-color: var(--vscode-menu-selectionBackground);
+  color: var(--vscode-menu-selectionForeground);
+}
+
+.radix-context-menu-subtrigger {
+  position: relative;
+}
+
+.radix-context-menu-arrow {
+  margin-left: auto;
+  color: inherit;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.radix-context-menu-separator {
+  height: 1px;
+  background-color: var(--vscode-menu-separatorBackground);
+  margin: 4px 0;
+}
+
+/* Icons */
+.radix-context-menu-item .codicon {
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.radix-context-menu-item .codicon-chevron-up,
+.radix-context-menu-item .codicon-chevron-down {
+  margin-right: 4px;
+}
+
+/* Icon colors for different copy types */
+.radix-context-menu-item .codicon-terminal {
+  color: var(--vscode-terminal-ansiGreen);
+}
+
+.radix-context-menu-item .codicon-code {
+  color: var(--vscode-symbolIcon-functionForeground);
+}
+
+.radix-context-menu-item .codicon-link {
+  color: var(--vscode-textLink-foreground);
+}
+
+.radix-context-menu-item .codicon-json {
+  color: var(--vscode-symbolIcon-keywordForeground);
+}
+
+.radix-context-menu-item .codicon-file-text {
+  color: var(--vscode-symbolIcon-textForeground);
+}
+
+.radix-context-menu-item .codicon-copy {
+  color: var(--vscode-symbolIcon-colorForeground);
+}
+
+.radix-context-menu-item .codicon-list-ordered {
+  color: var(--vscode-symbolIcon-arrayForeground);
+}
+
+/* Animations */
+@keyframes slideUpAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideRightAndFade {
+  from {
+    opacity: 0;
+    transform: translateX(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideDownAndFade {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideLeftAndFade {
+  from {
+    opacity: 0;
+    transform: translateX(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Focus styles */
+.radix-context-menu-item:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: -1px;
+}
+
+/* Hover styles for non-touch devices */
+@media (hover: hover) {
+  .radix-context-menu-item:hover:not([data-disabled]) {
+    background-color: var(--vscode-menu-selectionBackground);
+    color: var(--vscode-menu-selectionForeground);
+  }
+}
