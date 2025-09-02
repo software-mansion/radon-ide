@@ -98,3 +98,8 @@ vscode-table-header-cell:hover .table-header-cell button {
   visibility: hidden;
   pointer-events: none;
 }
+
+.context-menu-row{
+  width: auto;
+  position: absolute;
+}

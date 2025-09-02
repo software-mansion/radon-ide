@@ -4,6 +4,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { capitalize } from "lodash";
 import { VscodeTable as VscodeTableElement } from "@vscode-elements/elements/dist/vscode-table/vscode-table.js";
 import type { VscodeTableRow as VscodeTableRowElement } from "@vscode-elements/elements/dist/vscode-table-row/vscode-table-row";
+import type { VscodeContextMenu as VscodeContextMenuElement } from "@vscode-elements/elements/dist/vscode-context-menu/vscode-context-menu";
 import {
   VscodeTableBody,
   VscodeTableCell,
@@ -11,6 +12,7 @@ import {
   VscodeTableHeaderCell,
   VscodeTableRow,
 } from "@vscode-elements/react-elements";
+import ContextMenuPortal from "./ContextMenuPortal";
 import VscodeTable from "./VscodeTableInternalFix";
 import IconButton from "../../webview/components/shared/IconButton";
 import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogUtils";
@@ -183,6 +185,17 @@ interface TableBodyProps {
 const CELL_DEFAULT_HEIGHT = 24;
 const ROW_OVERSCAN = 15;
 
+const CONTEXT_MENU_DATA = [
+  {
+    label: "Copy as cURL",
+    value: "menuitem1",
+  },
+  {
+    label: "Test2",
+    value: "menuitem2",
+  },
+];
+
 function TableBody({
   networkLogs,
   selectedNetworkLog,
@@ -191,7 +204,10 @@ function TableBody({
   parentHeight,
 }: TableBodyProps) {
   const [selectedRequestIndex, setSelectedRequestIndex] = useState<number>(0);
+  const [contextMenuRequestId, setContextMenuRequestId] = useState<string | null>(null);
   const [cellWidths, setCellWidths] = useState<number[]>([]);
+
+  const contextMenuRef = useRef<VscodeContextMenuElement>(null);
 
   /**
    * Updates the cell widths based on the current sash (column bars) positions from the table component.
@@ -305,46 +321,77 @@ function TableBody({
     handleSelectedRequest(id);
   };
 
+  const handleContextMenu = (
+    e: React.MouseEvent<VscodeTableRowElement>,
+    requestId: string | null
+  ) => {
+    const contextMenu = contextMenuRef.current;
+    if (!contextMenu) {
+      return;
+    }
+
+    e.preventDefault();
+
+    if (contextMenuRequestId !== requestId) {
+      setContextMenuRequestId(requestId);
+      contextMenu.show = true;
+    } else {
+      contextMenu.show = !contextMenu.show;
+    }
+
+    contextMenu.style.left = `${e.clientX}px`;
+    contextMenu.style.top = `${e.clientY}px`;
+  };
+
   return (
-    <VscodeTableBody style={{ height: `${rowVirtualizer.getTotalSize()}px` }} slot="body">
-      {rowVirtualizer.getVirtualItems().map((virtualRow, index) => {
-        const log = networkLogs[virtualRow.index];
-        return (
-          <VscodeTableRow
-            data-index={virtualRow.index}
-            key={log.requestId}
-            // Style needs to be overwritten using virtualizer values
-            style={{
-              height: `${virtualRow.size}px`,
-              transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
-            }}
-            className={classNames(
-              "table-row",
-              selectedNetworkLog?.requestId === log.requestId && "selected"
-            )}
-            onClick={() =>
-              innerHandleSelectedRequest(
-                selectedNetworkLog?.requestId === log.requestId ? null : log.requestId,
-                virtualRow.index
-              )
-            }>
-            {LOG_DETAILS_CONFIG.map(({ title, getClass }, i) => (
-              <VscodeTableCell
-                key={`${log.requestId}-${title}`}
-                className={getClass?.(log) ?? ""}
-                style={{ width: cellWidths[i] || "auto" }}>
-                {getNetworkLogValue(log, title)}
-              </VscodeTableCell>
-            ))}
-          </VscodeTableRow>
-        );
-      })}
-      {/* Below row, renedered unconditionally, is needed, because the VscodeTableBody
-      is styled with display:table, which causes rows to stretch to fit the container, despite
-      set size. As we will always have total low height lesser than the table-body height (because
-      virtualization) an additional row is needed to fill the remaining space */}
-      <VscodeTableRow className="hack-table-row"></VscodeTableRow>
-    </VscodeTableBody>
+    <>
+      <ContextMenuPortal
+        className="context-menu-row"
+        ref={contextMenuRef}
+        data={CONTEXT_MENU_DATA}
+      />
+
+      <VscodeTableBody style={{ height: `${rowVirtualizer.getTotalSize()}px` }} slot="body">
+        {rowVirtualizer.getVirtualItems().map((virtualRow, index) => {
+          const log = networkLogs[virtualRow.index];
+          return (
+            <VscodeTableRow
+              data-index={virtualRow.index}
+              key={log.requestId}
+              // Style needs to be overwritten using virtualizer values
+              style={{
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
+              }}
+              className={classNames(
+                "table-row",
+                selectedNetworkLog?.requestId === log.requestId && "selected"
+              )}
+              onClick={() =>
+                innerHandleSelectedRequest(
+                  selectedNetworkLog?.requestId === log.requestId ? null : log.requestId,
+                  virtualRow.index
+                )
+              }
+              onContextMenu={(e) => handleContextMenu(e, log.requestId)}>
+              {LOG_DETAILS_CONFIG.map(({ title, getClass }, i) => (
+                <VscodeTableCell
+                  key={`${log.requestId}-${title}`}
+                  className={getClass?.(log) ?? ""}
+                  style={{ width: cellWidths[i] || "auto" }}>
+                  {getNetworkLogValue(log, title)}
+                </VscodeTableCell>
+              ))}
+            </VscodeTableRow>
+          );
+        })}
+        {/* Below row, renedered unconditionally, is needed, because the VscodeTableBody
+        is styled with display:table, which causes rows to stretch to fit the container, despite
+        set size. As we will always have total low height lesser than the table-body height (because
+        virtualization) an additional row is needed to fill the remaining space */}
+        <VscodeTableRow className="hack-table-row"></VscodeTableRow>
+      </VscodeTableBody>
+    </>
   );
 }
 
