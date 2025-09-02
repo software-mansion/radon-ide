@@ -42,7 +42,17 @@ export default function NavbarContent() {
           <ul className={styles.navLinks}>
             {navbarItems.map((item, index) =>
               item.position == "center" ? (
-                <li key={index} className={active == item.to ? styles.activeLink : null}>
+                <li
+                  key={index}
+                  className={
+                    item.to.startsWith("/docs")
+                      ? active.startsWith("/docs")
+                        ? styles.activeLink
+                        : ""
+                      : active === item.to
+                        ? styles.activeLink
+                        : ""
+                  }>
                   <NavbarLink item={item} />
                 </li>
               ) : null

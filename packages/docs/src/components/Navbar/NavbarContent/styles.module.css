@@ -18,10 +18,11 @@
   padding: 0 24px;
   flex-direction: column;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   align-self: stretch;
   border-right: 1px solid var(--swm-border);
+  width: 250px;
 }
 
 .navbarLeft a {
@@ -90,6 +91,13 @@ a:hover {
 }
 .menuIcon {
   display: none;
+}
+
+@media (max-width: 997px) {
+  .navbarLeft {
+    align-items: flex-start;
+    width: auto;
+  }
 }
 
 @media (max-width: 830px) {

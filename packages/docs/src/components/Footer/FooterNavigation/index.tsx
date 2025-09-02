@@ -24,7 +24,7 @@ const footerLinks: FooterProps[] = [
     links: [
       { label: "Customer Portal", to: "/customer-portal" },
       { label: "Docs", to: "/docs/category/getting-started" },
-      { label: "Changelog", to: "/changelog" },
+      { label: "Changelog", to: "/docs/getting-started/changelog" },
       { label: "Contact", to: "/contact" },
     ],
   },

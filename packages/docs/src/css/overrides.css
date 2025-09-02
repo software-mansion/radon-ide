@@ -224,7 +224,7 @@ a[class*="menu__link"]:not([class*="active"]):hover {
 }
 
 a.menu__link--active {
-  color: var(--radon-active-tab);
+  color: var(--radon-active-tab) !important;
   text-decoration: none;
   opacity: 1;
 }
@@ -325,9 +325,17 @@ section.row:nth-child(even) {
 
 [class*="generatedIndexPage"] article section.row article.col--6 a {
   border: var(--radon-border-layout);
+  height: 100%;
 }
 [class*="generatedIndexPage"] header h1[class*="title"] {
   padding-left: 10px;
+}
+
+@media (max-width: 1360px) {
+  [class*="docRoot"] {
+    border-left: none;
+    border-right: none;
+  }
 }
 
 @media (min-width: 997px) {
