@@ -165,12 +165,10 @@ export class ApplicationDependencyManager implements Disposable {
     if (!requiredNodeInstalled) {
       if (installedVersion) {
         throw new Error(
-          `Node.js version mismatch: Found version ${installedVersion} but minimum required is ${minimumVersion}`
+          `Node.js version mismatch: Found version ${installedVersion} but minimum required is ${minimumVersion}.`
         );
       }
-      throw new Error(
-        "Node.js was not found, or the version in the PATH does not satisfy minimum version requirements."
-      );
+      throw new Error("Node.js executable was not found in the PATH.");
     }
   }
 
@@ -183,9 +181,6 @@ export class ApplicationDependencyManager implements Disposable {
       this.stateManager.setState({
         nodeVersion: {
           status: isMinimumNodeVersion ? "installed" : "notInstalled",
-          details: isMinimumNodeVersion
-            ? undefined
-            : `Found version ${nodeVersion} but minimum required is ${minimumNodeVersion}`,
           isOptional: false,
         },
       });
@@ -198,7 +193,6 @@ export class ApplicationDependencyManager implements Disposable {
       this.stateManager.setState({
         nodeVersion: {
           status: "notInstalled",
-          details: "Node.js installation not found in the path",
           isOptional: false,
         },
       });
