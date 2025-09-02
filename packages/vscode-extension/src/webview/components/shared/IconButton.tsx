@@ -91,7 +91,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
     return (
       <Tooltip
         label={label}
-        disabled={!shouldDisplayLabelWhileDisabled}
+        disabled={shouldDisplayLabelWhileDisabled && disabled}
         side={tooltipSide}
         type={tooltipType ?? type}>
         {button}
