@@ -1,4 +1,4 @@
-import { By, WebView, BottomBarPanel } from "vscode-extension-tester";
+import { By, WebView, BottomBarPanel, Key } from "vscode-extension-tester";
 import {
   findAndClickElementByTag,
   findAndWaitForElementByTag,
@@ -28,6 +28,8 @@ describe("Network panel tests", () => {
   });
 
   beforeEach(async () => {
+    let bottomBar = new BottomBarPanel();
+    await bottomBar.toggle(false);
     openRadonIDEPanel(driver);
     await waitForAppToLoad(driver);
 
@@ -46,15 +48,17 @@ describe("Network panel tests", () => {
       "dev-tool-Network"
     );
 
-    if (networkSwitch.getAttribute("value") !== "on") {
+    if ((await networkSwitch.getAttribute("data-state")) !== "checked") {
       await networkSwitch.click();
-
-      view = new WebView();
-      await view.switchBack();
-      const bottomBar = new BottomBarPanel();
-      await bottomBar.toggle(false);
-      openRadonIDEPanel(driver);
+    } else {
+      await findAndClickElementByTag(driver, "dev-tool-Network-open-button");
     }
+
+    view = new WebView();
+    await view.switchBack();
+    bottomBar = new BottomBarPanel();
+    await bottomBar.toggle(false);
+    openRadonIDEPanel(driver);
   });
 
   it("Should open the network panel", async () => {

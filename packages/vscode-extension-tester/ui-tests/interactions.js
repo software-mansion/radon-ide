@@ -246,7 +246,8 @@ export async function findWebViewIFrame(driver, iframeTitle) {
       const iframe = await findAndWaitForElement(
         driver,
         By.css(`iframe[title="${iframeTitle}"]`),
-        `Timed out waiting for Radon IDE iframe with title ${iframeTitle}`
+        `Timed out waiting for Radon IDE iframe with title ${iframeTitle}`,
+        5000
       );
       return iframe;
     } catch (error) {
