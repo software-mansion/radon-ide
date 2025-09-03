@@ -99,7 +99,7 @@ vscode-table-header-cell:hover .table-header-cell button {
   pointer-events: none;
 }
 
-.context-menu-row{
+.context-menu-row {
   width: auto;
   position: absolute;
 }

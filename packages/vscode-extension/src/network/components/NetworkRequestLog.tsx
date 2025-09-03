@@ -11,7 +11,8 @@ import {
   VscodeTableHeaderCell,
   VscodeTableRow,
 } from "@vscode-elements/react-elements";
-import NetworkLogContextMenu from "./NetworkLogContextMenu";
+import RowContextMenu from "./ContextMenu/RowContextMenu";
+import TableContextMenu from "./ContextMenu/TableContextMenu";
 import VscodeTable from "./VscodeTableInternalFix";
 import IconButton from "../../webview/components/shared/IconButton";
 import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogUtils";
@@ -140,35 +141,37 @@ const NetworkRequestLog = ({
   return (
     <div className="table-container">
       <div style={{ width: "100%", overflowX: "hidden" }}>
-        <VscodeTable
-          zebra
-          bordered-columns
-          resizable
-          style={{ height: parentHeight }}
-          ref={tableRef}>
-          <VscodeTableHeader slot="header">
-            {LOG_DETAILS_CONFIG.map(({ title }) => (
-              <VscodeTableHeaderCell key={title} onClick={() => handleHeaderClick(title)}>
-                <div className="table-header-cell">
-                  <span className="table-header-title">{capitalize(title)}</span>
-                  <IconButton onClick={(e) => handleHeaderFilterClick(e, title)}>
-                    <span className={`codicon codicon-filter-filled`}></span>
-                  </IconButton>
-                  <span className={`codicon ${getSortIcon(title, sortState)}`}></span>
-                </div>
-              </VscodeTableHeaderCell>
-            ))}
-          </VscodeTableHeader>
-          <TableBody
-            networkLogs={sortedNetworkLogs}
-            selectedNetworkLog={selectedNetworkLog}
-            handleSelectedRequest={handleSelectedRequest}
-            tableRef={tableRef}
-            parentHeight={parentHeight}
-            onSort={handleSort}
-            sortState={sortState}
-          />
-        </VscodeTable>
+        <TableContextMenu handleSort={handleSort} sortState={sortState}>
+          <VscodeTable
+            zebra
+            bordered-columns
+            resizable
+            style={{ height: parentHeight }}
+            ref={tableRef}>
+            <VscodeTableHeader slot="header">
+              {LOG_DETAILS_CONFIG.map(({ title }) => (
+                <VscodeTableHeaderCell key={title} onClick={() => handleHeaderClick(title)}>
+                  <div className="table-header-cell">
+                    <span className="table-header-title">{capitalize(title)}</span>
+                    <IconButton onClick={(e) => handleHeaderFilterClick(e, title)}>
+                      <span className={`codicon codicon-filter-filled`}></span>
+                    </IconButton>
+                    <span className={`codicon ${getSortIcon(title, sortState)}`}></span>
+                  </div>
+                </VscodeTableHeaderCell>
+              ))}
+            </VscodeTableHeader>
+            <TableBody
+              networkLogs={sortedNetworkLogs}
+              selectedNetworkLog={selectedNetworkLog}
+              handleSelectedRequest={handleSelectedRequest}
+              tableRef={tableRef}
+              parentHeight={parentHeight}
+              onSort={handleSort}
+              sortState={sortState}
+            />
+          </VscodeTable>
+        </TableContextMenu>
       </div>
     </div>
   );
@@ -320,12 +323,13 @@ function TableBody({
       {rowVirtualizer.getVirtualItems().map((virtualRow, index) => {
         const log = networkLogs[virtualRow.index];
         return (
-          <NetworkLogContextMenu
+          <RowContextMenu
             key={log.requestId}
             networkLog={log}
             handleSort={handleSort}
             sortState={sortState}>
             <VscodeTableRow
+              key={log.requestId}
               data-index={virtualRow.index}
               // Style needs to be overwritten using virtualizer values
               style={{
@@ -351,7 +355,7 @@ function TableBody({
                 </VscodeTableCell>
               ))}
             </VscodeTableRow>
-          </NetworkLogContextMenu>
+          </RowContextMenu>
         );
       })}
       {/* Below row, renedered unconditionally, is needed, because the VscodeTableBody
