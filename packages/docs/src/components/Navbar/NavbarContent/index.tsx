@@ -1,9 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import styles from "./styles.module.css";
 import { useLocation } from "@docusaurus/router";
 import MobileSidebarToggle from "../MobileSidebarToggle";
 import NavbarMobileSidebar from "../MobileSidebar";
-import ThemeSwitcher from "../../ThemeSwitcher";
 import NavbarLink from "../NavbarLink";
 import Logo from "../../Logo";
 import clsx from "clsx";
@@ -25,11 +24,7 @@ const navbarItems: NavbarItem[] = [
   { label: "GitHub", to: "https://github.com/software-mansion/radon-ide/", position: "right" },
 ];
 
-export interface NavbarContentProps {
-  isThemeSwitcherShown?: boolean;
-}
-
-export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentProps) {
+export default function NavbarContent() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const location = useLocation();
   const active = location.pathname;
@@ -52,12 +47,9 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
                 </li>
               ) : null
             )}
-            <ThemeSwitcher isThemeSwitcherShown={isThemeSwitcherShown} />
           </ul>
         </div>
-        {/* To be changed */}
         <MobileSidebarToggle />
-        {/* --------------- */}
         <div className={styles.navbarRight}>
           <a
             href="https://github.com/software-mansion/radon-ide/"
@@ -72,7 +64,6 @@ export default function NavbarContent({ isThemeSwitcherShown }: NavbarContentPro
       </div>
       <NavbarMobileSidebar
         navbarItems={navbarItems}
-        isThemeSwitcherShown={isThemeSwitcherShown}
         onOpen={() => {
           setIsOpen(true);
         }}

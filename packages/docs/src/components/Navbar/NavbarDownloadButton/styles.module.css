@@ -28,6 +28,9 @@
   border: none;
   padding: 0;
 }
+.mobileDownload:hover {
+  background-color: transparent;
+}
 
 .mobileDownload p {
   color: var(--ifm-color-primary);

@@ -104,12 +104,13 @@
 
   --radon-gradient-green: #38a880;
   --radon-gradient-black: #11111100;
+  --radon-background-75: #111111bf;
 
   /* --- Text rebranding --- */
   --radon-color-primary: #fafafa;
   --radon-color-secondary: #a1a1a1;
   --radon-color-tertiary: #777777;
-  --radon-image-in-grid: #555555;
+  --radon-color-grey-90: #555555;
 
   --radon-color-background: var(--radon-color-black);
   --radon-subheading: var(--swm-navy-light-100);
@@ -119,6 +120,7 @@
   --radon-button-text: var(--radon-color-primary);
 
   --radon-icon: var(--swm-green-light-100);
+  --radon-image-in-grid: var(--radon-color-grey-90);
   --radon-active-tab: var(--swm-green-light-100);
   --radon-copyright: var(--radon-color-grey-dark);
 

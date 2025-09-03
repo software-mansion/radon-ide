@@ -7,6 +7,7 @@ import FooterNavigation from "./FooterNavigation";
 import GitHubIcon from "../GitHubIcon";
 import YouTubeIcon from "../YouTubeIcon";
 import XIcon from "../XIcon";
+import ColorModeToggle from "../ColorModeToggle";
 
 export default function Footer() {
   const {
@@ -45,6 +46,7 @@ export default function Footer() {
         </div>
         <div className={styles.right}>
           <FooterNavigation />
+          <ColorModeToggle />
         </div>
       </div>
     </footer>

@@ -23,7 +23,7 @@
 
 .right {
   display: grid;
-  grid-template-columns: 160px 160px 120px;
+  grid-template-columns: 160px 160px 160px 104px;
   gap: 80px;
 }
 
@@ -45,6 +45,10 @@
   font-size: 14px;
   font-weight: 400;
   line-height: 20px;
+}
+
+.brand a:hover {
+  color: var(--ifm-color-primary);
 }
 
 p.copyright {
@@ -72,6 +76,13 @@ a.icon:hover {
   opacity: 1;
 }
 
+@media (max-width: 1360px) {
+  .right {
+    gap: unset;
+    justify-content: space-between;
+    width: 100%;
+  }
+}
 @media (max-width: 1024px) {
   .container {
     flex-direction: column;
@@ -80,7 +91,7 @@ a.icon:hover {
   }
 }
 
-@media (max-width: 710px) {
+@media (max-width: 840px) {
   .right {
     grid-template-columns: 1fr;
     gap: 40px;

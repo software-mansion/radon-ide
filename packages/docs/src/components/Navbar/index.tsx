@@ -1,15 +1,11 @@
 import React from "react";
 import NavbarContent from "./NavbarContent";
-import NavbarLayout from "./NavbarLayout";
+import styles from "./styles.module.css";
 
-export interface NavbarProps {
-  isThemeSwitcherShown?: boolean;
-}
-
-export default function Navbar({ isThemeSwitcherShown }: NavbarProps) {
+export default function Navbar() {
   return (
-    <NavbarLayout>
-      <NavbarContent isThemeSwitcherShown={isThemeSwitcherShown} />
-    </NavbarLayout>
+    <nav aria-label="Navigation bar" className={`navbar ${styles.navbar}`}>
+      <NavbarContent />
+    </nav>
   );
 }

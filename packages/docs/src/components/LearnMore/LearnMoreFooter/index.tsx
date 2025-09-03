@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import styles from "./styles.module.css";
 import { track } from "@vercel/analytics";
 import DownloadButtons from "../../DownloadButtons";
+import RadonIconGreen from "../../RadonIconGreen";
 
 const RADON_IDE_MARKETPLACE_URL =
   "https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide";
@@ -42,14 +43,19 @@ const LearnMoreFooter = () => {
 
   return (
     <div className={`${styles.learnMoreSectionFooter} ${isLoaded ? styles.show : ""}`}>
-      <div className={styles.ellipse} />
-      <div className={styles.ellipse} />
       <div className={styles.contentContainer}>
         <h2>
-          Join {installs} engineers using Radon IDE for faster, more efficient app development.
+          Join <span>{installs} developers</span> using Radon IDE for faster, more efficient app
+          development
         </h2>
+        <div className={styles.buttonContainer}>
+          <DownloadButtons />
+        </div>
+        <div className={styles.try}>Try 30 days for free. No sign up or credit card required.</div>
       </div>
-      <DownloadButtons />
+      <div className={styles.radonIconGreen}>
+        <RadonIconGreen />
+      </div>
     </div>
   );
 };
