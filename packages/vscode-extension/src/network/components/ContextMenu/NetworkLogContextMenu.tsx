@@ -27,7 +27,7 @@ interface BaseContextMenuProps {
 }
 
 function BaseContextMenu({ children, menuItems }: BaseContextMenuProps) {
-  // Filter option state handling
+  // Filter-item state handling
   // Below is needed, because RadixUI modifies focus upon context menu closing.
   // If we wish to direct the focus to the input field when clicking a button, we have to
   // first wait for the closeAutoFocus event and only then direct the focus to the right component
