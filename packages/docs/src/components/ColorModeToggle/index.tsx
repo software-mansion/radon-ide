@@ -12,7 +12,7 @@ function ColorModeToggle() {
 
   const current = theme === "system" ? "system" : colorMode;
 
-  const handleModeChange = (mode: any) => {
+  const handleModeChange = (mode: "system" | "light" | "dark") => {
     if (mode === "system") {
       setColorMode(null);
       setTheme("system");
