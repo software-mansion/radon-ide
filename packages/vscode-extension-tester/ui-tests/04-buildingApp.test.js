@@ -52,8 +52,6 @@ describe("App clicking", () => {
   });
 
   beforeEach(async () => {
-    const bottomBar = new BottomBarPanel();
-    await bottomBar.toggle(false);
     await workbench.executeCommand("Remove All Breakpoints");
     openRadonIDEPanel(driver);
     await waitForAppToLoad(driver);

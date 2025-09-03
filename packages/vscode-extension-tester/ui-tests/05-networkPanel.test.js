@@ -28,8 +28,6 @@ describe("Network panel tests", () => {
   });
 
   beforeEach(async () => {
-    let bottomBar = new BottomBarPanel();
-    await bottomBar.toggle(false);
     openRadonIDEPanel(driver);
     await waitForAppToLoad(driver);
 
@@ -56,7 +54,7 @@ describe("Network panel tests", () => {
 
     view = new WebView();
     await view.switchBack();
-    bottomBar = new BottomBarPanel();
+    const bottomBar = new BottomBarPanel();
     await bottomBar.toggle(false);
     openRadonIDEPanel(driver);
   });

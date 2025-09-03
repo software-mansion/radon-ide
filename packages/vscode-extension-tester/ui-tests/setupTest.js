@@ -3,6 +3,7 @@ import {
   WebView,
   Workbench,
   EditorView,
+  BottomBarPanel,
 } from "vscode-extension-tester";
 import path from "path";
 import fs from "fs";
@@ -131,6 +132,8 @@ afterEach(async function () {
   }
   view = new WebView();
   await view.switchBack();
+  let bottomBar = new BottomBarPanel();
+  await bottomBar.toggle(false);
   await new EditorView().closeAllEditors();
 });
 
