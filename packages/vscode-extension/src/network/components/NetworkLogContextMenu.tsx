@@ -21,22 +21,25 @@ import {
   hasUrlParams,
 } from "../utils/requestFormatUtils";
 import "./NetworkLogContextMenu.css";
+import { useNetworkFilter } from "../providers/NetworkFilterProvider";
 
 interface NetworkLogContextMenuProps {
   children: React.ReactNode;
   networkLog: NetworkLog | null;
-  onSort: (column: NetworkLogColumn) => void;
+  handleSort: (column: NetworkLogColumn) => void;
   sortState: SortState;
 }
 
 function NetworkLogContextMenu({
   children,
   networkLog,
-  onSort,
+  handleSort,
   sortState,
 }: NetworkLogContextMenuProps) {
   const { getResponseBody } = useNetwork();
+  const { focusFilterInput } = useNetworkFilter();
   const [responseBody, setResponseBody] = useState<string | unknown>(null);
+  const [shouldFocusInput, setShouldFocusInput] = useState(false);
 
   const handleOpenChange = async (open: boolean) => {
     // prefetch response body only when needed
@@ -44,6 +47,17 @@ function NetworkLogContextMenu({
       return;
     }
     setResponseBody(await getResponseBody(networkLog));
+  };
+
+  const handleFocusFilter = () => {
+    setShouldFocusInput(true);
+  };
+
+  const handleFocusLose = () => {
+    if (shouldFocusInput) {
+      focusFilterInput();
+      setShouldFocusInput(false);
+    }
   };
 
   const handleCopyCurl = async () => {
@@ -113,7 +127,8 @@ function NetworkLogContextMenu({
       <ContextMenu.Portal>
         <ContextMenu.Content
           className="radix-context-menu-content"
-          onContextMenu={(e) => e.preventDefault()}>
+          onContextMenu={(e) => e.preventDefault()}
+          onCloseAutoFocus={handleFocusLose}>
           <ContextMenu.Sub>
             <ContextMenu.SubTrigger className="radix-context-menu-item radix-context-menu-subtrigger">
               <span className="codicon codicon-copy"></span>
@@ -210,7 +225,7 @@ function NetworkLogContextMenu({
                 {NETWORK_LOG_COLUMNS.map((column) => (
                   <ContextMenu.Sub key={column}>
                     <ContextMenu.Item
-                      onSelect={() => onSort(column)}
+                      onSelect={() => handleSort(column)}
                       className="radix-context-menu-item ">
                       {capitalize(column)}
                       <span className="radix-context-sort-arrow">
@@ -222,6 +237,14 @@ function NetworkLogContextMenu({
               </ContextMenu.SubContent>
             </ContextMenu.Portal>
           </ContextMenu.Sub>
+
+          <ContextMenu.Item
+            className="radix-context-menu-item"
+            onSelect={handleFocusFilter}
+            disabled={!networkLog || !networkLog.response}>
+            <span className="codicon codicon-filter"></span>
+            Filter
+          </ContextMenu.Item>
         </ContextMenu.Content>
       </ContextMenu.Portal>
     </ContextMenu.Root>

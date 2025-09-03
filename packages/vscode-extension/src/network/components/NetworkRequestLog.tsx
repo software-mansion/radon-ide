@@ -323,7 +323,7 @@ function TableBody({
           <NetworkLogContextMenu
             key={log.requestId}
             networkLog={log}
-            onSort={handleSort}
+            handleSort={handleSort}
             sortState={sortState}>
             <VscodeTableRow
               data-index={virtualRow.index}
