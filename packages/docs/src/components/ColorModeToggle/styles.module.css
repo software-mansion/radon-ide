@@ -3,6 +3,7 @@
   padding: 4px;
   display: flex;
   width: fit-content;
+  height: 40px;
 }
 
 button {
