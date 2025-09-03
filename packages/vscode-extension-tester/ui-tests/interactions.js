@@ -61,8 +61,9 @@ export async function openAndGetDebugConsoleElement(driver) {
 
   return debugConsole;
 }
-export async function clickOnSourceInDebugConsole(debugConsole, textPattern) {
-  const outputLine = await debugConsole.findElement(
+export async function clickOnSourceInDebugConsole(driver, textPattern) {
+  const outputLine = await findAndWaitForElement(
+    driver,
     By.xpath(`//span[contains(text(), '${textPattern}')]/ancestor::div[1]`)
   );
 

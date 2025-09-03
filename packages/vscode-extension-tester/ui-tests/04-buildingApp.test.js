@@ -87,7 +87,7 @@ describe("App clicking", () => {
 
     const debugConsole = await openAndGetDebugConsoleElement(driver);
     const { file, lineNumber } = await clickOnSourceInDebugConsole(
-      debugConsole,
+      driver,
       "console.log"
     );
 
@@ -108,7 +108,7 @@ describe("App clicking", () => {
 
     const debugConsole = await openAndGetDebugConsoleElement(driver);
     const { lineNumber } = await clickOnSourceInDebugConsole(
-      debugConsole,
+      driver,
       "console.log"
     );
 
@@ -137,7 +137,7 @@ describe("App clicking", () => {
 
     const debugConsole = await openAndGetDebugConsoleElement(driver);
     const { lineNumber } = await clickOnSourceInDebugConsole(
-      debugConsole,
+      driver,
       "console.log"
     );
 
