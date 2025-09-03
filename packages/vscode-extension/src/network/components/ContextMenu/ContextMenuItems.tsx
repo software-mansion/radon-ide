@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { capitalize } from "lodash";
 import * as ContextMenu from "@radix-ui/react-context-menu";
-import useNetworkTracker, { NetworkLog } from "../../hooks/useNetworkTracker";
+import { NetworkLog } from "../../hooks/useNetworkTracker";
 import { NetworkLogColumn, SortState } from "../../types/network";
 import { getSortIcon } from "../NetworkRequestLog";
 import { NETWORK_LOG_COLUMNS } from "../../utils/networkLogUtils";
@@ -18,6 +18,7 @@ import {
   getRequestPayload,
   hasUrlParams,
 } from "../../utils/requestFormatUtils";
+import { useNetwork } from "../../providers/NetworkProvider";
 
 export interface CopySubmenuProps {
   networkLog: NetworkLog | null;
@@ -44,7 +45,7 @@ export interface FilterItemConfig {
 
 export function CopySubmenu({ networkLog }: CopySubmenuProps) {
   const [responseBody, setResponseBody] = useState<string | unknown>(null);
-  const { getResponseBody } = useNetworkTracker();
+  const { getResponseBody } = useNetwork();
 
   const handleOpenChange = async (open: boolean) => {
     // In order to prevent fetching responseBody as soon as the request log is rendered
