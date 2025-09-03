@@ -1,0 +1,59 @@
+.title {
+  color: var(--ifm-color-primary);
+  text-align: center;
+  font-size: 48px;
+  line-height: 72px;
+}
+
+.container {
+  border: var(--radon-border-layout);
+  max-width: 100%;
+  margin: 80px 40px 0;
+}
+
+.planColumns {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr;
+  border-bottom: var(--radon-border-layout);
+}
+
+.table {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr;
+  border-bottom: var(--radon-border-layout);
+}
+
+.valueCell {
+  border-left: var(--radon-border-layout);
+  padding: 24px 40px;
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: center;
+}
+
+.valueCell p {
+  margin-bottom: 0;
+}
+
+.featureLabelCell,
+.columnName {
+  padding: 24px 16px;
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.featureLabelCell {
+  font-weight: 500;
+  color: var(--ifm-color-primary);
+}
+
+.columnName {
+  color: var(--radon-subheading);
+  align-self: end;
+}
+
+p.notIncluded {
+  color: var(--radon-subheading);
+}

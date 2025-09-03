@@ -3,6 +3,7 @@ import styles from "./styles.module.css";
 import PricingPlansList from "./PricingPlansList";
 import FAQ from "../Sections/FAQ";
 import clsx from "clsx";
+import ComparePricingPlans from "./ComparePricingPlans";
 
 const Pricing = () => {
   return (
@@ -17,6 +18,7 @@ const Pricing = () => {
       <div className={styles.wrapper}>
         <PricingPlansList />
       </div>
+      <ComparePricingPlans />
       <FAQ />
     </div>
   );

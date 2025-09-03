@@ -1,0 +1,19 @@
+.buttonLink,
+.buttonLinkEmpty {
+  display: flex;
+  height: 40px;
+  padding: 8px 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
+}
+
+.buttonLink {
+  background: var(--radon-button);
+}
+
+.buttonLinkEmpty {
+  background: transparent;
+  border: 1px solid var(--ifm-color-primary);
+}
