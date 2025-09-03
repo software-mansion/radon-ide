@@ -5,7 +5,8 @@
   background: var(--vscode-editor-background);
 }
 
-.table-row:hover {
+.table-row:hover,
+.table-row[data-state="open"] {
   cursor: pointer;
   background-color: var(--swm-url-select-highlighted-background);
 }
