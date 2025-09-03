@@ -52,11 +52,9 @@ describe("Smoke tests Radon IDE", () => {
     );
     await waitForElement(driver, approot);
 
-    const text = await approot.getText();
-    assert.equal(
-      text.toLowerCase(),
-      texts.expectedProjectName.toLowerCase(),
-      "Text of the element should be a name of the project"
-    );
+    await driver.wait(async () => {
+      const text = await approot.getText();
+      return text.toLowerCase() === texts.expectedProjectName.toLowerCase();
+    }, 5000);
   });
 });

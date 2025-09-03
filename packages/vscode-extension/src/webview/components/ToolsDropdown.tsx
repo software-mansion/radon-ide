@@ -10,8 +10,12 @@ import { useProject } from "../providers/ProjectProvider";
 import IconButton from "./shared/IconButton";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import Label from "./shared/Label";
-import { ProjectInterface, ToolState } from "../../common/Project";
+import { ProjectInterface } from "../../common/Project";
 import Tooltip from "./shared/Tooltip";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { use$ } from "@legendapp/state/react";
+import { ToolsState, ToolState } from "../../common/State";
+import { observable } from "@legendapp/state";
 
 interface DevToolCheckboxProps {
   label: string;
@@ -39,7 +43,7 @@ function DevToolCheckbox({
         style={{ color: enabled ? "inherit" : "var(--swm-disabled-text)" }}>
         {label}
         {checked && isPanelTool && (
-          <IconButton onClick={onSelect}>
+          <IconButton onClick={onSelect} dataTest={`dev-tool-${label}-open-button`}>
             <span className="codicon codicon-link-external" />
           </IconButton>
         )}
@@ -84,17 +88,29 @@ function ToolsList({
 }
 
 function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
   const { project, selectedDeviceSession } = useProject();
 
   const isRunning = selectedDeviceSession?.status === "running";
-  const toolsState = isRunning ? selectedDeviceSession.toolsState : {};
+
+  const profilingCPUState = use$(selectedDeviceSessionState.applicationSession.profilingCPUState);
+  const profilingReactState = use$(
+    selectedDeviceSessionState.applicationSession.profilingReactState
+  );
+
+  const toolsState = use$(
+    isRunning
+      ? selectedDeviceSessionState.applicationSession.toolsState
+      : observable<ToolsState>({})
+  );
 
   const allTools = Object.entries(toolsState);
   const panelTools = allTools.filter(([key, tool]) => tool.isPanelTool);
   const nonPanelTools = allTools.filter(([key, tool]) => !tool.isPanelTool);
 
-  const isProfilingCPU = isRunning && selectedDeviceSession.profilingCPUState !== "stopped";
-  const isProfilingReact = isRunning && selectedDeviceSession.profilingReactState !== "stopped";
+  const isProfilingCPU = isRunning && profilingCPUState !== "stopped";
+  const isProfilingReact = isRunning && profilingReactState !== "stopped";
 
   return (
     <DropdownMenuRoot>

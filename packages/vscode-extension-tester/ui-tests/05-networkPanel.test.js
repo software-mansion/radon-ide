@@ -1,31 +1,99 @@
-import { By } from "vscode-extension-tester";
+import { By, WebView, BottomBarPanel } from "vscode-extension-tester";
 import {
   findAndClickElementByTag,
   findAndWaitForElementByTag,
   findAndWaitForElement,
 } from "../utils/helpers.js";
-import { openRadonIDEPanel, findWebViewIFrame } from "./interactions.js";
+import {
+  openRadonIDEPanel,
+  findWebViewIFrame,
+  waitForAppToLoad,
+  addNewDevice,
+  deleteAllDevices,
+  getButtonCoordinates,
+  clickInsidePhoneScreen,
+} from "./interactions.js";
 import { get } from "./setupTest.js";
 
 describe("Network panel tests", () => {
-  const { driver } = get();
+  let driver, view, appWebsocket;
+
+  before(async () => {
+    ({ driver } = get());
+    await deleteAllDevices(driver);
+    await addNewDevice(driver, "newDevice");
+    await findAndClickElementByTag(driver, "modal-close-button");
+    view = new WebView();
+    await view.switchBack();
+  });
+
+  beforeEach(async () => {
+    openRadonIDEPanel(driver);
+    await waitForAppToLoad(driver);
+
+    await driver.wait(async () => {
+      appWebsocket = get().appWebsocket;
+      return appWebsocket != null;
+    }, 5000);
+
+    await findAndClickElementByTag(
+      driver,
+      "radon-top-bar-tools-dropdown-trigger"
+    );
+    await findAndWaitForElementByTag(driver, "radon-tools-dropdown-menu");
+    const networkSwitch = await findAndWaitForElementByTag(
+      driver,
+      "dev-tool-Network"
+    );
+
+    if (networkSwitch.getAttribute("value") !== "on") {
+      await networkSwitch.click();
+
+      view = new WebView();
+      await view.switchBack();
+      const bottomBar = new BottomBarPanel();
+      await bottomBar.toggle(false);
+      openRadonIDEPanel(driver);
+    }
+  });
 
   it("Should open the network panel", async () => {
-    await openRadonIDEPanel(driver);
-    await findAndWaitForElement(
+    await findAndClickElementByTag(
       driver,
-      By.css(`[data-test="phone-screen"]`),
-      "Timed out waiting for phone-screen",
-      600000
+      "radon-top-bar-tools-dropdown-trigger"
     );
-    await findAndClickElementByTag(driver, "radon-tools-button");
-    await findAndWaitForElementByTag(driver, "radon-tools-menu");
-    await findAndClickElementByTag(driver, "dev-tool-Network");
+    await findAndWaitForElementByTag(driver, "radon-tools-dropdown-menu");
+    await findAndClickElementByTag(driver, "dev-tool-Network-open-button");
+    await driver.sleep(1000);
+    const networkIFrame = await findWebViewIFrame(
+      driver,
+      "Radon Network Inspector"
+    );
+  });
+
+  it("Should show fetch in network panel", async () => {
+    const position = await getButtonCoordinates(
+      appWebsocket,
+      "fetch-request-button"
+    );
+    await clickInsidePhoneScreen(driver, position);
+
+    await findAndClickElementByTag(
+      driver,
+      "radon-top-bar-tools-dropdown-trigger"
+    );
+    await findAndWaitForElementByTag(driver, "radon-tools-dropdown-menu");
+    await findAndClickElementByTag(driver, "dev-tool-Network-open-button");
     await driver.sleep(1000);
     const networkIFrame = await findWebViewIFrame(
       driver,
       "Radon Network Inspector"
     );
     driver.switchTo().frame(networkIFrame);
+
+    await findAndWaitForElement(
+      driver,
+      By.css('[data-test="network-panel-row-ditto"]')
+    );
   });
 });

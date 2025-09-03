@@ -2,8 +2,10 @@ import {
   findAndWaitForElement,
   findAndClickElementByTag,
   waitUntilElementGone,
+  findAndWaitForElementByTag,
 } from "../utils/helpers.js";
-import { By } from "vscode-extension-tester";
+import { waitForMessage } from "./setupTest.js";
+import { By, WebView, Key } from "vscode-extension-tester";
 
 // #region Opening radon views
 export async function openRadonIDEPanel(driver) {
@@ -21,7 +23,16 @@ export async function openRadonIDEPanel(driver) {
     By.css('iframe[title="Radon IDE"]'),
     "Timed out waiting for Radon IDE iframe"
   );
+
   await driver.switchTo().frame(iframe);
+  await driver.wait(async () => {
+    try {
+      await driver.findElement(By.css("[data-test=vscode-progress-ring]"));
+    } catch {
+      return true;
+    }
+    return false;
+  });
 }
 export async function openRadonSettingsMenu(driver) {
   await findAndClickElementByTag(
@@ -29,15 +40,63 @@ export async function openRadonSettingsMenu(driver) {
     "radon-top-bar-settings-dropdown-trigger"
   );
 }
+export async function openRadonDeviceSettingsMenu(driver) {
+  await findAndClickElementByTag(
+    driver,
+    "radon-bottom-bar-device-settings-dropdown-trigger"
+  );
+}
+export async function openAndGetDebugConsoleElement(driver) {
+  await findAndClickElementByTag(driver, `radon-top-bar-debug-console-button`);
+
+  // without this delay function above does not open debug window
+  await driver.sleep(1000);
+  await driver.switchTo().defaultContent();
+  const debugConsole = await findAndWaitForElement(
+    driver,
+    // vscode sets this id
+    By.css(`#workbench\\.panel\\.repl`),
+    "Timed out waiting for debug console"
+  );
+
+  return debugConsole;
+}
+export async function clickOnSourceInDebugConsole(debugConsole, textPattern) {
+  const outputLine = await debugConsole.findElement(
+    By.xpath(`//span[contains(text(), '${textPattern}')]/ancestor::div[1]`)
+  );
+
+  const source = await outputLine.findElement(By.css(".source"));
+  const [file, lineNumber] = (await source.getText()).split(":");
+  await source.click();
+  return { file, lineNumber };
+}
 //#endregion
+
+// #region Radon settings
+export async function toggleShowTouches(driver) {
+  await findAndClickElementByTag(
+    driver,
+    "radon-bottom-bar-device-settings-dropdown-trigger"
+  );
+  await findAndClickElementByTag(driver, "device-settings-show-touches-switch");
+  driver.actions().sendKeys(Key.ESCAPE).perform();
+}
+// #endregion
 
 // #region Managing devices
 // #region Adding devices
 export async function openDeviceCreationModal(driver) {
-  await findAndClickElementByTag(
+  const dropdownButton = await findAndWaitForElementByTag(
     driver,
     "radon-bottom-bar-device-select-dropdown-trigger"
   );
+
+  await driver.wait(async () => {
+    return await dropdownButton.isEnabled();
+  });
+
+  dropdownButton.click();
 
   await findAndClickElementByTag(
     driver,
@@ -82,16 +141,13 @@ export async function fillDeviceCreationForm(driver, deviceName) {
     By.css('[data-test="creating-device-form-name-input"]'),
     "Timed out waiting for an element matching from system image list"
   );
+
   deviceNameInput.click();
-
-  await driver.executeScript("arguments[0].value = '';", deviceNameInput);
-  await deviceNameInput.clear();
-
+  await deviceNameInput.sendKeys(Key.chord(Key.COMMAND, "a"));
+  deviceNameInput.clear();
   await driver.wait(async () => {
-    const value = await deviceNameInput.getAttribute("value");
-    return value === "";
-  }, 3000);
-
+    return (await deviceNameInput.getAttribute("value")) === "";
+  });
   await deviceNameInput.sendKeys(deviceName);
 }
 
@@ -147,6 +203,7 @@ export async function deleteAllDevices(driver) {
       );
     }
   } catch (e) {}
+  findAndClickElementByTag(driver, `modal-close-button`);
 }
 // #endregion
 
@@ -163,14 +220,13 @@ export async function modifyDeviceName(driver, deviceName, modifiedDeviceName) {
     "Timed out waiting for device name input"
   );
 
-  await driver.executeScript("arguments[0].value = '';", deviceNameInput);
+  deviceNameInput.click();
+  await deviceNameInput.sendKeys(Key.chord(Key.COMMAND, "a"), Key.BACK_SPACE);
   await deviceNameInput.clear();
-
   await driver.wait(async () => {
-    const value = await deviceNameInput.getAttribute("value");
-    return value === "";
-  }, 3000);
-  deviceNameInput.sendKeys(modifiedDeviceName);
+    return (await deviceNameInput.getAttribute("value")) === "";
+  });
+  await deviceNameInput.sendKeys(modifiedDeviceName);
 
   await findAndClickElementByTag(driver, `renaming-device-view-save-button`);
 }
@@ -214,7 +270,80 @@ export async function findAndFillSaveFileForm(driver, filename) {
   );
 
   await quickInput.click();
-  await quickInput.sendKeys(Key.chord(Key.COMMAND, "a"), "~");
+  while ((await quickInput.getAttribute("value")).length > 0) {
+    await quickInput.sendKeys(Key.BACK_SPACE);
+    await quickInput.sendKeys(Key.DELETE);
+  }
+  await quickInput.sendKeys("~");
   await quickInput.sendKeys(filename, Key.ENTER);
 }
+// #region App manipulation
+
+export async function waitForAppToLoad(driver) {
+  await driver.wait(
+    async () => {
+      try {
+        const el = await driver.findElement(
+          By.css('[data-test="phone-screen"]')
+        );
+        if (await el.isDisplayed()) {
+          return el;
+        }
+      } catch {}
+
+      try {
+        const popup = await driver.findElement(
+          By.css('[data-test="alert-dialog-content"]')
+        );
+        if (await popup.isDisplayed()) {
+          findAndClickElementByTag(driver, "alert-open-logs-button");
+          return popup;
+        }
+      } catch {}
+
+      return false;
+    },
+    600000,
+    "Timed out waiting for phone-screen"
+  );
+}
+
+export async function clickInsidePhoneScreen(driver, position) {
+  const phoneScreen = await findAndWaitForElement(
+    driver,
+    By.css(`[data-test="phone-screen"]`),
+    "Timed out waiting for phone-screen"
+  );
+
+  const rect = await phoneScreen.getRect();
+  const phoneWidth = rect.width;
+  const phoneHeight = rect.height;
+
+  const actions = driver.actions({ bridge: true });
+  await actions
+    .move({
+      // origin is center of phoneScreen
+      origin: phoneScreen,
+      x: Math.floor((position.x + position.width / 2) * phoneWidth),
+      y: Math.floor((position.y + position.height / 2) * phoneHeight),
+    })
+    // .click() method does not trigger show touch on phone screen
+    .press()
+    .pause(250)
+    .release()
+    .perform();
+}
+
+export async function getButtonCoordinates(appWebsocket, buttonID) {
+  const messagePromise = waitForMessage();
+  appWebsocket.send(`getPosition:${buttonID}`);
+  const position = await messagePromise;
+
+  if (!position) {
+    throw new Error("No position received from getPosition");
+  }
+
+  return position;
+}
+
 // #endregion

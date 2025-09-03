@@ -1,4 +1,4 @@
-import { DeviceRotation } from "../../common/Project";
+import { DeviceRotation } from "../../common/State";
 
 type NormalizedFrameRect = {
   width: number;
@@ -94,12 +94,12 @@ function getOrientationPredicates(
  *  and app orientation - change, synchronizing the app's coordinate system with the preview's coordinate system.
  * */
 export function appToPreviewCoordinates(
-  appOrientation: DeviceRotation | undefined,
+  appOrientation: DeviceRotation | null,
   deviceOrientation: DeviceRotation,
   frameRect: NormalizedFrameRect
 ): NormalizedFrameRect {
   if (!appOrientation) {
-    // if the app orientation is undefined, we assume that
+    // if the app orientation is null, we assume that
     // the app's orientation is the same as the device's rotation
     return frameRect;
   }
@@ -185,12 +185,12 @@ export function appToPreviewCoordinates(
  *  and app orientation - change, synchronizing the preview's coordinate system with the app's coordinate system.
  * */
 export function previewToAppCoordinates(
-  appOrientation: DeviceRotation | undefined,
+  appOrientation: DeviceRotation | null,
   deviceOrientation: DeviceRotation,
   coords: NormalizedCoordinates
 ): NormalizedCoordinates {
   if (!appOrientation) {
-    // if the app orientation is undefined, we assume that
+    // if the app orientation is null, we assume that
     // the app's orientation is the same as the device's rotation
     return coords;
   }

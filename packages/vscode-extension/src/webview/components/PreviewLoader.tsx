@@ -8,7 +8,6 @@ import ProgressBar from "./shared/ProgressBar";
 
 import {
   DeviceSessionStateStarting,
-  DeviceRotation,
   StartupMessage,
   StartupStageWeight,
 } from "../../common/Project";
@@ -17,7 +16,7 @@ import Button from "./shared/Button";
 import { Output } from "../../common/OutputChannel";
 import { useStore } from "../providers/storeProvider";
 import { use$ } from "@legendapp/state/react";
-import { DevicePlatform } from "../../common/State";
+import { DevicePlatform, DeviceRotation } from "../../common/State";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => acc + cur,
@@ -141,7 +140,7 @@ function PreviewLoader({
         </button>
         <ProgressBar progress={progress} />
         {isLoadingSlowly && isWaitingForApp && (
-          <div className="preview-loader-submessage">
+          <div className="preview-loader-submessage" data-test="app-preview-loader-submessage">
             Loading app takes longer than expected. If nothing happens after a while try the below
             options to troubleshoot:
           </div>

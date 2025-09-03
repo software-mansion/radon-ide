@@ -25,7 +25,7 @@ export default function Modal({ title, component, open, setOpen, headerShown }: 
           <Dialog.Close asChild>
             <IconButton
               className="modal-close-button"
-              data-test="modal-close-button"
+              dataTest="modal-close-button"
               aria-label="Close"
               onClick={close}>
               <span className="codicon codicon-close" />

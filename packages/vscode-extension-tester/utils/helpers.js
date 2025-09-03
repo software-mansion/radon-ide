@@ -1,5 +1,6 @@
 import { until } from "selenium-webdriver";
-import { By } from "vscode-extension-tester";
+import { By, TextEditor, WebView, ActivityBar } from "vscode-extension-tester";
+import * as path from "path";
 
 export async function waitForElement(driver, element, timeout = 5000) {
   await driver.wait(
@@ -63,4 +64,39 @@ export async function waitUntilElementGone(
     timeout,
     message
   );
+}
+
+export async function getCursorLineInEditor(driver) {
+  const editor = new TextEditor();
+  return (await editor.getCoordinates())[0];
+}
+
+export async function getFileNameInEditor(driver) {
+  const editor = new TextEditor();
+  const fullPath = await editor.getFilePath();
+  return path.basename(fullPath);
+}
+
+export async function getDebuggerStopLineNumber(driver) {
+  const view = new WebView();
+  await view.switchBack();
+
+  const btn = await new ActivityBar().getViewControl("Run");
+  const debugView = await btn.openView();
+  const num = 1;
+
+  const callStack = await debugView.getCallStackSection();
+  const items = await callStack.getVisibleItems();
+  const item = await items.at(num);
+  const tooltip = await item.getTooltip();
+
+  let line;
+
+  const match = tooltip.match(/line (\d+)/);
+  if (match) {
+    line = parseInt(match[1], 10);
+    console.log("Line number:", line);
+  }
+
+  return line;
 }

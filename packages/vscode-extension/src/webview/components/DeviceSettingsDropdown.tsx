@@ -16,7 +16,6 @@ import { useProject } from "../providers/ProjectProvider";
 import {
   AppPermissionType,
   DeviceRotationDirection,
-  DeviceRotation,
   DeviceSettings,
   ProjectInterface,
 } from "../../common/Project";
@@ -29,7 +28,7 @@ import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
-import { DevicePlatform } from "../../common/State";
+import { DevicePlatform, DeviceRotation } from "../../common/State";
 
 const contentSizes = [
   "xsmall",
@@ -321,6 +320,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Show Touches
             <Switch.Root
               className="switch-root small-switch"
+              data-test="device-settings-show-touches-switch"
               id="show-touches"
               onCheckedChange={(checked) =>
                 project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })

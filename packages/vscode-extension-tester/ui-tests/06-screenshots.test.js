@@ -1,36 +1,47 @@
-import { By, Key } from "vscode-extension-tester";
+import { WebView } from "vscode-extension-tester";
 import {
   findAndWaitForElement,
   findAndClickElementByTag,
 } from "../utils/helpers.js";
-import { openRadonIDEPanel, findAndFillSaveFileForm } from "./interactions.js";
+import {
+  openRadonIDEPanel,
+  findAndFillSaveFileForm,
+  waitForAppToLoad,
+  deleteAllDevices,
+  addNewDevice,
+} from "./interactions.js";
 import { get } from "./setupTest.js";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
 describe("screenshots panel tests", () => {
-  const { driver } = get();
+  let driver, view;
   const homeDir = os.homedir();
+
+  before(async () => {
+    ({ driver } = get());
+    await deleteAllDevices(driver);
+    await addNewDevice(driver, "newDevice");
+    await findAndClickElementByTag(driver, "modal-close-button");
+    view = new WebView();
+    await view.switchBack();
+  });
+
+  beforeEach(async () => {
+    await openRadonIDEPanel(driver);
+    await waitForAppToLoad(driver);
+  });
 
   it("Should take a screenshot", async () => {
     const filePath = path.join(homeDir, "testScreenshot..png");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    await openRadonIDEPanel(driver);
-
-    await findAndWaitForElement(
-      driver,
-      By.css(`[data-test="phone-screen"]`),
-      "Timed out waiting for phone-screen",
-      600000
-    );
-
     await findAndClickElementByTag(driver, "capture-screenshot-button");
     await driver.sleep(1000);
 
-    findAndFillSaveFileForm(driver, "testScreenshot");
+    await findAndFillSaveFileForm(driver, "testScreenshot");
 
     await driver.wait(
       async () => {
@@ -46,21 +57,13 @@ describe("screenshots panel tests", () => {
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    await openRadonIDEPanel(driver);
-
-    await findAndWaitForElement(
-      driver,
-      By.css(`[data-test="phone-screen"]`),
-      "Timed out waiting for phone-screen",
-      600000
-    );
-
     await findAndClickElementByTag(driver, "toggle-recording-button");
+    // recording for 4 sec
     await driver.sleep(4000);
     await findAndClickElementByTag(driver, "toggle-recording-button");
     await driver.sleep(1000);
 
-    findAndFillSaveFileForm(driver, "testRecording");
+    await findAndFillSaveFileForm(driver, "testRecording");
 
     await driver.wait(
       async () => {

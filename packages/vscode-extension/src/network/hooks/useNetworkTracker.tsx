@@ -91,6 +91,7 @@ const useNetworkTracker = (): NetworkTracker => {
   const processServerMessage = (msg: string, newLogs: NetworkLog[]): void => {
     try {
       const parsedMsg: WebSocketMessage = JSON.parse(msg);
+
       const { method, params } = parsedMsg;
 
       if (!params?.requestId) {
@@ -161,7 +162,6 @@ const useNetworkTracker = (): NetworkTracker => {
     if (serverMessages.length === 0) {
       return;
     }
-
     setNetworkLogs((prevLogs) => {
       const newLogs = [...prevLogs];
       serverMessages.map((msg) => processServerMessage(msg, newLogs));
