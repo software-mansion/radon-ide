@@ -1,0 +1,37 @@
+.preventfulContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.headerWrapper {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 0 40px;
+}
+
+.titleContainer {
+  gap: 24px;
+  width: 100%;
+  max-width: 1280px;
+}
+
+.headingLabel {
+  margin-top: 60px;
+  margin-bottom: 20px;
+  text-align: center;
+  text-wrap: balance;
+  font-size: 64px;
+  font-weight: 400;
+}
+
+.subheadingLabel {
+  text-align: center;
+  text-wrap: balance;
+  font-weight: 400;
+  font-size: 20px;
+  margin-bottom: 32px;
+  color: var(--radon-subheading);
+}

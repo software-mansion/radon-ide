@@ -19,11 +19,11 @@ export default function FeaturesGridCard({
       <div className={styles.content}>
         <div className={styles.header}>
           <p className={styles.label}>{label}</p>
-          <h1 className={styles.title}> {title}</h1>
+          <p className={styles.title}> {title}</p>
         </div>
         <div className={styles.textContent}>{content}</div>
       </div>
-      <img src={imageSrc}></img>
+      <img className={styles.gridSvg} src={imageSrc}></img>
     </div>
   );
 }

@@ -49,15 +49,17 @@ export default function FeaturesGrid() {
     },
   ];
   return (
-    <div className={styles.container}>
-      {featuresList.map((feature, index) => (
-        <FeaturesGridCard
-          label={feature.label}
-          title={feature.title}
-          content={feature.content}
-          imageSrc={feature.imageSrc}
-        />
-      ))}
+    <div className={styles.wrapper}>
+      <div className={styles.container}>
+        {featuresList.map((feature, index) => (
+          <FeaturesGridCard
+            label={feature.label}
+            title={feature.title}
+            content={feature.content}
+            imageSrc={feature.imageSrc}
+          />
+        ))}
+      </div>
     </div>
   );
 }
