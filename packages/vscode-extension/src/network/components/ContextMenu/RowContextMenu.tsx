@@ -1,5 +1,10 @@
 import { NetworkLog } from "../../hooks/useNetworkTracker";
-import { ContextMenuItems, NetworkLogColumn, SortState } from "../../types/network";
+import {
+  ContextMenuItemName,
+  ContextMenuItems,
+  NetworkLogColumn,
+  SortState,
+} from "../../types/network";
 import "./NetworkLogContextMenu.css";
 import NetworkLogContextMenu from "./NetworkLogContextMenu";
 
@@ -12,9 +17,9 @@ interface RowContextMenuProps {
 
 function RowContextMenu({ children, networkLog, handleSort, sortState }: RowContextMenuProps) {
   const menuItems: ContextMenuItems = {
-    copy: { networkLog, enabled: true },
-    sort: { handleSort, sortState, enabled: true },
-    filter: { enabled: true },
+    [ContextMenuItemName.Copy]: { networkLog, enabled: true },
+    [ContextMenuItemName.Sort]: { handleSort, sortState, enabled: true },
+    [ContextMenuItemName.Filter]: { enabled: true },
   };
 
   return <NetworkLogContextMenu menuItems={menuItems}>{children}</NetworkLogContextMenu>;
