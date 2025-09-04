@@ -94,7 +94,7 @@ const MjpegImg = forwardRef<
         ref={ref}
         mediaRef={sourceImgRef}
         src={src}
-        data-test="phone-screen"
+        data-testid="phone-screen"
         {...rest}
         alwaysPortrait
       />

@@ -61,7 +61,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
           side === "right" && "icon-button-right",
           className
         )}
-        data-test={dataTest}
+        data-testid={dataTest}
         {...rest}
         ref={ref}>
         {children}

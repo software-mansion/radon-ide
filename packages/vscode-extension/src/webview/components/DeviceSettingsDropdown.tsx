@@ -129,7 +129,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="dropdown-menu-content device-settings-content"
-          data-test="device-settings-dropdown-menu"
+          data-testid="device-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
           <form>
@@ -148,7 +148,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                   className="radio-group-item"
                   value="light"
                   id="r1"
-                  data-test="device-appearance-light">
+                  data-testid="device-appearance-light">
                   <RadioGroup.Indicator className="radio-group-indicator" />
                 </RadioGroup.Item>
                 <label className="radio-group-label" htmlFor="r1">
@@ -160,7 +160,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                   className="radio-group-item"
                   value="dark"
                   id="r2"
-                  data-test="device-appearance-dark">
+                  data-testid="device-appearance-dark">
                   <RadioGroup.Indicator className="radio-group-indicator" />
                 </RadioGroup.Item>
                 <label className="radio-group-label" htmlFor="r2">
@@ -320,7 +320,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Show Touches
             <Switch.Root
               className="switch-root small-switch"
-              data-test="device-settings-show-touches-switch"
+              data-testid="device-settings-show-touches-switch"
               id="show-touches"
               onCheckedChange={(checked) =>
                 project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })
@@ -389,7 +389,7 @@ function CommandItem({
         project.runCommand(commandName);
       }}
       disabled={disabled}
-      data-test={dataTest}>
+      data-testid={dataTest}>
       <span className="dropdown-menu-item-wraper">
         <span className={`codicon codicon-${icon}`} />
         <div className="dropdown-menu-item-content">

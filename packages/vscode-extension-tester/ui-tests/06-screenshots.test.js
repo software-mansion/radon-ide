@@ -1,14 +1,10 @@
 import { WebView } from "vscode-extension-tester";
+import { ElementHelperService } from "../utils/helpers.js";
 import {
-  findAndWaitForElement,
-  findAndClickElementByTag,
-} from "../utils/helpers.js";
-import {
-  openRadonIDEPanel,
+  RadonViewsService,
+  ManagingDevicesService,
+  AppManipulationService,
   findAndFillSaveFileForm,
-  waitForAppToLoad,
-  deleteAllDevices,
-  addNewDevice,
 } from "./interactions.js";
 import { get } from "./setupTest.js";
 import * as fs from "fs";
@@ -16,21 +12,31 @@ import * as os from "os";
 import * as path from "path";
 
 describe("screenshots panel tests", () => {
-  let driver, view;
+  let driver,
+    view,
+    elementHelperService,
+    radonViewsService,
+    managingDevicesService,
+    appManipulationService;
   const homeDir = os.homedir();
 
   before(async () => {
     ({ driver } = get());
-    await deleteAllDevices(driver);
-    await addNewDevice(driver, "newDevice");
-    await findAndClickElementByTag(driver, "modal-close-button");
+    elementHelperService = new ElementHelperService(driver);
+    radonViewsService = new RadonViewsService(driver);
+    managingDevicesService = new ManagingDevicesService(driver);
+    appManipulationService = new AppManipulationService(driver);
+
+    await managingDevicesService.deleteAllDevices();
+    await managingDevicesService.addNewDevice("newDevice");
+    await elementHelperService.findAndClickElementByTag("modal-close-button");
     view = new WebView();
     await view.switchBack();
   });
 
   beforeEach(async () => {
-    await openRadonIDEPanel(driver);
-    await waitForAppToLoad(driver);
+    await radonViewsService.openRadonIDEPanel();
+    await appManipulationService.waitForAppToLoad();
   });
 
   it("Should take a screenshot", async () => {
@@ -38,7 +44,9 @@ describe("screenshots panel tests", () => {
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    await findAndClickElementByTag(driver, "capture-screenshot-button");
+    await elementHelperService.findAndClickElementByTag(
+      "capture-screenshot-button"
+    );
     await driver.sleep(1000);
 
     await findAndFillSaveFileForm(driver, "testScreenshot");
@@ -57,13 +65,17 @@ describe("screenshots panel tests", () => {
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    await findAndClickElementByTag(driver, "toggle-recording-button");
+    await elementHelperService.findAndClickElementByTag(
+      "toggle-recording-button"
+    );
     // recording for 4 sec
     await driver.sleep(4000);
-    await findAndClickElementByTag(driver, "toggle-recording-button");
+    await elementHelperService.findAndClickElementByTag(
+      "toggle-recording-button"
+    );
     await driver.sleep(1000);
 
-    await findAndFillSaveFileForm(driver, "testRecording");
+    await elementHelperService.findAndFillSaveFileForm("testRecording");
 
     await driver.wait(
       async () => {

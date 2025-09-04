@@ -312,7 +312,7 @@ function TableBody({
         return (
           <VscodeTableRow
             data-index={virtualRow.index}
-            data-test={`network-panel-row-${getNetworkLogValue(log, NetworkLogColumn.Name)}`}
+            data-testid={`network-panel-row-${getNetworkLogValue(log, NetworkLogColumn.Name)}`}
             key={log.requestId}
             // Style needs to be overwritten using virtualizer values
             style={{

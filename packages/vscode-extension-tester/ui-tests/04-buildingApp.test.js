@@ -7,45 +7,47 @@ import {
 } from "vscode-extension-tester";
 import { assert } from "chai";
 import {
-  findAndClickElementByTag,
-  findAndWaitForElement,
+  ElementHelperService,
   getFileNameInEditor,
   getDebuggerStopLineNumber,
   getCursorLineInEditor,
 } from "../utils/helpers.js";
 import {
-  addNewDevice,
-  openRadonIDEPanel,
-  clickInsidePhoneScreen,
-  deleteAllDevices,
-  getButtonCoordinates,
-  openAndGetDebugConsoleElement,
-  clickOnSourceInDebugConsole,
-  waitForAppToLoad,
-  toggleShowTouches,
+  RadonSettingsService,
+  RadonViewsService,
+  ManagingDevicesService,
+  AppManipulationService,
 } from "./interactions.js";
-import { get, waitForMessage } from "./setupTest.js";
+import { get } from "./setupTest.js";
 
 describe("App clicking", () => {
-  let driver, appWebsocket, view, workbench;
-
-  async function clickInPhoneAndWaitForMessage(position) {
-    const messagePromise = waitForMessage();
-    await clickInsidePhoneScreen(driver, position);
-    return messagePromise;
-  }
+  let driver,
+    appWebsocket,
+    view,
+    workbench,
+    elementHelperService,
+    radonViewsService,
+    managingDevicesService,
+    appManipulationService,
+    radonSettingsService;
 
   before(async () => {
     ({ driver, view, workbench } = get());
 
-    await deleteAllDevices(driver);
-    await addNewDevice(driver, "newDevice");
+    elementHelperService = new ElementHelperService(driver);
+    radonViewsService = new RadonViewsService(driver);
+    managingDevicesService = new ManagingDevicesService(driver);
+    appManipulationService = new AppManipulationService(driver);
+    radonSettingsService = new RadonSettingsService(driver);
+
+    await managingDevicesService.deleteAllDevices();
+    await managingDevicesService.addNewDevice("newDevice");
     try {
-      await findAndClickElementByTag(driver, `modal-close-button`);
+      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
     } catch {}
 
-    await waitForAppToLoad(driver);
-    await toggleShowTouches(driver);
+    await appManipulationService.waitForAppToLoad();
+    await radonSettingsService.toggleShowTouches();
 
     view = new WebView();
     await view.switchBack();
@@ -53,8 +55,8 @@ describe("App clicking", () => {
 
   beforeEach(async () => {
     await workbench.executeCommand("Remove All Breakpoints");
-    openRadonIDEPanel(driver);
-    await waitForAppToLoad(driver);
+    radonViewsService.openRadonIDEPanel();
+    await appManipulationService.waitForAppToLoad();
 
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
@@ -67,48 +69,53 @@ describe("App clicking", () => {
   });
 
   it("Should click in app", async () => {
-    const position = await getButtonCoordinates(
+    const position = await appManipulationService.getButtonCoordinates(
       appWebsocket,
       "console-log-button"
     );
 
-    const message = await clickInPhoneAndWaitForMessage(position);
+    const message = await appManipulationService.clickInPhoneAndWaitForMessage(
+      position
+    );
 
     assert.equal(message.action, "console-log-button");
   });
 
   it("should jump to the correct line in the editor", async () => {
-    const position = await getButtonCoordinates(
+    const position = await appManipulationService.getButtonCoordinates(
       appWebsocket,
       "console-log-button"
     );
 
-    await clickInPhoneAndWaitForMessage(position);
+    await appManipulationService.clickInPhoneAndWaitForMessage(position);
 
-    const debugConsole = await openAndGetDebugConsoleElement(driver);
-    const { file, lineNumber } = await clickOnSourceInDebugConsole(
-      driver,
-      "console.log"
-    );
+    const debugConsole =
+      await radonViewsService.openAndGetDebugConsoleElement();
+    const { file, lineNumber } =
+      await radonViewsService.clickOnSourceInDebugConsole(
+        debugConsole,
+        "console.log"
+      );
 
-    const fileName = await getFileNameInEditor(driver);
-    const cursorLineNumber = await getCursorLineInEditor(driver);
+    const fileName = await getFileNameInEditor();
+    const cursorLineNumber = await getCursorLineInEditor();
 
     assert.equal(fileName, await file);
     assert.equal(lineNumber, cursorLineNumber);
   });
 
   it("Should stop on breakpoint", async () => {
-    const position = await getButtonCoordinates(
+    const position = await appManipulationService.getButtonCoordinates(
       appWebsocket,
       "console-log-button"
     );
 
-    await clickInPhoneAndWaitForMessage(position);
+    await appManipulationService.clickInPhoneAndWaitForMessage(position);
 
-    const debugConsole = await openAndGetDebugConsoleElement(driver);
-    const { lineNumber } = await clickOnSourceInDebugConsole(
-      driver,
+    const debugConsole =
+      await radonViewsService.openAndGetDebugConsoleElement();
+    const { lineNumber } = await radonViewsService.clickOnSourceInDebugConsole(
+      debugConsole,
       "console.log"
     );
 
@@ -118,26 +125,27 @@ describe("App clicking", () => {
     const editor = new TextEditor();
     await editor.toggleBreakpoint(lineNumber);
 
-    await openRadonIDEPanel(driver);
+    await radonViewsService.openRadonIDEPanel();
 
-    await clickInsidePhoneScreen(driver, position);
+    await appManipulationService.clickInsidePhoneScreen(position);
 
-    const debuggerLineStop = await getDebuggerStopLineNumber(driver);
+    const debuggerLineStop = await getDebuggerStopLineNumber();
 
     assert.equal(lineNumber, debuggerLineStop);
   });
 
   it("Should show breakpoint stop view on phone screen", async () => {
-    const position = await getButtonCoordinates(
+    const position = await appManipulationService.getButtonCoordinates(
       appWebsocket,
       "console-log-button"
     );
 
-    await clickInPhoneAndWaitForMessage(position);
+    await appManipulationService.clickInPhoneAndWaitForMessage(position);
 
-    const debugConsole = await openAndGetDebugConsoleElement(driver);
-    const { lineNumber } = await clickOnSourceInDebugConsole(
-      driver,
+    const debugConsole =
+      await radonViewsService.openAndGetDebugConsoleElement();
+    const { lineNumber } = await radonViewsService.clickOnSourceInDebugConsole(
+      debugConsole,
       "console.log"
     );
 
@@ -147,17 +155,16 @@ describe("App clicking", () => {
     const editor = new TextEditor();
     await editor.toggleBreakpoint(lineNumber);
 
-    await openRadonIDEPanel(driver);
-    await clickInsidePhoneScreen(driver, position);
+    await radonViewsService.openRadonIDEPanel();
+    await appManipulationService.clickInsidePhoneScreen(position);
 
     view = new WebView();
     await view.switchBack();
 
-    await openRadonIDEPanel(driver);
+    await radonViewsService.openRadonIDEPanel();
 
-    await findAndWaitForElement(
-      driver,
-      By.css(`[data-test="app-debugger-container"]`),
+    await elementHelperService.findAndWaitForElement(
+      By.css(`[data-testid="app-debugger-container"]`),
       "Timed out waiting for debugger stop view in app"
     );
   });

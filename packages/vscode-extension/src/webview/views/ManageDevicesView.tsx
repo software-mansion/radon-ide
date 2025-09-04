@@ -62,7 +62,7 @@ function DeviceRow({
       className="device-row"
       onClick={selectDevice}
       data-selected={isSelected}
-      data-test={dataTest}>
+      data-testid={dataTest}>
       <div className={isSelected ? "device-icon-selected" : "device-icon"}>
         {!deviceInfo.available ? (
           <Tooltip
@@ -115,7 +115,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
-          data-test={`manage-devices-menu-rename-button-device-${deviceInfo.displayName}`}
+          data-testid={`manage-devices-menu-rename-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceRename(deviceInfo);
@@ -130,7 +130,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
-          data-test={`manage-devices-menu-delete-button-device-${deviceInfo.displayName}`}
+          data-testid={`manage-devices-menu-delete-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceDelete(deviceInfo);
@@ -212,7 +212,7 @@ function ManageDevicesView() {
   }
 
   return (
-    <div className="manage-devices-container" data-test="manage-devices-view">
+    <div className="manage-devices-container" data-testid="manage-devices-view">
       {iosDevices.length > 0 && (
         <>
           <Label>iOS Devices</Label>

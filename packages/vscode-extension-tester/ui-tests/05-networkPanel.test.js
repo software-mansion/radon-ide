@@ -1,71 +1,80 @@
 import { By, WebView, BottomBarPanel, Key } from "vscode-extension-tester";
+import { ElementHelperService } from "../utils/helpers.js";
 import {
-  findAndClickElementByTag,
-  findAndWaitForElementByTag,
-  findAndWaitForElement,
-} from "../utils/helpers.js";
-import {
-  openRadonIDEPanel,
   findWebViewIFrame,
-  waitForAppToLoad,
-  addNewDevice,
-  deleteAllDevices,
-  getButtonCoordinates,
-  clickInsidePhoneScreen,
+  RadonViewsService,
+  ManagingDevicesService,
+  AppManipulationService,
 } from "./interactions.js";
 import { get } from "./setupTest.js";
 
 describe("Network panel tests", () => {
-  let driver, view, appWebsocket;
+  let driver,
+    view,
+    appWebsocket,
+    elementHelperService,
+    radonViewsService,
+    managingDevicesService,
+    appManipulationService;
 
   before(async () => {
     ({ driver } = get());
-    await deleteAllDevices(driver);
-    await addNewDevice(driver, "newDevice");
-    await findAndClickElementByTag(driver, "modal-close-button");
+    elementHelperService = new ElementHelperService(driver);
+    radonViewsService = new RadonViewsService(driver);
+    managingDevicesService = new ManagingDevicesService(driver);
+    appManipulationService = new AppManipulationService(driver);
+
+    await managingDevicesService.deleteAllDevices();
+    await managingDevicesService.addNewDevice("newDevice");
+    await elementHelperService.findAndClickElementByTag("modal-close-button");
     view = new WebView();
     await view.switchBack();
   });
 
   beforeEach(async () => {
-    openRadonIDEPanel(driver);
-    await waitForAppToLoad(driver);
+    await radonViewsService.openRadonIDEPanel();
+    await appManipulationService.waitForAppToLoad();
 
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
     }, 5000);
 
-    await findAndClickElementByTag(
-      driver,
+    await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-tools-dropdown-trigger"
     );
-    await findAndWaitForElementByTag(driver, "radon-tools-dropdown-menu");
-    const networkSwitch = await findAndWaitForElementByTag(
-      driver,
+    await elementHelperService.findAndWaitForElementByTag(
+      "radon-tools-dropdown-menu"
+    );
+    const networkSwitch = await elementHelperService.findAndWaitForElementByTag(
       "dev-tool-Network"
     );
 
     if ((await networkSwitch.getAttribute("data-state")) !== "checked") {
       await networkSwitch.click();
     } else {
-      await findAndClickElementByTag(driver, "dev-tool-Network-open-button");
+      await elementHelperService.findAndClickElementByTag(
+        "dev-tool-Network-open-button"
+      );
     }
 
     view = new WebView();
     await view.switchBack();
     const bottomBar = new BottomBarPanel();
     await bottomBar.toggle(false);
-    openRadonIDEPanel(driver);
+    await radonViewsService.openRadonIDEPanel();
   });
 
   it("Should open the network panel", async () => {
-    await findAndClickElementByTag(
-      driver,
+    await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-tools-dropdown-trigger"
     );
-    await findAndWaitForElementByTag(driver, "radon-tools-dropdown-menu");
-    await findAndClickElementByTag(driver, "dev-tool-Network-open-button");
+    await elementHelperService.findAndWaitForElementByTag(
+      "radon-tools-dropdown-menu"
+    );
+    await elementHelperService.findAndClickElementByTag(
+      "dev-tool-Network-open-button"
+    );
     await driver.sleep(1000);
     const networkIFrame = await findWebViewIFrame(
       driver,
@@ -74,18 +83,21 @@ describe("Network panel tests", () => {
   });
 
   it("Should show fetch in network panel", async () => {
-    const position = await getButtonCoordinates(
+    const position = await appManipulationService.getButtonCoordinates(
       appWebsocket,
       "fetch-request-button"
     );
-    await clickInsidePhoneScreen(driver, position);
+    await appManipulationService.clickInsidePhoneScreen(position);
 
-    await findAndClickElementByTag(
-      driver,
+    await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-tools-dropdown-trigger"
     );
-    await findAndWaitForElementByTag(driver, "radon-tools-dropdown-menu");
-    await findAndClickElementByTag(driver, "dev-tool-Network-open-button");
+    await elementHelperService.findAndWaitForElementByTag(
+      "radon-tools-dropdown-menu"
+    );
+    await elementHelperService.findAndClickElementByTag(
+      "dev-tool-Network-open-button"
+    );
     await driver.sleep(1000);
     const networkIFrame = await findWebViewIFrame(
       driver,
@@ -93,9 +105,8 @@ describe("Network panel tests", () => {
     );
     driver.switchTo().frame(networkIFrame);
 
-    await findAndWaitForElement(
-      driver,
-      By.css('[data-test="network-panel-row-ditto"]')
+    await elementHelperService.findAndWaitForElementByTag(
+      "network-panel-row-ditto"
     );
   });
 });
