@@ -268,26 +268,22 @@ export class AppManipulationService {
   async waitForAppToLoad() {
     await this.driver.wait(
       async () => {
-        try {
-          const el = await this.driver.findElement(
-            By.css('[data-testid="phone-screen"]')
-          );
-          if (await el.isDisplayed()) {
-            return el;
-          }
-        } catch {}
+        const phoneScreen = await this.elementHelperService.safeFind(
+          By.css('[data-testid="phone-screen"]')
+        );
+        if (await phoneScreen?.isDisplayed()) {
+          return phoneScreen;
+        }
 
-        try {
-          const popup = await this.driver.findElement(
-            By.css('[data-testid="alert-dialog-content"]')
+        const errorPopup = await this.elementHelperService.safeFind(
+          By.css('[data-testid="alert-dialog-content"]')
+        );
+        if (await errorPopup?.isDisplayed()) {
+          this.elementHelperService.findAndClickElementByTag(
+            "alert-open-logs-button"
           );
-          if (await popup.isDisplayed()) {
-            this.elementHelperService.findAndClickElementByTag(
-              "alert-open-logs-button"
-            );
-            return popup;
-          }
-        } catch {}
+          return errorPopup;
+        }
 
         return false;
       },

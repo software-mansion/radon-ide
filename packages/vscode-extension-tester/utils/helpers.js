@@ -61,6 +61,11 @@ export class ElementHelperService {
       message
     );
   }
+
+  async safeFind(selector) {
+    const elements = await this.driver.findElements(selector);
+    return elements.length > 0 ? elements[0] : null;
+  }
 }
 
 export async function getCursorLineInEditor() {
