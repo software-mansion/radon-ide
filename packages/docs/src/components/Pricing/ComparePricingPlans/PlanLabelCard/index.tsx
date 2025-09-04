@@ -9,6 +9,7 @@ interface PlanLabelCardProps {
   yearlyFullPrice?: number;
   buttonLabel: string;
   stylingFilled?: boolean;
+  href?: string;
 }
 
 export default function PlanLabelCard({
@@ -18,6 +19,7 @@ export default function PlanLabelCard({
   yearlyFullPrice,
   buttonLabel,
   stylingFilled,
+  href,
 }: PlanLabelCardProps) {
   return (
     <div className={styles.container}>
@@ -35,7 +37,9 @@ export default function PlanLabelCard({
           )}
         </div>
       </div>
-      <PricingButton stylingFilled={stylingFilled}>{buttonLabel}</PricingButton>
+      <PricingButton href={href} stylingFilled={stylingFilled}>
+        {buttonLabel}
+      </PricingButton>
     </div>
   );
 }

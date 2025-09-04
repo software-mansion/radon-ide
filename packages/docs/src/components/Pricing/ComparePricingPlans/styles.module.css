@@ -9,12 +9,17 @@
   border: var(--radon-border-layout);
   max-width: 100%;
   margin: 80px 40px 0;
+  position: relative;
 }
 
 .planColumns {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr 1fr;
   border-bottom: var(--radon-border-layout);
+  background-color: var(--swm-background);
+  position: sticky;
+  top: 80px;
+  z-index: 40;
 }
 
 .table {

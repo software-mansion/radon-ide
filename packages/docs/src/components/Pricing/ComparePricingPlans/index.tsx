@@ -1,7 +1,6 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./styles.module.css";
 import CheckIcon from "../../CheckIcon";
-import clsx from "clsx";
 import PlanLabelCard from "./PlanLabelCard";
 
 export interface FeatureItem {
@@ -133,19 +132,11 @@ export default function ComparePricingPlans() {
           />
         </div>
         {pricingPlanFeatures.map((feature, index) => (
-          <div className={styles.table}>
-            <div key={index + "-label"} className={styles.featureLabelCell}>
-              {feature.label}
-            </div>
-            <div key={index + "-free"} className={styles.valueCell}>
-              {handleCellContent(feature.free)}
-            </div>
-            <div key={index + "-pro"} className={styles.valueCell}>
-              {handleCellContent(feature.pro)}
-            </div>
-            <div key={index + "-enterprise"} className={styles.valueCell}>
-              {handleCellContent(feature.enterprise)}
-            </div>
+          <div key={index} className={styles.table}>
+            <div className={styles.featureLabelCell}>{feature.label}</div>
+            <div className={styles.valueCell}>{handleCellContent(feature.free)}</div>
+            <div className={styles.valueCell}>{handleCellContent(feature.pro)}</div>
+            <div className={styles.valueCell}>{handleCellContent(feature.enterprise)}</div>
           </div>
         ))}
       </div>

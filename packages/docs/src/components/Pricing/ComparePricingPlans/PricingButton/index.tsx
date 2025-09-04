@@ -3,15 +3,25 @@ import styles from "./styles.module.css";
 import clsx from "clsx";
 
 interface PricingButtonProps {
-  stylingFilled?: boolean;
   children: string;
+  stylingFilled?: boolean;
+  href?: string;
+  target?: "_blank" | "_parent" | "_self" | "_top";
+  onClick?: () => void;
 }
 
-function PricingButton({ stylingFilled, children }: PricingButtonProps) {
+function PricingButton({
+  children,
+  href,
+  target = "_self",
+  onClick,
+  stylingFilled,
+}: PricingButtonProps) {
   return (
     <a
-      href="#"
-      target="_self"
+      href={href}
+      target={target}
+      onClick={onClick}
       className={clsx(stylingFilled ? styles.buttonLink : styles.buttonLinkEmpty)}>
       <div className={styles.button}>{children}</div>
     </a>
