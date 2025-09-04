@@ -1,6 +1,7 @@
 const RNInternals = require("./rn-internals/rn-internals");
 const { PluginMessageBridge } = require("./plugins/PluginMessageBridge");
 const TextDecoder = require("./polyfills").TextDecoder;
+const BoundedXhrBuffer = require("./BoundedXhrBuffer").BoundedXhrBuffer;
 
 function mimeTypeFromResponseType(responseType) {
   switch (responseType) {
@@ -118,30 +119,6 @@ function deserializeDataContent(data, contentType) {
   return data;
 }
 
-// WeakRef support is only available on the new architecture. We keep XHR objects
-// as WeakRefs to avoid leaking potentially large response data objects. We need
-// to keep them around in case the network inspector wants to acess this data.
-// By using WeakRefs we give a way to access that within a sensible time period
-// which seems like a better tradeof than keeping all request data around forever.
-// When WeakRef isn't supported, unless the response data is accessed, we will never
-// cleanup the reference. The below fake implementation of weak reference drops
-// the ref after specified timeout.
-const XHR_REF_TIMEOUT_MS = 3 * 60 * 1000; // 3 mins
-class FakeWeakRef {
-  constructor(obj) {
-    this.obj = obj;
-    this.timeout = setTimeout(() => (this.obj = undefined), XHR_REF_TIMEOUT_MS);
-  }
-  deref() {
-    // timeout captures this and hence may extend the time the reference is kept.
-    // we clear it here as in the code below we drop the weak ref immediately after dereferencing.
-    clearTimeout(this.timeout);
-    return this.obj;
-  }
-}
-
-const WeakRefImpl = typeof WeakRef !== "undefined" ? WeakRef : FakeWeakRef;
-
 let setupCompleted = false;
 
 export function setup() {
@@ -174,7 +151,7 @@ function enableNetworkInspect(networkProxy) {
   const XHRInterceptor = RNInternals.XHRInterceptor;
 
   const loaderId = "xhr-interceptor";
-  const xhrsMap = new Map();
+  const xhrBuffer = new BoundedXhrBuffer();
 
   const requestIdPrefix = Math.random().toString(36).slice(2);
   let requestIdCounter = 0;
@@ -188,10 +165,12 @@ function enableNetworkInspect(networkProxy) {
         message.params.requestId.startsWith(requestIdPrefix)
       ) {
         const requestId = message.params.requestId;
-        const xhr = xhrsMap.get(requestId)?.deref();
+        const xhr = xhrBuffer.get(requestId);
         // typically with devtools UI, each request details will be fetched at most once.
         // we can safely delete the record once the request data is retrieved.
-        xhrsMap.delete(requestId);
+        if (xhr) {
+          xhrBuffer.remove(requestId);
+        }
 
         readResponseBodyContent(xhr)
           .then((body) => {
@@ -216,8 +195,6 @@ function enableNetworkInspect(networkProxy) {
       const requestId = `${requestIdPrefix}-${requestIdCounter++}`;
       const sendTime = Date.now();
       let ttfb;
-
-      xhrsMap.set(requestId, new WeakRefImpl(xhr));
 
       function sendCDPMessage(method, params) {
         networkProxy.sendMessage("cdp-message", JSON.stringify({ method, params }));
@@ -295,6 +272,11 @@ function enableNetworkInspect(networkProxy) {
       });
 
       xhr.addEventListener("loadend", (event) => {
+        // We store the xhr object only to be able to read response body later
+        // if the request is not loaded, there is no point storing it, as it
+        // won't have any response data
+        xhrBuffer.put(requestId, xhr);
+
         try {
           sendCDPMessage("Network.loadingFinished", {
             requestId: requestId,
