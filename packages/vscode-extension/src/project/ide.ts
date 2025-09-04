@@ -7,7 +7,6 @@ import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
 import { initialState, RecursivePartial, State } from "../common/State";
 import { LaunchConfiguration } from "../common/LaunchConfig";
-import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 import { Telemetry } from "./telemetry";
@@ -27,9 +26,6 @@ export class IDE implements Disposable {
   public readonly project: Project;
   public readonly workspaceConfigController: WorkspaceConfigController;
 
-  // TODO: Remove outputChannelRegistry from IDE, access it directly
-  public readonly outputChannelRegistry: OutputChannelRegistry;
-
   private environmentDependencyManager: EnvironmentDependencyManager;
 
   private readonly telemetry: Telemetry;
@@ -48,19 +44,7 @@ export class IDE implements Disposable {
 
     this.telemetry = new Telemetry(this.stateManager.getDerived("telemetry"));
 
-    // TODO: Remove outputChannelRegistry from IDE, access it directly
-    const outputChannelRegistry = OutputChannelRegistry.getInstanceIfExists();
-
-    if (!outputChannelRegistry) {
-      throw new Error("Cannot create IDE instance. OutputChannelRegistry hasn't been initialized.");
-    }
-
-    this.outputChannelRegistry = outputChannelRegistry;
-
-    this.deviceManager = new DeviceManager(
-      this.stateManager.getDerived("devicesState"),
-      this.outputChannelRegistry
-    );
+    this.deviceManager = new DeviceManager(this.stateManager.getDerived("devicesState"));
     this.editorBindings = new EditorBindings();
 
     this.environmentDependencyManager = new EnvironmentDependencyManager(
@@ -77,7 +61,6 @@ export class IDE implements Disposable {
       this.stateManager.getDerived("devicesState"),
       this.deviceManager,
       this.editorBindings,
-      this.outputChannelRegistry,
       this.environmentDependencyManager,
       this.telemetry,
       initialLaunchConfig

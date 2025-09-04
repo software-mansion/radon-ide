@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { Disposable } from "vscode";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import {
   IosSimulatorDevice,
@@ -20,7 +21,6 @@ import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { Platform } from "../utilities/platform";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { checkXcodeExists } from "../utilities/checkXcodeExists";
 import {
   AndroidSystemImageInfo,
@@ -31,7 +31,6 @@ import {
   IOSRuntimeInfo,
 } from "../common/State";
 import { StateManager } from "../project/StateManager";
-import { Disposable } from "vscode";
 import { disposeAll } from "../utilities/disposables";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
@@ -40,10 +39,7 @@ export class DeviceAlreadyUsedError extends Error {}
 export class DeviceManager implements Disposable {
   private disposables: Disposable[] = [];
 
-  constructor(
-    private readonly stateManager: StateManager<DevicesState>,
-    private readonly outputChannelRegistry: OutputChannelRegistry
-  ) {
+  constructor(private readonly stateManager: StateManager<DevicesState>) {
     this.loadDevicesIntoState();
     this.listInstalledIOSRuntimes().then((runtimes) => {
       this.stateManager.setState({
@@ -70,11 +66,7 @@ export class DeviceManager implements Disposable {
       if (!simulatorInfo || simulatorInfo.platform !== DevicePlatform.IOS) {
         throw new Error(`Simulator ${deviceInfo.id} not found`);
       }
-      const device = new IosSimulatorDevice(
-        simulatorInfo.UDID,
-        simulatorInfo,
-        this.outputChannelRegistry
-      );
+      const device = new IosSimulatorDevice(simulatorInfo.UDID, simulatorInfo);
       if (await device.acquire()) {
         return device;
       } else {
@@ -86,11 +78,7 @@ export class DeviceManager implements Disposable {
       if (!emulatorInfo || emulatorInfo.platform !== DevicePlatform.Android) {
         throw new Error(`Emulator ${deviceInfo.id} not found`);
       }
-      const device = new AndroidEmulatorDevice(
-        emulatorInfo.avdId,
-        emulatorInfo,
-        this.outputChannelRegistry
-      );
+      const device = new AndroidEmulatorDevice(emulatorInfo.avdId, emulatorInfo);
       if (await device.acquire()) {
         return device;
       } else {

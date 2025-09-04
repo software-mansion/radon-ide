@@ -8,8 +8,8 @@ export class OutputChannelRegistry implements Disposable {
   private static instance: OutputChannelRegistry | null = null;
   private channelByName = new Map<Output, ReadableLogOutputChannel>([]);
 
-  getOrCreateOutputChannel(channel: Output): ReadableLogOutputChannel {
-    const logOutput = this.channelByName.get(channel);
+  public static getOrCreateOutputChannel(channel: Output): ReadableLogOutputChannel {
+    const logOutput = this.instance?.channelByName.get(channel);
 
     if (logOutput) {
       return logOutput;
@@ -20,19 +20,15 @@ export class OutputChannelRegistry implements Disposable {
       !hiddenOutputChannels.includes(channel)
     );
 
-    this.channelByName.set(channel, newOutputChannel);
+    this.instance?.channelByName.set(channel, newOutputChannel);
 
     return newOutputChannel;
-  }
-
-  public static getInstanceIfExists(): OutputChannelRegistry | null {
-    return this.instance;
   }
 
   public static initializeInstance(): OutputChannelRegistry {
     // Using `initializeInstance` in combination with `getInstanceIfExists` instead of a single `getInstance`
     // prevents Logger from constructing OutputChannelRegistry after `dispose` has been already called.
-    if (this.getInstanceIfExists()) {
+    if (this.instance) {
       throw new Error("OutputChannelRegistry instance already exists.");
     }
     this.instance = new OutputChannelRegistry();

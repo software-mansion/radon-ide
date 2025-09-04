@@ -24,9 +24,9 @@ import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { extensionContext } from "../utilities/extensionContext";
-import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform, DeviceType } from "../common/State";
+import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -78,8 +78,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   constructor(
     private readonly avdId: string,
-    private readonly info: DeviceInfo,
-    private readonly outputChannelRegistry: OutputChannelRegistry
+    private readonly info: DeviceInfo
   ) {
     super();
   }
@@ -99,7 +98,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   private get nativeLogsOutputChannel() {
-    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.AndroidDevice);
+    return OutputChannelRegistry.getOrCreateOutputChannel(Output.AndroidDevice);
   }
 
   public dispose(): void {
