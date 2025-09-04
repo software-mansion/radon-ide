@@ -45,7 +45,7 @@ type Props = {
   onInspectorItemSelected: (item: InspectDataStackItem) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
-  replayData: MultimediaData | null;
+  replayData: MultimediaData | null | undefined;
   onReplayClose: () => void;
 };
 

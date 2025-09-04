@@ -40,7 +40,7 @@ describe("screenshots panel tests", () => {
   });
 
   it("Should take a screenshot", async () => {
-    const filePath = path.join(homeDir, "testScreenshot..png");
+    const filePath = path.join(homeDir, "screenshotTest..png");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
@@ -49,7 +49,7 @@ describe("screenshots panel tests", () => {
     );
     await driver.sleep(1000);
 
-    await findAndFillSaveFileForm(driver, "testScreenshot");
+    await findAndFillSaveFileForm(driver, "screenshotTest");
 
     await driver.wait(
       async () => {
@@ -58,10 +58,12 @@ describe("screenshots panel tests", () => {
       10000,
       "Timed out waiting for screenshot to be saved"
     );
+
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   });
 
   it("Should record screen", async () => {
-    const filePath = path.join(homeDir, "testRecording..mp4");
+    const filePath = path.join(homeDir, "recordingTest..mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
@@ -75,7 +77,7 @@ describe("screenshots panel tests", () => {
     );
     await driver.sleep(1000);
 
-    await elementHelperService.findAndFillSaveFileForm("testRecording");
+    await findAndFillSaveFileForm(driver, "recordingTest");
 
     await driver.wait(
       async () => {
@@ -84,5 +86,7 @@ describe("screenshots panel tests", () => {
       10000,
       "Timed out waiting for screenshot to be saved"
     );
+
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   });
 });

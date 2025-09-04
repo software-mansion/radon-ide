@@ -257,7 +257,8 @@ export class ManagingDevicesService {
 // #endregion
 // #endregion
 
-// #region Managing Webviews
+// #region WebView
+
 export async function findWebViewIFrame(driver, iframeTitle) {
   const elementHelperService = new ElementHelperService(driver);
   await driver.switchTo().defaultContent();
@@ -284,23 +285,27 @@ export async function findWebViewIFrame(driver, iframeTitle) {
 
 // #region Saving files
 export async function findAndFillSaveFileForm(driver, filename) {
+  const elementHelperService = new ElementHelperService(driver);
   await driver.switchTo().defaultContent();
 
-  const quickInput = await findAndWaitForElement(
-    driver,
+  const quickInput = await elementHelperService.findAndWaitForElement(
     By.css(".quick-input-widget input"),
-    "Timed out waiting for quick input",
-    10000
+    "Timed out waiting for quick input"
   );
 
-  await quickInput.click();
-  while ((await quickInput.getAttribute("value")).length > 0) {
-    await quickInput.sendKeys(Key.BACK_SPACE);
-    await quickInput.sendKeys(Key.DELETE);
-  }
+  await driver.executeScript("arguments[0].value = '';", quickInput);
+
   await quickInput.sendKeys("~");
-  await quickInput.sendKeys(filename, Key.ENTER);
+  await quickInput.sendKeys(filename);
+
+  const quickInputButton = await elementHelperService.findAndWaitForElement(
+    By.css(".quick-input-action"),
+    "Timed out waiting for quick input button"
+  );
+
+  quickInputButton.click();
 }
+
 // #region App manipulation
 
 export class AppManipulationService {

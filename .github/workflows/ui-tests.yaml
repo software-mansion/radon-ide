@@ -120,6 +120,7 @@ jobs:
 
       - name: make video
         if: ${{ always() && github.event.inputs.isRecording == 'true' }}
+        timeout-minutes: 1
         run: ffmpeg -framerate 10 -i frame-%04d.png -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
         working-directory: packages/vscode-extension-tester/videos
 
@@ -133,6 +134,7 @@ jobs:
       - name: build output
         if: always()
         uses: actions/upload-artifact@v4
+        timeout-minutes: 1
         with:
           name: output
           path: packages/vscode-extension-tester/output.txt
@@ -140,6 +142,7 @@ jobs:
       - name: Upload video recording
         if: ${{ always() && github.event.inputs.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
+        timeout-minutes: 1
         with:
           name: vscode-ui-recording
           path: packages/vscode-extension-tester/videos/vscode-ui-recording.mp4

@@ -25,6 +25,7 @@ import {
   DeviceSessionStatus,
   FatalErrorDescriptor,
   InspectData,
+  InstallationError,
 } from "../common/Project";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
@@ -311,6 +312,16 @@ export class DeviceSession implements Disposable {
           message: e.message,
           buildType: e.buildType,
           platform: this.platform,
+        };
+        this.emitStateChange();
+        return;
+      } else if (e instanceof InstallationError) {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "installation",
+          message: e.message,
+          platform: this.platform,
+          reason: e.reason,
         };
         this.emitStateChange();
         return;
@@ -677,6 +688,14 @@ export class DeviceSession implements Disposable {
           message: e.message,
           buildType: e.buildType,
           platform: this.platform,
+        };
+      } else if (e instanceof InstallationError) {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "installation",
+          message: e.message,
+          platform: this.platform,
+          reason: e.reason,
         };
       } else {
         this.status = "fatalError";
