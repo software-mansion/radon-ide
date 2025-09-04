@@ -49,16 +49,18 @@ export function ModalProvider({ children }: ModalProviderProps) {
   return (
     <ModalContext.Provider value={{ isOpen, onOpen, onClose }}>
       {children}
-      <dialog ref={dialogRef} className={styles.modalContainer} onClick={handleBackdropClose}>
-        <div className={styles.modalHead}>
-          <p>Download</p>
-          <button onClick={onClose} className={styles.dialogCloseButton}>
-            <CloseIcon />
-          </button>
-        </div>
-        <p className={styles.modalSubheading}>Choose how you want to use Radon IDE:</p>
-        <DownloadButtons vertical={true} />
-      </dialog>
+      {isOpen && (
+        <dialog ref={dialogRef} className={styles.modalContainer} onClick={handleBackdropClose}>
+          <div className={styles.modalHead}>
+            <p>Download</p>
+            <button onClick={onClose} className={styles.dialogCloseButton}>
+              <CloseIcon />
+            </button>
+          </div>
+          <p className={styles.modalSubheading}>Choose how you want to use Radon IDE:</p>
+          <DownloadButtons vertical={true} />
+        </dialog>
+      )}
     </ModalContext.Provider>
   );
 }
