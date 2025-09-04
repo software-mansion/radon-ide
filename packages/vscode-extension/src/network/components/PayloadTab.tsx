@@ -1,6 +1,7 @@
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import IconButton from "../../webview/components/shared/IconButton";
 import { getRequestPayload } from "../utils/requestFormatUtils";
+import { copyToClipboard } from "../utils/sharedUtils";
 
 interface PayloadTabProps {
   networkLog: NetworkLog;
@@ -18,7 +19,7 @@ const PayloadTab = ({ networkLog }: PayloadTabProps) => {
       <IconButton
         className="response-tab-copy-button"
         tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
-        onClick={() => navigator.clipboard.writeText(payloadData)}>
+        onClick={() => copyToClipboard(payloadData)}>
         <span className="codicon codicon-copy" />
       </IconButton>
       <pre className="response-tab-pre">{payloadData}</pre>

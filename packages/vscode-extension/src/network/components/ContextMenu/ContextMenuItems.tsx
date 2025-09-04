@@ -9,8 +9,8 @@ import {
   generateCurlCommand,
   generateFetchCommand,
   getUrl,
-  copyToClipboard,
 } from "../../utils/contextMenuUtils";
+import { copyToClipboard } from "../../utils/sharedUtils";
 import {
   getRequestJson,
   getResponseJson,

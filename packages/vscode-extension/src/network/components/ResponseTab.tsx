@@ -4,6 +4,7 @@ import IconButton from "../../webview/components/shared/IconButton";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
 import { formatJSONBody } from "../utils/requestFormatUtils";
+import { copyToClipboard } from "../utils/sharedUtils";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
@@ -26,7 +27,7 @@ const ResponseTab = ({ networkLog }: ResponseTabProps) => {
       <IconButton
         className="response-tab-copy-button"
         tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
-        onClick={() => navigator.clipboard.writeText(responseData)}>
+        onClick={() => copyToClipboard(responseData)}>
         <span className="codicon codicon-copy" />
       </IconButton>
       <pre>{responseData}</pre>

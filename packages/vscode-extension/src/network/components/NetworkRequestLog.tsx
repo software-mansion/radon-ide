@@ -196,15 +196,11 @@ function TableBody({
   handleSelectedRequest,
   tableRef,
   parentHeight,
-  onSort,
+  onSort: handleSort,
   sortState,
 }: TableBodyProps) {
   const [selectedRequestIndex, setSelectedRequestIndex] = useState<number>(0);
   const [cellWidths, setCellWidths] = useState<number[]>([]);
-
-  const handleSort = (column: NetworkLogColumn) => {
-    onSort(column);
-  };
 
   /**
    * Updates the cell widths based on the current sash (column bars) positions from the table component.

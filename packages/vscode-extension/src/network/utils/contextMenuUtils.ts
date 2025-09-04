@@ -70,12 +70,3 @@ export function generateFetchCommand(log: NetworkLog): string {
 export function getUrl(log: NetworkLog): string {
   return log.request?.url || "No URL available";
 }
-
-export async function copyToClipboard(text: string): Promise<void> {
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch (error) {
-    console.error("Failed to copy to clipboard:", error);
-    throw error;
-  }
-}
