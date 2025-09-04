@@ -2,18 +2,12 @@ import fs from "fs";
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import {
-  AppPermissionType,
-  DeviceSettings,
-  TouchPoint,
-  DeviceButtonType,
-  DeviceRotation,
-} from "../common/Project";
+import { AppPermissionType, DeviceSettings, TouchPoint, DeviceButtonType } from "../common/Project";
 import { tryAcquiringLock } from "../utilities/common";
 import { extensionContext } from "../utilities/extensionContext";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { getChanges } from "../utilities/diffing";
-import { DeviceInfo, DevicePlatform, FrameRateReport } from "../common/State";
+import { DeviceInfo, DevicePlatform, DeviceRotation, FrameRateReport } from "../common/State";
 
 const LEFT_META_HID_CODE = 0xe3;
 const RIGHT_META_HID_CODE = 0xe7;

@@ -22,7 +22,7 @@
     "workspaceContains:**/app.config.ts",
     "onWebviewPanel:RadonIDETabPanel"
   ],
-  "version": "1.10.0",
+  "version": "1.11.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -1008,7 +1008,7 @@
     "@typescript-eslint/parser": "^8.30.1",
     "@vitejs/plugin-react": "^4.2.1",
     "@vscode-elements/react-elements": "^1.15.0",
-    "@vscode/codicons": "^0.0.36",
+    "@vscode/codicons": "^0.0.39",
     "@vscode/debugadapter": "^1.68.0",
     "@vscode/debugprotocol": "^1.68.0",
     "@vscode/extension-telemetry": "github:software-mansion-labs/vscode-extension-telemetry",

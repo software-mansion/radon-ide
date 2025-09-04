@@ -28,7 +28,7 @@ function DiagnosticView() {
   };
 
   return (
-    <div className="diagnostic-container" data-test="diagnostics-view">
+    <div className="diagnostic-container" data-testid="diagnostics-view">
       <Label>Common</Label>
       <DiagnosticItem label="Node.js" name="nodejs" info={dependencies.nodejs} />
       <DiagnosticItem

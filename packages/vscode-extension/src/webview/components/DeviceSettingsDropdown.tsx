@@ -16,7 +16,6 @@ import { useProject } from "../providers/ProjectProvider";
 import {
   AppPermissionType,
   DeviceRotationDirection,
-  DeviceRotation,
   DeviceSettings,
   ProjectInterface,
 } from "../../common/Project";
@@ -29,7 +28,7 @@ import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
-import { DevicePlatform } from "../../common/State";
+import { DevicePlatform, DeviceRotation } from "../../common/State";
 
 const contentSizes = [
   "xsmall",
@@ -130,7 +129,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="dropdown-menu-content device-settings-content"
-          data-test="device-settings-dropdown-menu"
+          data-testid="device-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
           <form>
@@ -311,6 +310,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Show Touches
             <Switch.Root
               className="switch-root small-switch"
+              data-testid="device-settings-show-touches-switch"
               id="show-touches"
               onCheckedChange={(checked) =>
                 project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })

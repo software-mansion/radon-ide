@@ -2,16 +2,16 @@ import classNames from "classnames";
 import { useRef, useState, useEffect, useLayoutEffect, useMemo } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { capitalize } from "lodash";
-import type { VscodeTable as VscodeTableElement } from "@vscode-elements/elements/dist/vscode-table/vscode-table.js";
+import { VscodeTable as VscodeTableElement } from "@vscode-elements/elements/dist/vscode-table/vscode-table.js";
 import type { VscodeTableRow as VscodeTableRowElement } from "@vscode-elements/elements/dist/vscode-table-row/vscode-table-row";
 import {
-  VscodeTable,
   VscodeTableBody,
   VscodeTableCell,
   VscodeTableHeader,
   VscodeTableHeaderCell,
   VscodeTableRow,
 } from "@vscode-elements/react-elements";
+import VscodeTable from "./VscodeTableInternalFix";
 import IconButton from "../../webview/components/shared/IconButton";
 import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogUtils";
 import { NetworkLogColumn } from "../types/network";

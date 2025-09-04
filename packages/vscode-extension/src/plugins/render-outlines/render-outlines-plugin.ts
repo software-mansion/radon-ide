@@ -9,7 +9,7 @@ import {
 import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolPlugin } from "../../project/tools";
 import { disposeAll } from "../../utilities/disposables";
-import { InspectorAvailabilityStatus } from "../../common/Project";
+import { InspectorAvailabilityStatus } from "../../common/State";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "",

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, MouseEvent, WheelEvent, useMemo } from "react";
+import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
 import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
 import { clamp, debounce } from "lodash";
@@ -9,13 +9,7 @@ import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
 import { useBundleErrorAlert } from "../hooks/useBundleErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
-import {
-  Frame,
-  InspectDataStackItem,
-  InspectStackData,
-  InspectorAvailabilityStatus,
-  InspectorBridgeStatus,
-} from "../../common/Project";
+import { Frame, InspectDataStackItem, InspectStackData } from "../../common/Project";
 import ZoomControls from "./ZoomControls";
 import { throttle } from "../../utilities/throttle";
 import InspectOverlay from "./InspectOverlay";
@@ -29,7 +23,14 @@ import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
 import InspectorUnavailableBox from "./InspectorUnavailableBox";
 import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
-import { MultimediaData, ZoomLevelType } from "../../common/State";
+import { SendFilesOverlay } from "./SendFilesOverlay";
+import {
+  InspectorAvailabilityStatus,
+  InspectorBridgeStatus,
+  MultimediaData,
+  ZoomLevelType,
+} from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -44,7 +45,7 @@ type Props = {
   onInspectorItemSelected: (item: InspectDataStackItem) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
-  replayData: MultimediaData | null;
+  replayData: MultimediaData | null | undefined;
   onReplayClose: () => void;
 };
 
@@ -76,7 +77,20 @@ function Preview({
   onReplayClose,
 }: Props) {
   const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const appOrientation = use$(selectedDeviceSessionState.applicationSession.appOrientation);
+
+  const bundleError = use$(selectedDeviceSessionState.applicationSession.bundleError);
+
+  const elementInspectorAvailability = use$(
+    selectedDeviceSessionState.applicationSession.elementInspectorAvailability
+  );
+
+  const inspectorBridgeStatus = use$(
+    selectedDeviceSessionState.applicationSession.inspectorBridgeStatus
+  );
 
   const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>(null);
   const wrapperDivRef = useRef<HTMLDivElement>(null);
@@ -96,8 +110,13 @@ function Preview({
   const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
 
   const isRunning = selectedDeviceSession?.status === "running";
-  const isRefreshing = isRunning && selectedDeviceSession.isRefreshing;
-  const debugPaused = isRunning && selectedDeviceSession.isDebuggerPaused;
+
+  const isRefreshing = use$(() =>
+    isRunning ? selectedDeviceSessionState.applicationSession.isRefreshing.get() : false
+  );
+  const debugPaused = use$(() =>
+    isRunning ? selectedDeviceSessionState.applicationSession.isDebuggerPaused.get() : false
+  );
 
   const previewURL = selectedDeviceSession?.previewURL;
 
@@ -105,12 +124,12 @@ function Preview({
     selectedDeviceSession?.previewURL && (showPreviewRequested || isRunning);
 
   const isAppDisconnected =
-    isRunning && selectedDeviceSession.inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
+    isRunning && inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
   useApplicationDisconnectedAlert(isAppDisconnected);
 
   useFatalErrorAlert(fatalErrorDescriptor);
 
-  const bundleErrorDescriptor = isRunning ? selectedDeviceSession?.bundleError : undefined;
+  const bundleErrorDescriptor = isRunning ? bundleError : null;
   useBundleErrorAlert(bundleErrorDescriptor);
 
   const openRebuildAlert = useNativeRebuildAlert();
@@ -187,9 +206,7 @@ function Preview({
     if (selectedDeviceSession?.status !== "running") {
       return;
     }
-    if (
-      selectedDeviceSession?.elementInspectorAvailability !== InspectorAvailabilityStatus.Available
-    ) {
+    if (elementInspectorAvailability !== InspectorAvailabilityStatus.Available) {
       return;
     }
     if (type === "Leave") {
@@ -201,7 +218,7 @@ function Preview({
 
     const clampedCoordinates = getNormalizedTouchCoordinates(event);
     const { x: translatedX, y: translatedY } = previewToAppCoordinates(
-      selectedDeviceSession.appOrientation,
+      appOrientation,
       rotation,
       clampedCoordinates
     );
@@ -295,8 +312,7 @@ function Preview({
       if (e.button === 2) {
         if (
           selectedDeviceSession?.status === "running" &&
-          selectedDeviceSession?.elementInspectorAvailability !==
-            InspectorAvailabilityStatus.Available
+          elementInspectorAvailability !== InspectorAvailabilityStatus.Available
         ) {
           handleInspectorUnavailable(e);
         } else {
@@ -508,42 +524,17 @@ function Preview({
   const normalTouchIndicatorSize = 33;
   const smallTouchIndicatorSize = 9;
 
-  const dragHandlers = useMemo(() => {
-    return {
-      onDrop(ev: React.DragEvent) {
-        ev.preventDefault();
-        const files = ev.dataTransfer.files;
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          file.arrayBuffer().then((buf) => {
-            project.sendFileToDevice({
-              fileName: file.name,
-              data: buf,
-            });
-          });
-        }
-      },
-      onDragOver(ev: React.DragEvent) {
-        ev.stopPropagation();
-        ev.preventDefault();
-      },
-      onDragEnter(ev: React.DragEvent) {
-        ev.preventDefault();
-      },
-    } as const;
-  }, [project]);
-
   return (
     <>
       <div
         className="phone-display-container"
-        data-test="phone-wrapper"
+        data-testid="phone-wrapper"
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>
         {showDevicePreview && (
           <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
-            <div className="touch-area" {...touchHandlers} {...dragHandlers}>
+            <div className="touch-area" {...touchHandlers}>
               <MjpegImg
                 src={previewURL}
                 ref={previewRef}
@@ -551,8 +542,10 @@ function Preview({
                   cursor: isInspecting ? "crosshair" : "default",
                 }}
                 className="phone-screen"
+                data-testid="phone-screen"
               />
               <RenderOutlinesOverlay />
+              {isRunning && <SendFilesOverlay />}
               {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
               {isMultiTouching && (

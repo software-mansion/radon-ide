@@ -1,10 +1,9 @@
 import _ from "lodash";
 import { ConfigurationChangeEvent, workspace, Disposable } from "vscode";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { PanelLocation, WorkspaceConfiguration } from "../common/State";
+import { DeviceRotation, PanelLocation, WorkspaceConfiguration } from "../common/State";
 import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceRotation } from "../common/Project";
 import { updatePartialWorkspaceConfig } from "../utilities/updatePartialWorkspaceConfig";
 
 export class WorkspaceConfigController implements Disposable {

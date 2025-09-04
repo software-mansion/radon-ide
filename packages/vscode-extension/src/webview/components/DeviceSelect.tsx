@@ -59,7 +59,7 @@ function renderDevices(
           key={device.id}
           icon={<span className="codicon codicon-device-mobile" />}
           title={device.displayName}
-          data-test={`device-${device.displayName}`}
+          data-testid={`device-${device.displayName}`}
           subtitle={device.systemName}
           disabled={!device.available}
           isSelected={device.id === selectedProjectDevice?.id}>
@@ -142,11 +142,11 @@ function DeviceSelect() {
     <Select.Root onValueChange={handleDeviceDropdownChange} value={value}>
       <Select.Trigger
         className="device-select-trigger"
-        data-test="radon-bottom-bar-device-select-dropdown-trigger">
+        data-testid="radon-bottom-bar-device-select-dropdown-trigger">
         <Select.Value>
           <div className="device-select-value">
             <span className={`codicon codicon-${iconClass}`} />
-            <span className="device-select-value-text" data-test="device-select-value-text">
+            <span className="device-select-value-text" data-testid="device-select-value-text">
               {displayName}
             </span>
             {backgroundDeviceCounter > 0 && (
@@ -159,7 +159,7 @@ function DeviceSelect() {
       <Select.Portal>
         <Select.Content
           className="device-select-content"
-          data-test="device-select-menu"
+          data-testid="device-select-menu"
           position="popper"
           align="center"
           onCloseAutoFocus={(e) => e.preventDefault()}>
@@ -187,7 +187,7 @@ function DeviceSelect() {
               />
             </Select.Group>
             <Select.Separator className="device-select-separator" />
-            <SelectItem value="manage" data-test="device-select-menu-manage-devices-button">
+            <SelectItem value="manage" data-testid="device-select-menu-manage-devices-button">
               Manage devices...
             </SelectItem>
           </Select.Viewport>

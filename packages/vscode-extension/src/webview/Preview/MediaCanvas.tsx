@@ -1,7 +1,7 @@
 import { useEffect, forwardRef, RefObject, useRef, useMemo, useCallback } from "react";
 import { use$ } from "@legendapp/state/react";
-import { DeviceRotation } from "../../common/Project";
 import { useStore } from "../providers/storeProvider";
+import { DeviceRotation } from "../../common/State";
 
 type MediaRef = RefObject<HTMLImageElement | null> | RefObject<HTMLVideoElement | null>;
 
