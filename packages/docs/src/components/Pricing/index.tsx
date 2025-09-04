@@ -62,10 +62,7 @@ const Pricing = ({ handleBusiness, handleIndividual }: PricingProps) => {
           handleIndividual={openIndividualCheckout}
         />
       </div>
-      <ComparePricingPlans
-        handleBusiness={openBusinessCheckout}
-        handleIndividual={openIndividualCheckout}
-      />
+      <ComparePricingPlans handleBusiness={openBusinessCheckout} />
       <FAQ />
     </div>
   );

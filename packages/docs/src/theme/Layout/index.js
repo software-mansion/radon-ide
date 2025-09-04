@@ -14,10 +14,9 @@ import { ModalProvider } from "@site/src/components/ModalProvider";
 
 export default function LayoutWrapper({ children, noFooter, title, description }) {
   useKeyboardNavigation();
-  const dialogRef = useRef < HTMLDialogElement > null;
   return (
     <LayoutProvider>
-      <ModalProvider dialogRef={dialogRef}>
+      <ModalProvider>
         <PageMetadata title={title} description={description} />
 
         <SkipToContent />

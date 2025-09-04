@@ -9,7 +9,11 @@ type ModalContextType = {
   onClose: () => void;
 };
 
-const ModalContext = createContext<ModalContextType | undefined>(undefined);
+const ModalContext = createContext<ModalContextType>({
+  isOpen: false,
+  onOpen: () => {},
+  onClose: () => {},
+});
 
 export const useModal = (): ModalContextType => {
   const context = useContext(ModalContext);

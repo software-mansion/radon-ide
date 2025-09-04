@@ -105,7 +105,7 @@ const handleCellContent = (data: string[] | boolean) => {
   }
 };
 
-export default function ComparePricingPlans({ handleIndividual }: PricingProps) {
+export default function ComparePricingPlans({ handleBusiness }: PricingProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { onOpen } = useModal();
   return (
@@ -127,7 +127,7 @@ export default function ComparePricingPlans({ handleIndividual }: PricingProps) 
             yearlyLowPrice={390}
             buttonLabel="Start 14-day trial"
             stylingFilled={true}
-            onClick={handleIndividual}
+            onClick={handleBusiness}
           />
           <PlanLabelCard
             plan="ENTERPRISE"
