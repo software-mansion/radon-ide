@@ -119,7 +119,7 @@ jobs:
           IS_RECORDING: ${{ github.event.inputs.isRecording }}
 
       - name: make video
-        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
+        if: ${{ !cancelled() && github.event.inputs.isRecording == 'true' }}
         run: ffmpeg -framerate 10 -i frame-%04d.png -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
         working-directory: packages/vscode-extension-tester/videos
 
