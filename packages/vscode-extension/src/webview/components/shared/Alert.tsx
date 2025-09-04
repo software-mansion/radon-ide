@@ -15,7 +15,7 @@ function Alert({ open, title, description, actions, type = "error" }: AlertProps
   return (
     <AlertDialog.Root open={open}>
       <AlertDialog.Portal>
-        <div className="alert-dialog-content" data-test="alert-dialog-content">
+        <div className="alert-dialog-content" data-testid="alert-dialog-content">
           {type === "error" && (
             <div className="alert-dialog-error">
               <ErrorIcon color="var(--red-dark-100)" />

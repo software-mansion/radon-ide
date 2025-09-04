@@ -204,7 +204,7 @@ function PreviewView() {
   } else if (!initialized) {
     content = (
       <div className="preview-content-placeholder">
-        <VscodeProgressRing data-test="vscode-progress-ring" />
+        <VscodeProgressRing data-testid="vscode-progress-ring" />
       </div>
     );
   } else if (selectedDevice) {
@@ -238,7 +238,7 @@ function PreviewView() {
   return (
     <div
       className="panel-view"
-      data-test="radon-panel-view"
+      data-testid="radon-panel-view"
       onFocus={(e) => {
         vscode.postMessage({
           command: "focusPreview",
