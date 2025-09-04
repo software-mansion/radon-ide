@@ -2,7 +2,6 @@ import assert from "assert";
 import os from "os";
 import path from "path";
 import fs from "fs";
-import _ from "lodash";
 import { Disposable, window } from "vscode";
 import { MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
@@ -757,10 +756,6 @@ export class DeviceSession implements Disposable {
 
   public get previewReady() {
     return this.device.previewReady;
-  }
-
-  public get deviceRotation() {
-    return this.device.rotation;
   }
 
   // #endregion Recording

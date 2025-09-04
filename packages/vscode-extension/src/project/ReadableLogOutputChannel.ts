@@ -13,7 +13,7 @@ export interface ReadableLogOutputChannel extends LogOutputChannel {
 }
 
 function createMockOutputChannel(): LogOutputChannel {
-  // All four functions required for writing, reading and clearing logs are already implemented by `createReadableOutputChannel`.
+  // All five functions required for writing, reading and clearing logs are already implemented by `createReadableOutputChannel`.
   // Remaining functions provided by `window.createOutputChannel` are never used within our codebase, and thus don't have to be present.
   return {} as unknown as LogOutputChannel;
 }
