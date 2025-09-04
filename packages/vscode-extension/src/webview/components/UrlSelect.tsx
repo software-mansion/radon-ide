@@ -7,8 +7,8 @@ import UrlSelectItemGroup from "./UrlSelectItemGroup";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
-import { NavigationHistoryItem, NavigationRoute } from "../../common/Project";
 import "./UrlSelect.css";
+import { NavigationHistoryItem, NavigationRoute } from "../../common/State";
 
 export type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
