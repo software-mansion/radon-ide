@@ -114,6 +114,7 @@ jobs:
       - name: Run setup-run-tests
         run: npm run setup-run-tests -- ${{ github.event.inputs.testsToRun }} --exclude ${{ github.event.inputs.testsToExclude }}
         working-directory: packages/vscode-extension-tester
+        timeout-minutes: 1
         env:
           PROJECT_NAME: ${{ github.event.inputs.testApp }}
           IS_RECORDING: ${{ github.event.inputs.isRecording }}
