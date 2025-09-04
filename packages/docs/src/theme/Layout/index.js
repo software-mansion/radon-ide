@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import ErrorBoundary from "@docusaurus/ErrorBoundary";
 import { PageMetadata } from "@docusaurus/theme-common";
 import { useKeyboardNavigation } from "@docusaurus/theme-common/internal";
@@ -10,27 +10,31 @@ import LayoutProvider from "@theme/Layout/Provider";
 import ErrorPageContent from "@theme/ErrorPageContent";
 import styles from "./styles.module.css";
 import clsx from "clsx";
+import { ModalProvider } from "@site/src/components/ModalProvider";
 
 export default function LayoutWrapper({ children, noFooter, title, description }) {
   useKeyboardNavigation();
+  const dialogRef = useRef < HTMLDialogElement > null;
   return (
     <LayoutProvider>
-      <PageMetadata title={title} description={description} />
+      <ModalProvider dialogRef={dialogRef}>
+        <PageMetadata title={title} description={description} />
 
-      <SkipToContent />
+        <SkipToContent />
 
-      <AnnouncementBar />
+        <AnnouncementBar />
 
-      <Navbar />
+        <Navbar />
 
-      <ErrorBoundary fallback={(params) => <ErrorPageContent {...params} />}>
-        {children}
-      </ErrorBoundary>
-      <div className={styles.spacer}>
-        <div className={clsx(styles.spacerBorder, "border-layout")}></div>
-      </div>
+        <ErrorBoundary fallback={(params) => <ErrorPageContent {...params} />}>
+          {children}
+        </ErrorBoundary>
+        <div className={styles.spacer}>
+          <div className={clsx(styles.spacerBorder, "border-layout")}></div>
+        </div>
 
-      {!noFooter && <Footer />}
+        {!noFooter && <Footer />}
+      </ModalProvider>
     </LayoutProvider>
   );
 }

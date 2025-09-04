@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef } from "react";
 import styles from "./styles.module.css";
 import CheckIcon from "../../CheckIcon";
 import PlanLabelCard from "./PlanLabelCard";
+import { useModal } from "../../ModalProvider";
 
 export interface FeatureItem {
   label: string;
@@ -104,6 +105,8 @@ const handleCellContent = (data: string[] | boolean) => {
 };
 
 export default function ComparePricingPlans() {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const { onOpen } = useModal();
   return (
     <div>
       <div className={styles.title}>Compare plans</div>
@@ -115,6 +118,7 @@ export default function ComparePricingPlans() {
             monthlyPrice={0}
             buttonLabel="Download"
             stylingFilled={false}
+            onClick={onOpen}
           />
           <PlanLabelCard
             plan="PRO"
@@ -129,6 +133,7 @@ export default function ComparePricingPlans() {
             yearlyLowPrice={990}
             buttonLabel="Get your quote"
             stylingFilled={true}
+            href="mailto:projects@swmansion.com"
           />
         </div>
         {pricingPlanFeatures.map((feature, index) => (

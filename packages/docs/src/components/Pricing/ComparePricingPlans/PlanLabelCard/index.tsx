@@ -10,6 +10,7 @@ interface PlanLabelCardProps {
   buttonLabel: string;
   stylingFilled?: boolean;
   href?: string;
+  onClick?: () => void;
 }
 
 export default function PlanLabelCard({
@@ -20,6 +21,7 @@ export default function PlanLabelCard({
   buttonLabel,
   stylingFilled,
   href,
+  onClick,
 }: PlanLabelCardProps) {
   return (
     <div className={styles.container}>
@@ -37,7 +39,7 @@ export default function PlanLabelCard({
           )}
         </div>
       </div>
-      <PricingButton href={href} stylingFilled={stylingFilled}>
+      <PricingButton href={href} stylingFilled={stylingFilled} onClick={onClick}>
         {buttonLabel}
       </PricingButton>
     </div>

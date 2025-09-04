@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
 import styles from "./styles.module.css";
 import { useLocation } from "@docusaurus/router";
 import MobileSidebarToggle from "../MobileSidebarToggle";
@@ -6,8 +6,8 @@ import NavbarMobileSidebar from "../MobileSidebar";
 import NavbarLink from "../NavbarLink";
 import Logo from "../../Logo";
 import clsx from "clsx";
-import DownloadModal from "../../DownloadModal";
 import NavbarDownloadButton from "../NavbarDownloadButton";
+import { useModal } from "../../ModalProvider";
 
 export interface NavbarItem {
   label: string;
@@ -28,7 +28,7 @@ export default function NavbarContent() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const location = useLocation();
   const active = location.pathname;
-  const [isOpen, setIsOpen] = useState(false);
+  const { onOpen } = useModal();
 
   return (
     <>
@@ -64,21 +64,10 @@ export default function NavbarContent() {
           <a
             href="https://github.com/software-mansion/radon-ide/"
             className={styles.headerGithub}></a>
-          <NavbarDownloadButton
-            isMobile={false}
-            onOpen={() => {
-              setIsOpen(true);
-            }}
-          />
+          <NavbarDownloadButton isMobile={false} onOpen={onOpen} />
         </div>
       </div>
-      <NavbarMobileSidebar
-        navbarItems={navbarItems}
-        onOpen={() => {
-          setIsOpen(true);
-        }}
-      />
-      {isOpen && <DownloadModal dialogRef={dialogRef} onClose={() => setIsOpen(false)} />}
+      <NavbarMobileSidebar navbarItems={navbarItems} onOpen={onOpen} />
     </>
   );
 }
