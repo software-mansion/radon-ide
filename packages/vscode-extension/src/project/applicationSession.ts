@@ -211,6 +211,10 @@ export class ApplicationSession implements Disposable {
 
   private onNetworkEvent = (event: DebugSessionCustomEvent): void => {
     const method = event.body?.method as NetworkCommandMethod;
+    if (!method || !(method in NETWORK_EVENT_MAP)) {
+      console.error("Unknown network event method - aborting:", method);
+      return;
+    }
     this.networkBridge.emitEvent(NETWORK_EVENT_MAP[method], event.body);
   };
 

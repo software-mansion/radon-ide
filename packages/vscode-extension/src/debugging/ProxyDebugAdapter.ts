@@ -7,7 +7,7 @@ import { Disposable } from "vscode";
 import { CDPProxy } from "./CDPProxy";
 import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
 import { disposeAll } from "../utilities/disposables";
-import { DEBUG_CONSOLE_LOG, DEBUG_PAUSED, DEBUG_RESUMED } from "./DebugSession";
+import { DEBUG_CONSOLE_LOG, DEBUG_PAUSED, DEBUG_RESUMED, DebugNetworkEvent } from "./DebugSession";
 import { CDPProfile } from "./cdp";
 import { annotateLocations, filePathForProfile } from "./cpuProfiler";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
@@ -315,13 +315,13 @@ export class ProxyDebugAdapter extends DebugSession {
       case "RNIDE_evaluate":
         response.body.result = await this.evaluateExpression(args);
         break;
-      case "RNIDE_enableNetworkInspector":
+      case DebugNetworkEvent.Enable:
         await this.enableNetworkInspector();
         break;
-      case "RNIDE_disableNetworkInspector":
+      case DebugNetworkEvent.Disable:
         await this.disableNetworkInspector();
         break;
-      case "RNIDE_getResponseBody":
+      case DebugNetworkEvent.GetResponseBody:
         await this.getResponseBody(args);
         break;
     }

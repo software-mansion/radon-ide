@@ -62,6 +62,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         return applicationCommand;
       }
       case "Network.requestWillBeSent":
+      case "Network.getResponseBody":
       case "Network.requestWillBeSentExtraInfo":
       case "Network.responseReceived":
       case "Network.loadingFinished": {

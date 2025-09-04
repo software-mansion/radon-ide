@@ -56,7 +56,7 @@ export interface DebugSession {
   stepOutDebugger(): void;
   stepIntoDebugger(): void;
   evaluateExpression(params: Cdp.Runtime.EvaluateParams): Promise<Cdp.Runtime.EvaluateResult>;
-  sendNetworkCommandRequest(request: any): Promise<void>;
+  sendNetworkCommandRequest(requestType: DebugNetworkEvent): Promise<void>;
 
   // Profiling controls
   startProfilingCPU(): Promise<void>;
@@ -300,8 +300,9 @@ export class DebugSessionImpl implements DebugSession, Disposable {
     return response;
   }
 
-  public async sendNetworkCommandRequest(request: DebugNetworkEvent) {
-    await this.jsDebugSession?.customRequest(request);
+  public async sendNetworkCommandRequest(requestType: DebugNetworkEvent) {
+    // TODO add args handling for future getResponseBody
+    await this.jsDebugSession?.customRequest(requestType);
   }
 
   private cancelStartingDebugSession() {

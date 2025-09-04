@@ -11,6 +11,8 @@ import LegacyArchitecture from "./LegacyArchitectureStrategy";
 import NewArchitecture from "./NewArchitectureStrategy";
 
 export const NETWORK_PLUGIN_ID = "network";
+const NEW_ARCHITECTURE = true;
+
 export interface ArchitectureStrategy {
   activate(): void;
   deactivate(): void;
@@ -20,7 +22,6 @@ export interface ArchitectureStrategy {
   readonly pluginAvailable: boolean;
 }
 
-const NEW_ARCHITECTURE = true;
 
 let initialized = false;
 async function initialize() {
