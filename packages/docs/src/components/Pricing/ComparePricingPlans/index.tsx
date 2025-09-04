@@ -4,6 +4,7 @@ import CheckIcon from "../../CheckIcon";
 import PlanLabelCard from "./PlanLabelCard";
 import { useModal } from "../../ModalProvider";
 import { PricingProps } from "..";
+import clsx from "clsx";
 
 export interface FeatureItem {
   label: string;
@@ -139,7 +140,14 @@ export default function ComparePricingPlans({ handleBusiness }: PricingProps) {
           />
         </div>
         {pricingPlanFeatures.map((feature, index) => (
-          <div key={index} className={styles.table}>
+          <div
+            key={index}
+            className={clsx(
+              styles.table,
+              Array.isArray(feature.enterprise) && feature.enterprise.length > 1
+                ? ""
+                : styles.centered
+            )}>
             <div className={styles.featureLabelCell}>{feature.label}</div>
             <div className={styles.valueCell}>{handleCellContent(feature.free)}</div>
             <div className={styles.valueCell}>{handleCellContent(feature.pro)}</div>
