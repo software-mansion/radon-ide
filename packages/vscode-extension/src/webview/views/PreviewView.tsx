@@ -11,13 +11,7 @@ import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
 import { useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
-import {
-  Frame,
-  InspectDataStackItem,
-  InspectorAvailabilityStatus,
-  InspectStackData,
-  ProfilingState,
-} from "../../common/Project";
+import { Frame, InspectDataStackItem, InspectStackData } from "../../common/Project";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import "./View.css";
 import "./PreviewView.css";
@@ -29,7 +23,7 @@ import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
-import { ZoomLevelType } from "../../common/State";
+import { InspectorAvailabilityStatus, ProfilingState, ZoomLevelType } from "../../common/State";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -110,11 +104,15 @@ function PreviewView() {
   const isRunning = selectedDeviceSession?.status === "running";
 
   const isRecording = use$(selectedDeviceSessionState.screenCapture.isRecording);
-  const recordingTime = use$(selectedDeviceSessionState.screenCapture.recordingTime);
+  const recordingTime = use$(selectedDeviceSessionState.screenCapture.recordingTime) ?? 0;
   const replayData = use$(selectedDeviceSessionState.screenCapture.replayData);
 
+  const elementInspectorAvailability =
+    use$(selectedDeviceSessionState.applicationSession.elementInspectorAvailability) ??
+    InspectorAvailabilityStatus.Available;
+
   const inspectorAvailabilityStatus = isRunning
-    ? selectedDeviceSession.elementInspectorAvailability
+    ? elementInspectorAvailability
     : InspectorAvailabilityStatus.Available;
 
   const navBarButtonsActive = initialized && !isStarting && !radonConnectEnabled;
@@ -229,9 +227,17 @@ function PreviewView() {
     content = <NoDeviceView hasNoDevices={hasNoDevices} />;
   }
 
-  const logCounter = isRunning ? selectedDeviceSession.logCounter : 0;
-  const profilingCPUState = isRunning ? selectedDeviceSession?.profilingCPUState : "stopped";
-  const profilingReactState = isRunning ? selectedDeviceSession?.profilingReactState : "stopped";
+  const logCounter = use$(isRunning ? selectedDeviceSessionState.applicationSession.logCounter : 0);
+  const profilingCPUState = use$(() =>
+    isRunning
+      ? (selectedDeviceSessionState.applicationSession.profilingCPUState.get() ?? "stopped")
+      : "stopped"
+  );
+  const profilingReactState = use$(() =>
+    isRunning
+      ? (selectedDeviceSessionState.applicationSession.profilingReactState.get() ?? "stopped")
+      : "stopped"
+  );
 
   return (
     <div

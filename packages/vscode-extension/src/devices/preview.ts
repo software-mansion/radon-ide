@@ -2,11 +2,11 @@ import path from "path";
 import { Disposable, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import { TouchPoint, DeviceButtonType, DeviceRotation } from "../common/Project";
+import { TouchPoint, DeviceButtonType } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
 import { disposeAll } from "../utilities/disposables";
-import { FrameRateReport, MultimediaData } from "../common/State";
+import { DeviceRotation, FrameRateReport, MultimediaData } from "../common/State";
 
 interface MultimediaPromiseHandlers {
   resolve: (value: MultimediaData) => void;
