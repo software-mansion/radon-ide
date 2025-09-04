@@ -5,11 +5,7 @@ import { NetworkLog } from "../../hooks/useNetworkTracker";
 import { NetworkLogColumn, SortState } from "../../types/network";
 import { getSortIcon } from "../NetworkRequestLog";
 import { NETWORK_LOG_COLUMNS } from "../../utils/networkLogUtils";
-import {
-  generateCurlCommand,
-  generateFetchCommand,
-  getUrl,
-} from "../../utils/contextMenuUtils";
+import { generateCurlCommand, generateFetchCommand, getUrl } from "../../utils/contextMenuUtils";
 import { copyToClipboard } from "../../utils/sharedUtils";
 import {
   getRequestJson,

@@ -4,6 +4,18 @@ function stringify(obj: unknown): string {
   return JSON.stringify(obj, null, 2);
 }
 
+export function formatJSONBody(body: unknown): string {
+  if (typeof body !== "string") {
+    return "No response body";
+  }
+  try {
+    const parsed = JSON.parse(body);
+    return stringify(parsed);
+  } catch {
+    return body;
+  }
+}
+
 export function formatUrlParams(url: string): string {
   try {
     const urlObj = new URL(url);
@@ -14,18 +26,6 @@ export function formatUrlParams(url: string): string {
     return stringify(params);
   } catch {
     return stringify({});
-  }
-}
-
-export function formatJSONBody(body: unknown): string {
-  if (typeof body !== "string") {
-    return "No response body";
-  }
-  try {
-    const parsed = JSON.parse(body);
-    return stringify(parsed);
-  } catch {
-    return body;
   }
 }
 

@@ -1,4 +1,9 @@
-import { ContextMenuItemName, ContextMenuItems, NetworkLogColumn, SortState } from "../../types/network";
+import {
+  ContextMenuItemName,
+  ContextMenuItems,
+  NetworkLogColumn,
+  SortState,
+} from "../../types/network";
 import "./NetworkLogContextMenu.css";
 import NetworkLogContextMenu from "./NetworkLogContextMenu";
 
