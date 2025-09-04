@@ -222,9 +222,9 @@
   --ifm-table-border-color: var(--swm-table-border-color);
 
   /* Pagination */
-  --swm-paginator-sublabel: var(--swm-navy-light-100);
-  --swm-paginator-label: var(--swm-green-light-80);
-  --swm-paginator-label-hover: var(--swm-green-light-100);
+  --swm-paginator-sublabel: var(--ifm-color-primary) !important;
+  --swm-paginator-label: var(--radon-subheading) !important;
+  --swm-paginator-label-hover: var(--ifm-color-primary);
 
   /* Footer */
   --swm-brand-copyright-color: var(--swm-navy-light-100);
