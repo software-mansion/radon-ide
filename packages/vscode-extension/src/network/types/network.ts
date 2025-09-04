@@ -1,3 +1,9 @@
+import {
+  CopySubmenuConfig,
+  FilterItemConfig,
+  SortSubmenuConfig,
+} from "../components/ContextMenu/ContextMenuItems";
+
 export interface NetworkLog {
   requestId: string;
   url: string;
@@ -33,4 +39,16 @@ export interface FilterBadge {
 export interface SortState {
   column: NetworkLogColumn | null;
   direction: SortDirection | null;
+}
+
+export enum ContextMenuItemName {
+  Copy = "copy",
+  Sort = "sort",
+  Filter = "filter",
+}
+
+export interface ContextMenuItems {
+  [ContextMenuItemName.Copy]?: CopySubmenuConfig;
+  [ContextMenuItemName.Sort]?: SortSubmenuConfig;
+  [ContextMenuItemName.Filter]?: FilterItemConfig;
 }

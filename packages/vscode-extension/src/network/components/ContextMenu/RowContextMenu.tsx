@@ -1,7 +1,7 @@
 import { NetworkLog } from "../../hooks/useNetworkTracker";
-import { NetworkLogColumn, SortState } from "../../types/network";
+import { ContextMenuItems, NetworkLogColumn, SortState } from "../../types/network";
 import "./NetworkLogContextMenu.css";
-import BaseContextMenu from "./NetworkLogContextMenu";
+import NetworkLogContextMenu from "./NetworkLogContextMenu";
 
 interface RowContextMenuProps {
   children: React.ReactNode;
@@ -11,13 +11,13 @@ interface RowContextMenuProps {
 }
 
 function RowContextMenu({ children, networkLog, handleSort, sortState }: RowContextMenuProps) {
-  const menuItems = {
-    copyMenu: { networkLog, enabled: true },
-    sortMenu: { handleSort, sortState, enabled: true },
-    filterMenu: { enabled: true },
+  const menuItems: ContextMenuItems = {
+    copy: { networkLog, enabled: true },
+    sort: { handleSort, sortState, enabled: true },
+    filter: { enabled: true },
   };
 
-  return <BaseContextMenu menuItems={menuItems}>{children}</BaseContextMenu>;
+  return <NetworkLogContextMenu menuItems={menuItems}>{children}</NetworkLogContextMenu>;
 }
 
 export default RowContextMenu;

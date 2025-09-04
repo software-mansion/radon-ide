@@ -4,29 +4,18 @@ import {
   SortSubmenu,
   FilterItem,
   CopySubmenu,
-  CopySubmenuConfig,
-  SortSubmenuConfig,
-  FilterItemConfig,
   CopySubmenuProps,
   SortSubmenuProps,
 } from "./ContextMenuItems";
 import { useNetworkFilter } from "../../providers/NetworkFilterProvider";
+import { ContextMenuItemName, ContextMenuItems } from "../../types/network";
 import "./NetworkLogContextMenu.css";
-
-type additionalMenuItemName = "copyMenu" | "sortMenu" | "filterMenu";
-
-interface additionalMenuItems {
-  copyMenu?: CopySubmenuConfig;
-  sortMenu?: SortSubmenuConfig;
-  filterMenu?: FilterItemConfig;
-}
-
-interface BaseContextMenuProps {
+interface NetworkLogContextMenuProps {
   children: React.ReactNode;
-  menuItems?: additionalMenuItems;
+  menuItems?: ContextMenuItems;
 }
 
-function BaseContextMenu({ children, menuItems }: BaseContextMenuProps) {
+function NetworkLogContextMenu({ children, menuItems }: NetworkLogContextMenuProps) {
   // Filter-item state handling
   // Below is needed, because RadixUI modifies focus upon context menu closing.
   // If we wish to direct the focus to the input field when clicking a button, we have to
@@ -46,7 +35,7 @@ function BaseContextMenu({ children, menuItems }: BaseContextMenuProps) {
   };
 
   const renderMenuItems = (): React.ReactNode => {
-    const menuItemNames = Object.keys(menuItems || {}) as additionalMenuItemName[];
+    const menuItemNames = Object.keys(menuItems || {}) as ContextMenuItemName[];
     if (!menuItems || menuItemNames.length === 0) {
       return null;
     }
@@ -59,11 +48,11 @@ function BaseContextMenu({ children, menuItems }: BaseContextMenuProps) {
       }
 
       switch (name) {
-        case "copyMenu":
+        case ContextMenuItemName.Copy:
           return <CopySubmenu key={name} {...(config as CopySubmenuProps)} />;
-        case "sortMenu":
+        case ContextMenuItemName.Sort:
           return <SortSubmenu key={name} {...(config as SortSubmenuProps)} />;
-        case "filterMenu":
+        case ContextMenuItemName.Filter:
           return <FilterItem key={name} onFocusFilter={handleFocusFilter} />;
         default:
           return null;
@@ -86,4 +75,4 @@ function BaseContextMenu({ children, menuItems }: BaseContextMenuProps) {
   );
 }
 
-export default BaseContextMenu;
+export default NetworkLogContextMenu;

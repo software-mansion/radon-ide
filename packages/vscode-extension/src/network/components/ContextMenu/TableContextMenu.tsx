@@ -1,6 +1,6 @@
-import { NetworkLogColumn, SortState } from "../../types/network";
+import { ContextMenuItems, NetworkLogColumn, SortState } from "../../types/network";
 import "./NetworkLogContextMenu.css";
-import BaseContextMenu from "./NetworkLogContextMenu";
+import NetworkLogContextMenu from "./NetworkLogContextMenu";
 
 interface TableContextMenuProps {
   children: React.ReactNode;
@@ -9,12 +9,12 @@ interface TableContextMenuProps {
 }
 
 function TableContextMenu({ children, handleSort, sortState }: TableContextMenuProps) {
-  const menuItems = {
-    sortMenu: { handleSort, sortState, enabled: true },
-    filterMenu: { enabled: true },
+  const menuItems: ContextMenuItems = {
+    sort: { handleSort, sortState, enabled: true },
+    filter: { enabled: true },
   };
 
-  return <BaseContextMenu menuItems={menuItems}>{children}</BaseContextMenu>;
+  return <NetworkLogContextMenu menuItems={menuItems}>{children}</NetworkLogContextMenu>;
 }
 
 export default TableContextMenu;
