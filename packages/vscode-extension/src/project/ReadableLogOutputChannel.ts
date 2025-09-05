@@ -1,4 +1,4 @@
-import { LogOutputChannel, window } from "vscode";
+import { LogLevel, LogOutputChannel, window } from "vscode";
 import { CircularBuffer } from "./CircularBuffer";
 import { Output } from "../common/OutputChannel";
 
@@ -15,16 +15,17 @@ export interface ReadableLogOutputChannel extends LogOutputChannel {
   isEmpty: () => boolean;
 }
 
-function createMockOutputChannel(): LogOutputChannel {
+function createMockOutputChannel(channel: Output): LogOutputChannel {
   // All five functions required for writing, reading and clearing logs are already implemented by `createReadableOutputChannel`.
   // Remaining functions provided by `window.createOutputChannel` are never used within our codebase, and thus don't have to be present.
-  return {} as unknown as LogOutputChannel;
+  // LogLevel.Info is the default log level for any newly initialized output channel.
+  return { name: channel, logLevel: LogLevel.Info } as LogOutputChannel;
 }
 
 export function createReadableOutputChannel(channel: Output): ReadableLogOutputChannel {
   const outputChannel = !hiddenOutputChannels.includes(channel)
     ? window.createOutputChannel(channel, { log: true })
-    : createMockOutputChannel();
+    : createMockOutputChannel(channel);
 
   const logHead: string[] = [];
   const logTailBuffer = new CircularBuffer<string>(KEEP_LAST_N);
