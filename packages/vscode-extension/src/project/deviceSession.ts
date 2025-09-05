@@ -1,5 +1,4 @@
 import assert from "assert";
-import _ from "lodash";
 import { Disposable } from "vscode";
 import { MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
@@ -770,6 +769,10 @@ export class DeviceSession implements Disposable {
 
   public async getScreenshot() {
     return this.screenCapture.getScreenshot();
+  }
+
+  public get previewReady() {
+    return this.device.previewReady;
   }
 
   // #endregion Recording
