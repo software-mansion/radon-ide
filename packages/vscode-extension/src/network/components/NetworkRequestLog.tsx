@@ -15,7 +15,8 @@ import RowContextMenu from "./ContextMenu/RowContextMenu";
 import TableContextMenu from "./ContextMenu/TableContextMenu";
 import VscodeTable from "./VscodeTableInternalFix";
 import IconButton from "../../webview/components/shared/IconButton";
-import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogUtils";
+import { sortNetworkLogs } from "../utils/networkLogsSort";
+import { getNetworkLogValue } from "../utils/networkLogParsers";
 
 import { NetworkLogColumn, SortState } from "../types/network";
 import { useNetworkFilter } from "../providers/NetworkFilterProvider";

@@ -52,3 +52,15 @@ export interface ContextMenuItems {
   [ContextMenuItemName.Sort]?: SortSubmenuConfig;
   [ContextMenuItemName.Filter]?: FilterItemConfig;
 }
+
+/**
+ * Array of all available network log columns for use in filters, tables
+ */
+export const NETWORK_LOG_COLUMNS: NetworkLogColumn[] = [
+  NetworkLogColumn.Name,
+  NetworkLogColumn.Status,
+  NetworkLogColumn.Method,
+  NetworkLogColumn.Type,
+  NetworkLogColumn.Size,
+  NetworkLogColumn.Time,
+] as const;
