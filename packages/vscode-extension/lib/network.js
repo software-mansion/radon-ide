@@ -20,13 +20,26 @@ function mimeTypeFromResponseType(responseType) {
   return undefined;
 }
 
+// Allowed content types for processing text-based data
+const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
+  "application/x-sh",
+  "application/x-csh",
+  "application/rtf",
+  "application/manifest+json",
+  "application/xhtml+xml",
+  "application/xml",
+  "application/XUL",
+  "application/ld+json",
+  "application/json",
+]);
+
 const MAX_BODY_SIZE = 100 * 1024; // 100 KB
 const TRUNCATED_LENGTH = 100;
 
 function truncateResponseBody(responseBody) {
   if (responseBody && new Blob([responseBody]).size > MAX_BODY_SIZE) {
     return {
-      body: responseBody.slice(0, TRUNCATED_LENGTH),
+      body: `${responseBody.slice(0, TRUNCATED_LENGTH)}...`,
       wasTruncated: true,
     };
   }
@@ -46,13 +59,19 @@ function readResponseBodyContent(xhr) {
     const truncatedBody = truncateResponseBody(xhr.responseText);
     return Promise.resolve(truncatedBody);
   }
+
   if (responseType === "blob") {
     const contentType = xhr.getResponseHeader("Content-Type") || "";
-    if (contentType.startsWith("text/") || contentType.startsWith("application/json")) {
+    const isTextType = contentType.startsWith("text/");
+    const isParsableApplicationType = Array.from(PARSABLE_APPLICATION_CONTENT_TYPES).some((type) =>
+      contentType.startsWith(type)
+    );
+
+    if (isTextType || isParsableApplicationType) {
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = () => {
-          const truncatedBody = truncateResponseBody(reader.result);
+          const truncatedBody = truncateResponseBody(reader.result || undefined);
           resolve(truncatedBody);
         };
         reader.readAsText(xhr.response);
@@ -62,19 +81,6 @@ function readResponseBodyContent(xhr) {
   // don't want to read binary data here
   return Promise.resolve(undefined);
 }
-
-// Allowed content types for processing text-based data
-const ALLOWED_APPLICATION_CONTENT_TYPES = new Set([
-  "application/x-sh",
-  "application/x-csh",
-  "application/rtf",
-  "application/manifest+json",
-  "application/xhtml+xml",
-  "application/xml",
-  "application/XUL",
-  "application/ld+json",
-  "application/json",
-]);
 
 function deserializeDataContent(data, contentType) {
   const shouldDecodeAsText = (dataContentType) => {
@@ -87,7 +93,7 @@ function deserializeDataContent(data, contentType) {
     }
 
     const mimeType = dataContentType.split(";")[0].trim().toLowerCase();
-    return ALLOWED_APPLICATION_CONTENT_TYPES.has(mimeType);
+    return PARSABLE_APPLICATION_CONTENT_TYPES.has(mimeType);
   };
 
   const isSerializedTypedArray = (obj) => {
