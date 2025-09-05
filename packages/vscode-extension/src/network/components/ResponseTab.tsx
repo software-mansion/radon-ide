@@ -1,7 +1,7 @@
 import "./ResponseTab.css";
 import { useEffect, useState } from "react";
 import IconButton from "../../webview/components/shared/IconButton";
-import { NetworkLog } from "../hooks/useNetworkTracker";
+import { NetworkLog, responseBodyInfo } from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
 import { formatJSONBody } from "../utils/requestFormatUtils";
 
@@ -11,7 +11,7 @@ interface ResponseTabProps {
 
 const ResponseTab = ({ networkLog }: ResponseTabProps) => {
   const { getResponseBody } = useNetwork();
-  const [responseBody, setResponseBody] = useState<unknown>();
+  const [responseBody, setResponseBody] = useState<responseBodyInfo | null>(null);
 
   useEffect(() => {
     getResponseBody(networkLog).then((data) => {
@@ -19,16 +19,28 @@ const ResponseTab = ({ networkLog }: ResponseTabProps) => {
     });
   }, [networkLog.requestId]);
 
-  const responseData = formatJSONBody(responseBody);
+  const responseData = formatJSONBody(responseBody?.body);
+  const wasTruncated = responseBody?.wasTruncated;
 
   return (
     <>
-      <IconButton
-        className="response-tab-copy-button"
-        tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
-        onClick={() => navigator.clipboard.writeText(responseData)}>
-        <span className="codicon codicon-copy" />
-      </IconButton>
+      <div>
+
+        <IconButton
+          className="response-tab-copy-button"
+          tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
+          onClick={() => navigator.clipboard.writeText(responseData)}>
+          <span className="codicon codicon-copy" />
+        </IconButton>
+        
+        {wasTruncated && (
+          <span 
+            className="response-tab-warning-icon codicon codicon-warning"
+            title="Data was too large and was therefore truncated"
+          />
+        )}
+      </div>
+
       <pre>{responseData}</pre>
     </>
   );

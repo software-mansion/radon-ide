@@ -20,6 +20,20 @@ function mimeTypeFromResponseType(responseType) {
   return undefined;
 }
 
+const MAX_BODY_SIZE = 100 * 1024; // 100 KB
+const TRUNCATED_LENGTH = 100;
+
+function truncateResponseBody(responseBody) {
+  if (responseBody && new Blob([responseBody]).size > MAX_BODY_SIZE) {
+    return {
+      body: responseBody.slice(0, TRUNCATED_LENGTH),
+      wasTruncated: true,
+    };
+  }
+
+  return { body: responseBody, wasTruncated: false };
+}
+
 function readResponseBodyContent(xhr) {
   if (!xhr && !xhr._cachedResponse) {
     // if response was accessed it is cached and we can use it
@@ -29,7 +43,8 @@ function readResponseBodyContent(xhr) {
   const responseType = xhr.responseType;
 
   if (responseType === "" || responseType === "text") {
-    return Promise.resolve(xhr.responseText);
+    const truncatedBody = truncateResponseBody(xhr.responseText);
+    return Promise.resolve(truncatedBody);
   }
   if (responseType === "blob") {
     const contentType = xhr.getResponseHeader("Content-Type") || "";
@@ -37,7 +52,8 @@ function readResponseBodyContent(xhr) {
       return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = () => {
-          resolve(reader.result);
+          const truncatedBody = truncateResponseBody(reader.result);
+          resolve(truncatedBody);
         };
         reader.readAsText(xhr.response);
       });
@@ -173,12 +189,12 @@ function enableNetworkInspect(networkProxy) {
         }
 
         readResponseBodyContent(xhr)
-          .then((body) => {
+          .then((bodyInfo) => {
             networkProxy.sendMessage(
               "cdp-message",
               JSON.stringify({
                 id: message.id,
-                result: { body },
+                result: bodyInfo,
               })
             );
           })

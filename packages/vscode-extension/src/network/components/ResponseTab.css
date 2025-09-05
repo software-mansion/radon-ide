@@ -5,6 +5,24 @@
   background-color: var(--vscode-diffEditor-unchangedRegionBackground);
 }
 
+.response-tab-warning-icon {
+  position: absolute;
+  top: 4px;
+  right: 52px;
+  padding: 6px;
+  background-color: var(--vscode-diffEditor-unchangedRegionBackground);
+  border: 1px solid var(--vscode-button-border);
+  border-radius: 2px;
+  color: var(--vscode-notificationsWarningIcon-foreground);
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+}
+
 .response-tab-pre {
   white-space: pre-wrap;
   word-break: break-word;
