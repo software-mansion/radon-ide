@@ -1,8 +1,7 @@
 import { assert } from "chai";
 import { By } from "vscode-extension-tester";
-import { texts } from "../data/testData.js";
-import { ElementHelperService } from "../utils/helpers.js";
-import { RadonViewsService } from "./interactions.js";
+import { texts } from "../utils/constants.js";
+import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
 describe("Smoke tests Radon IDE", () => {
@@ -10,8 +9,7 @@ describe("Smoke tests Radon IDE", () => {
 
   beforeEach(async function () {
     ({ driver, workbench } = get());
-    elementHelperService = new ElementHelperService(driver);
-    radonViewsService = new RadonViewsService(driver);
+    ({ elementHelperService, radonViewsService } = initServices(driver));
   });
 
   it("should open Radon IDE webview using Radon IDE button", async function () {

@@ -43,13 +43,14 @@ function DevToolCheckbox({
         style={{ color: enabled ? "inherit" : "var(--swm-disabled-text)" }}>
         {label}
         {checked && isPanelTool && (
-          <IconButton onClick={onSelect}>
+          <IconButton onClick={onSelect} dataTest={`dev-tool-${label}-open-button`}>
             <span className="codicon codicon-link-external" />
           </IconButton>
         )}
         <Switch.Root
           disabled={!enabled}
           className="switch-root small-switch"
+          data-testid={`dev-tool-${label}`}
           onCheckedChange={onCheckedChange}
           defaultChecked={checked}
           style={{ marginLeft: "auto" }}>

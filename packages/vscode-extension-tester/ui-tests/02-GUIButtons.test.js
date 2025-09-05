@@ -1,5 +1,4 @@
-import { ElementHelperService } from "../utils/helpers.js";
-import { RadonViewsService, ManagingDevicesService } from "./interactions.js";
+import initServices from "../services/index.js";
 import { WebView, EditorView } from "vscode-extension-tester";
 
 import { get } from "./setupTest.js";
@@ -9,9 +8,10 @@ describe("Main interface buttons tests", () => {
 
   before(async () => {
     driver = get().driver;
-    elementHelperService = new ElementHelperService(driver);
-    radonViewsService = new RadonViewsService(driver);
-    managingDevicesService = new ManagingDevicesService(driver);
+
+    ({ elementHelperService, radonViewsService, managingDevicesService } =
+      initServices(driver));
+
     await managingDevicesService.deleteAllDevices();
     const view = new WebView();
     await view.switchBack();
