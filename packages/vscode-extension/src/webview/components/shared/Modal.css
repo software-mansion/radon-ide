@@ -31,6 +31,19 @@ input {
   outline: none;
 }
 
+.modal-content-fullscreen {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  border-radius: 0;
+  transform: none;
+  top: 0;
+  left: 0;
+  animation: fullScreenContentShow 200ms ease-out;
+}
+
 .modal-title {
   margin: 0 0 10px 0;
   font-weight: 500;
@@ -41,6 +54,10 @@ input {
 .modal-content-container {
   max-height: 80vh;
   overflow-y: auto;
+}
+
+.modal-content-container-fullscreen {
+  max-height: none;
 }
 
 .modal-close-button {
@@ -68,5 +85,16 @@ input {
   to {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes fullScreenContentShow {
+  0% {
+    transform: translateY(25%);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(0%);
+    opacity: 1;
   }
 }
