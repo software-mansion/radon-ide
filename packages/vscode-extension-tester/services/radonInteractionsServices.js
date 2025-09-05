@@ -1,6 +1,6 @@
 import { ElementHelperService } from "./helperServices.js";
 import { waitForMessage } from "../server/webSocketServer.js";
-import { By, Key } from "vscode-extension-tester";
+import { By, Key, WebView, EditorView } from "vscode-extension-tester";
 
 // #region Opening radon views
 export class RadonViewsService {
@@ -273,6 +273,10 @@ export class ManagingDevicesService {
       }
     } catch (e) {}
     this.elementHelperService.findAndClickElementByTag(`modal-close-button`);
+    const view = new WebView();
+    await view.switchBack();
+    await new EditorView().closeAllEditors();
+    await this.radonViewsService.openRadonIDEPanel();
   }
   // #endregion
 

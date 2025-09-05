@@ -146,3 +146,19 @@ jobs:
         with:
           name: vscode-ui-recording
           path: packages/vscode-extension-tester/videos/vscode-ui-recording.mp4
+
+      - name: Upload screenshot made by radon
+        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: radon-screenshot
+          path: /Users/runner/screenshotTest..png
+
+      - name: Upload recording made by radon
+        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: radon-recording
+          path: /Users/runner/recordingTest..mp4

@@ -57,8 +57,6 @@ describe("screenshots panel tests", () => {
       10000,
       "Timed out waiting for screenshot to be saved"
     );
-
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   });
 
   it("Should record screen", async () => {
@@ -85,7 +83,5 @@ describe("screenshots panel tests", () => {
       10000,
       "Timed out waiting for screenshot to be saved"
     );
-
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
   });
 });
