@@ -485,8 +485,12 @@ export class MetroLauncher extends Metro implements Disposable {
         Output.MetroBundler
       );
 
+    if (!metroOutputChannel) {
+      throw new Error("Cannot start bundler process. The IDE is not initialized.");
+    }
+
     // Clearing logs shortly before the new bundler process is started.
-    metroOutputChannel?.clear();
+    metroOutputChannel.clear();
 
     let bundlerProcess: ChildProcess;
 
@@ -528,12 +532,10 @@ export class MetroLauncher extends Metro implements Disposable {
           } else if (event.type === "client_log" && event.level === "error") {
             const err = stripAnsi(event.data[0]);
             Logger.error(err);
-            metroOutputChannel?.appendLine(err);
+            metroOutputChannel.appendLine(err);
           } else {
             Logger.debug("Metro", line);
           }
-
-          let log;
 
           switch (event.type) {
             case "RNIDE_expo_env_prelude_lines":
@@ -542,8 +544,8 @@ export class MetroLauncher extends Metro implements Disposable {
               break;
             case "initialize_done":
               this._port = event.port;
-              log = `Metro started on port ${this._port}`;
-              metroOutputChannel?.appendLine(log);
+              const log = `Metro started on port ${this._port}`;
+              metroOutputChannel.appendLine(log);
               Logger.info(log);
               resolve();
               break;
@@ -564,7 +566,7 @@ export class MetroLauncher extends Metro implements Disposable {
               };
               const errorModulePath = event.error.originModulePath;
               this.bundleErrorEventEmitter.fire({ message, source, errorModulePath });
-              metroOutputChannel?.appendLine(
+              metroOutputChannel.appendLine(
                 `[Bundling Error]: ${filename}:${source.line1based}:${source.column0based}: ${message}`
               );
               break;
@@ -584,7 +586,7 @@ export class MetroLauncher extends Metro implements Disposable {
         Logger.debug("Metro", line);
 
         if (!line.startsWith("__RNIDE__")) {
-          metroOutputChannel?.appendLine(line);
+          metroOutputChannel.appendLine(line);
         }
 
         if (line.startsWith("__RNIDE__open_editor__ ")) {
