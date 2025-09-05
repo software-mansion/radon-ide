@@ -1,11 +1,14 @@
 import { LogOutputChannel, window } from "vscode";
 import { CircularBuffer } from "./CircularBuffer";
+import { Output } from "../common/OutputChannel";
 
 // Some builds churn out +45k lines of logs.
 // We're only interested in the first 50 and last 150 of them.
 // These numbers are arbitriary and work well.
 const KEEP_FIRST_N = 50;
 const KEEP_LAST_N = 150;
+
+const hiddenOutputChannels = [Output.MetroBundler];
 
 export interface ReadableLogOutputChannel extends LogOutputChannel {
   readAll: () => string[];
@@ -18,11 +21,8 @@ function createMockOutputChannel(): LogOutputChannel {
   return {} as unknown as LogOutputChannel;
 }
 
-export function createReadableOutputChannel(
-  channel: string,
-  isVisible: boolean
-): ReadableLogOutputChannel {
-  const outputChannel = isVisible
+export function createReadableOutputChannel(channel: Output): ReadableLogOutputChannel {
+  const outputChannel = !hiddenOutputChannels.includes(channel)
     ? window.createOutputChannel(channel, { log: true })
     : createMockOutputChannel();
 

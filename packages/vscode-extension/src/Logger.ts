@@ -4,7 +4,7 @@ import {
   ReadableLogOutputChannel,
 } from "./project/ReadableLogOutputChannel";
 
-const outputChannel = createReadableOutputChannel(Output.Ide, true);
+const outputChannel = createReadableOutputChannel(Output.Ide);
 
 const logger = {
   log(_message: string, ..._args: any[]) {},
