@@ -146,8 +146,6 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
             Copy as fetch
           </ContextMenu.Item>
 
-          <ContextMenu.Separator className="radix-context-menu-separator" />
-
           <ContextMenu.Item
             className="radix-context-menu-item"
             onSelect={handleCopyUrl}
@@ -155,8 +153,6 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
             <span className="codicon codicon-link"></span>
             Copy URL
           </ContextMenu.Item>
-
-          <ContextMenu.Separator className="radix-context-menu-separator" />
 
           <ContextMenu.Item
             className="radix-context-menu-item"
@@ -173,8 +169,6 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
             <span className="codicon codicon-file-text"></span>
             Copy Request Payload
           </ContextMenu.Item>
-
-          <ContextMenu.Separator className="radix-context-menu-separator" />
 
           <ContextMenu.Item
             className="radix-context-menu-item"
