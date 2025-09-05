@@ -5,15 +5,17 @@ import { NetworkLog } from "../../hooks/useNetworkTracker";
 import { NetworkLogColumn, SortState } from "../../types/network";
 import { getSortIcon } from "../NetworkRequestLog";
 import { NETWORK_LOG_COLUMNS } from "../../utils/networkLogUtils";
-import { generateCurlCommand, generateFetchCommand, getUrl } from "../../utils/contextMenuUtils";
-import { copyToClipboard } from "../../utils/sharedUtils";
+import { copyToClipboard } from "../../utils/clipboard";
 import {
-  getRequestJson,
-  getResponseJson,
-  formatJSONBody,
+  getRequestDetails,
+  getResponseDetails,
+  formatRequestBody,
   getRequestPayload,
   hasUrlParams,
-} from "../../utils/requestFormatUtils";
+  createCurlCommand,
+  createFetchCommand,
+  getUrl,
+} from "../../utils/requestFormatters";
 import { useNetwork } from "../../providers/NetworkProvider";
 
 export interface CopySubmenuProps {
@@ -59,7 +61,7 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
     if (!networkLog) {
       return;
     }
-    const curlCommand = generateCurlCommand(networkLog);
+    const curlCommand = createCurlCommand(networkLog);
     await copyToClipboard(curlCommand);
   };
 
@@ -67,7 +69,7 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
     if (!networkLog) {
       return;
     }
-    const fetchCommand = generateFetchCommand(networkLog);
+    const fetchCommand = createFetchCommand(networkLog);
     await copyToClipboard(fetchCommand);
   };
 
@@ -83,7 +85,7 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
     if (!networkLog) {
       return;
     }
-    const responseJson = getResponseJson(networkLog);
+    const responseJson = getResponseDetails(networkLog);
     await copyToClipboard(responseJson);
   };
 
@@ -91,7 +93,7 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
     if (!networkLog) {
       return;
     }
-    const requestJson = getRequestJson(networkLog);
+    const requestJson = getRequestDetails(networkLog);
     await copyToClipboard(requestJson);
   };
 
@@ -103,7 +105,7 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
     if (responseBody === null || typeof responseBody !== "string") {
       await copyToClipboard("{}");
     } else {
-      await copyToClipboard(formatJSONBody(responseBody));
+      await copyToClipboard(formatRequestBody(responseBody));
     }
   };
 

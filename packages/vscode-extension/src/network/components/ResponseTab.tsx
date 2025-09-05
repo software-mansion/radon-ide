@@ -3,8 +3,8 @@ import { useEffect, useState } from "react";
 import IconButton from "../../webview/components/shared/IconButton";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
-import { formatJSONBody } from "../utils/requestFormatUtils";
-import { copyToClipboard } from "../utils/sharedUtils";
+import { formatRequestBody } from "../utils/requestFormatters";
+import { copyToClipboard } from "../utils/clipboard";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
@@ -20,7 +20,7 @@ const ResponseTab = ({ networkLog }: ResponseTabProps) => {
     });
   }, [networkLog.requestId]);
 
-  const responseData = formatJSONBody(responseBody);
+  const responseData = formatRequestBody(responseBody);
 
   return (
     <>
