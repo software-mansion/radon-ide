@@ -1,11 +1,5 @@
 import { WebView } from "vscode-extension-tester";
-import { ElementHelperService } from "../utils/helpers.js";
-import {
-  RadonViewsService,
-  ManagingDevicesService,
-  AppManipulationService,
-  findAndFillSaveFileForm,
-} from "./interactions.js";
+import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 import * as fs from "fs";
 import * as os from "os";
@@ -22,10 +16,12 @@ describe("screenshots panel tests", () => {
 
   before(async () => {
     ({ driver } = get());
-    elementHelperService = new ElementHelperService(driver);
-    radonViewsService = new RadonViewsService(driver);
-    managingDevicesService = new ManagingDevicesService(driver);
-    appManipulationService = new AppManipulationService(driver);
+    ({
+      elementHelperService,
+      radonViewsService,
+      managingDevicesService,
+      appManipulationService,
+    } = initServices(driver));
 
     await managingDevicesService.deleteAllDevices();
     await managingDevicesService.addNewDevice("newDevice");
@@ -40,6 +36,9 @@ describe("screenshots panel tests", () => {
   });
 
   it("Should take a screenshot", async () => {
+    // VSCode for some reason puts two dots in file name, but it's not an issue
+    // it only happens in vscode instance opened by vscode-extension-tester which uses different save file dialog
+    // regular VSCode instance use macOS default save file dialog
     const filePath = path.join(homeDir, "screenshotTest..png");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
@@ -49,7 +48,7 @@ describe("screenshots panel tests", () => {
     );
     await driver.sleep(1000);
 
-    await findAndFillSaveFileForm(driver, "screenshotTest");
+    await radonViewsService.findAndFillSaveFileForm("screenshotTest");
 
     await driver.wait(
       async () => {
@@ -77,7 +76,7 @@ describe("screenshots panel tests", () => {
     );
     await driver.sleep(1000);
 
-    await findAndFillSaveFileForm(driver, "recordingTest");
+    await radonViewsService.findAndFillSaveFileForm("recordingTest");
 
     await driver.wait(
       async () => {

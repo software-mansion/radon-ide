@@ -1,11 +1,5 @@
-import { By, WebView, BottomBarPanel, Key } from "vscode-extension-tester";
-import { ElementHelperService } from "../utils/helpers.js";
-import {
-  findWebViewIFrame,
-  RadonViewsService,
-  ManagingDevicesService,
-  AppManipulationService,
-} from "./interactions.js";
+import { WebView, BottomBarPanel } from "vscode-extension-tester";
+import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
 describe("Network panel tests", () => {
@@ -19,10 +13,12 @@ describe("Network panel tests", () => {
 
   before(async () => {
     ({ driver } = get());
-    elementHelperService = new ElementHelperService(driver);
-    radonViewsService = new RadonViewsService(driver);
-    managingDevicesService = new ManagingDevicesService(driver);
-    appManipulationService = new AppManipulationService(driver);
+    ({
+      elementHelperService,
+      radonViewsService,
+      managingDevicesService,
+      appManipulationService,
+    } = initServices(driver));
 
     await managingDevicesService.deleteAllDevices();
     await managingDevicesService.addNewDevice("newDevice");
@@ -76,8 +72,7 @@ describe("Network panel tests", () => {
       "dev-tool-Network-open-button"
     );
     await driver.sleep(1000);
-    const networkIFrame = await findWebViewIFrame(
-      driver,
+    const networkIFrame = await radonViewsService.findWebViewIFrame(
       "Radon Network Inspector"
     );
   });
@@ -99,8 +94,7 @@ describe("Network panel tests", () => {
       "dev-tool-Network-open-button"
     );
     await driver.sleep(1000);
-    const networkIFrame = await findWebViewIFrame(
-      driver,
+    const networkIFrame = await radonViewsService.findWebViewIFrame(
       "Radon Network Inspector"
     );
     driver.switchTo().frame(networkIFrame);
