@@ -17,7 +17,6 @@ import {
   getUrl,
 } from "../../utils/requestFormatters";
 import { useNetwork } from "../../providers/NetworkProvider";
-
 export interface CopySubmenuProps {
   networkLog: NetworkLog | null;
 }
@@ -57,65 +56,34 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
     setResponseBody(body);
   };
 
-  const handleCopyCurl = async () => {
+  const parseAndCopy = async (parseLog: (networkLog: NetworkLog) => string) => {
     if (!networkLog) {
       return;
     }
-    const curlCommand = createCurlCommand(networkLog);
-    await copyToClipboard(curlCommand);
+    const clipboardText = parseLog(networkLog);
+    await copyToClipboard(clipboardText);
   };
 
-  const handleCopyFetch = async () => {
-    if (!networkLog) {
-      return;
-    }
-    const fetchCommand = createFetchCommand(networkLog);
-    await copyToClipboard(fetchCommand);
-  };
+  const handleCopyCurl = () => parseAndCopy(createCurlCommand);
 
-  const handleCopyUrl = async () => {
-    if (!networkLog) {
-      return;
-    }
-    const url = getUrl(networkLog);
-    await copyToClipboard(url);
-  };
+  const handleCopyFetch = () => parseAndCopy(createFetchCommand);
 
-  const handleCopyResponseJson = async () => {
-    if (!networkLog) {
-      return;
-    }
-    const responseJson = getResponseDetails(networkLog);
-    await copyToClipboard(responseJson);
-  };
+  const handleCopyUrl = () => parseAndCopy(getUrl);
 
-  const handleCopyRequestJson = async () => {
-    if (!networkLog) {
-      return;
-    }
-    const requestJson = getRequestDetails(networkLog);
-    await copyToClipboard(requestJson);
-  };
+  const handleCopyResponseJson = () => parseAndCopy(getResponseDetails);
 
-  const handleCopyResponseBody = async () => {
-    if (!networkLog) {
-      return;
-    }
+  const handleCopyRequestJson = () => parseAndCopy(getRequestDetails);
 
+  const handleCopyRequestPayload = () => parseAndCopy(getRequestPayload);
+
+  const getResponseBodyAsJsonString = () => {
     if (responseBody === null || typeof responseBody !== "string") {
-      await copyToClipboard("{}");
-    } else {
-      await copyToClipboard(formatRequestBody(responseBody));
+      return "{}";
     }
+    return formatRequestBody(responseBody);
   };
 
-  const handleCopyRequestPayload = async () => {
-    if (!networkLog) {
-      return;
-    }
-    const requestPayload = getRequestPayload(networkLog);
-    await copyToClipboard(requestPayload);
-  };
+  const handleCopyResponseBody = () => parseAndCopy(getResponseBodyAsJsonString);
 
   return (
     <ContextMenu.Sub onOpenChange={handleOpenChange}>
