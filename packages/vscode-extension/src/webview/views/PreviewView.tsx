@@ -359,6 +359,7 @@ function PreviewView() {
         <IconButton
           shouldDisplayLabelWhileDisabled={navBarButtonsActive}
           active={isInspecting}
+          dataTest="radon-bottom-bar-element-inspector-button"
           tooltip={{
             label: INSPECTOR_AVAILABILITY_MESSAGES[inspectorAvailabilityStatus],
           }}

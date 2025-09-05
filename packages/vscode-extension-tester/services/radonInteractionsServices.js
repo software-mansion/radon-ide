@@ -1,6 +1,15 @@
 import { ElementHelperService } from "./helperServices.js";
 import { waitForMessage } from "../server/webSocketServer.js";
-import { By, Key, WebView, EditorView } from "vscode-extension-tester";
+import {
+  By,
+  Key,
+  WebView,
+  EditorView,
+  BottomBarPanel,
+  OutputView,
+} from "vscode-extension-tester";
+import * as fs from "fs";
+import config from "../utils/configuration.js";
 
 // #region Opening radon views
 export class RadonViewsService {
@@ -183,10 +192,15 @@ export class ManagingDevicesService {
       "creating-device-form-device-type-select"
     );
 
+    const device =
+      process.env.TESTS_OS === "Android" || config.isAndroid
+        ? "pixel"
+        : "com.apple";
+
     const selectedDevice =
       await this.elementHelperService.findAndWaitForElement(
         By.css(
-          '[data-testid^="creating-device-form-device-type-select-item-"]'
+          `[data-testid^="creating-device-form-device-type-select-item-${device}"]`
         ),
         "Timed out waiting for an element matching from devices list"
       );
@@ -334,7 +348,15 @@ export class AppManipulationService {
           this.elementHelperService.findAndClickElementByTag(
             "alert-open-logs-button"
           );
-          return errorPopup;
+          await this.driver.sleep(1000);
+          await this.driver.switchTo().defaultContent();
+          const bottomBar = await new BottomBarPanel().openOutputView();
+          const text = await bottomBar.getText();
+          console.log(text);
+          await this.driver.sleep(1000);
+          fs.writeFileSync("output.txt", text);
+          await this.driver.sleep(1000);
+          throw new Error("App error popup displayed");
         }
 
         return false;
@@ -344,7 +366,7 @@ export class AppManipulationService {
     );
   }
 
-  async clickInsidePhoneScreen(position) {
+  async clickInsidePhoneScreen(position, rightClick = false) {
     const phoneScreen = await this.elementHelperService.findAndWaitForElement(
       By.css(`[data-testid="phone-screen"]`),
       "Timed out waiting for phone-screen"
@@ -355,6 +377,7 @@ export class AppManipulationService {
     const phoneHeight = rect.height;
 
     const actions = this.driver.actions({ bridge: true });
+
     await actions
       .move({
         // origin is center of phoneScreen
@@ -363,9 +386,9 @@ export class AppManipulationService {
         y: Math.floor((position.y + position.height / 2) * phoneHeight),
       })
       // .click() method does not trigger show touch on phone screen
-      .press()
+      .press(rightClick ? 2 : 0)
       .pause(250)
-      .release()
+      .release(rightClick ? 2 : 0)
       .perform();
   }
 

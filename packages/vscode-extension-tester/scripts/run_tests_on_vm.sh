@@ -93,7 +93,7 @@ ssh -i ./scripts/id_vm_mac "$VM_USER@$VM_IP" <<EOF
 cd "$REMOTE_PATH"
 npm install
 npm run get-test-app -- $APP
-PROJECT_NAME=$APP npm run setup-run-tests -- $@
+PROJECT_NAME=$APP TESTS_OS=Android npm run setup-run-tests -- $@
 cd ..
 rm -rf "$REMOTE_PATH"
 EOF

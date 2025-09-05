@@ -38,6 +38,14 @@ on:
         type: boolean
         required: false
         default: "true"
+      OS:
+        description: Operating System to use
+        type: choice
+        required: false
+        default: "iOS"
+        options:
+          - "Android"
+          - "iOS"
       testsToRun:
         description: Space-separated list of test numbers to run (none runs all tests)
         required: false
@@ -49,9 +57,15 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: macos-latest-xlarge
+    runs-on: macos-15-large
 
     steps:
+      - name: Setup Android SDK
+        if: ${{ github.event.inputs.OS == 'Android' }}
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "platform-tools emulator platforms;android-36 system-images;android-36;google_apis;x86_64"
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -117,6 +131,7 @@ jobs:
         env:
           PROJECT_NAME: ${{ github.event.inputs.testApp }}
           IS_RECORDING: ${{ github.event.inputs.isRecording }}
+          TESTS_OS: ${{ github.event.inputs.OS }}
 
       - name: make video
         if: ${{ always() && github.event.inputs.isRecording == 'true' }}

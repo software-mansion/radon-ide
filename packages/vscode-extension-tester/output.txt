@@ -1,0 +1,135 @@
+2025-09-08 15:51:29.225 [info] Started local MCP server on port 59463.
+2025-09-08 15:51:32.226 [info] Project in "./" loaded environment variables from .env files: []
+2025-09-08 15:51:32.241 [error] Error: Command failed with ENOENT: eas --version
+spawn eas ENOENT
+	at ChildProcess._handle.onexit (node:internal/child_process:285:19)
+	at onErrorNT (node:internal/child_process:483:16)
+	at process.processTicksAndRejections (node:internal/process/task_queues:90:21) Subprocess eas --version execution resulted in an error:
+2025-09-08 15:51:32.859 [warning] [WEBVIEW LOG] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+2025-09-08 15:51:33.213 [info] Device selected newDevice
+2025-09-08 15:51:33.215 [info] Selected device is ready
+2025-09-08 15:51:33.215 [info] Launching devtools
+2025-09-08 15:51:33.215 [info] Launching metro
+2025-09-08 15:51:33.216 [info] Devtools started on port 59475
+2025-09-08 15:51:33.233 [info] Found Xcode workspace /Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/react-native-app/ios/reactNative81.xcworkspace
+2025-09-08 15:51:33.257 [warning] Could not find any scheme files in /Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/react-native-app/ios/reactNative81.xcworkspace, using workspace name "reactNative81" as scheme
+2025-09-08 15:51:33.346 [info] Device selection was canceled The process was canceled
+2025-09-08 15:51:33.346 [error] Couldn't start device session The process was canceled
+2025-09-08 15:51:33.350 [error] Error: Preview not started
+	at IosSimulatorDevice.captureAndStopRecording (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:408789:13)
+	at ScreenCapture.stopRecording (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:424167:24)
+	at Kv.<anonymous> (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:424113:14)
+	at Kv.dispose (file:///private/var/folders/qs/39r63h3j09j9z5ldn24f2dc40000gn/T/test-resources/Visual%20Studio%20Code.app/Contents/Resources/app/out/vs/workbench/api/node/extensionHostProcess.js:107:9017)
+	at disposeAll (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:409069:18)
+	at ScreenCapture.dispose (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:424172:5)
+	at disposeAll (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:409069:18)
+	at DeviceSession.dispose (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:424443:5)
+	at async DeviceSessionsManager.terminateSession (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:425407:7) Unhandled promise rejection
+2025-09-08 15:51:33.486 [error] Error: Command failed with exit code 149: xcrun simctl --set /Users/krzysztof/Library/Caches/com.swmansion.radon-ide/Devices/iOS shutdown 8083AA20-E0B6-49A9-9EF4-E379D2FD8A40
+An error was encountered processing the command (domain=com.apple.CoreSimulator.SimError, code=405):
+Unable to shutdown device in current state: Shutdown
+	at makeError (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:80320:17)
+	at handlePromise (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:80891:33)
+	at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+	at async printErrorsOnExit (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:400230:22) Subprocess xcrun simctl --set /Users/krzysztof/Library/Caches/com.swmansion.radon-ide/Devices/iOS shutdown 8083AA20-E0B6-49A9-9EF4-E379D2FD8A40 execution resulted in an error:
+2025-09-08 15:51:34.016 [info] Node modules already installed - skipping
+2025-09-08 15:51:34.529 [info] Metro =================================================================================================
+2025-09-08 15:51:34.529 [info] Metro From React Native 0.73, your project's Metro config should extend '@react-native/metro-config'
+2025-09-08 15:51:34.529 [info] Metro or it will fail to build. Please copy the template at:
+2025-09-08 15:51:34.529 [info] Metro https://github.com/react-native-community/template/blob/main/template/metro.config.js
+2025-09-08 15:51:34.529 [info] Metro This warning will be removed in future (https://github.com/facebook/metro/issues/1018).
+2025-09-08 15:51:34.529 [info] Metro =================================================================================================
+2025-09-08 15:51:34.531 [info] Metro {"type":"RNIDE_watch_folders","watchFolders":["/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/react-native-app","/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/react-native-app","/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/lib"]}
+2025-09-08 15:51:34.531 [info] Captured metro watch folders ["/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/react-native-app","/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/react-native-app","/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/lib"]
+2025-09-08 15:51:34.541 [info] Metro 
+2025-09-08 15:51:34.541 [info] Metro Welcome to React Native v0.81
+2025-09-08 15:51:34.548 [info] Metro Starting dev server on http://localhost:59476
+2025-09-08 15:51:34.548 [info] Metro 
+2025-09-08 15:51:34.557 [info] Metro {"hasReducedPerformance":false,"port":59476,"type":"initialize_started"}
+2025-09-08 15:51:34.558 [info] Metro {"type":"dep_graph_loading","hasReducedPerformance":false}
+2025-09-08 15:51:34.559 [info] Metro {"type":"server_listening","address":"::","port":59476,"family":"IPv6"}
+2025-09-08 15:51:34.812 [info] Metro {"type":"watcher_status","status":{"type":"watchman_warning","warning":"Recrawled this watch 19 times, most recently because:\nMustScanSubDirs UserDroppedTo resolve, please review the information on\nhttps://facebook.github.io/watchman/docs/troubleshooting.html#recrawl\nTo clear this warning, run:\n`watchman watch-del '/Users/krzysztof/test/radon-ide' ; watchman watch-project '/Users/krzysztof/test/radon-ide'`\n","command":"watch-project"}}
+2025-09-08 15:51:34.812 [info] Metro {"type":"watcher_status","status":{"type":"watchman_warning","warning":"Recrawled this watch 19 times, most recently because:\nMustScanSubDirs UserDroppedTo resolve, please review the information on\nhttps://facebook.github.io/watchman/docs/troubleshooting.html#recrawl\nTo clear this warning, run:\n`watchman watch-del '/Users/krzysztof/test/radon-ide' ; watchman watch-project '/Users/krzysztof/test/radon-ide'`\n","command":"watch-project"}}
+2025-09-08 15:51:34.824 [info] Metro {"type":"watcher_status","status":{"type":"watchman_warning","warning":"Recrawled this watch 19 times, most recently because:\nMustScanSubDirs UserDroppedTo resolve, please review the information on\nhttps://facebook.github.io/watchman/docs/troubleshooting.html#recrawl\nTo clear this warning, run:\n`watchman watch-del '/Users/krzysztof/test/radon-ide' ; watchman watch-project '/Users/krzysztof/test/radon-ide'`\n","command":"query"}}
+2025-09-08 15:51:34.930 [info] Metro Recrawled this watch 19 times, most recently because:
+2025-09-08 15:51:34.930 [info] Metro MustScanSubDirs UserDroppedTo resolve, please review the information on
+2025-09-08 15:51:34.930 [info] Metro https://facebook.github.io/watchman/docs/troubleshooting.html#recrawl
+2025-09-08 15:51:34.930 [info] Metro To clear this warning, run:
+2025-09-08 15:51:34.930 [info] Metro `watchman watch-del '/Users/krzysztof/test/radon-ide' ; watchman watch-project '/Users/krzysztof/test/radon-ide'`
+2025-09-08 15:51:34.930 [info] Metro 
+2025-09-08 15:51:34.932 [info] Metro {"type":"dep_graph_loaded"}
+2025-09-08 15:51:34.932 [info] Metro {"type":"transformer_load_started"}
+2025-09-08 15:51:34.988 [info] Metro {"type":"transformer_load_done"}
+2025-09-08 15:51:34.988 [info] Metro {"type":"initialize_done","port":59476}
+2025-09-08 15:51:34.988 [info] Metro started on port 59476
+2025-09-08 15:51:34.988 [info] Metro & devtools ready
+2025-09-08 15:51:40.209 [info] Disposing IDE instance
+2025-09-08 15:51:40.320 [info] Project in "./" loaded environment variables from .env files: []
+2025-09-08 15:51:40.334 [error] Error: Command failed with ENOENT: eas --version
+spawn eas ENOENT
+	at ChildProcess._handle.onexit (node:internal/child_process:285:19)
+	at onErrorNT (node:internal/child_process:483:16)
+	at process.processTicksAndRejections (node:internal/process/task_queues:90:21) Subprocess eas --version execution resulted in an error:
+2025-09-08 15:51:40.795 [warning] [WEBVIEW LOG] Warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent}.
+2025-09-08 15:51:41.991 [info] Device selected newDevice
+2025-09-08 15:51:41.992 [info] Selected device is ready
+2025-09-08 15:51:41.992 [info] Launching devtools
+2025-09-08 15:51:41.992 [info] Launching metro
+2025-09-08 15:51:41.992 [info] Devtools started on port 59478
+2025-09-08 15:51:41.999 [info] Found Xcode workspace /Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/react-native-app/ios/reactNative81.xcworkspace
+2025-09-08 15:51:42.023 [warning] Could not find any scheme files in /Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/react-native-app/ios/reactNative81.xcworkspace, using workspace name "reactNative81" as scheme
+2025-09-08 15:51:42.718 [info] Node modules already installed - skipping
+2025-09-08 15:51:43.171 [info] Metro =================================================================================================
+2025-09-08 15:51:43.171 [info] Metro From React Native 0.73, your project's Metro config should extend '@react-native/metro-config'
+2025-09-08 15:51:43.171 [info] Metro or it will fail to build. Please copy the template at:
+2025-09-08 15:51:43.171 [info] Metro https://github.com/react-native-community/template/blob/main/template/metro.config.js
+2025-09-08 15:51:43.171 [info] Metro This warning will be removed in future (https://github.com/facebook/metro/issues/1018).
+2025-09-08 15:51:43.171 [info] Metro =================================================================================================
+2025-09-08 15:51:43.172 [info] Metro {"type":"RNIDE_watch_folders","watchFolders":["/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/react-native-app","/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/react-native-app","/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/lib"]}
+2025-09-08 15:51:43.172 [info] Captured metro watch folders ["/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/react-native-app","/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/react-native-app","/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/lib"]
+2025-09-08 15:51:43.183 [info] Metro 
+2025-09-08 15:51:43.183 [info] Metro Welcome to React Native v0.81
+2025-09-08 15:51:43.189 [info] Metro Starting dev server on http://localhost:59479
+2025-09-08 15:51:43.189 [info] Metro 
+2025-09-08 15:51:43.198 [info] Metro {"hasReducedPerformance":false,"port":59479,"type":"initialize_started"}
+2025-09-08 15:51:43.198 [info] Metro {"type":"dep_graph_loading","hasReducedPerformance":false}
+2025-09-08 15:51:43.200 [info] Metro {"type":"server_listening","address":"::","port":59479,"family":"IPv6"}
+2025-09-08 15:51:43.389 [info] Metro {"type":"watcher_status","status":{"type":"watchman_warning","warning":"Recrawled this watch 19 times, most recently because:\nMustScanSubDirs UserDroppedTo resolve, please review the information on\nhttps://facebook.github.io/watchman/docs/troubleshooting.html#recrawl\nTo clear this warning, run:\n`watchman watch-del '/Users/krzysztof/test/radon-ide' ; watchman watch-project '/Users/krzysztof/test/radon-ide'`\n","command":"watch-project"}}
+2025-09-08 15:51:43.389 [info] Metro {"type":"watcher_status","status":{"type":"watchman_warning","warning":"Recrawled this watch 19 times, most recently because:\nMustScanSubDirs UserDroppedTo resolve, please review the information on\nhttps://facebook.github.io/watchman/docs/troubleshooting.html#recrawl\nTo clear this warning, run:\n`watchman watch-del '/Users/krzysztof/test/radon-ide' ; watchman watch-project '/Users/krzysztof/test/radon-ide'`\n","command":"watch-project"}}
+2025-09-08 15:51:43.398 [info] Metro {"type":"watcher_status","status":{"type":"watchman_warning","warning":"Recrawled this watch 19 times, most recently because:\nMustScanSubDirs UserDroppedTo resolve, please review the information on\nhttps://facebook.github.io/watchman/docs/troubleshooting.html#recrawl\nTo clear this warning, run:\n`watchman watch-del '/Users/krzysztof/test/radon-ide' ; watchman watch-project '/Users/krzysztof/test/radon-ide'`\n","command":"query"}}
+2025-09-08 15:51:43.475 [info] Metro Recrawled this watch 19 times, most recently because:
+2025-09-08 15:51:43.475 [info] Metro MustScanSubDirs UserDroppedTo resolve, please review the information on
+2025-09-08 15:51:43.475 [info] Metro https://facebook.github.io/watchman/docs/troubleshooting.html#recrawl
+2025-09-08 15:51:43.475 [info] Metro To clear this warning, run:
+2025-09-08 15:51:43.475 [info] Metro `watchman watch-del '/Users/krzysztof/test/radon-ide' ; watchman watch-project '/Users/krzysztof/test/radon-ide'`
+2025-09-08 15:51:43.475 [info] Metro 
+2025-09-08 15:51:43.480 [info] Metro {"type":"dep_graph_loaded"}
+2025-09-08 15:51:43.480 [info] Metro {"type":"transformer_load_started"}
+2025-09-08 15:51:43.546 [info] Metro {"type":"transformer_load_done"}
+2025-09-08 15:51:43.546 [info] Metro {"type":"initialize_done","port":59479}
+2025-09-08 15:51:43.546 [info] Metro started on port 59479
+2025-09-08 15:51:43.546 [info] Metro & devtools ready
+2025-09-08 15:51:43.644 [info] Emulator output INFO         | Android emulator version 36.1.9.0 (build_id 13823996) (CL:N/A)
+2025-09-08 15:51:43.644 [info] Emulator output INFO         | Graphics backend: gfxstream
+2025-09-08 15:51:43.644 [info] Emulator output INFO         | Found systemPath /Users/krzysztof/Library/Android/sdk/system-images/android-36/google_apis/arm64-v8a
+2025-09-08 15:51:43.862 [info] Emulator output unknown option: -no-hvf
+2025-09-08 15:51:43.862 [info] Emulator output please use -help for a list of valid options
+2025-09-08 15:51:43.869 [error] Error: Command failed with exit code 1: /Users/krzysztof/Library/Android/sdk/emulator/emulator -avd 54a8b34e-bc10-4e8f-8f87-864ce36cfe27 -qt-hide-window -no-boot-anim -no-hvf -grpc-use-token -no-snapshot-save -writable-system
+unknown option: -no-hvf
+please use -help for a list of valid options
+INFO         | Android emulator version 36.1.9.0 (build_id 13823996) (CL:N/A)
+INFO         | Graphics backend: gfxstream
+INFO         | Found systemPath /Users/krzysztof/Library/Android/sdk/system-images/android-36/google_apis/arm64-v8a
+	at makeError (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:80320:17)
+	at handlePromise (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:80891:33)
+	at process.processTicksAndRejections (node:internal/process/task_queues:105:5) Subprocess /Users/krzysztof/Library/Android/sdk/emulator/emulator -avd 54a8b34e-bc10-4e8f-8f87-864ce36cfe27 -qt-hide-window -no-boot-anim -no-hvf -grpc-use-token -no-snapshot-save -writable-system execution resulted in an error:
+2025-09-08 15:51:43.869 [error] Error: Command failed with exit code 1: /Users/krzysztof/Library/Android/sdk/emulator/emulator -avd 54a8b34e-bc10-4e8f-8f87-864ce36cfe27 -qt-hide-window -no-boot-anim -no-hvf -grpc-use-token -no-snapshot-save -writable-system
+unknown option: -no-hvf
+please use -help for a list of valid options
+INFO         | Android emulator version 36.1.9.0 (build_id 13823996) (CL:N/A)
+INFO         | Graphics backend: gfxstream
+INFO         | Found systemPath /Users/krzysztof/Library/Android/sdk/system-images/android-36/google_apis/arm64-v8a
+	at makeError (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:80320:17)
+	at handlePromise (/Users/krzysztof/test/radon-ide/packages/vscode-extension-tester/data/vscode-extensions/swmansion.react-native-ide-1.11.0/dist/extension.js:80891:33)
+	at process.processTicksAndRejections (node:internal/process/task_queues:105:5) Failed to boot device
+2025-09-08 15:51:43.869 [error] Couldn't start device session Failed to boot device
