@@ -231,7 +231,6 @@ a.menu__link--active {
 
 a.menu__link--active:hover {
   text-decoration: none;
-  opacity: 1;
 }
 
 .table-of-contents__link span {
@@ -285,6 +284,7 @@ div[class*="hireUsContainer"] p {
 [class*="buttonTOCStyling"] {
   background-color: var(--radon-button) !important;
 }
+
 [class*="buttonTOCStyling"]:hover {
   background-color: var(--radon-button-hover) !important;
   color: var(--radon-button-text) !important;
@@ -295,7 +295,7 @@ div[class*="hireUsContainer"] p {
 }
 
 [class*="buttonTOCStyling"] svg {
-  stroke: white !important;
+  stroke: var(--ifm-color-primary) !important;
 }
 
 .col[class*="col--3"] {
@@ -309,10 +309,6 @@ div[class*="hireUsContainer"] p {
 
 .table-of-contents {
   padding: 20px !important;
-}
-
-section.row:nth-child(even) {
-  border: 1px solid red;
 }
 
 [class*="generatedIndexPage"] {

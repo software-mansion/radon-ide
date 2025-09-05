@@ -1,7 +1,10 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef } from "react";
 import styles from "./styles.module.css";
 import CheckIcon from "../../CheckIcon";
 import PlanLabelCard from "./PlanLabelCard";
+import { useModal } from "../../ModalProvider";
+import { PricingProps } from "..";
+import clsx from "clsx";
 
 export interface FeatureItem {
   label: string;
@@ -103,7 +106,9 @@ const handleCellContent = (data: string[] | boolean) => {
   }
 };
 
-export default function ComparePricingPlans() {
+export default function ComparePricingPlans({ handleBusiness }: PricingProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const { onOpen } = useModal();
   return (
     <div>
       <div className={styles.title}>Compare plans</div>
@@ -115,6 +120,7 @@ export default function ComparePricingPlans() {
             monthlyPrice={0}
             buttonLabel="Download"
             stylingFilled={false}
+            onClick={onOpen}
           />
           <PlanLabelCard
             plan="PRO"
@@ -122,6 +128,7 @@ export default function ComparePricingPlans() {
             yearlyLowPrice={390}
             buttonLabel="Start 14-day trial"
             stylingFilled={true}
+            onClick={handleBusiness}
           />
           <PlanLabelCard
             plan="ENTERPRISE"
@@ -129,10 +136,18 @@ export default function ComparePricingPlans() {
             yearlyLowPrice={990}
             buttonLabel="Get your quote"
             stylingFilled={true}
+            href="mailto:projects@swmansion.com"
           />
         </div>
         {pricingPlanFeatures.map((feature, index) => (
-          <div key={index} className={styles.table}>
+          <div
+            key={index}
+            className={clsx(
+              styles.table,
+              Array.isArray(feature.enterprise) && feature.enterprise.length > 1
+                ? ""
+                : styles.centered
+            )}>
             <div className={styles.featureLabelCell}>{feature.label}</div>
             <div className={styles.valueCell}>{handleCellContent(feature.free)}</div>
             <div className={styles.valueCell}>{handleCellContent(feature.pro)}</div>

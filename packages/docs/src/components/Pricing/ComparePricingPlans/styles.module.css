@@ -28,14 +28,23 @@
   border-bottom: var(--radon-border-layout);
 }
 
+.centered {
+  align-items: center;
+}
+
+.centered .valueCell {
+  justify-content: center;
+}
+
 .valueCell {
   border-left: var(--radon-border-layout);
   padding: 24px 40px;
-  align-items: center;
   display: flex;
+  align-items: center;
   flex-direction: column;
   gap: 4px;
   text-align: center;
+  height: 100%;
 }
 
 .valueCell p {
