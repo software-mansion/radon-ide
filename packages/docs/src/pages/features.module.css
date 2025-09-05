@@ -6,9 +6,7 @@
 
 .headerWrapper {
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+
   padding: 0 40px;
 }
 
@@ -16,6 +14,8 @@
   gap: 24px;
   width: 100%;
   max-width: 1280px;
+  display: flex;
+  flex-direction: column;
 }
 
 .headingLabel {
@@ -25,6 +25,9 @@
   text-wrap: balance;
   font-size: 64px;
   font-weight: 400;
+  gap: 24px;
+  display: flex;
+  flex-direction: column;
 }
 
 .subheadingLabel {
@@ -34,4 +37,24 @@
   font-size: 20px;
   margin-bottom: 32px;
   color: var(--radon-subheading);
+}
+
+@media (max-width: 767px) {
+  .headerWrapper {
+    padding: 40px 24px 24px;
+  }
+  .headingLabel {
+    margin: 0;
+    text-align: left;
+    text-wrap: balance;
+    font-size: 32px;
+    font-weight: 400;
+  }
+  .subheadingLabel {
+    text-align: left;
+    text-wrap: balance;
+    font-weight: 400;
+    font-size: 16px;
+    margin: 0;
+  }
 }

@@ -6,6 +6,7 @@ import FeatureSliderLanding from "../components/FeaturesLanding/FeatureSliderLan
 import FeaturesGrid from "../components/FeaturesLanding/FeaturesGrid";
 import AI from "../components/Sections/AI";
 import LearnMoreFooter from "../components/LearnMore/LearnMoreFooter";
+import SWM from "../components/Sections/SWM";
 
 export default function Features(): JSX.Element {
   return (
@@ -23,6 +24,7 @@ export default function Features(): JSX.Element {
           <FeatureSliderLanding />
           <FeaturesGrid />
           <AI />
+          <SWM />
           <LearnMoreFooter />
         </div>
       </div>

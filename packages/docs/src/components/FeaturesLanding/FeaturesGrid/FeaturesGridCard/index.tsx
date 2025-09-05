@@ -21,7 +21,7 @@ export default function FeaturesGridCard({
           <p className={styles.label}>{label}</p>
           <p className={styles.title}> {title}</p>
         </div>
-        <div className={styles.textContent}>{content}</div>
+        <p className={styles.textContent}>{content}</p>
       </div>
       <img className={styles.gridSvg} src={imageSrc}></img>
     </div>
