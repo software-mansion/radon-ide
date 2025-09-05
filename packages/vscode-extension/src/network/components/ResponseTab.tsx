@@ -1,47 +1,39 @@
 import "./ResponseTab.css";
-import { useEffect, useState } from "react";
 import IconButton from "../../webview/components/shared/IconButton";
 import { NetworkLog, responseBodyInfo } from "../hooks/useNetworkTracker";
-import { useNetwork } from "../providers/NetworkProvider";
 import { formatJSONBody } from "../utils/requestFormatUtils";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
+  responseBody?: responseBodyInfo;
 }
 
-const ResponseTab = ({ networkLog }: ResponseTabProps) => {
-  const { getResponseBody } = useNetwork();
-  const [responseBody, setResponseBody] = useState<responseBodyInfo | null>(null);
-
-  useEffect(() => {
-    getResponseBody(networkLog).then((data) => {
-      setResponseBody(data);
-    });
-  }, [networkLog.requestId]);
-
-  const responseData = formatJSONBody(responseBody?.body);
-  const wasTruncated = responseBody?.wasTruncated;
+const ResponseTab = ({ networkLog, responseBody }: ResponseTabProps) => {
+  const { body = undefined, wasTruncated = false } = responseBody || {};
+  const responseData = formatJSONBody(body);
 
   return (
     <>
-      <div>
-
+      <div className="response-tab-button-wrapper">
+        <IconButton
+          className="response-tab-copy-button"
+          tooltip={{ label: "Open request in new window", side: "bottom" }}
+          onClick={() => console.log("placeholder")}>
+          <span className="codicon codicon-chrome-restore" />
+        </IconButton>
         <IconButton
           className="response-tab-copy-button"
           tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
           onClick={() => navigator.clipboard.writeText(responseData)}>
           <span className="codicon codicon-copy" />
         </IconButton>
-        
-        {wasTruncated && (
-          <span 
-            className="response-tab-warning-icon codicon codicon-warning"
-            title="Data was too large and was therefore truncated"
-          />
-        )}
       </div>
-
-      <pre>{responseData}</pre>
+      {wasTruncated && (
+        <pre className="response-tab-truncated-warning">
+          <span className="codicon codicon-warning" /> Response too large, showing truncated data.
+        </pre>
+      )}
+      <pre className="response-tab-pre">{responseData}</pre>
     </>
   );
 };

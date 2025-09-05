@@ -37,12 +37,15 @@ const PayloadTab = ({ networkLog }: PayloadTabProps) => {
 
   return (
     <>
-      <IconButton
-        className="response-tab-copy-button"
-        tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
-        onClick={() => navigator.clipboard.writeText(payloadData)}>
-        <span className="codicon codicon-copy" />
-      </IconButton>
+      <div className="response-tab-button-wrapper">
+        <IconButton
+          className="response-tab-copy-button"
+          tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
+          onClick={() => navigator.clipboard.writeText(payloadData)}>
+          <span className="codicon codicon-copy" />
+        </IconButton>
+      </div>
+
       <pre className="response-tab-pre">{payloadData}</pre>
     </>
   );
