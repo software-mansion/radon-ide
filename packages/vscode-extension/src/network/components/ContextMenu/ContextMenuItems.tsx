@@ -4,7 +4,6 @@ import * as ContextMenu from "@radix-ui/react-context-menu";
 import { NetworkLog } from "../../hooks/useNetworkTracker";
 import { NetworkLogColumn, SortState } from "../../types/network";
 import { getSortIcon } from "../NetworkRequestLog";
-import { NETWORK_LOG_COLUMNS } from "../../utils/networkLogsSort";
 import { copyToClipboard } from "../../utils/clipboard";
 import {
   getRequestDetails,
@@ -17,6 +16,7 @@ import {
   getUrl,
 } from "../../utils/requestFormatters";
 import { useNetwork } from "../../providers/NetworkProvider";
+import { NETWORK_LOG_COLUMNS } from "../../types/network";
 export interface CopySubmenuProps {
   networkLog: NetworkLog | null;
 }
