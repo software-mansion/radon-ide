@@ -5,9 +5,10 @@
   background: var(--vscode-editor-background);
 }
 
-.table-row:hover {
+.table-row:hover,
+.table-row[data-state="open"] {
   cursor: pointer;
-  background-color: var(--vscode-list-hoverBackground);
+  background-color: var(--swm-url-select-highlighted-background);
 }
 
 .table-header-cell {
@@ -97,4 +98,9 @@ vscode-table-header-cell:hover .table-header-cell button {
 .hack-table-row {
   visibility: hidden;
   pointer-events: none;
+}
+
+.context-menu-row {
+  width: auto;
+  position: absolute;
 }
