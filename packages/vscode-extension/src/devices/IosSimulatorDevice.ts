@@ -18,7 +18,6 @@ import {
 } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
-import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import {
   DeviceInfo,
@@ -27,6 +26,7 @@ import {
   IOSDeviceInfo,
   IOSRuntimeInfo,
 } from "../common/State";
+import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 
 interface SimulatorInfo {
   availability?: string;
@@ -67,8 +67,7 @@ export class IosSimulatorDevice extends DeviceBase {
 
   constructor(
     private readonly deviceUDID: string,
-    private readonly _deviceInfo: DeviceInfo,
-    private readonly outputChannelRegistry: OutputChannelRegistry
+    private readonly _deviceInfo: DeviceInfo
   ) {
     super();
   }
@@ -88,7 +87,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   private get nativeLogsOutputChannel() {
-    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.IosDevice);
+    return OutputChannelRegistry.getOrCreateOutputChannel(Output.IosDevice);
   }
 
   public dispose() {

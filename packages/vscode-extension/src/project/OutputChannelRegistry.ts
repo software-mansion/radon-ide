@@ -1,30 +1,43 @@
-import { Disposable, LogOutputChannel, window } from "vscode";
+import { Disposable } from "vscode";
 import { Output } from "../common/OutputChannel";
-import { Logger } from "../Logger";
+import { createReadableOutputChannel, ReadableLogOutputChannel } from "./ReadableLogOutputChannel";
+
+const hiddenOutputChannels: Output[] = [];
 
 export class OutputChannelRegistry implements Disposable {
-  private channelByName = new Map<Output, LogOutputChannel>([
-    [Output.Ide, Logger.rawOutputChannel],
-  ]);
+  private static instance: OutputChannelRegistry | null = null;
+  private channelByName = new Map<Output, ReadableLogOutputChannel>([]);
 
-  getOrCreateOutputChannel(channel: Output) {
-    const logOutput = this.channelByName.get(channel);
+  public static getOrCreateOutputChannel(channel: Output): ReadableLogOutputChannel {
+    const logOutput = this.instance?.channelByName.get(channel);
+
     if (logOutput) {
       return logOutput;
     }
 
-    const newOutputChannel = window.createOutputChannel(channel, { log: true });
-    this.channelByName.set(channel, newOutputChannel);
+    const newOutputChannel = createReadableOutputChannel(
+      channel,
+      !hiddenOutputChannels.includes(channel)
+    );
+
+    this.instance?.channelByName.set(channel, newOutputChannel);
+
     return newOutputChannel;
   }
 
+  public static initializeInstance(): OutputChannelRegistry {
+    // Using `initializeInstance` in combination with `getInstanceIfExists` instead of a single `getInstance`
+    // prevents Logger from constructing OutputChannelRegistry after `dispose` has been already called.
+    if (this.instance) {
+      throw new Error("OutputChannelRegistry instance already exists.");
+    }
+    this.instance = new OutputChannelRegistry();
+    return this.instance;
+  }
+
   dispose() {
-    this.channelByName.entries().forEach(([k, c]) => {
-      // NOTE: we special-case the IDE output channel to keep it open
-      // even when the IDE is disposed.
-      if (k !== Output.Ide) {
-        c.dispose();
-      }
-    });
+    this.channelByName.values().forEach((channel) => channel.dispose());
+    this.channelByName.clear();
+    OutputChannelRegistry.instance = null;
   }
 }

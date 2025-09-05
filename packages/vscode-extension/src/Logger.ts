@@ -1,6 +1,9 @@
-import { LogOutputChannel, window } from "vscode";
+import { Output } from "./common/OutputChannel";
+import { OutputChannelRegistry } from "./project/OutputChannelRegistry";
 
-const outputChannel = window.createOutputChannel("Radon IDE", { log: true });
+const getIdeOutputChannel = () => {
+  return OutputChannelRegistry.getInstanceIfExists()?.getOrCreateOutputChannel(Output.Ide);
+};
 
 const logger = {
   log(_message: string, ..._args: any[]) {},
@@ -12,28 +15,28 @@ const logger = {
     // to INFO. We don't want to ask users to change their logging level as it impacts all
     // the logs vscode generates. Also, when changing log level, one need to reload vscode
     // window for the extension to pick up the change.
-    outputChannel.info(message, ...args);
+    getIdeOutputChannel()?.info(message, ...args);
   },
 
   info(message: string, ...args: any[]) {
-    outputChannel.info(message, ...args);
+    getIdeOutputChannel()?.info(message, ...args);
   },
 
   warn(message: string, ...args: any[]) {
-    outputChannel.warn(message, ...args);
+    getIdeOutputChannel()?.warn(message, ...args);
   },
 
   error(message: string, ...args: any[]) {
     if (args.length > 0 && args[args.length - 1] instanceof Error) {
       const error = args[args.length - 1] as Error;
-      outputChannel.error(error, message, ...args.slice(0, -1));
+      getIdeOutputChannel()?.error(error, message, ...args.slice(0, -1));
     } else {
-      outputChannel.error(message, ...args);
+      getIdeOutputChannel()?.error(message, ...args);
     }
   },
 
   openOutputPanel() {
-    outputChannel.show();
+    getIdeOutputChannel()?.show();
   },
 };
 
@@ -58,10 +61,6 @@ export function enableDevModeLogging() {
 }
 
 export class Logger {
-  public static get rawOutputChannel(): LogOutputChannel {
-    return outputChannel;
-  }
-
   public static openOutputPanel() {
     logger.openOutputPanel();
   }

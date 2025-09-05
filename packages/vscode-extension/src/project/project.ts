@@ -133,7 +133,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     private readonly devicesStateManager: StateManager<DevicesState>,
     private readonly deviceManager: DeviceManager,
     private readonly editorBindings: EditorBindings,
-    private readonly outputChannelRegistry: OutputChannelRegistry,
     private readonly environmentDependencyManager: EnvironmentDependencyManager,
     private readonly telemetry: Telemetry,
     initialLaunchConfigOptions?: LaunchConfiguration
@@ -155,8 +154,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this.applicationContext,
       this.deviceManager,
       this.devicesStateManager,
-      this,
-      this.outputChannelRegistry
+      this
     );
 
     const connector = Connector.getInstance();
@@ -292,8 +290,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this.applicationContext,
       this.deviceManager,
       this.devicesStateManager,
-      this,
-      this.outputChannelRegistry
+      this
     );
     oldDeviceSessionsManager.dispose();
     this.maybeStartInitialDeviceSession();
@@ -745,7 +742,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region Logging
 
   public async focusOutput(channel: Output): Promise<void> {
-    this.outputChannelRegistry.getOrCreateOutputChannel(channel).show();
+    OutputChannelRegistry.getOrCreateOutputChannel(channel).show();
   }
 
   public async log(type: "info" | "error" | "warn" | "log", message: string, ...args: unknown[]) {

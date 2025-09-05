@@ -1,5 +1,4 @@
 import assert from "assert";
-import _ from "lodash";
 import { Disposable } from "vscode";
 import { MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
@@ -33,7 +32,6 @@ import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { ToolKey } from "./tools";
 import { ApplicationContext } from "./ApplicationContext";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
-import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { ApplicationSession } from "./applicationSession";
 import { DevicePlatform, DeviceRotation, DeviceSessionStore } from "../common/State";
@@ -43,6 +41,7 @@ import { FrameReporter } from "./FrameReporter";
 import { ScreenCapture } from "./ScreenCapture";
 import { disposeAll } from "../utilities/disposables";
 import { FileTransfer } from "./FileTransfer";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -113,8 +112,7 @@ export class DeviceSession implements Disposable {
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     initialRotation: DeviceRotation,
-    private readonly deviceSessionDelegate: DeviceSessionDelegate,
-    private readonly outputChannelRegistry: OutputChannelRegistry
+    private readonly deviceSessionDelegate: DeviceSessionDelegate
   ) {
     this.frameReporter = new FrameReporter(
       this.stateManager.getDerived("frameReporting"),
@@ -595,7 +593,7 @@ export class DeviceSession implements Disposable {
 
     const buildOptions = {
       forceCleanBuild: clean || buildDependenciesChanged,
-      buildOutputChannel: this.outputChannelRegistry.getOrCreateOutputChannel(
+      buildOutputChannel: OutputChannelRegistry.getOrCreateOutputChannel(
         this.platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
       ),
       cancelToken,
@@ -642,7 +640,7 @@ export class DeviceSession implements Disposable {
       this.cancelOngoingOperations();
       const cancelToken = this.cancelToken;
 
-      const packageManagerOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
+      const packageManagerOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(
         Output.PackageManager
       );
 
