@@ -1,11 +1,4 @@
-import React, {
-  createContext,
-  PropsWithChildren,
-  useContext,
-  useMemo,
-  useReducer,
-  useState,
-} from "react";
+import { createContext, PropsWithChildren, useContext, useMemo, useReducer } from "react";
 import useNetworkTracker, {
   NetworkTracker,
   networkTrackerInitialState,
@@ -38,27 +31,18 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
-  const [isRecording, setIsRecording] = useState(true);
 
-  const clearActivity = () => {
-    networkTracker.clearLogs();
-  };
-
-  const toggleRecording = () => {
-    setIsRecording((prev) => {
-      networkTracker.toggleNetwork(prev);
-      return !prev;
-    });
-  };
+  const [isRecording, toggleRecording] = useReducer((state) => {
+    networkTracker.toggleNetwork(state);
+    return !state;
+  }, true);
 
   const contextValue = useMemo(() => {
     return {
       ...networkTracker,
-      networkLogs: networkTracker.networkLogs,
       isRecording,
       toggleRecording,
       isScrolling,
-      clearActivity,
       toggleScrolling,
       isTimelineVisible,
       toggleTimelineVisible,
