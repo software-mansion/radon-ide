@@ -45,7 +45,7 @@ export interface NetworkLog {
   encodedDataLength?: number;
   type?: string;
   timeline: TimelineEvent;
-  initiator?: any;
+  initiator?: NetworkRequestInitiator;
 }
 
 export interface WebSocketMessage {
