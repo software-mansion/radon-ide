@@ -34,7 +34,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       isTimelineVisible,
       toggleTimelineVisible,
     };
-  }, [isScrolling, isTimelineVisible, networkTracker.networkLogs]);
+  }, [isScrolling, isTimelineVisible, networkTracker]);
 
   return (
     <NetworkContext.Provider value={contextValue}>
