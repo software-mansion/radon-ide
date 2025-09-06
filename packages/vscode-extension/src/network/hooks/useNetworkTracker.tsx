@@ -194,15 +194,13 @@ const useNetworkTracker = (): NetworkTracker => {
 
     const id = Math.random().toString(36).substring(7);
 
-    wsRef.current?.send(
-      JSON.stringify({
-        id,
-        method: "Network.getResponseBody",
-        params: {
-          requestId: networkLog.requestId,
-        },
-      })
-    );
+    vscode.postMessage({
+      command: "cdp-call",
+      method: "Network.getResponseBody",
+      params: {
+        requestId: networkLog.requestId,
+      },
+    });
 
     return new Promise((resolve) => {
       const listener = (message: MessageEvent) => {
@@ -226,14 +224,13 @@ const useNetworkTracker = (): NetworkTracker => {
   };
 
   const getSource = (networkLog: NetworkLog) => {
-    wsRef.current?.send(
-      JSON.stringify({
-        method: "Network.Initiator",
-        params: {
-          ...networkLog.initiator,
-        },
-      })
-    );
+    vscode.postMessage({
+      command: "cdp-call",
+      method: "Network.Initiator",
+      params: {
+        ...networkLog.initiator,
+      },
+    });
   };
 
   return {

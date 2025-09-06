@@ -46,7 +46,7 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
       if (event.command === "cdp-call") {
         networkPlugin.sendCDPMessage({
           method: event.method,
-          params: {},
+          params: event.params ?? {},
         });
       }
     });
