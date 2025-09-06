@@ -1,4 +1,5 @@
 import { useEffect, useReducer, useRef, useState } from "react";
+import { vscode } from "../../webview/utilities/vscode";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
 
@@ -177,11 +178,10 @@ const useNetworkTracker = (): NetworkTracker => {
   };
 
   const [isRecording, toggleRecording] = useReducer((state) => {
-    wsRef.current?.send(
-      JSON.stringify({
-        method: state ? "Network.disable" : "Network.enable",
-      })
-    );
+    vscode.postMessage({
+      command: "cdp-call",
+      method: state ? "Network.disable" : "Network.enable",
+    });
     return !state;
   }, true);
 

@@ -12,6 +12,10 @@ import { reportToolOpened, reportToolVisibilityChanged } from "../../project/too
 import { generateWebviewContent } from "../../panels/webviewContentGenerator";
 import { PREVIEW_NETWORK_NAME, PREVIEW_NETWORK_PATH } from "../../webview/utilities/constants";
 
+type WebviewMessage = Record<string, string> & {
+  command: string;
+};
+
 export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
   constructor(private readonly context: ExtensionContext) {}
   public resolveWebviewView(
@@ -30,10 +34,22 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
     };
 
     const project = IDE.getInstanceIfExists()?.project;
-    const wsPort = (project?.deviceSession?.getPlugin("network") as NetworkPlugin)?.websocketPort;
-    if (!wsPort) {
-      throw new Error("Couldn't retrieve websocket port from network plugin");
+
+    const networkPlugin = project?.deviceSession?.getPlugin("network") as NetworkPlugin | undefined;
+
+    if (!networkPlugin) {
+      throw new Error("Couldn't retrieve the network plugin");
     }
+
+    // FIXME: Dispose
+    const _disposable = webview.onDidReceiveMessage((event: WebviewMessage) => {
+      if (event.command === "cdp-call") {
+        networkPlugin.sendCDPMessage({
+          method: event.method,
+          params: {},
+        });
+      }
+    });
 
     webviewView.onDidChangeVisibility(() =>
       reportToolVisibilityChanged(NETWORK_PLUGIN_ID, webviewView.visible)
@@ -45,7 +61,7 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
       this.context.extensionUri,
       PREVIEW_NETWORK_NAME,
       PREVIEW_NETWORK_PATH,
-      `localhost:${wsPort}`
+      `localhost:${networkPlugin.websocketPort}`
     );
   }
 }
