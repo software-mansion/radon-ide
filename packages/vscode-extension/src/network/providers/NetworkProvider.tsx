@@ -6,10 +6,7 @@ import useNetworkTracker, {
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 
 interface NetworkProviderProps extends NetworkTracker {
-  isRecording: boolean;
   isScrolling: boolean;
-  toggleRecording: () => void;
-  clearActivity: () => void;
   toggleScrolling: () => void;
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
@@ -18,8 +15,6 @@ interface NetworkProviderProps extends NetworkTracker {
 const NetworkContext = createContext<NetworkProviderProps>({
   ...networkTrackerInitialState,
   isScrolling: false,
-  toggleRecording: () => {},
-  clearActivity: () => {},
   toggleScrolling: () => {},
   isTimelineVisible: true,
   toggleTimelineVisible: () => {},
