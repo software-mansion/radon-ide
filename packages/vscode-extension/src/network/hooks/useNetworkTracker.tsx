@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
 
@@ -67,18 +67,20 @@ export interface WebSocketMessage {
 export interface NetworkTracker {
   networkLogs: NetworkLog[];
   ws: WebSocket | null;
+  isRecording: boolean;
   getResponseBody: (networkLog: NetworkLog) => Promise<unknown>;
   clearActivity: () => void;
-  toggleNetwork: (isRunning: boolean) => void;
+  toggleRecording: () => void;
   getSource: (networkLog: NetworkLog) => void;
 }
 
 export const networkTrackerInitialState: NetworkTracker = {
   networkLogs: [],
   ws: null,
+  isRecording: true,
   getResponseBody: async () => undefined,
   clearActivity: () => {},
-  toggleNetwork: () => {},
+  toggleRecording: () => {},
   getSource: () => {},
 };
 
@@ -174,13 +176,14 @@ const useNetworkTracker = (): NetworkTracker => {
     setServerMessages([]);
   };
 
-  const toggleNetwork = (isRunning: boolean) => {
+  const [isRecording, toggleRecording] = useReducer((state) => {
     wsRef.current?.send(
       JSON.stringify({
-        method: isRunning ? "Network.disable" : "Network.enable",
+        method: state ? "Network.disable" : "Network.enable",
       })
     );
-  };
+    return !state;
+  }, true);
 
   const [responseBodies, setResponseBodies] = useState<Record<string, unknown>>({});
 
@@ -236,9 +239,10 @@ const useNetworkTracker = (): NetworkTracker => {
   return {
     networkLogs: networkLogs.filter((log) => log?.request?.url !== undefined),
     ws: wsRef.current,
+    isRecording,
     getResponseBody,
     clearActivity,
-    toggleNetwork,
+    toggleRecording,
     getSource,
   };
 };

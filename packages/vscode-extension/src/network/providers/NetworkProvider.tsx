@@ -17,7 +17,6 @@ interface NetworkProviderProps extends NetworkTracker {
 
 const NetworkContext = createContext<NetworkProviderProps>({
   ...networkTrackerInitialState,
-  isRecording: true,
   isScrolling: false,
   toggleRecording: () => {},
   clearActivity: () => {},
@@ -32,22 +31,15 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
 
-  const [isRecording, toggleRecording] = useReducer((state) => {
-    networkTracker.toggleNetwork(state);
-    return !state;
-  }, true);
-
   const contextValue = useMemo(() => {
     return {
       ...networkTracker,
-      isRecording,
-      toggleRecording,
       isScrolling,
       toggleScrolling,
       isTimelineVisible,
       toggleTimelineVisible,
     };
-  }, [isRecording, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
+  }, [isScrolling, isTimelineVisible, networkTracker.networkLogs]);
 
   return (
     <NetworkContext.Provider value={contextValue}>
