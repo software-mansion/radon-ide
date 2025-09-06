@@ -27,11 +27,16 @@ async function initialize() {
   );
 }
 
+interface CDPMessage {
+  method: string;
+  params: unknown;
+}
+
 class NetworkCDPWebsocketBackend implements Disposable {
   private server: Server;
   private sessions: Set<WebSocket> = new Set();
 
-  constructor(private readonly sendCDPMessage: (messageData: any) => void) {
+  constructor(private readonly sendCDPMessage: (messageData: CDPMessage) => void) {
     this.server = http.createServer(() => {});
     const wss = new WebSocketServer({ server: this.server });
 
@@ -113,9 +118,9 @@ export class NetworkPlugin implements ToolPlugin {
     return this.websocketBackend.port;
   }
 
-  sendCDPMessage = (messageData: any) => {
+  public sendCDPMessage(messageData: CDPMessage) {
     this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
-  };
+  }
 
   activate(): void {
     this.websocketBackend.start().then(() => {
