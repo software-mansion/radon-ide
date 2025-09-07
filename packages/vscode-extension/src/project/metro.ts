@@ -16,6 +16,7 @@ import { DebugSource } from "../debugging/DebugSession";
 import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
 import { CancelToken } from "../utilities/cancelToken";
+import { checkPortOpen } from "../utilities/checkPortOpen";
 
 const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
@@ -455,7 +456,18 @@ export class MetroLauncher extends Metro implements Disposable {
     }
     const isExtensionDev = extensionContext.extensionMode === ExtensionMode.Development;
 
-    const port = await getOpenPort();
+    let port: number;
+
+    if (launchConfiguration.bundler?.port) {
+      if (!(await checkPortOpen("localhost", launchConfiguration.bundler.port))) {
+        throw new Error(
+          `Custom bundler port ${launchConfiguration.bundler.port} is taken by another process.`
+        );
+      }
+      port = launchConfiguration.bundler.port;
+    } else {
+      port = await getOpenPort();
+    }
 
     // NOTE: this is needed to capture metro's open-stack-frame calls.
     // See `packages/vscode-extension/atom` script for more details.

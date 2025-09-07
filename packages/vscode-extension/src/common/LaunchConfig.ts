@@ -11,6 +11,9 @@ export interface LaunchOptions {
   name?: string;
   appRoot?: string;
   metroConfigPath?: string;
+  bundler?: {
+    port?: number;
+  };
   expoStartArgs?: string[];
   customBuild?: {
     ios?: CustomBuild;
@@ -35,6 +38,7 @@ export const LAUNCH_OPTIONS_KEYS = [
   "name",
   "appRoot",
   "metroConfigPath",
+  "bundler",
   "expoStartArgs",
   "customBuild",
   "eas",
