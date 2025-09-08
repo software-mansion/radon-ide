@@ -63,7 +63,7 @@
   display: flex;
   justify-content: flex-end;
   align-self: center;
-  gap: 10px;
+  gap: 2px;
 }
 
 @keyframes alertContentShow {
