@@ -12,13 +12,14 @@ import { reportToolOpened, reportToolVisibilityChanged } from "../../project/too
 import { generateWebviewContent } from "../../panels/webviewContentGenerator";
 import { PREVIEW_NETWORK_NAME, PREVIEW_NETWORK_PATH } from "../../webview/utilities/constants";
 
-type WebviewMessage = Record<string, string> & {
-  command: string;
-};
-
 // TODO: Use an enum with all possible call types if there will be more than one.
 // TODO: Move to share frontend-backend consts file
-const CDP_CALL = "cdp-call";
+
+type WebviewCDPMessage = {
+  command: "cdp-call";
+  method: string;
+  params: Record<string, unknown>;
+};
 
 export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
   constructor(private readonly context: ExtensionContext) {}
@@ -46,8 +47,8 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
     }
 
     // FIXME: Dispose
-    const _disposable = webview.onDidReceiveMessage((event: WebviewMessage) => {
-      if (event.command === CDP_CALL) {
+    const _disposable = webview.onDidReceiveMessage((event: WebviewCDPMessage) => {
+      if (event.command === "cdp-call") {
         networkPlugin.sendCDPMessage({
           method: event.method,
           params: event.params ?? {},
