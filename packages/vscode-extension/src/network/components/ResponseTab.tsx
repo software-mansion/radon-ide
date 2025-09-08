@@ -3,6 +3,7 @@ import IconButton from "../../webview/components/shared/IconButton";
 import { NetworkLog, responseBodyInfo } from "../hooks/useNetworkTracker";
 import { formatJSONBody } from "../utils/requestFormatUtils";
 import { useNetwork } from "../providers/NetworkProvider";
+import TabActionButtons from "./TabActionButtons";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
@@ -16,24 +17,21 @@ const ResponseTab = ({ networkLog, responseBody }: ResponseTabProps) => {
 
   return (
     <>
-      <div className="response-tab-button-wrapper">
-        <IconButton
-          className="response-tab-copy-button"
-          tooltip={{ label: "Open request in new window", side: "bottom" }}
-          onClick={() => {
-            fetchAndOpenResponseInEditor(networkLog);
-          }}
-          disabled={!responseData}>
-          <span className="codicon codicon-chrome-restore" />
-        </IconButton>
-        <IconButton
-          className="response-tab-copy-button"
-          tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
-          onClick={() => navigator.clipboard.writeText(responseData)}
-          disabled={!responseData}>
-          <span className="codicon codicon-copy" />
-        </IconButton>
-      </div>
+      <TabActionButtons 
+        data={responseData}
+        copyDisabled={!responseData}
+        additionalButtons={
+          <IconButton
+            className="response-tab-copy-button"
+            tooltip={{ label: "Open request in new window", side: "bottom" }}
+            onClick={() => {
+              fetchAndOpenResponseInEditor(networkLog);
+            }}
+            disabled={!responseData}>
+            <span className="codicon codicon-chrome-restore" />
+          </IconButton>
+        }
+      />
       {wasTruncated && (
         <pre className="response-tab-truncated-warning">
           <span className="codicon codicon-warning" /> Response too large, showing truncated data.

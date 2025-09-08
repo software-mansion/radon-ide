@@ -1,6 +1,6 @@
 import { NetworkLog } from "../hooks/useNetworkTracker";
-import IconButton from "../../webview/components/shared/IconButton";
 import { formatJSONBody, formatUrlParams } from "../utils/requestFormatUtils";
+import TabActionButtons from "./TabActionButtons";
 
 interface PayloadTabProps {
   networkLog: NetworkLog;
@@ -37,15 +37,7 @@ const PayloadTab = ({ networkLog }: PayloadTabProps) => {
 
   return (
     <>
-      <div className="response-tab-button-wrapper">
-        <IconButton
-          className="response-tab-copy-button"
-          tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
-          onClick={() => navigator.clipboard.writeText(payloadData)}>
-          <span className="codicon codicon-copy" />
-        </IconButton>
-      </div>
-
+      <TabActionButtons data={payloadData} />
       <pre className="response-tab-pre">{payloadData}</pre>
     </>
   );
