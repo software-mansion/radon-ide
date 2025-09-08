@@ -98,6 +98,11 @@ class NetworkCDPWebsocketBackend implements Disposable {
   }
 }
 
+enum CDPNetworkCommand {
+  Enable = "Network.enable",
+  Disable = "Network.disable",
+}
+
 export class NetworkPlugin implements ToolPlugin {
   public readonly id: ToolKey = NETWORK_PLUGIN_ID;
   public readonly label = "Network";
@@ -134,16 +139,16 @@ export class NetworkPlugin implements ToolPlugin {
       );
       this.devtoolsListeners.push(
         this.inspectorBridge.onEvent("appReady", () => {
-          this.sendCDPMessage({ method: "Network.enable", params: {} });
+          this.sendCDPMessage({ method: CDPNetworkCommand.Enable, params: {} });
         })
       );
-      this.sendCDPMessage({ method: "Network.enable", params: {} });
+      this.sendCDPMessage({ method: CDPNetworkCommand.Enable, params: {} });
     });
   }
 
   deactivate(): void {
     disposeAll(this.devtoolsListeners);
-    this.sendCDPMessage({ method: "Network.disable", params: {} });
+    this.sendCDPMessage({ method: CDPNetworkCommand.Disable, params: {} });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
   }
 

@@ -200,6 +200,7 @@ const useNetworkTracker = (): NetworkTracker => {
 
     vscode.postMessage({
       command: CDP_CALL,
+      id,
       method: "Network.getResponseBody",
       params: {
         requestId: networkLog.requestId,
@@ -237,8 +238,13 @@ const useNetworkTracker = (): NetworkTracker => {
     });
   };
 
+  const validLogs = useMemo(
+    () => networkLogs.filter((log) => log?.request?.url !== undefined),
+    [networkLogs.length]
+  );
+
   return {
-    networkLogs: networkLogs.filter((log) => log?.request?.url !== undefined),
+    networkLogs: validLogs,
     ws: wsRef.current,
     isRecording,
     getResponseBody,
