@@ -26,7 +26,7 @@ export class OutputChannelRegistry implements Disposable {
   }
 
   dispose() {
-    this.channelByName.entries().forEach(([k, c]) => {
+    this.channelByName.values().forEach((c) => {
       c.dispose();
     });
   }
