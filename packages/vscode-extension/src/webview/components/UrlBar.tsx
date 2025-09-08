@@ -14,6 +14,7 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
         label: "Reload the app",
         side: "bottom",
       }}
+      data-testid="top-bar-reload-button"
       disabled={disabled}
       options={{
         "Reload JS": () => project.reloadCurrentSession("reloadJs"),

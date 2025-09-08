@@ -22,7 +22,7 @@ function StartupMessageComponent({ children, className }: StartupMessageProps) {
   });
 
   return (
-    <div className={classNames("startup-message-wrapper", className)}>
+    <div className={classNames("startup-message-wrapper", className)} data-testid="startup-message">
       {children}
       <div className="startup-message-dots">
         {children !== StartupMessage.Building && children !== StartupMessage.WaitingForAppToLoad

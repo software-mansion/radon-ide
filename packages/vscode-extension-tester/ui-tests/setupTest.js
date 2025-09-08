@@ -6,8 +6,50 @@ import {
 } from "vscode-extension-tester";
 import path from "path";
 import fs from "fs";
+import { WebSocketServer } from "ws";
 
 const IS_RECORDING = process.env.IS_RECORDING === "true";
+
+let appWebsocket;
+
+const wss = new WebSocketServer({ port: 8080 });
+
+wss.on("connection", (ws) => {
+  appWebsocket = ws;
+
+  ws.on("message", (message) => {
+    const msg = JSON.parse(message);
+    console.log("Received message:", msg);
+  });
+
+  ws.on("close", () => {
+    appWebsocket = null;
+    console.log("Client disconnected");
+  });
+});
+
+export function waitForMessage(timeoutMs = 5000) {
+  return new Promise((resolve, reject) => {
+    if (!appWebsocket) {
+      reject(new Error("No websocket connection"));
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      appWebsocket.off("message", handler);
+      reject(new Error("Timeout waiting for message"));
+    }, timeoutMs);
+
+    const handler = (message) => {
+      clearTimeout(timer);
+      appWebsocket.off("message", handler);
+      const msg = JSON.parse(message);
+      resolve(msg);
+    };
+
+    appWebsocket.on("message", handler);
+  });
+}
 
 function startRecording(driver, options = {}) {
   const screenshotsDir = path.join(process.cwd(), "videos");
@@ -52,6 +94,7 @@ let recorder;
 
 before(async function () {
   console.log("Initializing VSBrowser...");
+
   browser = VSBrowser.instance;
   if (!browser) {
     console.error("Failed to initialize VSBrowser.");
@@ -70,7 +113,7 @@ before(async function () {
 
   view = new WebView();
   if (IS_RECORDING) {
-    recorder = await startRecording(driver, { interval: 200 });
+    recorder = await startRecording(driver, { interval: 100 });
   }
 });
 
@@ -95,8 +138,11 @@ after(async function () {
   if (IS_RECORDING && recorder) {
     await recorder.stop();
   }
+  wss.close(() => {
+    console.log("WebSocket server closed");
+  });
 });
 
 export function get() {
-  return { driver, workbench, view, browser };
+  return { driver, workbench, view, browser, appWebsocket };
 }

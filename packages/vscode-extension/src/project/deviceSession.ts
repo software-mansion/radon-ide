@@ -1,5 +1,4 @@
 import assert from "assert";
-import _ from "lodash";
 import { Disposable } from "vscode";
 import { MetroLauncher } from "./metro";
 import { Devtools } from "./devtools";
@@ -25,6 +24,7 @@ import {
   DeviceSessionStatus,
   FatalErrorDescriptor,
   InspectData,
+  InstallationError,
 } from "../common/Project";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
@@ -311,6 +311,16 @@ export class DeviceSession implements Disposable {
           message: e.message,
           buildType: e.buildType,
           platform: this.platform,
+        };
+        this.emitStateChange();
+        return;
+      } else if (e instanceof InstallationError) {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "installation",
+          message: e.message,
+          platform: this.platform,
+          reason: e.reason,
         };
         this.emitStateChange();
         return;
@@ -678,6 +688,14 @@ export class DeviceSession implements Disposable {
           buildType: e.buildType,
           platform: this.platform,
         };
+      } else if (e instanceof InstallationError) {
+        this.status = "fatalError";
+        this.fatalError = {
+          kind: "installation",
+          message: e.message,
+          platform: this.platform,
+          reason: e.reason,
+        };
       } else {
         this.status = "fatalError";
         this.fatalError = {
@@ -751,6 +769,10 @@ export class DeviceSession implements Disposable {
 
   public async getScreenshot() {
     return this.screenCapture.getScreenshot();
+  }
+
+  public get previewReady() {
+    return this.device.previewReady;
   }
 
   // #endregion Recording

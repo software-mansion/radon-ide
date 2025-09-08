@@ -15,7 +15,7 @@ export function SendFeedbackItem() {
   return (
     <DropdownMenu.Item
       className="dropdown-menu-item"
-      data-test="radon-bottom-bar-send-feedback-button"
+      data-testid="radon-bottom-bar-send-feedback-button"
       onSelect={() => {
         openModal(
           "Do you enjoy using Radon IDE today?",
