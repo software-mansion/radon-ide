@@ -179,6 +179,10 @@ export abstract class DevtoolsServer implements Disposable {
   }
 }
 
+const BINDING_NAME = "__CHROME_DEVTOOLS_FRONTEND_BINDING__";
+const DISPATCHER_GLOBAL = "__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__";
+const DEVTOOLS_DOMAIN_NAME = "react-devtools";
+
 export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   private disposables: Disposable[] = [];
   constructor(private readonly debugSession: DebugSession) {
@@ -202,20 +206,19 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
           return fn(parsedPayload.message);
         }
         const subscription = debugSession.onBindingCalled((ev) => {
-          if (ev.name === "__CHROME_DEVTOOLS_FRONTEND_BINDING__") {
+          if (ev.name === BINDING_NAME) {
             listener(ev.payload);
           }
         });
         debugSession.evaluateExpression({
-          expression:
-            'void __FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.initializeDomain("react-devtools")',
+          expression: `void ${DISPATCHER_GLOBAL}.initializeDomain("${DEVTOOLS_DOMAIN_NAME}")`,
         });
         return () => subscription.dispose();
       },
-      send(event, payload, transferable) {
+      send(event, payload, _transferable) {
         const serializedMessage = JSON.stringify({ event, payload });
         debugSession.evaluateExpression({
-          expression: `__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.sendMessage("react-devtools", '${serializedMessage}')`,
+          expression: `void ${DISPATCHER_GLOBAL}.sendMessage("${DEVTOOLS_DOMAIN_NAME}", '${serializedMessage}')`,
         });
       },
     };

@@ -143,8 +143,8 @@ export enum StartupMessage {
   Building = "Building",
   Installing = "Installing",
   Launching = "Launching",
-  WaitingForAppToLoad = "Waiting for app to load",
   AttachingDebugger = "Attaching debugger",
+  WaitingForAppToLoad = "Waiting for app to load",
   Restarting = "Restarting",
 }
 
