@@ -8,8 +8,64 @@ import { extensionContext } from "../../utilities/extensionContext";
 import { Logger } from "../../Logger";
 import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider";
 import { disposeAll } from "../../utilities/disposables";
+import { openContentInEditor } from "../../utilities/editorOpeners";
+
+interface RequestOptions {
+  method: string;
+  headers: Record<string, string>;
+  body?: any;
+}
 
 export const NETWORK_PLUGIN_ID = "network";
+
+function determineLanguage(contentType: string, body: string): string {
+  if (contentType.includes("application/json") || contentType.includes("text/json")) {
+    return "json";
+  } else if (contentType.includes("text/html") || contentType.includes("application/xhtml+xml")) {
+    return "html";
+  } else if (contentType.includes("text/xml") || contentType.includes("application/xml")) {
+    return "xml";
+  } else if (contentType.includes("text/css")) {
+    return "css";
+  } else if (
+    contentType.includes("text/javascript") ||
+    contentType.includes("application/javascript") ||
+    contentType.includes("application/x-javascript")
+  ) {
+    return "javascript";
+  } else if (contentType.includes("text/plain")) {
+    return "text";
+  }
+  const guessLanguageFromText = () => {
+    const trimmedBody = body.trim();
+    if (trimmedBody.startsWith("<?xml") || trimmedBody.startsWith("<")) {
+      if (trimmedBody.includes("<!DOCTYPE html") || trimmedBody.includes("<html")) {
+        return "html";
+      }
+      return "xml";
+    } else if (trimmedBody.startsWith("{") || trimmedBody.startsWith("[")) {
+      return "json";
+    }
+
+    return "text";
+  };
+
+  // Fallback for "text/..."
+  return guessLanguageFromText();
+}
+
+function formatDataBasedOnLanguage(body: string, language: string): string {
+  if (language === "json") {
+    try {
+      const parsed = JSON.parse(body);
+      return JSON.stringify(parsed, null, 2);
+    } catch (e) {
+      // If JSON parsing fails, return original body
+    }
+  }
+
+  return body;
+}
 
 let initialized = false;
 async function initialize() {
@@ -41,7 +97,36 @@ class NetworkCDPWebsocketBackend implements Disposable {
       ws.on("message", (message) => {
         try {
           const payload = JSON.parse(message.toString());
-          if (payload.method.startsWith("Network.")) {
+          if (payload.method === "Network.fetchFullRequestBody") {
+            const requestOptions = payload.params.request;
+
+            const fetchOptions: RequestOptions = {
+              method: requestOptions.method,
+              headers: requestOptions.headers,
+            };
+
+            if (requestOptions.postData) {
+              fetchOptions.body = JSON.stringify(requestOptions.postData);
+            }
+
+            fetch(requestOptions.url, fetchOptions)
+              .then((response) => {
+                if (!response.ok) {
+                  throw new Error("Network response was not ok");
+                }
+                const contentType = response.headers.get("content-type") || "";
+
+                return response.text().then((data) => ({ data, contentType }));
+              })
+              .then(({ data, contentType }) => {
+                const language = determineLanguage(contentType, data);
+                const formattedData = formatDataBasedOnLanguage(data, language);
+                openContentInEditor(formattedData, language);
+              })
+              .catch((error) => {
+                console.error("There was a problem fetching the data:", error);
+              });
+          } else if (payload.method.startsWith("Network.")) {
             // forward message to devtools
             this.sendCDPMessage(payload);
           } else if (payload.id) {

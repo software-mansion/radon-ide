@@ -7,6 +7,7 @@ import React, {
   useState,
 } from "react";
 import useNetworkTracker, {
+  NetworkLog,
   NetworkTracker,
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
@@ -20,6 +21,7 @@ interface NetworkProviderProps extends NetworkTracker {
   toggleScrolling: () => void;
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
+  fetchResponseBody: (networkLog: NetworkLog) => Promise<void>;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
@@ -31,6 +33,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
   toggleScrolling: () => {},
   isTimelineVisible: true,
   toggleTimelineVisible: () => {},
+  fetchResponseBody: async () => {},
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
@@ -51,6 +54,27 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     });
   };
 
+  const fetchResponseBody = async (networkLog: NetworkLog) => {
+    const requestId = networkLog.requestId;
+    const ws = networkTracker.ws;
+
+    if (!requestId || !ws) {
+      return Promise.resolve(undefined);
+    }
+
+    const id = Math.random().toString(36).substring(7);
+    
+    ws.send(
+      JSON.stringify({
+        id,
+        method: "Network.fetchFullRequestBody",
+        params: {
+          request: networkLog.request,
+        },
+      })
+    );
+  };
+
   const contextValue = useMemo(() => {
     return {
       ...networkTracker,
@@ -62,6 +86,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       toggleScrolling,
       isTimelineVisible,
       toggleTimelineVisible,
+      fetchResponseBody
     };
   }, [isRecording, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
 

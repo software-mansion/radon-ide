@@ -2,6 +2,7 @@ import "./ResponseTab.css";
 import IconButton from "../../webview/components/shared/IconButton";
 import { NetworkLog, responseBodyInfo } from "../hooks/useNetworkTracker";
 import { formatJSONBody } from "../utils/requestFormatUtils";
+import { useNetwork } from "../providers/NetworkProvider";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
@@ -9,6 +10,7 @@ interface ResponseTabProps {
 }
 
 const ResponseTab = ({ networkLog, responseBody }: ResponseTabProps) => {
+  const { fetchResponseBody } = useNetwork();
   const { body = undefined, wasTruncated = false } = responseBody || {};
   const responseData = formatJSONBody(body);
 
@@ -18,13 +20,17 @@ const ResponseTab = ({ networkLog, responseBody }: ResponseTabProps) => {
         <IconButton
           className="response-tab-copy-button"
           tooltip={{ label: "Open request in new window", side: "bottom" }}
-          onClick={() => console.log("placeholder")}>
+          onClick={() => {
+            fetchResponseBody(networkLog);
+          }}
+          disabled={!responseData}>
           <span className="codicon codicon-chrome-restore" />
         </IconButton>
         <IconButton
           className="response-tab-copy-button"
           tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
-          onClick={() => navigator.clipboard.writeText(responseData)}>
+          onClick={() => navigator.clipboard.writeText(responseData)}
+          disabled={!responseData}>
           <span className="codicon codicon-copy" />
         </IconButton>
       </div>
