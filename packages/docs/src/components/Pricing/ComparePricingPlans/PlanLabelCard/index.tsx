@@ -17,7 +17,6 @@ export default function PlanLabelCard({
   plan,
   monthlyPrice,
   yearlyLowPrice,
-  yearlyFullPrice,
   buttonLabel,
   stylingFilled,
   href,
@@ -30,12 +29,10 @@ export default function PlanLabelCard({
         <div className={styles.priceDescription}>
           {plan === "ENTERPRISE" ? "From " : ""}
           <span>${monthlyPrice}</span> /month{" "}
-          {yearlyLowPrice ? (
+          {yearlyLowPrice && (
             <>
               or <span>${yearlyLowPrice}</span> /yearly
             </>
-          ) : (
-            ""
           )}
         </div>
       </div>
