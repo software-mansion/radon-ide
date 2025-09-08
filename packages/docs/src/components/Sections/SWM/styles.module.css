@@ -55,6 +55,7 @@
 .learnMoreButton:hover {
   background-color: transparent;
   opacity: 0.75;
+  transition: opacity 0.3s;
 }
 
 .box {

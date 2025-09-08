@@ -28,6 +28,7 @@
 
 .container:hover {
   background-color: var(--radon-button-hover);
+  transition: background-color 0.3s;
 }
 
 @media (max-width: 580px) {

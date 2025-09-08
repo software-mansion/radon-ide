@@ -1,5 +1,5 @@
 import React from "react";
-import FeaturesGridCard from "./FeaturesGridCard";
+import FeaturesGridCard from "../FeaturesGridCard";
 import styles from "./styles.module.css";
 import useBaseUrl from "@docusaurus/useBaseUrl";
 

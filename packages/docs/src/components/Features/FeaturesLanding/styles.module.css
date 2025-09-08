@@ -1,0 +1,51 @@
+.contentContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
+  padding: 80px;
+}
+
+.textContent {
+  display: flex;
+  gap: 40px;
+}
+
+.heading {
+  color: var(--ifm-color-primary);
+
+  font-size: 48px;
+  font-weight: 250;
+  line-height: normal;
+}
+
+.heading span {
+  color: var(--swm-green-light-100);
+
+  font-size: 48px;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.description p {
+  margin: 0;
+}
+
+.description {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.learnMoreLink {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+  border: 1px solid var(--ifm-color-primary);
+  padding: 16px;
+  width: fit-content;
+  font-size: 16px;
+  line-height: 24px;
+  justify-content: center;
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
