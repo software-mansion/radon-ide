@@ -330,14 +330,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       if (isMainBundle && this.installConnectRuntime) {
         await this.setupRadonConnectRuntime(tunnel);
       }
-      if (isMainBundle) {
-        await tunnel.injectDebuggerCommand({
-          method: "Runtime.addBinding",
-          params: {
-            name: "__CHROME_DEVTOOLS_FRONTEND_BINDING__",
-          },
-        });
-      }
+
       this.bundleParsedEmitter.fire({ isMainBundle });
     } catch (e) {
       Logger.error("Could not process the source map", e);

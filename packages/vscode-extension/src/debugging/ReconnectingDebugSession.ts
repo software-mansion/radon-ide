@@ -137,4 +137,7 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   ): Promise<Cdp.Runtime.EvaluateResult> {
     return this.debugSession.evaluateExpression(params);
   }
+  public async addBinding(name: string): Promise<void> {
+    return this.debugSession.addBinding(name);
+  }
 }

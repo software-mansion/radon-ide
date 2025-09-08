@@ -196,8 +196,9 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
     );
   }
 
-  private createConnection() {
+  private async createConnection() {
     const debugSession = this.debugSession;
+    await debugSession.addBinding(BINDING_NAME);
 
     const wall: Wall = {
       listen(fn) {
