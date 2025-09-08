@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import styles from "./styles.module.css";
-import usePaddle from "@site/src/hooks/usePaddle";
 import pricing from "../PricingCard/pricing.module.css";
 import Button from "../../Button";
 import PricingCard from "../PricingCard";

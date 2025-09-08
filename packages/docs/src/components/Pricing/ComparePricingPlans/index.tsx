@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import styles from "./styles.module.css";
 import CheckIcon from "../../CheckIcon";
 import PlanLabelCard from "./PlanLabelCard";
@@ -25,7 +25,6 @@ const handleCellContent = (data: string[] | boolean) => {
 };
 
 export default function ComparePricingPlans({ handleBusiness }: PricingProps) {
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const { onOpen } = useModal();
   const pricingPlanFeatures: FeatureItem[] = planFeaturesData;
   return (

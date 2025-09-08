@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import styles from "./styles.module.css";
 import { useLocation } from "@docusaurus/router";
 import MobileSidebarToggle from "../MobileSidebarToggle";
@@ -25,7 +25,6 @@ const navbarItems: NavbarItem[] = [
 ];
 
 export default function NavbarContent() {
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const location = useLocation();
   const active = location.pathname;
   const { onOpen } = useModal();
