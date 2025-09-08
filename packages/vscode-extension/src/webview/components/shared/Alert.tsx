@@ -1,7 +1,6 @@
 import React from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import "./Alert.css";
-import ErrorIcon from "../icons/ErrorIcon";
 
 interface AlertProps {
   open: boolean;
@@ -16,20 +15,20 @@ function Alert({ open, title, description, actions, type = "error" }: AlertProps
     <AlertDialog.Root open={open}>
       <AlertDialog.Portal>
         <div className="alert-dialog-content" data-testid="alert-dialog-content">
-          {type === "error" && (
-            <div className="alert-dialog-error">
-              <ErrorIcon color="var(--red-dark-100)" />
-            </div>
-          )}
-          <div>
-            <AlertDialog.Title className="alert-dialog-title">{title}</AlertDialog.Title>
-            {description && (
-              <AlertDialog.Description className="alert-dialog-description">
-                {description}
-              </AlertDialog.Description>
+          <div className="alert-dialog-content-container">
+            {type === "error" && (
+              <div className="alert-dialog-error">
+                <span className="codicon codicon-error" />
+              </div>
             )}
+            <AlertDialog.Title className="alert-dialog-title">{title}</AlertDialog.Title>
+            <div className="alert-dialog-actions">{actions}</div>
           </div>
-          <div className="alert-dialog-actions">{actions}</div>
+          {description && (
+            <AlertDialog.Description className="alert-dialog-description">
+              {description}
+            </AlertDialog.Description>
+          )}
         </div>
       </AlertDialog.Portal>
     </AlertDialog.Root>

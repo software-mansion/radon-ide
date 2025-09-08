@@ -1,13 +1,12 @@
 .alert-dialog-content {
   background-color: var(--swm-popover-background);
-  border-radius: var(--swm-button-size);
-  display: grid;
-  grid-template-columns: 50px 1fr min-content;
-  gap: 4px;
+  border-radius: 15px;
+  display: flex;
+  flex-direction: column;
   position: fixed;
-  top: 13%;
+  top: 50px;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%);
   width: 90vw;
   max-width: 500px;
   max-height: 85vh;
@@ -18,20 +17,28 @@
     rgba(0, 0, 0, 0.22) 0px 15px 12px;
   cursor: default;
 }
+
+.alert-dialog-content-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+}
+
 .alert-dialog-content:focus {
   outline: none;
 }
 
 .alert-dialog-title {
   margin: 0;
-  margin-bottom: 4px;
+  flex: 1;
   font-weight: 500;
   color: var(--swm-default-text);
   font-size: 16px;
 }
 
 .alert-dialog-description {
-  margin: 0;
+  overflow: hidden;
   color: var(--swm-secondary-text);
   font-size: 13px;
 }
@@ -40,6 +47,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.alert-dialog-error .codicon {
+  font-size: 22px;
+  font-weight: bold;
+  color: var(--vscode-statusBarItem-errorBackground);
 }
 
 .alert-dialog-error-icon {
