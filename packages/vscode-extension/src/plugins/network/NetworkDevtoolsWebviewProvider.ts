@@ -16,6 +16,10 @@ type WebviewMessage = Record<string, string> & {
   command: string;
 };
 
+// TODO: Use an enum with all possible call types if there will be more than one.
+// TODO: Move to share frontend-backend consts file
+const CDP_CALL = "cdp-call";
+
 export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
   constructor(private readonly context: ExtensionContext) {}
   public resolveWebviewView(
@@ -43,7 +47,7 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
 
     // FIXME: Dispose
     const _disposable = webview.onDidReceiveMessage((event: WebviewMessage) => {
-      if (event.command === "cdp-call") {
+      if (event.command === CDP_CALL) {
         networkPlugin.sendCDPMessage({
           method: event.method,
           params: event.params ?? {},

@@ -85,6 +85,10 @@ export const networkTrackerInitialState: NetworkTracker = {
   getSource: () => {},
 };
 
+// TODO: Use an enum with all possible call types if there will be more than one.
+// TODO: Move to share frontend-backend consts file
+const CDP_CALL = "cdp-call";
+
 const useNetworkTracker = (): NetworkTracker => {
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -179,7 +183,7 @@ const useNetworkTracker = (): NetworkTracker => {
 
   const [isRecording, toggleRecording] = useReducer((state) => {
     vscode.postMessage({
-      command: "cdp-call",
+      command: CDP_CALL,
       method: state ? "Network.disable" : "Network.enable",
     });
     return !state;
@@ -195,7 +199,7 @@ const useNetworkTracker = (): NetworkTracker => {
     const id = Math.random().toString(36).substring(7);
 
     vscode.postMessage({
-      command: "cdp-call",
+      command: CDP_CALL,
       method: "Network.getResponseBody",
       params: {
         requestId: networkLog.requestId,
@@ -225,7 +229,7 @@ const useNetworkTracker = (): NetworkTracker => {
 
   const getSource = (networkLog: NetworkLog) => {
     vscode.postMessage({
-      command: "cdp-call",
+      command: CDP_CALL,
       method: "Network.Initiator",
       params: {
         ...networkLog.initiator,
