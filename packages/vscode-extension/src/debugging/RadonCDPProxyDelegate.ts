@@ -337,14 +337,6 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
             name: "__CHROME_DEVTOOLS_FRONTEND_BINDING__",
           },
         });
-
-        await tunnel.injectDebuggerCommand({
-          method: "Runtime.evaluate",
-          params: {
-            expression:
-              'void __FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.initializeDomain("react-devtools")',
-          },
-        });
       }
       this.bundleParsedEmitter.fire({ isMainBundle });
     } catch (e) {

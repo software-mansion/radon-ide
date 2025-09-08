@@ -202,6 +202,10 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
             listener(ev.payload);
           }
         });
+        debugSession.evaluateExpression({
+          expression:
+            'void __FUSEBOX_REACT_DEVTOOLS_DISPATCHER__.initializeDomain("react-devtools")',
+        });
         return () => subscription.dispose();
       },
       send(event, payload, transferable) {
