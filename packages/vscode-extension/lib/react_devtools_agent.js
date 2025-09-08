@@ -14,6 +14,7 @@ const agent = {
 
 const setDevtoolsAgent = (newDevtoolsAgent) => {
   if (!newDevtoolsAgent) {
+    devtoolsAgent = undefined;
     return;
   }
   devtoolsAgent = newDevtoolsAgent;
