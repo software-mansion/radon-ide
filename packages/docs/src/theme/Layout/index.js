@@ -10,27 +10,30 @@ import LayoutProvider from "@theme/Layout/Provider";
 import ErrorPageContent from "@theme/ErrorPageContent";
 import styles from "./styles.module.css";
 import clsx from "clsx";
+import { ModalProvider } from "@site/src/components/ModalProvider";
 
 export default function LayoutWrapper({ children, noFooter, title, description }) {
   useKeyboardNavigation();
   return (
     <LayoutProvider>
-      <PageMetadata title={title} description={description} />
+      <ModalProvider>
+        <PageMetadata title={title} description={description} />
 
-      <SkipToContent />
+        <SkipToContent />
 
-      <AnnouncementBar />
+        <AnnouncementBar />
 
-      <Navbar />
+        <Navbar />
 
-      <ErrorBoundary fallback={(params) => <ErrorPageContent {...params} />}>
-        {children}
-      </ErrorBoundary>
-      <div className={styles.spacer}>
-        <div className={clsx(styles.spacerBorder, "border-layout")}></div>
-      </div>
+        <ErrorBoundary fallback={(params) => <ErrorPageContent {...params} />}>
+          {children}
+        </ErrorBoundary>
+        <div className={styles.spacer}>
+          <div className={clsx(styles.spacerBorder, "border-layout")}></div>
+        </div>
 
-      {!noFooter && <Footer />}
+        {!noFooter && <Footer />}
+      </ModalProvider>
     </LayoutProvider>
   );
 }

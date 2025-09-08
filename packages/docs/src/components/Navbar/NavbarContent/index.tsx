@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React from "react";
 import styles from "./styles.module.css";
 import { useLocation } from "@docusaurus/router";
 import MobileSidebarToggle from "../MobileSidebarToggle";
@@ -6,8 +6,8 @@ import NavbarMobileSidebar from "../MobileSidebar";
 import NavbarLink from "../NavbarLink";
 import Logo from "../../Logo";
 import clsx from "clsx";
-import DownloadModal from "../../DownloadModal";
 import NavbarDownloadButton from "../NavbarDownloadButton";
+import { useModal } from "../../ModalProvider";
 
 export interface NavbarItem {
   label: string;
@@ -25,10 +25,9 @@ const navbarItems: NavbarItem[] = [
 ];
 
 export default function NavbarContent() {
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const location = useLocation();
   const active = location.pathname;
-  const [isOpen, setIsOpen] = useState(false);
+  const { onOpen } = useModal();
 
   return (
     <>
@@ -42,7 +41,13 @@ export default function NavbarContent() {
           <ul className={styles.navLinks}>
             {navbarItems.map((item, index) =>
               item.position == "center" ? (
-                <li key={index} className={active == item.to ? styles.activeLink : null}>
+                <li
+                  key={index}
+                  className={clsx({
+                    [styles.activeLink]:
+                      (item.to.startsWith("/docs") && active.startsWith("/docs")) ||
+                      active === item.to,
+                  })}>
                   <NavbarLink item={item} />
                 </li>
               ) : null
@@ -54,21 +59,10 @@ export default function NavbarContent() {
           <a
             href="https://github.com/software-mansion/radon-ide/"
             className={styles.headerGithub}></a>
-          <NavbarDownloadButton
-            isMobile={false}
-            onOpen={() => {
-              setIsOpen(true);
-            }}
-          />
+          <NavbarDownloadButton isMobile={false} onOpen={onOpen} />
         </div>
       </div>
-      <NavbarMobileSidebar
-        navbarItems={navbarItems}
-        onOpen={() => {
-          setIsOpen(true);
-        }}
-      />
-      {isOpen && <DownloadModal dialogRef={dialogRef} onClose={() => setIsOpen(false)} />}
+      <NavbarMobileSidebar navbarItems={navbarItems} onOpen={onOpen} />
     </>
   );
 }
