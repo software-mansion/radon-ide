@@ -21,7 +21,7 @@ interface NetworkProviderProps extends NetworkTracker {
   toggleScrolling: () => void;
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
-  fetchResponseBody: (networkLog: NetworkLog) => Promise<void>;
+  fetchAndOpenResponseInEditor: (networkLog: NetworkLog) => Promise<void>;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
@@ -33,7 +33,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
   toggleScrolling: () => {},
   isTimelineVisible: true,
   toggleTimelineVisible: () => {},
-  fetchResponseBody: async () => {},
+  fetchAndOpenResponseInEditor: async () => {},
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
@@ -54,7 +54,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     });
   };
 
-  const fetchResponseBody = async (networkLog: NetworkLog) => {
+  const fetchAndOpenResponseInEditor = async (networkLog: NetworkLog) => {
     const requestId = networkLog.requestId;
     const ws = networkTracker.ws;
 
@@ -86,7 +86,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       toggleScrolling,
       isTimelineVisible,
       toggleTimelineVisible,
-      fetchResponseBody
+      fetchAndOpenResponseInEditor
     };
   }, [isRecording, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
 

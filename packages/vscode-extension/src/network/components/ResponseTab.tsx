@@ -10,7 +10,7 @@ interface ResponseTabProps {
 }
 
 const ResponseTab = ({ networkLog, responseBody }: ResponseTabProps) => {
-  const { fetchResponseBody } = useNetwork();
+  const { fetchAndOpenResponseInEditor } = useNetwork();
   const { body = undefined, wasTruncated = false } = responseBody || {};
   const responseData = formatJSONBody(body);
 
@@ -21,7 +21,7 @@ const ResponseTab = ({ networkLog, responseBody }: ResponseTabProps) => {
           className="response-tab-copy-button"
           tooltip={{ label: "Open request in new window", side: "bottom" }}
           onClick={() => {
-            fetchResponseBody(networkLog);
+            fetchAndOpenResponseInEditor(networkLog);
           }}
           disabled={!responseData}>
           <span className="codicon codicon-chrome-restore" />
