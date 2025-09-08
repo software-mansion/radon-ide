@@ -130,23 +130,16 @@ export class ApplicationSession implements Disposable {
 
       const appReadyPromise = waitForAppReady(session.inspectorBridge, cancelToken);
 
-      onLaunchStage(StartupMessage.WaitingForAppToLoad);
-      // const appReadyPromise = new Promise<void>((resolve, reject) => {
-      //   devtoolsServer.onConnection((devtools) => {
-      //     devtools.appReady.then(resolve, reject);
-      //   });
-      // });
-      // await cancelToken.adapt(Promise.race([appReadyPromise, bundleErrorPromise]));
-
       if (getIsActive()) {
         const activatePromise = session.activate();
-        const hasBundleError = stateManager.getState().bundleError !== undefined;
-        // NOTE: if an initial bundle error occurred, the app won't connect to Metro
-        // and we won't be able to attach the debugger anyway, so there's no point in waiting
-        if (!hasBundleError) {
-          onLaunchStage(StartupMessage.AttachingDebugger);
-          await cancelToken.adapt(activatePromise);
-        }
+        onLaunchStage(StartupMessage.AttachingDebugger);
+        await cancelToken.adapt(Promise.race([activatePromise, bundleErrorPromise]));
+      }
+
+      const hasBundleError = stateManager.getState().bundleError !== undefined;
+      if (!hasBundleError && getIsActive()) {
+        onLaunchStage(StartupMessage.WaitingForAppToLoad);
+        await cancelToken.adapt(appReadyPromise);
       }
 
       return session;
