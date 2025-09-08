@@ -285,6 +285,15 @@ export class ProxyDebugAdapter extends DebugSession {
     return response.result;
   }
 
+  private async addBinding(name: string) {
+    await this.cdpProxy.injectDebuggerCommand({
+      method: "Runtime.addBinding",
+      params: {
+        name,
+      },
+    });
+  }
+
   protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
@@ -304,6 +313,9 @@ export class ProxyDebugAdapter extends DebugSession {
         break;
       case "RNIDE_evaluate":
         response.body.result = await this.evaluateExpression(args);
+        break;
+      case "RNIDE_addBinding":
+        await this.addBinding(args.name);
         break;
     }
     this.sendResponse(response);

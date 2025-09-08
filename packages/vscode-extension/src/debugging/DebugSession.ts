@@ -50,6 +50,7 @@ export interface DebugSession {
   stepOutDebugger(): void;
   stepIntoDebugger(): void;
   evaluateExpression(params: Cdp.Runtime.EvaluateParams): Promise<Cdp.Runtime.EvaluateResult>;
+  addBinding(name: string): Promise<void>;
 
   // Profiling controls
   startProfilingCPU(): Promise<void>;
@@ -294,6 +295,13 @@ export class DebugSessionImpl implements DebugSession, Disposable {
     }
     const response = await this.jsDebugSession.customRequest("RNIDE_evaluate", params);
     return response;
+  }
+
+  public async addBinding(name: string) {
+    if (!this.jsDebugSession) {
+      throw new Error("JS Debug session is not running");
+    }
+    await this.jsDebugSession.customRequest("RNIDE_addBinding", { name });
   }
 
   private cancelStartingDebugSession() {
