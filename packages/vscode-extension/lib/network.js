@@ -1,7 +1,20 @@
 const RNInternals = require("./rn-internals/rn-internals");
 const { PluginMessageBridge } = require("./plugins/PluginMessageBridge");
 const TextDecoder = require("./polyfills").TextDecoder;
-const BoundedXhrBuffer = require("./BoundedXhrBuffer").BoundedXhrBuffer;
+const { BoundedResponseBuffer } = require("./BoundedXhrBuffer");
+
+// Allowed content types for processing text-based data
+const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
+  "application/x-sh",
+  "application/x-csh",
+  "application/rtf",
+  "application/manifest+json",
+  "application/xhtml+xml",
+  "application/xml",
+  "application/XUL",
+  "application/ld+json",
+  "application/json",
+]);
 
 function mimeTypeFromResponseType(responseType) {
   switch (responseType) {
@@ -20,69 +33,7 @@ function mimeTypeFromResponseType(responseType) {
   return undefined;
 }
 
-// Allowed content types for processing text-based data
-const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
-  "application/x-sh",
-  "application/x-csh",
-  "application/rtf",
-  "application/manifest+json",
-  "application/xhtml+xml",
-  "application/xml",
-  "application/XUL",
-  "application/ld+json",
-  "application/json",
-]);
-
-const MAX_BODY_SIZE = 100 * 1024; // 100 KB
-const TRUNCATED_LENGTH = 100;
-
-function truncateResponseBody(responseBody) {
-  if (responseBody && new Blob([responseBody]).size > MAX_BODY_SIZE) {
-    return {
-      body: `${responseBody.slice(0, TRUNCATED_LENGTH)}...`,
-      wasTruncated: true,
-    };
-  }
-
-  return { body: responseBody, wasTruncated: false };
-}
-
-function readResponseBodyContent(xhr) {
-  if (!xhr && !xhr._cachedResponse) {
-    // if response was accessed it is cached and we can use it
-    // otherwise we don't want to read it here to avoid potential side effects
-    return Promise.resolve(undefined);
-  }
-  const responseType = xhr.responseType;
-
-  if (responseType === "" || responseType === "text") {
-    const truncatedBody = truncateResponseBody(xhr.responseText);
-    return Promise.resolve(truncatedBody);
-  }
-
-  if (responseType === "blob") {
-    const contentType = xhr.getResponseHeader("Content-Type") || "";
-    const isTextType = contentType.startsWith("text/");
-    const isParsableApplicationType = Array.from(PARSABLE_APPLICATION_CONTENT_TYPES).some((type) =>
-      contentType.startsWith(type)
-    );
-
-    if (isTextType || isParsableApplicationType) {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const truncatedBody = truncateResponseBody(reader.result || undefined);
-          resolve(truncatedBody);
-        };
-        reader.readAsText(xhr.response);
-      });
-    }
-  }
-  // don't want to read binary data here
-  return Promise.resolve(undefined);
-}
-
-function deserializeDataContent(data, contentType) {
+function deserializeRequestData(data, contentType) {
   const shouldDecodeAsText = (dataContentType) => {
     if (!dataContentType) {
       return false;
@@ -173,7 +124,7 @@ function enableNetworkInspect(networkProxy) {
   const XHRInterceptor = RNInternals.XHRInterceptor;
 
   const loaderId = "xhr-interceptor";
-  const xhrBuffer = new BoundedXhrBuffer();
+  const responseBuffer = new BoundedResponseBuffer(PARSABLE_APPLICATION_CONTENT_TYPES);
 
   const requestIdPrefix = Math.random().toString(36).slice(2);
   let requestIdCounter = 0;
@@ -186,21 +137,18 @@ function enableNetworkInspect(networkProxy) {
         message.method === "Network.getResponseBody" &&
         message.params.requestId.startsWith(requestIdPrefix)
       ) {
+        //TODO The request gets send twice, check why
         const requestId = message.params.requestId;
-        const xhr = xhrBuffer.get(requestId);
-        // typically with devtools UI, each request details will be fetched at most once.
-        // we can safely delete the record once the request data is retrieved.
-        if (xhr) {
-          xhrBuffer.remove(requestId);
-        }
 
-        readResponseBodyContent(xhr)
-          .then((bodyInfo) => {
+        const responsePromise = responseBuffer.get(requestId);
+
+        responsePromise
+          ?.then((responseBodyInfo) => {
             networkProxy.sendMessage(
               "cdp-message",
               JSON.stringify({
                 id: message.id,
-                result: bodyInfo,
+                result: responseBodyInfo,
               })
             );
           })
@@ -231,7 +179,7 @@ function enableNetworkInspect(networkProxy) {
           url: xhr._url,
           method: xhr._method,
           headers: xhr._headers,
-          postData: deserializeDataContent(data, xhr._headers["content-type"]),
+          postData: deserializeRequestData(data, xhr._headers["content-type"]),
         },
         type: "XHR",
         initiator: {
@@ -287,7 +235,7 @@ function enableNetworkInspect(networkProxy) {
               statusText: xhr.statusText,
               headers: xhr.responseHeaders,
               mimeType: mimeType,
-              data: deserializeDataContent(data, mimeType),
+              data: deserializeRequestData(data, mimeType),
             },
           });
         } catch (error) {}
@@ -297,7 +245,7 @@ function enableNetworkInspect(networkProxy) {
         // We store the xhr object only to be able to read response body later
         // if the request is not loaded, there is no point storing it, as it
         // won't have any response data
-        xhrBuffer.put(requestId, xhr);
+        responseBuffer.put(requestId, xhr);
 
         try {
           sendCDPMessage("Network.loadingFinished", {
