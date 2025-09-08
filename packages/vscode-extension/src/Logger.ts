@@ -1,10 +1,7 @@
+import { window } from "vscode";
 import { Output } from "./common/OutputChannel";
-import {
-  createReadableOutputChannel,
-  ReadableLogOutputChannel,
-} from "./project/ReadableLogOutputChannel";
 
-const outputChannel = createReadableOutputChannel(Output.Ide);
+const outputChannel = window.createOutputChannel(Output.Ide, { log: true });
 
 const logger = {
   log(_message: string, ..._args: any[]) {},
@@ -62,10 +59,6 @@ export function enableDevModeLogging() {
 }
 
 export class Logger {
-  public static get rawOutputChannel(): ReadableLogOutputChannel {
-    return outputChannel;
-  }
-
   public static openOutputPanel() {
     logger.openOutputPanel();
   }
