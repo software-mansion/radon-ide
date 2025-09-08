@@ -13,7 +13,7 @@ import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
 import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 import { getOpenPort } from "../utilities/common";
 import { DebugSource } from "../debugging/DebugSession";
-import { openFileAtPosition } from "../utilities/openFileAtPosition";
+import { openFileAtPosition } from "../utilities/editorOpeners";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
 import { CancelToken } from "../utilities/cancelToken";
 

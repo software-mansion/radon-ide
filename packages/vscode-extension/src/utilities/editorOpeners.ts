@@ -1,4 +1,4 @@
-import { window, workspace, ViewColumn, Range } from "vscode";
+import { window, workspace, ViewColumn, Range, Uri } from "vscode";
 import { Logger } from "../Logger";
 
 export async function openFileAtPosition(
@@ -31,4 +31,12 @@ export async function openFileAtPosition(
       viewColumn: column,
     });
   }
+}
+
+export async function openContentInEditor(content: string, language: string) {
+  workspace.openTextDocument({ language, content }).then(async (doc) => {
+    console.log("MLEKO", doc.uri)
+    await workspace.fs.rename(doc.uri, Uri.file('/response'), { overwrite: true });
+    await window.showTextDocument(doc);
+  });
 }
