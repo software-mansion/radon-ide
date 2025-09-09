@@ -69,8 +69,7 @@ export class DeviceSession implements Disposable {
   private isActive = false;
   private metro: MetroLauncher;
   private maybeBuildResult: BuildResult | undefined;
-  private devtoolsServer: Promise<DevtoolsServer>;
-  private devtoolsPort: Promise<number>;
+  private devtoolsServer: Promise<DevtoolsServer & { port: number }>;
   private devtools: DevtoolsConnection | undefined;
   private buildManager: BuildManager;
   private cancelToken: CancelToken = new CancelToken();
@@ -131,9 +130,7 @@ export class DeviceSession implements Disposable {
     this.disposables.push(this.screenCapture);
 
     Logger.debug("Launching DevTools server");
-    const promise = this.makeDevtools();
-    this.devtoolsServer = promise.then(({ devtoolsServer }) => devtoolsServer);
-    this.devtoolsPort = promise.then(({ port }) => port);
+    this.devtoolsServer = this.makeDevtools();
 
     this.metro = new MetroLauncher();
     this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
@@ -232,7 +229,7 @@ export class DeviceSession implements Disposable {
   //#endregion
 
   private async makeDevtools() {
-    const { devtoolsServer, port } = await createWebSocketDevtoolsServer();
+    const devtoolsServer = await createWebSocketDevtoolsServer();
     devtoolsServer.onConnection((devtools: DevtoolsConnection) => {
       if (this.devtools) {
         this.devtools.dispose();
@@ -260,7 +257,11 @@ export class DeviceSession implements Disposable {
         this.emitStateChange();
       });
     });
-    return { devtoolsServer, port };
+    return devtoolsServer;
+  }
+
+  private get devtoolsPort() {
+    return this.devtoolsServer.then((server) => server.port);
   }
 
   /**

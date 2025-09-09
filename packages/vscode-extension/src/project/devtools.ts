@@ -113,7 +113,10 @@ export abstract class DevtoolsServer implements Disposable {
 class WebSocketDevtoolsServer extends DevtoolsServer implements Disposable {
   private wss: WebSocketServer;
 
-  constructor(private server: http.Server) {
+  constructor(
+    private server: http.Server,
+    public readonly port: number
+  ) {
     super();
     this.wss = new WebSocketServer({ server });
 
@@ -150,9 +153,8 @@ class WebSocketDevtoolsServer extends DevtoolsServer implements Disposable {
   }
 }
 
-export async function createWebSocketDevtoolsServer() {
+export async function createWebSocketDevtoolsServer(): Promise<DevtoolsServer & { port: number }> {
   const server = http.createServer(() => {});
-  const devtoolsServer = new WebSocketDevtoolsServer(server);
   const { promise, resolve } = Promise.withResolvers<number>();
 
   server.listen(0, () => {
@@ -167,5 +169,6 @@ export async function createWebSocketDevtoolsServer() {
   });
 
   const port = await promise;
-  return { port, devtoolsServer };
+  const devtoolsServer = new WebSocketDevtoolsServer(server, port);
+  return devtoolsServer;
 }

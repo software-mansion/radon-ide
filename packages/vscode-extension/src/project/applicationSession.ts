@@ -102,16 +102,16 @@ export class ApplicationSession implements Disposable {
 
     try {
       onLaunchStage(StartupMessage.Launching);
+      const appReadyPromise = new Promise<void>((resolve, reject) => {
+        const subscription = devtoolsServer.onConnection((devtools) => {
+          devtools.appReady.then(resolve, reject).finally(() => subscription.dispose());
+        });
+      });
       await cancelToken.adapt(
         device.launchApp(buildResult, metro.port, devtoolsPort, launchArguments)
       );
 
       onLaunchStage(StartupMessage.WaitingForAppToLoad);
-      const appReadyPromise = new Promise<void>((resolve, reject) => {
-        devtoolsServer.onConnection((devtools) => {
-          devtools.appReady.then(resolve, reject);
-        });
-      });
       await cancelToken.adapt(Promise.race([appReadyPromise, bundleErrorPromise]));
 
       if (getIsActive()) {
@@ -185,15 +185,27 @@ export class ApplicationSession implements Disposable {
   // #region Tools
 
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
-    this.toolsManager?.updateToolEnabledState(toolName, enabled);
+    if (!this.toolsManager) {
+      Logger.error("Cannot update tool state, devtools are not connected");
+      return;
+    }
+    this.toolsManager.updateToolEnabledState(toolName, enabled);
   }
 
   public openTool(toolName: ToolKey): void {
-    this.toolsManager?.openTool(toolName);
+    if (!this.toolsManager) {
+      Logger.error("Cannot open tool, devtools are not connected", toolName);
+      return;
+    }
+    this.toolsManager.openTool(toolName);
   }
 
   public getPlugin(toolName: ToolKey): ToolPlugin | undefined {
-    return this.toolsManager?.getPlugin(toolName);
+    if (!this.toolsManager) {
+      Logger.error("Cannot get tool plugin, devtools are not connected", toolName);
+      return;
+    }
+    this.toolsManager.getPlugin(toolName);
   }
 
   // #endregion Tools
@@ -371,7 +383,7 @@ export class ApplicationSession implements Disposable {
   }
 
   private registerDevtoolsListeners(devtools: DevtoolsConnection) {
-    const disposables = [
+    const devtoolsEventSubscriptions = [
       devtools.onEvent("appReady", () => {
         // NOTE: since this is triggered by the JS bundle,
         // we can assume that if it fires, the bundle loaded successfully.
@@ -402,6 +414,10 @@ export class ApplicationSession implements Disposable {
         }
       ),
       devtools.onEvent("disconnected", () => {
+        disposeAll(devtoolsEventSubscriptions);
+        if (devtools !== this.devtools) {
+          return;
+        }
         if (
           this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected
         ) {
@@ -410,7 +426,6 @@ export class ApplicationSession implements Disposable {
         this.devtools = undefined;
         this.toolsManager?.dispose();
         this.toolsManager = undefined;
-        disposeAll(disposables);
       }),
     ];
   }
@@ -431,8 +446,8 @@ export class ApplicationSession implements Disposable {
     try {
       // NOTE: we expect a new devtools connection when reloading JS
       const appReadyPromise = new Promise<void>((resolve, reject) => {
-        this.devtoolsServer.onConnection((devtools) => {
-          devtools.appReady.then(resolve, reject);
+        const subscription = this.devtoolsServer.onConnection((devtools) => {
+          devtools.appReady.then(resolve, reject).finally(() => subscription.dispose());
         });
       });
       await this.metro.reload();
