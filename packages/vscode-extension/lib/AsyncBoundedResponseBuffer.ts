@@ -10,7 +10,7 @@ type InternalResponseBodyData = ResponseBodyData & { dataSize: number };
  * bodies.
  */
 const REQUEST_BUFFER_MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100MB
-const MAX_BODY_SIZE = 100 * 1024; // 100 KB
+const MAX_BODY_SIZE = 1024 * 1024; // 1 MB
 const TRUNCATED_LENGTH = 1000; // 1000 characters
 
 /**
