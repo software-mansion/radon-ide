@@ -2,9 +2,9 @@ function stringify(obj: unknown): string {
   return JSON.stringify(obj, null, 2);
 }
 
-export function formatJSONBody(body: unknown): string {
+export function formatJSONBody(body: unknown): string | undefined {
   if (typeof body !== "string") {
-    return "No response body";
+    return undefined;
   }
   try {
     const parsed = JSON.parse(body);

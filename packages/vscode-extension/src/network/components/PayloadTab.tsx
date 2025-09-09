@@ -6,12 +6,14 @@ interface PayloadTabProps {
   networkLog: NetworkLog;
 }
 
+const NO_PAYLOAD_MESSAGE = "No request body";
+
 const PayloadTab = ({ networkLog }: PayloadTabProps) => {
   if (!networkLog.request) {
     return null;
   }
 
-  const getPayloadData = () => {
+  const getPayloadData = (): string | undefined => {
     const { url, postData } = networkLog.request!;
 
     const urlParams = formatUrlParams(url);
@@ -30,15 +32,15 @@ const PayloadTab = ({ networkLog }: PayloadTabProps) => {
       return urlParams;
     }
 
-    return "No request body";
+    return undefined;
   };
 
   const payloadData = getPayloadData();
 
   return (
     <>
-      <TabActionButtons data={payloadData} />
-      <pre className="response-tab-pre">{payloadData}</pre>
+      <TabActionButtons data={payloadData} disabled={!payloadData} />
+      <pre className="response-tab-pre">{payloadData ?? NO_PAYLOAD_MESSAGE}</pre>
     </>
   );
 };

@@ -10,6 +10,8 @@ interface ResponseTabProps {
   responseBody?: responseBodyInfo;
 }
 
+const NO_RESPONSE_MESSAGE = "No response body";
+
 const ResponseTab = ({ networkLog, responseBody }: ResponseTabProps) => {
   const { fetchAndOpenResponseInEditor } = useNetwork();
   const { body = undefined, wasTruncated = false } = responseBody || {};
@@ -17,9 +19,9 @@ const ResponseTab = ({ networkLog, responseBody }: ResponseTabProps) => {
 
   return (
     <>
-      <TabActionButtons 
+      <TabActionButtons
         data={responseData}
-        copyDisabled={!responseData}
+        disabled={!responseData}
         additionalButtons={
           <IconButton
             className="response-tab-copy-button"
@@ -37,7 +39,7 @@ const ResponseTab = ({ networkLog, responseBody }: ResponseTabProps) => {
           <span className="codicon codicon-warning" /> Response too large, showing truncated data.
         </pre>
       )}
-      <pre className="response-tab-pre">{responseData}</pre>
+      <pre className="response-tab-pre">{responseData ?? NO_RESPONSE_MESSAGE}</pre>
     </>
   );
 };
