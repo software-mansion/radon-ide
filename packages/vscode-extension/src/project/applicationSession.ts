@@ -32,7 +32,8 @@ import {
 } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
 import { StateManager } from "./StateManager";
-import { DevtoolsConnection, DevtoolsServer } from "./devtools";
+import { DevtoolsConnection, DevtoolsInspectorBridge, DevtoolsServer } from "./devtools";
+import { RadonInspectorBridge } from "./bridge";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
@@ -50,7 +51,9 @@ export class ApplicationSession implements Disposable {
   private isActive = false;
   private inspectCallID = 7621;
   private devtools: DevtoolsConnection | undefined;
-  private toolsManager: ToolsManager | undefined;
+  private toolsManager: ToolsManager;
+
+  public readonly inspectorBridge: RadonInspectorBridge;
 
   public static async launch(
     stateManager: StateManager<ApplicationSessionState>,
@@ -146,19 +149,37 @@ export class ApplicationSession implements Disposable {
     this.disposables.push(
       this.devtoolsServer.onConnection((devtools) => {
         this.devtools?.dispose();
-        this.toolsManager?.dispose();
-
         this.devtools = devtools;
         this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
-        this.registerDevtoolsListeners(devtools);
-        this.toolsManager = new ToolsManager(
-          this.stateManager.getDerived("toolsState"),
-          this.devtools
-        );
+        const disconnectedSubscription = devtools.onDisconnected(() => {
+          disconnectedSubscription.dispose();
+          if (devtools !== this.devtools) {
+            return;
+          }
+          if (
+            this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected
+          ) {
+            this.stateManager.setState({
+              inspectorBridgeStatus: InspectorBridgeStatus.Disconnected,
+            });
+          }
+          this.devtools = undefined;
+        });
       })
     );
     this.registerMetroListeners();
 
+    const devtoolsInspectorBridge = new DevtoolsInspectorBridge(this.devtoolsServer);
+    this.inspectorBridge = devtoolsInspectorBridge;
+    const inspectorBridgeSubscriptions =
+      this.registerInspectorBridgeEventListeners(devtoolsInspectorBridge);
+    this.disposables.push(devtoolsInspectorBridge, ...inspectorBridgeSubscriptions);
+
+    this.toolsManager = new ToolsManager(
+      this.stateManager.getDerived("toolsState"),
+      devtoolsInspectorBridge
+    );
+    this.disposables.push(this.toolsManager);
     this.disposables.push(this.stateManager);
   }
 
@@ -185,27 +206,15 @@ export class ApplicationSession implements Disposable {
   // #region Tools
 
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
-    if (!this.toolsManager) {
-      Logger.error("Cannot update tool state, devtools are not connected");
-      return;
-    }
-    this.toolsManager.updateToolEnabledState(toolName, enabled);
+    return this.toolsManager.updateToolEnabledState(toolName, enabled);
   }
 
   public openTool(toolName: ToolKey): void {
-    if (!this.toolsManager) {
-      Logger.error("Cannot open tool, devtools are not connected", toolName);
-      return;
-    }
-    this.toolsManager.openTool(toolName);
+    return this.toolsManager.openTool(toolName);
   }
 
   public getPlugin(toolName: ToolKey): ToolPlugin | undefined {
-    if (!this.toolsManager) {
-      Logger.error("Cannot get tool plugin, devtools are not connected", toolName);
-      return;
-    }
-    this.toolsManager.getPlugin(toolName);
+    return this.toolsManager.getPlugin(toolName);
   }
 
   // #endregion Tools
@@ -330,7 +339,7 @@ export class ApplicationSession implements Disposable {
   public async activate(): Promise<void> {
     if (!this.isActive) {
       this.isActive = true;
-      this.toolsManager?.activate();
+      this.toolsManager.activate();
       if (this.debugSession === undefined) {
         await this.setupDebugSession();
       }
@@ -340,7 +349,7 @@ export class ApplicationSession implements Disposable {
 
   public async deactivate(): Promise<void> {
     this.isActive = false;
-    this.toolsManager?.deactivate();
+    this.toolsManager.deactivate();
     this.debugSessionEventSubscription?.dispose();
     const debugSession = this.debugSession;
     this.debugSession = undefined;
@@ -382,52 +391,39 @@ export class ApplicationSession implements Disposable {
     });
   }
 
-  private registerDevtoolsListeners(devtools: DevtoolsConnection) {
-    const devtoolsEventSubscriptions = [
-      devtools.onEvent("appReady", () => {
+  private registerInspectorBridgeEventListeners(inspectorBridge: RadonInspectorBridge) {
+    const subscriptions = [
+      inspectorBridge.onEvent("appReady", () => {
         // NOTE: since this is triggered by the JS bundle,
         // we can assume that if it fires, the bundle loaded successfully.
         // This is necessary to reset the bundle error state when the app reload
         // is triggered from the app itself (e.g. by in-app dev menu or redbox).
         this.stateManager.setState({ bundleError: null });
       }),
-      devtools.onEvent("fastRefreshStarted", () => {
+      inspectorBridge.onEvent("fastRefreshStarted", () => {
         this.stateManager.setState({ bundleError: null, isRefreshing: true });
       }),
-      devtools.onEvent("fastRefreshComplete", () => {
+      inspectorBridge.onEvent("fastRefreshComplete", () => {
         this.stateManager.setState({ isRefreshing: false });
       }),
-      devtools.onEvent("isProfilingReact", (isProfiling) => {
+      inspectorBridge.onEvent("isProfilingReact", (isProfiling) => {
         if (this.stateManager.getState().profilingReactState !== "saving") {
           this.stateManager.setState({
             profilingReactState: isProfiling ? "profiling" : "stopped",
           });
         }
       }),
-      devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
+      inspectorBridge.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
         this.stateManager.setState({ appOrientation: this.determineAppOrientation(orientation) });
       }),
-      devtools.onEvent(
+      inspectorBridge.onEvent(
         "inspectorAvailabilityChanged",
         (inspectorAvailability: InspectorAvailabilityStatus) => {
           this.stateManager.setState({ elementInspectorAvailability: inspectorAvailability });
         }
       ),
-      devtools.onEvent("disconnected", () => {
-        disposeAll(devtoolsEventSubscriptions);
-        if (devtools !== this.devtools) {
-          return;
-        }
-        if (
-          this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected
-        ) {
-          this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Disconnected });
-        }
-        this.devtools = undefined;
-        this.toolsManager?.dispose();
-        this.toolsManager = undefined;
-      }),
     ];
+    return subscriptions;
   }
   //#endregion
 
@@ -531,7 +527,7 @@ export class ApplicationSession implements Disposable {
   ): Promise<InspectData> {
     const id = this.inspectCallID++;
     const { promise, resolve, reject } = Promise.withResolvers<InspectData>();
-    const listener = this.devtools?.onEvent("inspectData", (payload) => {
+    const listener = this.inspectorBridge.onEvent("inspectData", (payload) => {
       if (payload.id === id) {
         listener?.dispose();
         resolve(payload as unknown as InspectData);
@@ -540,7 +536,7 @@ export class ApplicationSession implements Disposable {
         reject("Inspect request was invalidated by a later request");
       }
     });
-    this.devtools?.sendInspectRequest(xRatio, yRatio, id, requestStack);
+    this.inspectorBridge.sendInspectRequest(xRatio, yRatio, id, requestStack);
 
     const inspectData = await promise;
     let stack = undefined;

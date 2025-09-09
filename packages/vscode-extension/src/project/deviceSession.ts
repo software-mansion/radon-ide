@@ -41,7 +41,7 @@ import { FrameReporter } from "./FrameReporter";
 import { ScreenCapture } from "./ScreenCapture";
 import { disposeAll } from "../utilities/disposables";
 import { FileTransfer } from "./FileTransfer";
-import { createWebSocketDevtoolsServer, DevtoolsConnection, DevtoolsServer } from "./devtools";
+import { createWebSocketDevtoolsServer, DevtoolsServer } from "./devtools";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -70,7 +70,6 @@ export class DeviceSession implements Disposable {
   private metro: MetroLauncher;
   private maybeBuildResult: BuildResult | undefined;
   private devtoolsServer: Promise<DevtoolsServer & { port: number }>;
-  private devtools: DevtoolsConnection | undefined;
   private buildManager: BuildManager;
   private cancelToken: CancelToken = new CancelToken();
   private watchProjectSubscription: Disposable;
@@ -105,7 +104,7 @@ export class DeviceSession implements Disposable {
   }
 
   public get inspectorBridge(): RadonInspectorBridge | undefined {
-    return this.devtools;
+    return this.applicationSession?.inspectorBridge;
   }
 
   constructor(
@@ -130,7 +129,7 @@ export class DeviceSession implements Disposable {
     this.disposables.push(this.screenCapture);
 
     Logger.debug("Launching DevTools server");
-    this.devtoolsServer = this.makeDevtools();
+    this.devtoolsServer = createWebSocketDevtoolsServer();
 
     this.metro = new MetroLauncher();
     this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
@@ -228,36 +227,24 @@ export class DeviceSession implements Disposable {
 
   //#endregion
 
-  private async makeDevtools() {
-    const devtoolsServer = await createWebSocketDevtoolsServer();
-    devtoolsServer.onConnection((devtools: DevtoolsConnection) => {
-      if (this.devtools) {
-        this.devtools.dispose();
+  private setupInspectorBridgeListeners(devtools: RadonInspectorBridge) {
+    // We don't need to store event disposables here as they are tied to the lifecycle
+    // of the devtools instance, which is disposed when we recreate the devtools or
+    // when the device session is disposed
+    devtools.onEvent("navigationChanged", (payload: NavigationHistoryItem) => {
+      if (!this.navigationHomeTarget) {
+        this.navigationHomeTarget = payload;
       }
-      this.devtools = devtools;
-      devtools.onEvent("appReady", () => {
-        this.device.setUpKeyboard();
-        Logger.debug("App ready");
-      });
-      // We don't need to store event disposables here as they are tied to the lifecycle
-      // of the devtools instance, which is disposed when we recreate the devtools or
-      // when the device session is disposed
-      devtools.onEvent("navigationChanged", (payload: NavigationHistoryItem) => {
-        if (!this.navigationHomeTarget) {
-          this.navigationHomeTarget = payload;
-        }
-        this.navigationHistory = [
-          payload,
-          ...this.navigationHistory.filter((record) => record.id !== payload.id),
-        ].slice(0, MAX_URL_HISTORY_SIZE);
-        this.emitStateChange();
-      });
-      devtools.onEvent("navigationRouteListUpdated", (payload: NavigationRoute[]) => {
-        this.navigationRouteList = payload;
-        this.emitStateChange();
-      });
+      this.navigationHistory = [
+        payload,
+        ...this.navigationHistory.filter((record) => record.id !== payload.id),
+      ].slice(0, MAX_URL_HISTORY_SIZE);
+      this.emitStateChange();
     });
-    return devtoolsServer;
+    devtools.onEvent("navigationRouteListUpdated", (payload: NavigationRoute[]) => {
+      this.navigationRouteList = payload;
+      this.emitStateChange();
+    });
   }
 
   private get devtoolsPort() {
@@ -281,7 +268,6 @@ export class DeviceSession implements Disposable {
 
     this.device?.dispose();
     this.metro?.dispose();
-    this.devtools?.dispose();
     this.watchProjectSubscription.dispose();
 
     disposeAll(this.disposables);
@@ -532,6 +518,11 @@ export class DeviceSession implements Disposable {
       }
 
       this.applicationSession = applicationSession;
+
+      // NOTE: on iOS, we need to change keyboard langugage to match the device locale after the app is ready
+      this.device.setUpKeyboard();
+      this.setupInspectorBridgeListeners(applicationSession.inspectorBridge);
+
       this.status = "running";
       this.emitStateChange();
 
@@ -862,7 +853,7 @@ export class DeviceSession implements Disposable {
 
   public async startPreview(previewId: string) {
     const { resolve, reject, promise } = Promise.withResolvers<void>();
-    const listener = this.devtools?.onEvent("openPreviewResult", (payload) => {
+    const listener = this.inspectorBridge?.onEvent("openPreviewResult", (payload) => {
       if (payload.previewId === previewId) {
         listener?.dispose();
         if (payload.error) {

@@ -14,7 +14,8 @@ import {
   Wall,
   FrontendBridge,
 } from "../../third-party/react-devtools/headless";
-import { BaseInspectorBridge } from "./bridge";
+import { BaseInspectorBridge, RadonInspectorBridgeEvents } from "./bridge";
+import { disposeAll } from "../utilities/disposables";
 
 function filePathForProfile() {
   const fileName = `profile-${Date.now()}.reactprofile`;
@@ -22,21 +23,72 @@ function filePathForProfile() {
   return filePath;
 }
 
-export class DevtoolsConnection extends BaseInspectorBridge implements Disposable {
+type IdeMessageListener = <K extends keyof RadonInspectorBridgeEvents>(event: {
+  type: K;
+  data: RadonInspectorBridgeEvents[K];
+}) => void;
+type IdeMessage = Parameters<IdeMessageListener>[0];
+
+/**
+ * InspectorBridge implementation that uses the React DevTools frontend to receive messages from the application.
+ * It connects to the application via the last DevtoolsConnection provided by a DevtoolsServer.
+ */
+export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disposable {
+  private devtoolsConnection: DevtoolsConnection | undefined;
+  private devtoolsServerListener: Disposable;
+  private devtoolsConnectionListeners: Disposable[] = [];
+
+  constructor(devtoolsServer: DevtoolsServer) {
+    super();
+    this.devtoolsServerListener = devtoolsServer.onConnection((connection) => {
+      this.devtoolsConnection = connection;
+      disposeAll(this.devtoolsConnectionListeners);
+      this.devtoolsConnectionListeners = [
+        connection.onIdeMessage((message) => {
+          this.emitEvent(message.type, message.data);
+        }),
+        connection.onDisconnected(() => {
+          if (connection === this.devtoolsConnection) {
+            this.devtoolsConnection = undefined;
+            this.devtoolsConnectionListeners = [];
+            disposeAll(this.devtoolsConnectionListeners);
+          }
+        }),
+      ];
+    });
+  }
+
+  dispose() {
+    disposeAll(this.devtoolsConnectionListeners);
+    this.devtoolsServerListener.dispose();
+  }
+
+  protected send(message: any): void {
+    this.devtoolsConnection?.send("RNIDE_message", message);
+  }
+}
+
+export class DevtoolsConnection implements Disposable {
   bridge: FrontendBridge;
   store: Store;
   appReady: Promise<void>;
   connected: boolean = true;
 
-  constructor(private readonly wall: Wall) {
-    super();
+  private readonly ideMessageEventEmitter: EventEmitter<IdeMessage> = new EventEmitter();
+  private readonly disconnectedEventEmitter: EventEmitter<void> = new EventEmitter();
 
+  public readonly onIdeMessage = this.ideMessageEventEmitter.event;
+  public readonly onDisconnected = this.disconnectedEventEmitter.event;
+
+  constructor(private readonly wall: Wall) {
     // set up `appReady` promise
     const { promise: appReady, resolve: resolveAppReady } = Promise.withResolvers<void>();
     this.appReady = appReady;
-    const appReadyListener = this.onEvent("appReady", () => {
-      resolveAppReady();
-      appReadyListener.dispose();
+    const appReadyListener = this.onIdeMessage(({ type }) => {
+      if (type === "appReady") {
+        resolveAppReady();
+        appReadyListener.dispose();
+      }
     });
 
     // create the DevTools frontend for the connection
@@ -44,8 +96,7 @@ export class DevtoolsConnection extends BaseInspectorBridge implements Disposabl
     this.store = createStore(this.bridge);
 
     this.bridge.addListener("RNIDE_message", (payload: any) => {
-      const { type, data } = payload;
-      this.emitEvent(type, data);
+      this.ideMessageEventEmitter.fire(payload);
     });
 
     // Register for isProfiling event on the profiler store
@@ -82,13 +133,13 @@ export class DevtoolsConnection extends BaseInspectorBridge implements Disposabl
     return promise;
   }
 
-  public send(message: unknown) {
-    this.wall.send("RNIDE_message", message);
+  public send(event: string, payload: unknown) {
+    this.wall.send(event, payload);
   }
 
   public close() {
+    this.disconnectedEventEmitter.fire();
     this.dispose();
-    this.emitEvent("disconnected", []);
   }
 
   public dispose() {
@@ -97,6 +148,8 @@ export class DevtoolsConnection extends BaseInspectorBridge implements Disposabl
     }
     this.connected = false;
     this.bridge.shutdown();
+    this.disconnectedEventEmitter.dispose();
+    this.ideMessageEventEmitter.dispose();
   }
 }
 

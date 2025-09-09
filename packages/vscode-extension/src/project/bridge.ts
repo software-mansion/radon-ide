@@ -5,7 +5,6 @@ import { InspectorAvailabilityStatus } from "../common/State";
 
 export interface RadonInspectorBridgeEvents {
   appReady: [];
-  disconnected: [];
   navigationChanged: [{ displayName: string; id: string }];
   navigationRouteListUpdated: [NavigationRoute[]];
   fastRefreshStarted: [];
