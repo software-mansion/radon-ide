@@ -56,6 +56,8 @@ function determineLanguage(contentType: string, body: string): string {
   } else if (contentType.includes("text/plain")) {
     return "text";
   }
+
+  // Fallback for "text/..."
   const guessLanguageFromText = () => {
     const trimmedBody = body.trim();
     if (trimmedBody.startsWith("<?xml") || trimmedBody.startsWith("<")) {
@@ -69,8 +71,7 @@ function determineLanguage(contentType: string, body: string): string {
 
     return "text";
   };
-
-  // Fallback for "text/..."
+  
   return guessLanguageFromText();
 }
 
