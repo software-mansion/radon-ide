@@ -26,7 +26,7 @@ const ResponseTab = ({ networkLog, responseBodyData }: ResponseTabProps) => {
         additionalButtons={
           <IconButton
             className="response-tab-copy-button"
-            tooltip={{ label: "Open request in new window", side: "bottom" }}
+            tooltip={{ label: "Open response in editor", side: "bottom" }}
             onClick={() => {
               fetchAndOpenResponseInEditor(networkLog);
             }}
