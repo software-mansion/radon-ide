@@ -352,7 +352,7 @@ export class AppManipulationService {
           await this.driver.switchTo().defaultContent();
           const bottomBar = await new BottomBarPanel().openOutputView();
           const text = await bottomBar.getText();
-          console.log(text);
+          console.log("build error saved to output.txt");
           await this.driver.sleep(1000);
           fs.writeFileSync("output.txt", text);
           await this.driver.sleep(1000);

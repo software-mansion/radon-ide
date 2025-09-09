@@ -50,9 +50,13 @@ describe("Smoke tests Radon IDE", () => {
       By.css('[data-testid="approot-select-value"]')
     );
 
-    await driver.wait(async () => {
-      const text = await approot.getText();
-      return text.toLowerCase() === texts.expectedProjectName.toLowerCase();
-    }, 5000);
+    await driver.wait(
+      async () => {
+        const text = await approot.getText();
+        return text.toLowerCase() === texts.expectedProjectName.toLowerCase();
+      },
+      5000,
+      `Timed out waiting for project name to be: ${texts.expectedProjectName}`
+    );
   });
 });
