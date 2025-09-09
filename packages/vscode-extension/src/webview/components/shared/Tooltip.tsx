@@ -19,6 +19,7 @@ export default function Tooltip({
   instant = false,
   disabled = false,
 }: TooltipProps) {
+
   return (
     <RadixTooltip.Provider>
       <RadixTooltip.Root delayDuration={instant ? 0 : 700}>
@@ -29,7 +30,7 @@ export default function Tooltip({
           one wishes to disable the Tooltip when `pointer-events: none` is set
           they should declare this explicitly setting the `disabled` prop on the
           Tooltip component. */}
-          <span>{children}</span>
+          <span className={"tooltip-trigger-span"}>{children}</span>
         </RadixTooltip.Trigger>
         <RadixTooltip.Portal>
           <RadixTooltip.Content

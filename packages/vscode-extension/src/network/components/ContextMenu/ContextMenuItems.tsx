@@ -17,6 +17,7 @@ import {
 } from "../../utils/requestFormatters";
 import { responseBodyInfo, useNetwork } from "../../providers/NetworkProvider";
 import { NETWORK_LOG_COLUMNS } from "../../types/network";
+import Tooltip from "../../../webview/components/shared/Tooltip";
 export interface CopySubmenuProps {
   networkLog: NetworkLog | null;
 }
@@ -154,8 +155,19 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
             className="radix-context-menu-item"
             onSelect={handleCopyResponseBody}
             disabled={!networkLog || !networkLog.response}>
-            <span className="codicon codicon-file-text"></span>
-            Copy Response Body
+              {/* Tooltip has to be nested in ContextMenu.Item, causes problems with
+                  "instant" attribute behaviour otherwise */}
+            <Tooltip
+              instant={false}
+              disabled={!responseBodyData?.wasTruncated}
+              label={"Response body was truncated"}
+              side="bottom">
+              <>
+                <span className="codicon codicon-file-text"></span>
+                Copy Response Body
+                {responseBodyData?.wasTruncated && <span className="codicon codicon-warning" />}
+              </>
+            </Tooltip>
           </ContextMenu.Item>
         </ContextMenu.SubContent>
       </ContextMenu.Portal>

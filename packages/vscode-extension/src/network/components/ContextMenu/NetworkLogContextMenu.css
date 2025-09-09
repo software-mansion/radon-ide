@@ -7,7 +7,7 @@
   border-radius: 6px;
   box-shadow: 0 0 8px 2px var(--vscode-widget-shadow);
   padding: 4px;
-  z-index: 1000;
+  z-index: 10;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
   animation-duration: 400ms;
@@ -34,7 +34,8 @@
   min-width: 140px;
 }
 
-.radix-context-menu-item {
+.radix-context-menu-item,
+.radix-context-menu-item > .tooltip-trigger-span {
   font-size: 13px;
   line-height: 1;
   color: var(--vscode-menu-foreground);
@@ -48,6 +49,15 @@
   outline: none;
   gap: 8px;
   cursor: pointer;
+
+  .codicon-warning {
+    color: var(--vscode-problemsWarningIcon-foreground);
+  }
+}
+
+/* Handle nested tooltip */
+.radix-context-menu-item:has(> .tooltip-trigger-span) {
+  padding: 0;
 }
 
 .radix-context-menu-item[data-disabled] {
