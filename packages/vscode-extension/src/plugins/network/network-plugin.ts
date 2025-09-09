@@ -8,12 +8,32 @@ import { extensionContext } from "../../utilities/extensionContext";
 import { Logger } from "../../Logger";
 import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider";
 import { disposeAll } from "../../utilities/disposables";
-import { openContentInEditor } from "../../utilities/editorOpeners";
+import { openContentInEditor, showDismissableError } from "../../utilities/editorOpeners";
 
 interface RequestOptions {
   method: string;
   headers: Record<string, string>;
-  body?: any;
+  body?: string;
+}
+
+interface RequestData {
+  method: string;
+  headers: Record<string, string>;
+  url: string;
+  postData?: unknown;
+}
+
+interface CDPMessage {
+  method?: string;
+  id?: string | number;
+  params?: {
+    request?: RequestData;
+  };
+  result?: unknown;
+}
+
+interface WebSocketMessageData {
+  toString(): string;
 }
 
 export const NETWORK_PLUGIN_ID = "network";
@@ -87,7 +107,79 @@ class NetworkCDPWebsocketBackend implements Disposable {
   private server: Server;
   private sessions: Set<WebSocket> = new Set();
 
-  constructor(private readonly sendCDPMessage: (messageData: any) => void) {
+  /**
+   * Handles the "Network.fetchFullResponseBody" CDP message, by
+   * fetching the response and displaying the body in vscode editor tab.
+   *
+   * On fetch error, shows a dismissable error notification.
+   */
+  private async handleFetchFullResponseBody(
+    requestOptions: RequestData | undefined
+  ): Promise<void> {
+    if (!requestOptions) {
+      return;
+    }
+
+    const fetchOptions: RequestOptions = {
+      method: requestOptions.method,
+      headers: requestOptions.headers,
+    };
+
+    if (requestOptions.postData) {
+      fetchOptions.body = JSON.stringify(requestOptions.postData);
+    }
+
+    try {
+      const response = await fetch(requestOptions.url, fetchOptions);
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+      const data = await response.text();
+
+      const language = determineLanguage(contentType, data);
+      const formattedData = formatDataBasedOnLanguage(data, language);
+
+      openContentInEditor(formattedData, language);
+    } catch (error) {
+      console.error("There was a problem fetching the data:", error);
+      showDismissableError("Data could not be fetched.");
+    }
+  }
+
+  /**
+   * Sends empty result if non-"Network." message was received
+   */
+  private handleGenericMessage(payload: CDPMessage, ws: WebSocket): void {
+    if (payload.id) {
+      const response = { id: payload.id, result: {} };
+      ws.send(JSON.stringify(response));
+    }
+  }
+
+  private async handleWebSocketMessage(
+    message: WebSocketMessageData,
+    ws: WebSocket
+  ): Promise<void> {
+    try {
+      const payload: CDPMessage = JSON.parse(message.toString());
+
+      if (payload.method === "Network.fetchFullResponseBody") {
+        await this.handleFetchFullResponseBody(payload.params?.request);
+      } else if (payload.method?.startsWith("Network.")) {
+        // Forwards all "Network." messages to devtools inspector bridge,
+        // which in turns sends them through the websocket to the app
+        this.sendCDPMessage(payload);
+      } else {
+        this.handleGenericMessage(payload, ws);
+      }
+    } catch (err) {
+      console.error("Network CDP invalid message format:", err);
+    }
+  }
+
+  constructor(private readonly sendCDPMessage: (messageData: CDPMessage) => void) {
     this.server = http.createServer(() => {});
     const wss = new WebSocketServer({ server: this.server });
 
@@ -95,48 +187,7 @@ class NetworkCDPWebsocketBackend implements Disposable {
       this.sessions.add(ws);
 
       ws.on("message", (message) => {
-        try {
-          const payload = JSON.parse(message.toString());
-          if (payload.method === "Network.fetchFullRequestBody") {
-            const requestOptions = payload.params.request;
-
-            const fetchOptions: RequestOptions = {
-              method: requestOptions.method,
-              headers: requestOptions.headers,
-            };
-
-            if (requestOptions.postData) {
-              fetchOptions.body = JSON.stringify(requestOptions.postData);
-            }
-
-            fetch(requestOptions.url, fetchOptions)
-              .then((response) => {
-                if (!response.ok) {
-                  throw new Error("Network response was not ok");
-                }
-                const contentType = response.headers.get("content-type") || "";
-
-                return response.text().then((data) => ({ data, contentType }));
-              })
-              .then(({ data, contentType }) => {
-                const language = determineLanguage(contentType, data);
-                const formattedData = formatDataBasedOnLanguage(data, language);
-                openContentInEditor(formattedData, language);
-              })
-              .catch((error) => {
-                console.error("There was a problem fetching the data:", error);
-              });
-          } else if (payload.method.startsWith("Network.")) {
-            // forward message to devtools
-            this.sendCDPMessage(payload);
-          } else if (payload.id) {
-            // send empty response otherwise
-            const response = { id: payload.id, result: {} };
-            ws.send(JSON.stringify(response));
-          }
-        } catch (err) {
-          console.error("Network CDP invalid message format:", err);
-        }
+        this.handleWebSocketMessage(message, ws);
       });
 
       ws.on("close", () => {
@@ -198,7 +249,7 @@ export class NetworkPlugin implements ToolPlugin {
     return this.websocketBackend.port;
   }
 
-  sendCDPMessage = (messageData: any) => {
+  sendCDPMessage = (messageData: CDPMessage) => {
     this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
   };
 

@@ -3,7 +3,7 @@ import { commands, window, env, Uri, ProgressLocation } from "vscode";
 import JSON5 from "json5";
 import path from "path";
 import { homedir } from "os";
-import { openFileAtPosition, openContentInEditor } from "../utilities/editorOpeners";
+import { openFileAtPosition, openContentInEditor, showDismissableError } from "../utilities/editorOpeners";
 import { Logger } from "../Logger";
 import { Platform } from "../utilities/platform";
 import { extensionContext } from "../utilities/extensionContext";
@@ -88,7 +88,7 @@ export class EditorBindings {
   }
 
   public async showDismissableError(errorMessage: string) {
-    window.showErrorMessage(errorMessage, "Dismiss");
+    showDismissableError(errorMessage);
   }
 
   async showToast(message: string, timeout: number) {

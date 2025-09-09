@@ -128,7 +128,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     ws.send(
       JSON.stringify({
         id,
-        method: "Network.fetchFullRequestBody",
+        method: "Network.fetchFullResponseBody",
         params: {
           request: networkLog.request,
         },

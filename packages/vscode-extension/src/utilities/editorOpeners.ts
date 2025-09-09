@@ -1,4 +1,4 @@
-import { window, workspace, ViewColumn, Range, Uri } from "vscode";
+import { window, workspace, ViewColumn, Range } from "vscode";
 import { Logger } from "../Logger";
 
 export async function openFileAtPosition(
@@ -37,4 +37,8 @@ export async function openContentInEditor(content: string, language: string) {
   workspace.openTextDocument({ language, content }).then(async (doc) => {
     await window.showTextDocument(doc);
   });
+}
+
+export async function showDismissableError(errorMessage: string) {
+  window.showErrorMessage(errorMessage, "Dismiss");
 }
