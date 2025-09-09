@@ -1,6 +1,5 @@
 import { By, WebView, EditorView } from "vscode-extension-tester";
-import { ElementHelperService } from "../utils/helpers.js";
-import { RadonViewsService, ManagingDevicesService } from "./interactions.js";
+import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
 describe("Adding device tests", () => {
@@ -8,9 +7,8 @@ describe("Adding device tests", () => {
 
   beforeEach(async function () {
     ({ driver } = get());
-    elementHelperService = new ElementHelperService(driver);
-    radonViewsService = new RadonViewsService(driver);
-    managingDevicesService = new ManagingDevicesService(driver);
+    ({ elementHelperService, radonViewsService, managingDevicesService } =
+      initServices(driver));
     const view = new WebView();
 
     await view.switchBack();
