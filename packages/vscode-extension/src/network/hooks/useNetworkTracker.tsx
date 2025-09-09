@@ -101,7 +101,7 @@ const useNetworkTracker = (): NetworkTracker => {
 
       const { method, params } = parsedMsg;
 
-      if (!params?.requestId) {
+      if (!params.requestId) {
         return;
       }
 
@@ -123,7 +123,7 @@ const useNetworkTracker = (): NetworkTracker => {
             durationMs: params.duration || existingLog.timeline.durationMs,
             ttfb: params.ttfb || existingLog.timeline.ttfb,
           },
-          type: params?.type || existingLog?.type,
+          type: params.type || existingLog.type,
           encodedDataLength: params.encodedDataLength || existingLog.encodedDataLength,
         };
       } else {
@@ -133,7 +133,7 @@ const useNetworkTracker = (): NetworkTracker => {
           request: params.request,
           response: params.response,
           encodedDataLength: params.encodedDataLength,
-          type: params?.type,
+          type: params.type,
           initiator: params.initiator,
           timeline: {
             timestamp: params.timestamp,
@@ -171,6 +171,7 @@ const useNetworkTracker = (): NetworkTracker => {
     }
     setNetworkLogs((prevLogs) => {
       const newLogs = [...prevLogs];
+      // FIXME: The entirety is mapped on each addition, absurd
       serverMessages.map((msg) => processServerMessage(msg, newLogs));
       return newLogs;
     });
