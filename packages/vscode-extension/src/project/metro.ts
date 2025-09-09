@@ -16,6 +16,8 @@ import { DebugSource } from "../debugging/DebugSession";
 import { openFileAtPosition } from "../utilities/editorOpeners";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
 import { CancelToken } from "../utilities/cancelToken";
+import { Output } from "../common/OutputChannel";
+import { IDE } from "./ide";
 
 const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
@@ -477,6 +479,19 @@ export class MetroLauncher extends Metro implements Disposable {
       EXPO_EDITOR: FAKE_EDITOR,
       ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
     };
+
+    const metroOutputChannel =
+      IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(
+        Output.MetroBundler
+      );
+
+    if (!metroOutputChannel) {
+      throw new Error("Cannot start bundler process. The IDE is not initialized.");
+    }
+
+    // Clearing logs shortly before the new bundler process is started.
+    metroOutputChannel.clear();
+
     let bundlerProcess: ChildProcess;
 
     if (shouldUseExpoCLI(launchConfiguration)) {
@@ -515,7 +530,9 @@ export class MetroLauncher extends Metro implements Disposable {
               this.bundleProgressEventEmitter.fire({ bundleProgress });
             }
           } else if (event.type === "client_log" && event.level === "error") {
-            Logger.error(stripAnsi(event.data[0]));
+            const err = stripAnsi(event.data[0]);
+            Logger.error(err);
+            metroOutputChannel.appendLine(err);
           } else {
             Logger.debug("Metro", line);
           }
@@ -527,7 +544,9 @@ export class MetroLauncher extends Metro implements Disposable {
               break;
             case "initialize_done":
               this._port = event.port;
-              Logger.info(`Metro started on port ${this._port}`);
+              const log = `Metro started on port ${this._port}`;
+              metroOutputChannel.appendLine(log);
+              Logger.info(log);
               resolve();
               break;
             case "RNIDE_watch_folders":
@@ -547,6 +566,9 @@ export class MetroLauncher extends Metro implements Disposable {
               };
               const errorModulePath = event.error.originModulePath;
               this.bundleErrorEventEmitter.fire({ message, source, errorModulePath });
+              metroOutputChannel.appendLine(
+                `[Bundling Error]: ${filename}:${source.line1based}:${source.column0based}: ${message}`
+              );
               break;
           }
         };
@@ -562,6 +584,10 @@ export class MetroLauncher extends Metro implements Disposable {
         }
 
         Logger.debug("Metro", line);
+
+        if (!line.startsWith("__RNIDE__")) {
+          metroOutputChannel.appendLine(line);
+        }
 
         if (line.startsWith("__RNIDE__open_editor__ ")) {
           this.handleOpenEditor(line.slice("__RNIDE__open_editor__ ".length));

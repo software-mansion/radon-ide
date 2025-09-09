@@ -43,7 +43,7 @@ function FeedbackView({ initialSentiment }: FeedbackViewProps) {
   }
 
   return (
-    <form className="container" data-test="feedback-view" onSubmit={handleSubmit(onSubmit)}>
+    <form className="container" data-testid="feedback-view" onSubmit={handleSubmit(onSubmit)}>
       <div className="feedback-buttons-container">
         <div className="feedback-button-wrapper">
           <FeedbackButton

@@ -64,15 +64,9 @@ export interface WebSocketMessage {
   };
 }
 
-export type responseBodyInfo = {
-  body: string | undefined;
-  wasTruncated: boolean;
-};
-
 export interface NetworkTracker {
   networkLogs: NetworkLog[];
   ws: WebSocket | null;
-  getResponseBody: (networkLog: NetworkLog) => Promise<responseBodyInfo | undefined>;
   clearLogs: () => void;
   toggleNetwork: (isRunning: boolean) => void;
   getSource: (networkLog: NetworkLog) => void;
@@ -81,7 +75,6 @@ export interface NetworkTracker {
 export const networkTrackerInitialState: NetworkTracker = {
   networkLogs: [],
   ws: null,
-  getResponseBody: async () => undefined,
   clearLogs: () => {},
   toggleNetwork: () => {},
   getSource: () => {},
@@ -187,56 +180,6 @@ const useNetworkTracker = (): NetworkTracker => {
     );
   };
 
-  const [responseBodies, setResponseBodies] = useState<Record<string, responseBodyInfo>>({});
-
-  const getResponseBody = (networkLog: NetworkLog) => {
-    const requestId = networkLog.requestId;
-    const ws = wsRef.current;
-
-    if (!requestId || !ws) {
-      return Promise.resolve(undefined);
-    }
-
-    if (responseBodies[requestId]) {
-      return Promise.resolve(responseBodies[requestId]);
-    }
-    const id = Math.random().toString(36).substring(7);
-
-    ws.send(
-      JSON.stringify({
-        id,
-        method: "Network.getResponseBody",
-        params: {
-          requestId: networkLog.requestId,
-        },
-      })
-    );
-
-    return new Promise<responseBodyInfo | undefined>((resolve) => {
-      const listener = (message: MessageEvent) => {
-        try {
-          const parsedMsg = JSON.parse(message.data);
-          if (parsedMsg.id !== id) {
-            return;
-          }
-          const bodyInfo = parsedMsg.result;
-          setResponseBodies((prev) => ({
-            ...prev,
-            [requestId]: bodyInfo,
-          }));
-
-          resolve(bodyInfo);
-          ws.removeEventListener("message", listener);
-        } catch (error) {
-          console.error("Error parsing WebSocket message:", error);
-          ws.removeEventListener("message", listener);
-        }
-      };
-
-      ws.addEventListener("message", listener);
-    });
-  };
-
   const getSource = (networkLog: NetworkLog) => {
     wsRef.current?.send(
       JSON.stringify({
@@ -251,7 +194,6 @@ const useNetworkTracker = (): NetworkTracker => {
   return {
     networkLogs: networkLogs.filter((log) => log?.request?.url !== undefined),
     ws: wsRef.current,
-    getResponseBody,
     clearLogs,
     toggleNetwork,
     getSource,

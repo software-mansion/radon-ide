@@ -1,9 +1,9 @@
-import "./ResponseTab.css";
+import { NetworkLog } from "../hooks/useNetworkTracker";
+import { responseBodyInfo, useNetwork } from "../providers/NetworkProvider";
+import { getFormattedRequestBody } from "../utils/requestFormatters";
 import IconButton from "../../webview/components/shared/IconButton";
-import { NetworkLog, responseBodyInfo } from "../hooks/useNetworkTracker";
-import { formatJSONBody } from "../utils/requestFormatUtils";
-import { useNetwork } from "../providers/NetworkProvider";
 import TabActionButtons from "./TabActionButtons";
+import "./ResponseTab.css";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
@@ -15,7 +15,7 @@ const NO_RESPONSE_MESSAGE = "No response body";
 const ResponseTab = ({ networkLog, responseBody }: ResponseTabProps) => {
   const { fetchAndOpenResponseInEditor } = useNetwork();
   const { body = undefined, wasTruncated = false } = responseBody || {};
-  const responseData = formatJSONBody(body);
+  const responseData = getFormattedRequestBody(body);
 
   return (
     <>

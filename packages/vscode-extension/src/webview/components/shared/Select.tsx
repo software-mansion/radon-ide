@@ -58,7 +58,7 @@ function Select({
     <RadixSelect.Root value={value} onValueChange={onChange} disabled={disabled}>
       <RadixSelect.Trigger
         className={classnames("select-trigger", className, disabled && "select-trigger-disabled")}
-        data-test={dataTest}>
+        data-testid={dataTest}>
         <RadixSelect.Value placeholder={placeholder} />
         <RadixSelect.Icon className="select-icon">
           <span className="codicon codicon-chevron-down" />
@@ -80,7 +80,7 @@ function Select({
                       disabled={selectItem.disabled}
                       marked={selectItem.marked}
                       value={selectItem.value}
-                      data-test={`${dataTest}-item-${selectItem.value}`}>
+                      data-testid={`${dataTest}-item-${selectItem.value}`}>
                       {selectItem.label}
                     </SelectItem>
                   ))}
@@ -90,7 +90,7 @@ function Select({
                   key={item.value}
                   disabled={item.disabled}
                   value={item.value}
-                  data-test={`${dataTest}-item-${item.value}`}
+                  data-testid={`${dataTest}-item-${item.value}`}
                   marked={item.marked}>
                   {item.label}
                 </SelectItem>

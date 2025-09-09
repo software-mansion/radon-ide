@@ -1,4 +1,5 @@
 import IconButton from "../../webview/components/shared/IconButton";
+import { copyToClipboard } from "../utils/clipboard";
 
 interface TabActionButtonsProps {
   data: string | undefined;
@@ -13,7 +14,7 @@ const TabActionButtons = ({ data, disabled = false, additionalButtons }: TabActi
       <IconButton
         className="response-tab-copy-button"
         tooltip={{ label: "Copy to Clipboard", side: "bottom" }}
-        onClick={() => data && navigator.clipboard.writeText(data)}
+        onClick={() => copyToClipboard(data)}
         disabled={disabled}>
         <span className="codicon codicon-copy" />
       </IconButton>

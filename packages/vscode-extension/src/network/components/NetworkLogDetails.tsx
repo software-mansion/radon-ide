@@ -10,8 +10,8 @@ import HeadersTab from "./HeadersTab";
 import PayloadTab from "./PayloadTab";
 import ResponseTab from "./ResponseTab";
 import TimingTab from "./TimingTab";
-import { NetworkLog, responseBodyInfo } from "../hooks/useNetworkTracker";
-import { useNetwork } from "../providers/NetworkProvider";
+import { NetworkLog } from "../hooks/useNetworkTracker";
+import { useNetwork, responseBodyInfo } from "../providers/NetworkProvider";
 
 const VSCODE_TABS_HEADER_HEIGHT = 30;
 
@@ -40,7 +40,6 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
   const { wasTruncated = false } = responseBody || {};
 
   useEffect(() => {
-    
     getResponseBody(networkLog).then((data) => {
       setResponseBody(data);
     });

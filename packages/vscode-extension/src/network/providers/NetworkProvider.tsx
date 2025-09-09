@@ -13,6 +13,11 @@ import useNetworkTracker, {
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 
+export type responseBodyInfo = {
+  body: string | undefined;
+  wasTruncated: boolean;
+};
+
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;
   isScrolling: boolean;
@@ -22,6 +27,7 @@ interface NetworkProviderProps extends NetworkTracker {
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
   fetchAndOpenResponseInEditor: (networkLog: NetworkLog) => Promise<void>;
+  getResponseBody: (networkLog: NetworkLog) => Promise<responseBodyInfo | undefined>;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
@@ -33,6 +39,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
   toggleScrolling: () => {},
   isTimelineVisible: true,
   toggleTimelineVisible: () => {},
+  getResponseBody: async () => undefined,
   fetchAndOpenResponseInEditor: async () => {},
 });
 
@@ -42,15 +49,69 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
   const [isRecording, setIsRecording] = useState(true);
+  const [responseBodies, setResponseBodies] = useState<Record<string, responseBodyInfo>>({});
 
   const clearActivity = () => {
     networkTracker.clearLogs();
+    setResponseBodies({});
   };
 
   const toggleRecording = () => {
     setIsRecording((prev) => {
       networkTracker.toggleNetwork(prev);
       return !prev;
+    });
+  };
+
+  const getResponseBody = (networkLog: NetworkLog): Promise<responseBodyInfo | undefined> => {
+    const requestId = networkLog.requestId;
+    const ws = networkTracker.ws;
+
+    if (!requestId || !ws) {
+      return Promise.resolve(undefined);
+    }
+
+    if (responseBodies[requestId]) {
+      return Promise.resolve(responseBodies[requestId]);
+    }
+
+    const id = Math.random().toString(36).substring(7);
+
+    // Send the message to the network-plugin backend
+    ws.send(
+      JSON.stringify({
+        id,
+        method: "Network.getResponseBody",
+        params: {
+          requestId: requestId,
+        },
+      })
+    );
+
+    // Add a listener to capture the response
+    return new Promise((resolve) => {
+      const listener = (message: MessageEvent) => {
+        try {
+          const parsedMsg = JSON.parse(message.data);
+          if (parsedMsg.id !== id) {
+            return;
+          }
+
+          const bodyInfo = parsedMsg.result;
+          setResponseBodies((prev) => ({
+            ...prev,
+            [requestId]: bodyInfo,
+          }));
+
+          resolve(bodyInfo);
+
+          ws.removeEventListener("message", listener);
+        } catch (error) {
+          console.error("Error parsing WebSocket message:", error);
+        }
+      };
+
+      ws.addEventListener("message", listener);
     });
   };
 
@@ -63,7 +124,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     }
 
     const id = Math.random().toString(36).substring(7);
-    
+
     ws.send(
       JSON.stringify({
         id,
@@ -86,7 +147,8 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       toggleScrolling,
       isTimelineVisible,
       toggleTimelineVisible,
-      fetchAndOpenResponseInEditor
+      getResponseBody,
+      fetchAndOpenResponseInEditor,
     };
   }, [isRecording, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
 

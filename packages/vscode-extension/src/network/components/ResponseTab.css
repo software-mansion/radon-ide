@@ -25,14 +25,14 @@
   margin: 0 0 14px 0;
 }
 
-.response-tab-button-wrapper{
+.response-tab-button-wrapper {
   position: absolute;
   top: 4px;
   right: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px
+  gap: 4px;
 }
 
 .response-tab-pre {

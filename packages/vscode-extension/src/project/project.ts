@@ -745,7 +745,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region Logging
 
   public async focusOutput(channel: Output): Promise<void> {
-    this.outputChannelRegistry.getOrCreateOutputChannel(channel).show();
+    if (channel === Output.Ide) {
+      Logger.openOutputPanel();
+    } else {
+      this.outputChannelRegistry.getOrCreateOutputChannel(channel).show();
+    }
   }
 
   public async log(type: "info" | "error" | "warn" | "log", message: string, ...args: unknown[]) {
