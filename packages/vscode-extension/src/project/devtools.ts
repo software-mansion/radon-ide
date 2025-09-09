@@ -166,10 +166,16 @@ export abstract class DevtoolsServer implements Disposable {
 class WebSocketDevtoolsServer extends DevtoolsServer implements Disposable {
   private wss: WebSocketServer;
 
-  constructor(
-    private server: http.Server,
-    public readonly port: number
-  ) {
+  public get port() {
+    const address = this.server.address();
+    assert(
+      address !== null && typeof address !== "string",
+      "The address is an instance of `AddressInfo`"
+    );
+    return address.port;
+  }
+
+  constructor(private server: http.Server) {
     super();
     this.wss = new WebSocketServer({ server });
 
@@ -208,7 +214,7 @@ class WebSocketDevtoolsServer extends DevtoolsServer implements Disposable {
 
 export async function createWebSocketDevtoolsServer(): Promise<DevtoolsServer & { port: number }> {
   const server = http.createServer(() => {});
-  const { promise, resolve } = Promise.withResolvers<number>();
+  const { promise: listenPromise, resolve, reject } = Promise.withResolvers<void>();
 
   server.listen(0, () => {
     const address = server.address();
@@ -218,10 +224,18 @@ export async function createWebSocketDevtoolsServer(): Promise<DevtoolsServer & 
     );
     const serverPort = address.port;
     Logger.info(`Devtools started on port ${serverPort}`);
-    resolve(serverPort);
+    resolve();
   });
 
-  const port = await promise;
-  const devtoolsServer = new WebSocketDevtoolsServer(server, port);
+  function onErrorCallback(error: Error) {
+    Logger.error("Devtools server error:", error);
+    reject(new Error(`Could not start the React Devtools server`));
+  }
+  server.on("error", onErrorCallback);
+
+  await listenPromise;
+
+  server.off("error", onErrorCallback);
+  const devtoolsServer = new WebSocketDevtoolsServer(server);
   return devtoolsServer;
 }
