@@ -128,7 +128,8 @@ class AsyncBoundedResponseBuffer {
               const textResult = typeof result === "string" ? result : undefined;
               resolve(this.truncateResponseBody(textResult));
             };
-            reader.onerror = () => {
+            reader.onerror = (error) => {
+              console.warn("Failed to read response body content:", error);
               resolve(this.truncateResponseBody(undefined));
             };
             reader.readAsText(xhr.response);
@@ -180,6 +181,7 @@ class AsyncBoundedResponseBuffer {
   public async put(requestId: string, xhr: XMLHttpRequest): Promise<boolean> {
     try {
       // Remove existing request with the same ID, if any
+      // Done to rearrange the order when re-adding the same requestId
       if (this.responseMap.has(requestId)) {
         this.remove(requestId);
       }
