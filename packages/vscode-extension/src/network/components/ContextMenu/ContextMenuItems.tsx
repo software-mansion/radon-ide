@@ -1,8 +1,7 @@
 import { useState } from "react";
 import { capitalize } from "lodash";
 import * as ContextMenu from "@radix-ui/react-context-menu";
-import { NetworkLog } from "../../hooks/useNetworkTracker";
-import { NetworkLogColumn, SortState } from "../../types/network";
+import Tooltip from "../../../webview/components/shared/Tooltip";
 import { getSortIcon } from "../NetworkRequestLog";
 import { copyToClipboard } from "../../utils/clipboard";
 import {
@@ -16,8 +15,9 @@ import {
   getUrl,
 } from "../../utils/requestFormatters";
 import { responseBodyInfo, useNetwork } from "../../providers/NetworkProvider";
+import { NetworkLogColumn, SortState } from "../../types/network";
+import { NetworkLog } from "../../hooks/useNetworkTracker";
 import { NETWORK_LOG_COLUMNS } from "../../types/network";
-import Tooltip from "../../../webview/components/shared/Tooltip";
 export interface CopySubmenuProps {
   networkLog: NetworkLog | null;
 }
