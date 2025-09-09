@@ -13,7 +13,9 @@ interface ParsedText {
  */
 const NetworkLogFormatters = {
   name: (log: NetworkLog): string => {
-    return log.request?.url.split("/").pop() || "(pending)";
+    // remove trailing slashes
+    const trimmedUrl = log.request?.url.replace(/\/+$/, "") || "";
+    return trimmedUrl.split("/").pop() || "(pending)";
   },
 
   status: (log: NetworkLog): string => {
