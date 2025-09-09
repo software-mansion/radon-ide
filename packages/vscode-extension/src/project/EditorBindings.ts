@@ -3,7 +3,11 @@ import { commands, window, env, Uri, ProgressLocation } from "vscode";
 import JSON5 from "json5";
 import path from "path";
 import { homedir } from "os";
-import { openFileAtPosition, openContentInEditor, showDismissableError } from "../utilities/editorOpeners";
+import {
+  openFileAtPosition,
+  openContentInEditor,
+  showDismissableError,
+} from "../utilities/editorOpeners";
 import { Logger } from "../Logger";
 import { Platform } from "../utilities/platform";
 import { extensionContext } from "../utilities/extensionContext";

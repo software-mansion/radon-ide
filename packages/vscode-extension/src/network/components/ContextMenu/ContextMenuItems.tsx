@@ -155,7 +155,7 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
             className="radix-context-menu-item"
             onSelect={handleCopyResponseBody}
             disabled={!networkLog || !networkLog.response}>
-              {/* Tooltip has to be nested in ContextMenu.Item, causes problems with
+            {/* Tooltip has to be nested in ContextMenu.Item, causes problems with
                   "instant" attribute behaviour otherwise */}
             <Tooltip
               instant={false}

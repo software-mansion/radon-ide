@@ -19,7 +19,6 @@ export default function Tooltip({
   instant = false,
   disabled = false,
 }: TooltipProps) {
-
   return (
     <RadixTooltip.Provider>
       <RadixTooltip.Root delayDuration={instant ? 0 : 700}>

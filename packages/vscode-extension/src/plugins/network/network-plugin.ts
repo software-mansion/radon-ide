@@ -71,7 +71,7 @@ function determineLanguage(contentType: string, body: string): string {
 
     return "text";
   };
-  
+
   return guessLanguageFromText();
 }
 
