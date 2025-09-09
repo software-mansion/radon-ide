@@ -1,7 +1,7 @@
 const RNInternals = require("./rn-internals/rn-internals");
 const { PluginMessageBridge } = require("./plugins/PluginMessageBridge");
 const TextDecoder = require("./polyfills").TextDecoder;
-const { BoundedResponseBuffer } = require("./BoundedXhrBuffer");
+const { AsyncBoundedResponseBuffer } = require("./AsyncBoundedResponseBuffer");
 
 // Allowed content types for processing text-based data
 const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
@@ -124,7 +124,7 @@ function enableNetworkInspect(networkProxy) {
   const XHRInterceptor = RNInternals.XHRInterceptor;
 
   const loaderId = "xhr-interceptor";
-  const responseBuffer = new BoundedResponseBuffer(PARSABLE_APPLICATION_CONTENT_TYPES);
+  const responseBuffer = new AsyncBoundedResponseBuffer(PARSABLE_APPLICATION_CONTENT_TYPES);
 
   const requestIdPrefix = Math.random().toString(36).slice(2);
   let requestIdCounter = 0;
@@ -137,11 +137,12 @@ function enableNetworkInspect(networkProxy) {
         message.method === "Network.getResponseBody" &&
         message.params.requestId.startsWith(requestIdPrefix)
       ) {
-        //TODO The request gets send twice, check why
+
         const requestId = message.params.requestId;
 
         const responsePromise = responseBuffer.get(requestId);
 
+        // Upon initial launch, the message gets send twice
         responsePromise
           ?.then((responseBodyInfo) => {
             networkProxy.sendMessage(
