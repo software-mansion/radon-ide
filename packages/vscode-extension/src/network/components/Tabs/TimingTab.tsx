@@ -1,5 +1,5 @@
 import "./TimingTab.css";
-import { NetworkLog } from "../hooks/useNetworkTracker";
+import { NetworkLog } from "../../hooks/useNetworkTracker";
 
 interface TimingTabProps {
   networkLog: NetworkLog;

@@ -6,10 +6,10 @@ import {
   VscodeTabs,
 } from "@vscode-elements/react-elements";
 import { Fragment, useEffect, useState } from "react";
-import HeadersTab from "./HeadersTab";
-import PayloadTab from "./PayloadTab";
-import ResponseTab from "./ResponseTab";
-import TimingTab from "./TimingTab";
+import HeadersTab from "./Tabs/HeadersTab";
+import PayloadTab from "./Tabs/PayloadTab";
+import ResponseTab from "./Tabs/ResponseTab";
+import TimingTab from "./Tabs/TimingTab";
 import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork, responseBodyInfo } from "../providers/NetworkProvider";
 

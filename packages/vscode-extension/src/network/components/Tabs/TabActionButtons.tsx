@@ -1,5 +1,5 @@
-import IconButton from "../../webview/components/shared/IconButton";
-import { copyToClipboard } from "../utils/clipboard";
+import IconButton from "../../../webview/components/shared/IconButton";
+import { copyToClipboard } from "../../utils/clipboard";
 
 interface TabActionButtonsProps {
   data: string | undefined;

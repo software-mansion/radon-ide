@@ -1,9 +1,9 @@
-import { NetworkLog } from "../hooks/useNetworkTracker";
-import { responseBodyInfo, useNetwork } from "../providers/NetworkProvider";
-import { getFormattedRequestBody } from "../utils/requestFormatters";
-import IconButton from "../../webview/components/shared/IconButton";
+import { NetworkLog } from "../../hooks/useNetworkTracker";
+import { responseBodyInfo, useNetwork } from "../../providers/NetworkProvider";
+import { getFormattedRequestBody } from "../../utils/requestFormatters";
+import IconButton from "../../../webview/components/shared/IconButton";
 import TabActionButtons from "./TabActionButtons";
-import "./ResponseTab.css";
+import "./PayloadAndResponseTab.css";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;

@@ -1,6 +1,7 @@
-import { NetworkLog } from "../hooks/useNetworkTracker";
-import { getRequestPayload } from "../utils/requestFormatters";
+import { NetworkLog } from "../../hooks/useNetworkTracker";
+import { getRequestPayload } from "../../utils/requestFormatters";
 import TabActionButtons from "./TabActionButtons";
+import "./PayloadAndResponseTab.css";
 
 interface PayloadTabProps {
   networkLog: NetworkLog;
