@@ -3,6 +3,7 @@
   flex-direction: column;
   gap: 80px;
   padding: 80px;
+  border-top: var(--radon-border-layout);
 }
 
 .textContent {
@@ -48,4 +49,10 @@
   align-items: center;
   display: flex;
   gap: 12px;
+}
+
+@media (max-width: 1024px) {
+  .contentContainer {
+    padding: 24px;
+  }
 }

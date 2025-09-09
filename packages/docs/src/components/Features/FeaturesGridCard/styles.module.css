@@ -1,12 +1,24 @@
-.container {
+.container,
+.reverseContainer {
   border: var(--radon-border-layout);
   display: flex;
-  max-width: 620px;
   width: 100%;
-  padding: 40px 40px 0 40px;
   flex-direction: column;
+}
+
+.container {
   align-items: center;
   gap: 20px;
+  padding: 40px 40px 0 40px;
+  max-width: 620px;
+}
+
+.reverseContainer {
+  flex-direction: column-reverse;
+  padding: 32px;
+  gap: 32px;
+  max-width: 386.667px;
+  /* min-width: 327px; */
 }
 
 .content {
@@ -49,9 +61,12 @@
 img.gridSvg {
   max-width: 400px;
   max-height: 200px;
-  width: 100%;
   height: auto;
   min-width: 280px;
+}
+
+.widthSvg {
+  width: 100%;
 }
 
 @media (max-width: 700px) {
