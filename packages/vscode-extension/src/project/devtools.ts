@@ -71,7 +71,6 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
 export class DevtoolsConnection implements Disposable {
   bridge: FrontendBridge;
   store: Store;
-  appReady: Promise<void>;
   connected: boolean = true;
 
   private readonly ideMessageEventEmitter: EventEmitter<IdeMessage> = new EventEmitter();
@@ -81,16 +80,6 @@ export class DevtoolsConnection implements Disposable {
   public readonly onDisconnected = this.disconnectedEventEmitter.event;
 
   constructor(private readonly wall: Wall) {
-    // set up `appReady` promise
-    const { promise: appReady, resolve: resolveAppReady } = Promise.withResolvers<void>();
-    this.appReady = appReady;
-    const appReadyListener = this.onIdeMessage(({ type }) => {
-      if (type === "appReady") {
-        resolveAppReady();
-        appReadyListener.dispose();
-      }
-    });
-
     // create the DevTools frontend for the connection
     this.bridge = createBridge(wall);
     this.store = createStore(this.bridge);

@@ -52,6 +52,7 @@ export class ApplicationSession implements Disposable {
   private inspectCallID = 7621;
   private devtools: DevtoolsConnection | undefined;
   private toolsManager: ToolsManager;
+  private appReady: PromiseWithResolvers<void>;
 
   public readonly inspectorBridge: RadonInspectorBridge;
 
@@ -105,17 +106,12 @@ export class ApplicationSession implements Disposable {
 
     try {
       onLaunchStage(StartupMessage.Launching);
-      const appReadyPromise = new Promise<void>((resolve, reject) => {
-        const subscription = devtoolsServer.onConnection((devtools) => {
-          devtools.appReady.then(resolve, reject).finally(() => subscription.dispose());
-        });
-      });
       await cancelToken.adapt(
         device.launchApp(buildResult, metro.port, devtoolsPort, launchArguments)
       );
 
       onLaunchStage(StartupMessage.WaitingForAppToLoad);
-      await cancelToken.adapt(Promise.race([appReadyPromise, bundleErrorPromise]));
+      await cancelToken.adapt(Promise.race([session.appReady.promise, bundleErrorPromise]));
 
       if (getIsActive()) {
         const activatePromise = session.activate();
@@ -181,6 +177,8 @@ export class ApplicationSession implements Disposable {
     );
     this.disposables.push(this.toolsManager);
     this.disposables.push(this.stateManager);
+
+    this.appReady = this.waitForAppReady();
   }
 
   private async setupDebugSession(): Promise<void> {
@@ -427,6 +425,19 @@ export class ApplicationSession implements Disposable {
   }
   //#endregion
 
+  private waitForAppReady() {
+    // set up `appReady` promise
+    const { promise, resolve, reject } = Promise.withResolvers<void>();
+    const appReadyListener = this.inspectorBridge.onEvent("appReady", () => {
+      resolve();
+      appReadyListener.dispose();
+    });
+    promise.finally(() => {
+      appReadyListener.dispose();
+    });
+    return { promise, resolve, reject };
+  }
+
   public async reloadJS() {
     if (!this.devtools?.connected) {
       Logger.debug(
@@ -441,13 +452,9 @@ export class ApplicationSession implements Disposable {
     });
     try {
       // NOTE: we expect a new devtools connection when reloading JS
-      const appReadyPromise = new Promise<void>((resolve, reject) => {
-        const subscription = this.devtoolsServer.onConnection((devtools) => {
-          devtools.appReady.then(resolve, reject).finally(() => subscription.dispose());
-        });
-      });
+      this.appReady = this.waitForAppReady();
       await this.metro.reload();
-      await Promise.race([appReadyPromise, bundleErrorPromise]);
+      await Promise.race([this.appReady.promise, bundleErrorPromise]);
     } finally {
       bundleErrorSubscription.dispose();
     }
@@ -567,6 +574,7 @@ export class ApplicationSession implements Disposable {
 
   public async dispose() {
     disposeAll(this.disposables);
+    this.appReady.reject("Application session was disposed while waiting for the app to be ready.");
     this.debugSessionEventSubscription?.dispose();
     await this.debugSession?.dispose();
     this.debugSession = undefined;
