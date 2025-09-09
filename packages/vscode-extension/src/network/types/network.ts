@@ -58,7 +58,6 @@ export type ResponseBodyData = {
   wasTruncated: boolean;
 };
 
-
 /**
  * Array of all available network log columns for use in filters, tables
  */

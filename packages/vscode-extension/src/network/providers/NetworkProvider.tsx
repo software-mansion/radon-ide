@@ -14,7 +14,6 @@ import useNetworkTracker, {
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { ResponseBodyData } from "../types/network";
 
-
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;
   isScrolling: boolean;
