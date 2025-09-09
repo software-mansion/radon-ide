@@ -243,9 +243,8 @@ function enableNetworkInspect(networkProxy) {
       });
 
       xhr.addEventListener("loadend", (event) => {
-        // We store the xhr object only to be able to read response body later
-        // if the request is not loaded, there is no point storing it, as it
-        // won't have any response data
+        // We only store the xhr response body object, so we only put on 
+        // the buffer when loading ends, to get the actual loaded response
         responseBuffer.put(requestId, xhr);
 
         try {
