@@ -388,13 +388,15 @@ export class DeviceSession implements Disposable {
   }
 
   private async reloadJS() {
+    this.cancelOngoingOperations();
+    const cancelToken = this.cancelToken;
     if (this.applicationSession === undefined) {
       throw new Error(
         "JS bundle cannot be reloaded before an application is launched and connected to Radon"
       );
     }
     this.updateStartupMessage(StartupMessage.WaitingForAppToLoad);
-    await this.applicationSession.reloadJS();
+    await this.applicationSession.reloadJS(cancelToken);
   }
 
   private async reinstallApp() {

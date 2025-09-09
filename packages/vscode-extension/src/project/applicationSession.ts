@@ -20,7 +20,7 @@ import { AppOrientation, InspectData, StartupMessage } from "../common/Project";
 import { disposeAll } from "../utilities/disposables";
 import { ToolKey, ToolPlugin, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
-import { CancelToken } from "../utilities/cancelToken";
+import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { BuildResult } from "../builders/BuildManager";
 import {
   ApplicationSessionState,
@@ -44,6 +44,22 @@ interface LaunchApplicationSessionDeps {
   devtoolsPort: number;
 }
 
+function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: CancelToken) {
+  // set up `appReady` promise
+  const { promise, resolve, reject } = Promise.withResolvers<void>();
+  cancelToken?.onCancel(() => {
+    reject(new CancelError("Cancelled while waiting for the app to be ready."));
+  });
+  const appReadyListener = inspectorBridge.onEvent("appReady", () => {
+    resolve();
+    appReadyListener.dispose();
+  });
+  promise.finally(() => {
+    appReadyListener.dispose();
+  });
+  return promise;
+}
+
 export class ApplicationSession implements Disposable {
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
@@ -52,7 +68,6 @@ export class ApplicationSession implements Disposable {
   private inspectCallID = 7621;
   private devtools: DevtoolsConnection | undefined;
   private toolsManager: ToolsManager;
-  private appReady: PromiseWithResolvers<void>;
 
   public readonly inspectorBridge: RadonInspectorBridge;
 
@@ -110,8 +125,10 @@ export class ApplicationSession implements Disposable {
         device.launchApp(buildResult, metro.port, devtoolsPort, launchArguments)
       );
 
+      const appReadyPromise = waitForAppReady(session.inspectorBridge, cancelToken);
+
       onLaunchStage(StartupMessage.WaitingForAppToLoad);
-      await cancelToken.adapt(Promise.race([session.appReady.promise, bundleErrorPromise]));
+      await cancelToken.adapt(Promise.race([appReadyPromise, bundleErrorPromise]));
 
       if (getIsActive()) {
         const activatePromise = session.activate();
@@ -177,8 +194,6 @@ export class ApplicationSession implements Disposable {
     );
     this.disposables.push(this.toolsManager);
     this.disposables.push(this.stateManager);
-
-    this.appReady = this.waitForAppReady();
   }
 
   private async setupDebugSession(): Promise<void> {
@@ -425,20 +440,7 @@ export class ApplicationSession implements Disposable {
   }
   //#endregion
 
-  private waitForAppReady() {
-    // set up `appReady` promise
-    const { promise, resolve, reject } = Promise.withResolvers<void>();
-    const appReadyListener = this.inspectorBridge.onEvent("appReady", () => {
-      resolve();
-      appReadyListener.dispose();
-    });
-    promise.finally(() => {
-      appReadyListener.dispose();
-    });
-    return { promise, resolve, reject };
-  }
-
-  public async reloadJS() {
+  public async reloadJS(cancelToken: CancelToken) {
     if (!this.devtools?.connected) {
       Logger.debug(
         "`reloadJS()` was called on an application session while the devtools are not connected. " +
@@ -451,10 +453,9 @@ export class ApplicationSession implements Disposable {
       rejectBundleError(new Error("Bundle error occurred during reload"));
     });
     try {
-      // NOTE: we expect a new devtools connection when reloading JS
-      this.appReady = this.waitForAppReady();
+      const appReadyPromise = waitForAppReady(this.inspectorBridge, cancelToken);
       await this.metro.reload();
-      await Promise.race([this.appReady.promise, bundleErrorPromise]);
+      await Promise.race([appReadyPromise, bundleErrorPromise]);
     } finally {
       bundleErrorSubscription.dispose();
     }
@@ -574,7 +575,6 @@ export class ApplicationSession implements Disposable {
 
   public async dispose() {
     disposeAll(this.disposables);
-    this.appReady.reject("Application session was disposed while waiting for the app to be ready.");
     this.debugSessionEventSubscription?.dispose();
     await this.debugSession?.dispose();
     this.debugSession = undefined;
