@@ -409,6 +409,15 @@ export class AppManipulationService {
 
     return position;
   }
+
+  async hideExpoOverlay(appWebsocket) {
+    const position = await this.getButtonCoordinates(
+      appWebsocket,
+      "console-log-button"
+    );
+
+    await this.clickInsidePhoneScreen(position);
+  }
 }
 
 // #endregion
