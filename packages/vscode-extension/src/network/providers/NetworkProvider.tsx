@@ -12,11 +12,8 @@ import useNetworkTracker, {
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
+import { ResponseBodyData } from "../types/network";
 
-export type responseBodyInfo = {
-  body: string | undefined;
-  wasTruncated: boolean;
-};
 
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;
@@ -27,7 +24,7 @@ interface NetworkProviderProps extends NetworkTracker {
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
   fetchAndOpenResponseInEditor: (networkLog: NetworkLog) => Promise<void>;
-  getResponseBody: (networkLog: NetworkLog) => Promise<responseBodyInfo | undefined>;
+  getResponseBody: (networkLog: NetworkLog) => Promise<ResponseBodyData | undefined>;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
@@ -49,7 +46,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
   const [isRecording, setIsRecording] = useState(true);
-  const [responseBodies, setResponseBodies] = useState<Record<string, responseBodyInfo>>({});
+  const [responseBodies, setResponseBodies] = useState<Record<string, ResponseBodyData>>({});
 
   const clearActivity = () => {
     networkTracker.clearLogs();
@@ -63,7 +60,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     });
   };
 
-  const getResponseBody = (networkLog: NetworkLog): Promise<responseBodyInfo | undefined> => {
+  const getResponseBody = (networkLog: NetworkLog): Promise<ResponseBodyData | undefined> => {
     const requestId = networkLog.requestId;
     const ws = networkTracker.ws;
 
@@ -97,13 +94,13 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
             return;
           }
 
-          const bodyInfo = parsedMsg.result;
+          const bodyData = parsedMsg.result;
           setResponseBodies((prev) => ({
             ...prev,
-            [requestId]: bodyInfo,
+            [requestId]: bodyData,
           }));
 
-          resolve(bodyInfo);
+          resolve(bodyData);
 
           ws.removeEventListener("message", listener);
         } catch (error) {

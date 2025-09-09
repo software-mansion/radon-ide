@@ -1,9 +1,9 @@
-type ResponseBodyInfo = {
+type ResponseBodyData = {
   body: string | undefined;
   wasTruncated: boolean;
 };
 
-type InternalResponseBodyInfo = ResponseBodyInfo & { dataSize: number };
+type InternalResponseBodyData = ResponseBodyData & { dataSize: number };
 
 /**
  * Maximum memory size (in bytes) to store buffered text and image request
@@ -27,7 +27,7 @@ const TRUNCATED_LENGTH = 1000; // 1000 characters
  * Inspired by the C++ BoundedRequestBuffer implementation from React Native.
  */
 class AsyncBoundedResponseBuffer {
-  private responseMap: Map<string, Promise<ResponseBodyInfo | undefined>>;
+  private responseMap: Map<string, Promise<ResponseBodyData | undefined>>;
   private dataSizeMap: Map<string, number>;
   private order: string[];
   private currentSize: number;
@@ -47,16 +47,16 @@ class AsyncBoundedResponseBuffer {
    *   body is sliced to `TRUNCATED_LENGTH` characters and marked as truncated.
    * - Otherwise returns the original body and its computed byte size.
    *
-   * Returns an InternalResponseBodyInfo containing the (possibly truncated)
+   * Returns an InternalResponseBodyData containing the (possibly truncated)
    * body, a `wasTruncated` flag, and the measured `dataSize` in bytes.
    *
    * Note: size is measured using `new Blob([body]).size` to approximate
    * serialized byte length in the runtime environment.
    *
    * @param responseBody The string body to inspect and potentially truncate.
-   * @returns An InternalResponseBodyInfo with `body`, `wasTruncated` and `dataSize`.
+   * @returns An InternalResponseBodyData with `body`, `wasTruncated` and `dataSize`.
    */
-  private truncateResponseBody(responseBody: string | undefined): InternalResponseBodyInfo {
+  private truncateResponseBody(responseBody: string | undefined): InternalResponseBodyData {
     if (!responseBody) {
       return { body: undefined, wasTruncated: false, dataSize: 0 };
     }
@@ -76,7 +76,7 @@ class AsyncBoundedResponseBuffer {
   }
 
   /**
-   * Parse an `XMLHttpRequest` response into an InternalResponseBodyInfo.
+   * Parse an `XMLHttpRequest` response into an InternalResponseBodyData.
    *
    * This method is async because reading `blob` response types requires a
    * FileReader. Behavior summary:
@@ -88,17 +88,17 @@ class AsyncBoundedResponseBuffer {
    *   or parsable application type reads the blob as text using FileReader (asynchronously) and
    *   then delegates to `truncateResponseBody`.
    *
-   * The returned promise resolves to InternalResponseBodyInfo when a textual
+   * The returned promise resolves to InternalResponseBodyData when a textual
    * preview is available, or to `undefined` when the response should not be
    * buffered.
    *
    * @param xhr The XMLHttpRequest instance to parse the response from.
-   * @returns A promise resolving to an InternalResponseBodyInfo when a text
+   * @returns A promise resolving to an InternalResponseBodyData when a text
    * preview is available, or `undefined` for non-parsable or uncached responses.
    */
   private async parseResponseBody(
     xhr: XMLHttpRequest
-  ): Promise<InternalResponseBodyInfo | undefined> {
+  ): Promise<InternalResponseBodyData | undefined> {
     try {
       // @ts-ignore - RN-specific property
       if (!xhr || !xhr._cachedResponse) {
@@ -234,9 +234,9 @@ class AsyncBoundedResponseBuffer {
   /**
    * Retrieve a response preview by requestId asynchronously.
    * @param requestId The unique identifier for the request
-   * @returns Promise that resolves to ResponseBodyInfo if found, undefined otherwise
+   * @returns Promise that resolves to ResponseBodyData if found, undefined otherwise
    */
-  public get(requestId: string): Promise<ResponseBodyInfo | undefined> | undefined {
+  public get(requestId: string): Promise<ResponseBodyData | undefined> | undefined {
     const responsePromise = this.responseMap.get(requestId);
     // One-Time_Access - Remove the entry once accessed to free up space
     if (responsePromise) {

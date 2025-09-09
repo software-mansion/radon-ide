@@ -144,12 +144,12 @@ function enableNetworkInspect(networkProxy) {
 
         // Upon initial launch, the message gets send twice
         responsePromise
-          ?.then((responseBodyInfo) => {
+          ?.then((responseBodyData) => {
             networkProxy.sendMessage(
               "cdp-message",
               JSON.stringify({
                 id: message.id,
-                result: responseBodyInfo,
+                result: responseBodyData,
               })
             );
           })

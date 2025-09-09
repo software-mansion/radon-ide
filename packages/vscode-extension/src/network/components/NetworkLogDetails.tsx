@@ -11,7 +11,8 @@ import PayloadTab from "./Tabs/PayloadTab";
 import ResponseTab from "./Tabs/ResponseTab";
 import TimingTab from "./Tabs/TimingTab";
 import { NetworkLog } from "../hooks/useNetworkTracker";
-import { useNetwork, responseBodyInfo } from "../providers/NetworkProvider";
+import { useNetwork } from "../providers/NetworkProvider";
+import { ResponseBodyData } from "../types/network";
 
 const VSCODE_TABS_HEADER_HEIGHT = 30;
 
@@ -23,7 +24,7 @@ interface NetworkLogDetailsProps {
 
 interface TabProps {
   networkLog: NetworkLog;
-  responseBody?: responseBodyInfo;
+  responseBodyData?: ResponseBodyData;
 }
 
 interface Tab {
@@ -35,13 +36,13 @@ interface Tab {
 
 const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLogDetailsProps) => {
   const { getResponseBody } = useNetwork();
-  const [responseBody, setResponseBody] = useState<responseBodyInfo | undefined>(undefined);
+  const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
 
-  const { wasTruncated = false } = responseBody || {};
+  const { wasTruncated = false } = responseBodyData || {};
 
   useEffect(() => {
     getResponseBody(networkLog).then((data) => {
-      setResponseBody(data);
+      setResponseBodyData(data);
     });
   }, [networkLog.requestId]);
 
@@ -57,7 +58,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
     {
       title: "Response",
       Tab: ResponseTab,
-      props: { responseBody },
+      props: { responseBodyData },
       warning: wasTruncated,
     },
     {

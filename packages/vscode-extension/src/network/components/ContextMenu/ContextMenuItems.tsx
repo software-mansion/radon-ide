@@ -14,8 +14,8 @@ import {
   createFetchCommand,
   getUrl,
 } from "../../utils/requestFormatters";
-import { responseBodyInfo, useNetwork } from "../../providers/NetworkProvider";
-import { NetworkLogColumn, SortState } from "../../types/network";
+import { useNetwork } from "../../providers/NetworkProvider";
+import { NetworkLogColumn, ResponseBodyData, SortState } from "../../types/network";
 import { NetworkLog } from "../../hooks/useNetworkTracker";
 import { NETWORK_LOG_COLUMNS } from "../../types/network";
 export interface CopySubmenuProps {
@@ -42,7 +42,7 @@ export interface FilterItemConfig {
 }
 
 export function CopySubmenu({ networkLog }: CopySubmenuProps) {
-  const [responseBodyData, setResponseBodyData] = useState<responseBodyInfo | undefined>(undefined);
+  const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
   const { getResponseBody } = useNetwork();
 
   const handleOpenChange = async (open: boolean) => {
