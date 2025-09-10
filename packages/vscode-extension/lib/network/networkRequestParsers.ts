@@ -1,4 +1,4 @@
-import { TextDecoder } from "./polyfills";
+import { TextDecoder } from "../polyfills";
 
 export type InternalResponseBodyData = {
   body: string | undefined;

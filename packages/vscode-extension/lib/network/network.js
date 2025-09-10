@@ -1,5 +1,5 @@
-const RNInternals = require("./rn-internals/rn-internals");
-const { PluginMessageBridge } = require("./plugins/PluginMessageBridge");
+const RNInternals = require("../rn-internals/rn-internals");
+const { PluginMessageBridge } = require("../plugins/PluginMessageBridge");
 const { AsyncBoundedResponseBuffer } = require("./AsyncBoundedResponseBuffer");
 const {
   deserializeRequestData,
