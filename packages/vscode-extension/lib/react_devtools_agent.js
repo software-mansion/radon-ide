@@ -18,19 +18,29 @@ const setDevtoolsAgent = (newDevtoolsAgent) => {
     return;
   }
   devtoolsAgent = newDevtoolsAgent;
-  // TODO: clean these up if the devtools agent changes
-  devtoolsAgent._bridge.addListener("RNIDE_message", (message) => {
+  const bridge = devtoolsAgent._bridge;
+
+  function onIdeMessage(message) {
     if (agent.onmessage) {
       agent.onmessage(message);
     }
-  });
-  devtoolsAgent._bridge.addListener("shutdown", () => {
-    devtoolsAgent = undefined;
-  });
+  }
+
+  function onBridgeShutdown() {
+    if (devtoolsAgent === newDevtoolsAgent) {
+      devtoolsAgent = undefined;
+    }
+    bridge.removeListener("RNIDE_message", onIdeMessage);
+    bridge.removeListener("shutdown", onBridgeShutdown);
+  }
+
+  bridge.addListener("RNIDE_message", onIdeMessage);
+  bridge.addListener("shutdown", onBridgeShutdown);
+
   const messages = messageQueue;
   messageQueue = [];
   messages.forEach((message) => {
-    devtoolsAgent._bridge.send("RNIDE_message", message);
+    bridge.send("RNIDE_message", message);
   });
 };
 
