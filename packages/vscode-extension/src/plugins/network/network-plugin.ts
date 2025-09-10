@@ -132,9 +132,6 @@ class NetworkCDPWebsocketBackend implements Disposable {
 
     try {
       const response = await fetch(requestOptions.url, fetchOptions);
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
 
       const contentType = response.headers.get("content-type") || "";
       const data = await response.text();

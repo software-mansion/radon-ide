@@ -13,9 +13,19 @@ interface ParsedText {
  */
 const NetworkLogFormatters = {
   name: (log: NetworkLog): string => {
-    // remove trailing slashes
-    const trimmedUrl = log.request?.url.replace(/\/+$/, "") || "";
-    return trimmedUrl.split("/").pop() || "(pending)";
+    try {
+      const parsedUrl = new URL(log.request?.url || "");
+      const hostname = parsedUrl.hostname.startsWith("www.")
+        ? parsedUrl.hostname.slice(4)
+        : parsedUrl.hostname;
+      // remove trailing slashes
+      const parsedPathName = parsedUrl.pathname.replace(/\/+$/, "");
+      const maybeLastPathSegment = parsedPathName?.split("/").pop();
+
+      return maybeLastPathSegment || hostname;
+    } catch (error) {
+      return "";
+    }
   },
 
   status: (log: NetworkLog): string => {
