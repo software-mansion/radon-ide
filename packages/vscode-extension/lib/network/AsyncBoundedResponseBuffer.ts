@@ -77,20 +77,17 @@ class AsyncBoundedResponseBuffer {
         this.remove(requestId);
       }
 
-      // Store the promise immediately. When it resolves, handle size and eviction.
-      this.responseMap.set(
-        requestId,
-        responseBodyPromise.then((response) =>
-          response ? { body: response.body, wasTruncated: response.wasTruncated } : undefined
-        )
+      const storedPromise = responseBodyPromise.then((response) =>
+        response ? { body: response.body, wasTruncated: response.wasTruncated } : undefined
       );
+      this.responseMap.set(requestId, storedPromise);
       this.order.push(requestId);
 
       // Handle the response when it resolves
       const response = await responseBodyPromise;
 
       // Check if the request was removed while we were processing
-      if (!response || !this.responseMap.has(requestId)) {
+      if (!response || this.responseMap.get(requestId) !== storedPromise) {
         return false;
       }
 
