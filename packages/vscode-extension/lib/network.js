@@ -1,96 +1,11 @@
 const RNInternals = require("./rn-internals/rn-internals");
 const { PluginMessageBridge } = require("./plugins/PluginMessageBridge");
-const TextDecoder = require("./polyfills").TextDecoder;
 const { AsyncBoundedResponseBuffer } = require("./AsyncBoundedResponseBuffer");
-
-// Allowed content types for processing text-based data
-const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
-  "application/x-sh",
-  "application/x-csh",
-  "application/rtf",
-  "application/manifest+json",
-  "application/xhtml+xml",
-  "application/xml",
-  "application/XUL",
-  "application/ld+json",
-  "application/json",
-]);
-
-function mimeTypeFromResponseType(responseType) {
-  switch (responseType) {
-    case "arraybuffer":
-    case "blob":
-    case "base64":
-      return "application/octet-stream";
-    case "text":
-    case "":
-      return "text/plain";
-    case "json":
-      return "application/json";
-    case "document":
-      return "text/html";
-  }
-  return undefined;
-}
-
-function deserializeRequestData(data, contentType) {
-  const shouldDecodeAsText = (dataContentType) => {
-    if (!dataContentType) {
-      return false;
-    }
-
-    if (dataContentType.startsWith("text/")) {
-      return true;
-    }
-
-    const mimeType = dataContentType.split(";")[0].trim().toLowerCase();
-    return PARSABLE_APPLICATION_CONTENT_TYPES.has(mimeType);
-  };
-
-  const isSerializedTypedArray = (obj) => {
-    return (
-      obj &&
-      typeof obj === "object" &&
-      !Array.isArray(obj) &&
-      typeof obj.length === "number" &&
-      Object.keys(obj).every((key) => !isNaN(parseInt(key)))
-    );
-  };
-
-  const dataToBase64 = (array) => {
-    return btoa(String.fromCharCode.apply(null, Array.from(array)));
-  };
-  const decode = (array) => {
-    return new TextDecoder().decode(array);
-  };
-
-  const reconstructTypedArray = (serializedData) => {
-    const length = Object.keys(serializedData).length;
-    const uint8Array = new Uint8Array(length);
-    Object.keys(serializedData).forEach((key) => {
-      uint8Array[parseInt(key)] = serializedData[key];
-    });
-    return uint8Array;
-  };
-
-  if (!data || !contentType) {
-    return data;
-  }
-
-  // Handle native typed Uint8Arrays
-  if (data instanceof Uint8Array) {
-    return shouldDecodeAsText(contentType) ? decode(data) : dataToBase64(data);
-  }
-
-  // Handle objects with numeric keys, which lost information about their type
-  if (isSerializedTypedArray(data)) {
-    const uint8Array = reconstructTypedArray(data);
-    return shouldDecodeAsText(contentType) ? decode(uint8Array) : dataToBase64(uint8Array);
-  }
-
-  // String or other types
-  return data;
-}
+const {
+  deserializeRequestData,
+  mimeTypeFromResponseType,
+  readResponseText,
+} = require("./networkRequestParsers");
 
 let setupCompleted = false;
 
@@ -124,7 +39,7 @@ function enableNetworkInspect(networkProxy) {
   const XHRInterceptor = RNInternals.XHRInterceptor;
 
   const loaderId = "xhr-interceptor";
-  const responseBuffer = new AsyncBoundedResponseBuffer(PARSABLE_APPLICATION_CONTENT_TYPES);
+  const responseBuffer = new AsyncBoundedResponseBuffer();
 
   const requestIdPrefix = Math.random().toString(36).slice(2);
   let requestIdCounter = 0;
@@ -137,12 +52,11 @@ function enableNetworkInspect(networkProxy) {
         message.method === "Network.getResponseBody" &&
         message.params.requestId.startsWith(requestIdPrefix)
       ) {
-
         const requestId = message.params.requestId;
-
         const responsePromise = responseBuffer.get(requestId);
 
-        // Upon initial launch, the message gets send twice
+        // Upon initial launch, the message gets send twice in dev, because of
+        // react Strict Mode and dependency on useEffect. To be fixed in next PR's.
         responsePromise
           ?.then((responseBodyData) => {
             networkProxy.sendMessage(
@@ -243,9 +157,10 @@ function enableNetworkInspect(networkProxy) {
       });
 
       xhr.addEventListener("loadend", (event) => {
-        // We only store the xhr response body object, so we only put on 
+        // We only store the xhr response body object, so we only put on
         // the buffer when loading ends, to get the actual loaded response
-        responseBuffer.put(requestId, xhr);
+        const responsePromise = readResponseText(xhr);
+        responseBuffer.put(requestId, responsePromise);
 
         try {
           sendCDPMessage("Network.loadingFinished", {

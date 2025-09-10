@@ -1,17 +1,11 @@
-type ResponseBodyData = {
-  body: string | undefined;
-  wasTruncated: boolean;
-};
-
-type InternalResponseBodyData = ResponseBodyData & { dataSize: number };
+import { InternalResponseBodyData } from "./networkRequestParsers";
+type ResponseBodyData = Omit<InternalResponseBodyData, "dataSize">;
 
 /**
  * Maximum memory size (in bytes) to store buffered text and image request
  * bodies.
  */
 const REQUEST_BUFFER_MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100MB
-const MAX_BODY_SIZE = 1024 * 1024; // 1 MB
-const TRUNCATED_LENGTH = 1000; // 1000 characters
 
 /**
  * An asynchronous buffer to store network response previews keyed by requestId,
@@ -32,117 +26,11 @@ class AsyncBoundedResponseBuffer {
   private order: string[];
   private currentSize: number;
 
-  constructor(private readonly parsableContentTypes: Set<string>) {
+  constructor() {
     this.responseMap = new Map();
     this.dataSizeMap = new Map();
     this.order = [];
     this.currentSize = 0;
-  }
-
-  /**
-   * Truncate and measure a response body for buffering.
-   *
-   * - If `responseBody` is falsy, returns an object with no body and zero size.
-   * - If the serialized size of `responseBody` exceeds `MAX_BODY_SIZE`, the
-   *   body is sliced to `TRUNCATED_LENGTH` characters and marked as truncated.
-   * - Otherwise returns the original body and its computed byte size.
-   *
-   * Returns an InternalResponseBodyData containing the (possibly truncated)
-   * body, a `wasTruncated` flag, and the measured `dataSize` in bytes.
-   *
-   * Note: size is measured using `new Blob([body]).size` to approximate
-   * serialized byte length in the runtime environment.
-   *
-   * @param responseBody The string body to inspect and potentially truncate.
-   * @returns An InternalResponseBodyData with `body`, `wasTruncated` and `dataSize`.
-   */
-  private truncateResponseBody(responseBody: string | undefined): InternalResponseBodyData {
-    if (!responseBody) {
-      return { body: undefined, wasTruncated: false, dataSize: 0 };
-    }
-
-    const dataSize = new Blob([responseBody]).size;
-
-    if (dataSize > MAX_BODY_SIZE) {
-      const slicedBody = responseBody.slice(0, TRUNCATED_LENGTH);
-      return {
-        body: `${slicedBody}...`,
-        wasTruncated: true,
-        dataSize: new Blob([slicedBody]).size,
-      };
-    }
-
-    return { body: responseBody, wasTruncated: false, dataSize };
-  }
-
-  /**
-   * Parse an `XMLHttpRequest` response into an InternalResponseBodyData.
-   *
-   * This method is async because reading `blob` response types requires a
-   * FileReader. Behavior summary:
-   * - If `xhr` is falsy, not cached (`_cachedResponse`) or non-parsable binary type, returns
-   *   `undefined` to avoid side effects.
-   * - If `responseType` is `""` or `"text"`, reads `xhr.responseText` and
-   *   delegates truncation/size-measurement to `truncateResponseBody`.
-   * - If `responseType` is `"blob"` and the `Content-Type` indicates a text
-   *   or parsable application type reads the blob as text using FileReader (asynchronously) and
-   *   then delegates to `truncateResponseBody`.
-   *
-   * The returned promise resolves to InternalResponseBodyData when a textual
-   * preview is available, or to `undefined` when the response should not be
-   * buffered.
-   *
-   * @param xhr The XMLHttpRequest instance to parse the response from.
-   * @returns A promise resolving to an InternalResponseBodyData when a text
-   * preview is available, or `undefined` for non-parsable or uncached responses.
-   */
-  private async parseResponseBody(
-    xhr: XMLHttpRequest
-  ): Promise<InternalResponseBodyData | undefined> {
-    try {
-      // @ts-ignore - RN-specific property
-      if (!xhr || !xhr._cachedResponse) {
-        // if response was not accessed, it's not cached and we don't want to read it
-        // here to avoid potential side effects
-        return undefined;
-      }
-
-      const responseType = xhr.responseType;
-
-      if (responseType === "" || responseType === "text") {
-        return this.truncateResponseBody(xhr.responseText);
-      }
-
-      if (responseType === "blob") {
-        const contentType = xhr.getResponseHeader("Content-Type") || "";
-        const isTextType = contentType.startsWith("text/");
-        const isParsableApplicationType = Array.from(this.parsableContentTypes).some((type) =>
-          contentType.startsWith(type)
-        );
-
-        if (isTextType || isParsableApplicationType) {
-          return new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => {
-              const result = reader.result;
-              const textResult = typeof result === "string" ? result : undefined;
-              resolve(this.truncateResponseBody(textResult));
-            };
-            reader.onerror = (error) => {
-              console.warn("Failed to read response body content:", error);
-              resolve(this.truncateResponseBody(undefined));
-            };
-            reader.readAsText(xhr.response);
-          });
-        }
-      }
-
-      // don't read binary data
-      return undefined;
-    } catch (error) {
-      console.warn("Failed to read response body content:", error);
-      return undefined;
-    }
   }
 
   /**
@@ -175,18 +63,19 @@ class AsyncBoundedResponseBuffer {
    * there is enough space or the buffer is empty.
    *
    * @param requestId Unique identifier for the request
-   * @param xhr The XMLHttpRequest object to read response from
+   * @param responseBodyPromise The response promise object, with data from xhr response
    * @returns Promise<boolean> True if the response body processing was initiated successfully
    */
-  public async put(requestId: string, xhr: XMLHttpRequest): Promise<boolean> {
+  public async put(
+    requestId: string,
+    responseBodyPromise: Promise<InternalResponseBodyData | undefined>
+  ): Promise<boolean> {
     try {
       // Remove existing request with the same ID, if any
       // Done to rearrange the order when re-adding the same requestId
       if (this.responseMap.has(requestId)) {
         this.remove(requestId);
       }
-
-      const responseBodyPromise = this.parseResponseBody(xhr);
 
       // Store the promise immediately. When it resolves, handle size and eviction.
       this.responseMap.set(
