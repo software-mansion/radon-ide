@@ -181,6 +181,8 @@ const DEVTOOLS_DOMAIN_NAME = "react-devtools";
 
 export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   private disposables: Disposable[] = [];
+  private connection: DevtoolsConnection | undefined;
+
   constructor(private readonly debugSession: DebugSession) {
     super();
     this.disposables.push(
@@ -193,8 +195,15 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   }
 
   private async createConnection() {
+    if (this.connection) {
+      // NOTE: a single `DebugSession` only supports a single devtools connection at a time
+      return;
+    }
     const debugSession = this.debugSession;
-    await debugSession.addBinding(BINDING_NAME);
+    debugSession.addBinding(BINDING_NAME);
+    debugSession.evaluateExpression({
+      expression: `void ${DISPATCHER_GLOBAL}.initializeDomain("${DEVTOOLS_DOMAIN_NAME}")`,
+    });
 
     const wall: Wall = {
       listen(fn) {
@@ -207,9 +216,6 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
             listener(ev.payload);
           }
         });
-        debugSession.evaluateExpression({
-          expression: `void ${DISPATCHER_GLOBAL}.initializeDomain("${DEVTOOLS_DOMAIN_NAME}")`,
-        });
         return () => subscription.dispose();
       },
       send(event, payload, _transferable) {
@@ -220,17 +226,22 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
       },
     };
 
-    const session = new DevtoolsConnection(wall);
+    const connection = new DevtoolsConnection(wall);
+    this.connection = connection;
     const shutdownListener = this.debugSession.onDebugSessionTerminated(() => {
-      session.close();
+      connection.close();
       shutdownListener.dispose();
     });
+    connection.onDisconnected(() => {
+      this.connection = undefined;
+    });
 
-    this.connectionEventEmitter.fire(session);
+    this.connectionEventEmitter.fire(connection);
   }
 
   public dispose() {
     super.dispose();
+    this.connection?.dispose();
     disposeAll(this.disposables);
   }
 }
