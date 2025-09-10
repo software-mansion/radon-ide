@@ -421,12 +421,18 @@ export class AppManipulationService {
   }
 
   async hideExpoOverlay(appWebsocket) {
+    // expo developer menu overlay loads slower on android app, it's test app so I can't check it programmatically
+    if (config.isAndroid) await this.driver.sleep(3000);
+
     const position = await this.getButtonCoordinates(
       appWebsocket,
       "console-log-button"
     );
 
     await this.clickInsidePhoneScreen(position);
+
+    // expo overlay has animation on close so there must be a delay
+    await this.driver.sleep(1000);
   }
 }
 

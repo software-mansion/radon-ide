@@ -161,7 +161,7 @@ jobs:
         timeout-minutes: 1
         with:
           name: radon-screenshot
-          path: /Users/runner/screenshotTest..png
+          path: packages/vscode-extension-tester/data/screenshotTest..png
 
       - name: Upload recording made by radon
         if: ${{ always() && github.event.inputs.isRecording == 'true' }}
@@ -169,4 +169,4 @@ jobs:
         timeout-minutes: 1
         with:
           name: radon-recording
-          path: /Users/runner/recordingTest..mp4
+          path: packages/vscode-extension-tester/data/recordingTest..mp4

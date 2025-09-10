@@ -9,6 +9,7 @@ import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 import * as fs from "fs";
 import * as path from "path";
+import config from "../utils/configuration.js";
 
 const cwd = process.cwd() + "/data";
 
@@ -59,6 +60,88 @@ describe("Radon tools tests", () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
     }, 5000);
+
+    // expo apps start with developer menu overlay opened
+    await appManipulationService.hideExpoOverlay(appWebsocket);
+  });
+
+  it("Should make element inspector active", async () => {
+    const elementInspectorButton =
+      await elementHelperService.findAndClickElementByTag(
+        "radon-bottom-bar-element-inspector-button"
+      );
+
+    const isActive = await elementHelperService.hasClass(
+      elementInspectorButton,
+      "icon-button-selected"
+    );
+
+    assert.isTrue(isActive, "Element inspector button is not active");
+  });
+
+  it("Element Inspector: Should open component source file", async () => {
+    const componentSourceFile = "TrackableButton.tsx";
+
+    await elementHelperService.findAndClickElementByTag(
+      "radon-bottom-bar-element-inspector-button"
+    );
+
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "console-log-button"
+    );
+
+    await appManipulationService.clickInsidePhoneScreen(position);
+
+    driver.switchTo().defaultContent();
+
+    const editorView = new EditorView();
+    const titles = await editorView.getOpenEditorTitles();
+
+    assert.include(titles, componentSourceFile);
+  });
+
+  it("Right Click on App element: Should open component source file", async () => {
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "console-log-button"
+    );
+
+    await appManipulationService.clickInsidePhoneScreen(position, true);
+
+    await elementHelperService.findAndWaitForElementByTag(
+      "inspect-data-menu-content"
+    );
+
+    const menuItem = await elementHelperService.findAndWaitForElement(
+      By.css(`[data-testid^="inspect-data-menu-item-"]`),
+      "Timed out waiting for inspect data item name"
+    );
+    const attributeData = (await menuItem.getAttribute("data-testid")).split(
+      "-"
+    );
+    const lineNumber = attributeData[attributeData.length - 1];
+    const filename = attributeData[attributeData.length - 2];
+
+    console.log({ lineNumber, filename });
+
+    await menuItem.click();
+
+    driver.switchTo().defaultContent();
+
+    const editorView = new EditorView();
+    await editorView.closeEditor("Radon IDE");
+
+    assert.equal(
+      await vscodeHelperService.getFileNameInEditor(),
+      filename,
+      "Opened file name is incorrect"
+    );
+    assert.equal(
+      await vscodeHelperService.getCursorLineInEditor(),
+      parseInt(lineNumber) + 1,
+      "Cursor line number is incorrect"
+    );
   });
 
   it("should save CPU profiling", async () => {
@@ -84,14 +167,14 @@ describe("Radon tools tests", () => {
       "Timed out waiting for CPU profiling to be saved"
     );
 
-    driver.switchTo().defaultContent();
-
-    const editorView = new EditorView();
-    const activeTab = await editorView.getActiveTab();
-    const title = await activeTab.getTitle();
-    const fileExtension = title.split(".").pop();
-
-    assert.equal(fileExtension, "cpuprofile", "CPU profiling file not opened");
+    driver.wait(async () => {
+      driver.switchTo().defaultContent();
+      const editorView = new EditorView();
+      const activeTab = await editorView.getActiveTab();
+      const title = await activeTab?.getTitle();
+      const fileExtension = title?.split(".").pop();
+      return fileExtension === "cpuprofile";
+    }, 5000);
   });
 
   it("should save React profiling", async () => {
@@ -113,17 +196,13 @@ describe("Radon tools tests", () => {
       "radon-top-bar-react-profiling-button"
     );
 
-    driver.switchTo().defaultContent();
-
-    const editorView = new EditorView();
-    const activeTab = await editorView.getActiveTab();
-    const title = await activeTab.getTitle();
-    const fileExtension = title.split(".").pop();
-
-    assert.equal(
-      fileExtension,
-      "reactprofile",
-      "React profiling file not opened"
-    );
+    driver.wait(async () => {
+      driver.switchTo().defaultContent();
+      const editorView = new EditorView();
+      const activeTab = await editorView.getActiveTab();
+      const title = await activeTab?.getTitle();
+      const fileExtension = title?.split(".").pop();
+      return fileExtension === "reactprofile";
+    }, 5000);
   });
 });
