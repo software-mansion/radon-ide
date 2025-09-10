@@ -55,4 +55,7 @@
   .contentContainer {
     padding: 24px;
   }
+  .textContent {
+    display: none;
+  }
 }

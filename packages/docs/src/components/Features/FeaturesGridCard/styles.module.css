@@ -18,7 +18,6 @@
   padding: 32px;
   gap: 32px;
   max-width: 386.667px;
-  /* min-width: 327px; */
 }
 
 .content {
@@ -68,7 +67,10 @@ img.gridSvg {
 .widthSvg {
   width: 100%;
 }
-
+@media (max-width: 1250px) {
+  .reverseContainer {
+  }
+}
 @media (max-width: 700px) {
   .container {
     padding: 24px 24px 0 24px;

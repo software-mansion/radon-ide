@@ -10,7 +10,9 @@
   gap: 20px;
 
   position: relative;
-  width: 100%;
+  width: 60%;
+  min-width: 327px;
+  flex-shrink: 1;
 }
 
 .overflow {
@@ -80,5 +82,12 @@
 @media (max-width: 800px) {
   .container {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 400px) {
+  .navigationArrows {
+    justify-content: initial;
+    gap: 13px;
   }
 }

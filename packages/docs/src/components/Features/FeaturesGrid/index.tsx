@@ -11,6 +11,7 @@ export default function FeaturesGrid() {
   const [first, setFirst] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
   const [cardPosition, setCardPosition] = useState(0);
+  const [visibleCards, setVisibleCards] = useState(2);
   const containerRef = useRef(null);
   const cardRefs = useRef([]);
 
@@ -60,18 +61,39 @@ export default function FeaturesGrid() {
   ];
 
   useEffect(() => {
-    const position = cardRefs.current[first]?.offsetLeft || 0;
-    setCardWidth(cardRefs.current[first]?.offsetWidth);
+    const cardLeft = cardRefs.current[first]?.offsetLeft || 0;
+    const cardWidth = cardRefs.current[first]?.offsetWidth || 0;
+    const containerWidth = containerRef.current?.offsetWidth || 0;
+
+    let position = cardLeft + cardWidth / 2 - containerWidth / 2;
+
+    if (first === 0) {
+      position = cardLeft;
+    }
+
+    if (first === featuresList.length - 1) {
+      position = cardLeft + cardWidth - containerWidth;
+    }
+
+    setCardWidth(cardWidth);
     setCardPosition(position);
-  }, [first]);
+  }, [first, featuresList.length]);
 
-  const getVisibleCards = () => {
-    if (!isLanding || !containerRef.current) return 2;
-    const containerWidth = containerRef.current.offsetWidth;
-    return Math.floor(containerWidth / cardWidth);
-  };
+  useEffect(() => {
+    const updateVisibleCards = () => {
+      if (!isLanding || !containerRef.current || !cardWidth) {
+        setVisibleCards(2);
+        return;
+      }
+      const containerWidth = containerRef.current.offsetWidth;
+      const newVisibleCards = Math.floor(containerWidth / cardWidth);
+      setVisibleCards(newVisibleCards);
+    };
 
-  const visibleCards = getVisibleCards();
+    updateVisibleCards();
+    window.addEventListener("resize", updateVisibleCards);
+    return () => window.removeEventListener("resize", updateVisibleCards);
+  }, [isLanding, cardWidth]);
 
   const handleNextArrow = () => {
     setFirst((prev) => prev + 1);
