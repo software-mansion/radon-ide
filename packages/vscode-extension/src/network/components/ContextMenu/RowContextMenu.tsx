@@ -17,12 +17,17 @@ interface RowContextMenuProps {
 
 function RowContextMenu({ children, networkLog, handleSort, sortState }: RowContextMenuProps) {
   const menuItems: ContextMenuItems = {
-    [ContextMenuItemName.Copy]: { networkLog, enabled: true },
+    [ContextMenuItemName.Copy]: { enabled: true },
     [ContextMenuItemName.Sort]: { handleSort, sortState, enabled: true },
     [ContextMenuItemName.Filter]: { enabled: true },
+    [ContextMenuItemName.OpenInEditor]: { enabled: true },
   };
 
-  return <NetworkLogContextMenu menuItems={menuItems}>{children}</NetworkLogContextMenu>;
+  return (
+    <NetworkLogContextMenu networkLog={networkLog} menuItems={menuItems}>
+      {children}
+    </NetworkLogContextMenu>
+  );
 }
 
 export default RowContextMenu;

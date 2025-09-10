@@ -60,13 +60,15 @@
   padding: 0;
 }
 
-.radix-context-menu-item[data-disabled] {
+.radix-context-menu-item[data-disabled],
+.radix-context-menu-item[data-disabled] > .tooltip-trigger-span {
   color: var(--vscode-disabledForeground);
   pointer-events: none;
   cursor: default;
 }
 
-.radix-context-menu-item[data-highlighted] {
+.radix-context-menu-item[data-highlighted],
+.radix-context-menu-item[data-highlighted] > .tooltip-trigger-span {
   background-color: var(--swm-url-select-highlighted-background);
 }
 

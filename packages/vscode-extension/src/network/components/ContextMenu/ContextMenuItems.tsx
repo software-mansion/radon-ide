@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { capitalize } from "lodash";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import Tooltip from "../../../webview/components/shared/Tooltip";
@@ -20,6 +19,7 @@ import { NetworkLog } from "../../hooks/useNetworkTracker";
 import { NETWORK_LOG_COLUMNS } from "../../types/network";
 export interface CopySubmenuProps {
   networkLog: NetworkLog | null;
+  responseBodyData: ResponseBodyData | undefined;
 }
 
 export interface SortSubmenuProps {
@@ -31,7 +31,7 @@ export interface FilterItemProps {
   onFocusFilter: () => void;
 }
 
-export interface CopySubmenuConfig extends CopySubmenuProps {
+export interface CopySubmenuConfig {
   enabled: boolean;
 }
 export interface SortSubmenuConfig extends SortSubmenuProps {
@@ -41,22 +41,16 @@ export interface FilterItemConfig {
   enabled: boolean;
 }
 
-export function CopySubmenu({ networkLog }: CopySubmenuProps) {
-  const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
-  const { getResponseBody } = useNetwork();
+export interface OpenInEditorItemProps {
+  networkLog: NetworkLog | null;
+  responseBodyData: ResponseBodyData | undefined;
+}
 
-  const handleOpenChange = async (open: boolean) => {
-    // In order to prevent fetching responseBody as soon as the request log is rendered
-    // (which has memory implications on the backend), we wait until the user
-    // opens the menu for the first time
-    if (!open || !networkLog) {
-      return;
-    }
-    // Prefetch response body for copy menu when context menu opens
-    const bodyData = await getResponseBody(networkLog);
-    setResponseBodyData(bodyData);
-  };
+export interface OpenInEditorItemConfig {
+  enabled: boolean;
+}
 
+export function CopySubmenu({ networkLog, responseBodyData }: CopySubmenuProps) {
   const parseAndCopy = async (parseLog: (networkLog: NetworkLog) => string | undefined) => {
     if (!networkLog) {
       return;
@@ -89,7 +83,7 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
   const handleCopyResponseBody = () => parseAndCopy(getResponseBodyAsJsonString);
 
   return (
-    <ContextMenu.Sub onOpenChange={handleOpenChange}>
+    <ContextMenu.Sub>
       <ContextMenu.SubTrigger className="radix-context-menu-item radix-context-menu-subtrigger">
         <span className="codicon codicon-copy"></span>
         Copy
@@ -154,7 +148,7 @@ export function CopySubmenu({ networkLog }: CopySubmenuProps) {
           <ContextMenu.Item
             className="radix-context-menu-item"
             onSelect={handleCopyResponseBody}
-            disabled={!networkLog || !networkLog.response}>
+            disabled={!responseBodyData?.body || !networkLog?.response}>
             {/* Tooltip has to be nested in ContextMenu.Item, causes problems with
                   "instant" attribute behaviour otherwise */}
             <Tooltip
@@ -213,6 +207,19 @@ export function FilterItem({ onFocusFilter }: FilterItemProps) {
     <ContextMenu.Item className="radix-context-menu-item" onSelect={onFocusFilter}>
       <span className="codicon codicon-filter"></span>
       Filter
+    </ContextMenu.Item>
+  );
+}
+
+export function OpenInEditorItem({ networkLog, responseBodyData }: OpenInEditorItemProps) {
+  const { fetchAndOpenResponseInEditor } = useNetwork();
+  return (
+    <ContextMenu.Item
+      className="radix-context-menu-item"
+      disabled={!responseBodyData?.body || !networkLog?.response}
+      onSelect={() => networkLog && fetchAndOpenResponseInEditor(networkLog)}>
+      <span className="codicon codicon-chrome-restore"></span>
+      Open Response
     </ContextMenu.Item>
   );
 }
