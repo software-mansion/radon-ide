@@ -20,7 +20,6 @@ export interface JSDebugConfiguration {
   websocketAddress: string;
   sourceMapPathOverrides: Record<string, string>;
   displayDebuggerOverlay: boolean;
-  installConnectRuntime?: boolean;
   isUsingNewDebugger: boolean;
   expoPreludeLineCount: number;
 }
