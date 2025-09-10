@@ -59,6 +59,16 @@ export class RadonViewsService {
     );
   }
 
+  async openRadonToolsMenu() {
+    await this.elementHelperService.findAndClickElementByTag(
+      "radon-top-bar-tools-dropdown-trigger"
+    );
+
+    await this.elementHelperService.findAndWaitForElementByTag(
+      "radon-tools-dropdown-menu"
+    );
+  }
+
   async openAndGetDebugConsoleElement() {
     await this.elementHelperService.findAndClickElementByTag(
       "radon-top-bar-debug-console-button"
@@ -98,7 +108,7 @@ export class RadonViewsService {
 
     await this.driver.executeScript("arguments[0].value = '';", quickInput);
 
-    await quickInput.sendKeys("~");
+    await quickInput.sendKeys(process.cwd() + "/data/");
     await quickInput.sendKeys(filename);
 
     const quickInputButton =

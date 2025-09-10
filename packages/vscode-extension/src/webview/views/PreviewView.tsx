@@ -39,15 +39,18 @@ function ActiveToolButton({
   toolState,
   title,
   onClick,
+  dataTest,
 }: {
   toolState: ActiveToolState;
   title: string;
   onClick: () => void;
+  dataTest?: string;
 }) {
   const showButton = toolState !== "stopped";
   return (
     <IconButton
       className={showButton ? "button-recording-on" : "button-recording-off"}
+      data-testid={dataTest}
       tooltip={{
         label: title,
       }}
@@ -262,11 +265,13 @@ function PreviewView() {
             toolState={profilingCPUState}
             title="Stop profiling CPU"
             onClick={stopProfilingCPU}
+            dataTest="radon-top-bar-cpu-profiling-button"
           />
           <ActiveToolButton
             toolState={profilingReactState}
             title="Stop profiling React"
             onClick={stopProfilingReact}
+            dataTest="radon-top-bar-react-profiling-button"
           />
           <ActiveToolButton
             toolState={frameReportingEnabled ? "profiling" : "stopped"}

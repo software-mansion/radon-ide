@@ -9,7 +9,7 @@ import { assert } from "chai";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
-describe("App clicking", () => {
+describe("App interaction tests", () => {
   let driver,
     appWebsocket,
     view,
@@ -58,11 +58,11 @@ describe("App clicking", () => {
       return appWebsocket != null;
     }, 5000);
 
-    await appManipulationService.hideExpoOverlay(appWebsocket);
-
     // Without using this delay, the application returns incorrect button coordinates.
     // So far, I haven't found a better way to check it (it might be related to SafeAreaView).
     await driver.sleep(1000);
+
+    await appManipulationService.hideExpoOverlay(appWebsocket);
   });
 
   it("Should click in app", async () => {
@@ -88,9 +88,7 @@ describe("App clicking", () => {
 
     const debugConsole =
       await radonViewsService.openAndGetDebugConsoleElement();
-    const bottomBar = await new BottomBarPanel().openDebugConsoleView();
-    await driver.sleep(1000);
-    console.log(await bottomBar.getText());
+
     const { file, lineNumber } =
       await radonViewsService.clickOnSourceInDebugConsole(
         debugConsole,
