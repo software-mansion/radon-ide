@@ -18,6 +18,7 @@ const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
   "application/ld+json",
   "application/json",
   "application/javascript",
+  "application/x-javascript",
   "application/yaml",
 ]);
 

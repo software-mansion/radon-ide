@@ -57,22 +57,18 @@ function determineLanguage(contentType: string, body: string): string {
     return "text";
   }
 
-  // Fallback for "text/..."
-  const guessLanguageFromText = () => {
-    const trimmedBody = body.trim();
-    if (trimmedBody.startsWith("<?xml") || trimmedBody.startsWith("<")) {
-      if (trimmedBody.includes("<!DOCTYPE html") || trimmedBody.includes("<html")) {
-        return "html";
-      }
-      return "xml";
-    } else if (trimmedBody.startsWith("{") || trimmedBody.startsWith("[")) {
-      return "json";
+  // Fallback for "text/..., try to make a guess based on content"
+  const trimmedBody = body.trim();
+  if (trimmedBody.startsWith("<?xml") || trimmedBody.startsWith("<")) {
+    if (trimmedBody.includes("<!DOCTYPE html") || trimmedBody.includes("<html")) {
+      return "html";
     }
+    return "xml";
+  } else if (trimmedBody.startsWith("{") || trimmedBody.startsWith("[")) {
+    return "json";
+  }
 
-    return "text";
-  };
-
-  return guessLanguageFromText();
+  return "text";
 }
 
 function formatDataBasedOnLanguage(body: string, language: string): string {
