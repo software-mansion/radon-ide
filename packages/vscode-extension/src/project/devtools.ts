@@ -31,7 +31,7 @@ type IdeMessage = Parameters<IdeMessageListener>[0];
 
 /**
  * InspectorBridge implementation that uses the React DevTools frontend to receive messages from the application.
- * It connects to the application via the last DevtoolsConnection provided by a DevtoolsServer.
+ * It listens for new connection from the DevTools server and uses the latest DevtoolsConnection to communicate with the application.
  */
 export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disposable {
   private devtoolsConnection: DevtoolsConnection | undefined;
