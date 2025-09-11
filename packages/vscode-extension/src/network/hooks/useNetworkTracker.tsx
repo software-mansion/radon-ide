@@ -52,7 +52,7 @@ export interface NetworkLog {
 
 export interface WebSocketMessage {
   method: NetworkState;
-  params: {
+  params?: {
     encodedDataLength?: number;
     requestId: string;
     request?: NetworkRequest;
@@ -96,7 +96,7 @@ const useNetworkTracker = (): NetworkTracker => {
 
       const { method, params } = parsedMsg;
 
-      if (!params.requestId) {
+      if (!params?.requestId) {
         return;
       }
 
