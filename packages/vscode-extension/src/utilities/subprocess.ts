@@ -124,27 +124,42 @@ export function exec(
     Platform.select({ macos: overrideEnv(options), windows: options, linux: options })
   );
 
-  const allowNonZeroExit = options?.allowNonZeroExit;
-  async function printErrorsOnExit() {
-    try {
-      const result = await subprocess;
-      if (result.stderr) {
-        Logger.debug("Subprocess", name, args?.join(" "), "produced error output:", result.stderr);
-      }
-    } catch (e) {
-      // @ts-ignore idk how to deal with error objects in ts
-      const { exitCode, signal } = e;
+  if (!options?.quietErrorsOnExit) {
+    // we want to print errors / stderr logs when the process fails
+
+    const allowNonZeroExit = options?.allowNonZeroExit;
+    function handleProcessFailed(exitCode?: number, signal?: string, error?: Error) {
       if (exitCode === undefined && signal !== undefined) {
         Logger.info("Subprocess", name, "was terminated with", signal);
       } else {
         if (!allowNonZeroExit || !exitCode) {
-          Logger.error("Subprocess", name, args?.join(" "), "execution resulted in an error:", e);
+          Logger.error(
+            "Subprocess",
+            name,
+            args?.join(" "),
+            "execution resulted in an error:",
+            error
+          );
         }
       }
     }
-  }
-  if (!options?.quietErrorsOnExit) {
-    printErrorsOnExit(); // don't want to await here not to block the outer method
+
+    subprocess
+      .then((result) => {
+        if (result.stderr) {
+          Logger.debug(
+            "Subprocess",
+            name,
+            args?.join(" "),
+            "produced error output:",
+            result.stderr
+          );
+        }
+        if (result.failed) {
+          handleProcessFailed(result.exitCode, result.signal);
+        }
+      })
+      .catch((e) => handleProcessFailed(e.exitCode, e.signal, e));
   }
 
   return subprocess;
