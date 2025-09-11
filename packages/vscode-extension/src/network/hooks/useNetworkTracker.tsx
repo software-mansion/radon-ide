@@ -138,8 +138,14 @@ const useNetworkTracker = (): NetworkTracker => {
   };
 
   useEffect(() => {
-    window.onmessage = (message) => {
+    const listener = (message: MessageEvent) => {
       setServerMessages((prev) => [...prev, message.data]);
+    };
+
+    window.addEventListener("message", listener);
+
+    return () => {
+      window.removeEventListener("message", listener);
     };
   }, []);
 
