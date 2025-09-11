@@ -1,11 +1,11 @@
 import { EventEmitter, Disposable } from "vscode";
 import { Cdp } from "vscode-cdp-proxy";
-import { Metro } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
 import { sleep } from "../utilities/retry";
 import { DebugSession, DebugSource, JSDebugConfiguration } from "./DebugSession";
 import { disposeAll } from "../utilities/disposables";
 import { DevtoolsServer } from "../project/devtools";
+import { MetroSession } from "../project/MetroNew";
 
 const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {
@@ -19,7 +19,7 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
 
   constructor(
     private readonly debugSession: DebugSession & Partial<Disposable>,
-    private readonly metro: Metro,
+    private readonly metro: MetroSession,
     devtoolsServer?: DevtoolsServer
   ) {
     this.disposables.push(debugSession.onDebugSessionTerminated(this.maybeReconnect));
