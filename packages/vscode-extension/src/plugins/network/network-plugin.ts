@@ -146,6 +146,7 @@ export class NetworkPlugin implements ToolPlugin {
       this.devtoolsListeners.push(
         this.inspectorBridge.onEvent("pluginMessage", (payload) => {
           if (payload.pluginId === "network") {
+            // TODO: Remove .broadcast if it's redundant
             this.websocketBackend.broadcast(payload.data);
             this.messageListeners.forEach((cb) => cb(payload.data));
           }
