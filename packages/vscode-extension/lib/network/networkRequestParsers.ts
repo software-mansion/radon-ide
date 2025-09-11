@@ -209,7 +209,8 @@ function deserializeRequestData(data: RequestData, contentType: string | undefin
     const length = Object.keys(serializedData).length;
     const uint8Array = new Uint8Array(length);
     Object.keys(serializedData).forEach((key) => {
-      uint8Array[parseInt(key)] = serializedData[key];
+      const numKey = parseInt(key);
+      uint8Array[numKey] = serializedData[numKey];
     });
     return uint8Array;
   };
