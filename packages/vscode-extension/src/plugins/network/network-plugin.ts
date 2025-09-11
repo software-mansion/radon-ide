@@ -50,12 +50,11 @@ export class NetworkPlugin implements ToolPlugin {
     initialize();
   }
 
-  public sendCDPMessage(messageData: CDPMessage) {
+  sendCDPMessage(messageData: CDPMessage) {
     this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
   }
 
   onMessageBroadcast(cb: BroadcastListener): Disposable {
-    // TODO: Check if this should only be exposed to Network or all
     this.messageListeners.push(cb);
     return new Disposable(() => {
       let index = this.messageListeners.indexOf(cb);
