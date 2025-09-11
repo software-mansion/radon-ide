@@ -44,6 +44,7 @@ before(async function () {
   if (IS_RECORDING) {
     recorder = startRecording(driver, { interval: 100 });
   }
+  await workbench.executeCommand("Chat: Open Chat");
   await workbench.executeCommand("View: Toggle Secondary Side Bar Visibility");
 });
 
@@ -76,6 +77,7 @@ afterEach(async function () {
       return false;
     }
   }, 10000);
+  workbench.executeCommand("Notifications: Clear All Notifications");
 });
 
 after(async function () {
