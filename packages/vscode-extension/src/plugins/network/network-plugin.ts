@@ -306,18 +306,29 @@ export class NetworkPlugin implements ToolPlugin {
   }
 
   private setupEventListeners(): void {
-    // Listen for plugin messages from the bridge
+    /**
+     * All pluginMessages sent to the panel follow @type {NetworkPanelMessage} format:
+     *
+     * Message Flow:
+     * - React Native app sends network events (requests, responses) via inspector bridge
+     * - Bridge forwards messages to this plugin with pluginId: "network"
+     * - Plugin transforms bridge messages into NetworkPanel protocol format
+     * - Messages are broadcasted via WebSocket to all connected NetworkPanel clients
+     */
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("pluginMessage", (payload) => {
         if (payload.pluginId !== "network") {
           return;
         }
 
+        // Transform bridge message format to NetworkPanel protocol format
         const messageType = payload.type === DEVTOOLS_CDP_MESSAGE_ID ? "CDP" : "IDE";
         const panelMessage = {
           type: messageType,
           payload: JSON.parse(payload.data),
         };
+
+        // Broadcast to all connected NetworkPanel webviews via WebSocket
         this.websocketBackend.broadcast(JSON.stringify(panelMessage));
       })
     );
