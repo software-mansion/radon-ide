@@ -185,9 +185,7 @@ export class ManagingDevicesService {
 
     const selectedDevice =
       await this.elementHelperService.findAndWaitForElement(
-        By.css(
-          '[data-testid^="creating-device-form-device-type-select-item-pixel"]'
-        ),
+        By.css('[data-testid^="creating-device-form-device-type-select-item"]'),
         "Timed out waiting for an element matching from devices list"
       );
     await selectedDevice.click();
