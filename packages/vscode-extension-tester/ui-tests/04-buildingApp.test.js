@@ -2,22 +2,10 @@ import {
   By,
   TextEditor,
   WebView,
-  Key,
   BottomBarPanel,
 } from "vscode-extension-tester";
 import { assert } from "chai";
-import {
-  ElementHelperService,
-  getFileNameInEditor,
-  getDebuggerStopLineNumber,
-  getCursorLineInEditor,
-} from "../utils/helpers.js";
-import {
-  RadonSettingsService,
-  RadonViewsService,
-  ManagingDevicesService,
-  AppManipulationService,
-} from "./interactions.js";
+import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
 describe("App clicking", () => {
@@ -29,16 +17,20 @@ describe("App clicking", () => {
     radonViewsService,
     managingDevicesService,
     appManipulationService,
-    radonSettingsService;
+    radonSettingsService,
+    vscodeHelperService;
 
   before(async () => {
     ({ driver, view, workbench } = get());
 
-    elementHelperService = new ElementHelperService(driver);
-    radonViewsService = new RadonViewsService(driver);
-    managingDevicesService = new ManagingDevicesService(driver);
-    appManipulationService = new AppManipulationService(driver);
-    radonSettingsService = new RadonSettingsService(driver);
+    ({
+      elementHelperService,
+      radonViewsService,
+      managingDevicesService,
+      appManipulationService,
+      radonSettingsService,
+      vscodeHelperService,
+    } = initServices(driver));
 
     await managingDevicesService.deleteAllDevices();
     await managingDevicesService.addNewDevice("newDevice");
@@ -99,8 +91,8 @@ describe("App clicking", () => {
         "console.log"
       );
 
-    const fileName = await getFileNameInEditor();
-    const cursorLineNumber = await getCursorLineInEditor();
+    const fileName = await vscodeHelperService.getFileNameInEditor();
+    const cursorLineNumber = await vscodeHelperService.getCursorLineInEditor();
 
     assert.equal(fileName, await file);
     assert.equal(lineNumber, cursorLineNumber);
@@ -131,7 +123,8 @@ describe("App clicking", () => {
 
     await appManipulationService.clickInsidePhoneScreen(position);
 
-    const debuggerLineStop = await getDebuggerStopLineNumber();
+    const debuggerLineStop =
+      await vscodeHelperService.getDebuggerStopLineNumber();
 
     assert.equal(lineNumber, debuggerLineStop);
   });

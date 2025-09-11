@@ -1,6 +1,6 @@
-import { ElementHelperService } from "../utils/helpers.js";
-import { waitForMessage } from "./setupTest.js";
-import { By, Key } from "vscode-extension-tester";
+import { ElementHelperService } from "./helperServices.js";
+import { waitForMessage } from "../server/webSocketServer.js";
+import { By, Key, WebView, EditorView } from "vscode-extension-tester";
 
 // #region Opening radon views
 export class RadonViewsService {
@@ -76,6 +76,54 @@ export class RadonViewsService {
     const [file, lineNumber] = (await source.getText()).split(":");
     await source.click();
     return { file, lineNumber };
+  }
+
+  // #region Saving files
+  async findAndFillSaveFileForm(filename) {
+    await this.driver.switchTo().defaultContent();
+
+    const quickInput = await this.elementHelperService.findAndWaitForElement(
+      By.css(".quick-input-widget input"),
+      "Timed out waiting for quick input"
+    );
+
+    await this.driver.executeScript("arguments[0].value = '';", quickInput);
+
+    await quickInput.sendKeys("~");
+    await quickInput.sendKeys(filename);
+
+    const quickInputButton =
+      await this.elementHelperService.findAndWaitForElement(
+        By.css(".quick-input-action"),
+        "Timed out waiting for quick input button"
+      );
+
+    quickInputButton.click();
+  }
+
+  // #region WebView
+
+  async findWebViewIFrame(iframeTitle) {
+    await this.driver.switchTo().defaultContent();
+    const webviews = await this.driver.findElements(
+      By.css('iframe[class*="webview"]')
+    );
+    for (let webview of webviews) {
+      await this.driver.switchTo().frame(webview);
+      try {
+        const iframe = await this.elementHelperService.findAndWaitForElement(
+          By.css(`iframe[title="${iframeTitle}"]`),
+          `Timed out waiting for Radon IDE iframe with title ${iframeTitle}`,
+          5000
+        );
+        return iframe;
+      } catch (error) {
+        await this.driver.switchTo().defaultContent();
+      }
+    }
+    throw new Error(
+      `Could not find iframe with title ${iframeTitle} in any webview`
+    );
   }
 }
 
@@ -225,6 +273,10 @@ export class ManagingDevicesService {
       }
     } catch (e) {}
     this.elementHelperService.findAndClickElementByTag(`modal-close-button`);
+    const view = new WebView();
+    await view.switchBack();
+    await new EditorView().closeAllEditors();
+    await this.radonViewsService.openRadonIDEPanel();
   }
   // #endregion
 
