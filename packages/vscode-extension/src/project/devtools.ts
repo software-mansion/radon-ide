@@ -131,7 +131,9 @@ export class DevtoolsConnection implements Disposable {
   }
 
   public disconnect() {
-    this.disconnectedEventEmitter.fire();
+    if (this.connected) {
+      this.disconnectedEventEmitter.fire();
+    }
     this.dispose();
   }
 
