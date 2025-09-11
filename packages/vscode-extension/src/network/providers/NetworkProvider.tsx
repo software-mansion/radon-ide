@@ -82,11 +82,11 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     return {
       ...networkTracker,
       isScrolling,
+      clearActivity,
       toggleScrolling,
       isTimelineVisible,
       toggleTimelineVisible,
       getResponseBody,
-      clearActivity,
     };
   }, [isScrolling, isTimelineVisible, networkTracker]);
 
