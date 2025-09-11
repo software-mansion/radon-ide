@@ -186,7 +186,7 @@ export class ManagingDevicesService {
     const selectedDevice =
       await this.elementHelperService.findAndWaitForElement(
         By.css(
-          '[data-testid^="creating-device-form-device-type-select-item-"]'
+          '[data-testid^="creating-device-form-device-type-select-item-pixel"]'
         ),
         "Timed out waiting for an element matching from devices list"
       );
@@ -385,6 +385,17 @@ export class AppManipulationService {
     }
 
     return position;
+  }
+
+  async sendMessageAndWaitForResponse(appWebsocket, message) {
+    if (!appWebsocket)
+      console.warn("No appWebsocket provided to sendMessageAndWaitForResponse");
+
+    const id = Date.now() + "-" + Math.floor(Math.random() * 1e6);
+    const messagePromise = waitForMessage(id);
+    appWebsocket.send(JSON.stringify({ message: message, id: id }));
+    const msg = await messagePromise;
+    return msg;
   }
 }
 

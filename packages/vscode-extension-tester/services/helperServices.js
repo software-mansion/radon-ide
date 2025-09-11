@@ -44,7 +44,7 @@ export class ElementHelperService {
       message,
       timeout
     );
-    element.click();
+    await element.click();
   }
 
   async waitUntilElementGone(
