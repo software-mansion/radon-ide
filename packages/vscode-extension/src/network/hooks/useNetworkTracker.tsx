@@ -68,15 +68,15 @@ export interface WebSocketMessage {
 
 export interface NetworkTracker {
   networkLogs: NetworkLog[];
-  clearActivity: () => void;
-  toggleRecording: (isRunning: boolean) => void;
+  clearLogs: () => void;
+  toggleNetwork: (isRunning: boolean) => void;
   getSource: (networkLog: NetworkLog) => void;
 }
 
 export const networkTrackerInitialState: NetworkTracker = {
   networkLogs: [],
-  clearActivity: () => {},
-  toggleRecording: () => {},
+  clearLogs: () => {},
+  toggleNetwork: () => {},
   getSource: () => {},
 };
 
@@ -156,12 +156,12 @@ const useNetworkTracker = (): NetworkTracker => {
     });
   }, [serverMessages]);
 
-  const clearActivity = () => {
+  const clearLogs = () => {
     setNetworkLogs([]);
     setServerMessages([]);
   };
 
-  const toggleRecording = (isRunning: boolean) => {
+  const toggleNetwork = (isRunning: boolean) => {
     vscode.postMessage({
       command: WebviewCommand.CDPCall,
       method: isRunning ? CDPNetworkCommand.Disable : CDPNetworkCommand.Enable,
@@ -185,8 +185,8 @@ const useNetworkTracker = (): NetworkTracker => {
 
   return {
     networkLogs: validLogs,
-    clearActivity,
-    toggleRecording,
+    clearLogs,
+    toggleNetwork,
     getSource,
   };
 };

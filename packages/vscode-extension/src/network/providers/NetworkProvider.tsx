@@ -40,13 +40,13 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const [responseBodies, setResponseBodies] = useState<Record<string, unknown>>({});
 
   const clearActivity = () => {
-    networkTracker.clearActivity();
+    networkTracker.clearLogs();
     setResponseBodies({});
   };
 
   const toggleRecording = () => {
     setIsRecording((prev) => {
-      networkTracker.toggleRecording(prev);
+      networkTracker.toggleNetwork(prev);
       return !prev;
     });
   };
