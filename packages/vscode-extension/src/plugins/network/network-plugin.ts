@@ -24,40 +24,27 @@ interface WebSocketMessageData {
 export const NETWORK_PLUGIN_ID = "network";
 const DEVTOOLS_CDP_MESSAGE_ID = "cdp-message";
 
+const LANGUAGE_BY_CONTENT_TYPE = {
+  "application/json": "json",
+  "text/json": "json",
+  "text/html": "html",
+  "application/xhtml+xml": "html",
+  "text/xml": "xml",
+  "application/xml": "xml",
+  "text/css": "css",
+  "text/javascript": "javascript",
+  "application/javascript": "javascript",
+  "application/x-javascript": "javascript",
+  "text/plain": "text",
+};
+
 function determineLanguage(contentType: string, body: string): string {
   const contentTypeLowerCase = contentType.toLowerCase();
 
-  // Check explicit content types first
-  if (
-    contentTypeLowerCase.includes("application/json") ||
-    contentTypeLowerCase.includes("text/json")
-  ) {
-    return "json";
-  }
-  if (
-    contentTypeLowerCase.includes("text/html") ||
-    contentTypeLowerCase.includes("application/xhtml+xml")
-  ) {
-    return "html";
-  }
-  if (
-    contentTypeLowerCase.includes("text/xml") ||
-    contentTypeLowerCase.includes("application/xml")
-  ) {
-    return "xml";
-  }
-  if (contentTypeLowerCase.includes("text/css")) {
-    return "css";
-  }
-  if (
-    contentTypeLowerCase.includes("text/javascript") ||
-    contentTypeLowerCase.includes("application/javascript") ||
-    contentTypeLowerCase.includes("application/x-javascript")
-  ) {
-    return "javascript";
-  }
-  if (contentTypeLowerCase.includes("text/plain")) {
-    return "text";
+  for (const [contentTypeKey, language] of Object.entries(LANGUAGE_BY_CONTENT_TYPE)) {
+    if (contentTypeLowerCase.includes(contentTypeKey)) {
+      return language;
+    }
   }
 
   // Fallback: try to guess based on content structure
