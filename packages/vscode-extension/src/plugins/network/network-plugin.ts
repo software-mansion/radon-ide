@@ -18,12 +18,14 @@ async function initialize() {
   }
   Logger.debug("Initilizing Network tool");
   initialized = true;
+
+  const networkDevtoolsWebviewProvider = new NetworkDevtoolsWebviewProvider(extensionContext);
+
   extensionContext.subscriptions.push(
-    window.registerWebviewViewProvider(
-      `RNIDE.Tool.Network.view`,
-      new NetworkDevtoolsWebviewProvider(extensionContext),
-      { webviewOptions: { retainContextWhenHidden: true } }
-    )
+    networkDevtoolsWebviewProvider,
+    window.registerWebviewViewProvider(`RNIDE.Tool.Network.view`, networkDevtoolsWebviewProvider, {
+      webviewOptions: { retainContextWhenHidden: true },
+    })
   );
 }
 

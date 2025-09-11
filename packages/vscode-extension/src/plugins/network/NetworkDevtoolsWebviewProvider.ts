@@ -1,5 +1,6 @@
 import {
   CancellationToken,
+  Disposable,
   ExtensionContext,
   Uri,
   WebviewView,
@@ -21,8 +22,15 @@ type WebviewCDPMessage = {
   params: Record<string, unknown>;
 };
 
-export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
+export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider, Disposable {
+  private messageListenerDisposable: null | Disposable = null;
+
   constructor(private readonly context: ExtensionContext) {}
+
+  public dispose() {
+    this.messageListenerDisposable?.dispose();
+  }
+
   public resolveWebviewView(
     webviewView: WebviewView,
     context: WebviewViewResolveContext,
@@ -46,8 +54,7 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
       throw new Error("Couldn't retrieve the network plugin");
     }
 
-    // FIXME: Dispose
-    const _disposable = webview.onDidReceiveMessage((event: WebviewCDPMessage) => {
+    this.messageListenerDisposable = webview.onDidReceiveMessage((event: WebviewCDPMessage) => {
       if (event.command === "cdp-call") {
         networkPlugin.sendCDPMessage({
           method: event.method,
