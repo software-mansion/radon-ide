@@ -38,7 +38,7 @@ import {
   CDPDevtoolsServer,
 } from "./devtools";
 import { RadonInspectorBridge } from "./bridge";
-import { MetroSession } from "./MetroNew";
+import { getDebuggerTargetUrl, MetroSession } from "./MetroNew";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
@@ -232,6 +232,7 @@ export class ApplicationSession implements Disposable {
         useCustomJSDebugger: this.applicationContext.launchConfig.useCustomJSDebugger,
       }),
       this.metro,
+      this.device.deviceInfo,
       this.websocketDevtoolsServer
     );
 
@@ -414,8 +415,18 @@ export class ApplicationSession implements Disposable {
     this.debugSession?.stepIntoDebugger();
   }
 
+  private connectJSDebuggerCancelToken: CancelToken = new CancelToken();
   private async connectJSDebugger(cancelToken?: CancelToken) {
-    const websocketAddress = await this.metro.getDebuggerURL(-1, cancelToken);
+    this.connectJSDebuggerCancelToken.cancel();
+    this.connectJSDebuggerCancelToken = new CancelToken();
+    cancelToken?.onCancel(() => this.connectJSDebuggerCancelToken.cancel());
+
+    const websocketAddress = await getDebuggerTargetUrl(
+      this.metro,
+      this.device.deviceInfo,
+      this.connectJSDebuggerCancelToken,
+      undefined
+    );
     if (!websocketAddress) {
       Logger.error("Couldn't find a proper debugger URL to connect to");
       return;
@@ -603,6 +614,7 @@ export class ApplicationSession implements Disposable {
 
   public async dispose() {
     disposeAll(this.disposables);
+    this.connectJSDebuggerCancelToken.cancel();
     this.debugSessionEventSubscription?.dispose();
     this.devtoolsServerSubscription?.dispose();
     await this.debugSession?.dispose();
