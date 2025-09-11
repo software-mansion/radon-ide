@@ -92,13 +92,6 @@ class NetworkCDPWebsocketBackend implements Disposable {
     });
   }
 
-  public broadcast(cdpMessage: string) {
-    // TODO: Check if this can be safely removed
-    this.sessions.forEach((ws) => {
-      ws.send(cdpMessage);
-    });
-  }
-
   public dispose() {
     this.server.close();
   }
@@ -119,10 +112,6 @@ export class NetworkPlugin implements ToolPlugin {
   constructor(private readonly inspectorBridge: RadonInspectorBridge) {
     this.websocketBackend = new NetworkCDPWebsocketBackend(this.sendCDPMessage);
     initialize();
-  }
-
-  public get websocketPort() {
-    return this.websocketBackend.port;
   }
 
   public sendCDPMessage(messageData: CDPMessage) {
@@ -146,8 +135,6 @@ export class NetworkPlugin implements ToolPlugin {
       this.devtoolsListeners.push(
         this.inspectorBridge.onEvent("pluginMessage", (payload) => {
           if (payload.pluginId === "network") {
-            // TODO: Remove .broadcast if it's redundant
-            this.websocketBackend.broadcast(payload.data);
             this.messageListeners.forEach((cb) => cb(payload.data));
           }
         })

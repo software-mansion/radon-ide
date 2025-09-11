@@ -70,8 +70,7 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider, Disp
       webviewView.webview,
       this.context.extensionUri,
       PREVIEW_NETWORK_NAME,
-      PREVIEW_NETWORK_PATH,
-      `localhost:${networkPlugin.websocketPort}`
+      PREVIEW_NETWORK_PATH
     );
   }
 }
