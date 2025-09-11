@@ -17,6 +17,7 @@ import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { sleep, progressiveRetryTimeout } from "../utilities/retry";
 import { openFileAtPosition } from "../utilities/editorOpeners";
+import { DeviceInfo, DevicePlatform } from "../common/State";
 
 export interface MetroProvider {
   getMetroSession(options: { resetCache: boolean }): Promise<MetroSession & Disposable>;
@@ -49,6 +50,7 @@ export class SharedMetroProvider implements MetroProvider, Disposable {
 interface CDPTargetDescription {
   id: string;
   appId?: string;
+  deviceName: string;
   title: string;
   type: string;
   url: string;
@@ -127,6 +129,10 @@ export interface MetroSession {
   onServerStopped: (listener: () => void) => Disposable;
 
   getDebuggerURL(timeoutMs?: number, cancelToken?: CancelToken): Promise<string | undefined>;
+  getDebuggerTargets(
+    timeoutMs?: number,
+    cancelToken?: CancelToken
+  ): Promise<CDPTargetDescription[]>;
   reload(): Promise<void>;
   openDevMenu(): Promise<void>;
 }
@@ -346,6 +352,13 @@ class SubprocessMetroSession implements MetroSession, Disposable {
       : this.lookupWsAddressForOldDebugger(listJson);
 
     return websocketAddress;
+  }
+
+  public async getDebuggerTargets(
+    timeoutMs?: number,
+    cancelToken?: CancelToken
+  ): Promise<CDPTargetDescription[]> {
+    return (await this.fetchWsTargets(timeoutMs, cancelToken)) || [];
   }
 
   public async reload() {
@@ -641,4 +654,42 @@ function findCustomMetroConfig(configPath: string) {
     }
   }
   throw new Error("Metro config cannot be found, please check if `metroConfigPath` path is valid");
+}
+
+export async function getDebuggerTargetUrl(
+  metro: MetroSession,
+  deviceInfo: DeviceInfo,
+  cancelToken: CancelToken,
+  timeoutMs?: number
+): Promise<string | undefined> {
+  const now = performance.now();
+  const deadline = timeoutMs ? now + timeoutMs : undefined;
+  while (deadline ?? Number.POSITIVE_INFINITY > performance.now()) {
+    try {
+      const debuggerTargets = await metro.getDebuggerTargets(
+        deadline ? deadline - performance.now() : undefined,
+        cancelToken
+      );
+      const websocketAddress = debuggerTargets
+        .filter((target) => {
+          if (deviceInfo.platform === DevicePlatform.IOS) {
+            // On iOS, we want to connect to the target that has the same bundle ID as our app
+            return target.deviceName === deviceInfo.displayName;
+          } else {
+            return target.deviceName.startsWith("sdk_gphone64_");
+          }
+        })
+        .map((page) => {
+          return page.webSocketDebuggerUrl;
+        })[0];
+      if (websocketAddress) {
+        return websocketAddress;
+      }
+    } catch (e) {
+      if (cancelToken.cancelled) {
+        return undefined;
+      }
+      throw e;
+    }
+  }
 }

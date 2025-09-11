@@ -5,7 +5,8 @@ import { sleep } from "../utilities/retry";
 import { DebugSession, DebugSource, JSDebugConfiguration } from "./DebugSession";
 import { disposeAll } from "../utilities/disposables";
 import { DevtoolsServer } from "../project/devtools";
-import { MetroSession } from "../project/MetroNew";
+import { getDebuggerTargetUrl, MetroSession } from "../project/MetroNew";
+import { DeviceInfo } from "../common/State";
 
 const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {
@@ -20,6 +21,7 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   constructor(
     private readonly debugSession: DebugSession & Partial<Disposable>,
     private readonly metro: MetroSession,
+    private readonly deviceInfo: DeviceInfo,
     devtoolsServer?: DevtoolsServer
   ) {
     this.disposables.push(debugSession.onDebugSessionTerminated(this.maybeReconnect));
@@ -64,7 +66,12 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
           // if we're connected to a responsive session, we can break
           break;
         }
-        const websocketAddress = await this.metro.getDebuggerURL(undefined, cancelToken);
+        const websocketAddress = await getDebuggerTargetUrl(
+          this.metro,
+          this.deviceInfo,
+          cancelToken,
+          undefined
+        );
         if (!websocketAddress) {
           throw new Error("No connected device listed");
         }
