@@ -14,9 +14,9 @@ import {
   getUrl,
 } from "../../utils/requestFormatters";
 import { useNetwork } from "../../providers/NetworkProvider";
-import { NetworkLogColumn, ResponseBodyData, SortState } from "../../types/network";
-import { NetworkLog } from "../../hooks/useNetworkTracker";
-import { NETWORK_LOG_COLUMNS } from "../../types/network";
+import { NetworkLog, NetworkLogColumn, NETWORK_LOG_COLUMNS } from "../../types/networkLog";
+import { ResponseBodyData } from "../../types/network";
+import { SortState } from "../../types/networkFilter";
 export interface CopySubmenuProps {
   networkLog: NetworkLog | null;
   responseBodyData: ResponseBodyData | undefined;

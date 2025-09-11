@@ -10,9 +10,9 @@ import HeadersTab from "./Tabs/HeadersTab";
 import PayloadTab from "./Tabs/PayloadTab";
 import ResponseTab from "./Tabs/ResponseTab";
 import TimingTab from "./Tabs/TimingTab";
-import { NetworkLog } from "../hooks/useNetworkTracker";
 import { useNetwork } from "../providers/NetworkProvider";
-import { ResponseBodyData } from "../types/network";
+import { NetworkLog } from "../types/networkLog.d";
+import { ResponseBodyData } from "../types/network.d";
 
 const VSCODE_TABS_HEADER_HEIGHT = 30;
 

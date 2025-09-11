@@ -8,10 +8,12 @@ import {
   OpenInEditorItem,
 } from "./ContextMenuItems";
 import { useNetworkFilter } from "../../providers/NetworkFilterProvider";
-import { ContextMenuItemName, ContextMenuItems, ResponseBodyData } from "../../types/network";
-import "./NetworkLogContextMenu.css";
-import { NetworkLog } from "../../hooks/useNetworkTracker";
+import { ResponseBodyData } from "../../types/network";
+import { NetworkLog } from "../../types/networkLog";
 import { useNetwork } from "../../providers/NetworkProvider";
+import { ContextMenuItemName, ContextMenuItems } from "../../types/contextMenu";
+import "./NetworkLogContextMenu.css";
+
 interface NetworkLogContextMenuProps {
   children: React.ReactNode;
   menuItems?: ContextMenuItems;

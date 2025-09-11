@@ -7,12 +7,13 @@ import React, {
   useState,
 } from "react";
 import useNetworkTracker, {
-  NetworkLog,
   NetworkTracker,
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
-import { ResponseBodyData } from "../types/network";
+import { NetworkLog } from "../types/networkLog.d";
+import { NetworkPanelMessage } from "../types/panelMessageProtocol.d";
+import { ResponseBodyData } from "../types/network.d";
 
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;
@@ -41,6 +42,8 @@ const NetworkContext = createContext<NetworkProviderProps>({
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
+  const { clearLogs, toggleNetwork, sendIDEMessage, sendCDPMessage, ws, networkLogs } =
+    networkTracker;
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
@@ -48,20 +51,19 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const [responseBodies, setResponseBodies] = useState<Record<string, ResponseBodyData>>({});
 
   const clearActivity = () => {
-    networkTracker.clearLogs();
+    clearLogs();
     setResponseBodies({});
   };
 
   const toggleRecording = () => {
     setIsRecording((prev) => {
-      networkTracker.toggleNetwork(prev);
+      toggleNetwork(prev);
       return !prev;
     });
   };
 
   const getResponseBody = (networkLog: NetworkLog): Promise<ResponseBodyData | undefined> => {
     const requestId = networkLog.requestId;
-    const ws = networkTracker.ws;
 
     if (!requestId || !ws) {
       return Promise.resolve(undefined);
@@ -74,26 +76,23 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     const id = Math.random().toString(36).substring(7);
 
     // Send the message to the network-plugin backend
-    ws.send(
-      JSON.stringify({
-        id,
-        method: "Network.getResponseBody",
-        params: {
-          requestId: requestId,
-        },
-      })
-    );
+    sendCDPMessage({
+      id,
+      method: "Network.getResponseBody",
+      params: {
+        requestId: requestId,
+      },
+    });
 
     // Add a listener to capture the response
     return new Promise((resolve) => {
-      const listener = (message: MessageEvent) => {
+      const listener = (message: MessageEvent<string>) => {
         try {
-          const parsedMsg = JSON.parse(message.data);
-          if (parsedMsg.id !== id) {
+          const parsedMsg: NetworkPanelMessage = JSON.parse(message.data);
+          if (parsedMsg.type !== "CDP" || parsedMsg.payload.id !== id) {
             return;
           }
-
-          const bodyData = parsedMsg.result;
+          const bodyData = parsedMsg.payload.result as ResponseBodyData;
           setResponseBodies((prev) => ({
             ...prev,
             [requestId]: bodyData,
@@ -113,29 +112,27 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
   const fetchAndOpenResponseInEditor = async (networkLog: NetworkLog) => {
     const requestId = networkLog.requestId;
-    const ws = networkTracker.ws;
+    const request = networkLog.request;
 
-    if (!requestId || !ws) {
+    if (!requestId || !ws || !request) {
       return Promise.resolve(undefined);
     }
 
     const id = Math.random().toString(36).substring(7);
 
-    ws.send(
-      JSON.stringify({
-        id,
-        method: "Network.fetchFullResponseBody",
-        params: {
-          request: networkLog.request,
-        },
-      })
-    );
+    sendIDEMessage({
+      id,
+      method: "IDE.fetchFullResponseBody",
+      params: {
+        request: request,
+      },
+    });
   };
 
   const contextValue = useMemo(() => {
     return {
       ...networkTracker,
-      networkLogs: networkTracker.networkLogs,
+      networkLogs: networkLogs,
       isRecording,
       toggleRecording,
       isScrolling,

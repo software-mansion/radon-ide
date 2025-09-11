@@ -1,4 +1,4 @@
-import { NetworkLog } from "../hooks/useNetworkTracker";
+import { NetworkLog } from "../types/networkLog";
 
 function prettyStringify(obj: unknown): string {
   return JSON.stringify(obj, null, 2);

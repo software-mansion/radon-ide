@@ -10,61 +10,65 @@ import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider
 import { disposeAll } from "../../utilities/disposables";
 import { openContentInEditor, showDismissableError } from "../../utilities/editorOpeners";
 
-interface RequestOptions {
-  method: string;
-  headers: Record<string, string>;
-  body?: string;
-}
-
-interface RequestData {
-  method: string;
-  headers: Record<string, string>;
-  url: string;
-  postData?: unknown;
-}
-
-interface CDPMessage {
-  method?: string;
-  id?: string | number;
-  params?: {
-    request?: RequestData;
-  };
-  result?: unknown;
-}
+import {
+  RequestData,
+  RequestOptions,
+} from "../../network/types/network.d";
+import {
+  NetworkPanelMessage,
+  IDEMessage,
+  CDPMessage,
+} from "../../network/types/panelMessageProtocol.d";
 
 interface WebSocketMessageData {
   toString(): string;
 }
 
 export const NETWORK_PLUGIN_ID = "network";
+const DEVTOOLS_CDP_MESSAGE_ID = "cdp-message";
 
 function determineLanguage(contentType: string, body: string): string {
-  if (contentType.includes("application/json") || contentType.includes("text/json")) {
+  const contentTypeLowerCase = contentType.toLowerCase();
+
+  // Check explicit content types first
+  if (
+    contentTypeLowerCase.includes("application/json") ||
+    contentTypeLowerCase.includes("text/json")
+  ) {
     return "json";
-  } else if (contentType.includes("text/html") || contentType.includes("application/xhtml+xml")) {
+  }
+  if (
+    contentTypeLowerCase.includes("text/html") ||
+    contentTypeLowerCase.includes("application/xhtml+xml")
+  ) {
     return "html";
-  } else if (contentType.includes("text/xml") || contentType.includes("application/xml")) {
+  }
+  if (
+    contentTypeLowerCase.includes("text/xml") ||
+    contentTypeLowerCase.includes("application/xml")
+  ) {
     return "xml";
-  } else if (contentType.includes("text/css")) {
+  }
+  if (contentTypeLowerCase.includes("text/css")) {
     return "css";
-  } else if (
-    contentType.includes("text/javascript") ||
-    contentType.includes("application/javascript") ||
-    contentType.includes("application/x-javascript")
+  }
+  if (
+    contentTypeLowerCase.includes("text/javascript") ||
+    contentTypeLowerCase.includes("application/javascript") ||
+    contentTypeLowerCase.includes("application/x-javascript")
   ) {
     return "javascript";
-  } else if (contentType.includes("text/plain")) {
+  }
+  if (contentTypeLowerCase.includes("text/plain")) {
     return "text";
   }
 
-  // Fallback for "text/..., try to make a guess based on content"
+  // Fallback: try to guess based on content structure
   const trimmedBody = body.trim();
   if (trimmedBody.startsWith("<?xml") || trimmedBody.startsWith("<")) {
-    if (trimmedBody.includes("<!DOCTYPE html") || trimmedBody.includes("<html")) {
-      return "html";
-    }
-    return "xml";
-  } else if (trimmedBody.startsWith("{") || trimmedBody.startsWith("[")) {
+    return trimmedBody.includes("<!DOCTYPE html") || trimmedBody.includes("<html") ? "html" : "xml";
+  }
+  if (trimmedBody.startsWith("{") || trimmedBody.startsWith("[")) {
     return "json";
   }
 
@@ -76,11 +80,10 @@ function formatDataBasedOnLanguage(body: string, language: string): string {
     try {
       const parsed = JSON.parse(body);
       return JSON.stringify(parsed, null, 2);
-    } catch (e) {
+    } catch {
       // If JSON parsing fails, return original body
     }
   }
-
   return body;
 }
 
@@ -104,77 +107,12 @@ class NetworkCDPWebsocketBackend implements Disposable {
   private server: Server;
   private sessions: Set<WebSocket> = new Set();
 
-  /**
-   * Handles the "Network.fetchFullResponseBody" CDP message, by
-   * fetching the response and displaying the body in vscode editor tab.
-   *
-   * On fetch error, shows a dismissable error notification.
-   */
-  private async handleFetchFullResponseBody(
-    requestOptions: RequestData | undefined
-  ): Promise<void> {
-    if (!requestOptions) {
-      return;
-    }
-
-    const fetchOptions: RequestOptions = {
-      method: requestOptions.method,
-      headers: requestOptions.headers,
-    };
-
-    if (requestOptions.postData) {
-      fetchOptions.body = JSON.stringify(requestOptions.postData);
-    }
-
-    try {
-      const response = await fetch(requestOptions.url, fetchOptions);
-
-      const contentType = response.headers.get("content-type") || "";
-      const data = await response.text();
-
-      const language = determineLanguage(contentType, data);
-      const formattedData = formatDataBasedOnLanguage(data, language);
-
-      openContentInEditor(formattedData, language);
-    } catch (error) {
-      console.error("There was a problem fetching the data:", error);
-      showDismissableError("Data could not be fetched.");
-    }
-  }
-
-  /**
-   * Sends empty result if non-"Network." message was received
-   */
-  private handleGenericMessage(payload: CDPMessage, ws: WebSocket): void {
-    if (payload.id) {
-      const response = { id: payload.id, result: {} };
-      ws.send(JSON.stringify(response));
-    }
-  }
-
-  private async handleWebSocketMessage(
-    message: WebSocketMessageData,
-    ws: WebSocket
-  ): Promise<void> {
-    try {
-      const payload: CDPMessage = JSON.parse(message.toString());
-
-      if (payload.method === "Network.fetchFullResponseBody") {
-        await this.handleFetchFullResponseBody(payload.params?.request);
-      } else if (payload.method?.startsWith("Network.")) {
-        // Forwards all "Network." messages to devtools inspector bridge,
-        // which in turns sends them through the websocket to the app
-        this.sendCDPMessage(payload);
-      } else {
-        this.handleGenericMessage(payload, ws);
-      }
-    } catch (err) {
-      console.error("Network CDP invalid message format:", err);
-    }
-  }
-
-  constructor(private readonly sendCDPMessage: (messageData: CDPMessage) => void) {
+  constructor(private readonly sendCDPMessage: (messageData: CDPMessage | IDEMessage) => void) {
     this.server = http.createServer(() => {});
+    this.setupWebSocketServer();
+  }
+
+  private setupWebSocketServer(): void {
     const wss = new WebSocketServer({ server: this.server });
 
     wss.on("connection", (ws) => {
@@ -190,7 +128,112 @@ class NetworkCDPWebsocketBackend implements Disposable {
     });
   }
 
-  public get port() {
+  private async handleWebSocketMessage(
+    message: WebSocketMessageData,
+    ws: WebSocket
+  ): Promise<void> {
+    try {
+      const parsedMessage: NetworkPanelMessage = JSON.parse(message.toString());
+
+      switch (parsedMessage.type) {
+        case "CDP":
+          this.handleCDPMessage(parsedMessage as NetworkPanelMessage & { type: "CDP" }, ws);
+          break;
+        case "IDE":
+          this.handleIDEMessage(parsedMessage as NetworkPanelMessage & { type: "IDE" }, ws);
+          break;
+        default:
+          Logger.warn("Unknown message type received");
+      }
+    } catch (error) {
+      Logger.error("Invalid WebSocket message format:", error);
+    }
+  }
+
+  private handleCDPMessage(message: NetworkPanelMessage & { type: "CDP" }, ws: WebSocket): void {
+    const { payload } = message;
+
+    if (payload.method.startsWith("Network.")) {
+      this.sendCDPMessage(payload);
+    } else {
+      Logger.warn("Unknown CDP method received");
+      this.sendGenericResponse(message, ws);
+    }
+  }
+
+  private handleIDEMessage(message: NetworkPanelMessage & { type: "IDE" }, ws: WebSocket): void {
+    const { payload } = message;
+
+    switch (payload.method) {
+      case "IDE.fetchFullResponseBody":
+        this.handleFetchFullResponseBody(payload.params?.request);
+        break;
+      default:
+        Logger.warn("Unknown IDE method received");
+        this.sendGenericResponse(message, ws);
+    }
+  }
+
+  private sendGenericResponse(message: NetworkPanelMessage, ws: WebSocket): void {
+    const { type, payload } = message;
+
+    if (!payload.id) {
+      return;
+    }
+    const responsePayload = {
+      id: payload.id,
+      method: payload.method,
+      result: {},
+    };
+
+    const response = {
+      type,
+      payload: responsePayload,
+    };
+
+    ws.send(JSON.stringify(response));
+  }
+
+  private async handleFetchFullResponseBody(requestData: RequestData | undefined): Promise<void> {
+    if (!requestData) {
+      Logger.warn("fetchFullResponseBody called without request data");
+      return;
+    }
+
+    try {
+      const response = await this.fetchResponse(requestData);
+      const contentType = response.headers.get("content-type") || "";
+      const responseBody = await response.text();
+
+      const language = determineLanguage(contentType, responseBody);
+      const formattedData = formatDataBasedOnLanguage(responseBody, language);
+
+      openContentInEditor(formattedData, language);
+    } catch (error) {
+      Logger.error("Failed to fetch response body:", error);
+      showDismissableError("Could not fetch response data.");
+    }
+  }
+
+  /**
+   * Performs the actual HTTP request to fetch response data
+   */
+  private async fetchResponse(requestData: RequestData): Promise<Response> {
+    const fetchOptions: RequestOptions = {
+      method: requestData.method,
+      headers: requestData.headers || {},
+    };
+
+    if (requestData.postData) {
+      fetchOptions.body = requestData.postData;
+    }
+
+    return fetch(requestData.url, fetchOptions);
+  }
+
+  // ===== SERVER MANAGEMENT =====
+
+  public get port(): number {
     const address = this.server.address();
     Logger.debug("Server address:", address);
 
@@ -200,11 +243,11 @@ class NetworkCDPWebsocketBackend implements Disposable {
     throw new Error("Server address is not available");
   }
 
-  public async start() {
-    // if server is already started, we return immediately
+  public async start(): Promise<void> {
     if (this.server.listening) {
       return;
     }
+
     return new Promise<void>((resolve) => {
       this.server.listen(0, () => {
         resolve();
@@ -212,13 +255,13 @@ class NetworkCDPWebsocketBackend implements Disposable {
     });
   }
 
-  public broadcast(cdpMessage: string) {
+  public broadcast(message: string): void {
     this.sessions.forEach((ws) => {
-      ws.send(cdpMessage);
+      ws.send(message);
     });
   }
 
-  public dispose() {
+  public dispose(): void {
     this.server.close();
   }
 }
@@ -226,12 +269,12 @@ class NetworkCDPWebsocketBackend implements Disposable {
 export class NetworkPlugin implements ToolPlugin {
   public readonly id: ToolKey = NETWORK_PLUGIN_ID;
   public readonly label = "Network";
+  public readonly persist = true;
 
   public pluginAvailable = true;
   public toolInstalled = false;
-  public readonly persist = true;
 
-  private readonly websocketBackend;
+  private readonly websocketBackend: NetworkCDPWebsocketBackend;
   private devtoolsListeners: Disposable[] = [];
 
   constructor(private readonly inspectorBridge: RadonInspectorBridge) {
@@ -239,44 +282,63 @@ export class NetworkPlugin implements ToolPlugin {
     initialize();
   }
 
-  public get websocketPort() {
+  public get websocketPort(): number {
     return this.websocketBackend.port;
   }
 
-  sendCDPMessage = (messageData: CDPMessage) => {
+  private sendCDPMessage = (messageData: CDPMessage | IDEMessage): void => {
     this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
   };
 
-  activate(): void {
+  public activate(): void {
     this.websocketBackend.start().then(() => {
+      this.setupEventListeners();
+      this.enableNetworkMonitoring();
       commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
-      this.devtoolsListeners.push(
-        this.inspectorBridge.onEvent("pluginMessage", (payload) => {
-          if (payload.pluginId === "network") {
-            this.websocketBackend.broadcast(payload.data);
-          }
-        })
-      );
-      this.devtoolsListeners.push(
-        this.inspectorBridge.onEvent("appReady", () => {
-          this.sendCDPMessage({ method: "Network.enable", params: {} });
-        })
-      );
-      this.sendCDPMessage({ method: "Network.enable", params: {} });
     });
   }
 
-  deactivate(): void {
+  public deactivate(): void {
     disposeAll(this.devtoolsListeners);
     this.sendCDPMessage({ method: "Network.disable", params: {} });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
   }
 
-  openTool(): void {
+  public openTool(): void {
     commands.executeCommand(`RNIDE.Tool.Network.view.focus`);
   }
 
-  dispose() {
+  public dispose(): void {
     disposeAll(this.devtoolsListeners);
+    this.websocketBackend.dispose();
+  }
+
+  private setupEventListeners(): void {
+    // Listen for plugin messages from the bridge
+    this.devtoolsListeners.push(
+      this.inspectorBridge.onEvent("pluginMessage", (payload) => {
+        if (payload.pluginId !== "network") {
+          return;
+        }
+
+        const messageType = payload.type === DEVTOOLS_CDP_MESSAGE_ID ? "CDP" : "IDE";
+        const panelMessage = {
+          type: messageType,
+          payload: JSON.parse(payload.data),
+        };
+        this.websocketBackend.broadcast(JSON.stringify(panelMessage));
+      })
+    );
+
+    // Enable network monitoring when app is ready
+    this.devtoolsListeners.push(
+      this.inspectorBridge.onEvent("appReady", () => {
+        this.enableNetworkMonitoring();
+      })
+    );
+  }
+
+  private enableNetworkMonitoring(): void {
+    this.sendCDPMessage({ method: "Network.enable", params: {} });
   }
 }

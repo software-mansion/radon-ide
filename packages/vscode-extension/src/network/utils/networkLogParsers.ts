@@ -1,7 +1,6 @@
-import { NetworkLog } from "../hooks/useNetworkTracker";
-import { FilterBadge } from "../types/network";
-import { NetworkLogColumn } from "../types/network";
-import { NETWORK_LOG_COLUMNS } from "../types/network";
+import { NetworkLog } from "../types/networkLog";
+import { NetworkLogColumn, NETWORK_LOG_COLUMNS } from "../types/networkLog";
+import { FilterBadge } from "../types/networkFilter";
 
 interface ParsedText {
   badge: FilterBadge | null;

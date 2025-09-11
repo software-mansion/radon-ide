@@ -1,12 +1,8 @@
-import { NetworkLog } from "../../hooks/useNetworkTracker";
-import {
-  ContextMenuItemName,
-  ContextMenuItems,
-  NetworkLogColumn,
-  SortState,
-} from "../../types/network";
 import "./NetworkLogContextMenu.css";
 import NetworkLogContextMenu from "./NetworkLogContextMenu";
+import { NetworkLog, NetworkLogColumn } from "../../types/networkLog";
+import { ContextMenuItems, ContextMenuItemName } from "../../types/contextMenu";
+import { SortState } from "../../types/networkFilter";
 
 interface RowContextMenuProps {
   children: React.ReactNode;
