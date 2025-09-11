@@ -5,6 +5,7 @@ import {
   IDEMessage,
   NetworkPanelMessage,
   NetworkEvent,
+  NETWORK_EVENTS,
 } from "../types/panelMessageProtocol";
 
 export interface NetworkTracker {
@@ -33,28 +34,20 @@ const useNetworkTracker = (): NetworkTracker => {
   const [networkLogs, setNetworkLogs] = useState<NetworkLog[]>([]);
   const [cdpMessages, setCdpMessages] = useState<CDPMessage[]>([]);
 
-  const isValidCDPMessage = (message: string): CDPMessage | null => {
+  const validateCDPMessage = (message: string): CDPMessage | null => {
     try {
       const parsedMsg: NetworkPanelMessage = JSON.parse(message);
+      const { payload, type } = parsedMsg;
 
       // Only accept CDP messages
-      if (parsedMsg.type !== "CDP") {
+      if (type !== "CDP") {
         return null;
       }
 
-      const { payload } = parsedMsg;
+      const haveRequiredFields = payload.params?.timestamp && payload.params?.requestId;
+      const isNetworkEvent = NETWORK_EVENTS.includes(payload.method as NetworkEvent);
 
-      // Only accept messages with required fields
-      if (!payload.params?.timestamp || !payload.params?.requestId) {
-        return null;
-      }
-
-      // Only process network events, not control commands
-      const isNetworkEvent =
-        payload.method.startsWith("Network.") &&
-        !["Network.enable", "Network.disable", "Network.getResponseBody"].includes(payload.method);
-
-      if (!isNetworkEvent) {
+      if (!isNetworkEvent || !haveRequiredFields) {
         return null;
       }
 
@@ -122,9 +115,9 @@ const useNetworkTracker = (): NetworkTracker => {
     wsRef.current = ws;
 
     ws.onmessage = (message) => {
-      const validCdpMessage = isValidCDPMessage(message.data);
-      if (validCdpMessage) {
-        setCdpMessages((prev) => [...prev, validCdpMessage]);
+      const cdpMessage = validateCDPMessage(message.data);
+      if (cdpMessage) {
+        setCdpMessages((prev) => [...prev, cdpMessage]);
       }
     };
 

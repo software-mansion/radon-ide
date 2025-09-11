@@ -4,15 +4,29 @@ export type NetworkEvent =
   | "Network.requestWillBeSent"
   | "Network.responseReceived"
   | "Network.loadingFinished"
-  | "Network.loadingFailed"
-  | "Network.Initiator";
+  | "Network.loadingFailed";
+
+export type NetworkTypes = "Network.Initiator";
 
 export type NetworkControlCommand =
   | "Network.enable"
   | "Network.disable"
   | "Network.getResponseBody";
 
-export type CDPMethod = NetworkEvent | NetworkControlCommand;
+export const NETWORK_EVENTS = [
+  "Network.requestWillBeSent",
+  "Network.responseReceived",
+  "Network.loadingFinished",
+  "Network.loadingFailed",
+] as const;
+
+export const NETWORK_CONTROL_COMMANDS = [
+  "Network.enable",
+  "Network.disable",
+  "Network.getResponseBody",
+] as const;
+
+export type CDPMethod = NetworkEvent | NetworkControlCommand | NetworkTypes;
 
 export type IDEMethod = "IDE.fetchFullResponseBody";
 
