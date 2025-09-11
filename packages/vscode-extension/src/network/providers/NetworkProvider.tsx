@@ -6,7 +6,7 @@ import useNetworkTracker, {
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { vscode } from "../../webview/utilities/vscode";
-import { WebviewCommand } from "../../webview/utilities/communicationTypes";
+import { CDPNetworkCommand, WebviewCommand } from "../../webview/utilities/communicationTypes";
 
 interface NetworkProviderProps extends NetworkTracker {
   isScrolling: boolean;
@@ -48,7 +48,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     vscode.postMessage({
       command: WebviewCommand.CDPCall,
       id,
-      method: "Network.getResponseBody",
+      method: CDPNetworkCommand.GetResponseBody,
       params: {
         requestId: networkLog.requestId,
       },

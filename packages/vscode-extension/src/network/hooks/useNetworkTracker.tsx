@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { vscode } from "../../webview/utilities/vscode";
-import { WebviewCommand } from "../../webview/utilities/communicationTypes";
+import { CDPNetworkCommand, WebviewCommand } from "../../webview/utilities/communicationTypes";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
 
@@ -180,7 +180,7 @@ const useNetworkTracker = (): NetworkTracker => {
   const [isRecording, toggleRecording] = useReducer((state) => {
     vscode.postMessage({
       command: WebviewCommand.CDPCall,
-      method: state ? "Network.disable" : "Network.enable",
+      method: state ? CDPNetworkCommand.Disable : CDPNetworkCommand.Enable,
     });
     return !state;
   }, true);
@@ -188,7 +188,7 @@ const useNetworkTracker = (): NetworkTracker => {
   const getSource = (networkLog: NetworkLog) => {
     vscode.postMessage({
       command: WebviewCommand.CDPCall,
-      method: "Network.Initiator",
+      method: CDPNetworkCommand.Initiator,
       params: {
         ...networkLog.initiator,
       },
