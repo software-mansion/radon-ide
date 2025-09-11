@@ -31,7 +31,6 @@ type IdeMessage = Parameters<IdeMessageListener>[0];
 
 /**
  * InspectorBridge implementation that uses the React DevTools frontend to receive messages from the application.
- * It listens for new connection from the DevTools server and uses the latest DevtoolsConnection to communicate with the application.
  */
 export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disposable {
   private devtoolsConnection: DevtoolsConnection | undefined;
@@ -40,23 +39,28 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
 
   constructor(devtoolsServer: DevtoolsServer) {
     super();
-    this.devtoolsServerListener = devtoolsServer.onConnection((connection) => {
-      this.devtoolsConnection = connection;
-      disposeAll(this.devtoolsConnectionListeners);
-      this.devtoolsConnectionListeners = [
-        connection.onIdeMessage((message) => {
-          this.emitEvent(message.type, message.data);
-        }),
-        connection.onDisconnected(() => {
-          if (connection === this.devtoolsConnection) {
-            this.devtoolsConnection = undefined;
-            this.devtoolsConnectionListeners = [];
-            disposeAll(this.devtoolsConnectionListeners);
-          }
-        }),
-      ];
-    });
+    this.devtoolsConnection = devtoolsServer.connection;
+    if (devtoolsServer.connection) {
+      this.setupBridge(devtoolsServer.connection);
+    }
+    this.devtoolsServerListener = devtoolsServer.onConnection(this.setupBridge);
   }
+
+  private setupBridge = (connection: DevtoolsConnection) => {
+    this.devtoolsConnection = connection;
+    disposeAll(this.devtoolsConnectionListeners);
+    this.devtoolsConnectionListeners = [
+      connection.onIdeMessage((message) => {
+        this.emitEvent(message.type, message.data);
+      }),
+      connection.onDisconnected(() => {
+        if (connection === this.devtoolsConnection) {
+          this.devtoolsConnectionListeners = [];
+          disposeAll(this.devtoolsConnectionListeners);
+        }
+      }),
+    ];
+  };
 
   dispose() {
     disposeAll(this.devtoolsConnectionListeners);
@@ -143,7 +147,20 @@ export class DevtoolsConnection implements Disposable {
 }
 
 export abstract class DevtoolsServer implements Disposable {
-  protected readonly connectionEventEmitter: EventEmitter<DevtoolsConnection> = new EventEmitter();
+  private readonly connectionEventEmitter: EventEmitter<DevtoolsConnection> = new EventEmitter();
+  private _connection: DevtoolsConnection | undefined;
+
+  protected setConnection(connection: DevtoolsConnection | undefined) {
+    this._connection?.dispose();
+    this._connection = connection;
+    if (connection) {
+      this.connectionEventEmitter.fire(connection);
+    }
+  }
+
+  public get connection() {
+    return this._connection;
+  }
 
   public readonly onConnection = this.connectionEventEmitter.event;
 
@@ -193,7 +210,7 @@ class WebSocketDevtoolsServer extends DevtoolsServer implements Disposable {
         session.disconnect();
       });
 
-      this.connectionEventEmitter.fire(session);
+      super.setConnection(session);
     });
   }
 
