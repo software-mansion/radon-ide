@@ -32,21 +32,36 @@
   flex-direction: column;
 }
 
-.label {
+.label,
+.labelLanding {
   margin: 0;
   color: var(--radon-subheading);
-  font-size: 16px;
   font-style: normal;
   font-weight: 400;
   line-height: 20px;
 }
+.label {
+  font-size: 16px;
+}
 
-.title {
+.labelLanding {
+  font-size: 14px;
+}
+
+.title,
+.titleLanding {
   color: var(--ifm-color-primary);
-  font-size: 20px;
   font-weight: 500;
   line-height: normal;
   margin: 0;
+}
+
+.title {
+  font-size: 24px;
+}
+
+.titleLanding {
+  font-size: 20px;
 }
 
 .textContent {
@@ -61,18 +76,19 @@ img.gridSvg {
   max-width: 400px;
   max-height: 200px;
   height: auto;
-  min-width: 280px;
 }
 
 .widthSvg {
   width: 100%;
 }
-@media (max-width: 1250px) {
-  .reverseContainer {
-  }
-}
+
 @media (max-width: 700px) {
   .container {
     padding: 24px 24px 0 24px;
+  }
+
+  .reverseContainer {
+    padding: 24px;
+    gap: 16px;
   }
 }

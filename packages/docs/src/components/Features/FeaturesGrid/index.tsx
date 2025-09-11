@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
 import FeaturesGridCard from "../FeaturesGridCard";
 import styles from "./styles.module.css";
 import useBaseUrl from "@docusaurus/useBaseUrl";
@@ -7,14 +7,6 @@ import ArrowRightSmallIcon from "../../ArrowRightSmallIcon";
 import { motion } from "motion/react";
 
 export default function FeaturesGrid() {
-  const { isLanding } = usePageType();
-  const [first, setFirst] = useState(0);
-  const [cardWidth, setCardWidth] = useState(0);
-  const [cardPosition, setCardPosition] = useState(0);
-  const [visibleCards, setVisibleCards] = useState(2);
-  const containerRef = useRef(null);
-  const cardRefs = useRef([]);
-
   const featuresList = [
     {
       label: "Debugger",
@@ -60,55 +52,135 @@ export default function FeaturesGrid() {
     },
   ];
 
-  useEffect(() => {
-    const cardLeft = cardRefs.current[first]?.offsetLeft || 0;
-    const cardWidth = cardRefs.current[first]?.offsetWidth || 0;
-    const containerWidth = containerRef.current?.offsetWidth || 0;
+  const { isLanding } = usePageType();
 
-    let position = cardLeft + cardWidth / 2 - containerWidth / 2;
+  const [first, setFirst] = useState(0);
+  const [cardWidth, setCardWidth] = useState(0);
+  const [cardPosition, setCardPosition] = useState(0);
+  const [visibleCards, setVisibleCards] = useState(3);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const windowRef = useRef(null);
+  const containerRef = useRef(null);
+  const cardRefs = useRef([]);
+
+  const calculatedPosition = useMemo(() => {
+    if (!cardRefs.current[first] || !windowRef.current || !cardRefs.current[0]) return 0;
+
+    const cardLeft = cardRefs.current[first].offsetLeft;
+    const windowWidth = windowRef.current.offsetWidth;
+    const cardWidth = cardRefs.current[0].offsetWidth;
+
+    let position = cardLeft + cardWidth / 2 - windowWidth / 2;
 
     if (first === 0) {
       position = cardLeft;
     }
 
     if (first === featuresList.length - 1) {
-      position = cardLeft + cardWidth - containerWidth;
+      position = cardLeft + cardWidth - windowWidth;
     }
 
-    setCardWidth(cardWidth);
-    setCardPosition(position);
-  }, [first, featuresList.length]);
+    console.log(first);
+    return position;
+  }, [first]);
+
+  const dragConstraints = useMemo(() => {
+    if (!containerRef.current || !windowRef.current) {
+      return { left: 0, right: 0 };
+    }
+
+    const containerWidth = containerRef.current.scrollWidth;
+    const windowWidth = windowRef.current.offsetWidth;
+
+    return {
+      left: -(containerWidth - windowWidth || 0),
+      right: 0,
+    };
+  }, [cardWidth, visibleCards]);
 
   useEffect(() => {
-    const updateVisibleCards = () => {
-      if (!isLanding || !containerRef.current || !cardWidth) {
+    if (!cardRefs.current[0]) return;
+    const newCardWidth = cardRefs.current[0].offsetWidth;
+    setCardWidth(newCardWidth);
+    setCardPosition(calculatedPosition);
+  }, [calculatedPosition]);
+
+  useEffect(() => {
+    if (!isLanding || !windowRef.current) return;
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+
+      const windowWidth = entry.contentRect.width;
+      const currentCardWidth = cardRefs.current[0]?.offsetWidth || 0;
+
+      if (!currentCardWidth) {
         setVisibleCards(2);
         return;
       }
-      const containerWidth = containerRef.current.offsetWidth;
-      const newVisibleCards = Math.floor(containerWidth / cardWidth);
+
+      const newVisibleCards = Math.floor(windowWidth / currentCardWidth);
       setVisibleCards(newVisibleCards);
-    };
+    });
 
-    updateVisibleCards();
-    window.addEventListener("resize", updateVisibleCards);
-    return () => window.removeEventListener("resize", updateVisibleCards);
-  }, [isLanding, cardWidth]);
+    observer.observe(windowRef.current);
+    return () => observer.disconnect();
+  }, [isLanding]);
 
-  const handleNextArrow = () => {
-    setFirst((prev) => prev + 1);
-  };
+  const handleNextArrow = useCallback(() => {
+    if (visibleCards > 2 && first === 0) {
+      setFirst(2);
+    } else {
+      setFirst((prev) => Math.min(prev + 1, featuresList.length - 1));
+    }
+  }, [visibleCards, first]);
 
-  const handlePrevArrow = () => {
-    setFirst((prev) => prev - 1);
-  };
+  const handlePrevArrow = useCallback(() => {
+    setFirst((prev) => Math.max(prev - 1, 0));
+  }, []);
+
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
+  const handleDragEnd = useCallback(() => {
+    const winRect = windowRef.current?.getBoundingClientRect();
+    if (!winRect) return;
+
+    const screenCenter = winRect.left + winRect.width / 2;
+    let centerIndex = 0;
+    let minDistance = winRect.width;
+
+    cardRefs.current.forEach((el, i) => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cardCenter = rect.left + rect.width / 2;
+      const distance = Math.abs(cardCenter - screenCenter);
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        centerIndex = i;
+      }
+    });
+    setFirst(centerIndex);
+    setIsDragging(false);
+  }, []);
 
   return (
     <div className={isLanding ? styles.wrapperLanding : styles.wrapper}>
-      <div className={styles.overflow} ref={containerRef}>
+      <div className={styles.overflow} ref={windowRef}>
         <motion.div
-          animate={{ x: isLanding && -cardPosition }}
+          ref={containerRef}
+          animate={{ x: isLanding && !isDragging && -cardPosition }}
           transition={{ duration: 0.6, type: "linear" }}
+          drag="x"
+          dragConstraints={dragConstraints}
+          dragTransition={{ bounceStiffness: 200, bounceDamping: 20 }}
+          dragElastic={0.2}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+          whileDrag={{ cursor: "grabbing", userSelect: "none" }}
           className={isLanding ? styles.landingContainer : styles.container}>
           {featuresList.map((feature, index) => (
             <FeaturesGridCard
@@ -125,14 +197,17 @@ export default function FeaturesGrid() {
       {isLanding && (
         <div className={styles.navigationArrows}>
           <div className={styles.arrow}>
-            <button className={styles.arrowLeft} disabled={first === 0} onClick={handlePrevArrow}>
+            <button
+              className={styles.arrowLeft}
+              disabled={first === 0 || (visibleCards === 3 && first === 1)}
+              onClick={handlePrevArrow}>
               <ArrowRightSmallIcon />
             </button>
           </div>
           <div className={styles.arrow}>
             <button
               className={styles.arrowRight}
-              disabled={first >= featuresList.length - visibleCards}
+              disabled={first >= featuresList.length - Math.ceil(visibleCards / 2)}
               onClick={handleNextArrow}>
               <ArrowRightSmallIcon />
             </button>

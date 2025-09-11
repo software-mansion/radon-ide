@@ -23,6 +23,9 @@ export default function FeaturesLanding() {
       </div>
       <div className={styles.overviewContainer}>
         <FeaturesGrid />
+        <a href="/features" className={styles.learnMoreLinkBottom}>
+          See all features <ArrowRightSmallIcon />
+        </a>
       </div>
     </div>
   );

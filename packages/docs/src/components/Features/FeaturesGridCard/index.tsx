@@ -18,8 +18,8 @@ const FeaturesGridCard = forwardRef<HTMLDivElement, FeatureGridCardProps>(
       <div ref={ref} className={isLanding ? styles.reverseContainer : styles.container}>
         <div className={styles.content}>
           <div className={styles.header}>
-            <p className={styles.label}>{label}</p>
-            <p className={styles.title}> {title}</p>
+            <p className={isLanding ? styles.labelLanding : styles.label}>{label}</p>
+            <p className={isLanding ? styles.titleLanding : styles.title}> {title}</p>
           </div>
           {!isLanding && <p className={styles.textContent}>{content}</p>}
         </div>

@@ -29,6 +29,9 @@
 
 .description p {
   margin: 0;
+  color: var(--radon-subheading);
+  font-size: 18px;
+  line-height: 28px;
 }
 
 .description {
@@ -37,25 +40,61 @@
   gap: 24px;
 }
 
-.learnMoreLink {
+.learnMoreLink,
+.learnMoreLinkBottom {
   color: var(--ifm-color-primary);
   text-decoration: none;
   border: 1px solid var(--ifm-color-primary);
-  padding: 16px;
+
   width: fit-content;
   font-size: 16px;
   line-height: 24px;
   justify-content: center;
   align-items: center;
-  display: flex;
+  text-align: center;
   gap: 12px;
+}
+
+.learnMoreLink {
+  display: flex;
+  padding: 16px;
+}
+
+.learnMoreLinkBottom {
+  display: none;
+  padding: 8px 12px;
+}
+
+.overviewContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
 }
 
 @media (max-width: 1024px) {
   .contentContainer {
-    padding: 24px;
+    padding: 40px 24px;
+    gap: 40px;
   }
   .textContent {
+    flex-direction: column;
+  }
+  .heading,
+  .heading span {
+    font-size: 28px;
+  }
+  .description p {
+    font-size: 16px;
+    line-height: 24px;
+  }
+}
+
+@media (max-width: 700px) {
+  .learnMoreLink {
     display: none;
+  }
+  .learnMoreLinkBottom {
+    display: flex;
+    justify-self: end;
   }
 }

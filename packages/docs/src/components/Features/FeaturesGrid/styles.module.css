@@ -87,7 +87,6 @@
 
 @media (max-width: 400px) {
   .navigationArrows {
-    justify-content: initial;
-    gap: 13px;
+    display: none;
   }
 }
