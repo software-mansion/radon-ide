@@ -4,6 +4,7 @@ import {
   Workbench,
   EditorView,
   BottomBarPanel,
+  Key,
 } from "vscode-extension-tester";
 import path from "path";
 import fs from "fs";
@@ -43,6 +44,7 @@ before(async function () {
   if (IS_RECORDING) {
     recorder = startRecording(driver, { interval: 100 });
   }
+  await workbench.executeCommand("View: Toggle Secondary Side Bar Visibility");
 });
 
 afterEach(async function () {
