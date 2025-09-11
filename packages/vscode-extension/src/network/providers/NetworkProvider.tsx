@@ -45,6 +45,26 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
     const id = Math.random().toString(36).substring(7);
 
+    const { promise, resolve } = Promise.withResolvers();
+
+    const listener = (message: MessageEvent) => {
+      try {
+        const parsedMsg = JSON.parse(message.data);
+        if (parsedMsg.id === id) {
+          setResponseBodies((prev) => ({
+            ...prev,
+            [networkLog.requestId]: parsedMsg.result.body,
+          }));
+          resolve(parsedMsg.result.body);
+          ws?.removeEventListener("message", listener);
+        }
+      } catch (error) {
+        console.error("Error parsing WebSocket message:", error);
+      }
+    };
+
+    ws?.addEventListener("message", listener);
+
     vscode.postMessage({
       command: WebviewCommand.CDPCall,
       id,
@@ -54,25 +74,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       },
     });
 
-    return new Promise((resolve) => {
-      const listener = (message: MessageEvent) => {
-        try {
-          const parsedMsg = JSON.parse(message.data);
-          if (parsedMsg.id === id) {
-            setResponseBodies((prev) => ({
-              ...prev,
-              [networkLog.requestId]: parsedMsg.result.body,
-            }));
-            resolve(parsedMsg.result.body);
-            ws?.removeEventListener("message", listener);
-          }
-        } catch (error) {
-          console.error("Error parsing WebSocket message:", error);
-        }
-      };
-
-      ws?.addEventListener("message", listener);
-    });
+    return promise;
   };
 
   const contextValue = useMemo(() => {
