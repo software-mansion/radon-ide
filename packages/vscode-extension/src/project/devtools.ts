@@ -39,7 +39,6 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
 
   constructor(devtoolsServer: DevtoolsServer) {
     super();
-    this.devtoolsConnection = devtoolsServer.connection;
     if (devtoolsServer.connection) {
       this.setupBridge(devtoolsServer.connection);
     }
@@ -73,9 +72,10 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
 }
 
 export class DevtoolsConnection implements Disposable {
-  bridge: FrontendBridge;
-  store: Store;
-  connected: boolean = true;
+  private bridge: FrontendBridge;
+  private store: Store;
+
+  public connected: boolean = true;
 
   private readonly ideMessageEventEmitter: EventEmitter<IdeMessage> = new EventEmitter();
   private readonly disconnectedEventEmitter: EventEmitter<void> = new EventEmitter();
@@ -153,7 +153,7 @@ export abstract class DevtoolsServer implements Disposable {
   private _connection: DevtoolsConnection | undefined;
 
   protected setConnection(connection: DevtoolsConnection | undefined) {
-    this._connection?.dispose();
+    this._connection?.disconnect();
     this._connection = connection;
     if (connection) {
       this.connectionEventEmitter.fire(connection);
@@ -204,15 +204,15 @@ class WebSocketDevtoolsServer extends DevtoolsServer implements Disposable {
         },
       };
 
-      const session = new DevtoolsConnection(wall);
+      const connection = new DevtoolsConnection(wall);
       ws.on("close", () => {
-        session.disconnect();
+        connection.disconnect();
       });
       ws.on("error", () => {
-        session.disconnect();
+        connection.disconnect();
       });
 
-      super.setConnection(session);
+      super.setConnection(connection);
     });
   }
 
