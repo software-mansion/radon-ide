@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { vscode } from "../../webview/utilities/vscode";
 import { CDPNetworkCommand, WebviewCommand } from "../../webview/utilities/communicationTypes";
 
@@ -68,7 +68,6 @@ export interface WebSocketMessage {
 
 export interface NetworkTracker {
   networkLogs: NetworkLog[];
-  ws: WebSocket | null;
   isRecording: boolean;
   clearActivity: () => void;
   toggleRecording: () => void;
@@ -77,7 +76,6 @@ export interface NetworkTracker {
 
 export const networkTrackerInitialState: NetworkTracker = {
   networkLogs: [],
-  ws: null,
   isRecording: true,
   clearActivity: () => {},
   toggleRecording: () => {},
@@ -85,8 +83,6 @@ export const networkTrackerInitialState: NetworkTracker = {
 };
 
 const useNetworkTracker = (): NetworkTracker => {
-  const wsRef = useRef<WebSocket | null>(null);
-
   const [networkLogs, setNetworkLogs] = useState<NetworkLog[]>([]);
   const [serverMessages, setServerMessages] = useState<string[]>([]);
 
@@ -144,20 +140,9 @@ const useNetworkTracker = (): NetworkTracker => {
   };
 
   useEffect(() => {
-    const websocketEndpoint = document.querySelector<HTMLMetaElement>(
-      "meta[name='websocketEndpoint']"
-    )?.content;
-
-    const ws = new WebSocket(`ws://${websocketEndpoint}`);
-    wsRef.current = ws;
-
     window.onmessage = (message) => {
       // TODO: Remove serialization, as it is not neccessary with direct comms
       setServerMessages((prev) => [...prev, message.data]);
-    };
-
-    return () => {
-      ws.close();
     };
   }, []);
 
@@ -203,7 +188,6 @@ const useNetworkTracker = (): NetworkTracker => {
 
   return {
     networkLogs: validLogs,
-    ws: wsRef.current,
     isRecording,
     clearActivity,
     toggleRecording,
