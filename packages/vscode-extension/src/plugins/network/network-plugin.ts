@@ -35,6 +35,8 @@ interface CDPMessage {
   params: unknown;
 }
 
+type BroadcastListener = (message: CDPMessage) => void;
+
 class NetworkCDPWebsocketBackend implements Disposable {
   private server: Server;
   private sessions: Set<WebSocket> = new Set();
@@ -91,6 +93,7 @@ class NetworkCDPWebsocketBackend implements Disposable {
   }
 
   public broadcast(cdpMessage: string) {
+    // TODO: Check if this can be safely removed
     this.sessions.forEach((ws) => {
       ws.send(cdpMessage);
     });
@@ -111,6 +114,7 @@ export class NetworkPlugin implements ToolPlugin {
 
   private readonly websocketBackend;
   private devtoolsListeners: Disposable[] = [];
+  private messageListeners: BroadcastListener[] = [];
 
   constructor(private readonly inspectorBridge: RadonInspectorBridge) {
     this.websocketBackend = new NetworkCDPWebsocketBackend(this.sendCDPMessage);
@@ -125,6 +129,17 @@ export class NetworkPlugin implements ToolPlugin {
     this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
   }
 
+  onMessageBroadcast(cb: BroadcastListener): Disposable {
+    // TODO: Check if this should only be exposed to Network or all
+    this.messageListeners.push(cb);
+    return new Disposable(() => {
+      let index = this.messageListeners.indexOf(cb);
+      if (index !== -1) {
+        this.messageListeners.splice(index, 1);
+      }
+    });
+  }
+
   activate(): void {
     this.websocketBackend.start().then(() => {
       commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
@@ -132,6 +147,7 @@ export class NetworkPlugin implements ToolPlugin {
         this.inspectorBridge.onEvent("pluginMessage", (payload) => {
           if (payload.pluginId === "network") {
             this.websocketBackend.broadcast(payload.data);
+            this.messageListeners.forEach((cb) => cb(payload.data));
           }
         })
       );

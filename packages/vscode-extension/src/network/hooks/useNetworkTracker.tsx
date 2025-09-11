@@ -151,7 +151,13 @@ const useNetworkTracker = (): NetworkTracker => {
     const ws = new WebSocket(`ws://${websocketEndpoint}`);
     wsRef.current = ws;
 
+    window.onmessage = (message) => {
+      console.log("FOOBAR WINDOW MESSAGE:", message.data);
+      // setServerMessages((prev) => [...prev, message.data]);
+    };
+
     ws.onmessage = (message) => {
+      console.log("FOOBAR WEBSOC MESSAGE:", message.data);
       setServerMessages((prev) => [...prev, message.data]);
     };
 

@@ -16,11 +16,13 @@ import { WebviewCDPMessage, WebviewCommand } from "../../webview/utilities/commu
 
 export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider, Disposable {
   private messageListenerDisposable: null | Disposable = null;
+  private broadcastRepeaterDisposable: null | Disposable = null;
 
   constructor(private readonly context: ExtensionContext) {}
 
   public dispose() {
     this.messageListenerDisposable?.dispose();
+    this.broadcastRepeaterDisposable?.dispose();
   }
 
   public resolveWebviewView(
@@ -53,6 +55,10 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider, Disp
           params: event.params ?? {},
         });
       }
+    });
+
+    this.broadcastRepeaterDisposable = networkPlugin.onMessageBroadcast((message) => {
+      webview.postMessage(message);
     });
 
     webviewView.onDidChangeVisibility(() =>
