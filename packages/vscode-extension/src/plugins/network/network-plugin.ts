@@ -1,6 +1,4 @@
-import http, { Server } from "http";
 import { commands, Disposable, window } from "vscode";
-import { WebSocketServer, WebSocket } from "ws";
 import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
@@ -37,66 +35,6 @@ interface CDPMessage {
 
 type BroadcastListener = (message: CDPMessage) => void;
 
-class NetworkCDPWebsocketBackend implements Disposable {
-  private server: Server;
-  private sessions: Set<WebSocket> = new Set();
-
-  constructor(private readonly sendCDPMessage: (messageData: CDPMessage) => void) {
-    this.server = http.createServer(() => {});
-    const wss = new WebSocketServer({ server: this.server });
-
-    wss.on("connection", (ws) => {
-      this.sessions.add(ws);
-
-      ws.on("message", (message) => {
-        try {
-          const payload = JSON.parse(message.toString());
-          if (payload.method.startsWith("Network.")) {
-            // forward message to devtools
-            this.sendCDPMessage(payload);
-          } else if (payload.id) {
-            // send empty response otherwise
-            const response = { id: payload.id, result: {} };
-            ws.send(JSON.stringify(response));
-          }
-        } catch (err) {
-          console.error("Network CDP invalid message format:", err);
-        }
-      });
-
-      ws.on("close", () => {
-        this.sessions.delete(ws);
-      });
-    });
-  }
-
-  public get port() {
-    const address = this.server.address();
-    Logger.debug("Server address:", address);
-
-    if (address && typeof address === "object") {
-      return address.port;
-    }
-    throw new Error("Server address is not available");
-  }
-
-  public async start() {
-    // if server is already started, we return immediately
-    if (this.server.listening) {
-      return;
-    }
-    return new Promise<void>((resolve) => {
-      this.server.listen(0, () => {
-        resolve();
-      });
-    });
-  }
-
-  public dispose() {
-    this.server.close();
-  }
-}
-
 export class NetworkPlugin implements ToolPlugin {
   public readonly id: ToolKey = NETWORK_PLUGIN_ID;
   public readonly label = "Network";
@@ -105,12 +43,10 @@ export class NetworkPlugin implements ToolPlugin {
   public toolInstalled = false;
   public readonly persist = true;
 
-  private readonly websocketBackend;
   private devtoolsListeners: Disposable[] = [];
   private messageListeners: BroadcastListener[] = [];
 
   constructor(private readonly inspectorBridge: RadonInspectorBridge) {
-    this.websocketBackend = new NetworkCDPWebsocketBackend(this.sendCDPMessage);
     initialize();
   }
 
@@ -130,22 +66,23 @@ export class NetworkPlugin implements ToolPlugin {
   }
 
   activate(): void {
-    this.websocketBackend.start().then(() => {
-      commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
-      this.devtoolsListeners.push(
-        this.inspectorBridge.onEvent("pluginMessage", (payload) => {
-          if (payload.pluginId === "network") {
-            this.messageListeners.forEach((cb) => cb(payload.data));
-          }
-        })
-      );
-      this.devtoolsListeners.push(
-        this.inspectorBridge.onEvent("appReady", () => {
-          this.sendCDPMessage({ method: CDPNetworkCommand.Enable, params: {} });
-        })
-      );
-      this.sendCDPMessage({ method: CDPNetworkCommand.Enable, params: {} });
-    });
+    commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
+
+    this.devtoolsListeners.push(
+      this.inspectorBridge.onEvent("pluginMessage", (payload) => {
+        if (payload.pluginId === "network") {
+          this.messageListeners.forEach((cb) => cb(payload.data));
+        }
+      })
+    );
+
+    this.devtoolsListeners.push(
+      this.inspectorBridge.onEvent("appReady", () => {
+        this.sendCDPMessage({ method: CDPNetworkCommand.Enable, params: {} });
+      })
+    );
+
+    this.sendCDPMessage({ method: CDPNetworkCommand.Enable, params: {} });
   }
 
   deactivate(): void {
