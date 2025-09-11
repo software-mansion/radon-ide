@@ -19,9 +19,11 @@ export class RadonViewsService {
   }
 
   async openRadonIDEPanel() {
-    await this.driver
-      .findElement(By.css("div#swmansion\\.react-native-ide"))
-      .click();
+    const radonIDEButton =
+      await this.elementHelperService.findAndWaitForElement(
+        By.css("div#swmansion\\.react-native-ide")
+      );
+    await radonIDEButton.click();
 
     const webview = await this.elementHelperService.findAndWaitForElement(
       By.css('iframe[class*="webview"]'),

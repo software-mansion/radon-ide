@@ -50,6 +50,7 @@ describe("App interaction tests", () => {
     const bottomBar = new BottomBarPanel();
     await bottomBar.toggle(false);
     await workbench.executeCommand("Remove All Breakpoints");
+
     radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
 

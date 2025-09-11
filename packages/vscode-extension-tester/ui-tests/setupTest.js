@@ -62,6 +62,18 @@ afterEach(async function () {
   let bottomBar = new BottomBarPanel();
   await bottomBar.toggle(false);
   await new EditorView().closeAllEditors();
+  await workbench.executeCommand("Developer: Reload Window");
+  workbench = new Workbench();
+
+  // waiting for vscode to get ready after reload
+  await driver.wait(async () => {
+    try {
+      await workbench.getTitleBar().getTitle();
+      return true;
+    } catch {
+      return false;
+    }
+  }, 10000);
 });
 
 after(async function () {
