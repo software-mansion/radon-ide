@@ -152,12 +152,7 @@ const useNetworkTracker = (): NetworkTracker => {
     wsRef.current = ws;
 
     window.onmessage = (message) => {
-      console.log("FOOBAR WINDOW MESSAGE:", message.data);
-      // setServerMessages((prev) => [...prev, message.data]);
-    };
-
-    ws.onmessage = (message) => {
-      console.log("FOOBAR WEBSOC MESSAGE:", message.data);
+      // TODO: Remove serialization, as it is not neccessary with direct comms
       setServerMessages((prev) => [...prev, message.data]);
     };
 
