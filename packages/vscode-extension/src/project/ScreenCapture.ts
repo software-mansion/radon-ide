@@ -87,6 +87,9 @@ export class ScreenCapture implements Disposable {
     clearTimeout(this.recordingTimeout);
     clearInterval(this.recordingTimer);
 
+    this.recordingTimeout = undefined;
+    this.recordingTimer = undefined;
+
     this.stateManager.setState({ isRecording: false, recordingTime: 0 });
 
     return this.device.captureAndStopRecording(
