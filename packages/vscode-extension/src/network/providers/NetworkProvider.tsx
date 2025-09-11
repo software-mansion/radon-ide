@@ -11,9 +11,9 @@ import useNetworkTracker, {
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
-import { NetworkLog } from "../types/networkLog.d";
-import { NetworkPanelMessage } from "../types/panelMessageProtocol.d";
-import { ResponseBodyData } from "../types/network.d";
+import { NetworkLog } from "../types/networkLog";
+import { NetworkPanelMessage } from "../types/panelMessageProtocol";
+import { ResponseBodyData } from "../types/network";
 
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;

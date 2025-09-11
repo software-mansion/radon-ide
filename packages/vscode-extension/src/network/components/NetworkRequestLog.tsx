@@ -18,8 +18,8 @@ import IconButton from "../../webview/components/shared/IconButton";
 import { sortNetworkLogs } from "../utils/networkLogsSort";
 import { getNetworkLogValue } from "../utils/networkLogParsers";
 
-import { NetworkLogColumn, NetworkLog } from "../types/networkLog.d";
-import { SortState, SortDirection } from "../types/networkFilter.d";
+import { NetworkLogColumn, NetworkLog } from "../types/networkLog";
+import { SortState, SortDirection } from "../types/networkFilter";
 import { useNetworkFilter } from "../providers/NetworkFilterProvider";
 import "./NetworkRequestLog.css";
 

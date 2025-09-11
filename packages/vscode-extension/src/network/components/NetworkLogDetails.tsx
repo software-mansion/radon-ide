@@ -11,8 +11,8 @@ import PayloadTab from "./Tabs/PayloadTab";
 import ResponseTab from "./Tabs/ResponseTab";
 import TimingTab from "./Tabs/TimingTab";
 import { useNetwork } from "../providers/NetworkProvider";
-import { NetworkLog } from "../types/networkLog.d";
-import { ResponseBodyData } from "../types/network.d";
+import { NetworkLog } from "../types/networkLog";
+import { ResponseBodyData } from "../types/network";
 
 const VSCODE_TABS_HEADER_HEIGHT = 30;
 

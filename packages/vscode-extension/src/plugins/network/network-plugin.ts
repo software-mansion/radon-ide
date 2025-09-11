@@ -10,15 +10,12 @@ import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider
 import { disposeAll } from "../../utilities/disposables";
 import { openContentInEditor, showDismissableError } from "../../utilities/editorOpeners";
 
-import {
-  RequestData,
-  RequestOptions,
-} from "../../network/types/network.d";
+import { RequestData, RequestOptions } from "../../network/types/network";
 import {
   NetworkPanelMessage,
   IDEMessage,
   CDPMessage,
-} from "../../network/types/panelMessageProtocol.d";
+} from "../../network/types/panelMessageProtocol";
 
 interface WebSocketMessageData {
   toString(): string;

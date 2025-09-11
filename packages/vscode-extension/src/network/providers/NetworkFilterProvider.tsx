@@ -10,8 +10,8 @@ import {
 } from "react";
 import { getNetworkLogValue, parseTextToBadge } from "../utils/networkLogParsers";
 import { useNetwork } from "./NetworkProvider";
-import { FilterBadge } from "../types/networkFilter.d";
-import { NetworkLog, NETWORK_LOG_COLUMNS } from "../types/networkLog.d";
+import { FilterBadge } from "../types/networkFilter";
+import { NetworkLog, NETWORK_LOG_COLUMNS } from "../types/networkLog";
 
 // lookup structure for badge filters
 type BadgeByColumnsLookup = Record<string, string[]>;

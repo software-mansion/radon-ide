@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { NetworkLog } from "../types/networkLog.d";
+import { NetworkLog } from "../types/networkLog";
 import {
   CDPMessage,
   IDEMessage,
   NetworkPanelMessage,
   NetworkEvent,
-} from "../types/panelMessageProtocol.d";
+} from "../types/panelMessageProtocol";
 
 export interface NetworkTracker {
   networkLogs: NetworkLog[];
