@@ -12,14 +12,6 @@ describe("Smoke tests Radon IDE", () => {
     ({ elementHelperService, radonViewsService } = initServices(driver));
   });
 
-  it("should open Radon IDE webview using Radon IDE button", async function () {
-    try {
-      await radonViewsService.openRadonIDEPanel();
-    } catch (error) {
-      throw error;
-    }
-  });
-
   it("should open Radon IDE view using command line", async function () {
     await workbench.executeCommand("RNIDE.openPanel");
 
@@ -34,6 +26,14 @@ describe("Smoke tests Radon IDE", () => {
       "Timed out waiting for Radon IDE iframe"
     );
     await driver.switchTo().frame(iframe);
+  });
+
+  it("should open Radon IDE webview using Radon IDE button", async function () {
+    try {
+      await radonViewsService.openRadonIDEPanel();
+    } catch (error) {
+      throw error;
+    }
   });
 
   it("should open Radon IDE webview for a specific project", async function () {

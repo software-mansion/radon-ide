@@ -37,7 +37,7 @@ before(async function () {
 
   await browser.waitForWorkbench();
   workbench = new Workbench();
-  await workbench.executeCommand("Notifications: Clear All Notifications");
+  await workbench.executeCommand("Notifications: Toggle Do Not Disturb Mode");
   await workbench.executeCommand("View: Close All Editors");
 
   view = new WebView();
@@ -77,7 +77,6 @@ afterEach(async function () {
       return false;
     }
   }, 10000);
-  workbench.executeCommand("Notifications: Clear All Notifications");
 });
 
 after(async function () {
