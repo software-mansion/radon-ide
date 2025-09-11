@@ -128,38 +128,28 @@ export function exec(
     // we want to print errors / stderr logs when the process fails
 
     const allowNonZeroExit = options?.allowNonZeroExit;
-    function handleProcessFailed(exitCode?: number, signal?: string, error?: Error) {
-      if (exitCode === undefined && signal !== undefined) {
-        Logger.info("Subprocess", name, "was terminated with", signal);
-      } else {
-        if (!allowNonZeroExit || !exitCode) {
-          Logger.error(
-            "Subprocess",
-            name,
-            args?.join(" "),
-            "execution resulted in an error:",
-            error
-          );
-        }
-      }
-    }
 
     subprocess
-      .then((result) => {
-        if (result.stderr) {
-          Logger.debug(
-            "Subprocess",
-            name,
-            args?.join(" "),
-            "produced error output:",
-            result.stderr
-          );
-        }
-        if (result.failed) {
-          handleProcessFailed(result.exitCode, result.signal);
-        }
+      .catch((e) => {
+        return {
+          stderr: e.stderr,
+          failed: true,
+          exitCode: e.exitCode,
+          signal: e.signal,
+        };
       })
-      .catch((e) => handleProcessFailed(e.exitCode, e.signal, e));
+      .then((resultOrError) => {
+        const { stderr, failed, exitCode, signal } = resultOrError;
+        if (stderr) {
+          // we print stderr to debug if the process exited normally or failed but
+          // allowNonZeroExit was set. Otherwise we print it to the error channel.
+          const log = failed && !allowNonZeroExit ? Logger.error : Logger.debug;
+          log("Subprocess", name, args?.join(" "), "produced error output:", stderr);
+        }
+        if (exitCode === undefined && signal !== undefined) {
+          Logger.info("Subprocess", name, "was terminated with", signal);
+        }
+      });
   }
 
   return subprocess;
