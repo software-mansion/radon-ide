@@ -212,9 +212,6 @@ class NetworkCDPWebsocketBackend implements Disposable {
     }
   }
 
-  /**
-   * Performs the actual HTTP request to fetch response data
-   */
   private async fetchResponse(requestData: RequestData): Promise<Response> {
     const fetchOptions: RequestOptions = {
       method: requestData.method,
@@ -227,8 +224,6 @@ class NetworkCDPWebsocketBackend implements Disposable {
 
     return fetch(requestData.url, fetchOptions);
   }
-
-  // ===== SERVER MANAGEMENT =====
 
   public get port(): number {
     const address = this.server.address();
