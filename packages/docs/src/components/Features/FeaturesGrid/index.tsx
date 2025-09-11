@@ -52,7 +52,7 @@ export default function FeaturesGrid() {
     },
   ];
 
-  const { isLanding } = usePageType();
+  const { isFeatures } = usePageType();
 
   const [first, setFirst] = useState(0);
   const [cardWidth, setCardWidth] = useState(0);
@@ -81,7 +81,6 @@ export default function FeaturesGrid() {
       position = cardLeft + cardWidth - windowWidth;
     }
 
-    console.log(first);
     return position;
   }, [first]);
 
@@ -107,7 +106,7 @@ export default function FeaturesGrid() {
   }, [calculatedPosition]);
 
   useEffect(() => {
-    if (!isLanding || !windowRef.current) return;
+    if (isFeatures || !windowRef.current) return;
 
     const observer = new ResizeObserver((entries) => {
       const entry = entries[0];
@@ -127,7 +126,7 @@ export default function FeaturesGrid() {
 
     observer.observe(windowRef.current);
     return () => observer.disconnect();
-  }, [isLanding]);
+  }, [isFeatures]);
 
   const handleNextArrow = useCallback(() => {
     if (visibleCards > 2 && first === 0) {
@@ -168,11 +167,11 @@ export default function FeaturesGrid() {
   }, []);
 
   return (
-    <div className={isLanding ? styles.wrapperLanding : styles.wrapper}>
+    <div className={!isFeatures ? styles.wrapperLanding : styles.wrapper}>
       <div className={styles.overflow} ref={windowRef}>
         <motion.div
           ref={containerRef}
-          animate={{ x: isLanding && !isDragging && -cardPosition }}
+          animate={{ x: !isFeatures && !isDragging && -cardPosition }}
           transition={{ duration: 0.6, type: "linear" }}
           drag="x"
           dragConstraints={dragConstraints}
@@ -181,7 +180,7 @@ export default function FeaturesGrid() {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
           whileDrag={{ cursor: "grabbing", userSelect: "none" }}
-          className={isLanding ? styles.landingContainer : styles.container}>
+          className={!isFeatures ? styles.landingContainer : styles.container}>
           {featuresList.map((feature, index) => (
             <FeaturesGridCard
               key={index}
@@ -194,7 +193,7 @@ export default function FeaturesGrid() {
           ))}
         </motion.div>
       </div>
-      {isLanding && (
+      {!isFeatures && (
         <div className={styles.navigationArrows}>
           <div className={styles.arrow}>
             <button
