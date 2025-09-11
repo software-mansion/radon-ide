@@ -1,0 +1,34 @@
+.cardContainer {
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  border: var(--radon-border-layout);
+  align-items: flex-start;
+  width: 400px;
+}
+
+.textContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  align-self: stretch;
+}
+
+.cardTitle {
+  color: var(--ifm-color-primary);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.description {
+  color: var(--radon-subheading);
+  font-size: 16px;
+  line-height: 24px;
+}
+
+.cardContainer p {
+  margin: 0;
+}

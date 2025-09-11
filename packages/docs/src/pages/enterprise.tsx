@@ -26,7 +26,7 @@ export default function Enterprise(): JSX.Element {
               </div>
               <div className={styles.buttonContainer}>
                 <a href={"/"} className={clsx(styles.button, styles.btnGreen)}>
-                  Schedule a Demo
+                  Schedule a demo
                 </a>
                 <a href={"/"} className={clsx(styles.button, styles.btnBorder)}>
                   See avaliable plans
