@@ -8,6 +8,7 @@ import { extensionContext } from "../../utilities/extensionContext";
 import { Logger } from "../../Logger";
 import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider";
 import { disposeAll } from "../../utilities/disposables";
+import { CDPNetworkCommand } from "../../webview/utilities/communicationTypes";
 
 export const NETWORK_PLUGIN_ID = "network";
 
@@ -98,11 +99,6 @@ class NetworkCDPWebsocketBackend implements Disposable {
   public dispose() {
     this.server.close();
   }
-}
-
-enum CDPNetworkCommand {
-  Enable = "Network.enable",
-  Disable = "Network.disable",
 }
 
 export class NetworkPlugin implements ToolPlugin {

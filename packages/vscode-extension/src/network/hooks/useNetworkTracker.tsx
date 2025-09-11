@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { vscode } from "../../webview/utilities/vscode";
+import { WebviewCommand } from "../../webview/utilities/communicationTypes";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
 
@@ -82,10 +83,6 @@ export const networkTrackerInitialState: NetworkTracker = {
   toggleRecording: () => {},
   getSource: () => {},
 };
-
-// TODO: Use an enum with all possible call types if there will be more than one.
-// TODO: Move to share frontend-backend consts file
-const CDP_CALL = "cdp-call";
 
 const useNetworkTracker = (): NetworkTracker => {
   const wsRef = useRef<WebSocket | null>(null);
@@ -182,7 +179,7 @@ const useNetworkTracker = (): NetworkTracker => {
 
   const [isRecording, toggleRecording] = useReducer((state) => {
     vscode.postMessage({
-      command: CDP_CALL,
+      command: WebviewCommand.CDPCall,
       method: state ? "Network.disable" : "Network.enable",
     });
     return !state;
@@ -190,7 +187,7 @@ const useNetworkTracker = (): NetworkTracker => {
 
   const getSource = (networkLog: NetworkLog) => {
     vscode.postMessage({
-      command: CDP_CALL,
+      command: WebviewCommand.CDPCall,
       method: "Network.Initiator",
       params: {
         ...networkLog.initiator,

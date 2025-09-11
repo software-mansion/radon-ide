@@ -6,6 +6,7 @@ import useNetworkTracker, {
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { vscode } from "../../webview/utilities/vscode";
+import { WebviewCommand } from "../../webview/utilities/communicationTypes";
 
 interface NetworkProviderProps extends NetworkTracker {
   isScrolling: boolean;
@@ -23,10 +24,6 @@ const NetworkContext = createContext<NetworkProviderProps>({
   toggleTimelineVisible: () => {},
   getResponseBody: async () => undefined,
 });
-
-// TODO: Use an enum with all possible call types if there will be more than one.
-// TODO: Move to share frontend-backend consts file
-const CDP_CALL = "cdp-call";
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
@@ -49,7 +46,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     const id = Math.random().toString(36).substring(7);
 
     vscode.postMessage({
-      command: CDP_CALL,
+      command: WebviewCommand.CDPCall,
       id,
       method: "Network.getResponseBody",
       params: {

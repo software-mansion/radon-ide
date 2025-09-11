@@ -12,15 +12,7 @@ import { NETWORK_PLUGIN_ID, NetworkPlugin } from "./network-plugin";
 import { reportToolOpened, reportToolVisibilityChanged } from "../../project/tools";
 import { generateWebviewContent } from "../../panels/webviewContentGenerator";
 import { PREVIEW_NETWORK_NAME, PREVIEW_NETWORK_PATH } from "../../webview/utilities/constants";
-
-// TODO: Use an enum with all possible call types if there will be more than one.
-// TODO: Move to share frontend-backend consts file
-
-type WebviewCDPMessage = {
-  command: "cdp-call";
-  method: string;
-  params: Record<string, unknown>;
-};
+import { WebviewCDPMessage, WebviewCommand } from "../../webview/utilities/communicationTypes";
 
 export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider, Disposable {
   private messageListenerDisposable: null | Disposable = null;
@@ -55,7 +47,7 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider, Disp
     }
 
     this.messageListenerDisposable = webview.onDidReceiveMessage((event: WebviewCDPMessage) => {
-      if (event.command === "cdp-call") {
+      if (event.command === WebviewCommand.CDPCall) {
         networkPlugin.sendCDPMessage({
           method: event.method,
           params: event.params ?? {},
