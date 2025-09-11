@@ -155,7 +155,6 @@ const useNetworkTracker = (): NetworkTracker => {
     }
     setNetworkLogs((prevLogs) => {
       const newLogs = [...prevLogs];
-      // FIXME: Do we really need to map the entirety of this array on every single addition
       serverMessages.map((msg) => processServerMessage(msg, newLogs));
       return newLogs;
     });
