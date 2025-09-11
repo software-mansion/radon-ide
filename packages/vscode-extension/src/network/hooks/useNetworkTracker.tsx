@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { vscode } from "../../webview/utilities/vscode";
 import { CDPNetworkCommand, WebviewCommand } from "../../webview/utilities/communicationTypes";
 
@@ -182,13 +182,8 @@ const useNetworkTracker = (): NetworkTracker => {
     });
   };
 
-  const validLogs = useMemo(
-    () => networkLogs.filter((log) => log?.request?.url !== undefined),
-    [networkLogs.length]
-  );
-
   return {
-    networkLogs: validLogs,
+    networkLogs: networkLogs.filter((log) => log?.request?.url !== undefined),
     clearLogs,
     toggleNetwork,
     getSource,
