@@ -33,7 +33,7 @@ export function getAppWebsocket() {
   return appWebsocket;
 }
 
-export function waitForMessage(timeoutMs = 5000) {
+export function waitForMessage(id, timeoutMs = 5000) {
   return new Promise((resolve, reject) => {
     const appWebsocket = getAppWebsocket();
     if (!appWebsocket) {
@@ -47,10 +47,12 @@ export function waitForMessage(timeoutMs = 5000) {
     }, timeoutMs);
 
     const handler = (message) => {
-      clearTimeout(timer);
-      appWebsocket.off("message", handler);
       const msg = JSON.parse(message);
-      resolve(msg);
+      if (msg.id === id) {
+        clearTimeout(timer);
+        appWebsocket.off("message", handler);
+        resolve(msg);
+      }
     };
 
     appWebsocket.on("message", handler);

@@ -409,9 +409,12 @@ export class AppManipulationService {
   }
 
   async getButtonCoordinates(appWebsocket, buttonID) {
-    const messagePromise = waitForMessage();
-    appWebsocket.send(`getPosition:${buttonID}`);
-    const position = await messagePromise;
+    const id = Date.now() + "-" + Math.floor(Math.random() * 1e6);
+    const messagePromise = waitForMessage(id);
+    appWebsocket.send(
+      JSON.stringify({ message: `getPosition:${buttonID}`, id: id })
+    );
+    const position = (await messagePromise).position;
 
     if (!position) {
       throw new Error("No position received from getPosition");
