@@ -63,7 +63,7 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
     this.devtoolsServerListener.dispose();
   }
 
-  protected send(message: any): void {
+  protected send(message: unknown): void {
     this.devtoolsConnection?.send("RNIDE_message", message);
   }
 }
@@ -84,8 +84,8 @@ export class DevtoolsConnection implements Disposable {
     this.bridge = createBridge(wall);
     this.store = createStore(this.bridge);
 
-    this.bridge.addListener("RNIDE_message", (payload: any) => {
-      this.ideMessageEventEmitter.fire(payload);
+    this.bridge.addListener("RNIDE_message", (payload: unknown) => {
+      this.ideMessageEventEmitter.fire(payload as IdeMessage);
     });
 
     // Register for isProfiling event on the profiler store
@@ -126,7 +126,7 @@ export class DevtoolsConnection implements Disposable {
     this.wall.send(event, payload);
   }
 
-  public close() {
+  public disconnect() {
     this.disconnectedEventEmitter.fire();
     this.dispose();
   }
@@ -187,7 +187,10 @@ class WebSocketDevtoolsServer extends DevtoolsServer implements Disposable {
 
       const session = new DevtoolsConnection(wall);
       ws.on("close", () => {
-        session.close();
+        session.disconnect();
+      });
+      ws.on("error", () => {
+        session.disconnect();
       });
 
       this.connectionEventEmitter.fire(session);
@@ -224,7 +227,6 @@ export async function createWebSocketDevtoolsServer(): Promise<DevtoolsServer & 
 
   await listenPromise;
 
-  server.off("error", onErrorCallback);
   const devtoolsServer = new WebSocketDevtoolsServer(server);
   return devtoolsServer;
 }

@@ -52,7 +52,6 @@ function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: Ca
   });
   const appReadyListener = inspectorBridge.onEvent("appReady", () => {
     resolve();
-    appReadyListener.dispose();
   });
   promise.finally(() => {
     appReadyListener.dispose();
