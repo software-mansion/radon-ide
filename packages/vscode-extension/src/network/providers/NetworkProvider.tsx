@@ -38,7 +38,6 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   };
 
   const getResponseBody = (networkLog: NetworkLog) => {
-    const ws = networkTracker.ws;
     if (responseBodies[networkLog.requestId]) {
       return Promise.resolve(responseBodies[networkLog.requestId]);
     }
@@ -56,14 +55,14 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
             [networkLog.requestId]: parsedMsg.result.body,
           }));
           resolve(parsedMsg.result.body);
-          ws?.removeEventListener("message", listener);
+          window.removeEventListener("message", listener);
         }
       } catch (error) {
-        console.error("Error parsing WebSocket message:", error);
+        console.error("Error parsing Window message:", error);
       }
     };
 
-    ws?.addEventListener("message", listener);
+    window.addEventListener("message", listener);
 
     vscode.postMessage({
       command: WebviewCommand.CDPCall,
