@@ -4,6 +4,7 @@ import UrlSelect from "./UrlSelect";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
 import IconButton from "./shared/IconButton";
 import { useStore } from "../providers/storeProvider";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 function ReloadButton({ disabled }: { disabled: boolean }) {
   const { project } = useProject();
@@ -33,12 +34,14 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 function UrlBar({ disabled }: { disabled?: boolean }) {
   const { project, selectedDeviceSession } = useProject();
   const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
   const expoRouterStatus = use$(
     store$.projectState.applicationContext.applicationDependencies.expoRouter
   );
 
-  const navigationHistory = selectedDeviceSession?.navigationHistory ?? [];
-  const routeList = selectedDeviceSession?.navigationRouteList ?? [];
+  const navigationHistory = use$(selectedDeviceSessionState.navigationHistory);
+  const navigationRouteList = use$(selectedDeviceSessionState.navigationRouteList);
 
   const disabledAlsoWhenStarting = disabled || selectedDeviceSession?.status === "starting";
   const isExpoRouterProject = !expoRouterStatus?.isOptional;
@@ -50,7 +53,9 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabledAlsoWhenStarting || !isExpoRouterProject || navigationHistory.length < 2}
+        disabled={
+          disabledAlsoWhenStarting || !isExpoRouterProject || (navigationHistory?.length ?? 0) < 2
+        }
         onClick={() => project.navigateBack()}>
         <span className="codicon codicon-arrow-left" />
       </IconButton>
@@ -59,8 +64,8 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         onValueChange={(value: string) => {
           project.openNavigation(value);
         }}
-        navigationHistory={navigationHistory}
-        routeList={routeList}
+        navigationHistory={navigationHistory ?? []}
+        routeList={navigationRouteList ?? []}
         disabled={disabledAlsoWhenStarting}
         dropdownOnly={!isExpoRouterProject}
       />

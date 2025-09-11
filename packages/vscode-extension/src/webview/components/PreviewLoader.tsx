@@ -17,6 +17,7 @@ import { Output } from "../../common/OutputChannel";
 import { useStore } from "../providers/storeProvider";
 import { use$ } from "@legendapp/state/react";
 import { DevicePlatform, DeviceRotation } from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => acc + cur,
@@ -38,11 +39,13 @@ function PreviewLoader({
   startingSessionState: DeviceSessionStateStarting;
 }) {
   const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 
-  const { project, selectedDeviceSession } = useProject();
+  const { project } = useProject();
   const [progress, setProgress] = useState(0);
-  const platform = selectedDeviceSession?.deviceInfo.platform;
+  const platform = use$(selectedDeviceSessionState.deviceInfo.platform);
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
 

@@ -80,17 +80,17 @@ function Preview({
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+
   const appOrientation = use$(selectedDeviceSessionState.applicationSession.appOrientation);
-
   const bundleError = use$(selectedDeviceSessionState.applicationSession.bundleError);
-
   const elementInspectorAvailability = use$(
     selectedDeviceSessionState.applicationSession.elementInspectorAvailability
   );
-
   const inspectorBridgeStatus = use$(
     selectedDeviceSessionState.applicationSession.inspectorBridgeStatus
   );
+  const isUsingStaleBuild = use$(selectedDeviceSessionState.isUsingStaleBuild);
+  const modelId = use$(selectedDeviceSessionState.deviceInfo.modelId);
 
   const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>(null);
   const wrapperDivRef = useRef<HTMLDivElement>(null);
@@ -118,10 +118,9 @@ function Preview({
     isRunning ? selectedDeviceSessionState.applicationSession.isDebuggerPaused.get() : false
   );
 
-  const previewURL = selectedDeviceSession?.previewURL;
+  const previewURL = use$(selectedDeviceSessionState.previewURL);
 
-  const showDevicePreview =
-    selectedDeviceSession?.previewURL && (showPreviewRequested || isRunning);
+  const showDevicePreview = previewURL && (showPreviewRequested || isRunning);
 
   const isAppDisconnected =
     isRunning && inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
@@ -511,13 +510,13 @@ function Preview({
   }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
-    if (selectedDeviceSession?.isUsingStaleBuild) {
+    if (isUsingStaleBuild) {
       openRebuildAlert();
     }
-  }, [selectedDeviceSession?.isUsingStaleBuild]);
+  }, [isUsingStaleBuild]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
+    return sd.modelId === modelId;
   });
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);

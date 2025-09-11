@@ -29,6 +29,7 @@ import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
 import { DevicePlatform, DeviceRotation } from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const contentSizes = [
   "xsmall",
@@ -110,15 +111,18 @@ const rotateOptions: Array<{
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
   const showDeviceFrame = use$(store$.workspaceConfiguration.showDeviceFrame);
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 
-  const { project, selectedDeviceSession, deviceSettings } = useProject();
+  const platform = use$(selectedDeviceSessionState.deviceInfo.platform);
+
+  const { project, deviceSettings } = useProject();
 
   const { openModal } = useModal();
 
-  const resetOptions =
-    selectedDeviceSession?.deviceInfo.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
+  const resetOptions = platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
 
   return (
     <DropdownMenuRoot>
@@ -253,7 +257,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
-          {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.IOS && <BiometricsItem />}
+          {platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => project.openSendFileDialog()}>
@@ -270,7 +274,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           </DropdownMenu.Item>
           <LocalizationItem />
           <VolumeItem />
-          {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.Android && <CameraItem />}
+          {platform === DevicePlatform.Android && <CameraItem />}
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-redo" />
