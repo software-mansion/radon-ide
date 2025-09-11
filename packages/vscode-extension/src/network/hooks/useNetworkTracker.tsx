@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { vscode } from "../../webview/utilities/vscode";
 import { CDPNetworkCommand, WebviewCommand } from "../../webview/utilities/communicationTypes";
 
@@ -68,15 +68,13 @@ export interface WebSocketMessage {
 
 export interface NetworkTracker {
   networkLogs: NetworkLog[];
-  isRecording: boolean;
   clearActivity: () => void;
-  toggleRecording: () => void;
+  toggleRecording: (isRunning: boolean) => void;
   getSource: (networkLog: NetworkLog) => void;
 }
 
 export const networkTrackerInitialState: NetworkTracker = {
   networkLogs: [],
-  isRecording: true,
   clearActivity: () => {},
   toggleRecording: () => {},
   getSource: () => {},
@@ -163,13 +161,12 @@ const useNetworkTracker = (): NetworkTracker => {
     setServerMessages([]);
   };
 
-  const [isRecording, toggleRecording] = useReducer((state) => {
+  const toggleRecording = (isRunning: boolean) => {
     vscode.postMessage({
       command: WebviewCommand.CDPCall,
-      method: state ? CDPNetworkCommand.Disable : CDPNetworkCommand.Enable,
+      method: isRunning ? CDPNetworkCommand.Disable : CDPNetworkCommand.Enable,
     });
-    return !state;
-  }, true);
+  };
 
   const getSource = (networkLog: NetworkLog) => {
     vscode.postMessage({
@@ -188,7 +185,6 @@ const useNetworkTracker = (): NetworkTracker => {
 
   return {
     networkLogs: validLogs,
-    isRecording,
     clearActivity,
     toggleRecording,
     getSource,

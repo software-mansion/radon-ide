@@ -9,7 +9,10 @@ import { vscode } from "../../webview/utilities/vscode";
 import { CDPNetworkCommand, WebviewCommand } from "../../webview/utilities/communicationTypes";
 
 interface NetworkProviderProps extends NetworkTracker {
+  isRecording: boolean;
   isScrolling: boolean;
+  toggleRecording: () => void;
+  clearActivity: () => void;
   toggleScrolling: () => void;
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
@@ -18,7 +21,10 @@ interface NetworkProviderProps extends NetworkTracker {
 
 const NetworkContext = createContext<NetworkProviderProps>({
   ...networkTrackerInitialState,
+  isRecording: true,
   isScrolling: false,
+  toggleRecording: () => {},
+  clearActivity: () => {},
   toggleScrolling: () => {},
   isTimelineVisible: true,
   toggleTimelineVisible: () => {},
@@ -30,11 +36,19 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
+  const [isRecording, setIsRecording] = useState(true);
   const [responseBodies, setResponseBodies] = useState<Record<string, unknown>>({});
 
   const clearActivity = () => {
     networkTracker.clearActivity();
     setResponseBodies({});
+  };
+
+  const toggleRecording = () => {
+    setIsRecording((prev) => {
+      networkTracker.toggleRecording(prev);
+      return !prev;
+    });
   };
 
   const getResponseBody = (networkLog: NetworkLog) => {
@@ -79,6 +93,9 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const contextValue = useMemo(() => {
     return {
       ...networkTracker,
+      networkLogs: networkTracker.networkLogs,
+      isRecording,
+      toggleRecording,
       isScrolling,
       clearActivity,
       toggleScrolling,
@@ -86,7 +103,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       toggleTimelineVisible,
       getResponseBody,
     };
-  }, [isScrolling, isTimelineVisible, networkTracker]);
+  }, [isRecording, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
 
   return (
     <NetworkContext.Provider value={contextValue}>
