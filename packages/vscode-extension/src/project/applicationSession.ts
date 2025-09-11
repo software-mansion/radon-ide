@@ -12,7 +12,6 @@ import {
 import { minimatch } from "minimatch";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { ApplicationContext } from "./ApplicationContext";
-import { MetroLauncher } from "./metro";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
@@ -40,12 +39,13 @@ import {
   CDPDevtoolsServer,
 } from "./devtools";
 import { RadonInspectorBridge } from "./bridge";
+import { MetroSession } from "./MetroNew";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
   device: DeviceBase;
   buildResult: BuildResult;
-  metro: MetroLauncher;
+  metro: MetroSession;
   devtoolsServer?: DevtoolsServer;
   devtoolsPort?: number;
 }
@@ -115,9 +115,6 @@ export class ApplicationSession implements Disposable {
       (device.deviceInfo.platform === DevicePlatform.IOS && launchConfig.ios?.launchArguments) ||
       [];
 
-    onLaunchStage(StartupMessage.StartingPackager);
-    await cancelToken.adapt(metro.ready());
-
     const { promise: bundleErrorPromise, resolve: resolveBundleError } =
       Promise.withResolvers<void>();
     const bundleErrorSubscription = metro.onBundleError(({ source }) => {
@@ -162,7 +159,7 @@ export class ApplicationSession implements Disposable {
     private readonly stateManager: StateManager<ApplicationSessionState>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
-    private readonly metro: MetroLauncher,
+    private readonly metro: MetroSession,
     private readonly websocketDevtoolsServer: DevtoolsServer | undefined,
     private readonly packageNameOrBundleId: string,
     private readonly supportedOrientations: DeviceRotation[]

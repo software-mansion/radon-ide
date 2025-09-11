@@ -22,7 +22,8 @@ import {
   ProjectStore,
   REMOVE,
 } from "../common/State";
-import { createWebSocketDevtoolsServer } from "./devtools";
+import { createWebSocketDevtoolsServer, DevtoolsServer } from "./devtools";
+import { MetroProvider, SharedMetroProvider } from "./MetroNew";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -55,6 +56,13 @@ export class DeviceSessionsManager implements Disposable {
   private activeSessionId: DeviceId | undefined;
   private findingDevice: boolean = false;
   private previousDevices: DeviceInfo[] = [];
+
+  private servers:
+    | {
+        devtoolsServer?: DevtoolsServer & { port: number };
+        metroProvider: MetroProvider;
+      }
+    | undefined;
 
   constructor(
     private readonly stateManager: StateManager<DeviceSessions>,
@@ -156,19 +164,34 @@ export class DeviceSessionsManager implements Disposable {
       });
     }
 
-    let devtoolsServer;
-    if (this.applicationContext.launchConfig.useOldDevtools) {
-      Logger.debug("Launching DevTools server");
-      devtoolsServer = await createWebSocketDevtoolsServer();
+    if (!this.servers) {
+      const nodeModulesStatus = this.applicationContext.applicationDependencyManager
+        .checkNodeModulesInstallationStatus()
+        .then((installed) => {
+          if (!installed) {
+            throw new Error("Node Modules are not installed.");
+          }
+        });
+      let devtoolsServer;
+      if (this.applicationContext.launchConfig.useOldDevtools) {
+        devtoolsServer = await createWebSocketDevtoolsServer();
+      }
+      const metroProvider = new SharedMetroProvider(
+        this.applicationContext.launchConfig,
+        devtoolsServer?.port,
+        [nodeModulesStatus]
+      );
+      this.servers = { devtoolsServer, metroProvider };
     }
 
     const newDeviceSession = new DeviceSession(
       this.stateManager.getDerived(deviceInfo.id),
       this.applicationContext,
       device,
-      devtoolsServer,
+      this.servers.devtoolsServer,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
-      this.outputChannelRegistry
+      this.outputChannelRegistry,
+      this.servers.metroProvider
     );
 
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
