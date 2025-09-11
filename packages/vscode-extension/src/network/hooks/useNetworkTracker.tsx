@@ -139,7 +139,6 @@ const useNetworkTracker = (): NetworkTracker => {
 
   useEffect(() => {
     window.onmessage = (message) => {
-      // TODO: Remove serialization, as it is not neccessary with direct comms
       setServerMessages((prev) => [...prev, message.data]);
     };
   }, []);
@@ -150,7 +149,7 @@ const useNetworkTracker = (): NetworkTracker => {
     }
     setNetworkLogs((prevLogs) => {
       const newLogs = [...prevLogs];
-      // FIXME: The entirety is mapped on each addition, absurd
+      // FIXME: Do we really need to map the entirety of this array on every single addition
       serverMessages.map((msg) => processServerMessage(msg, newLogs));
       return newLogs;
     });
