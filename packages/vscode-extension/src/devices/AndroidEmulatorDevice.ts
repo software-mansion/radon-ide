@@ -17,7 +17,14 @@ import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { BuildResult } from "../builders/BuildManager";
 import { Logger } from "../Logger";
-import { AppPermissionType, CameraSettings, DeviceSettings, Locale } from "../common/Project";
+import {
+  AppPermissionType,
+  CameraSettings,
+  DeviceSettings,
+  InstallationError,
+  InstallationErrorReason,
+  Locale,
+} from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
@@ -611,7 +618,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   async installApp(build: BuildResult, forceReinstall: boolean) {
     if (build.platform !== DevicePlatform.Android) {
-      throw new Error("Invalid platform");
+      throw new InstallationError("Invalid platform", InstallationErrorReason.InvalidPlatform);
     }
 
     // allowNonZeroExit is set to true to not print errors when INSTALL_FAILED_UPDATE_INCOMPATIBLE occurs.
@@ -644,29 +651,45 @@ export class AndroidEmulatorDevice extends DeviceBase {
     if (forceReinstall) {
       await uninstallApp(build.packageName);
     }
-
-    await retry(
-      async (retryNumber) => {
-        if (retryNumber === 0) {
-          await installApk(false);
-        } else if (retryNumber === 1) {
-          // There's a chance that same emulator was used in newer version of Expo
-          // and then RN IDE was opened on older project, in which case installation
-          // will fail. We use -d flag which allows for downgrading debuggable
-          // applications (see `adb shell pm`, install command)
-          await installApk(true);
-        } else {
-          // If the app is still not installed, we try to uninstall it first to
-          // avoid "INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package <name>
-          // signatures do not match newer version; ignoring!" error. This error
-          // may come when building locally and with EAS.
-          await uninstallApp(build.packageName);
-          await installApk(true);
-        }
-      },
-      2,
-      1000
-    );
+    try {
+      await retry(
+        async (retryNumber) => {
+          if (retryNumber === 0) {
+            await installApk(false);
+          } else if (retryNumber === 1) {
+            // There's a chance that same emulator was used in newer version of Expo
+            // and then RN IDE was opened on older project, in which case installation
+            // will fail. We use -d flag which allows for downgrading debuggable
+            // applications (see `adb shell pm`, install command)
+            await installApk(true);
+          } else {
+            // If the app is still not installed, we try to uninstall it first to
+            // avoid "INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package <name>
+            // signatures do not match newer version; ignoring!" error. This error
+            // may come when building locally and with EAS.
+            await uninstallApp(build.packageName);
+            await installApk(true);
+          }
+        },
+        2,
+        1000
+      );
+    } catch (e) {
+      const message =
+        typeof e === "object" && e !== null && "message" in e
+          ? String((e as any).message)
+          : String(e);
+      if (
+        message.includes("INSTALL_FAILED_INSUFFICIENT_STORAGE") ||
+        message.includes("not enough space")
+      ) {
+        throw new InstallationError(
+          "Not enough space on device, consider switching device.",
+          InstallationErrorReason.NotEnoughStorage
+        );
+      }
+      throw new InstallationError(message, InstallationErrorReason.Unknown);
+    }
   }
 
   async resetAppPermissions(appPermission: AppPermissionType, build: BuildResult) {

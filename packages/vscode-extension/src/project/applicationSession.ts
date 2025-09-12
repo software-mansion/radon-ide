@@ -15,13 +15,12 @@ import { ApplicationContext } from "./ApplicationContext";
 import { MetroLauncher } from "./metro";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 import { DeviceBase } from "../devices/DeviceBase";
-import { Devtools } from "./devtools";
 import { Logger } from "../Logger";
 import { AppOrientation, InspectData, StartupMessage } from "../common/Project";
 import { disposeAll } from "../utilities/disposables";
 import { ToolKey, ToolPlugin, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
-import { CancelToken } from "../utilities/cancelToken";
+import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { BuildResult } from "../builders/BuildManager";
 import {
   ApplicationSessionState,
@@ -33,26 +32,52 @@ import {
 } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
 import { StateManager } from "./StateManager";
+import { DevtoolsConnection, DevtoolsInspectorBridge, DevtoolsServer } from "./devtools";
+import { RadonInspectorBridge } from "./bridge";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
   device: DeviceBase;
   buildResult: BuildResult;
   metro: MetroLauncher;
-  devtools: Devtools;
+  devtoolsServer: DevtoolsServer;
+  devtoolsPort: number;
+}
+
+function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: CancelToken) {
+  // set up `appReady` promise
+  const { promise, resolve, reject } = Promise.withResolvers<void>();
+  cancelToken?.onCancel(() => {
+    reject(new CancelError("Cancelled while waiting for the app to be ready."));
+  });
+  const appReadyListener = inspectorBridge.onEvent("appReady", resolve);
+  promise.finally(() => {
+    appReadyListener.dispose();
+  });
+  return promise;
 }
 
 export class ApplicationSession implements Disposable {
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
   private debugSessionEventSubscription?: Disposable;
-  private toolsManager: ToolsManager;
   private isActive = false;
   private inspectCallID = 7621;
+  private devtools: DevtoolsConnection | undefined;
+  private toolsManager: ToolsManager;
+
+  public readonly inspectorBridge: RadonInspectorBridge;
 
   public static async launch(
     stateManager: StateManager<ApplicationSessionState>,
-    { applicationContext, device, buildResult, metro, devtools }: LaunchApplicationSessionDeps,
+    {
+      applicationContext,
+      device,
+      buildResult,
+      metro,
+      devtoolsServer,
+      devtoolsPort,
+    }: LaunchApplicationSessionDeps,
     getIsActive: () => boolean,
     onLaunchStage: (stage: StartupMessage) => void,
     cancelToken: CancelToken
@@ -66,7 +91,7 @@ export class ApplicationSession implements Disposable {
       applicationContext,
       device,
       metro,
-      devtools,
+      devtoolsServer,
       packageNameOrBundleId,
       supportedOrientations
     );
@@ -94,11 +119,13 @@ export class ApplicationSession implements Disposable {
     try {
       onLaunchStage(StartupMessage.Launching);
       await cancelToken.adapt(
-        device.launchApp(buildResult, metro.port, devtools.port, launchArguments)
+        device.launchApp(buildResult, metro.port, devtoolsPort, launchArguments)
       );
 
+      const appReadyPromise = waitForAppReady(session.inspectorBridge, cancelToken);
+
       onLaunchStage(StartupMessage.WaitingForAppToLoad);
-      await cancelToken.adapt(Promise.race([devtools.appReady(), bundleErrorPromise]));
+      await cancelToken.adapt(Promise.race([appReadyPromise, bundleErrorPromise]));
 
       if (getIsActive()) {
         const activatePromise = session.activate();
@@ -125,14 +152,44 @@ export class ApplicationSession implements Disposable {
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
-    private readonly devtools: Devtools,
+    private readonly devtoolsServer: DevtoolsServer,
     private readonly packageNameOrBundleId: string,
     private readonly supportedOrientations: DeviceRotation[]
   ) {
-    this.registerDevtoolsListeners();
+    this.disposables.push(
+      this.devtoolsServer.onConnection((devtools) => {
+        this.devtools?.dispose();
+        this.devtools = devtools;
+        this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
+        const disconnectedSubscription = devtools.onDisconnected(() => {
+          disconnectedSubscription.dispose();
+          if (devtools !== this.devtools) {
+            return;
+          }
+          if (
+            this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected
+          ) {
+            this.stateManager.setState({
+              inspectorBridgeStatus: InspectorBridgeStatus.Disconnected,
+            });
+          }
+          this.devtools = undefined;
+        });
+      })
+    );
     this.registerMetroListeners();
-    this.toolsManager = new ToolsManager(this.stateManager.getDerived("toolsState"), this.devtools);
 
+    const devtoolsInspectorBridge = new DevtoolsInspectorBridge(this.devtoolsServer);
+    this.inspectorBridge = devtoolsInspectorBridge;
+    const inspectorBridgeSubscriptions =
+      this.registerInspectorBridgeEventListeners(devtoolsInspectorBridge);
+    this.disposables.push(devtoolsInspectorBridge, ...inspectorBridgeSubscriptions);
+
+    this.toolsManager = new ToolsManager(
+      this.stateManager.getDerived("toolsState"),
+      devtoolsInspectorBridge
+    );
+    this.disposables.push(this.toolsManager);
     this.disposables.push(this.stateManager);
   }
 
@@ -148,7 +205,7 @@ export class ApplicationSession implements Disposable {
         useParentDebugSession: true,
       }),
       this.metro,
-      this.devtools
+      this.devtoolsServer
     );
 
     await session.startParentDebugSession();
@@ -159,11 +216,11 @@ export class ApplicationSession implements Disposable {
   // #region Tools
 
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
-    this.toolsManager.updateToolEnabledState(toolName, enabled);
+    return this.toolsManager.updateToolEnabledState(toolName, enabled);
   }
 
   public openTool(toolName: ToolKey): void {
-    this.toolsManager.openTool(toolName);
+    return this.toolsManager.openTool(toolName);
   }
 
   public getPlugin(toolName: ToolKey): ToolPlugin | undefined {
@@ -344,70 +401,58 @@ export class ApplicationSession implements Disposable {
     });
   }
 
-  private registerDevtoolsListeners() {
-    this.disposables.push(
-      this.devtools.onEvent("appReady", () => {
+  private registerInspectorBridgeEventListeners(inspectorBridge: RadonInspectorBridge) {
+    const subscriptions = [
+      inspectorBridge.onEvent("appReady", () => {
         // NOTE: since this is triggered by the JS bundle,
         // we can assume that if it fires, the bundle loaded successfully.
         // This is necessary to reset the bundle error state when the app reload
         // is triggered from the app itself (e.g. by in-app dev menu or redbox).
         this.stateManager.setState({ bundleError: null });
       }),
-      this.devtools.onEvent("fastRefreshStarted", () => {
+      inspectorBridge.onEvent("fastRefreshStarted", () => {
         this.stateManager.setState({ bundleError: null, isRefreshing: true });
       }),
-      this.devtools.onEvent("fastRefreshComplete", () => {
+      inspectorBridge.onEvent("fastRefreshComplete", () => {
         this.stateManager.setState({ isRefreshing: false });
       }),
-      this.devtools.onEvent("isProfilingReact", (isProfiling) => {
+      inspectorBridge.onEvent("isProfilingReact", (isProfiling) => {
         if (this.stateManager.getState().profilingReactState !== "saving") {
           this.stateManager.setState({
             profilingReactState: isProfiling ? "profiling" : "stopped",
           });
         }
       }),
-      this.devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
+      inspectorBridge.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
         this.stateManager.setState({ appOrientation: this.determineAppOrientation(orientation) });
       }),
-      this.devtools.onEvent(
+      inspectorBridge.onEvent(
         "inspectorAvailabilityChanged",
         (inspectorAvailability: InspectorAvailabilityStatus) => {
           this.stateManager.setState({ elementInspectorAvailability: inspectorAvailability });
         }
       ),
-      this.devtools.onEvent("disconnected", () => {
-        if (
-          this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected
-        ) {
-          this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Disconnected });
-        }
-      }),
-      this.devtools.onEvent("connected", () => {
-        if (
-          this.stateManager.getState().inspectorBridgeStatus !== InspectorBridgeStatus.Connected
-        ) {
-          this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
-        }
-      })
-    );
+    ];
+    return subscriptions;
   }
   //#endregion
 
-  public async reloadJS() {
-    if (!this.devtools.hasConnectedClient) {
+  public async reloadJS(cancelToken: CancelToken) {
+    if (!this.devtools?.connected) {
       Logger.debug(
         "`reloadJS()` was called on an application session while the devtools are not connected. " +
           "This should never happen, since an application session should represent a running and connected application."
       );
       throw new Error("Tried to reload JS on an application which disconnected from Radon");
     }
-    const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
+    const { promise: bundleErrorPromise, reject: rejectBundleError } = Promise.withResolvers();
     const bundleErrorSubscription = this.metro.onBundleError(() => {
-      reject(new Error("Bundle error occurred during reload"));
+      rejectBundleError(new Error("Bundle error occurred during reload"));
     });
     try {
+      const appReadyPromise = waitForAppReady(this.inspectorBridge, cancelToken);
       await this.metro.reload();
-      await Promise.race([this.devtools.appReady(), bundleErrorPromise]);
+      await Promise.race([appReadyPromise, bundleErrorPromise]);
     } finally {
       bundleErrorSubscription.dispose();
     }
@@ -467,12 +512,12 @@ export class ApplicationSession implements Disposable {
 
   //#region React Profiling
   public async startProfilingReact() {
-    return await this.devtools.startProfilingReact();
+    return await this.devtools?.startProfilingReact();
   }
 
   public async stopProfilingReact() {
     try {
-      return await this.devtools.stopProfilingReact();
+      return await this.devtools?.stopProfilingReact();
     } finally {
       this.stateManager.setState({ profilingReactState: "stopped" });
     }
@@ -487,16 +532,16 @@ export class ApplicationSession implements Disposable {
   ): Promise<InspectData> {
     const id = this.inspectCallID++;
     const { promise, resolve, reject } = Promise.withResolvers<InspectData>();
-    const listener = this.devtools.onEvent("inspectData", (payload) => {
+    const listener = this.inspectorBridge.onEvent("inspectData", (payload) => {
       if (payload.id === id) {
-        listener.dispose();
+        listener?.dispose();
         resolve(payload as unknown as InspectData);
       } else if (payload.id >= id) {
-        listener.dispose();
+        listener?.dispose();
         reject("Inspect request was invalidated by a later request");
       }
     });
-    this.devtools.sendInspectRequest(xRatio, yRatio, id, requestStack);
+    this.inspectorBridge.sendInspectRequest(xRatio, yRatio, id, requestStack);
 
     const inspectData = await promise;
     let stack = undefined;

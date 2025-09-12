@@ -130,14 +130,14 @@ export default function NoDeviceView({ hasNoDevices }: { hasNoDevices: boolean }
     });
   }
   return (
-    <div className="devices-not-found-container" data-test="devices-not-found-container">
+    <div className="devices-not-found-container" data-testid="devices-not-found-container">
       <div className="devices-not-found-icon">
         <SmartphoneIcon color="var(--swm-devices-not-found-icon)" />
       </div>
       <h1 className="devices-not-found-title">
         {hasNoDevices ? "No devices found" : "Select a device to start"}
       </h1>
-      <p className="devices-not-found-subtitle" data-test="devices-not-found-subtitle">
+      <p className="devices-not-found-subtitle" data-testid="devices-not-found-subtitle">
         {hasNoDevices
           ? "You can add a new device using the quick action below."
           : "You can select one of available devices or create a new one to start."}

@@ -45,7 +45,7 @@ export function ActivateLicenseView() {
     <form
       className="container"
       onSubmit={handleSubmit(onSubmit)}
-      data-test="activate-license-window">
+      data-testid="activate-license-window">
       <div className="info-row">
         {activateDeviceResult === null && (
           <div className="info-text">

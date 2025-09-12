@@ -9,7 +9,13 @@ import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { BuildResult } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
+import {
+  AppPermissionType,
+  DeviceSettings,
+  InstallationError,
+  InstallationErrorReason,
+  Locale,
+} from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
 import { Output } from "../common/OutputChannel";
@@ -87,25 +93,25 @@ export class IosSimulatorDevice extends DeviceBase {
   public dispose() {
     super.dispose();
     this.runningAppProcess?.cancel();
-    return exec("xcrun", [
-      "simctl",
-      "--set",
-      getOrCreateDeviceSet(this.deviceUDID),
-      "shutdown",
-      this.deviceUDID,
-    ]);
+    return exec(
+      "xcrun",
+      ["simctl", "--set", getOrCreateDeviceSet(this.deviceUDID), "shutdown", this.deviceUDID],
+      {
+        reject: false, // we ignore the error here, as the shutdown command may fail if the device is already shutdown
+      }
+    );
   }
 
   public async reboot() {
     super.reboot();
     this.runningAppProcess?.cancel();
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      getOrCreateDeviceSet(this.deviceUDID),
-      "shutdown",
-      this.deviceUDID,
-    ]);
+    await exec(
+      "xcrun",
+      ["simctl", "--set", getOrCreateDeviceSet(this.deviceUDID), "shutdown", this.deviceUDID],
+      {
+        reject: false, // we ignore the error here, as the shutdown command may fail if the device is already shutdown
+      }
+    );
 
     await this.internalBootDevice();
   }
@@ -509,44 +515,53 @@ export class IosSimulatorDevice extends DeviceBase {
 
   async installApp(build: BuildResult, forceReinstall: boolean) {
     if (build.platform !== DevicePlatform.IOS) {
-      throw new Error("Invalid platform");
-    }
-    const startTime = performance.now();
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-    if (forceReinstall) {
-      try {
-        await exec(
-          "xcrun",
-          ["simctl", "--set", deviceSetLocation, "uninstall", this.deviceUDID, build.bundleID],
-          { allowNonZeroExit: true }
-        );
-      } catch (e) {
-        Logger.error("Error while uninstalling will be ignored", e);
-      }
-    } else {
-      const isInstalled = await this.checkInstalledAppBuildHashFile(build);
-      if (isInstalled) {
-        const skipInstallDurationSec = (performance.now() - startTime) / 1000;
-        Logger.info(
-          `App is already installed, skipping installation. Took ${skipInstallDurationSec.toFixed(
-            2
-          )} sec.`
-        );
-        return;
-      }
+      throw new InstallationError("Invalid platform", InstallationErrorReason.InvalidPlatform);
     }
 
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "install",
-      this.deviceUDID,
-      build.appPath,
-    ]);
-    const installDurationSec = (performance.now() - startTime) / 1000;
-    Logger.info(`App installed. Took ${installDurationSec.toFixed(2)} sec.`);
-    await this.updateInstalledAppBuildHash(build);
+    try {
+      const startTime = performance.now();
+      const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
+      if (forceReinstall) {
+        try {
+          await exec(
+            "xcrun",
+            ["simctl", "--set", deviceSetLocation, "uninstall", this.deviceUDID, build.bundleID],
+            { allowNonZeroExit: true }
+          );
+        } catch (e) {
+          Logger.error("Error while uninstalling will be ignored", e);
+        }
+      } else {
+        const isInstalled = await this.checkInstalledAppBuildHashFile(build);
+        if (isInstalled) {
+          const skipInstallDurationSec = (performance.now() - startTime) / 1000;
+          Logger.info(
+            `App is already installed, skipping installation. Took ${skipInstallDurationSec.toFixed(
+              2
+            )} sec.`
+          );
+          return;
+        }
+      }
+
+      await exec("xcrun", [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "install",
+        this.deviceUDID,
+        build.appPath,
+      ]);
+      const installDurationSec = (performance.now() - startTime) / 1000;
+      Logger.info(`App installed. Took ${installDurationSec.toFixed(2)} sec.`);
+      await this.updateInstalledAppBuildHash(build);
+    } catch (e) {
+      const message =
+        typeof e === "object" && e !== null && "message" in e
+          ? String((e as any).message)
+          : String(e);
+      throw new InstallationError(message, InstallationErrorReason.Unknown);
+    }
   }
 
   async resetAppPermissions(appPermission: AppPermissionType, build: BuildResult) {

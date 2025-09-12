@@ -2,26 +2,21 @@ import { Disposable } from "vscode";
 import { Output } from "../common/OutputChannel";
 import { createReadableOutputChannel, ReadableLogOutputChannel } from "./ReadableLogOutputChannel";
 
-const hiddenOutputChannels: Output[] = [];
+type OutputExceptIde = Exclude<Output, Output.Ide>;
 
 export class OutputChannelRegistry implements Disposable {
   private static instance: OutputChannelRegistry | null = null;
-  private channelByName = new Map<Output, ReadableLogOutputChannel>([]);
+  private channelByName = new Map<OutputExceptIde, ReadableLogOutputChannel>([]);
 
-  public static getOrCreateOutputChannel(channel: Output): ReadableLogOutputChannel {
+  public static getOrCreateOutputChannel(channel: OutputExceptIde): ReadableLogOutputChannel {
     const logOutput = this.instance?.channelByName.get(channel);
 
     if (logOutput) {
       return logOutput;
     }
 
-    const newOutputChannel = createReadableOutputChannel(
-      channel,
-      !hiddenOutputChannels.includes(channel)
-    );
-
+    const newOutputChannel = createReadableOutputChannel(channel);
     this.instance?.channelByName.set(channel, newOutputChannel);
-
     return newOutputChannel;
   }
 
@@ -31,6 +26,7 @@ export class OutputChannelRegistry implements Disposable {
     if (this.instance) {
       throw new Error("OutputChannelRegistry instance already exists.");
     }
+
     this.instance = new OutputChannelRegistry();
     return this.instance;
   }

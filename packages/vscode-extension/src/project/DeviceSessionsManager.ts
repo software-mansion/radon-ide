@@ -20,6 +20,7 @@ import {
   initialDeviceSessionStore,
   ProjectStore,
 } from "../common/State";
+import { createWebSocketDevtoolsServer } from "./devtools";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -61,7 +62,7 @@ export class DeviceSessionsManager implements Disposable {
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
     private readonly devicesStateManager: StateManager<DevicesState>,
-    private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate
+    private deviceSessionManagerDelegate: DeviceSessionsManagerDelegate
   ) {
     this.disposables.push(
       this.devicesStateManager.onSetState((partialState) => {
@@ -160,10 +161,14 @@ export class DeviceSessionsManager implements Disposable {
       this.stateManager.setState({ [deviceInfo.id]: initialDeviceSessionStore });
     }
 
+    Logger.debug("Launching DevTools server");
+    const devtoolsServer = await createWebSocketDevtoolsServer();
+
     const newDeviceSession = new DeviceSession(
       this.stateManager.getDerived(deviceInfo.id),
       this.applicationContext,
       device,
+      devtoolsServer,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
       {
         onStateChange: (state) => {
@@ -350,6 +355,15 @@ export class DeviceSessionsManager implements Disposable {
   }, SWITCH_DEVICE_THROTTLE_MS);
 
   dispose() {
-    disposeAll([...this.deviceSessions.values().toArray(), ...this.disposables]);
+    // NOTE: we overwrite the delegate to avoid calling it during/after dispose
+    this.deviceSessionManagerDelegate = {
+      onInitialized: () => {},
+      onDeviceSessionsManagerStateChange: (_state: DeviceSessionsManagerState) => {},
+      getDeviceRotation: () => DeviceRotation.Portrait,
+    };
+    const deviceSessions = this.deviceSessions.values().toArray();
+    this.deviceSessions.clear();
+    this.activeSessionId = undefined;
+    disposeAll([...deviceSessions, ...this.disposables]);
   }
 }

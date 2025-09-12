@@ -1,9 +1,7 @@
+import { window } from "vscode";
 import { Output } from "./common/OutputChannel";
-import { OutputChannelRegistry } from "./project/OutputChannelRegistry";
 
-const getIdeOutputChannel = () => {
-  return OutputChannelRegistry.getInstanceIfExists()?.getOrCreateOutputChannel(Output.Ide);
-};
+const outputChannel = window.createOutputChannel(Output.Ide, { log: true });
 
 const logger = {
   log(_message: string, ..._args: any[]) {},
@@ -15,28 +13,28 @@ const logger = {
     // to INFO. We don't want to ask users to change their logging level as it impacts all
     // the logs vscode generates. Also, when changing log level, one need to reload vscode
     // window for the extension to pick up the change.
-    getIdeOutputChannel()?.info(message, ...args);
+    outputChannel.info(message, ...args);
   },
 
   info(message: string, ...args: any[]) {
-    getIdeOutputChannel()?.info(message, ...args);
+    outputChannel.info(message, ...args);
   },
 
   warn(message: string, ...args: any[]) {
-    getIdeOutputChannel()?.warn(message, ...args);
+    outputChannel.warn(message, ...args);
   },
 
   error(message: string, ...args: any[]) {
     if (args.length > 0 && args[args.length - 1] instanceof Error) {
       const error = args[args.length - 1] as Error;
-      getIdeOutputChannel()?.error(error, message, ...args.slice(0, -1));
+      outputChannel.error(error, message, ...args.slice(0, -1));
     } else {
-      getIdeOutputChannel()?.error(message, ...args);
+      outputChannel.error(message, ...args);
     }
   },
 
   openOutputPanel() {
-    getIdeOutputChannel()?.show();
+    outputChannel.show();
   },
 };
 

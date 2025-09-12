@@ -3,55 +3,26 @@ import {
   WebView,
   Workbench,
   EditorView,
+  BottomBarPanel,
 } from "vscode-extension-tester";
 import path from "path";
 import fs from "fs";
+import {
+  initServer,
+  getAppWebsocket,
+  closeServer,
+} from "../server/webSocketServer.js";
+import startRecording from "../utils/screenRecording.js";
 
 const IS_RECORDING = process.env.IS_RECORDING === "true";
-
-function startRecording(driver, options = {}) {
-  const screenshotsDir = path.join(process.cwd(), "videos");
-  if (fs.existsSync(screenshotsDir)) {
-    fs.rmSync(screenshotsDir, { recursive: true, force: true });
-  }
-  fs.mkdirSync(screenshotsDir, { recursive: true });
-
-  let frame = 0;
-  const interval = options.interval || 100;
-
-  const intervalId = setInterval(async () => {
-    try {
-      const image = await driver.takeScreenshot();
-      const filePath = path.join(
-        screenshotsDir,
-        `frame-${String(frame).padStart(4, "0")}.png`
-      );
-      fs.writeFileSync(filePath, image, "base64");
-      frame++;
-    } catch (error) {
-      if (
-        error.name === "NoSuchSessionError" ||
-        error.message.includes("invalid session id")
-      ) {
-        console.warn(
-          "Session ended during recording. Stopping screenshot capture."
-        );
-        clearInterval(intervalId);
-      } else {
-      }
-    }
-  }, interval);
-
-  return {
-    stop: () => clearInterval(intervalId),
-  };
-}
 
 let driver, workbench, view, browser;
 let recorder;
 
 before(async function () {
+  initServer(8080);
   console.log("Initializing VSBrowser...");
+
   browser = VSBrowser.instance;
   if (!browser) {
     console.error("Failed to initialize VSBrowser.");
@@ -70,7 +41,7 @@ before(async function () {
 
   view = new WebView();
   if (IS_RECORDING) {
-    recorder = await startRecording(driver, { interval: 200 });
+    recorder = startRecording(driver, { interval: 100 });
   }
 });
 
@@ -88,6 +59,8 @@ afterEach(async function () {
   }
   view = new WebView();
   await view.switchBack();
+  let bottomBar = new BottomBarPanel();
+  await bottomBar.toggle(false);
   await new EditorView().closeAllEditors();
 });
 
@@ -95,8 +68,9 @@ after(async function () {
   if (IS_RECORDING && recorder) {
     await recorder.stop();
   }
+  closeServer();
 });
 
 export function get() {
-  return { driver, workbench, view, browser };
+  return { driver, workbench, view, browser, appWebsocket: getAppWebsocket() };
 }

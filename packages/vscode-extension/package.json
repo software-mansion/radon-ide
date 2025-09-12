@@ -22,7 +22,7 @@
     "workspaceContains:**/app.config.ts",
     "onWebviewPanel:RadonIDETabPanel"
   ],
-  "version": "1.10.0",
+  "version": "1.11.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -372,7 +372,7 @@
         {
           "type": "webview",
           "id": "RNIDE.Tool.Network.view",
-          "name": "",
+          "name": "Radon Network Inspector",
           "when": "RNIDE.Tool.Network.available && RNIDE.panelIsOpen"
         }
       ],

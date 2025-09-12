@@ -204,7 +204,7 @@ function PreviewView() {
   } else if (!initialized) {
     content = (
       <div className="preview-content-placeholder">
-        <VscodeProgressRing />
+        <VscodeProgressRing data-testid="vscode-progress-ring" />
       </div>
     );
   } else if (selectedDevice) {
@@ -242,7 +242,7 @@ function PreviewView() {
   return (
     <div
       className="panel-view"
-      data-test="radon-panel-view"
+      data-testid="radon-panel-view"
       onFocus={(e) => {
         vscode.postMessage({
           command: "focusPreview",
@@ -286,7 +286,8 @@ function PreviewView() {
               label: isRecording ? "Stop screen recording" : "Start screen recording",
             }}
             onClick={toggleRecording}
-            disabled={!navBarButtonsActive}>
+            disabled={!navBarButtonsActive}
+            dataTest="toggle-recording-button">
             {isRecording ? (
               <div className="recording-rec-indicator">
                 <div className="recording-rec-dot" />
@@ -311,12 +312,14 @@ function PreviewView() {
               label: "Capture a screenshot of the app",
             }}
             onClick={captureScreenshot}
-            disabled={!navBarButtonsActive}>
+            disabled={!navBarButtonsActive}
+            dataTest="capture-screenshot-button">
             <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
           <IconButton
             counter={logCounter}
             counterMode="compact"
+            dataTest="radon-top-bar-debug-console-button"
             onClick={() => project.focusDebugConsole()}
             tooltip={{
               label: "Open logs panel",
