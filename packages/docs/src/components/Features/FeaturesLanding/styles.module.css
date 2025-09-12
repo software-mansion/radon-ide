@@ -42,9 +42,9 @@
 
 .learnMoreLink,
 .learnMoreLinkBottom {
-  color: var(--ifm-color-primary);
+  color: var(--radon-button-secondary);
   text-decoration: none;
-  border: 1px solid var(--ifm-color-primary);
+  border: 1px solid var(--radon-button-secondary);
 
   width: fit-content;
   font-size: 16px;
@@ -89,12 +89,19 @@
   }
 }
 
-@media (max-width: 700px) {
+@media (max-width: 400px) {
+  .contentContainer {
+    padding: 40px 0px;
+  }
   .learnMoreLink {
     display: none;
   }
   .learnMoreLinkBottom {
     display: flex;
     justify-self: end;
+    margin-left: 24px;
+  }
+  .textContent {
+    padding: 0 24px;
   }
 }

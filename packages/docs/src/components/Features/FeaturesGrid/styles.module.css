@@ -12,7 +12,6 @@
   position: relative;
   width: 60%;
   min-width: 327px;
-  flex-shrink: 1;
 }
 
 .overflow {
@@ -82,6 +81,11 @@
 @media (max-width: 800px) {
   .container {
     grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .landingContainer {
+    gap: 8px;
   }
 }
 
