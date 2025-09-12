@@ -12,7 +12,7 @@ import { NETWORK_PLUGIN_ID, NetworkPlugin } from "./network-plugin";
 import { reportToolOpened, reportToolVisibilityChanged } from "../../project/tools";
 import { generateWebviewContent } from "../../panels/webviewContentGenerator";
 import { PREVIEW_NETWORK_NAME, PREVIEW_NETWORK_PATH } from "../../webview/utilities/constants";
-import { WebviewCDPMessage, WebviewCommand } from "../../network/types/network";
+import { WebviewCDPMessage, WebviewCommand } from "../../network/types/cdp";
 
 export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider, Disposable {
   private messageListenerDisposable: null | Disposable = null;

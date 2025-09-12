@@ -64,20 +64,3 @@ export const NETWORK_LOG_COLUMNS: NetworkLogColumn[] = [
   NetworkLogColumn.Size,
   NetworkLogColumn.Time,
 ] as const;
-
-export enum WebviewCommand {
-  CDPCall = "cdp-call",
-}
-
-export enum CDPNetworkCommand {
-  Enable = "Network.enable",
-  Disable = "Network.disable",
-  GetResponseBody = "Network.getResponseBody",
-  Initiator = "Network.Initiator",
-}
-
-export interface WebviewCDPMessage {
-  command: WebviewCommand.CDPCall;
-  method: string;
-  params: Record<string, unknown>;
-}
