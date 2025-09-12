@@ -44,6 +44,10 @@ function enableNetworkInspect(networkProxy) {
   const requestIdPrefix = Math.random().toString(36).slice(2);
   let requestIdCounter = 0;
 
+  function sendCDPMessage(method, params) {
+    networkProxy.sendMessage("cdp-message", JSON.stringify({ method, params }));
+  }
+
   async function sendResponseBody(responsePromise, message) {
     const responseBodyData = responsePromise ? await responsePromise : undefined;
     const responseObject = {
@@ -79,10 +83,6 @@ function enableNetworkInspect(networkProxy) {
       const requestId = `${requestIdPrefix}-${requestIdCounter++}`;
       const sendTime = Date.now();
       let ttfb;
-
-      function sendCDPMessage(method, params) {
-        networkProxy.sendMessage("cdp-message", JSON.stringify({ method, params }));
-      }
 
       sendCDPMessage("Network.requestWillBeSent", {
         requestId: requestId,

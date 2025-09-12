@@ -1,6 +1,6 @@
 import "./HeadersTab.css";
 import { VscodeCollapsible } from "@vscode-elements/react-elements";
-import { NetworkLog } from "../../hooks/useNetworkTracker";
+import { NetworkLog } from "../../types/networkLog";
 
 interface HeadersTabProps {
   networkLog: NetworkLog;

@@ -1,4 +1,4 @@
-import { NetworkLog } from "../../hooks/useNetworkTracker";
+import { NetworkLog } from "../../types/networkLog";
 import { getRequestPayload } from "../../utils/requestFormatters";
 import TabActionButtons from "./TabActionButtons";
 import "./PayloadAndResponseTab.css";

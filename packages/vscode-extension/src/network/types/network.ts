@@ -1,74 +1,41 @@
-import {
-  CopySubmenuConfig,
-  FilterItemConfig,
-  OpenInEditorItemConfig,
-  SortSubmenuConfig,
-} from "../components/ContextMenu/ContextMenuItems";
+export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
 
-export interface NetworkLog {
-  requestId: string;
+export interface RequestData {
   url: string;
-  status: number;
-  method: string;
-  type: string;
-  startTimestamp: number;
-  endTimestamp: number;
-  duration: number;
+  method: HttpMethod;
+  headers?: Record<string, string>;
+  postData?: string;
+}
+
+export interface RequestOptions {
+  method: HttpMethod;
   headers: Record<string, string>;
+  body?: string;
 }
 
-export enum NetworkLogColumn {
-  Name = "name",
-  Status = "status",
-  Method = "method",
-  Type = "type",
-  Size = "size",
-  Time = "time",
+export interface ResponseData {
+  type: string;
+  status: number;
+  statusText: string;
+  headers?: Record<string, string>;
+  content?: unknown;
+  mimeType?: string;
 }
 
-export enum SortDirection {
-  Asc = "asc",
-  Desc = "desc",
+export interface NetworkRequestInitiator {
+  sourceUrl: string;
+  lineNumber: number;
+  columnNumber: number;
 }
 
-export interface FilterBadge {
-  id: string;
-  columnName: string;
-  value: string;
-}
-
-export interface SortState {
-  column: NetworkLogColumn | null;
-  direction: SortDirection | null;
-}
-
-export enum ContextMenuItemName {
-  Copy = "copy",
-  Sort = "sort",
-  Filter = "filter",
-  OpenInEditor = "openInEditor",
-}
-
-export interface ContextMenuItems {
-  [ContextMenuItemName.Copy]?: CopySubmenuConfig;
-  [ContextMenuItemName.Sort]?: SortSubmenuConfig;
-  [ContextMenuItemName.Filter]?: FilterItemConfig;
-  [ContextMenuItemName.OpenInEditor]?: OpenInEditorItemConfig;
-}
-
-export type ResponseBodyData = {
+export interface ResponseBodyData {
   body: string | undefined;
   wasTruncated: boolean;
-};
+}
 
-/**
- * Array of all available network log columns for use in filters, tables
- */
-export const NETWORK_LOG_COLUMNS: NetworkLogColumn[] = [
-  NetworkLogColumn.Name,
-  NetworkLogColumn.Status,
-  NetworkLogColumn.Method,
-  NetworkLogColumn.Type,
-  NetworkLogColumn.Size,
-  NetworkLogColumn.Time,
-] as const;
+export interface TimelineEvent {
+  timestamp: number;
+  wallTime?: number;
+  durationMs?: number;
+  ttfb?: number;
+}
