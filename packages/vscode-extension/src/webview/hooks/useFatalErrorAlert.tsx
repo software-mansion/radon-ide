@@ -33,11 +33,11 @@ function BuildErrorActions({
         type="secondary"
         onClick={() => {
           openModal(
-            "Launch Configuration",
             <LaunchConfigurationView
               launchConfig={projectState.selectedLaunchConfiguration}
               isCurrentConfig
-            />
+            />,
+            { title: "Launch Configuration" }
           );
         }}
         tooltip={{ label: "Launch Configuration", side: "bottom" }}>

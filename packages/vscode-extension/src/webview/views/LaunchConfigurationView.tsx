@@ -174,11 +174,11 @@ function LaunchConfigurationView({
             className="button-secondary"
             onClick={() =>
               openModal(
-                "Launch Configuration",
                 <LaunchConfigurationView
                   launchConfig={launchConfig}
                   isCurrentConfig={isCurrentConfig}
-                />
+                />,
+                { title: "Launch Configuration" }
               )
             }>
             Cancel
@@ -324,7 +324,7 @@ function LaunchConfigurationView({
           <Button
             secondary
             onClick={() => {
-              openModal("", <DeleteConfirmationModal />);
+              openModal(<DeleteConfirmationModal />);
             }}>
             <span className="codicon codicon-trash" />
             Delete
