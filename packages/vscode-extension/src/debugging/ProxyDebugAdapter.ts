@@ -61,8 +61,7 @@ export class ProxyDebugAdapter extends DebugSession {
 
     const proxyDelegate = new RadonCDPProxyDelegate(
       this.sourceMapRegistry,
-      this.session.configuration.skipFiles,
-      this.session.configuration.installConnectRuntime
+      this.session.configuration.skipFiles
     );
 
     this.cdpProxy = new CDPProxy(
@@ -112,6 +111,12 @@ export class ProxyDebugAdapter extends DebugSession {
     this.disposables.push(
       proxyDelegate.onBindingCalled(({ name, payload }) => {
         this.sendEvent(new Event("RNIDE_bindingCalled", { name, payload }));
+      })
+    );
+
+    this.disposables.push(
+      proxyDelegate.onBundleParsed(({ isMainBundle }) => {
+        this.sendEvent(new Event("RNIDE_bundleParsed", { isMainBundle }));
       })
     );
   }
@@ -279,6 +284,15 @@ export class ProxyDebugAdapter extends DebugSession {
     return response.result;
   }
 
+  private async addBinding(name: string) {
+    await this.cdpProxy.injectDebuggerCommand({
+      method: "Runtime.addBinding",
+      params: {
+        name,
+      },
+    });
+  }
+
   protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
@@ -298,6 +312,9 @@ export class ProxyDebugAdapter extends DebugSession {
         break;
       case "RNIDE_evaluate":
         response.body.result = await this.evaluateExpression(args);
+        break;
+      case "RNIDE_addBinding":
+        await this.addBinding(args.name);
         break;
     }
     this.sendResponse(response);

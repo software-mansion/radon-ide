@@ -94,6 +94,7 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   public onProfilingCPUStopped = this.debugSession.onProfilingCPUStopped;
   public onBindingCalled = this.debugSession.onBindingCalled;
   public onDebugSessionTerminated = this.debugSession.onDebugSessionTerminated;
+  public onBundleParsed = this.debugSession.onBundleParsed;
 
   public async startParentDebugSession(): Promise<void> {
     return this.debugSession.startParentDebugSession();
@@ -135,5 +136,8 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
     params: Cdp.Runtime.EvaluateParams
   ): Promise<Cdp.Runtime.EvaluateResult> {
     return this.debugSession.evaluateExpression(params);
+  }
+  public async addBinding(name: string): Promise<void> {
+    return this.debugSession.addBinding(name);
   }
 }

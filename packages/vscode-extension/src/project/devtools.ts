@@ -15,6 +15,7 @@ import {
   FrontendBridge,
 } from "../../third-party/react-devtools/headless";
 import { BaseInspectorBridge, RadonInspectorBridgeEvents } from "./bridge";
+import { DebugSession } from "../debugging/DebugSession";
 import { disposeAll } from "../utilities/disposables";
 
 function filePathForProfile() {
@@ -123,6 +124,9 @@ export class DevtoolsConnection implements Disposable {
 
     this.store?.profilerStore.addListener("isProcessingData", saveProfileListener);
     this.store?.profilerStore.stopProfiling();
+    this.bridge.addListener("shutdown", () => {
+      this.disconnect();
+    });
     return promise;
   }
 
@@ -168,6 +172,75 @@ export abstract class DevtoolsServer implements Disposable {
 
   public dispose(): void {
     this.connectionEventEmitter.dispose();
+  }
+}
+
+const BINDING_NAME = "__CHROME_DEVTOOLS_FRONTEND_BINDING__";
+const DISPATCHER_GLOBAL = "__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__";
+const DEVTOOLS_DOMAIN_NAME = "react-devtools";
+
+export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
+  private disposables: Disposable[] = [];
+
+  constructor(private readonly debugSession: DebugSession) {
+    super();
+    this.disposables.push(
+      debugSession.onBundleParsed(({ isMainBundle }) => {
+        if (isMainBundle) {
+          this.createConnection();
+        }
+      })
+    );
+  }
+
+  private async createConnection() {
+    if (this.connection) {
+      // NOTE: a single `DebugSession` only supports a single devtools connection at a time
+      return;
+    }
+    const debugSession = this.debugSession;
+    debugSession.addBinding(BINDING_NAME);
+    debugSession.evaluateExpression({
+      expression: `void ${DISPATCHER_GLOBAL}.initializeDomain("${DEVTOOLS_DOMAIN_NAME}")`,
+    });
+
+    const wall: Wall = {
+      listen(fn) {
+        function listener(payload: string) {
+          const parsedPayload = JSON.parse(payload);
+          return fn(parsedPayload.message);
+        }
+        const subscription = debugSession.onBindingCalled((ev) => {
+          if (ev.name === BINDING_NAME) {
+            listener(ev.payload);
+          }
+        });
+        return () => subscription.dispose();
+      },
+      send(event, payload, _transferable) {
+        const serializedMessage = JSON.stringify({ event, payload });
+        debugSession.evaluateExpression({
+          expression: `void ${DISPATCHER_GLOBAL}.sendMessage("${DEVTOOLS_DOMAIN_NAME}", '${serializedMessage}')`,
+        });
+      },
+    };
+
+    const connection = new DevtoolsConnection(wall);
+    const shutdownListener = this.debugSession.onDebugSessionTerminated(() => {
+      connection.disconnect();
+      shutdownListener.dispose();
+    });
+    connection.onDisconnected(() => {
+      this.setConnection(undefined);
+    });
+
+    this.setConnection(connection);
+  }
+
+  public dispose() {
+    super.dispose();
+    this.connection?.dispose();
+    disposeAll(this.disposables);
   }
 }
 
@@ -248,4 +321,45 @@ export async function createWebSocketDevtoolsServer(): Promise<DevtoolsServer & 
 
   const devtoolsServer = new WebSocketDevtoolsServer(server);
   return devtoolsServer;
+}
+
+export class AnyDevtoolsServer extends DevtoolsServer implements Disposable {
+  private connectionSubscriptions = new Map<DevtoolsServer, Disposable>();
+
+  constructor(servers: DevtoolsServer[]) {
+    super();
+    const existingConnection = servers.filter((server) => server.connection !== undefined)[0]
+      ?.connection;
+    if (existingConnection) {
+      this.setConnection(existingConnection);
+    }
+
+    servers
+      .map((server) => [server, server.onConnection((c) => this.setConnection(c))] as const)
+      .forEach(([server, subscription]) => {
+        this.connectionSubscriptions.set(server, subscription);
+      });
+  }
+
+  public addServer(server: DevtoolsServer) {
+    if (this.connectionSubscriptions.has(server)) {
+      return;
+    }
+    this.connectionSubscriptions.set(
+      server,
+      server.onConnection((c) => this.setConnection(c))
+    );
+  }
+
+  public removeServer(server: DevtoolsServer) {
+    const subscription = this.connectionSubscriptions.get(server);
+    subscription?.dispose();
+    this.connectionSubscriptions.delete(server);
+  }
+
+  public dispose() {
+    super.dispose();
+    disposeAll(this.connectionSubscriptions.values().toArray());
+    this.connectionSubscriptions.clear();
+  }
 }

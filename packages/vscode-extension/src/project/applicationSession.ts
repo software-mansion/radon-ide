@@ -32,7 +32,13 @@ import {
 } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
 import { StateManager } from "./StateManager";
-import { DevtoolsConnection, DevtoolsInspectorBridge, DevtoolsServer } from "./devtools";
+import {
+  DevtoolsConnection,
+  DevtoolsInspectorBridge,
+  DevtoolsServer,
+  AnyDevtoolsServer,
+  CDPDevtoolsServer,
+} from "./devtools";
 import { RadonInspectorBridge } from "./bridge";
 
 interface LaunchApplicationSessionDeps {
@@ -124,18 +130,16 @@ export class ApplicationSession implements Disposable {
 
       const appReadyPromise = waitForAppReady(session.inspectorBridge, cancelToken);
 
-      onLaunchStage(StartupMessage.WaitingForAppToLoad);
-      await cancelToken.adapt(Promise.race([appReadyPromise, bundleErrorPromise]));
-
       if (getIsActive()) {
         const activatePromise = session.activate();
-        const hasBundleError = stateManager.getState().bundleError !== undefined;
-        // NOTE: if an initial bundle error occurred, the app won't connect to Metro
-        // and we won't be able to attach the debugger anyway, so there's no point in waiting
-        if (!hasBundleError) {
-          onLaunchStage(StartupMessage.AttachingDebugger);
-          await cancelToken.adapt(activatePromise);
-        }
+        onLaunchStage(StartupMessage.AttachingDebugger);
+        await cancelToken.adapt(Promise.race([activatePromise, bundleErrorPromise]));
+      }
+
+      const hasBundleError = stateManager.getState().bundleError !== undefined;
+      if (!hasBundleError && getIsActive()) {
+        onLaunchStage(StartupMessage.WaitingForAppToLoad);
+        await cancelToken.adapt(appReadyPromise);
       }
 
       return session;
@@ -147,15 +151,19 @@ export class ApplicationSession implements Disposable {
     }
   }
 
+  private readonly devtoolsServer: AnyDevtoolsServer;
+  private cdpDevtoolsServer?: CDPDevtoolsServer;
+
   private constructor(
     private readonly stateManager: StateManager<ApplicationSessionState>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
-    private readonly devtoolsServer: DevtoolsServer,
+    devtoolsServer: DevtoolsServer,
     private readonly packageNameOrBundleId: string,
     private readonly supportedOrientations: DeviceRotation[]
   ) {
+    this.devtoolsServer = new AnyDevtoolsServer([devtoolsServer]);
     this.disposables.push(
       this.devtoolsServer.onConnection((devtools) => {
         this.devtools?.dispose();
@@ -196,6 +204,12 @@ export class ApplicationSession implements Disposable {
   private async setupDebugSession(): Promise<void> {
     this.debugSession = await this.createDebugSession();
     this.debugSessionEventSubscription = this.registerDebugSessionListeners(this.debugSession);
+    if (this.cdpDevtoolsServer) {
+      this.devtoolsServer.removeServer(this.cdpDevtoolsServer);
+      this.cdpDevtoolsServer.dispose();
+    }
+    this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
+    this.devtoolsServer.addServer(this.cdpDevtoolsServer);
   }
 
   private async createDebugSession(): Promise<DebugSession & Disposable> {
