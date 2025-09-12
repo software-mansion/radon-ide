@@ -21,6 +21,7 @@ import {
   initialDeviceSessionStore,
   ProjectStore,
 } from "../common/State";
+import { createWebSocketDevtoolsServer } from "./devtools";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -162,10 +163,14 @@ export class DeviceSessionsManager implements Disposable {
       this.stateManager.setState({ [deviceInfo.id]: initialDeviceSessionStore });
     }
 
+    Logger.debug("Launching DevTools server");
+    const devtoolsServer = await createWebSocketDevtoolsServer();
+
     const newDeviceSession = new DeviceSession(
       this.stateManager.getDerived(deviceInfo.id),
       this.applicationContext,
       device,
+      devtoolsServer,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
       {
         onStateChange: (state) => {
