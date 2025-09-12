@@ -20,6 +20,8 @@
 
 .download:hover {
   opacity: 0.75;
+  background-color: transparent;
+  transition: opacity 0.3s;
 }
 
 .mobileDownload {

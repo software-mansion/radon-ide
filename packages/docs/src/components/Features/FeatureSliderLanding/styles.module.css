@@ -2,7 +2,6 @@
   display: flex;
 
   align-self: stretch;
-  border-bottom: var(--radon-border-layout);
   padding: 80px 0 80px 80px;
   justify-content: space-between;
   align-items: stretch;

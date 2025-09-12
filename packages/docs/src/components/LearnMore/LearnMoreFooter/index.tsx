@@ -3,6 +3,8 @@ import styles from "./styles.module.css";
 import { track } from "@vercel/analytics";
 import DownloadButtons from "../../DownloadButtons";
 import RadonIconGreen from "../../RadonIconGreen";
+import usePageType from "@site/src/hooks/usePageType";
+import clsx from "clsx";
 
 const RADON_IDE_MARKETPLACE_URL =
   "https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide";
@@ -15,6 +17,7 @@ const LearnMoreFooter = () => {
 
   const [isLoaded, setIsLoaded] = React.useState(false);
   const [installs, setInstalls] = React.useState(DEFAULT_INSTALLS_NO);
+  const { isLanding } = usePageType();
 
   useEffect(() => {
     async function getInstalls() {
@@ -42,20 +45,32 @@ const LearnMoreFooter = () => {
   }, []);
 
   return (
-    <div className={`${styles.learnMoreSectionFooter} ${isLoaded ? styles.show : ""}`}>
-      <div className={styles.contentContainer}>
+    <div
+      className={clsx(
+        styles.learnMoreSectionFooter,
+        isLoaded && styles.show,
+        isLanding ? styles.sectionLanding : styles.sectionFeature
+      )}>
+      <div
+        className={clsx(
+          styles.contentContainer,
+          isLanding ? styles.containerLanding : styles.containerFeature
+        )}>
         <h2>
-          Join <span>{installs} developers</span> using Radon IDE for faster, more efficient app
-          development
+          Join <span>{installs} developers</span>
+          <br /> using Radon IDE for faster,
+          <br /> more efficient app development
         </h2>
         <div className={styles.buttonContainer}>
           <DownloadButtons />
         </div>
-        <div className={styles.try}>Try 30 days for free. No sign up or credit card required.</div>
+        <p className={styles.try}>Try 30 days for free. No sign up or credit card required.</p>
       </div>
-      <div className={styles.radonIconGreen}>
-        <RadonIconGreen />
-      </div>
+      {isLanding && (
+        <div className={styles.radonIconGreen}>
+          <RadonIconGreen />
+        </div>
+      )}
     </div>
   );
 };

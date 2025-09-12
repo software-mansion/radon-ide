@@ -54,6 +54,11 @@
   color: var(--ifm-color-primary);
 }
 
+.cardTitle:hover {
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
 .activeTitle {
   opacity: 1;
   transition: opacity 0.6s ease;

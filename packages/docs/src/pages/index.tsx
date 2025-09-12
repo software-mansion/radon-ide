@@ -11,8 +11,10 @@ import usePaddle from "@site/src/hooks/usePaddle";
 import styles from "./index.module.css";
 import Testimonials from "../components/Sections/Testimonials";
 import clsx from "clsx";
-import FeaturesLanding from "../components/FeaturesLanding";
 import AI from "../components/Sections/AI";
+import FeatureSliderLanding from "../components/Features/FeatureSliderLanding";
+import LandingBanner from "../components/Features/LandingBanner";
+import FeaturesLanding from "../components/Features/FeaturesLanding";
 
 export default function Home(): JSX.Element {
   // We need to initialize on the landing coz Paddle redirects here when the user wants to change the card info, there's no way to change it
@@ -27,6 +29,8 @@ export default function Home(): JSX.Element {
           {/* <Disclaimer /> */}
           {/* <LearnMoreHero /> */}
           {/* <Installation /> */}
+          <LandingBanner />
+          <FeatureSliderLanding />
           <FeaturesLanding />
           <AI />
           <Testimonials />
