@@ -48,6 +48,15 @@ function enableNetworkInspect(networkProxy) {
     networkProxy.sendMessage("cdp-message", JSON.stringify({ method, params }));
   }
 
+  async function sendResponseBody(responsePromise, message) {
+    const responseBodyData = responsePromise ? await responsePromise : undefined;
+    const responseObject = {
+      id: message.id,
+      result: responseBodyData,
+    };
+    networkProxy.sendMessage("cdp-message", JSON.stringify(responseObject));
+  }
+
   function listener(message) {
     try {
       if (message.method === "Network.disable") {
@@ -61,17 +70,7 @@ function enableNetworkInspect(networkProxy) {
 
         // Upon initial launch, the message gets send twice in dev, because of
         // react Strict Mode and dependency on useEffect. To be fixed in next PR's.
-        responsePromise
-          ?.then((responseBodyData) => {
-            networkProxy.sendMessage(
-              "cdp-message",
-              JSON.stringify({
-                id: message.id,
-                result: responseBodyData,
-              })
-            );
-          })
-          .catch(() => {});
+        sendResponseBody(responsePromise, message);
       }
     } catch (error) {}
   }

@@ -20,7 +20,7 @@ const REQUEST_BUFFER_MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100MB
  *
  * Inspired by the C++ BoundedRequestBuffer implementation from React Native.
  */
-class AsyncBoundedResponseBuffer {
+export class AsyncBoundedResponseBuffer {
   private responseMap: Map<string, Promise<ResponseBodyData | undefined>>;
   private dataSizeMap: Map<string, number>;
   private order: string[];
@@ -77,9 +77,15 @@ class AsyncBoundedResponseBuffer {
         this.remove(requestId);
       }
 
-      const storedPromise = responseBodyPromise.then((response) =>
-        response ? { body: response.body, wasTruncated: response.wasTruncated } : undefined
-      );
+      const storedPromise = responseBodyPromise
+        .then((response) =>
+          response ? { body: response.body, wasTruncated: response.wasTruncated } : undefined
+        )
+        .catch((error) => {
+          console.warn("Error processing response body for requestId", requestId, error);
+          return undefined;
+        });
+
       this.responseMap.set(requestId, storedPromise);
       this.order.push(requestId);
 
@@ -87,8 +93,13 @@ class AsyncBoundedResponseBuffer {
       const response = await responseBodyPromise;
 
       // Check if the request was removed while we were processing
-      if (!response || this.responseMap.get(requestId) !== storedPromise) {
+      if (this.responseMap.get(requestId) !== storedPromise) {
         return false;
+      }
+
+      // Do not keep track of empty responses, negligible size
+      if(!response){
+        return true;
       }
 
       const dataSize = response.dataSize;

@@ -6,6 +6,25 @@ export type InternalResponseBodyData = {
   dataSize: number;
 };
 
+interface SerializedTypedArray {
+  length: number;
+  [key: number]: number;
+}
+
+function isSerializedTypedArray(obj: unknown): obj is SerializedTypedArray {
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+    return false;
+  }
+  const record = obj as Record<string, unknown>;
+  // length may exist but not be a number, so check safely
+  if (typeof record.length !== "number") {
+    return false;
+  }
+  return Object.keys(record).every((key) => !isNaN(parseInt(key, 10)));
+}
+
+type RequestData = string | SerializedTypedArray | null | object;
+
 // Allowed content types for processing text-based data
 const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
   "application/x-sh",
@@ -157,11 +176,36 @@ function mimeTypeFromResponseType(responseType: string): string | undefined {
   return undefined;
 }
 
-interface SerializedTypedArray {
-  length: number;
-  [key: number]: number;
+function shouldDecodeAsText(contentType: string | undefined) {
+  if (!contentType) {
+    return false;
+  }
+
+  if (contentType.startsWith("text/")) {
+    return true;
+  }
+
+  const mimeType = contentType.split(";")[0].trim().toLowerCase();
+  return PARSABLE_APPLICATION_CONTENT_TYPES.has(mimeType);
 }
-type RequestData = string | SerializedTypedArray | null | object;
+
+function reconstructTypedArray(serializedData: SerializedTypedArray): Uint8Array {
+  const length = Object.keys(serializedData).length;
+  const uint8Array = new Uint8Array(length);
+  Object.keys(serializedData).forEach((key) => {
+    const numKey = parseInt(key);
+    uint8Array[numKey] = serializedData[numKey];
+  });
+  return uint8Array;
+}
+
+function dataToBase64(array: SerializedTypedArray) {
+  return btoa(String.fromCharCode.apply(null, Array.from(array)));
+}
+
+function decode(array: Uint8Array) {
+  return new TextDecoder().decode(array);
+}
 
 /**
  * Deserialize request/response payloads that may be raw binary ({@link Uint8Array}),
@@ -173,47 +217,6 @@ type RequestData = string | SerializedTypedArray | null | object;
  * @returns Either a decoded string, base64 string, or the original data.
  */
 function deserializeRequestData(data: RequestData, contentType: string | undefined) {
-  const shouldDecodeAsText = (dataContentType: string | undefined) => {
-    if (!dataContentType) {
-      return false;
-    }
-
-    if (dataContentType.startsWith("text/")) {
-      return true;
-    }
-
-    const mimeType = dataContentType.split(";")[0].trim().toLowerCase();
-    return PARSABLE_APPLICATION_CONTENT_TYPES.has(mimeType);
-  };
-
-  const isSerializedTypedArray = (obj: unknown): obj is SerializedTypedArray => {
-    if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
-      return false;
-    }
-    const record = obj as Record<string, unknown>;
-    // length may exist but not be a number, so check safely
-    if (typeof record.length !== "number") {
-      return false;
-    }
-    return Object.keys(record).every((key) => !isNaN(parseInt(key, 10)));
-  };
-
-  const dataToBase64 = (array: SerializedTypedArray) => {
-    return btoa(String.fromCharCode.apply(null, Array.from(array)));
-  };
-  const decode = (array: Uint8Array) => {
-    return new TextDecoder().decode(array);
-  };
-
-  const reconstructTypedArray = (serializedData: SerializedTypedArray) => {
-    const length = Object.keys(serializedData).length;
-    const uint8Array = new Uint8Array(length);
-    Object.keys(serializedData).forEach((key) => {
-      uint8Array[parseInt(key)] = serializedData[key];
-    });
-    return uint8Array;
-  };
-
   if (!data || !contentType) {
     return data;
   }
