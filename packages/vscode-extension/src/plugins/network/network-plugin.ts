@@ -44,7 +44,7 @@ export class NetworkPlugin implements ToolPlugin {
   public readonly persist = true;
 
   private devtoolsListeners: Disposable[] = [];
-  private messageListeners: BroadcastListener[] = [];
+  private broadcastListeners: BroadcastListener[] = [];
 
   constructor(private readonly inspectorBridge: RadonInspectorBridge) {
     initialize();
@@ -55,11 +55,11 @@ export class NetworkPlugin implements ToolPlugin {
   }
 
   onMessageBroadcast(cb: BroadcastListener): Disposable {
-    this.messageListeners.push(cb);
+    this.broadcastListeners.push(cb);
     return new Disposable(() => {
-      let index = this.messageListeners.indexOf(cb);
+      let index = this.broadcastListeners.indexOf(cb);
       if (index !== -1) {
-        this.messageListeners.splice(index, 1);
+        this.broadcastListeners.splice(index, 1);
       }
     });
   }
@@ -70,7 +70,7 @@ export class NetworkPlugin implements ToolPlugin {
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("pluginMessage", (payload) => {
         if (payload.pluginId === "network") {
-          this.messageListeners.forEach((cb) => cb(payload.data));
+          this.broadcastListeners.forEach((cb) => cb(payload.data));
         }
       })
     );
