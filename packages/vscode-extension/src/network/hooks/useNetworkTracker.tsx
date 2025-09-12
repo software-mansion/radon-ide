@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { vscode } from "../../webview/utilities/vscode";
+import { WebviewCommand, CDPNetworkCommand } from "../types/cdp";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
 
@@ -45,12 +47,12 @@ export interface NetworkLog {
   encodedDataLength?: number;
   type?: string;
   timeline: TimelineEvent;
-  initiator?: any;
+  initiator?: NetworkRequestInitiator;
 }
 
 export interface WebSocketMessage {
   method: NetworkState;
-  params: {
+  params?: {
     encodedDataLength?: number;
     requestId: string;
     request?: NetworkRequest;
@@ -66,7 +68,6 @@ export interface WebSocketMessage {
 
 export interface NetworkTracker {
   networkLogs: NetworkLog[];
-  ws: WebSocket | null;
   clearLogs: () => void;
   toggleNetwork: (isRunning: boolean) => void;
   getSource: (networkLog: NetworkLog) => void;
@@ -74,15 +75,12 @@ export interface NetworkTracker {
 
 export const networkTrackerInitialState: NetworkTracker = {
   networkLogs: [],
-  ws: null,
   clearLogs: () => {},
   toggleNetwork: () => {},
   getSource: () => {},
 };
 
 const useNetworkTracker = (): NetworkTracker => {
-  const wsRef = useRef<WebSocket | null>(null);
-
   const [networkLogs, setNetworkLogs] = useState<NetworkLog[]>([]);
   const [serverMessages, setServerMessages] = useState<string[]>([]);
 
@@ -114,7 +112,7 @@ const useNetworkTracker = (): NetworkTracker => {
             durationMs: params.duration || existingLog.timeline.durationMs,
             ttfb: params.ttfb || existingLog.timeline.ttfb,
           },
-          type: params?.type || existingLog?.type,
+          type: params.type || existingLog.type,
           encodedDataLength: params.encodedDataLength || existingLog.encodedDataLength,
         };
       } else {
@@ -124,7 +122,7 @@ const useNetworkTracker = (): NetworkTracker => {
           request: params.request,
           response: params.response,
           encodedDataLength: params.encodedDataLength,
-          type: params?.type,
+          type: params.type,
           initiator: params.initiator,
           timeline: {
             timestamp: params.timestamp,
@@ -140,19 +138,14 @@ const useNetworkTracker = (): NetworkTracker => {
   };
 
   useEffect(() => {
-    const websocketEndpoint = document.querySelector<HTMLMetaElement>(
-      "meta[name='websocketEndpoint']"
-    )?.content;
-
-    const ws = new WebSocket(`ws://${websocketEndpoint}`);
-    wsRef.current = ws;
-
-    ws.onmessage = (message) => {
+    const listener = (message: MessageEvent) => {
       setServerMessages((prev) => [...prev, message.data]);
     };
 
+    window.addEventListener("message", listener);
+
     return () => {
-      ws.close();
+      window.removeEventListener("message", listener);
     };
   }, []);
 
@@ -173,27 +166,24 @@ const useNetworkTracker = (): NetworkTracker => {
   };
 
   const toggleNetwork = (isRunning: boolean) => {
-    wsRef.current?.send(
-      JSON.stringify({
-        method: isRunning ? "Network.disable" : "Network.enable",
-      })
-    );
+    vscode.postMessage({
+      command: WebviewCommand.CDPCall,
+      method: isRunning ? CDPNetworkCommand.Disable : CDPNetworkCommand.Enable,
+    });
   };
 
   const getSource = (networkLog: NetworkLog) => {
-    wsRef.current?.send(
-      JSON.stringify({
-        method: "Network.Initiator",
-        params: {
-          ...networkLog.initiator,
-        },
-      })
-    );
+    vscode.postMessage({
+      command: WebviewCommand.CDPCall,
+      method: CDPNetworkCommand.Initiator,
+      params: {
+        ...networkLog.initiator,
+      },
+    });
   };
 
   return {
     networkLogs: networkLogs.filter((log) => log?.request?.url !== undefined),
-    ws: wsRef.current,
     clearLogs,
     toggleNetwork,
     getSource,

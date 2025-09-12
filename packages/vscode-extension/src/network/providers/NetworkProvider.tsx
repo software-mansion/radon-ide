@@ -1,17 +1,12 @@
-import React, {
-  createContext,
-  PropsWithChildren,
-  useContext,
-  useMemo,
-  useReducer,
-  useState,
-} from "react";
+import { createContext, PropsWithChildren, useContext, useMemo, useReducer, useState } from "react";
 import useNetworkTracker, {
   NetworkLog,
   NetworkTracker,
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
+import { vscode } from "../../webview/utilities/vscode";
+import { WebviewCommand, CDPNetworkCommand } from "../types/cdp";
 
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;
@@ -57,42 +52,42 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   };
 
   const getResponseBody = (networkLog: NetworkLog) => {
-    const ws = networkTracker.ws;
     if (responseBodies[networkLog.requestId]) {
       return Promise.resolve(responseBodies[networkLog.requestId]);
     }
 
     const id = Math.random().toString(36).substring(7);
 
-    ws?.send(
-      JSON.stringify({
-        id,
-        method: "Network.getResponseBody",
-        params: {
-          requestId: networkLog.requestId,
-        },
-      })
-    );
+    const { promise, resolve } = Promise.withResolvers();
 
-    return new Promise((resolve) => {
-      const listener = (message: MessageEvent) => {
-        try {
-          const parsedMsg = JSON.parse(message.data);
-          if (parsedMsg.id === id) {
-            setResponseBodies((prev) => ({
-              ...prev,
-              [networkLog.requestId]: parsedMsg.result.body,
-            }));
-            resolve(parsedMsg.result.body);
-            ws?.removeEventListener("message", listener);
-          }
-        } catch (error) {
-          console.error("Error parsing WebSocket message:", error);
+    const listener = (message: MessageEvent) => {
+      try {
+        const parsedMsg = JSON.parse(message.data);
+        if (parsedMsg.id === id) {
+          setResponseBodies((prev) => ({
+            ...prev,
+            [networkLog.requestId]: parsedMsg.result.body,
+          }));
+          resolve(parsedMsg.result.body);
+          window.removeEventListener("message", listener);
         }
-      };
+      } catch (error) {
+        console.error("Error parsing Window message:", error);
+      }
+    };
 
-      ws?.addEventListener("message", listener);
+    window.addEventListener("message", listener);
+
+    vscode.postMessage({
+      command: WebviewCommand.CDPCall,
+      id,
+      method: CDPNetworkCommand.GetResponseBody,
+      params: {
+        requestId: networkLog.requestId,
+      },
     });
+
+    return promise;
   };
 
   const contextValue = useMemo(() => {
