@@ -16,7 +16,7 @@ import { openFileAtPosition } from "../utilities/openFileAtPosition";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
 import { CancelToken } from "../utilities/cancelToken";
 import { Output } from "../common/OutputChannel";
-import { IDE } from "./ide";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
 const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
@@ -487,14 +487,7 @@ export class MetroLauncher extends Metro implements Disposable {
       ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
     };
 
-    const metroOutputChannel =
-      IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(
-        Output.MetroBundler
-      );
-
-    if (!metroOutputChannel) {
-      throw new Error("Cannot start bundler process. The IDE is not initialized.");
-    }
+    const metroOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
 
     // Clearing logs shortly before the new bundler process is started.
     metroOutputChannel.clear();
