@@ -31,6 +31,7 @@ async function initialize() {
 interface CDPMessage {
   method: string;
   params: unknown;
+  id?: string;
 }
 
 type BroadcastListener = (message: CDPMessage) => void;
@@ -57,6 +58,7 @@ export class NetworkPlugin implements ToolPlugin {
   handleWebviewMessage(event: WebviewCDPMessage) {
     if (event.command === WebviewCommand.CDPCall) {
       this.sendCDPMessage({
+        id: event.id,
         method: event.method,
         params: event.params ?? {},
       });

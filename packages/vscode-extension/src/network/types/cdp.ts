@@ -13,4 +13,5 @@ export interface WebviewCDPMessage {
   command: WebviewCommand.CDPCall;
   method: string;
   params: Record<string, unknown>;
+  id: string;
 }
