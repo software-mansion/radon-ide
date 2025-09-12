@@ -21,8 +21,9 @@ export class OutputChannelRegistry implements Disposable {
   }
 
   public static initializeInstance(): OutputChannelRegistry {
-    // Using `initializeInstance` in combination with `getInstanceIfExists` instead of a single `getInstance`
-    // prevents Logger from constructing OutputChannelRegistry after `dispose` has been already called.
+    // Using `initializeInstance` instead of a single `getOrInitializeInstance` prevents Logger
+    // from constructing OutputChannelRegistry after `dispose` has been already called.
+
     if (this.instance) {
       throw new Error("OutputChannelRegistry instance already exists.");
     }
