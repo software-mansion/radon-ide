@@ -1,11 +1,8 @@
-import {
-  ContextMenuItemName,
-  ContextMenuItems,
-  NetworkLogColumn,
-  SortState,
-} from "../../types/network";
 import "./NetworkLogContextMenu.css";
 import NetworkLogContextMenu from "./NetworkLogContextMenu";
+import { ContextMenuItems, ContextMenuItemName } from "../../types/contextMenu";
+import { SortState } from "../../types/networkFilter";
+import { NetworkLogColumn } from "../../types/networkLog";
 
 interface TableContextMenuProps {
   children: React.ReactNode;

@@ -776,6 +776,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.editorBindings.openFileAt(filePath, line0Based, column0Based);
   }
 
+  public openContentInEditor(content: string, language: string): Promise<void> {
+    return this.editorBindings.openContentInEditor(content, language);
+  }
+
   public showDismissableError(errorMessage: string): Promise<void> {
     return this.editorBindings.showDismissableError(errorMessage);
   }

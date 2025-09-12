@@ -18,10 +18,9 @@ import IconButton from "../../webview/components/shared/IconButton";
 import { sortNetworkLogs } from "../utils/networkLogsSort";
 import { getNetworkLogValue } from "../utils/networkLogParsers";
 
-import { NetworkLogColumn, SortState } from "../types/network";
+import { NetworkLogColumn, NetworkLog } from "../types/networkLog";
+import { SortState, SortDirection } from "../types/networkFilter";
 import { useNetworkFilter } from "../providers/NetworkFilterProvider";
-import { SortDirection } from "../types/network";
-import { NetworkLog } from "../hooks/useNetworkTracker";
 import "./NetworkRequestLog.css";
 
 interface NetworkRequestLogProps {

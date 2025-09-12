@@ -4,14 +4,17 @@ import React, {
   useContext,
   useMemo,
   useReducer,
+  useRef,
   useState,
 } from "react";
 import useNetworkTracker, {
-  NetworkLog,
   NetworkTracker,
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
+import { NetworkLog } from "../types/networkLog";
+import { NetworkPanelMessage } from "../types/panelMessageProtocol";
+import { ResponseBodyData } from "../types/network";
 
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;
@@ -21,7 +24,8 @@ interface NetworkProviderProps extends NetworkTracker {
   toggleScrolling: () => void;
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
-  getResponseBody: (networkLog: NetworkLog) => Promise<unknown>;
+  fetchAndOpenResponseInEditor: (networkLog: NetworkLog) => Promise<void>;
+  getResponseBody: (networkLog: NetworkLog) => Promise<ResponseBodyData | undefined>;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
@@ -34,71 +38,107 @@ const NetworkContext = createContext<NetworkProviderProps>({
   isTimelineVisible: true,
   toggleTimelineVisible: () => {},
   getResponseBody: async () => undefined,
+  fetchAndOpenResponseInEditor: async () => {},
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
+  const { clearLogs, toggleNetwork, sendIDEMessage, sendCDPMessage, ws, networkLogs } =
+    networkTracker;
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
   const [isRecording, setIsRecording] = useState(true);
-  const [responseBodies, setResponseBodies] = useState<Record<string, unknown>>({});
+  const responseBodiesRef = useRef<Record<string, ResponseBodyData | undefined>>({});
 
   const clearActivity = () => {
-    networkTracker.clearLogs();
-    setResponseBodies({});
+    clearLogs();
+    responseBodiesRef.current = {};
   };
 
   const toggleRecording = () => {
     setIsRecording((prev) => {
-      networkTracker.toggleNetwork(prev);
+      toggleNetwork(prev);
       return !prev;
     });
   };
 
-  const getResponseBody = (networkLog: NetworkLog) => {
-    const ws = networkTracker.ws;
-    if (responseBodies[networkLog.requestId]) {
-      return Promise.resolve(responseBodies[networkLog.requestId]);
+  const getResponseBody = (networkLog: NetworkLog): Promise<ResponseBodyData | undefined> => {
+    const requestId = networkLog.requestId;
+
+    if (!requestId || !ws) {
+      return Promise.resolve(undefined);
+    }
+
+    if (responseBodiesRef.current[requestId]) {
+      return Promise.resolve(responseBodiesRef.current[requestId]);
     }
 
     const id = Math.random().toString(36).substring(7);
 
-    ws?.send(
-      JSON.stringify({
-        id,
-        method: "Network.getResponseBody",
-        params: {
-          requestId: networkLog.requestId,
-        },
-      })
-    );
+    // Send the message to the network-plugin backend
+    sendCDPMessage({
+      id,
+      method: "Network.getResponseBody",
+      params: {
+        requestId: requestId,
+      },
+    });
 
+    // Add a listener to capture the response
     return new Promise((resolve) => {
-      const listener = (message: MessageEvent) => {
+      const listener = (message: MessageEvent<string>) => {
         try {
-          const parsedMsg = JSON.parse(message.data);
-          if (parsedMsg.id === id) {
-            setResponseBodies((prev) => ({
-              ...prev,
-              [networkLog.requestId]: parsedMsg.result.body,
-            }));
-            resolve(parsedMsg.result.body);
-            ws?.removeEventListener("message", listener);
+          const parsedMsg: NetworkPanelMessage = JSON.parse(message.data);
+          if (parsedMsg.type !== "CDP" || parsedMsg.payload.id !== id) {
+            return;
           }
+          const bodyData: ResponseBodyData | undefined = parsedMsg.payload.result as
+            | ResponseBodyData
+            | undefined;
+
+          if (bodyData === undefined) {
+            ws.removeEventListener("message", listener);
+            resolve(responseBodiesRef.current[requestId]);
+            return;
+          }
+
+          responseBodiesRef.current[requestId] = bodyData;
+
+          resolve(bodyData);
+          ws.removeEventListener("message", listener);
         } catch (error) {
           console.error("Error parsing WebSocket message:", error);
         }
       };
 
-      ws?.addEventListener("message", listener);
+      ws.addEventListener("message", listener);
+    });
+  };
+
+  const fetchAndOpenResponseInEditor = async (networkLog: NetworkLog) => {
+    const requestId = networkLog.requestId;
+    const request = networkLog.request;
+
+    if (!requestId || !ws || !request) {
+      return Promise.resolve(undefined);
+    }
+
+    const id = Math.random().toString(36).substring(7);
+
+    sendIDEMessage({
+      id,
+      method: "IDE.fetchFullResponseBody",
+      params: {
+        request: request,
+      },
     });
   };
 
   const contextValue = useMemo(() => {
     return {
       ...networkTracker,
-      networkLogs: networkTracker.networkLogs,
+      networkLogs: networkLogs,
       isRecording,
       toggleRecording,
       isScrolling,
@@ -107,6 +147,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       isTimelineVisible,
       toggleTimelineVisible,
       getResponseBody,
+      fetchAndOpenResponseInEditor,
     };
   }, [isRecording, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
 

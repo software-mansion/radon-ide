@@ -1,4 +1,4 @@
-import { NetworkLog } from "../hooks/useNetworkTracker";
+import { NetworkLog } from "../types/networkLog";
 
 function prettyStringify(obj: unknown): string {
   return JSON.stringify(obj, null, 2);
@@ -32,9 +32,9 @@ function formatUrlParams(url: string): string {
   }
 }
 
-export function formatRequestBody(body: unknown): string {
+export function getFormattedRequestBody(body: unknown): string | undefined {
   if (typeof body !== "string") {
-    return "No response body";
+    return undefined;
   }
   try {
     const parsed = JSON.parse(body);
@@ -48,11 +48,11 @@ export function getUrl(log: NetworkLog): string {
   return log.request?.url || "No URL available";
 }
 
-export function getRequestDetails(log: NetworkLog): string {
+export function getRequestDetails(log: NetworkLog): string | undefined {
   const request = log.request;
 
   if (!request) {
-    return prettyStringify({ error: "No request data" });
+    return undefined;
   }
 
   const { postData, method, url, headers = {} } = request;
@@ -63,17 +63,18 @@ export function getRequestDetails(log: NetworkLog): string {
     headers,
   };
 
-  if (postData) {
-    requestData.body = formatRequestBody(postData);
+  const requestBody = getFormattedRequestBody(postData);
+  if (requestBody) {
+    requestData.body = requestBody;
   }
 
   return prettyStringify(requestData);
 }
 
-export function getResponseDetails(log: NetworkLog): string {
+export function getResponseDetails(log: NetworkLog): string | undefined {
   const response = log.response;
   if (!response) {
-    return prettyStringify({ error: "No response data" });
+    return undefined;
   }
 
   const { status, statusText, headers = {}, content } = response;
@@ -91,20 +92,19 @@ export function getResponseDetails(log: NetworkLog): string {
   return prettyStringify(responseData);
 }
 
-export function getRequestPayload(log: NetworkLog): string {
+export function getRequestPayload(log: NetworkLog): string | undefined {
   const request = log.request;
   if (!request) {
-    return "No request payload";
+    return undefined;
   }
 
   const { url, postData } = request;
 
-  const urlParams = formatUrlParams(url);
   const _hasUrlParams = hasUrlParams(log);
+  const urlParams = formatUrlParams(url);
+  const bodyData = getFormattedRequestBody(postData);
 
-  if (postData && postData !== "") {
-    const bodyData = formatRequestBody(postData);
-
+  if (bodyData) {
     if (_hasUrlParams) {
       return `URL Parameters:\n${urlParams}\n\nRequest Body:\n${bodyData}`;
     }
@@ -115,7 +115,7 @@ export function getRequestPayload(log: NetworkLog): string {
     return urlParams;
   }
 
-  return "No request payload";
+  return undefined;
 }
 
 export function createCurlCommand(log: NetworkLog): string {

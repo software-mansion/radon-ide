@@ -1,4 +1,8 @@
-export async function copyToClipboard(text: string): Promise<void> {
+export async function copyToClipboard(text: string | undefined): Promise<void> {
+  if (!text) {
+    return;
+  }
+
   try {
     await navigator.clipboard.writeText(text);
   } catch (error) {
