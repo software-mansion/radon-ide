@@ -9,14 +9,20 @@ export class OutputChannelRegistry implements Disposable {
   private channelByName = new Map<OutputExceptIde, ReadableLogOutputChannel>([]);
 
   public static getOrCreateOutputChannel(channel: OutputExceptIde): ReadableLogOutputChannel {
-    const logOutput = this.instance?.channelByName.get(channel);
+    if (!this.instance) {
+      throw new Error(
+        "Cannot get or create output channel - OutputChannelRegistry is not initialized."
+      );
+    }
+
+    const logOutput = this.instance.channelByName.get(channel);
 
     if (logOutput) {
       return logOutput;
     }
 
     const newOutputChannel = createReadableOutputChannel(channel);
-    this.instance?.channelByName.set(channel, newOutputChannel);
+    this.instance.channelByName.set(channel, newOutputChannel);
     return newOutputChannel;
   }
 
