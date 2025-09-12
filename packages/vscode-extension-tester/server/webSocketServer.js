@@ -61,9 +61,16 @@ export function waitForMessage(id, timeoutMs = 5000) {
 
 export function closeServer() {
   if (wss) {
+    wss.clients.forEach((client) => {
+      try {
+        client.terminate();
+      } catch {}
+    });
+
     wss.close(() => {
       console.log("WebSocket server closed");
     });
+
     wss = null;
     appWebsocket = null;
   }

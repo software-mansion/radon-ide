@@ -36,6 +36,8 @@ describe("Network panel tests", () => {
       return appWebsocket != null;
     }, 5000);
 
+    await appManipulationService.hideExpoOverlay(appWebsocket);
+
     await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-tools-dropdown-trigger"
     );

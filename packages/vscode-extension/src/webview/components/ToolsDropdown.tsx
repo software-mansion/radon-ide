@@ -126,6 +126,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
           <Label>Utilities</Label>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="tools-dropdown-menu-cpu-profiling-button"
             onSelect={() =>
               isProfilingCPU ? project.stopProfilingCPU() : project.startProfilingCPU()
             }>
@@ -134,6 +135,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="tools-dropdown-menu-react-profiling-button"
             onSelect={() =>
               isProfilingReact ? project.stopProfilingReact() : project.startProfilingReact()
             }>

@@ -1,7 +1,6 @@
 import assert from "assert";
 import { Disposable } from "vscode";
 import { MetroLauncher } from "./metro";
-import { Devtools } from "./devtools";
 import { RadonInspectorBridge } from "./bridge";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
@@ -42,6 +41,7 @@ import { FrameReporter } from "./FrameReporter";
 import { ScreenCapture } from "./ScreenCapture";
 import { disposeAll } from "../utilities/disposables";
 import { FileTransfer } from "./FileTransfer";
+import { DevtoolsServer } from "./devtools";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -69,7 +69,6 @@ export class DeviceSession implements Disposable {
   private isActive = false;
   private metro: MetroLauncher;
   private maybeBuildResult: BuildResult | undefined;
-  private devtools: Devtools;
   private buildManager: BuildManager;
   private cancelToken: CancelToken = new CancelToken();
   private watchProjectSubscription: Disposable;
@@ -103,14 +102,15 @@ export class DeviceSession implements Disposable {
     return this.device.platform;
   }
 
-  public get inspectorBridge(): RadonInspectorBridge {
-    return this.devtools;
+  public get inspectorBridge(): RadonInspectorBridge | undefined {
+    return this.applicationSession?.inspectorBridge;
   }
 
   constructor(
     private readonly stateManager: StateManager<DeviceSessionStore>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
+    private readonly devtoolsServer: DevtoolsServer & { port: number },
     initialRotation: DeviceRotation,
     private readonly deviceSessionDelegate: DeviceSessionDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
@@ -128,8 +128,7 @@ export class DeviceSession implements Disposable {
     );
     this.disposables.push(this.screenCapture);
 
-    this.devtools = this.makeDevtools();
-    this.metro = new MetroLauncher(this.devtools);
+    this.metro = new MetroLauncher();
     this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
 
     this.buildManager = this.applicationContext.buildManager;
@@ -216,7 +215,7 @@ export class DeviceSession implements Disposable {
 
   //#region Metro delegate methods
 
-  onBundleProgress = throttle((stageProgress: number) => {
+  private onBundleProgress = throttle((stageProgress: number) => {
     if (this.startupMessage === StartupMessage.WaitingForAppToLoad) {
       this.stageProgress = stageProgress;
       this.emitStateChange();
@@ -225,12 +224,7 @@ export class DeviceSession implements Disposable {
 
   //#endregion
 
-  private makeDevtools() {
-    const devtools = new Devtools();
-    devtools.onEvent("appReady", () => {
-      this.device.setUpKeyboard();
-      Logger.debug("App ready");
-    });
+  private setupInspectorBridgeListeners(devtools: RadonInspectorBridge) {
     // We don't need to store event disposables here as they are tied to the lifecycle
     // of the devtools instance, which is disposed when we recreate the devtools or
     // when the device session is disposed
@@ -248,7 +242,6 @@ export class DeviceSession implements Disposable {
       this.navigationRouteList = payload;
       this.emitStateChange();
     });
-    return devtools;
   }
 
   /**
@@ -262,9 +255,11 @@ export class DeviceSession implements Disposable {
     await this.applicationSession?.dispose();
     this.applicationSession = undefined;
 
+    // the devtools server is most likely already resolved, so this should run immediately
+    this.devtoolsServer.dispose();
+
     this.device?.dispose();
     this.metro?.dispose();
-    this.devtools?.dispose();
     this.watchProjectSubscription.dispose();
 
     disposeAll(this.disposables);
@@ -370,7 +365,7 @@ export class DeviceSession implements Disposable {
 
     this.updateStartupMessage(StartupMessage.StartingPackager);
     const oldMetro = this.metro;
-    this.metro = new MetroLauncher(this.devtools);
+    this.metro = new MetroLauncher();
     this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
     oldMetro.dispose();
 
@@ -379,6 +374,7 @@ export class DeviceSession implements Disposable {
       resetCache,
       launchConfiguration: this.applicationContext.launchConfig,
       dependencies: [],
+      devtoolsPort: this.devtoolsServer.port,
     });
 
     this.applicationSession?.dispose();
@@ -392,13 +388,15 @@ export class DeviceSession implements Disposable {
   }
 
   private async reloadJS() {
+    this.cancelOngoingOperations();
+    const cancelToken = this.cancelToken;
     if (this.applicationSession === undefined) {
       throw new Error(
         "JS bundle cannot be reloaded before an application is launched and connected to Radon"
       );
     }
     this.updateStartupMessage(StartupMessage.WaitingForAppToLoad);
-    await this.applicationSession.reloadJS();
+    await this.applicationSession.reloadJS(cancelToken);
   }
 
   private async reinstallApp() {
@@ -501,7 +499,8 @@ export class DeviceSession implements Disposable {
         device: this.device,
         buildResult: this.buildResult,
         metro: this.metro,
-        devtools: this.devtools,
+        devtoolsServer: this.devtoolsServer,
+        devtoolsPort: this.devtoolsServer.port,
       },
       () => this.isActive,
       this.updateStartupMessage.bind(this),
@@ -513,6 +512,11 @@ export class DeviceSession implements Disposable {
       }
 
       this.applicationSession = applicationSession;
+
+      // NOTE: on iOS, we need to change keyboard langugage to match the device locale after the app is ready
+      this.device.setUpKeyboard();
+      this.setupInspectorBridgeListeners(applicationSession.inspectorBridge);
+
       this.status = "running";
       this.emitStateChange();
 
@@ -629,9 +633,8 @@ export class DeviceSession implements Disposable {
 
   private async waitForMetroReady() {
     this.updateStartupMessage(StartupMessage.StartingPackager);
-    // wait for metro/devtools to start before we continue
-    await Promise.all([this.metro.ready(), this.devtools.ready()]);
-    Logger.debug("Metro & devtools ready");
+    await this.metro.ready();
+    Logger.debug("Metro server ready");
   }
 
   public async start() {
@@ -651,14 +654,12 @@ export class DeviceSession implements Disposable {
           cancelToken
         );
 
-      Logger.debug(`Launching devtools`);
-      this.devtools.start();
-
       Logger.debug(`Launching metro`);
       this.metro.start({
         resetCache: false,
         launchConfiguration: this.applicationContext.launchConfig,
         dependencies: [waitForNodeModules],
+        devtoolsPort: this.devtoolsServer.port,
       });
 
       await cancelToken.adapt(this.waitForMetroReady());
@@ -822,17 +823,17 @@ export class DeviceSession implements Disposable {
   }
 
   public openNavigation(id: string) {
-    this.inspectorBridge.sendOpenNavigationRequest(id);
+    this.inspectorBridge?.sendOpenNavigationRequest(id);
   }
 
   public navigateHome() {
     if (this.navigationHomeTarget) {
-      this.inspectorBridge.sendOpenNavigationRequest(this.navigationHomeTarget.id);
+      this.inspectorBridge?.sendOpenNavigationRequest(this.navigationHomeTarget.id);
     }
   }
 
   public navigateBack() {
-    this.inspectorBridge.sendOpenNavigationRequest("__BACK__");
+    this.inspectorBridge?.sendOpenNavigationRequest("__BACK__");
   }
 
   public removeNavigationHistoryEntry(id: string) {
@@ -846,9 +847,9 @@ export class DeviceSession implements Disposable {
 
   public async startPreview(previewId: string) {
     const { resolve, reject, promise } = Promise.withResolvers<void>();
-    const listener = this.devtools.onEvent("openPreviewResult", (payload) => {
+    const listener = this.inspectorBridge?.onEvent("openPreviewResult", (payload) => {
       if (payload.previewId === previewId) {
-        listener.dispose();
+        listener?.dispose();
         if (payload.error) {
           reject(payload.error);
         } else {
@@ -856,7 +857,7 @@ export class DeviceSession implements Disposable {
         }
       }
     });
-    this.inspectorBridge.sendOpenPreviewRequest(previewId);
+    this.inspectorBridge?.sendOpenPreviewRequest(previewId);
     return promise;
   }
 
@@ -869,7 +870,7 @@ export class DeviceSession implements Disposable {
   }
 
   public openStorybookStory(componentTitle: string, storyName: string) {
-    this.inspectorBridge.sendShowStorybookStoryRequest(componentTitle, storyName);
+    this.inspectorBridge?.sendShowStorybookStoryRequest(componentTitle, storyName);
   }
 
   //#region Application Session

@@ -5,7 +5,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
-describe("screenshots panel tests", () => {
+describe("screenshots tests", () => {
   let driver,
     view,
     appWebsocket,
@@ -13,7 +13,7 @@ describe("screenshots panel tests", () => {
     radonViewsService,
     managingDevicesService,
     appManipulationService;
-  const homeDir = os.homedir();
+  const cwd = process.cwd() + "/data";
 
   before(async () => {
     ({ driver } = get());
@@ -45,7 +45,7 @@ describe("screenshots panel tests", () => {
   //   // VSCode for some reason puts two dots in file name, but it's not an issue
   //   // it only happens in vscode instance opened by vscode-extension-tester which uses different save file dialog
   //   // regular VSCode instance use macOS default save file dialog
-  //   const filePath = path.join(homeDir, "screenshotTest..png");
+  //   const filePath = path.join(cwd, "screenshotTest..png");
 
   //   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 

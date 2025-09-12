@@ -94,25 +94,25 @@ export class IosSimulatorDevice extends DeviceBase {
   public dispose() {
     super.dispose();
     this.runningAppProcess?.cancel();
-    return exec("xcrun", [
-      "simctl",
-      "--set",
-      getOrCreateDeviceSet(this.deviceUDID),
-      "shutdown",
-      this.deviceUDID,
-    ]);
+    return exec(
+      "xcrun",
+      ["simctl", "--set", getOrCreateDeviceSet(this.deviceUDID), "shutdown", this.deviceUDID],
+      {
+        reject: false, // we ignore the error here, as the shutdown command may fail if the device is already shutdown
+      }
+    );
   }
 
   public async reboot() {
     super.reboot();
     this.runningAppProcess?.cancel();
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      getOrCreateDeviceSet(this.deviceUDID),
-      "shutdown",
-      this.deviceUDID,
-    ]);
+    await exec(
+      "xcrun",
+      ["simctl", "--set", getOrCreateDeviceSet(this.deviceUDID), "shutdown", this.deviceUDID],
+      {
+        reject: false, // we ignore the error here, as the shutdown command may fail if the device is already shutdown
+      }
+    );
 
     await this.internalBootDevice();
   }

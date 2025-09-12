@@ -4,17 +4,19 @@ const appRoot = path.resolve();
 
 // Instead of using require in this code, we should use require_app, which will
 // resolve modules relative to the app root, not the extension lib root.
-function requireFromAppDir(module) {
-  // eslint-disable-next-line @typescript-eslint/no-shadow
-  const path = require.resolve(module, { paths: [appRoot] });
+function requireFromAppDir(module, options) {
+  const path = resolveFromAppDir(module, options);
   return require(path);
 }
 
-function overrideModuleFromAppDir(moduleName, exports) {
+function resolveFromAppDir(module, options) {
+  const paths = options && options.paths ? [...options.paths, appRoot] : [appRoot];
+  return require.resolve(module, { paths });
+}
+
+function overrideModuleFromAppDir(moduleName, exports, options) {
   try {
-    const moduleToOverride = require.resolve(moduleName, {
-      paths: [appRoot],
-    });
+    const moduleToOverride = resolveFromAppDir(moduleName, options);
     require.cache[moduleToOverride] = {
       exports,
     };
@@ -173,5 +175,6 @@ module.exports = {
   appRoot,
   adaptMetroConfig,
   requireFromAppDir,
+  resolveFromAppDir,
   overrideModuleFromAppDir,
 };
