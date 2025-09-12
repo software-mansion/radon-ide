@@ -44,7 +44,8 @@ export class ElementHelperService {
       message,
       timeout
     );
-    element.click();
+    await element.click();
+    return element;
   }
 
   async waitUntilElementGone(
@@ -65,6 +66,11 @@ export class ElementHelperService {
   async safeFind(selector) {
     const elements = await this.driver.findElements(selector);
     return elements.length > 0 ? elements[0] : null;
+  }
+
+  async hasClass(element, className) {
+    const classes = await element.getAttribute("class");
+    return classes?.split(" ").includes(className) ?? false;
   }
 }
 

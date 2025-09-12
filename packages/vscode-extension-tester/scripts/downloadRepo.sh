@@ -7,7 +7,6 @@ if [ -z "$1" ]; then
   APP="react-native-81"
 fi
 
-
 FOLDER_NAME="$APP"
 TARGET_DIR="./data/react-native-app"
 # FIXME: temporary repo with react native apps (one app so far)
@@ -24,18 +23,21 @@ git remote add origin "$REPO_URL"
 git config core.sparseCheckout true
 
 echo "$FOLDER_NAME" >> .git/info/sparse-checkout
+echo "shared" >> .git/info/sparse-checkout
 
 git pull --depth 1 origin main
 
 mkdir -p ../data
 
 mv "$FOLDER_NAME" ../data/react-native-app
+mv "shared" ../data/ || true  # przenosimy shared do katalogu aplikacji
 
 cd ..
 rm -rf "$TMP_DIR"
 
 cd ./data/react-native-app
 npm install
+npm run copy-shared
 cd ../..
 
-echo "Directory $FOLDER_NAME successfully fetched into $TARGET_DIR"
+echo "Directory $FOLDER_NAME (with shared) successfully fetched into $TARGET_DIR"
