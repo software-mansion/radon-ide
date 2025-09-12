@@ -128,7 +128,7 @@ export class DevtoolsConnection implements Disposable {
     this.store?.profilerStore.addListener("isProcessingData", saveProfileListener);
     this.store?.profilerStore.stopProfiling();
     this.bridge.addListener("shutdown", () => {
-      this.close();
+      this.disconnect();
     });
     return promise;
   }
@@ -185,7 +185,6 @@ const DEVTOOLS_DOMAIN_NAME = "react-devtools";
 
 export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   private disposables: Disposable[] = [];
-  private connection: DevtoolsConnection | undefined;
 
   constructor(private readonly debugSession: DebugSession) {
     super();
@@ -231,16 +230,15 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
     };
 
     const connection = new DevtoolsConnection(wall);
-    this.connection = connection;
     const shutdownListener = this.debugSession.onDebugSessionTerminated(() => {
-      connection.close();
+      connection.disconnect();
       shutdownListener.dispose();
     });
     connection.onDisconnected(() => {
-      this.connection = undefined;
+      this.setConnection(undefined);
     });
 
-    this.connectionEventEmitter.fire(connection);
+    this.setConnection(connection);
   }
 
   public dispose() {
@@ -334,11 +332,14 @@ export class AnyDevtoolsServer extends DevtoolsServer implements Disposable {
 
   constructor(servers: DevtoolsServer[]) {
     super();
+    const existingConnection = servers.filter((server) => server.connection !== undefined)[0]
+      ?.connection;
+    if (existingConnection) {
+      this.setConnection(existingConnection);
+    }
+
     servers
-      .map(
-        (server) =>
-          [server, server.onConnection((c) => this.connectionEventEmitter.fire(c))] as const
-      )
+      .map((server) => [server, server.onConnection((c) => this.setConnection(c))] as const)
       .forEach(([server, subscription]) => {
         this.connectionSubscriptions.set(server, subscription);
       });
@@ -350,7 +351,7 @@ export class AnyDevtoolsServer extends DevtoolsServer implements Disposable {
     }
     this.connectionSubscriptions.set(
       server,
-      server.onConnection((c) => this.connectionEventEmitter.fire(c))
+      server.onConnection((c) => this.setConnection(c))
     );
   }
 
