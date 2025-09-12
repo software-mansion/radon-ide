@@ -6,7 +6,7 @@ import useNetworkTracker, {
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { vscode } from "../../webview/utilities/vscode";
-import { CDPNetworkCommand, WebviewCommand } from "../../webview/utilities/communicationTypes";
+import { WebviewCommand, CDPNetworkCommand } from "../types/network";
 
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;

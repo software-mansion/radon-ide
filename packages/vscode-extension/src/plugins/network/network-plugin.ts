@@ -6,7 +6,7 @@ import { extensionContext } from "../../utilities/extensionContext";
 import { Logger } from "../../Logger";
 import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider";
 import { disposeAll } from "../../utilities/disposables";
-import { CDPNetworkCommand } from "../../webview/utilities/communicationTypes";
+import { CDPNetworkCommand } from "../../network/types/network";
 
 export const NETWORK_PLUGIN_ID = "network";
 

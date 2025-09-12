@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { vscode } from "../../webview/utilities/vscode";
-import { CDPNetworkCommand, WebviewCommand } from "../../webview/utilities/communicationTypes";
+import { WebviewCommand, CDPNetworkCommand } from "../types/network";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
 
