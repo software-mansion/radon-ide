@@ -38,7 +38,11 @@ export class OutputChannelRegistry implements Disposable {
     return this.instance;
   }
 
-  dispose() {
+  public static getInstanceIfExists() {
+    return OutputChannelRegistry.instance;
+  }
+
+  public dispose() {
     this.channelByName.values().forEach((channel) => channel.dispose());
     this.channelByName.clear();
     OutputChannelRegistry.instance = null;
