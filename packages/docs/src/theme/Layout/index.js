@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import ErrorBoundary from "@docusaurus/ErrorBoundary";
 import { PageMetadata } from "@docusaurus/theme-common";
 import { useKeyboardNavigation } from "@docusaurus/theme-common/internal";

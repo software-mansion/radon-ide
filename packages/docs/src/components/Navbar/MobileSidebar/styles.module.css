@@ -11,9 +11,9 @@
 
   transform: translateY(-200%);
 
+  opacity: 0.9;
   background: var(--swm-background);
-  background-color: transparent;
-  backdrop-filter: blur(20px);
+  backdrop-filter: blur(2px);
 
   z-index: 999;
 }
