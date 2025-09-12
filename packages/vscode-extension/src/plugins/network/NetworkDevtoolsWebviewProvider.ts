@@ -12,7 +12,7 @@ import { NETWORK_PLUGIN_ID, NetworkPlugin } from "./network-plugin";
 import { reportToolOpened, reportToolVisibilityChanged } from "../../project/tools";
 import { generateWebviewContent } from "../../panels/webviewContentGenerator";
 import { PREVIEW_NETWORK_NAME, PREVIEW_NETWORK_PATH } from "../../webview/utilities/constants";
-import { WebviewCDPMessage, WebviewCommand } from "../../network/types/cdp";
+import { WebviewCDPMessage } from "../../network/types/cdp";
 
 export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider, Disposable {
   private messageListenerDisposable: null | Disposable = null;
@@ -48,18 +48,15 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider, Disp
       throw new Error("Couldn't retrieve the network plugin");
     }
 
-    this.messageListenerDisposable = webview.onDidReceiveMessage((event: WebviewCDPMessage) => {
-      if (event.command === WebviewCommand.CDPCall) {
-        networkPlugin.sendCDPMessage({
-          method: event.method,
-          params: event.params ?? {},
-        });
-      }
-    });
+    this.messageListenerDisposable = webview.onDidReceiveMessage((event: WebviewCDPMessage) =>
+      // TODO: Try passing directly, bind if neccessary.
+      networkPlugin.handleWebviewMessage(event)
+    );
 
-    this.broadcastRepeaterDisposable = networkPlugin.onMessageBroadcast((message) => {
-      webview.postMessage(message);
-    });
+    this.broadcastRepeaterDisposable = networkPlugin.onMessageBroadcast((message) =>
+      // TODO: Try passing directly, bind if neccessary.
+      webview.postMessage(message)
+    );
 
     webviewView.onDidChangeVisibility(() =>
       reportToolVisibilityChanged(NETWORK_PLUGIN_ID, webviewView.visible)

@@ -6,7 +6,7 @@ import { extensionContext } from "../../utilities/extensionContext";
 import { Logger } from "../../Logger";
 import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider";
 import { disposeAll } from "../../utilities/disposables";
-import { CDPNetworkCommand } from "../../network/types/cdp";
+import { CDPNetworkCommand, WebviewCDPMessage, WebviewCommand } from "../../network/types/cdp";
 
 export const NETWORK_PLUGIN_ID = "network";
 
@@ -50,8 +50,17 @@ export class NetworkPlugin implements ToolPlugin {
     initialize();
   }
 
-  sendCDPMessage(messageData: CDPMessage) {
+  private sendCDPMessage(messageData: CDPMessage) {
     this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
+  }
+
+  handleWebviewMessage(event: WebviewCDPMessage) {
+    if (event.command === WebviewCommand.CDPCall) {
+      this.sendCDPMessage({
+        method: event.method,
+        params: event.params ?? {},
+      });
+    }
   }
 
   onMessageBroadcast(cb: BroadcastListener): Disposable {
