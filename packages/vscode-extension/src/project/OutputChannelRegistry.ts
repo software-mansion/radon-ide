@@ -6,7 +6,7 @@ type OutputExceptIde = Exclude<Output, Output.Ide>;
 
 export class OutputChannelRegistry implements Disposable {
   private static instance: OutputChannelRegistry | null = null;
-  private channelByName = new Map<OutputExceptIde, ReadableLogOutputChannel>([]);
+  private channelByName = new Map<OutputExceptIde, ReadableLogOutputChannel>();
 
   public static getOrCreateOutputChannel(channel: OutputExceptIde): ReadableLogOutputChannel {
     if (!this.instance) {
