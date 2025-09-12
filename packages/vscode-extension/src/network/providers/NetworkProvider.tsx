@@ -4,6 +4,7 @@ import React, {
   useContext,
   useMemo,
   useReducer,
+  useRef,
   useState,
 } from "react";
 import useNetworkTracker, {
@@ -45,11 +46,11 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
   const [isRecording, setIsRecording] = useState(true);
-  const [responseBodies, setResponseBodies] = useState<Record<string, ResponseBodyData>>({});
+  const responseBodiesRef = useRef<Record<string, ResponseBodyData | undefined>>({});
 
   const clearActivity = () => {
     networkTracker.clearLogs();
-    setResponseBodies({});
+    responseBodiesRef.current = {};
   };
 
   const toggleRecording = () => {
@@ -67,8 +68,8 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       return Promise.resolve(undefined);
     }
 
-    if (responseBodies[requestId]) {
-      return Promise.resolve(responseBodies[requestId]);
+    if (responseBodiesRef.current[requestId]) {
+      return Promise.resolve(responseBodiesRef.current[requestId]);
     }
 
     const id = Math.random().toString(36).substring(7);
@@ -92,15 +93,17 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
           if (parsedMsg.id !== id) {
             return;
           }
+          const bodyData: ResponseBodyData | undefined = parsedMsg.result;
 
-          const bodyData = parsedMsg.result;
-          setResponseBodies((prev) => ({
-            ...prev,
-            [requestId]: bodyData,
-          }));
+          if (bodyData === undefined) {
+            ws.removeEventListener("message", listener);
+            resolve(responseBodiesRef.current[requestId]);
+            return;
+          }
+
+          responseBodiesRef.current[requestId] = bodyData;
 
           resolve(bodyData);
-
           ws.removeEventListener("message", listener);
         } catch (error) {
           console.error("Error parsing WebSocket message:", error);

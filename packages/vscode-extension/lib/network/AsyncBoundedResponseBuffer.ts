@@ -93,8 +93,13 @@ export class AsyncBoundedResponseBuffer {
       const response = await responseBodyPromise;
 
       // Check if the request was removed while we were processing
-      if (!response || this.responseMap.get(requestId) !== storedPromise) {
+      if (this.responseMap.get(requestId) !== storedPromise) {
         return false;
+      }
+
+      // Do not keep track of empty responses, negligible size
+      if(!response){
+        return true;
       }
 
       const dataSize = response.dataSize;

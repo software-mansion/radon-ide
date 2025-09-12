@@ -51,7 +51,7 @@ describe("AsyncBoundedResponseBuffer", () => {
       const requestId = "test-request-undefined";
 
       const result = await buffer.put(requestId, Promise.resolve(undefined));
-      assert.strictEqual(result, false);
+      assert.strictEqual(result, true);
 
       const retrievedPromise = buffer.get(requestId);
 
@@ -79,15 +79,15 @@ describe("AsyncBoundedResponseBuffer", () => {
     const result1 = await buffer.put(requestId1, Promise.resolve(responseData1));
     const result2 = await buffer.put(requestId2, Promise.resolve(responseData2));
     assert.strictEqual(result1, true);
-    assert.strictEqual(result2, false);
+    assert.strictEqual(result2, true);
 
     const retrievedPromise1 = buffer.get(requestId1);
     const retrievedPromise2 = buffer.get(requestId2);
     assert(retrievedPromise1 !== undefined);
-    assert(retrievedPromise2 === undefined);
+    assert(retrievedPromise2 !== undefined);
 
-    assert.strictEqual(result1, buffer.get(requestId1));
-    assert.strictEqual(result2, buffer.get(requestId2));
+    assert.strictEqual(undefined, buffer.get(requestId1));
+    assert.strictEqual(undefined, buffer.get(requestId2));
 
     const stats = buffer.getStats();
     assert.strictEqual(stats.entryCount, 0);
