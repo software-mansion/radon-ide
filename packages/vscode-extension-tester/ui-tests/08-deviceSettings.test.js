@@ -2,10 +2,9 @@ import { WebView, By, Key } from "vscode-extension-tester";
 import { assert } from "chai";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
-import { waitForMessage } from "../server/webSocketServer.js";
 import { getAppWebsocket } from "../server/webSocketServer.js";
 
-describe("App clicking", () => {
+describe("Device Settings", () => {
   let driver,
     appWebsocket,
     view,

@@ -231,6 +231,7 @@ function UrlSelect({
             // @ts-ignore, no type for VscodeTextfield
             ref={textfieldRef}
             className="url-select-input"
+            data-testid="radon-top-bar-url-input"
             data-state={isDropdownOpen ? "open" : "closed"}
             value={inputValue ?? ""}
             placeholder="Enter path..."
