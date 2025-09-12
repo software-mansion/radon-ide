@@ -5,6 +5,7 @@ import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils
 import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
+import { OutputChannelRegistry } from "../../project/OutputChannelRegistry";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -35,7 +36,6 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
     );
   }
 
-  const registry = ideInstance.outputChannelRegistry;
   const session = ideInstance.project.deviceSession;
 
   if (!session) {
@@ -47,15 +47,15 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
 
   const isAndroid = session.platform === DevicePlatform.Android;
 
-  const buildLogs = registry.getOrCreateOutputChannel(
+  const buildLogs = OutputChannelRegistry.getOrCreateOutputChannel(
     isAndroid ? Output.BuildAndroid : Output.BuildIos
   );
 
-  const packageManagerLogs = registry.getOrCreateOutputChannel(Output.PackageManager);
+  const packageManagerLogs = OutputChannelRegistry.getOrCreateOutputChannel(Output.PackageManager);
 
-  const metroLogs = registry.getOrCreateOutputChannel(Output.MetroBundler);
+  const metroLogs = OutputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
 
-  const deviceLogs = registry.getOrCreateOutputChannel(
+  const deviceLogs = OutputChannelRegistry.getOrCreateOutputChannel(
     isAndroid ? Output.AndroidDevice : Output.IosDevice
   );
 
