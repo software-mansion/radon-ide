@@ -76,6 +76,7 @@ img.gridSvg {
   max-width: 400px;
   max-height: 200px;
   height: auto;
+  -webkit-user-drag: none;
 }
 
 .widthSvg {

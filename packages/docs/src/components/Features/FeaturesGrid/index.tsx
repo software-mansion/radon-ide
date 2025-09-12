@@ -64,7 +64,7 @@ export default function FeaturesGrid() {
   const containerRef = useRef(null);
   const cardRefs = useRef([]);
 
-  const calculatedPosition = useMemo(() => {
+  const calculatedPosition = () => {
     if (!cardRefs.current[first] || !windowRef.current || !cardRefs.current[0]) return 0;
 
     const cardLeft = cardRefs.current[first].offsetLeft;
@@ -73,18 +73,18 @@ export default function FeaturesGrid() {
 
     let position = cardLeft + cardWidth / 2 - windowWidth / 2;
 
-    if (first === 0) {
+    if (windowWidth > 400 && first === 0) {
       position = cardLeft;
     }
 
-    if (first === featuresList.length - 1) {
+    if (windowWidth > 400 && first === featuresList.length - 1) {
       position = cardLeft + cardWidth - windowWidth;
     }
 
     return position;
-  }, [first]);
+  };
 
-  const dragConstraints = useMemo(() => {
+  const dragConstraints = () => {
     if (!containerRef.current || !windowRef.current) {
       return { left: 0, right: 0 };
     }
@@ -96,14 +96,14 @@ export default function FeaturesGrid() {
       left: -(containerWidth - windowWidth || 0),
       right: 0,
     };
-  }, [cardWidth, visibleCards]);
+  };
 
   useEffect(() => {
     if (!cardRefs.current[0]) return;
     const newCardWidth = cardRefs.current[0].offsetWidth;
     setCardWidth(newCardWidth);
     setCardPosition(calculatedPosition);
-  }, [calculatedPosition]);
+  }, [calculatedPosition, cardWidth]);
 
   useEffect(() => {
     if (isFeatures || !windowRef.current) return;
@@ -128,22 +128,23 @@ export default function FeaturesGrid() {
     return () => observer.disconnect();
   }, [isFeatures]);
 
-  const handleNextArrow = useCallback(() => {
+  const handleNextArrow = () => {
     if (visibleCards > 2 && first === 0) {
       setFirst(2);
     } else {
       setFirst((prev) => Math.min(prev + 1, featuresList.length - 1));
     }
-  }, [visibleCards, first]);
+  };
 
-  const handlePrevArrow = useCallback(() => {
+  const handlePrevArrow = () => {
     setFirst((prev) => Math.max(prev - 1, 0));
-  }, []);
+  };
 
-  const handleDragStart = useCallback(() => {
+  const handleDragStart = () => {
     setIsDragging(true);
-  }, []);
-  const handleDragEnd = useCallback(() => {
+  };
+
+  const handleDragEnd = () => {
     const winRect = windowRef.current?.getBoundingClientRect();
     if (!winRect) return;
 
@@ -164,7 +165,7 @@ export default function FeaturesGrid() {
     });
     setFirst(centerIndex);
     setIsDragging(false);
-  }, []);
+  };
 
   return (
     <div className={!isFeatures ? styles.wrapperLanding : styles.wrapper}>
@@ -174,7 +175,7 @@ export default function FeaturesGrid() {
           animate={{ x: !isFeatures && !isDragging && -cardPosition }}
           transition={{ duration: 0.6, type: "linear" }}
           drag="x"
-          dragConstraints={dragConstraints}
+          dragConstraints={dragConstraints()}
           dragTransition={{ bounceStiffness: 200, bounceDamping: 20 }}
           dragElastic={0.2}
           onDragStart={handleDragStart}
