@@ -47,8 +47,6 @@ describe("App interaction tests", () => {
   });
 
   beforeEach(async () => {
-    const bottomBar = new BottomBarPanel();
-    await bottomBar.toggle(false);
     await workbench.executeCommand("Remove All Breakpoints");
 
     radonViewsService.openRadonIDEPanel();
@@ -64,6 +62,9 @@ describe("App interaction tests", () => {
     await driver.sleep(1000);
 
     await appManipulationService.hideExpoOverlay(appWebsocket);
+
+    await radonViewsService.clearDebugConsole();
+    await radonViewsService.openRadonIDEPanel();
   });
 
   it("Should click in app", async () => {

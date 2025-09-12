@@ -99,6 +99,14 @@ export class RadonViewsService {
     return { file, lineNumber };
   }
 
+  async clearDebugConsole() {
+    await this.openAndGetDebugConsoleElement();
+    const debugView = await new BottomBarPanel().openDebugConsoleView();
+    await debugView.clearText();
+    const bottomBar = new BottomBarPanel();
+    await bottomBar.toggle(false);
+  }
+
   // #region Saving files
   async findAndFillSaveFileForm(filename) {
     await this.driver.switchTo().defaultContent();
