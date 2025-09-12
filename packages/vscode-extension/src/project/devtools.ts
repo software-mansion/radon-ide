@@ -35,11 +35,15 @@ type IdeMessage = Parameters<IdeMessageListener>[0];
  */
 export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disposable {
   private devtoolsConnection: DevtoolsConnection | undefined;
-  private devtoolsServerListener: Disposable;
+  private devtoolsServerListener?: Disposable;
   private devtoolsConnectionListeners: Disposable[] = [];
 
-  constructor(devtoolsServer: DevtoolsServer) {
+  constructor() {
     super();
+  }
+
+  public setDevtoolsServer(devtoolsServer: DevtoolsServer) {
+    this.devtoolsServerListener?.dispose();
     if (devtoolsServer.connection) {
       this.setupBridge(devtoolsServer.connection);
     }
@@ -64,7 +68,7 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
 
   dispose() {
     disposeAll(this.devtoolsConnectionListeners);
-    this.devtoolsServerListener.dispose();
+    this.devtoolsServerListener?.dispose();
   }
 
   protected send(message: unknown): void {
@@ -161,7 +165,6 @@ export abstract class DevtoolsServer implements Disposable {
   private _connection: DevtoolsConnection | undefined;
 
   protected setConnection(connection: DevtoolsConnection | undefined) {
-    this._connection?.disconnect();
     this._connection = connection;
     if (connection) {
       this.connectionEventEmitter.fire(connection);
@@ -325,45 +328,4 @@ export async function createWebSocketDevtoolsServer(): Promise<DevtoolsServer & 
 
   const devtoolsServer = new WebSocketDevtoolsServer(server);
   return devtoolsServer;
-}
-
-export class AnyDevtoolsServer extends DevtoolsServer implements Disposable {
-  private connectionSubscriptions = new Map<DevtoolsServer, Disposable>();
-
-  constructor(servers: DevtoolsServer[]) {
-    super();
-    const existingConnection = servers.filter((server) => server.connection !== undefined)[0]
-      ?.connection;
-    if (existingConnection) {
-      this.setConnection(existingConnection);
-    }
-
-    servers
-      .map((server) => [server, server.onConnection((c) => this.setConnection(c))] as const)
-      .forEach(([server, subscription]) => {
-        this.connectionSubscriptions.set(server, subscription);
-      });
-  }
-
-  public addServer(server: DevtoolsServer) {
-    if (this.connectionSubscriptions.has(server)) {
-      return;
-    }
-    this.connectionSubscriptions.set(
-      server,
-      server.onConnection((c) => this.setConnection(c))
-    );
-  }
-
-  public removeServer(server: DevtoolsServer) {
-    const subscription = this.connectionSubscriptions.get(server);
-    subscription?.dispose();
-    this.connectionSubscriptions.delete(server);
-  }
-
-  public dispose() {
-    super.dispose();
-    disposeAll(this.connectionSubscriptions.values().toArray());
-    this.connectionSubscriptions.clear();
-  }
 }

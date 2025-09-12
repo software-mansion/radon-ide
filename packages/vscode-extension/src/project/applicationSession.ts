@@ -36,7 +36,6 @@ import {
   DevtoolsConnection,
   DevtoolsInspectorBridge,
   DevtoolsServer,
-  AnyDevtoolsServer,
   CDPDevtoolsServer,
 } from "./devtools";
 import { RadonInspectorBridge } from "./bridge";
@@ -72,7 +71,10 @@ export class ApplicationSession implements Disposable {
   private devtools: DevtoolsConnection | undefined;
   private toolsManager: ToolsManager;
 
-  public readonly inspectorBridge: RadonInspectorBridge;
+  private readonly _inspectorBridge: DevtoolsInspectorBridge;
+  public get inspectorBridge(): RadonInspectorBridge {
+    return this._inspectorBridge;
+  }
 
   public static async launch(
     stateManager: StateManager<ApplicationSessionState>,
@@ -151,53 +153,27 @@ export class ApplicationSession implements Disposable {
     }
   }
 
-  private readonly devtoolsServer: AnyDevtoolsServer;
   private cdpDevtoolsServer?: CDPDevtoolsServer;
+  private devtoolsServerSubscription: Disposable | undefined;
 
   private constructor(
     private readonly stateManager: StateManager<ApplicationSessionState>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
-    devtoolsServer: DevtoolsServer,
+    private devtoolsServer: DevtoolsServer,
     private readonly packageNameOrBundleId: string,
     private readonly supportedOrientations: DeviceRotation[]
   ) {
-    this.devtoolsServer = new AnyDevtoolsServer([devtoolsServer]);
-    this.disposables.push(
-      this.devtoolsServer.onConnection((devtools) => {
-        this.devtools?.dispose();
-        this.devtools = devtools;
-        this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
-        devtools.onDisconnected(() => {
-          if (devtools !== this.devtools) {
-            return;
-          }
-          if (
-            this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected
-          ) {
-            this.stateManager.setState({
-              inspectorBridgeStatus: InspectorBridgeStatus.Disconnected,
-            });
-          }
-          this.devtools = undefined;
-        });
-        devtools.onProfilingChange((isProfiling) => {
-          if (this.stateManager.getState().profilingReactState !== "saving") {
-            this.stateManager.setState({
-              profilingReactState: isProfiling ? "profiling" : "stopped",
-            });
-          }
-        });
-      })
-    );
     this.registerMetroListeners();
 
-    const devtoolsInspectorBridge = new DevtoolsInspectorBridge(this.devtoolsServer);
-    this.inspectorBridge = devtoolsInspectorBridge;
+    const devtoolsInspectorBridge = new DevtoolsInspectorBridge();
+    this._inspectorBridge = devtoolsInspectorBridge;
     const inspectorBridgeSubscriptions =
       this.registerInspectorBridgeEventListeners(devtoolsInspectorBridge);
     this.disposables.push(devtoolsInspectorBridge, ...inspectorBridgeSubscriptions);
+
+    this.setupDevtoolsServer(devtoolsServer);
 
     this.toolsManager = new ToolsManager(
       this.stateManager.getDerived("toolsState"),
@@ -207,15 +183,45 @@ export class ApplicationSession implements Disposable {
     this.disposables.push(this.stateManager);
   }
 
+  private setupDevtoolsServer(devtoolsServer: DevtoolsServer) {
+    this.devtoolsServerSubscription?.dispose();
+    this.devtoolsServerSubscription = devtoolsServer.onConnection((devtools) => {
+      this.devtools?.dispose();
+      this.devtools = devtools;
+      this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
+      const disconnectedSubscription = devtools.onDisconnected(() => {
+        disconnectedSubscription.dispose();
+        if (devtools !== this.devtools) {
+          return;
+        }
+        if (
+          this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected
+        ) {
+          this.stateManager.setState({
+            inspectorBridgeStatus: InspectorBridgeStatus.Disconnected,
+          });
+        }
+        this.devtools = undefined;
+      });
+      devtools.onProfilingChange((isProfiling) => {
+        if (this.stateManager.getState().profilingReactState !== "saving") {
+          this.stateManager.setState({
+            profilingReactState: isProfiling ? "profiling" : "stopped",
+          });
+        }
+      });
+    });
+    this._inspectorBridge.setDevtoolsServer(devtoolsServer);
+  }
+
   private async setupDebugSession(): Promise<void> {
     this.debugSession = await this.createDebugSession();
     this.debugSessionEventSubscription = this.registerDebugSessionListeners(this.debugSession);
     if (this.cdpDevtoolsServer) {
-      this.devtoolsServer.removeServer(this.cdpDevtoolsServer);
       this.cdpDevtoolsServer.dispose();
     }
     this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
-    this.devtoolsServer.addServer(this.cdpDevtoolsServer);
+    this.setupDevtoolsServer(this.cdpDevtoolsServer);
   }
 
   private async createDebugSession(): Promise<DebugSession & Disposable> {
@@ -586,6 +592,7 @@ export class ApplicationSession implements Disposable {
   public async dispose() {
     disposeAll(this.disposables);
     this.debugSessionEventSubscription?.dispose();
+    this.devtoolsServerSubscription?.dispose();
     await this.debugSession?.dispose();
     this.debugSession = undefined;
     this.device.terminateApp(this.packageNameOrBundleId);
