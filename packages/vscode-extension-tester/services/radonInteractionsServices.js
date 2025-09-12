@@ -1,6 +1,7 @@
 import { ElementHelperService } from "./helperServices.js";
 import { waitForMessage } from "../server/webSocketServer.js";
 import { By, Key, WebView, EditorView } from "vscode-extension-tester";
+import { createCanvas } from "canvas";
 
 // #region Opening radon views
 export class RadonViewsService {
@@ -124,6 +125,28 @@ export class RadonViewsService {
     throw new Error(
       `Could not find iframe with title ${iframeTitle} in any webview`
     );
+  }
+
+  async getPhoneScreenSnapshot() {
+    const pixels = await this.driver.executeScript(() => {
+      const canvas = document.querySelector("canvas");
+      const ctx = canvas.getContext("2d");
+      const { data, width, height } = ctx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+      return { data: Array.from(data), width, height };
+    });
+    const canvas = createCanvas(pixels.width, pixels.height);
+    const ctx = canvas.getContext("2d");
+
+    const imageData = ctx.createImageData(pixels.width, pixels.height);
+    imageData.data.set(pixels.data);
+    ctx.putImageData(imageData, 0, 0);
+
+    return canvas;
   }
 }
 
@@ -374,15 +397,11 @@ export class AppManipulationService {
   }
 
   async getButtonCoordinates(appWebsocket, buttonID) {
-    const messagePromise = waitForMessage();
-    appWebsocket.send(`getPosition:${buttonID}`);
-    const position = await messagePromise;
-
-    if (!position) {
-      throw new Error("No position received from getPosition");
-    }
-
-    return position;
+    const response = await this.sendMessageAndWaitForResponse(
+      appWebsocket,
+      `getPosition:${buttonID}`
+    );
+    return response.position;
   }
 
   async sendMessageAndWaitForResponse(appWebsocket, message) {

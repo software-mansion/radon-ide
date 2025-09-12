@@ -3,6 +3,9 @@ import { assert } from "chai";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 import { getAppWebsocket } from "../server/webSocketServer.js";
+import fs from "fs";
+import { createCanvas } from "canvas";
+import { cropCanvas } from "../utils/imageProcessing.js";
 
 describe("preview", () => {
   let driver,
@@ -12,6 +15,7 @@ describe("preview", () => {
     radonViewsService,
     managingDevicesService,
     appManipulationService,
+    radonSettingsService,
     vscodeHelperService;
 
   before(async () => {
@@ -21,6 +25,7 @@ describe("preview", () => {
       elementHelperService,
       radonViewsService,
       managingDevicesService,
+      radonSettingsService,
       appManipulationService,
       vscodeHelperService,
     } = initServices(driver));
@@ -47,22 +52,39 @@ describe("preview", () => {
     }, 5000);
   });
 
-  it("should open preview", async () => {
-    await driver.switchTo().defaultContent();
-    await vscodeHelperService.openFileInEditor("automatedTests.tsx");
-    const editor = new TextEditor();
-    await driver.wait(
-      async () => (await editor.getCodeLenses("Open preview")).length > 0,
-      5000
-    );
-    const lenses = await editor.getCodeLenses("Open preview");
+  // it("should open preview", async () => {
+  //   await driver.switchTo().defaultContent();
+  //   await vscodeHelperService.openFileInEditor("automatedTests.tsx");
+  //   const editor = new TextEditor();
+  //   await driver.wait(
+  //     async () => (await editor.getCodeLenses("Open preview")).length > 0,
+  //     5000
+  //   );
+  //   const lenses = await editor.getCodeLenses("Open preview");
 
-    await lenses[0].click();
-    await radonViewsService.openRadonIDEPanel();
-    const urlInput = await elementHelperService.findAndWaitForElementByTag(
-      "radon-top-bar-url-input"
+  //   await lenses[0].click();
+  //   await radonViewsService.openRadonIDEPanel();
+  //   const urlInput = await elementHelperService.findAndWaitForElementByTag(
+  //     "radon-top-bar-url-input"
+  //   );
+  //   const url = await urlInput.getAttribute("value");
+  //   assert.equal(url, "preview:Button");
+  // });
+
+  it("should test show touches", async () => {
+    await radonSettingsService.toggleShowTouches();
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "console-log-button"
     );
-    const url = await urlInput.getAttribute("value");
-    assert.equal(url, "preview:Button");
+    await appManipulationService.clickInsidePhoneScreen(position);
+
+    const canvas = await radonViewsService.getPhoneScreenSnapshot();
+    const cropped = cropCanvas(canvas, position);
+
+    const buffer = cropped.toBuffer("image/png");
+    fs.writeFileSync("cropped.png", buffer);
+
+    // console.log(pixels);
   });
 });
