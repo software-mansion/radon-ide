@@ -13,7 +13,6 @@ export interface RadonInspectorBridgeEvents {
   inspectData: [{ id: number }];
   devtoolPluginsChanged: [{ plugins: string[] }];
   pluginMessage: [{ pluginId: string; type: string; data: any }];
-  isProfilingReact: [boolean];
   appOrientationChanged: [AppOrientation];
   inspectorAvailabilityChanged: [InspectorAvailabilityStatus];
 }
