@@ -396,12 +396,13 @@ export class MetroLauncher extends Metro implements Disposable {
 
   private launchExpoMetro(
     appRootFolder: string,
+    port: number,
     libPath: string,
     resetCache: boolean,
     expoStartExtraArgs: string[] | undefined,
     metroEnv: typeof process.env
   ) {
-    const args = [path.join(libPath, "expo_start.js")];
+    const args = [path.join(libPath, "expo_start.js"), "--port", `${port}`];
     if (resetCache) {
       args.push("--clear");
     }
@@ -504,6 +505,7 @@ export class MetroLauncher extends Metro implements Disposable {
     if (shouldUseExpoCLI(launchConfiguration)) {
       bundlerProcess = this.launchExpoMetro(
         appRoot,
+        port,
         libPath,
         resetCache,
         launchConfiguration.expoStartArgs,

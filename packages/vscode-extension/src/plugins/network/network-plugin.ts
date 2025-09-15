@@ -1,6 +1,4 @@
-import http, { Server } from "http";
 import { commands, Disposable, window } from "vscode";
-import { WebSocketServer, WebSocket } from "ws";
 import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
@@ -12,17 +10,12 @@ import { openContentInEditor, showDismissableError } from "../../utilities/edito
 
 import { RequestData, RequestOptions } from "../../network/types/network";
 import {
-  NetworkPanelMessage,
-  IDEMessage,
+  WebviewMessage,
   CDPMessage,
+  WebviewCommand,
 } from "../../network/types/panelMessageProtocol";
 
-interface WebSocketMessageData {
-  toString(): string;
-}
-
 export const NETWORK_PLUGIN_ID = "network";
-const DEVTOOLS_CDP_MESSAGE_ID = "cdp-message";
 
 const LANGUAGE_BY_CONTENT_TYPE = {
   "application/json": "json",
@@ -78,104 +71,45 @@ async function initialize() {
   }
   Logger.debug("Initilizing Network tool");
   initialized = true;
+
+  const networkDevtoolsWebviewProvider = new NetworkDevtoolsWebviewProvider(extensionContext);
+
   extensionContext.subscriptions.push(
-    window.registerWebviewViewProvider(
-      `RNIDE.Tool.Network.view`,
-      new NetworkDevtoolsWebviewProvider(extensionContext),
-      { webviewOptions: { retainContextWhenHidden: true } }
-    )
+    networkDevtoolsWebviewProvider,
+    window.registerWebviewViewProvider(`RNIDE.Tool.Network.view`, networkDevtoolsWebviewProvider, {
+      webviewOptions: { retainContextWhenHidden: true },
+    })
   );
 }
 
-class NetworkCDPWebsocketBackend implements Disposable {
-  private server: Server;
-  private sessions: Set<WebSocket> = new Set();
+type BroadcastListener = (message: WebviewMessage) => void;
 
-  constructor(private readonly sendCDPMessage: (messageData: CDPMessage | IDEMessage) => void) {
-    this.server = http.createServer(() => {});
-    this.setupWebSocketServer();
+export class NetworkPlugin implements ToolPlugin {
+  public readonly id: ToolKey = NETWORK_PLUGIN_ID;
+  public readonly label = "Network";
+  public readonly persist = true;
+
+  public pluginAvailable = true;
+  public toolInstalled = false;
+
+  private devtoolsListeners: Disposable[] = [];
+  private broadcastListeners: BroadcastListener[] = [];
+
+  constructor(private readonly inspectorBridge: RadonInspectorBridge) {
+    initialize();
   }
 
-  private setupWebSocketServer(): void {
-    const wss = new WebSocketServer({ server: this.server });
-
-    wss.on("connection", (ws) => {
-      this.sessions.add(ws);
-
-      ws.on("message", (message) => {
-        this.handleWebSocketMessage(message, ws);
-      });
-
-      ws.on("close", () => {
-        this.sessions.delete(ws);
-      });
-    });
-  }
-
-  private async handleWebSocketMessage(
-    message: WebSocketMessageData,
-    ws: WebSocket
-  ): Promise<void> {
-    try {
-      const parsedMessage: NetworkPanelMessage = JSON.parse(message.toString());
-
-      switch (parsedMessage.type) {
-        case "CDP":
-          this.handleCDPMessage(parsedMessage as NetworkPanelMessage & { type: "CDP" }, ws);
-          break;
-        case "IDE":
-          this.handleIDEMessage(parsedMessage as NetworkPanelMessage & { type: "IDE" }, ws);
-          break;
-        default:
-          Logger.warn("Unknown message type received");
-      }
-    } catch (error) {
-      Logger.error("Invalid WebSocket message format:", error);
-    }
-  }
-
-  private handleCDPMessage(message: NetworkPanelMessage & { type: "CDP" }, ws: WebSocket): void {
-    const { payload } = message;
-
-    if (payload.method.startsWith("Network.")) {
-      this.sendCDPMessage(payload);
-    } else {
-      Logger.warn("Unknown CDP method received");
-      this.sendGenericResponse(message, ws);
-    }
-  }
-
-  private handleIDEMessage(message: NetworkPanelMessage & { type: "IDE" }, ws: WebSocket): void {
-    const { payload } = message;
-
-    switch (payload.method) {
-      case "IDE.fetchFullResponseBody":
-        this.handleFetchFullResponseBody(payload.params?.request);
-        break;
-      default:
-        Logger.warn("Unknown IDE method received");
-        this.sendGenericResponse(message, ws);
-    }
-  }
-
-  private sendGenericResponse(message: NetworkPanelMessage, ws: WebSocket): void {
-    const { type, payload } = message;
-
-    if (!payload.id) {
-      return;
-    }
-    const responsePayload = {
-      id: payload.id,
-      method: payload.method,
-      result: {},
+  private async fetchResponse(requestData: RequestData): Promise<Response> {
+    const fetchOptions: RequestOptions = {
+      method: requestData.method,
+      headers: requestData.headers || {},
     };
 
-    const response = {
-      type,
-      payload: responsePayload,
-    };
+    if (requestData.postData) {
+      fetchOptions.body = requestData.postData;
+    }
 
-    ws.send(JSON.stringify(response));
+    return fetch(requestData.url, fetchOptions);
   }
 
   private async handleFetchFullResponseBody(requestData: RequestData | undefined): Promise<void> {
@@ -199,85 +133,130 @@ class NetworkCDPWebsocketBackend implements Disposable {
     }
   }
 
-  private async fetchResponse(requestData: RequestData): Promise<Response> {
-    const fetchOptions: RequestOptions = {
-      method: requestData.method,
-      headers: requestData.headers || {},
-    };
+  private handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
+    const { payload } = message;
 
-    if (requestData.postData) {
-      fetchOptions.body = requestData.postData;
+    if (payload.method.startsWith("Network.")) {
+      this.sendCDPMessage(payload);
+    } else {
+      Logger.warn("Unknown CDP method received");
+      this.sendGenericResponse(message);
     }
-
-    return fetch(requestData.url, fetchOptions);
   }
 
-  public get port(): number {
-    const address = this.server.address();
-    Logger.debug("Server address:", address);
+  private handleIDEMessage(message: WebviewMessage & { command: WebviewCommand.IDECall }): void {
+    const { payload } = message;
 
-    if (address && typeof address === "object") {
-      return address.port;
+    switch (payload.method) {
+      case "IDE.fetchFullResponseBody":
+        this.handleFetchFullResponseBody(payload.params?.request);
+        break;
+      default:
+        Logger.warn("Unknown IDE method received");
+        this.sendGenericResponse(message);
     }
-    throw new Error("Server address is not available");
   }
 
-  public async start(): Promise<void> {
-    if (this.server.listening) {
+  private sendGenericResponse(message: WebviewMessage): void {
+    const { command, payload } = message;
+
+    if (!payload.id) {
       return;
     }
+    const responsePayload = {
+      id: payload.id,
+      method: payload.method,
+      result: {},
+    };
 
-    return new Promise<void>((resolve) => {
-      this.server.listen(0, () => {
-        resolve();
-      });
-    });
+    const response = {
+      command,
+      payload: responsePayload,
+    } as WebviewMessage;
+
+    this.broadcastListeners.forEach((cb) => cb(response));
   }
 
-  public broadcast(message: string): void {
-    this.sessions.forEach((ws) => {
-      ws.send(message);
-    });
+  handleWebviewMessage(message: WebviewMessage) {
+    try {
+      switch (message.command) {
+        case WebviewCommand.CDPCall:
+          this.handleCDPMessage(message);
+          break;
+        case WebviewCommand.IDECall:
+          this.handleIDEMessage(message);
+          break;
+        default:
+          Logger.warn("Unknown message type received");
+      }
+    } catch (error) {
+      Logger.error("Invalid WebSocket message format:", error);
+    }
   }
 
-  public dispose(): void {
-    this.server.close();
-  }
-}
-
-export class NetworkPlugin implements ToolPlugin {
-  public readonly id: ToolKey = NETWORK_PLUGIN_ID;
-  public readonly label = "Network";
-  public readonly persist = true;
-
-  public pluginAvailable = true;
-  public toolInstalled = false;
-
-  private readonly websocketBackend: NetworkCDPWebsocketBackend;
-  private devtoolsListeners: Disposable[] = [];
-
-  constructor(private readonly inspectorBridge: RadonInspectorBridge) {
-    this.websocketBackend = new NetworkCDPWebsocketBackend(this.sendCDPMessage);
-    initialize();
-  }
-
-  public get websocketPort(): number {
-    return this.websocketBackend.port;
-  }
-
-  private sendCDPMessage = (messageData: CDPMessage | IDEMessage): void => {
+  private sendCDPMessage(messageData: CDPMessage) {
     this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
-  };
+  }
 
-  public activate(): void {
-    this.websocketBackend.start().then(() => {
-      this.setupEventListeners();
-      this.enableNetworkMonitoring();
-      commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
+  /**
+   * Parse CDPMessage into WebviewMessage format and broadcast to all listeners
+   */
+  private broadcastCDPMessage(message: string) {
+    try {
+      const webviewMessage: WebviewMessage = {
+        command: WebviewCommand.CDPCall,
+        payload: JSON.parse(message),
+      };
+      this.broadcastListeners.forEach((cb) => cb(webviewMessage));
+    } catch {
+      console.error("Failed to parse CDP message:", message);
+    }
+  }
+
+  /**
+   * All pluginMessages sent to the panel follow @type {WebviewMessage} format:
+   *
+   * Message Flow:
+   * - React Native app sends network events (requests, responses) via inspector bridge
+   * - Bridge forwards messages to this plugin with pluginId: "network"
+   * - Plugin transforms bridge messages into WebviewMessage format
+   * - Messages are broadcasted via WebSocket to all connected NetworkPanel clients
+   */
+  private setupListeners() {
+    // Broadcast network messages from the app to Network Panel Webview
+    this.devtoolsListeners.push(
+      this.inspectorBridge.onEvent("pluginMessage", (payload) => {
+        if (payload.pluginId === "network") {
+          this.broadcastCDPMessage(payload.data);
+        }
+      })
+    );
+
+    // Enable network monitoring when app is ready
+    this.devtoolsListeners.push(
+      this.inspectorBridge.onEvent("appReady", () => {
+        this.sendCDPMessage({ method: "Network.enable", params: {} });
+      })
+    );
+  }
+
+  onMessageBroadcast(cb: BroadcastListener): Disposable {
+    this.broadcastListeners.push(cb);
+    return new Disposable(() => {
+      let index = this.broadcastListeners.indexOf(cb);
+      if (index !== -1) {
+        this.broadcastListeners.splice(index, 1);
+      }
     });
   }
 
-  public deactivate(): void {
+  activate(): void {
+    commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
+    this.setupListeners();
+    this.sendCDPMessage({ method: "Network.enable", params: {} });
+  }
+
+  deactivate(): void {
     disposeAll(this.devtoolsListeners);
     this.sendCDPMessage({ method: "Network.disable", params: {} });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
@@ -289,46 +268,5 @@ export class NetworkPlugin implements ToolPlugin {
 
   public dispose(): void {
     disposeAll(this.devtoolsListeners);
-    this.websocketBackend.dispose();
-  }
-
-  private setupEventListeners(): void {
-    /**
-     * All pluginMessages sent to the panel follow @type {NetworkPanelMessage} format:
-     *
-     * Message Flow:
-     * - React Native app sends network events (requests, responses) via inspector bridge
-     * - Bridge forwards messages to this plugin with pluginId: "network"
-     * - Plugin transforms bridge messages into NetworkPanel protocol format
-     * - Messages are broadcasted via WebSocket to all connected NetworkPanel clients
-     */
-    this.devtoolsListeners.push(
-      this.inspectorBridge.onEvent("pluginMessage", (payload) => {
-        if (payload.pluginId !== "network") {
-          return;
-        }
-
-        // Transform bridge message format to NetworkPanel protocol format
-        const messageType = payload.type === DEVTOOLS_CDP_MESSAGE_ID ? "CDP" : "IDE";
-        const panelMessage = {
-          type: messageType,
-          payload: JSON.parse(payload.data),
-        };
-
-        // Broadcast to all connected NetworkPanel webviews via WebSocket
-        this.websocketBackend.broadcast(JSON.stringify(panelMessage));
-      })
-    );
-
-    // Enable network monitoring when app is ready
-    this.devtoolsListeners.push(
-      this.inspectorBridge.onEvent("appReady", () => {
-        this.enableNetworkMonitoring();
-      })
-    );
-  }
-
-  private enableNetworkMonitoring(): void {
-    this.sendCDPMessage({ method: "Network.enable", params: {} });
   }
 }

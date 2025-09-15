@@ -1,5 +1,6 @@
 import {
   CancellationToken,
+  Disposable,
   ExtensionContext,
   Uri,
   WebviewView,
@@ -12,8 +13,17 @@ import { reportToolOpened, reportToolVisibilityChanged } from "../../project/too
 import { generateWebviewContent } from "../../panels/webviewContentGenerator";
 import { PREVIEW_NETWORK_NAME, PREVIEW_NETWORK_PATH } from "../../webview/utilities/constants";
 
-export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
+export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider, Disposable {
+  private messageListenerDisposable: null | Disposable = null;
+  private broadcastRepeaterDisposable: null | Disposable = null;
+
   constructor(private readonly context: ExtensionContext) {}
+
+  public dispose() {
+    this.messageListenerDisposable?.dispose();
+    this.broadcastRepeaterDisposable?.dispose();
+  }
+
   public resolveWebviewView(
     webviewView: WebviewView,
     context: WebviewViewResolveContext,
@@ -30,10 +40,20 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
     };
 
     const project = IDE.getInstanceIfExists()?.project;
-    const wsPort = (project?.deviceSession?.getPlugin("network") as NetworkPlugin)?.websocketPort;
-    if (!wsPort) {
-      throw new Error("Couldn't retrieve websocket port from network plugin");
+
+    const networkPlugin = project?.deviceSession?.getPlugin("network") as NetworkPlugin | undefined;
+
+    if (!networkPlugin) {
+      throw new Error("Couldn't retrieve the network plugin");
     }
+
+    this.messageListenerDisposable = webview.onDidReceiveMessage((event) =>
+      networkPlugin.handleWebviewMessage(event)
+    );
+
+    this.broadcastRepeaterDisposable = networkPlugin.onMessageBroadcast((message) => {
+      webview.postMessage(message);
+    });
 
     webviewView.onDidChangeVisibility(() =>
       reportToolVisibilityChanged(NETWORK_PLUGIN_ID, webviewView.visible)
@@ -44,8 +64,7 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider {
       webviewView.webview,
       this.context.extensionUri,
       PREVIEW_NETWORK_NAME,
-      PREVIEW_NETWORK_PATH,
-      `localhost:${wsPort}`
+      PREVIEW_NETWORK_PATH
     );
   }
 }

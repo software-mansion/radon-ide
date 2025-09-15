@@ -6,7 +6,7 @@ export type NetworkEvent =
   | "Network.loadingFinished"
   | "Network.loadingFailed";
 
-export type NetworkTypes = "Network.Initiator";
+export type NetworkType = "Network.Initiator";
 
 export type NetworkControlCommand =
   | "Network.enable"
@@ -26,7 +26,7 @@ export const NETWORK_CONTROL_COMMANDS = [
   "Network.getResponseBody",
 ] as const;
 
-export type CDPMethod = NetworkEvent | NetworkControlCommand | NetworkTypes;
+export type CDPMethod = NetworkEvent | NetworkControlCommand | NetworkType;
 
 export type IDEMethod = "IDE.fetchFullResponseBody";
 
@@ -36,26 +36,26 @@ export interface CDPParams {
   timestamp?: number;
   wallTime?: number;
 
-  // Request-related fields
+  // Request-related
   request?: RequestData;
 
-  // Response-related fields
+  // Response-related
   response?: ResponseData;
   type?: string;
 
-  // Timing and performance fields
+  // Timing / performance
   encodedDataLength?: number;
   duration?: number;
   ttfb?: number;
 
-  // Source tracking fields
+  // Source tracking
   initiator?: NetworkRequestInitiator;
 
-  // Error fields
+  // Errors
   errorText?: string;
   canceled?: boolean;
 
-  // Allow additional fields for extensibility
+  // additional fields
   [key: string]: unknown;
 }
 
@@ -80,7 +80,12 @@ export interface IDEMessage {
   result?: unknown;
 }
 
-// Union type for all network panel messages
-export type NetworkPanelMessage =
-  | { type: "CDP"; payload: CDPMessage }
-  | { type: "IDE"; payload: IDEMessage };
+export enum WebviewCommand {
+  CDPCall = "cdp-call",
+  IDECall = "ide-call",
+}
+
+// Union type for all webview messages
+export type WebviewMessage =
+  | { command: WebviewCommand.CDPCall; payload: CDPMessage }
+  | { command: WebviewCommand.IDECall; payload: IDEMessage };

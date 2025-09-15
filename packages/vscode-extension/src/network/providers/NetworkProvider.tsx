@@ -1,4 +1,4 @@
-import React, {
+import {
   createContext,
   PropsWithChildren,
   useContext,
@@ -13,7 +13,7 @@ import useNetworkTracker, {
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { NetworkLog } from "../types/networkLog";
-import { NetworkPanelMessage } from "../types/panelMessageProtocol";
+import { WebviewMessage, WebviewCommand } from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
 
 interface NetworkProviderProps extends NetworkTracker {
@@ -43,8 +43,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
-  const { clearLogs, toggleNetwork, sendIDEMessage, sendCDPMessage, ws, networkLogs } =
-    networkTracker;
+  const { clearLogs, toggleNetwork, sendWebviewIDEMessage, sendWebviewCDPMessage, networkLogs } = networkTracker;
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
@@ -66,7 +65,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const getResponseBody = (networkLog: NetworkLog): Promise<ResponseBodyData | undefined> => {
     const requestId = networkLog.requestId;
 
-    if (!requestId || !ws) {
+    if (!requestId) {
       return Promise.resolve(undefined);
     }
 
@@ -74,11 +73,38 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       return Promise.resolve(responseBodiesRef.current[requestId]);
     }
 
-    const id = Math.random().toString(36).substring(7);
+    const messageId = Math.random().toString(36).substring(7);
 
+    const { promise, resolve } = Promise.withResolvers<ResponseBodyData | undefined>();
+
+    const listener = (message: MessageEvent) => {
+      try {
+        const { command, payload }: WebviewMessage = message.data;
+        if (command !== WebviewCommand.CDPCall || payload.id !== messageId) {
+          return;
+        }
+
+        const bodyData = payload.result as ResponseBodyData | undefined;
+
+        if (bodyData === undefined) {
+          resolve(responseBodiesRef.current[requestId]);
+          window.removeEventListener("message", listener);
+          return;
+        }
+
+        responseBodiesRef.current[requestId] = bodyData;
+
+        resolve(bodyData);
+        window.removeEventListener("message", listener);
+      } catch (error) {
+        console.error("Error parsing Window message:", error);
+      }
+    };
+
+    window.addEventListener("message", listener);
     // Send the message to the network-plugin backend
-    sendCDPMessage({
-      id,
+    sendWebviewCDPMessage({
+      id: messageId,
       method: "Network.getResponseBody",
       params: {
         requestId: requestId,
@@ -86,47 +112,20 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     });
 
     // Add a listener to capture the response
-    return new Promise((resolve) => {
-      const listener = (message: MessageEvent<string>) => {
-        try {
-          const parsedMsg: NetworkPanelMessage = JSON.parse(message.data);
-          if (parsedMsg.type !== "CDP" || parsedMsg.payload.id !== id) {
-            return;
-          }
-          const bodyData: ResponseBodyData | undefined = parsedMsg.payload.result as
-            | ResponseBodyData
-            | undefined;
-
-          if (bodyData === undefined) {
-            ws.removeEventListener("message", listener);
-            resolve(responseBodiesRef.current[requestId]);
-            return;
-          }
-
-          responseBodiesRef.current[requestId] = bodyData;
-
-          resolve(bodyData);
-          ws.removeEventListener("message", listener);
-        } catch (error) {
-          console.error("Error parsing WebSocket message:", error);
-        }
-      };
-
-      ws.addEventListener("message", listener);
-    });
+    return promise;
   };
 
   const fetchAndOpenResponseInEditor = async (networkLog: NetworkLog) => {
     const requestId = networkLog.requestId;
     const request = networkLog.request;
 
-    if (!requestId || !ws || !request) {
+    if (!requestId || !request) {
       return Promise.resolve(undefined);
     }
 
     const id = Math.random().toString(36).substring(7);
 
-    sendIDEMessage({
+    sendWebviewIDEMessage({
       id,
       method: "IDE.fetchFullResponseBody",
       params: {

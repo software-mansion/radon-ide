@@ -1,46 +1,43 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { vscode } from "../../webview/utilities/vscode";
 import { NetworkLog } from "../types/networkLog";
 import {
   CDPMessage,
   IDEMessage,
-  NetworkPanelMessage,
+  WebviewMessage,
   NetworkEvent,
   NETWORK_EVENTS,
+  WebviewCommand,
 } from "../types/panelMessageProtocol";
 
 export interface NetworkTracker {
   networkLogs: NetworkLog[];
-  ws: WebSocket | null;
   clearLogs: () => void;
   toggleNetwork: (isRunning: boolean) => void;
   getSource: (networkLog: NetworkLog) => void;
-  sendCDPMessage: (messageData: CDPMessage) => void;
-  sendIDEMessage: (messageData: IDEMessage) => void;
+  sendWebviewCDPMessage: (messageData: CDPMessage) => void;
+  sendWebviewIDEMessage: (messageData: IDEMessage) => void;
 }
 
 export const networkTrackerInitialState: NetworkTracker = {
   networkLogs: [],
-  ws: null,
   clearLogs: () => {},
   toggleNetwork: () => {},
   getSource: () => {},
-  sendCDPMessage: () => {},
-  sendIDEMessage: () => {},
+  sendWebviewCDPMessage: () => {},
+  sendWebviewIDEMessage: () => {},
 };
 
 const useNetworkTracker = (): NetworkTracker => {
-  const wsRef = useRef<WebSocket | null>(null);
-
   const [networkLogs, setNetworkLogs] = useState<NetworkLog[]>([]);
   const [cdpMessages, setCdpMessages] = useState<CDPMessage[]>([]);
 
-  const validateCDPMessage = (message: string): CDPMessage | null => {
+  const validateCDPMessage = (message: WebviewMessage): CDPMessage | null => {
     try {
-      const parsedMsg: NetworkPanelMessage = JSON.parse(message);
-      const { payload, type } = parsedMsg;
+      const { payload, command } = message;
 
       // Only accept CDP messages
-      if (type !== "CDP") {
+      if (command !== WebviewCommand.CDPCall) {
         return null;
       }
 
@@ -61,6 +58,7 @@ const useNetworkTracker = (): NetworkTracker => {
   const processServerMessage = (cdpMessage: CDPMessage, newLogs: NetworkLog[]): void => {
     const { method, params } = cdpMessage;
 
+    // Already checked in validateCDPMessage, but TS needs more convincing
     if (!params?.requestId || !params?.timestamp) {
       return;
     }
@@ -84,7 +82,7 @@ const useNetworkTracker = (): NetworkTracker => {
           durationMs: params.duration || existingLog.timeline.durationMs,
           ttfb: params.ttfb || existingLog.timeline.ttfb,
         },
-        type: params?.type || existingLog?.type,
+        type: params.type || existingLog.type,
         encodedDataLength: params.encodedDataLength || existingLog.encodedDataLength,
       };
     } else {
@@ -94,7 +92,7 @@ const useNetworkTracker = (): NetworkTracker => {
         request: params.request,
         response: params.response,
         encodedDataLength: params.encodedDataLength,
-        type: params?.type,
+        type: params.type,
         initiator: params.initiator,
         timeline: {
           timestamp: params.timestamp,
@@ -107,22 +105,17 @@ const useNetworkTracker = (): NetworkTracker => {
   };
 
   useEffect(() => {
-    const websocketEndpoint = document.querySelector<HTMLMetaElement>(
-      "meta[name='websocketEndpoint']"
-    )?.content;
-
-    const ws = new WebSocket(`ws://${websocketEndpoint}`);
-    wsRef.current = ws;
-
-    ws.onmessage = (message) => {
+    const listener = (message: MessageEvent) => {
       const cdpMessage = validateCDPMessage(message.data);
       if (cdpMessage) {
         setCdpMessages((prev) => [...prev, cdpMessage]);
       }
     };
 
+    window.addEventListener("message", listener);
+
     return () => {
-      ws.close();
+      window.removeEventListener("message", listener);
     };
   }, []);
 
@@ -142,30 +135,29 @@ const useNetworkTracker = (): NetworkTracker => {
     setCdpMessages([]);
   };
 
-  const sendCDPMessage = (messageData: CDPMessage) => {
-    wsRef.current?.send(
-      JSON.stringify({
-        type: "CDP",
-        payload: messageData,
-      })
-    );
+  const sendWebviewCDPMessage = (messageData: CDPMessage) => {
+    vscode.postMessage({
+      command: WebviewCommand.CDPCall,
+      payload: messageData,
+    });
   };
 
-  const sendIDEMessage = (messageData: IDEMessage) => {
-    wsRef.current?.send(
-      JSON.stringify({
-        type: "IDE",
-        payload: messageData,
-      })
-    );
+  const sendWebviewIDEMessage = (messageData: IDEMessage) => {
+    vscode.postMessage({
+      command: WebviewCommand.IDECall,
+      payload: messageData,
+    });
   };
 
   const toggleNetwork = (isRunning: boolean) => {
-    sendCDPMessage({ id: "enable", method: isRunning ? "Network.disable" : "Network.enable" });
+    sendWebviewCDPMessage({
+      id: "enable",
+      method: isRunning ? "Network.disable" : "Network.enable",
+    });
   };
 
   const getSource = (networkLog: NetworkLog) => {
-    sendCDPMessage({
+    sendWebviewCDPMessage({
       id: "initiator",
       method: "Network.Initiator",
       params: {
@@ -177,12 +169,11 @@ const useNetworkTracker = (): NetworkTracker => {
 
   return {
     networkLogs: networkLogs.filter((log) => log?.request?.url !== undefined),
-    ws: wsRef.current,
     clearLogs,
     toggleNetwork,
     getSource,
-    sendCDPMessage,
-    sendIDEMessage,
+    sendWebviewCDPMessage,
+    sendWebviewIDEMessage,
   };
 };
 
