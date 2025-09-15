@@ -114,7 +114,10 @@ const useNetworkTracker = (): NetworkTracker => {
 
     window.addEventListener("message", listener);
 
+    window.addEventListener("message", listener);
+
     return () => {
+      window.removeEventListener("message", listener);
       window.removeEventListener("message", listener);
     };
   }, []);

@@ -161,8 +161,7 @@ export class ApplicationSession implements Disposable {
         this.devtools?.dispose();
         this.devtools = devtools;
         this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
-        const disconnectedSubscription = devtools.onDisconnected(() => {
-          disconnectedSubscription.dispose();
+        devtools.onDisconnected(() => {
           if (devtools !== this.devtools) {
             return;
           }
@@ -174,6 +173,13 @@ export class ApplicationSession implements Disposable {
             });
           }
           this.devtools = undefined;
+        });
+        devtools.onProfilingChange((isProfiling) => {
+          if (this.stateManager.getState().profilingReactState !== "saving") {
+            this.stateManager.setState({
+              profilingReactState: isProfiling ? "profiling" : "stopped",
+            });
+          }
         });
       })
     );
@@ -415,13 +421,6 @@ export class ApplicationSession implements Disposable {
       }),
       inspectorBridge.onEvent("fastRefreshComplete", () => {
         this.stateManager.setState({ isRefreshing: false });
-      }),
-      inspectorBridge.onEvent("isProfilingReact", (isProfiling) => {
-        if (this.stateManager.getState().profilingReactState !== "saving") {
-          this.stateManager.setState({
-            profilingReactState: isProfiling ? "profiling" : "stopped",
-          });
-        }
       }),
       inspectorBridge.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
         this.stateManager.setState({ appOrientation: this.determineAppOrientation(orientation) });

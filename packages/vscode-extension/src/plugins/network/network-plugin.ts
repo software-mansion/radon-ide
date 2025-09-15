@@ -76,6 +76,9 @@ async function initialize() {
 
   const networkDevtoolsWebviewProvider = new NetworkDevtoolsWebviewProvider(extensionContext);
 
+
+  const networkDevtoolsWebviewProvider = new NetworkDevtoolsWebviewProvider(extensionContext);
+
   extensionContext.subscriptions.push(
     networkDevtoolsWebviewProvider,
     window.registerWebviewViewProvider(`RNIDE.Tool.Network.view`, networkDevtoolsWebviewProvider, {
@@ -93,6 +96,7 @@ export class NetworkPlugin implements ToolPlugin {
   public toolInstalled = false;
 
   private devtoolsListeners: Disposable[] = [];
+  private broadcastListeners: BroadcastListener[] = [];
   private broadcastListeners: BroadcastListener[] = [];
 
   constructor(private readonly inspectorBridge: RadonInspectorBridge) {
@@ -236,7 +240,7 @@ export class NetworkPlugin implements ToolPlugin {
 
   deactivate(): void {
     disposeAll(this.devtoolsListeners);
-    this.sendCDPMessage({ method: "Network.disable", params: {} });
+    this.sendCDPMessage({ method: CDPNetworkCommand.Disable, params: {} });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
   }
 
