@@ -20,12 +20,14 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   constructor(
     private readonly debugSession: DebugSession & Partial<Disposable>,
     private readonly metro: Metro,
-    devtoolsServer: DevtoolsServer
+    devtoolsServer?: DevtoolsServer
   ) {
     this.disposables.push(debugSession.onDebugSessionTerminated(this.maybeReconnect));
-    // NOTE: with Expo Go on Android, the debugger can become unresponsive after a JS reload.
-    // Since a JS reload causes the devtools to reconnect, we can use that as a hint to reconnect the debugger.
-    this.disposables.push(devtoolsServer.onConnection(this.maybeReconnect));
+    if (devtoolsServer) {
+      // NOTE: with Expo Go on Android, the debugger can become unresponsive after a JS reload.
+      // Since a JS reload causes the devtools to reconnect, we can use that as a hint to reconnect the debugger.
+      this.disposables.push(devtoolsServer.onConnection(this.maybeReconnect));
+    }
   }
 
   public async startJSDebugSession(configuration: JSDebugConfiguration) {

@@ -45,8 +45,8 @@ interface LaunchApplicationSessionDeps {
   device: DeviceBase;
   buildResult: BuildResult;
   metro: MetroLauncher;
-  devtoolsServer: DevtoolsServer;
-  devtoolsPort: number;
+  devtoolsServer?: DevtoolsServer;
+  devtoolsPort?: number;
 }
 
 function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: CancelToken) {
@@ -138,7 +138,7 @@ export class ApplicationSession implements Disposable {
         await cancelToken.adapt(Promise.race([activatePromise, bundleErrorPromise]));
       }
 
-      const hasBundleError = stateManager.getState().bundleError !== undefined;
+      const hasBundleError = stateManager.getState().bundleError !== null;
       if (!hasBundleError && getIsActive()) {
         onLaunchStage(StartupMessage.WaitingForAppToLoad);
         await cancelToken.adapt(appReadyPromise);
@@ -161,7 +161,7 @@ export class ApplicationSession implements Disposable {
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
-    private devtoolsServer: DevtoolsServer,
+    private readonly devtoolsServer: DevtoolsServer | undefined,
     private readonly packageNameOrBundleId: string,
     private readonly supportedOrientations: DeviceRotation[]
   ) {
@@ -173,7 +173,9 @@ export class ApplicationSession implements Disposable {
       this.registerInspectorBridgeEventListeners(devtoolsInspectorBridge);
     this.disposables.push(devtoolsInspectorBridge, ...inspectorBridgeSubscriptions);
 
-    this.setupDevtoolsServer(devtoolsServer);
+    if (devtoolsServer) {
+      this.setupDevtoolsServer(devtoolsServer);
+    }
 
     this.toolsManager = new ToolsManager(
       this.stateManager.getDerived("toolsState"),
@@ -222,9 +224,8 @@ export class ApplicationSession implements Disposable {
     this.debugSessionEventSubscription = this.registerDebugSessionListeners(this.debugSession);
     if (this.cdpDevtoolsServer) {
       this.cdpDevtoolsServer.dispose();
+      this.cdpDevtoolsServer = undefined;
     }
-    this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
-    this.setupDevtoolsServer(this.cdpDevtoolsServer);
   }
 
   private async createDebugSession(): Promise<DebugSession & Disposable> {
@@ -430,6 +431,11 @@ export class ApplicationSession implements Disposable {
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
       sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
     });
+    if (this.metro.isUsingNewDebugger) {
+      // NOTE: we only create the CDP devtools server when using the new debugger
+      this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
+      this.setupDevtoolsServer(this.cdpDevtoolsServer);
+    }
   }
 
   private registerInspectorBridgeEventListeners(inspectorBridge: RadonInspectorBridge) {

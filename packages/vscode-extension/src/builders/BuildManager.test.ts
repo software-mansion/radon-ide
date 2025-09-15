@@ -44,6 +44,7 @@ const COMMON_CONFIG: ResolvedLaunchConfig = {
     waitForAppLaunch: true,
   },
   usePrebuild: false,
+  useNewDebugger: false,
 };
 
 const ANDROID_MOCK_DEVICE_INFO = {

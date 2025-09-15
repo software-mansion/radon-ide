@@ -2,6 +2,7 @@ import path from "path";
 import { Disposable, workspace } from "vscode";
 import { loadProjectEnv } from "@expo/env";
 import _ from "lodash";
+import { SemVer } from "semver";
 import { BuildCache } from "../builders/BuildCache";
 import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
@@ -12,6 +13,7 @@ import { ApplicationContextState, WorkspaceConfiguration } from "../common/State
 import { ApplicationDependencyManager } from "../dependency/ApplicationDependencyManager";
 import { Logger } from "../Logger";
 import { FingerprintProvider } from "./FingerprintProvider";
+import { requireNoCache } from "../utilities/requireNoCache";
 
 /**
  * Represents a launch configuration that has been resolved with additional properties.
@@ -23,7 +25,17 @@ export type ResolvedLaunchConfig = LaunchOptions & {
   };
   env: Record<string, string>;
   usePrebuild: boolean;
+  useNewDebugger: boolean;
 };
+
+function checkFuseboxSupport(appRoot: string): boolean {
+  const reactNativePackage = requireNoCache("react-native/package.json", {
+    paths: [appRoot],
+  });
+  const reactNativeVersion = new SemVer(reactNativePackage.version);
+  const supportsFusebox = reactNativeVersion.compare("0.76.0") >= 1;
+  return supportsFusebox;
+}
 
 function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunchConfig {
   const appRoot = configuration.appRoot;
@@ -69,6 +81,7 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
       waitForAppLaunch: configuration.preview?.waitForAppLaunch ?? true,
     },
     usePrebuild: configuration.usePrebuild ?? false,
+    useNewDebugger: configuration.useNewDebugger ?? checkFuseboxSupport(absoluteAppRoot),
   };
 }
 

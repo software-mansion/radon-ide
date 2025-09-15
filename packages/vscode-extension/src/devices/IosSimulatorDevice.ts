@@ -460,7 +460,7 @@ export class IosSimulatorDevice extends DeviceBase {
   async launchApp(
     build: BuildResult,
     metroPort: number,
-    _devtoolsPort: number,
+    _devtoolsPort: number | undefined,
     launchArguments: string[]
   ) {
     if (build.platform !== DevicePlatform.IOS) {
