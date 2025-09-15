@@ -67,6 +67,31 @@ describe("screenshots tests", () => {
     );
   });
 
+  it("Should take a screenshot using shortcut", async () => {
+    const filePath = path.join(cwd, "screenshotTestShortcut..png");
+
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+    await driver
+      .actions()
+      .keyDown(Key.COMMAND)
+      .keyDown(Key.SHIFT)
+      .sendKeys("a")
+      .keyUp(Key.SHIFT)
+      .keyUp(Key.COMMAND)
+      .perform();
+
+    await radonViewsService.findAndFillSaveFileForm("screenshotTestShortcut");
+
+    await driver.wait(
+      async () => {
+        return fs.existsSync(filePath);
+      },
+      10000,
+      "Timed out waiting for screenshot to be saved"
+    );
+  });
+
   it("Should record screen", async () => {
     const filePath = path.join(cwd, "recordingTest..mp4");
 
@@ -93,12 +118,69 @@ describe("screenshots tests", () => {
     );
   });
 
+  it("Should record screen using shortcut", async () => {
+    const filePath = path.join(cwd, "recordingTest..mp4");
+
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+    await driver
+      .actions()
+      .keyDown(Key.COMMAND)
+      .keyDown(Key.SHIFT)
+      .sendKeys("e")
+      .keyUp(Key.SHIFT)
+      .keyUp(Key.COMMAND)
+      .perform();
+    // recording for 4 sec
+    await driver.sleep(4000);
+
+    await driver
+      .actions()
+      .keyDown(Key.COMMAND)
+      .keyDown(Key.SHIFT)
+      .sendKeys("e")
+      .keyUp(Key.SHIFT)
+      .keyUp(Key.COMMAND)
+      .perform();
+
+    await radonViewsService.findAndFillSaveFileForm("recordingTest");
+
+    await driver.wait(
+      async () => {
+        return fs.existsSync(filePath);
+      },
+      10000,
+      "Timed out waiting for recording to be saved"
+    );
+  });
+
   it("Should open replay overlay", async () => {
     await radonSettingsService.toggleEnableReplays();
 
     await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-show-replay-button"
     );
+
+    await elementHelperService.findAndWaitForElementByTag(
+      "replay-overlay",
+      "Timed out waiting for replay overlay to appear"
+    );
+  });
+
+  it("Should open replay overlay using shortcut", async () => {
+    await radonSettingsService.toggleEnableReplays();
+
+    // some time to wait for replay to record
+    await driver.sleep(1000);
+
+    await driver
+      .actions()
+      .keyDown(Key.COMMAND)
+      .keyDown(Key.SHIFT)
+      .sendKeys("r")
+      .keyUp(Key.SHIFT)
+      .keyUp(Key.COMMAND)
+      .perform();
 
     await elementHelperService.findAndWaitForElementByTag(
       "replay-overlay",
