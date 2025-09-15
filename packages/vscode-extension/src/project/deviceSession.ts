@@ -589,24 +589,20 @@ export class DeviceSession implements Disposable {
     this.updateStartupMessage(StartupMessage.Building);
     this.maybeBuildResult = undefined;
     const launchConfiguration = this.applicationContext.launchConfig;
-    const buildType = await inferBuildType(
-      this.stateManager.getState().deviceInfo.platform,
-      launchConfiguration
-    );
+
+    const platform = this.stateManager.getState().deviceInfo.platform;
+
+    const buildType = await inferBuildType(platform, launchConfiguration);
 
     // Native build dependencies when changed, should invalidate cached build (even if the fingerprint is the same)
-    const buildDependenciesChanged = await this.checkBuildDependenciesChanged(
-      this.stateManager.getState().deviceInfo.platform
-    );
+    const buildDependenciesChanged = await this.checkBuildDependenciesChanged(platform);
 
     const buildConfig = createBuildConfig(this.device, launchConfiguration, buildType);
 
     const buildOptions = {
       forceCleanBuild: clean || buildDependenciesChanged,
       buildOutputChannel: this.outputChannelRegistry.getOrCreateOutputChannel(
-        this.stateManager.getState().deviceInfo.platform === DevicePlatform.IOS
-          ? Output.BuildIos
-          : Output.BuildAndroid
+        platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
       ),
       cancelToken,
       progressListener: throttle((stageProgress: number) => {
@@ -627,7 +623,7 @@ export class DeviceSession implements Disposable {
     getTelemetryReporter().sendTelemetryEvent(
       "build:completed",
       {
-        platform: this.stateManager.getState().deviceInfo.platform,
+        platform,
       },
       { durationSec: buildDurationSec }
     );
