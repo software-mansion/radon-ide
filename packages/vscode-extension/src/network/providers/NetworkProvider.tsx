@@ -43,7 +43,8 @@ const NetworkContext = createContext<NetworkProviderProps>({
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
-  const { clearLogs, toggleNetwork, sendWebviewIDEMessage, sendWebviewCDPMessage, networkLogs } = networkTracker;
+  const { clearLogs, toggleNetwork, sendWebviewIDEMessage, sendWebviewCDPMessage, networkLogs } =
+    networkTracker;
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
