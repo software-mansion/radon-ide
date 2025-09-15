@@ -113,9 +113,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Setup ffmpeg
+      - name: Install ffmpeg
         if: ${{ github.event.inputs.isRecording == 'true' }}
-        uses: FedericoCarboni/setup-ffmpeg@v3
+        run: brew install ffmpeg
 
       - name: Run setup-run-tests
         run: npm run setup-run-tests -- ${{ github.event.inputs.testsToRun }} --exclude ${{ github.event.inputs.testsToExclude }}
