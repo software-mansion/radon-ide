@@ -1,7 +1,7 @@
 import React from "react";
 import UrlSelectItem from "./UrlSelectItem";
 import { RemovableHistoryItem, UrlSelectFocusable } from "./UrlSelect";
-import { NavigationHistoryItem } from "../../common/Project";
+import { NavigationHistoryItem } from "../../common/State";
 
 interface UrlSelectItemGroupProps {
   items: RemovableHistoryItem[];
