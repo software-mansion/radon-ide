@@ -185,34 +185,37 @@ export class ApplicationSession implements Disposable {
 
   private setupDevtoolsServer(devtoolsServer: DevtoolsServer) {
     this.devtoolsServerSubscription?.dispose();
-    this.devtoolsServerSubscription = devtoolsServer.onConnection((devtools) => {
-      this.devtools?.dispose();
-      this.devtools = devtools;
-      this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
-      devtools.onDisconnected(() => {
-        if (devtools !== this.devtools) {
-          return;
-        }
-        if (
-          this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected
-        ) {
-          this.stateManager.setState({
-            inspectorBridgeStatus: InspectorBridgeStatus.Disconnected,
-          });
-        }
-        this.devtools = undefined;
-        this._inspectorBridge.setDevtoolsConnection(undefined);
-      });
-      devtools.onProfilingChange((isProfiling) => {
-        if (this.stateManager.getState().profilingReactState !== "saving") {
-          this.stateManager.setState({
-            profilingReactState: isProfiling ? "profiling" : "stopped",
-          });
-        }
-      });
-      this._inspectorBridge.setDevtoolsConnection(devtools);
-    });
+    if (devtoolsServer.connection) {
+      this.setDevtoolsConnection(devtoolsServer.connection);
+    }
+    this.devtoolsServerSubscription = devtoolsServer.onConnection(this.setDevtoolsConnection);
   }
+
+  private setDevtoolsConnection = (devtools: DevtoolsConnection) => {
+    this.devtools?.dispose();
+    this.devtools = devtools;
+    this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
+    devtools.onDisconnected(() => {
+      if (devtools !== this.devtools) {
+        return;
+      }
+      if (this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected) {
+        this.stateManager.setState({
+          inspectorBridgeStatus: InspectorBridgeStatus.Disconnected,
+        });
+      }
+      this.devtools = undefined;
+      this._inspectorBridge.setDevtoolsConnection(undefined);
+    });
+    devtools.onProfilingChange((isProfiling) => {
+      if (this.stateManager.getState().profilingReactState !== "saving") {
+        this.stateManager.setState({
+          profilingReactState: isProfiling ? "profiling" : "stopped",
+        });
+      }
+    });
+    this._inspectorBridge.setDevtoolsConnection(devtools);
+  };
 
   private async setupDebugSession(): Promise<void> {
     this.debugSession = await this.createDebugSession();
