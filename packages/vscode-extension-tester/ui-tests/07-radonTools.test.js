@@ -10,7 +10,7 @@ import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 import * as fs from "fs";
 import * as path from "path";
-import config from "../utils/configuration.js";
+import config from "../configuration.js";
 import { cropCanvas, compareImages } from "../utils/imageProcessing.js";
 
 const cwd = process.cwd() + "/data";
@@ -223,8 +223,11 @@ describe("Radon tools tests", () => {
     const urlInput = await elementHelperService.findAndWaitForElementByTag(
       "radon-top-bar-url-input"
     );
-    const url = await urlInput.getAttribute("value");
-    assert.equal(url, "preview:Button");
+
+    await driver.wait(async () => {
+      const url = await urlInput.getAttribute("value");
+      return url == "preview:Button";
+    }, 5000);
   });
 
   it("should test show touches", async () => {
@@ -236,7 +239,7 @@ describe("Radon tools tests", () => {
     let canvas = await radonViewsService.getPhoneScreenSnapshot();
     let button = cropCanvas(canvas, position);
 
-    await radonSettingsService.toggleShowTouches();
+    await radonSettingsService.setShowTouches(true);
 
     await appManipulationService.clickInsidePhoneScreen(position);
 

@@ -9,7 +9,7 @@ import {
   OutputView,
 } from "vscode-extension-tester";
 import * as fs from "fs";
-import config from "../utils/configuration.js";
+import config from "../configuration.js";
 import { createCanvas } from "canvas";
 
 // #region Opening radon views
@@ -188,7 +188,7 @@ export class RadonSettingsService {
     this.elementHelperService = new ElementHelperService(driver);
   }
 
-  async toggleShowTouches(value = true) {
+  async setShowTouches(value = true) {
     await this.elementHelperService.findAndClickElementByTag(
       "radon-bottom-bar-device-settings-dropdown-trigger"
     );
@@ -206,7 +206,7 @@ export class RadonSettingsService {
     this.driver.actions().sendKeys(Key.ESCAPE).perform();
   }
 
-  async toggleEnableReplays(value = true) {
+  async setEnableReplays(value = true) {
     await this.elementHelperService.findAndClickElementByTag(
       "radon-bottom-bar-device-settings-dropdown-trigger"
     );
@@ -261,10 +261,7 @@ export class ManagingDevicesService {
       "creating-device-form-device-type-select"
     );
 
-    const device =
-      process.env.TESTS_OS === "Android" || config.isAndroid
-        ? "pixel"
-        : "com.apple";
+    const device = config.isAndroid ? "pixel" : "com.apple";
 
     const selectedDevice =
       await this.elementHelperService.findAndWaitForElement(
@@ -451,8 +448,8 @@ export class AppManipulationService {
       .move({
         // origin is center of phoneScreen
         origin: phoneScreen,
-        x: Math.floor((position.x + position.width / 2) * phoneWidth),
-        y: Math.floor((position.y + position.height / 2) * phoneHeight),
+        x: Math.floor((position.x + position.width / 2 - 0.5) * phoneWidth),
+        y: Math.floor((position.y + position.height / 2 - 0.5) * phoneHeight),
       })
       // .click() method does not trigger show touch on phone screen
       .press(rightClick ? 2 : 0)

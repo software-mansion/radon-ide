@@ -94,7 +94,7 @@ describe("screenshots tests", () => {
   });
 
   it("Should open replay overlay", async () => {
-    await radonSettingsService.toggleEnableReplays();
+    await radonSettingsService.setEnableReplays(true);
 
     await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-show-replay-button"
@@ -110,7 +110,7 @@ describe("screenshots tests", () => {
     const filePath = path.join(cwd, "replayTest..mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    await radonSettingsService.toggleEnableReplays();
+    await radonSettingsService.setEnableReplays(true);
 
     await elementHelperService.waitUntilElementGone(
       By.css("[data-testid='vhs-rewind']")
