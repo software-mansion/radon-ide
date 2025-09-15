@@ -64,6 +64,11 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
         }
       }),
     ];
+    const messageQueue = this.messageQueue;
+    this.messageQueue = [];
+    for (const message of messageQueue) {
+      this.send(message);
+    }
   };
 
   dispose() {
@@ -71,7 +76,12 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
     this.devtoolsServerListener?.dispose();
   }
 
+  private messageQueue: unknown[] = [];
   protected send(message: unknown): void {
+    if (this.devtoolsConnection === undefined) {
+      this.messageQueue.push(message);
+      return;
+    }
     this.devtoolsConnection?.send("RNIDE_message", message);
   }
 }
