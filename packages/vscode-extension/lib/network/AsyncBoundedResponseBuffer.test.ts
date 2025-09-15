@@ -38,7 +38,7 @@ describe("AsyncBoundedResponseBuffer", () => {
       assert.strictEqual(result, true);
 
       const retrievedPromise = buffer.get(requestId);
-      assert(retrievedPromise !== undefined);
+      assert.notStrictEqual(retrievedPromise, undefined);
 
       const retrieved = await retrievedPromise;
       assert.deepStrictEqual(retrieved, {
@@ -83,11 +83,11 @@ describe("AsyncBoundedResponseBuffer", () => {
 
     const retrievedPromise1 = buffer.get(requestId1);
     const retrievedPromise2 = buffer.get(requestId2);
-    assert(retrievedPromise1 !== undefined);
-    assert(retrievedPromise2 !== undefined);
+    assert.notStrictEqual(retrievedPromise1, undefined);
+    assert.notStrictEqual(retrievedPromise2, undefined);
 
-    assert.strictEqual(undefined, buffer.get(requestId1));
-    assert.strictEqual(undefined, buffer.get(requestId2));
+    assert.strictEqual(buffer.get(requestId1), undefined);
+    assert.strictEqual(buffer.get(requestId2), undefined);
 
     const stats = buffer.getStats();
     assert.strictEqual(stats.entryCount, 0);
@@ -167,7 +167,7 @@ describe("AsyncBoundedResponseBuffer", () => {
 
       // Newest entry should still be available
       const newestPromise = buffer.get(newestId);
-      assert(newestPromise !== undefined);
+      assert.notStrictEqual(newestPromise, undefined);
 
       const newest = await newestPromise;
       assert.strictEqual(newest?.body, "large body");
@@ -188,7 +188,7 @@ describe("AsyncBoundedResponseBuffer", () => {
       assert.strictEqual(result, true);
 
       const currentPromise = buffer.get(currentId);
-      assert(currentPromise !== undefined);
+      assert.notStrictEqual(currentPromise, undefined);
     });
   });
 
@@ -224,7 +224,7 @@ describe("AsyncBoundedResponseBuffer", () => {
 
       // Should get the second response
       const retrievedPromise = buffer.get(requestId);
-      assert(retrievedPromise !== undefined);
+      assert.notStrictEqual(retrievedPromise, undefined);
 
       const retrieved = await retrievedPromise;
       assert.strictEqual(retrieved?.body, "second body");
