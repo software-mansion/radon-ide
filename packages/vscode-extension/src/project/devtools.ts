@@ -79,9 +79,11 @@ export class DevtoolsConnection implements Disposable {
 
   private readonly ideMessageEventEmitter: EventEmitter<IdeMessage> = new EventEmitter();
   private readonly disconnectedEventEmitter: EventEmitter<void> = new EventEmitter();
+  private readonly profilingEventEmitter: EventEmitter<boolean> = new EventEmitter();
 
   public readonly onIdeMessage = this.ideMessageEventEmitter.event;
   public readonly onDisconnected = this.disconnectedEventEmitter.event;
+  public readonly onProfilingChange = this.profilingEventEmitter.event;
 
   constructor(private readonly wall: Wall) {
     // create the DevTools frontend for the connection
@@ -95,7 +97,8 @@ export class DevtoolsConnection implements Disposable {
     // Register for isProfiling event on the profiler store
     this.store.profilerStore.addListener("isProfiling", () => {
       // @ts-ignore - isProfilingBasedOnUserInput exists but types are outdated
-      this.emitEvent("isProfilingReact", this.store.profilerStore.isProfilingBasedOnUserInput);
+      const isProfiling = this.store.profilerStore.isProfilingBasedOnUserInput;
+      this.profilingEventEmitter.fire(isProfiling);
     });
   }
 
@@ -145,6 +148,7 @@ export class DevtoolsConnection implements Disposable {
     this.bridge.shutdown();
     this.disconnectedEventEmitter.dispose();
     this.ideMessageEventEmitter.dispose();
+    this.profilingEventEmitter.dispose();
   }
 }
 
