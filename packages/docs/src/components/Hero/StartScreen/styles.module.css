@@ -42,7 +42,7 @@ p.preheadingLabel {
 }
 
 .headingLabel span.headingIde {
-  color: var(--swm-green-light-100);
+  color: var(--radon-text-green-highlight);
   font-weight: 700;
 }
 

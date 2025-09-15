@@ -12,6 +12,7 @@ button {
   border: none;
   align-items: center;
   display: flex;
+  color: var(--ifm-color-primary);
 }
 
 button:hover {
@@ -20,4 +21,5 @@ button:hover {
 
 button.active {
   background-color: var(--radon-button);
+  color: var(--radon-button-text);
 }

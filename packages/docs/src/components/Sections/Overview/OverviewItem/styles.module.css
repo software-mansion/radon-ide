@@ -38,7 +38,7 @@
   margin-bottom: 8px;
   text-transform: uppercase;
 
-  color: var(--swm-green-light-100);
+  color: var(--radon-text-green-highlight);
 }
 
 @media (max-width: 996px) {

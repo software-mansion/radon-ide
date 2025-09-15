@@ -20,7 +20,7 @@
 }
 
 .heading span {
-  color: var(--swm-green-light-100);
+  color: var(--radon-text-green-highlight);
 
   font-size: 48px;
   font-weight: 500;

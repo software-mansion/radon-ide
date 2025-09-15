@@ -9,7 +9,7 @@
 }
 
 .left span {
-  color: var(--swm-green-light-100);
+  color: var(--radon-text-green-highlight);
   font-size: 128px;
   font-weight: 600;
   line-height: normal;
@@ -69,6 +69,7 @@
 
 .content p {
   margin: 0;
+  color: var(--ifm-color-primary);
 }
 
 .radonBackgroundImage {
@@ -90,7 +91,7 @@
   align-items: flex-start;
   gap: 12px;
   width: 560px;
-  background: var(--radon-background-75);
+  background: var(--radon-Ai-chat);
   backdrop-filter: blur(2px);
   border-radius: 8px;
   position: relative;
@@ -103,7 +104,7 @@
   padding: 1px;
   border-radius: inherit;
   opacity: 0.5;
-  background: linear-gradient(to right, var(--radon-gradient-green), #111111bf);
+  background: linear-gradient(to right, var(--radon-gradient-green), var(--radon-Ai-chat));
   mask:
     linear-gradient(#fff 0 0) content-box,
     linear-gradient(#fff 0 0);
@@ -117,7 +118,7 @@
   align-items: center;
   gap: 8px;
   border-radius: 8px;
-  border: 1px solid var(--swm-card-border);
+  border: 1px solid var(--radon-border);
   font-size: 12px;
 }
 
@@ -126,7 +127,7 @@
 }
 
 .question span {
-  color: var(--swm-green-light-100);
+  color: var(--radon-text-green-highlight);
   margin-right: 8px;
 }
 
@@ -151,8 +152,8 @@
   justify-content: center;
 }
 
-.current {
-  color: var(--radon-color-grey-90);
+p.current {
+  color: var(--radon-color-gray-dark-700);
   font-weight: 400;
   line-height: normal;
 }
