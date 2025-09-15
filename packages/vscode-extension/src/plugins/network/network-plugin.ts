@@ -140,7 +140,6 @@ export class NetworkPlugin implements ToolPlugin {
       this.sendCDPMessage(payload);
     } else {
       Logger.warn("Unknown CDP method received");
-      this.sendGenericResponse(message);
     }
   }
 
@@ -153,28 +152,7 @@ export class NetworkPlugin implements ToolPlugin {
         break;
       default:
         Logger.warn("Unknown IDE method received");
-        this.sendGenericResponse(message);
     }
-  }
-
-  private sendGenericResponse(message: WebviewMessage): void {
-    const { command, payload } = message;
-
-    if (!payload.id) {
-      return;
-    }
-    const responsePayload = {
-      id: payload.id,
-      method: payload.method,
-      result: {},
-    };
-
-    const response = {
-      command,
-      payload: responsePayload,
-    } as WebviewMessage;
-
-    this.broadcastListeners.forEach((cb) => cb(response));
   }
 
   handleWebviewMessage(message: WebviewMessage) {
