@@ -307,6 +307,7 @@ function PreviewView() {
               tooltip={{
                 label: "Replay the last few seconds of the app",
               }}
+              dataTest="radon-top-bar-show-replay-button"
               onClick={handleReplay}
               disabled={!navBarButtonsActive}>
               <ReplayIcon />

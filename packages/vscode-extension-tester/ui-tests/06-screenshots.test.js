@@ -66,7 +66,7 @@ describe("screenshots tests", () => {
   });
 
   it("Should record screen", async () => {
-    const filePath = path.join(homeDir, "recordingTest..mp4");
+    const filePath = path.join(cwd, "recordingTest..mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
@@ -108,6 +108,9 @@ describe("screenshots tests", () => {
   });
 
   it("Should save replay", async () => {
+    const filePath = path.join(cwd, "replayTest..mp4");
+
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     await radonViewsService.openRadonDeviceSettingsMenu();
     await elementHelperService.findAndClickElementByTag(
       "device-settings-enable-replays-switch"
@@ -141,5 +144,13 @@ describe("screenshots tests", () => {
 
     await elementHelperService.findAndClickElementByTag("replay-save-button");
     await radonViewsService.findAndFillSaveFileForm("replayTest");
+
+    await driver.wait(
+      async () => {
+        return fs.existsSync(filePath);
+      },
+      10000,
+      "Timed out waiting for recording to be saved"
+    );
   });
 });
