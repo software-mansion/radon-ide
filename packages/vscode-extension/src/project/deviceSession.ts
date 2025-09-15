@@ -73,7 +73,6 @@ export class DeviceSession implements Disposable {
   private applicationSession: ApplicationSession | undefined;
   private buildManager: BuildManager;
   private cancelToken: CancelToken = new CancelToken();
-  private devtools: Devtools;
   private frameReporter: FrameReporter;
   private maybeBuildResult: BuildResult | undefined;
   private metro: MetroLauncher;
