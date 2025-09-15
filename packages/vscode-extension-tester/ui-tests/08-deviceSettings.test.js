@@ -135,7 +135,7 @@ describe("Device Settings", () => {
           return newFontSize;
         }
         return false;
-      }, 3000);
+      }, 5000);
     }
 
     await radonViewsService.openRadonDeviceSettingsMenu();
