@@ -7,7 +7,7 @@ import { MultimediaData } from "../../common/State";
 
 function VHSRewind() {
   return (
-    <div className="phone-screen vhs-wrapper">
+    <div className="phone-screen vhs-wrapper" data-testid="vhs-rewind">
       <div className="vhs-lines"></div>
       <div className="crt-lines"></div>
       <div className="vhs-bg">

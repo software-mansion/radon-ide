@@ -102,7 +102,7 @@ describe("screenshots tests", () => {
     );
 
     await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay-wrapper",
+      "replay-overlay",
       "Timed out waiting for replay overlay to appear"
     );
   });
@@ -111,10 +111,6 @@ describe("screenshots tests", () => {
     const filePath = path.join(cwd, "replayTest..mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    await radonViewsService.openRadonDeviceSettingsMenu();
-    await elementHelperService.findAndClickElementByTag(
-      "device-settings-enable-replays-switch"
-    );
     await driver.actions().sendKeys(Key.ESCAPE).perform();
     await elementHelperService.waitUntilElementGone(
       By.css("[data-testid='vhs-rewind']")
