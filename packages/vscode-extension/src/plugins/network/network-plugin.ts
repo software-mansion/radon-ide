@@ -15,6 +15,8 @@ import {
   WebviewCommand,
 } from "../../network/types/panelMessageProtocol";
 
+type BroadcastListener = (message: WebviewMessage) => void;
+
 export const NETWORK_PLUGIN_ID = "network";
 
 const LANGUAGE_BY_CONTENT_TYPE = {
@@ -81,8 +83,6 @@ async function initialize() {
     })
   );
 }
-
-type BroadcastListener = (message: WebviewMessage) => void;
 
 export class NetworkPlugin implements ToolPlugin {
   public readonly id: ToolKey = NETWORK_PLUGIN_ID;
