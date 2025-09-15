@@ -11,6 +11,7 @@ import {
 import * as fs from "fs";
 import config from "../configuration.js";
 import { createCanvas } from "canvas";
+import { centerCoordinates } from "../utils/helpers.js";
 
 // #region Opening radon views
 export class RadonViewsService {
@@ -453,6 +454,8 @@ export class AppManipulationService {
       "Timed out waiting for phone-screen"
     );
 
+    position = centerCoordinates(position);
+
     const rect = await phoneScreen.getRect();
     const phoneWidth = rect.width;
     const phoneHeight = rect.height;
@@ -463,8 +466,8 @@ export class AppManipulationService {
       .move({
         // origin is center of phoneScreen
         origin: phoneScreen,
-        x: Math.floor((position.x + position.width / 2 - 0.5) * phoneWidth),
-        y: Math.floor((position.y + position.height / 2 - 0.5) * phoneHeight),
+        x: Math.floor((position.x + position.width / 2) * phoneWidth),
+        y: Math.floor((position.y + position.height / 2) * phoneHeight),
       })
       // .click() method does not trigger show touch on phone screen
       .press(rightClick ? 2 : 0)
