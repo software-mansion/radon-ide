@@ -143,7 +143,7 @@ function PreviewLoader({
         </button>
         <ProgressBar progress={progress} />
         {isLoadingSlowly && isWaitingForApp && (
-          <div className="preview-loader-submessage">
+          <div className="preview-loader-submessage" data-testid="app-preview-loader-submessage">
             Loading app takes longer than expected. If nothing happens after a while try the below
             options to troubleshoot:
           </div>

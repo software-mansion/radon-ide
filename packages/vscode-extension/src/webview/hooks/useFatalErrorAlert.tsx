@@ -5,7 +5,13 @@ import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { BuildType } from "../../common/BuildConfig";
-import { BuildErrorDescriptor, FatalErrorDescriptor, ProjectInterface } from "../../common/Project";
+import {
+  BuildErrorDescriptor,
+  FatalErrorDescriptor,
+  InstallationErrorDescriptor,
+  InstallationErrorReason,
+  ProjectInterface,
+} from "../../common/Project";
 import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
@@ -39,6 +45,7 @@ function BuildErrorActions({
       </IconButton>
       <IconButton
         type="secondary"
+        dataTest="alert-open-logs-button"
         onClick={() => {
           project.focusOutput(logsButtonDestination ?? Output.Ide);
         }}
@@ -61,11 +68,39 @@ function BootErrorActions() {
     <>
       <IconButton
         type="secondary"
+        dataTest="alert-open-logs-button"
         onClick={() => {
           project.focusOutput(Output.Ide);
         }}
         tooltip={{ label: "Open IDE logs", side: "bottom" }}>
         <span className="codicon codicon-output" />
+      </IconButton>
+    </>
+  );
+}
+
+function InstallationErrorActions() {
+  const { project } = useProject();
+
+  let onReload = () => {
+    project.reloadCurrentSession("autoReload");
+  };
+
+  return (
+    <>
+      <IconButton
+        type="secondary"
+        onClick={() => {
+          project.focusOutput(Output.Ide);
+        }}
+        tooltip={{ label: "Open IDE logs", side: "bottom" }}>
+        <span className="codicon codicon-output" />
+      </IconButton>
+      <IconButton
+        type="secondary"
+        onClick={onReload}
+        tooltip={{ label: "Reload IDE", side: "bottom" }}>
+        <span className="codicon codicon-refresh" />
       </IconButton>
     </>
   );
@@ -124,6 +159,22 @@ function createBuildErrorAlert(
   };
 }
 
+function createInstallationErrorAlert(installationErrorDescriptor: InstallationErrorDescriptor) {
+  let description = installationErrorDescriptor.message;
+
+  if (installationErrorDescriptor.reason === InstallationErrorReason.Unknown) {
+    description =
+      "An unknown error occurred while installing the application. See logs for more details.";
+  }
+
+  return {
+    id: FATAL_ERROR_ALERT_ID,
+    title: "Couldn't install application on selected device",
+    description,
+    actions: <InstallationErrorActions />,
+  };
+}
+
 export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undefined) {
   let errorAlert = noErrorAlert;
   const { project, projectState } = useProject();
@@ -139,6 +190,8 @@ export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undef
     );
   } else if (errorDescriptor?.kind === "device") {
     errorAlert = bootErrorAlert;
+  } else if (errorDescriptor?.kind === "installation") {
+    errorAlert = createInstallationErrorAlert(errorDescriptor);
   }
 
   useToggleableAlert(errorDescriptor !== undefined, errorAlert);

@@ -133,7 +133,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="dropdown-menu-content device-settings-content"
-          data-test="device-settings-dropdown-menu"
+          data-testid="device-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
           <form>
@@ -148,7 +148,11 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 });
               }}>
               <div className="radio-group-center">
-                <RadioGroup.Item className="radio-group-item" value="light" id="r1">
+                <RadioGroup.Item
+                  className="radio-group-item"
+                  value="light"
+                  id="r1"
+                  data-testid="device-appearance-light">
                   <RadioGroup.Indicator className="radio-group-indicator" />
                 </RadioGroup.Item>
                 <label className="radio-group-label" htmlFor="r1">
@@ -156,7 +160,11 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 </label>
               </div>
               <div className="radio-group-center">
-                <RadioGroup.Item className="radio-group-item" value="dark" id="r2">
+                <RadioGroup.Item
+                  className="radio-group-item"
+                  value="dark"
+                  id="r2"
+                  data-testid="device-appearance-dark">
                   <RadioGroup.Indicator className="radio-group-indicator" />
                 </RadioGroup.Item>
                 <label className="radio-group-label" htmlFor="r2">
@@ -198,12 +206,14 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             commandName="RNIDE.deviceHomeButtonPress"
             label="Press Home Button"
             icon="home"
+            dataTest="press-home-button"
           />
           <CommandItem
             project={project}
             commandName="RNIDE.deviceAppSwitchButtonPress"
             label="Open App Switcher"
             icon="chrome-restore"
+            dataTest="open-app-switcher-button"
           />
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
@@ -314,6 +324,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Show Touches
             <Switch.Root
               className="switch-root small-switch"
+              data-testid="device-settings-show-touches-switch"
               id="show-touches"
               onCheckedChange={(checked) =>
                 project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })
@@ -366,12 +377,14 @@ function CommandItem({
   label,
   icon,
   disabled = false,
+  dataTest,
 }: {
   project: ProjectInterface;
   commandName: string;
   label: string;
   icon: string;
   disabled?: boolean;
+  dataTest?: string;
 }) {
   return (
     <DropdownMenu.Item
@@ -379,7 +392,8 @@ function CommandItem({
       onSelect={() => {
         project.runCommand(commandName);
       }}
-      disabled={disabled}>
+      disabled={disabled}
+      data-testid={dataTest}>
       <span className="dropdown-menu-item-wraper">
         <span className={`codicon codicon-${icon}`} />
         <div className="dropdown-menu-item-content">

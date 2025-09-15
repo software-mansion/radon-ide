@@ -219,7 +219,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Input
           value={displayName}
           className="device-name-input"
-          data-test="creating-device-form-name-input"
+          data-testid="creating-device-form-name-input"
           data-error={!isDisplayNameValid}
           type="string"
           onChange={handleDisplayNameChange}

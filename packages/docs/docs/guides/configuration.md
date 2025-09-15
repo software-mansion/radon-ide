@@ -238,6 +238,7 @@ Here, we list other attributes that can be configured using launch configuration
 - `metroConfigPath` — Path to metro config relative to the workspace. By default it tries to find
   `metro.config.js` or `metro.config.ts`.
 - `isExpo` — Boolean that can be set to `true` if IDE doesn't automatically detect the project should use Expo CLI. By default, the IDE tries to detect whether project is Expo-base or based on the React Native community CLI, so in most of the cases this options shouldn't be needed.
+- `usePrebuild` — Boolean that when set to `true` makes Radon IDE run `expo prebuild` command before building the app. By default, this is always disabled.
 
 Below is a sample `launch.json` config file with `appRoot`, `metroConfigPath`, and `env` setting specified:
 

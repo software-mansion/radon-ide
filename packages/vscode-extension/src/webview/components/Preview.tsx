@@ -527,7 +527,7 @@ function Preview({
     <>
       <div
         className="phone-display-container"
-        data-test="phone-wrapper"
+        data-testid="phone-wrapper"
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>
@@ -541,6 +541,7 @@ function Preview({
                   cursor: isInspecting ? "crosshair" : "default",
                 }}
                 className="phone-screen"
+                data-testid="phone-screen"
               />
               <RenderOutlinesOverlay />
               {isRunning && <SendFilesOverlay />}
