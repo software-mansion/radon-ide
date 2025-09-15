@@ -12,7 +12,8 @@ describe("screenshots tests", () => {
     elementHelperService,
     radonViewsService,
     managingDevicesService,
-    appManipulationService;
+    appManipulationService,
+    radonSettingsService;
   const cwd = process.cwd() + "/data";
 
   before(async () => {
@@ -22,6 +23,7 @@ describe("screenshots tests", () => {
       radonViewsService,
       managingDevicesService,
       appManipulationService,
+      radonSettingsService,
     } = initServices(driver));
 
     await managingDevicesService.deleteAllDevices();
@@ -92,11 +94,8 @@ describe("screenshots tests", () => {
   });
 
   it("Should open replay overlay", async () => {
-    await radonViewsService.openRadonDeviceSettingsMenu();
-    await elementHelperService.findAndClickElementByTag(
-      "device-settings-enable-replays-switch"
-    );
-    await driver.actions().sendKeys(Key.ESCAPE).perform();
+    await radonSettingsService.toggleEnableReplays();
+
     await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-show-replay-button"
     );
@@ -111,7 +110,8 @@ describe("screenshots tests", () => {
     const filePath = path.join(cwd, "replayTest..mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    await driver.actions().sendKeys(Key.ESCAPE).perform();
+    await radonSettingsService.toggleEnableReplays();
+
     await elementHelperService.waitUntilElementGone(
       By.css("[data-testid='vhs-rewind']")
     );

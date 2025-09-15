@@ -188,13 +188,39 @@ export class RadonSettingsService {
     this.elementHelperService = new ElementHelperService(driver);
   }
 
-  async toggleShowTouches() {
+  async toggleShowTouches(value = true) {
     await this.elementHelperService.findAndClickElementByTag(
       "radon-bottom-bar-device-settings-dropdown-trigger"
     );
+
+    const switchElement =
+      await this.elementHelperService.findAndWaitForElementByTag(
+        "device-settings-show-touches-switch"
+      );
+    const switchElementState =
+      (await switchElement.getAttribute("data-state")) == "checked";
+
+    if (value !== switchElementState) {
+      switchElement.click();
+    }
+    this.driver.actions().sendKeys(Key.ESCAPE).perform();
+  }
+
+  async toggleEnableReplays(value = true) {
     await this.elementHelperService.findAndClickElementByTag(
-      "device-settings-show-touches-switch"
+      "radon-bottom-bar-device-settings-dropdown-trigger"
     );
+
+    const switchElement =
+      await this.elementHelperService.findAndWaitForElementByTag(
+        "device-settings-enable-replays-switch"
+      );
+    const switchElementState =
+      (await switchElement.getAttribute("data-state")) == "checked";
+
+    if (value !== switchElementState) {
+      switchElement.click();
+    }
     this.driver.actions().sendKeys(Key.ESCAPE).perform();
   }
 }
