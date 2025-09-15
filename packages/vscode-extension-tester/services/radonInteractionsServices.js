@@ -50,6 +50,21 @@ export class RadonViewsService {
     });
   }
 
+  async switchToRadonIDEFrame() {
+    this.driver.switchTo().defaultContent();
+    const webview = await this.elementHelperService.findAndWaitForElement(
+      By.css('iframe[class*="webview"]'),
+      "Timed out waiting for Radon IDE webview"
+    );
+    await this.driver.switchTo().frame(webview);
+    const iframe = await this.elementHelperService.findAndWaitForElement(
+      By.css('iframe[title="Radon IDE"]'),
+      "Timed out waiting for Radon IDE iframe"
+    );
+
+    await this.driver.switchTo().frame(iframe);
+  }
+
   async openRadonSettingsMenu() {
     await this.elementHelperService.findAndClickElementByTag(
       "radon-top-bar-settings-dropdown-trigger"

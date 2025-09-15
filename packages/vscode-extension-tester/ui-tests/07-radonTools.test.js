@@ -219,7 +219,7 @@ describe("Radon tools tests", () => {
     const lenses = await editor.getCodeLenses("Open preview");
 
     await lenses[0].click();
-    await radonViewsService.openRadonIDEPanel();
+    await radonViewsService.switchToRadonIDEFrame();
     const urlInput = await elementHelperService.findAndWaitForElementByTag(
       "radon-top-bar-url-input"
     );
