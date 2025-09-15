@@ -1,13 +1,14 @@
 import { createCanvas } from "canvas";
 
 export function cropCanvas(canvas, position) {
-  const x = Math.floor(position.x * canvas.width);
-  const y = Math.floor(position.y * canvas.height);
+  // + 0.5 to translate origin to left top corner (originally it's in the center)
+  const x = Math.floor((position.x + 0.5) * canvas.width);
+  const y = Math.floor((position.y + 0.5) * canvas.height);
   const width = Math.floor(position.width * canvas.width);
   const height = Math.floor(position.height * canvas.height);
   const cropped = createCanvas(width, height);
   const data = canvas.getContext("2d").getImageData(x, y, width, height);
-  cropped.getContext("2d").drawImage(data, 0, 0);
+  cropped.getContext("2d").putImageData(data, 0, 0);
   return cropped;
 }
 

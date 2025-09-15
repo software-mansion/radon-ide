@@ -41,71 +41,71 @@ describe("screenshots tests", () => {
     }, 5000);
   });
 
-  // it("Should take a screenshot", async () => {
-  //   // VSCode for some reason puts two dots in file name, but it's not an issue
-  //   // it only happens in vscode instance opened by vscode-extension-tester which uses different save file dialog
-  //   // regular VSCode instance use macOS default save file dialog
-  //   const filePath = path.join(cwd, "screenshotTest..png");
+  it("Should take a screenshot", async () => {
+    // VSCode for some reason puts two dots in file name, but it's not an issue
+    // it only happens in vscode instance opened by vscode-extension-tester which uses different save file dialog
+    // regular VSCode instance use macOS default save file dialog
+    const filePath = path.join(cwd, "screenshotTest..png");
 
-  //   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-  //   await elementHelperService.findAndClickElementByTag(
-  //     "capture-screenshot-button"
-  //   );
-  //   await driver.sleep(1000);
+    await elementHelperService.findAndClickElementByTag(
+      "capture-screenshot-button"
+    );
+    await driver.sleep(1000);
 
-  //   await radonViewsService.findAndFillSaveFileForm("screenshotTest");
+    await radonViewsService.findAndFillSaveFileForm("screenshotTest");
 
-  //   await driver.wait(
-  //     async () => {
-  //       return fs.existsSync(filePath);
-  //     },
-  //     10000,
-  //     "Timed out waiting for screenshot to be saved"
-  //   );
-  // });
+    await driver.wait(
+      async () => {
+        return fs.existsSync(filePath);
+      },
+      10000,
+      "Timed out waiting for screenshot to be saved"
+    );
+  });
 
-  // it("Should record screen", async () => {
-  //   const filePath = path.join(homeDir, "recordingTest..mp4");
+  it("Should record screen", async () => {
+    const filePath = path.join(homeDir, "recordingTest..mp4");
 
-  //   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-  //   await elementHelperService.findAndClickElementByTag(
-  //     "toggle-recording-button"
-  //   );
-  //   // recording for 4 sec
-  //   await driver.sleep(4000);
-  //   await elementHelperService.findAndClickElementByTag(
-  //     "toggle-recording-button"
-  //   );
-  //   await driver.sleep(1000);
+    await elementHelperService.findAndClickElementByTag(
+      "toggle-recording-button"
+    );
+    // recording for 4 sec
+    await driver.sleep(4000);
+    await elementHelperService.findAndClickElementByTag(
+      "toggle-recording-button"
+    );
+    await driver.sleep(1000);
 
-  //   await radonViewsService.findAndFillSaveFileForm("recordingTest");
+    await radonViewsService.findAndFillSaveFileForm("recordingTest");
 
-  //   await driver.wait(
-  //     async () => {
-  //       return fs.existsSync(filePath);
-  //     },
-  //     10000,
-  //     "Timed out waiting for recording to be saved"
-  //   );
-  // });
+    await driver.wait(
+      async () => {
+        return fs.existsSync(filePath);
+      },
+      10000,
+      "Timed out waiting for recording to be saved"
+    );
+  });
 
-  // it("Should open replay overlay", async () => {
-  //   await radonViewsService.openRadonDeviceSettingsMenu();
-  //   await elementHelperService.findAndClickElementByTag(
-  //     "device-settings-enable-replays-switch"
-  //   );
-  //   await driver.actions().sendKeys(Key.ESCAPE).perform();
-  //   await elementHelperService.findAndClickElementByTag(
-  //     "radon-top-bar-show-replay-button"
-  //   );
+  it("Should open replay overlay", async () => {
+    await radonViewsService.openRadonDeviceSettingsMenu();
+    await elementHelperService.findAndClickElementByTag(
+      "device-settings-enable-replays-switch"
+    );
+    await driver.actions().sendKeys(Key.ESCAPE).perform();
+    await elementHelperService.findAndClickElementByTag(
+      "radon-top-bar-show-replay-button"
+    );
 
-  //   await elementHelperService.findAndWaitForElementByTag(
-  //     "replay-overlay-wrapper",
-  //     "Timed out waiting for replay overlay to appear"
-  //   );
-  // });
+    await elementHelperService.findAndWaitForElementByTag(
+      "replay-overlay-wrapper",
+      "Timed out waiting for replay overlay to appear"
+    );
+  });
 
   it("Should save replay", async () => {
     await radonViewsService.openRadonDeviceSettingsMenu();
