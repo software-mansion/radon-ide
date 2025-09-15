@@ -61,6 +61,13 @@ import ipadPro11Landscape from "../../assets/ipad_pro_11_inch/landscape/skin.png
 import ipadPro11LandscapeBezel from "../../assets/ipad_pro_11_inch/landscape/bezel.png";
 import ipadPro11LandscapeScreen from "../../assets/ipad_pro_11_inch/landscape/screen.png";
 
+import iphoneAir from "../../assets/iphone_air/skin.png";
+import iphoneAirbezel from "../../assets/iphone_air/bezel.png";
+import iphoneAirscreen from "../../assets/iphone_air/screen.png";
+import iphoneAirLandscape from "../../assets/iphone_air/landscape/skin.png";
+import iphoneAirLandscapeBezel from "../../assets/iphone_air/landscape/bezel.png";
+import iphoneAirLandscapeScreen from "../../assets/iphone_air/landscape/screen.png";
+
 import { DevicePlatform } from "../../common/State";
 
 export type DevicePropertiesFrame = {
@@ -92,6 +99,61 @@ export type DeviceProperties = {
 // iOS devices names should match supportedDeviceTypes inside the runtime
 
 export const iOSSupportedDevices: DeviceProperties[] = [
+  {
+    modelName: "iPhone Air",
+    modelId: "com.apple.CoreSimulator.SimDeviceType.iPhone-Air",
+    platform: DevicePlatform.IOS,
+    screenWidth: 1304,
+    screenHeight: 2832,
+    screenMaskImage: iphoneAirscreen,
+    landscapeScreenMaskImage: iphoneAirLandscapeScreen,
+    bezel: {
+      type: "mask" as const,
+      width: 1312,
+      height: 2840,
+      offsetX: 4,
+      offsetY: 4,
+      image: iphoneAirbezel,
+      imageLandscape: iphoneAirLandscapeBezel,
+    },
+    skin: {
+      type: "skin" as const,
+      width: 1422,
+      height: 2950,
+      offsetX: 60,
+      offsetY: 60,
+      image: iphoneAir,
+      imageLandscape: iphoneAirLandscape,
+    },
+  },
+  {
+    // Iphone 17 pro has the exact same screen and bezel as Iphone 16 pro
+    modelName: "iPhone 17 Pro",
+    modelId: "com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro",
+    platform: DevicePlatform.IOS,
+    screenWidth: 1178,
+    screenHeight: 2556,
+    screenMaskImage: iphone16proscreen,
+    landscapeScreenMaskImage: iphone16proLandscapeScreen,
+    bezel: {
+      type: "mask" as const,
+      width: 1186,
+      height: 2564,
+      offsetX: 4,
+      offsetY: 4,
+      image: iphone16probezel,
+      imageLandscape: iphone16proLandscapeBezel,
+    },
+    skin: {
+      type: "skin" as const,
+      width: 1285,
+      height: 2663,
+      offsetX: 55,
+      offsetY: 55,
+      image: iphone16pro,
+      imageLandscape: iphone16proLandscape,
+    },
+  },
   {
     modelName: "iPhone 16 Pro",
     modelId: "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro",
