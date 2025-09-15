@@ -1,4 +1,4 @@
-import { Disposable } from "vscode";
+import { EventEmitter, Disposable } from "vscode";
 import { Cdp } from "vscode-cdp-proxy";
 import { Metro } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
@@ -11,8 +11,11 @@ const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {
   private disposables: Disposable[] = [];
   private reconnectCancelToken: CancelToken | undefined;
+  private readonly sessionTerminatedEventEmitter = new EventEmitter<void>();
 
   private isRunning: boolean = false;
+
+  public readonly onDebugSessionTerminated = this.sessionTerminatedEventEmitter.event;
 
   constructor(
     private readonly debugSession: DebugSession & Partial<Disposable>,
@@ -83,6 +86,8 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   async dispose() {
     disposeAll(this.disposables);
     this.reconnectCancelToken?.cancel();
+    this.sessionTerminatedEventEmitter.fire();
+    this.sessionTerminatedEventEmitter.dispose();
     await this.debugSession.dispose?.();
   }
 
@@ -93,7 +98,6 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   public onProfilingCPUStarted = this.debugSession.onProfilingCPUStarted;
   public onProfilingCPUStopped = this.debugSession.onProfilingCPUStopped;
   public onBindingCalled = this.debugSession.onBindingCalled;
-  public onDebugSessionTerminated = this.debugSession.onDebugSessionTerminated;
   public onBundleParsed = this.debugSession.onBundleParsed;
 
   public async startParentDebugSession(): Promise<void> {

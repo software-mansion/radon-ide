@@ -309,12 +309,12 @@ export class DeviceSessionsManager implements Disposable {
     if (previousSession === session) {
       return;
     }
+    await previousSession?.deactivate();
     if (session === undefined) {
       this.projectStateManager.setState({ selectedDeviceSessionId: null });
       this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
       return;
     }
-    await previousSession?.deactivate();
     await session.activate();
     extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, this.activeSessionId);
     this.projectStateManager.setState({ selectedDeviceSessionId: this.activeSessionId });

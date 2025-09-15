@@ -253,7 +253,7 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
 
   public dispose() {
     super.dispose();
-    this.connection?.dispose();
+    this.connection?.disconnect();
     disposeAll(this.disposables);
   }
 }

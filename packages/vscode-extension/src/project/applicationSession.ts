@@ -390,10 +390,12 @@ export class ApplicationSession implements Disposable {
     this.isActive = false;
     this.toolsManager.deactivate();
     this.debugSessionEventSubscription?.dispose();
+    this.debugSessionEventSubscription = undefined;
     const debugSession = this.debugSession;
     this.debugSession = undefined;
     await debugSession?.dispose();
-    this.debugSessionEventSubscription = undefined;
+    this.cdpDevtoolsServer?.dispose();
+    this.cdpDevtoolsServer = undefined;
   }
 
   //#region Debugger control
@@ -599,5 +601,6 @@ export class ApplicationSession implements Disposable {
     await this.debugSession?.dispose();
     this.debugSession = undefined;
     this.device.terminateApp(this.packageNameOrBundleId);
+    this.cdpDevtoolsServer?.dispose();
   }
 }
