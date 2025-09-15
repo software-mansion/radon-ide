@@ -189,8 +189,7 @@ export class ApplicationSession implements Disposable {
       this.devtools?.dispose();
       this.devtools = devtools;
       this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
-      const disconnectedSubscription = devtools.onDisconnected(() => {
-        disconnectedSubscription.dispose();
+      devtools.onDisconnected(() => {
         if (devtools !== this.devtools) {
           return;
         }
@@ -202,6 +201,7 @@ export class ApplicationSession implements Disposable {
           });
         }
         this.devtools = undefined;
+        this._inspectorBridge.setDevtoolsConnection(undefined);
       });
       devtools.onProfilingChange((isProfiling) => {
         if (this.stateManager.getState().profilingReactState !== "saving") {
@@ -210,8 +210,8 @@ export class ApplicationSession implements Disposable {
           });
         }
       });
+      this._inspectorBridge.setDevtoolsConnection(devtools);
     });
-    this._inspectorBridge.setDevtoolsServer(devtoolsServer);
   }
 
   private async setupDebugSession(): Promise<void> {

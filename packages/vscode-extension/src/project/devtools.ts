@@ -42,17 +42,14 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
     super();
   }
 
-  public setDevtoolsServer(devtoolsServer: DevtoolsServer) {
-    this.devtoolsServerListener?.dispose();
-    if (devtoolsServer.connection) {
-      this.setupBridge(devtoolsServer.connection);
-    }
-    this.devtoolsServerListener = devtoolsServer.onConnection(this.setupBridge);
-  }
-
-  private setupBridge = (connection: DevtoolsConnection) => {
+  public setDevtoolsConnection(connection: DevtoolsConnection | undefined) {
     this.devtoolsConnection = connection;
     disposeAll(this.devtoolsConnectionListeners);
+
+    if (!connection) {
+      return;
+    }
+
     this.devtoolsConnectionListeners = [
       connection.onIdeMessage((message) => {
         this.emitEvent(message.type, message.data);
@@ -69,7 +66,7 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
     for (const message of messageQueue) {
       this.send(message);
     }
-  };
+  }
 
   dispose() {
     disposeAll(this.devtoolsConnectionListeners);
