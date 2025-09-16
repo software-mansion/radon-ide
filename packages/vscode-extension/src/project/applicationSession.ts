@@ -415,6 +415,10 @@ export class ApplicationSession implements Disposable {
     });
   }
 
+  /**
+   * Determine availability of the element inspector taking the
+   * enableExperimentalElementInspector setting (force-enable) into account.
+   */
   private determineInspectorAvailability(
     status: InspectorAvailabilityStatus
   ): InspectorAvailabilityStatus {
@@ -433,6 +437,7 @@ export class ApplicationSession implements Disposable {
 
   private registerConfigurationChangeListeners() {
     const subscriptions = [
+      // react to enableExperimentalElementInspector setting changes
       this.applicationContext.workspaceConfigState.onSetState(() => {
         const status = this.determineInspectorAvailability(
           this.lastRegisteredInspectorAvailability
