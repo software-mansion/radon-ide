@@ -79,7 +79,7 @@ export class WorkspaceConfigController implements Disposable {
         config.get<string>("defaultMultimediaSavingLocation") ?? null,
       startDeviceOnLaunch: config.get<boolean>("startDeviceOnLaunch") ?? true,
       enableExperimentalElementInspector:
-        config.get<boolean>("enableExperimentalInspector") ?? false,
+        config.get<boolean>("enableExperimentalElementInspector") ?? false,
     };
 
     const index = this.workspaceConfigurationUpdatesToIgnore.findIndex((cfg) =>
