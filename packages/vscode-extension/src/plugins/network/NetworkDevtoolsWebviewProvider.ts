@@ -51,9 +51,9 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider, Disp
       networkPlugin.handleWebviewMessage(event)
     );
 
-    this.broadcastRepeaterDisposable = networkPlugin.onMessageBroadcast((message) =>
-      webview.postMessage(message)
-    );
+    this.broadcastRepeaterDisposable = networkPlugin.onMessageBroadcast((message) => {
+      webview.postMessage(message);
+    });
 
     webviewView.onDidChangeVisibility(() =>
       reportToolVisibilityChanged(NETWORK_PLUGIN_ID, webviewView.visible)

@@ -316,6 +316,7 @@ export interface ProjectInterface {
   movePanelTo(location: IDEPanelMoveTarget): Promise<void>;
   openExternalUrl(uriString: string): Promise<void>;
   openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
+  openContentInEditor(codeId: string, content: string, language: string): Promise<void>;
   showDismissableError(errorMessage: string): Promise<void>;
   showToast(message: string, timeout: number): Promise<void>;
 

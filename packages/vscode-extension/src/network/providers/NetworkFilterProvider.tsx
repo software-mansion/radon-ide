@@ -8,10 +8,10 @@ import {
   useMemo,
   useEffect,
 } from "react";
-import { NetworkLog } from "../hooks/useNetworkTracker";
 import { getNetworkLogValue, parseTextToBadge } from "../utils/networkLogParsers";
 import { useNetwork } from "./NetworkProvider";
-import { FilterBadge, NETWORK_LOG_COLUMNS } from "../types/network";
+import { FilterBadge } from "../types/networkFilter";
+import { NetworkLog, NETWORK_LOG_COLUMNS } from "../types/networkLog";
 
 // lookup structure for badge filters
 type BadgeByColumnsLookup = Record<string, string[]>;
