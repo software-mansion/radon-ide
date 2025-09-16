@@ -1,31 +1,41 @@
-export interface NetworkLog {
-  requestId: string;
+export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
+
+export interface RequestData {
   url: string;
-  status: number;
-  method: string;
-  type: string;
-  startTimestamp: number;
-  endTimestamp: number;
-  duration: number;
+  method: HttpMethod;
+  headers?: Record<string, string>;
+  postData?: string;
+}
+
+export interface RequestOptions {
+  method: HttpMethod;
   headers: Record<string, string>;
+  body?: string;
 }
 
-export enum NetworkLogColumn {
-  Name = "name",
-  Status = "status",
-  Method = "method",
-  Type = "type",
-  Size = "size",
-  Time = "time",
+export interface ResponseData {
+  type: string;
+  status: number;
+  statusText: string;
+  headers?: Record<string, string>;
+  content?: unknown;
+  mimeType?: string;
 }
 
-export enum SortDirection {
-  Asc = "asc",
-  Desc = "desc",
+export interface NetworkRequestInitiator {
+  sourceUrl: string;
+  lineNumber: number;
+  columnNumber: number;
 }
 
-export interface FilterBadge {
-  id: string;
-  columnName: string;
-  value: string;
+export interface ResponseBodyData {
+  body: string | undefined;
+  wasTruncated: boolean;
+}
+
+export interface TimelineEvent {
+  timestamp: number;
+  wallTime?: number;
+  durationMs?: number;
+  ttfb?: number;
 }

@@ -39,15 +39,18 @@ function ActiveToolButton({
   toolState,
   title,
   onClick,
+  dataTest,
 }: {
   toolState: ActiveToolState;
   title: string;
   onClick: () => void;
+  dataTest?: string;
 }) {
   const showButton = toolState !== "stopped";
   return (
     <IconButton
       className={showButton ? "button-recording-on" : "button-recording-off"}
+      data-testid={dataTest}
       tooltip={{
         label: title,
       }}
@@ -71,16 +74,21 @@ function ActiveToolButton({
 
 function PreviewView() {
   const store$ = useStore();
-  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
   const { selectedDeviceSession, projectState, project, deviceSettings } = useProject();
-
-  const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
 
+  const devices = use$(store$.devicesState.devices) ?? [];
+  const fps = use$(useSelectedDeviceSessionState().frameReporting.frameReport.fps);
+  const frameReportingEnabled = use$(useSelectedDeviceSessionState().frameReporting.enabled);
+  const initialized = use$(store$.projectState.initialized);
+  const radonConnectConnected = projectState.connectState.connected;
+  const radonConnectEnabled = projectState.connectState.enabled;
+  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
   const zoomLevel = use$(store$.projectState.previewZoom);
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
@@ -89,23 +97,15 @@ function PreviewView() {
     [project]
   );
 
-  const devices = use$(store$.devicesState.devices) ?? [];
-
-  const frameReportingEnabled = use$(useSelectedDeviceSessionState().frameReporting.enabled);
-  const fps = use$(useSelectedDeviceSessionState().frameReporting.frameReport.fps);
-
-  const initialized = use$(store$.projectState.initialized);
-
-  const radonConnectEnabled = projectState.connectState.enabled;
-  const radonConnectConnected = projectState.connectState.connected;
-  const selectedDevice = selectedDeviceSession?.deviceInfo;
   const hasNoDevices = projectState !== undefined && devices.length === 0;
   const isStarting = selectedDeviceSession?.status === "starting";
   const isRunning = selectedDeviceSession?.status === "running";
 
   const isRecording = use$(selectedDeviceSessionState.screenCapture.isRecording);
+  const modelId = use$(selectedDeviceSessionState.deviceInfo.modelId);
   const recordingTime = use$(selectedDeviceSessionState.screenCapture.recordingTime) ?? 0;
   const replayData = use$(selectedDeviceSessionState.screenCapture.replayData);
+  const selectedDevice = use$(selectedDeviceSessionState.deviceInfo);
 
   const elementInspectorAvailability =
     use$(selectedDeviceSessionState.applicationSession.elementInspectorAvailability) ??
@@ -123,7 +123,7 @@ function PreviewView() {
   const debuggerToolsButtonsActive = navBarButtonsActive; // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
+    return sd.modelId === modelId;
   });
 
   useEffect(() => {
@@ -262,11 +262,13 @@ function PreviewView() {
             toolState={profilingCPUState}
             title="Stop profiling CPU"
             onClick={stopProfilingCPU}
+            dataTest="radon-top-bar-cpu-profiling-button"
           />
           <ActiveToolButton
             toolState={profilingReactState}
             title="Stop profiling React"
             onClick={stopProfilingReact}
+            dataTest="radon-top-bar-react-profiling-button"
           />
           <ActiveToolButton
             toolState={frameReportingEnabled ? "profiling" : "stopped"}
@@ -286,7 +288,8 @@ function PreviewView() {
               label: isRecording ? "Stop screen recording" : "Start screen recording",
             }}
             onClick={toggleRecording}
-            disabled={!navBarButtonsActive}>
+            disabled={!navBarButtonsActive}
+            dataTest="toggle-recording-button">
             {isRecording ? (
               <div className="recording-rec-indicator">
                 <div className="recording-rec-dot" />
@@ -311,7 +314,8 @@ function PreviewView() {
               label: "Capture a screenshot of the app",
             }}
             onClick={captureScreenshot}
-            disabled={!navBarButtonsActive}>
+            disabled={!navBarButtonsActive}
+            dataTest="capture-screenshot-button">
             <span slot="start" className="codicon codicon-device-camera" />
           </IconButton>
           <IconButton
@@ -357,6 +361,7 @@ function PreviewView() {
         <IconButton
           shouldDisplayLabelWhileDisabled={navBarButtonsActive}
           active={isInspecting}
+          dataTest="radon-bottom-bar-element-inspector-button"
           tooltip={{
             label: INSPECTOR_AVAILABILITY_MESSAGES[inspectorAvailabilityStatus],
           }}

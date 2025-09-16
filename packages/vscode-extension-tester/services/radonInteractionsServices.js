@@ -1,6 +1,15 @@
-import { ElementHelperService } from "../utils/helpers.js";
-import { waitForMessage } from "./setupTest.js";
-import { By, Key } from "vscode-extension-tester";
+import { ElementHelperService } from "./helperServices.js";
+import { waitForMessage } from "../server/webSocketServer.js";
+import {
+  By,
+  Key,
+  WebView,
+  EditorView,
+  BottomBarPanel,
+  OutputView,
+} from "vscode-extension-tester";
+import * as fs from "fs";
+import config from "../utils/configuration.js";
 
 // #region Opening radon views
 export class RadonViewsService {
@@ -10,9 +19,11 @@ export class RadonViewsService {
   }
 
   async openRadonIDEPanel() {
-    await this.driver
-      .findElement(By.css("div#swmansion\\.react-native-ide"))
-      .click();
+    const radonIDEButton =
+      await this.elementHelperService.findAndWaitForElement(
+        By.css("div#swmansion\\.react-native-ide")
+      );
+    await radonIDEButton.click();
 
     const webview = await this.elementHelperService.findAndWaitForElement(
       By.css('iframe[class*="webview"]'),
@@ -50,6 +61,16 @@ export class RadonViewsService {
     );
   }
 
+  async openRadonToolsMenu() {
+    await this.elementHelperService.findAndClickElementByTag(
+      "radon-top-bar-tools-dropdown-trigger"
+    );
+
+    await this.elementHelperService.findAndWaitForElementByTag(
+      "radon-tools-dropdown-menu"
+    );
+  }
+
   async openAndGetDebugConsoleElement() {
     await this.elementHelperService.findAndClickElementByTag(
       "radon-top-bar-debug-console-button"
@@ -76,6 +97,62 @@ export class RadonViewsService {
     const [file, lineNumber] = (await source.getText()).split(":");
     await source.click();
     return { file, lineNumber };
+  }
+
+  async clearDebugConsole() {
+    await this.openAndGetDebugConsoleElement();
+    const debugView = await new BottomBarPanel().openDebugConsoleView();
+    await debugView.clearText();
+    const bottomBar = new BottomBarPanel();
+    await bottomBar.toggle(false);
+  }
+
+  // #region Saving files
+  async findAndFillSaveFileForm(filename) {
+    await this.driver.switchTo().defaultContent();
+
+    const quickInput = await this.elementHelperService.findAndWaitForElement(
+      By.css(".quick-input-widget input"),
+      "Timed out waiting for quick input"
+    );
+
+    await this.driver.executeScript("arguments[0].value = '';", quickInput);
+
+    await quickInput.sendKeys(process.cwd() + "/data/");
+    await quickInput.sendKeys(filename);
+
+    const quickInputButton =
+      await this.elementHelperService.findAndWaitForElement(
+        By.css(".quick-input-action"),
+        "Timed out waiting for quick input button"
+      );
+
+    quickInputButton.click();
+  }
+
+  // #region WebView
+
+  async findWebViewIFrame(iframeTitle) {
+    await this.driver.switchTo().defaultContent();
+    const webviews = await this.driver.findElements(
+      By.css('iframe[class*="webview"]')
+    );
+    for (let webview of webviews) {
+      await this.driver.switchTo().frame(webview);
+      try {
+        const iframe = await this.elementHelperService.findAndWaitForElement(
+          By.css(`iframe[title="${iframeTitle}"]`),
+          `Timed out waiting for Radon IDE iframe with title ${iframeTitle}`,
+          5000
+        );
+        return iframe;
+      } catch (error) {
+        await this.driver.switchTo().defaultContent();
+      }
+    }
+    throw new Error(
+      `Could not find iframe with title ${iframeTitle} in any webview`
+    );
   }
 }
 
@@ -135,10 +212,15 @@ export class ManagingDevicesService {
       "creating-device-form-device-type-select"
     );
 
+    const device =
+      process.env.TESTS_OS === "Android" || config.isAndroid
+        ? "pixel"
+        : "com.apple";
+
     const selectedDevice =
       await this.elementHelperService.findAndWaitForElement(
         By.css(
-          '[data-testid^="creating-device-form-device-type-select-item-"]'
+          `[data-testid^="creating-device-form-device-type-select-item-${device}"]`
         ),
         "Timed out waiting for an element matching from devices list"
       );
@@ -225,6 +307,10 @@ export class ManagingDevicesService {
       }
     } catch (e) {}
     this.elementHelperService.findAndClickElementByTag(`modal-close-button`);
+    const view = new WebView();
+    await view.switchBack();
+    await new EditorView().closeAllEditors();
+    await this.radonViewsService.openRadonIDEPanel();
   }
   // #endregion
 
@@ -282,7 +368,15 @@ export class AppManipulationService {
           this.elementHelperService.findAndClickElementByTag(
             "alert-open-logs-button"
           );
-          return errorPopup;
+          await this.driver.sleep(1000);
+          await this.driver.switchTo().defaultContent();
+          const bottomBar = await new BottomBarPanel().openOutputView();
+          const text = await bottomBar.getText();
+          console.log("build error saved to output.txt");
+          await this.driver.sleep(1000);
+          fs.writeFileSync("output.txt", text);
+          await this.driver.sleep(1000);
+          throw new Error("App error popup displayed");
         }
 
         return false;
@@ -292,7 +386,7 @@ export class AppManipulationService {
     );
   }
 
-  async clickInsidePhoneScreen(position) {
+  async clickInsidePhoneScreen(position, rightClick = false) {
     const phoneScreen = await this.elementHelperService.findAndWaitForElement(
       By.css(`[data-testid="phone-screen"]`),
       "Timed out waiting for phone-screen"
@@ -303,6 +397,7 @@ export class AppManipulationService {
     const phoneHeight = rect.height;
 
     const actions = this.driver.actions({ bridge: true });
+
     await actions
       .move({
         // origin is center of phoneScreen
@@ -311,9 +406,9 @@ export class AppManipulationService {
         y: Math.floor((position.y + position.height / 2) * phoneHeight),
       })
       // .click() method does not trigger show touch on phone screen
-      .press()
+      .press(rightClick ? 2 : 0)
       .pause(250)
-      .release()
+      .release(rightClick ? 2 : 0)
       .perform();
   }
 
@@ -324,15 +419,33 @@ export class AppManipulationService {
   }
 
   async getButtonCoordinates(appWebsocket, buttonID) {
-    const messagePromise = waitForMessage();
-    appWebsocket.send(`getPosition:${buttonID}`);
-    const position = await messagePromise;
+    const id = Date.now() + "-" + Math.floor(Math.random() * 1e6);
+    const messagePromise = waitForMessage(id);
+    appWebsocket.send(
+      JSON.stringify({ message: `getPosition:${buttonID}`, id: id })
+    );
+    const position = (await messagePromise).position;
 
     if (!position) {
       throw new Error("No position received from getPosition");
     }
 
     return position;
+  }
+
+  async hideExpoOverlay(appWebsocket) {
+    // expo developer menu overlay loads slower on android app, it's test app so I can't check it programmatically
+    if (config.isAndroid) await this.driver.sleep(3000);
+
+    const position = await this.getButtonCoordinates(
+      appWebsocket,
+      "console-log-button"
+    );
+
+    await this.clickInsidePhoneScreen(position);
+
+    // expo overlay has animation on close so there must be a delay
+    await this.driver.sleep(1000);
   }
 }
 

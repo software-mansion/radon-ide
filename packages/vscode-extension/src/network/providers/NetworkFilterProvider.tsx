@@ -8,14 +8,10 @@ import {
   useMemo,
   useEffect,
 } from "react";
-import {
-  getNetworkLogValue,
-  NETWORK_LOG_COLUMNS,
-  parseTextToBadge,
-} from "../utils/networkLogUtils";
-import { NetworkLog } from "../hooks/useNetworkTracker";
+import { getNetworkLogValue, parseTextToBadge } from "../utils/networkLogParsers";
 import { useNetwork } from "./NetworkProvider";
-import { FilterBadge } from "../types/network";
+import { FilterBadge } from "../types/networkFilter";
+import { NetworkLog, NETWORK_LOG_COLUMNS } from "../types/networkLog";
 
 // lookup structure for badge filters
 type BadgeByColumnsLookup = Record<string, string[]>;
@@ -27,7 +23,8 @@ interface NetworkFilterContextValue {
   filterInvert: boolean;
   filterInputRef: RefObject<HTMLInputElement | null>;
   isFilterVisible: boolean;
-  wasColumnFilterAddedToInputField: boolean;
+  columnFilterAddedEventToggled: boolean;
+  filterFocusEventToggled: boolean;
   filteredNetworkLogs: NetworkLog[];
 
   // Filter management functions
@@ -37,6 +34,7 @@ interface NetworkFilterContextValue {
   clearAllFilters: () => void;
   setFilterBadges: (badges: FilterBadge[]) => void;
   toggleFilterVisible: () => void;
+  focusFilterInput: () => void;
 }
 
 const NetworkFilterContext = createContext<NetworkFilterContextValue | null>(null);
@@ -45,8 +43,9 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
   const [filterText, setFilterText] = useState<string>("");
   const [filterBadges, setFilterBadges] = useState<FilterBadge[]>([]);
   const [filterInvert, setInvert] = useState<boolean>(false);
-  const [wasColumnFilterAddedToInputField, setWasColumnFilterAddedToInputField] =
+  const [columnFilterAddedEventToggled, setColumnFilterAddedEventToggled] =
     useState<boolean>(false);
+  const [filterFocusEventToggled, setFilterFocusEventToggled] = useState<boolean>(false);
   const [isFilterVisible, setIsFilterVisible] = useState<boolean>(false);
   const filterInputRef = useRef<HTMLInputElement>(null);
 
@@ -58,10 +57,16 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
    * in instant state change which can be "observed" in other components, without unnecesary coupling between them.
    */
   useEffect(() => {
-    if (wasColumnFilterAddedToInputField) {
-      setWasColumnFilterAddedToInputField(false);
+    if (columnFilterAddedEventToggled) {
+      setColumnFilterAddedEventToggled(false);
     }
-  }, [wasColumnFilterAddedToInputField]);
+  }, [columnFilterAddedEventToggled]);
+
+  useEffect(() => {
+    if (filterFocusEventToggled) {
+      setFilterFocusEventToggled(false);
+    }
+  }, [filterFocusEventToggled]);
 
   useEffect(() => {
     if (!isFilterVisible) {
@@ -171,7 +176,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
   };
 
   const addColumnFilterToInputField = (column: string) => {
-    setWasColumnFilterAddedToInputField(true);
+    setColumnFilterAddedEventToggled(true);
     setIsFilterVisible(true);
     setFilterText((prev) => {
       // Check if any column filter pattern (COLUMN:"") exists and replace it
@@ -201,6 +206,11 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
     setIsFilterVisible((prev) => !prev);
   };
 
+  const focusFilterInput = () => {
+    setFilterFocusEventToggled(true);
+    setIsFilterVisible(true);
+  };
+
   const filteredNetworkLogs = useMemo(() => {
     return networkLogs.filter(getFilterMatches);
   }, [networkLogs, filterText, filterBadges, filterInvert]);
@@ -212,8 +222,9 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
     filterInputRef,
     filterInvert,
     isFilterVisible,
-    wasColumnFilterAddedToInputField,
+    columnFilterAddedEventToggled,
     filteredNetworkLogs,
+    filterFocusEventToggled,
 
     // Filter management functions
     setFilterText,
@@ -222,6 +233,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
     clearAllFilters,
     setFilterBadges,
     toggleFilterVisible,
+    focusFilterInput,
   };
 
   return (

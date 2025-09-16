@@ -18,9 +18,10 @@ import {
   DeviceRotation,
   DeviceSessions,
   DevicesState,
-  initialDeviceSessionStore,
+  generateInitialDeviceSessionStore,
   ProjectStore,
 } from "../common/State";
+import { createWebSocketDevtoolsServer } from "./devtools";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -62,7 +63,7 @@ export class DeviceSessionsManager implements Disposable {
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
     private readonly devicesStateManager: StateManager<DevicesState>,
-    private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate,
+    private deviceSessionManagerDelegate: DeviceSessionsManagerDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     this.disposables.push(
@@ -159,17 +160,23 @@ export class DeviceSessionsManager implements Disposable {
 
     if (!this.stateManager.getState()[deviceInfo.id]) {
       // we need to initialize the device session state before deriving a new state manager
-      this.stateManager.setState({ [deviceInfo.id]: initialDeviceSessionStore });
+      this.stateManager.setState({
+        [deviceInfo.id]: generateInitialDeviceSessionStore({ deviceInfo }),
+      });
     }
+
+    Logger.debug("Launching DevTools server");
+    const devtoolsServer = await createWebSocketDevtoolsServer();
 
     const newDeviceSession = new DeviceSession(
       this.stateManager.getDerived(deviceInfo.id),
       this.applicationContext,
       device,
+      devtoolsServer,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
       {
-        onStateChange: (state) => {
-          if (!this.deviceSessions.has(state.deviceInfo.id)) {
+        onStateChange: () => {
+          if (!this.deviceSessions.has(deviceInfo.id)) {
             // NOTE: the device is being removed, we shouldn't report state updates
             return;
           }
@@ -204,7 +211,7 @@ export class DeviceSessionsManager implements Disposable {
 
     const [iosDevices, androidDevices] = _.partition(
       this.deviceSessions.values().toArray(),
-      (session) => session.getState().deviceInfo.platform === DevicePlatform.IOS
+      (session) => session.platform === DevicePlatform.IOS
     );
 
     if (
@@ -298,7 +305,7 @@ export class DeviceSessionsManager implements Disposable {
 
   private async updateSelectedSession(session: DeviceSession | undefined) {
     const previousSession = this.selectedDeviceSession;
-    this.activeSessionId = session?.getState().deviceInfo.id;
+    this.activeSessionId = session?.id;
     if (previousSession === session) {
       return;
     }
@@ -353,6 +360,15 @@ export class DeviceSessionsManager implements Disposable {
   }, SWITCH_DEVICE_THROTTLE_MS);
 
   dispose() {
-    disposeAll([...this.deviceSessions.values().toArray(), ...this.disposables]);
+    // NOTE: we overwrite the delegate to avoid calling it during/after dispose
+    this.deviceSessionManagerDelegate = {
+      onInitialized: () => {},
+      onDeviceSessionsManagerStateChange: (_state: DeviceSessionsManagerState) => {},
+      getDeviceRotation: () => DeviceRotation.Portrait,
+    };
+    const deviceSessions = this.deviceSessions.values().toArray();
+    this.deviceSessions.clear();
+    this.activeSessionId = undefined;
+    disposeAll([...deviceSessions, ...this.disposables]);
   }
 }

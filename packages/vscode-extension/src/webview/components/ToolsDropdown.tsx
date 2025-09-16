@@ -43,13 +43,14 @@ function DevToolCheckbox({
         style={{ color: enabled ? "inherit" : "var(--swm-disabled-text)" }}>
         {label}
         {checked && isPanelTool && (
-          <IconButton onClick={onSelect}>
+          <IconButton onClick={onSelect} dataTest={`dev-tool-${label}-open-button`}>
             <span className="codicon codicon-link-external" />
           </IconButton>
         )}
         <Switch.Root
           disabled={!enabled}
           className="switch-root small-switch"
+          data-testid={`dev-tool-${label}`}
           onCheckedChange={onCheckedChange}
           defaultChecked={checked}
           style={{ marginLeft: "auto" }}>
@@ -125,6 +126,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
           <Label>Utilities</Label>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="tools-dropdown-menu-cpu-profiling-button"
             onSelect={() =>
               isProfilingCPU ? project.stopProfilingCPU() : project.startProfilingCPU()
             }>
@@ -133,6 +135,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="tools-dropdown-menu-react-profiling-button"
             onSelect={() =>
               isProfilingReact ? project.stopProfilingReact() : project.startProfilingReact()
             }>

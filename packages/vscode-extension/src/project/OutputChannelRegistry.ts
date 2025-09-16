@@ -2,16 +2,12 @@ import { Disposable } from "vscode";
 import { Output } from "../common/OutputChannel";
 import { createReadableOutputChannel, ReadableLogOutputChannel } from "./ReadableLogOutputChannel";
 
+type OutputExceptIde = Exclude<Output, Output.Ide>;
+
 export class OutputChannelRegistry implements Disposable {
-  private channelByName = new Map<Output, ReadableLogOutputChannel>();
+  private channelByName = new Map<OutputExceptIde, ReadableLogOutputChannel>();
 
-  getOrCreateOutputChannel(channel: Output): ReadableLogOutputChannel {
-    if (channel === Output.Ide) {
-      throw Error(
-        "Output.Ide output channel cannot be accessed through OutputChannelRegistry. Use Logger instead."
-      );
-    }
-
+  getOrCreateOutputChannel(channel: OutputExceptIde): ReadableLogOutputChannel {
     const logOutput = this.channelByName.get(channel);
 
     if (logOutput) {

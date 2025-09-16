@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import "./FilterInput.css";
 import { useNetworkFilter } from "../providers/NetworkFilterProvider";
-import { NETWORK_LOG_COLUMNS, parseTextToBadge } from "../utils/networkLogUtils";
+import { parseTextToBadge } from "../utils/networkLogParsers";
+import { NETWORK_LOG_COLUMNS } from "../types/networkLog";
 
 interface FilterInputProps {
   placeholder?: string;
@@ -53,7 +54,9 @@ function FilterInput({ placeholder }: FilterInputProps) {
     filterInputRef,
     filterText,
     filterBadges,
-    wasColumnFilterAddedToInputField,
+    columnFilterAddedEventToggled,
+    filterFocusEventToggled,
+    isFilterVisible,
     setFilterBadges,
     setFilterText,
   } = useNetworkFilter();
@@ -67,11 +70,11 @@ function FilterInput({ placeholder }: FilterInputProps) {
   const [focusedBadgeIndex, setFocusedBadgeIndex] = useState<number | null>(null);
   const [highlightedBadgeId, setHighlightedBadgeId] = useState<string | null>(null);
 
-  const focusFilterInput = () => {
+  const focusFilterInputInternal = () => {
     filterInputRef.current?.focus();
   };
 
-  const blurFilterInput = () => {
+  const blurFilterInputInternal = () => {
     filterInputRef.current?.blur();
   };
 
@@ -215,7 +218,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
 
       setHighlightedBadgeId(duplicateBadge.id);
       setFocusedBadgeIndex(duplicateBadgeIndex);
-      blurFilterInput();
+      blurFilterInputInternal();
       scrollBadgeIntoView(duplicateBadgeIndex, true);
 
       // Remove highlight after animation
@@ -244,11 +247,11 @@ function FilterInput({ placeholder }: FilterInputProps) {
 
     // Set proper focus
     if (focusedBadgeIndex === null) {
-      focusFilterInput();
+      focusFilterInputInternal();
       scrollInputIntoView();
     } else if (newBadges.length === 0) {
       setFocusedBadgeIndex(null);
-      focusFilterInput();
+      focusFilterInputInternal();
     } else {
       let newFocusIndex = focusedBadgeIndex > index ? index - 1 : index;
       newFocusIndex = Math.min(newFocusIndex, newBadges.length - 1);
@@ -333,8 +336,8 @@ function FilterInput({ placeholder }: FilterInputProps) {
    * from the provider is called
    */
   useEffect(() => {
-    if (wasColumnFilterAddedToInputField) {
-      focusFilterInput();
+    if (columnFilterAddedEventToggled) {
+      focusFilterInputInternal();
       const firstQuoteIndex = filterText.indexOf('"');
       if (firstQuoteIndex !== -1) {
         setFilterInputCursorPosition(firstQuoteIndex + 1);
@@ -345,7 +348,17 @@ function FilterInput({ placeholder }: FilterInputProps) {
         scrollInputIntoView();
       }, INPUT_UPDATE_TIMEOUT);
     }
-  }, [wasColumnFilterAddedToInputField]);
+  }, [columnFilterAddedEventToggled]);
+
+  useLayoutEffect(() => {
+    if (filterFocusEventToggled) {
+      focusFilterInputInternal();
+      // Timeout for useEffect recalculating input's width
+      setTimeout(() => {
+        scrollInputIntoView();
+      }, INPUT_UPDATE_TIMEOUT);
+    }
+  }, [filterFocusEventToggled, isFilterVisible]);
 
   /**
    * ArrowLeft - Navigate from input to last badge or between badges
@@ -355,7 +368,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
       // Move from input to last badge
       e.preventDefault();
       setFocusedBadgeIndex(filterBadges.length - 1);
-      blurFilterInput();
+      blurFilterInputInternal();
     } else if (focusedBadgeIndex !== null && focusedBadgeIndex > 0) {
       // Move to previous badge
       e.preventDefault();
@@ -373,7 +386,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
       if (focusedBadgeIndex === filterBadges.length - 1) {
         // Move from last badge to input
         setFocusedBadgeIndex(null);
-        focusFilterInput();
+        focusFilterInputInternal();
         setFilterInputCursorPosition(0);
       } else {
         // Move to next badge
@@ -426,7 +439,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
       // Tab with suggestion - autocomplete
       const newValue = filterText + suggestion;
       handleFilterTextChange(newValue);
-      focusFilterInput();
+      focusFilterInputInternal();
       scrollInputIntoView();
     } else {
       // Tab without suggestion - try to create badge
@@ -470,7 +483,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
    * by preventing default on Tab key.
    */
   const handleEscape = () => {
-    blurFilterInput();
+    blurFilterInputInternal();
   };
 
   /**
@@ -532,7 +545,7 @@ function FilterInput({ placeholder }: FilterInputProps) {
   };
 
   const handleInputContainerClick = () => {
-    focusFilterInput();
+    focusFilterInputInternal();
   };
 
   const handleBadgeClick = (index: number) => {

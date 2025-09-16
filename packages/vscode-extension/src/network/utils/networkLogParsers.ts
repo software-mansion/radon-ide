@@ -1,6 +1,6 @@
-import { NetworkLog } from "../hooks/useNetworkTracker";
-import { FilterBadge } from "../types/network";
-import { NetworkLogColumn, SortDirection } from "../types/network";
+import { NetworkLog } from "../types/networkLog";
+import { NetworkLogColumn, NETWORK_LOG_COLUMNS } from "../types/networkLog";
+import { FilterBadge } from "../types/networkFilter";
 
 interface ParsedText {
   badge: FilterBadge | null;
@@ -12,7 +12,19 @@ interface ParsedText {
  */
 const NetworkLogFormatters = {
   name: (log: NetworkLog): string => {
-    return log.request?.url.split("/").pop() || "(pending)";
+    try {
+      const parsedUrl = new URL(log.request?.url || "");
+      const hostname = parsedUrl.hostname.startsWith("www.")
+        ? parsedUrl.hostname.slice(4)
+        : parsedUrl.hostname;
+      // remove trailing slashes
+      const parsedPathName = parsedUrl.pathname.replace(/\/+$/, "");
+      const maybeLastPathSegment = parsedPathName?.split("/").pop();
+
+      return maybeLastPathSegment || hostname;
+    } catch (error) {
+      return "";
+    }
   },
 
   status: (log: NetworkLog): string => {
@@ -120,62 +132,3 @@ export function parseTextToBadge(text: string): ParsedText {
 
   return { badge, remainingText };
 }
-
-export function sortNetworkLogs(
-  networkLogs: NetworkLog[],
-  column: NetworkLogColumn | null,
-  direction: SortDirection | null
-): NetworkLog[] {
-  if (!column || !direction) {
-    return networkLogs;
-  }
-
-  const compare = (a: NetworkLog, b: NetworkLog) => {
-    const aValue = getNetworkLogValue(a, column);
-    const bValue = getNetworkLogValue(b, column);
-    let comparison = 0;
-
-    // Handle numeric sorting for Status, Size, and Time columns
-    switch (column) {
-      case NetworkLogColumn.Status: {
-        const aNum = parseInt(aValue) || 0;
-        const bNum = parseInt(bValue) || 0;
-        comparison = aNum - bNum;
-        break;
-      }
-      case NetworkLogColumn.Size: {
-        const aSize = a.encodedDataLength ?? 0;
-        const bSize = b.encodedDataLength ?? 0;
-        comparison = aSize - bSize;
-        break;
-      }
-      case NetworkLogColumn.Time: {
-        const aTime = a.timeline?.durationMs ?? 0;
-        const bTime = b.timeline?.durationMs ?? 0;
-        comparison = aTime - bTime;
-        break;
-      }
-      default: {
-        // String comparison for other columns
-        comparison = aValue.localeCompare(bValue);
-        break;
-      }
-    }
-
-    return direction === SortDirection.Asc ? comparison : -comparison;
-  };
-
-  return networkLogs.toSorted(compare);
-}
-
-/**
- * Array of all available network log columns for use in filters, tables
- */
-export const NETWORK_LOG_COLUMNS: NetworkLogColumn[] = [
-  NetworkLogColumn.Name,
-  NetworkLogColumn.Status,
-  NetworkLogColumn.Method,
-  NetworkLogColumn.Type,
-  NetworkLogColumn.Size,
-  NetworkLogColumn.Time,
-];

@@ -1,12 +1,10 @@
 import { Disposable } from "vscode";
-import { AppOrientation, NavigationRoute } from "../common/Project";
+import { AppOrientation } from "../common/Project";
 import { Logger } from "../Logger";
-import { InspectorAvailabilityStatus } from "../common/State";
+import { InspectorAvailabilityStatus, NavigationRoute } from "../common/State";
 
 export interface RadonInspectorBridgeEvents {
   appReady: [];
-  connected: [];
-  disconnected: [];
   navigationChanged: [{ displayName: string; id: string }];
   navigationRouteListUpdated: [NavigationRoute[]];
   fastRefreshStarted: [];
@@ -15,7 +13,6 @@ export interface RadonInspectorBridgeEvents {
   inspectData: [{ id: number }];
   devtoolPluginsChanged: [{ plugins: string[] }];
   pluginMessage: [{ pluginId: string; type: string; data: any }];
-  isProfilingReact: [boolean];
   appOrientationChanged: [AppOrientation];
   inspectorAvailabilityChanged: [InspectorAvailabilityStatus];
 }

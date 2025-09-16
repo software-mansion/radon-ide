@@ -68,6 +68,7 @@ function BootErrorActions() {
     <>
       <IconButton
         type="secondary"
+        dataTest="alert-open-logs-button"
         onClick={() => {
           project.focusOutput(Output.Ide);
         }}
