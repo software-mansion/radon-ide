@@ -166,7 +166,7 @@ export class DeviceSessionsManager implements Disposable {
     }
 
     let devtoolsServer;
-    if (!this.applicationContext.launchConfig.useNewDebugger) {
+    if (this.applicationContext.launchConfig.useOldDevtools) {
       Logger.debug("Launching DevTools server");
       devtoolsServer = await createWebSocketDevtoolsServer();
     }

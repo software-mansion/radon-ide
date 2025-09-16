@@ -25,7 +25,7 @@ export type ResolvedLaunchConfig = LaunchOptions & {
   };
   env: Record<string, string>;
   usePrebuild: boolean;
-  useNewDebugger: boolean;
+  useOldDevtools: boolean;
 };
 
 function checkFuseboxSupport(appRoot: string): boolean {
@@ -81,7 +81,7 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
       waitForAppLaunch: configuration.preview?.waitForAppLaunch ?? true,
     },
     usePrebuild: configuration.usePrebuild ?? false,
-    useNewDebugger: configuration.useNewDebugger ?? checkFuseboxSupport(absoluteAppRoot),
+    useOldDevtools: configuration.useOldDevtools ?? !checkFuseboxSupport(absoluteAppRoot),
   };
 }
 

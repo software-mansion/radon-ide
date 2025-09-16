@@ -161,7 +161,7 @@ export class ApplicationSession implements Disposable {
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
-    private readonly devtoolsServer: DevtoolsServer | undefined,
+    private readonly websocketDevtoolsServer: DevtoolsServer | undefined,
     private readonly packageNameOrBundleId: string,
     private readonly supportedOrientations: DeviceRotation[]
   ) {
@@ -173,8 +173,8 @@ export class ApplicationSession implements Disposable {
       this.registerInspectorBridgeEventListeners(devtoolsInspectorBridge);
     this.disposables.push(devtoolsInspectorBridge, ...inspectorBridgeSubscriptions);
 
-    if (devtoolsServer) {
-      this.setupDevtoolsServer(devtoolsServer);
+    if (websocketDevtoolsServer) {
+      this.setupDevtoolsServer(websocketDevtoolsServer);
     }
 
     this.toolsManager = new ToolsManager(
@@ -235,7 +235,7 @@ export class ApplicationSession implements Disposable {
         useParentDebugSession: true,
       }),
       this.metro,
-      this.devtoolsServer
+      this.websocketDevtoolsServer
     );
 
     await session.startParentDebugSession();
@@ -431,8 +431,9 @@ export class ApplicationSession implements Disposable {
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
       sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
     });
-    if (this.metro.isUsingNewDebugger) {
+    if (this.websocketDevtoolsServer === undefined) {
       // NOTE: we only create the CDP devtools server when using the new debugger
+      this.cdpDevtoolsServer?.dispose();
       this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
       this.setupDevtoolsServer(this.cdpDevtoolsServer);
     }
