@@ -33,7 +33,7 @@ function checkFuseboxSupport(appRoot: string): boolean {
     paths: [appRoot],
   });
   const reactNativeVersion = new SemVer(reactNativePackage.version);
-  const supportsFusebox = reactNativeVersion.compare("0.76.0") >= 1;
+  const supportsFusebox = reactNativeVersion.compare("0.76.0") >= 0;
   return supportsFusebox;
 }
 

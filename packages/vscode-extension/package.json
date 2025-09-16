@@ -618,6 +618,10 @@
               "usePrebuild": {
                 "type": "boolean",
                 "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
+              },
+              "useNewDebugger": {
+                "type": "boolean",
+                "description": "Defaults to `true` for React Native versions 0.76 and newer. When set to `false`, falls back to the old debugger implementation that misses some features but has better compatibility with older React Native versions."
               }
             }
           }
@@ -840,6 +844,10 @@
               "usePrebuild": {
                 "type": "boolean",
                 "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
+              },
+              "useNewDebugger": {
+                "type": "boolean",
+                "description": "Defaults to `true` for React Native versions 0.76 and newer. When set to `false`, falls back to the old debugger implementation that misses some features but has better compatibility with older React Native versions."
               }
             }
           }

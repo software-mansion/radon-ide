@@ -30,8 +30,6 @@ const setDevtoolsAgent = (newDevtoolsAgent) => {
     if (devtoolsAgent === newDevtoolsAgent) {
       devtoolsAgent = undefined;
     }
-    bridge.removeListener("RNIDE_message", onIdeMessage);
-    bridge.removeListener("shutdown", onBridgeShutdown);
   }
 
   bridge.addListener("RNIDE_message", onIdeMessage);
