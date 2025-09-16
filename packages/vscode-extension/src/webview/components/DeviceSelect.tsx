@@ -28,7 +28,10 @@ function RunningBadgeButton({ onStopClick }: { onStopClick?: (e: React.MouseEven
         e.stopPropagation();
       }}
       onClick={onStopClick}>
-      <Badge variant="activity-bar-counter" className="running-badge-button">
+      <Badge
+        variant="activity-bar-counter"
+        className="running-badge-button"
+        data-testid="device-running-badge">
         <span />
       </Badge>
     </div>

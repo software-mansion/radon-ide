@@ -294,9 +294,10 @@ export class ManagingDevicesService {
         "Timed out waiting for an element matching from system image list"
       );
 
+    // this method of clearing input seems to be most reliable
     deviceNameInput.click();
     await deviceNameInput.sendKeys(Key.chord(Key.COMMAND, "a"));
-    deviceNameInput.clear();
+    await deviceNameInput.sendKeys(Key.BACK_SPACE);
     await this.driver.wait(async () => {
       const value = await deviceNameInput.getAttribute("value");
       return value === "";
