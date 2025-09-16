@@ -192,8 +192,7 @@ export class ApplicationSession implements Disposable {
     this.inspectorBridge = devtoolsInspectorBridge;
     const inspectorBridgeSubscriptions =
       this.registerInspectorBridgeEventListeners(devtoolsInspectorBridge);
-    const configurationChangeSubscriptions =
-      this.registerConfigurationChangeListeners(devtoolsInspectorBridge);
+    const configurationChangeSubscriptions = this.registerConfigurationChangeListeners();
     this.disposables.push(
       devtoolsInspectorBridge,
       ...inspectorBridgeSubscriptions,
@@ -432,11 +431,13 @@ export class ApplicationSession implements Disposable {
     return newAvailabilityStatus;
   }
 
-  private registerConfigurationChangeListeners(inspectorBridge: RadonInspectorBridge) {
+  private registerConfigurationChangeListeners() {
     const subscriptions = [
-      this.applicationContext.workspaceConfigState.onSetState((config) => {
-        console.log("mleko", config);
-        inspectorBridge.emitInspectorAvailabilityUpdate(this.lastRegisteredInspectorAvailability);
+      this.applicationContext.workspaceConfigState.onSetState(() => {
+        const status = this.determineInspectorAvailability(
+          this.lastRegisteredInspectorAvailability
+        );
+        this.stateManager.setState({ elementInspectorAvailability: status });
       }),
     ];
     return subscriptions;
