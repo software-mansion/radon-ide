@@ -20,7 +20,7 @@
 }
 
 .preheadingLabel span.left {
-  color: var(--radon-sub-subheading);
+  color: var(--radon-copyright);
 }
 
 .preheadingLabel span.center {

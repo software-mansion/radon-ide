@@ -74,6 +74,7 @@ a.icon {
 
 a.icon:hover {
   opacity: 1;
+  transition: opacity 0.3s;
 }
 
 @media (max-width: 1360px) {

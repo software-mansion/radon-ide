@@ -54,6 +54,12 @@
   text-align: center;
   gap: 12px;
 }
+.learnMoreLink:hover,
+.learnMoreLinkBottom:hover {
+  background-color: transparent;
+  opacity: 0.75;
+  transition: opacity 0.3s;
+}
 
 .learnMoreLink {
   display: flex;

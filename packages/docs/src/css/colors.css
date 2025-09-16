@@ -123,7 +123,7 @@
   --radon-color-green-dark-900: #186e51;
   --radon-color-green-light-500: #57b495;
   --radon-color-green-light-400: #38a880;
-  --radon-color-green-light-200: #dff2ec;
+  --radon-color-green-light-200: var(--swm-green-light-40);
 
   /* ----------------------------- */
 
@@ -146,8 +146,8 @@
   --radon-button-primary-background-hover-dark: var(--radon-color-green-dark-900);
   --radon-button-primary-background-hover-light: var(--radon-color-green-dark-900);
   --radon-button-primary-foreground: var(--radon-color-white-light-100);
-  --radon-button-secondary-background-dark: var(--radon-color-black-dark-900);
-  --radon-button-secondary-background-light: var(--radon-color-white-light-100);
+  --radon-button-secondary-background-dark: var(--radon-color-white-light-100);
+  --radon-button-secondary-background-light: var(--radon-color-gray-dark-800);
   --radon-button-tertiary-background-hover-dark: var(--radon-color-green-dark-700);
   --radon-button-tertiary-background-hover-light: var(--radon-color-green-dark-700);
   --radon-button-tertiary-foreground: var(--radon-color-white-light-100);
@@ -159,8 +159,6 @@
   --radon-card-background-dark: var(--radon-color-black-dark-900);
   --radon-card-background-hover-light: var(--radon-color-white-light-200);
   --radon-card-background-hover-dark: var(--radon-color-gray-dark-800);
-  /* --radon-background-navbar-light: var(--radon-color-white-light-300);
-  --radon-background-navbar-dark: var(--radon-color-black-dark-800); */
 
   /* ---------------- Border ---------------- */
   --radon-border-grid-subtle-dark: var(--radon-color-gray-dark-900);
@@ -171,25 +169,30 @@
 
   /* ---------------- Badge ---------------- */
   --radon-badge-text-dark: var(--radon-color-white-light-100);
-  --radon-badge-background-light: var(--radon-color-green-light-200);
+  --radon-badge-text-light: var(--radon-color-gray-dark-800);
+  --radon-badge-background-light: var(--swm-green-light-40);
+  --radon-badge-background-dark: var(--radon-color-gray-dark-800);
 
   /* ---------------- Image ---------------- */
   --radon-image-in-grid-dark: var(--radon-color-gray-dark-700);
   --radon-image-in-grid-light: var(--radon-color-green-light-500);
-
+  --radon-SWM-icon-stroke-light: var(--swm-navy-light-100);
+  --radon-SWM-icon-stroke-dark: var(--radon-color-white-light-100);
   /* ----------------------------- */
 
   --radon-border-grid-subtle: var(--radon-border-grid-subtle-light);
   --radon-border: var(--radon-border-grid-light);
+
   --radon-button: var(--radon-button-primary-background-light);
   --radon-button-hover: var(--radon-button-primary-background-hover-light);
-  --radon-subheading: var(--radon-color-gray-light-300);
   --radon-button-text: var(--radon-button-primary-foreground);
+
+  --radon-subheading: var(--radon-color-gray-light-300);
   --radon-text-green-highlight: var(--swm-green-light-100);
   --radon-copyright: var(--radon-text-tertiary-light);
 
   --radon-button-tertiary: var(--radon-color-black-dark-900);
-  --radon-button-secondary: var(--radon-button-secondary-background-dark);
+  --radon-button-secondary: var(--radon-button-secondary-background-light);
   --radon-gradient-green: var(--radon-color-green-light-400);
   --radon-gradient-black: var(--radon-color-black-dark-transparent);
 
@@ -203,8 +206,13 @@
   --radon-Ai-chat: var(--radon-color-white-light-200);
   --radon-Ai-radon-icon: var(--radon-color-gray-light-100);
   --radon-green-radon-icon: var(--radon-color-gray-light-200);
-  --radon-badge: var(--radon-color-green-light-200);
+
+  --radon-badge: var(--radon-badge-background-light);
+  --radon-badge-text: var(--radon-badge-text-light);
+
   --radon-fill-pattern: var(--radon-color-gray-light-200);
+
+  --radon-SWM-icon: var(--radon-SWM-icon-stroke-light);
 
   /* Infima main colors */
   --ifm-color-primary: var(--radon-text-primary-light);
@@ -417,16 +425,22 @@
   --radon-button-text: var(--radon-button-primary-foreground);
   --radon-copyright: var(--radon-text-tertiary-dark);
 
-  --radon-button-secondary: var(--radon-button-secondary-background-light);
+  --radon-button-secondary: var(--radon-button-secondary-background-dark);
 
   --radon-gradient-color: var(--radon-color-black-dark-900);
   --radon-gradient-transparent: var(--radon-color-black-dark-transparent);
+
   --radon-Ai-chat: var(--radon-color-black-dark-700);
   --radon-Ai-radon-icon: var(--radon-border-grid-subtle);
+
   --radon-green-radon-icon: var(--radon-color-gray-dark-800);
-  --radon-badge: var(--radon-border);
+
+  --radon-badge: var(--radon-badge-background-dark);
+  --radon-badge-text: var(--radon-badge-text-dark);
+
   --radon-image-in-grid: var(--radon-image-in-grid-dark);
   --radon-fill-pattern: var(--radon-color-gray-dark-800);
+  --radon-SWM-icon: var(--radon-SWM-icon-stroke-dark);
 
   /* Infima main colors */
   --ifm-color-primary: var(--radon-text-primary-dark);

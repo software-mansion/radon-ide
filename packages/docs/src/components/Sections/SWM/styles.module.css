@@ -40,10 +40,10 @@
 
 .learnMoreButton {
   padding: 16px;
-  border: 1px solid var(--radon-button-text);
+  border: 1px solid var(--radon-button-secondary);
   width: fit-content;
 
-  color: var(--radon-button-text);
+  color: var(--radon-button-secondary);
   text-align: center;
   font-size: 18px;
   font-weight: 400;

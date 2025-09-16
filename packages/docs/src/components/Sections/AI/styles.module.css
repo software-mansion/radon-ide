@@ -143,6 +143,7 @@
   width: 13px;
 
   display: flex;
+  color: var(--radon-color-gray-dark-700);
 }
 
 .messageHeading {
