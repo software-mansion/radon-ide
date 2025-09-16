@@ -165,13 +165,6 @@ describe("Device Settings", () => {
     );
 
     assert.equal(orientation.value, "portrait");
-
-    await rotateDevice("clockwise");
-
-    orientation = await appManipulationService.sendMessageAndWaitForResponse(
-      appWebsocket,
-      "getOrientation"
-    );
   });
 
   it("should change device font size", async () => {
