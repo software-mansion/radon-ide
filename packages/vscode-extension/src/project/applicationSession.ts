@@ -65,6 +65,8 @@ export class ApplicationSession implements Disposable {
   private inspectCallID = 7621;
   private devtools: DevtoolsConnection | undefined;
   private toolsManager: ToolsManager;
+  private lastRegisteredInspectorAvailability: InspectorAvailabilityStatus =
+    InspectorAvailabilityStatus.UnavailableInactive;
 
   public readonly inspectorBridge: RadonInspectorBridge;
 
@@ -183,13 +185,20 @@ export class ApplicationSession implements Disposable {
         });
       })
     );
+
     this.registerMetroListeners();
 
     const devtoolsInspectorBridge = new DevtoolsInspectorBridge(this.devtoolsServer);
     this.inspectorBridge = devtoolsInspectorBridge;
     const inspectorBridgeSubscriptions =
       this.registerInspectorBridgeEventListeners(devtoolsInspectorBridge);
-    this.disposables.push(devtoolsInspectorBridge, ...inspectorBridgeSubscriptions);
+    const configurationChangeSubscriptions =
+      this.registerConfigurationChangeListeners(devtoolsInspectorBridge);
+    this.disposables.push(
+      devtoolsInspectorBridge,
+      ...inspectorBridgeSubscriptions,
+      ...configurationChangeSubscriptions
+    );
 
     this.toolsManager = new ToolsManager(
       this.stateManager.getDerived("toolsState"),
@@ -407,6 +416,32 @@ export class ApplicationSession implements Disposable {
     });
   }
 
+  private determineInspectorAvailability(
+    status: InspectorAvailabilityStatus
+  ): InspectorAvailabilityStatus {
+    const experimentalInspectorEnabled =
+      this.applicationContext.workspaceConfiguration.enableExperimentalInspector;
+    const isStatusUnavailableEdgeToEdge =
+      status === InspectorAvailabilityStatus.UnavailableEdgeToEdge;
+
+    const newAvailabilityStatus =
+      experimentalInspectorEnabled && isStatusUnavailableEdgeToEdge
+        ? InspectorAvailabilityStatus.Available
+        : status;
+
+    return newAvailabilityStatus;
+  }
+
+  private registerConfigurationChangeListeners(inspectorBridge: RadonInspectorBridge) {
+    const subscriptions = [
+      this.applicationContext.workspaceConfigState.onSetState((config) => {
+        console.log("mleko", config);
+        inspectorBridge.emitInspectorAvailabilityUpdate(this.lastRegisteredInspectorAvailability);
+      }),
+    ];
+    return subscriptions;
+  }
+
   private registerInspectorBridgeEventListeners(inspectorBridge: RadonInspectorBridge) {
     const subscriptions = [
       inspectorBridge.onEvent("appReady", () => {
@@ -428,7 +463,9 @@ export class ApplicationSession implements Disposable {
       inspectorBridge.onEvent(
         "inspectorAvailabilityChanged",
         (inspectorAvailability: InspectorAvailabilityStatus) => {
-          this.stateManager.setState({ elementInspectorAvailability: inspectorAvailability });
+          this.lastRegisteredInspectorAvailability = inspectorAvailability;
+          const status = this.determineInspectorAvailability(inspectorAvailability);
+          this.stateManager.setState({ elementInspectorAvailability: status });
         }
       ),
     ];

@@ -304,6 +304,12 @@
           "scope": "window",
           "default": true,
           "description": "Automatically starts the last used device when opening the IDE Panel."
+        },
+        "RadonIDE.enableExperimentalInspector": {
+          "type": "boolean",
+          "scope": "window",
+          "default": false,
+          "description": "Enables experimental support of element inspector, which may cause visual issues on some of the applications."
         }
       }
     },
