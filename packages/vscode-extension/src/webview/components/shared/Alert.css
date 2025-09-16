@@ -1,5 +1,6 @@
 .alert-dialog-content {
-  background-color: var(--swm-popover-background);
+  background-color: var(--vscode-notifications-background);
+  color: var(--vscode-notifications-foreground);
   border-radius: 6px;
   display: flex;
   flex-direction: column;
@@ -13,6 +14,7 @@
   padding: 8px;
   animation: alertContentShow 175ms cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: rgba(0, 0, 0, 0.36) 0px 0px 8px 2px;
+  border: 1px solid color-mix(in srgb,var(--vscode-dropdown-border) 50%,transparent);
   cursor: default;
 }
 
@@ -31,13 +33,11 @@
   margin: 0;
   flex: 1;
   font-weight: 500;
-  color: var(--swm-default-text);
   font-size: 125%;
 }
 
 .alert-dialog-description {
   overflow: hidden;
-  color: var(--swm-secondary-text);
   font-size: 110%;
 }
 
@@ -51,10 +51,6 @@
   font-size: 160%;
   font-weight: bold;
   color: var(--vscode-statusBarItem-errorBackground);
-}
-
-.alert-dialog-error-icon {
-  color: var(--red-dark-40);
 }
 
 .alert-dialog-actions {
