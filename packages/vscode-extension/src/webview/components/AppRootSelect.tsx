@@ -123,14 +123,7 @@ function useUnknownConfigurationAlert(shouldOpen: boolean) {
         description:
           "The selected launch configration was deleted or modified in the workspace's launch.json file. " +
           "Radon IDE will continue to use the last selected configuration, but you may want to select a different one.",
-        actions: (
-          <IconButton
-            type="secondary"
-            onClick={() => closeAlert(alertId)}
-            tooltip={{ label: "Close notification", side: "bottom" }}>
-            <span className="codicon codicon-close" />
-          </IconButton>
-        ),
+        closeable: true,
       });
     } else if (!shouldOpen && isOpen(alertId)) {
       closeAlert(alertId);

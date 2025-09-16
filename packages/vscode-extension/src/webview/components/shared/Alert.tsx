@@ -1,6 +1,7 @@
 import React from "react";
 import * as AlertDialog from "@radix-ui/react-alert-dialog";
 import "./Alert.css";
+import IconButton from "./IconButton";
 
 interface AlertProps {
   open: boolean;
@@ -8,9 +9,10 @@ interface AlertProps {
   description?: string;
   actions: React.ReactNode;
   type?: "error";
+  close?: () => void;
 }
 
-function Alert({ open, title, description, actions, type = "error" }: AlertProps) {
+function Alert({ open, title, description, actions, type = "error", close }: AlertProps) {
   return (
     <AlertDialog.Root open={open}>
       <AlertDialog.Portal>
@@ -22,13 +24,18 @@ function Alert({ open, title, description, actions, type = "error" }: AlertProps
               </div>
             )}
             <AlertDialog.Title className="alert-dialog-title">{title}</AlertDialog.Title>
-            <div className="alert-dialog-actions">{actions}</div>
+            {close && (
+              <IconButton
+                className="alert-dialog-close-button"
+                aria-label="Close"
+                onClick={close}
+                tooltip={{ label: "Close", side: "bottom" }}>
+                <span className="codicon codicon-close" />
+              </IconButton>
+            )}
           </div>
-          {description && (
-            <AlertDialog.Description className="alert-dialog-description">
-              {description}
-            </AlertDialog.Description>
-          )}
+          {description && <p className="alert-dialog-description">{description}</p>}
+          <div className="alert-dialog-actions">{actions}</div>
         </div>
       </AlertDialog.Portal>
     </AlertDialog.Root>

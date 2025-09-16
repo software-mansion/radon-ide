@@ -5,8 +5,9 @@ interface AlertType {
   id: string;
   title: string;
   description?: string;
-  actions: React.ReactNode;
+  actions?: React.ReactNode;
   priority?: number; // higher – more important
+  closeable?: boolean;
 }
 
 interface AlertContextProps {
@@ -31,14 +32,17 @@ export default function AlertProvider({ children }: { children: React.ReactNode 
     [alerts]
   );
 
-  const openAlert = useCallback(({ id, title, description, actions, priority }: AlertType) => {
-    setAlerts((oldAlerts) => {
-      if (oldAlerts.some((alert) => alert.id === id)) {
-        return oldAlerts;
-      }
-      return [...oldAlerts, { id, title, description, actions, priority }];
-    });
-  }, []);
+  const openAlert = useCallback(
+    ({ id, title, description, actions, priority, closeable }: AlertType) => {
+      setAlerts((oldAlerts) => {
+        if (oldAlerts.some((alert) => alert.id === id)) {
+          return oldAlerts;
+        }
+        return [...oldAlerts, { id, title, description, actions, priority, closeable }];
+      });
+    },
+    []
+  );
 
   const closeAlert = useCallback((id: string) => {
     setAlerts((oldAlerts) => oldAlerts.filter((alert) => alert.id !== id));
@@ -58,6 +62,7 @@ export default function AlertProvider({ children }: { children: React.ReactNode 
         title={topAlert?.title}
         description={topAlert?.description}
         actions={topAlert?.actions}
+        close={topAlert?.closeable ? () => closeAlert(topAlert.id) : undefined}
         type="error"
       />
     </AlertContext.Provider>
