@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { useAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
-import Button from "../components/shared/Button";
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 
 type Props = {
   closeAlert: () => void;
@@ -11,11 +11,10 @@ function Actions({ closeAlert }: Props) {
   const { project } = useProject();
   return (
     <>
-      <Button type="secondary" onClick={closeAlert}>
+      <Button secondary onClick={closeAlert}>
         Cancel
       </Button>
       <Button
-        type="primary"
         onClick={() => {
           project.reloadCurrentSession("rebuild");
           closeAlert();

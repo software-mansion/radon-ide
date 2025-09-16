@@ -14,7 +14,7 @@ import {
 import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
-import Button from "../components/shared/Button";
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
 
@@ -30,7 +30,7 @@ function BuildErrorActions({
   return (
     <>
       <Button
-        type="secondary"
+        secondary
         onClick={() => {
           openModal(
             "Launch Configuration",
@@ -43,14 +43,14 @@ function BuildErrorActions({
         Open Configuration
       </Button>
       <Button
-        type="secondary"
-        dataTest="alert-open-logs-button"
+        secondary
+        data-testid="alert-open-logs-button"
         onClick={() => {
           project.focusOutput(logsButtonDestination ?? Output.Ide);
         }}>
         Open Logs
       </Button>
-      <Button type="primary" onClick={onReload}>
+      <Button onClick={onReload}>
         <span className="codicon codicon-refresh" />
         Retry
       </Button>
@@ -63,8 +63,7 @@ function BootErrorActions() {
   return (
     <>
       <Button
-        type="primary"
-        dataTest="alert-open-logs-button"
+        data-testid="alert-open-logs-button"
         onClick={() => {
           project.focusOutput(Output.Ide);
         }}>
@@ -84,13 +83,13 @@ function InstallationErrorActions() {
   return (
     <>
       <Button
-        type="secondary"
+        secondary
         onClick={() => {
           project.focusOutput(Output.Ide);
         }}>
         Open Logs
       </Button>
-      <Button type="primary" onClick={onReload}>
+      <Button onClick={onReload}>
         <span className="codicon codicon-refresh" />
         Retry
       </Button>

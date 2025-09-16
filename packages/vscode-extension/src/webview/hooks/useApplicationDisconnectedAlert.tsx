@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from "react";
 import { useAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
-import Button from "../components/shared/Button";
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 
 const alertId = "devtools-disconnected-alert";
 
@@ -16,10 +16,10 @@ export function useApplicationDisconnectedAlert(shouldShow: boolean) {
       description: "Some tools may not work as expected until the application is restarted.",
       priority: 0,
       closeable: true,
+      type: "warning",
       actions: (
         <>
           <Button
-            type="secondary"
             onClick={() => {
               project.reloadCurrentSession("autoReload");
             }}>

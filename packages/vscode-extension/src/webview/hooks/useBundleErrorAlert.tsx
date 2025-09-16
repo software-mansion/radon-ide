@@ -1,5 +1,5 @@
 import { BundleErrorDescriptor } from "../../common/State";
-import Button from "../components/shared/Button";
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 import { useToggleableAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
 
@@ -8,14 +8,13 @@ function BundleErrorActions() {
   return (
     <>
       <Button
-        type="secondary"
+        secondary
         onClick={() => {
           project.focusDebugConsole();
         }}>
         Open Debug Console
       </Button>
       <Button
-        type="primary"
         onClick={() => {
           project.reloadCurrentSession("autoReload");
         }}>

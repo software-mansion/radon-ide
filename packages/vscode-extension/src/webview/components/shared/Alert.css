@@ -18,6 +18,10 @@
   cursor: default;
 }
 
+.alert-dialog-close-button {
+  aspect-ratio: 1 / 1;
+}
+
 .alert-dialog-content-container {
   display: flex;
   flex-direction: row;
