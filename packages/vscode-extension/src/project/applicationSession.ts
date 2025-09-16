@@ -420,7 +420,7 @@ export class ApplicationSession implements Disposable {
     status: InspectorAvailabilityStatus
   ): InspectorAvailabilityStatus {
     const experimentalInspectorEnabled =
-      this.applicationContext.workspaceConfiguration.enableExperimentalInspector;
+      this.applicationContext.workspaceConfiguration.enableExperimentalElementInspector;
     const isStatusUnavailableEdgeToEdge =
       status === InspectorAvailabilityStatus.UnavailableEdgeToEdge;
 

@@ -125,7 +125,7 @@ export abstract class BaseInspectorBridge implements RadonInspectorBridge {
     //@ts-ignore - FIXME, consider how to type this properly, as
     // all the events through inspector-bridge are sent as a single argument
     // (see ConnectionSession.ts or devtools.ts emitEvent calls - the data is typed as an array or any
-    // but sent argument is value, not an array). Despite that, emitEvent expects the array, 
+    // but sent argument is value, not an array). Despite that, emitEvent expects the array,
     // which comes from RadonInspectorBridgeEvents.
     this.emitEvent("inspectorAvailabilityChanged", status);
   }

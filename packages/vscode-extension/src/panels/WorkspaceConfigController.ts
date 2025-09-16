@@ -18,7 +18,8 @@ export class WorkspaceConfigController implements Disposable {
       stopPreviousDevices: configuration.get<boolean>("stopPreviousDevices")!,
       deviceRotation: configuration.get<DeviceRotation>("deviceRotation")!,
       startDeviceOnLaunch: configuration.get<boolean>("startDeviceOnLaunch") ?? true,
-      enableExperimentalInspector: configuration.get<boolean>("enableExperimentalInspector") ?? false,
+      enableExperimentalElementInspector:
+        configuration.get<boolean>("enableExperimentalElementInspector") ?? false,
     };
 
     this.stateManager.setState(workspaceConfig);
@@ -39,7 +40,8 @@ export class WorkspaceConfigController implements Disposable {
         defaultMultimediaSavingLocation:
           config.get<string>("defaultMultimediaSavingLocation") ?? null,
         startDeviceOnLaunch: config.get<boolean>("startDeviceOnLaunch") ?? true,
-        enableExperimentalInspector: config.get<boolean>("enableExperimentalInspector") ?? false,
+        enableExperimentalElementInspector:
+          config.get<boolean>("enableExperimentalElementInspector") ?? false,
       };
 
       for (const partialStateEntry of partialStateEntries) {
@@ -62,7 +64,6 @@ export class WorkspaceConfigController implements Disposable {
   }
 
   private onConfigurationChange = (event: ConfigurationChangeEvent) => {
-    
     if (!event.affectsConfiguration("RadonIDE")) {
       return;
     }
@@ -77,7 +78,8 @@ export class WorkspaceConfigController implements Disposable {
       defaultMultimediaSavingLocation:
         config.get<string>("defaultMultimediaSavingLocation") ?? null,
       startDeviceOnLaunch: config.get<boolean>("startDeviceOnLaunch") ?? true,
-      enableExperimentalInspector: config.get<boolean>("enableExperimentalInspector") ?? false,
+      enableExperimentalElementInspector:
+        config.get<boolean>("enableExperimentalInspector") ?? false,
     };
 
     const index = this.workspaceConfigurationUpdatesToIgnore.findIndex((cfg) =>

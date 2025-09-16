@@ -19,7 +19,7 @@ export type WorkspaceConfiguration = {
   inspectorExcludePattern: string | null;
   defaultMultimediaSavingLocation: string | null;
   startDeviceOnLaunch: boolean;
-  enableExperimentalInspector: boolean;
+  enableExperimentalElementInspector: boolean;
 };
 
 // #endregion Workspace Configuration
@@ -340,7 +340,7 @@ export const initialState: State = {
     inspectorExcludePattern: null,
     defaultMultimediaSavingLocation: null,
     startDeviceOnLaunch: true,
-    enableExperimentalInspector: false,
+    enableExperimentalElementInspector: false,
   },
 };
 
