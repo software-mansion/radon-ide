@@ -1,5 +1,5 @@
 .alert-dialog-content {
-  background-color: var(--vscode-notifications-background);
+  background-color: var(--vscode-dropdown-background);
   color: var(--vscode-notifications-foreground);
   border-radius: 6px;
   display: flex;
