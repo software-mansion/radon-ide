@@ -105,6 +105,7 @@ function DeviceRow({
               type: "secondary",
             }}
             disabled={!deviceInfo.available}
+            dataTest={`device-row-start-button-device-${deviceInfo.displayName}`}
             onClick={selectDevice}>
             <span className="codicon codicon-play" />
           </IconButton>

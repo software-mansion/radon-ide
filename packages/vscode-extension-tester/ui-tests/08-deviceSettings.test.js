@@ -123,6 +123,57 @@ describe("Device Settings", () => {
     assert.equal(orientation.value, "portrait");
   });
 
+  it("should rotate device using shortcuts", async () => {
+    // there is no Key.OPTION in selenium and Key.ALT does not work as expected on Mac
+    // so we use custom script to dispatch keyboard event, instead of standard selenium way
+    await driver.executeScript(`
+        const evt = new KeyboardEvent('keydown', {
+          key: '9',
+          code: 'Digit9',
+          altKey: true,
+          ctrlKey: true,
+          bubbles: true
+        });
+        document.dispatchEvent(evt);
+      `);
+
+    await driver.sleep(1000);
+
+    let orientation =
+      await appManipulationService.sendMessageAndWaitForResponse(
+        appWebsocket,
+        "getOrientation"
+      );
+
+    assert.equal(orientation.value, "landscape");
+
+    await driver.executeScript(`
+        const evt = new KeyboardEvent('keydown', {
+          key: '0',
+          code: 'Digit0',
+          altKey: true,
+          ctrlKey: true,
+          bubbles: true
+        });
+        document.dispatchEvent(evt);
+      `);
+    await driver.sleep(1000);
+
+    orientation = await appManipulationService.sendMessageAndWaitForResponse(
+      appWebsocket,
+      "getOrientation"
+    );
+
+    assert.equal(orientation.value, "portrait");
+
+    await rotateDevice("clockwise");
+
+    orientation = await appManipulationService.sendMessageAndWaitForResponse(
+      appWebsocket,
+      "getOrientation"
+    );
+  });
+
   it("should change device font size", async () => {
     async function waitForFontSizeChange(fontSize) {
       return await driver.wait(async () => {
@@ -182,6 +233,37 @@ describe("Device Settings", () => {
           "getColorScheme"
         );
       return appearance.value === "dark";
+    }, 5000);
+  });
+
+  it("should open app switcher in simulator", async () => {
+    radonViewsService.openRadonDeviceSettingsMenu();
+    await elementHelperService.findAndClickElementByTag(
+      "open-app-switcher-button"
+    );
+
+    await driver.wait(async () => {
+      const appState =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          getAppWebsocket(),
+          "getAppState"
+        );
+      // this test works on iOS only, Android app's state stays active in app switcher
+      return appState.value === "inactive";
+    }, 5000);
+  });
+
+  it("should press home button in simulator", async () => {
+    radonViewsService.openRadonDeviceSettingsMenu();
+    await elementHelperService.findAndClickElementByTag("press-home-button");
+
+    await driver.wait(async () => {
+      const appState =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          getAppWebsocket(),
+          "getAppState"
+        );
+      return appState.value === "background";
     }, 5000);
   });
 });

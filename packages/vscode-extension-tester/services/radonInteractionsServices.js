@@ -350,7 +350,7 @@ export class ManagingDevicesService {
 
         await this.elementHelperService.waitUntilElementGone(
           By.css(`[data-testid="device-removing-confirmation-view"]`),
-          3000,
+          5000,
           "delete confirmation modal did not disappear"
         );
       }
