@@ -155,8 +155,8 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.Building, weight: 7 },
   { StartupMessage: StartupMessage.Installing, weight: 1 },
   { StartupMessage: StartupMessage.Launching, weight: 1 },
-  { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
   { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
+  { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
 ];
 
 export type Frame = {
