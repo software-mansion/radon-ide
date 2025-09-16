@@ -90,7 +90,9 @@ describe("Adding device tests", () => {
 
     await managingDevicesService.addNewDevice(deviceName);
     await elementHelperService.findAndClickElementByTag("modal-close-button");
-    await elementHelperService.findAndWaitForElementByTag("phone-wrapper");
+    await elementHelperService.findAndWaitForElementByTag(
+      "phone-display-container"
+    );
     await elementHelperService.findAndClickElementByTag(
       "radon-bottom-bar-device-select-dropdown-trigger"
     );
@@ -102,7 +104,7 @@ describe("Adding device tests", () => {
 
     await elementHelperService.findAndClickElementByTag("device-running-badge");
     await elementHelperService.waitUntilElementGone(
-      By.css(`[data-testid="phone-wrapper"]`),
+      By.css(`[data-testid="phone-display-container"]`),
       10000,
       "Timed out waiting for phone screen to disappear"
     );

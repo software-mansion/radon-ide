@@ -89,6 +89,18 @@ export class RadonViewsService {
     return debugConsole;
   }
 
+  async showZoomControls() {
+    const zoomControlsWrapper =
+      await this.elementHelperService.findAndWaitForElementByTag(
+        "button-group-left-wrapper"
+      );
+    const actions = this.driver.actions({ async: true });
+    await actions.move({ origin: zoomControlsWrapper }).perform();
+
+    // zoom buttons slide animation
+    await this.driver.sleep(500);
+  }
+
   async clickOnSourceInDebugConsole(debugConsole, textPattern) {
     const outputLine = await debugConsole.findElement(
       By.xpath(`//span[contains(text(), '${textPattern}')]/ancestor::div[1]`)

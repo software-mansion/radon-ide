@@ -348,7 +348,7 @@
         {
           "type": "webview",
           "id": "RadonIDE.view",
-          "name": "",
+          "name": "Radon IDE",
           "when": "RNIDE.extensionIsActive && config.RadonIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
         }
       ],
