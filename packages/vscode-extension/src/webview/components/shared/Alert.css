@@ -41,23 +41,34 @@
   font-size: 110%;
 }
 
-.alert-dialog-error {
+.alert-dialog-icon {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.alert-dialog-error .codicon {
-  font-size: 160%;
+.alert-dialog-icon .codicon {
+  font-size: 165%;
   font-weight: bold;
-  color: var(--vscode-statusBarItem-errorBackground);
+}
+
+.alert-dialog-icon .codicon-error {
+  color: var(--vscode-notificationsErrorIcon-foreground);
+}
+
+.alert-dialog-icon .codicon-warning {
+  color: var(--vscode-notificationsWarningIcon-foreground);
+}
+
+.alert-dialog-icon .codicon-info {
+  color: var(--vscode-notificationsInfoIcon-foreground);
 }
 
 .alert-dialog-actions {
   display: flex;
   justify-content: flex-end;
   align-self: flex-end;
-  gap: 2px;
+  gap: 6px;
 }
 
 @keyframes alertContentShow {

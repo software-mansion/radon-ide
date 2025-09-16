@@ -39,6 +39,7 @@ export function useNativeRebuildAlert() {
         description: "Click the button to rebuild the project",
         priority: 1,
         closeable: true,
+        type: "warning",
         actions: <Actions closeAlert={() => closeAlert(alertId)} />,
       });
     }

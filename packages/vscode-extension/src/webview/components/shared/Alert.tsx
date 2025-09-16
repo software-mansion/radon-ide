@@ -8,21 +8,19 @@ interface AlertProps {
   title: string;
   description?: string;
   actions: React.ReactNode;
-  type?: "error";
+  type: "error" | "warning" | "info";
   close?: () => void;
 }
 
-function Alert({ open, title, description, actions, type = "error", close }: AlertProps) {
+function Alert({ open, title, description, actions, type, close }: AlertProps) {
   return (
     <AlertDialog.Root open={open}>
       <AlertDialog.Portal>
         <div className="alert-dialog-content" data-testid="alert-dialog-content">
           <div className="alert-dialog-content-container">
-            {type === "error" && (
-              <div className="alert-dialog-error">
-                <span className="codicon codicon-error" />
-              </div>
-            )}
+            <div className="alert-dialog-icon">
+              <span className={`codicon codicon-${type}`} />
+            </div>
             <AlertDialog.Title className="alert-dialog-title">{title}</AlertDialog.Title>
             {close && (
               <IconButton
