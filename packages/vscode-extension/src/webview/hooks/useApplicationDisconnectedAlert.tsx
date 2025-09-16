@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from "react";
-import IconButton from "../components/shared/IconButton";
 import { useAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
 import Button from "../components/shared/Button";

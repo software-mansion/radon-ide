@@ -1,7 +1,6 @@
 import { useToggleableAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
 
-import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { BuildType } from "../../common/BuildConfig";
@@ -63,15 +62,14 @@ function BootErrorActions() {
   const { project } = useProject();
   return (
     <>
-      <IconButton
-        type="secondary"
+      <Button
+        type="primary"
         dataTest="alert-open-logs-button"
         onClick={() => {
           project.focusOutput(Output.Ide);
-        }}
-        tooltip={{ label: "Open IDE logs", side: "bottom" }}>
-        <span className="codicon codicon-output" />
-      </IconButton>
+        }}>
+        Open Logs
+      </Button>
     </>
   );
 }
