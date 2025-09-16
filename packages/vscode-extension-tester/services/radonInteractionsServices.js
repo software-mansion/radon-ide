@@ -9,7 +9,7 @@ import {
   OutputView,
 } from "vscode-extension-tester";
 import * as fs from "fs";
-import config from "../configuration.js";
+import getConfiguration from "../configuration.js";
 import { createCanvas } from "canvas";
 import { centerCoordinates } from "../utils/helpers.js";
 
@@ -277,7 +277,9 @@ export class ManagingDevicesService {
       "creating-device-form-device-type-select"
     );
 
-    const device = config.isAndroid ? "pixel" : "com.apple";
+    const config = getConfiguration();
+    const IS_ANDROID = config.isAndroid;
+    const device = IS_ANDROID ? "pixel" : "com.apple";
 
     const selectedDevice =
       await this.elementHelperService.findAndWaitForElement(
