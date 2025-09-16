@@ -10,7 +10,6 @@ import RichSelectItem from "./shared/RichSelectItem";
 import { useStore } from "../providers/storeProvider";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
-import IconButton from "./shared/IconButton";
 import { useAlert } from "../providers/AlertProvider";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
