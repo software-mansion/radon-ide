@@ -29,6 +29,7 @@ export interface LaunchOptions {
     waitForAppLaunch?: boolean;
   };
   usePrebuild?: boolean;
+  useOldDevtools?: boolean;
   useCustomJSDebugger?: boolean;
 }
 
@@ -46,6 +47,7 @@ export const LAUNCH_OPTIONS_KEYS = [
   "packageManager",
   "preview",
   "usePrebuild",
+  "useOldDevtools",
   "useCustomJSDebugger",
 ] as const;
 
