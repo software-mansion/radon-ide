@@ -143,8 +143,8 @@ export enum StartupMessage {
   Building = "Building",
   Installing = "Installing",
   Launching = "Launching",
-  AttachingDebugger = "Attaching debugger",
   WaitingForAppToLoad = "Waiting for app to load",
+  AttachingDebugger = "Attaching debugger",
   Restarting = "Restarting",
 }
 
@@ -155,8 +155,8 @@ export const StartupStageWeight = [
   { StartupMessage: StartupMessage.Building, weight: 7 },
   { StartupMessage: StartupMessage.Installing, weight: 1 },
   { StartupMessage: StartupMessage.Launching, weight: 1 },
-  { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
   { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
+  { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
 ];
 
 export type Frame = {
