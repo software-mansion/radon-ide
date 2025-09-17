@@ -22,6 +22,7 @@ import {
 import { CDPSession, CDPSessionDelegate } from "./CDPSession";
 import getArraySlots from "./templates/getArraySlots";
 import { filePathForProfile } from "./cpuProfiler";
+import { BINDING_CALLED, SCRIPT_PARSED } from "./DebugSession";
 
 export type CDPConfiguration = {
   websocketAddress: string;
@@ -53,6 +54,10 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
 
   private startCDPSession(cdpConfiguration: CDPConfiguration) {
     this.cdpSession = new CDPSession(this, cdpConfiguration);
+    this.cdpSession.onScriptParsed((payload) => this.sendEvent(new Event(SCRIPT_PARSED, payload)));
+    this.cdpSession.onBindingCalled(({ name, payload }) =>
+      this.sendEvent(new Event(BINDING_CALLED, { name, payload }))
+    );
   }
 
   //#region CDPDelegate
@@ -375,6 +380,13 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
     return res.result;
   }
 
+  private async addBinding(name: string) {
+    const res = await this.cdpSession?.sendCDPMessage("Runtime.addBinding", {
+      name,
+    });
+    return res;
+  }
+
   protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
@@ -399,6 +411,9 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
         break;
       case "RNIDE_evaluate":
         response.body.result = await this.evaluateExpression(args);
+        break;
+      case "RNIDE_addBinding":
+        await this.addBinding(args.name);
         break;
       default:
         Logger.debug(`Custom req ${command} ${args}`);

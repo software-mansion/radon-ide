@@ -98,7 +98,7 @@ export class DeviceSession implements Disposable {
     private readonly stateManager: StateManager<DeviceSessionStore>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
-    private readonly devtoolsServer: DevtoolsServer & { port: number },
+    private readonly devtoolsServer: (DevtoolsServer & { port: number }) | undefined,
     initialRotation: DeviceRotation,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
@@ -221,8 +221,7 @@ export class DeviceSession implements Disposable {
     await this.applicationSession?.dispose();
     this.applicationSession = undefined;
 
-    // the devtools server is most likely already resolved, so this should run immediately
-    this.devtoolsServer.dispose();
+    this.devtoolsServer?.dispose();
 
     this.device?.dispose();
     this.metro?.dispose();
@@ -342,7 +341,7 @@ export class DeviceSession implements Disposable {
       resetCache,
       launchConfiguration: this.applicationContext.launchConfig,
       dependencies: [],
-      devtoolsPort: this.devtoolsServer.port,
+      devtoolsPort: this.devtoolsServer?.port,
     });
 
     this.applicationSession?.dispose();
@@ -469,7 +468,7 @@ export class DeviceSession implements Disposable {
         buildResult: this.buildResult,
         metro: this.metro,
         devtoolsServer: this.devtoolsServer,
-        devtoolsPort: this.devtoolsServer.port,
+        devtoolsPort: this.devtoolsServer?.port,
       },
       () => this.isActive,
       this.updateStartupMessage.bind(this),
@@ -635,7 +634,7 @@ export class DeviceSession implements Disposable {
         resetCache: false,
         launchConfiguration: this.applicationContext.launchConfig,
         dependencies: [waitForNodeModules],
-        devtoolsPort: this.devtoolsServer.port,
+        devtoolsPort: this.devtoolsServer?.port,
       });
 
       await cancelToken.adapt(this.waitForMetroReady());

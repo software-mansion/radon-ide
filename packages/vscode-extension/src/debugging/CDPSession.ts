@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { Disposable, EventEmitter } from "vscode";
+import { EventEmitter } from "vscode";
 import { OutputEvent, Source, StackFrame } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { Minimatch } from "minimatch";
@@ -19,6 +19,7 @@ import { CDPCallFrame, CDPDebuggerScope, CDPRemoteObject } from "./cdp";
 import { typeToCategory } from "./DebugAdapter";
 import { annotateLocations } from "./cpuProfiler";
 import { CDPConfiguration } from "./CDPDebugAdapter";
+import { sleep } from "../utilities/retry";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -27,26 +28,6 @@ type PromiseHandlers<T = unknown> = {
   resolve: ResolveType<T>;
   reject: RejectType;
 };
-
-async function eventFiredPromise<T>(event: EventEmitter<T>["event"], timeoutMs?: number) {
-  const { promise, resolve, reject } = Promise.withResolvers<void>();
-  let subscription: Disposable | undefined;
-
-  const timeout =
-    timeoutMs !== undefined
-      ? setTimeout(() => {
-          subscription?.dispose();
-          reject(new Error("Event did not fire before timeout"));
-        }, timeoutMs)
-      : undefined;
-
-  subscription = event(() => {
-    clearTimeout(timeout);
-    subscription?.dispose();
-    resolve();
-  });
-  return promise;
-}
 
 export interface CDPSessionDelegate {
   onExecutionContextCreated(threadId: number, threadName: string): void;
@@ -80,8 +61,12 @@ export class CDPSession {
   private breakpointsController: BreakpointsController;
 
   private debugSessionReady = false;
-  private debugSessionReadyEmitter = new EventEmitter();
-  private onDebugSessionReady = this.debugSessionReadyEmitter.event;
+
+  private scriptParsedEventEmitter = new EventEmitter<{ isMainBundle: boolean }>();
+  public readonly onScriptParsed = this.scriptParsedEventEmitter.event;
+
+  private bindingCalledEventEmitter = new EventEmitter<{ name: string; payload: string }>();
+  public readonly onBindingCalled = this.bindingCalledEventEmitter.event;
 
   private consoleAPICallsQueue: any[] = [];
 
@@ -123,7 +108,10 @@ export class CDPSession {
       await this.handleIncomingCDPMethodCalls(message);
     });
 
-    this.onDebugSessionReady(() => {
+    this.onScriptParsed(({ isMainBundle }) => {
+      if (!isMainBundle) {
+        return;
+      }
       this.debugSessionReady = true;
       this.flushEnqueuedConsoleAPICalls();
       this.delegate.onDebugSessionReady();
@@ -176,9 +164,7 @@ export class CDPSession {
           isMainBundle
         );
 
-        if (isMainBundle) {
-          this.debugSessionReadyEmitter.fire({});
-        }
+        this.scriptParsedEventEmitter.fire({ isMainBundle });
 
         this.breakpointsController.updateBreakpointsInSource(message.params.url, consumer);
         break;
@@ -208,6 +194,9 @@ export class CDPSession {
         } else {
           this.consoleAPICallsQueue.push(message);
         }
+        break;
+      case "Runtime.bindingCalled":
+        this.bindingCalledEventEmitter.fire(message.params);
         break;
       default:
         break;
@@ -313,10 +302,21 @@ export class CDPSession {
     return firstPosition!;
   }
 
+  private async waitForDebuggerReady(timeoutMs: number) {
+    const { resolve: resolveReady, promise: readyPromise } = Promise.withResolvers<void>();
+    const disposable = this.onScriptParsed(({ isMainBundle }) => {
+      if (isMainBundle) {
+        resolveReady();
+      }
+    });
+    await Promise.race([sleep(timeoutMs), readyPromise]);
+    disposable.dispose();
+  }
+
   private async handleDebuggerPaused(message: any) {
     if (!this.debugSessionReady) {
       const UNMAPPED_PAUSE_TIMEOUT_MS = 5000;
-      await eventFiredPromise(this.onDebugSessionReady, UNMAPPED_PAUSE_TIMEOUT_MS);
+      await this.waitForDebuggerReady(UNMAPPED_PAUSE_TIMEOUT_MS);
     }
     const stackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
       const cdpLocation = cdpFrame.location;

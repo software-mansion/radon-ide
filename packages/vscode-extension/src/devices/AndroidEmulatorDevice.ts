@@ -518,17 +518,23 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
   }
 
-  async launchWithExpoDeeplink(metroPort: number, devtoolsPort: number, expoDeeplink: string) {
+  async launchWithExpoDeeplink(
+    metroPort: number,
+    devtoolsPort: number | undefined,
+    expoDeeplink: string
+  ) {
     // For Expo dev-client and expo go setup, we use deeplink to launch the app. Since Expo's manifest is configured to
     // return localhost:PORT as the destination, we need to setup adb reverse for metro port first.
     await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
-    await exec(ADB_PATH, [
-      "-s",
-      this.serial!,
-      "reverse",
-      `tcp:${devtoolsPort}`,
-      `tcp:${devtoolsPort}`,
-    ]);
+    if (devtoolsPort !== undefined) {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "reverse",
+        `tcp:${devtoolsPort}`,
+        `tcp:${devtoolsPort}`,
+      ]);
+    }
     // next, we open the link
     await exec(ADB_PATH, [
       "-s",
@@ -595,7 +601,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
   }
 
-  async launchApp(build: BuildResult, metroPort: number, devtoolsPort: number) {
+  async launchApp(build: BuildResult, metroPort: number, devtoolsPort?: number) {
     if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
     }

@@ -19,7 +19,22 @@ const inspectorBridge = {
   },
 };
 
+let wakeupTimeout = null;
 agent.onmessage = (message) => {
+  // NOTE: this is a hack needed on React Native 0.76 with CDP-based agents.
+  // This is needed because on RN 0.76 promises created by the debugger through `Runtime.evaluate`
+  // won't resolve until the application wakes up by itself (e.g. by user interaction or a timer firing).
+  const { Platform } = require("react-native");
+  if (
+    wakeupTimeout === null &&
+    Platform.constants.reactNativeVersion.major === 0 &&
+    Platform.constants.reactNativeVersion.minor === 76
+  ) {
+    wakeupTimeout = setTimeout(() => {
+      wakeupTimeout = null;
+    }, 0);
+  }
+
   messageListeners.forEach((listener) => listener(message));
 };
 
