@@ -388,6 +388,9 @@ export class ApplicationSession implements Disposable {
 
   public async deactivate(): Promise<void> {
     this.isActive = false;
+    // NOTE: we reset the state to "connecting" here to prevent showing the "disconnected" alert
+    // when switching between devices
+    this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connecting });
     this.toolsManager.deactivate();
     this.debugSessionEventSubscription?.dispose();
     this.debugSessionEventSubscription = undefined;
