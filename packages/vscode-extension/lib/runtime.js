@@ -1,5 +1,5 @@
 const RNInternals = require("./rn-internals/rn-internals");
-const AppRegistry = RNInternals.AppRegistry;
+const { AppRegistry } = require("react-native");
 const parseErrorStack = RNInternals.parseErrorStack;
 
 // We add log this trace to diagnose issues with loading runtime in the IDE
