@@ -15,6 +15,8 @@ const VSCODE_JS_DEBUGGER_TYPE = "com.swmansion.proxy-debugger";
 export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
 export const DEBUG_PAUSED = "RNIDE_paused";
 export const DEBUG_RESUMED = "RNIDE_continued";
+export const SCRIPT_PARSED = "RNIDE_bundleParsed";
+export const BINDING_CALLED = "RNIDE_bindingCalled";
 
 export interface JSDebugConfiguration {
   websocketAddress: string;
@@ -121,10 +123,10 @@ export class DebugSessionImpl implements DebugSession, Disposable {
           case "RNIDE_profilingCPUStopped":
             this.profilingCPUStoppedEventEmitter.fire(event);
             break;
-          case "RNIDE_bindingCalled":
+          case BINDING_CALLED:
             this.bindingCalledEventEmitter.fire(event.body);
             break;
-          case "RNIDE_bundleParsed":
+          case SCRIPT_PARSED:
             this.bundleParsedEventEmitter.fire(event.body);
             break;
           default:

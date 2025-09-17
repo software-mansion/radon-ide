@@ -80,8 +80,12 @@ export class CDPSession {
   private breakpointsController: BreakpointsController;
 
   private debugSessionReady = false;
-  private debugSessionReadyEmitter = new EventEmitter();
-  private onDebugSessionReady = this.debugSessionReadyEmitter.event;
+
+  private scriptParsedEventEmitter = new EventEmitter<{ isMainBundle: boolean }>();
+  public readonly onScriptParsed = this.scriptParsedEventEmitter.event;
+
+  private bindingCalledEventEmitter = new EventEmitter<{ name: string; payload: string }>();
+  public readonly onBindingCalled = this.bindingCalledEventEmitter.event;
 
   private consoleAPICallsQueue: any[] = [];
 
@@ -123,7 +127,7 @@ export class CDPSession {
       await this.handleIncomingCDPMethodCalls(message);
     });
 
-    this.onDebugSessionReady(() => {
+    this.onScriptParsed(() => {
       this.debugSessionReady = true;
       this.flushEnqueuedConsoleAPICalls();
       this.delegate.onDebugSessionReady();
@@ -176,9 +180,7 @@ export class CDPSession {
           isMainBundle
         );
 
-        if (isMainBundle) {
-          this.debugSessionReadyEmitter.fire({});
-        }
+        this.scriptParsedEventEmitter.fire({ isMainBundle });
 
         this.breakpointsController.updateBreakpointsInSource(message.params.url, consumer);
         break;
@@ -208,6 +210,9 @@ export class CDPSession {
         } else {
           this.consoleAPICallsQueue.push(message);
         }
+        break;
+      case "Runtime.bindingCalled":
+        this.bindingCalledEventEmitter.fire(message.params);
         break;
       default:
         break;
@@ -316,7 +321,7 @@ export class CDPSession {
   private async handleDebuggerPaused(message: any) {
     if (!this.debugSessionReady) {
       const UNMAPPED_PAUSE_TIMEOUT_MS = 5000;
-      await eventFiredPromise(this.onDebugSessionReady, UNMAPPED_PAUSE_TIMEOUT_MS);
+      await eventFiredPromise(this.onScriptParsed, UNMAPPED_PAUSE_TIMEOUT_MS);
     }
     const stackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
       const cdpLocation = cdpFrame.location;
