@@ -147,7 +147,7 @@ describe("Device Settings", () => {
           appWebsocket,
           "getOrientation"
         );
-      return orientation.value === "portrait";
+      return orientation.value === "landscape";
     }, 5000);
 
     await driver.executeScript(`

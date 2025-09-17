@@ -75,10 +75,10 @@ for item in * .*; do
     [[ "$item" == "node_modules" || "$item" == ".gitignore" || "$item" == "data" ]] && continue
 
     echo "Copying: $item"
-    scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/"
+    scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:$REMOTE_PATH/"
 done
 
-scp -i ./scripts/id_vm_mac -r data/radon-ide.vsix "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/data/"
+scp -i ./scripts/id_vm_mac -r data/radon-ide.vsix "$VM_USER@$VM_IP:$REMOTE_PATH/data/"
 
 APP="$1"
 shift
