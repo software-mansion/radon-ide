@@ -29,6 +29,7 @@ export interface LaunchOptions {
     waitForAppLaunch?: boolean;
   };
   usePrebuild?: boolean;
+  useCustomJSDebugger?: boolean;
 }
 
 export const LAUNCH_OPTIONS_KEYS = [
@@ -45,6 +46,7 @@ export const LAUNCH_OPTIONS_KEYS = [
   "packageManager",
   "preview",
   "usePrebuild",
+  "useCustomJSDebugger",
 ] as const;
 
 type IsSuperTypeOf<Base, T extends Base> = T;

@@ -618,6 +618,10 @@
               "usePrebuild": {
                 "type": "boolean",
                 "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
+              },
+              "useCustomJSDebugger": {
+                "type": "boolean",
+                "description": "When set to true, Radon will use a custom implementation of the JavaScript debugger. This is an experimental feature, use with caution."
               }
             }
           }
@@ -840,6 +844,10 @@
               "usePrebuild": {
                 "type": "boolean",
                 "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
+              },
+              "useCustomJSDebugger": {
+                "type": "boolean",
+                "description": "When set to true, Radon will use a custom implementation of the JavaScript debugger. This is an experimental feature, use with caution."
               }
             }
           }

@@ -9,8 +9,8 @@ import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
 
 const MASTER_DEBUGGER_TYPE = "com.swmansion.react-native-debugger";
-const OLD_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
-const PROXY_JS_DEBUGGER_TYPE = "com.swmansion.proxy-debugger";
+const CUSTOM_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
+const VSCODE_JS_DEBUGGER_TYPE = "com.swmansion.proxy-debugger";
 
 export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
 export const DEBUG_PAUSED = "RNIDE_paused";
@@ -31,6 +31,7 @@ export type DebugSessionOptions = {
   displayName: string;
   useParentDebugSession?: boolean;
   suppressDebugToolbar?: boolean;
+  useCustomJSDebugger?: boolean;
 };
 
 type DebugSessionCustomEventListener = (event: DebugSessionCustomEvent) => void;
@@ -200,8 +201,20 @@ export class DebugSessionImpl implements DebugSession, Disposable {
       await this.startParentDebugSession();
     }
 
-    const isUsingNewDebugger = configuration.isUsingNewDebugger;
-    const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
+    // "debugger backend" refers to the React Native VM, while frontend is what
+    // the extension is using to display logs, control breakpoints, etc.
+    const isBackendUsingNewDebugger = configuration.isUsingNewDebugger;
+
+    // when the "new debugger backend" is enabled (aka fusebox), we can use the
+    // vscode-js-debug backed implementation on the frontend. For older RN versions
+    // we need to use our custom implementation. We also allow for the custom implementation
+    // to be selected in the launch configuration, as while not feature complete, it performs
+    // better in some cases.
+    const shouldUseCustomDebuggerFrontend =
+      !isBackendUsingNewDebugger || this.options.useCustomJSDebugger;
+    const debuggerType = shouldUseCustomDebuggerFrontend
+      ? CUSTOM_JS_DEBUGGER_TYPE
+      : VSCODE_JS_DEBUGGER_TYPE;
 
     const extensionPath = extensionContext.extensionUri.path;
 
@@ -213,7 +226,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
         type: debuggerType,
         name: this.options.displayName,
         request: "attach",
-        breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
+        breakpointsAreRemovedOnContextCleared: isBackendUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
         sourceMapPathOverrides: configuration.sourceMapPathOverrides,
         websocketAddress: configuration.websocketAddress,
         expoPreludeLineCount: configuration.expoPreludeLineCount,
