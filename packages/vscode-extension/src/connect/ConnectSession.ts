@@ -76,7 +76,7 @@ export default class ConnectSession implements Disposable {
       this.debugSession.onBindingCalled((event: unknown) => {
         this.inspectorBridge.onBindingCalled(event);
       }),
-      this.debugSession.onBundleParsed(({ isMainBundle }) => {
+      this.debugSession.onScriptParsed(({ isMainBundle }) => {
         if (isMainBundle) {
           this.setupRadonConnectRuntime();
         }

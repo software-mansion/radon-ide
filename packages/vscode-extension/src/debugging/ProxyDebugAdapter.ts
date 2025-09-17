@@ -7,7 +7,13 @@ import { Disposable } from "vscode";
 import { CDPProxy } from "./CDPProxy";
 import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
 import { disposeAll } from "../utilities/disposables";
-import { DEBUG_CONSOLE_LOG, DEBUG_PAUSED, DEBUG_RESUMED } from "./DebugSession";
+import {
+  BINDING_CALLED,
+  DEBUG_CONSOLE_LOG,
+  DEBUG_PAUSED,
+  DEBUG_RESUMED,
+  SCRIPT_PARSED,
+} from "./DebugSession";
 import { CDPProfile } from "./cdp";
 import { annotateLocations, filePathForProfile } from "./cpuProfiler";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
@@ -110,13 +116,13 @@ export class ProxyDebugAdapter extends DebugSession {
 
     this.disposables.push(
       proxyDelegate.onBindingCalled(({ name, payload }) => {
-        this.sendEvent(new Event("RNIDE_bindingCalled", { name, payload }));
+        this.sendEvent(new Event(BINDING_CALLED, { name, payload }));
       })
     );
 
     this.disposables.push(
       proxyDelegate.onBundleParsed(({ isMainBundle }) => {
-        this.sendEvent(new Event("RNIDE_bundleParsed", { isMainBundle }));
+        this.sendEvent(new Event(SCRIPT_PARSED, { isMainBundle }));
       })
     );
   }
