@@ -1,11 +1,6 @@
 import { PropsWithChildren, useContext, createContext, useState, useEffect, useMemo } from "react";
 import { makeProxy } from "../utilities/rpc";
-import {
-  DeviceSessionState,
-  DeviceSettings,
-  ProjectInterface,
-  ProjectState,
-} from "../../common/Project";
+import { DeviceSettings, ProjectInterface, ProjectState } from "../../common/Project";
 import { LaunchConfigurationKind } from "../../common/LaunchConfig";
 
 declare global {
@@ -29,15 +24,12 @@ const project = makeProxy<ProjectInterface>("Project");
 
 interface ProjectContextProps {
   projectState: ProjectState;
-  selectedDeviceSession: DeviceSessionState | undefined;
   deviceSettings: DeviceSettings;
   project: ProjectInterface;
   hasActiveLicense: boolean;
 }
 
 const defaultProjectState: ProjectState = {
-  selectedSessionId: null,
-  deviceSessions: {},
   appRootPath: "./",
   customLaunchConfigurations: [],
   selectedLaunchConfiguration: {
@@ -72,7 +64,6 @@ const defaultDeviceSettings: DeviceSettings = {
 const ProjectContext = createContext<ProjectContextProps>({
   projectState: defaultProjectState,
   deviceSettings: defaultDeviceSettings,
-  selectedDeviceSession: undefined,
   project,
   hasActiveLicense: false,
 });
@@ -100,12 +91,8 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
   }, []);
 
   const contextValue = useMemo(() => {
-    const selectedDeviceSession = projectState.selectedSessionId
-      ? projectState.deviceSessions[projectState.selectedSessionId]
-      : undefined;
     return {
       projectState,
-      selectedDeviceSession,
       deviceSettings,
       project,
       hasActiveLicense,

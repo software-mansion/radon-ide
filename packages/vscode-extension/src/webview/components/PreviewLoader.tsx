@@ -6,17 +6,12 @@ import "./PreviewLoader.css";
 import StartupMessageComponent from "./shared/StartupMessage";
 import ProgressBar from "./shared/ProgressBar";
 
-import {
-  DeviceSessionStateStarting,
-  StartupMessage,
-  StartupStageWeight,
-} from "../../common/Project";
 import { useProject } from "../providers/ProjectProvider";
 import Button from "./shared/Button";
 import { Output } from "../../common/OutputChannel";
 import { useStore } from "../providers/storeProvider";
 import { use$ } from "@legendapp/state/react";
-import { DevicePlatform, DeviceRotation } from "../../common/State";
+import { DevicePlatform, DeviceRotation, DeviceSessionStateStarting, StartupMessage, StartupStageWeight } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
@@ -32,14 +27,22 @@ const TOOLTIPS = {
 } as const;
 
 function PreviewLoader({
-  startingSessionState,
   onRequestShowPreview,
 }: {
   onRequestShowPreview: () => void;
-  startingSessionState: DeviceSessionStateStarting;
 }) {
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
+  const startupMessage = use$(() => {
+    const store = selectedDeviceSessionState.get();
+    return store && store.status === "starting" ? store.startupMessage : undefined;
+  });
+  const stageProgress = use$(() => {
+    const store = selectedDeviceSessionState.get();
+    return store && store.status === "starting" ? store.stageProgress : undefined;
+  });
+
 
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 
@@ -48,9 +51,6 @@ function PreviewLoader({
   const platform = use$(selectedDeviceSessionState.deviceInfo.platform);
 
   const [isLoadingSlowly, setIsLoadingSlowly] = useState(false);
-
-  const startupMessage = startingSessionState.startupMessage;
-  const stageProgress = startingSessionState.stageProgress;
 
   const isLandscape =
     rotation === DeviceRotation.LandscapeLeft || rotation === DeviceRotation.LandscapeRight;
@@ -78,10 +78,10 @@ function PreviewLoader({
       setProgress(
         ((startupStageWeightSumUntilNow + progressComponent * currentWeight) /
           startupStageWeightSum) *
-          100
+        100
       );
     }
-  }, [startingSessionState]);
+  }, [stageProgress, startupMessage]);
 
   useEffect(() => {
     setIsLoadingSlowly(false);
@@ -131,12 +131,12 @@ function PreviewLoader({
                 "preview-loader-message",
                 isLoadingSlowly && "preview-loader-slow-progress"
               )}>
-              {startingSessionState.startupMessage}
+              {startupMessage}
               {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
             </StartupMessageComponent>
-            {startingSessionState.stageProgress !== undefined && (
+            {stageProgress !== undefined && (
               <div className="preview-loader-stage-progress">
-                {(startingSessionState.stageProgress * 100).toFixed(1)}%
+                {(stageProgress * 100).toFixed(1)}%
               </div>
             )}
           </div>

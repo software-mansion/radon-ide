@@ -21,8 +21,6 @@ import {
   AppPermissionType,
   CameraSettings,
   DeviceSettings,
-  InstallationError,
-  InstallationErrorReason,
   Locale,
 } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
@@ -33,7 +31,7 @@ import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { extensionContext } from "../utilities/extensionContext";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
-import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform, DeviceType } from "../common/State";
+import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform, DeviceType, InstallationError, InstallationErrorReason } from "../common/State";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,

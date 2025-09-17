@@ -32,13 +32,13 @@ function createOutlineRenderer(canvas: HTMLCanvasElement, size: Size, dpr: numbe
 
 function useIsEnabled() {
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
-  const { selectedDeviceSession } = useProject();
+  const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
   const renderOutlinesPluginState = use$(
     selectedDeviceSessionState.applicationSession.toolsState[RENDER_OUTLINES_PLUGIN_ID]
   );
 
-  if (selectedDeviceSession?.status !== "running" || !renderOutlinesPluginState) {
+  if (selectedDeviceSessionStatus !== "running" || !renderOutlinesPluginState) {
     return false;
   }
 
@@ -57,11 +57,11 @@ function RenderOutlinesOverlay() {
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
-  const { selectedDeviceSession } = useProject();
 
   const appOrientation = use$(() =>
-    selectedDeviceSession?.status === "running"
+    selectedDeviceSessionStatus === "running"
       ? (selectedDeviceSessionState.applicationSession.appOrientation.get() ??
         DeviceRotation.Portrait)
       : DeviceRotation.Portrait

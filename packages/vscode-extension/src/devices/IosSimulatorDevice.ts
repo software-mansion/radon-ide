@@ -12,8 +12,6 @@ import { BuildResult } from "../builders/BuildManager";
 import {
   AppPermissionType,
   DeviceSettings,
-  InstallationError,
-  InstallationErrorReason,
   Locale,
 } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
@@ -24,6 +22,8 @@ import {
   DeviceInfo,
   DevicePlatform,
   DeviceType,
+  InstallationError,
+  InstallationErrorReason,
   IOSDeviceInfo,
   IOSRuntimeInfo,
 } from "../common/State";

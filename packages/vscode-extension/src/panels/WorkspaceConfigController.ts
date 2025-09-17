@@ -20,7 +20,7 @@ export class WorkspaceConfigController implements Disposable {
       startDeviceOnLaunch: configuration.get<boolean>("startDeviceOnLaunch") ?? true,
     };
 
-    this.stateManager.setState(workspaceConfig);
+    this.stateManager.updateState(workspaceConfig);
 
     this.disposables.push(workspace.onDidChangeConfiguration(this.onConfigurationChange));
 
@@ -100,7 +100,7 @@ export class WorkspaceConfigController implements Disposable {
       );
     }
 
-    this.stateManager.setState(newConfig);
+    this.stateManager.updateState(newConfig);
   };
 
   dispose() {

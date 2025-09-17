@@ -6,15 +6,11 @@ import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { BuildType } from "../../common/BuildConfig";
 import {
-  BuildErrorDescriptor,
-  FatalErrorDescriptor,
-  InstallationErrorDescriptor,
-  InstallationErrorReason,
   ProjectInterface,
 } from "../../common/Project";
 import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
 import { Output } from "../../common/OutputChannel";
-import { DevicePlatform } from "../../common/State";
+import { BuildErrorDescriptor, DevicePlatform, FatalErrorDescriptor, InstallationErrorDescriptor, InstallationErrorReason } from "../../common/State";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
 

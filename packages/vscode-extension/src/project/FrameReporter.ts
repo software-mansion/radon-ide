@@ -21,15 +21,15 @@ export class FrameReporter implements Disposable {
   }
 
   public startReportingFrameRate() {
-    this.stateManager.setState({ enabled: true, frameReport: null });
+    this.stateManager.updateState({ enabled: true, frameReport: null });
     const onFrameReport = (report: FrameRateReport) => {
-      this.stateManager.setState({ frameReport: report });
+      this.stateManager.updateState({ frameReport: report });
     };
     this.device.startReportingFrameRate(onFrameReport);
   }
 
   public stopReportingFrameRate() {
-    this.stateManager.setState({ enabled: false, frameReport: null });
+    this.stateManager.updateState({ enabled: false, frameReport: null });
     this.device.stopReportingFrameRate();
   }
 
