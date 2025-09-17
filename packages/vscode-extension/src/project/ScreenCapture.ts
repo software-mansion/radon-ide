@@ -20,7 +20,9 @@ export class ScreenCapture implements Disposable {
   ) {
     this.disposables.push(
       new Disposable(() => {
-        this.stopRecording();
+        if (this.recordingTimeout || this.recordingTimer) {
+          this.stopRecording();
+        }
       })
     );
 

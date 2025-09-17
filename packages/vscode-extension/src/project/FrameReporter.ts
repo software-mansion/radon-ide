@@ -13,7 +13,7 @@ export class FrameReporter implements Disposable {
   ) {
     this.disposables.push(
       new Disposable(() => {
-        this.stopReportingFrameRate();
+        this.device.stopReportingFrameRate();
       })
     );
 

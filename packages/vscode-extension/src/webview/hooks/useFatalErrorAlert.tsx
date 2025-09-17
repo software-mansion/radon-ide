@@ -5,12 +5,16 @@ import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { BuildType } from "../../common/BuildConfig";
-import {
-  ProjectInterface,
-} from "../../common/Project";
+import { ProjectInterface } from "../../common/Project";
 import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
 import { Output } from "../../common/OutputChannel";
-import { BuildErrorDescriptor, DevicePlatform, FatalErrorDescriptor, InstallationErrorDescriptor, InstallationErrorReason } from "../../common/State";
+import {
+  BuildErrorDescriptor,
+  DevicePlatform,
+  FatalErrorDescriptor,
+  InstallationErrorDescriptor,
+  InstallationErrorReason,
+} from "../../common/State";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
 

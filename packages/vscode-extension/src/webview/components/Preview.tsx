@@ -109,10 +109,10 @@ function Preview({
 
   const hasFatalError = selectedDeviceSessionStatus === "fatalError";
 
-  const fatalErrorDescriptor = use$(()=> {
+  const fatalErrorDescriptor = use$(() => {
     const store = selectedDeviceSessionState.get();
     return store && store.status === "fatalError" ? store.error : undefined;
-  })
+  });
 
   const isRunning = selectedDeviceSessionStatus === "running";
 
@@ -623,9 +623,7 @@ function Preview({
           <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="phone-sized phone-content-loading-background" />
             <div className="phone-sized phone-content-loading ">
-              <PreviewLoader
-                onRequestShowPreview={() => setShowPreviewRequested(true)}
-              />
+              <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
             </div>
           </Device>
         )}

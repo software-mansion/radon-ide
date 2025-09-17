@@ -95,7 +95,7 @@ export class DeviceSessionsManager implements Disposable {
         this.updateSelectedSession(undefined);
       }
       this.deviceSessions.delete(deviceId);
-      this.projectStateManager.updateState({ [deviceId]: REMOVE });
+      this.projectStateManager.updateState({ deviceSessions: { [deviceId]: REMOVE } });
       await session.dispose();
     }
   }

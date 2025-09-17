@@ -4,7 +4,6 @@ import { Frame } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import DimensionsBox from "./DimensionsBox";
 import { appToPreviewCoordinates } from "../utilities/transformAppCoordinates";
-import { useProject } from "../providers/ProjectProvider";
 import { useStore } from "../providers/storeProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 

@@ -9,7 +9,6 @@ import {
 } from "../../common/RenderOutlines";
 import { makeProxy } from "../utilities/rpc";
 import "./RenderOutlinesOverlay.css";
-import { useProject } from "../providers/ProjectProvider";
 import { appToPreviewCoordinates } from "../utilities/transformAppCoordinates";
 import { useStore } from "../providers/storeProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
@@ -58,7 +57,6 @@ function RenderOutlinesOverlay() {
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
   const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
-
 
   const appOrientation = use$(() =>
     selectedDeviceSessionStatus === "running"

@@ -17,12 +17,7 @@ import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { BuildResult } from "../builders/BuildManager";
 import { Logger } from "../Logger";
-import {
-  AppPermissionType,
-  CameraSettings,
-  DeviceSettings,
-  Locale,
-} from "../common/Project";
+import { AppPermissionType, CameraSettings, DeviceSettings, Locale } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
@@ -31,7 +26,14 @@ import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { extensionContext } from "../utilities/extensionContext";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
-import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform, DeviceType, InstallationError, InstallationErrorReason } from "../common/State";
+import {
+  AndroidSystemImageInfo,
+  DeviceInfo,
+  DevicePlatform,
+  DeviceType,
+  InstallationError,
+  InstallationErrorReason,
+} from "../common/State";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,

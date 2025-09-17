@@ -25,7 +25,7 @@ export class StateSerializer {
 
   static deserialize<T>(json: string): RecursivePartial<T> {
     return JSON.parse(json, (_, value) => {
-      if (value.__symbol__ === "Symbol(remove)") {
+      if (value && value.__symbol__ === "Symbol(remove)") {
         return REMOVE;
       }
       return value;

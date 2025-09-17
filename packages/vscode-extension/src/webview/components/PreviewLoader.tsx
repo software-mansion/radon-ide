@@ -11,7 +11,12 @@ import Button from "./shared/Button";
 import { Output } from "../../common/OutputChannel";
 import { useStore } from "../providers/storeProvider";
 import { use$ } from "@legendapp/state/react";
-import { DevicePlatform, DeviceRotation, DeviceSessionStateStarting, StartupMessage, StartupStageWeight } from "../../common/State";
+import {
+  DevicePlatform,
+  DeviceRotation,
+  StartupMessage,
+  StartupStageWeight,
+} from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
@@ -26,11 +31,7 @@ const TOOLTIPS = {
   rebuild: { label: "Clean rebuild project", side: "top" },
 } as const;
 
-function PreviewLoader({
-  onRequestShowPreview,
-}: {
-  onRequestShowPreview: () => void;
-}) {
+function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => void }) {
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
@@ -42,7 +43,6 @@ function PreviewLoader({
     const store = selectedDeviceSessionState.get();
     return store && store.status === "starting" ? store.stageProgress : undefined;
   });
-
 
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 
@@ -78,7 +78,7 @@ function PreviewLoader({
       setProgress(
         ((startupStageWeightSumUntilNow + progressComponent * currentWeight) /
           startupStageWeightSum) *
-        100
+          100
       );
     }
   }, [stageProgress, startupMessage]);
@@ -134,7 +134,7 @@ function PreviewLoader({
               {startupMessage}
               {isLoadingSlowly && isBuilding ? " (open logs)" : ""}
             </StartupMessageComponent>
-            {stageProgress !== undefined && (
+            {stageProgress !== undefined && stageProgress > 0 && (
               <div className="preview-loader-stage-progress">
                 {(stageProgress * 100).toFixed(1)}%
               </div>
