@@ -1,5 +1,5 @@
 import WebSocket from "ws";
-import { Disposable, EventEmitter } from "vscode";
+import { EventEmitter } from "vscode";
 import { OutputEvent, Source, StackFrame } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { Minimatch } from "minimatch";
@@ -27,26 +27,6 @@ type PromiseHandlers<T = unknown> = {
   resolve: ResolveType<T>;
   reject: RejectType;
 };
-
-async function eventFiredPromise<T>(event: EventEmitter<T>["event"], timeoutMs?: number) {
-  const { promise, resolve, reject } = Promise.withResolvers<void>();
-  let subscription: Disposable | undefined;
-
-  const timeout =
-    timeoutMs !== undefined
-      ? setTimeout(() => {
-          subscription?.dispose();
-          reject(new Error("Event did not fire before timeout"));
-        }, timeoutMs)
-      : undefined;
-
-  subscription = event(() => {
-    clearTimeout(timeout);
-    subscription?.dispose();
-    resolve();
-  });
-  return promise;
-}
 
 export interface CDPSessionDelegate {
   onExecutionContextCreated(threadId: number, threadName: string): void;
@@ -318,10 +298,24 @@ export class CDPSession {
     return firstPosition!;
   }
 
+  private async waitForDebuggerReady(timeoutMs: number) {
+    const { resolve: resolveTimeout, promise: timeoutPromise } = Promise.withResolvers<void>();
+    const timeoutId = setTimeout(resolveTimeout, timeoutMs);
+    const { resolve: resolveReady, promise: readyPromise } = Promise.withResolvers<void>();
+    const disposable = this.onScriptParsed(({ isMainBundle }) => {
+      if (isMainBundle) {
+        resolveReady();
+      }
+    });
+    await Promise.race([timeoutPromise, readyPromise]);
+    disposable.dispose();
+    clearTimeout(timeoutId);
+  }
+
   private async handleDebuggerPaused(message: any) {
     if (!this.debugSessionReady) {
       const UNMAPPED_PAUSE_TIMEOUT_MS = 5000;
-      await eventFiredPromise(this.onScriptParsed, UNMAPPED_PAUSE_TIMEOUT_MS);
+      await this.waitForDebuggerReady(UNMAPPED_PAUSE_TIMEOUT_MS);
     }
     const stackFrames = message.params.callFrames.map((cdpFrame: any, index: number) => {
       const cdpLocation = cdpFrame.location;
