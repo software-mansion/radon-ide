@@ -33,10 +33,20 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
+  z-index: 1;
 }
 
-.response-tab-pre {
+.response-tab-pre, .response-tab-pre > pre {
   white-space: pre-wrap;
   word-break: break-word;
   margin: 0 14px 14px 0;
+  font-size: var(--vscode-editor-font-size);
+}
+
+.shiki{
+  background-color: transparent!important;
+
+  & code {
+    background-color: transparent!important;
+  }
 }

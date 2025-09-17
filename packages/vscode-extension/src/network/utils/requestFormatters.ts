@@ -187,3 +187,38 @@ export function createFetchCommand(log: NetworkLog): string {
 
   return fetchCode;
 }
+
+const LANGUAGE_BY_CONTENT_TYPE = {
+  "application/json": "json",
+  "text/json": "json",
+  "text/html": "html",
+  "application/xhtml+xml": "html",
+  "text/xml": "xml",
+  "application/xml": "xml",
+  "text/css": "css",
+  "text/javascript": "javascript",
+  "application/javascript": "javascript",
+  "application/x-javascript": "javascript",
+  "text/plain": "text",
+};
+
+export function determineLanguage(contentType: string, body: string): string {
+  const contentTypeLowerCase = contentType.toLowerCase();
+
+  for (const [contentTypeKey, language] of Object.entries(LANGUAGE_BY_CONTENT_TYPE)) {
+    if (contentTypeLowerCase.includes(contentTypeKey)) {
+      return language;
+    }
+  }
+
+  // Fallback: try to guess based on content structure
+  const trimmedBody = body.trim();
+  if (trimmedBody.startsWith("<?xml") || trimmedBody.startsWith("<")) {
+    return trimmedBody.includes("<!DOCTYPE html") || trimmedBody.includes("<html") ? "html" : "xml";
+  }
+  if (trimmedBody.startsWith("{") || trimmedBody.startsWith("[")) {
+    return "json";
+  }
+
+  return "text";
+}

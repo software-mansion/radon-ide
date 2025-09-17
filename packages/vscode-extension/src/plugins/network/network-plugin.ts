@@ -1,4 +1,4 @@
-import { commands, Disposable, window } from "vscode";
+import { commands, Disposable, window, extensions } from "vscode";
 import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
@@ -15,44 +15,9 @@ import {
   WebviewCommand,
 } from "../../network/types/panelMessageProtocol";
 
+import { determineLanguage } from "../../network/utils/requestFormatters";
+
 type BroadcastListener = (message: WebviewMessage) => void;
-
-export const NETWORK_PLUGIN_ID = "network";
-
-const LANGUAGE_BY_CONTENT_TYPE = {
-  "application/json": "json",
-  "text/json": "json",
-  "text/html": "html",
-  "application/xhtml+xml": "html",
-  "text/xml": "xml",
-  "application/xml": "xml",
-  "text/css": "css",
-  "text/javascript": "javascript",
-  "application/javascript": "javascript",
-  "application/x-javascript": "javascript",
-  "text/plain": "text",
-};
-
-function determineLanguage(contentType: string, body: string): string {
-  const contentTypeLowerCase = contentType.toLowerCase();
-
-  for (const [contentTypeKey, language] of Object.entries(LANGUAGE_BY_CONTENT_TYPE)) {
-    if (contentTypeLowerCase.includes(contentTypeKey)) {
-      return language;
-    }
-  }
-
-  // Fallback: try to guess based on content structure
-  const trimmedBody = body.trim();
-  if (trimmedBody.startsWith("<?xml") || trimmedBody.startsWith("<")) {
-    return trimmedBody.includes("<!DOCTYPE html") || trimmedBody.includes("<html") ? "html" : "xml";
-  }
-  if (trimmedBody.startsWith("{") || trimmedBody.startsWith("[")) {
-    return "json";
-  }
-
-  return "text";
-}
 
 function formatDataBasedOnLanguage(body: string, language: string): string {
   if (language === "json") {
@@ -65,6 +30,8 @@ function formatDataBasedOnLanguage(body: string, language: string): string {
   }
   return body;
 }
+
+export const NETWORK_PLUGIN_ID = "network";
 
 let initialized = false;
 async function initialize() {
