@@ -267,14 +267,14 @@ export class Metro {
   }
 
   public async fetchWsTargets(
-    timeoutMs: number | undefined = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
+    timeoutMs: number = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
     cancelToken: CancelToken = new CancelToken()
   ): Promise<CDPTargetDescription[] | undefined> {
     let retryCount = 0;
     const startTime = Date.now();
 
     function shouldContinue() {
-      if (timeoutMs !== undefined) {
+      if (timeoutMs >= 0) {
         if (Date.now() - startTime > timeoutMs) {
           return false;
         }
@@ -312,7 +312,7 @@ export class Metro {
   }
 
   public async getDebuggerURL(
-    timeoutMs: number | undefined = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
+    timeoutMs: number = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
     cancelToken: CancelToken = new CancelToken()
   ) {
     const listJson = await this.fetchWsTargets(timeoutMs, cancelToken);

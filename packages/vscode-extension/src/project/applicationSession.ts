@@ -131,16 +131,15 @@ export class ApplicationSession implements Disposable {
       );
 
       const appReadyPromise = waitForAppReady(session.inspectorBridge, cancelToken);
+      onLaunchStage(StartupMessage.WaitingForAppToLoad);
 
       if (getIsActive()) {
-        const activatePromise = session.activate();
-        onLaunchStage(StartupMessage.AttachingDebugger);
+        const activatePromise = session.activate(cancelToken);
         await cancelToken.adapt(Promise.race([activatePromise, bundleErrorPromise]));
       }
 
       const hasBundleError = stateManager.getState().bundleError !== null;
       if (!hasBundleError && getIsActive()) {
-        onLaunchStage(StartupMessage.WaitingForAppToLoad);
         await cancelToken.adapt(appReadyPromise);
       }
 
@@ -376,14 +375,14 @@ export class ApplicationSession implements Disposable {
 
   //#endregion
 
-  public async activate(): Promise<void> {
+  public async activate(cancelToken?: CancelToken): Promise<void> {
     if (!this.isActive) {
       this.isActive = true;
       this.toolsManager.activate();
       if (this.debugSession === undefined) {
         await this.setupDebugSession();
       }
-      await this.connectJSDebugger();
+      await this.connectJSDebugger(cancelToken);
     }
   }
 
@@ -414,8 +413,8 @@ export class ApplicationSession implements Disposable {
     this.debugSession?.stepIntoDebugger();
   }
 
-  private async connectJSDebugger() {
-    const websocketAddress = await this.metro.getDebuggerURL();
+  private async connectJSDebugger(cancelToken?: CancelToken) {
+    const websocketAddress = await this.metro.getDebuggerURL(-1, cancelToken);
     if (!websocketAddress) {
       Logger.error("Couldn't find a proper debugger URL to connect to");
       return;
