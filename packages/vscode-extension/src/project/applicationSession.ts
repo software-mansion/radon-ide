@@ -232,6 +232,7 @@ export class ApplicationSession implements Disposable {
       new DebugSessionImpl({
         displayName: this.device.deviceInfo.displayName,
         useParentDebugSession: true,
+        useCustomJSDebugger: this.applicationContext.launchConfig.useCustomJSDebugger,
       }),
       this.metro,
       this.websocketDevtoolsServer
