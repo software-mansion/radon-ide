@@ -309,7 +309,7 @@
           "type": "boolean",
           "scope": "window",
           "default": false,
-          "description": "Enables experimental support of element inspector for Non-Edge-to-Edge applications, which may cause visual issues."
+          "description": "Enables experimental support for element inspector in non-Edge-to-Edge applications, which may cause visual issues."
         }
       }
     },
