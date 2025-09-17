@@ -363,7 +363,8 @@ export class ManagingDevicesService {
 
         await this.elementHelperService.waitUntilElementGone(
           By.css(`[data-testid="device-removing-confirmation-view"]`),
-          10000,
+          // deleting device on GitHub CI takes a lot of time for some reason
+          20000,
           "delete confirmation modal did not disappear"
         );
       }
@@ -464,8 +465,8 @@ export class AppManipulationService {
       .move({
         // origin is center of phoneScreen
         origin: phoneScreen,
-        x: Math.floor((position.x + position.width / 2) * phoneWidth),
-        y: Math.floor((position.y + position.height / 2) * phoneHeight),
+        x: Math.floor((position.x + position.width / 2 - 0.5) * phoneWidth),
+        y: Math.floor((position.y + position.height / 2 - 0.5) * phoneHeight),
       })
       // .click() method does not trigger show touch on phone screen
       .press(rightClick ? 2 : 0)

@@ -4,13 +4,15 @@
 VM_NAME="macOS"
 VM_USER="test"
 LOCAL_PROJECT_PATH="../../vscode-extension-tester"
-REMOTE_PATH="./vscode-extension-tester"
+REMOTE_PATH="/Users/$VM_USER/vscode-extension-tester"
 CONFIG_PATH="$HOME/Library/Containers/com.utmapp.UTM/Data/Documents/${VM_NAME}.utm/Config.plist"
 
 open -a "UTM" && sleep 3 && utmctl start "$VM_NAME" || {
     echo "Failed to start VM '$VM_NAME'."
     exit 1
 }
+
+mkdir -p data
 
 npm run build-vsix-package
 cd ./scripts
@@ -83,6 +85,7 @@ shift
 
 echo "installing test dependencies on VM and running tests..."
 ssh -i ./scripts/id_vm_mac "$VM_USER@$VM_IP" <<EOF
+echo "123456" | sudo -S pmset displaysleep 0
 cd "$REMOTE_PATH"
 npm install
 npm run get-test-app -- $APP

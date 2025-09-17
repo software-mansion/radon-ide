@@ -80,47 +80,51 @@ describe("Device Settings", () => {
           `device-settings-set-orientation-${rotation}`
         );
       await driver.executeScript("arguments[0].click();", rotationButton);
-
-      // rotation animation
-      await driver.sleep(1000);
     }
 
     await rotateDevice("landscape-left");
 
-    let orientation =
-      await appManipulationService.sendMessageAndWaitForResponse(
-        appWebsocket,
-        "getOrientation"
-      );
-
-    assert.equal(orientation.value, "landscape");
+    await driver.wait(async () => {
+      const orientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+      return orientation.value === "landscape";
+    }, 5000);
 
     await rotateDevice("portrait");
 
-    orientation = await appManipulationService.sendMessageAndWaitForResponse(
-      appWebsocket,
-      "getOrientation"
-    );
-
-    assert.equal(orientation.value, "portrait");
+    await driver.wait(async () => {
+      const orientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+      return orientation.value === "portrait";
+    }, 5000);
 
     await rotateDevice("clockwise");
 
-    orientation = await appManipulationService.sendMessageAndWaitForResponse(
-      appWebsocket,
-      "getOrientation"
-    );
-
-    assert.equal(orientation.value, "landscape");
+    await driver.wait(async () => {
+      const orientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+      return orientation.value === "landscape";
+    }, 5000);
 
     await rotateDevice("anticlockwise");
 
-    orientation = await appManipulationService.sendMessageAndWaitForResponse(
-      appWebsocket,
-      "getOrientation"
-    );
-
-    assert.equal(orientation.value, "portrait");
+    await driver.wait(async () => {
+      const orientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+      return orientation.value === "portrait";
+    }, 5000);
   });
 
   it("should rotate device using shortcuts", async () => {
@@ -137,15 +141,14 @@ describe("Device Settings", () => {
         document.dispatchEvent(evt);
       `);
 
-    await driver.sleep(1000);
-
-    let orientation =
-      await appManipulationService.sendMessageAndWaitForResponse(
-        appWebsocket,
-        "getOrientation"
-      );
-
-    assert.equal(orientation.value, "landscape");
+    await driver.wait(async () => {
+      const orientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+      return orientation.value === "portrait";
+    }, 5000);
 
     await driver.executeScript(`
         const evt = new KeyboardEvent('keydown', {
@@ -157,14 +160,15 @@ describe("Device Settings", () => {
         });
         document.dispatchEvent(evt);
       `);
-    await driver.sleep(1000);
 
-    orientation = await appManipulationService.sendMessageAndWaitForResponse(
-      appWebsocket,
-      "getOrientation"
-    );
-
-    assert.equal(orientation.value, "portrait");
+    await driver.wait(async () => {
+      const orientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+      return orientation.value === "portrait";
+    }, 5000);
   });
 
   it("should change device font size", async () => {
