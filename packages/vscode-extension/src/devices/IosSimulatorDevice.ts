@@ -40,7 +40,7 @@ interface SimulatorInfo {
   type?: "simulator" | "device" | "catalyst";
   booted?: boolean;
   lastBootedAt?: string;
-  deviceTypeIdentifier: string;
+  deviceTypeIdentifier?: string;
 }
 
 interface SimulatorData {
@@ -460,7 +460,7 @@ export class IosSimulatorDevice extends DeviceBase {
   async launchApp(
     build: BuildResult,
     metroPort: number,
-    _devtoolsPort: number,
+    _devtoolsPort: number | undefined,
     launchArguments: string[]
   ) {
     if (build.platform !== DevicePlatform.IOS) {
@@ -740,21 +740,26 @@ export async function listSimulators(location: SimulatorDeviceSet): Promise<IOSD
     .map(([runtimeID, devices]) => {
       const runtime = runtimes.find((item) => item.identifier === runtimeID);
 
-      return devices.map((device) => {
-        return {
-          id: `ios-${device.udid}`,
-          platform: DevicePlatform.IOS as const,
-          UDID: device.udid,
-          modelId: device.deviceTypeIdentifier,
-          systemName: runtime?.name ?? "Unknown",
-          displayName: device.name,
-          deviceType: device.deviceTypeIdentifier.includes("iPad")
-            ? DeviceType.Tablet
-            : DeviceType.Phone,
-          available: device.isAvailable ?? false,
-          runtimeInfo: runtime,
-        };
-      });
+      return devices
+        .map((device) => {
+          if (!device.deviceTypeIdentifier) {
+            return undefined;
+          }
+          return {
+            id: `ios-${device.udid}`,
+            platform: DevicePlatform.IOS as const,
+            UDID: device.udid,
+            modelId: device.deviceTypeIdentifier,
+            systemName: runtime?.name ?? "Unknown",
+            displayName: device.name,
+            deviceType: device.deviceTypeIdentifier.includes("iPad")
+              ? DeviceType.Tablet
+              : DeviceType.Phone,
+            available: device.isAvailable ?? false,
+            runtimeInfo: runtime,
+          };
+        })
+        .filter((e) => e !== undefined);
     })
     .flat();
   return simulators;

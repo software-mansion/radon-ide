@@ -1,4 +1,4 @@
-import { Disposable } from "vscode";
+import { EventEmitter, Disposable } from "vscode";
 import { Cdp } from "vscode-cdp-proxy";
 import { Metro } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
@@ -11,18 +11,23 @@ const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {
   private disposables: Disposable[] = [];
   private reconnectCancelToken: CancelToken | undefined;
+  private readonly sessionTerminatedEventEmitter = new EventEmitter<void>();
 
   private isRunning: boolean = false;
+
+  public readonly onDebugSessionTerminated = this.sessionTerminatedEventEmitter.event;
 
   constructor(
     private readonly debugSession: DebugSession & Partial<Disposable>,
     private readonly metro: Metro,
-    devtoolsServer: DevtoolsServer
+    devtoolsServer?: DevtoolsServer
   ) {
     this.disposables.push(debugSession.onDebugSessionTerminated(this.maybeReconnect));
-    // NOTE: with Expo Go on Android, the debugger can become unresponsive after a JS reload.
-    // Since a JS reload causes the devtools to reconnect, we can use that as a hint to reconnect the debugger.
-    this.disposables.push(devtoolsServer.onConnection(this.maybeReconnect));
+    if (devtoolsServer) {
+      // NOTE: with Expo Go on Android, the debugger can become unresponsive after a JS reload.
+      // Since a JS reload causes the devtools to reconnect, we can use that as a hint to reconnect the debugger.
+      this.disposables.push(devtoolsServer.onConnection(this.maybeReconnect));
+    }
   }
 
   public async startJSDebugSession(configuration: JSDebugConfiguration) {
@@ -83,6 +88,8 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   async dispose() {
     disposeAll(this.disposables);
     this.reconnectCancelToken?.cancel();
+    this.sessionTerminatedEventEmitter.fire();
+    this.sessionTerminatedEventEmitter.dispose();
     await this.debugSession.dispose?.();
   }
 
@@ -93,7 +100,7 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   public onProfilingCPUStarted = this.debugSession.onProfilingCPUStarted;
   public onProfilingCPUStopped = this.debugSession.onProfilingCPUStopped;
   public onBindingCalled = this.debugSession.onBindingCalled;
-  public onDebugSessionTerminated = this.debugSession.onDebugSessionTerminated;
+  public onBundleParsed = this.debugSession.onBundleParsed;
 
   public async startParentDebugSession(): Promise<void> {
     return this.debugSession.startParentDebugSession();
@@ -135,5 +142,8 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
     params: Cdp.Runtime.EvaluateParams
   ): Promise<Cdp.Runtime.EvaluateResult> {
     return this.debugSession.evaluateExpression(params);
+  }
+  public async addBinding(name: string): Promise<void> {
+    return this.debugSession.addBinding(name);
   }
 }
