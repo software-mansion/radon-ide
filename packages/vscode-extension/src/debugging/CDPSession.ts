@@ -107,7 +107,10 @@ export class CDPSession {
       await this.handleIncomingCDPMethodCalls(message);
     });
 
-    this.onScriptParsed(() => {
+    this.onScriptParsed(({ isMainBundle }) => {
+      if (!isMainBundle) {
+        return;
+      }
       this.debugSessionReady = true;
       this.flushEnqueuedConsoleAPICalls();
       this.delegate.onDebugSessionReady();
