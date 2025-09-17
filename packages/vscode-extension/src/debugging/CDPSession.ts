@@ -19,6 +19,7 @@ import { CDPCallFrame, CDPDebuggerScope, CDPRemoteObject } from "./cdp";
 import { typeToCategory } from "./DebugAdapter";
 import { annotateLocations } from "./cpuProfiler";
 import { CDPConfiguration } from "./CDPDebugAdapter";
+import { sleep } from "../utilities/retry";
 
 type ResolveType<T = unknown> = (result: T) => void;
 type RejectType = (error: unknown) => void;
@@ -302,17 +303,14 @@ export class CDPSession {
   }
 
   private async waitForDebuggerReady(timeoutMs: number) {
-    const { resolve: resolveTimeout, promise: timeoutPromise } = Promise.withResolvers<void>();
-    const timeoutId = setTimeout(resolveTimeout, timeoutMs);
     const { resolve: resolveReady, promise: readyPromise } = Promise.withResolvers<void>();
     const disposable = this.onScriptParsed(({ isMainBundle }) => {
       if (isMainBundle) {
         resolveReady();
       }
     });
-    await Promise.race([timeoutPromise, readyPromise]);
+    await Promise.race([sleep(timeoutMs), readyPromise]);
     disposable.dispose();
-    clearTimeout(timeoutId);
   }
 
   private async handleDebuggerPaused(message: any) {

@@ -15,7 +15,7 @@ const VSCODE_JS_DEBUGGER_TYPE = "com.swmansion.proxy-debugger";
 export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
 export const DEBUG_PAUSED = "RNIDE_paused";
 export const DEBUG_RESUMED = "RNIDE_continued";
-export const SCRIPT_PARSED = "RNIDE_bundleParsed";
+export const SCRIPT_PARSED = "RNIDE_scriptParsed";
 export const BINDING_CALLED = "RNIDE_bindingCalled";
 
 export interface JSDebugConfiguration {
@@ -65,7 +65,7 @@ export interface DebugSession {
   onProfilingCPUStarted(listener: DebugSessionCustomEventListener): Disposable;
   onProfilingCPUStopped(listener: DebugSessionCustomEventListener): Disposable;
   onBindingCalled(listener: (event: Cdp.Runtime.BindingCalledEvent) => void): Disposable;
-  onBundleParsed(listener: (event: { isMainBundle: boolean }) => void): Disposable;
+  onScriptParsed(listener: (event: { isMainBundle: boolean }) => void): Disposable;
   onDebugSessionTerminated(listener: () => void): Disposable;
 }
 
@@ -83,7 +83,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   private profilingCPUStoppedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
   private bindingCalledEventEmitter = new vscode.EventEmitter<Cdp.Runtime.BindingCalledEvent>();
   private debugSessionTerminatedEventEmitter = new vscode.EventEmitter<void>();
-  private bundleParsedEventEmitter = new vscode.EventEmitter<{ isMainBundle: boolean }>();
+  private scriptParsedEventEmitter = new vscode.EventEmitter<{ isMainBundle: boolean }>();
 
   public onConsoleLog = this.consoleLogEventEmitter.event;
   public onDebuggerPaused = this.debuggerPausedEventEmitter.event;
@@ -92,7 +92,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   public onProfilingCPUStopped = this.profilingCPUStoppedEventEmitter.event;
   public onBindingCalled = this.bindingCalledEventEmitter.event;
   public onDebugSessionTerminated = this.debugSessionTerminatedEventEmitter.event;
-  public onBundleParsed = this.bundleParsedEventEmitter.event;
+  public onScriptParsed = this.scriptParsedEventEmitter.event;
 
   constructor(private options: DebugSessionOptions = { displayName: "Radon IDE Debugger" }) {
     this.disposables.push(
@@ -127,7 +127,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
             this.bindingCalledEventEmitter.fire(event.body);
             break;
           case SCRIPT_PARSED:
-            this.bundleParsedEventEmitter.fire(event.body);
+            this.scriptParsedEventEmitter.fire(event.body);
             break;
           default:
             // ignore other events
