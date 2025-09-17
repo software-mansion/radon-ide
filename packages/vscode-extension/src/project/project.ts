@@ -397,7 +397,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async navigateHome() {
     getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
-      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+      platform: this.deviceSession?.platform,
     });
 
     if (this.applicationContext.applicationDependencyManager === undefined) {
@@ -510,7 +510,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async toggleRecording() {
     getTelemetryReporter().sendTelemetryEvent("recording:toggle-recording", {
-      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+      platform: this.deviceSession?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -520,7 +520,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async captureReplay() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
-      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+      platform: this.deviceSession?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -530,7 +530,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async captureScreenshot() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
-      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+      platform: this.deviceSession?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -558,7 +558,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public startReportingFrameRate() {
     getTelemetryReporter().sendTelemetryEvent("performance:start-frame-rate-reporting", {
-      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+      platform: this.deviceSession?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -712,7 +712,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         window.showWarningMessage("Wait for the app to load before launching preview.", "Dismiss");
         return;
       }
-      await deviceSession.startPreview(`preview:/${fileName}:${lineNumber1Based}`);
+      await deviceSession.openPreview(`preview:/${fileName}:${lineNumber1Based}`);
     } catch (e) {
       const relativeFileName = workspace.asRelativePath(fileName, false);
       const message = `Failed to open component preview. Currently previews only work for files loaded by the main application bundle. Make sure that ${relativeFileName} is loaded by your application code.`;
@@ -774,6 +774,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void> {
     return this.editorBindings.openFileAt(filePath, line0Based, column0Based);
+  }
+
+  public openContentInEditor(content: string, language: string): Promise<void> {
+    return this.editorBindings.openContentInEditor(content, language);
   }
 
   public showDismissableError(errorMessage: string): Promise<void> {

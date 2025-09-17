@@ -1,7 +1,6 @@
-import { NetworkLog } from "../hooks/useNetworkTracker";
-import { FilterBadge } from "../types/network";
-import { NetworkLogColumn } from "../types/network";
-import { NETWORK_LOG_COLUMNS } from "../types/network";
+import { NetworkLog } from "../types/networkLog";
+import { NetworkLogColumn, NETWORK_LOG_COLUMNS } from "../types/networkLog";
+import { FilterBadge } from "../types/networkFilter";
 
 interface ParsedText {
   badge: FilterBadge | null;
@@ -13,7 +12,19 @@ interface ParsedText {
  */
 const NetworkLogFormatters = {
   name: (log: NetworkLog): string => {
-    return log.request?.url.split("/").pop() || "(pending)";
+    try {
+      const parsedUrl = new URL(log.request?.url || "");
+      const hostname = parsedUrl.hostname.startsWith("www.")
+        ? parsedUrl.hostname.slice(4)
+        : parsedUrl.hostname;
+      // remove trailing slashes
+      const parsedPathName = parsedUrl.pathname.replace(/\/+$/, "");
+      const maybeLastPathSegment = parsedPathName?.split("/").pop();
+
+      return maybeLastPathSegment || hostname;
+    } catch (error) {
+      return "";
+    }
   },
 
   status: (log: NetworkLog): string => {

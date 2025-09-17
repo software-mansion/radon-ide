@@ -1,4 +1,5 @@
 import { ApplicationRoot } from "./AppRootConfig";
+import { merge } from "./Merge";
 import { DeviceId } from "./Project";
 
 export type RecursivePartial<T> = {
@@ -159,11 +160,33 @@ export type ScreenCaptureState = {
 
 // #endregion Multimedia
 
+// #region Navigation
+
+export type NavigationHistoryItem = {
+  displayName: string;
+  id: string;
+};
+
+export type NavigationRoute = {
+  path: string;
+  filePath: string;
+  children: NavigationRoute[];
+  dynamic: { name: string; deep: boolean; notFound?: boolean }[] | null;
+  type: string;
+};
+
+// #endregion Navigation
+
 // #region Device Session
 
 export type DeviceSessionStore = {
   applicationSession: ApplicationSessionState;
+  deviceInfo: DeviceInfo;
   frameReporting: FrameReportingState;
+  isUsingStaleBuild: boolean;
+  navigationHistory: NavigationHistoryItem[];
+  navigationRouteList: NavigationRoute[];
+  previewURL: string | undefined;
   fileTransfer: FileTransferState;
   screenCapture: ScreenCaptureState;
 };
@@ -294,12 +317,23 @@ export const initialApplicationSessionState: ApplicationSessionState = {
   toolsState: {},
 };
 
-export const initialDeviceSessionStore: DeviceSessionStore = {
+export const generateInitialDeviceSessionStore = (
+  partialDeviceSessionStore: RecursivePartial<DeviceSessionStore> = {}
+) => {
+  return merge(initialDeviceSessionStore, partialDeviceSessionStore);
+};
+
+const initialDeviceSessionStore: DeviceSessionStore = {
   applicationSession: initialApplicationSessionState,
+  deviceInfo: {} as DeviceInfo,
   frameReporting: {
     enabled: false,
     frameReport: null,
   },
+  isUsingStaleBuild: false,
+  navigationHistory: [],
+  navigationRouteList: [],
+  previewURL: undefined,
   screenCapture: {
     isRecording: false,
     recordingTime: 0,

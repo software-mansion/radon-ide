@@ -1,0 +1,42 @@
+.response-tab-copy-button {
+  background-color: var(--vscode-diffEditor-unchangedRegionBackground);
+}
+
+.response-tab-warning-icon {
+  right: 52px;
+  padding: 6px;
+  background-color: var(--vscode-diffEditor-unchangedRegionBackground);
+  border: 1px solid var(--vscode-button-border);
+  border-radius: 2px;
+  color: var(--vscode-notificationsWarningIcon-foreground);
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.response-tab-truncated-warning {
+  display: flex;
+  align-items: center;
+  color: var(--vscode-problemsWarningIcon-foreground);
+  margin: 0 0 14px 0;
+}
+
+.response-tab-button-wrapper {
+  position: absolute;
+  top: 4px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.response-tab-pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0 14px 14px 0;
+}

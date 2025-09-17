@@ -1,76 +1,22 @@
 import { useEffect, useState } from "react";
 import { vscode } from "../../webview/utilities/vscode";
-import { WebviewCommand, CDPNetworkCommand } from "../types/cdp";
-
-type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH" | "OPTIONS" | "HEAD";
-
-export interface NetworkRequest {
-  url: string;
-  method: HttpMethod;
-  headers?: Record<string, string>;
-  postData?: string;
-}
-
-export interface NetworkRequestInitiator {
-  sourceUrl: string;
-  lineNumber: number;
-  columnNumber: number;
-}
-
-export interface NetworkResponse {
-  type: string;
-  status: number;
-  statusText: string;
-  headers?: Record<string, string>;
-  content?: unknown;
-  mimeType?: string;
-}
-
-export interface TimelineEvent {
-  timestamp: number;
-  wallTime: number;
-  durationMs?: number;
-  ttfb?: number;
-}
-
-type NetworkState =
-  | "Network.requestWillBeSent"
-  | "Network.responseReceived"
-  | "Network.loadingFinished"
-  | "Network.loadingFailed";
-
-export interface NetworkLog {
-  currentState: NetworkState;
-  requestId: string;
-  request?: NetworkRequest;
-  response?: NetworkResponse;
-  encodedDataLength?: number;
-  type?: string;
-  timeline: TimelineEvent;
-  initiator?: NetworkRequestInitiator;
-}
-
-export interface WebSocketMessage {
-  method: NetworkState;
-  params?: {
-    encodedDataLength?: number;
-    requestId: string;
-    request?: NetworkRequest;
-    response?: NetworkResponse;
-    timestamp: number;
-    ttfb?: number;
-    wallTime: number;
-    type?: string;
-    initiator?: NetworkRequestInitiator;
-    duration?: number;
-  };
-}
+import { NetworkLog } from "../types/networkLog";
+import {
+  CDPMessage,
+  IDEMessage,
+  WebviewMessage,
+  NetworkEvent,
+  NETWORK_EVENTS,
+  WebviewCommand,
+} from "../types/panelMessageProtocol";
 
 export interface NetworkTracker {
   networkLogs: NetworkLog[];
   clearLogs: () => void;
   toggleNetwork: (isRunning: boolean) => void;
   getSource: (networkLog: NetworkLog) => void;
+  sendWebviewCDPMessage: (messageData: CDPMessage) => void;
+  sendWebviewIDEMessage: (messageData: IDEMessage) => void;
 }
 
 export const networkTrackerInitialState: NetworkTracker = {
@@ -78,106 +24,148 @@ export const networkTrackerInitialState: NetworkTracker = {
   clearLogs: () => {},
   toggleNetwork: () => {},
   getSource: () => {},
+  sendWebviewCDPMessage: () => {},
+  sendWebviewIDEMessage: () => {},
 };
 
 const useNetworkTracker = (): NetworkTracker => {
   const [networkLogs, setNetworkLogs] = useState<NetworkLog[]>([]);
-  const [serverMessages, setServerMessages] = useState<string[]>([]);
+  const [cdpMessages, setCdpMessages] = useState<CDPMessage[]>([]);
 
-  const processServerMessage = (msg: string, newLogs: NetworkLog[]): void => {
+  const validateCDPMessage = (message: WebviewMessage): CDPMessage | null => {
     try {
-      const parsedMsg: WebSocketMessage = JSON.parse(msg);
+      const { payload, command } = message;
 
-      const { method, params } = parsedMsg;
-
-      if (!params?.requestId) {
-        return;
+      // Only accept CDP messages
+      if (command !== WebviewCommand.CDPCall) {
+        return null;
       }
 
-      const existingIndex = newLogs.findIndex((log) => log.requestId === params.requestId);
+      const haveRequiredFields = payload.params?.timestamp && payload.params?.requestId;
+      const isNetworkEvent = NETWORK_EVENTS.includes(payload.method as NetworkEvent);
 
-      if (existingIndex !== -1) {
-        const existingLog = newLogs[existingIndex];
-
-        newLogs[existingIndex] = {
-          ...existingLog,
-          currentState: method,
-          request: params.request || existingLog.request,
-          response: params.response || existingLog.response,
-          initiator: params.initiator || existingLog.initiator,
-          timeline: {
-            ...existingLog.timeline,
-            timestamp: params.timestamp,
-            wallTime: params.wallTime,
-            durationMs: params.duration || existingLog.timeline.durationMs,
-            ttfb: params.ttfb || existingLog.timeline.ttfb,
-          },
-          type: params.type || existingLog.type,
-          encodedDataLength: params.encodedDataLength || existingLog.encodedDataLength,
-        };
-      } else {
-        newLogs.push({
-          currentState: method,
-          requestId: params.requestId,
-          request: params.request,
-          response: params.response,
-          encodedDataLength: params.encodedDataLength,
-          type: params.type,
-          initiator: params.initiator,
-          timeline: {
-            timestamp: params.timestamp,
-            wallTime: params.wallTime,
-            durationMs: params.duration,
-            ttfb: params.ttfb,
-          },
-        });
+      if (!isNetworkEvent || !haveRequiredFields) {
+        return null;
       }
+
+      return payload;
     } catch (error) {
       console.error("Error parsing WebSocket message:", error);
+      return null;
+    }
+  };
+
+  const processServerMessage = (cdpMessage: CDPMessage, newLogs: NetworkLog[]): void => {
+    const { method, params } = cdpMessage;
+
+    // Already checked in validateCDPMessage, but TS needs more convincing
+    if (!params?.requestId || !params?.timestamp) {
+      return;
+    }
+
+    const networkEventMethod = method as NetworkEvent;
+    const existingIndex = newLogs.findIndex((log) => log.requestId === params.requestId);
+
+    if (existingIndex !== -1) {
+      const existingLog = newLogs[existingIndex];
+
+      newLogs[existingIndex] = {
+        ...existingLog,
+        currentState: networkEventMethod,
+        request: params.request || existingLog.request,
+        response: params.response || existingLog.response,
+        initiator: params.initiator || existingLog.initiator,
+        timeline: {
+          ...existingLog.timeline,
+          timestamp: params.timestamp,
+          wallTime: params.wallTime,
+          durationMs: params.duration || existingLog.timeline.durationMs,
+          ttfb: params.ttfb || existingLog.timeline.ttfb,
+        },
+        type: params.type || existingLog.type,
+        encodedDataLength: params.encodedDataLength || existingLog.encodedDataLength,
+      };
+    } else {
+      newLogs.push({
+        currentState: networkEventMethod,
+        requestId: params.requestId,
+        request: params.request,
+        response: params.response,
+        encodedDataLength: params.encodedDataLength,
+        type: params.type,
+        initiator: params.initiator,
+        timeline: {
+          timestamp: params.timestamp,
+          wallTime: params.wallTime,
+          durationMs: params.duration,
+          ttfb: params.ttfb,
+        },
+      });
     }
   };
 
   useEffect(() => {
     const listener = (message: MessageEvent) => {
-      setServerMessages((prev) => [...prev, message.data]);
+      const cdpMessage = validateCDPMessage(message.data);
+      if (cdpMessage) {
+        setCdpMessages((prev) => [...prev, cdpMessage]);
+      }
     };
+
+    window.addEventListener("message", listener);
 
     window.addEventListener("message", listener);
 
     return () => {
       window.removeEventListener("message", listener);
+      window.removeEventListener("message", listener);
     };
   }, []);
 
   useEffect(() => {
-    if (serverMessages.length === 0) {
+    if (cdpMessages.length === 0) {
       return;
     }
     setNetworkLogs((prevLogs) => {
       const newLogs = [...prevLogs];
-      serverMessages.map((msg) => processServerMessage(msg, newLogs));
+      cdpMessages.forEach((cdpMessage) => processServerMessage(cdpMessage, newLogs));
       return newLogs;
     });
-  }, [serverMessages]);
+  }, [cdpMessages]);
 
   const clearLogs = () => {
     setNetworkLogs([]);
-    setServerMessages([]);
+    setCdpMessages([]);
+  };
+
+  const sendWebviewCDPMessage = (messageData: CDPMessage) => {
+    vscode.postMessage({
+      command: WebviewCommand.CDPCall,
+      payload: messageData,
+    });
+  };
+
+  const sendWebviewIDEMessage = (messageData: IDEMessage) => {
+    vscode.postMessage({
+      command: WebviewCommand.IDECall,
+      payload: messageData,
+    });
   };
 
   const toggleNetwork = (isRunning: boolean) => {
-    vscode.postMessage({
-      command: WebviewCommand.CDPCall,
-      method: isRunning ? CDPNetworkCommand.Disable : CDPNetworkCommand.Enable,
+    sendWebviewCDPMessage({
+      id: "enable",
+      method: isRunning ? "Network.disable" : "Network.enable",
     });
   };
 
   const getSource = (networkLog: NetworkLog) => {
-    vscode.postMessage({
-      command: WebviewCommand.CDPCall,
-      method: CDPNetworkCommand.Initiator,
+    sendWebviewCDPMessage({
+      id: "initiator",
+      method: "Network.Initiator",
       params: {
-        ...networkLog.initiator,
+        requestId: networkLog.requestId,
+        initiator: networkLog.initiator,
       },
     });
   };
@@ -187,6 +175,8 @@ const useNetworkTracker = (): NetworkTracker => {
     clearLogs,
     toggleNetwork,
     getSource,
+    sendWebviewCDPMessage,
+    sendWebviewIDEMessage,
   };
 };
 
