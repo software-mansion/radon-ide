@@ -1,5 +1,5 @@
-import { NetworkLog } from "../hooks/useNetworkTracker";
-import { NetworkLogColumn, SortDirection } from "../types/network";
+import { NetworkLogColumn, NetworkLog } from "../types/networkLog";
+import { SortDirection } from "../types/networkFilter";
 import { getNetworkLogValue } from "./networkLogParsers";
 
 export function sortNetworkLogs(

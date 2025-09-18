@@ -4,18 +4,23 @@ import {
   SortSubmenu,
   FilterItem,
   CopySubmenu,
-  CopySubmenuProps,
   SortSubmenuProps,
+  OpenInEditorItem,
 } from "./ContextMenuItems";
 import { useNetworkFilter } from "../../providers/NetworkFilterProvider";
-import { ContextMenuItemName, ContextMenuItems } from "../../types/network";
+import { ResponseBodyData } from "../../types/network";
+import { NetworkLog } from "../../types/networkLog";
+import { useNetwork } from "../../providers/NetworkProvider";
+import { ContextMenuItemName, ContextMenuItems } from "../../types/contextMenu";
 import "./NetworkLogContextMenu.css";
+
 interface NetworkLogContextMenuProps {
   children: React.ReactNode;
   menuItems?: ContextMenuItems;
+  networkLog?: NetworkLog | null;
 }
 
-function NetworkLogContextMenu({ children, menuItems }: NetworkLogContextMenuProps) {
+function NetworkLogContextMenu({ children, menuItems, networkLog }: NetworkLogContextMenuProps) {
   // Filter-item state handling
   // Below is needed, because RadixUI modifies focus upon context menu closing.
   // If we wish to direct the focus to the input field when clicking a button, we have to
@@ -34,6 +39,22 @@ function NetworkLogContextMenu({ children, menuItems }: NetworkLogContextMenuPro
     setShouldFocusInput(true);
   };
 
+  // Response body state handling
+  const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
+  const { getResponseBody } = useNetwork();
+
+  const handleOpenChange = async (open: boolean) => {
+    // In order to prevent fetching responseBody as soon as the request log is rendered
+    // (which has memory implications on the backend), we wait until the user
+    // opens the menu for the first time
+    if (!open || !networkLog) {
+      return;
+    }
+    // Prefetch response body for copy menu when context menu opens
+    const bodyData = await getResponseBody(networkLog);
+    setResponseBodyData(bodyData);
+  };
+
   const renderMenuItems = (): React.ReactNode => {
     const menuItemNames = Object.keys(menuItems || {}) as ContextMenuItemName[];
     if (!menuItems || menuItemNames.length === 0) {
@@ -49,7 +70,21 @@ function NetworkLogContextMenu({ children, menuItems }: NetworkLogContextMenuPro
 
       switch (name) {
         case ContextMenuItemName.Copy:
-          return <CopySubmenu key={name} {...(config as CopySubmenuProps)} />;
+          return (
+            <CopySubmenu
+              key={name}
+              networkLog={networkLog ?? null}
+              responseBodyData={responseBodyData}
+            />
+          );
+        case ContextMenuItemName.OpenInEditor:
+          return (
+            <OpenInEditorItem
+              key={name}
+              networkLog={networkLog ?? null}
+              responseBodyData={responseBodyData}
+            />
+          );
         case ContextMenuItemName.Sort:
           return <SortSubmenu key={name} {...(config as SortSubmenuProps)} />;
         case ContextMenuItemName.Filter:
@@ -61,7 +96,7 @@ function NetworkLogContextMenu({ children, menuItems }: NetworkLogContextMenuPro
   };
 
   return (
-    <ContextMenu.Root>
+    <ContextMenu.Root onOpenChange={handleOpenChange}>
       <ContextMenu.Trigger asChild>{children}</ContextMenu.Trigger>
       <ContextMenu.Portal>
         <ContextMenu.Content

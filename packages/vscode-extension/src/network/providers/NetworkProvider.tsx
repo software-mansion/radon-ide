@@ -1,12 +1,20 @@
-import { createContext, PropsWithChildren, useContext, useMemo, useReducer, useState } from "react";
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import useNetworkTracker, {
-  NetworkLog,
   NetworkTracker,
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
-import { vscode } from "../../webview/utilities/vscode";
-import { WebviewCommand, CDPNetworkCommand } from "../types/cdp";
+import { NetworkLog } from "../types/networkLog";
+import { WebviewMessage, WebviewCommand } from "../types/panelMessageProtocol";
+import { ResponseBodyData } from "../types/network";
 
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;
@@ -16,7 +24,8 @@ interface NetworkProviderProps extends NetworkTracker {
   toggleScrolling: () => void;
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
-  getResponseBody: (networkLog: NetworkLog) => Promise<unknown>;
+  fetchAndOpenResponseInEditor: (networkLog: NetworkLog) => Promise<void>;
+  getResponseBody: (networkLog: NetworkLog) => Promise<ResponseBodyData | undefined>;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
@@ -29,71 +38,107 @@ const NetworkContext = createContext<NetworkProviderProps>({
   isTimelineVisible: true,
   toggleTimelineVisible: () => {},
   getResponseBody: async () => undefined,
+  fetchAndOpenResponseInEditor: async () => {},
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
+  const { clearLogs, toggleNetwork, sendWebviewIDEMessage, sendWebviewCDPMessage, networkLogs } =
+    networkTracker;
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
   const [isRecording, setIsRecording] = useState(true);
-  const [responseBodies, setResponseBodies] = useState<Record<string, unknown>>({});
+  const responseBodiesRef = useRef<Record<string, ResponseBodyData | undefined>>({});
 
   const clearActivity = () => {
-    networkTracker.clearLogs();
-    setResponseBodies({});
+    clearLogs();
+    responseBodiesRef.current = {};
   };
 
   const toggleRecording = () => {
     setIsRecording((prev) => {
-      networkTracker.toggleNetwork(prev);
+      toggleNetwork(prev);
       return !prev;
     });
   };
 
-  const getResponseBody = (networkLog: NetworkLog) => {
-    if (responseBodies[networkLog.requestId]) {
-      return Promise.resolve(responseBodies[networkLog.requestId]);
+  const getResponseBody = (networkLog: NetworkLog): Promise<ResponseBodyData | undefined> => {
+    const requestId = networkLog.requestId;
+
+    if (!requestId) {
+      return Promise.resolve(undefined);
     }
 
-    const id = Math.random().toString(36).substring(7);
+    if (responseBodiesRef.current[requestId]) {
+      return Promise.resolve(responseBodiesRef.current[requestId]);
+    }
 
-    const { promise, resolve } = Promise.withResolvers();
+    const messageId = Math.random().toString(36).substring(7);
+
+    const { promise, resolve } = Promise.withResolvers<ResponseBodyData | undefined>();
 
     const listener = (message: MessageEvent) => {
       try {
-        const parsedMsg = JSON.parse(message.data);
-        if (parsedMsg.id === id) {
-          setResponseBodies((prev) => ({
-            ...prev,
-            [networkLog.requestId]: parsedMsg.result.body,
-          }));
-          resolve(parsedMsg.result.body);
-          window.removeEventListener("message", listener);
+        const { command, payload }: WebviewMessage = message.data;
+        if (command !== WebviewCommand.CDPCall || payload.id !== messageId) {
+          return;
         }
+
+        const bodyData = payload.result as ResponseBodyData | undefined;
+
+        if (bodyData === undefined) {
+          resolve(responseBodiesRef.current[requestId]);
+          window.removeEventListener("message", listener);
+          return;
+        }
+
+        responseBodiesRef.current[requestId] = bodyData;
+
+        resolve(bodyData);
+        window.removeEventListener("message", listener);
       } catch (error) {
         console.error("Error parsing Window message:", error);
       }
     };
 
     window.addEventListener("message", listener);
-
-    vscode.postMessage({
-      command: WebviewCommand.CDPCall,
-      id,
-      method: CDPNetworkCommand.GetResponseBody,
+    // Send the message to the network-plugin backend
+    sendWebviewCDPMessage({
+      id: messageId,
+      method: "Network.getResponseBody",
       params: {
-        requestId: networkLog.requestId,
+        requestId: requestId,
       },
     });
 
+    // Add a listener to capture the response
     return promise;
+  };
+
+  const fetchAndOpenResponseInEditor = async (networkLog: NetworkLog) => {
+    const requestId = networkLog.requestId;
+    const request = networkLog.request;
+
+    if (!requestId || !request) {
+      return Promise.resolve(undefined);
+    }
+
+    const id = Math.random().toString(36).substring(7);
+
+    sendWebviewIDEMessage({
+      id,
+      method: "IDE.fetchFullResponseBody",
+      params: {
+        request: request,
+      },
+    });
   };
 
   const contextValue = useMemo(() => {
     return {
       ...networkTracker,
-      networkLogs: networkTracker.networkLogs,
+      networkLogs: networkLogs,
       isRecording,
       toggleRecording,
       isScrolling,
@@ -102,6 +147,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       isTimelineVisible,
       toggleTimelineVisible,
       getResponseBody,
+      fetchAndOpenResponseInEditor,
     };
   }, [isRecording, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
 

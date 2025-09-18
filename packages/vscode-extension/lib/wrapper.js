@@ -38,7 +38,7 @@ const InternalImports = {
     return require("./preview").PREVIEW_APP_KEY;
   },
   get setupNetworkPlugin() {
-    return require("./network").setup;
+    return require("./network/network").setup;
   },
   get reduxDevtoolsExtensionCompose() {
     return require("./plugins/redux-devtools").compose;

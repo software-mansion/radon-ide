@@ -3,7 +3,11 @@ import { commands, window, env, Uri, ProgressLocation } from "vscode";
 import JSON5 from "json5";
 import path from "path";
 import { homedir } from "os";
-import { openFileAtPosition } from "../utilities/openFileAtPosition";
+import {
+  openFileAtPosition,
+  openContentInEditor,
+  showDismissableError,
+} from "../utilities/editorOpeners";
 import { Logger } from "../Logger";
 import { Platform } from "../utilities/platform";
 import { extensionContext } from "../utilities/extensionContext";
@@ -75,6 +79,10 @@ export class EditorBindings {
     openFileAtPosition(filePath, line0Based, column0Based);
   }
 
+  public async openContentInEditor(content: string, language: string) {
+    openContentInEditor(content, language);
+  }
+
   public async movePanelTo(location: IDEPanelMoveTarget) {
     commands.executeCommand("RNIDE.showPanel", location);
   }
@@ -84,7 +92,7 @@ export class EditorBindings {
   }
 
   public async showDismissableError(errorMessage: string) {
-    window.showErrorMessage(errorMessage, "Dismiss");
+    showDismissableError(errorMessage);
   }
 
   async showToast(message: string, timeout: number) {

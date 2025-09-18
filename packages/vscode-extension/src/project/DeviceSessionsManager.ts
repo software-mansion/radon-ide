@@ -18,7 +18,7 @@ import {
   DeviceRotation,
   DeviceSessions,
   DevicesState,
-  initialDeviceSessionStore,
+  generateInitialDeviceSessionStore,
   ProjectStore,
 } from "../common/State";
 import { createWebSocketDevtoolsServer } from "./devtools";
@@ -160,11 +160,16 @@ export class DeviceSessionsManager implements Disposable {
 
     if (!this.stateManager.getState()[deviceInfo.id]) {
       // we need to initialize the device session state before deriving a new state manager
-      this.stateManager.setState({ [deviceInfo.id]: initialDeviceSessionStore });
+      this.stateManager.setState({
+        [deviceInfo.id]: generateInitialDeviceSessionStore({ deviceInfo }),
+      });
     }
 
-    Logger.debug("Launching DevTools server");
-    const devtoolsServer = await createWebSocketDevtoolsServer();
+    let devtoolsServer;
+    if (this.applicationContext.launchConfig.useOldDevtools) {
+      Logger.debug("Launching DevTools server");
+      devtoolsServer = await createWebSocketDevtoolsServer();
+    }
 
     const newDeviceSession = new DeviceSession(
       this.stateManager.getDerived(deviceInfo.id),
@@ -173,8 +178,8 @@ export class DeviceSessionsManager implements Disposable {
       devtoolsServer,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
       {
-        onStateChange: (state) => {
-          if (!this.deviceSessions.has(state.deviceInfo.id)) {
+        onStateChange: () => {
+          if (!this.deviceSessions.has(deviceInfo.id)) {
             // NOTE: the device is being removed, we shouldn't report state updates
             return;
           }
@@ -209,7 +214,7 @@ export class DeviceSessionsManager implements Disposable {
 
     const [iosDevices, androidDevices] = _.partition(
       this.deviceSessions.values().toArray(),
-      (session) => session.getState().deviceInfo.platform === DevicePlatform.IOS
+      (session) => session.platform === DevicePlatform.IOS
     );
 
     if (
@@ -303,7 +308,7 @@ export class DeviceSessionsManager implements Disposable {
 
   private async updateSelectedSession(session: DeviceSession | undefined) {
     const previousSession = this.selectedDeviceSession;
-    this.activeSessionId = session?.getState().deviceInfo.id;
+    this.activeSessionId = session?.id;
     if (previousSession === session) {
       return;
     }

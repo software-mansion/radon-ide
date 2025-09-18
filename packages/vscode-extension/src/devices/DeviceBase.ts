@@ -104,7 +104,7 @@ export abstract class DeviceBase implements Disposable {
   abstract launchApp(
     build: BuildResult,
     metroPort: number,
-    devtoolsPort: number,
+    devtoolsPort: number | undefined,
     launchArguments: string[]
   ): Promise<void>;
   abstract terminateApp(packageNameOrBundleID: string): Promise<void>;

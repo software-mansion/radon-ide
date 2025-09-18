@@ -9,8 +9,9 @@ import {
   OutputView,
 } from "vscode-extension-tester";
 import * as fs from "fs";
-import config from "../utils/configuration.js";
+import getConfiguration from "../configuration.js";
 import { createCanvas } from "canvas";
+import { centerCoordinates } from "../utils/helpers.js";
 
 // #region Opening radon views
 export class RadonViewsService {
@@ -48,6 +49,21 @@ export class RadonViewsService {
       }
       return false;
     });
+  }
+
+  async switchToRadonIDEFrame() {
+    this.driver.switchTo().defaultContent();
+    const webview = await this.elementHelperService.findAndWaitForElement(
+      By.css('iframe[class*="webview"]'),
+      "Timed out waiting for Radon IDE webview"
+    );
+    await this.driver.switchTo().frame(webview);
+    const iframe = await this.elementHelperService.findAndWaitForElement(
+      By.css('iframe[title="Radon IDE"]'),
+      "Timed out waiting for Radon IDE iframe"
+    );
+
+    await this.driver.switchTo().frame(iframe);
   }
 
   async openRadonSettingsMenu() {
@@ -200,7 +216,7 @@ export class RadonSettingsService {
     this.elementHelperService = new ElementHelperService(driver);
   }
 
-  async toggleShowTouches(value = true) {
+  async setShowTouches(value = true) {
     await this.elementHelperService.findAndClickElementByTag(
       "radon-bottom-bar-device-settings-dropdown-trigger"
     );
@@ -218,7 +234,7 @@ export class RadonSettingsService {
     this.driver.actions().sendKeys(Key.ESCAPE).perform();
   }
 
-  async toggleEnableReplays(value = true) {
+  async setEnableReplays(value = true) {
     await this.elementHelperService.findAndClickElementByTag(
       "radon-bottom-bar-device-settings-dropdown-trigger"
     );
@@ -273,10 +289,8 @@ export class ManagingDevicesService {
       "creating-device-form-device-type-select"
     );
 
-    const device =
-      process.env.TESTS_OS === "Android" || config.isAndroid
-        ? "pixel"
-        : "com.apple";
+    const { IS_ANDROID } = getConfiguration();
+    const device = IS_ANDROID ? "pixel" : "com.apple";
 
     const selectedDevice =
       await this.elementHelperService.findAndWaitForElement(
@@ -454,6 +468,8 @@ export class AppManipulationService {
       By.css(`[data-testid="phone-screen"]`),
       "Timed out waiting for phone-screen"
     );
+
+    position = centerCoordinates(position);
 
     const rect = await phoneScreen.getRect();
     const phoneWidth = rect.width;

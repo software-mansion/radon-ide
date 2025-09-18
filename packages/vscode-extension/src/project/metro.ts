@@ -12,7 +12,7 @@ import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
 import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 import { getOpenPort } from "../utilities/common";
 import { DebugSource } from "../debugging/DebugSession";
-import { openFileAtPosition } from "../utilities/openFileAtPosition";
+import { openFileAtPosition } from "../utilities/editorOpeners";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
 import { CancelToken } from "../utilities/cancelToken";
 import { Output } from "../common/OutputChannel";
@@ -21,11 +21,6 @@ import { IDE } from "./ide";
 const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
 const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
-
-export interface MetroDelegate {
-  onBundleProgress(bundleProgress: number): void;
-  onBundlingError(message: string, source: DebugSource, errorModulePath: string): void;
-}
 
 interface CDPTargetDescription {
   id: string;
@@ -272,14 +267,14 @@ export class Metro {
   }
 
   public async fetchWsTargets(
-    timeoutMs: number | undefined = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
+    timeoutMs: number = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
     cancelToken: CancelToken = new CancelToken()
   ): Promise<CDPTargetDescription[] | undefined> {
     let retryCount = 0;
     const startTime = Date.now();
 
     function shouldContinue() {
-      if (timeoutMs !== undefined) {
+      if (timeoutMs >= 0) {
         if (Date.now() - startTime > timeoutMs) {
           return false;
         }
@@ -317,7 +312,7 @@ export class Metro {
   }
 
   public async getDebuggerURL(
-    timeoutMs: number | undefined = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
+    timeoutMs: number = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
     cancelToken: CancelToken = new CancelToken()
   ) {
     const listJson = await this.fetchWsTargets(timeoutMs, cancelToken);
@@ -368,7 +363,7 @@ export class MetroLauncher extends Metro implements Disposable {
     resetCache: boolean;
     dependencies: Promise<any>[];
     launchConfiguration: ResolvedLaunchConfig;
-    devtoolsPort: number;
+    devtoolsPort?: number;
   }) {
     if (this.startPromise) {
       throw new Error("metro already started");
@@ -453,7 +448,7 @@ export class MetroLauncher extends Metro implements Disposable {
     resetCache: boolean,
     dependencies: Promise<any>[],
     launchConfiguration: ResolvedLaunchConfig,
-    devtoolsPort: number
+    devtoolsPort?: number
   ) {
     const appRoot = launchConfiguration.absoluteAppRoot;
     await Promise.all(dependencies);
@@ -476,7 +471,7 @@ export class MetroLauncher extends Metro implements Disposable {
       ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
       NODE_PATH: path.join(appRoot, "node_modules"),
       RCT_METRO_PORT: `${port}`,
-      RCT_DEVTOOLS_PORT: devtoolsPort.toString(),
+      RCT_DEVTOOLS_PORT: devtoolsPort?.toString(),
       RADON_IDE_LIB_PATH: libPath,
       RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
       REACT_EDITOR: fakeEditorPath,

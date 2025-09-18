@@ -192,7 +192,7 @@ describe("screenshots tests", () => {
     const filePath = path.join(cwd, "replayTest..mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    await radonSettingsService.toggleEnableReplays();
+    await radonSettingsService.setEnableReplays(true);
 
     await elementHelperService.waitUntilElementGone(
       By.css("[data-testid='vhs-rewind']")

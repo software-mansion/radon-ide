@@ -17,6 +17,7 @@ import "../components/shared/SwitchGroup.css";
 import { useStore } from "../providers/storeProvider";
 import { PropsWithDataTest } from "../../common/types";
 import { DeviceInfo, DevicePlatform } from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -145,10 +146,14 @@ function DeviceRow({
 
 function ManageDevicesView() {
   const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
   const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
-  const { projectState, selectedDeviceSession } = useProject();
+
+  const selectedProjectDevice = use$(selectedDeviceSessionState.deviceInfo);
+
+  const { projectState } = useProject();
   const { deviceSessions } = projectState;
-  const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);

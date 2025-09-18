@@ -1,5 +1,15 @@
 .network-log-details-tab-header {
   padding: 5px 10px;
+
+  div {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .codicon-warning {
+    color: var(--vscode-problemsWarningIcon-foreground);
+  }
 }
 
 .network-log-details-tab {
