@@ -46,12 +46,12 @@ export class DeviceManager implements Disposable {
   ) {
     this.loadDevicesIntoState();
     this.listInstalledIOSRuntimes().then((runtimes) => {
-      this.stateManager.setState({
+      this.stateManager.updateState({
         iOSRuntimes: runtimes,
       });
     });
     this.listInstalledAndroidImages().then((images) => {
-      this.stateManager.setState({
+      this.stateManager.updateState({
         androidImages: images,
       });
     });
@@ -120,7 +120,7 @@ export class DeviceManager implements Disposable {
     }
     const devices = await this.loadDevicesPromise;
     if (!_.isEqual(previousDevices, devices)) {
-      this.stateManager.setState({ devices });
+      this.stateManager.updateState({ devices });
     }
     return devices;
   }
@@ -164,7 +164,7 @@ export class DeviceManager implements Disposable {
     if (devices) {
       // we still want to perform load here in case anything changes, just won't wait for it
       this.loadDevices();
-      this.stateManager.setState({ devices });
+      this.stateManager.updateState({ devices });
     } else {
       return await this.loadDevices();
     }
@@ -224,7 +224,7 @@ export class DeviceManager implements Disposable {
     // This is an optimization to update before costly operations
     const previousDevices = this.stateManager.getState().devices ?? [];
     const devices = previousDevices.filter((d) => d.id !== device.id);
-    this.stateManager.setState({ devices });
+    this.stateManager.updateState({ devices });
 
     if (device.platform === DevicePlatform.IOS) {
       await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);

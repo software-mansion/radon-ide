@@ -16,7 +16,7 @@ import { MetroLauncher } from "./metro";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
-import { AppOrientation, InspectData, StartupMessage } from "../common/Project";
+import { AppOrientation, InspectData } from "../common/Project";
 import { disposeAll } from "../utilities/disposables";
 import { ToolKey, ToolPlugin, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
@@ -29,6 +29,7 @@ import {
   DeviceType,
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
+  StartupMessage,
 } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
 import { StateManager } from "./StateManager";
@@ -195,13 +196,13 @@ export class ApplicationSession implements Disposable {
   private setDevtoolsConnection = (devtools: DevtoolsConnection) => {
     this.devtools?.dispose();
     this.devtools = devtools;
-    this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
+    this.stateManager.updateState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
     devtools.onDisconnected(() => {
       if (devtools !== this.devtools) {
         return;
       }
       if (this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected) {
-        this.stateManager.setState({
+        this.stateManager.updateState({
           inspectorBridgeStatus: InspectorBridgeStatus.Disconnected,
         });
       }
@@ -210,7 +211,7 @@ export class ApplicationSession implements Disposable {
     });
     devtools.onProfilingChange((isProfiling) => {
       if (this.stateManager.getState().profilingReactState !== "saving") {
-        this.stateManager.setState({
+        this.stateManager.updateState({
           profilingReactState: isProfiling ? "profiling" : "stopped",
         });
       }
@@ -263,11 +264,11 @@ export class ApplicationSession implements Disposable {
 
   private onConsoleLog = (event: DebugSessionCustomEvent): void => {
     const currentLogCount = this.stateManager.getState().logCounter;
-    this.stateManager.setState({ logCounter: currentLogCount + 1 });
+    this.stateManager.updateState({ logCounter: currentLogCount + 1 });
   };
 
   private onDebuggerPaused = (event: DebugSessionCustomEvent): void => {
-    this.stateManager.setState({ isDebuggerPaused: true });
+    this.stateManager.updateState({ isDebuggerPaused: true });
 
     if (this.isActive) {
       commands.executeCommand("workbench.view.debug");
@@ -275,15 +276,15 @@ export class ApplicationSession implements Disposable {
   };
 
   private onDebuggerResumed = (event: DebugSessionCustomEvent): void => {
-    this.stateManager.setState({ isDebuggerPaused: false });
+    this.stateManager.updateState({ isDebuggerPaused: false });
   };
 
   private onProfilingCPUStarted = (event: DebugSessionCustomEvent): void => {
-    this.stateManager.setState({ profilingCPUState: "profiling" });
+    this.stateManager.updateState({ profilingCPUState: "profiling" });
   };
 
   private onProfilingCPUStopped = (event: DebugSessionCustomEvent): void => {
-    this.stateManager.setState({ profilingCPUState: "stopped" });
+    this.stateManager.updateState({ profilingCPUState: "stopped" });
     if (event.body?.filePath) {
       this.saveAndOpenCPUProfile(event.body.filePath);
     }
@@ -359,7 +360,7 @@ export class ApplicationSession implements Disposable {
 
   private async onBundleError(message: string, source: DebugSource) {
     Logger.error("[Bundling Error]", message);
-    this.stateManager.setState({
+    this.stateManager.updateState({
       bundleError: {
         kind: "bundle",
         message,
@@ -391,7 +392,7 @@ export class ApplicationSession implements Disposable {
     this.isActive = false;
     // NOTE: we reset the state to "connecting" here to prevent showing the "disconnected" alert
     // when switching between devices
-    this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connecting });
+    this.stateManager.updateState({ inspectorBridgeStatus: InspectorBridgeStatus.Connecting });
     this.toolsManager.deactivate();
     this.debugSessionEventSubscription?.dispose();
     this.debugSessionEventSubscription = undefined;
@@ -449,21 +450,23 @@ export class ApplicationSession implements Disposable {
         // we can assume that if it fires, the bundle loaded successfully.
         // This is necessary to reset the bundle error state when the app reload
         // is triggered from the app itself (e.g. by in-app dev menu or redbox).
-        this.stateManager.setState({ bundleError: null });
+        this.stateManager.updateState({ bundleError: null });
       }),
       inspectorBridge.onEvent("fastRefreshStarted", () => {
-        this.stateManager.setState({ bundleError: null, isRefreshing: true });
+        this.stateManager.updateState({ bundleError: null, isRefreshing: true });
       }),
       inspectorBridge.onEvent("fastRefreshComplete", () => {
-        this.stateManager.setState({ isRefreshing: false });
+        this.stateManager.updateState({ isRefreshing: false });
       }),
       inspectorBridge.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
-        this.stateManager.setState({ appOrientation: this.determineAppOrientation(orientation) });
+        this.stateManager.updateState({
+          appOrientation: this.determineAppOrientation(orientation),
+        });
       }),
       inspectorBridge.onEvent(
         "inspectorAvailabilityChanged",
         (inspectorAvailability: InspectorAvailabilityStatus) => {
-          this.stateManager.setState({ elementInspectorAvailability: inspectorAvailability });
+          this.stateManager.updateState({ elementInspectorAvailability: inspectorAvailability });
         }
       ),
     ];
@@ -553,7 +556,7 @@ export class ApplicationSession implements Disposable {
     try {
       return await this.devtools?.stopProfilingReact();
     } finally {
-      this.stateManager.setState({ profilingReactState: "stopped" });
+      this.stateManager.updateState({ profilingReactState: "stopped" });
     }
   }
   //#endregion
@@ -601,7 +604,7 @@ export class ApplicationSession implements Disposable {
   //#endregion
 
   public resetLogCounter() {
-    this.stateManager.setState({ logCounter: 0 });
+    this.stateManager.updateState({ logCounter: 0 });
   }
 
   public async dispose() {

@@ -1,19 +1,18 @@
 import { useToggleableAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
-
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { BuildType } from "../../common/BuildConfig";
+import { ProjectInterface } from "../../common/Project";
+import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
+import { Output } from "../../common/OutputChannel";
 import {
   BuildErrorDescriptor,
+  DevicePlatform,
   FatalErrorDescriptor,
   InstallationErrorDescriptor,
   InstallationErrorReason,
-  ProjectInterface,
-} from "../../common/Project";
-import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
-import { Output } from "../../common/OutputChannel";
-import { DevicePlatform } from "../../common/State";
+} from "../../common/State";
 import { VscodeButton as Button } from "@vscode-elements/react-elements";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
