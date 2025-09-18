@@ -1,5 +1,6 @@
 name: Build VSIX Nightly
 
+
 on:
   workflow_dispatch:
   schedule:

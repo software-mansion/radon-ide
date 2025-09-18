@@ -309,28 +309,25 @@ export class IosSimulatorDevice extends DeviceBase {
       `${bundleID}.plist`
     );
     Logger.debug(`Defaults location ${userDefaultsLocation}`);
-    try {
-      await exec(
-        "/usr/libexec/PlistBuddy",
-        [
-          "-c",
-          "Delete :RCT_jsLocation",
-          "-c",
-          `Add :RCT_jsLocation string localhost:${metroPort}`,
-          userDefaultsLocation,
-        ],
-        { allowNonZeroExit: true }
-      );
-    } catch (e) {
-      // Delete command fails if the key doesn't exists, but later commands run regardless,
-      // despite that process exits with non-zero code. We can ignore this error.
-    }
-    try {
-      // Simulator may keep the defaults in memory with cfprefsd, we restart the deamon to make sure
-      // it reads the latest values from disk.
-      // We'd normally try to use defaults command that would write the updates via the daemon, however
-      // for some reason that doesn't work with custom device sets.
-      await exec("xcrun", [
+    await exec(
+      "/usr/libexec/PlistBuddy",
+      [
+        "-c",
+        "Delete :RCT_jsLocation",
+        "-c",
+        `Add :RCT_jsLocation string localhost:${metroPort}`,
+        userDefaultsLocation,
+      ],
+      { allowNonZeroExit: true, reject: false }
+    );
+
+    // Simulator may keep the defaults in memory with cfprefsd, we restart the daemon to make sure
+    // it reads the latest values from disk.
+    // We'd normally try to use defaults command that would write the updates via the daemon, however
+    // for some reason that doesn't work with custom device sets.
+    await exec(
+      "xcrun",
+      [
         "simctl",
         "--set",
         deviceSetLocation,
@@ -339,10 +336,27 @@ export class IosSimulatorDevice extends DeviceBase {
         "launchctl",
         "stop",
         "com.apple.cfprefsd.xpc.daemon",
-      ]);
-    } catch (e) {
-      // ignore errors here and hope for the best
-    }
+      ],
+      { reject: false }
+    );
+
+    // Restarting cfprefsd breaks the SpringBoard process which in particular controls things like
+    // the appearance settings. We need to restart it following the cfprefsd reset.
+    await exec(
+      "xcrun",
+      [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "spawn",
+        this.deviceUDID,
+        "launchctl",
+        "kickstart",
+        "-k",
+        "system/com.apple.SpringBoard",
+      ],
+      { reject: false }
+    );
   }
 
   async terminateApp(bundleID: string) {
