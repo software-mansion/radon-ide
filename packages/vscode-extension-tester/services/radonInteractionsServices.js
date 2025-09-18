@@ -481,8 +481,8 @@ export class AppManipulationService {
       .move({
         // origin is center of phoneScreen
         origin: phoneScreen,
-        x: Math.floor((position.x + position.width / 2 - 0.5) * phoneWidth),
-        y: Math.floor((position.y + position.height / 2 - 0.5) * phoneHeight),
+        x: Math.floor((position.x + position.width / 2) * phoneWidth),
+        y: Math.floor((position.y + position.height / 2) * phoneHeight),
       })
       // .click() method does not trigger show touch on phone screen
       .press(rightClick ? 2 : 0)

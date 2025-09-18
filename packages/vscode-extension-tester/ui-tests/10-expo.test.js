@@ -52,7 +52,17 @@ describe("App interaction tests", () => {
     await radonViewsService.openRadonIDEPanel();
   });
 
-  it("", async () => {
-    await driver.sleep(100000);
+  it("show correct route for expo router", async () => {
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "expo-route-explore-button"
+    );
+    await appManipulationService.clickInsidePhoneScreen(position);
+
+    const urlInput = await elementHelperService.findAndWaitForElementByTag(
+      "radon-top-bar-url-input"
+    );
+    const url = await urlInput.getAttribute("value");
+    console.log("url", url);
   });
 });
