@@ -3,24 +3,13 @@ name: Build VSIX and Run Tests (macOS)
 on:
   workflow_dispatch:
   schedule:
-    - cron: "5 13 * * *"
+    - cron: "5 12 * * *"
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Set workflow start time
-        id: date
-        run: echo "date=$(date +'%Y-%m-%dT%H%M%S')" >> $GITHUB_OUTPUT
-
-      - name: Set targets
-        id: set_targets
-        run: |
-          targets="darwin-arm64 darwin-x64 win32-x64 linux-x64"
-          echo "Building extension for targets: $targets"
-          echo "targets=$targets" >> $GITHUB_OUTPUT
-
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
@@ -40,12 +29,35 @@ jobs:
         working-directory: packages/vscode-extension
         run: npm ci
 
+      - name: Prepare nightly version
+        working-directory: packages/vscode-extension
+        id: prepare_version
+        run: |
+          commit=$(git rev-parse --short=6 HEAD)
+
+          date=$(date +'%Y%m%d')
+
+          preid="nightly.${date}+${commit}"
+          echo "Using preid: $preid"
+
+          npm version preminor --preid=$preid --no-git-tag-version
+
+          new_version=$(node -p "require('./package.json').version")
+          echo "nightly_version=$new_version" >> $GITHUB_OUTPUT
+
       - name: Prepare package name for artifact upload
         id: prepare_name
         run: |
           ref_name=$(echo -n "${{ github.event.inputs.ref }}" | xargs | sed 's/[\\\/'"'"':<>|*?]/-/g') 
-          package_name=radon-ide-${ref_name}-${{ steps.date.outputs.date }}
+          package_name=radon-ide-${ref_name}-${{ steps.prepare_version.outputs.nightly_version }}
           echo "package_name=$package_name" >> $GITHUB_OUTPUT
+
+      - name: Set targets
+        id: set_targets
+        run: |
+          targets="darwin-arm64 darwin-x64 win32-x64 linux-x64"
+          echo "Building extension for targets: $targets"
+          echo "targets=$targets" >> $GITHUB_OUTPUT
 
       - name: Package extension for each target
         working-directory: packages/vscode-extension
