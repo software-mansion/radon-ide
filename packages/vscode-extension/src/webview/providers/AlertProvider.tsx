@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import Alert from "../components/shared/Alert";
 
-interface AlertType {
+interface AlertDescriptor {
   id: string;
   title: string;
   description?: string;
@@ -12,7 +12,7 @@ interface AlertType {
 }
 
 interface AlertContextProps {
-  openAlert: (alert: AlertType) => void;
+  openAlert: (alert: AlertDescriptor) => void;
   closeAlert: (id: string) => void;
   isOpen: (id: string) => boolean;
 }
@@ -24,7 +24,7 @@ const AlertContext = createContext<AlertContextProps>({
 });
 
 export default function AlertProvider({ children }: { children: React.ReactNode }) {
-  const [alerts, setAlerts] = useState<AlertType[]>([]);
+  const [alerts, setAlerts] = useState<AlertDescriptor[]>([]);
 
   const isOpen = useCallback(
     (id: string) => {
@@ -33,17 +33,14 @@ export default function AlertProvider({ children }: { children: React.ReactNode 
     [alerts]
   );
 
-  const openAlert = useCallback(
-    ({ id, title, description, actions, priority, closeable, type }: AlertType) => {
-      setAlerts((oldAlerts) => {
-        if (oldAlerts.some((alert) => alert.id === id)) {
-          return oldAlerts;
-        }
-        return [...oldAlerts, { id, title, description, actions, priority, closeable, type }];
-      });
-    },
-    []
-  );
+  const openAlert = useCallback((alertDescriptor: AlertDescriptor) => {
+    setAlerts((oldAlerts) => {
+      if (oldAlerts.some((alert) => alert.id === alertDescriptor.id)) {
+        return oldAlerts;
+      }
+      return [...oldAlerts, alertDescriptor];
+    });
+  }, []);
 
   const closeAlert = useCallback((id: string) => {
     setAlerts((oldAlerts) => oldAlerts.filter((alert) => alert.id !== id));
@@ -70,7 +67,7 @@ export default function AlertProvider({ children }: { children: React.ReactNode 
   );
 }
 
-function getTopAlert(alerts: AlertType[]) {
+function getTopAlert(alerts: AlertDescriptor[]) {
   const sorted = [...alerts];
 
   sorted.sort((a, b) => {
@@ -93,7 +90,7 @@ export function useAlert() {
   return context;
 }
 
-export function useToggleableAlert(open: boolean, alert: AlertType) {
+export function useToggleableAlert(open: boolean, alert: AlertDescriptor) {
   const { openAlert, isOpen, closeAlert } = useAlert();
   useEffect(() => {
     if (open && !isOpen(alert.id)) {
