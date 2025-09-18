@@ -33,7 +33,6 @@
   text-wrap: balance;
   font-size: 64px;
   font-weight: 400;
-  gap: 24px;
   line-height: 72px;
 }
 
@@ -90,11 +89,23 @@
   transition: opacity 0.3s;
 }
 
+.heroGraphic {
+  width: 100%;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+}
+
+.heroGraphic svg {
+  flex-shrink: 0;
+  width: auto;
+  height: 100%;
+  transform: translateX(calc(max(0px, (1200px - 100vw) * 0.1)));
+}
+
 @media (max-width: 767px) {
-  .headerWrapper {
-    padding: 40px 24px 24px;
-  }
-  .headingLabel {
+  .headingLabel,
+  .headingLabel span {
     margin: 0;
     text-align: left;
     text-wrap: balance;
@@ -107,5 +118,8 @@
     font-weight: 400;
     font-size: 16px;
     margin: 0;
+  }
+  .headerText {
+    padding: 0 24px;
   }
 }

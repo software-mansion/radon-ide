@@ -5,7 +5,7 @@
   gap: 20px;
   border: var(--radon-border-layout);
   align-items: flex-start;
-  width: 400px;
+  width: 100%;
 }
 
 .textContent {

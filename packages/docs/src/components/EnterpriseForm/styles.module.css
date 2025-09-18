@@ -1,0 +1,153 @@
+.mainContainer {
+  display: grid;
+  gap: 80px;
+  padding: 80px;
+  border-top: var(--radon-border-layout);
+  border-bottom: var(--radon-border-layout);
+  grid-template-columns: 1fr 1.2fr;
+}
+
+.description {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.heading {
+  color: var(--ifm-color-primary);
+  font-size: 48px;
+  font-weight: 400;
+  line-height: normal;
+}
+
+.subheading {
+  color: var(--radon-subheading);
+  font-size: 20px;
+  font-weight: 400;
+  line-height: 30px;
+  margin: 0;
+}
+
+.formContainer {
+  width: 100%;
+  border: var(--radon-border-layout);
+  padding: 24px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+form div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+form input,
+form select {
+  display: flex;
+  padding: 12px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex: 1 0 0;
+  align-self: stretch;
+  border: none;
+  background-color: var(--radon-border-grid-dark);
+}
+
+form textarea {
+  display: flex;
+  height: 160px;
+  padding: 12px;
+  align-items: flex-start;
+  align-self: stretch;
+  border: none;
+  background-color: var(--radon-border-grid-dark);
+}
+
+.submitButton {
+  display: flex;
+  height: 48px;
+  padding: 16px;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
+  background: var(--radon-button);
+}
+
+form button:hover {
+  background: var(--radon-button-hover);
+  transition: 0.3s;
+}
+
+.labelError {
+  color: var(--radon-required-field);
+}
+
+.error {
+  color: var(--radon-required-field);
+
+  font-family: Aeonik;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  margin: 0;
+}
+
+select,
+::picker(select) {
+  appearance: base-select;
+  border: none;
+}
+
+select {
+  background: var(--radon-border-grid-dark);
+  border-radius: 0;
+}
+
+option {
+  display: flex;
+  justify-content: flex-start;
+  gap: 20px;
+
+  border: 1px solid var(--swm-background);
+  background: var(--radon-border-grid-dark);
+  padding: 10px;
+  transition: 0.4s;
+}
+
+.selectWrapper {
+  position: relative;
+}
+::picker-icon {
+  content: "";
+}
+
+.selectIcon {
+  position: absolute;
+  right: 12px;
+  top: 70%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  width: 16px;
+  height: 16px;
+}
+
+@media (max-width: 1024px) {
+  .mainContainer {
+    grid-template-columns: 1fr;
+    padding: 40px 24px;
+    gap: 40px;
+  }
+  .heading {
+    font-size: 28px;
+  }
+  .subheading {
+    font-size: 16px;
+  }
+}

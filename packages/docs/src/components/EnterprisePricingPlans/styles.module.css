@@ -1,0 +1,40 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 80px;
+  gap: 40px;
+  justify-content: center;
+  border-top: var(--radon-border-layout);
+}
+
+.heading {
+  color: var(--ifm-color-primary);
+  text-align: center;
+
+  font-size: 48px;
+  font-weight: 400;
+  line-height: normal;
+  width: 530px;
+  margin: 0 auto;
+}
+
+.pricingLink {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+
+  font-family: Aeonik;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+}
+
+.pricingLink p {
+  margin: 0;
+}
+
+.pricingLink a {
+  color: var(--radon-text-green-highlight);
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}

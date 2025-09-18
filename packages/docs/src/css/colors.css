@@ -121,9 +121,7 @@
   /* ---------------- Green / Accent ---------------- */
   --radon-color-green-dark-700: #248363;
   --radon-color-green-dark-900: #186e51;
-  --radon-color-green-light-500: #57b495;
   --radon-color-green-light-400: #38a880;
-  --radon-color-green-light-200: var(--swm-green-light-40);
 
   /* ----------------------------- */
 
@@ -136,9 +134,9 @@
   --radon-text-secondary-light: var(--radon-color-gray-light-300);
   --radon-text-tertiary-light: var(--radon-color-gray-light-400);
 
-  --radon-text-accent: var(--radon-color-green-light-500);
+  --radon-text-accent: var(--swm-green-light-100);
   --radon-text-link-light: var(--radon-color-white-light-100);
-  --radon-text-link-dark: var(--radon-color-green-light-500);
+  --radon-text-link-dark: var(--swm-green-light-100);
 
   /* ---------------- Button ---------------- */
   --radon-button-primary-background-dark: var(--radon-color-green-dark-700);
@@ -165,7 +163,7 @@
   --radon-border-grid-dark: var(--radon-color-gray-dark-800);
   --radon-border-grid-light: var(--radon-color-gray-light-200);
   --radon-border-grid-subtle-light: var(--radon-color-gray-light-100);
-  --radon-border-accent-dark: var(--radon-color-green-light-500);
+  --radon-border-accent-dark: var(--swm-green-light-100);
 
   /* ---------------- Badge ---------------- */
   --radon-badge-text-dark: var(--radon-color-white-light-100);
@@ -175,7 +173,7 @@
 
   /* ---------------- Image ---------------- */
   --radon-image-in-grid-dark: var(--radon-color-gray-dark-700);
-  --radon-image-in-grid-light: var(--radon-color-green-light-500);
+  --radon-image-in-grid-light: var(--swm-green-light-100);
   --radon-SWM-icon-stroke-light: var(--swm-navy-light-100);
   --radon-SWM-icon-stroke-dark: var(--radon-color-white-light-100);
   /* ----------------------------- */
@@ -213,6 +211,8 @@
   --radon-fill-pattern: var(--radon-color-gray-light-200);
 
   --radon-SWM-icon: var(--radon-SWM-icon-stroke-light);
+
+  --radon-required-field: var(--swm-red-light-60);
 
   /* Infima main colors */
   --ifm-color-primary: var(--radon-text-primary-light);

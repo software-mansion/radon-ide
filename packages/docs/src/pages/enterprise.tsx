@@ -8,6 +8,8 @@ import FAQ from "../components/Sections/FAQ";
 import Testimonials from "../components/Sections/Testimonials";
 import EnterpriseGridGraphic from "../components/EnterpriseGridGraphic";
 import BenefitsEnterprise from "../components/Sections/BenefitsEnterprise";
+import EnterpriseForm from "../components/EnterpriseForm";
+import EnterprisePricingPlans from "../components/EnterprisePricingPlans";
 
 export default function Enterprise(): JSX.Element {
   return (
@@ -18,7 +20,7 @@ export default function Enterprise(): JSX.Element {
             <div className={styles.headerText}>
               <div className={styles.titleContainer}>
                 <h1 className={styles.headingLabel}>
-                  Radon <span>IDE</span> Enterprise
+                  Radon <span> IDE </span> Enterprise
                 </h1>
                 <h3 className={styles.subheadingLabel}>
                   Helping teams deliver high-quality React Native apps faster
@@ -33,12 +35,16 @@ export default function Enterprise(): JSX.Element {
                 </a>
               </div>
             </div>
-            <EnterpriseGridGraphic />
+            <div className={styles.heroGraphic}>
+              <EnterpriseGridGraphic />
+            </div>
           </div>
           <BenefitsEnterprise />
           <FeaturesLanding />
+          <EnterprisePricingPlans />
           <Testimonials />
           <SWM />
+          <EnterpriseForm />
           <FAQ />
         </div>
       </div>
