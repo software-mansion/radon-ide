@@ -1,4 +1,5 @@
-name: Build VSIX nightly
+name: Build VSIX Nightly
+
 
 on:
   workflow_dispatch:
@@ -6,7 +7,7 @@ on:
     - cron: "47 0 * * *"
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -74,8 +75,30 @@ jobs:
           done
           echo "output_paths=$output_paths" >> $GITHUB_OUTPUT
 
-      - name: Upload extension artifacts
+      - name: upload mac arm
         uses: actions/upload-artifact@v4
         with:
-          name: radon-ide-extensions
-          path: /tmp/${{ steps.prepare_name.outputs.package_name }}-*.vsix
+          name: ${{ steps.prepare_name.outputs.package_name }}-darwin-arm64.vsix
+          path: /tmp/${{ steps.prepare_name.outputs.package_name }}-*darwin-arm64*.vsix
+          retention-days: 7
+
+      - name: upload mac x64
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare_name.outputs.package_name }}-darwin-x64.vsix
+          path: /tmp/${{ steps.prepare_name.outputs.package_name }}-*darwin-x64*.vsix
+          retention-days: 7
+
+      - name: upload windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare_name.outputs.package_name }}-win32-x64.vsix
+          path: /tmp/${{ steps.prepare_name.outputs.package_name }}-*win32*.vsix
+          retention-days: 7
+
+      - name: upload linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare_name.outputs.package_name }}-linux-x64.vsix
+          path: /tmp/${{ steps.prepare_name.outputs.package_name }}-*linux*.vsix
+          retention-days: 7
