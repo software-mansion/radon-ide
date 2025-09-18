@@ -14,6 +14,7 @@ import { ApplicationDependencyManager } from "../dependency/ApplicationDependenc
 import { Logger } from "../Logger";
 import { FingerprintProvider } from "./FingerprintProvider";
 import { requireNoCache } from "../utilities/requireNoCache";
+import { MetroProvider, SharedMetroProvider, UniqueMetroProvider } from "./metro";
 
 /**
  * Represents a launch configuration that has been resolved with additional properties.
@@ -85,12 +86,24 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
   };
 }
 
+function createMetroProvider(launchConfig: ResolvedLaunchConfig) {
+  if (launchConfig.metroPort) {
+    return new SharedMetroProvider(launchConfig, undefined, []);
+  }
+  return new UniqueMetroProvider(launchConfig, undefined, []);
+}
+
 export class ApplicationContext implements Disposable {
   public applicationDependencyManager: ApplicationDependencyManager;
   public buildManager: BuildManager;
   public launchConfig: ResolvedLaunchConfig;
   public readonly buildCache: BuildCache;
+  private _metroProvider: MetroProvider & Partial<Disposable>;
   private disposables: Disposable[] = [];
+
+  public get metroProvider(): MetroProvider {
+    return this._metroProvider;
+  }
 
   constructor(
     private readonly stateManager: StateManager<ApplicationContextState>,
@@ -109,6 +122,7 @@ export class ApplicationContext implements Disposable {
       new BuildManagerImpl(this.buildCache, fingerprintProvider)
     );
     this.buildManager = buildManager;
+    this._metroProvider = createMetroProvider(this.launchConfig);
 
     this.disposables.push(this.applicationDependencyManager, buildManager);
   }
@@ -125,9 +139,12 @@ export class ApplicationContext implements Disposable {
     this.launchConfig = resolveLaunchConfig(launchConfig);
     this.applicationDependencyManager.setLaunchConfiguration(this.launchConfig);
     await this.applicationDependencyManager.runAllDependencyChecks();
+    this._metroProvider.dispose?.();
+    this._metroProvider = createMetroProvider(this.launchConfig);
   }
 
   public dispose() {
     disposeAll(this.disposables);
+    this._metroProvider.dispose?.();
   }
 }

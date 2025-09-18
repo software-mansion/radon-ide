@@ -21,8 +21,8 @@ import {
   generateInitialDeviceSessionStore,
   ProjectStore,
 } from "../common/State";
-import { createWebSocketDevtoolsServer, DevtoolsServer } from "./devtools";
-import { MetroProvider, SharedMetroProvider } from "./metro";
+import { DevtoolsServer } from "./devtools";
+import { MetroProvider } from "./metro";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -173,31 +173,11 @@ export class DeviceSessionsManager implements Disposable {
       });
     }
 
-    if (!this.servers) {
-      const nodeModulesStatus = this.applicationContext.applicationDependencyManager
-        .checkNodeModulesInstallationStatus()
-        .then((installed) => {
-          if (!installed) {
-            throw new Error("Node Modules are not installed.");
-          }
-        });
-      let devtoolsServer;
-      if (this.applicationContext.launchConfig.useOldDevtools) {
-        devtoolsServer = await createWebSocketDevtoolsServer();
-      }
-      const metroProvider = new SharedMetroProvider(
-        this.applicationContext.launchConfig,
-        devtoolsServer?.port,
-        [nodeModulesStatus]
-      );
-      this.servers = { devtoolsServer, metroProvider };
-    }
-
     const newDeviceSession = new DeviceSession(
       this.stateManager.getDerived(deviceInfo.id),
       this.applicationContext,
       device,
-      this.servers.devtoolsServer,
+      undefined,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
       {
         onStateChange: () => {
@@ -209,7 +189,7 @@ export class DeviceSessionsManager implements Disposable {
         },
       },
       this.outputChannelRegistry,
-      this.servers.metroProvider
+      this.applicationContext.metroProvider
     );
 
     this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);

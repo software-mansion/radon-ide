@@ -31,6 +31,7 @@ export interface LaunchOptions {
   usePrebuild?: boolean;
   useOldDevtools?: boolean;
   useCustomJSDebugger?: boolean;
+  metroPort?: number;
 }
 
 export const LAUNCH_OPTIONS_KEYS = [
@@ -49,6 +50,7 @@ export const LAUNCH_OPTIONS_KEYS = [
   "usePrebuild",
   "useOldDevtools",
   "useCustomJSDebugger",
+  "metroPort",
 ] as const;
 
 type IsSuperTypeOf<Base, T extends Base> = T;

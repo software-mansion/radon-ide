@@ -40,39 +40,112 @@ export interface MetroProvider {
   restartServer(options: { resetCache: boolean }): Promise<MetroSession & Disposable>;
 }
 
-export class SharedMetroProvider implements MetroProvider, Disposable {
-  private metroSession?: Promise<MetroSession & Disposable>;
+export class UniqueMetroProvider implements MetroProvider {
   constructor(
     private readonly launchConfiguration: ResolvedLaunchConfig,
     private readonly devtoolsPort: number | undefined,
     private readonly dependencies: Promise<unknown>[]
   ) {}
 
-  public getMetroSession({ resetCache }: { resetCache: boolean }) {
-    if (!this.metroSession) {
-      this.metroSession = launchMetro({
-        devtoolsPort: this.devtoolsPort,
-        launchConfiguration: this.launchConfiguration,
-        dependencies: this.dependencies,
-        resetCache,
-      });
-    }
-    return this.metroSession;
+  getMetroSession(options: { resetCache: boolean }): Promise<MetroSession & Disposable> {
+    return launchMetro({
+      devtoolsPort: this.devtoolsPort,
+      launchConfiguration: this.launchConfiguration,
+      dependencies: this.dependencies,
+      resetCache: options.resetCache,
+    });
   }
 
-  public restartServer({ resetCache }: { resetCache: boolean }) {
+  restartServer(options: { resetCache: boolean }): Promise<MetroSession & Disposable> {
+    return this.getMetroSession(options);
+  }
+}
+
+export class SharedMetroProvider implements MetroProvider, Disposable {
+  private readonly port: number | undefined;
+  private metroSession?: Promise<MetroSession & Disposable>;
+  private counterRef = { current: 0 };
+
+  constructor(
+    private readonly launchConfiguration: ResolvedLaunchConfig,
+    private readonly devtoolsPort: number | undefined,
+    private readonly dependencies: Promise<unknown>[]
+  ) {
+    this.port = this.launchConfiguration.metroPort;
+  }
+
+  public async getMetroSession({ resetCache }: { resetCache: boolean }) {
+    if (this.counterRef.current === 0 || resetCache) {
+      this.createNewSession(resetCache);
+    }
+    return this.getSharedSession();
+  }
+
+  public async restartServer({ resetCache }: { resetCache: boolean }) {
     this.metroSession?.then((session) => session.dispose());
+    this.createNewSession(resetCache);
+    return this.getSharedSession();
+  }
+
+  private createNewSession(resetCache: boolean) {
     this.metroSession = launchMetro({
+      port: this.port,
       devtoolsPort: this.devtoolsPort,
       launchConfiguration: this.launchConfiguration,
       dependencies: this.dependencies,
       resetCache,
     });
-    return this.metroSession;
+    this.counterRef = { current: 0 };
+  }
+
+  private async getSharedSession() {
+    assert(this.metroSession, "Metro session is initialized");
+    this.counterRef.current += 1;
+    const session = await this.metroSession;
+    return new SharedMetroSession(session, this.counterRef);
   }
 
   public dispose() {
     this.metroSession?.then((session) => session.dispose());
+  }
+}
+
+class SharedMetroSession implements MetroSession, Disposable {
+  constructor(
+    private readonly wrappedSession: MetroSession & Disposable,
+    private readonly counterRef: { current: number }
+  ) {}
+
+  get port() {
+    return this.wrappedSession.port;
+  }
+  get sourceMapPathOverrides() {
+    return this.wrappedSession.sourceMapPathOverrides;
+  }
+  get expoPreludeLineCount() {
+    return this.wrappedSession.expoPreludeLineCount;
+  }
+  onBundleError = this.wrappedSession.onBundleError;
+  onBundleProgress = this.wrappedSession.onBundleProgress;
+  onServerStopped = this.wrappedSession.onServerStopped;
+  getDebuggerURL(cancelToken: CancelToken): Promise<DebuggerTargetDescription | undefined> {
+    return this.wrappedSession.getDebuggerURL(cancelToken);
+  }
+  getDebuggerPages(cancelToken: CancelToken): Promise<CDPTargetDescription[]> {
+    return this.wrappedSession.getDebuggerPages(cancelToken);
+  }
+  reload(): Promise<void> {
+    return this.wrappedSession.reload();
+  }
+  openDevMenu(): Promise<void> {
+    return this.wrappedSession.openDevMenu();
+  }
+
+  dispose() {
+    this.counterRef.current -= 1;
+    if (this.counterRef.current <= 0) {
+      this.wrappedSession.dispose();
+    }
   }
 }
 
@@ -151,11 +224,13 @@ const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
 
 async function launchMetro({
+  port,
   resetCache,
   dependencies,
   launchConfiguration,
   devtoolsPort,
 }: {
+  port?: number;
   resetCache: boolean;
   dependencies: Promise<unknown>[];
   launchConfiguration: ResolvedLaunchConfig;
@@ -171,7 +246,7 @@ async function launchMetro({
   }
   const isExtensionDev = extensionContext.extensionMode === ExtensionMode.Development;
 
-  const port = await getOpenPort();
+  port = port ?? (await getOpenPort());
 
   // NOTE: this is needed to capture metro's open-stack-frame calls.
   // See `packages/vscode-extension/atom` script for more details.
@@ -200,6 +275,7 @@ async function launchMetro({
   if (shouldUseExpoCLI(launchConfiguration)) {
     return await SubprocessMetroSession.launchExpoMetro(
       appRoot,
+      port,
       libPath,
       resetCache,
       launchConfiguration.expoStartArgs,
@@ -401,12 +477,13 @@ class SubprocessMetroSession extends Metro implements Disposable {
 
   public static async launchExpoMetro(
     appRootFolder: string,
+    port: number,
     libPath: string,
     resetCache: boolean,
     expoStartExtraArgs: string[] | undefined,
     metroEnv: typeof process.env
   ): Promise<SubprocessMetroSession> {
-    const args = [path.join(libPath, "expo_start.js")];
+    const args = [path.join(libPath, "expo_start.js"), "--port", `${port}`];
     if (resetCache) {
       args.push("--clear");
     }
