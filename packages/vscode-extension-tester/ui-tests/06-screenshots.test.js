@@ -155,7 +155,7 @@ describe("screenshots tests", () => {
   });
 
   it("Should open replay overlay", async () => {
-    await radonSettingsService.toggleEnableReplays();
+    await radonSettingsService.setEnableReplays(true);
 
     await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-show-replay-button"
@@ -168,7 +168,7 @@ describe("screenshots tests", () => {
   });
 
   it("Should open replay overlay using shortcut", async () => {
-    await radonSettingsService.toggleEnableReplays();
+    await radonSettingsService.setEnableReplays(true);
 
     // some time to wait for replay to record
     await driver.sleep(1000);
