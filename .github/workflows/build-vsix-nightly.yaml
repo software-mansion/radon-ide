@@ -92,7 +92,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.prepare_name.outputs.package_name }}-win32-x64.vsix
-          path: /tmp/${{ steps.prepare_name.outputs.package_name }}-*win*.vsix
+          path: /tmp/${{ steps.prepare_name.outputs.package_name }}-*win32*.vsix
           retention-days: 7
 
       - name: upload linux
