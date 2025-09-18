@@ -40,7 +40,7 @@ describe("App interaction tests", () => {
     } catch {}
 
     await appManipulationService.waitForAppToLoad();
-    await radonSettingsService.toggleShowTouches();
+    await radonSettingsService.setShowTouches(true);
 
     view = new WebView();
     await view.switchBack();

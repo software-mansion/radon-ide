@@ -338,7 +338,7 @@ export default function ReplayOverlay({
   const timeFormat = `${Math.floor(timeSec / 60)}:${(timeSec % 60).toString().padStart(2, "0")}`;
 
   return (
-    <div className="replay-overlay">
+    <div className="replay-overlay" data-testid="replay-overlay">
       <div className="replay-corner replay-top-left" />
       <div className="replay-corner replay-top-right" />
       <div className="replay-corner replay-bottom-left" />
@@ -388,6 +388,7 @@ export default function ReplayOverlay({
             </div>
             <Button
               className="button-replay"
+              dataTest="replay-save-button"
               onClick={saveReplay}
               tooltip={{ label: "Save replay" }}>
               <span className="codicon codicon-save-as" /> Save
