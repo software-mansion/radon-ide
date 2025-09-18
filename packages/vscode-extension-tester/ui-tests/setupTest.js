@@ -16,8 +16,7 @@ import {
 import startRecording from "../utils/screenRecording.js";
 import getConfiguration from "../configuration.js";
 
-const config = getConfiguration();
-const IS_RECORDING = config.isRecording;
+const { IS_RECORDING } = getConfiguration();
 
 let driver, workbench, view, browser;
 let recorder;

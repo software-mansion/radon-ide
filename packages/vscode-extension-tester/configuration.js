@@ -18,11 +18,11 @@ function prioritizeEnv(field) {
 }
 
 export default function getConfiguration() {
-  const isRecording = prioritizeEnv("IS_RECORDING");
-  const isAndroid = prioritizeEnv("IS_ANDROID");
+  const IS_RECORDING = prioritizeEnv("IS_RECORDING");
+  const IS_ANDROID = prioritizeEnv("IS_ANDROID");
 
   return {
-    isRecording,
-    isAndroid,
+    IS_RECORDING,
+    IS_ANDROID,
   };
 }

@@ -277,8 +277,7 @@ export class ManagingDevicesService {
       "creating-device-form-device-type-select"
     );
 
-    const config = getConfiguration();
-    const IS_ANDROID = config.isAndroid;
+    const { IS_ANDROID } = getConfiguration();
     const device = IS_ANDROID ? "pixel" : "com.apple";
 
     const selectedDevice =
