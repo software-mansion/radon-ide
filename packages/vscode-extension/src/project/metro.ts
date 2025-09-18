@@ -565,7 +565,10 @@ export async function getDebuggerTargetForDevice(
           return target.deviceName.startsWith("sdk_gphone64_");
         }
       });
-      return await pickDebuggerTarget(pagesForDevice);
+      const debuggerTarget = await pickDebuggerTarget(pagesForDevice);
+      if (debuggerTarget !== undefined) {
+        return debuggerTarget;
+      }
     } catch (e) {
       if (cancelToken.cancelled) {
         return undefined;
