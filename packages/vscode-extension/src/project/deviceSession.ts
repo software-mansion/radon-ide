@@ -338,7 +338,7 @@ export class DeviceSession implements Disposable {
       return this.metro;
     }
 
-    this.updateStartupMessage(StartupMessage.StartingPackager);
+    this.metro?.dispose();
     this.metro = undefined;
     this.metro = forceRestart
       ? await this.metroProvider.restartServer({ resetCache })
@@ -353,10 +353,6 @@ export class DeviceSession implements Disposable {
     const cancelToken = this.cancelToken;
 
     this.updateStartupMessage(StartupMessage.StartingPackager);
-    const oldMetro = this.metro;
-    oldMetro?.dispose();
-
-    Logger.debug(`Launching metro`);
     await this.getOrStartMetro({ resetCache, forceRestart: true });
 
     this.applicationSession?.dispose();
@@ -636,25 +632,9 @@ export class DeviceSession implements Disposable {
       this.cancelOngoingOperations();
       const cancelToken = this.cancelToken;
 
-      // const packageManagerOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
-      //   Output.PackageManager
-      // );
+      this.updateStartupMessage(StartupMessage.StartingPackager);
+      await cancelToken.adapt(this.getOrStartMetro({ resetCache: false }));
 
-      // const waitForNodeModules =
-      //   this.applicationContext.applicationDependencyManager.ensureDependenciesForStart(
-      //     packageManagerOutputChannel,
-      //     cancelToken
-      //   );
-
-      Logger.debug(`Launching metro`);
-      // this.metro.start({
-      //   resetCache: false,
-      //   launchConfiguration: this.applicationContext.launchConfig,
-      //   dependencies: [waitForNodeModules],
-      //   devtoolsPort: this.devtoolsServer.port,
-      // });
-      //
-      // await cancelToken.adapt(this.waitForMetroReady());
       await cancelToken.adapt(this.bootDevice());
       await this.buildApp({
         clean: false,

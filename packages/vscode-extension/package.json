@@ -632,6 +632,10 @@
               "useCustomJSDebugger": {
                 "type": "boolean",
                 "description": "When set to true, Radon will use a custom implementation of the JavaScript debugger. This is an experimental feature, use with caution."
+              },
+              "metroPort": {
+                "type": "number",
+                "description": "Port number that will be used by Metro bundler. If not specified, a free port will be automatically chosen."
               }
             }
           }
@@ -862,6 +866,10 @@
               "useCustomJSDebugger": {
                 "type": "boolean",
                 "description": "When set to true, Radon will use a custom implementation of the JavaScript debugger. This is an experimental feature, use with caution."
+              },
+              "metroPort": {
+                "type": "number",
+                "description": "Port number that will be used by Metro bundler. If not specified, a free port will be automatically chosen."
               }
             }
           }
