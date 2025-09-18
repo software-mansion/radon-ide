@@ -39,7 +39,7 @@ import {
   CDPDevtoolsServer,
 } from "./devtools";
 import { RadonInspectorBridge } from "./bridge";
-import { getDebuggerTargetUrl, MetroSession } from "./MetroNew";
+import { getDebuggerTargetForDevice, MetroSession } from "./metro";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
@@ -430,13 +430,13 @@ export class ApplicationSession implements Disposable {
     this.connectJSDebuggerCancelToken = new CancelToken();
     cancelToken?.onCancel(() => this.connectJSDebuggerCancelToken.cancel());
 
-    const websocketAddress = await getDebuggerTargetUrl(
+    const target = await getDebuggerTargetForDevice(
       this.metro,
       this.device.deviceInfo,
       this.connectJSDebuggerCancelToken,
       undefined
     );
-    if (!websocketAddress) {
+    if (!target) {
       Logger.error("Couldn't find a proper debugger URL to connect to");
       return;
     }
@@ -445,9 +445,8 @@ export class ApplicationSession implements Disposable {
       return;
     }
     await this.debugSession.startJSDebugSession({
-      websocketAddress,
+      ...target,
       displayDebuggerOverlay: false,
-      isUsingNewDebugger: this.metro.isUsingNewDebugger,
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
       sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
     });

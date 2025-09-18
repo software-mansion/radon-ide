@@ -41,7 +41,7 @@ import { ScreenCapture } from "./ScreenCapture";
 import { disposeAll } from "../utilities/disposables";
 import { FileTransfer } from "./FileTransfer";
 import { DevtoolsServer } from "./devtools";
-import { MetroProvider, MetroSession } from "./MetroNew";
+import { MetroProvider, MetroSession } from "./metro";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -324,14 +324,25 @@ export class DeviceSession implements Disposable {
     }
   }
 
-  private async getOrStartMetro({ resetCache }: { resetCache: boolean }) {
-    if (this.metro !== undefined) {
+  private async getOrStartMetro({
+    resetCache,
+    forceRestart = false,
+  }: {
+    resetCache: boolean;
+    forceRestart?: boolean;
+  }) {
+    // NOTE: `resetCache` requires restarting the server as well
+    forceRestart = forceRestart || resetCache;
+
+    if (!forceRestart && this.metro !== undefined) {
       return this.metro;
     }
 
     this.updateStartupMessage(StartupMessage.StartingPackager);
     this.metro = undefined;
-    this.metro = await this.metroProvider.getMetroSession({ resetCache });
+    this.metro = forceRestart
+      ? await this.metroProvider.restartServer({ resetCache })
+      : await this.metroProvider.getMetroSession({ resetCache });
     this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
 
     return this.metro;
@@ -346,7 +357,7 @@ export class DeviceSession implements Disposable {
     oldMetro?.dispose();
 
     Logger.debug(`Launching metro`);
-    await this.getOrStartMetro({ resetCache });
+    await this.getOrStartMetro({ resetCache, forceRestart: true });
 
     this.applicationSession?.dispose();
     this.applicationSession = undefined;

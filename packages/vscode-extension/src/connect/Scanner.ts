@@ -1,14 +1,14 @@
 import { Disposable, workspace } from "vscode";
-import { Metro } from "../project/metro";
 import { sleep } from "../utilities/retry";
 import { RADON_CONNECT_PORT_KEY } from "./Connector";
 import { extensionContext } from "../utilities/extensionContext";
+import { Metro, MetroSession } from "../project/metro";
 export const PORT_SCAN_INTERVAL_MS = 4000;
 export const DEFAULT_PORTS = [8081, 8082];
 
 export type ScannerDelegate = {
   onPortStatusUpdated: () => void;
-  onDeviceCandidateFound: (metro: Metro, websocketAddress: string) => Promise<void>;
+  onDeviceCandidateFound: (metro: MetroSession, websocketAddress: string) => Promise<void>;
 };
 
 function isInWorkspace(absoluteFilePath: string) {
@@ -50,19 +50,19 @@ export class Scanner implements Disposable {
   }
 
   private async verifyAndConnect(port: number, projectRoot: string) {
-    const metro = new Metro(port, [projectRoot]);
-    const websocketAddress = await metro.getDebuggerURL();
-    if (!websocketAddress) {
+    const metro = new Metro(port, projectRoot);
+    const debuggerTarget = await metro.getDebuggerURL();
+    if (!debuggerTarget) {
       this.portsStatus.set(port, "no connected device listed");
       return false;
     }
-    if (!metro.isUsingNewDebugger) {
+    if (!debuggerTarget.isUsingNewDebugger) {
       this.portsStatus.set(port, "using old debugger");
       return false;
     }
 
     this.portsStatus.set(port, "connecting...");
-    await this.delegate?.onDeviceCandidateFound(metro, websocketAddress);
+    await this.delegate?.onDeviceCandidateFound(metro, debuggerTarget.websocketAddress);
   }
 
   private async scanPort(port: number) {
