@@ -22,7 +22,7 @@ import {
   ProjectStore,
 } from "../common/State";
 import { createWebSocketDevtoolsServer, DevtoolsServer } from "./devtools";
-import { MetroProvider, SharedMetroProvider } from "./MetroNew";
+import { MetroProvider, SharedMetroProvider } from "./metro";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;

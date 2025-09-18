@@ -5,7 +5,7 @@ import { sleep } from "../utilities/retry";
 import { DebugSession, DebugSource, JSDebugConfiguration } from "./DebugSession";
 import { disposeAll } from "../utilities/disposables";
 import { DevtoolsServer } from "../project/devtools";
-import { getDebuggerTargetUrl, MetroSession } from "../project/MetroNew";
+import { getDebuggerTargetForDevice, MetroSession } from "../project/metro";
 import { DeviceInfo } from "../common/State";
 
 const PING_TIMEOUT = 1000;
@@ -66,19 +66,18 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
           // if we're connected to a responsive session, we can break
           break;
         }
-        const websocketAddress = await getDebuggerTargetUrl(
+        const target = await getDebuggerTargetForDevice(
           this.metro,
           this.deviceInfo,
           cancelToken,
           undefined
         );
-        if (!websocketAddress) {
+        if (!target) {
           throw new Error("No connected device listed");
         }
         await this.debugSession.startJSDebugSession({
-          websocketAddress,
+          ...target,
           displayDebuggerOverlay: false,
-          isUsingNewDebugger: this.metro.isUsingNewDebugger,
           expoPreludeLineCount: this.metro.expoPreludeLineCount,
           sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
         });
