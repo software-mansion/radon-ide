@@ -1,9 +1,9 @@
-name: Build VSIX and Run Tests (macOS)
+name: Build VSIX nightly
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: "10 12 * * *"
+    - cron: "47 0 * * *"
 
 jobs:
   build-and-test:
