@@ -346,7 +346,7 @@ export class IosSimulatorDevice extends DeviceBase {
     try {
       // After performing the above hack we need to restart SpringBoard as well,
       // because com.apple.cfprefsd.xpc.daemon restart breaks it's ability to read
-      // the preferences (e.g appearance).
+      // the settings (e.g appearance).
       await exec("xcrun", [
         "simctl",
         "--set",
