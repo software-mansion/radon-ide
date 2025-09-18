@@ -326,7 +326,7 @@ export class IosSimulatorDevice extends DeviceBase {
       // despite that process exits with non-zero code. We can ignore this error.
     }
     try {
-      // Simulator may keep the defaults in memory with cfprefsd, we restart the deamon to make sure
+      // Simulator may keep the defaults in memory with cfprefsd, we restart the daemon to make sure
       // it reads the latest values from disk.
       // We'd normally try to use defaults command that would write the updates via the daemon, however
       // for some reason that doesn't work with custom device sets.
@@ -339,6 +339,24 @@ export class IosSimulatorDevice extends DeviceBase {
         "launchctl",
         "stop",
         "com.apple.cfprefsd.xpc.daemon",
+      ]);
+    } catch (e) {
+      // ignore errors here and hope for the best
+    }
+    try {
+      // After performing the above hack we need to restart SpringBoard as well,
+      // because com.apple.cfprefsd.xpc.daemon restart breaks it's ability to read
+      // the preferences (e.g appearance).
+      await exec("xcrun", [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "spawn",
+        this.deviceUDID,
+        "launchctl",
+        "kickstart",
+        "-k",
+        "system/com.apple.SpringBoard",
       ]);
     } catch (e) {
       // ignore errors here and hope for the best
