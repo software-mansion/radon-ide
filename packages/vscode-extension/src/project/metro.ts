@@ -29,11 +29,8 @@ export interface MetroSession {
   onBundleProgress: (listener: (event: BundleProgressEvent) => void) => Disposable;
   onServerStopped: (listener: () => void) => Disposable;
 
-  getDebuggerURL(
-    timeoutMs: number,
-    cancelToken?: CancelToken
-  ): Promise<DebuggerTargetDescription | undefined>;
-  getDebuggerPages(timeoutMs: number, cancelToken?: CancelToken): Promise<CDPTargetDescription[]>;
+  getDebuggerURL(cancelToken: CancelToken): Promise<DebuggerTargetDescription | undefined>;
+  getDebuggerPages(cancelToken: CancelToken): Promise<CDPTargetDescription[]>;
   reload(): Promise<void>;
   openDevMenu(): Promise<void>;
 }
@@ -219,8 +216,6 @@ async function launchMetro({
   }
 }
 
-const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
-
 export class Metro implements MetroSession, Disposable {
   protected _expoPreludeLineCount = 0;
   protected _watchFolders: string[] | undefined = undefined;
@@ -252,18 +247,14 @@ export class Metro implements MetroSession, Disposable {
     return this._port;
   }
 
-  public async getDebuggerPages(
-    timeoutMs: number,
-    cancelToken?: CancelToken
-  ): Promise<CDPTargetDescription[]> {
-    return (await this.fetchWsTargets(timeoutMs, cancelToken)) || [];
+  public async getDebuggerPages(cancelToken: CancelToken): Promise<CDPTargetDescription[]> {
+    return (await this.fetchWsTargets(cancelToken)) || [];
   }
 
   public async getDebuggerURL(
-    timeoutMs: number | undefined = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
-    cancelToken: CancelToken = new CancelToken()
+    cancelToken: CancelToken
   ): Promise<DebuggerTargetDescription | undefined> {
-    const listJson = await this.fetchWsTargets(timeoutMs, cancelToken);
+    const listJson = await this.fetchWsTargets(cancelToken);
 
     if (listJson === undefined) {
       return undefined;
@@ -320,23 +311,11 @@ export class Metro implements MetroSession, Disposable {
   }
 
   private async fetchWsTargets(
-    timeoutMs: number = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
-    cancelToken: CancelToken = new CancelToken()
+    cancelToken: CancelToken
   ): Promise<CDPTargetDescription[] | undefined> {
     let retryCount = 0;
-    const startTime = performance.now();
 
-    function shouldContinue() {
-      if (timeoutMs >= 0) {
-        if (performance.now() - startTime > timeoutMs) {
-          return false;
-        }
-      }
-
-      return !cancelToken.cancelled;
-    }
-
-    while (shouldContinue()) {
+    while (!cancelToken.cancelled) {
       retryCount++;
 
       try {
@@ -573,15 +552,11 @@ interface DebuggerTargetDescription {
 export async function getDebuggerTargetForDevice(
   metro: MetroSession,
   deviceInfo: DeviceInfo,
-  cancelToken: CancelToken,
-  timeoutMs?: number
+  cancelToken: CancelToken
 ): Promise<DebuggerTargetDescription | undefined> {
-  const now = performance.now();
-  const deadline = timeoutMs ? now + timeoutMs : undefined;
-  while (deadline ?? Number.POSITIVE_INFINITY > performance.now()) {
+  while (!cancelToken.cancelled) {
     try {
-      const remainingTimeout = deadline ? Math.max(1, deadline - performance.now()) : -1;
-      const debuggerPages = await metro.getDebuggerPages(remainingTimeout, cancelToken);
+      const debuggerPages = await metro.getDebuggerPages(cancelToken);
       const pagesForDevice = debuggerPages.filter((target) => {
         if (deviceInfo.platform === DevicePlatform.IOS) {
           // On iOS, we want to connect to the target that has the same bundle ID as our app

@@ -66,12 +66,7 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
           // if we're connected to a responsive session, we can break
           break;
         }
-        const target = await getDebuggerTargetForDevice(
-          this.metro,
-          this.deviceInfo,
-          cancelToken,
-          undefined
-        );
+        const target = await getDebuggerTargetForDevice(this.metro, this.deviceInfo, cancelToken);
         if (!target) {
           throw new Error("No connected device listed");
         }

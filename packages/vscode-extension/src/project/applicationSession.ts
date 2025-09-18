@@ -424,8 +424,7 @@ export class ApplicationSession implements Disposable {
     const target = await getDebuggerTargetForDevice(
       this.metro,
       this.device.deviceInfo,
-      this.connectJSDebuggerCancelToken,
-      undefined
+      this.connectJSDebuggerCancelToken
     );
     if (!target) {
       Logger.error("Couldn't find a proper debugger URL to connect to");
