@@ -13,7 +13,11 @@ function DeviceFrame({ frame, isLandscape }: DeviceFrameProps) {
   return frame.type === "mask" ? (
     <div className="phone-bezel"></div>
   ) : (
-    <img src={isLandscape ? frame.imageLandscape : frame.image} className="phone-frame" />
+    <img
+      src={isLandscape ? frame.imageLandscape : frame.image}
+      className="phone-frame"
+      data-testid="device-frame"
+    />
   );
 }
 

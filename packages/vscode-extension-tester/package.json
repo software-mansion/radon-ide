@@ -74,6 +74,7 @@
     "call-bind-apply-helpers": "^1.0.2",
     "call-bound": "^1.0.4",
     "camelcase": "^6.3.0",
+    "canvas": "^3.2.0",
     "chalk": "^4.1.2",
     "check-error": "^2.1.1",
     "cheerio": "^1.1.0",

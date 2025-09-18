@@ -7,7 +7,13 @@ import { Disposable } from "vscode";
 import { CDPProxy } from "./CDPProxy";
 import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
 import { disposeAll } from "../utilities/disposables";
-import { DEBUG_CONSOLE_LOG, DEBUG_PAUSED, DEBUG_RESUMED } from "./DebugSession";
+import {
+  BINDING_CALLED,
+  DEBUG_CONSOLE_LOG,
+  DEBUG_PAUSED,
+  DEBUG_RESUMED,
+  SCRIPT_PARSED,
+} from "./DebugSession";
 import { CDPProfile } from "./cdp";
 import { annotateLocations, filePathForProfile } from "./cpuProfiler";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
@@ -61,8 +67,7 @@ export class ProxyDebugAdapter extends DebugSession {
 
     const proxyDelegate = new RadonCDPProxyDelegate(
       this.sourceMapRegistry,
-      this.session.configuration.skipFiles,
-      this.session.configuration.installConnectRuntime
+      this.session.configuration.skipFiles
     );
 
     this.cdpProxy = new CDPProxy(
@@ -111,7 +116,13 @@ export class ProxyDebugAdapter extends DebugSession {
 
     this.disposables.push(
       proxyDelegate.onBindingCalled(({ name, payload }) => {
-        this.sendEvent(new Event("RNIDE_bindingCalled", { name, payload }));
+        this.sendEvent(new Event(BINDING_CALLED, { name, payload }));
+      })
+    );
+
+    this.disposables.push(
+      proxyDelegate.onBundleParsed(({ isMainBundle }) => {
+        this.sendEvent(new Event(SCRIPT_PARSED, { isMainBundle }));
       })
     );
   }
@@ -279,6 +290,15 @@ export class ProxyDebugAdapter extends DebugSession {
     return response.result;
   }
 
+  private async addBinding(name: string) {
+    await this.cdpProxy.injectDebuggerCommand({
+      method: "Runtime.addBinding",
+      params: {
+        name,
+      },
+    });
+  }
+
   protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
@@ -298,6 +318,9 @@ export class ProxyDebugAdapter extends DebugSession {
         break;
       case "RNIDE_evaluate":
         response.body.result = await this.evaluateExpression(args);
+        break;
+      case "RNIDE_addBinding":
+        await this.addBinding(args.name);
         break;
     }
     this.sendResponse(response);
