@@ -1,4 +1,4 @@
-import { RecursivePartial } from "../common/State";
+import { RecursivePartial, REMOVE } from "../common/State";
 
 /**
  * Merges an existing state object with updates from a new partial state and calculates changes.
@@ -20,6 +20,11 @@ export function mergeAndCalculateChanges<T extends { [P in keyof T]: T[P] }>(
   const allKeys = [...Object.keys(oldNode), ...Object.keys(newNode)] as (keyof T)[];
 
   for (const key of allKeys) {
+    if (newNode[key] === REMOVE) {
+      changes[key] = REMOVE as (typeof changes)[typeof key];
+      wasChanged = true;
+      continue;
+    }
     if (newNode[key] === null) {
       result[key] = newNode[key];
       changes[key] = newNode[key];

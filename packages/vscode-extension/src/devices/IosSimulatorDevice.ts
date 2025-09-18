@@ -9,13 +9,7 @@ import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { BuildResult } from "../builders/BuildManager";
-import {
-  AppPermissionType,
-  DeviceSettings,
-  InstallationError,
-  InstallationErrorReason,
-  Locale,
-} from "../common/Project";
+import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
@@ -24,6 +18,8 @@ import {
   DeviceInfo,
   DevicePlatform,
   DeviceType,
+  InstallationError,
+  InstallationErrorReason,
   IOSDeviceInfo,
   IOSRuntimeInfo,
 } from "../common/State";

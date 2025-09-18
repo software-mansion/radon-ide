@@ -28,9 +28,11 @@ export class EnvironmentDependencyManager implements Disposable {
   private async checkAndroidEmulatorBinaryStatus() {
     try {
       await fs.promises.access(EMULATOR_BINARY, fs.constants.X_OK);
-      this.stateManager.setState({ androidEmulator: { status: "installed", isOptional: false } });
+      this.stateManager.updateState({
+        androidEmulator: { status: "installed", isOptional: false },
+      });
     } catch (e) {
-      this.stateManager.setState({
+      this.stateManager.updateState({
         androidEmulator: { status: "notInstalled", isOptional: false },
       });
     }
@@ -42,14 +44,14 @@ export class EnvironmentDependencyManager implements Disposable {
     const isSimctlInstalled = await testCommand("xcrun simctl help");
 
     const isInstalled = isXcodebuildInstalled && isXcrunInstalled && isSimctlInstalled;
-    this.stateManager.setState({
+    this.stateManager.updateState({
       xcode: { status: isInstalled ? "installed" : "notInstalled", isOptional: false },
     });
   }
 
   private async checkNodeCommandStatus() {
     const installed = await testCommand("node -v");
-    this.stateManager.setState({
+    this.stateManager.updateState({
       nodejs: { status: installed ? "installed" : "notInstalled", isOptional: false },
     });
   }

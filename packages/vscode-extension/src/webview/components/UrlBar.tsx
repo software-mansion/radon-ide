@@ -32,9 +32,10 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 }
 
 function UrlBar({ disabled }: { disabled?: boolean }) {
-  const { project, selectedDeviceSession } = useProject();
+  const { project } = useProject();
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
+  const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
   const expoRouterStatus = use$(
     store$.projectState.applicationContext.applicationDependencies.expoRouter
@@ -43,7 +44,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   const navigationHistory = use$(selectedDeviceSessionState.navigationHistory);
   const navigationRouteList = use$(selectedDeviceSessionState.navigationRouteList);
 
-  const disabledAlsoWhenStarting = disabled || selectedDeviceSession?.status === "starting";
+  const disabledAlsoWhenStarting = disabled || selectedDeviceSessionStatus === "starting";
   const isExpoRouterProject = !expoRouterStatus?.isOptional;
 
   return (
