@@ -3,7 +3,7 @@ name: Build VSIX and Run Tests (macOS)
 on:
   workflow_dispatch:
   schedule:
-    - cron: "5 12 * * *"
+    - cron: "10 12 * * *"
 
 jobs:
   build-and-test:
