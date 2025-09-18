@@ -518,7 +518,7 @@ export class AppManipulationService {
 
   async hideExpoOverlay(appWebsocket) {
     // expo developer menu overlay loads slower on android app, it's test app so I can't check it programmatically
-    if (config.isAndroid) await this.driver.sleep(3000);
+    if (getConfiguration().IS_ANDROID) await this.driver.sleep(3000);
 
     const position = await this.getButtonCoordinates(
       appWebsocket,
