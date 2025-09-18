@@ -8,7 +8,7 @@ import { getShikiThemeId } from "../../utils/theme";
 
 interface PayloadTabProps {
   networkLog: NetworkLog;
-  editorThemeData?: ThemeData;
+  editorThemeData?: any;
 }
 
 const NO_PAYLOAD_MESSAGE = "No request body";
@@ -20,12 +20,13 @@ const PayloadTab = ({ networkLog, editorThemeData }: PayloadTabProps) => {
   }
 
   const payloadData = getRequestPayload(networkLog);
+  console.log(editorThemeData)
 
   return (
     <>
       <TabActionButtons data={payloadData} disabled={!payloadData} />
       <ShikiHighlighter
-        theme={editorThemeData ? getShikiThemeId(editorThemeData) : "none"}
+        theme={editorThemeData?.theme ?? "none"}
         language={"json"}
         showLanguage={false}
         addDefaultStyles={false}

@@ -28,7 +28,7 @@ export const NETWORK_CONTROL_COMMANDS = [
 
 export type CDPMethod = NetworkEvent | NetworkControlCommand | NetworkType;
 
-export type IDEMethod = "IDE.fetchFullResponseBody";
+export type IDEMethod = "IDE.fetchFullResponseBody" | "IDE.getTheme" | "IDE.Theme";
 
 export interface CDPParams {
   // Common fields

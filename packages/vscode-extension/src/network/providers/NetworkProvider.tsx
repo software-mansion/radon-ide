@@ -26,6 +26,7 @@ interface NetworkProviderProps extends NetworkTracker {
   toggleTimelineVisible: () => void;
   fetchAndOpenResponseInEditor: (networkLog: NetworkLog) => Promise<void>;
   getResponseBody: (networkLog: NetworkLog) => Promise<ResponseBodyData | undefined>;
+  getThemeData: () => Promise<any>;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
@@ -39,6 +40,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
   toggleTimelineVisible: () => {},
   getResponseBody: async () => undefined,
   fetchAndOpenResponseInEditor: async () => {},
+  getThemeData: async () => ({}),
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
@@ -115,6 +117,38 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     // Add a listener to capture the response
     return promise;
   };
+  const getThemeData = (): Promise<ResponseBodyData | undefined> => {
+
+    const messageId = Math.random().toString(36).substring(7);
+
+    const { promise, resolve } = Promise.withResolvers<ResponseBodyData | undefined>();
+
+    const listener = (message: MessageEvent) => {
+      try {
+        const { payload }: WebviewMessage = message.data;
+        if (payload.method !== "IDE.Theme" || payload.id !== messageId) {
+          return;
+        }
+
+        const themeData = payload.result as any | undefined;
+
+        resolve(themeData);
+        window.removeEventListener("message", listener);
+      } catch (error) {
+        console.error("Error parsing Window message:", error);
+      }
+    };
+
+    window.addEventListener("message", listener);
+    // Send the message to the network-plugin backend
+    sendWebviewIDEMessage({
+      method: "IDE.getTheme",
+      id: messageId
+    });
+
+    // Add a listener to capture the response
+    return promise;
+  };
 
   const fetchAndOpenResponseInEditor = async (networkLog: NetworkLog) => {
     const requestId = networkLog.requestId;
@@ -148,6 +182,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       toggleTimelineVisible,
       getResponseBody,
       fetchAndOpenResponseInEditor,
+      getThemeData,
     };
   }, [isRecording, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
 

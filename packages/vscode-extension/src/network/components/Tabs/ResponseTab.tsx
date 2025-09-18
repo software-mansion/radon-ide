@@ -12,7 +12,7 @@ import { getShikiThemeId } from "../../utils/theme";
 interface ResponseTabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
-  editorThemeData?: ThemeData;
+  editorThemeData?: object;
 }
 
 const NO_RESPONSE_MESSAGE = "No response body";
@@ -46,7 +46,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
         </pre>
       )}
       <ShikiHighlighter
-        theme={editorThemeData ? getShikiThemeId(editorThemeData) : "none"}
+        theme={editorThemeData?.theme ?? "none"}
         language={responseData ? determineLanguage(contentType, responseData) : "plaintext"}
         showLanguage={false}
         addDefaultStyles={false}

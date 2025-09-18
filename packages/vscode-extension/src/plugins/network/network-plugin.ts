@@ -1,4 +1,4 @@
-import { commands, Disposable, window, extensions } from "vscode";
+import { commands, Disposable, window} from "vscode";
 import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
@@ -13,9 +13,11 @@ import {
   WebviewMessage,
   CDPMessage,
   WebviewCommand,
+  IDEMessage,
 } from "../../network/types/panelMessageProtocol";
 
 import { determineLanguage } from "../../network/utils/requestFormatters";
+import { getTokenColorsForCurrentTheme } from "../../utilities/getThemeColors";
 
 type BroadcastListener = (message: WebviewMessage) => void;
 
@@ -100,6 +102,11 @@ export class NetworkPlugin implements ToolPlugin {
     }
   }
 
+  private async handleGetTheme({id}: IDEMessage): Promise<any> {
+    const theme = getTokenColorsForCurrentTheme();
+    this.sendIDEMessage({ method: "IDE.Theme", id, result: { theme } });
+  }
+
   private handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
     const { payload } = message;
 
@@ -116,6 +123,9 @@ export class NetworkPlugin implements ToolPlugin {
     switch (payload.method) {
       case "IDE.fetchFullResponseBody":
         this.handleFetchFullResponseBody(payload.params?.request);
+        break;
+      case "IDE.getTheme":
+        this.handleGetTheme(payload);
         break;
       default:
         Logger.warn("Unknown IDE method received");
@@ -141,6 +151,14 @@ export class NetworkPlugin implements ToolPlugin {
 
   private sendCDPMessage(messageData: CDPMessage) {
     this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
+  }
+
+  private sendIDEMessage(payload: IDEMessage) {
+    const message: WebviewMessage = {
+      command: WebviewCommand.IDECall,
+      payload,
+    }
+    this.broadcastListeners.forEach((cb) => cb(message));
   }
 
   /**
