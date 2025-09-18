@@ -3,6 +3,7 @@ import { sleep } from "../utilities/retry";
 import { RADON_CONNECT_PORT_KEY } from "./Connector";
 import { extensionContext } from "../utilities/extensionContext";
 import { Metro, MetroSession } from "../project/metro";
+import { CancelToken } from "../utilities/cancelToken";
 export const PORT_SCAN_INTERVAL_MS = 4000;
 export const DEFAULT_PORTS = [8081, 8082];
 
@@ -18,6 +19,7 @@ function isInWorkspace(absoluteFilePath: string) {
   );
 }
 
+const DEBUGGER_LOOKUP_TIMEOUT_MS = 5000;
 export class Scanner implements Disposable {
   public portsStatus: Map<number, string> = new Map();
   private disposed = false;
@@ -51,7 +53,11 @@ export class Scanner implements Disposable {
 
   private async verifyAndConnect(port: number, projectRoot: string) {
     const metro = new Metro(port, projectRoot);
-    const debuggerTarget = await metro.getDebuggerURL();
+
+    const timeoutCancelToken = new CancelToken();
+    setTimeout(() => timeoutCancelToken.cancel(), DEBUGGER_LOOKUP_TIMEOUT_MS);
+
+    const debuggerTarget = await metro.getDebuggerURL(timeoutCancelToken);
     if (!debuggerTarget) {
       this.portsStatus.set(port, "no connected device listed");
       return false;
