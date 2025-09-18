@@ -2,7 +2,7 @@ import path from "path";
 import fs from "fs";
 import { Disposable } from "vscode";
 import { DebugSession, DebugSessionImpl } from "../debugging/DebugSession";
-import { Metro } from "../project/metro";
+import { MetroSession } from "../project/metro";
 import { BaseInspectorBridge } from "../project/bridge";
 import { disposeAll } from "../utilities/disposables";
 import { extensionContext } from "../utilities/extensionContext";
@@ -43,7 +43,7 @@ export default class ConnectSession implements Disposable {
   }
 
   constructor(
-    private readonly metro: Metro,
+    private readonly metro: MetroSession,
     private readonly delegate: ConnectSessionDelegate
   ) {
     this.debugSession = new DebugSessionImpl({
@@ -54,8 +54,7 @@ export default class ConnectSession implements Disposable {
     this.inspectorBridge = new DebugSessionInspectorBridge(this.debugSession);
   }
 
-  public async start(websocketAddress: string) {
-    const isUsingNewDebugger = this.metro.isUsingNewDebugger;
+  public async start(websocketAddress: string, isUsingNewDebugger: boolean) {
     if (!isUsingNewDebugger) {
       throw new Error("Auto-connect is only supported for the new React Native debugger");
     }

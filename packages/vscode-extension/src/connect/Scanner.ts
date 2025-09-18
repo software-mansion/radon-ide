@@ -9,7 +9,11 @@ export const DEFAULT_PORTS = [8081, 8082];
 
 export type ScannerDelegate = {
   onPortStatusUpdated: () => void;
-  onDeviceCandidateFound: (metro: MetroSession, websocketAddress: string) => Promise<void>;
+  onDeviceCandidateFound: (
+    metro: MetroSession,
+    websocketAddress: string,
+    isUsingNewDebugger: boolean
+  ) => Promise<void>;
 };
 
 function isInWorkspace(absoluteFilePath: string) {
@@ -68,7 +72,11 @@ export class Scanner implements Disposable {
     }
 
     this.portsStatus.set(port, "connecting...");
-    await this.delegate?.onDeviceCandidateFound(metro, debuggerTarget.websocketAddress);
+    await this.delegate?.onDeviceCandidateFound(
+      metro,
+      debuggerTarget.websocketAddress,
+      debuggerTarget.isUsingNewDebugger
+    );
   }
 
   private async scanPort(port: number) {
