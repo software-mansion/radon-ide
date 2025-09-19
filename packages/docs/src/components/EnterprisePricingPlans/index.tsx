@@ -1,10 +1,10 @@
-import React from "react";
+import React, { forwardRef } from "react";
 import styles from "./styles.module.css";
 import PricingPlansList from "../Pricing/PricingPlansList";
 
-export default function EnterprisePricingPlans() {
+const EnterprisePricingPlans = forwardRef<HTMLDivElement, {}>((props, ref) => {
   return (
-    <div className={styles.container}>
+    <div ref={ref} className={styles.container}>
       <p className={styles.heading}>Enterprise plans tailored to your business</p>
       <PricingPlansList />
       <div className={styles.pricingLink}>
@@ -13,4 +13,6 @@ export default function EnterprisePricingPlans() {
       </div>
     </div>
   );
-}
+});
+
+export default EnterprisePricingPlans;

@@ -8,3 +8,9 @@
 .preventfulContainer {
   overflow: visible;
 }
+
+@media (max-width: 600px) {
+  .preventfulContainer {
+    overflow: hidden;
+  }
+}

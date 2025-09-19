@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, forwardRef } from "react";
 import styles from "./styles.module.css";
 import ChevronDownIcon from "../ChevronDownIcon";
 
-export default function EnterpriseForm() {
+const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -39,7 +39,7 @@ export default function EnterpriseForm() {
   };
 
   return (
-    <div className={styles.mainContainer}>
+    <div ref={ref} className={styles.mainContainer}>
       <div className={styles.description}>
         <h2 className={styles.heading}>
           Ready to streamline your team’s React Native development?
@@ -51,31 +51,31 @@ export default function EnterpriseForm() {
       <div className={styles.formContainer}>
         <form onSubmit={handleSubmit}>
           <div>
-            <label className={error.name && styles.labelError}>Your name* </label>
+            <label className={error.name && styles.labelError}>Your name </label>
             <input
               type="text"
               name="name"
               id="name"
               value={formData.name}
               onChange={handleChange}
-              required
+              // required
             />
             {error.name && <p className={styles.error}>{err}</p>}
           </div>
           <div>
-            <label className={error.email && styles.labelError}>Email* </label>
+            <label className={error.email && styles.labelError}>Email </label>
             <input
               type="email"
               name="email"
               id="email"
               value={formData.email}
               onChange={handleChange}
-              required
+              // required
             />
             {error.email && <p className={styles.error}>{err}</p>}
           </div>
           <div>
-            <label className={error.companyName && styles.labelError}>Company name*</label>
+            <label className={error.companyName && styles.labelError}>Company name</label>
             <input
               type="text"
               name="companyName"
@@ -86,7 +86,9 @@ export default function EnterpriseForm() {
             {error.companyName && <p className={styles.error}>{err}</p>}
           </div>
           <div>
-            <label>Role</label>
+            <label>
+              Role <span>(Optional)</span>
+            </label>
             <input
               type="text"
               name="role"
@@ -96,27 +98,31 @@ export default function EnterpriseForm() {
             />
           </div>
           <div className={styles.selectWrapper}>
-            <label>Select team size </label>
+            <label>
+              Select team size <span>(Optional)</span>
+            </label>
             <select
               name="teamSize"
               id="size"
               value={formData.teamSize}
               onChange={handleChange}
               className={styles.customSelect}
-              required>
+              // required
+            >
               <option value="" disabled>
                 Select a value
               </option>
-              <option className={styles.option} value="10">
-                10
-              </option>
-              <option value="100">100</option>
-              <option value="more">More</option>
+              <option value="1-49">1-49</option>
+              <option value="50-99">50-99</option>
+              <option value="100-249">100-249</option>
+              <option value="1000+">1000+</option>
             </select>
             <ChevronDownIcon className={styles.selectIcon} />
           </div>
           <div>
-            <label>Tell us more about your needs</label>
+            <label>
+              Tell us more about your needs <span>(Optional)</span>
+            </label>
             <textarea
               name="comment"
               id="comment"
@@ -133,4 +139,5 @@ export default function EnterpriseForm() {
       </div>
     </div>
   );
-}
+});
+export default EnterpriseForm;

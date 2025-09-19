@@ -5,6 +5,7 @@
   border-top: var(--radon-border-layout);
   border-bottom: var(--radon-border-layout);
   grid-template-columns: 1fr 1.2fr;
+  scroll-margin-top: 80px;
 }
 
 .description {
@@ -38,12 +39,17 @@ form {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  color: var(--ifm-color-primary);
 }
 
 form div {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+form label span {
+  color: var(--radon-subheading);
 }
 
 form input,
@@ -56,7 +62,7 @@ form select {
   flex: 1 0 0;
   align-self: stretch;
   border: none;
-  background-color: var(--radon-border-grid-dark);
+  background-color: var(--radon-border);
 }
 
 form textarea {
@@ -66,21 +72,24 @@ form textarea {
   align-items: flex-start;
   align-self: stretch;
   border: none;
-  background-color: var(--radon-border-grid-dark);
+  background-color: var(--radon-border);
 }
 
 .submitButton {
   display: flex;
   height: 48px;
   padding: 16px;
+  font-size: 16px;
+  font-family: Aeonik;
   justify-content: center;
   align-items: center;
   gap: 12px;
   align-self: stretch;
   background: var(--radon-button);
+  color: var(--radon-button-text);
 }
 
-form button:hover {
+.submitButton:hover {
   background: var(--radon-button-hover);
   transition: 0.3s;
 }
@@ -106,19 +115,24 @@ select,
 }
 
 select {
-  background: var(--radon-border-grid-dark);
+  background: var(--radon-border);
   border-radius: 0;
+  color: var(--ifm-color-primary);
 }
 
 option {
   display: flex;
   justify-content: flex-start;
   gap: 20px;
-
   border: 1px solid var(--swm-background);
-  background: var(--radon-border-grid-dark);
+  background: var(--radon-border);
   padding: 10px;
   transition: 0.4s;
+  color: var(--ifm-color-primary);
+}
+
+option:disabled {
+  color: var(--radon-subheading);
 }
 
 .selectWrapper {

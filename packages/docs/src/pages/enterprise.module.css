@@ -2,6 +2,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  overflow: hidden;
 }
 
 .headerWrapper {
@@ -9,6 +10,8 @@
   gap: 60px;
   display: flex;
   flex-direction: column;
+  height: auto;
+  border-bottom: var(--radon-border-layout);
 }
 
 .headerText {
@@ -73,34 +76,40 @@
 
 .btnGreen {
   background-color: var(--radon-button);
+  color: var(--radon-button-text);
 }
 
 .btnGreen:hover {
   background-color: var(--radon-button-hover);
+  color: var(--radon-button-text);
   transition: 0.3s;
 }
 
 .btnBorder {
-  border: 1px solid white;
+  border: 1px solid var(--radon-button-secondary);
 }
 
 .btnBorder:hover {
   opacity: 0.75;
   transition: opacity 0.3s;
+  background: transparent;
 }
 
 .heroGraphic {
   width: 100%;
+  max-height: 385px;
+  min-height: 120px;
   overflow: hidden;
   display: flex;
   justify-content: center;
+  height: calc(385px - (1200px - 100vw) * 0.27);
 }
 
 .heroGraphic svg {
   flex-shrink: 0;
   width: auto;
-  height: 100%;
-  transform: translateX(calc(max(0px, (1200px - 100vw) * 0.1)));
+  height: 385px;
+  transform: translateX(calc(max(0px, (1200px - 180vw) * 0.1)));
 }
 
 @media (max-width: 767px) {

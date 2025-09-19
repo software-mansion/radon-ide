@@ -1,6 +1,6 @@
 import Layout from "@theme/Layout";
 import clsx from "clsx";
-import React from "react";
+import React, { useRef } from "react";
 import styles from "./enterprise.module.css";
 import FeaturesLanding from "../components/Features/FeaturesLanding";
 import SWM from "../components/Sections/SWM";
@@ -12,6 +12,8 @@ import EnterpriseForm from "../components/EnterpriseForm";
 import EnterprisePricingPlans from "../components/EnterprisePricingPlans";
 
 export default function Enterprise(): JSX.Element {
+  const pricingRef = useRef<HTMLDivElement | null>(null);
+  const formRef = useRef<HTMLDivElement | null>(null);
   return (
     <Layout>
       <div className={styles.preventfulContainer}>
@@ -27,12 +29,24 @@ export default function Enterprise(): JSX.Element {
                 </h3>
               </div>
               <div className={styles.buttonContainer}>
-                <a href={"/"} className={clsx(styles.button, styles.btnGreen)}>
+                <button
+                  className={clsx(styles.button, styles.btnGreen)}
+                  onClick={() =>
+                    formRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                    })
+                  }>
                   Schedule a demo
-                </a>
-                <a href={"/"} className={clsx(styles.button, styles.btnBorder)}>
+                </button>
+                <button
+                  className={clsx(styles.button, styles.btnBorder)}
+                  onClick={() =>
+                    pricingRef.current?.scrollIntoView({
+                      behavior: "smooth",
+                    })
+                  }>
                   See avaliable plans
-                </a>
+                </button>
               </div>
             </div>
             <div className={styles.heroGraphic}>
@@ -41,10 +55,10 @@ export default function Enterprise(): JSX.Element {
           </div>
           <BenefitsEnterprise />
           <FeaturesLanding />
-          <EnterprisePricingPlans />
+          <EnterprisePricingPlans ref={pricingRef} />
           <Testimonials />
           <SWM />
-          <EnterpriseForm />
+          <EnterpriseForm ref={formRef} />
           <FAQ />
         </div>
       </div>
