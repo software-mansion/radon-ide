@@ -1,7 +1,6 @@
 import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
-import assert from "assert";
 import { env, Disposable, commands, workspace, window } from "vscode";
 import _ from "lodash";
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
@@ -10,7 +9,6 @@ import {
   DeviceButtonType,
   DeviceId,
   DeviceSessionsManagerState,
-  DeviceSessionState,
   DeviceSettings,
   IDEPanelMoveTarget,
   isOfEnumDeviceRotation,
@@ -38,7 +36,6 @@ import {
   DeviceSessionsManager,
   DeviceSessionsManagerDelegate,
   ReloadAction,
-  SelectDeviceOptions,
 } from "./DeviceSessionsManager";
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 import { FingerprintProvider } from "./FingerprintProvider";
@@ -107,16 +104,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public get appRootFolder() {
     return this.applicationContext.appRootFolder;
-  }
-
-  private get selectedDeviceSessionState(): DeviceSessionState | undefined {
-    if (this.projectState.selectedSessionId === null) {
-      return undefined;
-    }
-    const selectedSessionState =
-      this.projectState.deviceSessions[this.projectState.selectedSessionId];
-    assert(selectedSessionState !== undefined, "Expected the selected session to exist");
-    return selectedSessionState;
   }
 
   public async getProjectState(): Promise<ProjectState> {
@@ -240,14 +227,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
-  public startOrActivateSessionForDevice(
-    deviceInfo: DeviceInfo,
-    selectDeviceOptions?: SelectDeviceOptions
-  ): Promise<void> {
-    return this.deviceSessionsManager.startOrActivateSessionForDevice(
-      deviceInfo,
-      selectDeviceOptions
-    );
+  public startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void> {
+    return this.deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
   }
 
   public terminateSession(deviceId: DeviceId): Promise<void> {

@@ -90,8 +90,6 @@ function DeviceSelect() {
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
-  const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
-
   const { projectState, project } = useProject();
 
   const devices = use$(store$.devicesState.devices) ?? [];
@@ -119,9 +117,7 @@ function DeviceSelect() {
     if (selectedDevice?.id !== value) {
       const deviceInfo = (devices ?? []).find((d) => d.id === value);
       if (deviceInfo) {
-        project.startOrActivateSessionForDevice(deviceInfo, {
-          stopPreviousDevices,
-        });
+        project.startOrActivateSessionForDevice(deviceInfo);
       }
     }
   };

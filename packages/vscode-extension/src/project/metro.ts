@@ -123,6 +123,7 @@ interface CDPTargetDescription {
     capabilities?: {
       prefersFuseboxFrontend?: boolean;
     };
+    logicalDeviceId?: string;
   };
 }
 

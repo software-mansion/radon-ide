@@ -1,5 +1,5 @@
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
-import { ReloadAction, SelectDeviceOptions } from "../project/DeviceSessionsManager";
+import { ReloadAction } from "../project/DeviceSessionsManager";
 import { BuildType } from "./BuildConfig";
 import { LaunchConfiguration } from "./LaunchConfig";
 import { Output } from "./OutputChannel";
@@ -288,10 +288,7 @@ export interface ProjectInterface {
   dispatchCopy(): Promise<void>;
 
   reloadCurrentSession(type: ReloadAction): Promise<void>;
-  startOrActivateSessionForDevice(
-    deviceInfo: DeviceInfo,
-    selectDeviceOptions?: SelectDeviceOptions
-  ): Promise<void>;
+  startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void>;
   terminateSession(deviceId: DeviceId): Promise<void>;
 
   inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<InspectData>;
