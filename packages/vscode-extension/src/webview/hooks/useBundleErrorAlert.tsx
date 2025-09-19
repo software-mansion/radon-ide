@@ -1,5 +1,5 @@
 import { BundleErrorDescriptor } from "../../common/State";
-import IconButton from "../components/shared/IconButton";
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 import { useToggleableAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
 
@@ -7,22 +7,20 @@ function BundleErrorActions() {
   const { project } = useProject();
   return (
     <>
-      <IconButton
-        type="secondary"
+      <Button
+        secondary
         onClick={() => {
           project.focusDebugConsole();
-        }}
-        tooltip={{ label: "Open debug console", side: "bottom" }}>
-        <span className="codicon codicon-output" />
-      </IconButton>
-      <IconButton
-        type="secondary"
+        }}>
+        Open Debug Console
+      </Button>
+      <Button
         onClick={() => {
           project.reloadCurrentSession("autoReload");
-        }}
-        tooltip={{ label: "Reload Metro", side: "bottom" }}>
+        }}>
         <span className="codicon codicon-refresh" />
-      </IconButton>
+        Reload
+      </Button>
     </>
   );
 }

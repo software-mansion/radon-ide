@@ -168,7 +168,7 @@ export class ToolsManager implements Disposable {
       }
     }
 
-    this.stateManager.setState(toolsState);
+    this.stateManager.updateState(toolsState);
   }
 
   public updateToolEnabledState(toolName: ToolKey, enabled: boolean) {

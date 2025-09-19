@@ -1,4 +1,4 @@
-import { WebView } from "vscode-extension-tester";
+import { WebView, Key, By } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 import * as fs from "fs";
@@ -8,10 +8,12 @@ import * as path from "path";
 describe("screenshots tests", () => {
   let driver,
     view,
+    appWebsocket,
     elementHelperService,
     radonViewsService,
     managingDevicesService,
-    appManipulationService;
+    appManipulationService,
+    radonSettingsService;
   const cwd = process.cwd() + "/data";
 
   before(async () => {
@@ -21,6 +23,7 @@ describe("screenshots tests", () => {
       radonViewsService,
       managingDevicesService,
       appManipulationService,
+      radonSettingsService,
     } = initServices(driver));
 
     await managingDevicesService.deleteAllDevices();
@@ -33,6 +36,11 @@ describe("screenshots tests", () => {
   beforeEach(async () => {
     await radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
+
+    await driver.wait(async () => {
+      appWebsocket = get().appWebsocket;
+      return appWebsocket != null;
+    }, 5000);
   });
 
   it("Should take a screenshot", async () => {
@@ -81,7 +89,64 @@ describe("screenshots tests", () => {
         return fs.existsSync(filePath);
       },
       10000,
-      "Timed out waiting for screenshot to be saved"
+      "Timed out waiting for recording to be saved"
+    );
+  });
+
+  it("Should open replay overlay", async () => {
+    await radonSettingsService.setEnableReplays(true);
+
+    await elementHelperService.findAndClickElementByTag(
+      "radon-top-bar-show-replay-button"
+    );
+
+    await elementHelperService.findAndWaitForElementByTag(
+      "replay-overlay",
+      "Timed out waiting for replay overlay to appear"
+    );
+  });
+
+  it("Should save replay", async () => {
+    const filePath = path.join(cwd, "replayTest..mp4");
+
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    await radonSettingsService.setEnableReplays(true);
+
+    await elementHelperService.waitUntilElementGone(
+      By.css("[data-testid='vhs-rewind']")
+    );
+
+    // simulate some actions in app
+    let position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "toggle-element-button"
+    );
+    await appManipulationService.clickInsidePhoneScreen(position);
+    await driver.sleep(2000);
+    position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "toggle-element-button"
+    );
+    await appManipulationService.clickInsidePhoneScreen(position);
+
+    await elementHelperService.findAndClickElementByTag(
+      "radon-top-bar-show-replay-button"
+    );
+
+    await elementHelperService.findAndWaitForElementByTag(
+      "replay-overlay",
+      "Timed out waiting for replay overlay to appear"
+    );
+
+    await elementHelperService.findAndClickElementByTag("replay-save-button");
+    await radonViewsService.findAndFillSaveFileForm("replayTest");
+
+    await driver.wait(
+      async () => {
+        return fs.existsSync(filePath);
+      },
+      10000,
+      "Timed out waiting for recording to be saved"
     );
   });
 });

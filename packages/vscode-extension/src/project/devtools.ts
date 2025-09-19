@@ -199,7 +199,7 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   constructor(private readonly debugSession: DebugSession) {
     super();
     this.disposables.push(
-      debugSession.onBundleParsed(({ isMainBundle }) => {
+      debugSession.onScriptParsed(({ isMainBundle }) => {
         if (isMainBundle) {
           this.createConnection();
         }

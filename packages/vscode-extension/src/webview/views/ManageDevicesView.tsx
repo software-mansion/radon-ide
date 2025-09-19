@@ -146,13 +146,12 @@ function DeviceRow({
 function ManageDevicesView() {
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
+  const deviceSessions = use$(store$.projectState.deviceSessions);
 
   const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
 
   const selectedProjectDevice = use$(selectedDeviceSessionState.deviceInfo);
 
-  const { projectState } = useProject();
-  const { deviceSessions } = projectState;
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);

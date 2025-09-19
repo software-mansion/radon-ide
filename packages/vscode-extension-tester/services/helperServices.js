@@ -1,5 +1,12 @@
 import { until } from "selenium-webdriver";
-import { By, TextEditor, WebView, ActivityBar } from "vscode-extension-tester";
+import {
+  By,
+  TextEditor,
+  WebView,
+  ActivityBar,
+  Key,
+  InputBox,
+} from "vscode-extension-tester";
 import * as path from "path";
 
 export class ElementHelperService {
@@ -77,6 +84,20 @@ export class ElementHelperService {
 export class VSCodeHelperService {
   constructor(driver) {
     this.driver = driver;
+  }
+
+  async openFileInEditor(fileName) {
+    await this.driver.switchTo().defaultContent();
+    await this.driver
+      .actions()
+      .keyDown(Key.COMMAND)
+      .sendKeys("p")
+      .keyUp(Key.COMMAND)
+      .perform();
+
+    const quickOpen = await InputBox.create();
+    await quickOpen.setText(fileName);
+    await quickOpen.confirm();
   }
 
   async getCursorLineInEditor() {
