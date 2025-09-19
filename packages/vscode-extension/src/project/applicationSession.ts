@@ -478,7 +478,7 @@ export class ApplicationSession implements Disposable {
         const status = this.determineInspectorAvailability(
           this.lastRegisteredInspectorAvailability
         );
-        this.stateManager.setState({ elementInspectorAvailability: status });
+        this.stateManager.updateState({ elementInspectorAvailability: status });
       }),
     ];
     return subscriptions;
