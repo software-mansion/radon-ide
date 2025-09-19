@@ -357,6 +357,24 @@ export class IosSimulatorDevice extends DeviceBase {
       ],
       { reject: false }
     );
+
+    // Restarting SpringBoard process breaks the backboardd which in particular controls things like
+    // the rotation settings. We need to restart it following the cfprefsd springboard reset.
+    await exec(
+      "xcrun",
+      [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "spawn",
+        this.deviceUDID,
+        "launchctl",
+        "kickstart",
+        "-k",
+        "system/com.apple.backboardd",
+      ],
+      { reject: false }
+    );
   }
 
   async terminateApp(bundleID: string) {
