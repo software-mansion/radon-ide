@@ -23,7 +23,7 @@ const INSPECTOR_AVAILABILITY_MESSAGES = {
 export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface, Disposable {
   private eventEmitter = new EventEmitter();
   private isEnabled = false;
-  private eventListeners: Disposable[] = [];
+  private disposables: Disposable[] = [];
   private inspectorAvailability: InspectorAvailabilityStatus =
     InspectorAvailabilityStatus.Available;
   private experimentalEnable: boolean;
@@ -47,7 +47,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
    * Sets up all event listeners for the plugin
    */
   private setupEventListeners(): void {
-    const disposables = [
+    const subscriptions = [
       this.inspectorBridge.onEvent("appReady", () => {
         this.setEnabled(this.isEnabled);
       }),
@@ -74,9 +74,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
       }),
     ];
 
-    disposables.forEach((disposable) => {
-      this.eventListeners.push(disposable);
-    });
+    this.disposables.push(...subscriptions);
   }
 
   private isPluginAvailable(): boolean {
@@ -115,7 +113,7 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
   }
 
   dispose() {
-    disposeAll(this.eventListeners);
+    disposeAll(this.disposables);
   }
 
   setEnabled(isEnabled: boolean) {
