@@ -1,16 +1,14 @@
-import ShikiHighlighter, { Theme } from "react-shiki";
 import { NetworkLog } from "../../types/networkLog";
 import { getRequestPayload } from "../../utils/requestFormatters";
 import TabActionButtons from "./TabActionButtons";
+import HighlightedCodeBlock from "./HighlightedCodeBlock";
 import "./PayloadAndResponseTab.css";
-import { ThemeData } from "../../../utilities/themeExtraction";
+import { ThemeData } from "../../../common/theme";
 
 interface PayloadTabProps {
   networkLog: NetworkLog;
   editorThemeData?: ThemeData;
 }
-
-const NO_PAYLOAD_MESSAGE = "No request body";
 
 const PayloadTab = ({ networkLog, editorThemeData }: PayloadTabProps) => {
   if (!networkLog.request) {
@@ -22,14 +20,12 @@ const PayloadTab = ({ networkLog, editorThemeData }: PayloadTabProps) => {
   return (
     <>
       <TabActionButtons data={payloadData} disabled={!payloadData} />
-      <ShikiHighlighter
-        theme={(editorThemeData as Theme) ?? "none"}
-        language={"json"}
-        showLanguage={false}
-        addDefaultStyles={false}
-        className="response-tab-pre">
-        {payloadData ?? NO_PAYLOAD_MESSAGE}
-      </ShikiHighlighter>
+      <HighlightedCodeBlock
+        content={payloadData}
+        language="json"
+        theme={editorThemeData}
+        placeholder="No request body"
+      />
     </>
   );
 };

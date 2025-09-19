@@ -13,7 +13,7 @@ import TimingTab from "./Tabs/TimingTab";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../types/networkLog";
 import { ResponseBodyData } from "../types/network";
-import { ThemeData } from "../../utilities/themeExtraction";
+import { ThemeData } from "../../common/theme";
 import useThemeExtractor from "../hooks/useThemeExtractor";
 
 const VSCODE_TABS_HEADER_HEIGHT = 30;

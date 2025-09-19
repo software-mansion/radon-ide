@@ -1,12 +1,12 @@
-import ShikiHighlighter, { Theme } from "react-shiki";
 import { useNetwork } from "../../providers/NetworkProvider";
 import { determineLanguage, getFormattedRequestBody } from "../../utils/requestFormatters";
 import IconButton from "../../../webview/components/shared/IconButton";
 import TabActionButtons from "./TabActionButtons";
+import HighlightedCodeBlock from "./HighlightedCodeBlock";
 import { ResponseBodyData } from "../../types/network";
 import { NetworkLog } from "../../types/networkLog";
 import "./PayloadAndResponseTab.css";
-import { ThemeData } from "../../../utilities/themeExtraction";
+import { ThemeData } from "../../../common/theme";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
@@ -14,13 +14,12 @@ interface ResponseTabProps {
   editorThemeData?: ThemeData;
 }
 
-const NO_RESPONSE_MESSAGE = "No response body";
-
 const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: ResponseTabProps) => {
   const { fetchAndOpenResponseInEditor } = useNetwork();
   const { body = undefined, wasTruncated = false } = responseBodyData || {};
   const responseData = getFormattedRequestBody(body);
   const contentType = networkLog.response?.headers?.["Content-Type"] || "";
+  const language = responseData ? determineLanguage(contentType, responseData) : "plaintext"
 
   return (
     <>
@@ -44,14 +43,12 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
           <span className="codicon codicon-warning" /> Response too large, showing truncated data.
         </pre>
       )}
-      <ShikiHighlighter
-        theme={(editorThemeData as Theme) ?? "none"}
-        language={responseData ? determineLanguage(contentType, responseData) : "plaintext"}
-        showLanguage={false}
-        addDefaultStyles={false}
-        className="response-tab-pre">
-        {responseData ?? NO_RESPONSE_MESSAGE}
-      </ShikiHighlighter>
+      <HighlightedCodeBlock
+        content={responseData}
+        language={language}
+        theme={editorThemeData}
+        placeholder="No response body"
+      />
     </>
   );
 };

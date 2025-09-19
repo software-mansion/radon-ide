@@ -5,54 +5,29 @@ import theme_dark from "../assets/default_themes/theme-dark.json";
 import theme_light from "../assets/default_themes/theme-light.json";
 import theme_hc_dark from "../assets/default_themes/theme-hc-dark.json";
 import theme_hc_light from "../assets/default_themes/theme-hc-light.json";
+import {
+  ThemeVariant,
+  ThemeData,
+  ThemeDescriptor,
+  ThemeFileData,
+  ExtensionThemeInfo,
+} from "../common/theme";
 
-export type ThemeVariant =
-  | "vscode-dark"
-  | "vscode-light"
-  | "vscode-high-contrast"
-  | "vscode-high-contrast-light";
+// Re-export types for backward compatibility
+export {
+  ThemeVariant,
+  ThemeData,
+  ThemeDescriptor,
+} from "../common/theme";
 
 const DEFAULT_THEME_MAPPING: Record<ThemeVariant, ThemeData> = {
-  "vscode-dark": theme_dark,
-  "vscode-light": theme_light,
-  "vscode-high-contrast": theme_hc_dark,
-  "vscode-high-contrast-light": theme_hc_light,
+  [ThemeVariant.Dark]: theme_dark,
+  [ThemeVariant.Light]: theme_light,
+  [ThemeVariant.HighContrast]: theme_hc_dark,
+  [ThemeVariant.HighContrastLight]: theme_hc_light,
 };
 
-const VARIANT_FALLBACK: ThemeVariant = "vscode-dark";
-
-type ThemeRule = {
-  name?: string;
-  scope: string | string[];
-  settings: TokenStyle;
-};
-
-type TokenStyle = {
-  foreground?: string;
-  fontStyle?: string;
-};
-
-export interface ThemeData {
-  name?: string;
-  displayName?: string;
-  semanticTokenColors?: Record<string, string>;
-  colors?: Record<string, string>;
-  semanticHighlighting?: boolean;
-  tokenColors?: ThemeRule[] | string;
-  include?: string;
-  type?: string;
-  [key: string]: unknown;
-}
-
-interface ThemeFileData extends ThemeData {
-  $schema?: string;
-  include?: string;
-}
-
-export interface ThemeDescriptor {
-  themeVariant?: ThemeVariant;
-  themeId?: string;
-}
+const VARIANT_FALLBACK: ThemeVariant = ThemeVariant.Dark;
 
 // Cache for theme data to avoid repeated file reads
 const themeCache = new Map<string, ThemeData>();
@@ -135,8 +110,6 @@ function loadThemeDefinitions(themePath: string): ThemeData {
   themeCache.set(themePath, mergedTheme);
   return mergedTheme;
 }
-
-type ExtensionThemeInfo = { id: string; label: string; path: string };
 
 /**
  * Finds the file path for a given theme name by searching through all installed extensions

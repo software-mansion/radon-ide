@@ -1,4 +1,4 @@
-import { ThemeDescriptor } from "../../utilities/themeExtraction";
+import { ThemeDescriptor } from "../../common/theme";
 import { RequestData, ResponseData, NetworkRequestInitiator } from "./network";
 
 export type NetworkEvent =

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNetwork } from "../providers/NetworkProvider";
-import { ThemeData, ThemeDescriptor, ThemeVariant } from "../../utilities/themeExtraction";
+import { ThemeData, ThemeDescriptor, ThemeVariant } from "../../common/theme";
 
 const THEME_VARIANT_ATTRIBUTE = "data-vscode-theme-kind";
 const THEME_ID_ATTRIBUTE = "data-vscode-theme-id";

@@ -17,7 +17,7 @@ import {
 } from "../../network/types/panelMessageProtocol";
 
 import { determineLanguage } from "../../network/utils/requestFormatters";
-import { extractTheme } from "../../utilities/themeExtraction";
+import { extractTheme } from "../../utilities/themeExtractor";
 
 type BroadcastListener = (message: WebviewMessage) => void;
 
