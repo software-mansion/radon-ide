@@ -230,7 +230,12 @@ export class DeviceSession implements Disposable {
   public async activate() {
     if (!this.isActive) {
       this.isActive = true;
-      await this.applicationSession?.activate();
+      try {
+        await this.applicationSession?.activate();
+      } catch (e) {
+        // the session couldn't be activated, which means we probably have to restart the application alltogether
+        await this.autoReload();
+      }
     }
   }
 
@@ -334,8 +339,12 @@ export class DeviceSession implements Disposable {
     // NOTE: `resetCache` requires restarting the server as well
     forceRestart = forceRestart || resetCache;
 
-    if (!forceRestart && this.metro !== undefined) {
-      return this.metro;
+    try {
+      if (!forceRestart && this.metro !== undefined && !this.metro.disposed) {
+        return this.metro;
+      }
+    } catch {
+      // ignore errors when accessing a disposed metro instance, just get a new one
     }
 
     this.metro?.dispose();
