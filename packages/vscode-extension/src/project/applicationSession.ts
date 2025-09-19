@@ -524,20 +524,15 @@ export class ApplicationSession implements Disposable {
   //#endregion
 
   public async reloadJS(cancelToken: CancelToken) {
-    if (!this.devtools?.connected) {
-      Logger.debug(
-        "`reloadJS()` was called on an application session while the devtools are not connected. " +
-          "This should never happen, since an application session should represent a running and connected application."
-      );
-      throw new Error("Tried to reload JS on an application which disconnected from Radon");
-    }
     const { promise: bundleErrorPromise, reject: rejectBundleError } = Promise.withResolvers();
     const bundleErrorSubscription = this.metro.onBundleError(() => {
       rejectBundleError(new Error("Bundle error occurred during reload"));
     });
     try {
       const appReadyPromise = waitForAppReady(this.inspectorBridge, cancelToken);
-      await this.metro.reload();
+      await this.debugSession?.evaluateExpression({
+        expression: "void globalThis.__RADON_reloadJS()",
+      });
       await Promise.race([appReadyPromise, bundleErrorPromise]);
     } finally {
       bundleErrorSubscription.dispose();
