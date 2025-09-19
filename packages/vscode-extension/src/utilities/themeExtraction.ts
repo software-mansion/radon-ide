@@ -6,25 +6,20 @@ import theme_light from "../assets/default_themes/theme-light.json";
 import theme_hc_dark from "../assets/default_themes/theme-hc-dark.json";
 import theme_hc_light from "../assets/default_themes/theme-hc-light.json";
 
-console.log(theme_dark);
-console.log(theme_light);
-console.log(theme_hc_dark);
-console.log(theme_hc_light);
-
 export type ThemeVariant =
   | "vscode-dark"
   | "vscode-light"
   | "vscode-high-contrast"
   | "vscode-high-contrast-light";
 
-const DEFAULT_THEME_MAP: Record<ThemeVariant, ThemeData> = {
+const DEFAULT_THEME_MAPPING: Record<ThemeVariant, ThemeData> = {
   "vscode-dark": theme_dark,
   "vscode-light": theme_light,
   "vscode-high-contrast": theme_hc_dark,
   "vscode-high-contrast-light": theme_hc_light,
 };
 
-const DEFAULT_THEME_FALLBACK = "vscode-dark";
+const VARIANT_FALLBACK: ThemeVariant = "vscode-dark";
 
 type ThemeRule = {
   name?: string;
@@ -36,11 +31,6 @@ type TokenStyle = {
   foreground?: string;
   fontStyle?: string;
 };
-
-interface ThemeDataFile extends ThemeData {
-  $schema?: string;
-  include?: string;
-}
 
 export interface ThemeData {
   name?: string;
@@ -54,15 +44,24 @@ export interface ThemeData {
   [key: string]: unknown;
 }
 
+interface ThemeFileData extends ThemeData {
+  $schema?: string;
+  include?: string;
+}
+
 export interface ThemeDescriptor {
-  themeVariant: ThemeVariant;
+  themeVariant?: ThemeVariant;
   themeId?: string;
 }
 
+// Cache for theme data to avoid repeated file reads
 const themeCache = new Map<string, ThemeData>();
 
+/**
+ * Gets a default theme based on variant, falling back to dark theme
+ */
 function getDefaultTheme(themeVariant: ThemeVariant | undefined): ThemeData {
-  return themeVariant ? DEFAULT_THEME_MAP[themeVariant] : DEFAULT_THEME_MAP[DEFAULT_THEME_FALLBACK];
+  return DEFAULT_THEME_MAPPING[themeVariant ?? VARIANT_FALLBACK];
 }
 
 /**
@@ -70,44 +69,44 @@ function getDefaultTheme(themeVariant: ThemeVariant | undefined): ThemeData {
  * @returns The merged theme object with all includes resolved, in format compatible with
  * TextMate themes (used by vscode and Shiki library)
  */
-export function extractTheme(themeDescriptor: ThemeDescriptor | undefined): ThemeData {
-  const { themeId, themeVariant} = themeDescriptor || {};
+export function extractTheme(themeDescriptor?: ThemeDescriptor): ThemeData {
+  const { themeId, themeVariant } = themeDescriptor || {};
 
-  const workspaceConfigTheme = vscode.workspace.getConfiguration("workbench").get("colorTheme") as
-    | string
-    | undefined;
-
-  const themePath = findThemePath(themeId ?? workspaceConfigTheme ?? "");
+  const workspaceThemeId = vscode.workspace.getConfiguration("workbench").get<string>("colorTheme");
+  const themePath = findThemePath(themeId ?? workspaceThemeId ?? "");
 
   if (!themePath) {
     return getDefaultTheme(themeVariant);
   }
 
+  // Return cached theme if available
   if (themeCache.has(themePath)) {
     return themeCache.get(themePath)!;
   }
 
-  const theme = loadThemeDefinitions(themePath);
-  themeCache.set(themePath, _.isEmpty(theme) ? getDefaultTheme(themeVariant) : theme);
-  return themeCache.get(themePath)!;
+  const loadedTheme = loadThemeDefinitions(themePath);
+  const resolvedTheme = _.isEmpty(loadedTheme) ? getDefaultTheme(themeVariant) : loadedTheme;
+
+  themeCache.set(themePath, resolvedTheme);
+  return resolvedTheme;
 }
 
 /**
  * Loads a theme file and recursively processes any included themes.
- * The theme file may containe an include property pointing to another theme file.
+ * The theme file may contain an include property pointing to another theme file.
  * {include: "path/to/other/theme.json"}, which contains theme definitions. In
  * order for the Shiki highlighter to work correctly, we need to merge all these
  * definitions into a single theme object.
  * @param themePath - Path to the main theme file
  * @returns Merged theme data
  */
-function loadThemeDefinitions(themePath: string): ThemeDataFile {
+function loadThemeDefinitions(themePath: string): ThemeData {
   if (themeCache.has(themePath)) {
     return themeCache.get(themePath)!;
   }
 
   const themeStack = [themePath];
-  let mergedTheme: ThemeDataFile = {};
+  let mergedTheme: ThemeData = {};
 
   while (themeStack.length > 0) {
     const currentPath = themeStack.pop();
@@ -117,7 +116,7 @@ function loadThemeDefinitions(themePath: string): ThemeDataFile {
     }
 
     try {
-      const themeData: ThemeDataFile = require(currentPath);
+      const themeData: ThemeFileData = require(currentPath);
 
       // Add "include" paths to stack for processing
       if (themeData.include) {
@@ -125,7 +124,7 @@ function loadThemeDefinitions(themePath: string): ThemeDataFile {
         themeStack.push(includePath);
       }
 
-      // excluding the include property to avoid circular references
+      // Exclude the include property to avoid circular references
       const { include: _include, ...themeWithoutInclude } = themeData;
       mergedTheme = { ...mergedTheme, ...themeWithoutInclude };
     } catch (error) {
@@ -137,20 +136,16 @@ function loadThemeDefinitions(themePath: string): ThemeDataFile {
   return mergedTheme;
 }
 
-type PackageThemesData = { id: string; label: string };
+type ExtensionThemeInfo = { id: string; label: string; path: string };
 
 /**
- * Finds the file path for a given theme name.
- *
- * We have to search through all installed extensions
- * to find available themes and exctract their file paths.
+ * Finds the file path for a given theme name by searching through all installed extensions
+ * to find available themes and extract their file paths.
  */
 function findThemePath(themeId: string): string | undefined {
   for (const extension of vscode.extensions.all) {
     const themes = extension.packageJSON.contributes?.themes;
-    const theme = themes?.find(
-      (t: PackageThemesData) => t.id === themeId || t.label === themeId
-    );
+    const theme = themes?.find((t: ExtensionThemeInfo) => t.id === themeId || t.label === themeId);
     if (theme) {
       return path.join(extension.extensionPath, theme.path);
     }

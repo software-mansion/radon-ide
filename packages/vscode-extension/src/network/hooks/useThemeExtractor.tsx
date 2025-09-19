@@ -11,49 +11,52 @@ export default function useThemeExtractor() {
   const previousThemeIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    /**
+     * In the webview, body element holds the theme attributes defined by VS Code
+     * We are able to observe changes made to those attributes to detect theme changes
+     */
     const body = document.querySelector("body");
     if (!body) {
       return;
     }
 
-    const mutationCallback = (mutations: MutationRecord[]) => {
-      mutations.forEach(async (mut) => {
+    const handleThemeChange = async (mutations: MutationRecord[]) => {
+      for (const mutation of mutations) {
         if (
-          mut.type !== "attributes" &&
-          mut.attributeName !== THEME_VARIANT_ATTRIBUTE &&
-          mut.attributeName !== THEME_ID_ATTRIBUTE
+          mutation.type !== "attributes" ||
+          (mutation.attributeName !== THEME_VARIANT_ATTRIBUTE &&
+            mutation.attributeName !== THEME_ID_ATTRIBUTE)
         ) {
-          return;
+          continue;
         }
 
         const themeVariant = body.getAttribute(THEME_VARIANT_ATTRIBUTE) as ThemeVariant;
         const themeId = body.getAttribute(THEME_ID_ATTRIBUTE);
 
         if (!themeId || previousThemeIdRef.current === themeId) {
-          return;
+          continue;
         }
 
         const themeDescriptor: ThemeDescriptor = { themeVariant, themeId };
-
         previousThemeIdRef.current = themeId;
-        const newThemeData = await getThemeData(themeDescriptor);
 
+        const newThemeData = await getThemeData(themeDescriptor);
         setEditorThemeData(newThemeData);
-      });
+      }
     };
 
-    const classObserver = new MutationObserver(mutationCallback);
-    classObserver.observe(body, { attributes: true });
+    const observer = new MutationObserver(handleThemeChange);
+    observer.observe(body, { attributes: true });
 
-    const themeVariant = body.getAttribute(THEME_VARIANT_ATTRIBUTE) as ThemeVariant;
-    const themeDescriptor: ThemeDescriptor = { themeVariant };
+    // Load initial theme data
+    const initialThemeVariant = body.getAttribute(THEME_VARIANT_ATTRIBUTE) as ThemeVariant;
+    const initialThemeDescriptor: ThemeDescriptor = { themeVariant: initialThemeVariant };
 
-    // Initial theme data
-    getThemeData(themeDescriptor).then((initialThemeData) => {
+    getThemeData(initialThemeDescriptor).then((initialThemeData) => {
       setEditorThemeData(initialThemeData);
     });
 
-    return () => classObserver.disconnect();
+    return () => observer.disconnect();
   }, [getThemeData]);
 
   return editorThemeData;
