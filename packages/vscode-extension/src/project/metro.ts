@@ -30,7 +30,7 @@ export interface MetroSession {
   onServerStopped: (listener: () => void) => Disposable;
 
   getDebuggerURL(cancelToken: CancelToken): Promise<DebuggerTargetDescription | undefined>;
-  getDebuggerPages(cancelToken: CancelToken): Promise<CDPTargetDescription[]>;
+  getDebuggerPages(): Promise<CDPTargetDescription[]>;
   reload(): Promise<void>;
   openDevMenu(): Promise<void>;
 }
@@ -131,8 +131,8 @@ class SharedMetroSession implements MetroSession, Disposable {
   getDebuggerURL(cancelToken: CancelToken): Promise<DebuggerTargetDescription | undefined> {
     return this.wrappedSession.getDebuggerURL(cancelToken);
   }
-  getDebuggerPages(cancelToken: CancelToken): Promise<CDPTargetDescription[]> {
-    return this.wrappedSession.getDebuggerPages(cancelToken);
+  getDebuggerPages(): Promise<CDPTargetDescription[]> {
+    return this.wrappedSession.getDebuggerPages();
   }
   reload(): Promise<void> {
     return this.wrappedSession.reload();
@@ -323,20 +323,44 @@ export class Metro implements MetroSession, Disposable {
     return this._port;
   }
 
-  public async getDebuggerPages(cancelToken: CancelToken): Promise<CDPTargetDescription[]> {
-    return (await this.fetchWsTargets(cancelToken)) || [];
+  public async getDebuggerPages(): Promise<CDPTargetDescription[]> {
+    try {
+      const list = await fetch(`http://localhost:${this.port}/json/list`);
+      const listJson = await list.json();
+
+      if (listJson.length > 0) {
+        // fixup websocket addresses on the list
+        for (const page of listJson) {
+          page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
+        }
+
+        return listJson;
+      }
+    } catch {}
+    return [];
   }
 
   public async getDebuggerURL(
     cancelToken: CancelToken
   ): Promise<DebuggerTargetDescription | undefined> {
-    const listJson = await this.fetchWsTargets(cancelToken);
+    let retryCount = 0;
 
-    if (listJson === undefined) {
-      return undefined;
+    while (!cancelToken.cancelled) {
+      retryCount++;
+      const listJson = await this.getDebuggerPages();
+
+      if (listJson === undefined) {
+        return undefined;
+      }
+
+      const target = pickDebuggerTarget(listJson);
+      if (target) {
+        return target;
+      }
+      await cancelToken.adapt(sleep(progressiveRetryTimeout(retryCount))).catch(() => {
+        // ignore the CancelError, we'll just break out of the loop after the condition is checked next time
+      });
     }
-
-    return pickDebuggerTarget(listJson);
   }
 
   public async reload() {
@@ -384,39 +408,6 @@ export class Metro implements MetroSession, Disposable {
     // we disconnect immediately after sending the message as there's no need
     // to keep the connection open since we use it on rare occasions.
     ws.close();
-  }
-
-  private async fetchWsTargets(
-    cancelToken: CancelToken
-  ): Promise<CDPTargetDescription[] | undefined> {
-    let retryCount = 0;
-
-    while (!cancelToken.cancelled) {
-      retryCount++;
-
-      try {
-        const list = await fetch(`http://localhost:${this.port}/json/list`);
-        const listJson = await list.json();
-
-        if (listJson.length > 0) {
-          // fixup websocket addresses on the list
-          for (const page of listJson) {
-            page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
-          }
-
-          return listJson;
-        }
-      } catch {
-        // It shouldn't happen, so lets warn about it. Except a warning we will retry anyway, so nothing to do here.
-        Logger.warn("[METRO] Fetching list of runtimes failed, retrying...");
-      }
-
-      await cancelToken.adapt(sleep(progressiveRetryTimeout(retryCount))).catch(() => {
-        // ignore the CancelError, we'll just break out of the loop after the condition is checked next time
-      });
-    }
-
-    return undefined;
   }
 
   private fixupWebSocketDebuggerUrl(websocketAddress: string) {
@@ -631,14 +622,19 @@ export async function getDebuggerTargetForDevice(
   deviceInfo: DeviceInfo,
   cancelToken: CancelToken
 ): Promise<DebuggerTargetDescription | undefined> {
+  let retryCount = 0;
+
   while (!cancelToken.cancelled) {
+    retryCount++;
+
     try {
-      const debuggerPages = await metro.getDebuggerPages(cancelToken);
+      const debuggerPages = await metro.getDebuggerPages();
       const pagesForDevice = debuggerPages.filter((target) => {
         if (deviceInfo.platform === DevicePlatform.IOS) {
-          // On iOS, we want to connect to the target that has the same bundle ID as our app
+          // On iOS, we want to connect to the target that has the same device name as our device
           return target.deviceName === deviceInfo.displayName;
         } else {
+          // TODO: figure out how to get this string from the AVD or system image
           return target.deviceName.startsWith("sdk_gphone64_");
         }
       });
@@ -652,7 +648,12 @@ export async function getDebuggerTargetForDevice(
       }
       throw e;
     }
+    await cancelToken.adapt(sleep(progressiveRetryTimeout(retryCount))).catch(() => {
+      // ignore the CancelError, we'll just break out of the loop after the condition is checked next time
+    });
   }
+
+  return undefined;
 }
 
 function isNewDebuggerPage(page: CDPTargetDescription) {
