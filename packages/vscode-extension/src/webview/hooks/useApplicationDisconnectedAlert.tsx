@@ -1,17 +1,13 @@
 import { useCallback, useEffect } from "react";
-import IconButton from "../components/shared/IconButton";
 import { useAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 
 const alertId = "devtools-disconnected-alert";
 
 export function useApplicationDisconnectedAlert(shouldShow: boolean) {
   const { project } = useProject();
-  const { openAlert, closeAlert } = useAlert();
-
-  const close = useCallback(() => {
-    closeAlert(alertId);
-  }, [closeAlert]);
+  const { openAlert } = useAlert();
 
   const open = useCallback(() => {
     openAlert({
@@ -19,23 +15,17 @@ export function useApplicationDisconnectedAlert(shouldShow: boolean) {
       title: "Application disconnected from Radon IDE",
       description: "Some tools may not work as expected until the application is restarted.",
       priority: 0,
+      closeable: true,
+      type: "warning",
       actions: (
         <>
-          <IconButton
-            type="secondary"
+          <Button
             onClick={() => {
               project.reloadCurrentSession("autoReload");
-              close();
-            }}
-            tooltip={{ label: "Restart application", side: "bottom" }}>
+            }}>
             <span className="codicon codicon-refresh" />
-          </IconButton>
-          <IconButton
-            type="secondary"
-            onClick={close}
-            tooltip={{ label: "Close notification", side: "bottom" }}>
-            <span className="codicon codicon-close" />
-          </IconButton>
+            Reload
+          </Button>
         </>
       ),
     });

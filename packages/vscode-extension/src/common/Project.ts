@@ -1,12 +1,10 @@
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import { ReloadAction, SelectDeviceOptions } from "../project/DeviceSessionsManager";
-import { BuildType } from "./BuildConfig";
 import { LaunchConfiguration } from "./LaunchConfig";
 import { Output } from "./OutputChannel";
 import {
   AndroidSystemImageInfo,
   DeviceInfo,
-  DevicePlatform,
   DeviceRotation,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
@@ -40,73 +38,7 @@ export type DeviceSettings = {
   camera?: CameraSettings;
 };
 
-export enum InstallationErrorReason {
-  NotEnoughStorage = "not_enough_storage",
-  InvalidPlatform = "invalid_platform",
-  Unknown = "unknown",
-}
-
-export class InstallationError extends Error {
-  constructor(
-    message: string,
-    public readonly reason: InstallationErrorReason
-  ) {
-    super(message);
-  }
-}
-
-export type BuildErrorDescriptor = {
-  kind: "build";
-  message: string;
-  platform: DevicePlatform;
-  buildType: BuildType | null;
-};
-
-export type DeviceErrorDescriptor = {
-  kind: "device";
-  message: string;
-};
-
-export type InstallationErrorDescriptor = {
-  kind: "installation";
-  message: string;
-  platform: DevicePlatform;
-  reason: InstallationErrorReason;
-};
-
-export type FatalErrorDescriptor =
-  | BuildErrorDescriptor
-  | DeviceErrorDescriptor
-  | InstallationErrorDescriptor;
-
-export type DeviceSessionStatus = "starting" | "running" | "fatalError";
-
-export type DeviceSessionStateStarting = {
-  status: "starting";
-  startupMessage: StartupMessage | undefined;
-  stageProgress: number | undefined;
-};
-
-export type DeviceSessionStateRunning = {
-  status: "running";
-};
-
-export type DeviceSessionStateFatalError = {
-  status: "fatalError";
-  error: FatalErrorDescriptor;
-};
-
-export type DeviceSessionState =
-  | DeviceSessionStateStarting
-  | DeviceSessionStateRunning
-  | DeviceSessionStateFatalError;
-
 export type DeviceId = DeviceInfo["id"];
-
-export interface DeviceSessionsManagerState {
-  selectedSessionId: DeviceId | null;
-  deviceSessions: Record<DeviceId, DeviceSessionState>;
-}
 
 export type ConnectState = {
   enabled: boolean;
@@ -118,7 +50,7 @@ export type ProjectState = {
   selectedLaunchConfiguration: LaunchConfiguration;
   customLaunchConfigurations: LaunchConfiguration[];
   connectState: ConnectState;
-} & DeviceSessionsManagerState;
+};
 
 export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
 
@@ -134,30 +66,6 @@ export type AppOrientation = DeviceRotation | "Landscape";
 export function isOfEnumDeviceRotation(value: any): value is DeviceRotation {
   return Object.values(DeviceRotation).includes(value);
 }
-
-// important: order of values in this enum matters
-export enum StartupMessage {
-  InitializingDevice = "Initializing device",
-  StartingPackager = "Starting packager",
-  BootingDevice = "Booting device",
-  Building = "Building",
-  Installing = "Installing",
-  Launching = "Launching",
-  WaitingForAppToLoad = "Waiting for app to load",
-  AttachingDebugger = "Attaching debugger",
-  Restarting = "Restarting",
-}
-
-export const StartupStageWeight = [
-  { StartupMessage: StartupMessage.InitializingDevice, weight: 1 },
-  { StartupMessage: StartupMessage.StartingPackager, weight: 1 },
-  { StartupMessage: StartupMessage.BootingDevice, weight: 2 },
-  { StartupMessage: StartupMessage.Building, weight: 7 },
-  { StartupMessage: StartupMessage.Installing, weight: 1 },
-  { StartupMessage: StartupMessage.Launching, weight: 1 },
-  { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
-  { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
-];
 
 export type Frame = {
   x: number;
@@ -316,7 +224,6 @@ export interface ProjectInterface {
   movePanelTo(location: IDEPanelMoveTarget): Promise<void>;
   openExternalUrl(uriString: string): Promise<void>;
   openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
-  openContentInEditor(codeId: string, content: string, language: string): Promise<void>;
   showDismissableError(errorMessage: string): Promise<void>;
   showToast(message: string, timeout: number): Promise<void>;
 

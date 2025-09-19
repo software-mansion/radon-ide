@@ -14,8 +14,9 @@ import {
   closeServer,
 } from "../server/webSocketServer.js";
 import startRecording from "../utils/screenRecording.js";
+import getConfiguration from "../configuration.js";
 
-const IS_RECORDING = process.env.IS_RECORDING === "true";
+const { IS_RECORDING } = getConfiguration();
 
 let driver, workbench, view, browser;
 let recorder;

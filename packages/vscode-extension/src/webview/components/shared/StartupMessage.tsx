@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import classNames from "classnames";
 import "./StartupMessage.css";
-import { StartupMessage } from "../../../common/Project";
+import { StartupMessage } from "../../../common/State";
 
 interface StartupMessageProps {
   children: React.ReactNode;

@@ -89,10 +89,11 @@ function ToolsList({
 
 function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
+  const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
-  const { project, selectedDeviceSession } = useProject();
+  const { project } = useProject();
 
-  const isRunning = selectedDeviceSession?.status === "running";
+  const isRunning = selectedDeviceSessionStatus === "running";
 
   const profilingCPUState = use$(selectedDeviceSessionState?.applicationSession.profilingCPUState);
   const profilingReactState = use$(

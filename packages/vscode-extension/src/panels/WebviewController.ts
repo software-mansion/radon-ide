@@ -4,7 +4,7 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
-import { PanelLocation, RecursivePartial, State } from "../common/State";
+import { PanelLocation, RecursivePartial, State, StateSerializer } from "../common/State";
 
 type EventBase = Record<string, unknown>;
 
@@ -14,8 +14,8 @@ interface CallCommand extends EventBase {
 interface GetStateCommand extends EventBase {
   command: "RNIDE_get_state";
 }
-interface SetStateCommand extends EventBase {
-  command: "RNIDE_set_state";
+interface UpdateStateCommand extends EventBase {
+  command: "RNIDE_update_state";
 }
 interface FocusPreviewCommand extends EventBase {
   command: "focusPreview";
@@ -33,21 +33,21 @@ interface CallArgs {
 interface GetStateArgs {
   callId: string;
 }
-interface SetStateArgs {
+interface UpdateStateArgs {
   callId: string;
-  state: RecursivePartial<State>;
+  state: string;
 }
 
 type CallEvent = CallCommand & CallArgs;
 type GetStateEvent = GetStateCommand & GetStateArgs;
-type SetStateEvent = SetStateCommand & SetStateArgs;
+type UpdateStateEvent = UpdateStateCommand & UpdateStateArgs;
 type FocusPreviewEvent = FocusPreviewCommand;
 type BlurPreviewEvent = BlurPreviewCommand;
 
 export type WebviewEvent =
   | CallEvent
   | GetStateEvent
-  | SetStateEvent
+  | UpdateStateEvent
   | FocusPreviewEvent
   | BlurPreviewEvent;
 
@@ -95,7 +95,7 @@ export class WebviewController implements Disposable {
   public onStateUpdated = (partialState: RecursivePartial<State>) => {
     this.webview.postMessage({
       command: "RNIDE_state_updated",
-      state: partialState,
+      state: StateSerializer.serialize(partialState),
     });
   };
 
@@ -120,8 +120,8 @@ export class WebviewController implements Disposable {
           this.handleRemoteCall(message);
         } else if (message.command === "RNIDE_get_state") {
           this.handleGetState(message);
-        } else if (message.command === "RNIDE_set_state") {
-          this.handleSetState(message);
+        } else if (message.command === "RNIDE_update_state") {
+          this.handleUpdateState(message);
         } else if (message.command === "focusPreview") {
           commands.executeCommand("setContext", "RNIDE.isPreviewFocused", true);
         } else if (message.command === "blurPreview") {
@@ -203,7 +203,7 @@ export class WebviewController implements Disposable {
     });
   }
 
-  private async handleSetState(message: SetStateArgs) {
-    await this.ide.setState(message.state);
+  private async handleUpdateState(message: UpdateStateArgs) {
+    await this.ide.updateState(StateSerializer.deserialize(message.state));
   }
 }

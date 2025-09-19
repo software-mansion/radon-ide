@@ -29,6 +29,7 @@ import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
 import { DevicePlatform, DeviceRotation } from "../../common/State";
+import { PropsWithDataTest } from "../../common/types";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const contentSizes = [
@@ -193,7 +194,11 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 <Slider.Thumb className="slider-thumb" aria-label="Text Size" />
                 <div className="slider-track-dent-container">
                   {Array.from({ length: 7 }).map((_, i) => (
-                    <div key={i} className="slider-track-dent" />
+                    <div
+                      key={i}
+                      className="slider-track-dent"
+                      data-testid={`device-settings-font-size-slider-track-dent-${i}`}
+                    />
                   ))}
                 </div>
               </Slider.Root>
@@ -216,7 +221,9 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             dataTest="open-app-switcher-button"
           />
           <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+            <DropdownMenu.SubTrigger
+              className="dropdown-menu-item"
+              data-testid="device-settings-rotate-device-menu-trigger">
               <span className="codicon codicon-sync" />
               Rotate Device
               <span className="codicon codicon-chevron-right right-slot" />
@@ -224,6 +231,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <DropdownMenu.Portal>
               <DropdownMenu.SubContent
                 className="dropdown-menu-subcontent"
+                data-testid="rotate-device-submenu"
                 sideOffset={2}
                 alignOffset={-5}>
                 <Label>Rotate</Label>
@@ -232,6 +240,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                     project={project}
                     commandName={option.commandName}
                     label={option.label}
+                    dataTest={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
                     icon={option.icon}
                   />
                 ))}
@@ -242,6 +251,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 {setOrientationOptions.map((option, index) => (
                   <DropdownMenu.Item
                     className="dropdown-menu-item"
+                    data-testid={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
                     key={index}
                     onSelect={() => store$.workspaceConfiguration.deviceRotation.set(option.value)}>
                     <span
@@ -260,12 +270,14 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           {platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="device-settings-send-file"
             onSelect={() => project.openSendFileDialog()}>
             <span className="codicon codicon-share" />
             Send File
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="device-settings-location"
             onSelect={() => {
               openModal("Location", <DeviceLocationView />);
             }}>
@@ -310,6 +322,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Enable Replays
             <Switch.Root
               className="switch-root small-switch"
+              data-testid="device-settings-enable-replays-switch"
               id="enable-replays"
               onCheckedChange={(checked) =>
                 project.updateDeviceSettings({ ...deviceSettings, replaysEnabled: checked })
@@ -340,6 +353,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <Switch.Root
               className="switch-root small-switch"
               id="show-device-frame"
+              data-testid="device-settings-show-device-frame-switch"
               onCheckedChange={(checked) =>
                 store$.workspaceConfiguration.showDeviceFrame.set(checked)
               }
@@ -378,14 +392,13 @@ function CommandItem({
   icon,
   disabled = false,
   dataTest,
-}: {
+}: PropsWithDataTest<{
   project: ProjectInterface;
   commandName: string;
   label: string;
   icon: string;
   disabled?: boolean;
-  dataTest?: string;
-}) {
+}>) {
   return (
     <DropdownMenu.Item
       className="dropdown-menu-item"

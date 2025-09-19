@@ -20,7 +20,9 @@ export class ScreenCapture implements Disposable {
   ) {
     this.disposables.push(
       new Disposable(() => {
-        this.stopRecording();
+        if (this.recordingTimeout || this.recordingTimer) {
+          this.stopRecording();
+        }
       })
     );
 
@@ -28,13 +30,13 @@ export class ScreenCapture implements Disposable {
   }
 
   public startRecording(): void {
-    this.stateManager.setState({ isRecording: true, recordingTime: 0 });
+    this.stateManager.updateState({ isRecording: true, recordingTime: 0 });
 
     this.device.startRecording();
 
     this.recordingTimer = setInterval(() => {
       const recordingTime = this.stateManager.getState().recordingTime;
-      this.stateManager.setState({
+      this.stateManager.updateState({
         recordingTime: recordingTime + 1,
       });
     }, 1000);
@@ -61,7 +63,7 @@ export class ScreenCapture implements Disposable {
     const replayData = await this.device.captureReplay(
       this.applicationContext.workspaceConfiguration.deviceRotation
     );
-    this.stateManager.setState({ replayData });
+    this.stateManager.updateState({ replayData });
   }
 
   public async captureScreenshot() {
@@ -90,7 +92,7 @@ export class ScreenCapture implements Disposable {
     this.recordingTimeout = undefined;
     this.recordingTimer = undefined;
 
-    this.stateManager.setState({ isRecording: false, recordingTime: 0 });
+    this.stateManager.updateState({ isRecording: false, recordingTime: 0 });
 
     return this.device.captureAndStopRecording(
       this.applicationContext.workspaceConfiguration.deviceRotation
