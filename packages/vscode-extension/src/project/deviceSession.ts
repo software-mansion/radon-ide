@@ -268,7 +268,7 @@ export class DeviceSession implements Disposable {
       try {
         await this.applicationSession?.activate();
       } catch (e) {
-        // the session couldn't be activated, which means we probably have to restart the application alltogether
+        // the session couldn't be activated, which means we probably have to restart the application altogether
         await this.autoReload();
       }
     }
@@ -655,12 +655,6 @@ export class DeviceSession implements Disposable {
     return this.device.installApp(this.buildResult, reinstall);
   }
 
-  private async waitForMetroReady() {
-    // this.updateStartupMessage(StartupMessage.StartingPackager);
-    // await this.metro.ready();
-    Logger.debug("Metro server ready");
-  }
-
   public async start() {
     try {
       this.resetStartingState(StartupMessage.InitializingDevice);
@@ -669,6 +663,16 @@ export class DeviceSession implements Disposable {
       const cancelToken = this.cancelToken;
 
       this.updateStartupMessage(StartupMessage.StartingPackager);
+
+      const packageManagerOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
+        Output.PackageManager
+      );
+
+      await this.applicationContext.applicationDependencyManager.ensureDependenciesForStart(
+        packageManagerOutputChannel,
+        this.cancelToken
+      );
+
       await cancelToken.adapt(this.getOrStartMetro({ resetCache: false }));
 
       await cancelToken.adapt(this.bootDevice());
