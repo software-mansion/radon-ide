@@ -3,6 +3,8 @@ import { assert } from "chai";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 import { getAppWebsocket } from "../server/webSocketServer.js";
+import { itIf } from "../utils/helpers.js";
+import getConfiguration from "../configuration.js";
 
 describe("Device Settings", () => {
   let driver,
@@ -171,6 +173,71 @@ describe("Device Settings", () => {
     }, 5000);
   });
 
+  it("should stay stable after rapid rotations", async () => {
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    const numberOfRotations = getRandomInt(20, 50);
+
+    for (let i = 0; i < numberOfRotations; i++) {
+      if (getRandomInt(0, 1))
+        await driver.executeScript(`
+        const evt = new KeyboardEvent('keydown', {
+          key: '9',
+          code: 'Digit9',
+          altKey: true,
+          ctrlKey: true,
+          bubbles: true
+        });
+        document.dispatchEvent(evt);
+        `);
+      else
+        await driver.executeScript(`
+        const evt = new KeyboardEvent('keydown', {
+          key: '0',
+          code: 'Digit0',
+          altKey: true,
+          ctrlKey: true,
+          bubbles: true
+        });
+        document.dispatchEvent(evt);
+      `);
+      // some delay for rotations not to be to fast
+      await driver.sleep(100);
+    }
+
+    const start = Date.now();
+    const firstOrientation =
+      await appManipulationService.sendMessageAndWaitForResponse(
+        appWebsocket,
+        "getOrientation"
+      );
+
+    let changes = 0;
+
+    // checks for 5 seconds if device orientation does not change
+    while (Date.now() - start < 5000) {
+      const currentOrientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+
+      if (firstOrientation.value !== currentOrientation.value) {
+        changes++;
+        firstOrientation.value = currentOrientation.value;
+      }
+
+      // the rotation might be delayed so one change is acceptable
+      if (changes > 1) {
+        throw new Error("Device orientation changed more than once");
+      }
+
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  });
+
   it("should change device font size", async () => {
     async function waitForFontSizeChange(fontSize) {
       return await driver.wait(async () => {
@@ -233,22 +300,26 @@ describe("Device Settings", () => {
     }, 5000);
   });
 
-  it("should open app switcher in simulator", async () => {
-    radonViewsService.openRadonDeviceSettingsMenu();
-    await elementHelperService.findAndClickElementByTag(
-      "open-app-switcher-button"
-    );
+  itIf(
+    !getConfiguration().IS_ANDROID,
+    "should open app switcher in simulator",
+    async () => {
+      radonViewsService.openRadonDeviceSettingsMenu();
+      await elementHelperService.findAndClickElementByTag(
+        "open-app-switcher-button"
+      );
 
-    await driver.wait(async () => {
-      const appState =
-        await appManipulationService.sendMessageAndWaitForResponse(
-          getAppWebsocket(),
-          "getAppState"
-        );
-      // this test works on iOS only, Android app's state stays active in app switcher
-      return appState.value === "inactive";
-    }, 5000);
-  });
+      await driver.wait(async () => {
+        const appState =
+          await appManipulationService.sendMessageAndWaitForResponse(
+            getAppWebsocket(),
+            "getAppState"
+          );
+        // this test works on iOS only, Android app's state stays active in app switcher
+        return appState.value === "inactive";
+      }, 5000);
+    }
+  );
 
   it("should press home button in simulator", async () => {
     radonViewsService.openRadonDeviceSettingsMenu();
