@@ -19,7 +19,7 @@ const HighlightedCodeBlock = ({
 }: HighlightedCodeBlockProps) => {
   return (
     <ShikiHighlighter
-      theme={theme as Theme ?? "none"}
+      theme={(theme as Theme) ?? "none"}
       language={language}
       showLanguage={false}
       addDefaultStyles={false}

@@ -94,14 +94,14 @@ vscode-table-header-cell:hover .table-header-cell button {
 .selected:hover {
   background-color: var(--vscode-terminal-selectionBackground);
 
-  vscode-table-cell{
-color: var(--vscode-menu-selectionForeground);
+  vscode-table-cell {
+    color: var(--vscode-menu-selectionForeground);
   }
-  
 }
 
 /* Fallback for high-contrast */
-.vscode-high-contrast .selected vscode-table-cell, .vscode-high-contrast-light .selected vscode-table-cell{
+.vscode-high-contrast .selected vscode-table-cell,
+.vscode-high-contrast-light .selected vscode-table-cell {
   color: var(--vscode-editor-selectionForeground);
 }
 

@@ -19,7 +19,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
   const { body = undefined, wasTruncated = false } = responseBodyData || {};
   const responseData = getFormattedRequestBody(body);
   const contentType = networkLog.response?.headers?.["Content-Type"] || "";
-  const language = responseData ? determineLanguage(contentType, responseData) : "plaintext"
+  const language = responseData ? determineLanguage(contentType, responseData) : "plaintext";
 
   return (
     <>

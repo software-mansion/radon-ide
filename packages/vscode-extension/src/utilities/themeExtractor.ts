@@ -17,7 +17,6 @@ import theme_light from "../assets/default_themes/theme-light.json";
 import theme_hc_dark from "../assets/default_themes/theme-hc-dark.json";
 import theme_hc_light from "../assets/default_themes/theme-hc-light.json";
 
-
 const DEFAULT_THEME_MAPPING: Record<ThemeVariant, ThemeData> = {
   [ThemeVariant.Dark]: theme_dark,
   [ThemeVariant.Light]: theme_light,

@@ -38,8 +38,8 @@ export interface ThemeFileData extends ThemeData {
   include?: string;
 }
 
-export type ExtensionThemeInfo = { 
-  id: string; 
-  label: string; 
-  path: string; 
+export type ExtensionThemeInfo = {
+  id: string;
+  label: string;
+  path: string;
 };
