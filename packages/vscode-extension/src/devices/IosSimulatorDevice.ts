@@ -1,8 +1,8 @@
 import path from "path";
 import fs from "fs";
-import assert from "assert";
 import { ExecaChildProcess, ExecaError } from "execa";
 import mime from "mime";
+import _ from "lodash";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
@@ -587,9 +587,7 @@ export class IosSimulatorDevice extends DeviceBase {
       await this.updateInstalledAppBuildHash(build);
     } catch (e) {
       const message =
-        typeof e === "object" && e !== null && "message" in e
-          ? String((e as any).message)
-          : String(e);
+        typeof e === "object" && e !== null && "message" in e ? String(e.message) : String(e);
       throw new InstallationError(message, InstallationErrorReason.Unknown);
     }
   }
@@ -904,24 +902,20 @@ function convertToSimctlSize(size: DeviceSettings["contentSize"]): string {
 }
 
 async function ensureUniqueDisplayNames(devices: IOSDeviceInfo[]) {
-  const uniqueNameCounts = new Map<string, number>();
-  // NOTE: matches "uniqueName[ (count)]"
-  const uniqueNameRegex = /^(.*?)( \([0-9]+\))?$/;
+  const devicesByDisplayName = _.groupBy(devices, "displayName");
+  const uniqueNames = new Set<string>(Object.keys(devicesByDisplayName));
 
-  const promises = devices.map((device) => {
-    const { UDID, displayName } = device;
-    const uniqueName = uniqueNameRegex.exec(displayName)?.[1];
-    assert(uniqueName, "The unique name regex matches all strings");
-    const nameCount = uniqueNameCounts.get(uniqueName);
-    if (nameCount === undefined) {
-      uniqueNameCounts.set(uniqueName, 1);
-      return;
+  for (const [displayName, devicesWithSameName] of Object.entries(devicesByDisplayName)) {
+    let duplicateCounter = 1;
+    let newName = `${displayName} (${duplicateCounter})`;
+    for (const device of devicesWithSameName.slice(1)) {
+      while (uniqueNames.has(newName)) {
+        duplicateCounter += 1;
+        newName = `${displayName} (${duplicateCounter})`;
+      }
+      uniqueNames.add(newName);
+      device.displayName = newName;
+      await renameIosSimulator(device.UDID, newName);
     }
-
-    uniqueNameCounts.set(uniqueName, nameCount + 1);
-    const newName = `${uniqueName} (${nameCount})`;
-    device.displayName = newName;
-    return renameIosSimulator(UDID, newName);
-  });
-  await Promise.all(promises);
+  }
 }

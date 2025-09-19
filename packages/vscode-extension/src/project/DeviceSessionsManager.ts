@@ -145,7 +145,7 @@ export class DeviceSessionsManager implements Disposable {
     const sessions = Object.entries(this.stateManager.getState()).filter(([_id, session]) => {
       return session.deviceInfo.id !== deviceId;
     });
-    const devicesToStop = Math.max(sessions.length + 1 - this.deviceLimits.totalDeviceLimit);
+    const devicesToStop = Math.max(0, sessions.length + 1 - this.deviceLimits.totalDeviceLimit);
     await Promise.all(sessions.slice(0, devicesToStop).map(([id]) => this.terminateSession(id)));
   }
 
