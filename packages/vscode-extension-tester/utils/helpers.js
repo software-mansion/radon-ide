@@ -6,3 +6,11 @@ export function centerCoordinates(position) {
     height: position.height,
   };
 }
+
+export function itIf(condition, title, fn) {
+  if (condition) {
+    it(title, fn);
+  } else {
+    it.skip(title, fn);
+  }
+}
