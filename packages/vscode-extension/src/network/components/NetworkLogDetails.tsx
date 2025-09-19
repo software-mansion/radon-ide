@@ -13,7 +13,7 @@ import TimingTab from "./Tabs/TimingTab";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../types/networkLog";
 import { ResponseBodyData } from "../types/network";
-import { ThemeObject } from "../../utilities/themeExtraction"
+import { ThemeData } from "../../utilities/themeExtraction"
 import useThemeExtractor from "../hooks/useThemeExtractor";
 
 const VSCODE_TABS_HEADER_HEIGHT = 30;
@@ -27,7 +27,7 @@ interface NetworkLogDetailsProps {
 interface TabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
-  editorThemeData?: ThemeObject;
+  editorThemeData?: ThemeData;
 }
 
 interface Tab {

@@ -6,12 +6,12 @@ import TabActionButtons from "./TabActionButtons";
 import { ResponseBodyData } from "../../types/network";
 import { NetworkLog } from "../../types/networkLog";
 import "./PayloadAndResponseTab.css";
-import { ThemeObject } from "../../../utilities/themeExtraction";
+import { ThemeData } from "../../../utilities/themeExtraction";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
-  editorThemeData?: ThemeObject;
+  editorThemeData?: ThemeData;
 }
 
 const NO_RESPONSE_MESSAGE = "No response body";
@@ -45,7 +45,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
         </pre>
       )}
       <ShikiHighlighter
-        theme={editorThemeData as Theme ?? "none"}
+        theme={(editorThemeData as Theme) ?? "none"}
         language={responseData ? determineLanguage(contentType, responseData) : "plaintext"}
         showLanguage={false}
         addDefaultStyles={false}

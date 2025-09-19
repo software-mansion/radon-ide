@@ -1,3 +1,4 @@
+import { ThemeDescriptor } from "../../utilities/themeExtraction";
 import { RequestData, ResponseData, NetworkRequestInitiator } from "./network";
 
 export type NetworkEvent =
@@ -70,7 +71,7 @@ export interface CDPMessage {
 // IDE message parameters
 type IDEMessageParams = {
   request?: RequestData;
-  themeName?: string;
+  themeDescriptor?: ThemeDescriptor;
 };
 
 // IDE-specific message structure

@@ -3,11 +3,11 @@ import { NetworkLog } from "../../types/networkLog";
 import { getRequestPayload } from "../../utils/requestFormatters";
 import TabActionButtons from "./TabActionButtons";
 import "./PayloadAndResponseTab.css";
-import { ThemeObject } from "../../../utilities/themeExtraction";
+import { ThemeData } from "../../../utilities/themeExtraction";
 
 interface PayloadTabProps {
   networkLog: NetworkLog;
-  editorThemeData?: ThemeObject;
+  editorThemeData?: ThemeData;
 }
 
 const NO_PAYLOAD_MESSAGE = "No request body";

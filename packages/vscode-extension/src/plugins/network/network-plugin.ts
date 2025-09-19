@@ -104,8 +104,8 @@ export class NetworkPlugin implements ToolPlugin {
 
   private async handleGetTheme(message: IDEMessage) {
     const { id, params } = message;
-    const { themeName } = params || {};
-    const theme = extractTheme(themeName);
+    const { themeDescriptor } = params || {};
+    const theme = extractTheme(themeDescriptor);
     this.sendIDEMessage({ method: "IDE.Theme", id, result: theme });
   }
 

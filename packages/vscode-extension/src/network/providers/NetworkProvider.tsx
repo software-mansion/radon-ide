@@ -15,7 +15,7 @@ import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { NetworkLog } from "../types/networkLog";
 import { WebviewMessage, WebviewCommand } from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
-import { ThemeObject } from "../../utilities/themeExtraction";
+import { ThemeDescriptor, ThemeData } from "../../utilities/themeExtraction";
 
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;
@@ -27,7 +27,7 @@ interface NetworkProviderProps extends NetworkTracker {
   toggleTimelineVisible: () => void;
   fetchAndOpenResponseInEditor: (networkLog: NetworkLog) => Promise<void>;
   getResponseBody: (networkLog: NetworkLog) => Promise<ResponseBodyData | undefined>;
-  getThemeData: (themeName?: string) => Promise<ThemeObject>;
+  getThemeData: (themeDescriptor: ThemeDescriptor) => Promise<ThemeData>;
 }
 
 function responseBodyListener(
@@ -62,7 +62,7 @@ function responseBodyListener(
   return listener;
 }
 
-function themeListener(resolve: (value: ThemeObject) => void, messageId: string) {
+function themeListener(resolve: (value: ThemeData) => void, messageId: string) {
   const listener = (message: MessageEvent) => {
     try {
       const { payload }: WebviewMessage = message.data;
@@ -70,7 +70,7 @@ function themeListener(resolve: (value: ThemeObject) => void, messageId: string)
         return;
       }
 
-      const themeData = payload.result as ThemeObject;
+      const themeData = payload.result as ThemeData;
 
       resolve(themeData);
       window.removeEventListener("message", listener);
@@ -93,7 +93,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
   toggleTimelineVisible: () => {},
   getResponseBody: async () => undefined,
   fetchAndOpenResponseInEditor: async () => {},
-  getThemeData: async () => ({ themeType: "vscode-light" as const, themeName: "Default" }),
+  getThemeData: async () => ({}),
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
@@ -147,9 +147,9 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
     return promise;
   };
-  const getThemeData = (themeName?: string): Promise<ThemeObject> => {
+  const getThemeData = (themeDescriptor: ThemeDescriptor): Promise<ThemeData> => {
     const messageId = Math.random().toString(36).substring(7);
-    const { promise, resolve } = Promise.withResolvers<ThemeObject>();
+    const { promise, resolve } = Promise.withResolvers<ThemeData>();
 
     // Setup listener to capture the response
     const listener = themeListener(resolve, messageId);
@@ -160,7 +160,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       method: "IDE.getTheme",
       id: messageId,
       params: {
-        themeName
+        themeDescriptor
       }
     });
 

@@ -1,5 +1,30 @@
 import path from "path";
 import vscode from "vscode";
+import _ from "lodash";
+import theme_dark from "../assets/default_themes/theme-dark.json";
+import theme_light from "../assets/default_themes/theme-light.json";
+import theme_hc_dark from "../assets/default_themes/theme-hc-dark.json";
+import theme_hc_light from "../assets/default_themes/theme-hc-light.json";
+
+console.log(theme_dark);
+console.log(theme_light);
+console.log(theme_hc_dark);
+console.log(theme_hc_light);
+
+export type ThemeVariant =
+  | "vscode-dark"
+  | "vscode-light"
+  | "vscode-high-contrast"
+  | "vscode-high-contrast-light";
+
+const DEFAULT_THEME_MAP: Record<ThemeVariant, ThemeData> = {
+  "vscode-dark": theme_dark,
+  "vscode-light": theme_light,
+  "vscode-high-contrast": theme_hc_dark,
+  "vscode-high-contrast-light": theme_hc_light,
+};
+
+const DEFAULT_THEME_FALLBACK = "vscode-dark";
 
 type ThemeRule = {
   name?: string;
@@ -12,7 +37,12 @@ type TokenStyle = {
   fontStyle?: string;
 };
 
-export interface ThemeObject {
+interface ThemeDataFile extends ThemeData {
+  $schema?: string;
+  include?: string;
+}
+
+export interface ThemeData {
   name?: string;
   displayName?: string;
   semanticTokenColors?: Record<string, string>;
@@ -24,9 +54,15 @@ export interface ThemeObject {
   [key: string]: unknown;
 }
 
-interface ThemeDataFile extends ThemeObject {
-  $schema?: string;
-  include?: string;
+export interface ThemeDescriptor {
+  themeVariant: ThemeVariant;
+  themeId?: string;
+}
+
+const themeCache = new Map<string, ThemeData>();
+
+function getDefaultTheme(themeVariant: ThemeVariant | undefined): ThemeData {
+  return themeVariant ? DEFAULT_THEME_MAP[themeVariant] : DEFAULT_THEME_MAP[DEFAULT_THEME_FALLBACK];
 }
 
 /**
@@ -34,17 +70,26 @@ interface ThemeDataFile extends ThemeObject {
  * @returns The merged theme object with all includes resolved, in format compatible with
  * TextMate themes (used by vscode and Shiki library)
  */
-export function extractTheme(themeName: string | undefined): ThemeObject {
-  const workspaceConfigTheme = vscode.workspace.getConfiguration('workbench').get('colorTheme') as string | undefined;
-  const themePath = findThemePath(
-    themeName ?? workspaceConfigTheme ?? ""
-  );
+export function extractTheme(themeDescriptor: ThemeDescriptor | undefined): ThemeData {
+  const { themeId, themeVariant} = themeDescriptor || {};
+
+  const workspaceConfigTheme = vscode.workspace.getConfiguration("workbench").get("colorTheme") as
+    | string
+    | undefined;
+
+  const themePath = findThemePath(themeId ?? workspaceConfigTheme ?? "");
 
   if (!themePath) {
-    return {};
+    return getDefaultTheme(themeVariant);
   }
+
+  if (themeCache.has(themePath)) {
+    return themeCache.get(themePath)!;
+  }
+
   const theme = loadThemeDefinitions(themePath);
-  return theme;
+  themeCache.set(themePath, _.isEmpty(theme) ? getDefaultTheme(themeVariant) : theme);
+  return themeCache.get(themePath)!;
 }
 
 /**
@@ -57,6 +102,10 @@ export function extractTheme(themeName: string | undefined): ThemeObject {
  * @returns Merged theme data
  */
 function loadThemeDefinitions(themePath: string): ThemeDataFile {
+  if (themeCache.has(themePath)) {
+    return themeCache.get(themePath)!;
+  }
+
   const themeStack = [themePath];
   let mergedTheme: ThemeDataFile = {};
 
@@ -84,6 +133,7 @@ function loadThemeDefinitions(themePath: string): ThemeDataFile {
     }
   }
 
+  themeCache.set(themePath, mergedTheme);
   return mergedTheme;
 }
 
@@ -95,11 +145,11 @@ type PackageThemesData = { id: string; label: string };
  * We have to search through all installed extensions
  * to find available themes and exctract their file paths.
  */
-function findThemePath(themeName: string): string | undefined {
+function findThemePath(themeId: string): string | undefined {
   for (const extension of vscode.extensions.all) {
     const themes = extension.packageJSON.contributes?.themes;
     const theme = themes?.find(
-      (t: PackageThemesData) => t.id === themeName || t.label === themeName
+      (t: PackageThemesData) => t.id === themeId || t.label === themeId
     );
     if (theme) {
       return path.join(extension.extensionPath, theme.path);
