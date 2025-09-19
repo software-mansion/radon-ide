@@ -1,11 +1,14 @@
-import { useState, useEffect } from "react";
-import { ThemeData, ThemeType } from "../types/theme";
+import { useState, useEffect, useRef } from "react";
+import { useNetwork } from "../providers/NetworkProvider";
+import { ThemeObject } from "../../utilities/themeExtraction";
 
 const THEME_TYPE_ATTRIBUTE = "data-vscode-theme-kind";
 const THEME_ID_ATTRIBUTE = "data-vscode-theme-id";
 
 export default function useThemeExtractor() {
-  const [editorThemeData, setEditorThemeData] = useState<ThemeData | undefined>(undefined);
+  const { getThemeData } = useNetwork();
+  const [editorThemeData, setEditorThemeData] = useState<ThemeObject | undefined>(undefined);
+  const previousThemeIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const body = document.querySelector("body");
@@ -14,7 +17,7 @@ export default function useThemeExtractor() {
     }
 
     const mutationCallback = (mutations: MutationRecord[]) => {
-      mutations.forEach((mut) => {
+      mutations.forEach(async (mut) => {
         if (
           mut.type !== "attributes" &&
           mut.attributeName !== THEME_TYPE_ATTRIBUTE &&
@@ -22,32 +25,29 @@ export default function useThemeExtractor() {
         ) {
           return;
         }
+        
+        const themeId = body.getAttribute(THEME_ID_ATTRIBUTE);
+        if (!themeId || previousThemeIdRef.current === themeId) {
+          return;
+        }
 
-        const newThemeData = {
-          themeType: body.getAttribute(THEME_TYPE_ATTRIBUTE) as ThemeType,
-          themeName: body.getAttribute(THEME_ID_ATTRIBUTE) || "",
-        };
+        previousThemeIdRef.current = themeId;
+        const newThemeData = await getThemeData(themeId);
 
-        setEditorThemeData((prev) => {
-          const hasThemeChanged =
-            prev?.themeName === newThemeData.themeName &&
-            prev?.themeType === newThemeData.themeType;
-          return hasThemeChanged ? prev : newThemeData;
-        });
+        setEditorThemeData(newThemeData);
       });
     };
 
     const classObserver = new MutationObserver(mutationCallback);
     classObserver.observe(body, { attributes: true });
 
-    const initialThemeData: ThemeData = {
-      themeType: body.getAttribute(THEME_TYPE_ATTRIBUTE) as ThemeData["themeType"],
-      themeName: body.getAttribute(THEME_ID_ATTRIBUTE) || "",
-    };
-    setEditorThemeData(initialThemeData);
+    // Initial theme data
+    getThemeData().then((initialThemeData) => {
+      setEditorThemeData(initialThemeData);
+    });
 
     return () => classObserver.disconnect();
-  }, []);
+  }, [getThemeData]);
 
   return editorThemeData;
 }

@@ -1,4 +1,4 @@
-import { commands, Disposable, window} from "vscode";
+import { commands, Disposable, window } from "vscode";
 import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
@@ -17,7 +17,7 @@ import {
 } from "../../network/types/panelMessageProtocol";
 
 import { determineLanguage } from "../../network/utils/requestFormatters";
-import { getTokenColorsForCurrentTheme } from "../../utilities/getThemeColors";
+import { extractTheme } from "../../utilities/themeExtraction";
 
 type BroadcastListener = (message: WebviewMessage) => void;
 
@@ -102,9 +102,11 @@ export class NetworkPlugin implements ToolPlugin {
     }
   }
 
-  private async handleGetTheme({id}: IDEMessage): Promise<any> {
-    const theme = getTokenColorsForCurrentTheme();
-    this.sendIDEMessage({ method: "IDE.Theme", id, result: { theme } });
+  private async handleGetTheme(message: IDEMessage) {
+    const { id, params } = message;
+    const { themeName } = params || {};
+    const theme = extractTheme(themeName);
+    this.sendIDEMessage({ method: "IDE.Theme", id, result: theme });
   }
 
   private handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
@@ -132,7 +134,7 @@ export class NetworkPlugin implements ToolPlugin {
     }
   }
 
-  handleWebviewMessage(message: WebviewMessage) {
+  public handleWebviewMessage(message: WebviewMessage) {
     try {
       switch (message.command) {
         case WebviewCommand.CDPCall:
@@ -157,7 +159,7 @@ export class NetworkPlugin implements ToolPlugin {
     const message: WebviewMessage = {
       command: WebviewCommand.IDECall,
       payload,
-    }
+    };
     this.broadcastListeners.forEach((cb) => cb(message));
   }
 
@@ -203,7 +205,7 @@ export class NetworkPlugin implements ToolPlugin {
     );
   }
 
-  onMessageBroadcast(cb: BroadcastListener): Disposable {
+  public onMessageBroadcast(cb: BroadcastListener): Disposable {
     this.broadcastListeners.push(cb);
     return new Disposable(() => {
       let index = this.broadcastListeners.indexOf(cb);
@@ -213,13 +215,13 @@ export class NetworkPlugin implements ToolPlugin {
     });
   }
 
-  activate(): void {
+  public activate(): void {
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
     this.setupListeners();
     this.sendCDPMessage({ method: "Network.enable", params: {} });
   }
 
-  deactivate(): void {
+  public deactivate(): void {
     disposeAll(this.devtoolsListeners);
     this.sendCDPMessage({ method: "Network.disable", params: {} });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);

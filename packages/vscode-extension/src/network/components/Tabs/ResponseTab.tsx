@@ -1,4 +1,4 @@
-import ShikiHighlighter from "react-shiki";
+import ShikiHighlighter, { Theme } from "react-shiki";
 import { useNetwork } from "../../providers/NetworkProvider";
 import { determineLanguage, getFormattedRequestBody } from "../../utils/requestFormatters";
 import IconButton from "../../../webview/components/shared/IconButton";
@@ -6,13 +6,12 @@ import TabActionButtons from "./TabActionButtons";
 import { ResponseBodyData } from "../../types/network";
 import { NetworkLog } from "../../types/networkLog";
 import "./PayloadAndResponseTab.css";
-import { ThemeData } from "../../types/theme";
-import { getShikiThemeId } from "../../utils/theme";
+import { ThemeObject } from "../../../utilities/themeExtraction";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
-  editorThemeData?: object;
+  editorThemeData?: ThemeObject;
 }
 
 const NO_RESPONSE_MESSAGE = "No response body";
@@ -46,7 +45,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
         </pre>
       )}
       <ShikiHighlighter
-        theme={editorThemeData?.theme ?? "none"}
+        theme={editorThemeData as Theme ?? "none"}
         language={responseData ? determineLanguage(contentType, responseData) : "plaintext"}
         showLanguage={false}
         addDefaultStyles={false}

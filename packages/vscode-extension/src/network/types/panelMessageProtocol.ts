@@ -68,9 +68,10 @@ export interface CDPMessage {
 }
 
 // IDE message parameters
-interface IDEMessageParams {
+type IDEMessageParams = {
   request?: RequestData;
-}
+  themeName?: string;
+};
 
 // IDE-specific message structure
 export interface IDEMessage {

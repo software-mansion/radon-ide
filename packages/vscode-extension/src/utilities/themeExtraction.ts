@@ -12,7 +12,7 @@ type TokenStyle = {
   fontStyle?: string;
 };
 
-interface ThemeObject {
+export interface ThemeObject {
   name?: string;
   displayName?: string;
   semanticTokenColors?: Record<string, string>;
@@ -31,18 +31,20 @@ interface ThemeDataFile extends ThemeObject {
 
 /**
  * Extracts the complete theme data from the currently active VS Code theme
- * @returns The merged theme object with all includes resolved, in format compatible with 
+ * @returns The merged theme object with all includes resolved, in format compatible with
  * TextMate themes (used by vscode and Shiki library)
  */
-export function extractCurrentTheme(): ThemeDataFile {
-  const themeName = vscode.workspace.getConfiguration("workbench").get("colorTheme") as string;
-  const themePath = findThemePath(themeName);
-  
+export function extractTheme(themeName: string | undefined): ThemeObject {
+  const workspaceConfigTheme = vscode.workspace.getConfiguration('workbench').get('colorTheme') as string | undefined;
+  const themePath = findThemePath(
+    themeName ?? workspaceConfigTheme ?? ""
+  );
+
   if (!themePath) {
     return {};
   }
-
-  return loadThemeDefinitions(themePath);
+  const theme = loadThemeDefinitions(themePath);
+  return theme;
 }
 
 /**
@@ -61,23 +63,22 @@ function loadThemeDefinitions(themePath: string): ThemeDataFile {
   while (themeStack.length > 0) {
     const currentPath = themeStack.pop();
 
-    if(!currentPath) {
+    if (!currentPath) {
       return mergedTheme;
     }
-    
+
     try {
       const themeData: ThemeDataFile = require(currentPath);
-      
+
       // Add "include" paths to stack for processing
       if (themeData.include) {
         const includePath = path.join(path.dirname(currentPath), themeData.include);
         themeStack.push(includePath);
       }
-      
+
       // excluding the include property to avoid circular references
       const { include: _include, ...themeWithoutInclude } = themeData;
       mergedTheme = { ...mergedTheme, ...themeWithoutInclude };
-      
     } catch (error) {
       console.warn(`Failed to load theme file: ${currentPath}`, error);
     }
@@ -89,9 +90,9 @@ function loadThemeDefinitions(themePath: string): ThemeDataFile {
 type PackageThemesData = { id: string; label: string };
 
 /**
- * Finds the file path for a given theme name. 
- * 
- * We have to search through all installed extensions 
+ * Finds the file path for a given theme name.
+ *
+ * We have to search through all installed extensions
  * to find available themes and exctract their file paths.
  */
 function findThemePath(themeName: string): string | undefined {
