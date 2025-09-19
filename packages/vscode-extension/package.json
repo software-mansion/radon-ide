@@ -304,6 +304,12 @@
           "scope": "window",
           "default": true,
           "description": "Automatically starts the last used device when opening the IDE Panel."
+        },
+        "RadonIDE.enableExperimentalElementInspector": {
+          "type": "boolean",
+          "scope": "window",
+          "default": false,
+          "description": "Enables experimental support for element inspector in non-Edge-to-Edge applications, which may cause visual issues."
         }
       }
     },
@@ -618,6 +624,14 @@
               "usePrebuild": {
                 "type": "boolean",
                 "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
+              },
+              "useOldDevtools": {
+                "type": "boolean",
+                "description": "Defaults to `false` for React Native versions 0.76 and newer. When set to `true`, falls back to the old devtools implementation that may be necessary on some setups."
+              },
+              "useCustomJSDebugger": {
+                "type": "boolean",
+                "description": "When set to true, Radon will use a custom implementation of the JavaScript debugger. This is an experimental feature, use with caution."
               }
             }
           }
@@ -840,6 +854,14 @@
               "usePrebuild": {
                 "type": "boolean",
                 "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
+              },
+              "useOldDevtools": {
+                "type": "boolean",
+                "description": "Defaults to `false` for React Native versions 0.76 and newer. When set to `true`, falls back to the old devtools implementation that may be necessary on some setups."
+              },
+              "useCustomJSDebugger": {
+                "type": "boolean",
+                "description": "When set to true, Radon will use a custom implementation of the JavaScript debugger. This is an experimental feature, use with caution."
               }
             }
           }

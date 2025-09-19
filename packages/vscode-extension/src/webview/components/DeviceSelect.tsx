@@ -11,6 +11,7 @@ import RichSelectItem from "./shared/RichSelectItem";
 import { VscodeBadge as Badge } from "@vscode-elements/react-elements";
 import { useStore } from "../providers/storeProvider";
 import { DeviceInfo, DevicePlatform } from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -87,21 +88,21 @@ function partitionDevices(devices: DeviceInfo[]): Record<string, DeviceInfo[]> {
 
 function DeviceSelect() {
   const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
   const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
 
-  const { selectedDeviceSession, projectState, project } = useProject();
+  const { projectState, project } = useProject();
 
   const devices = use$(store$.devicesState.devices) ?? [];
   const { openModal } = useModal();
 
-  const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
-
   const hasNoDevices = devices.length === 0;
-  const selectedDevice = selectedDeviceSession?.deviceInfo;
+  const selectedDevice = use$(selectedDeviceSessionState.deviceInfo);
+  const deviceSessions = use$(store$.projectState.deviceSessions);
 
   const radonConnectEnabled = projectState.connectState.enabled;
 
-  const { deviceSessions } = projectState;
   const runningSessionIds = Object.keys(deviceSessions);
 
   const deviceSections = partitionDevices(devices ?? []);
@@ -171,7 +172,7 @@ function DeviceSelect() {
               renderDevices(
                 label,
                 sectionDevices,
-                selectedProjectDevice,
+                selectedDevice,
                 runningSessionIds,
                 handleDeviceStop
               )

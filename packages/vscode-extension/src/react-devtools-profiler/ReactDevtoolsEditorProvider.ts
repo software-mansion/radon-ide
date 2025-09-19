@@ -62,7 +62,6 @@ export class ReactDevtoolsEditorProvider implements CustomTextEditorProvider {
       this.context.extensionUri,
       "react-devtools-profiler",
       "src/react-devtools-profiler",
-      undefined,
       true
     );
   }

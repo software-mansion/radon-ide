@@ -15,6 +15,7 @@ import {
   FrontendBridge,
 } from "../../third-party/react-devtools/headless";
 import { BaseInspectorBridge, RadonInspectorBridgeEvents } from "./bridge";
+import { DebugSession } from "../debugging/DebugSession";
 import { disposeAll } from "../utilities/disposables";
 
 function filePathForProfile() {
@@ -34,20 +35,21 @@ type IdeMessage = Parameters<IdeMessageListener>[0];
  */
 export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disposable {
   private devtoolsConnection: DevtoolsConnection | undefined;
-  private devtoolsServerListener: Disposable;
+  private devtoolsServerListener?: Disposable;
   private devtoolsConnectionListeners: Disposable[] = [];
 
-  constructor(devtoolsServer: DevtoolsServer) {
+  constructor() {
     super();
-    if (devtoolsServer.connection) {
-      this.setupBridge(devtoolsServer.connection);
-    }
-    this.devtoolsServerListener = devtoolsServer.onConnection(this.setupBridge);
   }
 
-  private setupBridge = (connection: DevtoolsConnection) => {
+  public setDevtoolsConnection(connection: DevtoolsConnection | undefined) {
     this.devtoolsConnection = connection;
     disposeAll(this.devtoolsConnectionListeners);
+
+    if (!connection) {
+      return;
+    }
+
     this.devtoolsConnectionListeners = [
       connection.onIdeMessage((message) => {
         this.emitEvent(message.type, message.data);
@@ -59,14 +61,24 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
         }
       }),
     ];
-  };
+    const messageQueue = this.messageQueue;
+    this.messageQueue = [];
+    for (const message of messageQueue) {
+      this.send(message);
+    }
+  }
 
   dispose() {
     disposeAll(this.devtoolsConnectionListeners);
-    this.devtoolsServerListener.dispose();
+    this.devtoolsServerListener?.dispose();
   }
 
+  private messageQueue: unknown[] = [];
   protected send(message: unknown): void {
+    if (this.devtoolsConnection === undefined) {
+      this.messageQueue.push(message);
+      return;
+    }
     this.devtoolsConnection?.send("RNIDE_message", message);
   }
 }
@@ -79,9 +91,11 @@ export class DevtoolsConnection implements Disposable {
 
   private readonly ideMessageEventEmitter: EventEmitter<IdeMessage> = new EventEmitter();
   private readonly disconnectedEventEmitter: EventEmitter<void> = new EventEmitter();
+  private readonly profilingEventEmitter: EventEmitter<boolean> = new EventEmitter();
 
   public readonly onIdeMessage = this.ideMessageEventEmitter.event;
   public readonly onDisconnected = this.disconnectedEventEmitter.event;
+  public readonly onProfilingChange = this.profilingEventEmitter.event;
 
   constructor(private readonly wall: Wall) {
     // create the DevTools frontend for the connection
@@ -95,7 +109,8 @@ export class DevtoolsConnection implements Disposable {
     // Register for isProfiling event on the profiler store
     this.store.profilerStore.addListener("isProfiling", () => {
       // @ts-ignore - isProfilingBasedOnUserInput exists but types are outdated
-      this.emitEvent("isProfilingReact", this.store.profilerStore.isProfilingBasedOnUserInput);
+      const isProfiling = this.store.profilerStore.isProfilingBasedOnUserInput;
+      this.profilingEventEmitter.fire(isProfiling);
     });
   }
 
@@ -123,6 +138,9 @@ export class DevtoolsConnection implements Disposable {
 
     this.store?.profilerStore.addListener("isProcessingData", saveProfileListener);
     this.store?.profilerStore.stopProfiling();
+    this.bridge.addListener("shutdown", () => {
+      this.disconnect();
+    });
     return promise;
   }
 
@@ -145,6 +163,7 @@ export class DevtoolsConnection implements Disposable {
     this.bridge.shutdown();
     this.disconnectedEventEmitter.dispose();
     this.ideMessageEventEmitter.dispose();
+    this.profilingEventEmitter.dispose();
   }
 }
 
@@ -153,7 +172,6 @@ export abstract class DevtoolsServer implements Disposable {
   private _connection: DevtoolsConnection | undefined;
 
   protected setConnection(connection: DevtoolsConnection | undefined) {
-    this._connection?.disconnect();
     this._connection = connection;
     if (connection) {
       this.connectionEventEmitter.fire(connection);
@@ -168,6 +186,78 @@ export abstract class DevtoolsServer implements Disposable {
 
   public dispose(): void {
     this.connectionEventEmitter.dispose();
+  }
+}
+
+const BINDING_NAME = "__CHROME_DEVTOOLS_FRONTEND_BINDING__";
+const DISPATCHER_GLOBAL = "__FUSEBOX_REACT_DEVTOOLS_DISPATCHER__";
+const DEVTOOLS_DOMAIN_NAME = "react-devtools";
+
+export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
+  private disposables: Disposable[] = [];
+
+  constructor(private readonly debugSession: DebugSession) {
+    super();
+    this.disposables.push(
+      debugSession.onScriptParsed(({ isMainBundle }) => {
+        if (isMainBundle) {
+          this.createConnection();
+        }
+      })
+    );
+  }
+
+  private async createConnection() {
+    const debugSession = this.debugSession;
+    // NOTE: the binding survives JS reloads, and the Devtools frontend will reconnect automatically,
+    // so this should not be needed, but because the debugger on Expo Go + Android can break on reloads,
+    // this is sadly necessary.
+    debugSession.addBinding(BINDING_NAME);
+    debugSession.evaluateExpression({
+      expression: `void ${DISPATCHER_GLOBAL}.initializeDomain("${DEVTOOLS_DOMAIN_NAME}")`,
+    });
+    if (this.connection) {
+      // NOTE: a single `DebugSession` only supports a single devtools connection at a time
+      return;
+    }
+
+    const wall: Wall = {
+      listen(fn) {
+        function listener(payload: string) {
+          const parsedPayload = JSON.parse(payload);
+          return fn(parsedPayload.message);
+        }
+        const subscription = debugSession.onBindingCalled((ev) => {
+          if (ev.name === BINDING_NAME) {
+            listener(ev.payload);
+          }
+        });
+        return () => subscription.dispose();
+      },
+      send(event, payload, _transferable) {
+        const serializedMessage = JSON.stringify({ event, payload });
+        debugSession.evaluateExpression({
+          expression: `void ${DISPATCHER_GLOBAL}.sendMessage("${DEVTOOLS_DOMAIN_NAME}", '${serializedMessage}')`,
+        });
+      },
+    };
+
+    const connection = new DevtoolsConnection(wall);
+    const shutdownListener = this.debugSession.onDebugSessionTerminated(() => {
+      connection.disconnect();
+      shutdownListener.dispose();
+    });
+    connection.onDisconnected(() => {
+      this.setConnection(undefined);
+    });
+
+    this.setConnection(connection);
+  }
+
+  public dispose() {
+    super.dispose();
+    this.connection?.disconnect();
+    disposeAll(this.disposables);
   }
 }
 

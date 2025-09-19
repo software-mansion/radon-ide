@@ -80,17 +80,18 @@ function Preview({
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+
   const appOrientation = use$(selectedDeviceSessionState.applicationSession.appOrientation);
-
   const bundleError = use$(selectedDeviceSessionState.applicationSession.bundleError);
-
   const elementInspectorAvailability = use$(
     selectedDeviceSessionState.applicationSession.elementInspectorAvailability
   );
-
   const inspectorBridgeStatus = use$(
     selectedDeviceSessionState.applicationSession.inspectorBridgeStatus
   );
+  const isUsingStaleBuild = use$(selectedDeviceSessionState.isUsingStaleBuild);
+  const modelId = use$(selectedDeviceSessionState.deviceInfo.modelId);
+  const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
   const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>(null);
   const wrapperDivRef = useRef<HTMLDivElement>(null);
@@ -104,12 +105,16 @@ function Preview({
     useState<Point | null>(null);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
-  const { selectedDeviceSession, project } = useProject();
+  const { project } = useProject();
 
-  const hasFatalError = selectedDeviceSession?.status === "fatalError";
-  const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
+  const hasFatalError = selectedDeviceSessionStatus === "fatalError";
 
-  const isRunning = selectedDeviceSession?.status === "running";
+  const fatalErrorDescriptor = use$(() => {
+    const store = selectedDeviceSessionState.get();
+    return store && store.status === "fatalError" ? store.error : undefined;
+  });
+
+  const isRunning = selectedDeviceSessionStatus === "running";
 
   const isRefreshing = use$(() =>
     isRunning ? selectedDeviceSessionState.applicationSession.isRefreshing.get() : false
@@ -118,10 +123,9 @@ function Preview({
     isRunning ? selectedDeviceSessionState.applicationSession.isDebuggerPaused.get() : false
   );
 
-  const previewURL = selectedDeviceSession?.previewURL;
+  const previewURL = use$(selectedDeviceSessionState.previewURL);
 
-  const showDevicePreview =
-    selectedDeviceSession?.previewURL && (showPreviewRequested || isRunning);
+  const showDevicePreview = previewURL && (showPreviewRequested || isRunning);
 
   const isAppDisconnected =
     isRunning && inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
@@ -203,7 +207,7 @@ function Preview({
     event: MouseEvent<HTMLDivElement>,
     type: MouseMove | "Leave" | "RightButtonDown"
   ) {
-    if (selectedDeviceSession?.status !== "running") {
+    if (selectedDeviceSessionStatus !== "running") {
       return;
     }
     if (elementInspectorAvailability !== InspectorAvailabilityStatus.Available) {
@@ -311,7 +315,7 @@ function Preview({
     } else if (!inspectFrame) {
       if (e.button === 2) {
         if (
-          selectedDeviceSession?.status === "running" &&
+          selectedDeviceSessionStatus === "running" &&
           elementInspectorAvailability !== InspectorAvailabilityStatus.Available
         ) {
           handleInspectorUnavailable(e);
@@ -511,13 +515,13 @@ function Preview({
   }, [project, shouldPreventInputEvents]);
 
   useEffect(() => {
-    if (selectedDeviceSession?.isUsingStaleBuild) {
+    if (isUsingStaleBuild) {
       openRebuildAlert();
     }
-  }, [selectedDeviceSession?.isUsingStaleBuild]);
+  }, [isUsingStaleBuild]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
+    return sd.modelId === modelId;
   });
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
@@ -615,14 +619,11 @@ function Preview({
             </div>
           </Device>
         )}
-        {!showDevicePreview && selectedDeviceSession?.status === "starting" && (
+        {!showDevicePreview && selectedDeviceSessionStatus === "starting" && (
           <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="phone-sized phone-content-loading-background" />
             <div className="phone-sized phone-content-loading ">
-              <PreviewLoader
-                startingSessionState={selectedDeviceSession}
-                onRequestShowPreview={() => setShowPreviewRequested(true)}
-              />
+              <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
             </div>
           </Device>
         )}

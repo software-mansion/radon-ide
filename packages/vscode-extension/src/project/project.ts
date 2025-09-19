@@ -1,7 +1,6 @@
 import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
-import assert from "assert";
 import { env, Disposable, commands, workspace, window } from "vscode";
 import _ from "lodash";
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
@@ -9,8 +8,6 @@ import {
   AppPermissionType,
   DeviceButtonType,
   DeviceId,
-  DeviceSessionsManagerState,
-  DeviceSessionState,
   DeviceSettings,
   IDEPanelMoveTarget,
   isOfEnumDeviceRotation,
@@ -57,6 +54,7 @@ import {
   IOSRuntimeInfo,
   MultimediaData,
   ProjectStore,
+  RecursivePartial,
   WorkspaceConfiguration,
 } from "../common/State";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
@@ -69,8 +67,6 @@ const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
-  // #region Properties
-
   // #region Properties
 
   private launchConfigsManager = new LaunchConfigurationsManager();
@@ -107,16 +103,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public get appRootFolder() {
     return this.applicationContext.appRootFolder;
-  }
-
-  private get selectedDeviceSessionState(): DeviceSessionState | undefined {
-    if (this.projectState.selectedSessionId === null) {
-      return undefined;
-    }
-    const selectedSessionState =
-      this.projectState.deviceSessions[this.projectState.selectedSessionId];
-    assert(selectedSessionState !== undefined, "Expected the selected session to exist");
-    return selectedSessionState;
   }
 
   public async getProjectState(): Promise<ProjectState> {
@@ -160,8 +146,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     const connector = Connector.getInstance();
 
     this.projectState = {
-      selectedSessionId: null,
-      deviceSessions: {},
       appRootPath: this.relativeAppRootPath,
       selectedLaunchConfiguration: this.selectedLaunchConfiguration,
       customLaunchConfigurations: this.launchConfigsManager.launchConfigurations,
@@ -199,7 +183,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
     this.disposables.push(
       this.workspaceStateManager.onSetState(
-        (partialWorkspaceConfig: Partial<WorkspaceConfiguration>) => {
+        (partialWorkspaceConfig: RecursivePartial<WorkspaceConfiguration>) => {
           const deviceRotation = partialWorkspaceConfig.deviceRotation;
           if (!deviceRotation) {
             return;
@@ -221,11 +205,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region Device Session
 
   public onInitialized(): void {
-    this.stateManager.setState({ initialized: true });
-  }
-
-  public onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
-    this.updateProjectState(state);
+    this.stateManager.updateState({ initialized: true });
   }
 
   public getDeviceRotation(): DeviceRotation {
@@ -394,7 +374,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async navigateHome() {
     getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
-      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+      platform: this.deviceSession?.platform,
     });
 
     if (this.applicationContext.applicationDependencyManager === undefined) {
@@ -507,7 +487,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async toggleRecording() {
     getTelemetryReporter().sendTelemetryEvent("recording:toggle-recording", {
-      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+      platform: this.deviceSession?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -517,7 +497,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async captureReplay() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
-      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+      platform: this.deviceSession?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -527,7 +507,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async captureScreenshot() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
-      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+      platform: this.deviceSession?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -555,7 +535,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public startReportingFrameRate() {
     getTelemetryReporter().sendTelemetryEvent("performance:start-frame-rate-reporting", {
-      platform: this.selectedDeviceSessionState?.deviceInfo.platform,
+      platform: this.deviceSession?.platform,
     });
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -684,18 +664,17 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     deviceInfo.displayName = newDisplayName;
     // NOTE: this should probably be handled via some listener on Device instead:
     const deviceId = deviceInfo.id;
-    if (!(deviceId in this.projectState.deviceSessions)) {
+    const deviceSessions = this.stateManager.getState().deviceSessions;
+    if (!(deviceId in deviceSessions)) {
       return;
     }
+
     const newDeviceState = {
-      ...this.projectState.deviceSessions[deviceId],
+      ...deviceSessions[deviceId],
       deviceInfo,
     };
-    const newDeviceSessions = {
-      ...this.projectState.deviceSessions,
-      [deviceId]: newDeviceState,
-    };
-    this.updateProjectState({ deviceSessions: newDeviceSessions });
+
+    this.stateManager.updateState({ deviceSessions: { [deviceId]: newDeviceState } });
   }
 
   // #endregion Devices
@@ -709,7 +688,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         window.showWarningMessage("Wait for the app to load before launching preview.", "Dismiss");
         return;
       }
-      await deviceSession.startPreview(`preview:/${fileName}:${lineNumber1Based}`);
+      await deviceSession.openPreview(`preview:/${fileName}:${lineNumber1Based}`);
     } catch (e) {
       const relativeFileName = workspace.asRelativePath(fileName, false);
       const message = `Failed to open component preview. Currently previews only work for files loaded by the main application bundle. Make sure that ${relativeFileName} is loaded by your application code.`;
@@ -771,6 +750,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void> {
     return this.editorBindings.openFileAt(filePath, line0Based, column0Based);
+  }
+
+  public openContentInEditor(content: string, language: string): Promise<void> {
+    return this.editorBindings.openContentInEditor(content, language);
   }
 
   public showDismissableError(errorMessage: string): Promise<void> {

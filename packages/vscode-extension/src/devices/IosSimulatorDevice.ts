@@ -9,13 +9,7 @@ import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { BuildResult } from "../builders/BuildManager";
-import {
-  AppPermissionType,
-  DeviceSettings,
-  InstallationError,
-  InstallationErrorReason,
-  Locale,
-} from "../common/Project";
+import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
 import { Output } from "../common/OutputChannel";
@@ -23,6 +17,8 @@ import {
   DeviceInfo,
   DevicePlatform,
   DeviceType,
+  InstallationError,
+  InstallationErrorReason,
   IOSDeviceInfo,
   IOSRuntimeInfo,
 } from "../common/State";
@@ -40,7 +36,7 @@ interface SimulatorInfo {
   type?: "simulator" | "device" | "catalyst";
   booted?: boolean;
   lastBootedAt?: string;
-  deviceTypeIdentifier: string;
+  deviceTypeIdentifier?: string;
 }
 
 interface SimulatorData {
@@ -312,28 +308,25 @@ export class IosSimulatorDevice extends DeviceBase {
       `${bundleID}.plist`
     );
     Logger.debug(`Defaults location ${userDefaultsLocation}`);
-    try {
-      await exec(
-        "/usr/libexec/PlistBuddy",
-        [
-          "-c",
-          "Delete :RCT_jsLocation",
-          "-c",
-          `Add :RCT_jsLocation string localhost:${metroPort}`,
-          userDefaultsLocation,
-        ],
-        { allowNonZeroExit: true }
-      );
-    } catch (e) {
-      // Delete command fails if the key doesn't exists, but later commands run regardless,
-      // despite that process exits with non-zero code. We can ignore this error.
-    }
-    try {
-      // Simulator may keep the defaults in memory with cfprefsd, we restart the deamon to make sure
-      // it reads the latest values from disk.
-      // We'd normally try to use defaults command that would write the updates via the daemon, however
-      // for some reason that doesn't work with custom device sets.
-      await exec("xcrun", [
+    await exec(
+      "/usr/libexec/PlistBuddy",
+      [
+        "-c",
+        "Delete :RCT_jsLocation",
+        "-c",
+        `Add :RCT_jsLocation string localhost:${metroPort}`,
+        userDefaultsLocation,
+      ],
+      { allowNonZeroExit: true, reject: false }
+    );
+
+    // Simulator may keep the defaults in memory with cfprefsd, we restart the daemon to make sure
+    // it reads the latest values from disk.
+    // We'd normally try to use defaults command that would write the updates via the daemon, however
+    // for some reason that doesn't work with custom device sets.
+    await exec(
+      "xcrun",
+      [
         "simctl",
         "--set",
         deviceSetLocation,
@@ -342,10 +335,27 @@ export class IosSimulatorDevice extends DeviceBase {
         "launchctl",
         "stop",
         "com.apple.cfprefsd.xpc.daemon",
-      ]);
-    } catch (e) {
-      // ignore errors here and hope for the best
-    }
+      ],
+      { reject: false }
+    );
+
+    // Restarting cfprefsd breaks the SpringBoard process which in particular controls things like
+    // the appearance settings. We need to restart it following the cfprefsd reset.
+    await exec(
+      "xcrun",
+      [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "spawn",
+        this.deviceUDID,
+        "launchctl",
+        "kickstart",
+        "-k",
+        "system/com.apple.SpringBoard",
+      ],
+      { reject: false }
+    );
   }
 
   async terminateApp(bundleID: string) {
@@ -459,7 +469,7 @@ export class IosSimulatorDevice extends DeviceBase {
   async launchApp(
     build: BuildResult,
     metroPort: number,
-    _devtoolsPort: number,
+    _devtoolsPort: number | undefined,
     launchArguments: string[]
   ) {
     if (build.platform !== DevicePlatform.IOS) {
@@ -739,21 +749,26 @@ export async function listSimulators(location: SimulatorDeviceSet): Promise<IOSD
     .map(([runtimeID, devices]) => {
       const runtime = runtimes.find((item) => item.identifier === runtimeID);
 
-      return devices.map((device) => {
-        return {
-          id: `ios-${device.udid}`,
-          platform: DevicePlatform.IOS as const,
-          UDID: device.udid,
-          modelId: device.deviceTypeIdentifier,
-          systemName: runtime?.name ?? "Unknown",
-          displayName: device.name,
-          deviceType: device.deviceTypeIdentifier.includes("iPad")
-            ? DeviceType.Tablet
-            : DeviceType.Phone,
-          available: device.isAvailable ?? false,
-          runtimeInfo: runtime,
-        };
-      });
+      return devices
+        .map((device) => {
+          if (!device.deviceTypeIdentifier) {
+            return undefined;
+          }
+          return {
+            id: `ios-${device.udid}`,
+            platform: DevicePlatform.IOS as const,
+            UDID: device.udid,
+            modelId: device.deviceTypeIdentifier,
+            systemName: runtime?.name ?? "Unknown",
+            displayName: device.name,
+            deviceType: device.deviceTypeIdentifier.includes("iPad")
+              ? DeviceType.Tablet
+              : DeviceType.Phone,
+            available: device.isAvailable ?? false,
+            runtimeInfo: runtime,
+          };
+        })
+        .filter((e) => e !== undefined);
     })
     .flat();
   return simulators;

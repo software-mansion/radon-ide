@@ -8,7 +8,7 @@ import { DeviceSession } from "./deviceSession";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceId, DeviceSessionsManagerState } from "../common/Project";
+import { DeviceId } from "../common/Project";
 import { Connector } from "../connect/Connector";
 import { StateManager } from "./StateManager";
 import {
@@ -17,8 +17,9 @@ import {
   DeviceRotation,
   DeviceSessions,
   DevicesState,
-  initialDeviceSessionStore,
+  generateInitialDeviceSessionStore,
   ProjectStore,
+  REMOVE,
 } from "../common/State";
 import { createWebSocketDevtoolsServer } from "./devtools";
 
@@ -41,7 +42,6 @@ export type ReloadAction =
 
 export type DeviceSessionsManagerDelegate = {
   onInitialized(): void;
-  onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void;
   getDeviceRotation(): DeviceRotation;
 };
 
@@ -67,7 +67,7 @@ export class DeviceSessionsManager implements Disposable {
     this.disposables.push(
       this.devicesStateManager.onSetState((partialState) => {
         const devices = partialState.devices;
-        if (devices !== undefined && devices !== null) {
+        if (devices !== undefined && devices !== null && devices !== REMOVE) {
           this.devicesChangedListener(devices);
         }
       })
@@ -93,18 +93,9 @@ export class DeviceSessionsManager implements Disposable {
         this.updateSelectedSession(undefined);
       }
       this.deviceSessions.delete(deviceId);
-      this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
+      this.projectStateManager.updateState({ deviceSessions: { [deviceId]: REMOVE } });
       await session.dispose();
     }
-  }
-
-  private get state(): DeviceSessionsManagerState {
-    return {
-      selectedSessionId: this.activeSessionId ?? null,
-      deviceSessions: Object.fromEntries(
-        this.deviceSessions.entries().map(([k, v]) => [k, v.getState()])
-      ),
-    };
   }
 
   public async reloadCurrentSession(type: ReloadAction) {
@@ -158,30 +149,25 @@ export class DeviceSessionsManager implements Disposable {
 
     if (!this.stateManager.getState()[deviceInfo.id]) {
       // we need to initialize the device session state before deriving a new state manager
-      this.stateManager.setState({ [deviceInfo.id]: initialDeviceSessionStore });
+      this.stateManager.updateState({
+        [deviceInfo.id]: generateInitialDeviceSessionStore({ deviceInfo }),
+      });
     }
 
-    Logger.debug("Launching DevTools server");
-    const devtoolsServer = await createWebSocketDevtoolsServer();
+    let devtoolsServer;
+    if (this.applicationContext.launchConfig.useOldDevtools) {
+      Logger.debug("Launching DevTools server");
+      devtoolsServer = await createWebSocketDevtoolsServer();
+    }
 
     const newDeviceSession = new DeviceSession(
       this.stateManager.getDerived(deviceInfo.id),
       this.applicationContext,
       device,
       devtoolsServer,
-      this.deviceSessionManagerDelegate.getDeviceRotation(),
-      {
-        onStateChange: (state) => {
-          if (!this.deviceSessions.has(state.deviceInfo.id)) {
-            // NOTE: the device is being removed, we shouldn't report state updates
-            return;
-          }
-          this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
-        },
-      }
+      this.deviceSessionManagerDelegate.getDeviceRotation()
     );
 
-    this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
     this.maybeWarnAboutRunningDevices();
     this.updateSelectedSession(newDeviceSession);
@@ -206,7 +192,7 @@ export class DeviceSessionsManager implements Disposable {
 
     const [iosDevices, androidDevices] = _.partition(
       this.deviceSessions.values().toArray(),
-      (session) => session.getState().deviceInfo.platform === DevicePlatform.IOS
+      (session) => session.platform === DevicePlatform.IOS
     );
 
     if (
@@ -300,20 +286,18 @@ export class DeviceSessionsManager implements Disposable {
 
   private async updateSelectedSession(session: DeviceSession | undefined) {
     const previousSession = this.selectedDeviceSession;
-    this.activeSessionId = session?.getState().deviceInfo.id;
+    this.activeSessionId = session?.id;
     if (previousSession === session) {
       return;
     }
     if (session === undefined) {
-      this.projectStateManager.setState({ selectedDeviceSessionId: null });
-      this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
+      this.projectStateManager.updateState({ selectedDeviceSessionId: null });
       return;
     }
     await previousSession?.deactivate();
     await session.activate();
     extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, this.activeSessionId);
-    this.projectStateManager.setState({ selectedDeviceSessionId: this.activeSessionId });
-    this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
+    this.projectStateManager.updateState({ selectedDeviceSessionId: this.activeSessionId });
   }
 
   private async acquireDeviceByDeviceInfo(deviceInfo: DeviceInfo) {
@@ -358,7 +342,6 @@ export class DeviceSessionsManager implements Disposable {
     // NOTE: we overwrite the delegate to avoid calling it during/after dispose
     this.deviceSessionManagerDelegate = {
       onInitialized: () => {},
-      onDeviceSessionsManagerStateChange: (_state: DeviceSessionsManagerState) => {},
       getDeviceRotation: () => DeviceRotation.Portrait,
     };
     const deviceSessions = this.deviceSessions.values().toArray();

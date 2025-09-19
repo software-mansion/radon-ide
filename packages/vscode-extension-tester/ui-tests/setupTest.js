@@ -4,6 +4,7 @@ import {
   Workbench,
   EditorView,
   BottomBarPanel,
+  Key,
 } from "vscode-extension-tester";
 import path from "path";
 import fs from "fs";
@@ -13,8 +14,9 @@ import {
   closeServer,
 } from "../server/webSocketServer.js";
 import startRecording from "../utils/screenRecording.js";
+import getConfiguration from "../configuration.js";
 
-const IS_RECORDING = process.env.IS_RECORDING === "true";
+const { IS_RECORDING } = getConfiguration();
 
 let driver, workbench, view, browser;
 let recorder;
@@ -36,13 +38,15 @@ before(async function () {
 
   await browser.waitForWorkbench();
   workbench = new Workbench();
-  await workbench.executeCommand("Notifications: Clear All Notifications");
+  await workbench.executeCommand("Notifications: Toggle Do Not Disturb Mode");
   await workbench.executeCommand("View: Close All Editors");
 
   view = new WebView();
   if (IS_RECORDING) {
     recorder = startRecording(driver, { interval: 100 });
   }
+  await workbench.executeCommand("Chat: Open Chat");
+  await workbench.executeCommand("View: Toggle Secondary Side Bar Visibility");
 });
 
 afterEach(async function () {
@@ -62,6 +66,18 @@ afterEach(async function () {
   let bottomBar = new BottomBarPanel();
   await bottomBar.toggle(false);
   await new EditorView().closeAllEditors();
+  await workbench.executeCommand("Developer: Reload Window");
+  workbench = new Workbench();
+
+  // waiting for vscode to get ready after reload
+  await driver.wait(async () => {
+    try {
+      await workbench.getTitleBar().getTitle();
+      return true;
+    } catch {
+      return false;
+    }
+  }, 10000);
 });
 
 after(async function () {

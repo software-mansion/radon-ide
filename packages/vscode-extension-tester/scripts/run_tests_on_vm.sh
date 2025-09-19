@@ -70,20 +70,13 @@ cd "$LOCAL_PROJECT_PATH" || exit 1
 # node_modules cannot be copied to the VM, because it may not be compatible with the VM's architecture.
 for item in * .*; do
     [[ "$item" == "." || "$item" == ".." ]] && continue
-    [[ "$item" == "node_modules" || "$item" == ".gitignore" ]] && continue
-    
-    if [[ "$item" == "data" ]]; then
-        for sub in "$item"/*; do
-            [[ "$sub" == "$item/react-native-app" || "$sub" == "$item/vscode-extensions" ]] && continue
-            echo "Copying: $sub"
-            scp -i ./scripts/id_vm_mac -r "$sub" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/data/"
-        done
-        continue
-    fi
+    [[ "$item" == "node_modules" || "$item" == ".gitignore" || "$item" == "data" ]] && continue
 
     echo "Copying: $item"
     scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/"
 done
+
+scp -i ./scripts/id_vm_mac -r data/radon-ide.vsix "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/data/"
 
 APP="$1"
 shift

@@ -89,10 +89,11 @@ function ToolsList({
 
 function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
+  const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
-  const { project, selectedDeviceSession } = useProject();
+  const { project } = useProject();
 
-  const isRunning = selectedDeviceSession?.status === "running";
+  const isRunning = selectedDeviceSessionStatus === "running";
 
   const profilingCPUState = use$(selectedDeviceSessionState?.applicationSession.profilingCPUState);
   const profilingReactState = use$(
@@ -126,6 +127,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
           <Label>Utilities</Label>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="tools-dropdown-menu-cpu-profiling-button"
             onSelect={() =>
               isProfilingCPU ? project.stopProfilingCPU() : project.startProfilingCPU()
             }>
@@ -134,6 +136,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="tools-dropdown-menu-react-profiling-button"
             onSelect={() =>
               isProfilingReact ? project.stopProfilingReact() : project.startProfilingReact()
             }>
