@@ -10,6 +10,7 @@ const {
   findNodeHandle,
   Platform,
   Dimensions,
+  DevSettings,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
 require("./react_devtools_agent"); // needs to be loaded before inspector_bridge is used
@@ -30,6 +31,10 @@ export function registerDevtoolPlugin(name) {
   devtoolPlugins.add(name);
   devtoolPluginsChanged?.();
 }
+
+globalThis.__RADON_reloadJS = function () {
+  DevSettings.reload("Radon IDE");
+};
 
 let navigationHistory = new Map();
 
