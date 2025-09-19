@@ -160,8 +160,8 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       method: "IDE.getTheme",
       id: messageId,
       params: {
-        themeDescriptor
-      }
+        themeDescriptor,
+      },
     });
 
     return promise;

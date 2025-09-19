@@ -12,7 +12,6 @@ interface PayloadTabProps {
 
 const NO_PAYLOAD_MESSAGE = "No request body";
 
-
 const PayloadTab = ({ networkLog, editorThemeData }: PayloadTabProps) => {
   if (!networkLog.request) {
     return null;
@@ -24,12 +23,11 @@ const PayloadTab = ({ networkLog, editorThemeData }: PayloadTabProps) => {
     <>
       <TabActionButtons data={payloadData} disabled={!payloadData} />
       <ShikiHighlighter
-        theme={editorThemeData as Theme ?? "none"}
+        theme={(editorThemeData as Theme) ?? "none"}
         language={"json"}
         showLanguage={false}
         addDefaultStyles={false}
-        className="response-tab-pre"
-        >
+        className="response-tab-pre">
         {payloadData ?? NO_PAYLOAD_MESSAGE}
       </ShikiHighlighter>
     </>

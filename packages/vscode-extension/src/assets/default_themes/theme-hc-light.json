@@ -3,11 +3,7 @@
   "name": "Light High Contrast",
   "tokenColors": [
     {
-      "scope": [
-        "meta.embedded",
-        "source.groovy.embedded",
-        "variable.legacy.builtin.python"
-      ],
+      "scope": ["meta.embedded", "source.groovy.embedded", "variable.legacy.builtin.python"],
       "settings": {
         "foreground": "#292929"
       }
@@ -171,10 +167,7 @@
       }
     },
     {
-      "scope": [
-        "meta.preprocessor",
-        "entity.name.function.preprocessor"
-      ],
+      "scope": ["meta.preprocessor", "entity.name.function.preprocessor"],
       "settings": {
         "foreground": "#0F4A85"
       }
@@ -210,19 +203,13 @@
       }
     },
     {
-      "scope": [
-        "storage.modifier",
-        "keyword.operator.noexcept"
-      ],
+      "scope": ["storage.modifier", "keyword.operator.noexcept"],
       "settings": {
         "foreground": "#0F4A85"
       }
     },
     {
-      "scope": [
-        "string",
-        "meta.embedded.assembly"
-      ],
+      "scope": ["string", "meta.embedded.assembly"],
       "settings": {
         "foreground": "#0F4A85"
       }
@@ -266,9 +253,7 @@
       }
     },
     {
-      "scope": [
-        "meta.template.expression"
-      ],
+      "scope": ["meta.template.expression"],
       "settings": {
         "foreground": "#000000"
       }
@@ -299,9 +284,7 @@
       }
     },
     {
-      "scope": [
-        "support.type.property-name.json"
-      ],
+      "scope": ["support.type.property-name.json"],
       "settings": {
         "foreground": "#0451A5"
       }
@@ -348,10 +331,7 @@
       }
     },
     {
-      "scope": [
-        "punctuation.section.embedded.begin.php",
-        "punctuation.section.embedded.end.php"
-      ],
+      "scope": ["punctuation.section.embedded.begin.php", "punctuation.section.embedded.end.php"],
       "settings": {
         "foreground": "#0F4A85"
       }
@@ -476,18 +456,13 @@
       }
     },
     {
-      "scope": [
-        "variable.other.constant",
-        "variable.other.enummember"
-      ],
+      "scope": ["variable.other.constant", "variable.other.enummember"],
       "settings": {
         "foreground": "#02715D"
       }
     },
     {
-      "scope": [
-        "meta.object-literal.key"
-      ],
+      "scope": ["meta.object-literal.key"],
       "settings": {
         "foreground": "#001080"
       }
@@ -538,10 +513,7 @@
       }
     },
     {
-      "scope": [
-        "keyword.operator.or.regexp",
-        "keyword.control.anchor.regexp"
-      ],
+      "scope": ["keyword.operator.or.regexp", "keyword.control.anchor.regexp"],
       "settings": {
         "foreground": "#EE0000"
       }
