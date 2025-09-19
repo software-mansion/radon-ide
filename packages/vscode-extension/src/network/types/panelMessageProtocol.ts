@@ -1,3 +1,4 @@
+import { ThemeDescriptor } from "../../common/theme";
 import { RequestData, ResponseData, NetworkRequestInitiator } from "./network";
 
 export type NetworkEvent =
@@ -28,7 +29,7 @@ export const NETWORK_CONTROL_COMMANDS = [
 
 export type CDPMethod = NetworkEvent | NetworkControlCommand | NetworkType;
 
-export type IDEMethod = "IDE.fetchFullResponseBody";
+export type IDEMethod = "IDE.fetchFullResponseBody" | "IDE.getTheme" | "IDE.Theme";
 
 export interface CDPParams {
   // Common fields
@@ -68,9 +69,10 @@ export interface CDPMessage {
 }
 
 // IDE message parameters
-interface IDEMessageParams {
+type IDEMessageParams = {
   request?: RequestData;
-}
+  themeDescriptor?: ThemeDescriptor;
+};
 
 // IDE-specific message structure
 export interface IDEMessage {

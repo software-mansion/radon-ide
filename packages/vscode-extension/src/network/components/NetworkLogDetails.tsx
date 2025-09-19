@@ -13,6 +13,8 @@ import TimingTab from "./Tabs/TimingTab";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../types/networkLog";
 import { ResponseBodyData } from "../types/network";
+import { ThemeData } from "../../common/theme";
+import useThemeExtractor from "../hooks/useThemeExtractor";
 
 const VSCODE_TABS_HEADER_HEIGHT = 30;
 
@@ -25,6 +27,7 @@ interface NetworkLogDetailsProps {
 interface TabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
+  editorThemeData?: ThemeData;
 }
 
 interface Tab {
@@ -35,10 +38,11 @@ interface Tab {
 }
 
 const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLogDetailsProps) => {
-  const { getResponseBody } = useNetwork();
   const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
-
   const { wasTruncated = false } = responseBodyData || {};
+  const { getResponseBody } = useNetwork();
+
+  const themeData = useThemeExtractor();
 
   useEffect(() => {
     getResponseBody(networkLog).then((data) => {
@@ -54,11 +58,12 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
     {
       title: "Payload",
       Tab: PayloadTab,
+      props: { editorThemeData: themeData },
     },
     {
       title: "Response",
       Tab: ResponseTab,
-      props: { responseBodyData },
+      props: { responseBodyData, editorThemeData: themeData },
       warning: wasTruncated,
     },
     {

@@ -15,6 +15,7 @@ import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { NetworkLog } from "../types/networkLog";
 import { WebviewMessage, WebviewCommand } from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
+import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
 interface NetworkProviderProps extends NetworkTracker {
   isRecording: boolean;
@@ -26,6 +27,59 @@ interface NetworkProviderProps extends NetworkTracker {
   toggleTimelineVisible: () => void;
   fetchAndOpenResponseInEditor: (networkLog: NetworkLog) => Promise<void>;
   getResponseBody: (networkLog: NetworkLog) => Promise<ResponseBodyData | undefined>;
+  getThemeData: (themeDescriptor: ThemeDescriptor) => Promise<ThemeData>;
+}
+
+function responseBodyListener(
+  resolve: (value: ResponseBodyData | undefined) => void,
+  messageId: string,
+  requestId: string,
+  responseBodiesRef: React.RefObject<Record<string, ResponseBodyData | undefined>>
+) {
+  const listener = (message: MessageEvent) => {
+    try {
+      const { command, payload }: WebviewMessage = message.data;
+      if (command !== WebviewCommand.CDPCall || payload.id !== messageId) {
+        return;
+      }
+
+      const bodyData = payload.result as ResponseBodyData | undefined;
+
+      if (bodyData === undefined) {
+        resolve(responseBodiesRef.current[requestId]);
+        window.removeEventListener("message", listener);
+        return;
+      }
+
+      responseBodiesRef.current[requestId] = bodyData;
+
+      resolve(bodyData);
+      window.removeEventListener("message", listener);
+    } catch (error) {
+      console.error("Error parsing Window message:", error);
+    }
+  };
+  return listener;
+}
+
+function themeListener(resolve: (value: ThemeData) => void, messageId: string) {
+  const listener = (message: MessageEvent) => {
+    try {
+      const { payload }: WebviewMessage = message.data;
+      if (payload.method !== "IDE.Theme" || payload.id !== messageId) {
+        return;
+      }
+
+      const themeData = payload.result as ThemeData;
+
+      resolve(themeData);
+      window.removeEventListener("message", listener);
+    } catch (error) {
+      console.error("Error parsing Window message:", error);
+    }
+  };
+
+  return listener;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
@@ -39,6 +93,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
   toggleTimelineVisible: () => {},
   getResponseBody: async () => undefined,
   fetchAndOpenResponseInEditor: async () => {},
+  getThemeData: async () => ({}),
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
@@ -75,34 +130,12 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     }
 
     const messageId = Math.random().toString(36).substring(7);
-
     const { promise, resolve } = Promise.withResolvers<ResponseBodyData | undefined>();
+    const listener = responseBodyListener(resolve, messageId, requestId, responseBodiesRef);
 
-    const listener = (message: MessageEvent) => {
-      try {
-        const { command, payload }: WebviewMessage = message.data;
-        if (command !== WebviewCommand.CDPCall || payload.id !== messageId) {
-          return;
-        }
-
-        const bodyData = payload.result as ResponseBodyData | undefined;
-
-        if (bodyData === undefined) {
-          resolve(responseBodiesRef.current[requestId]);
-          window.removeEventListener("message", listener);
-          return;
-        }
-
-        responseBodiesRef.current[requestId] = bodyData;
-
-        resolve(bodyData);
-        window.removeEventListener("message", listener);
-      } catch (error) {
-        console.error("Error parsing Window message:", error);
-      }
-    };
-
+    // Setup listener to capture the response
     window.addEventListener("message", listener);
+
     // Send the message to the network-plugin backend
     sendWebviewCDPMessage({
       id: messageId,
@@ -112,7 +145,25 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       },
     });
 
-    // Add a listener to capture the response
+    return promise;
+  };
+  const getThemeData = (themeDescriptor: ThemeDescriptor): Promise<ThemeData> => {
+    const messageId = Math.random().toString(36).substring(7);
+    const { promise, resolve } = Promise.withResolvers<ThemeData>();
+
+    // Setup listener to capture the response
+    const listener = themeListener(resolve, messageId);
+    window.addEventListener("message", listener);
+
+    // Send the message to the network-plugin backend
+    sendWebviewIDEMessage({
+      method: "IDE.getTheme",
+      id: messageId,
+      params: {
+        themeDescriptor,
+      },
+    });
+
     return promise;
   };
 
@@ -148,6 +199,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       toggleTimelineVisible,
       getResponseBody,
       fetchAndOpenResponseInEditor,
+      getThemeData,
     };
   }, [isRecording, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
 

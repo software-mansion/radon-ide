@@ -13,46 +13,13 @@ import {
   WebviewMessage,
   CDPMessage,
   WebviewCommand,
+  IDEMessage,
 } from "../../network/types/panelMessageProtocol";
 
+import { determineLanguage } from "../../network/utils/requestFormatters";
+import { extractTheme } from "../../utilities/themeExtractor";
+
 type BroadcastListener = (message: WebviewMessage) => void;
-
-export const NETWORK_PLUGIN_ID = "network";
-
-const LANGUAGE_BY_CONTENT_TYPE = {
-  "application/json": "json",
-  "text/json": "json",
-  "text/html": "html",
-  "application/xhtml+xml": "html",
-  "text/xml": "xml",
-  "application/xml": "xml",
-  "text/css": "css",
-  "text/javascript": "javascript",
-  "application/javascript": "javascript",
-  "application/x-javascript": "javascript",
-  "text/plain": "text",
-};
-
-function determineLanguage(contentType: string, body: string): string {
-  const contentTypeLowerCase = contentType.toLowerCase();
-
-  for (const [contentTypeKey, language] of Object.entries(LANGUAGE_BY_CONTENT_TYPE)) {
-    if (contentTypeLowerCase.includes(contentTypeKey)) {
-      return language;
-    }
-  }
-
-  // Fallback: try to guess based on content structure
-  const trimmedBody = body.trim();
-  if (trimmedBody.startsWith("<?xml") || trimmedBody.startsWith("<")) {
-    return trimmedBody.includes("<!DOCTYPE html") || trimmedBody.includes("<html") ? "html" : "xml";
-  }
-  if (trimmedBody.startsWith("{") || trimmedBody.startsWith("[")) {
-    return "json";
-  }
-
-  return "text";
-}
 
 function formatDataBasedOnLanguage(body: string, language: string): string {
   if (language === "json") {
@@ -65,6 +32,8 @@ function formatDataBasedOnLanguage(body: string, language: string): string {
   }
   return body;
 }
+
+export const NETWORK_PLUGIN_ID = "network";
 
 let initialized = false;
 async function initialize() {
@@ -133,6 +102,13 @@ export class NetworkPlugin implements ToolPlugin {
     }
   }
 
+  private async handleGetTheme(message: IDEMessage) {
+    const { id, params } = message;
+    const { themeDescriptor } = params || {};
+    const theme = extractTheme(themeDescriptor);
+    this.sendIDEMessage({ method: "IDE.Theme", id, result: theme });
+  }
+
   private handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
     const { payload } = message;
 
@@ -150,12 +126,15 @@ export class NetworkPlugin implements ToolPlugin {
       case "IDE.fetchFullResponseBody":
         this.handleFetchFullResponseBody(payload.params?.request);
         break;
+      case "IDE.getTheme":
+        this.handleGetTheme(payload);
+        break;
       default:
         Logger.warn("Unknown IDE method received");
     }
   }
 
-  handleWebviewMessage(message: WebviewMessage) {
+  public handleWebviewMessage(message: WebviewMessage) {
     try {
       switch (message.command) {
         case WebviewCommand.CDPCall:
@@ -174,6 +153,14 @@ export class NetworkPlugin implements ToolPlugin {
 
   private sendCDPMessage(messageData: CDPMessage) {
     this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
+  }
+
+  private sendIDEMessage(payload: IDEMessage) {
+    const message: WebviewMessage = {
+      command: WebviewCommand.IDECall,
+      payload,
+    };
+    this.broadcastListeners.forEach((cb) => cb(message));
   }
 
   /**
@@ -218,7 +205,7 @@ export class NetworkPlugin implements ToolPlugin {
     );
   }
 
-  onMessageBroadcast(cb: BroadcastListener): Disposable {
+  public onMessageBroadcast(cb: BroadcastListener): Disposable {
     this.broadcastListeners.push(cb);
     return new Disposable(() => {
       let index = this.broadcastListeners.indexOf(cb);
@@ -228,13 +215,13 @@ export class NetworkPlugin implements ToolPlugin {
     });
   }
 
-  activate(): void {
+  public activate(): void {
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
     this.setupListeners();
     this.sendCDPMessage({ method: "Network.enable", params: {} });
   }
 
-  deactivate(): void {
+  public deactivate(): void {
     disposeAll(this.devtoolsListeners);
     this.sendCDPMessage({ method: "Network.disable", params: {} });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
