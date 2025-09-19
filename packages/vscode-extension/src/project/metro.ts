@@ -19,6 +19,7 @@ import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { sleep, progressiveRetryTimeout } from "../utilities/retry";
 import { openFileAtPosition } from "../utilities/editorOpeners";
 import { DeviceInfo, DevicePlatform } from "../common/State";
+import { createRefCounted, RefCounted } from "../utilities/refCounted";
 
 export interface MetroSession {
   port: number;
@@ -63,8 +64,7 @@ export class UniqueMetroProvider implements MetroProvider {
 
 export class SharedMetroProvider implements MetroProvider, Disposable {
   private readonly port: number | undefined;
-  private metroSession?: Promise<MetroSession & Disposable>;
-  private counterRef = { current: 0 };
+  private metroSession?: Promise<RefCounted<MetroSession & Disposable>>;
 
   constructor(
     private readonly launchConfiguration: ResolvedLaunchConfig,
@@ -75,16 +75,19 @@ export class SharedMetroProvider implements MetroProvider, Disposable {
   }
 
   public async getMetroSession({ resetCache }: { resetCache: boolean }) {
-    if (this.counterRef.current === 0 || resetCache) {
-      this.createNewSession(resetCache);
+    const session = await this.metroSession;
+    if (session === undefined || session.refCount <= 0 || resetCache) {
+      return this.createNewSession(resetCache);
     }
-    return this.getSharedSession();
+
+    session.retain();
+    return session;
   }
 
   public async restartServer({ resetCache }: { resetCache: boolean }) {
-    this.metroSession?.then((session) => session.dispose());
-    this.createNewSession(resetCache);
-    return this.getSharedSession();
+    const session = await this.metroSession;
+    session?.disposeInner();
+    return this.createNewSession(resetCache);
   }
 
   private createNewSession(resetCache: boolean) {
@@ -94,58 +97,12 @@ export class SharedMetroProvider implements MetroProvider, Disposable {
       launchConfiguration: this.launchConfiguration,
       dependencies: this.dependencies,
       resetCache,
-    });
-    this.counterRef = { current: 0 };
-  }
-
-  private async getSharedSession() {
-    assert(this.metroSession, "Metro session is initialized");
-    this.counterRef.current += 1;
-    const session = await this.metroSession;
-    return new SharedMetroSession(session, this.counterRef);
+    }).then(createRefCounted);
+    return this.metroSession;
   }
 
   public dispose() {
     this.metroSession?.then((session) => session.dispose());
-  }
-}
-
-class SharedMetroSession implements MetroSession, Disposable {
-  constructor(
-    private readonly wrappedSession: MetroSession & Disposable,
-    private readonly counterRef: { current: number }
-  ) {}
-
-  get port() {
-    return this.wrappedSession.port;
-  }
-  get sourceMapPathOverrides() {
-    return this.wrappedSession.sourceMapPathOverrides;
-  }
-  get expoPreludeLineCount() {
-    return this.wrappedSession.expoPreludeLineCount;
-  }
-  onBundleError = this.wrappedSession.onBundleError;
-  onBundleProgress = this.wrappedSession.onBundleProgress;
-  onServerStopped = this.wrappedSession.onServerStopped;
-  getDebuggerURL(cancelToken: CancelToken): Promise<DebuggerTargetDescription | undefined> {
-    return this.wrappedSession.getDebuggerURL(cancelToken);
-  }
-  getDebuggerPages(): Promise<CDPTargetDescription[]> {
-    return this.wrappedSession.getDebuggerPages();
-  }
-  reload(): Promise<void> {
-    return this.wrappedSession.reload();
-  }
-  openDevMenu(): Promise<void> {
-    return this.wrappedSession.openDevMenu();
-  }
-
-  dispose() {
-    this.counterRef.current -= 1;
-    if (this.counterRef.current <= 0) {
-      this.wrappedSession.dispose();
-    }
   }
 }
 
