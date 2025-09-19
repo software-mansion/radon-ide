@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import assert from "assert";
 import { ExecaChildProcess, ExecaError } from "execa";
 import mime from "mime";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
@@ -790,6 +791,9 @@ export async function listSimulators(location: SimulatorDeviceSet): Promise<IOSD
         .filter((e) => e !== undefined);
     })
     .flat();
+  if (location === SimulatorDeviceSet.RN_IDE) {
+    await ensureUniqueDisplayNames(simulators);
+  }
   return simulators;
 }
 
@@ -897,4 +901,27 @@ function convertToSimctlSize(size: DeviceSettings["contentSize"]): string {
     case "xxxlarge":
       return "extra-extra-extra-large";
   }
+}
+
+async function ensureUniqueDisplayNames(devices: IOSDeviceInfo[]) {
+  const uniqueNameCounts = new Map<string, number>();
+  // NOTE: matches "uniqueName[ (count)]"
+  const uniqueNameRegex = /^(.*?)( \([0-9]+\))?$/;
+
+  const promises = devices.map((device) => {
+    const { UDID, displayName } = device;
+    const uniqueName = uniqueNameRegex.exec(displayName)?.[1];
+    assert(uniqueName, "The unique name regex matches all strings");
+    const nameCount = uniqueNameCounts.get(uniqueName);
+    if (nameCount === undefined) {
+      uniqueNameCounts.set(uniqueName, 1);
+      return;
+    }
+
+    uniqueNameCounts.set(uniqueName, nameCount + 1);
+    const newName = `${uniqueName} (${nameCount})`;
+    device.displayName = newName;
+    return renameIosSimulator(UDID, newName);
+  });
+  await Promise.all(promises);
 }
