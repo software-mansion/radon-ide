@@ -23,7 +23,6 @@ import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { ToolKey } from "./tools";
 import { ApplicationContext } from "./ApplicationContext";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
-import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { ApplicationSession } from "./applicationSession";
 import {
@@ -41,6 +40,7 @@ import { FrameReporter } from "./FrameReporter";
 import { ScreenCapture } from "./ScreenCapture";
 import { disposeAll } from "../utilities/disposables";
 import { FileTransfer } from "./FileTransfer";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { DevtoolsServer } from "./devtools";
 
 const MAX_URL_HISTORY_SIZE = 20;
@@ -99,8 +99,7 @@ export class DeviceSession implements Disposable {
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly devtoolsServer: (DevtoolsServer & { port: number }) | undefined,
-    initialRotation: DeviceRotation,
-    private readonly outputChannelRegistry: OutputChannelRegistry
+    initialRotation: DeviceRotation
   ) {
     this.frameReporter = new FrameReporter(
       this.stateManager.getDerived("frameReporting"),
@@ -570,7 +569,7 @@ export class DeviceSession implements Disposable {
 
     const buildOptions = {
       forceCleanBuild: clean || buildDependenciesChanged,
-      buildOutputChannel: this.outputChannelRegistry.getOrCreateOutputChannel(
+      buildOutputChannel: OutputChannelRegistry.getOrCreateOutputChannel(
         platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
       ),
       cancelToken,
@@ -619,7 +618,7 @@ export class DeviceSession implements Disposable {
       this.cancelOngoingOperations();
       const cancelToken = this.cancelToken;
 
-      const packageManagerOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
+      const packageManagerOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(
         Output.PackageManager
       );
 
