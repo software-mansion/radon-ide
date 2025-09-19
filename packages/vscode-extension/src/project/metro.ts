@@ -26,6 +26,8 @@ export interface MetroSession {
   sourceMapPathOverrides: Record<string, string>;
   expoPreludeLineCount: number;
 
+  disposed: boolean;
+
   onBundleError: (listener: (event: BundleErrorEvent) => void) => Disposable;
   onBundleProgress: (listener: (event: BundleProgressEvent) => void) => Disposable;
   onServerStopped: (listener: () => void) => Disposable;
@@ -261,6 +263,12 @@ export class Metro implements MetroSession, Disposable {
   public readonly onBundleProgress = this.bundleProgressEventEmitter.event;
   public readonly onServerStopped = this.onServerStoppedEventEmitter.event;
 
+  protected _disposed = false;
+
+  public get disposed() {
+    return this._disposed;
+  }
+
   constructor(
     protected _port: number,
     protected readonly appRoot: string
@@ -380,6 +388,7 @@ export class Metro implements MetroSession, Disposable {
   }
 
   public dispose() {
+    this._disposed = true;
     this.bundleErrorEventEmitter.dispose();
     this.bundleProgressEventEmitter.dispose();
   }
