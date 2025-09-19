@@ -46,20 +46,20 @@ export interface MetroProvider {
 export class UniqueMetroProvider implements MetroProvider {
   constructor(
     private readonly launchConfiguration: ResolvedLaunchConfig,
-    private readonly devtoolsPort: number | undefined,
-    private readonly dependencies: Promise<unknown>[]
+    private readonly devtoolsPort: Promise<number | undefined> = Promise.resolve(undefined)
   ) {}
 
-  getMetroSession(options: { resetCache: boolean }): Promise<MetroSession & Disposable> {
+  public async getMetroSession(options: {
+    resetCache: boolean;
+  }): Promise<MetroSession & Disposable> {
     return launchMetro({
-      devtoolsPort: this.devtoolsPort,
+      devtoolsPort: await this.devtoolsPort,
       launchConfiguration: this.launchConfiguration,
-      dependencies: this.dependencies,
       resetCache: options.resetCache,
     });
   }
 
-  restartServer(options: { resetCache: boolean }): Promise<MetroSession & Disposable> {
+  public restartServer(options: { resetCache: boolean }): Promise<MetroSession & Disposable> {
     return this.getMetroSession(options);
   }
 }
@@ -70,8 +70,7 @@ export class SharedMetroProvider implements MetroProvider, Disposable {
 
   constructor(
     private readonly launchConfiguration: ResolvedLaunchConfig,
-    private readonly devtoolsPort: number | undefined,
-    private readonly dependencies: Promise<unknown>[]
+    private readonly devtoolsPort: Promise<number | undefined> = Promise.resolve(undefined)
   ) {
     this.port = this.launchConfiguration.metroPort;
   }
@@ -93,13 +92,16 @@ export class SharedMetroProvider implements MetroProvider, Disposable {
   }
 
   private createNewSession(resetCache: boolean) {
-    this.metroSession = launchMetro({
-      port: this.port,
-      devtoolsPort: this.devtoolsPort,
-      launchConfiguration: this.launchConfiguration,
-      dependencies: this.dependencies,
-      resetCache,
-    }).then(createRefCounted);
+    this.metroSession = this.devtoolsPort
+      .then((devtoolsPort) =>
+        launchMetro({
+          port: this.port,
+          devtoolsPort,
+          launchConfiguration: this.launchConfiguration,
+          resetCache,
+        })
+      )
+      .then(createRefCounted);
     return this.metroSession;
   }
 
@@ -185,18 +187,15 @@ const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`
 async function launchMetro({
   port,
   resetCache,
-  dependencies,
   launchConfiguration,
   devtoolsPort,
 }: {
   port?: number;
   resetCache: boolean;
-  dependencies: Promise<unknown>[];
   launchConfiguration: ResolvedLaunchConfig;
   devtoolsPort?: number;
 }): Promise<MetroSession & Disposable> {
   const appRoot = launchConfiguration.absoluteAppRoot;
-  await Promise.all(dependencies);
 
   const libPath = path.join(extensionContext.extensionPath, "lib");
   let metroConfigPath: string | undefined;

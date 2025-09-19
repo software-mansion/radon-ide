@@ -22,8 +22,6 @@ import {
   ProjectStore,
   REMOVE,
 } from "../common/State";
-import { DevtoolsServer } from "./devtools";
-import { MetroProvider } from "./metro";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -56,13 +54,6 @@ export class DeviceSessionsManager implements Disposable {
   private activeSessionId: DeviceId | undefined;
   private findingDevice: boolean = false;
   private previousDevices: DeviceInfo[] = [];
-
-  private servers:
-    | {
-        devtoolsServer?: DevtoolsServer & { port: number };
-        metroProvider: MetroProvider;
-      }
-    | undefined;
 
   constructor(
     private readonly stateManager: StateManager<DeviceSessions>,
@@ -168,7 +159,7 @@ export class DeviceSessionsManager implements Disposable {
       this.stateManager.getDerived(deviceInfo.id),
       this.applicationContext,
       device,
-      undefined,
+      await this.applicationContext.devtoolsServer,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
       this.outputChannelRegistry,
       this.applicationContext.metroProvider

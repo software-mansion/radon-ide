@@ -15,6 +15,7 @@ import { Logger } from "../Logger";
 import { FingerprintProvider } from "./FingerprintProvider";
 import { requireNoCache } from "../utilities/requireNoCache";
 import { MetroProvider, SharedMetroProvider, UniqueMetroProvider } from "./metro";
+import { DevtoolsServer, WebSocketDevtoolsServer } from "./devtools";
 
 /**
  * Represents a launch configuration that has been resolved with additional properties.
@@ -86,11 +87,11 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
   };
 }
 
-function createMetroProvider(launchConfig: ResolvedLaunchConfig) {
+function createMetroProvider(launchConfig: ResolvedLaunchConfig, devtoolsPort?: Promise<number>) {
   if (launchConfig.metroPort) {
-    return new SharedMetroProvider(launchConfig, undefined, []);
+    return new SharedMetroProvider(launchConfig, devtoolsPort);
   }
-  return new UniqueMetroProvider(launchConfig, undefined, []);
+  return new UniqueMetroProvider(launchConfig, devtoolsPort);
 }
 
 export class ApplicationContext implements Disposable {
@@ -99,10 +100,15 @@ export class ApplicationContext implements Disposable {
   public launchConfig: ResolvedLaunchConfig;
   public readonly buildCache: BuildCache;
   private _metroProvider: MetroProvider & Partial<Disposable>;
+  private _devtoolsServer: Promise<WebSocketDevtoolsServer> | undefined;
   private disposables: Disposable[] = [];
 
   public get metroProvider(): MetroProvider {
     return this._metroProvider;
+  }
+
+  public get devtoolsServer(): Promise<DevtoolsServer & { port: number }> | undefined {
+    return this._devtoolsServer;
   }
 
   constructor(
@@ -122,7 +128,13 @@ export class ApplicationContext implements Disposable {
       new BuildManagerImpl(this.buildCache, fingerprintProvider)
     );
     this.buildManager = buildManager;
-    this._metroProvider = createMetroProvider(this.launchConfig);
+    if (this.launchConfig.useOldDevtools) {
+      this._devtoolsServer = WebSocketDevtoolsServer.createServer();
+    }
+    this._metroProvider = createMetroProvider(
+      this.launchConfig,
+      this.devtoolsServer?.then((server) => server.port)
+    );
 
     this.disposables.push(this.applicationDependencyManager, buildManager);
   }
@@ -139,12 +151,24 @@ export class ApplicationContext implements Disposable {
     this.launchConfig = resolveLaunchConfig(launchConfig);
     this.applicationDependencyManager.setLaunchConfiguration(this.launchConfig);
     await this.applicationDependencyManager.runAllDependencyChecks();
+
+    (await this._devtoolsServer)?.dispose();
+    this._devtoolsServer = undefined;
+
+    if (this.launchConfig.useOldDevtools) {
+      this._devtoolsServer = WebSocketDevtoolsServer.createServer();
+    }
+
     this._metroProvider.dispose?.();
-    this._metroProvider = createMetroProvider(this.launchConfig);
+    this._metroProvider = createMetroProvider(
+      this.launchConfig,
+      this.devtoolsServer?.then((server) => server.port)
+    );
   }
 
   public dispose() {
     disposeAll(this.disposables);
     this._metroProvider.dispose?.();
+    this._devtoolsServer?.then((server) => server.dispose());
   }
 }
