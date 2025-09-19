@@ -13,13 +13,6 @@ import {
   ExtensionThemeInfo,
 } from "../common/theme";
 
-// Re-export types for backward compatibility
-export {
-  ThemeVariant,
-  ThemeData,
-  ThemeDescriptor,
-} from "../common/theme";
-
 const DEFAULT_THEME_MAPPING: Record<ThemeVariant, ThemeData> = {
   [ThemeVariant.Dark]: theme_dark,
   [ThemeVariant.Light]: theme_light,
@@ -32,9 +25,6 @@ const VARIANT_FALLBACK: ThemeVariant = ThemeVariant.Dark;
 // Cache for theme data to avoid repeated file reads
 const themeCache = new Map<string, ThemeData>();
 
-/**
- * Gets a default theme based on variant, falling back to dark theme
- */
 function getDefaultTheme(themeVariant: ThemeVariant | undefined): ThemeData {
   return DEFAULT_THEME_MAPPING[themeVariant ?? VARIANT_FALLBACK];
 }
