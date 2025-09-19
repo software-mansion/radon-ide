@@ -1,12 +1,39 @@
 import { ApplicationRoot } from "./AppRootConfig";
+import { BuildType } from "./BuildConfig";
 import { merge } from "./Merge";
 import { DeviceId } from "./Project";
 
+export const REMOVE = Symbol("remove");
+
 export type RecursivePartial<T> = {
   [P in keyof T]?: NonNullable<T[P]> extends Array<infer U>
-    ? Array<U> | undefined
-    : RecursivePartial<T[P]>;
+    ? Array<U> | undefined | typeof REMOVE
+    : RecursivePartial<T[P]> | typeof REMOVE;
 };
+
+// #region State Serializer
+
+export class StateSerializer {
+  static serialize<T>(state: RecursivePartial<T>): string {
+    return JSON.stringify(state, (_, value) => {
+      if (typeof value === "symbol") {
+        return { __symbol__: value.toString() };
+      }
+      return value;
+    });
+  }
+
+  static deserialize<T>(json: string): RecursivePartial<T> {
+    return JSON.parse(json, (_, value) => {
+      if (value && value.__symbol__ === "Symbol(remove)") {
+        return REMOVE;
+      }
+      return value;
+    });
+  }
+}
+
+// #endregion State Serializer
 
 // #region Workspace Configuration
 
@@ -20,6 +47,7 @@ export type WorkspaceConfiguration = {
   inspectorExcludePattern: string | null;
   defaultMultimediaSavingLocation: string | null;
   startDeviceOnLaunch: boolean;
+  enableExperimentalElementInspector: boolean;
 };
 
 // #endregion Workspace Configuration
@@ -118,6 +146,66 @@ export type ApplicationSessionState = {
 
 // #endregion Application Session
 
+// #region Device Session Status
+
+export enum InstallationErrorReason {
+  NotEnoughStorage = "not_enough_storage",
+  InvalidPlatform = "invalid_platform",
+  Unknown = "unknown",
+}
+
+export class InstallationError extends Error {
+  constructor(
+    message: string,
+    public readonly reason: InstallationErrorReason
+  ) {
+    super(message);
+  }
+}
+
+export type BuildErrorDescriptor = {
+  kind: "build";
+  message: string;
+  platform: DevicePlatform;
+  buildType: BuildType | null;
+};
+
+export type DeviceErrorDescriptor = {
+  kind: "device";
+  message: string;
+};
+
+export type InstallationErrorDescriptor = {
+  kind: "installation";
+  message: string;
+  platform: DevicePlatform;
+  reason: InstallationErrorReason;
+};
+
+export type FatalErrorDescriptor =
+  | BuildErrorDescriptor
+  | DeviceErrorDescriptor
+  | InstallationErrorDescriptor;
+
+export type DeviceSessionStatus = "starting" | "running" | "fatalError";
+
+export type DeviceSessionStateStarting = {
+  status: "starting";
+  startupMessage: StartupMessage;
+  stageProgress: number;
+};
+
+export type DeviceSessionStateRunning = {
+  status: "running";
+};
+
+export type DeviceSessionStateFatalError = {
+  status: "fatalError";
+  error: FatalErrorDescriptor;
+};
+
+// #endregion Device Session status
+
 // #region Frame Reporting State
 
 export type FrameRateReport = {
@@ -143,6 +231,7 @@ export type FileTransferState = {
 };
 
 // #endregion File Transfer State
+
 // #region Multimedia
 
 export type MultimediaData = {
@@ -176,6 +265,34 @@ export type NavigationRoute = {
 
 // #endregion Navigation
 
+// #region Startup Messages
+
+// important: order of values in this enum matters
+export enum StartupMessage {
+  InitializingDevice = "Initializing device",
+  StartingPackager = "Starting packager",
+  BootingDevice = "Booting device",
+  Building = "Building",
+  Installing = "Installing",
+  Launching = "Launching",
+  WaitingForAppToLoad = "Waiting for app to load",
+  AttachingDebugger = "Attaching debugger",
+  Restarting = "Restarting",
+}
+
+export const StartupStageWeight = [
+  { StartupMessage: StartupMessage.InitializingDevice, weight: 1 },
+  { StartupMessage: StartupMessage.StartingPackager, weight: 1 },
+  { StartupMessage: StartupMessage.BootingDevice, weight: 2 },
+  { StartupMessage: StartupMessage.Building, weight: 7 },
+  { StartupMessage: StartupMessage.Installing, weight: 1 },
+  { StartupMessage: StartupMessage.Launching, weight: 1 },
+  { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
+  { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
+];
+
+// #endregion Startup Messages
+
 // #region Device Session
 
 export type DeviceSessionStore = {
@@ -188,7 +305,7 @@ export type DeviceSessionStore = {
   previewURL: string | undefined;
   fileTransfer: FileTransferState;
   screenCapture: ScreenCaptureState;
-};
+} & (DeviceSessionStateStarting | DeviceSessionStateRunning | DeviceSessionStateFatalError);
 
 // #endregion Device Session
 
@@ -343,6 +460,9 @@ const initialDeviceSessionStore: DeviceSessionStore = {
     sentFiles: [],
     erroredFiles: [],
   },
+  stageProgress: 0,
+  startupMessage: StartupMessage.InitializingDevice,
+  status: "starting",
 };
 
 export const initialState: State = {
@@ -373,6 +493,7 @@ export const initialState: State = {
     inspectorExcludePattern: null,
     defaultMultimediaSavingLocation: null,
     startDeviceOnLaunch: true,
+    enableExperimentalElementInspector: false,
   },
 };
 

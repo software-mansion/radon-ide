@@ -32,11 +32,11 @@ export class FileTransfer implements Disposable {
     const fileName = path.basename(filePath);
 
     const sendingFiles = [...this.stateManager.getState().sendingFiles, fileName];
-    this.stateManager.setState({ sendingFiles });
+    this.stateManager.updateState({ sendingFiles });
     try {
       const result = await this.device.sendFile(filePath);
       const newSentFiles = [...this.stateManager.getState().sentFiles, fileName];
-      this.stateManager.setState({ sentFiles: newSentFiles });
+      this.stateManager.updateState({ sentFiles: newSentFiles });
       return result;
     } catch (e) {
       const newErrors = [
@@ -46,7 +46,7 @@ export class FileTransfer implements Disposable {
           errorMessage: (e as Error).message,
         },
       ];
-      this.stateManager.setState({ erroredFiles: newErrors });
+      this.stateManager.updateState({ erroredFiles: newErrors });
       throw e;
     } finally {
       this.removeFileFromState(fileName);
@@ -62,7 +62,7 @@ export class FileTransfer implements Disposable {
     }
     const withoutFile = [...sendingFiles];
     withoutFile.splice(fileIndex, 1);
-    this.stateManager.setState({ sendingFiles: withoutFile });
+    this.stateManager.updateState({ sendingFiles: withoutFile });
   }
 
   public async openSendFileDialog() {

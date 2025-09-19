@@ -2,7 +2,7 @@ import { Change, Observable, observable } from "@legendapp/state";
 import { synced, SyncedSetParams, SyncedSubscribeParams } from "@legendapp/state/sync";
 import { vscode } from "../utilities/vscode";
 import { createContext, PropsWithChildren, useContext } from "react";
-import { initialState, RecursivePartial, State } from "../../common/State";
+import { initialState, RecursivePartial, State, StateSerializer } from "../../common/State";
 import { merge } from "../../common/Merge";
 
 let instanceToken = Math.floor(Math.random() * 1000000);
@@ -57,15 +57,15 @@ const getState: () => Promise<State> = async () => {
   });
 };
 
-const setState = async (params: SyncedSetParams<State>) => {
+const updateState = async (params: SyncedSetParams<State>) => {
   const { changes } = params;
 
-  const currentCallId = `RNIDE_set_state_${instanceToken}_${globalCallCounter++}`;
+  const currentCallId = `RNIDE_update_state_${instanceToken}_${globalCallCounter++}`;
 
   vscode.postMessage({
-    command: "RNIDE_set_state",
+    command: "RNIDE_update_state",
     callId: currentCallId,
-    state: partialNewStateFromChanges(changes),
+    state: StateSerializer.serialize(partialNewStateFromChanges(changes)),
   });
 };
 
@@ -73,7 +73,7 @@ const subscribeToState = (params: SyncedSubscribeParams<State>) => {
   const { update } = params;
   const listener = (event: any) => {
     if (event.data.command === "RNIDE_state_updated") {
-      const changes = event.data.state as RecursivePartial<State>;
+      const changes = StateSerializer.deserialize(event.data.state) as RecursivePartial<State>;
       update({
         //@ts-ignore Legend State is mistyping the param, but it works. _Trust me_.
         value: (prev) => {
@@ -93,7 +93,7 @@ const subscribeToState = (params: SyncedSubscribeParams<State>) => {
 const stateStore$ = observable(
   synced<State>({
     get: getState,
-    set: setState,
+    set: updateState,
     subscribe: subscribeToState,
     initial: initialState,
   })

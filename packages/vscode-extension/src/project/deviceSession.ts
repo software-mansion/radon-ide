@@ -1,4 +1,3 @@
-import assert from "assert";
 import { Disposable } from "vscode";
 import { MetroLauncher } from "./metro";
 import { RadonInspectorBridge } from "./bridge";
@@ -14,14 +13,9 @@ import {
 import {
   AppPermissionType,
   DeviceSettings,
-  StartupMessage,
   TouchPoint,
   DeviceButtonType,
-  DeviceSessionState,
-  DeviceSessionStatus,
-  FatalErrorDescriptor,
   InspectData,
-  InstallationError,
 } from "../common/Project";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
@@ -36,8 +30,10 @@ import {
   DevicePlatform,
   DeviceRotation,
   DeviceSessionStore,
+  InstallationError,
   NavigationHistoryItem,
   NavigationRoute,
+  StartupMessage,
 } from "../common/State";
 import { ReloadAction } from "./DeviceSessionsManager";
 import { StateManager } from "./StateManager";
@@ -52,10 +48,6 @@ const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 type RestartOptions = {
   forceClean: boolean;
-};
-
-export type DeviceSessionDelegate = {
-  onStateChange(state: DeviceSessionState): void;
 };
 
 export class DeviceBootError extends Error {
@@ -79,10 +71,6 @@ export class DeviceSession implements Disposable {
   private screenCapture: ScreenCapture;
 
   private isActive = false;
-  private status: DeviceSessionStatus = "starting";
-  private startupMessage: StartupMessage = StartupMessage.InitializingDevice;
-  private stageProgress: number | undefined;
-  private fatalError: FatalErrorDescriptor | undefined;
   private navigationHomeTarget: NavigationHistoryItem | undefined;
 
   public fileTransfer: FileTransfer;
@@ -112,7 +100,6 @@ export class DeviceSession implements Disposable {
     private readonly device: DeviceBase,
     private readonly devtoolsServer: (DevtoolsServer & { port: number }) | undefined,
     initialRotation: DeviceRotation,
-    private readonly deviceSessionDelegate: DeviceSessionDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     this.frameReporter = new FrameReporter(
@@ -142,47 +129,23 @@ export class DeviceSession implements Disposable {
     this.disposables.push(this.fileTransfer);
   }
 
-  public getState(): DeviceSessionState {
-    if (this.status === "starting") {
-      return {
-        status: "starting",
-        startupMessage: this.startupMessage,
-        stageProgress: this.stageProgress,
-      };
-    } else if (this.status === "running") {
-      return {
-        status: "running",
-      };
-    } else if (this.status === "fatalError") {
-      assert(this.fatalError, "Expected error to be defined in fatal error state");
-      return {
-        status: "fatalError",
-        error: this.fatalError,
-      };
-    }
-    assert(false, "Unexpected device session status: " + this.status);
-  }
-
   private resetStartingState(startupMessage: StartupMessage = StartupMessage.Restarting) {
-    this.status = "starting";
-    this.startupMessage = startupMessage;
-    this.stageProgress = undefined;
-    this.fatalError = undefined;
     this.navigationHomeTarget = undefined;
-    this.emitStateChange();
-
-    this.stateManager.setState({ isUsingStaleBuild: false });
+    this.stateManager.updateState({
+      isUsingStaleBuild: false,
+      status: "starting",
+      startupMessage,
+      stageProgress: 0,
+    });
   }
 
   private updateStartupMessage(startupMessage: StartupMessage) {
-    this.startupMessage = startupMessage;
-    this.stageProgress = undefined;
-    this.emitStateChange();
+    this.stateManager.updateState({ startupMessage, stageProgress: 0 });
   }
 
   private async startPreview() {
     const previewURL = await this.device.startPreview();
-    this.stateManager.setState({ previewURL });
+    this.stateManager.updateState({ previewURL });
   }
 
   private async isBuildStale(build: BuildResult) {
@@ -202,22 +165,24 @@ export class DeviceSession implements Disposable {
 
   private onProjectFilesChanged = throttleAsync(async () => {
     const lastSuccessfulBuild = this.maybeBuildResult;
-    if (!lastSuccessfulBuild || this.status !== "running") {
+    if (!lastSuccessfulBuild || this.stateManager.getState().status !== "running") {
       // we only monitor for stale builds when the session is in 'running' state
       return;
     }
     if (await this.isBuildStale(lastSuccessfulBuild)) {
-      this.stateManager.setState({ isUsingStaleBuild: true });
-      this.emitStateChange();
+      this.stateManager.updateState({ isUsingStaleBuild: true });
     }
   }, CACHE_STALE_THROTTLE_MS);
 
   //#region Metro delegate methods
 
   private onBundleProgress = throttle((stageProgress: number) => {
-    if (this.startupMessage === StartupMessage.WaitingForAppToLoad) {
-      this.stageProgress = stageProgress;
-      this.emitStateChange();
+    const store = this.stateManager.getState();
+    if (store.status !== "starting") {
+      return;
+    }
+    if (store.startupMessage === StartupMessage.WaitingForAppToLoad) {
+      this.stateManager.updateState({ stageProgress });
     }
   }, 100);
 
@@ -238,10 +203,10 @@ export class DeviceSession implements Disposable {
           .navigationHistory.filter((record) => record.id !== payload.id),
       ].slice(0, MAX_URL_HISTORY_SIZE);
 
-      this.stateManager.setState({ navigationHistory });
+      this.stateManager.updateState({ navigationHistory });
     });
     devtools.onEvent("navigationRouteListUpdated", (payload: NavigationRoute[]) => {
-      this.stateManager.setState({ navigationRouteList: payload });
+      this.stateManager.updateState({ navigationRouteList: payload });
     });
   }
 
@@ -292,31 +257,34 @@ export class DeviceSession implements Disposable {
         method: type,
       });
       await this.performReloadActionInternal(type);
-      this.status = "running";
-      this.emitStateChange();
+      this.stateManager.updateState({
+        status: "running",
+      });
     } catch (e) {
       if (e instanceof CancelError) {
         // reload got cancelled, we don't show any errors
         return;
       } else if (e instanceof BuildError) {
-        this.status = "fatalError";
-        this.fatalError = {
-          kind: "build",
-          message: e.message,
-          buildType: e.buildType,
-          platform: this.stateManager.getState().deviceInfo.platform,
-        };
-        this.emitStateChange();
+        this.stateManager.updateState({
+          status: "fatalError",
+          error: {
+            kind: "build",
+            message: e.message,
+            buildType: e.buildType,
+            platform: this.stateManager.getState().deviceInfo.platform,
+          },
+        });
         return;
       } else if (e instanceof InstallationError) {
-        this.status = "fatalError";
-        this.fatalError = {
-          kind: "installation",
-          message: e.message,
-          platform: this.stateManager.getState().deviceInfo.platform,
-          reason: e.reason,
-        };
-        this.emitStateChange();
+        this.stateManager.updateState({
+          status: "fatalError",
+          error: {
+            kind: "installation",
+            message: e.message,
+            platform: this.stateManager.getState().deviceInfo.platform,
+            reason: e.reason,
+          },
+        });
         return;
       }
       Logger.error("Failed to perform reload action", type, e);
@@ -466,8 +434,9 @@ export class DeviceSession implements Disposable {
 
     try {
       await this.restartProcess();
-      this.status = "running";
-      this.emitStateChange();
+      this.stateManager.updateState({
+        status: "running",
+      });
       return;
     } catch (e) {
       if (e instanceof CancelError) {
@@ -516,8 +485,9 @@ export class DeviceSession implements Disposable {
       this.device.setUpKeyboard();
       this.setupInspectorBridgeListeners(applicationSession.inspectorBridge);
 
-      this.status = "running";
-      this.emitStateChange();
+      this.stateManager.updateState({
+        status: "running",
+      });
 
       const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
       Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
@@ -605,9 +575,12 @@ export class DeviceSession implements Disposable {
       ),
       cancelToken,
       progressListener: throttle((stageProgress: number) => {
-        if (this.startupMessage === StartupMessage.Building) {
-          this.stageProgress = stageProgress;
-          this.emitStateChange();
+        const store = this.stateManager.getState();
+        if (store.status !== "starting") {
+          return;
+        }
+        if (store.startupMessage === StartupMessage.Building) {
+          this.stateManager.updateState({ stageProgress });
         }
       }, 100),
     };
@@ -615,7 +588,7 @@ export class DeviceSession implements Disposable {
     const dependencyManager = this.applicationContext.applicationDependencyManager;
     await dependencyManager.ensureDependenciesForBuild(buildConfig, buildOptions);
 
-    this.stateManager.setState({ isUsingStaleBuild: false });
+    this.stateManager.updateState({ isUsingStaleBuild: false });
     this.maybeBuildResult = await this.buildManager.buildApp(buildConfig, buildOptions);
     const buildDurationSec = (Date.now() - buildStartTime) / 1000;
     Logger.info("Build completed in", buildDurationSec.toFixed(2), "sec.");
@@ -678,44 +651,46 @@ export class DeviceSession implements Disposable {
       if (e instanceof CancelError) {
         Logger.info("Device selection was canceled", e);
       } else if (e instanceof DeviceBootError) {
-        this.status = "fatalError";
-        this.fatalError = {
-          kind: "device",
-          message: e.message,
-        };
+        this.stateManager.updateState({
+          status: "fatalError",
+          error: {
+            kind: "device",
+            message: e.message,
+          },
+        });
       } else if (e instanceof BuildError) {
-        this.status = "fatalError";
-        this.fatalError = {
-          kind: "build",
-          message: e.message,
-          buildType: e.buildType,
-          platform: this.stateManager.getState().deviceInfo.platform,
-        };
+        this.stateManager.updateState({
+          status: "fatalError",
+          error: {
+            kind: "build",
+            message: e.message,
+            buildType: e.buildType,
+            platform: this.stateManager.getState().deviceInfo.platform,
+          },
+        });
       } else if (e instanceof InstallationError) {
-        this.status = "fatalError";
-        this.fatalError = {
-          kind: "installation",
-          message: e.message,
-          platform: this.stateManager.getState().deviceInfo.platform,
-          reason: e.reason,
-        };
+        this.stateManager.updateState({
+          status: "fatalError",
+          error: {
+            kind: "installation",
+            message: e.message,
+            platform: this.stateManager.getState().deviceInfo.platform,
+            reason: e.reason,
+          },
+        });
       } else {
-        this.status = "fatalError";
-        this.fatalError = {
-          kind: "build",
-          message: (e as Error).message,
-          buildType: null,
-          platform: this.stateManager.getState().deviceInfo.platform,
-        };
+        this.stateManager.updateState({
+          status: "fatalError",
+          error: {
+            kind: "build",
+            message: (e as Error).message,
+            buildType: null,
+            platform: this.stateManager.getState().deviceInfo.platform,
+          },
+        });
       }
       throw e;
-    } finally {
-      this.emitStateChange();
     }
-  }
-
-  private emitStateChange() {
-    this.deviceSessionDelegate.onStateChange(this.getState());
   }
 
   public async resetAppPermissions(permissionType: AppPermissionType) {
@@ -802,7 +777,6 @@ export class DeviceSession implements Disposable {
 
   public sendRotate(rotation: DeviceRotation) {
     this.device.sendRotate(rotation);
-    this.emitStateChange();
   }
 
   public async getClipboard() {
@@ -839,7 +813,7 @@ export class DeviceSession implements Disposable {
   }
 
   public removeNavigationHistoryEntry(id: string) {
-    this.stateManager.setState({
+    this.stateManager.updateState({
       navigationHistory: this.stateManager
         .getState()
         .navigationHistory.filter((record) => record.id !== id),

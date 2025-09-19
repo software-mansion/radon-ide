@@ -75,8 +75,10 @@ function ActiveToolButton({
 function PreviewView() {
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
+  const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
+  const selectedProjectDevice = use$(selectedDeviceSessionState.deviceInfo);
 
-  const { selectedDeviceSession, projectState, project, deviceSettings } = useProject();
+  const { projectState, project, deviceSettings } = useProject();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
@@ -98,8 +100,8 @@ function PreviewView() {
   );
 
   const hasNoDevices = projectState !== undefined && devices.length === 0;
-  const isStarting = selectedDeviceSession?.status === "starting";
-  const isRunning = selectedDeviceSession?.status === "running";
+  const isStarting = selectedDeviceSessionStatus === "starting";
+  const isRunning = selectedDeviceSessionStatus === "running";
 
   const isRecording = use$(selectedDeviceSessionState.screenCapture.isRecording);
   const modelId = use$(selectedDeviceSessionState.deviceInfo.modelId);
@@ -255,7 +257,7 @@ function PreviewView() {
       }}>
       <div className="button-group-top">
         <div className="button-group-top-left">
-          <UrlBar disabled={!selectedDeviceSession} />
+          <UrlBar disabled={!selectedProjectDevice} />
         </div>
         <div className="button-group-top-right">
           <ActiveToolButton
