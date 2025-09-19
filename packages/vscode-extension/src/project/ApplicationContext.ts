@@ -94,7 +94,7 @@ export class ApplicationContext implements Disposable {
 
   constructor(
     private readonly stateManager: StateManager<ApplicationContextState>,
-    private readonly workspaceConfigState: StateManager<WorkspaceConfiguration>, // owned by `Project`, do not dispose
+    public readonly workspaceConfigState: StateManager<WorkspaceConfiguration>, // owned by `Project`, do not dispose
     launchConfig: LaunchConfiguration,
     fingerprintProvider: FingerprintProvider
   ) {

@@ -71,6 +71,8 @@ export class ApplicationSession implements Disposable {
   private inspectCallID = 7621;
   private devtools: DevtoolsConnection | undefined;
   private toolsManager: ToolsManager;
+  private lastRegisteredInspectorAvailability: InspectorAvailabilityStatus =
+    InspectorAvailabilityStatus.UnavailableInactive;
 
   private readonly _inspectorBridge: DevtoolsInspectorBridge;
   public get inspectorBridge(): RadonInspectorBridge {
@@ -171,7 +173,12 @@ export class ApplicationSession implements Disposable {
     this._inspectorBridge = devtoolsInspectorBridge;
     const inspectorBridgeSubscriptions =
       this.registerInspectorBridgeEventListeners(devtoolsInspectorBridge);
-    this.disposables.push(devtoolsInspectorBridge, ...inspectorBridgeSubscriptions);
+    const configurationChangeSubscriptions = this.registerConfigurationChangeListeners();
+    this.disposables.push(
+      devtoolsInspectorBridge,
+      ...inspectorBridgeSubscriptions,
+      ...configurationChangeSubscriptions
+    );
 
     if (websocketDevtoolsServer) {
       this.setupDevtoolsServer(websocketDevtoolsServer);
@@ -179,7 +186,8 @@ export class ApplicationSession implements Disposable {
 
     this.toolsManager = new ToolsManager(
       this.stateManager.getDerived("toolsState"),
-      devtoolsInspectorBridge
+      devtoolsInspectorBridge,
+      this.applicationContext.workspaceConfigState
     );
     this.disposables.push(this.toolsManager);
     this.disposables.push(this.stateManager);
@@ -443,6 +451,39 @@ export class ApplicationSession implements Disposable {
     }
   }
 
+  /**
+   * Determine availability of the element inspector taking the
+   * enableExperimentalElementInspector setting (force-enable) into account.
+   */
+  private determineInspectorAvailability(
+    status: InspectorAvailabilityStatus
+  ): InspectorAvailabilityStatus {
+    const experimentalInspectorEnabled =
+      this.applicationContext.workspaceConfiguration.enableExperimentalElementInspector;
+    const isStatusUnavailableEdgeToEdge =
+      status === InspectorAvailabilityStatus.UnavailableEdgeToEdge;
+
+    const newAvailabilityStatus =
+      experimentalInspectorEnabled && isStatusUnavailableEdgeToEdge
+        ? InspectorAvailabilityStatus.Available
+        : status;
+
+    return newAvailabilityStatus;
+  }
+
+  private registerConfigurationChangeListeners() {
+    const subscriptions = [
+      // react to enableExperimentalElementInspector setting changes
+      this.applicationContext.workspaceConfigState.onSetState(() => {
+        const status = this.determineInspectorAvailability(
+          this.lastRegisteredInspectorAvailability
+        );
+        this.stateManager.updateState({ elementInspectorAvailability: status });
+      }),
+    ];
+    return subscriptions;
+  }
+
   private registerInspectorBridgeEventListeners(inspectorBridge: RadonInspectorBridge) {
     const subscriptions = [
       inspectorBridge.onEvent("appReady", () => {
@@ -466,7 +507,9 @@ export class ApplicationSession implements Disposable {
       inspectorBridge.onEvent(
         "inspectorAvailabilityChanged",
         (inspectorAvailability: InspectorAvailabilityStatus) => {
-          this.stateManager.updateState({ elementInspectorAvailability: inspectorAvailability });
+          this.lastRegisteredInspectorAvailability = inspectorAvailability;
+          const status = this.determineInspectorAvailability(inspectorAvailability);
+          this.stateManager.updateState({ elementInspectorAvailability: status });
         }
       ),
     ];

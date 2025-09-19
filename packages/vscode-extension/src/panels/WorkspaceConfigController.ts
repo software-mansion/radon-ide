@@ -18,6 +18,8 @@ export class WorkspaceConfigController implements Disposable {
       stopPreviousDevices: configuration.get<boolean>("stopPreviousDevices")!,
       deviceRotation: configuration.get<DeviceRotation>("deviceRotation")!,
       startDeviceOnLaunch: configuration.get<boolean>("startDeviceOnLaunch") ?? true,
+      enableExperimentalElementInspector:
+        configuration.get<boolean>("enableExperimentalElementInspector") ?? false,
     };
 
     this.stateManager.updateState(workspaceConfig);
@@ -38,6 +40,8 @@ export class WorkspaceConfigController implements Disposable {
         defaultMultimediaSavingLocation:
           config.get<string>("defaultMultimediaSavingLocation") ?? null,
         startDeviceOnLaunch: config.get<boolean>("startDeviceOnLaunch") ?? true,
+        enableExperimentalElementInspector:
+          config.get<boolean>("enableExperimentalElementInspector") ?? false,
       };
 
       for (const partialStateEntry of partialStateEntries) {
@@ -74,6 +78,8 @@ export class WorkspaceConfigController implements Disposable {
       defaultMultimediaSavingLocation:
         config.get<string>("defaultMultimediaSavingLocation") ?? null,
       startDeviceOnLaunch: config.get<boolean>("startDeviceOnLaunch") ?? true,
+      enableExperimentalElementInspector:
+        config.get<boolean>("enableExperimentalElementInspector") ?? false,
     };
 
     const index = this.workspaceConfigurationUpdatesToIgnore.findIndex((cfg) =>
