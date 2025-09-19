@@ -99,7 +99,7 @@ export class DeviceSession implements Disposable {
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly devtoolsServer: (DevtoolsServer & { port: number }) | undefined,
-    initialRotation: DeviceRotation,
+    initialRotation: DeviceRotation
   ) {
     this.frameReporter = new FrameReporter(
       this.stateManager.getDerived("frameReporting"),
