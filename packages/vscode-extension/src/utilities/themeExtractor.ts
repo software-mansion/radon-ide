@@ -1,10 +1,6 @@
 import path from "path";
 import vscode from "vscode";
 import _ from "lodash";
-import theme_dark from "../assets/default_themes/theme-dark.json";
-import theme_light from "../assets/default_themes/theme-light.json";
-import theme_hc_dark from "../assets/default_themes/theme-hc-dark.json";
-import theme_hc_light from "../assets/default_themes/theme-hc-light.json";
 import {
   ThemeVariant,
   ThemeData,
@@ -12,6 +8,15 @@ import {
   ThemeFileData,
   ExtensionThemeInfo,
 } from "../common/theme";
+
+// Below are the themes used when the theme file cannot be found or loaded
+// In case the themes chosen by us to be default cannot be loaded from vscode
+// for any reason, we provide files with basic themes bundled with the extension
+import theme_dark from "../assets/default_themes/theme-dark.json";
+import theme_light from "../assets/default_themes/theme-light.json";
+import theme_hc_dark from "../assets/default_themes/theme-hc-dark.json";
+import theme_hc_light from "../assets/default_themes/theme-hc-light.json";
+
 
 const DEFAULT_THEME_MAPPING: Record<ThemeVariant, ThemeData> = {
   [ThemeVariant.Dark]: theme_dark,
