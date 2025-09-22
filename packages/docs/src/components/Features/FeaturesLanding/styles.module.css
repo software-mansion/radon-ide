@@ -91,7 +91,7 @@
 
 @media (max-width: 400px) {
   .contentContainer {
-    padding: 40px 0px;
+    padding: 40px 0px 40px 24px;
   }
   .learnMoreLink {
     display: none;
@@ -99,7 +99,6 @@
   .learnMoreLinkBottom {
     display: flex;
     justify-self: end;
-    margin-left: 24px;
   }
   .textContent {
     padding: 0 24px;
