@@ -49,7 +49,7 @@ describe("8 - Device Settings", () => {
     }, 5000);
   });
 
-  after(async () => {
+  afterEach(async () => {
     // leave device in portrait mode
     await rotateDevice("portrait");
   });

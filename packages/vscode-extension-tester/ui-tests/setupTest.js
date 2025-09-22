@@ -91,7 +91,9 @@ after(async function () {
   // console log additional informations after standard mocha report
   setTimeout(() => {
     if (failedTests.length > 0) {
-      const failingTestNumbers = failedTests.map((x) => x.split(" - ")[0]);
+      const failingTestNumbers = [
+        ...new Set(failedTests.map((x) => x.split(" - ")[0])),
+      ];
       console.log("Test suit numbers that failed:");
       console.log(failingTestNumbers.join(" "));
       console.log(
