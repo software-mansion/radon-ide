@@ -1,6 +1,8 @@
 .feedback {
   display: flex;
   gap: 4px;
+  --positive-color: var(--green-dark-100);
+  --negative-color: var(--red-dark-100);
 }
 
 .feedback-button {
@@ -41,30 +43,30 @@
 }
 
 .feedback-button-positive {
-  color: var(--green-light-80);
-  border: 1px solid var(--green-light-80);
+  color: var(--positive-color);
+  border: 1px solid var(--positive-color);
 }
 
 .feedback-button-positive span {
-  color: var(--green-light-80);
+  color: var(--positive-color);
 }
 
 .feedback-button-positive:hover,
 .feedback-button-positive-active {
-  background-color: var(--green-light-80);
+  background-color: var(--positive-color);
 }
 
 .feedback-button-negative {
-  border: 1px solid var(--red-light-80);
+  border: 1px solid var(--negative-color);
 }
 
 .feedback-button-negative span {
-  color: var(--red-light-80);
+  color: var(--negative-color);
 }
 
 .feedback-button-negative:hover,
 .feedback-button-negative-active {
-  background-color: var(--red-light-80);
+  background-color: var(--negative-color);
 }
 
 .feedback-prompt {

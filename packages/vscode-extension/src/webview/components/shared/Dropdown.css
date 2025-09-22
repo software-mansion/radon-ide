@@ -8,11 +8,12 @@ button {
   min-width: 220px;
   background-color: var(--swm-popover-background);
   border-radius: 6px;
+  border: var(--swm-dropdown-border);
+  box-shadow: var(--swm-dropdown-shadow);
   padding: 4px;
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
-  box-shadow: var(--swm-backdrop-shadow);
   max-height: calc(var(--radix-dropdown-menu-content-available-height) - 40px);
   overflow-y: auto;
 
@@ -35,6 +36,14 @@ button {
 .dropdown-menu-content[data-side="top"],
 .dropdown-menu-subcontent[data-side="top"] {
   animation-name: slideDownAndFade;
+}
+.dropdown-menu-content[data-side="left"],
+.dropdown-menu-subcontent[data-side="left"] {
+  animation-name: slideRightAndFade;
+}
+.dropdown-menu-content[data-side="right"],
+.dropdown-menu-subcontent[data-side="right"] {
+  animation-name: slideLeftAndFade;
 }
 
 .dropdown-menu-item {

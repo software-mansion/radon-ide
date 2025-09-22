@@ -9,6 +9,12 @@
   will-change: transform, opacity;
   box-shadow: var(--swm-backdrop-shadow);
   z-index: 11;
+  border: var(--swm-dropdown-border);
+  box-shadow: var(--swm-dropdown-shadow);
+
+  svg {
+    filter: drop-shadow(0 1px 0 var(--vscode-menu-border)) drop-shadow(2px 0 8px var(--vscode-widget-shadow));
+  }
 }
 
 .tooltip-primary {
