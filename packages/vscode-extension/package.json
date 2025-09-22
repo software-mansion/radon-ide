@@ -1091,6 +1091,8 @@
     "@rollup/rollup-linux-x64-gnu": "4.40.0"
   },
   "dependencies": {
-    "@tanstack/react-virtual": "^3.13.12"
+    "@tanstack/react-virtual": "^3.13.12",
+    "overlayscrollbars": "^2.12.0",
+    "overlayscrollbars-react": "^0.5.6"
   }
 }

@@ -13,6 +13,11 @@
 }
 
 .network-log-details-tab {
+  width: max-content;
+  min-width: 100%;
+}
+
+.tab-padding{
   padding: 8px;
 }
 
@@ -35,4 +40,27 @@
   outline: 1px dashed var(--vscode-toolbar-hoverOutline);
   outline-offset: -1px;
   background-color: var(--vscode-toolbar-hoverBackground);
+}
+
+/* Mimick the styles used in vscode-elements */
+.network-log-details-tab-scrollable {
+  &:hover .os-scrollbar {
+    transition-duration: 100ms;
+  }
+
+  .os-scrollbar {
+    transition-duration: 800ms;
+
+    --os-size: 10px;
+    --os-padding-perpendicular: 0;
+    --os-padding-axis: 0;
+    --os-handle-border-radius: 0px;
+    --os-handle-bg: var(--vscode-scrollbarSlider-background);
+    --os-handle-bg-hover: var(--vscode-scrollbarSlider-hoverBackground);
+    --os-handle-bg-active: var(--vscode-scrollbarSlider-hoverBackground);
+
+    .os-scrollbar-handle {
+      transition: none;
+    }
+  }
 }

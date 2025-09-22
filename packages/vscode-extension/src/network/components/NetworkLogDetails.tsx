@@ -1,11 +1,11 @@
 import "./NetworkLogDetails.css";
 import {
-  VscodeScrollable,
   VscodeTabHeader,
   VscodeTabPanel,
   VscodeTabs,
 } from "@vscode-elements/react-elements";
 import { Fragment, useEffect, useState } from "react";
+import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import HeadersTab from "./Tabs/HeadersTab";
 import PayloadTab from "./Tabs/PayloadTab";
 import ResponseTab from "./Tabs/ResponseTab";
@@ -13,6 +13,7 @@ import TimingTab from "./Tabs/TimingTab";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../types/networkLog";
 import { ResponseBodyData } from "../types/network";
+import 'overlayscrollbars/overlayscrollbars.css';
 
 const VSCODE_TABS_HEADER_HEIGHT = 30;
 
@@ -83,14 +84,21 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
               </div>
             </VscodeTabHeader>
             <VscodeTabPanel>
-              <VscodeScrollable
+              <OverlayScrollbarsComponent
+              options={{
+                scrollbars: {
+                  autoHide: 'leave',
+                  autoHideDelay: 100,
+                  visibility: 'auto' 
+                }}}
+                className="network-log-details-tab-scrollable"
                 style={{
                   height: parentHeight ? parentHeight - VSCODE_TABS_HEADER_HEIGHT : undefined,
                 }}>
                 <div className="network-log-details-tab">
                   <Tab networkLog={networkLog} {...props} />
                 </div>
-              </VscodeScrollable>
+              </OverlayScrollbarsComponent>
             </VscodeTabPanel>
           </Fragment>
         ))}
