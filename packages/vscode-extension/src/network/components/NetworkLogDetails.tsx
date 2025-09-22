@@ -1,6 +1,6 @@
 import "./NetworkLogDetails.css";
 import { VscodeTabHeader, VscodeTabPanel, VscodeTabs } from "@vscode-elements/react-elements";
-import {type VscodeTabHeader as VscodeTabHeaderElement} from "@vscode-elements/elements/dist/vscode-tab-header/vscode-tab-header.js";
+import { type VscodeTabHeader as VscodeTabHeaderElement } from "@vscode-elements/elements/dist/vscode-tab-header/vscode-tab-header.js";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import HeadersTab from "./Tabs/HeadersTab";
@@ -34,7 +34,7 @@ interface Tab {
 
 const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLogDetailsProps) => {
   const headerRef = useRef<VscodeTabHeaderElement>(null);
-  
+
   const { getResponseBody } = useNetwork();
   const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
 
@@ -67,14 +67,14 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
     },
   ];
 
-  const calculateScrollableHeight =  () => {
+  const calculateScrollableHeight = () => {
     const header = headerRef.current;
     if (!parentHeight || !header) {
       return undefined;
     }
     const headerHeight = header.clientHeight;
     return parentHeight - headerHeight;
-  }
+  };
 
   return (
     <>

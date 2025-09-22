@@ -19,8 +19,10 @@ interface VscodeTableInternalFixProps extends React.ComponentProps<typeof Vscode
  * VscodeTableInternalFix - A wrapper around VscodeTable that applies a fix for table body scroll behaviour.
  *
  * The component overwrites the original VscodeTable _resizeTableBody method implementation
- * to properly handle table body scrolling. It includes runtime checks to ensure compatibility
- * with the internal VscodeTable API.
+ * to properly handle table body scrolling. Without the fix, scrollbar does not appear even when
+ * the content overflows the table body.
+ *
+ * The component includes runtime checks to ensure compatibility with the internal VscodeTable API.
  *
  * Usage of this component may be dropped when the fix is applied in the library.
  */
@@ -37,7 +39,7 @@ export default function VscodeTableInternalFix({
 
     // Runtime checks to ensure the VscodeTable API is available
     const hasRequiredMethods =
-      typeof table._resizeTableBody === "function" && 
+      typeof table._resizeTableBody === "function" &&
       typeof table.getBoundingClientRect === "function" &&
       table._assignedHeaderElements !== undefined &&
       table._assignedBodyElements !== undefined &&
@@ -52,26 +54,25 @@ export default function VscodeTableInternalFix({
 
     const original_resizeTableBody = table._resizeTableBody;
 
-    // Overwrite the _resizeTableBody method to fix issues with scrollbar not appearing
+    // Overwrite the _resizeTableBody method to fix issues with scrollbar not appearing, even though
+    // the content overflows the table body.
     // Original implementation: https://github.com/vscode-elements/elements/blob/main/src/vscode-table/vscode-table.ts
     table._resizeTableBody = () => {
-        let headerHeight = 0;
-        let tbodyHeight = 0;
-        const tableHeight = table.getBoundingClientRect().height;
-        if (table._assignedHeaderElements && table._assignedHeaderElements.length) {
-            headerHeight =
-                table._assignedHeaderElements[0].getBoundingClientRect().height;
-        }
-        if (table._assignedBodyElements && table._assignedBodyElements.length) {
-            tbodyHeight =
-                table._assignedBodyElements[0].getBoundingClientRect().height;
-        }
-        // Original code - tbodyHeight - headerHeight - tableHeight; 
-        // its always the sign isnt it?
-        const overflownContentHeight = tbodyHeight + headerHeight - tableHeight;
-        table._scrollableElement.style.height =
-            overflownContentHeight > 0 ? `${tableHeight - headerHeight}px` : 'auto';
-    }
+      let headerHeight = 0;
+      let tbodyHeight = 0;
+      const tableHeight = table.getBoundingClientRect().height;
+      if (table._assignedHeaderElements && table._assignedHeaderElements.length) {
+        headerHeight = table._assignedHeaderElements[0].getBoundingClientRect().height;
+      }
+      if (table._assignedBodyElements && table._assignedBodyElements.length) {
+        tbodyHeight = table._assignedBodyElements[0].getBoundingClientRect().height;
+      }
+      // Original code - tbodyHeight - headerHeight - tableHeight;
+      // its always the sign isnt it?
+      const overflownContentHeight = tbodyHeight + headerHeight - tableHeight;
+      table._scrollableElement.style.height =
+        overflownContentHeight > 0 ? `${tableHeight - headerHeight}px` : "auto";
+    };
 
     // restore original method if needed
     return () => {
