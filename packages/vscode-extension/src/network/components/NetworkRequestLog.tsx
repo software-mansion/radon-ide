@@ -10,8 +10,8 @@ import {
   VscodeTableHeader,
   VscodeTableHeaderCell,
   VscodeTableRow,
-  VscodeTable,
 } from "@vscode-elements/react-elements";
+import VscodeTable from "./VscodeTableInternalFix";
 import RowContextMenu from "./ContextMenu/RowContextMenu";
 import TableContextMenu from "./ContextMenu/TableContextMenu";
 import IconButton from "../../webview/components/shared/IconButton";
