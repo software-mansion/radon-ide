@@ -6,7 +6,7 @@ import { getAppWebsocket } from "../server/webSocketServer.js";
 import { itIf } from "../utils/helpers.js";
 import getConfiguration from "../configuration.js";
 
-const rotationSequence = "1010110010101110010010111011100100100110";
+const rotationSequence = "1010110010101110010010111011100100100111";
 
 describe("Device Settings", () => {
   let driver,
