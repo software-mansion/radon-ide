@@ -2,7 +2,7 @@ import { WebView, BottomBarPanel } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
-describe("Network panel tests", () => {
+describe("5 - Network panel tests", () => {
   let driver,
     view,
     appWebsocket,

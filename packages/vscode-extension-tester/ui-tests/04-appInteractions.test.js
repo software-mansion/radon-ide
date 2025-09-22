@@ -9,7 +9,7 @@ import { assert } from "chai";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
-describe("App interaction tests", () => {
+describe("4 - App interaction tests", () => {
   let driver,
     appWebsocket,
     view,

@@ -4,7 +4,7 @@ import { texts } from "../utils/constants.js";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
-describe("Smoke tests Radon IDE", () => {
+describe("1 - Smoke tests Radon IDE", () => {
   let driver, workbench, elementHelperService, radonViewsService;
 
   beforeEach(async function () {

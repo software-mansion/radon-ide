@@ -11,7 +11,7 @@ import { get } from "./setupTest.js";
 import { exec } from "child_process";
 import getConfiguration from "../configuration.js";
 
-describe("Adding device tests", () => {
+describe("3 - Adding device tests", () => {
   let driver,
     elementHelperService,
     radonViewsService,

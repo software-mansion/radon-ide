@@ -8,7 +8,7 @@ import getConfiguration from "../configuration.js";
 
 const rotationSequence = "1010110010101110010010111011100100100111";
 
-describe("Device Settings", () => {
+describe("8 - Device Settings", () => {
   let driver,
     appWebsocket,
     view,
@@ -49,6 +49,25 @@ describe("Device Settings", () => {
     }, 5000);
   });
 
+  after(async () => {
+    // leave device in portrait mode
+    await rotateDevice("portrait");
+  });
+
+  async function rotateDevice(rotation) {
+    radonViewsService.openRadonDeviceSettingsMenu();
+    await elementHelperService.findAndClickElementByTag(
+      "device-settings-rotate-device-menu-trigger"
+    );
+
+    // this menu shows up on hover, normal click does not work because menu disappears before click happens
+    const rotationButton =
+      await elementHelperService.findAndWaitForElementByTag(
+        `device-settings-set-orientation-${rotation}`
+      );
+    await driver.executeScript("arguments[0].click();", rotationButton);
+  }
+
   it("should toggle device frame", async () => {
     await elementHelperService.findAndWaitForElementByTag("device-frame");
 
@@ -72,20 +91,6 @@ describe("Device Settings", () => {
   });
 
   it("should rotate device", async () => {
-    async function rotateDevice(rotation) {
-      radonViewsService.openRadonDeviceSettingsMenu();
-      await elementHelperService.findAndClickElementByTag(
-        "device-settings-rotate-device-menu-trigger"
-      );
-
-      // this menu shows up on hover, normal click does not work because menu disappears before click happens
-      const rotationButton =
-        await elementHelperService.findAndWaitForElementByTag(
-          `device-settings-set-orientation-${rotation}`
-        );
-      await driver.executeScript("arguments[0].click();", rotationButton);
-    }
-
     await rotateDevice("landscape-left");
 
     await driver.wait(async () => {
@@ -107,6 +112,9 @@ describe("Device Settings", () => {
         );
       return orientation.value === "portrait";
     }, 5000);
+
+    // rotation does not work without this sleep
+    await driver.sleep(1000);
 
     await rotateDevice("clockwise");
 

@@ -3,7 +3,7 @@ import { WebView, EditorView } from "vscode-extension-tester";
 
 import { get } from "./setupTest.js";
 
-describe("Main interface buttons tests", () => {
+describe("2 - Main interface buttons tests", () => {
   let driver, elementHelperService, radonViewsService, managingDevicesService;
 
   before(async () => {

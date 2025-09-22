@@ -20,6 +20,7 @@ const { IS_RECORDING } = getConfiguration();
 
 let driver, workbench, view, browser;
 let recorder;
+const failedTests = [];
 
 before(async function () {
   initServer(8080);
@@ -60,11 +61,13 @@ afterEach(async function () {
     fs.mkdirSync(screenshotDir, { recursive: true });
     fs.writeFileSync(filePath, image, "base64");
     console.log(`Saved screenshot: ${filePath}`);
+    failedTests.push(this.currentTest.fullTitle());
   }
   view = new WebView();
   await view.switchBack();
   let bottomBar = new BottomBarPanel();
   await bottomBar.toggle(false);
+  9;
   await new EditorView().closeAllEditors();
   await workbench.executeCommand("Developer: Reload Window");
   workbench = new Workbench();
@@ -85,6 +88,25 @@ after(async function () {
     await recorder.stop();
   }
   closeServer();
+  // console log additional informations after standard mocha report
+  setTimeout(() => {
+    if (failedTests.length > 0) {
+      const failingTestNumbers = failedTests.map((x) => x.split(" - ")[0]);
+      console.log("Test suit numbers that failed:");
+      console.log(failingTestNumbers.join(" "));
+      console.log(
+        "To re-run test suits that failed use one of the commands below:"
+      );
+      console.log(
+        `npm run prepare-and-run-tests -- <test-app> ${failingTestNumbers.join(
+          " "
+        )}`
+      );
+      console.log(
+        `npm run run-tests-on-VM -- <test-app> ${failingTestNumbers.join(" ")}`
+      );
+    }
+  }, 0);
 });
 
 export function get() {
