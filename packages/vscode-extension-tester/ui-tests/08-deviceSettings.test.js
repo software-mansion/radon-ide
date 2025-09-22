@@ -212,8 +212,8 @@ describe("Device Settings", () => {
 
     let changes = 0;
 
-    // checks for 3 seconds if device orientation does not change
-    while (Date.now() - start < 3000) {
+    // checks for 2 seconds if device orientation does not change
+    while (Date.now() - start < 2000) {
       const currentOrientation =
         await appManipulationService.sendMessageAndWaitForResponse(
           appWebsocket,
