@@ -22,15 +22,15 @@ const TimingTab = ({ networkLog }: TimingTabProps) => {
       <table className="timing-section">
         <tr>
           <td>Waiting (TTFB):</td>
-          <td>{ttfb} ms</td>
+          <td className="timing-value">{ttfb} ms</td>
         </tr>
         <tr>
           <td>Downloading response:</td>
-          <td>{totalTime - ttfb} ms</td>{" "}
+          <td className="timing-value">{totalTime - ttfb} ms</td>{" "}
         </tr>
         <tr>
           <td>Total:</td>
-          <td> {totalTime} ms</td>
+          <td className="timing-value"> {totalTime} ms</td>
         </tr>
       </table>
     </div>
