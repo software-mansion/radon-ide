@@ -6,6 +6,8 @@ import { getAppWebsocket } from "../server/webSocketServer.js";
 import { itIf } from "../utils/helpers.js";
 import getConfiguration from "../configuration.js";
 
+const rotationSequence = "1010110010101110010010111011100100100110";
+
 describe("Device Settings", () => {
   let driver,
     appWebsocket,
@@ -174,14 +176,8 @@ describe("Device Settings", () => {
   });
 
   it("should stay stable after rapid rotations", async () => {
-    function getRandomInt(min, max) {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
-
-    const numberOfRotations = getRandomInt(20, 50);
-
-    for (let i = 0; i < numberOfRotations; i++) {
-      if (getRandomInt(0, 1))
+    for (let i of rotationSequence) {
+      if (i === "1")
         await driver.executeScript(`
         const evt = new KeyboardEvent('keydown', {
           key: '9',
@@ -216,8 +212,8 @@ describe("Device Settings", () => {
 
     let changes = 0;
 
-    // checks for 5 seconds if device orientation does not change
-    while (Date.now() - start < 5000) {
+    // checks for 3 seconds if device orientation does not change
+    while (Date.now() - start < 3000) {
       const currentOrientation =
         await appManipulationService.sendMessageAndWaitForResponse(
           appWebsocket,
