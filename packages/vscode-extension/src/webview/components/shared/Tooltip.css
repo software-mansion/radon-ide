@@ -13,7 +13,8 @@
   box-shadow: var(--swm-dropdown-shadow);
 
   svg {
-    filter: drop-shadow(0 1px 0 var(--vscode-menu-border)) drop-shadow(2px 0 8px var(--vscode-widget-shadow));
+    filter: drop-shadow(0 1px 0 var(--vscode-menu-border))
+      drop-shadow(2px 0 8px var(--vscode-widget-shadow));
   }
 }
 
