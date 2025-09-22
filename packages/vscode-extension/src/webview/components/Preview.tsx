@@ -532,7 +532,7 @@ function Preview({
     <>
       <div
         className="phone-display-container"
-        data-testid="phone-wrapper"
+        data-testid="phone-display-container"
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>
@@ -636,7 +636,7 @@ function Preview({
 
       {showDevicePreview && <DelayedFastRefreshIndicator isRefreshing={isRefreshing} />}
 
-      <div className="button-group-left-wrapper">
+      <div className="button-group-left-wrapper" data-testid="button-group-left-wrapper">
         <div className="button-group-left">
           <ZoomControls
             zoomLevel={zoomLevel}
