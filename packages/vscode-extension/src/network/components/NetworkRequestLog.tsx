@@ -10,10 +10,10 @@ import {
   VscodeTableHeader,
   VscodeTableHeaderCell,
   VscodeTableRow,
+  VscodeTable
 } from "@vscode-elements/react-elements";
 import RowContextMenu from "./ContextMenu/RowContextMenu";
 import TableContextMenu from "./ContextMenu/TableContextMenu";
-import VscodeTable from "./VscodeTableInternalFix";
 import IconButton from "../../webview/components/shared/IconButton";
 import { sortNetworkLogs } from "../utils/networkLogsSort";
 import { getNetworkLogValue } from "../utils/networkLogParsers";
