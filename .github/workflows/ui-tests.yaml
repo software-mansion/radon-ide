@@ -124,7 +124,7 @@ jobs:
           PROJECT_NAME: ${{ github.event.inputs.testApp }}
           IS_RECORDING: ${{ github.event.inputs.isRecording }}
           TESTS_OS: ${{ github.event.inputs.OS }}
-          GITHUB_ACTIONS: true
+          IS_GITHUB_ACTIONS: "true"
 
       - name: make video
         if: ${{ always() && github.event.inputs.isRecording == 'true' }}
@@ -135,43 +135,43 @@ jobs:
       - name: Upload screenshots on failure
         if: failure()
         uses: actions/upload-artifact@v4
-        retention-days: 7
         with:
           name: vscode-ui-screenshots
           path: packages/vscode-extension-tester/screenshots/
+          retention-days: 7
 
       - name: build output
         if: always()
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
-        retention-days: 7
         with:
           name: output
           path: packages/vscode-extension-tester/output.txt
+          retention-days: 7
 
       - name: Upload video recording
         if: ${{ always() && github.event.inputs.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
-        retention-days: 7
         with:
           name: vscode-ui-recording
           path: packages/vscode-extension-tester/videos/vscode-ui-recording.mp4
+          retention-days: 7
 
       - name: Upload screenshot made by radon
         if: ${{ always() && github.event.inputs.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
-        retention-days: 7
         with:
           name: radon-screenshot
           path: packages/vscode-extension-tester/data/screenshotTest..png
+          retention-days: 7
 
       - name: Upload recording made by radon
         if: ${{ always() && github.event.inputs.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
-        retention-days: 7
         with:
           name: radon-recording
           path: packages/vscode-extension-tester/data/recordingTest..mp4
+          retention-days: 7

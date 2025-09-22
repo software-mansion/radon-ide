@@ -291,14 +291,12 @@ export class ManagingDevicesService {
 
     const { IS_ANDROID, IS_GITHUB_ACTIONS } = getConfiguration();
     let device = IS_ANDROID ? "pixel" : "com.apple";
-    device =
-      IS_GITHUB_ACTIONS == "true"
-        ? "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro"
-        : device;
-    let systemImage =
-      IS_GITHUB_ACTIONS == "true"
-        ? "com.apple.CoreSimulator.SimRuntime.iOS-18-6"
-        : "";
+    device = IS_GITHUB_ACTIONS
+      ? "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro"
+      : device;
+    let systemImage = IS_GITHUB_ACTIONS
+      ? "com.apple.CoreSimulator.SimRuntime.iOS-18-5"
+      : "";
 
     const selectedDevice =
       await this.elementHelperService.findAndWaitForElement(
