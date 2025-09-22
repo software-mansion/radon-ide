@@ -265,7 +265,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     // NOTE: we reset the device sessions manager to close all the running sessions
     // and restart the current device with new config. In the future, we might want to keep the devices running
     // and only close the applications, but the API we have right now does not allow that.
-    const oldDeviceSessionsManager = this.deviceSessionsManager;
+    this.deviceSessionsManager.dispose();
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.stateManager.getDerived("deviceSessions"),
       this.stateManager,
@@ -275,7 +275,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this,
       this.outputChannelRegistry
     );
-    oldDeviceSessionsManager.dispose();
     this.maybeStartInitialDeviceSession();
 
     this.launchConfigsManager.saveInitialLaunchConfig(launchConfig);

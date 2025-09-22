@@ -341,6 +341,12 @@ export class DeviceSessionsManager implements Disposable {
     this.updateSelectedSession(this.deviceSessions.get(runningSessions[nextSessionIndex]));
   }, SWITCH_DEVICE_THROTTLE_MS);
 
+  clearState() {
+    const currentState = this.stateManager.getState();
+    const newState = _.mapValues(currentState, (): typeof REMOVE => REMOVE);
+    this.stateManager.updateState(newState);
+  }
+
   dispose() {
     // NOTE: we overwrite the delegate to avoid calling it during/after dispose
     this.deviceSessionManagerDelegate = {
@@ -351,5 +357,6 @@ export class DeviceSessionsManager implements Disposable {
     this.deviceSessions.clear();
     this.activeSessionId = undefined;
     disposeAll([...deviceSessions, ...this.disposables]);
+    this.clearState();
   }
 }
