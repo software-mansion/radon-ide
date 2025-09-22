@@ -129,8 +129,15 @@ describe("4 - App interaction tests", () => {
 
     await appManipulationService.clickInsidePhoneScreen(position);
 
-    const debuggerLineStop =
-      await vscodeHelperService.getDebuggerStopLineNumber();
+    const debuggerLineStop = await driver.wait(async () => {
+      try {
+        const debuggerLineStop =
+          await vscodeHelperService.getDebuggerStopLineNumber();
+        return debuggerLineStop;
+      } catch {
+        return false;
+      }
+    });
 
     assert.equal(lineNumber, debuggerLineStop);
   });
