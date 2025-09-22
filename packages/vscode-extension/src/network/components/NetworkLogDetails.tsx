@@ -12,8 +12,6 @@ import { NetworkLog } from "../types/networkLog";
 import { ResponseBodyData } from "../types/network";
 import "overlayscrollbars/overlayscrollbars.css";
 
-// const VSCODE_TABS_HEADER_HEIGHT = 30;
-
 interface NetworkLogDetailsProps {
   networkLog: NetworkLog;
   handleClose: () => void;
