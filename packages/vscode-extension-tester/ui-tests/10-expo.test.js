@@ -1,6 +1,7 @@
-import { WebView } from "vscode-extension-tester";
+import { WebView, Key } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
+import { assert } from "chai";
 
 describe("App interaction tests", () => {
   let driver,
@@ -52,17 +53,75 @@ describe("App interaction tests", () => {
     await radonViewsService.openRadonIDEPanel();
   });
 
-  it("show correct route for expo router", async () => {
-    const position = await appManipulationService.getButtonCoordinates(
-      appWebsocket,
-      "expo-route-explore-button"
-    );
-    await appManipulationService.clickInsidePhoneScreen(position);
+  // it("default route should be /", async () => {
+  //   const urlInput = await elementHelperService.findAndWaitForElementByTag(
+  //     "radon-top-bar-url-input"
+  //   );
+  //   const url = await urlInput.getAttribute("value");
+  //   assert.equal(url, "/");
+  // });
 
+  // it("should change url route when switching view", async () => {
+  //   const position = await appManipulationService.getButtonCoordinates(
+  //     appWebsocket,
+  //     "expo-route-explore-button"
+  //   );
+  //   await appManipulationService.clickInsidePhoneScreen(position);
+
+  //   const urlInput = await elementHelperService.findAndWaitForElementByTag(
+  //     "radon-top-bar-url-input"
+  //   );
+
+  //   await driver.wait(async () => {
+  //     const url = await urlInput.getAttribute("value");
+  //     return url === "/explore";
+  //   }, 5000);
+  // });
+
+  // it("should navigate to different view when url is changed", async () => {
+  //   const urlInput = await elementHelperService.findAndWaitForElementByTag(
+  //     "radon-top-bar-url-input"
+  //   );
+  //   await urlInput.click();
+  //   await urlInput.sendKeys("/explore", Key.ENTER);
+
+  //   const position = await appManipulationService.getButtonCoordinates(
+  //     appWebsocket,
+  //     "expo-second-view-button"
+  //   );
+  //   const message = await appManipulationService.clickInPhoneAndWaitForMessage(
+  //     position
+  //   );
+
+  //   assert.equal(message.action, "expo-second-view-button");
+  // });
+
+  it("should navigate to not found view when url is changed", async () => {
     const urlInput = await elementHelperService.findAndWaitForElementByTag(
       "radon-top-bar-url-input"
     );
-    const url = await urlInput.getAttribute("value");
-    console.log("url", url);
+    await urlInput.click();
+    await urlInput.sendKeys("/notExistingRoute", Key.ENTER);
+
+    // works with sleep here
+
+    const position = await driver.wait(async () => {
+      let position;
+      try {
+        position = await appManipulationService.getButtonCoordinates(
+          appWebsocket,
+          "not-found-view-button"
+        );
+      } catch {
+        return false;
+      }
+      return position;
+    }, 10000);
+
+    const message = await appManipulationService.clickInPhoneAndWaitForMessage(
+      position
+    );
+
+    assert.equal(message.action, "not-found-view-button");
   });
 });
