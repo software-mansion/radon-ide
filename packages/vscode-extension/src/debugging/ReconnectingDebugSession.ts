@@ -5,8 +5,9 @@ import { sleep } from "../utilities/retry";
 import { DebugSession, DebugSource, JSDebugConfiguration } from "./DebugSession";
 import { disposeAll } from "../utilities/disposables";
 import { DevtoolsServer } from "../project/devtools";
-import { getDebuggerTargetForDevice, MetroSession } from "../project/metro";
+import { MetroSession } from "../project/metro";
 import { DeviceInfo } from "../common/State";
+import { getDebuggerTargetForDevice } from "../project/debugTargetScanner";
 
 const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {

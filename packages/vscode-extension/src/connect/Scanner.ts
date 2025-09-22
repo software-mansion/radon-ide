@@ -4,6 +4,7 @@ import { RADON_CONNECT_PORT_KEY } from "./Connector";
 import { extensionContext } from "../utilities/extensionContext";
 import { Metro, MetroSession } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
+import { DebuggerTargetScanner } from "../project/debugTargetScanner";
 export const PORT_SCAN_INTERVAL_MS = 4000;
 export const DEFAULT_PORTS = [8081, 8082];
 
@@ -61,7 +62,10 @@ export class Scanner implements Disposable {
     const timeoutCancelToken = new CancelToken();
     setTimeout(() => timeoutCancelToken.cancel(), DEBUGGER_LOOKUP_TIMEOUT_MS);
 
-    const debuggerTarget = await metro.getDebuggerURL(timeoutCancelToken);
+    const debuggerTarget = await new DebuggerTargetScanner(metro).waitForTarget({
+      cancelToken: timeoutCancelToken,
+    });
+
     if (!debuggerTarget) {
       this.portsStatus.set(port, "no connected device listed");
       return false;

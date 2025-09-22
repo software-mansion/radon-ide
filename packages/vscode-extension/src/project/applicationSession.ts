@@ -39,7 +39,8 @@ import {
   CDPDevtoolsServer,
 } from "./devtools";
 import { RadonInspectorBridge } from "./bridge";
-import { getDebuggerTargetForDevice, MetroSession } from "./metro";
+import { MetroSession } from "./metro";
+import { getDebuggerTargetForDevice } from "./debugTargetScanner";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
