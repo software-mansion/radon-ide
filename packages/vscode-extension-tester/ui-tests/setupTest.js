@@ -67,7 +67,6 @@ afterEach(async function () {
   await view.switchBack();
   let bottomBar = new BottomBarPanel();
   await bottomBar.toggle(false);
-  9;
   await new EditorView().closeAllEditors();
   await workbench.executeCommand("Developer: Reload Window");
   workbench = new Workbench();
