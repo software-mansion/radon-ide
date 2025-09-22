@@ -10,7 +10,7 @@ import {
   VscodeTableHeader,
   VscodeTableHeaderCell,
   VscodeTableRow,
-  VscodeTable
+  VscodeTable,
 } from "@vscode-elements/react-elements";
 import RowContextMenu from "./ContextMenu/RowContextMenu";
 import TableContextMenu from "./ContextMenu/TableContextMenu";
