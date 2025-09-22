@@ -1,6 +1,5 @@
 import path from "path";
 import fs from "fs";
-import assert from "assert";
 import stripAnsi from "strip-ansi";
 import { Disposable, EventEmitter, ExtensionMode, Uri, workspace } from "vscode";
 import _ from "lodash";
@@ -264,7 +263,7 @@ export class Metro implements MetroSession, Disposable {
   }
 
   constructor(
-    protected _port: number,
+    public readonly port: number,
     protected readonly appRoot: string
   ) {
     const metroOutputChannel =
@@ -275,11 +274,6 @@ export class Metro implements MetroSession, Disposable {
       throw new Error("Cannot start bundler process. The IDE is not initialized.");
     }
     this.metroOutputChannel = metroOutputChannel;
-  }
-
-  public get port(): number {
-    assert(this._port, "Metro session is not used before it's initialized");
-    return this._port;
   }
 
   public async getDebuggerPages(): Promise<CDPTargetDescription[]> {
@@ -398,7 +392,7 @@ class SubprocessMetroSession extends Metro implements Disposable {
         buffer: false,
       }
     );
-    const session = new SubprocessMetroSession(packagerProcess, appRootFolder);
+    const session = new SubprocessMetroSession(packagerProcess, appRootFolder, port);
     await session.bundlerReady.promise;
     return session;
   }
@@ -424,16 +418,17 @@ class SubprocessMetroSession extends Metro implements Disposable {
       env: metroEnv,
       buffer: false,
     });
-    const session = new SubprocessMetroSession(packagerProcess, appRootFolder);
+    const session = new SubprocessMetroSession(packagerProcess, appRootFolder, port);
     await session.bundlerReady.promise;
     return session;
   }
 
   private constructor(
     private readonly bundlerProcess: ChildProcess,
-    appRoot: string
+    appRoot: string,
+    port: number
   ) {
-    super(0, appRoot);
+    super(port, appRoot);
     lineReader(bundlerProcess).onLineRead((line) => {
       try {
         const event = JSON.parse(line) as MetroEvent;
@@ -442,6 +437,12 @@ class SubprocessMetroSession extends Metro implements Disposable {
       } catch {}
 
       Logger.debug("Metro", line);
+
+      if (line.includes("EADDRINUSE")) {
+        this.bundlerReady.reject(
+          new Error(`The Metro server could not start: port ${this.port} is already in use.`)
+        );
+      }
 
       if (!line.startsWith("__RNIDE__")) {
         this.metroOutputChannel.appendLine(line);
@@ -489,8 +490,7 @@ class SubprocessMetroSession extends Metro implements Disposable {
         Logger.debug("Expo prelude line offset was set to: ", this._expoPreludeLineCount);
         break;
       case "initialize_done":
-        this._port = event.port;
-        const log = `Metro started on port ${this._port}`;
+        const log = `Metro started on port ${this.port}`;
         this.metroOutputChannel.appendLine(log);
         Logger.info(log);
         this.bundlerReady.resolve();
