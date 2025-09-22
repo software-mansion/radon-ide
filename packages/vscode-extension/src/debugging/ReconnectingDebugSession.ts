@@ -7,7 +7,7 @@ import { disposeAll } from "../utilities/disposables";
 import { DevtoolsServer } from "../project/devtools";
 import { MetroSession } from "../project/metro";
 import { DeviceInfo } from "../common/State";
-import { getDebuggerTargetForDevice } from "../project/debugTargetScanner";
+import { getDebuggerTargetForDevice } from "../project/DebuggerTarget";
 
 const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {

@@ -1,5 +1,4 @@
 import _ from "lodash";
-import { Disposable } from "vscode";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { DeviceInfo, DevicePlatform } from "../common/State";
 import { Logger } from "../Logger";
@@ -27,40 +26,36 @@ function targetDeviceFilter(deviceInfo: DeviceInfo) {
   };
 }
 
-export class DebuggerTargetScanner implements Disposable {
-  constructor(private readonly metro: MetroSession) {}
+export async function waitForDebuggerTarget({
+  metro,
+  filter,
+  cancelToken,
+}: {
+  metro: MetroSession;
+  filter?: (page: CDPTargetDescription) => boolean;
+  cancelToken: CancelToken;
+}) {
+  let retryCount = 0;
+  while (!cancelToken.cancelled) {
+    retryCount++;
+    try {
+      const debuggerPages = await metro.getDebuggerPages();
 
-  public async waitForTarget({
-    filter,
-    cancelToken,
-  }: {
-    filter?: (page: CDPTargetDescription) => boolean;
-    cancelToken: CancelToken;
-  }) {
-    let retryCount = 0;
-    while (!cancelToken.cancelled) {
-      retryCount++;
-      try {
-        const debuggerPages = await this.metro.getDebuggerPages();
+      const filteredPages = filter ? debuggerPages.filter(filter) : debuggerPages;
 
-        const filteredPages = filter ? debuggerPages.filter(filter) : debuggerPages;
-
-        const debuggerTarget = await pickDebuggerTarget(filteredPages);
-        if (debuggerTarget !== undefined) {
-          return debuggerTarget;
-        }
-        await cancelToken.adapt(sleep(progressiveRetryTimeout(retryCount)));
-      } catch (e) {
-        if (cancelToken.cancelled) {
-          return undefined;
-        }
-        throw e;
+      const debuggerTarget = await pickDebuggerTarget(filteredPages);
+      if (debuggerTarget !== undefined) {
+        return debuggerTarget;
       }
+      await cancelToken.adapt(sleep(progressiveRetryTimeout(retryCount)));
+    } catch (e) {
+      if (cancelToken.cancelled) {
+        return undefined;
+      }
+      throw e;
     }
-    return undefined;
   }
-
-  public dispose(): void {}
+  return undefined;
 }
 
 export async function getDebuggerTargetForDevice(
@@ -68,7 +63,8 @@ export async function getDebuggerTargetForDevice(
   deviceInfo: DeviceInfo,
   cancelToken: CancelToken
 ): Promise<DebuggerTargetDescription | undefined> {
-  return new DebuggerTargetScanner(metro).waitForTarget({
+  return waitForDebuggerTarget({
+    metro,
     filter: targetDeviceFilter(deviceInfo),
     cancelToken,
   });

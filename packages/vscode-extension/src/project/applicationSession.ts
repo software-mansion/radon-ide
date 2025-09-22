@@ -40,7 +40,7 @@ import {
 } from "./devtools";
 import { RadonInspectorBridge } from "./bridge";
 import { MetroSession } from "./metro";
-import { getDebuggerTargetForDevice } from "./debugTargetScanner";
+import { getDebuggerTargetForDevice } from "./DebuggerTarget";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
