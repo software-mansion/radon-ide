@@ -3,6 +3,10 @@ import { assert } from "chai";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 import { getAppWebsocket } from "../server/webSocketServer.js";
+import { itIf } from "../utils/helpers.js";
+import getConfiguration from "../configuration.js";
+
+const rotationSequence = "1010110010101110010010111011100100100111";
 
 describe("Device Settings", () => {
   let driver,
@@ -80,47 +84,154 @@ describe("Device Settings", () => {
           `device-settings-set-orientation-${rotation}`
         );
       await driver.executeScript("arguments[0].click();", rotationButton);
-
-      // rotation animation
-      await driver.sleep(1000);
     }
 
     await rotateDevice("landscape-left");
 
-    let orientation =
+    await driver.wait(async () => {
+      const orientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+      return orientation.value === "landscape";
+    }, 5000);
+
+    await rotateDevice("portrait");
+
+    await driver.wait(async () => {
+      const orientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+      return orientation.value === "portrait";
+    }, 5000);
+
+    await rotateDevice("clockwise");
+
+    await driver.wait(async () => {
+      const orientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+      return orientation.value === "landscape";
+    }, 5000);
+
+    await rotateDevice("anticlockwise");
+
+    await driver.wait(async () => {
+      const orientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+      return orientation.value === "portrait";
+    }, 5000);
+  });
+
+  it("should rotate device using shortcuts", async () => {
+    // there is no Key.OPTION in selenium and Key.ALT does not work as expected on Mac
+    // so we use custom script to dispatch keyboard event, instead of standard selenium way
+    await driver.executeScript(`
+        const evt = new KeyboardEvent('keydown', {
+          key: '9',
+          code: 'Digit9',
+          altKey: true,
+          ctrlKey: true,
+          bubbles: true
+        });
+        document.dispatchEvent(evt);
+      `);
+
+    await driver.wait(async () => {
+      const orientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+      return orientation.value === "landscape";
+    }, 5000);
+
+    await driver.executeScript(`
+        const evt = new KeyboardEvent('keydown', {
+          key: '0',
+          code: 'Digit0',
+          altKey: true,
+          ctrlKey: true,
+          bubbles: true
+        });
+        document.dispatchEvent(evt);
+      `);
+
+    await driver.wait(async () => {
+      const orientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
+      return orientation.value === "portrait";
+    }, 5000);
+  });
+
+  it("should stay stable after rapid rotations", async () => {
+    for (let i of rotationSequence) {
+      if (i === "1")
+        await driver.executeScript(`
+        const evt = new KeyboardEvent('keydown', {
+          key: '9',
+          code: 'Digit9',
+          altKey: true,
+          ctrlKey: true,
+          bubbles: true
+        });
+        document.dispatchEvent(evt);
+        `);
+      else
+        await driver.executeScript(`
+        const evt = new KeyboardEvent('keydown', {
+          key: '0',
+          code: 'Digit0',
+          altKey: true,
+          ctrlKey: true,
+          bubbles: true
+        });
+        document.dispatchEvent(evt);
+      `);
+      // some delay for rotations not to be to fast
+      await driver.sleep(100);
+    }
+
+    const start = Date.now();
+    const firstOrientation =
       await appManipulationService.sendMessageAndWaitForResponse(
         appWebsocket,
         "getOrientation"
       );
 
-    assert.equal(orientation.value, "landscape");
+    let changes = 0;
 
-    await rotateDevice("portrait");
+    // checks for 2 seconds if device orientation does not change
+    while (Date.now() - start < 2000) {
+      const currentOrientation =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          appWebsocket,
+          "getOrientation"
+        );
 
-    orientation = await appManipulationService.sendMessageAndWaitForResponse(
-      appWebsocket,
-      "getOrientation"
-    );
+      if (firstOrientation.value !== currentOrientation.value) {
+        changes++;
+        firstOrientation.value = currentOrientation.value;
+      }
 
-    assert.equal(orientation.value, "portrait");
+      // the rotation might be delayed so one change is acceptable
+      if (changes > 1) {
+        throw new Error("Device orientation changed more than once");
+      }
 
-    await rotateDevice("clockwise");
-
-    orientation = await appManipulationService.sendMessageAndWaitForResponse(
-      appWebsocket,
-      "getOrientation"
-    );
-
-    assert.equal(orientation.value, "landscape");
-
-    await rotateDevice("anticlockwise");
-
-    orientation = await appManipulationService.sendMessageAndWaitForResponse(
-      appWebsocket,
-      "getOrientation"
-    );
-
-    assert.equal(orientation.value, "portrait");
+      await new Promise((r) => setTimeout(r, 100));
+    }
   });
 
   it("should change device font size", async () => {
@@ -182,6 +293,41 @@ describe("Device Settings", () => {
           "getColorScheme"
         );
       return appearance.value === "dark";
+    }, 5000);
+  });
+
+  itIf(
+    !getConfiguration().IS_ANDROID,
+    "should open app switcher in simulator",
+    async () => {
+      radonViewsService.openRadonDeviceSettingsMenu();
+      await elementHelperService.findAndClickElementByTag(
+        "open-app-switcher-button"
+      );
+
+      await driver.wait(async () => {
+        const appState =
+          await appManipulationService.sendMessageAndWaitForResponse(
+            getAppWebsocket(),
+            "getAppState"
+          );
+        // this test works on iOS only, Android app's state stays active in app switcher
+        return appState.value === "inactive";
+      }, 5000);
+    }
+  );
+
+  it("should press home button in simulator", async () => {
+    radonViewsService.openRadonDeviceSettingsMenu();
+    await elementHelperService.findAndClickElementByTag("press-home-button");
+
+    await driver.wait(async () => {
+      const appState =
+        await appManipulationService.sendMessageAndWaitForResponse(
+          getAppWebsocket(),
+          "getAppState"
+        );
+      return appState.value === "background";
     }, 5000);
   });
 });
