@@ -17,10 +17,10 @@ const PayloadTab = ({ networkLog }: PayloadTabProps) => {
   const payloadData = getRequestPayload(networkLog);
 
   return (
-    <>
+    <div className="tab-padding">
       <TabActionButtons data={payloadData} disabled={!payloadData} />
       <pre className="response-tab-pre">{payloadData ?? NO_PAYLOAD_MESSAGE}</pre>
-    </>
+    </div>
   );
 };
 

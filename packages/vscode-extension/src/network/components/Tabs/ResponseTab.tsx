@@ -19,7 +19,7 @@ const ResponseTab = ({ networkLog, responseBodyData }: ResponseTabProps) => {
   const responseData = getFormattedRequestBody(body);
 
   return (
-    <>
+    <div className="tab-padding">
       <TabActionButtons
         data={responseData}
         disabled={!responseData}
@@ -41,7 +41,7 @@ const ResponseTab = ({ networkLog, responseBodyData }: ResponseTabProps) => {
         </pre>
       )}
       <pre className="response-tab-pre">{responseData ?? NO_RESPONSE_MESSAGE}</pre>
-    </>
+    </div>
   );
 };
 

@@ -13,7 +13,7 @@ const TimingTab = ({ networkLog }: TimingTabProps) => {
   const responseLoadingPercent = ((totalTime - ttfb) / totalTime) * 100;
 
   return (
-    <>
+    <div className="tab-padding">
       <div className="timing-bar">
         <div className="bar request-sent-bar" style={{ width: `${ttfbPercent}%` }} />
         <div className="bar response-receive-bar" style={{ width: `${responseLoadingPercent}%` }} />
@@ -33,7 +33,7 @@ const TimingTab = ({ networkLog }: TimingTabProps) => {
           <td> {totalTime} ms</td>
         </tr>
       </table>
-    </>
+    </div>
   );
 };
 

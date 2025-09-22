@@ -1,16 +1,25 @@
 import "./HeadersTab.css";
 import { VscodeCollapsible } from "@vscode-elements/react-elements";
 import { NetworkLog } from "../../types/networkLog";
-
 interface HeadersTabProps {
   networkLog: NetworkLog;
 }
 
 interface SectionProps {
-  data: Record<string, any> | undefined;
+  data: Record<string, string | number | undefined> | undefined;
 }
 
-function formatHeaders(headersObj: Record<string, any> | undefined) {
+interface StatusDotProps {
+  status: HeaderValue;
+}
+
+type HeaderValue = string | number | undefined;
+
+type StatusColor = "gray" | "green" | "yellow" | "red";
+
+const STATUS_CODE_KEY = "Status Code";
+
+function formatHeaders(headersObj: Record<string, HeaderValue> | undefined) {
   if (!headersObj) {
     return undefined;
   }
@@ -29,10 +38,33 @@ function formatHeaders(headersObj: Record<string, any> | undefined) {
         acc[capitalizedKey] = value;
         return acc;
       },
-      {} as Record<string, any>
+      {} as Record<string, HeaderValue>
     );
 
   return sortedObj;
+}
+
+function getStatusColor(status: HeaderValue): StatusColor {
+  const numericStatus = Number(status);
+  if (!numericStatus || isNaN(numericStatus)) {
+    return "gray";
+  }
+
+  if (numericStatus >= 100 && numericStatus <= 299) {
+    return "green";
+  }
+  if (numericStatus >= 300 && numericStatus <= 399) {
+    return "yellow";
+  }
+  if (numericStatus >= 400 && numericStatus <= 599) {
+    return "red";
+  }
+
+  return "gray";
+}
+
+function StatusDot({ status }: StatusDotProps) {
+  return <span className={`status-dot ${getStatusColor(status)}`} />;
 }
 
 function Section({ data }: SectionProps) {
@@ -42,7 +74,10 @@ function Section({ data }: SectionProps) {
         Object.entries(data).map(([key, value]) => (
           <tr key={key}>
             <td className="network-log-request-header">{key}:</td>
-            <td> {String(value)}</td>
+            <td className="network-log-request-header-value">
+              {key === STATUS_CODE_KEY && <StatusDot status={value} />}
+              {String(value)}
+            </td>
           </tr>
         ))}
     </table>

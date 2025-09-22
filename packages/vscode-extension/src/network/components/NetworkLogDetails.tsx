@@ -1,9 +1,5 @@
 import "./NetworkLogDetails.css";
-import {
-  VscodeTabHeader,
-  VscodeTabPanel,
-  VscodeTabs,
-} from "@vscode-elements/react-elements";
+import { VscodeTabHeader, VscodeTabPanel, VscodeTabs } from "@vscode-elements/react-elements";
 import { Fragment, useEffect, useState } from "react";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import HeadersTab from "./Tabs/HeadersTab";
@@ -13,7 +9,7 @@ import TimingTab from "./Tabs/TimingTab";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../types/networkLog";
 import { ResponseBodyData } from "../types/network";
-import 'overlayscrollbars/overlayscrollbars.css';
+import "overlayscrollbars/overlayscrollbars.css";
 
 const VSCODE_TABS_HEADER_HEIGHT = 30;
 
@@ -85,12 +81,13 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
             </VscodeTabHeader>
             <VscodeTabPanel>
               <OverlayScrollbarsComponent
-              options={{
-                scrollbars: {
-                  autoHide: 'leave',
-                  autoHideDelay: 100,
-                  visibility: 'auto' 
-                }}}
+                options={{
+                  scrollbars: {
+                    autoHide: "leave",
+                    autoHideDelay: 100,
+                    visibility: "auto",
+                  },
+                }}
                 className="network-log-details-tab-scrollable"
                 style={{
                   height: parentHeight ? parentHeight - VSCODE_TABS_HEADER_HEIGHT : undefined,
