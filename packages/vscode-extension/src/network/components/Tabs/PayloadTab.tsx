@@ -20,7 +20,6 @@ const PayloadTab = ({ networkLog }: PayloadTabProps) => {
     <>
       <TabActionButtons data={payloadData} disabled={!payloadData} />
       <div className="tab-padding">
-      
         <pre className="response-tab-pre">{payloadData ?? NO_PAYLOAD_MESSAGE}</pre>
       </div>
     </>
