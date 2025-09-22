@@ -19,7 +19,7 @@ const ResponseTab = ({ networkLog, responseBodyData }: ResponseTabProps) => {
   const responseData = getFormattedRequestBody(body);
 
   return (
-    <div className="tab-padding">
+    <>
       <TabActionButtons
         data={responseData}
         disabled={!responseData}
@@ -35,13 +35,15 @@ const ResponseTab = ({ networkLog, responseBodyData }: ResponseTabProps) => {
           </IconButton>
         }
       />
-      {wasTruncated && (
-        <pre className="response-tab-truncated-warning">
-          <span className="codicon codicon-warning" /> Response too large, showing truncated data.
-        </pre>
-      )}
-      <pre className="response-tab-pre">{responseData ?? NO_RESPONSE_MESSAGE}</pre>
-    </div>
+      <div className="tab-padding">
+        {wasTruncated && (
+          <pre className="response-tab-truncated-warning">
+            <span className="codicon codicon-warning" /> Response too large, showing truncated data.
+          </pre>
+        )}
+        <pre className="response-tab-pre">{responseData ?? NO_RESPONSE_MESSAGE}</pre>
+      </div>
+    </>
   );
 };
 

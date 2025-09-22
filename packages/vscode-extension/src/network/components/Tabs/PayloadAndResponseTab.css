@@ -26,13 +26,14 @@
 }
 
 .response-tab-button-wrapper {
-  position: absolute;
-  top: 4px;
+  position: sticky;
+  top: 8px;
   right: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
+  float: right;
 }
 
 .response-tab-pre {
