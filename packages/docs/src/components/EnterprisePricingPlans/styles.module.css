@@ -10,13 +10,22 @@
 
 .heading {
   color: var(--ifm-color-primary);
+  align-self: center;
   text-align: center;
-
   font-size: 48px;
   font-weight: 400;
   line-height: normal;
-  width: 530px;
-  margin: 0 auto;
+  max-width: 530px;
+  margin: 0;
+}
+
+.subheading {
+  color: var(--radon-subheading);
+  font-size: 16px;
+  line-height: 24px;
+  text-align: center;
+  margin: 0;
+  display: none;
 }
 
 .pricingLink {
@@ -42,4 +51,27 @@
   color: var(--radon-text-green-highlight);
   text-decoration: underline;
   text-underline-offset: 5px;
+}
+
+@media (max-width: 800px) {
+  .container {
+    padding: 40px 24px;
+    gap: 24px;
+  }
+  .heading {
+    font-size: 28px;
+    text-align: left;
+    align-self: initial;
+  }
+  .subheading {
+    display: initial;
+    text-align: left;
+  }
+}
+
+@media (max-width: 650px) {
+  .pricingLink {
+    flex-direction: column;
+    gap: 4px;
+  }
 }

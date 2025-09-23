@@ -138,6 +138,7 @@ option:disabled {
 .selectWrapper {
   position: relative;
 }
+
 ::picker-icon {
   content: "";
 }
@@ -163,5 +164,8 @@ option:disabled {
   }
   .subheading {
     font-size: 16px;
+  }
+  .formContainer {
+    padding: 16px;
   }
 }

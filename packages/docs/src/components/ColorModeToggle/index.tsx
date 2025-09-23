@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import clsx from "clsx";
 import styles from "./styles.module.css";
 import IconLightMode from "../IconLightMode";
@@ -8,13 +8,14 @@ import { useColorMode } from "@docusaurus/theme-common";
 
 function ColorModeToggle() {
   const { colorMode, setColorMode } = useColorMode();
-  const [theme, setTheme] = useState<"system" | "light" | "dark">(() => {
+  const [theme, setTheme] = useState<"system" | "light" | "dark">("system");
+
+  useEffect(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "light" || saved === "dark" || saved === "system") {
-      return saved;
+      setTheme(saved);
     }
-    return "system";
-  });
+  }, []);
 
   const handleModeChange = (mode: "system" | "light" | "dark") => {
     if (mode === "system") {

@@ -185,7 +185,7 @@
   --radon-button-hover: var(--radon-button-primary-background-hover-light);
   --radon-button-text: var(--radon-button-primary-foreground);
 
-  --radon-subheading: var(--radon-color-gray-light-300);
+  --radon-subheading: var(--radon-text-secondary-light);
   --radon-text-green-highlight: var(--swm-green-light-100);
   --radon-copyright: var(--radon-text-tertiary-light);
 

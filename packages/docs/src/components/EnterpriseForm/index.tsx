@@ -18,7 +18,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
     companyName: false,
   });
 
-  const err = "This fieled is required.";
+  const err = "This field is required.";
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -36,6 +36,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
     setError(newErrors);
 
     if (Object.values(newErrors).some((val) => val)) return;
+    window.location.href = `mailto:projects@swmansion.com?subject=Radon enterprise: ${formData.name} from ${formData.companyName}&body=Contact email: ${formData.email}%0A Role: ${formData.role}%0A Team size: ${formData.teamSize}%0A Comment: ${formData.comment}`;
   };
 
   return (
@@ -56,9 +57,9 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
               type="text"
               name="name"
               id="name"
+              pattern="^[a-zA-Z]{3,50}$"
               value={formData.name}
               onChange={handleChange}
-              // required
             />
             {error.name && <p className={styles.error}>{err}</p>}
           </div>
@@ -70,7 +71,6 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
               id="email"
               value={formData.email}
               onChange={handleChange}
-              // required
             />
             {error.email && <p className={styles.error}>{err}</p>}
           </div>
@@ -106,9 +106,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
               id="size"
               value={formData.teamSize}
               onChange={handleChange}
-              className={styles.customSelect}
-              // required
-            >
+              className={styles.customSelect}>
               <option value="" disabled>
                 Select a value
               </option>
