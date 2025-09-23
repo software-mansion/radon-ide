@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { Disposable, EventEmitter } from "vscode";
 import { disposeAll } from "../utilities/disposables";
-import { RecursivePartial } from "../common/State";
+import { RecursivePartial, REMOVE } from "../common/State";
 import { mergeAndCalculateChanges } from "../common/Merge";
 
 export abstract class StateManager<T extends object> implements Disposable {
@@ -91,14 +91,12 @@ class DerivedStateManager<T extends object, K extends object> extends StateManag
           return;
         }
 
-        const parentState = this.parent.getState();
-        if (parentState[this.keyInParent] === undefined) {
-          this.removed = true;
+        const partialState = partialParentState[this.keyInParent];
+        if (partialState === undefined) {
           return;
         }
-
-        const partialState = partialParentState[this.keyInParent] as T | undefined;
-        if (partialState === undefined) {
+        if (partialState === REMOVE) {
+          this.removed = true;
           return;
         }
         this.onSetStateEmitter.fire(partialState);
