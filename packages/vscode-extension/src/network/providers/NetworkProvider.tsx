@@ -30,12 +30,13 @@ interface NetworkProviderProps extends NetworkTracker {
   getThemeData: (themeDescriptor: ThemeDescriptor) => Promise<ThemeData>;
 }
 
-function responseBodyListener(
-  resolve: (value: ResponseBodyData | undefined) => void,
+function createBodyResponsePromise(
   messageId: string,
   requestId: string,
   responseBodiesRef: React.RefObject<Record<string, ResponseBodyData | undefined>>
 ) {
+  const { promise, resolve } = Promise.withResolvers<ResponseBodyData | undefined>();
+
   const listener = (message: MessageEvent) => {
     try {
       const { command, payload }: WebviewMessage = message.data;
@@ -59,10 +60,16 @@ function responseBodyListener(
       console.error("Error parsing Window message:", error);
     }
   };
-  return listener;
+
+  // Setup listener to capture the response
+  window.addEventListener("message", listener);
+
+  return promise;
 }
 
-function themeListener(resolve: (value: ThemeData) => void, messageId: string) {
+function createThemeResponsePromise(messageId: string) {
+  const { promise, resolve } = Promise.withResolvers<ThemeData>();
+
   const listener = (message: MessageEvent) => {
     try {
       const { payload }: WebviewMessage = message.data;
@@ -79,7 +86,10 @@ function themeListener(resolve: (value: ThemeData) => void, messageId: string) {
     }
   };
 
-  return listener;
+  // Setup listener to capture the response
+  window.addEventListener("message", listener);
+
+  return promise;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
@@ -130,11 +140,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     }
 
     const messageId = Math.random().toString(36).substring(7);
-    const { promise, resolve } = Promise.withResolvers<ResponseBodyData | undefined>();
-    const listener = responseBodyListener(resolve, messageId, requestId, responseBodiesRef);
-
-    // Setup listener to capture the response
-    window.addEventListener("message", listener);
+    const promise = createBodyResponsePromise(messageId, requestId, responseBodiesRef);
 
     // Send the message to the network-plugin backend
     sendWebviewCDPMessage({
@@ -149,12 +155,8 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   };
   const getThemeData = (themeDescriptor: ThemeDescriptor): Promise<ThemeData> => {
     const messageId = Math.random().toString(36).substring(7);
-    const { promise, resolve } = Promise.withResolvers<ThemeData>();
-
-    // Setup listener to capture the response
-    const listener = themeListener(resolve, messageId);
-    window.addEventListener("message", listener);
-
+    const promise = createThemeResponsePromise(messageId);
+    
     // Send the message to the network-plugin backend
     sendWebviewIDEMessage({
       method: "IDE.getTheme",
