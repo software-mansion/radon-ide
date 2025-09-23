@@ -8,6 +8,7 @@ import {
   ThemeFileData,
   ExtensionThemeInfo,
 } from "../common/theme";
+import { THEME_VARIANT_FALLBACK } from "../common/theme";
 
 // Below are the themes used when the theme file cannot be found or loaded
 // In case the themes chosen by us to be default cannot be loaded from vscode
@@ -24,12 +25,10 @@ const DEFAULT_THEME_MAPPING: Record<ThemeVariant, ThemeData> = {
   [ThemeVariant.HighContrastLight]: theme_hc_light,
 };
 
-const VARIANT_FALLBACK: ThemeVariant = ThemeVariant.Dark;
-
 // Cache for theme data to avoid repeated file reads
 const themeCache = new Map<string, ThemeData>();
 
-function getDefaultTheme(themeVariant: ThemeVariant = VARIANT_FALLBACK): ThemeData {
+function getDefaultTheme(themeVariant: ThemeVariant = THEME_VARIANT_FALLBACK): ThemeData {
   return DEFAULT_THEME_MAPPING[themeVariant];
 }
 
@@ -42,7 +41,7 @@ export function extractTheme(themeDescriptor?: ThemeDescriptor): ThemeData {
   const { themeId, themeVariant } = themeDescriptor || {};
 
   const workspaceThemeId = vscode.workspace.getConfiguration("workbench").get<string>("colorTheme");
-  const themePath = findThemePath(themeId ?? workspaceThemeId ?? "");
+  const themePath = findThemePath(themeId ?? workspaceThemeId);
 
   if (!themePath) {
     return getDefaultTheme(themeVariant);
@@ -109,7 +108,11 @@ function loadThemeDefinitions(themePath: string): ThemeData {
  * Finds the file path for a given theme name by searching through all installed extensions
  * to find available themes and extract their file paths.
  */
-function findThemePath(themeId: string): string | undefined {
+function findThemePath(themeId: string | undefined): string | undefined {
+  if (!themeId) {
+    return undefined;
+  }
+
   for (const extension of vscode.extensions.all) {
     const themes = extension.packageJSON.contributes?.themes;
     const theme = themes?.find((t: ExtensionThemeInfo) => t.id === themeId || t.label === themeId);

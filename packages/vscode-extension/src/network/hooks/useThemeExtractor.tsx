@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNetwork } from "../providers/NetworkProvider";
-import { ThemeData, ThemeDescriptor, ThemeVariant } from "../../common/theme";
+import { isThemeVariant, ThemeData, ThemeDescriptor } from "../../common/theme";
+import { THEME_VARIANT_FALLBACK } from "../../common/theme";
 
 const THEME_VARIANT_ATTRIBUTE = "data-vscode-theme-kind";
 const THEME_ID_ATTRIBUTE = "data-vscode-theme-id";
@@ -8,7 +9,7 @@ const THEME_ID_ATTRIBUTE = "data-vscode-theme-id";
 export default function useThemeExtractor() {
   const { getThemeData } = useNetwork();
   const [editorThemeData, setEditorThemeData] = useState<ThemeData | undefined>(undefined);
-  const previousThemeIdRef = useRef<string | null>(null);
+  const previousThemeIdRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     /**
@@ -30,7 +31,11 @@ export default function useThemeExtractor() {
           continue;
         }
 
-        const themeVariant = body.getAttribute(THEME_VARIANT_ATTRIBUTE) as ThemeVariant;
+        const variantAttributeValue = body.getAttribute(THEME_VARIANT_ATTRIBUTE);
+
+        const themeVariant = isThemeVariant(variantAttributeValue)
+          ? variantAttributeValue
+          : THEME_VARIANT_FALLBACK;
         const themeId = body.getAttribute(THEME_ID_ATTRIBUTE);
 
         if (!themeId || previousThemeIdRef.current === themeId) {
@@ -49,8 +54,18 @@ export default function useThemeExtractor() {
     observer.observe(body, { attributes: true });
 
     // Load initial theme data
-    const initialThemeVariant = body.getAttribute(THEME_VARIANT_ATTRIBUTE) as ThemeVariant;
-    const initialThemeDescriptor: ThemeDescriptor = { themeVariant: initialThemeVariant };
+    const initialVariantAttributeValue = body.getAttribute(THEME_VARIANT_ATTRIBUTE);
+    const initialThemeVariant = isThemeVariant(initialVariantAttributeValue)
+      ? initialVariantAttributeValue
+      : THEME_VARIANT_FALLBACK;
+
+    const initialThemeId = body.getAttribute(THEME_ID_ATTRIBUTE) || undefined;
+    previousThemeIdRef.current = initialThemeId;
+
+    const initialThemeDescriptor: ThemeDescriptor = {
+      themeVariant: initialThemeVariant,
+      themeId: initialThemeId,
+    };
 
     getThemeData(initialThemeDescriptor).then((initialThemeData) => {
       setEditorThemeData(initialThemeData);

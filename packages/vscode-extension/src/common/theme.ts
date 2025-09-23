@@ -5,6 +5,12 @@ export enum ThemeVariant {
   HighContrastLight = "vscode-high-contrast-light",
 }
 
+export function isThemeVariant(value: unknown): value is ThemeVariant {
+  return Object.values(ThemeVariant).includes(value as ThemeVariant);
+}
+
+export const THEME_VARIANT_FALLBACK = ThemeVariant.Dark;
+
 export type ThemeRule = {
   name?: string;
   scope: string | string[];
