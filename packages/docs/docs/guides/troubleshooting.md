@@ -113,3 +113,7 @@ If you're using a theme that doesn't look good with Radon IDE, please open an is
 ### -sec-num- Node version is not supported
 
 Radon IDE uses node version inherited from a shell run in the application root, and checks if it satisfies `react-native` minimum requirements. If you have a specific setup that uses node version from outside this range or you want to narrow down the scope of compatible versions for your internal needs, you can do so by specifying `engines` field of your applications `package.json`. If you have a problem installing a compatible node version, we recommend using a tool like [nvm](https://github.com/nvm-sh/nvm).
+
+### -sec-num- Force-enabling Element Inspector
+
+[Element Inspector](/docs/features/element-inspector.md)  disabled by default in apps that don't support edge-to-edge mode due to inconsistent performance. If needed, the tool can be activated regardless of these limitations by setting `RadonIDE.enableExperimentalElementInspector` to true in the editor's settings. Note that while the tool will be operational, its behavior might be unpredictable.
