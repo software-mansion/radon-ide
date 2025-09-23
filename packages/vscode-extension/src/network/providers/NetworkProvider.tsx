@@ -156,7 +156,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   const getThemeData = (themeDescriptor: ThemeDescriptor): Promise<ThemeData> => {
     const messageId = Math.random().toString(36).substring(7);
     const promise = createThemeResponsePromise(messageId);
-    
+
     // Send the message to the network-plugin backend
     sendWebviewIDEMessage({
       method: "IDE.getTheme",
