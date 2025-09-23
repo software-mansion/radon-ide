@@ -24,7 +24,6 @@ export interface MetroSession {
 
   onBundleError: (listener: (event: BundleErrorEvent) => void) => Disposable;
   onBundleProgress: (listener: (event: BundleProgressEvent) => void) => Disposable;
-  onServerStopped: (listener: () => void) => Disposable;
 
   getDebuggerPages(): Promise<CDPTargetDescription[]>;
   reload(): Promise<void>;
@@ -251,10 +250,8 @@ export class Metro implements MetroSession, Disposable {
 
   protected readonly bundleErrorEventEmitter = new EventEmitter<BundleErrorEvent>();
   protected readonly bundleProgressEventEmitter = new EventEmitter<BundleProgressEvent>();
-  protected readonly onServerStoppedEventEmitter = new EventEmitter<void>();
   public readonly onBundleError = this.bundleErrorEventEmitter.event;
   public readonly onBundleProgress = this.bundleProgressEventEmitter.event;
-  public readonly onServerStopped = this.onServerStoppedEventEmitter.event;
 
   protected _disposed = false;
 
@@ -465,7 +462,6 @@ class SubprocessMetroSession extends Metro implements Disposable {
       })
       .then(() => {
         this.bundlerReady.reject(new Error("Metro bundler exited unexpectedly"));
-        this.onServerStoppedEventEmitter.fire();
       });
   }
 

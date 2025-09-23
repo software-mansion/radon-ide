@@ -58,11 +58,15 @@ export async function waitForDebuggerTarget({
   return undefined;
 }
 
-export async function getDebuggerTargetForDevice(
-  metro: MetroSession,
-  deviceInfo: DeviceInfo,
-  cancelToken: CancelToken
-): Promise<DebuggerTargetDescription | undefined> {
+export async function getDebuggerTargetForDevice({
+  metro,
+  deviceInfo,
+  cancelToken,
+}: {
+  metro: MetroSession;
+  deviceInfo: DeviceInfo;
+  cancelToken: CancelToken;
+}): Promise<DebuggerTargetDescription | undefined> {
   return waitForDebuggerTarget({
     metro,
     filter: targetDeviceFilter(deviceInfo),

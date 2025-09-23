@@ -152,7 +152,7 @@ export class ApplicationContext implements Disposable {
     this.applicationDependencyManager.setLaunchConfiguration(this.launchConfig);
     await this.applicationDependencyManager.runAllDependencyChecks();
 
-    (await this._devtoolsServer)?.dispose();
+    this._devtoolsServer?.then((server) => server.dispose());
     this._devtoolsServer = undefined;
 
     if (this.launchConfig.useOldDevtools) {
