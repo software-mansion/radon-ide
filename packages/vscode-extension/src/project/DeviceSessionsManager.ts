@@ -356,7 +356,7 @@ export class DeviceSessionsManager implements Disposable {
     const deviceSessions = this.deviceSessions.values().toArray();
     this.deviceSessions.clear();
     this.activeSessionId = undefined;
-    disposeAll([...deviceSessions, ...this.disposables]);
     this.clearState();
+    disposeAll([...deviceSessions, ...this.disposables]);
   }
 }
