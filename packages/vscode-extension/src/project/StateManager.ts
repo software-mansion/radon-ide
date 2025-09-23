@@ -74,6 +74,9 @@ class RootStateManager<T extends object> extends StateManager<T> {
 }
 
 class DerivedStateManager<T extends object, K extends object> extends StateManager<T> {
+  // NOTE: after the derived state is removed from the parent, we want to ignore any further updates
+  // made through this derived state manager to prevent accidental re-adding of the removed state or updating
+  // an entry that is added after this one is removed.
   private removed: boolean;
 
   constructor(
