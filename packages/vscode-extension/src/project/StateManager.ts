@@ -74,13 +74,26 @@ class RootStateManager<T extends object> extends StateManager<T> {
 }
 
 class DerivedStateManager<T extends object, K extends object> extends StateManager<T> {
+  private removed: boolean;
+
   constructor(
     private parent: StateManager<K>,
     private keyInParent: keyof K
   ) {
     super();
+    this.removed = this.parent.getState()[this.keyInParent] === undefined;
     this.disposables.push(
       parent.onSetState((partialParentState: RecursivePartial<K>) => {
+        if (this.removed) {
+          return;
+        }
+
+        const parentState = this.parent.getState();
+        if (parentState[this.keyInParent] === undefined) {
+          this.removed = true;
+          return;
+        }
+
         const partialState = partialParentState[this.keyInParent] as T | undefined;
         if (partialState === undefined) {
           return;
@@ -91,10 +104,18 @@ class DerivedStateManager<T extends object, K extends object> extends StateManag
   }
 
   updateState(partialValue: RecursivePartial<T>) {
+    if (this.removed) {
+      return;
+    }
     this.parent.updateState({ [this.keyInParent]: partialValue } as RecursivePartial<K>);
   }
 
   getState() {
     return this.parent.getState()[this.keyInParent] as T;
+  }
+
+  dispose() {
+    super.dispose();
+    this.removed = true;
   }
 }
