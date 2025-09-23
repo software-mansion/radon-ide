@@ -9,7 +9,7 @@ export abstract class StateManager<T extends object> implements Disposable {
     return new RootStateManager(initialState);
   }
 
-  abstract setState(partialState: RecursivePartial<T>): void;
+  abstract updateState(partialState: RecursivePartial<T>): void;
   abstract getState(): T;
 
   protected onSetStateEmitter = new EventEmitter<RecursivePartial<T>>();
@@ -60,7 +60,7 @@ class RootStateManager<T extends object> extends StateManager<T> {
     this.state = initialState;
   }
 
-  setState(partialState: RecursivePartial<T>): void {
+  updateState(partialState: RecursivePartial<T>): void {
     const [newState, changes] = mergeAndCalculateChanges(this.state, partialState);
     if (this.state !== newState) {
       this.state = newState;
@@ -90,8 +90,8 @@ class DerivedStateManager<T extends object, K extends object> extends StateManag
     );
   }
 
-  setState(partialValue: RecursivePartial<T>) {
-    this.parent.setState({ [this.keyInParent]: partialValue } as RecursivePartial<K>);
+  updateState(partialValue: RecursivePartial<T>) {
+    this.parent.updateState({ [this.keyInParent]: partialValue } as RecursivePartial<K>);
   }
 
   getState() {

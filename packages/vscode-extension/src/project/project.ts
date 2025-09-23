@@ -1,7 +1,6 @@
 import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
-import assert from "assert";
 import { env, Disposable, commands, workspace, window } from "vscode";
 import _ from "lodash";
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
@@ -9,8 +8,6 @@ import {
   AppPermissionType,
   DeviceButtonType,
   DeviceId,
-  DeviceSessionsManagerState,
-  DeviceSessionState,
   DeviceSettings,
   IDEPanelMoveTarget,
   isOfEnumDeviceRotation,
@@ -57,6 +54,7 @@ import {
   IOSRuntimeInfo,
   MultimediaData,
   ProjectStore,
+  RecursivePartial,
   WorkspaceConfiguration,
 } from "../common/State";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
@@ -69,8 +67,6 @@ const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 const DEEP_LINKS_HISTORY_LIMIT = 50;
 
 export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
-  // #region Properties
-
   // #region Properties
 
   private launchConfigsManager = new LaunchConfigurationsManager();
@@ -107,16 +103,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public get appRootFolder() {
     return this.applicationContext.appRootFolder;
-  }
-
-  private get selectedDeviceSessionState(): DeviceSessionState | undefined {
-    if (this.projectState.selectedSessionId === null) {
-      return undefined;
-    }
-    const selectedSessionState =
-      this.projectState.deviceSessions[this.projectState.selectedSessionId];
-    assert(selectedSessionState !== undefined, "Expected the selected session to exist");
-    return selectedSessionState;
   }
 
   public async getProjectState(): Promise<ProjectState> {
@@ -162,8 +148,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     const connector = Connector.getInstance();
 
     this.projectState = {
-      selectedSessionId: null,
-      deviceSessions: {},
       appRootPath: this.relativeAppRootPath,
       selectedLaunchConfiguration: this.selectedLaunchConfiguration,
       customLaunchConfigurations: this.launchConfigsManager.launchConfigurations,
@@ -201,7 +185,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     );
     this.disposables.push(
       this.workspaceStateManager.onSetState(
-        (partialWorkspaceConfig: Partial<WorkspaceConfiguration>) => {
+        (partialWorkspaceConfig: RecursivePartial<WorkspaceConfiguration>) => {
           const deviceRotation = partialWorkspaceConfig.deviceRotation;
           if (!deviceRotation) {
             return;
@@ -223,11 +207,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region Device Session
 
   public onInitialized(): void {
-    this.stateManager.setState({ initialized: true });
-  }
-
-  public onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void {
-    this.updateProjectState(state);
+    this.stateManager.updateState({ initialized: true });
   }
 
   public getDeviceRotation(): DeviceRotation {
@@ -285,7 +265,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     // NOTE: we reset the device sessions manager to close all the running sessions
     // and restart the current device with new config. In the future, we might want to keep the devices running
     // and only close the applications, but the API we have right now does not allow that.
-    const oldDeviceSessionsManager = this.deviceSessionsManager;
+    this.deviceSessionsManager.dispose();
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.stateManager.getDerived("deviceSessions"),
       this.stateManager,
@@ -295,7 +275,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this,
       this.outputChannelRegistry
     );
-    oldDeviceSessionsManager.dispose();
     this.maybeStartInitialDeviceSession();
 
     this.launchConfigsManager.saveInitialLaunchConfig(launchConfig);
@@ -687,18 +666,17 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     deviceInfo.displayName = newDisplayName;
     // NOTE: this should probably be handled via some listener on Device instead:
     const deviceId = deviceInfo.id;
-    if (!(deviceId in this.projectState.deviceSessions)) {
+    const deviceSessions = this.stateManager.getState().deviceSessions;
+    if (!(deviceId in deviceSessions)) {
       return;
     }
+
     const newDeviceState = {
-      ...this.projectState.deviceSessions[deviceId],
+      ...deviceSessions[deviceId],
       deviceInfo,
     };
-    const newDeviceSessions = {
-      ...this.projectState.deviceSessions,
-      [deviceId]: newDeviceState,
-    };
-    this.updateProjectState({ deviceSessions: newDeviceSessions });
+
+    this.stateManager.updateState({ deviceSessions: { [deviceId]: newDeviceState } });
   }
 
   // #endregion Devices

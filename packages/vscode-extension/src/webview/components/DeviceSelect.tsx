@@ -102,10 +102,10 @@ function DeviceSelect() {
 
   const hasNoDevices = devices.length === 0;
   const selectedDevice = use$(selectedDeviceSessionState.deviceInfo);
+  const deviceSessions = use$(store$.projectState.deviceSessions);
 
   const radonConnectEnabled = projectState.connectState.enabled;
 
-  const { deviceSessions } = projectState;
   const runningSessionIds = Object.keys(deviceSessions);
 
   const deviceSections = partitionDevices(devices ?? []);

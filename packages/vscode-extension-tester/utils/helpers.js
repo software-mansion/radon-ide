@@ -14,3 +14,11 @@ function describeIf(condition, title, fn) {
     describe.skip(title, fn);
   }
 }
+
+export function itIf(condition, title, fn) {
+  if (condition) {
+    it(title, fn);
+  } else {
+    it.skip(title, fn);
+  }
+}

@@ -4,7 +4,7 @@ import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 import { getAppWebsocket } from "../server/webSocketServer.js";
 
-describe("Radon Settings", () => {
+describe("9 - Radon Settings", () => {
   let driver,
     view,
     elementHelperService,

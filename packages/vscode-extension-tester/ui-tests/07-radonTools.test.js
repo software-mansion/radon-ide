@@ -15,7 +15,7 @@ import { cropCanvas, compareImages } from "../utils/imageProcessing.js";
 
 const cwd = process.cwd() + "/data";
 
-describe("Radon tools tests", () => {
+describe("7 - Radon tools tests", () => {
   let driver,
     appWebsocket,
     view,
