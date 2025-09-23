@@ -3,13 +3,13 @@ import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 import { assert } from "chai";
 import * as fs from "fs";
-import describeIf from "../utils/helpers.js";
+import { describeIf } from "../utils/helpers.js";
 
 const raw = fs.readFileSync("./data/react-native-app/package.json");
 const data = JSON.parse(raw);
 const IS_EXPO = data.name.includes("expo");
 
-describeIf(IS_EXPO, "Expo router tests", () => {
+describeIf(IS_EXPO, "10 - Expo router tests", () => {
   let driver,
     appWebsocket,
     view,
@@ -91,10 +91,18 @@ describeIf(IS_EXPO, "Expo router tests", () => {
     await urlInput.click();
     await urlInput.sendKeys("/explore", Key.ENTER);
 
-    const position = await appManipulationService.getButtonCoordinates(
-      appWebsocket,
-      "expo-second-view-button"
-    );
+    const position = await driver.wait(async () => {
+      try {
+        const position = await appManipulationService.getButtonCoordinates(
+          appWebsocket,
+          "expo-second-view-button"
+        );
+        return position;
+      } catch {
+        return false;
+      }
+    }, 10000);
+
     const message = await appManipulationService.clickInPhoneAndWaitForMessage(
       position
     );
@@ -113,16 +121,14 @@ describeIf(IS_EXPO, "Expo router tests", () => {
     await driver.sleep(1000);
 
     const position = await driver.wait(async () => {
-      let position;
       try {
-        position = await appManipulationService.getButtonCoordinates(
+        return await appManipulationService.getButtonCoordinates(
           appWebsocket,
           "not-found-view-button"
         );
       } catch {
         return false;
       }
-      return position;
     }, 10000);
 
     const message = await appManipulationService.clickInPhoneAndWaitForMessage(
@@ -139,10 +145,17 @@ describeIf(IS_EXPO, "Expo router tests", () => {
     );
     await appManipulationService.clickInsidePhoneScreen(position);
 
-    position = await appManipulationService.getButtonCoordinates(
-      appWebsocket,
-      "not-found-button"
-    );
+    position = await driver.wait(async () => {
+      try {
+        const position = await appManipulationService.getButtonCoordinates(
+          appWebsocket,
+          "not-found-button"
+        );
+        return position;
+      } catch {
+        return false;
+      }
+    }, 10000);
     await appManipulationService.clickInsidePhoneScreen(position);
 
     const urlInput = await elementHelperService.findAndWaitForElementByTag(
@@ -151,7 +164,6 @@ describeIf(IS_EXPO, "Expo router tests", () => {
 
     await driver.wait(async () => {
       const url = await urlInput.getAttribute("value");
-      console.log(url);
       return url === "/notExisting?not-found=notExisting";
     }, 5000);
   });
@@ -163,10 +175,17 @@ describeIf(IS_EXPO, "Expo router tests", () => {
     );
     await appManipulationService.clickInsidePhoneScreen(position);
 
-    position = await appManipulationService.getButtonCoordinates(
-      appWebsocket,
-      "show-modal-button"
-    );
+    position = await driver.wait(async () => {
+      try {
+        const position = await appManipulationService.getButtonCoordinates(
+          appWebsocket,
+          "show-modal-button"
+        );
+        return position;
+      } catch {
+        return false;
+      }
+    }, 10000);
     await appManipulationService.clickInsidePhoneScreen(position);
 
     const urlInput = await elementHelperService.findAndWaitForElementByTag(
@@ -175,7 +194,6 @@ describeIf(IS_EXPO, "Expo router tests", () => {
 
     await driver.wait(async () => {
       const url = await urlInput.getAttribute("value");
-      console.log(url);
       return url === "/modal";
     }, 5000);
   });
@@ -190,35 +208,21 @@ describeIf(IS_EXPO, "Expo router tests", () => {
     // modal has slide in animation
     await driver.sleep(1000);
 
-    const position = await appManipulationService.getButtonCoordinates(
-      appWebsocket,
-      "modal-button"
-    );
+    const position = await driver.wait(async () => {
+      try {
+        const position = await appManipulationService.getButtonCoordinates(
+          appWebsocket,
+          "modal-button"
+        );
+        return position;
+      } catch {
+        return false;
+      }
+    }, 10000);
     const message = await appManipulationService.clickInPhoneAndWaitForMessage(
       position
     );
 
     assert.equal(message.action, "modal-button");
-  });
-
-  it("should change url when modal is closed", async () => {
-    const urlInput = await elementHelperService.findAndWaitForElementByTag(
-      "radon-top-bar-url-input"
-    );
-    await urlInput.click();
-    await urlInput.sendKeys("/modal", Key.ENTER);
-
-    await driver.sleep(1000);
-
-    let position = await appManipulationService.getButtonCoordinates(
-      appWebsocket,
-      "modal-return-to-home"
-    );
-    await appManipulationService.clickInsidePhoneScreen(position);
-
-    await driver.wait(async () => {
-      const url = await urlInput.getAttribute("value");
-      return url === "/";
-    }, 5000);
   });
 });

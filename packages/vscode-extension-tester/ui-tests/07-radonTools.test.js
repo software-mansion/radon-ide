@@ -99,6 +99,7 @@ describe("7 - Radon tools tests", () => {
 
     const editorView = new EditorView();
     const titles = await editorView.getOpenEditorTitles();
+    console.log(titles);
 
     assert.include(titles, componentSourceFile);
   });
