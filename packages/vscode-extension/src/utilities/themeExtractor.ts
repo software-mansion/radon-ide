@@ -7,6 +7,7 @@ import {
   ThemeDescriptor,
   ThemeFileData,
   ExtensionThemeInfo,
+  ThemeRule,
 } from "../common/theme";
 import { THEME_VARIANT_FALLBACK } from "../common/theme";
 
@@ -94,7 +95,7 @@ function loadThemeDefinitions(themePath: string): ThemeData {
 
       // Exclude the include property to avoid circular references
       const { include: _include, ...themeWithoutInclude } = themeData;
-      mergedTheme = { ...mergedTheme, ...themeWithoutInclude };
+      mergedTheme = mergeThemeData(themeWithoutInclude, mergedTheme);
     } catch (error) {
       console.warn(`Failed to load theme file: ${currentPath}`, error);
     }
@@ -121,4 +122,96 @@ function findThemePath(themeId: string | undefined): string | undefined {
     }
   }
   return undefined;
+}
+
+function normalizeScope(scope: string | string[]): string[] {
+  return _.isArray(scope) ? scope : [scope];
+}
+
+/**
+ * Checks if two scope arrays are equivalent (same scopes, order doesn't matter)
+ */
+function areScopesEqual(scope1: string | string[], scope2: string | string[]): boolean {
+  const normalized1 = normalizeScope(scope1).sort();
+  const normalized2 = normalizeScope(scope2).sort();
+  return _.isEqual(normalized1, normalized2);
+}
+
+/**
+ * Merges token color arrays by scope, with override rules taking precedence
+ * for rules with the same scope, and unique scopes being preserved
+ */
+function mergeTokenColorsByScope(base: ThemeRule[], override: ThemeRule[]): ThemeRule[] {
+  const result: ThemeRule[] = [...base];
+
+  for (const overrideRule of override) {
+    const baseRuleIndex = result.findIndex((baseRule) =>
+      areScopesEqual(baseRule.scope, overrideRule.scope)
+    );
+
+    if (baseRuleIndex >= 0) {
+      result[baseRuleIndex] = {
+        ...result[baseRuleIndex],
+        ...overrideRule,
+        settings: _.merge({}, result[baseRuleIndex].settings, overrideRule.settings),
+      };
+    } else {
+      // Add new rule if scope doesn't exist
+      result.push(overrideRule);
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Custom merge function for theme data that handles VS Code theme structure appropriately.
+ * Vscode theme schema: Theme file schema: https://github.com/microsoft/vscode/blob/main/src/vs/workbench/services/themes/common/colorThemeSchema.ts
+ * Based on the VS Code color theme schema:
+ * - colors: object (workbench colors)
+ * - tokenColors: string (path to tmTheme) OR array of token color rules
+ *   We are aware of the fact that string points to tmTheme file and we knowingly do not handle that case here
+ *   This case would require parsing the tmTheme file and merging its contents, which is out of scope for now
+ *   Can be done if someone submits an issue about it.
+ * - semanticTokenColors: object
+ * - Other properties are treated as simple key-value pairs,
+ *   including "semanticHighlighting", "name", "displayName", "type" and unknown properties
+ */
+function mergeThemeData(base: ThemeData, override: ThemeData): ThemeData {
+  const result: ThemeData = { ...base };
+
+  for (const [key, overrideValue] of Object.entries(override)) {
+    if (overrideValue === undefined || overrideValue === null) {
+      continue;
+    }
+
+    const baseValue = result[key];
+
+    switch (key) {
+      case "colors":
+      case "semanticTokenColors":
+        // colors and semanticTokenColors: Record<string, string>
+        result[key] = _.merge({}, baseValue, overrideValue);
+        break;
+      case "tokenColors":
+        // tokenColors: Array | string,
+        // we knowingly do not handle the string case and merge the token arrays
+        if (_.isArray(overrideValue)) {
+          result.tokenColors = mergeTokenColorsByScope(
+            baseValue as ThemeRule[],
+            overrideValue as ThemeRule[]
+          );
+        }
+        break;
+
+      // in other cases, we simply override primitive values.
+      // this goes for "semanticHighlighting", "name", "displayName", "type"
+      // as well as unknown properties
+      default:
+        result[key] = overrideValue;
+        break;
+    }
+  }
+
+  return result;
 }
