@@ -124,6 +124,7 @@ jobs:
           PROJECT_NAME: ${{ github.event.inputs.testApp }}
           IS_RECORDING: ${{ github.event.inputs.isRecording }}
           TESTS_OS: ${{ github.event.inputs.OS }}
+          IS_GITHUB_ACTIONS: "true"
 
       - name: make video
         if: ${{ always() && github.event.inputs.isRecording == 'true' }}
@@ -137,6 +138,7 @@ jobs:
         with:
           name: vscode-ui-screenshots
           path: packages/vscode-extension-tester/screenshots/
+          retention-days: 7
 
       - name: build output
         if: always()
@@ -145,6 +147,7 @@ jobs:
         with:
           name: output
           path: packages/vscode-extension-tester/output.txt
+          retention-days: 7
 
       - name: Upload video recording
         if: ${{ always() && github.event.inputs.isRecording == 'true' }}
@@ -153,6 +156,7 @@ jobs:
         with:
           name: vscode-ui-recording
           path: packages/vscode-extension-tester/videos/vscode-ui-recording.mp4
+          retention-days: 7
 
       - name: Upload screenshot made by radon
         if: ${{ always() && github.event.inputs.isRecording == 'true' }}
@@ -161,6 +165,7 @@ jobs:
         with:
           name: radon-screenshot
           path: packages/vscode-extension-tester/data/screenshotTest..png
+          retention-days: 7
 
       - name: Upload recording made by radon
         if: ${{ always() && github.event.inputs.isRecording == 'true' }}
@@ -169,3 +174,4 @@ jobs:
         with:
           name: radon-recording
           path: packages/vscode-extension-tester/data/recordingTest..mp4
+          retention-days: 7

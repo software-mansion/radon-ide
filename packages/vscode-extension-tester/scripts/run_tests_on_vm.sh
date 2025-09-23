@@ -91,8 +91,11 @@ npm install
 npm run get-test-app -- $APP
 PROJECT_NAME=$APP npm run setup-run-tests -- $@
 cd ..
-rm -rf "$REMOTE_PATH"
 EOF
+
+scp -i ./scripts/id_vm_mac -r "$VM_USER@$VM_IP:$REMOTE_PATH/screenshots" .
+
+ssh -i ./scripts/id_vm_mac "$VM_USER@$VM_IP" "rm -rf '$REMOTE_PATH'"
 
 utmctl stop "$VM_NAME" || {
     echo "Failed to stop VM '$VM_NAME'."

@@ -5,7 +5,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 
-describe("screenshots tests", () => {
+describe("6 - screenshots tests", () => {
   let driver,
     view,
     appWebsocket,
@@ -156,6 +156,9 @@ describe("screenshots tests", () => {
 
   it("Should open replay overlay", async () => {
     await radonSettingsService.setEnableReplays(true);
+
+    // some time to wait for replay to record
+    await driver.sleep(1000);
 
     await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-show-replay-button"
