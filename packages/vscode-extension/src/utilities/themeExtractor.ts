@@ -29,8 +29,8 @@ const VARIANT_FALLBACK: ThemeVariant = ThemeVariant.Dark;
 // Cache for theme data to avoid repeated file reads
 const themeCache = new Map<string, ThemeData>();
 
-function getDefaultTheme(themeVariant: ThemeVariant | undefined): ThemeData {
-  return DEFAULT_THEME_MAPPING[themeVariant ?? VARIANT_FALLBACK];
+function getDefaultTheme(themeVariant: ThemeVariant = VARIANT_FALLBACK): ThemeData {
+  return DEFAULT_THEME_MAPPING[themeVariant];
 }
 
 /**
