@@ -2,8 +2,14 @@ import { WebView, Key } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 import { assert } from "chai";
+import * as fs from "fs";
+import describeIf from "../utils/helpers.js";
 
-describe("App interaction tests", () => {
+const raw = fs.readFileSync("./data/react-native-app/package.json");
+const data = JSON.parse(raw);
+const IS_EXPO = data.name.includes("expo");
+
+describeIf(IS_EXPO, "Expo router tests", () => {
   let driver,
     appWebsocket,
     view,
@@ -103,7 +109,7 @@ describe("App interaction tests", () => {
     await urlInput.click();
     await urlInput.sendKeys("/notExistingRoute", Key.ENTER);
 
-    // expo has animation on changing routes
+    // this view changes
     await driver.sleep(1000);
 
     const position = await driver.wait(async () => {
@@ -124,5 +130,95 @@ describe("App interaction tests", () => {
     );
 
     assert.equal(message.action, "not-found-view-button");
+  });
+
+  it("should show not found in path", async () => {
+    let position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "expo-route-explore-button"
+    );
+    await appManipulationService.clickInsidePhoneScreen(position);
+
+    position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "not-found-button"
+    );
+    await appManipulationService.clickInsidePhoneScreen(position);
+
+    const urlInput = await elementHelperService.findAndWaitForElementByTag(
+      "radon-top-bar-url-input"
+    );
+
+    await driver.wait(async () => {
+      const url = await urlInput.getAttribute("value");
+      console.log(url);
+      return url === "/notExisting?not-found=notExisting";
+    }, 5000);
+  });
+
+  it("should show modal in path", async () => {
+    let position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "expo-route-explore-button"
+    );
+    await appManipulationService.clickInsidePhoneScreen(position);
+
+    position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "show-modal-button"
+    );
+    await appManipulationService.clickInsidePhoneScreen(position);
+
+    const urlInput = await elementHelperService.findAndWaitForElementByTag(
+      "radon-top-bar-url-input"
+    );
+
+    await driver.wait(async () => {
+      const url = await urlInput.getAttribute("value");
+      console.log(url);
+      return url === "/modal";
+    }, 5000);
+  });
+
+  it("should open modal using url bar", async () => {
+    const urlInput = await elementHelperService.findAndWaitForElementByTag(
+      "radon-top-bar-url-input"
+    );
+    await urlInput.click();
+    await urlInput.sendKeys("/modal", Key.ENTER);
+
+    // modal has slide in animation
+    await driver.sleep(1000);
+
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "modal-button"
+    );
+    const message = await appManipulationService.clickInPhoneAndWaitForMessage(
+      position
+    );
+
+    assert.equal(message.action, "modal-button");
+  });
+
+  it("should change url when modal is closed", async () => {
+    const urlInput = await elementHelperService.findAndWaitForElementByTag(
+      "radon-top-bar-url-input"
+    );
+    await urlInput.click();
+    await urlInput.sendKeys("/modal", Key.ENTER);
+
+    await driver.sleep(1000);
+
+    let position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "modal-return-to-home"
+    );
+    await appManipulationService.clickInsidePhoneScreen(position);
+
+    await driver.wait(async () => {
+      const url = await urlInput.getAttribute("value");
+      return url === "/";
+    }, 5000);
   });
 });
