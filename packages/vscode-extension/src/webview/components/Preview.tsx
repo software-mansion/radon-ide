@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
+import { useState, useRef, useEffect, MouseEvent, WheelEvent, useMemo } from "react";
 import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
-import { clamp, debounce } from "lodash";
+import { clamp, debounce, throttle } from "lodash";
 import { Platform, useProject } from "../providers/ProjectProvider";
 import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
 import PreviewLoader from "./PreviewLoader";
@@ -11,7 +11,6 @@ import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
 import { Frame, InspectDataStackItem, InspectStackData } from "../../common/Project";
 import ZoomControls from "./ZoomControls";
-import { throttle } from "../../utilities/throttle";
 import InspectOverlay from "./InspectOverlay";
 import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
@@ -210,7 +209,45 @@ function Preview({
     );
   }
 
-  function sendInspectUnthrottled(
+  const inspectElementAt = useMemo(
+    () =>
+      throttle(
+        (translatedX, translatedY, requestStack, showInspectStackModal, clientX, clientY) => {
+          project
+            .inspectElementAt(translatedX, translatedY, requestStack)
+            .then((inspectData) => {
+              if (requestStack && inspectData?.stack) {
+                if (showInspectStackModal) {
+                  setInspectStackData({
+                    requestLocation: {
+                      x: clientX,
+                      y: clientY,
+                    },
+                    stack: inspectData.stack,
+                  });
+                } else {
+                  // find first item w/o hide flag and open file
+                  const firstItem = inspectData.stack.find((item) => !item.hide);
+                  if (firstItem) {
+                    onInspectorItemSelected(firstItem);
+                  }
+                }
+              }
+              if (inspectData.frame) {
+                setInspectFrame(inspectData.frame);
+              }
+            })
+            .catch(() => {
+              // NOTE: we can safely ignore errors, we'll simply not show the frame in that case
+            });
+        },
+        50,
+        { trailing: true }
+      ),
+    [project, onInspectorItemSelected]
+  );
+
+  function sendInspect(
     event: MouseEvent<HTMLDivElement>,
     type: MouseMove | "Leave" | "RightButtonDown"
   ) {
@@ -227,6 +264,7 @@ function Preview({
       project.sendTelemetry("inspector:show-component-stack", {});
     }
 
+    console.log("sendInspect", type);
     const clampedCoordinates = getNormalizedTouchCoordinates(event);
     const { x: translatedX, y: translatedY } = previewToAppCoordinates(
       appOrientation,
@@ -236,36 +274,18 @@ function Preview({
 
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
-    project
-      .inspectElementAt(translatedX, translatedY, requestStack)
-      .then((inspectData) => {
-        if (requestStack && inspectData?.stack) {
-          if (showInspectStackModal) {
-            setInspectStackData({
-              requestLocation: {
-                x: event.clientX,
-                y: event.clientY,
-              },
-              stack: inspectData.stack,
-            });
-          } else {
-            // find first item w/o hide flag and open file
-            const firstItem = inspectData.stack.find((item) => !item.hide);
-            if (firstItem) {
-              onInspectorItemSelected(firstItem);
-            }
-          }
-        }
-        if (inspectData.frame) {
-          setInspectFrame(inspectData.frame);
-        }
-      })
-      .catch(() => {
-        // NOTE: we can safely ignore errors, we'll simply not show the frame in that case
-      });
+    inspectElementAt(
+      translatedX,
+      translatedY,
+      requestStack,
+      showInspectStackModal,
+      event.clientX,
+      event.clientY
+    );
+    if (type !== "Move") {
+      inspectElementAt.flush();
+    }
   }
-
-  const sendInspect = throttle(sendInspectUnthrottled, 50);
 
   function resetInspector() {
     setInspectFrame(null);
@@ -288,7 +308,7 @@ function Preview({
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isInspecting) {
-      sendInspect(e, "Move", false);
+      sendInspect(e, "Move");
     } else if (isMultiTouching) {
       setTouchPoint(getNormalizedTouchCoordinates(e));
       if (e.shiftKey) {
@@ -318,7 +338,7 @@ function Preview({
     wrapperDivRef.current!.focus();
 
     if (isInspecting) {
-      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
+      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down");
     } else if (!inspectFrame) {
       if (e.button === 2) {
         if (
@@ -327,7 +347,7 @@ function Preview({
         ) {
           handleInspectorUnavailable(e);
         } else {
-          sendInspect(e, "RightButtonDown", true);
+          sendInspect(e, "RightButtonDown");
         }
       } else if (isMultiTouching) {
         setIsPressing(true);
@@ -385,7 +405,7 @@ function Preview({
     if (isInspecting) {
       // we force inspect event here to make sure no extra events are throttled
       // and will be dispatched later on
-      sendInspect(e, "Leave", true);
+      sendInspect(e, "Leave");
     }
   }
 

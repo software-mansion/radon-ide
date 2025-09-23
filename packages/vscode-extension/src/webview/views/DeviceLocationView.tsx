@@ -4,9 +4,9 @@ import "./DeviceLocationView.css";
 import "../components/shared/SwitchGroup.css";
 import * as Switch from "@radix-ui/react-switch";
 import CoordinateParser from "coordinate-parser";
+import { throttle } from "lodash";
 import Label from "../components/shared/Label";
 import Tooltip from "../components/shared/Tooltip";
-import { throttle } from "../../utilities/throttle";
 import { Input } from "../components/shared/Input";
 import { useStore } from "../providers/storeProvider";
 
