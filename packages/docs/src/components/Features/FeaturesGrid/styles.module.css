@@ -1,0 +1,96 @@
+.container {
+  padding: 40px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.landingContainer {
+  display: flex;
+  gap: 20px;
+
+  position: relative;
+  width: 60%;
+  min-width: 327px;
+}
+
+.overflow {
+  overflow: hidden;
+}
+
+.wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  border-top: var(--radon-border-layout);
+}
+
+.wrapperLanding {
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.navigationArrows {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.arrowLeft,
+.arrowRight {
+  display: flex;
+  width: px;
+  height: 40px;
+  padding: 12px 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  aspect-ratio: 1/1;
+  opacity: 0.75;
+}
+
+.arrow {
+  border: var(--radon-border-layout);
+}
+
+.arrowRight:hover,
+.arrowLeft:hover {
+  opacity: 1;
+  cursor: pointer;
+  background-color: transparent;
+}
+
+.arrowLeft {
+  transform: rotate(180deg);
+}
+
+.arrow button:disabled {
+  opacity: 0.25;
+}
+
+@media (max-width: 1000px) {
+  .container {
+    padding: 24px;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 800px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 700px) {
+  .landingContainer {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 400px) {
+  .navigationArrows {
+    display: none;
+  }
+}

@@ -94,6 +94,7 @@
   --swm-navy: #232736;
 
   /* Rebranding colors */
+  --radon-color-white: #ffffff;
   --radon-color-black: #111111;
   --radon-color-border: #333333;
   --radon-color-border-grid-subtle: #222222;
@@ -118,6 +119,7 @@
 
   --radon-button-tertiary: var(--radon-color-black);
   --radon-button-text: var(--radon-color-primary);
+  --radon-button-secondary: var(--radon-color-black);
 
   --radon-icon: var(--swm-green-light-100);
   --radon-image-in-grid: var(--radon-color-grey-90);
@@ -330,6 +332,7 @@
   /* Rebranding */
 
   --radon-border-grid-subtle: var(--radon-color-border-grid-subtle);
+  --radon-button-secondary: var(--radon-color-white);
 
   /* Infima main colors */
   --ifm-color-primary: var(--radon-color-primary);

@@ -1,17 +1,45 @@
 .learnMoreSectionFooter {
-  padding: 0 35px 0 80px;
   display: flex;
   flex-direction: row;
   position: relative;
   overflow: hidden;
   opacity: 0;
   gap: 35px;
-  animation-duration: 400ms;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform, opacity;
   border-top: var(--radon-border-layout);
+}
+
+.sectionLanding {
+  padding: 0 35px 0 80px;
   height: 440px;
+}
+
+.sectionFeature {
+  justify-content: center;
+  height: 400px;
+  padding: 75px 0;
+}
+
+.contentContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 3;
+  z-index: 3;
+  justify-content: center;
+}
+
+.containerLanding {
+  max-width: 600px;
+}
+
+.containerFeature {
   align-items: center;
+  text-align: center;
+  max-width: 700px;
+  width: 100%;
+}
+
+.containerFeature h2 br {
+  display: none;
 }
 
 .learnMoreSectionFooter.show {
@@ -29,16 +57,6 @@
     transform: translateY(0);
   }
 }
-
-.contentContainer {
-  display: flex;
-  flex-direction: column;
-  flex: 3;
-  z-index: 3;
-  max-width: 600px;
-  justify-content: center;
-}
-
 .buttonContainer {
   padding: 40px 0;
   width: fit-content;
@@ -60,6 +78,7 @@
 
   font-size: 16px;
   line-height: 24px;
+  margin: 0;
 }
 
 .radonIconGreen {
@@ -77,6 +96,9 @@
     font-size: 24px;
     line-height: 32px;
   }
+  .sectionFeature {
+    height: auto;
+  }
 }
 
 @media (max-width: 600px) {
@@ -86,6 +108,9 @@
   .try {
     font-size: 14px;
     line-height: 20px;
+  }
+  .contentContainer h2 {
+    text-align: left;
   }
   .buttonContainer {
     width: 100%;

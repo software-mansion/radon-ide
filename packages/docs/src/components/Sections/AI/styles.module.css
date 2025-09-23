@@ -1,7 +1,7 @@
 .container {
   display: flex;
   justify-content: space-between;
-  border-bottom: var(--radon-border-layout);
+  border-top: var(--radon-border-layout);
   max-width: 1360px;
   height: 600px;
   overflow: hidden;
