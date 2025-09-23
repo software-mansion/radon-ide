@@ -1,15 +1,16 @@
 import { NetworkLog } from "../../types/networkLog";
 import { getRequestPayload } from "../../utils/requestFormatters";
 import TabActionButtons from "./TabActionButtons";
+import HighlightedCodeBlock from "./HighlightedCodeBlock";
 import "./PayloadAndResponseTab.css";
+import { ThemeData } from "../../../common/theme";
 
 interface PayloadTabProps {
   networkLog: NetworkLog;
+  editorThemeData?: ThemeData;
 }
 
-const NO_PAYLOAD_MESSAGE = "No request body";
-
-const PayloadTab = ({ networkLog }: PayloadTabProps) => {
+const PayloadTab = ({ networkLog, editorThemeData }: PayloadTabProps) => {
   if (!networkLog.request) {
     return null;
   }
@@ -20,7 +21,12 @@ const PayloadTab = ({ networkLog }: PayloadTabProps) => {
     <>
       <TabActionButtons data={payloadData} disabled={!payloadData} />
       <div className="tab-padding">
-        <pre className="response-tab-pre">{payloadData ?? NO_PAYLOAD_MESSAGE}</pre>
+        <HighlightedCodeBlock
+        content={payloadData}
+        language="json"
+        theme={editorThemeData}
+        placeholder="No request body"
+      />
       </div>
     </>
   );

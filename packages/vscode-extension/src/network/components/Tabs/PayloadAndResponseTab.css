@@ -34,8 +34,19 @@
   justify-content: center;
   gap: 4px;
   float: right;
+  z-index: 1;
 }
 
-.response-tab-pre {
+.response-tab-pre,
+.response-tab-pre > pre {
   margin: 0 14px 14px 0;
+  font-size: var(--vscode-editor-font-size);
+}
+
+.shiki {
+  background-color: transparent !important;
+
+  & code {
+    background-color: transparent !important;
+  }
 }
