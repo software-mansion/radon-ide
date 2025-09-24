@@ -1,13 +1,14 @@
 import React, { FocusEventHandler, useRef, useState } from "react";
+import { use$ } from "@legendapp/state/react";
 import "./DeviceLocationView.css";
 import "../components/shared/SwitchGroup.css";
 import * as Switch from "@radix-ui/react-switch";
 import CoordinateParser from "coordinate-parser";
-import { useProject } from "../providers/ProjectProvider";
 import Label from "../components/shared/Label";
 import Tooltip from "../components/shared/Tooltip";
 import { throttle } from "../../utilities/throttle";
 import { Input } from "../components/shared/Input";
+import { useStore } from "../providers/storeProvider";
 
 const CoordinateInfo = () => {
   return (
@@ -42,10 +43,14 @@ const CoordinateInfo = () => {
 const THROTTLE_LIMIT = 1000;
 
 export function DeviceLocationView() {
-  const { project, deviceSettings } = useProject();
+  const store$ = useStore();
+  const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const updateProjectSettingWithThrottle = throttle(project.updateDeviceSettings, THROTTLE_LIMIT);
+  const updateLocationWithThrottle = throttle(
+    store$.workspaceConfiguration.deviceSettings.location.set,
+    THROTTLE_LIMIT
+  );
 
   const [isCoordinateValid, setIsCoordinateValid] = useState(true);
 
@@ -60,13 +65,10 @@ export function DeviceLocationView() {
       return;
     }
 
-    updateProjectSettingWithThrottle({
-      ...deviceSettings,
-      location: {
-        ...deviceSettings.location,
-        latitude: position.getLatitude(),
-        longitude: position.getLongitude(),
-      },
+    updateLocationWithThrottle({
+      ...deviceSettings.location,
+      latitude: position.getLatitude(),
+      longitude: position.getLongitude(),
     });
   };
   // DD - Decimal Degrees DMS - Degrees Minutes Seconds
@@ -103,12 +105,9 @@ export function DeviceLocationView() {
 
   const handleEnableLocation = (check: boolean) => {
     const isDisabled = !check;
-    project.updateDeviceSettings({
-      ...deviceSettings,
-      location: {
-        ...deviceSettings.location,
-        isDisabled,
-      },
+    store$.workspaceConfiguration.deviceSettings.location.set({
+      ...deviceSettings.location,
+      isDisabled,
     });
   };
 

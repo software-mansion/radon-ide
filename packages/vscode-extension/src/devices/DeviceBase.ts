@@ -19,24 +19,6 @@ const C_KEY_HID_CODE = 0x06;
 
 export const REBOOT_TIMEOUT = 3000;
 
-// FRYTKI Migration to new system so people don't loose the settings
-export const DEVICE_SETTINGS_KEY = "device_settings_v4";
-
-// Frytki
-// export const DEVICE_SETTINGS_DEFAULT: DeviceSettings = {
-//   appearance: "dark",
-//   contentSize: "normal",
-//   location: {
-//     latitude: 50.048653,
-//     longitude: 19.965474,
-//     isDisabled: false,
-//   },
-//   hasEnrolledBiometrics: false,
-//   locale: "en_US",
-//   replaysEnabled: false,
-//   showTouches: false,
-// };
-
 export abstract class DeviceBase implements Disposable {
   protected preview: Preview | undefined;
   private previewStartPromise: Promise<string> | undefined;
