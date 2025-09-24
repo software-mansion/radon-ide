@@ -75,3 +75,42 @@ export function merge<T extends { [P in keyof T]: T[P] }>(
   const [result] = mergeAndCalculateChanges(oldNode, newNode);
   return result;
 }
+
+/**
+ * Transforms a RecursivePartial object into an array of RecursivePartial objects,
+ * each containing only a single leaf node from the original object.
+ *
+ * @param partial - A RecursivePartial object to be split into single-leaf objects.
+ * @returns An array of RecursivePartial objects, each representing a single leaf node.
+ */
+export function splitRecursivePartialToSingleLeafs<T>(
+  partial: RecursivePartial<T>
+): Array<RecursivePartial<T>> {
+  const result: any = [];
+
+  function traverse(obj: any, pathKeys: any = []) {
+    for (const [key, value] of Object.entries(obj)) {
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        traverse(value, [...pathKeys, key]);
+      } else {
+        const leafObject = {};
+        setNestedValue(leafObject, [...pathKeys, key], value);
+        result.push(leafObject);
+      }
+    }
+  }
+
+  function setNestedValue(obj: any, pathKeys: any, value: any) {
+    let current = obj;
+    for (let i = 0; i < pathKeys.length - 1; i++) {
+      if (!current[pathKeys[i]]) {
+        current[pathKeys[i]] = {};
+      }
+      current = current[pathKeys[i]];
+    }
+    current[pathKeys[pathKeys.length - 1]] = value;
+  }
+
+  traverse(partial);
+  return result;
+}

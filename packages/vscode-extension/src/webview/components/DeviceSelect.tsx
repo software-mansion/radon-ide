@@ -93,7 +93,7 @@ function DeviceSelect() {
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
-  const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
+  const stopPreviousDevices = use$(store$.workspaceConfiguration.deviceControl.stopPreviousDevices);
 
   const { projectState, project } = useProject();
 

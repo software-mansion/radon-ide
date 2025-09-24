@@ -82,12 +82,6 @@ export class DeviceSessionsManager implements Disposable {
     return this.activeSessionId ? this.deviceSessions.get(this.activeSessionId) : undefined;
   }
 
-  public rotateAllDevices(rotation: DeviceRotation) {
-    this.deviceSessions.forEach((session) => {
-      session.sendRotate(rotation);
-    });
-  }
-
   public async terminateSession(deviceId: string) {
     const session = this.deviceSessions.get(deviceId);
     if (session) {
@@ -218,7 +212,7 @@ export class DeviceSessionsManager implements Disposable {
   }
 
   public findInitialDeviceAndStartSession = async () => {
-    if (!this.applicationContext.workspaceConfiguration.startDeviceOnLaunch) {
+    if (!this.applicationContext.workspaceConfiguration.deviceControl.startDeviceOnLaunch) {
       this.deviceSessionManagerDelegate.onInitialized();
       return;
     }
@@ -313,7 +307,10 @@ export class DeviceSessionsManager implements Disposable {
     }
     let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
     try {
-      device = await this.deviceManager.acquireDevice(deviceInfo);
+      device = await this.deviceManager.acquireDevice(
+        deviceInfo,
+        this.applicationContext.workspaceConfigState.getState().deviceSettings
+      );
     } catch (e) {
       if (e instanceof DeviceAlreadyUsedError) {
         window.showErrorMessage(

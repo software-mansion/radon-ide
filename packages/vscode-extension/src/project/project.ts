@@ -8,9 +8,7 @@ import {
   AppPermissionType,
   DeviceButtonType,
   DeviceId,
-  DeviceSettings,
   IDEPanelMoveTarget,
-  isOfEnumDeviceRotation,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
@@ -37,7 +35,6 @@ import {
   ReloadAction,
   SelectDeviceOptions,
 } from "./DeviceSessionsManager";
-import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 import { FingerprintProvider } from "./FingerprintProvider";
 import { Connector } from "../connect/Connector";
 import { LaunchConfigurationsManager } from "./launchConfigurationsManager";
@@ -54,7 +51,6 @@ import {
   IOSRuntimeInfo,
   MultimediaData,
   ProjectStore,
-  RecursivePartial,
   WorkspaceConfiguration,
 } from "../common/State";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
@@ -183,21 +179,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         });
       })
     );
-    this.disposables.push(
-      this.workspaceStateManager.onSetState(
-        (partialWorkspaceConfig: RecursivePartial<WorkspaceConfiguration>) => {
-          const deviceRotation = partialWorkspaceConfig.deviceRotation;
-          if (!deviceRotation) {
-            return;
-          }
-
-          const deviceRotationResult = isOfEnumDeviceRotation(deviceRotation)
-            ? deviceRotation
-            : DeviceRotation.Portrait;
-          this.deviceSessionsManager.rotateAllDevices(deviceRotationResult);
-        }
-      )
-    );
 
     this.disposables.push(this.stateManager, this.workspaceStateManager, this.devicesStateManager);
   }
@@ -211,7 +192,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public getDeviceRotation(): DeviceRotation {
-    return this.workspaceStateManager.getState().deviceRotation;
+    return this.workspaceStateManager.getState().deviceSettings.deviceRotation;
   }
 
   private maybeStartInitialDeviceSession() {
@@ -296,26 +277,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   // #endregion Dependency Checks
-
-  // #region Device Settings
-
-  public async getDeviceSettings() {
-    return extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY, DEVICE_SETTINGS_DEFAULT);
-  }
-
-  public async updateDeviceSettings(settings: DeviceSettings) {
-    const currentSession = this.deviceSession;
-    if (currentSession) {
-      let needsRestart = await currentSession.updateDeviceSettings(settings);
-      this.eventEmitter.emit("deviceSettingsChanged", settings);
-
-      if (needsRestart) {
-        await this.deviceSessionsManager.reloadCurrentSession("reboot");
-      }
-    }
-  }
-
-  // #endregion Device Settings
 
   // #region Tools
 
@@ -518,7 +479,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async saveMultimedia(multimediaData: MultimediaData) {
-    const defaultSavingPath = this.workspaceStateManager.getState().defaultMultimediaSavingLocation;
+    const defaultSavingPath =
+      this.workspaceStateManager.getState().general.defaultMultimediaSavingLocation;
     return saveMultimedia(multimediaData, defaultSavingPath ?? undefined);
   }
 

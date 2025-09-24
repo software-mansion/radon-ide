@@ -37,7 +37,7 @@ import { launchConfigurationFromOptions } from "./project/launchConfigurationsMa
 import { isIdeConfig } from "./utilities/launchConfiguration";
 import { DeviceRotation, PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
-import { updatePartialWorkspaceConfig } from "./utilities/updatePartialWorkspaceConfig";
+import { updatePartialWorkspaceConfig } from "./utilities/workspaceConfiguration";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -457,7 +457,10 @@ async function rotateDevice(direction: DeviceRotationDirection) {
   }
   const currentIndex = ROTATIONS.indexOf(currentRotation);
   const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
-  await updatePartialWorkspaceConfig(configuration, ["deviceRotation", ROTATIONS[newIndex]]);
+  await updatePartialWorkspaceConfig(configuration, [
+    "deviceSettings.deviceRotation",
+    ROTATIONS[newIndex],
+  ]);
 }
 
 async function rotateDeviceAnticlockwise() {

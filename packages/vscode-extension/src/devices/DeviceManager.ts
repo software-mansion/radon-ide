@@ -26,6 +26,7 @@ import {
   AndroidSystemImageInfo,
   DeviceInfo,
   DevicePlatform,
+  DeviceSettings,
   DevicesState,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
@@ -59,7 +60,7 @@ export class DeviceManager implements Disposable {
     this.disposables.push(this.stateManager);
   }
 
-  public async acquireDevice(deviceInfo: DeviceInfo) {
+  public async acquireDevice(deviceInfo: DeviceInfo, deviceSettings: DeviceSettings) {
     if (deviceInfo.platform === DevicePlatform.IOS) {
       if (Platform.OS !== "macos") {
         throw new Error("Invalid platform. Expected macos.");
@@ -71,6 +72,7 @@ export class DeviceManager implements Disposable {
         throw new Error(`Simulator ${deviceInfo.id} not found`);
       }
       const device = new IosSimulatorDevice(
+        deviceSettings,
         simulatorInfo.UDID,
         simulatorInfo,
         this.outputChannelRegistry
@@ -87,6 +89,7 @@ export class DeviceManager implements Disposable {
         throw new Error(`Emulator ${deviceInfo.id} not found`);
       }
       const device = new AndroidEmulatorDevice(
+        deviceSettings,
         emulatorInfo.avdId,
         emulatorInfo,
         this.outputChannelRegistry

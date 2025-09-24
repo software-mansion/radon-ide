@@ -10,13 +10,7 @@ import {
   createBuildConfig,
   inferBuildType,
 } from "../builders/BuildManager";
-import {
-  AppPermissionType,
-  DeviceSettings,
-  TouchPoint,
-  DeviceButtonType,
-  InspectData,
-} from "../common/Project";
+import { AppPermissionType, TouchPoint, DeviceButtonType, InspectData } from "../common/Project";
 import { throttle, throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
@@ -30,9 +24,12 @@ import {
   DevicePlatform,
   DeviceRotation,
   DeviceSessionStore,
+  DeviceSettings,
   InstallationError,
   NavigationHistoryItem,
   NavigationRoute,
+  RecursivePartial,
+  REMOVE,
   StartupMessage,
 } from "../common/State";
 import { ReloadAction } from "./DeviceSessionsManager";
@@ -45,6 +42,10 @@ import { DevtoolsServer } from "./devtools";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
+
+function isOfEnumDeviceRotation(value: any): value is DeviceRotation {
+  return Object.values(DeviceRotation).includes(value);
+}
 
 type RestartOptions = {
   forceClean: boolean;
@@ -65,6 +66,7 @@ export class DeviceSession implements Disposable {
   private applicationSession: ApplicationSession | undefined;
   private buildManager: BuildManager;
   private cancelToken: CancelToken = new CancelToken();
+  private deviceSettingsStateManager: StateManager<DeviceSettings>;
   private frameReporter: FrameReporter;
   private maybeBuildResult: BuildResult | undefined;
   private metro: MetroLauncher;
@@ -102,6 +104,46 @@ export class DeviceSession implements Disposable {
     initialRotation: DeviceRotation,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
+    this.deviceSettingsStateManager =
+      applicationContext.workspaceConfigState.getDerived("deviceSettings");
+    this.disposables.push(this.deviceSettingsStateManager);
+
+    this.disposables.push(
+      this.deviceSettingsStateManager.onSetState(async (partialState) => {
+        const deviceSettings = this.deviceSettingsStateManager.getState();
+
+        const changes = Object.keys(partialState);
+
+        getTelemetryReporter().sendTelemetryEvent("device-settings:update-device-settings", {
+          platform: this.platform,
+          changedSetting: JSON.stringify(changes),
+        });
+
+        let needsRestart = await this.device.updateDeviceSettings(deviceSettings);
+
+        if (needsRestart) {
+          await this.performReloadAction("reboot");
+        }
+      })
+    );
+
+    this.disposables.push(
+      this.deviceSettingsStateManager.onSetState(
+        (partialState: RecursivePartial<DeviceSettings>) => {
+          const deviceRotation =
+            partialState.deviceRotation !== REMOVE ? partialState.deviceRotation : undefined;
+          if (!deviceRotation) {
+            return;
+          }
+
+          const deviceRotationResult = isOfEnumDeviceRotation(deviceRotation)
+            ? deviceRotation
+            : DeviceRotation.Portrait;
+          this.device.sendRotate(deviceRotationResult);
+        }
+      )
+    );
+
     this.frameReporter = new FrameReporter(
       this.stateManager.getDerived("frameReporting"),
       this.device
@@ -775,10 +817,6 @@ export class DeviceSession implements Disposable {
     return this.device.sendClipboard(text);
   }
 
-  public sendRotate(rotation: DeviceRotation) {
-    this.device.sendRotate(rotation);
-  }
-
   public async getClipboard() {
     return this.device.getClipboard();
   }
@@ -838,10 +876,6 @@ export class DeviceSession implements Disposable {
     });
     this.inspectorBridge?.sendOpenPreviewRequest(previewId);
     return promise;
-  }
-
-  public async updateDeviceSettings(settings: DeviceSettings): Promise<boolean> {
-    return this.device.updateDeviceSettings(settings);
   }
 
   public async sendBiometricAuthorization(isMatch: boolean) {

@@ -61,27 +61,27 @@ export class ScreenCapture implements Disposable {
 
   public async captureReplay() {
     const replayData = await this.device.captureReplay(
-      this.applicationContext.workspaceConfiguration.deviceRotation
+      this.applicationContext.workspaceConfiguration.deviceSettings.deviceRotation
     );
     this.stateManager.updateState({ replayData });
   }
 
   public async captureScreenshot() {
     const screenshot = await this.device.captureScreenshot(
-      this.applicationContext.workspaceConfiguration.deviceRotation
+      this.applicationContext.workspaceConfiguration.deviceSettings.deviceRotation
     );
     await this.saveMultimedia(screenshot);
   }
 
   public async getScreenshot() {
     return this.device.captureScreenshot(
-      this.applicationContext.workspaceConfiguration.deviceRotation
+      this.applicationContext.workspaceConfiguration.deviceSettings.deviceRotation
     );
   }
 
   private async saveMultimedia(multimediaData: MultimediaData) {
     const defaultPath =
-      this.applicationContext.workspaceConfiguration.defaultMultimediaSavingLocation;
+      this.applicationContext.workspaceConfiguration.general.defaultMultimediaSavingLocation;
     return saveMultimedia(multimediaData, defaultPath ?? undefined);
   }
 
@@ -95,7 +95,7 @@ export class ScreenCapture implements Disposable {
     this.stateManager.updateState({ isRecording: false, recordingTime: 0 });
 
     return this.device.captureAndStopRecording(
-      this.applicationContext.workspaceConfiguration.deviceRotation
+      this.applicationContext.workspaceConfiguration.deviceSettings.deviceRotation
     );
   }
 
