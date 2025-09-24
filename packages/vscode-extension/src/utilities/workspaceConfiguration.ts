@@ -58,43 +58,45 @@ export function getCurrentWorkspaceConfiguration(config: WorkspaceConfiguration)
         ) ?? false,
     },
     userInterface: {
-      panelLocation: config.get<PanelLocation>(
-        WorkspaceConfigurationKeyMap.userInterface.panelLocation
-      )!,
-      showDeviceFrame: config.get<boolean>(
-        WorkspaceConfigurationKeyMap.userInterface.showDeviceFrame
-      )!,
+      panelLocation:
+        config.get<PanelLocation>(WorkspaceConfigurationKeyMap.userInterface.panelLocation) ??
+        "tab",
+      showDeviceFrame:
+        config.get<boolean>(WorkspaceConfigurationKeyMap.userInterface.showDeviceFrame) ?? true,
     },
     deviceControl: {
       startDeviceOnLaunch:
         config.get<boolean>(WorkspaceConfigurationKeyMap.deviceControl.startDeviceOnLaunch) ?? true,
-      stopPreviousDevices: config.get<boolean>(
-        WorkspaceConfigurationKeyMap.deviceControl.stopPreviousDevices
-      )!,
+      stopPreviousDevices:
+        config.get<boolean>(WorkspaceConfigurationKeyMap.deviceControl.stopPreviousDevices) ??
+        false,
     },
     deviceSettings: {
-      deviceRotation: config.get<DeviceRotation>(
-        WorkspaceConfigurationKeyMap.deviceSettings.deviceRotation
-      )!,
+      deviceRotation:
+        config.get<DeviceRotation>(WorkspaceConfigurationKeyMap.deviceSettings.deviceRotation) ??
+        DeviceRotation.Portrait,
       appearance:
-        config.get<Appearance>(WorkspaceConfigurationKeyMap.deviceSettings.appearance)! ?? "dark",
+        config.get<Appearance>(WorkspaceConfigurationKeyMap.deviceSettings.appearance) ?? "dark",
       contentSize:
-        config.get<ContentSize>(WorkspaceConfigurationKeyMap.deviceSettings.contentSize)! ??
+        config.get<ContentSize>(WorkspaceConfigurationKeyMap.deviceSettings.contentSize) ??
         "normal",
-      location: config.get<Location>(WorkspaceConfigurationKeyMap.deviceSettings.location)! ?? {
+      location: config.get<Location>(WorkspaceConfigurationKeyMap.deviceSettings.location) ?? {
         latitude: 50.048653,
         longitude: 19.965474,
         isDisabled: false,
       },
-      hasEnrolledBiometrics: config.get<boolean>(
-        WorkspaceConfigurationKeyMap.deviceSettings.hasEnrolledBiometrics
-      )!,
-      locale: config.get<Locale>(WorkspaceConfigurationKeyMap.deviceSettings.locale)!,
-      replaysEnabled: config.get<boolean>(
-        WorkspaceConfigurationKeyMap.deviceSettings.replaysEnabled
-      )!,
-      showTouches: config.get<boolean>(WorkspaceConfigurationKeyMap.deviceSettings.showTouches)!,
-      camera: config.get<CameraSettings>(WorkspaceConfigurationKeyMap.deviceSettings.camera)!,
+      hasEnrolledBiometrics:
+        config.get<boolean>(WorkspaceConfigurationKeyMap.deviceSettings.hasEnrolledBiometrics) ??
+        false,
+      locale: config.get<Locale>(WorkspaceConfigurationKeyMap.deviceSettings.locale) ?? "en-US",
+      replaysEnabled:
+        config.get<boolean>(WorkspaceConfigurationKeyMap.deviceSettings.replaysEnabled) ?? false,
+      showTouches:
+        config.get<boolean>(WorkspaceConfigurationKeyMap.deviceSettings.showTouches) ?? false,
+      camera: config.get<CameraSettings>(WorkspaceConfigurationKeyMap.deviceSettings.camera) ?? {
+        back: "emulated",
+        front: "none",
+      },
     },
     radonAI: {
       enableRadonAI:
