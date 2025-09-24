@@ -10,7 +10,7 @@ export enum ConfigLocation {
 
 export function getConfigLocation(): ConfigLocation {
   const configuration = vscode.workspace.getConfiguration("RadonIDE");
-  return configuration.get<ConfigLocation>("locationOfMcpConfig") ?? ConfigLocation.Project;
+  return configuration.get<ConfigLocation>("radonAI.MCPConfigLocation") ?? ConfigLocation.Project;
 }
 
 export function getEditorType(): EditorType {
