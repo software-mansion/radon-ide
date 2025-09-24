@@ -45,11 +45,11 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
           </pre>
         )}
         <HighlightedCodeBlock
-        content={responseData}
-        language={language}
-        theme={editorThemeData}
-        placeholder="No response body"
-      />
+          content={responseData}
+          language={language}
+          theme={editorThemeData}
+          placeholder="No response body"
+        />
       </div>
     </>
   );
