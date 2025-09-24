@@ -3,55 +3,29 @@ import {
   WebView,
   Workbench,
   EditorView,
+  BottomBarPanel,
+  Key,
 } from "vscode-extension-tester";
 import path from "path";
 import fs from "fs";
+import {
+  initServer,
+  getAppWebsocket,
+  closeServer,
+} from "../server/webSocketServer.js";
+import startRecording from "../utils/screenRecording.js";
+import getConfiguration from "../configuration.js";
 
-const IS_RECORDING = process.env.IS_RECORDING === "true";
-
-function startRecording(driver, options = {}) {
-  const screenshotsDir = path.join(process.cwd(), "videos");
-  if (fs.existsSync(screenshotsDir)) {
-    fs.rmSync(screenshotsDir, { recursive: true, force: true });
-  }
-  fs.mkdirSync(screenshotsDir, { recursive: true });
-
-  let frame = 0;
-  const interval = options.interval || 100;
-
-  const intervalId = setInterval(async () => {
-    try {
-      const image = await driver.takeScreenshot();
-      const filePath = path.join(
-        screenshotsDir,
-        `frame-${String(frame).padStart(4, "0")}.png`
-      );
-      fs.writeFileSync(filePath, image, "base64");
-      frame++;
-    } catch (error) {
-      if (
-        error.name === "NoSuchSessionError" ||
-        error.message.includes("invalid session id")
-      ) {
-        console.warn(
-          "Session ended during recording. Stopping screenshot capture."
-        );
-        clearInterval(intervalId);
-      } else {
-      }
-    }
-  }, interval);
-
-  return {
-    stop: () => clearInterval(intervalId),
-  };
-}
+const { IS_RECORDING } = getConfiguration();
 
 let driver, workbench, view, browser;
 let recorder;
+const failedTests = [];
 
 before(async function () {
+  initServer(8080);
   console.log("Initializing VSBrowser...");
+
   browser = VSBrowser.instance;
   if (!browser) {
     console.error("Failed to initialize VSBrowser.");
@@ -65,13 +39,15 @@ before(async function () {
 
   await browser.waitForWorkbench();
   workbench = new Workbench();
-  await workbench.executeCommand("Notifications: Clear All Notifications");
+  await workbench.executeCommand("Notifications: Toggle Do Not Disturb Mode");
   await workbench.executeCommand("View: Close All Editors");
 
   view = new WebView();
   if (IS_RECORDING) {
-    recorder = await startRecording(driver, { interval: 200 });
+    recorder = startRecording(driver, { interval: 100 });
   }
+  await workbench.executeCommand("Chat: Open Chat");
+  await workbench.executeCommand("View: Toggle Secondary Side Bar Visibility");
 });
 
 afterEach(async function () {
@@ -85,18 +61,55 @@ afterEach(async function () {
     fs.mkdirSync(screenshotDir, { recursive: true });
     fs.writeFileSync(filePath, image, "base64");
     console.log(`Saved screenshot: ${filePath}`);
+    failedTests.push(this.currentTest.fullTitle());
   }
   view = new WebView();
   await view.switchBack();
+  let bottomBar = new BottomBarPanel();
+  await bottomBar.toggle(false);
   await new EditorView().closeAllEditors();
+  await workbench.executeCommand("Developer: Reload Window");
+  workbench = new Workbench();
+
+  // waiting for vscode to get ready after reload
+  await driver.wait(async () => {
+    try {
+      await workbench.getTitleBar().getTitle();
+      return true;
+    } catch {
+      return false;
+    }
+  }, 10000);
 });
 
 after(async function () {
   if (IS_RECORDING && recorder) {
     await recorder.stop();
   }
+  closeServer();
+  // console log additional informations after standard mocha report
+  setTimeout(() => {
+    if (failedTests.length > 0) {
+      const failingTestNumbers = [
+        ...new Set(failedTests.map((x) => x.split(" - ")[0])),
+      ];
+      console.log("Test suit numbers that failed:");
+      console.log(failingTestNumbers.join(" "));
+      console.log(
+        "To re-run test suits that failed use one of the commands below:"
+      );
+      console.log(
+        `npm run prepare-and-run-tests -- <test-app> ${failingTestNumbers.join(
+          " "
+        )}`
+      );
+      console.log(
+        `npm run run-tests-on-VM -- <test-app> ${failingTestNumbers.join(" ")}`
+      );
+    }
+  }, 0);
 });
 
 export function get() {
-  return { driver, workbench, view, browser };
+  return { driver, workbench, view, browser, appWebsocket: getAppWebsocket() };
 }

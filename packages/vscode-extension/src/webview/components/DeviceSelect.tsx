@@ -11,6 +11,7 @@ import RichSelectItem from "./shared/RichSelectItem";
 import { VscodeBadge as Badge } from "@vscode-elements/react-elements";
 import { useStore } from "../providers/storeProvider";
 import { DeviceInfo, DevicePlatform } from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -28,7 +29,10 @@ function RunningBadgeButton({ onStopClick }: { onStopClick?: (e: React.MouseEven
         e.stopPropagation();
       }}
       onClick={onStopClick}>
-      <Badge variant="activity-bar-counter" className="running-badge-button">
+      <Badge
+        variant="activity-bar-counter"
+        className="running-badge-button"
+        data-testid="device-running-badge">
         <span />
       </Badge>
     </div>
@@ -59,7 +63,7 @@ function renderDevices(
           key={device.id}
           icon={<span className="codicon codicon-device-mobile" />}
           title={device.displayName}
-          data-test={`device-${device.displayName}`}
+          data-testid={`device-${device.displayName}`}
           subtitle={device.systemName}
           disabled={!device.available}
           isSelected={device.id === selectedProjectDevice?.id}>
@@ -87,21 +91,21 @@ function partitionDevices(devices: DeviceInfo[]): Record<string, DeviceInfo[]> {
 
 function DeviceSelect() {
   const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
   const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
 
-  const { selectedDeviceSession, projectState, project } = useProject();
+  const { projectState, project } = useProject();
 
   const devices = use$(store$.devicesState.devices) ?? [];
   const { openModal } = useModal();
 
-  const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
-
   const hasNoDevices = devices.length === 0;
-  const selectedDevice = selectedDeviceSession?.deviceInfo;
+  const selectedDevice = use$(selectedDeviceSessionState.deviceInfo);
+  const deviceSessions = use$(store$.projectState.deviceSessions);
 
   const radonConnectEnabled = projectState.connectState.enabled;
 
-  const { deviceSessions } = projectState;
   const runningSessionIds = Object.keys(deviceSessions);
 
   const deviceSections = partitionDevices(devices ?? []);
@@ -142,11 +146,11 @@ function DeviceSelect() {
     <Select.Root onValueChange={handleDeviceDropdownChange} value={value}>
       <Select.Trigger
         className="device-select-trigger"
-        data-test="radon-bottom-bar-device-select-dropdown-trigger">
+        data-testid="radon-bottom-bar-device-select-dropdown-trigger">
         <Select.Value>
           <div className="device-select-value">
             <span className={`codicon codicon-${iconClass}`} />
-            <span className="device-select-value-text" data-test="device-select-value-text">
+            <span className="device-select-value-text" data-testid="device-select-value-text">
               {displayName}
             </span>
             {backgroundDeviceCounter > 0 && (
@@ -159,7 +163,7 @@ function DeviceSelect() {
       <Select.Portal>
         <Select.Content
           className="device-select-content"
-          data-test="device-select-menu"
+          data-testid="device-select-menu"
           position="popper"
           align="center"
           onCloseAutoFocus={(e) => e.preventDefault()}>
@@ -171,7 +175,7 @@ function DeviceSelect() {
               renderDevices(
                 label,
                 sectionDevices,
-                selectedProjectDevice,
+                selectedDevice,
                 runningSessionIds,
                 handleDeviceStop
               )
@@ -187,7 +191,7 @@ function DeviceSelect() {
               />
             </Select.Group>
             <Select.Separator className="device-select-separator" />
-            <SelectItem value="manage" data-test="device-select-menu-manage-devices-button">
+            <SelectItem value="manage" data-testid="device-select-menu-manage-devices-button">
               Manage devices...
             </SelectItem>
           </Select.Viewport>

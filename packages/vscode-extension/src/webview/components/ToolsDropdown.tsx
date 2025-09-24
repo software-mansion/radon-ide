@@ -43,13 +43,14 @@ function DevToolCheckbox({
         style={{ color: enabled ? "inherit" : "var(--swm-disabled-text)" }}>
         {label}
         {checked && isPanelTool && (
-          <IconButton onClick={onSelect}>
+          <IconButton onClick={onSelect} dataTest={`dev-tool-${label}-open-button`}>
             <span className="codicon codicon-link-external" />
           </IconButton>
         )}
         <Switch.Root
           disabled={!enabled}
           className="switch-root small-switch"
+          data-testid={`dev-tool-${label}`}
           onCheckedChange={onCheckedChange}
           defaultChecked={checked}
           style={{ marginLeft: "auto" }}>
@@ -88,10 +89,11 @@ function ToolsList({
 
 function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disabled?: boolean }) {
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
+  const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
-  const { project, selectedDeviceSession } = useProject();
+  const { project } = useProject();
 
-  const isRunning = selectedDeviceSession?.status === "running";
+  const isRunning = selectedDeviceSessionStatus === "running";
 
   const profilingCPUState = use$(selectedDeviceSessionState?.applicationSession.profilingCPUState);
   const profilingReactState = use$(
@@ -119,12 +121,13 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="dropdown-menu-content device-settings-content"
-          data-test="radon-tools-dropdown-menu"
+          data-testid="radon-tools-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Tools</h4>
           <Label>Utilities</Label>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="tools-dropdown-menu-cpu-profiling-button"
             onSelect={() =>
               isProfilingCPU ? project.stopProfilingCPU() : project.startProfilingCPU()
             }>
@@ -133,6 +136,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="tools-dropdown-menu-react-profiling-button"
             onSelect={() =>
               isProfilingReact ? project.stopProfilingReact() : project.startProfilingReact()
             }>

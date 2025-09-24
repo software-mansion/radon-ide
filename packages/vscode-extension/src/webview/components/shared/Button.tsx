@@ -16,6 +16,7 @@ interface ButtonProps {
   };
   className?: string;
   autoFocus?: boolean;
+  dataTest?: string;
 }
 
 function Button({
@@ -34,7 +35,7 @@ function Button({
       autoFocus={autoFocus}
       onClick={onClick}
       disabled={disabled}
-      data-test={dataTest}
+      data-testid={dataTest}
       className={classNames(
         "button",
         type === "secondary" && "button-secondary",

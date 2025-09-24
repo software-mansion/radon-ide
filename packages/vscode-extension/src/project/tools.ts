@@ -21,6 +21,8 @@ import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 import { disposeAll } from "../utilities/disposables";
 import { ToolsState } from "../common/State";
 import { StateManager } from "./StateManager";
+import { WorkspaceConfiguration } from "../common/State";
+
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
 export type ToolKey =
@@ -60,10 +62,10 @@ export class ToolsManager implements Disposable {
   public constructor(
     private readonly stateManager: StateManager<ToolsState>,
     public readonly inspectorBridge: RadonInspectorBridge,
-    public readonly networkBridge: NetworkInspectorBridge
+    public readonly networkBridge: NetworkInspectorBridge,
+    public readonly workspaceConfigState: StateManager<WorkspaceConfiguration>
   ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
-
     for (const plugin of createExpoDevPluginTools()) {
       this.plugins.set(plugin.id, plugin);
     }
@@ -87,7 +89,11 @@ export class ToolsManager implements Disposable {
     this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(inspectorBridge, networkBridge));
     this.plugins.set(
       RENDER_OUTLINES_PLUGIN_ID,
-      new RenderOutlinesPlugin(inspectorBridge, handleRenderOutlinesAvailabilityChange)
+      new RenderOutlinesPlugin(
+        inspectorBridge,
+        handleRenderOutlinesAvailabilityChange,
+        workspaceConfigState
+      )
     );
 
     this.disposables.push(
@@ -163,7 +169,7 @@ export class ToolsManager implements Disposable {
       }
     }
 
-    this.stateManager.setState(toolsState);
+    this.stateManager.updateState(toolsState);
   }
 
   public updateToolEnabledState(toolName: ToolKey, enabled: boolean) {

@@ -10,7 +10,6 @@ import RichSelectItem from "./shared/RichSelectItem";
 import { useStore } from "../providers/storeProvider";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
-import IconButton from "./shared/IconButton";
 import { useAlert } from "../providers/AlertProvider";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
@@ -123,14 +122,7 @@ function useUnknownConfigurationAlert(shouldOpen: boolean) {
         description:
           "The selected launch configration was deleted or modified in the workspace's launch.json file. " +
           "Radon IDE will continue to use the last selected configuration, but you may want to select a different one.",
-        actions: (
-          <IconButton
-            type="secondary"
-            onClick={() => closeAlert(alertId)}
-            tooltip={{ label: "Close notification", side: "bottom" }}>
-            <span className="codicon codicon-close" />
-          </IconButton>
-        ),
+        closeable: true,
       });
     } else if (!shouldOpen && isOpen(alertId)) {
       closeAlert(alertId);
@@ -218,10 +210,10 @@ function AppRootSelect() {
     <Select.Root onValueChange={handleAppRootChange} value={selectedValue}>
       <Select.Trigger
         className="approot-select-trigger"
-        data-test="radon-bottom-bar-approot-select-dropdown-trigger"
+        data-testid="radon-bottom-bar-approot-select-dropdown-trigger"
         disabled={configurationsCount === 0}>
         <Select.Value placeholder={placeholder}>
-          <div className="approot-select-value" data-test="approot-select-value">
+          <div className="approot-select-value" data-testid="approot-select-value">
             <span className="codicon codicon-folder-opened" />
             <span className="approot-select-value-text">{value}</span>
           </div>
@@ -231,7 +223,7 @@ function AppRootSelect() {
       <Select.Portal>
         <Select.Content
           className="approot-select-content"
-          data-test="approot-select-dropdown-content"
+          data-testid="approot-select-dropdown-content"
           position="popper"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <Select.ScrollUpButton className="approot-select-scroll">

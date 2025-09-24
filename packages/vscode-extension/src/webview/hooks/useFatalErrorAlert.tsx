@@ -1,14 +1,19 @@
 import { useToggleableAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
-
-import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { BuildType } from "../../common/BuildConfig";
-import { BuildErrorDescriptor, FatalErrorDescriptor, ProjectInterface } from "../../common/Project";
+import { ProjectInterface } from "../../common/Project";
 import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
 import { Output } from "../../common/OutputChannel";
-import { DevicePlatform } from "../../common/State";
+import {
+  BuildErrorDescriptor,
+  DevicePlatform,
+  FatalErrorDescriptor,
+  InstallationErrorDescriptor,
+  InstallationErrorReason,
+} from "../../common/State";
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
 
@@ -23,8 +28,8 @@ function BuildErrorActions({
   const { openModal } = useModal();
   return (
     <>
-      <IconButton
-        type="secondary"
+      <Button
+        secondary
         onClick={() => {
           openModal(
             "Launch Configuration",
@@ -33,24 +38,21 @@ function BuildErrorActions({
               isCurrentConfig
             />
           );
-        }}
-        tooltip={{ label: "Launch Configuration", side: "bottom" }}>
-        <span className="codicon codicon-rocket" />
-      </IconButton>
-      <IconButton
-        type="secondary"
+        }}>
+        Open Configuration
+      </Button>
+      <Button
+        secondary
+        data-testid="alert-open-logs-button"
         onClick={() => {
           project.focusOutput(logsButtonDestination ?? Output.Ide);
-        }}
-        tooltip={{ label: "Open build logs", side: "bottom" }}>
-        <span className="codicon codicon-symbol-keyword" />
-      </IconButton>
-      <IconButton
-        type="secondary"
-        onClick={onReload}
-        tooltip={{ label: "Reload IDE", side: "bottom" }}>
+        }}>
+        Open Logs
+      </Button>
+      <Button onClick={onReload}>
         <span className="codicon codicon-refresh" />
-      </IconButton>
+        Retry
+      </Button>
     </>
   );
 }
@@ -59,14 +61,37 @@ function BootErrorActions() {
   const { project } = useProject();
   return (
     <>
-      <IconButton
-        type="secondary"
+      <Button
+        data-testid="alert-open-logs-button"
         onClick={() => {
           project.focusOutput(Output.Ide);
-        }}
-        tooltip={{ label: "Open IDE logs", side: "bottom" }}>
-        <span className="codicon codicon-output" />
-      </IconButton>
+        }}>
+        Open Logs
+      </Button>
+    </>
+  );
+}
+
+function InstallationErrorActions() {
+  const { project } = useProject();
+
+  let onReload = () => {
+    project.reloadCurrentSession("autoReload");
+  };
+
+  return (
+    <>
+      <Button
+        secondary
+        onClick={() => {
+          project.focusOutput(Output.Ide);
+        }}>
+        Open Logs
+      </Button>
+      <Button onClick={onReload}>
+        <span className="codicon codicon-refresh" />
+        Retry
+      </Button>
     </>
   );
 }
@@ -124,6 +149,22 @@ function createBuildErrorAlert(
   };
 }
 
+function createInstallationErrorAlert(installationErrorDescriptor: InstallationErrorDescriptor) {
+  let description = installationErrorDescriptor.message;
+
+  if (installationErrorDescriptor.reason === InstallationErrorReason.Unknown) {
+    description =
+      "An unknown error occurred while installing the application. See logs for more details.";
+  }
+
+  return {
+    id: FATAL_ERROR_ALERT_ID,
+    title: "Couldn't install application on selected device",
+    description,
+    actions: <InstallationErrorActions />,
+  };
+}
+
 export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undefined) {
   let errorAlert = noErrorAlert;
   const { project, projectState } = useProject();
@@ -139,6 +180,8 @@ export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undef
     );
   } else if (errorDescriptor?.kind === "device") {
     errorAlert = bootErrorAlert;
+  } else if (errorDescriptor?.kind === "installation") {
+    errorAlert = createInstallationErrorAlert(errorDescriptor);
   }
 
   useToggleableAlert(errorDescriptor !== undefined, errorAlert);

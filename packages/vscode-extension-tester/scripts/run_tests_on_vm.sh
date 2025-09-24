@@ -4,13 +4,15 @@
 VM_NAME="macOS"
 VM_USER="test"
 LOCAL_PROJECT_PATH="../../vscode-extension-tester"
-REMOTE_PATH="./vscode-extension-tester"
+REMOTE_PATH="/Users/$VM_USER/vscode-extension-tester"
 CONFIG_PATH="$HOME/Library/Containers/com.utmapp.UTM/Data/Documents/${VM_NAME}.utm/Config.plist"
 
 open -a "UTM" && sleep 3 && utmctl start "$VM_NAME" || {
     echo "Failed to start VM '$VM_NAME'."
     exit 1
 }
+
+mkdir -p data
 
 npm run build-vsix-package
 cd ./scripts
@@ -70,33 +72,30 @@ cd "$LOCAL_PROJECT_PATH" || exit 1
 # node_modules cannot be copied to the VM, because it may not be compatible with the VM's architecture.
 for item in * .*; do
     [[ "$item" == "." || "$item" == ".." ]] && continue
-    [[ "$item" == "node_modules" || "$item" == ".gitignore" ]] && continue
-    
-    if [[ "$item" == "data" ]]; then
-        for sub in "$item"/*; do
-            [[ "$sub" == "$item/react-native-app" || "$sub" == "$item/vscode-extensions" ]] && continue
-            echo "Copying: $sub"
-            scp -i ./scripts/id_vm_mac -r "$sub" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/data/"
-        done
-        continue
-    fi
+    [[ "$item" == "node_modules" || "$item" == ".gitignore" || "$item" == "data" ]] && continue
 
     echo "Copying: $item"
-    scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:/Users/$VM_USER/$REMOTE_PATH/"
+    scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:$REMOTE_PATH/"
 done
+
+scp -i ./scripts/id_vm_mac -r data/radon-ide.vsix "$VM_USER@$VM_IP:$REMOTE_PATH/data/"
 
 APP="$1"
 shift
 
 echo "installing test dependencies on VM and running tests..."
 ssh -i ./scripts/id_vm_mac "$VM_USER@$VM_IP" <<EOF
+echo "123456" | sudo -S pmset displaysleep 0
 cd "$REMOTE_PATH"
 npm install
 npm run get-test-app -- $APP
 PROJECT_NAME=$APP npm run setup-run-tests -- $@
 cd ..
-rm -rf "$REMOTE_PATH"
 EOF
+
+scp -i ./scripts/id_vm_mac -r "$VM_USER@$VM_IP:$REMOTE_PATH/screenshots" .
+
+ssh -i ./scripts/id_vm_mac "$VM_USER@$VM_IP" "rm -rf '$REMOTE_PATH'"
 
 utmctl stop "$VM_NAME" || {
     echo "Failed to stop VM '$VM_NAME'."

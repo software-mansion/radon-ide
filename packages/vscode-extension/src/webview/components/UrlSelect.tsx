@@ -7,8 +7,10 @@ import UrlSelectItemGroup from "./UrlSelectItemGroup";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
-import { NavigationHistoryItem, NavigationRoute } from "../../common/Project";
 import "./UrlSelect.css";
+import { NavigationHistoryItem, NavigationRoute } from "../../common/State";
+import { use$ } from "@legendapp/state/react";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 export type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
@@ -31,6 +33,9 @@ function UrlSelect({
   disabled,
   dropdownOnly,
 }: UrlSelectProps) {
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+  const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
+
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const [filteredItems, setFilteredItems] = React.useState<RemovableHistoryItem[]>([]);
   const [filteredOutItems, setFilteredOutItems] = React.useState<RemovableHistoryItem[]>([]);
@@ -43,7 +48,7 @@ function UrlSelect({
 
   const textfieldRef = React.useRef<HTMLInputElement>(null);
   const { openModal } = useModal();
-  const { project, selectedDeviceSession } = useProject();
+  const { project } = useProject();
 
   const routeItems = React.useMemo(
     () =>
@@ -165,10 +170,10 @@ function UrlSelect({
 
   // Reset the input on app reload
   useEffect(() => {
-    if (selectedDeviceSession?.status === "starting") {
+    if (selectedDeviceSessionStatus === "starting") {
       setInputValue("/");
     }
-  }, [selectedDeviceSession?.status]);
+  }, [selectedDeviceSessionStatus]);
 
   // Refresh the input value when the navigation history changes
   useEffect(() => {
@@ -231,6 +236,7 @@ function UrlSelect({
             // @ts-ignore, no type for VscodeTextfield
             ref={textfieldRef}
             className="url-select-input"
+            data-testid="radon-top-bar-url-input"
             data-state={isDropdownOpen ? "open" : "closed"}
             value={inputValue ?? ""}
             placeholder="Enter path..."

@@ -1,44 +1,43 @@
 import { assert } from "chai";
-import { By, VSBrowser } from "vscode-extension-tester";
-import { texts } from "../data/testData.js";
-import { waitForElement, findAndWaitForElement } from "../utils/helpers.js";
-import { openRadonIDEPanel } from "./interactions.js";
+import { By } from "vscode-extension-tester";
+import { texts } from "../utils/constants.js";
+import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
-describe("Smoke tests Radon IDE", () => {
-  let driver, workbench;
+describe("1 - Smoke tests Radon IDE", () => {
+  let driver, workbench, elementHelperService, radonViewsService;
+
   beforeEach(async function () {
     ({ driver, workbench } = get());
-  });
-
-  it("should open Radon IDE webview using Radon IDE button", async function () {
-    try {
-      await openRadonIDEPanel(driver);
-    } catch (error) {
-      throw error;
-    }
+    ({ elementHelperService, radonViewsService } = initServices(driver));
   });
 
   it("should open Radon IDE view using command line", async function () {
     await workbench.executeCommand("RNIDE.openPanel");
 
-    const webview = await findAndWaitForElement(
-      driver,
+    const webview = await elementHelperService.findAndWaitForElement(
       By.css('iframe[class*="webview"]'),
       "Timed out waiting for Radon IDE webview"
     );
     await driver.switchTo().frame(webview);
 
-    const iframe = await findAndWaitForElement(
-      driver,
+    const iframe = await elementHelperService.findAndWaitForElement(
       By.css('iframe[title="Radon IDE"]'),
       "Timed out waiting for Radon IDE iframe"
     );
     await driver.switchTo().frame(iframe);
   });
 
+  it("should open Radon IDE webview using Radon IDE button", async function () {
+    try {
+      await radonViewsService.openRadonIDEPanel();
+    } catch (error) {
+      throw error;
+    }
+  });
+
   it("should open Radon IDE webview for a specific project", async function () {
-    await openRadonIDEPanel(driver);
+    await radonViewsService.openRadonIDEPanel();
 
     const title = await driver.getTitle();
     assert.equal(
@@ -47,16 +46,17 @@ describe("Smoke tests Radon IDE", () => {
       `Page title should be: ${texts.pageTitle}`
     );
 
-    const approot = await driver.findElement(
-      By.css('[data-test="approot-select-value"]')
+    const approot = await elementHelperService.findAndWaitForElement(
+      By.css('[data-testid="approot-select-value"]')
     );
-    await waitForElement(driver, approot);
 
-    const text = await approot.getText();
-    assert.equal(
-      text.toLowerCase(),
-      texts.expectedProjectName.toLowerCase(),
-      "Text of the element should be a name of the project"
+    await driver.wait(
+      async () => {
+        const text = await approot.getText();
+        return text.toLowerCase() === texts.expectedProjectName.toLowerCase();
+      },
+      5000,
+      `Timed out waiting for project name to be: ${texts.expectedProjectName}`
     );
   });
 });

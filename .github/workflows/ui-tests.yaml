@@ -11,9 +11,8 @@ on:
         description: Project app name to test
         type: choice
         required: true
-        default: "react-native-77"
+        default: "react-native-81"
         options:
-          - "react-native-73"
           - "react-native-74"
           - "react-native-75"
           - "react-native-76"
@@ -22,17 +21,17 @@ on:
           - "react-native-79"
           - "react-native-80"
           - "react-native-81"
-          - "expo-50-dev-client"
-          - "expo-51-dev-client"
           - "expo-51"
-          - "expo-52-eas"
           - "expo-52-prebuild-with-plugins"
           - "expo-53"
           - "expo-54"
-          - "expo-go"
-          - "expo-router"
-          - "nx-monorepo"
-          - "pnpm-monorepo"
+          # - "expo-52-eas"
+          # - "expo-50-dev-client"
+          # - "expo-51-dev-client"
+          # - "expo-go"
+          # - "expo-router"
+          # - "nx-monorepo"
+          # - "pnpm-monorepo"
       isRecording:
         description: Whether to record video
         type: boolean
@@ -54,6 +53,20 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: log inputs
+        run: |
+          echo "testApp: ${{ github.event.inputs.testApp }}"
+          echo "isRecording: ${{ github.event.inputs.isRecording }}"
+          echo "testsToRun: ${{ github.event.inputs.testsToRun }}"
+          echo "testsToExclude: ${{ github.event.inputs.testsToExclude }}"
+
+      - name: check sdk
+        run: |
+          xcodebuild -showsdks
+
+      - name: Show Xcode version
+        run: xcodebuild -version
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -100,9 +113,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - name: Setup ffmpeg
+      - name: Install ffmpeg
         if: ${{ github.event.inputs.isRecording == 'true' }}
-        uses: AnimMouse/setup-ffmpeg@v1
+        run: brew install ffmpeg
 
       - name: Run setup-run-tests
         run: npm run setup-run-tests -- ${{ github.event.inputs.testsToRun }} --exclude ${{ github.event.inputs.testsToExclude }}
@@ -110,10 +123,13 @@ jobs:
         env:
           PROJECT_NAME: ${{ github.event.inputs.testApp }}
           IS_RECORDING: ${{ github.event.inputs.isRecording }}
+          TESTS_OS: ${{ github.event.inputs.OS }}
+          IS_GITHUB_ACTIONS: "true"
 
       - name: make video
-        if: ${{ github.event.inputs.isRecording == 'true' }}
-        run: ffmpeg -framerate 10 -i frame-%04d.png -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
+        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
+        timeout-minutes: 1
+        run: ffmpeg -framerate 10 -i frame-%04d.png -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
         working-directory: packages/vscode-extension-tester/videos
 
       - name: Upload screenshots on failure
@@ -122,10 +138,40 @@ jobs:
         with:
           name: vscode-ui-screenshots
           path: packages/vscode-extension-tester/screenshots/
+          retention-days: 7
+
+      - name: build output
+        if: always()
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: output
+          path: packages/vscode-extension-tester/output.txt
+          retention-days: 7
 
       - name: Upload video recording
-        if: ${{ github.event.inputs.isRecording == 'true' }}
+        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
+        timeout-minutes: 1
         with:
           name: vscode-ui-recording
           path: packages/vscode-extension-tester/videos/vscode-ui-recording.mp4
+          retention-days: 7
+
+      - name: Upload screenshot made by radon
+        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: radon-screenshot
+          path: packages/vscode-extension-tester/data/screenshotTest..png
+          retention-days: 7
+
+      - name: Upload recording made by radon
+        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: radon-recording
+          path: packages/vscode-extension-tester/data/recordingTest..mp4
+          retention-days: 7

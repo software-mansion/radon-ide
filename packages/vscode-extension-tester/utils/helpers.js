@@ -1,66 +1,16 @@
-import { until } from "selenium-webdriver";
-import { By } from "vscode-extension-tester";
-
-export async function waitForElement(driver, element, timeout = 5000) {
-  await driver.wait(
-    until.elementIsVisible(element),
-    timeout,
-    `Could not find the element: ${element}`
-  );
+export function centerCoordinates(position) {
+  return {
+    x: position.x - 0.5,
+    y: position.y - 0.5,
+    width: position.width,
+    height: position.height,
+  };
 }
 
-export async function findAndWaitForElement(
-  driver,
-  selector,
-  timeoutMessage,
-  timeout = 10000
-) {
-  const element = await driver.wait(
-    until.elementLocated(selector),
-    timeout,
-    timeoutMessage
-  );
-  await waitForElement(driver, element);
-  return element;
-}
-
-export async function findAndWaitForElementByTag(
-  driver,
-  tagName,
-  timeoutMessage = `Timed out waiting for element by tag ${tagName}`,
-  timeout = 10000
-) {
-  const selector = By.css(`[data-test="${tagName}"]`);
-  return findAndWaitForElement(driver, selector, timeoutMessage, timeout);
-}
-
-export async function findAndClickElementByTag(
-  driver,
-  dataTag,
-  timeout = 15000,
-  message = `Timed out waiting for element with tag name ${dataTag}`
-) {
-  const element = await findAndWaitForElement(
-    driver,
-    By.css(`[data-test="${dataTag}"]`),
-    message,
-    timeout
-  );
-  element.click();
-}
-
-export async function waitUntilElementGone(
-  driver,
-  locator,
-  timeout = 5000,
-  message = "Element did not disappear"
-) {
-  await driver.wait(
-    async () => {
-      const elements = await driver.findElements(locator);
-      return elements.length === 0;
-    },
-    timeout,
-    message
-  );
+export function itIf(condition, title, fn) {
+  if (condition) {
+    it(title, fn);
+  } else {
+    it.skip(title, fn);
+  }
 }

@@ -17,6 +17,7 @@ import "../components/shared/SwitchGroup.css";
 import { useStore } from "../providers/storeProvider";
 import { PropsWithDataTest } from "../../common/types";
 import { DeviceInfo, DevicePlatform } from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -24,6 +25,7 @@ interface DeviceRowProps {
   onDeviceDelete: (device: DeviceInfo) => void;
   isSelected: boolean;
   isRunning: boolean;
+  dataTest?: string;
 }
 
 function DeviceRow({
@@ -61,7 +63,7 @@ function DeviceRow({
       className="device-row"
       onClick={selectDevice}
       data-selected={isSelected}
-      data-test={dataTest}>
+      data-testid={dataTest}>
       <div className={isSelected ? "device-icon-selected" : "device-icon"}>
         {!deviceInfo.available ? (
           <Tooltip
@@ -104,6 +106,7 @@ function DeviceRow({
               type: "secondary",
             }}
             disabled={!deviceInfo.available}
+            dataTest={`device-row-start-button-device-${deviceInfo.displayName}`}
             onClick={selectDevice}>
             <span className="codicon codicon-play" />
           </IconButton>
@@ -114,7 +117,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
-          data-test={`manage-devices-menu-rename-button-device-${deviceInfo.displayName}`}
+          data-testid={`manage-devices-menu-rename-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceRename(deviceInfo);
@@ -129,7 +132,7 @@ function DeviceRow({
             side: "bottom",
             type: "secondary",
           }}
-          data-test={`manage-devices-menu-delete-button-device-${deviceInfo.displayName}`}
+          data-testid={`manage-devices-menu-delete-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceDelete(deviceInfo);
@@ -143,10 +146,13 @@ function DeviceRow({
 
 function ManageDevicesView() {
   const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+  const deviceSessions = use$(store$.projectState.deviceSessions);
+
   const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
-  const { projectState, selectedDeviceSession } = useProject();
-  const { deviceSessions } = projectState;
-  const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
+
+  const selectedProjectDevice = use$(selectedDeviceSessionState.deviceInfo);
+
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
@@ -201,7 +207,7 @@ function ManageDevicesView() {
       <DeviceRow
         key={deviceInfo.id}
         deviceInfo={deviceInfo}
-        dataTest={`manage-devices-menu-row-device-${deviceInfo.displayName}`}
+        dataTest={`manage-devices-menu-row-device-${deviceInfo.displayName}--${deviceInfo.id}`}
         onDeviceRename={handleDeviceRename}
         onDeviceDelete={handleDeviceDelete}
         isSelected={deviceInfo.id === selectedProjectDevice?.id}
@@ -211,7 +217,7 @@ function ManageDevicesView() {
   }
 
   return (
-    <div className="manage-devices-container" data-test="manage-devices-view">
+    <div className="manage-devices-container" data-testid="manage-devices-view">
       {iosDevices.length > 0 && (
         <>
           <Label>iOS Devices</Label>

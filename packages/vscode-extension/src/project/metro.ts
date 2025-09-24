@@ -7,24 +7,20 @@ import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
-import { Devtools } from "./devtools";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
 import { progressiveRetryTimeout, sleep } from "../utilities/retry";
 import { getOpenPort } from "../utilities/common";
 import { DebugSource } from "../debugging/DebugSession";
-import { openFileAtPosition } from "../utilities/openFileAtPosition";
+import { openFileAtPosition } from "../utilities/editorOpeners";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
 import { CancelToken } from "../utilities/cancelToken";
+import { Output } from "../common/OutputChannel";
+import { IDE } from "./ide";
 
 const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
 const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
 const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
-
-export interface MetroDelegate {
-  onBundleProgress(bundleProgress: number): void;
-  onBundlingError(message: string, source: DebugSource, errorModulePath: string): void;
-}
 
 interface CDPTargetDescription {
   id: string;
@@ -271,14 +267,14 @@ export class Metro {
   }
 
   public async fetchWsTargets(
-    timeoutMs: number | undefined = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
+    timeoutMs: number = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
     cancelToken: CancelToken = new CancelToken()
   ): Promise<CDPTargetDescription[] | undefined> {
     let retryCount = 0;
     const startTime = Date.now();
 
     function shouldContinue() {
-      if (timeoutMs !== undefined) {
+      if (timeoutMs >= 0) {
         if (Date.now() - startTime > timeoutMs) {
           return false;
         }
@@ -316,7 +312,7 @@ export class Metro {
   }
 
   public async getDebuggerURL(
-    timeoutMs: number | undefined = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
+    timeoutMs: number = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
     cancelToken: CancelToken = new CancelToken()
   ) {
     const listJson = await this.fetchWsTargets(timeoutMs, cancelToken);
@@ -341,7 +337,7 @@ export class MetroLauncher extends Metro implements Disposable {
   private subprocess?: ChildProcess;
   private startPromise: Promise<void> | undefined;
 
-  constructor(private readonly devtools: Devtools) {
+  constructor() {
     super(0);
   }
 
@@ -362,15 +358,22 @@ export class MetroLauncher extends Metro implements Disposable {
     resetCache,
     dependencies,
     launchConfiguration,
+    devtoolsPort,
   }: {
     resetCache: boolean;
     dependencies: Promise<any>[];
     launchConfiguration: ResolvedLaunchConfig;
+    devtoolsPort?: number;
   }) {
     if (this.startPromise) {
       throw new Error("metro already started");
     }
-    this.startPromise = this.startInternal(resetCache, dependencies, launchConfiguration);
+    this.startPromise = this.startInternal(
+      resetCache,
+      dependencies,
+      launchConfiguration,
+      devtoolsPort
+    );
     this.startPromise.then(() => {
       // start promise is used to indicate that metro has started, however, sometimes
       // the metro process may exit, in which case we need to update the promise to
@@ -388,12 +391,13 @@ export class MetroLauncher extends Metro implements Disposable {
 
   private launchExpoMetro(
     appRootFolder: string,
+    port: number,
     libPath: string,
     resetCache: boolean,
     expoStartExtraArgs: string[] | undefined,
     metroEnv: typeof process.env
   ) {
-    const args = [path.join(libPath, "expo_start.js")];
+    const args = [path.join(libPath, "expo_start.js"), "--port", `${port}`];
     if (resetCache) {
       args.push("--clear");
     }
@@ -443,10 +447,11 @@ export class MetroLauncher extends Metro implements Disposable {
   public async startInternal(
     resetCache: boolean,
     dependencies: Promise<any>[],
-    launchConfiguration: ResolvedLaunchConfig
+    launchConfiguration: ResolvedLaunchConfig,
+    devtoolsPort?: number
   ) {
     const appRoot = launchConfiguration.absoluteAppRoot;
-    await Promise.all([this.devtools.ready()].concat(dependencies));
+    await Promise.all(dependencies);
 
     const libPath = path.join(extensionContext.extensionPath, "lib");
     let metroConfigPath: string | undefined;
@@ -466,7 +471,7 @@ export class MetroLauncher extends Metro implements Disposable {
       ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
       NODE_PATH: path.join(appRoot, "node_modules"),
       RCT_METRO_PORT: `${port}`,
-      RCT_DEVTOOLS_PORT: this.devtools.port.toString(),
+      RCT_DEVTOOLS_PORT: devtoolsPort?.toString(),
       RADON_IDE_LIB_PATH: libPath,
       RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
       REACT_EDITOR: fakeEditorPath,
@@ -477,11 +482,25 @@ export class MetroLauncher extends Metro implements Disposable {
       EXPO_EDITOR: FAKE_EDITOR,
       ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
     };
+
+    const metroOutputChannel =
+      IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(
+        Output.MetroBundler
+      );
+
+    if (!metroOutputChannel) {
+      throw new Error("Cannot start bundler process. The IDE is not initialized.");
+    }
+
+    // Clearing logs shortly before the new bundler process is started.
+    metroOutputChannel.clear();
+
     let bundlerProcess: ChildProcess;
 
     if (shouldUseExpoCLI(launchConfiguration)) {
       bundlerProcess = this.launchExpoMetro(
         appRoot,
+        port,
         libPath,
         resetCache,
         launchConfiguration.expoStartArgs,
@@ -515,7 +534,9 @@ export class MetroLauncher extends Metro implements Disposable {
               this.bundleProgressEventEmitter.fire({ bundleProgress });
             }
           } else if (event.type === "client_log" && event.level === "error") {
-            Logger.error(stripAnsi(event.data[0]));
+            const err = stripAnsi(event.data[0]);
+            Logger.error(err);
+            metroOutputChannel.appendLine(err);
           } else {
             Logger.debug("Metro", line);
           }
@@ -527,7 +548,9 @@ export class MetroLauncher extends Metro implements Disposable {
               break;
             case "initialize_done":
               this._port = event.port;
-              Logger.info(`Metro started on port ${this._port}`);
+              const log = `Metro started on port ${this._port}`;
+              metroOutputChannel.appendLine(log);
+              Logger.info(log);
               resolve();
               break;
             case "RNIDE_watch_folders":
@@ -547,6 +570,9 @@ export class MetroLauncher extends Metro implements Disposable {
               };
               const errorModulePath = event.error.originModulePath;
               this.bundleErrorEventEmitter.fire({ message, source, errorModulePath });
+              metroOutputChannel.appendLine(
+                `[Bundling Error]: ${filename}:${source.line1based}:${source.column0based}: ${message}`
+              );
               break;
           }
         };
@@ -562,6 +588,10 @@ export class MetroLauncher extends Metro implements Disposable {
         }
 
         Logger.debug("Metro", line);
+
+        if (!line.startsWith("__RNIDE__")) {
+          metroOutputChannel.appendLine(line);
+        }
 
         if (line.startsWith("__RNIDE__open_editor__ ")) {
           this.handleOpenEditor(line.slice("__RNIDE__open_editor__ ".length));

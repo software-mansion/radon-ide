@@ -40,11 +40,11 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="dropdown-menu-content"
-          data-test="radon-settings-dropdown-menu"
+          data-testid="radon-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenu.Item
             className="dropdown-menu-item"
-            data-test="settings-dropdown-run-diagnostics-button"
+            data-testid="settings-dropdown-run-diagnostics-button"
             onSelect={() => {
               openModal("Diagnostics", <DiagnosticView />);
             }}>
@@ -53,7 +53,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
-            data-test="settings-dropdown-manage-devices-button"
+            data-testid="settings-dropdown-manage-devices-button"
             onSelect={() => {
               openModal("Manage Devices", <ManageDevicesView />);
             }}>
@@ -75,7 +75,9 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             </span>
           </DropdownMenu.Item>
           <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+            <DropdownMenu.SubTrigger
+              className="dropdown-menu-item"
+              data-testid="settings-dropdown-change-ide-location-trigger">
               <span className="codicon codicon-layout" />
               Change IDE location
               <span className="codicon codicon-chevron-right right-slot" />
@@ -88,6 +90,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                 {panelLocation !== "side-panel" && (
                   <DropdownMenu.Item
                     className="dropdown-menu-item"
+                    data-testid="settings-dropdown-move-to-side-panel-button"
                     onSelect={() => project.movePanelTo("side-panel")}>
                     <span className="codicon codicon-layout-sidebar-right" />
                     Move to Side Panel
@@ -95,12 +98,14 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                 )}
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
+                  data-testid="settings-dropdown-move-to-editor-tab-button"
                   onSelect={() => project.movePanelTo("editor-tab")}>
                   <span className="codicon codicon-layout-centered" />
                   Move to Editor Tab
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
+                  data-testid="settings-dropdown-move-to-new-window-button"
                   onSelect={() => project.movePanelTo("new-window")}>
                   <span className="codicon codicon-multiple-windows" />
                   Move to New Window

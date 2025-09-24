@@ -29,6 +29,8 @@ import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
 import { DevicePlatform, DeviceRotation } from "../../common/State";
+import { PropsWithDataTest } from "../../common/types";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const contentSizes = [
   "xsmall",
@@ -110,15 +112,18 @@ const rotateOptions: Array<{
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
   const showDeviceFrame = use$(store$.workspaceConfiguration.showDeviceFrame);
   const rotation = use$(store$.workspaceConfiguration.deviceRotation);
 
-  const { project, selectedDeviceSession, deviceSettings } = useProject();
+  const platform = use$(selectedDeviceSessionState.deviceInfo.platform);
+
+  const { project, deviceSettings } = useProject();
 
   const { openModal } = useModal();
 
-  const resetOptions =
-    selectedDeviceSession?.deviceInfo.platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
+  const resetOptions = platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
 
   return (
     <DropdownMenuRoot>
@@ -129,7 +134,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="dropdown-menu-content device-settings-content"
-          data-test="device-settings-dropdown-menu"
+          data-testid="device-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
           <form>
@@ -144,7 +149,11 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 });
               }}>
               <div className="radio-group-center">
-                <RadioGroup.Item className="radio-group-item" value="light" id="r1">
+                <RadioGroup.Item
+                  className="radio-group-item"
+                  value="light"
+                  id="r1"
+                  data-testid="device-appearance-light">
                   <RadioGroup.Indicator className="radio-group-indicator" />
                 </RadioGroup.Item>
                 <label className="radio-group-label" htmlFor="r1">
@@ -152,7 +161,11 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 </label>
               </div>
               <div className="radio-group-center">
-                <RadioGroup.Item className="radio-group-item" value="dark" id="r2">
+                <RadioGroup.Item
+                  className="radio-group-item"
+                  value="dark"
+                  id="r2"
+                  data-testid="device-appearance-dark">
                   <RadioGroup.Indicator className="radio-group-indicator" />
                 </RadioGroup.Item>
                 <label className="radio-group-label" htmlFor="r2">
@@ -181,7 +194,11 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 <Slider.Thumb className="slider-thumb" aria-label="Text Size" />
                 <div className="slider-track-dent-container">
                   {Array.from({ length: 7 }).map((_, i) => (
-                    <div key={i} className="slider-track-dent" />
+                    <div
+                      key={i}
+                      className="slider-track-dent"
+                      data-testid={`device-settings-font-size-slider-track-dent-${i}`}
+                    />
                   ))}
                 </div>
               </Slider.Root>
@@ -194,15 +211,19 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             commandName="RNIDE.deviceHomeButtonPress"
             label="Press Home Button"
             icon="home"
+            dataTest="press-home-button"
           />
           <CommandItem
             project={project}
             commandName="RNIDE.deviceAppSwitchButtonPress"
             label="Open App Switcher"
             icon="chrome-restore"
+            dataTest="open-app-switcher-button"
           />
           <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+            <DropdownMenu.SubTrigger
+              className="dropdown-menu-item"
+              data-testid="device-settings-rotate-device-menu-trigger">
               <span className="codicon codicon-sync" />
               Rotate Device
               <span className="codicon codicon-chevron-right right-slot" />
@@ -210,6 +231,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <DropdownMenu.Portal>
               <DropdownMenu.SubContent
                 className="dropdown-menu-subcontent"
+                data-testid="rotate-device-submenu"
                 sideOffset={2}
                 alignOffset={-5}>
                 <Label>Rotate</Label>
@@ -218,6 +240,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                     project={project}
                     commandName={option.commandName}
                     label={option.label}
+                    dataTest={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
                     icon={option.icon}
                   />
                 ))}
@@ -228,6 +251,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 {setOrientationOptions.map((option, index) => (
                   <DropdownMenu.Item
                     className="dropdown-menu-item"
+                    data-testid={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
                     key={index}
                     onSelect={() => store$.workspaceConfiguration.deviceRotation.set(option.value)}>
                     <span
@@ -243,15 +267,17 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               </DropdownMenu.SubContent>
             </DropdownMenu.Portal>
           </DropdownMenu.Sub>
-          {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.IOS && <BiometricsItem />}
+          {platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="device-settings-send-file"
             onSelect={() => project.openSendFileDialog()}>
             <span className="codicon codicon-share" />
             Send File
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="device-settings-location"
             onSelect={() => {
               openModal("Location", <DeviceLocationView />);
             }}>
@@ -260,7 +286,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           </DropdownMenu.Item>
           <LocalizationItem />
           <VolumeItem />
-          {selectedDeviceSession?.deviceInfo.platform === DevicePlatform.Android && <CameraItem />}
+          {platform === DevicePlatform.Android && <CameraItem />}
           <DropdownMenu.Sub>
             <DropdownMenu.SubTrigger className="dropdown-menu-item">
               <span className="codicon codicon-redo" />
@@ -296,6 +322,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Enable Replays
             <Switch.Root
               className="switch-root small-switch"
+              data-testid="device-settings-enable-replays-switch"
               id="enable-replays"
               onCheckedChange={(checked) =>
                 project.updateDeviceSettings({ ...deviceSettings, replaysEnabled: checked })
@@ -310,6 +337,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Show Touches
             <Switch.Root
               className="switch-root small-switch"
+              data-testid="device-settings-show-touches-switch"
               id="show-touches"
               onCheckedChange={(checked) =>
                 project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })
@@ -325,6 +353,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <Switch.Root
               className="switch-root small-switch"
               id="show-device-frame"
+              data-testid="device-settings-show-device-frame-switch"
               onCheckedChange={(checked) =>
                 store$.workspaceConfiguration.showDeviceFrame.set(checked)
               }
@@ -362,20 +391,22 @@ function CommandItem({
   label,
   icon,
   disabled = false,
-}: {
+  dataTest,
+}: PropsWithDataTest<{
   project: ProjectInterface;
   commandName: string;
   label: string;
   icon: string;
   disabled?: boolean;
-}) {
+}>) {
   return (
     <DropdownMenu.Item
       className="dropdown-menu-item"
       onSelect={() => {
         project.runCommand(commandName);
       }}
-      disabled={disabled}>
+      disabled={disabled}
+      data-testid={dataTest}>
       <span className="dropdown-menu-item-wraper">
         <span className={`codicon codicon-${icon}`} />
         <div className="dropdown-menu-item-content">

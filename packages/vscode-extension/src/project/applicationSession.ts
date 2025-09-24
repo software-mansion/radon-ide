@@ -15,13 +15,12 @@ import { ApplicationContext } from "./ApplicationContext";
 import { MetroLauncher } from "./metro";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 import { DeviceBase } from "../devices/DeviceBase";
-import { Devtools } from "./devtools";
 import { Logger } from "../Logger";
-import { AppOrientation, InspectData, StartupMessage } from "../common/Project";
+import { AppOrientation, InspectData } from "../common/Project";
 import { disposeAll } from "../utilities/disposables";
 import { ToolKey, ToolPlugin, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
-import { CancelToken } from "../utilities/cancelToken";
+import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { BuildResult } from "../builders/BuildManager";
 import {
   ApplicationSessionState,
@@ -30,30 +29,71 @@ import {
   DeviceType,
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
+  StartupMessage,
 } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
 import { StateManager } from "./StateManager";
-import { NETWORK_EVENT_MAP, NetworkCommandMethod, NetworkInspectorBridge } from "./bridge";
+import {
+  DevtoolsConnection,
+  DevtoolsInspectorBridge,
+  DevtoolsServer,
+  CDPDevtoolsServer,
+} from "./devtools";
+import {
+  RadonInspectorBridge,
+  NETWORK_EVENT_MAP,
+  NetworkCommandMethod,
+  NetworkInspectorBridge,
+} from "./bridge";
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
   device: DeviceBase;
   buildResult: BuildResult;
   metro: MetroLauncher;
-  devtools: Devtools;
+  devtoolsServer?: DevtoolsServer;
+  devtoolsPort?: number;
+}
+
+function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: CancelToken) {
+  // set up `appReady` promise
+  const { promise, resolve, reject } = Promise.withResolvers<void>();
+  cancelToken?.onCancel(() => {
+    reject(new CancelError("Cancelled while waiting for the app to be ready."));
+  });
+  const appReadyListener = inspectorBridge.onEvent("appReady", resolve);
+  promise.finally(() => {
+    appReadyListener.dispose();
+  });
+  return promise;
 }
 
 export class ApplicationSession implements Disposable {
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
   private debugSessionEventSubscription?: Disposable;
-  private toolsManager: ToolsManager;
   private networkBridge: NetworkInspectorBridge;
   private isActive = false;
   private inspectCallID = 7621;
+  private devtools: DevtoolsConnection | undefined;
+  private toolsManager: ToolsManager;
+  private lastRegisteredInspectorAvailability: InspectorAvailabilityStatus =
+    InspectorAvailabilityStatus.UnavailableInactive;
+
+  private readonly _inspectorBridge: DevtoolsInspectorBridge;
+  public get inspectorBridge(): RadonInspectorBridge {
+    return this._inspectorBridge;
+  }
 
   public static async launch(
     stateManager: StateManager<ApplicationSessionState>,
-    { applicationContext, device, buildResult, metro, devtools }: LaunchApplicationSessionDeps,
+    {
+      applicationContext,
+      device,
+      buildResult,
+      metro,
+      devtoolsServer,
+      devtoolsPort,
+    }: LaunchApplicationSessionDeps,
     getIsActive: () => boolean,
     onLaunchStage: (stage: StartupMessage) => void,
     cancelToken: CancelToken
@@ -67,7 +107,7 @@ export class ApplicationSession implements Disposable {
       applicationContext,
       device,
       metro,
-      devtools,
+      devtoolsServer,
       packageNameOrBundleId,
       supportedOrientations
     );
@@ -95,21 +135,20 @@ export class ApplicationSession implements Disposable {
     try {
       onLaunchStage(StartupMessage.Launching);
       await cancelToken.adapt(
-        device.launchApp(buildResult, metro.port, devtools.port, launchArguments)
+        device.launchApp(buildResult, metro.port, devtoolsPort, launchArguments)
       );
 
+      const appReadyPromise = waitForAppReady(session.inspectorBridge, cancelToken);
       onLaunchStage(StartupMessage.WaitingForAppToLoad);
-      await cancelToken.adapt(Promise.race([devtools.appReady(), bundleErrorPromise]));
 
       if (getIsActive()) {
-        const activatePromise = session.activate();
-        const hasBundleError = stateManager.getState().bundleError !== undefined;
-        // NOTE: if an initial bundle error occurred, the app won't connect to Metro
-        // and we won't be able to attach the debugger anyway, so there's no point in waiting
-        if (!hasBundleError) {
-          onLaunchStage(StartupMessage.AttachingDebugger);
-          await cancelToken.adapt(activatePromise);
-        }
+        const activatePromise = session.activate(cancelToken);
+        await cancelToken.adapt(Promise.race([activatePromise, bundleErrorPromise]));
+      }
+
+      const hasBundleError = stateManager.getState().bundleError !== null;
+      if (!hasBundleError && getIsActive()) {
+        await cancelToken.adapt(appReadyPromise);
       }
 
       return session;
@@ -121,31 +160,89 @@ export class ApplicationSession implements Disposable {
     }
   }
 
+  private cdpDevtoolsServer?: CDPDevtoolsServer;
+  private devtoolsServerSubscription: Disposable | undefined;
+
   private constructor(
     private readonly stateManager: StateManager<ApplicationSessionState>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroLauncher,
-    private readonly devtools: Devtools,
+    private readonly websocketDevtoolsServer: DevtoolsServer | undefined,
     private readonly packageNameOrBundleId: string,
     private readonly supportedOrientations: DeviceRotation[]
   ) {
-    this.registerDevtoolsListeners();
     this.registerMetroListeners();
     this.networkBridge = new NetworkInspectorBridge();
-    this.toolsManager = new ToolsManager(
-      this.stateManager.getDerived("toolsState"),
-      this.devtools,
-      this.networkBridge
+
+    const devtoolsInspectorBridge = new DevtoolsInspectorBridge();
+    this._inspectorBridge = devtoolsInspectorBridge;
+    const inspectorBridgeSubscriptions =
+      this.registerInspectorBridgeEventListeners(devtoolsInspectorBridge);
+    const configurationChangeSubscriptions = this.registerConfigurationChangeListeners();
+    this.disposables.push(
+      devtoolsInspectorBridge,
+      ...inspectorBridgeSubscriptions,
+      ...configurationChangeSubscriptions
     );
 
+    if (websocketDevtoolsServer) {
+      this.setupDevtoolsServer(websocketDevtoolsServer);
+    }
+
+    this.toolsManager = new ToolsManager(
+      this.stateManager.getDerived("toolsState"),
+      devtoolsInspectorBridge,
+      this.networkBridge,
+      this.applicationContext.workspaceConfigState
+    );
+
+    this.disposables.push(this.toolsManager);
     this.disposables.push(this.stateManager);
   }
+
+  private setupDevtoolsServer(devtoolsServer: DevtoolsServer) {
+    this.devtoolsServerSubscription?.dispose();
+    if (devtoolsServer.connection) {
+      this.setDevtoolsConnection(devtoolsServer.connection);
+    }
+    this.devtoolsServerSubscription = devtoolsServer.onConnection(this.setDevtoolsConnection);
+  }
+
+  private setDevtoolsConnection = (devtools: DevtoolsConnection) => {
+    this.devtools?.dispose();
+    this.devtools = devtools;
+    this.stateManager.updateState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
+    devtools.onDisconnected(() => {
+      if (devtools !== this.devtools) {
+        return;
+      }
+      if (this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected) {
+        this.stateManager.updateState({
+          inspectorBridgeStatus: InspectorBridgeStatus.Disconnected,
+        });
+      }
+      this.devtools = undefined;
+      this._inspectorBridge.setDevtoolsConnection(undefined);
+    });
+    devtools.onProfilingChange((isProfiling) => {
+      if (this.stateManager.getState().profilingReactState !== "saving") {
+        this.stateManager.updateState({
+          profilingReactState: isProfiling ? "profiling" : "stopped",
+        });
+      }
+    });
+    this._inspectorBridge.setDevtoolsConnection(devtools);
+  };
 
   private async setupDebugSession(): Promise<void> {
     this.debugSession = await this.createDebugSession();
     this.debugSessionEventSubscription = this.registerDebugSessionListeners(this.debugSession);
     this.networkBridge.setDebugSession(this.debugSession);
+    if (this.cdpDevtoolsServer) {
+      this.cdpDevtoolsServer.dispose();
+      this.cdpDevtoolsServer = undefined;
+    }
   }
 
   private async createDebugSession(): Promise<DebugSession & Disposable> {
@@ -153,9 +250,10 @@ export class ApplicationSession implements Disposable {
       new DebugSessionImpl({
         displayName: this.device.deviceInfo.displayName,
         useParentDebugSession: true,
+        useCustomJSDebugger: this.applicationContext.launchConfig.useCustomJSDebugger,
       }),
       this.metro,
-      this.devtools
+      this.websocketDevtoolsServer
     );
 
     await session.startParentDebugSession();
@@ -166,11 +264,11 @@ export class ApplicationSession implements Disposable {
   // #region Tools
 
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
-    this.toolsManager.updateToolEnabledState(toolName, enabled);
+    return this.toolsManager.updateToolEnabledState(toolName, enabled);
   }
 
   public openTool(toolName: ToolKey): void {
-    this.toolsManager.openTool(toolName);
+    return this.toolsManager.openTool(toolName);
   }
 
   public getPlugin(toolName: ToolKey): ToolPlugin | undefined {
@@ -183,11 +281,11 @@ export class ApplicationSession implements Disposable {
 
   private onConsoleLog = (event: DebugSessionCustomEvent): void => {
     const currentLogCount = this.stateManager.getState().logCounter;
-    this.stateManager.setState({ logCounter: currentLogCount + 1 });
+    this.stateManager.updateState({ logCounter: currentLogCount + 1 });
   };
 
   private onDebuggerPaused = (event: DebugSessionCustomEvent): void => {
-    this.stateManager.setState({ isDebuggerPaused: true });
+    this.stateManager.updateState({ isDebuggerPaused: true });
 
     if (this.isActive) {
       commands.executeCommand("workbench.view.debug");
@@ -195,15 +293,15 @@ export class ApplicationSession implements Disposable {
   };
 
   private onDebuggerResumed = (event: DebugSessionCustomEvent): void => {
-    this.stateManager.setState({ isDebuggerPaused: false });
+    this.stateManager.updateState({ isDebuggerPaused: false });
   };
 
   private onProfilingCPUStarted = (event: DebugSessionCustomEvent): void => {
-    this.stateManager.setState({ profilingCPUState: "profiling" });
+    this.stateManager.updateState({ profilingCPUState: "profiling" });
   };
 
   private onProfilingCPUStopped = (event: DebugSessionCustomEvent): void => {
-    this.stateManager.setState({ profilingCPUState: "stopped" });
+    this.stateManager.updateState({ profilingCPUState: "stopped" });
     if (event.body?.filePath) {
       this.saveAndOpenCPUProfile(event.body.filePath);
     }
@@ -289,7 +387,7 @@ export class ApplicationSession implements Disposable {
 
   private async onBundleError(message: string, source: DebugSource) {
     Logger.error("[Bundling Error]", message);
-    this.stateManager.setState({
+    this.stateManager.updateState({
       bundleError: {
         kind: "bundle",
         message,
@@ -306,25 +404,30 @@ export class ApplicationSession implements Disposable {
 
   //#endregion
 
-  public async activate(): Promise<void> {
+  public async activate(cancelToken?: CancelToken): Promise<void> {
     if (!this.isActive) {
       this.isActive = true;
       this.toolsManager.activate();
       if (this.debugSession === undefined) {
         await this.setupDebugSession();
       }
-      await this.connectJSDebugger();
+      await this.connectJSDebugger(cancelToken);
     }
   }
 
   public async deactivate(): Promise<void> {
     this.isActive = false;
+    // NOTE: we reset the state to "connecting" here to prevent showing the "disconnected" alert
+    // when switching between devices
+    this.stateManager.updateState({ inspectorBridgeStatus: InspectorBridgeStatus.Connecting });
     this.toolsManager.deactivate();
     this.debugSessionEventSubscription?.dispose();
+    this.debugSessionEventSubscription = undefined;
     const debugSession = this.debugSession;
     this.debugSession = undefined;
     await debugSession?.dispose();
-    this.debugSessionEventSubscription = undefined;
+    this.cdpDevtoolsServer?.dispose();
+    this.cdpDevtoolsServer = undefined;
   }
 
   //#region Debugger control
@@ -342,8 +445,8 @@ export class ApplicationSession implements Disposable {
     this.debugSession?.stepIntoDebugger();
   }
 
-  private async connectJSDebugger() {
-    const websocketAddress = await this.metro.getDebuggerURL();
+  private async connectJSDebugger(cancelToken?: CancelToken) {
+    const websocketAddress = await this.metro.getDebuggerURL(-1, cancelToken);
     if (!websocketAddress) {
       Logger.error("Couldn't find a proper debugger URL to connect to");
       return;
@@ -359,72 +462,96 @@ export class ApplicationSession implements Disposable {
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
       sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
     });
+    if (this.websocketDevtoolsServer === undefined) {
+      // NOTE: we only create the CDP devtools server when using the new debugger
+      this.cdpDevtoolsServer?.dispose();
+      this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
+      this.setupDevtoolsServer(this.cdpDevtoolsServer);
+    }
   }
 
-  private registerDevtoolsListeners() {
-    this.disposables.push(
-      this.devtools.onEvent("appReady", () => {
+  /**
+   * Determine availability of the element inspector taking the
+   * enableExperimentalElementInspector setting (force-enable) into account.
+   */
+  private determineInspectorAvailability(
+    status: InspectorAvailabilityStatus
+  ): InspectorAvailabilityStatus {
+    const experimentalInspectorEnabled =
+      this.applicationContext.workspaceConfiguration.enableExperimentalElementInspector;
+    const isStatusUnavailableEdgeToEdge =
+      status === InspectorAvailabilityStatus.UnavailableEdgeToEdge;
+
+    const newAvailabilityStatus =
+      experimentalInspectorEnabled && isStatusUnavailableEdgeToEdge
+        ? InspectorAvailabilityStatus.Available
+        : status;
+
+    return newAvailabilityStatus;
+  }
+
+  private registerConfigurationChangeListeners() {
+    const subscriptions = [
+      // react to enableExperimentalElementInspector setting changes
+      this.applicationContext.workspaceConfigState.onSetState(() => {
+        const status = this.determineInspectorAvailability(
+          this.lastRegisteredInspectorAvailability
+        );
+        this.stateManager.updateState({ elementInspectorAvailability: status });
+      }),
+    ];
+    return subscriptions;
+  }
+
+  private registerInspectorBridgeEventListeners(inspectorBridge: RadonInspectorBridge) {
+    const subscriptions = [
+      inspectorBridge.onEvent("appReady", () => {
         // NOTE: since this is triggered by the JS bundle,
         // we can assume that if it fires, the bundle loaded successfully.
         // This is necessary to reset the bundle error state when the app reload
         // is triggered from the app itself (e.g. by in-app dev menu or redbox).
-        this.stateManager.setState({ bundleError: null });
+        this.stateManager.updateState({ bundleError: null });
       }),
-      this.devtools.onEvent("fastRefreshStarted", () => {
-        this.stateManager.setState({ bundleError: null, isRefreshing: true });
+      inspectorBridge.onEvent("fastRefreshStarted", () => {
+        this.stateManager.updateState({ bundleError: null, isRefreshing: true });
       }),
-      this.devtools.onEvent("fastRefreshComplete", () => {
-        this.stateManager.setState({ isRefreshing: false });
+      inspectorBridge.onEvent("fastRefreshComplete", () => {
+        this.stateManager.updateState({ isRefreshing: false });
       }),
-      this.devtools.onEvent("isProfilingReact", (isProfiling) => {
-        if (this.stateManager.getState().profilingReactState !== "saving") {
-          this.stateManager.setState({
-            profilingReactState: isProfiling ? "profiling" : "stopped",
-          });
-        }
+      inspectorBridge.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
+        this.stateManager.updateState({
+          appOrientation: this.determineAppOrientation(orientation),
+        });
       }),
-      this.devtools.onEvent("appOrientationChanged", (orientation: AppOrientation) => {
-        this.stateManager.setState({ appOrientation: this.determineAppOrientation(orientation) });
-      }),
-      this.devtools.onEvent(
+      inspectorBridge.onEvent(
         "inspectorAvailabilityChanged",
         (inspectorAvailability: InspectorAvailabilityStatus) => {
-          this.stateManager.setState({ elementInspectorAvailability: inspectorAvailability });
+          this.lastRegisteredInspectorAvailability = inspectorAvailability;
+          const status = this.determineInspectorAvailability(inspectorAvailability);
+          this.stateManager.updateState({ elementInspectorAvailability: status });
         }
       ),
-      this.devtools.onEvent("disconnected", () => {
-        if (
-          this.stateManager.getState().inspectorBridgeStatus === InspectorBridgeStatus.Connected
-        ) {
-          this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Disconnected });
-        }
-      }),
-      this.devtools.onEvent("connected", () => {
-        if (
-          this.stateManager.getState().inspectorBridgeStatus !== InspectorBridgeStatus.Connected
-        ) {
-          this.stateManager.setState({ inspectorBridgeStatus: InspectorBridgeStatus.Connected });
-        }
-      })
-    );
+    ];
+    return subscriptions;
   }
   //#endregion
 
-  public async reloadJS() {
-    if (!this.devtools.hasConnectedClient) {
+  public async reloadJS(cancelToken: CancelToken) {
+    if (!this.devtools?.connected) {
       Logger.debug(
         "`reloadJS()` was called on an application session while the devtools are not connected. " +
           "This should never happen, since an application session should represent a running and connected application."
       );
       throw new Error("Tried to reload JS on an application which disconnected from Radon");
     }
-    const { promise: bundleErrorPromise, reject } = Promise.withResolvers();
+    const { promise: bundleErrorPromise, reject: rejectBundleError } = Promise.withResolvers();
     const bundleErrorSubscription = this.metro.onBundleError(() => {
-      reject(new Error("Bundle error occurred during reload"));
+      rejectBundleError(new Error("Bundle error occurred during reload"));
     });
     try {
+      const appReadyPromise = waitForAppReady(this.inspectorBridge, cancelToken);
       await this.metro.reload();
-      await Promise.race([this.devtools.appReady(), bundleErrorPromise]);
+      await Promise.race([appReadyPromise, bundleErrorPromise]);
     } finally {
       bundleErrorSubscription.dispose();
     }
@@ -484,14 +611,14 @@ export class ApplicationSession implements Disposable {
 
   //#region React Profiling
   public async startProfilingReact() {
-    return await this.devtools.startProfilingReact();
+    return await this.devtools?.startProfilingReact();
   }
 
   public async stopProfilingReact() {
     try {
-      return await this.devtools.stopProfilingReact();
+      return await this.devtools?.stopProfilingReact();
     } finally {
-      this.stateManager.setState({ profilingReactState: "stopped" });
+      this.stateManager.updateState({ profilingReactState: "stopped" });
     }
   }
   //#endregion
@@ -504,16 +631,16 @@ export class ApplicationSession implements Disposable {
   ): Promise<InspectData> {
     const id = this.inspectCallID++;
     const { promise, resolve, reject } = Promise.withResolvers<InspectData>();
-    const listener = this.devtools.onEvent("inspectData", (payload) => {
+    const listener = this.inspectorBridge.onEvent("inspectData", (payload) => {
       if (payload.id === id) {
-        listener.dispose();
+        listener?.dispose();
         resolve(payload as unknown as InspectData);
       } else if (payload.id >= id) {
-        listener.dispose();
+        listener?.dispose();
         reject("Inspect request was invalidated by a later request");
       }
     });
-    this.devtools.sendInspectRequest(xRatio, yRatio, id, requestStack);
+    this.inspectorBridge.sendInspectRequest(xRatio, yRatio, id, requestStack);
 
     const inspectData = await promise;
     let stack = undefined;
@@ -539,14 +666,16 @@ export class ApplicationSession implements Disposable {
   //#endregion
 
   public resetLogCounter() {
-    this.stateManager.setState({ logCounter: 0 });
+    this.stateManager.updateState({ logCounter: 0 });
   }
 
   public async dispose() {
     disposeAll(this.disposables);
     this.debugSessionEventSubscription?.dispose();
+    this.devtoolsServerSubscription?.dispose();
     await this.debugSession?.dispose();
     this.debugSession = undefined;
     this.device.terminateApp(this.packageNameOrBundleId);
+    this.cdpDevtoolsServer?.dispose();
   }
 }

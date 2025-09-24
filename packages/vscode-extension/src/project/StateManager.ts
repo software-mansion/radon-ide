@@ -1,7 +1,7 @@
 import _ from "lodash";
 import { Disposable, EventEmitter } from "vscode";
 import { disposeAll } from "../utilities/disposables";
-import { RecursivePartial } from "../common/State";
+import { RecursivePartial, REMOVE } from "../common/State";
 import { mergeAndCalculateChanges } from "../common/Merge";
 
 export abstract class StateManager<T extends object> implements Disposable {
@@ -9,7 +9,7 @@ export abstract class StateManager<T extends object> implements Disposable {
     return new RootStateManager(initialState);
   }
 
-  abstract setState(partialState: RecursivePartial<T>): void;
+  abstract updateState(partialState: RecursivePartial<T>): void;
   abstract getState(): T;
 
   protected onSetStateEmitter = new EventEmitter<RecursivePartial<T>>();
@@ -60,7 +60,7 @@ class RootStateManager<T extends object> extends StateManager<T> {
     this.state = initialState;
   }
 
-  setState(partialState: RecursivePartial<T>): void {
+  updateState(partialState: RecursivePartial<T>): void {
     const [newState, changes] = mergeAndCalculateChanges(this.state, partialState);
     if (this.state !== newState) {
       this.state = newState;
@@ -74,15 +74,29 @@ class RootStateManager<T extends object> extends StateManager<T> {
 }
 
 class DerivedStateManager<T extends object, K extends object> extends StateManager<T> {
+  // NOTE: after the derived state is removed from the parent, we want to ignore any further updates
+  // made through this derived state manager to prevent accidental re-adding of the removed state or updating
+  // an entry that is added after this one is removed.
+  private removed: boolean;
+
   constructor(
     private parent: StateManager<K>,
     private keyInParent: keyof K
   ) {
     super();
+    this.removed = this.parent.getState()[this.keyInParent] === undefined;
     this.disposables.push(
       parent.onSetState((partialParentState: RecursivePartial<K>) => {
-        const partialState = partialParentState[this.keyInParent] as T | undefined;
+        if (this.removed) {
+          return;
+        }
+
+        const partialState = partialParentState[this.keyInParent];
         if (partialState === undefined) {
+          return;
+        }
+        if (partialState === REMOVE) {
+          this.removed = true;
           return;
         }
         this.onSetStateEmitter.fire(partialState);
@@ -90,11 +104,19 @@ class DerivedStateManager<T extends object, K extends object> extends StateManag
     );
   }
 
-  setState(partialValue: RecursivePartial<T>) {
-    this.parent.setState({ [this.keyInParent]: partialValue } as RecursivePartial<K>);
+  updateState(partialValue: RecursivePartial<T>) {
+    if (this.removed) {
+      return;
+    }
+    this.parent.updateState({ [this.keyInParent]: partialValue } as RecursivePartial<K>);
   }
 
   getState() {
     return this.parent.getState()[this.keyInParent] as T;
+  }
+
+  dispose() {
+    super.dispose();
+    this.removed = true;
   }
 }

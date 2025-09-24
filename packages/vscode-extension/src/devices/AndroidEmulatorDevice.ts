@@ -26,7 +26,14 @@ import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { extensionContext } from "../utilities/extensionContext";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
-import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform, DeviceType } from "../common/State";
+import {
+  AndroidSystemImageInfo,
+  DeviceInfo,
+  DevicePlatform,
+  DeviceType,
+  InstallationError,
+  InstallationErrorReason,
+} from "../common/State";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -511,17 +518,23 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
   }
 
-  async launchWithExpoDeeplink(metroPort: number, devtoolsPort: number, expoDeeplink: string) {
+  async launchWithExpoDeeplink(
+    metroPort: number,
+    devtoolsPort: number | undefined,
+    expoDeeplink: string
+  ) {
     // For Expo dev-client and expo go setup, we use deeplink to launch the app. Since Expo's manifest is configured to
     // return localhost:PORT as the destination, we need to setup adb reverse for metro port first.
     await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
-    await exec(ADB_PATH, [
-      "-s",
-      this.serial!,
-      "reverse",
-      `tcp:${devtoolsPort}`,
-      `tcp:${devtoolsPort}`,
-    ]);
+    if (devtoolsPort !== undefined) {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "reverse",
+        `tcp:${devtoolsPort}`,
+        `tcp:${devtoolsPort}`,
+      ]);
+    }
     // next, we open the link
     await exec(ADB_PATH, [
       "-s",
@@ -588,7 +601,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
   }
 
-  async launchApp(build: BuildResult, metroPort: number, devtoolsPort: number) {
+  async launchApp(build: BuildResult, metroPort: number, devtoolsPort?: number) {
     if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
     }
@@ -612,7 +625,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   async installApp(build: BuildResult, forceReinstall: boolean) {
     if (build.platform !== DevicePlatform.Android) {
-      throw new Error("Invalid platform");
+      throw new InstallationError("Invalid platform", InstallationErrorReason.InvalidPlatform);
     }
 
     // allowNonZeroExit is set to true to not print errors when INSTALL_FAILED_UPDATE_INCOMPATIBLE occurs.
@@ -645,29 +658,45 @@ export class AndroidEmulatorDevice extends DeviceBase {
     if (forceReinstall) {
       await uninstallApp(build.packageName);
     }
-
-    await retry(
-      async (retryNumber) => {
-        if (retryNumber === 0) {
-          await installApk(false);
-        } else if (retryNumber === 1) {
-          // There's a chance that same emulator was used in newer version of Expo
-          // and then RN IDE was opened on older project, in which case installation
-          // will fail. We use -d flag which allows for downgrading debuggable
-          // applications (see `adb shell pm`, install command)
-          await installApk(true);
-        } else {
-          // If the app is still not installed, we try to uninstall it first to
-          // avoid "INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package <name>
-          // signatures do not match newer version; ignoring!" error. This error
-          // may come when building locally and with EAS.
-          await uninstallApp(build.packageName);
-          await installApk(true);
-        }
-      },
-      2,
-      1000
-    );
+    try {
+      await retry(
+        async (retryNumber) => {
+          if (retryNumber === 0) {
+            await installApk(false);
+          } else if (retryNumber === 1) {
+            // There's a chance that same emulator was used in newer version of Expo
+            // and then RN IDE was opened on older project, in which case installation
+            // will fail. We use -d flag which allows for downgrading debuggable
+            // applications (see `adb shell pm`, install command)
+            await installApk(true);
+          } else {
+            // If the app is still not installed, we try to uninstall it first to
+            // avoid "INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package <name>
+            // signatures do not match newer version; ignoring!" error. This error
+            // may come when building locally and with EAS.
+            await uninstallApp(build.packageName);
+            await installApk(true);
+          }
+        },
+        2,
+        1000
+      );
+    } catch (e) {
+      const message =
+        typeof e === "object" && e !== null && "message" in e
+          ? String((e as any).message)
+          : String(e);
+      if (
+        message.includes("INSTALL_FAILED_INSUFFICIENT_STORAGE") ||
+        message.includes("not enough space")
+      ) {
+        throw new InstallationError(
+          "Not enough space on device, consider switching device.",
+          InstallationErrorReason.NotEnoughStorage
+        );
+      }
+      throw new InstallationError(message, InstallationErrorReason.Unknown);
+    }
   }
 
   async resetAppPermissions(appPermission: AppPermissionType, build: BuildResult) {

@@ -1,56 +1,78 @@
 .alert-dialog-content {
-  background-color: var(--swm-popover-background);
-  border-radius: var(--swm-button-size);
-  display: grid;
-  grid-template-columns: 50px 1fr min-content;
-  gap: 4px;
+  background-color: var(--vscode-dropdown-background);
+  color: var(--vscode-notifications-foreground);
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
   position: fixed;
-  top: 13%;
+  top: 50px;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%);
   width: 90vw;
   max-width: 500px;
   max-height: 85vh;
-  padding: 8px 16px 8px 8px;
+  padding: 8px;
   animation: alertContentShow 175ms cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow:
-    rgba(0, 0, 0, 0.3) 0px 19px 38px,
-    rgba(0, 0, 0, 0.22) 0px 15px 12px;
+  box-shadow: rgba(0, 0, 0, 0.36) 0px 0px 8px 2px;
+  border: 1px solid color-mix(in srgb, var(--vscode-dropdown-border) 50%, transparent);
   cursor: default;
 }
+
+.alert-dialog-close-button {
+  aspect-ratio: 1 / 1;
+}
+
+.alert-dialog-content-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+}
+
 .alert-dialog-content:focus {
   outline: none;
 }
 
 .alert-dialog-title {
   margin: 0;
-  margin-bottom: 4px;
+  flex: 1;
   font-weight: 500;
-  color: var(--swm-default-text);
-  font-size: 16px;
+  font-size: 125%;
 }
 
 .alert-dialog-description {
-  margin: 0;
-  color: var(--swm-secondary-text);
-  font-size: 13px;
+  overflow: hidden;
+  font-size: 110%;
 }
 
-.alert-dialog-error {
+.alert-dialog-icon {
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.alert-dialog-error-icon {
-  color: var(--red-dark-40);
+.alert-dialog-icon .codicon {
+  font-size: 165%;
+  font-weight: bold;
+}
+
+.alert-dialog-icon .codicon-error {
+  color: var(--vscode-notificationsErrorIcon-foreground);
+}
+
+.alert-dialog-icon .codicon-warning {
+  color: var(--vscode-notificationsWarningIcon-foreground);
+}
+
+.alert-dialog-icon .codicon-info {
+  color: var(--vscode-notificationsInfoIcon-foreground);
 }
 
 .alert-dialog-actions {
   display: flex;
   justify-content: flex-end;
-  align-self: center;
-  gap: 10px;
+  align-self: flex-end;
+  gap: 6px;
 }
 
 @keyframes alertContentShow {

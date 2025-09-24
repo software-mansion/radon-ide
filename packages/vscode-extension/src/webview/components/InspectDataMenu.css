@@ -1,6 +1,8 @@
 .inspect-data-menu-content {
   min-width: 50px;
   background-color: var(--swm-popover-background);
+  border: var(--swm-dropdown-border);
+  box-shadow: var(--swm-dropdown-shadow);
   border-radius: 6px;
   padding: 4px;
   animation-duration: 400ms;

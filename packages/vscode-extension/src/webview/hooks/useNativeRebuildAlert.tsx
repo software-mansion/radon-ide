@@ -1,7 +1,7 @@
 import { useCallback } from "react";
-import IconButton from "../components/shared/IconButton";
 import { useAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 
 type Props = {
   closeAlert: () => void;
@@ -11,21 +11,17 @@ function Actions({ closeAlert }: Props) {
   const { project } = useProject();
   return (
     <>
-      <IconButton
-        type="secondary"
+      <Button secondary onClick={closeAlert}>
+        Cancel
+      </Button>
+      <Button
         onClick={() => {
           project.reloadCurrentSession("rebuild");
           closeAlert();
-        }}
-        tooltip={{ label: "Rebuild", side: "bottom" }}>
+        }}>
         <span className="codicon codicon-refresh" />
-      </IconButton>
-      <IconButton
-        type="secondary"
-        onClick={closeAlert}
-        tooltip={{ label: "Close notification", side: "bottom" }}>
-        <span className="codicon codicon-close" />
-      </IconButton>
+        Rebuild
+      </Button>
     </>
   );
 }
@@ -41,6 +37,8 @@ export function useNativeRebuildAlert() {
         title: "Native dependencies changed",
         description: "Click the button to rebuild the project",
         priority: 1,
+        closeable: true,
+        type: "warning",
         actions: <Actions closeAlert={() => closeAlert(alertId)} />,
       });
     }

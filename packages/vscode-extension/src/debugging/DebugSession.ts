@@ -9,12 +9,15 @@ import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
 
 const MASTER_DEBUGGER_TYPE = "com.swmansion.react-native-debugger";
-const OLD_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
-const PROXY_JS_DEBUGGER_TYPE = "com.swmansion.proxy-debugger";
+const CUSTOM_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
+const VSCODE_JS_DEBUGGER_TYPE = "com.swmansion.proxy-debugger";
 
 export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
 export const DEBUG_PAUSED = "RNIDE_paused";
 export const DEBUG_RESUMED = "RNIDE_continued";
+export const SCRIPT_PARSED = "RNIDE_scriptParsed";
+export const BINDING_CALLED = "RNIDE_bindingCalled";
+export const NETWORK_EVENT = "RNIDE_networkEvent"
 
 export enum DebugNetworkEvent {
   Enable = "RNIDE_enableNetworkInspector",
@@ -26,7 +29,6 @@ export interface JSDebugConfiguration {
   websocketAddress: string;
   sourceMapPathOverrides: Record<string, string>;
   displayDebuggerOverlay: boolean;
-  installConnectRuntime?: boolean;
   isUsingNewDebugger: boolean;
   expoPreludeLineCount: number;
 }
@@ -37,6 +39,7 @@ export type DebugSessionOptions = {
   displayName: string;
   useParentDebugSession?: boolean;
   suppressDebugToolbar?: boolean;
+  useCustomJSDebugger?: boolean;
 };
 
 type DebugSessionCustomEventListener = (event: DebugSessionCustomEvent) => void;
@@ -56,6 +59,7 @@ export interface DebugSession {
   stepOutDebugger(): void;
   stepIntoDebugger(): void;
   evaluateExpression(params: Cdp.Runtime.EvaluateParams): Promise<Cdp.Runtime.EvaluateResult>;
+  addBinding(name: string): Promise<void>;
   sendNetworkCommandRequest(requestType: DebugNetworkEvent): Promise<void>;
 
   // Profiling controls
@@ -68,7 +72,8 @@ export interface DebugSession {
   onDebuggerResumed(listener: DebugSessionCustomEventListener): Disposable;
   onProfilingCPUStarted(listener: DebugSessionCustomEventListener): Disposable;
   onProfilingCPUStopped(listener: DebugSessionCustomEventListener): Disposable;
-  onBindingCalled(listener: DebugSessionCustomEventListener): Disposable;
+  onBindingCalled(listener: (event: Cdp.Runtime.BindingCalledEvent) => void): Disposable;
+  onScriptParsed(listener: (event: { isMainBundle: boolean }) => void): Disposable;
   onDebugSessionTerminated(listener: () => void): Disposable;
   onNetworkEvent(listener: DebugSessionCustomEventListener): Disposable;
 }
@@ -85,8 +90,9 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   private debuggerResumedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
   private profilingCPUStartedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
   private profilingCPUStoppedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
-  private bindingCalledEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
+  private bindingCalledEventEmitter = new vscode.EventEmitter<Cdp.Runtime.BindingCalledEvent>();
   private debugSessionTerminatedEventEmitter = new vscode.EventEmitter<void>();
+  private scriptParsedEventEmitter = new vscode.EventEmitter<{ isMainBundle: boolean }>();
   private networkEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
 
   public onConsoleLog = this.consoleLogEventEmitter.event;
@@ -96,6 +102,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   public onProfilingCPUStopped = this.profilingCPUStoppedEventEmitter.event;
   public onBindingCalled = this.bindingCalledEventEmitter.event;
   public onDebugSessionTerminated = this.debugSessionTerminatedEventEmitter.event;
+  public onScriptParsed = this.scriptParsedEventEmitter.event;
   public onNetworkEvent = this.networkEventEmitter.event;
 
   constructor(private options: DebugSessionOptions = { displayName: "Radon IDE Debugger" }) {
@@ -108,6 +115,9 @@ export class DebugSessionImpl implements DebugSession, Disposable {
     );
     this.disposables.push(
       debug.onDidReceiveDebugSessionCustomEvent((event) => {
+        if (event.session.id !== this.jsDebugSession?.id) {
+          return;
+        }
         switch (event.event) {
           case DEBUG_CONSOLE_LOG:
             this.consoleLogEventEmitter.fire(event);
@@ -124,10 +134,13 @@ export class DebugSessionImpl implements DebugSession, Disposable {
           case "RNIDE_profilingCPUStopped":
             this.profilingCPUStoppedEventEmitter.fire(event);
             break;
-          case "RNIDE_bindingCalled":
-            this.bindingCalledEventEmitter.fire(event);
+          case BINDING_CALLED:
+            this.bindingCalledEventEmitter.fire(event.body);
             break;
-          case "RNIDE_networkEvent":
+          case SCRIPT_PARSED:
+            this.scriptParsedEventEmitter.fire(event.body);
+            break;
+          case NETWORK_EVENT:
             this.networkEventEmitter.fire(event);
             break;
           default:
@@ -213,8 +226,20 @@ export class DebugSessionImpl implements DebugSession, Disposable {
       await this.startParentDebugSession();
     }
 
-    const isUsingNewDebugger = configuration.isUsingNewDebugger;
-    const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
+    // "debugger backend" refers to the React Native VM, while frontend is what
+    // the extension is using to display logs, control breakpoints, etc.
+    const isBackendUsingNewDebugger = configuration.isUsingNewDebugger;
+
+    // when the "new debugger backend" is enabled (aka fusebox), we can use the
+    // vscode-js-debug backed implementation on the frontend. For older RN versions
+    // we need to use our custom implementation. We also allow for the custom implementation
+    // to be selected in the launch configuration, as while not feature complete, it performs
+    // better in some cases.
+    const shouldUseCustomDebuggerFrontend =
+      !isBackendUsingNewDebugger || this.options.useCustomJSDebugger;
+    const debuggerType = shouldUseCustomDebuggerFrontend
+      ? CUSTOM_JS_DEBUGGER_TYPE
+      : VSCODE_JS_DEBUGGER_TYPE;
 
     const extensionPath = extensionContext.extensionUri.path;
 
@@ -226,7 +251,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
         type: debuggerType,
         name: this.options.displayName,
         request: "attach",
-        breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
+        breakpointsAreRemovedOnContextCleared: isBackendUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
         sourceMapPathOverrides: configuration.sourceMapPathOverrides,
         websocketAddress: configuration.websocketAddress,
         expoPreludeLineCount: configuration.expoPreludeLineCount,
@@ -298,6 +323,13 @@ export class DebugSessionImpl implements DebugSession, Disposable {
     }
     const response = await this.jsDebugSession.customRequest("RNIDE_evaluate", params);
     return response;
+  }
+
+  public async addBinding(name: string) {
+    if (!this.jsDebugSession) {
+      throw new Error("JS Debug session is not running");
+    }
+    await this.jsDebugSession.customRequest("RNIDE_addBinding", { name });
   }
 
   public async sendNetworkCommandRequest(requestType: DebugNetworkEvent) {
