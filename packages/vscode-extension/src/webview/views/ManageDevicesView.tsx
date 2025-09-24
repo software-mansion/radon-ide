@@ -36,17 +36,13 @@ function DeviceRow({
   isRunning,
   dataTest,
 }: PropsWithDataTest<DeviceRowProps>) {
-  const store$ = useStore();
-  const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
   const { project } = useProject();
 
   const stopDevice = () => project.terminateSession(deviceInfo.id);
   const selectDevice: MouseEventHandler = (e) => {
     if (!isSelected) {
       e.stopPropagation();
-      project.startOrActivateSessionForDevice(deviceInfo, {
-        stopPreviousDevices,
-      });
+      project.startOrActivateSessionForDevice(deviceInfo);
       closeModal();
     }
   };
