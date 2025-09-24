@@ -232,6 +232,10 @@ export class ApplicationSession implements Disposable {
       this.cdpDevtoolsServer.dispose();
       this.cdpDevtoolsServer = undefined;
     }
+    if (this.websocketDevtoolsServer === undefined) {
+      this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
+      this.setupDevtoolsServer(this.cdpDevtoolsServer);
+    }
   }
 
   private async createDebugSession(): Promise<DebugSession & Disposable> {
@@ -450,12 +454,6 @@ export class ApplicationSession implements Disposable {
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
       sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
     });
-    if (this.websocketDevtoolsServer === undefined) {
-      // NOTE: we only create the CDP devtools server when using the new debugger
-      this.cdpDevtoolsServer?.dispose();
-      this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
-      this.setupDevtoolsServer(this.cdpDevtoolsServer);
-    }
   }
 
   /**

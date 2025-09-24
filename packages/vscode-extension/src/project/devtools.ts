@@ -199,27 +199,24 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   constructor(private readonly debugSession: DebugSession) {
     super();
     this.disposables.push(
-      debugSession.onScriptParsed(({ isMainBundle }) => {
-        if (isMainBundle) {
-          this.createConnection();
-        }
+      debugSession.onJSDebugSessionStarted(() => {
+        this.createConnection();
       })
     );
   }
 
   private async createConnection() {
     const debugSession = this.debugSession;
-    // NOTE: the binding survives JS reloads, and the Devtools frontend will reconnect automatically,
-    // so this should not be needed, but because the debugger on Expo Go + Android can break on reloads,
-    // this is sadly necessary.
-    debugSession.addBinding(BINDING_NAME);
-    debugSession.evaluateExpression({
-      expression: `void ${DISPATCHER_GLOBAL}.initializeDomain("${DEVTOOLS_DOMAIN_NAME}")`,
-    });
     if (this.connection) {
       // NOTE: a single `DebugSession` only supports a single devtools connection at a time
       return;
     }
+
+    // NOTE: the binding survives JS reloads, and the Devtools frontend will reconnect automatically
+    debugSession.addBinding(BINDING_NAME);
+    debugSession.evaluateExpression({
+      expression: `void ${DISPATCHER_GLOBAL}.initializeDomain("${DEVTOOLS_DOMAIN_NAME}")`,
+    });
 
     const wall: Wall = {
       listen(fn) {
