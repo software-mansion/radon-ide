@@ -1,5 +1,5 @@
 import { commands, Disposable } from "vscode";
-import { ArchitectureStrategy, NetworkPlugin, BroadcastListener } from "./network-plugin";
+import { NetworkPlugin } from "./network-plugin";
 import { RadonInspectorBridge } from "../../project/bridge";
 import { disposeAll } from "../../utilities/disposables";
 import { Logger } from "../../Logger";
@@ -14,6 +14,7 @@ import {
   NetworkMethod,
 } from "../../network/types/panelMessageProtocol";
 import { RequestData, RequestOptions } from "../../network/types/network";
+import { BaseArchitectureStrategy } from "./BaseArchitectureStrategy";
 
 function formatDataBasedOnLanguage(body: string, language: string): string {
   if (language === "json") {
@@ -27,13 +28,13 @@ function formatDataBasedOnLanguage(body: string, language: string): string {
   return body;
 }
 
-export default class LegacyArchitecture implements ArchitectureStrategy {
+export default class LegacyArchitecture extends BaseArchitectureStrategy {
   private devtoolsListeners: Disposable[] = [];
-  private broadcastListeners: BroadcastListener[] = [];
 
   private readonly inspectorBridge: RadonInspectorBridge;
 
   constructor(private plugin: NetworkPlugin) {
+    super();
     this.inspectorBridge = this.plugin.inspectorBridge;
   }
 
@@ -116,7 +117,7 @@ export default class LegacyArchitecture implements ArchitectureStrategy {
       command: WebviewCommand.IDECall,
       payload,
     };
-    this.broadcastListeners.forEach((cb) => cb(message));
+    this.broadcastMessage(message);
   }
 
   /**
@@ -128,7 +129,7 @@ export default class LegacyArchitecture implements ArchitectureStrategy {
         command: WebviewCommand.CDPCall,
         payload: JSON.parse(message),
       };
-      this.broadcastListeners.forEach((cb) => cb(webviewMessage));
+      this.broadcastMessage(webviewMessage);
     } catch {
       console.error("Failed to parse CDP message:", message);
     }
@@ -176,16 +177,6 @@ export default class LegacyArchitecture implements ArchitectureStrategy {
     } catch (error) {
       Logger.error("Invalid WebSocket message format:", error);
     }
-  }
-
-  public onMessageBroadcast(cb: BroadcastListener): Disposable {
-    this.broadcastListeners.push(cb);
-    return new Disposable(() => {
-      let index = this.broadcastListeners.indexOf(cb);
-      if (index !== -1) {
-        this.broadcastListeners.splice(index, 1);
-      }
-    });
   }
 
   public activate(): void {
