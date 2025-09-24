@@ -401,7 +401,7 @@
           "type": "webview",
           "id": "RadonIDE.view",
           "name": "Radon IDE",
-          "when": "RNIDE.extensionIsActive && config.RadonIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
+          "when": "RNIDE.extensionIsActive && config.RadonIDE.userInterface.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
         }
       ],
       "RadonIDEToolExpoDevPluginMMKV": [
