@@ -58,6 +58,7 @@ function renderLaunchConfigurations(
         <RichSelectItem
           value={`${prefix}:${idx}`}
           key={idx}
+          data-testid={`approot-select-item-${config.appRoot}`}
           icon={<span className="codicon codicon-folder" />}
           title={displayNameForConfig(config) ?? config.appRoot ?? "./"}
           subtitle={displayNameForConfig(config) ? config.appRoot : undefined}
