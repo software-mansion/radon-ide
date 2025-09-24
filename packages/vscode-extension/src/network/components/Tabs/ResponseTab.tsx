@@ -1,22 +1,25 @@
 import { useNetwork } from "../../providers/NetworkProvider";
-import { getFormattedRequestBody } from "../../utils/requestFormatters";
+import { determineLanguage, getFormattedRequestBody } from "../../utils/requestFormatters";
 import IconButton from "../../../webview/components/shared/IconButton";
 import TabActionButtons from "./TabActionButtons";
+import HighlightedCodeBlock from "./HighlightedCodeBlock";
 import { ResponseBodyData } from "../../types/network";
 import { NetworkLog } from "../../types/networkLog";
 import "./PayloadAndResponseTab.css";
+import { ThemeData } from "../../../common/theme";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
+  editorThemeData?: ThemeData;
 }
 
-const NO_RESPONSE_MESSAGE = "No response body";
-
-const ResponseTab = ({ networkLog, responseBodyData }: ResponseTabProps) => {
+const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: ResponseTabProps) => {
   const { fetchAndOpenResponseInEditor } = useNetwork();
   const { body = undefined, wasTruncated = false } = responseBodyData || {};
   const responseData = getFormattedRequestBody(body);
+  const contentType = networkLog.response?.headers?.["Content-Type"] || "";
+  const language = responseData ? determineLanguage(contentType, responseData) : "plaintext";
 
   return (
     <>
@@ -40,7 +43,12 @@ const ResponseTab = ({ networkLog, responseBodyData }: ResponseTabProps) => {
           <span className="codicon codicon-warning" /> Response too large, showing truncated data.
         </pre>
       )}
-      <pre className="response-tab-pre">{responseData ?? NO_RESPONSE_MESSAGE}</pre>
+      <HighlightedCodeBlock
+        content={responseData}
+        language={language}
+        theme={editorThemeData}
+        placeholder="No response body"
+      />
     </>
   );
 };
