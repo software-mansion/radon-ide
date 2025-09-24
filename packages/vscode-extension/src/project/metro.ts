@@ -1,34 +1,121 @@
 import path from "path";
 import fs from "fs";
-import WebSocket from "ws";
-import { Disposable, EventEmitter, ExtensionMode, Uri, workspace } from "vscode";
 import stripAnsi from "strip-ansi";
-import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
-import { Logger } from "../Logger";
-import { extensionContext } from "../utilities/extensionContext";
-import { shouldUseExpoCLI } from "../utilities/expoCli";
-import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
-import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
-import { progressiveRetryTimeout, sleep } from "../utilities/retry";
-import { getOpenPort } from "../utilities/common";
+import { Disposable, EventEmitter, ExtensionMode, Uri, workspace } from "vscode";
 import { DebugSource } from "../debugging/DebugSession";
-import { openFileAtPosition } from "../utilities/editorOpeners";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
-import { CancelToken } from "../utilities/cancelToken";
 import { Output } from "../common/OutputChannel";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
+import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
+import { Logger } from "../Logger";
+import { extensionContext } from "../utilities/extensionContext";
+import { getOpenPort } from "../utilities/common";
+import { shouldUseExpoCLI } from "../utilities/expoCli";
+import { openFileAtPosition } from "../utilities/editorOpeners";
+import { createRefCounted, RefCounted } from "../utilities/refCounted";
 
-const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
-const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
-const WAIT_FOR_DEBUGGER_TIMEOUT_MS = 15_000;
+export interface MetroSession {
+  port: number;
+  sourceMapPathOverrides: Record<string, string>;
+  expoPreludeLineCount: number;
 
-interface CDPTargetDescription {
+  disposed: boolean;
+
+  onBundleError: (listener: (event: BundleErrorEvent) => void) => Disposable;
+  onBundleProgress: (listener: (event: BundleProgressEvent) => void) => Disposable;
+
+  getDebuggerPages(): Promise<CDPTargetDescription[]>;
+  reload(): Promise<void>;
+  openDevMenu(): Promise<void>;
+}
+
+export interface MetroProvider {
+  getMetroSession(options: { resetCache: boolean }): Promise<MetroSession & Disposable>;
+  restartServer(options: { resetCache: boolean }): Promise<MetroSession & Disposable>;
+}
+
+export class UniqueMetroProvider implements MetroProvider {
+  constructor(
+    private readonly launchConfiguration: ResolvedLaunchConfig,
+    private readonly devtoolsPort: Promise<number | undefined> = Promise.resolve(undefined)
+  ) {}
+
+  public async getMetroSession(options: {
+    resetCache: boolean;
+  }): Promise<MetroSession & Disposable> {
+    return launchMetro({
+      devtoolsPort: await this.devtoolsPort,
+      launchConfiguration: this.launchConfiguration,
+      resetCache: options.resetCache,
+    });
+  }
+
+  public restartServer(options: { resetCache: boolean }): Promise<MetroSession & Disposable> {
+    return this.getMetroSession(options);
+  }
+}
+
+export class SharedMetroProvider implements MetroProvider, Disposable {
+  private readonly port: number | undefined;
+  private metroSession?: Promise<RefCounted<MetroSession & Disposable>>;
+
+  constructor(
+    private readonly launchConfiguration: ResolvedLaunchConfig,
+    private readonly devtoolsPort: Promise<number | undefined> = Promise.resolve(undefined)
+  ) {
+    this.port = this.launchConfiguration.metroPort;
+  }
+
+  public async getMetroSession({ resetCache }: { resetCache: boolean }) {
+    const session = await this.metroSession;
+    if (session === undefined || session.refCount <= 0 || resetCache) {
+      return this.createNewSession(resetCache);
+    }
+
+    session.retain();
+    return session;
+  }
+
+  public async restartServer({ resetCache }: { resetCache: boolean }) {
+    const session = await this.metroSession;
+    session?.disposeInner();
+    return this.createNewSession(resetCache);
+  }
+
+  private createNewSession(resetCache: boolean) {
+    this.metroSession = this.devtoolsPort
+      .then((devtoolsPort) =>
+        launchMetro({
+          port: this.port,
+          devtoolsPort,
+          launchConfiguration: this.launchConfiguration,
+          resetCache,
+        })
+      )
+      .then(createRefCounted);
+    return this.metroSession;
+  }
+
+  public dispose() {
+    this.metroSession?.then((session) => session.dispose());
+  }
+}
+
+export interface CDPTargetDescription {
   id: string;
+  appId?: string;
+  deviceName: string;
   title: string;
   type: string;
   url: string;
   webSocketDebuggerUrl: string;
-  [key: string]: any; // To allow for any additional properties
+  description?: string;
+  reactNative?: {
+    capabilities?: {
+      prefersFuseboxFrontend?: boolean;
+    };
+    logicalDeviceId?: string;
+  };
 }
 
 type MetroEvent =
@@ -76,35 +163,140 @@ type MetroEvent =
       ];
     };
 
-export class Metro {
-  protected _port = 0;
-  protected _watchFolders: string[] | undefined = undefined;
-  protected usesNewDebugger?: boolean;
-  protected _expoPreludeLineCount = 0;
-  protected readonly bundleErrorEventEmitter = new EventEmitter<{
-    message: string;
-    source: DebugSource;
-    errorModulePath: string;
-  }>();
-  protected readonly bundleProgressEventEmitter = new EventEmitter<{ bundleProgress: number }>();
+interface BundleErrorEvent {
+  message: string;
+  source: DebugSource;
+  errorModulePath: string;
+}
 
+interface BundleProgressEvent {
+  bundleProgress: number;
+}
+
+const FAKE_EDITOR = "RADON_IDE_FAKE_EDITOR";
+const OPENING_IN_FAKE_EDITOR_REGEX = new RegExp(`Opening (.+) in ${FAKE_EDITOR}`);
+
+async function launchMetro({
+  port,
+  resetCache,
+  launchConfiguration,
+  devtoolsPort,
+}: {
+  port?: number;
+  resetCache: boolean;
+  launchConfiguration: ResolvedLaunchConfig;
+  devtoolsPort?: number;
+}): Promise<MetroSession & Disposable> {
+  const appRoot = launchConfiguration.absoluteAppRoot;
+
+  const libPath = path.join(extensionContext.extensionPath, "lib");
+  let metroConfigPath: string | undefined;
+  if (launchConfiguration.metroConfigPath) {
+    metroConfigPath = findCustomMetroConfig(launchConfiguration.metroConfigPath);
+  }
+  const isExtensionDev = extensionContext.extensionMode === ExtensionMode.Development;
+
+  port = port ?? (await getOpenPort());
+
+  // NOTE: this is needed to capture metro's open-stack-frame calls.
+  // See `packages/vscode-extension/atom` script for more details.
+  const fakeEditorPath = extensionContext.asAbsolutePath("dist/atom");
+
+  const metroEnv: Record<string, string> = {
+    ...launchConfiguration.env,
+    ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
+    NODE_PATH: path.join(appRoot, "node_modules"),
+    RCT_METRO_PORT: `${port}`,
+    RADON_IDE_LIB_PATH: libPath,
+    RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
+    REACT_EDITOR: fakeEditorPath,
+    // NOTE: At least as of version 52, Expo uses a different mechanism to open stack frames in the editor,
+    // which doesn't allow passing a path to the EDITOR executable.
+    // Instead, we pass it a fake editor name and inspect the debug logs to extract the file path to open.
+    DEBUG: "expo:utils:editor",
+    EXPO_EDITOR: FAKE_EDITOR,
+    ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
+  };
+
+  const metroOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
+
+  // Clearing logs shortly before the new bundler process is started.
+  metroOutputChannel.clear();
+
+  if (devtoolsPort !== undefined) {
+    metroEnv.RCT_DEVTOOLS_PORT = devtoolsPort.toString();
+  }
+
+  if (shouldUseExpoCLI(launchConfiguration)) {
+    return await SubprocessMetroSession.launchExpoMetro(
+      appRoot,
+      port,
+      libPath,
+      resetCache,
+      launchConfiguration.expoStartArgs,
+      metroEnv
+    );
+  } else {
+    return await SubprocessMetroSession.launchBareMetro(
+      appRoot,
+      port,
+      libPath,
+      resetCache,
+      metroEnv
+    );
+  }
+}
+
+export class Metro implements MetroSession, Disposable {
+  protected _expoPreludeLineCount = 0;
+  protected _watchFolders: string[] | undefined = undefined;
+  protected readonly metroOutputChannel;
+
+  protected readonly bundleErrorEventEmitter = new EventEmitter<BundleErrorEvent>();
+  protected readonly bundleProgressEventEmitter = new EventEmitter<BundleProgressEvent>();
   public readonly onBundleError = this.bundleErrorEventEmitter.event;
   public readonly onBundleProgress = this.bundleProgressEventEmitter.event;
 
-  constructor(port: number, watchFolders: string[] | undefined = undefined) {
-    this._port = port;
-    this._watchFolders = watchFolders;
+  protected _disposed = false;
+
+  public get disposed() {
+    return this._disposed;
   }
 
-  public get isUsingNewDebugger() {
-    if (this.usesNewDebugger === undefined) {
-      throw new Error("Debugger is not yet initialized. Call getDebuggerURL first.");
+  constructor(
+    public readonly port: number,
+    protected readonly appRoot: string
+  ) {
+    const metroOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
+    if (!metroOutputChannel) {
+      throw new Error("Cannot start bundler process. The IDE is not initialized.");
     }
-    return this.usesNewDebugger;
+    this.metroOutputChannel = metroOutputChannel;
   }
 
-  public get port() {
-    return this._port;
+  public async getDebuggerPages(): Promise<CDPTargetDescription[]> {
+    try {
+      const list = await fetch(`http://localhost:${this.port}/json/list`);
+      const listJson = await list.json();
+
+      if (listJson.length > 0) {
+        // fixup websocket addresses on the list
+        for (const page of listJson) {
+          page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
+        }
+
+        return listJson;
+      }
+    } catch {}
+    return [];
+  }
+
+  public async reload() {
+    await this.sendMessageToDevice("reload");
+  }
+
+  public async openDevMenu() {
+    await this.sendMessageToDevice("devMenu");
   }
 
   public get sourceMapPathOverrides() {
@@ -112,7 +304,7 @@ export class Metro {
       throw new Error("Attempting to read sourceMapPathOverrides before metro has started");
     }
     const sourceMapPathOverrides: Record<string, string> = {};
-    if (this.isUsingNewDebugger && this._watchFolders.length > 0) {
+    if (this._watchFolders.length > 0) {
       sourceMapPathOverrides["/[metro-project]/*"] = `${this._watchFolders[0]}${path.sep}*`;
       this._watchFolders.forEach((watchFolder, index) => {
         sourceMapPathOverrides[`/[metro-watchFolders]/${index}/*`] = `${watchFolder}${path.sep}*`;
@@ -133,7 +325,7 @@ export class Metro {
     // like reload or open dev menu.
     // The message format is a JSON object with a "method" field that specifies
     // the action, and version field with the protocol version (currently 2).
-    const ws = new WebSocket(`ws://localhost:${this._port}/message`);
+    const ws = new WebSocket(`ws://localhost:${this.port}/message`);
     await new Promise((resolve) => ws.addEventListener("open", resolve));
     ws.send(
       JSON.stringify({
@@ -146,283 +338,39 @@ export class Metro {
     ws.close();
   }
 
-  public async reload() {
-    await this.sendMessageToDevice("reload");
-  }
-
-  public async openDevMenu() {
-    await this.sendMessageToDevice("devMenu");
-  }
-
-  private lookupWsAddressForOldDebugger(listJson: CDPTargetDescription[]) {
-    // Pre 0.76 RN metro lists debugger pages that are identified as "deviceId-pageId"
-    // After new device is connected, the deviceId is incremented while pageId could be
-    // either 1 or -1 where "-1" corresponds to connection that supports reloads.
-    // We search for the most recent device id and want to use special -1 page identifier (reloadable page)
-    let recentDeviceId = -1;
-    let websocketAddress: string | undefined;
-    for (const page of listJson) {
-      // pageId can sometimes be negative so we can't just use .split('-') here
-      const matches = page.id.match(/([^-]+)-(-?\d+)/);
-
-      if (!matches) {
-        continue;
-      }
-      const pageId = parseInt(matches[2]);
-      if (pageId !== -1) {
-        continue;
-      }
-      //If deviceId is a number we want to pick the highest one, with expo it's never a number and we pick the latest record
-      if (Number.isInteger(matches[1])) {
-        const deviceId = parseInt(matches[1]);
-        if (deviceId < recentDeviceId) {
-          continue;
-        }
-        recentDeviceId = deviceId;
-      }
-      websocketAddress = page.webSocketDebuggerUrl;
-    }
-    return websocketAddress;
-  }
-
-  private filterNewDebuggerPages(listJson: CDPTargetDescription[]) {
-    return listJson.filter(
-      (page) =>
-        page.reactNative &&
-        (page.title.startsWith("React Native Bridge") ||
-          page.description.endsWith("[C++ connection]") ||
-          page.reactNative.capabilities?.prefersFuseboxFrontend)
-    );
-  }
-
-  private async isActiveExpoGoAppRuntime(webSocketDebuggerUrl: string) {
-    // This method checks for a global variable that is set in the expo host runtime.
-    // We expect this variable to not be present in the main app runtime.
-    const HIDE_FROM_INSPECTOR_ENV = "(globalThis.__expo_hide_from_inspector__ || 'runtime')";
-    try {
-      const result = await connectCDPAndEval(webSocketDebuggerUrl, HIDE_FROM_INSPECTOR_ENV);
-      if (result === "runtime") {
-        return true;
-      }
-    } catch (e) {
-      Logger.warn(
-        "Error checking expo go runtime",
-        webSocketDebuggerUrl,
-        "(this could be stale/inactive runtime)",
-        e
-      );
-    }
-    return false;
-  }
-
   private fixupWebSocketDebuggerUrl(websocketAddress: string) {
     // CDP websocket addresses come from metro and in some configurations they
     // still use the default port instead of the ephemeral port that we force metro to use.
     // We override the port and host to match the current metro address.
     const websocketDebuggerUrl = new URL(websocketAddress);
     // replace port number with metro port number:
-    websocketDebuggerUrl.port = this._port.toString();
+    websocketDebuggerUrl.port = this.port.toString();
     // replace host with localhost:
     websocketDebuggerUrl.host = "localhost";
     return websocketDebuggerUrl.toString();
   }
 
-  private async lookupWsAddressForNewDebugger(listJson: CDPTargetDescription[]) {
-    // In the new debugger, ids are generated in the following format: "deviceId-pageId"
-    // but unlike with the old debugger, deviceId is a hex string (UUID most likely)
-    // that is stable between reloads.
-    // Subsequent runtimes that register get incremented pageId (e.g. main runtime will
-    // be 1, reanimated worklet runtime would get 2, etc.)
-    // The most recent runtimes are listed first, so we can pick the first one with title
-    // that starts with "React Native Bridge" (which is the main runtime)
-    const newDebuggerPages = this.filterNewDebuggerPages(listJson);
-    if (newDebuggerPages.length > 0) {
-      const description = newDebuggerPages[0].description;
-      const appId = newDebuggerPages[0]?.appId;
-      const isExpoGo =
-        description === EXPO_GO_BUNDLE_ID ||
-        description === EXPO_GO_PACKAGE_NAME ||
-        appId === EXPO_GO_BUNDLE_ID ||
-        appId === EXPO_GO_PACKAGE_NAME;
-      if (isExpoGo) {
-        // Expo go apps using the new debugger could report more then one page,
-        // if it exist the first one being the Expo Go host runtime.
-        // more over expo go on android has a bug causing newDebuggerPages
-        // from previously run applications to leak if the host application
-        // was not stopped.
-        // to solve both issues we check if the runtime is part of
-        // the host application process and select the last one that
-        // is not. To perform this check we use expo host functionality
-        // introduced in https://github.com/expo/expo/pull/32322/files
-        for (const newDebuggerPage of newDebuggerPages.reverse()) {
-          if (await this.isActiveExpoGoAppRuntime(newDebuggerPage.webSocketDebuggerUrl)) {
-            return newDebuggerPage.webSocketDebuggerUrl;
-          }
-        }
-        return undefined;
-      }
-      return newDebuggerPages[0].webSocketDebuggerUrl;
-    }
-    return undefined;
-  }
-
-  public async fetchWsTargets(
-    timeoutMs: number = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
-    cancelToken: CancelToken = new CancelToken()
-  ): Promise<CDPTargetDescription[] | undefined> {
-    let retryCount = 0;
-    const startTime = Date.now();
-
-    function shouldContinue() {
-      if (timeoutMs >= 0) {
-        if (Date.now() - startTime > timeoutMs) {
-          return false;
-        }
-      }
-
-      return !cancelToken.cancelled;
-    }
-
-    while (shouldContinue()) {
-      retryCount++;
-
-      try {
-        const list = await fetch(`http://localhost:${this._port}/json/list`);
-        const listJson = await list.json();
-
-        if (listJson.length > 0) {
-          // fixup websocket addresses on the list
-          for (const page of listJson) {
-            page.webSocketDebuggerUrl = this.fixupWebSocketDebuggerUrl(page.webSocketDebuggerUrl);
-          }
-
-          return listJson;
-        }
-      } catch (_) {
-        // It shouldn't happen, so lets warn about it. Except a warning we will retry anyway, so nothing to do here.
-        Logger.warn("[METRO] Fetching list of runtimes failed, retrying...");
-      }
-
-      await cancelToken.adapt(sleep(progressiveRetryTimeout(retryCount))).catch(() => {
-        // ignore the CancelError, we'll just break out of the loop after the condition is checked next time
-      });
-    }
-
-    return undefined;
-  }
-
-  public async getDebuggerURL(
-    timeoutMs: number = WAIT_FOR_DEBUGGER_TIMEOUT_MS,
-    cancelToken: CancelToken = new CancelToken()
-  ) {
-    const listJson = await this.fetchWsTargets(timeoutMs, cancelToken);
-
-    if (listJson === undefined) {
-      return undefined;
-    }
-
-    // When there are pages that are identified as belonging to the new debugger, we
-    // assume the use of the new debugger and use new debugger logic to determine the websocket address.
-    this.usesNewDebugger = this.filterNewDebuggerPages(listJson).length > 0;
-
-    let websocketAddress = this.usesNewDebugger
-      ? await this.lookupWsAddressForNewDebugger(listJson)
-      : this.lookupWsAddressForOldDebugger(listJson);
-
-    return websocketAddress;
-  }
-}
-
-export class MetroLauncher extends Metro implements Disposable {
-  private subprocess?: ChildProcess;
-  private startPromise: Promise<void> | undefined;
-
-  constructor() {
-    super(0);
-  }
-
   public dispose() {
-    this.subprocess?.kill(9);
+    this._disposed = true;
     this.bundleErrorEventEmitter.dispose();
     this.bundleProgressEventEmitter.dispose();
   }
+}
 
-  public async ready() {
-    if (!this.startPromise) {
-      throw new Error("metro not started");
-    }
-    await this.startPromise;
-  }
+class SubprocessMetroSession extends Metro implements Disposable {
+  protected readonly bundlerReady = Promise.withResolvers<void>();
 
-  public async start({
-    resetCache,
-    dependencies,
-    launchConfiguration,
-    devtoolsPort,
-  }: {
-    resetCache: boolean;
-    dependencies: Promise<any>[];
-    launchConfiguration: ResolvedLaunchConfig;
-    devtoolsPort?: number;
-  }) {
-    if (this.startPromise) {
-      throw new Error("metro already started");
-    }
-    this.startPromise = this.startInternal(
-      resetCache,
-      dependencies,
-      launchConfiguration,
-      devtoolsPort
-    );
-    this.startPromise.then(() => {
-      // start promise is used to indicate that metro has started, however, sometimes
-      // the metro process may exit, in which case we need to update the promise to
-      // indicate an error.
-      this.subprocess
-        ?.catch(() => {
-          // ignore the error, we are only interested in the process exit
-        })
-        ?.then(() => {
-          this.startPromise = Promise.reject(new Error("Metro process exited"));
-        });
-    });
-    return this.startPromise;
-  }
-
-  private launchExpoMetro(
+  public static async launchBareMetro(
     appRootFolder: string,
     port: number,
     libPath: string,
     resetCache: boolean,
-    expoStartExtraArgs: string[] | undefined,
-    metroEnv: typeof process.env
-  ) {
-    const args = [path.join(libPath, "expo_start.js"), "--port", `${port}`];
-    if (resetCache) {
-      args.push("--clear");
-    }
-    if (expoStartExtraArgs) {
-      args.push(...expoStartExtraArgs);
-    }
-
-    return exec("node", args, {
-      cwd: appRootFolder,
-      env: metroEnv,
-      buffer: false,
-    });
-  }
-
-  private launchPackager(
-    appRootFolder: string,
-    port: number,
-    libPath: string,
-    resetCache: boolean,
-    metroEnv: typeof process.env
-  ) {
+    metroEnv: Record<string, string>
+  ): Promise<SubprocessMetroSession> {
     const reactNativeRoot = path.dirname(
       require.resolve("react-native", { paths: [appRootFolder] })
     );
-    return exec(
+    const packagerProcess = exec(
       "node",
       [
         path.join(reactNativeRoot, "cli.js"),
@@ -442,165 +390,133 @@ export class MetroLauncher extends Metro implements Disposable {
         buffer: false,
       }
     );
+    const session = new SubprocessMetroSession(packagerProcess, appRootFolder, port);
+    await session.bundlerReady.promise;
+    return session;
   }
 
-  public async startInternal(
+  public static async launchExpoMetro(
+    appRootFolder: string,
+    port: number,
+    libPath: string,
     resetCache: boolean,
-    dependencies: Promise<any>[],
-    launchConfiguration: ResolvedLaunchConfig,
-    devtoolsPort?: number
+    expoStartExtraArgs: string[] | undefined,
+    metroEnv: typeof process.env
+  ): Promise<SubprocessMetroSession> {
+    const args = [path.join(libPath, "expo_start.js"), "--port", `${port}`];
+    if (resetCache) {
+      args.push("--clear");
+    }
+    if (expoStartExtraArgs) {
+      args.push(...expoStartExtraArgs);
+    }
+
+    const packagerProcess = exec("node", args, {
+      cwd: appRootFolder,
+      env: metroEnv,
+      buffer: false,
+    });
+    const session = new SubprocessMetroSession(packagerProcess, appRootFolder, port);
+    await session.bundlerReady.promise;
+    return session;
+  }
+
+  private constructor(
+    private readonly bundlerProcess: ChildProcess,
+    appRoot: string,
+    port: number
   ) {
-    const appRoot = launchConfiguration.absoluteAppRoot;
-    await Promise.all(dependencies);
+    super(port, appRoot);
+    lineReader(bundlerProcess).onLineRead((line) => {
+      try {
+        const event = JSON.parse(line) as MetroEvent;
+        this.handleMetroEvent(event);
+        return;
+      } catch {}
 
-    const libPath = path.join(extensionContext.extensionPath, "lib");
-    let metroConfigPath: string | undefined;
-    if (launchConfiguration.metroConfigPath) {
-      metroConfigPath = findCustomMetroConfig(launchConfiguration.metroConfigPath);
-    }
-    const isExtensionDev = extensionContext.extensionMode === ExtensionMode.Development;
+      Logger.debug("Metro", line);
 
-    const port = await getOpenPort();
+      if (line.includes("EADDRINUSE")) {
+        this.bundlerReady.reject(
+          new Error(`The Metro server could not start: port ${this.port} is already in use.`)
+        );
+      }
 
-    // NOTE: this is needed to capture metro's open-stack-frame calls.
-    // See `packages/vscode-extension/atom` script for more details.
-    const fakeEditorPath = extensionContext.asAbsolutePath("dist/atom");
+      if (!line.startsWith("__RNIDE__")) {
+        this.metroOutputChannel.appendLine(line);
+      }
 
-    const metroEnv = {
-      ...launchConfiguration.env,
-      ...(metroConfigPath ? { RN_IDE_METRO_CONFIG_PATH: metroConfigPath } : {}),
-      NODE_PATH: path.join(appRoot, "node_modules"),
-      RCT_METRO_PORT: `${port}`,
-      RCT_DEVTOOLS_PORT: devtoolsPort?.toString(),
-      RADON_IDE_LIB_PATH: libPath,
-      RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
-      REACT_EDITOR: fakeEditorPath,
-      // NOTE: At least as of version 52, Expo uses a different mechanism to open stack frames in the editor,
-      // which doesn't allow passing a path to the EDITOR executable.
-      // Instead, we pass it a fake editor name and inspect the debug logs to extract the file path to open.
-      DEBUG: "expo:utils:editor",
-      EXPO_EDITOR: FAKE_EDITOR,
-      ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
-    };
-
-    const metroOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
-
-    // Clearing logs shortly before the new bundler process is started.
-    metroOutputChannel.clear();
-
-    let bundlerProcess: ChildProcess;
-
-    if (shouldUseExpoCLI(launchConfiguration)) {
-      bundlerProcess = this.launchExpoMetro(
-        appRoot,
-        port,
-        libPath,
-        resetCache,
-        launchConfiguration.expoStartArgs,
-        metroEnv
-      );
-    } else {
-      bundlerProcess = this.launchPackager(appRoot, port, libPath, resetCache, metroEnv);
-    }
-    this.subprocess = bundlerProcess;
-
-    const initPromise = new Promise<void>((resolve, reject) => {
-      // reject if process exits
-      bundlerProcess
-        .catch((reason) => {
-          Logger.error("Metro exited unexpectedly", reason);
-          reject(new Error(`Metro exited with code ${reason.exitCode}: ${reason.message}`));
-        })
-        .then(() => {
-          // we expect metro to produce a line with the port number indicating it started
-          // successfully. However, if it doesn't produce that line and exists, the promise
-          // would be waiting indefinitely, so we reject it in that case as well.
-          reject(new Error("Metro exited but did not start server successfully."));
-        });
-
-      lineReader(bundlerProcess).onLineRead((line) => {
-        const handleMetroEvent = (event: MetroEvent) => {
-          if (event.type === "bundle_transform_progressed") {
-            // Because totalFileCount grows as bundle_transform progresses at the beginning there are a few logs that indicate 100% progress thats why we ignore them
-            if (event.totalFileCount > 10) {
-              const bundleProgress = event.transformedFileCount / event.totalFileCount;
-              this.bundleProgressEventEmitter.fire({ bundleProgress });
-            }
-          } else if (event.type === "client_log" && event.level === "error") {
-            const err = stripAnsi(event.data[0]);
-            Logger.error(err);
-            metroOutputChannel.appendLine(err);
-          } else {
-            Logger.debug("Metro", line);
-          }
-
-          switch (event.type) {
-            case "RNIDE_expo_env_prelude_lines":
-              this._expoPreludeLineCount = event.lineCount;
-              Logger.debug("Expo prelude line offset was set to: ", this._expoPreludeLineCount);
-              break;
-            case "initialize_done":
-              this._port = event.port;
-              const log = `Metro started on port ${this._port}`;
-              metroOutputChannel.appendLine(log);
-              Logger.info(log);
-              resolve();
-              break;
-            case "RNIDE_watch_folders":
-              this._watchFolders = event.watchFolders;
-              Logger.info("Captured metro watch folders", this._watchFolders);
-              break;
-            case "bundling_error":
-              const message = stripAnsi(event.message);
-              let filename = event.error.originModulePath;
-              if (!filename && event.error.filename) {
-                filename = path.join(appRoot, event.error.filename);
-              }
-              const source = {
-                filename,
-                line1based: event.error.lineNumber,
-                column0based: event.error.columnNumber,
-              };
-              const errorModulePath = event.error.originModulePath;
-              this.bundleErrorEventEmitter.fire({ message, source, errorModulePath });
-              metroOutputChannel.appendLine(
-                `[Bundling Error]: ${filename}:${source.line1based}:${source.column0based}: ${message}`
-              );
-              break;
-          }
-        };
-
-        let event: MetroEvent | undefined;
-        try {
-          event = JSON.parse(line) as MetroEvent;
-        } catch {}
-
-        if (event) {
-          handleMetroEvent(event);
-          return;
+      if (line.startsWith("__RNIDE__open_editor__ ")) {
+        this.handleOpenEditor(line.slice("__RNIDE__open_editor__ ".length));
+      } else if (line.includes(FAKE_EDITOR)) {
+        const matches = line.match(OPENING_IN_FAKE_EDITOR_REGEX);
+        if (matches?.length) {
+          this.handleOpenEditor(matches[1]);
         }
-
-        Logger.debug("Metro", line);
-
-        if (!line.startsWith("__RNIDE__")) {
-          metroOutputChannel.appendLine(line);
-        }
-
-        if (line.startsWith("__RNIDE__open_editor__ ")) {
-          this.handleOpenEditor(line.slice("__RNIDE__open_editor__ ".length));
-        } else if (line.includes(FAKE_EDITOR)) {
-          const matches = line.match(OPENING_IN_FAKE_EDITOR_REGEX);
-          if (matches?.length) {
-            this.handleOpenEditor(matches[1]);
-          }
-        }
-      });
+      }
     });
 
-    return initPromise;
+    // NOTE: if the process exits before the "initialize_done" event, we reject the promise
+    bundlerProcess
+      .catch(() => {
+        // ignore the error, we are only interested in the process exit
+      })
+      .then(() => {
+        this.bundlerReady.reject(new Error("Metro bundler exited unexpectedly"));
+      });
   }
 
-  private handleOpenEditor(payload: string) {
+  protected handleMetroEvent = (event: MetroEvent) => {
+    if (event.type === "bundle_transform_progressed") {
+      // Because totalFileCount grows as bundle_transform progresses at the beginning there are a few logs that indicate 100% progress thats why we ignore them
+      if (event.totalFileCount > 10) {
+        const bundleProgress = event.transformedFileCount / event.totalFileCount;
+        this.bundleProgressEventEmitter.fire({ bundleProgress });
+      }
+    } else if (event.type === "client_log" && event.level === "error") {
+      const err = stripAnsi(event.data[0]);
+      Logger.error(err);
+      this.metroOutputChannel.appendLine(err);
+    } else {
+      Logger.debug("Metro", event);
+    }
+
+    switch (event.type) {
+      case "RNIDE_expo_env_prelude_lines":
+        this._expoPreludeLineCount = event.lineCount;
+        Logger.debug("Expo prelude line offset was set to: ", this._expoPreludeLineCount);
+        break;
+      case "initialize_done":
+        const log = `Metro started on port ${this.port}`;
+        this.metroOutputChannel.appendLine(log);
+        Logger.info(log);
+        this.bundlerReady.resolve();
+        break;
+      case "RNIDE_watch_folders":
+        this._watchFolders = event.watchFolders;
+        Logger.info("Captured metro watch folders", this._watchFolders);
+        break;
+      case "bundling_error":
+        const message = stripAnsi(event.message);
+        let filename = event.error.originModulePath;
+        if (!filename && event.error.filename) {
+          filename = path.join(this.appRoot, event.error.filename);
+        }
+        const source = {
+          filename,
+          line1based: event.error.lineNumber,
+          column0based: event.error.columnNumber,
+        };
+        const errorModulePath = event.error.originModulePath;
+        this.bundleErrorEventEmitter.fire({ message, source, errorModulePath });
+        this.metroOutputChannel.appendLine(
+          `[Bundling Error]: ${filename}:${source.line1based}:${source.column0based}: ${message}`
+        );
+        break;
+    }
+  };
+
+  protected handleOpenEditor(payload: string) {
     // NOTE: this regex matches `fileName[:lineNumber][:columnNumber]` format:
     // - (.+?) - fileName (any character, non-greedy to allow for the trailing numbers)
     // - (?::(\d+))? - optional ":number", not capturing the colon
@@ -612,6 +528,11 @@ export class MetroLauncher extends Metro implements Disposable {
     const lineNumber = matches[2] ? parseInt(matches[2], 10) - 1 : 0;
     const columnNumber = matches[3] ? parseInt(matches[3], 10) - 1 : 0;
     openFileAtPosition(fileName, lineNumber, columnNumber);
+  }
+
+  public dispose() {
+    super.dispose();
+    this.bundlerProcess.kill();
   }
 }
 

@@ -105,7 +105,6 @@ function App() {
           {areNetworkLogDetailsVisible ? (
             <div ref={networkDetailsContainerRef} slot="end">
               <NetworkLogDetails
-                key={selectedNetworkLog.requestId}
                 networkLog={selectedNetworkLog}
                 handleClose={() => setSelectedNetworkLogId(null)}
                 parentHeight={networkLogContainerHeight}

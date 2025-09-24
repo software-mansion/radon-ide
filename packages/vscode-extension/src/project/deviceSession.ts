@@ -1,5 +1,4 @@
 import { Disposable } from "vscode";
-import { MetroLauncher } from "./metro";
 import { RadonInspectorBridge } from "./bridge";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
@@ -42,6 +41,7 @@ import { disposeAll } from "../utilities/disposables";
 import { FileTransfer } from "./FileTransfer";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { DevtoolsServer } from "./devtools";
+import { MetroProvider, MetroSession } from "./metro";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -63,11 +63,11 @@ export class DeviceSession implements Disposable {
   private disposables: Disposable[] = [];
 
   private applicationSession: ApplicationSession | undefined;
+  private metro: (MetroSession & Disposable) | undefined;
+  private maybeBuildResult: BuildResult | undefined;
   private buildManager: BuildManager;
   private cancelToken: CancelToken = new CancelToken();
   private frameReporter: FrameReporter;
-  private maybeBuildResult: BuildResult | undefined;
-  private metro: MetroLauncher;
   private screenCapture: ScreenCapture;
 
   private isActive = false;
@@ -99,7 +99,8 @@ export class DeviceSession implements Disposable {
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly devtoolsServer: (DevtoolsServer & { port: number }) | undefined,
-    initialRotation: DeviceRotation
+    initialRotation: DeviceRotation,
+    private readonly metroProvider: MetroProvider
   ) {
     this.frameReporter = new FrameReporter(
       this.stateManager.getDerived("frameReporting"),
@@ -113,9 +114,6 @@ export class DeviceSession implements Disposable {
       this.applicationContext
     );
     this.disposables.push(this.screenCapture);
-
-    this.metro = new MetroLauncher();
-    this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
 
     this.buildManager = this.applicationContext.buildManager;
 
@@ -231,7 +229,12 @@ export class DeviceSession implements Disposable {
   public async activate() {
     if (!this.isActive) {
       this.isActive = true;
-      await this.applicationSession?.activate();
+      try {
+        await this.applicationSession?.activate();
+      } catch (e) {
+        // the session couldn't be activated, which means we probably have to restart the application altogether
+        await this.autoReload();
+      }
     }
   }
 
@@ -325,23 +328,40 @@ export class DeviceSession implements Disposable {
     }
   }
 
+  private async getOrStartMetro({
+    resetCache,
+    forceRestart = false,
+  }: {
+    resetCache: boolean;
+    forceRestart?: boolean;
+  }) {
+    // NOTE: `resetCache` requires restarting the server as well
+    forceRestart = forceRestart || resetCache;
+
+    try {
+      if (!forceRestart && this.metro !== undefined && !this.metro.disposed) {
+        return this.metro;
+      }
+    } catch {
+      // ignore errors when accessing a disposed metro instance, just get a new one
+    }
+
+    this.metro?.dispose();
+    this.metro = undefined;
+    this.metro = forceRestart
+      ? await this.metroProvider.restartServer({ resetCache })
+      : await this.metroProvider.getMetroSession({ resetCache });
+    this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
+
+    return this.metro;
+  }
+
   private async restartMetro({ resetCache }: { resetCache: boolean }) {
     this.cancelOngoingOperations();
     const cancelToken = this.cancelToken;
 
     this.updateStartupMessage(StartupMessage.StartingPackager);
-    const oldMetro = this.metro;
-    this.metro = new MetroLauncher();
-    this.metro.onBundleProgress(({ bundleProgress }) => this.onBundleProgress(bundleProgress));
-    oldMetro.dispose();
-
-    Logger.debug(`Launching metro`);
-    await this.metro.start({
-      resetCache,
-      launchConfiguration: this.applicationContext.launchConfig,
-      dependencies: [],
-      devtoolsPort: this.devtoolsServer?.port,
-    });
+    await this.getOrStartMetro({ resetCache, forceRestart: true });
 
     this.applicationSession?.dispose();
     this.applicationSession = undefined;
@@ -459,13 +479,15 @@ export class DeviceSession implements Disposable {
       platform: this.stateManager.getState().deviceInfo.platform,
     });
 
+    const metro = await this.getOrStartMetro({ resetCache: false });
+
     const applicationSessionPromise = ApplicationSession.launch(
       this.stateManager.getDerived("applicationSession"),
       {
         applicationContext: this.applicationContext,
         device: this.device,
         buildResult: this.buildResult,
-        metro: this.metro,
+        metro,
         devtoolsServer: this.devtoolsServer,
         devtoolsPort: this.devtoolsServer?.port,
       },
@@ -605,12 +627,6 @@ export class DeviceSession implements Disposable {
     return this.device.installApp(this.buildResult, reinstall);
   }
 
-  private async waitForMetroReady() {
-    this.updateStartupMessage(StartupMessage.StartingPackager);
-    await this.metro.ready();
-    Logger.debug("Metro server ready");
-  }
-
   public async start() {
     try {
       this.resetStartingState(StartupMessage.InitializingDevice);
@@ -618,25 +634,19 @@ export class DeviceSession implements Disposable {
       this.cancelOngoingOperations();
       const cancelToken = this.cancelToken;
 
+      this.updateStartupMessage(StartupMessage.StartingPackager);
+
       const packageManagerOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(
         Output.PackageManager
       );
 
-      const waitForNodeModules =
-        this.applicationContext.applicationDependencyManager.ensureDependenciesForStart(
-          packageManagerOutputChannel,
-          cancelToken
-        );
+      await this.applicationContext.applicationDependencyManager.ensureDependenciesForStart(
+        packageManagerOutputChannel,
+        this.cancelToken
+      );
 
-      Logger.debug(`Launching metro`);
-      this.metro.start({
-        resetCache: false,
-        launchConfiguration: this.applicationContext.launchConfig,
-        dependencies: [waitForNodeModules],
-        devtoolsPort: this.devtoolsServer?.port,
-      });
+      await cancelToken.adapt(this.getOrStartMetro({ resetCache: false }));
 
-      await cancelToken.adapt(this.waitForMetroReady());
       await cancelToken.adapt(this.bootDevice());
       await this.buildApp({
         clean: false,
@@ -820,7 +830,7 @@ export class DeviceSession implements Disposable {
   }
 
   public async openDevMenu() {
-    await this.metro.openDevMenu();
+    await this.metro?.openDevMenu();
   }
 
   public async openPreview(previewId: string) {
@@ -901,6 +911,6 @@ export class DeviceSession implements Disposable {
   //#endregion
 
   public getMetroPort() {
-    return this.metro.port;
+    return this.metro?.port;
   }
 }

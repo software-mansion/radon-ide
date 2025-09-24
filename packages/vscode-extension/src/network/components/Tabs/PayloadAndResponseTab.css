@@ -26,17 +26,27 @@
 }
 
 .response-tab-button-wrapper {
-  position: absolute;
-  top: 4px;
+  position: sticky;
+  top: 8px;
   right: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 4px;
+  float: right;
+  z-index: 1;
 }
 
-.response-tab-pre {
-  white-space: pre-wrap;
-  word-break: break-word;
+.response-tab-pre,
+.response-tab-pre > pre {
   margin: 0 14px 14px 0;
+  font-size: var(--vscode-editor-font-size);
+}
+
+.shiki {
+  background-color: transparent !important;
+
+  & code {
+    background-color: transparent !important;
+  }
 }

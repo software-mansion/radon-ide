@@ -36,17 +36,13 @@ function DeviceRow({
   isRunning,
   dataTest,
 }: PropsWithDataTest<DeviceRowProps>) {
-  const store$ = useStore();
-  const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
   const { project } = useProject();
 
   const stopDevice = () => project.terminateSession(deviceInfo.id);
   const selectDevice: MouseEventHandler = (e) => {
     if (!isSelected) {
       e.stopPropagation();
-      project.startOrActivateSessionForDevice(deviceInfo, {
-        stopPreviousDevices,
-      });
+      project.startOrActivateSessionForDevice(deviceInfo);
       closeModal();
     }
   };
@@ -106,6 +102,7 @@ function DeviceRow({
               type: "secondary",
             }}
             disabled={!deviceInfo.available}
+            dataTest={`device-row-start-button-device-${deviceInfo.displayName}`}
             onClick={selectDevice}>
             <span className="codicon codicon-play" />
           </IconButton>
@@ -206,7 +203,7 @@ function ManageDevicesView() {
       <DeviceRow
         key={deviceInfo.id}
         deviceInfo={deviceInfo}
-        dataTest={`manage-devices-menu-row-device-${deviceInfo.displayName}`}
+        dataTest={`manage-devices-menu-row-device-${deviceInfo.displayName}--${deviceInfo.id}`}
         onDeviceRename={handleDeviceRename}
         onDeviceDelete={handleDeviceDelete}
         isSelected={deviceInfo.id === selectedProjectDevice?.id}

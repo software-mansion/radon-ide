@@ -10,7 +10,7 @@ export function checkNavigationDescriptorsEqual(a, b) {
   if (a.pathname !== b.pathname || Object.keys(a.params).length !== Object.keys(b.params).length) {
     return false;
   }
-  return Object.keys(a).every(key => deepEqual(a[key], b[key]));
+  return Object.keys(a).every((key) => deepEqual(a[key], b[key]));
 }
 
 export function sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange) {
@@ -19,7 +19,7 @@ export function sendNavigationChange(previousRouteInfo, routeInfo, onNavigationC
   const filteredParams = getParamsWithoutDynamicSegments(routeInfo);
   const displayParams = new URLSearchParams(filteredParams).toString();
   const displayName = `${pathname}${displayParams ? `?${displayParams}` : ""}`;
-  
+
   if (
     pathname &&
     previousRouteInfo.current &&
@@ -39,19 +39,27 @@ export function sendNavigationChange(previousRouteInfo, routeInfo, onNavigationC
 // in the params object, as they are already part of the route path.
 export function getParamsWithoutDynamicSegments(routeInfo) {
   const params = routeInfo?.params || {};
-  const dynamicSegments = routeInfo?.segments.filter((segment) => segment.startsWith("[") && segment.endsWith("]")) || [];
+  const dynamicSegments =
+    routeInfo?.segments.filter((segment) => segment.startsWith("[") && segment.endsWith("]")) || [];
   const dynamicSegmentKeys = dynamicSegments.map((segment) => segment.slice(1, -1));
-  
+
   Object.keys(params).forEach((key) => {
     if (dynamicSegmentKeys.includes(key)) {
       delete params[key];
     }
   });
+
+  // filter out expo-router internal params, those include __EXPO_ROUTER_key, and all params
+  // prefixed with __internal_expo_router
   delete params.__EXPO_ROUTER_key;
-  
+  Object.keys(params).forEach((key) => {
+    if (key.startsWith("__internal_expo_router")) {
+      delete params[key];
+    }
+  });
+
   return params;
 }
-
 
 // Helper function to extract the route list from Expo Router's routeNode, which is a tree-like object
 // returned by the router store and the getRoutes() function, containing all indexed routes.
@@ -70,7 +78,7 @@ export function extractNestedRouteList(rootNode) {
     const handleIndexFound = (route) => {
       indexFound = true;
       return "/" + route.replace("index", "");
-    }
+    };
 
     if (node) {
       const { contextKey, children, route, dynamic, type } = node;
@@ -87,7 +95,7 @@ export function extractNestedRouteList(rootNode) {
           filePath: contextKey,
           children: children,
           dynamic: dynamic,
-          type: type
+          type: type,
         });
       }
       if (children) {
@@ -109,7 +117,6 @@ export function extractNestedRouteList(rootNode) {
   });
 }
 
-
 // As it's an injected file, we can't use lodash or similar
 // so this is a simple deep equality check to compare
 // navigation descriptors, which can contain e.g. arrays.
@@ -120,7 +127,7 @@ function deepEqual(x, y) {
   if (typeof x !== typeof y) {
     return false;
   }
-  if (x && y && typeof x === 'object') {
+  if (x && y && typeof x === "object") {
     if (Array.isArray(x) && Array.isArray(y)) {
       if (x.length !== y.length) {
         return false;
@@ -135,7 +142,7 @@ function deepEqual(x, y) {
     if (keysX.length !== keysY.length) {
       return false;
     }
-    return keysX.every(key => deepEqual(x[key], y[key]));
+    return keysX.every((key) => deepEqual(x[key], y[key]));
   }
   return false;
 }

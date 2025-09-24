@@ -105,6 +105,18 @@ export class RadonViewsService {
     return debugConsole;
   }
 
+  async showZoomControls() {
+    const zoomControlsWrapper =
+      await this.elementHelperService.findAndWaitForElementByTag(
+        "button-group-left-wrapper"
+      );
+    const actions = this.driver.actions({ async: true });
+    await actions.move({ origin: zoomControlsWrapper }).perform();
+
+    // zoom buttons slide animation
+    await this.driver.sleep(500);
+  }
+
   async clickOnSourceInDebugConsole(debugConsole, textPattern) {
     const outputLine = await debugConsole.findElement(
       By.xpath(`//span[contains(text(), '${textPattern}')]/ancestor::div[1]`)
@@ -277,8 +289,14 @@ export class ManagingDevicesService {
       "creating-device-form-device-type-select"
     );
 
-    const { IS_ANDROID } = getConfiguration();
-    const device = IS_ANDROID ? "pixel" : "com.apple";
+    const { IS_ANDROID, IS_GITHUB_ACTIONS } = getConfiguration();
+    let device = IS_ANDROID ? "pixel" : "com.apple";
+    device = IS_GITHUB_ACTIONS
+      ? "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro"
+      : device;
+    let systemImage = IS_GITHUB_ACTIONS
+      ? "com.apple.CoreSimulator.SimRuntime.iOS-18-5"
+      : "";
 
     const selectedDevice =
       await this.elementHelperService.findAndWaitForElement(
@@ -296,7 +314,7 @@ export class ManagingDevicesService {
     const selectedSystemImage =
       await this.elementHelperService.findAndWaitForElement(
         By.css(
-          '[data-testid^="creating-device-form-system-image-select-item-"]:not(.select-item-marked)'
+          `[data-testid^="creating-device-form-system-image-select-item-${systemImage}"]:not(.select-item-marked)`
         ),
         "Timed out waiting for an element matching from system image list"
       );
@@ -308,9 +326,10 @@ export class ManagingDevicesService {
         "Timed out waiting for an element matching from system image list"
       );
 
+    // this method of clearing input seems to be most reliable
     deviceNameInput.click();
     await deviceNameInput.sendKeys(Key.chord(Key.COMMAND, "a"));
-    deviceNameInput.clear();
+    await deviceNameInput.sendKeys(Key.BACK_SPACE);
     await this.driver.wait(async () => {
       const value = await deviceNameInput.getAttribute("value");
       return value === "";
@@ -364,7 +383,8 @@ export class ManagingDevicesService {
 
         await this.elementHelperService.waitUntilElementGone(
           By.css(`[data-testid="device-removing-confirmation-view"]`),
-          3000,
+          // deleting device on GitHub CI takes a lot of time for some reason
+          20000,
           "delete confirmation modal did not disappear"
         );
       }
@@ -504,7 +524,7 @@ export class AppManipulationService {
 
   async hideExpoOverlay(appWebsocket) {
     // expo developer menu overlay loads slower on android app, it's test app so I can't check it programmatically
-    if (config.isAndroid) await this.driver.sleep(3000);
+    if (getConfiguration().IS_ANDROID) await this.driver.sleep(3000);
 
     const position = await this.getButtonCoordinates(
       appWebsocket,

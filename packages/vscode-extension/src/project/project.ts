@@ -35,7 +35,6 @@ import {
   DeviceSessionsManager,
   DeviceSessionsManagerDelegate,
   ReloadAction,
-  SelectDeviceOptions,
 } from "./DeviceSessionsManager";
 import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 import { FingerprintProvider } from "./FingerprintProvider";
@@ -218,14 +217,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
-  public startOrActivateSessionForDevice(
-    deviceInfo: DeviceInfo,
-    selectDeviceOptions?: SelectDeviceOptions
-  ): Promise<void> {
-    return this.deviceSessionsManager.startOrActivateSessionForDevice(
-      deviceInfo,
-      selectDeviceOptions
-    );
+  public startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void> {
+    return this.deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
   }
 
   public terminateSession(deviceId: DeviceId): Promise<void> {
@@ -263,7 +256,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     // NOTE: we reset the device sessions manager to close all the running sessions
     // and restart the current device with new config. In the future, we might want to keep the devices running
     // and only close the applications, but the API we have right now does not allow that.
-    const oldDeviceSessionsManager = this.deviceSessionsManager;
+    this.deviceSessionsManager.dispose();
     this.deviceSessionsManager = new DeviceSessionsManager(
       this.stateManager.getDerived("deviceSessions"),
       this.stateManager,
@@ -272,7 +265,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this.devicesStateManager,
       this
     );
-    oldDeviceSessionsManager.dispose();
     this.maybeStartInitialDeviceSession();
 
     this.launchConfigsManager.saveInitialLaunchConfig(launchConfig);

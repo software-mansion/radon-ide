@@ -9,6 +9,7 @@ const defaultConfig = {
   // https://github.com/utmapp/UTM/issues/6821
   // android tests can be run on a local machine with android studio installed
   IS_ANDROID: false,
+  IS_GITHUB_ACTIONS: false,
 };
 
 function prioritizeEnv(field) {
@@ -20,9 +21,11 @@ function prioritizeEnv(field) {
 export default function getConfiguration() {
   const IS_RECORDING = prioritizeEnv("IS_RECORDING");
   const IS_ANDROID = prioritizeEnv("IS_ANDROID");
+  const IS_GITHUB_ACTIONS = prioritizeEnv("IS_GITHUB_ACTIONS");
 
   return {
     IS_RECORDING,
     IS_ANDROID,
+    IS_GITHUB_ACTIONS,
   };
 }

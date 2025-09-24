@@ -9,8 +9,7 @@ fi
 
 FOLDER_NAME="$APP"
 TARGET_DIR="./data/react-native-app"
-# FIXME: temporary repo with react native apps (one app so far)
-REPO_URL="https://github.com/KeyJayY/react-native-apps.git"
+REPO_URL="https://github.com/software-mansion-labs/radon-ide-test-apps.git"
 TMP_DIR="./tmp-radon-ide-test-apps"
 
 rm -rf "$TARGET_DIR"
