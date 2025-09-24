@@ -1,10 +1,23 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useCallback, useState } from "react";
 import Modal from "../components/shared/Modal";
 
+interface ModalState {
+  title: string;
+  component: React.ReactNode;
+  open: boolean;
+  headerShown: boolean;
+  fullscreen: boolean;
+}
+
+interface ModalOptions {
+  title?: string;
+  fullscreen?: boolean;
+}
+
 interface ModalContextProps {
-  openModal: (title: string, component: React.ReactNode) => void;
+  openModal: (component: React.ReactNode, options?: ModalOptions) => void;
   closeModal: () => void;
-  showHeader: React.Dispatch<React.SetStateAction<boolean>>;
+  showHeader: (value: boolean) => void;
 }
 
 const ModalContext = createContext<ModalContextProps>({
@@ -14,32 +27,45 @@ const ModalContext = createContext<ModalContextProps>({
 });
 
 export default function ModalProvider({ children }: { children: React.ReactNode }) {
-  const [title, setTitle] = useState("");
-  const [component, setComponent] = useState(<></>);
-  const [open, setOpen] = useState(false);
-  const [headerShown, showHeader] = useState(true);
+  const [state, setState] = useState<ModalState | null>(null);
 
-  const openModal = (modalTitle: string, modalComponent: React.ReactNode) => {
-    setTitle(modalTitle);
-    // @ts-ignore TODO see this further but i think it's fine
-    setComponent(modalComponent);
-    setOpen(true);
+  const openModal = (modalComponent: React.ReactNode, options?: ModalOptions) => {
+    setState({
+      title: options?.title ?? "",
+      component: modalComponent,
+      open: true,
+      headerShown: true,
+      fullscreen: options?.fullscreen || false,
+    });
   };
 
   const closeModal = () => {
-    setOpen(false);
+    setState(null);
   };
+
+  const showHeader = useCallback(
+    (value: boolean) => {
+      if (state === null) {
+        return;
+      }
+      setState({ ...state, headerShown: value });
+    },
+    [state]
+  );
 
   return (
     <ModalContext.Provider value={{ openModal, closeModal, showHeader }}>
       {children}
-      <Modal
-        title={title}
-        component={component}
-        open={open}
-        setOpen={setOpen}
-        headerShown={headerShown}
-      />
+      {state !== null && (
+        <Modal
+          title={state.title}
+          component={state.component}
+          isOpen={state.open}
+          onClose={closeModal}
+          headerShown={state.headerShown}
+          fullscreen={state.fullscreen}
+        />
+      )}
     </ModalContext.Provider>
   );
 }

@@ -32,11 +32,11 @@ function BuildErrorActions({
         secondary
         onClick={() => {
           openModal(
-            "Launch Configuration",
             <LaunchConfigurationView
               launchConfig={projectState.selectedLaunchConfiguration}
               isCurrentConfig
-            />
+            />,
+            { title: "Launch Configuration" }
           );
         }}>
         Open Configuration
