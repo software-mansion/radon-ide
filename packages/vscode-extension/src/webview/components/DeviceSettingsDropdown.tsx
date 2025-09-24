@@ -215,14 +215,14 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                   onSelect={() => project.rotateDevices(DeviceRotationDirection.Clockwise)}
                   commandName={"RNIDE.rotateDeviceClockwise"}
                   label={"Clockwise"}
-                  dataTest={`device-settings-set-orientation-${"Clockwise".trim().toLowerCase().replace(/\s+/g, "-")}`}
+                  dataTest={`device-settings-set-orientation-clockwise`}
                   icon={"refresh"}
                 />
                 <CommandItem
                   onSelect={() => project.rotateDevices(DeviceRotationDirection.Anticlockwise)}
                   commandName={"RNIDE.rotateDeviceAnticlockwise"}
                   label={"Anticlockwise"}
-                  dataTest={`device-settings-set-orientation-${"Anticlockwise".trim().toLowerCase().replace(/\s+/g, "-")}`}
+                  dataTest={`device-settings-set-orientation-anticlockwise`}
                   icon={"refresh mirror"}
                 />
 
