@@ -1,8 +1,8 @@
 import React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 
-import "./Modal.css";
 import IconButton from "./IconButton";
+import "./Modal.css";
 
 interface ModalProps {
   title: string;
