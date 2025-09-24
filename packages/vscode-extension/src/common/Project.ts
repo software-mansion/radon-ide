@@ -61,6 +61,13 @@ export enum DeviceRotationDirection {
   Anticlockwise = 1,
 }
 
+export const ROTATIONS: DeviceRotation[] = [
+  DeviceRotation.LandscapeLeft,
+  DeviceRotation.Portrait,
+  DeviceRotation.LandscapeRight,
+  DeviceRotation.PortraitUpsideDown,
+] as const;
+
 export type AppOrientation = DeviceRotation | "Landscape";
 
 export function isOfEnumDeviceRotation(value: any): value is DeviceRotation {
@@ -141,9 +148,9 @@ export interface ProjectInterface {
 
   runDependencyChecks(): Promise<void>;
 
+  rotateDevices(direction: DeviceRotationDirection): Promise<void>;
   getDeviceSettings(): Promise<DeviceSettings>;
   updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
-  runCommand(command: string): Promise<void>;
 
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
   openTool(toolName: keyof ToolsState): Promise<void>;
@@ -194,6 +201,10 @@ export interface ProjectInterface {
   dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number): void;
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;
+  dispatchHomeButtonPress(): void;
+  dispatchAppSwitchButtonPress(): void;
+
+  sendBiometricAuthorization(isMatch: boolean): Promise<void>;
 
   reloadCurrentSession(type: ReloadAction): Promise<void>;
   startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void>;
@@ -223,6 +234,7 @@ export interface ProjectInterface {
   openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
   showDismissableError(errorMessage: string): Promise<void>;
   showToast(message: string, timeout: number): Promise<void>;
+  openLaunchConfigurationFile(): Promise<void>;
 
   reportIssue(): Promise<void>;
   sendTelemetry(eventName: string, properties?: TelemetryEventProperties): Promise<void>;

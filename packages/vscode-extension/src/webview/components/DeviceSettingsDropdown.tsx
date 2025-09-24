@@ -13,12 +13,7 @@ import "./shared/SwitchGroup.css";
 
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
-import {
-  AppPermissionType,
-  DeviceRotationDirection,
-  DeviceSettings,
-  ProjectInterface,
-} from "../../common/Project";
+import { AppPermissionType, DeviceRotationDirection, DeviceSettings } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
@@ -88,25 +83,6 @@ const setOrientationOptions: Array<{
     value: DeviceRotation.LandscapeRight,
     icon: "device-mobile",
     rotation: "90deg",
-  },
-];
-const rotateOptions: Array<{
-  label: string;
-  value: DeviceRotationDirection;
-  icon: string;
-  commandName: string;
-}> = [
-  {
-    label: "Clockwise",
-    value: DeviceRotationDirection.Clockwise,
-    icon: "refresh",
-    commandName: "RNIDE.rotateDeviceClockwise",
-  },
-  {
-    label: "Anticlockwise",
-    value: DeviceRotationDirection.Anticlockwise,
-    icon: "refresh mirror",
-    commandName: "RNIDE.rotateDeviceAnticlockwise",
   },
 ];
 
@@ -207,14 +183,14 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <div className="device-settings-margin" />
           </form>
           <CommandItem
-            project={project}
+            onSelect={() => project.dispatchHomeButtonPress()}
             commandName="RNIDE.deviceHomeButtonPress"
             label="Press Home Button"
             icon="home"
             dataTest="press-home-button"
           />
           <CommandItem
-            project={project}
+            onSelect={() => project.dispatchAppSwitchButtonPress()}
             commandName="RNIDE.deviceAppSwitchButtonPress"
             label="Open App Switcher"
             icon="chrome-restore"
@@ -235,15 +211,20 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 sideOffset={2}
                 alignOffset={-5}>
                 <Label>Rotate</Label>
-                {rotateOptions.map((option) => (
-                  <CommandItem
-                    project={project}
-                    commandName={option.commandName}
-                    label={option.label}
-                    dataTest={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
-                    icon={option.icon}
-                  />
-                ))}
+                <CommandItem
+                  onSelect={() => project.rotateDevices(DeviceRotationDirection.Clockwise)}
+                  commandName={"RNIDE.rotateDeviceClockwise"}
+                  label={"Clockwise"}
+                  dataTest={`device-settings-set-orientation-${"Clockwise".trim().toLowerCase().replace(/\s+/g, "-")}`}
+                  icon={"refresh"}
+                />
+                <CommandItem
+                  onSelect={() => project.rotateDevices(DeviceRotationDirection.Anticlockwise)}
+                  commandName={"RNIDE.rotateDeviceAnticlockwise"}
+                  label={"Anticlockwise"}
+                  dataTest={`device-settings-set-orientation-${"Anticlockwise".trim().toLowerCase().replace(/\s+/g, "-")}`}
+                  icon={"refresh mirror"}
+                />
 
                 <div className="device-settings-margin" />
                 <Label>Set Orientation</Label>
@@ -386,14 +367,14 @@ const LocalizationItem = () => {
 };
 
 function CommandItem({
-  project,
+  onSelect,
   commandName,
   label,
   icon,
   disabled = false,
   dataTest,
 }: PropsWithDataTest<{
-  project: ProjectInterface;
+  onSelect: () => void;
   commandName: string;
   label: string;
   icon: string;
@@ -402,9 +383,7 @@ function CommandItem({
   return (
     <DropdownMenu.Item
       className="dropdown-menu-item"
-      onSelect={() => {
-        project.runCommand(commandName);
-      }}
+      onSelect={onSelect}
       disabled={disabled}
       data-testid={dataTest}>
       <span className="dropdown-menu-item-wraper">
@@ -446,14 +425,18 @@ const BiometricsItem = () => {
             )}
           </DropdownMenu.Item>
           <CommandItem
-            project={project}
+            onSelect={() => {
+              project.sendBiometricAuthorization(true);
+            }}
             commandName="RNIDE.performBiometricAuthorization"
             label="Matching ID"
             icon="layout-sidebar-left"
             disabled={!deviceSettings.hasEnrolledBiometrics}
           />
           <CommandItem
-            project={project}
+            onSelect={() => {
+              project.sendBiometricAuthorization(false);
+            }}
             commandName="RNIDE.performFailedBiometricAuthorization"
             label="Non-Matching ID"
             icon="layout-sidebar-left"

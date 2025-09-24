@@ -8,6 +8,7 @@ import {
   AppPermissionType,
   DeviceButtonType,
   DeviceId,
+  DeviceRotationDirection,
   DeviceSettings,
   IDEPanelMoveTarget,
   isOfEnumDeviceRotation,
@@ -15,6 +16,7 @@ import {
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
+  ROTATIONS,
   TouchPoint,
 } from "../common/Project";
 import { AppRootConfigController } from "../panels/AppRootConfigController";
@@ -291,6 +293,18 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #endregion Dependency Checks
 
   // #region Device Settings
+
+  public async rotateDevices(direction: DeviceRotationDirection) {
+    const currentRotation = this.workspaceStateManager.getState().deviceRotation;
+    if (currentRotation === undefined) {
+      Logger.warn("[Radon IDE] Device rotation is not set in the configuration.");
+      return;
+    }
+
+    const currentIndex = ROTATIONS.indexOf(currentRotation);
+    const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
+    this.workspaceStateManager.updateState({ deviceRotation: ROTATIONS[newIndex] });
+  }
 
   public async getDeviceSettings() {
     return extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY, DEVICE_SETTINGS_DEFAULT);
@@ -611,6 +625,20 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     await this.editorBindings.showToast("Copied from device clipboard", 2000);
   }
 
+  public dispatchHomeButtonPress(): void {
+    this.deviceSession?.sendButton("home", "Down");
+    this.deviceSession?.sendButton("home", "Up");
+  }
+
+  public dispatchAppSwitchButtonPress(): void {
+    this.deviceSession?.sendButton("appSwitch", "Down");
+    this.deviceSession?.sendButton("appSwitch", "Up");
+  }
+
+  public async sendBiometricAuthorization(isMatch: boolean) {
+    await this.deviceSession?.sendBiometricAuthorization(isMatch);
+  }
+
   // #endregion Device Input
 
   // #region Reloading
@@ -707,10 +735,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
-  public async sendBiometricAuthorization(isMatch: boolean) {
-    await this.deviceSession?.sendBiometricAuthorization(isMatch);
-  }
-
   // #endregion Extension Interface
 
   // #region Logging
@@ -759,6 +783,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.editorBindings.showToast(message, timeout);
   }
 
+  public openLaunchConfigurationFile(): Promise<void> {
+    return this.editorBindings.openLaunchConfigurationFile();
+  }
+
   // #endregion Editor
 
   // #region Telemetry
@@ -804,12 +832,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #endregion Dispose
 
   // #region To Be Removed
-
-  // TODO: this should be removed from our public API
-  // to control it's surface
-  public async runCommand(command: string): Promise<void> {
-    await commands.executeCommand(command);
-  }
 
   // TODO: this should be moved to the new state management
   private updateProjectState(newState: Partial<ProjectState>) {

@@ -35,18 +35,10 @@ import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
 import { launchConfigurationFromOptions } from "./project/launchConfigurationsManager";
 import { isIdeConfig } from "./utilities/launchConfiguration";
-import { DeviceRotation, PanelLocation } from "./common/State";
+import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
-import { updatePartialWorkspaceConfig } from "./utilities/updatePartialWorkspaceConfig";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
-
-const ROTATIONS: DeviceRotation[] = [
-  DeviceRotation.LandscapeLeft,
-  DeviceRotation.Portrait,
-  DeviceRotation.LandscapeRight,
-  DeviceRotation.PortraitUpsideDown,
-] as const;
 
 function handleUncaughtErrors(context: ExtensionContext) {
   process.on("unhandledRejection", (error) => {
@@ -408,14 +400,12 @@ async function performFailedBiometricAuthorization() {
 
 async function deviceHomeButtonPress() {
   const project = IDE.getInstanceIfExists()?.project;
-  project?.dispatchButton("home", "Down");
-  project?.dispatchButton("home", "Up");
+  project?.dispatchHomeButtonPress();
 }
 
 async function deviceAppSwitchButtonPress() {
   const project = IDE.getInstanceIfExists()?.project;
-  project?.dispatchButton("appSwitch", "Down");
-  project?.dispatchButton("appSwitch", "Up");
+  project?.dispatchAppSwitchButtonPress();
 }
 
 async function deviceVolumeIncrease() {
@@ -448,16 +438,7 @@ async function rotateDevice(direction: DeviceRotationDirection) {
     throw new Error("Radon IDE is not initialized yet.");
   }
 
-  const configuration = workspace.getConfiguration("RadonIDE");
-
-  const currentRotation = configuration.get<DeviceRotation>("deviceRotation");
-  if (currentRotation === undefined) {
-    Logger.warn("[Radon IDE] Device rotation is not set in the configuration.");
-    return;
-  }
-  const currentIndex = ROTATIONS.indexOf(currentRotation);
-  const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
-  await updatePartialWorkspaceConfig(configuration, ["deviceRotation", ROTATIONS[newIndex]]);
+  project.rotateDevices(direction);
 }
 
 async function rotateDeviceAnticlockwise() {
