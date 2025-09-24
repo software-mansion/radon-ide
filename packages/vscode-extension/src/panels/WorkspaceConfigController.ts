@@ -11,7 +11,7 @@ import {
 import {
   merge,
   mergeAndCalculateChanges,
-  splitRecursivePartialToSingleLeafs,
+  splitRecursivePartialToSingleLeaves,
 } from "../common/Merge";
 
 export class WorkspaceConfigController implements Disposable {
@@ -34,7 +34,7 @@ export class WorkspaceConfigController implements Disposable {
         getCurrentWorkspaceConfiguration(config);
 
       const [_result, changes] = mergeAndCalculateChanges(currentWorkspaceConfig, partialState);
-      const singleChangesArray = splitRecursivePartialToSingleLeafs(changes);
+      const singleChangesArray = splitRecursivePartialToSingleLeaves(changes);
 
       for (const singleChange of singleChangesArray) {
         const updatedConfig = merge(currentWorkspaceConfig, singleChange);

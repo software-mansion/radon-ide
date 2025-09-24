@@ -83,34 +83,28 @@ export function merge<T extends { [P in keyof T]: T[P] }>(
  * @param partial - A RecursivePartial object to be split into single-leaf objects.
  * @returns An array of RecursivePartial objects, each representing a single leaf node.
  */
-export function splitRecursivePartialToSingleLeafs<T>(
+export function splitRecursivePartialToSingleLeaves<T>(
   partial: RecursivePartial<T>
 ): Array<RecursivePartial<T>> {
-  const result: any = [];
-
-  function traverse(obj: any, pathKeys: any = []) {
+  const result: Array<RecursivePartial<T>> = [];
+  function traverse(obj: NonNullable<object>, pathKeys: string[] = []) {
     for (const [key, value] of Object.entries(obj)) {
       if (value && typeof value === "object" && !Array.isArray(value)) {
         traverse(value, [...pathKeys, key]);
       } else {
-        const leafObject = {};
-        setNestedValue(leafObject, [...pathKeys, key], value);
-        result.push(leafObject);
+        const leafObject = createPathObject([...pathKeys, key], value);
+        result.push(leafObject as RecursivePartial<T>);
       }
     }
   }
-
-  function setNestedValue(obj: any, pathKeys: any, value: any) {
-    let current = obj;
-    for (let i = 0; i < pathKeys.length - 1; i++) {
-      if (!current[pathKeys[i]]) {
-        current[pathKeys[i]] = {};
-      }
-      current = current[pathKeys[i]];
+  function createPathObject(pathKeys: string[], value: unknown) {
+    let current = value;
+    while (pathKeys.length !== 0) {
+      const key = pathKeys.pop()!;
+      current = { [key]: current };
     }
-    current[pathKeys[pathKeys.length - 1]] = value;
+    return current;
   }
-
   traverse(partial);
   return result;
 }
