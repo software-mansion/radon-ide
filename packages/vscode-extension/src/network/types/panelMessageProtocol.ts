@@ -1,35 +1,41 @@
 import { ThemeDescriptor } from "../../common/theme";
 import { RequestData, ResponseData, NetworkRequestInitiator } from "./network";
 
-export type NetworkEvent =
-  | "Network.requestWillBeSent"
-  | "Network.responseReceived"
-  | "Network.loadingFinished"
-  | "Network.loadingFailed";
+export enum NetworkEvent {
+  RequestWillBeSent = "Network.requestWillBeSent",
+  RequestWillBeSentExtraInfo = "Network.requestWillBeSentExtraInfo",
+  ResponseReceived = "Network.responseReceived",
+  LoadingFinished = "Network.loadingFinished",
+  LoadingFailed = "Network.loadingFailed",
+}
 
-export type NetworkType = "Network.Initiator";
+export enum NetworkType {
+  Initiator = "Network.Initiator",
+}
 
-export type NetworkControlCommand =
-  | "Network.enable"
-  | "Network.disable"
-  | "Network.getResponseBody";
+export enum NetworkMethod {
+  Enable = "Network.enable",
+  Disable = "Network.disable",
+  GetResponseBody = "Network.getResponseBody",
+}
 
-export const NETWORK_EVENTS = [
-  "Network.requestWillBeSent",
-  "Network.responseReceived",
-  "Network.loadingFinished",
-  "Network.loadingFailed",
-] as const;
+export const NETWORK_EVENTS = Object.values(NetworkEvent);
 
-export const NETWORK_CONTROL_COMMANDS = [
-  "Network.enable",
-  "Network.disable",
-  "Network.getResponseBody",
-] as const;
+export const NETWORK_METHODS = Object.values(NetworkMethod);
 
-export type CDPMethod = NetworkEvent | NetworkControlCommand | NetworkType;
+export const NETWORK_TYPES = Object.values(NetworkType);
+
+export type CDPMethod = NetworkEvent | NetworkMethod | NetworkType;
 
 export type IDEMethod = "IDE.fetchFullResponseBody" | "IDE.getTheme" | "IDE.Theme";
+
+export function isCDPMethod(method: string): method is CDPMethod {
+  return (
+    NETWORK_EVENTS.includes(method as NetworkEvent) ||
+    NETWORK_METHODS.includes(method as NetworkMethod) ||
+    NETWORK_TYPES.includes(method as NetworkType)
+  );
+}
 
 export interface CDPParams {
   // Common fields

@@ -13,14 +13,15 @@ import {
   DEBUG_PAUSED,
   DEBUG_RESUMED,
   SCRIPT_PARSED,
-  NETWORK_EVENT,
-  DebugNetworkEvent,
+  RNIDE_NETWORK_EVENT,
+  RNIDE_NetworkMethod,
 } from "./DebugSession";
 import { CDPProfile } from "./cdp";
 import { annotateLocations, filePathForProfile } from "./cpuProfiler";
 import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { startDebugging } from "./startDebugging";
 import { Logger } from "../Logger";
+import { NetworkMethod } from "../network/types/panelMessageProtocol";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
@@ -130,7 +131,7 @@ export class ProxyDebugAdapter extends DebugSession {
 
     this.disposables.push(
       proxyDelegate.onNetworkEvent((e) => {
-        this.sendEvent(new Event(NETWORK_EVENT, e));
+        this.sendEvent(new Event(RNIDE_NETWORK_EVENT, e));
       })
     );
   }
@@ -275,13 +276,16 @@ export class ProxyDebugAdapter extends DebugSession {
   }
 
   private async enableNetworkInspector() {
-    await this.cdpProxy.injectDebuggerCommand({ method: "Network.enable", params: {} });
+    await this.cdpProxy.injectDebuggerCommand({ method: NetworkMethod.Enable, params: {} });
   }
   private async disableNetworkInspector() {
-    await this.cdpProxy.injectDebuggerCommand({ method: "Network.disable", params: {} });
+    await this.cdpProxy.injectDebuggerCommand({ method: NetworkMethod.Disable, params: {} });
   }
   private async getResponseBody(args: any) {
-    await this.cdpProxy.injectDebuggerCommand({ method: "Network.getResponseBody", params: args });
+    await this.cdpProxy.injectDebuggerCommand({
+      method: NetworkMethod.GetResponseBody,
+      params: args,
+    });
   }
 
   private async dispatchRadonAgentMessage(args: any) {
@@ -340,13 +344,13 @@ export class ProxyDebugAdapter extends DebugSession {
       case "RNIDE_addBinding":
         await this.addBinding(args.name);
         break;
-      case DebugNetworkEvent.Enable:
+      case RNIDE_NetworkMethod.Enable:
         await this.enableNetworkInspector();
         break;
-      case DebugNetworkEvent.Disable:
+      case RNIDE_NetworkMethod.Disable:
         await this.disableNetworkInspector();
         break;
-      case DebugNetworkEvent.GetResponseBody:
+      case RNIDE_NetworkMethod.GetResponseBody:
         await this.getResponseBody(args);
         break;
     }

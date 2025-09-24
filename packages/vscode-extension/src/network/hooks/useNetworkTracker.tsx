@@ -8,6 +8,8 @@ import {
   NetworkEvent,
   NETWORK_EVENTS,
   WebviewCommand,
+  NetworkMethod,
+  NetworkType,
 } from "../types/panelMessageProtocol";
 
 export interface NetworkTracker {
@@ -155,14 +157,14 @@ const useNetworkTracker = (): NetworkTracker => {
   const toggleNetwork = (isRunning: boolean) => {
     sendWebviewCDPMessage({
       id: "enable",
-      method: isRunning ? "Network.disable" : "Network.enable",
+      method: isRunning ? NetworkMethod.Disable : NetworkMethod.Enable,
     });
   };
 
   const getSource = (networkLog: NetworkLog) => {
     sendWebviewCDPMessage({
       id: "initiator",
-      method: "Network.Initiator",
+      method: NetworkType.Initiator,
       params: {
         requestId: networkLog.requestId,
         initiator: networkLog.initiator,

@@ -13,7 +13,7 @@ import useNetworkTracker, {
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { NetworkLog } from "../types/networkLog";
-import { WebviewMessage, WebviewCommand } from "../types/panelMessageProtocol";
+import { WebviewMessage, WebviewCommand, NetworkMethod } from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
 import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
@@ -145,7 +145,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     // Send the message to the network-plugin backend
     sendWebviewCDPMessage({
       id: messageId,
-      method: "Network.getResponseBody",
+      method: NetworkMethod.GetResponseBody,
       params: {
         requestId: requestId,
       },

@@ -38,7 +38,13 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     applicationCommand: IProtocolCommand,
     tunnel: ProxyTunnel
   ): Promise<IProtocolCommand | IProtocolSuccess | IProtocolError | undefined> {
-    switch (applicationCommand.method) {
+    const commandMethod = applicationCommand.method;
+
+    if (commandMethod.startsWith("Network.")) {
+      return this.handleNetworkEvent(applicationCommand);
+    }
+
+    switch (commandMethod) {
       case "Runtime.consoleAPICalled": {
         return this.handleConsoleAPICalled(applicationCommand);
       }
@@ -57,13 +63,6 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       case "Runtime.executionContextsCleared": {
         this.sourceMapRegistry.clearSourceMaps();
         return applicationCommand;
-      }
-      case "Network.requestWillBeSent":
-      case "Network.getResponseBody":
-      case "Network.requestWillBeSentExtraInfo":
-      case "Network.responseReceived":
-      case "Network.loadingFinished": {
-        return this.handleNetworkEvent(applicationCommand);
       }
     }
     return applicationCommand;
@@ -177,7 +176,6 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       }
       case "Runtime.enable": {
         await this.onRuntimeEnable(tunnel);
-        await this.handleNetworkEvent(command);
         return command;
       }
       // NOTE: setBlackbox* commands (as of 0.78) are not handled correctly by the Hermes debugger, so we need to disable them.

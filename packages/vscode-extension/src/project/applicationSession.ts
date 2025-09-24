@@ -39,12 +39,8 @@ import {
   DevtoolsServer,
   CDPDevtoolsServer,
 } from "./devtools";
-import {
-  RadonInspectorBridge,
-  NETWORK_EVENT_MAP,
-  NetworkCommandMethod,
-  NetworkInspectorBridge,
-} from "./bridge";
+import { RadonInspectorBridge, NETWORK_EVENT_MAP, NetworkBridge } from "./bridge";
+import { isCDPMethod } from "../network/types/panelMessageProtocol";
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
   device: DeviceBase;
@@ -71,7 +67,7 @@ export class ApplicationSession implements Disposable {
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
   private debugSessionEventSubscription?: Disposable;
-  private networkBridge: NetworkInspectorBridge;
+  private networkBridge: NetworkBridge;
   private isActive = false;
   private inspectCallID = 7621;
   private devtools: DevtoolsConnection | undefined;
@@ -173,7 +169,7 @@ export class ApplicationSession implements Disposable {
     private readonly supportedOrientations: DeviceRotation[]
   ) {
     this.registerMetroListeners();
-    this.networkBridge = new NetworkInspectorBridge();
+    this.networkBridge = new NetworkBridge();
 
     const devtoolsInspectorBridge = new DevtoolsInspectorBridge();
     this._inspectorBridge = devtoolsInspectorBridge;
@@ -308,11 +304,12 @@ export class ApplicationSession implements Disposable {
   };
 
   private onNetworkEvent = (event: DebugSessionCustomEvent): void => {
-    const method = event.body?.method as NetworkCommandMethod;
-    if (!method || !(method in NETWORK_EVENT_MAP)) {
+    const method = event.body?.method;
+    if (!method || !isCDPMethod(method)) {
       console.error("Unknown network event method - aborting:", method);
       return;
     }
+
     this.networkBridge.emitEvent(NETWORK_EVENT_MAP[method], event.body);
   };
 

@@ -17,9 +17,9 @@ export const DEBUG_PAUSED = "RNIDE_paused";
 export const DEBUG_RESUMED = "RNIDE_continued";
 export const SCRIPT_PARSED = "RNIDE_scriptParsed";
 export const BINDING_CALLED = "RNIDE_bindingCalled";
-export const NETWORK_EVENT = "RNIDE_networkEvent"
+export const RNIDE_NETWORK_EVENT = "RNIDE_networkEvent";
 
-export enum DebugNetworkEvent {
+export enum RNIDE_NetworkMethod {
   Enable = "RNIDE_enableNetworkInspector",
   Disable = "RNIDE_disableNetworkInspector",
   GetResponseBody = "RNIDE_getResponseBody",
@@ -60,7 +60,7 @@ export interface DebugSession {
   stepIntoDebugger(): void;
   evaluateExpression(params: Cdp.Runtime.EvaluateParams): Promise<Cdp.Runtime.EvaluateResult>;
   addBinding(name: string): Promise<void>;
-  sendNetworkCommandRequest(requestType: DebugNetworkEvent): Promise<void>;
+  invokeNetworkMethod(method: RNIDE_NetworkMethod): Promise<void>;
 
   // Profiling controls
   startProfilingCPU(): Promise<void>;
@@ -140,7 +140,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
           case SCRIPT_PARSED:
             this.scriptParsedEventEmitter.fire(event.body);
             break;
-          case NETWORK_EVENT:
+          case RNIDE_NETWORK_EVENT:
             this.networkEventEmitter.fire(event);
             break;
           default:
@@ -332,9 +332,9 @@ export class DebugSessionImpl implements DebugSession, Disposable {
     await this.jsDebugSession.customRequest("RNIDE_addBinding", { name });
   }
 
-  public async sendNetworkCommandRequest(requestType: DebugNetworkEvent) {
+  public async invokeNetworkMethod(method: RNIDE_NetworkMethod) {
     // TODO add args handling for future getResponseBody
-    await this.jsDebugSession?.customRequest(requestType);
+    await this.jsDebugSession?.customRequest(method);
   }
 
   private cancelStartingDebugSession() {

@@ -1,6 +1,6 @@
 import { Disposable } from "vscode";
 import _ from "lodash";
-import { NetworkInspectorBridge, RadonInspectorBridge } from "./bridge";
+import { NetworkBridge, RadonInspectorBridge } from "./bridge";
 import { extensionContext } from "../utilities/extensionContext";
 import {
   createExpoDevPluginTools,
@@ -62,7 +62,7 @@ export class ToolsManager implements Disposable {
   public constructor(
     private readonly stateManager: StateManager<ToolsState>,
     public readonly inspectorBridge: RadonInspectorBridge,
-    public readonly networkBridge: NetworkInspectorBridge,
+    public readonly networkBridge: NetworkBridge,
     public readonly workspaceConfigState: StateManager<WorkspaceConfiguration>
   ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));

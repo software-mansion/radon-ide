@@ -1,5 +1,5 @@
 import { Disposable, window } from "vscode";
-import { NetworkInspectorBridge, RadonInspectorBridge } from "../../project/bridge";
+import { NetworkBridge, RadonInspectorBridge } from "../../project/bridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { Logger } from "../../Logger";
@@ -10,7 +10,7 @@ import NewArchitecture from "./NewArchitectureStrategy";
 import { WebviewMessage } from "../../network/types/panelMessageProtocol";
 
 export const NETWORK_PLUGIN_ID = "network";
-const NEW_ARCHITECTURE = false;
+const NEW_ARCHITECTURE = true;
 
 export interface ArchitectureStrategy {
   activate(): void;
@@ -53,7 +53,7 @@ export class NetworkPlugin implements ToolPlugin {
 
   constructor(
     readonly inspectorBridge: RadonInspectorBridge,
-    readonly networkBridge: NetworkInspectorBridge
+    readonly networkBridge: NetworkBridge
   ) {
     this.strategy = NEW_ARCHITECTURE ? new NewArchitecture(this) : new LegacyArchitecture(this);
     initialize();

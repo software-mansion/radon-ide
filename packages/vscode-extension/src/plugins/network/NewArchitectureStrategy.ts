@@ -4,7 +4,7 @@ import { disposeAll } from "../../utilities/disposables";
 import { WebviewMessage } from "../../network/types/panelMessageProtocol";
 
 export default class NewArchitecture implements ArchitectureStrategy {
-  private networkListeners: Disposable[] = [];
+  private disposables: Disposable[] = [];
   private broadcastListeners: BroadcastListener[] = [];
 
   public get pluginAvailable() {
@@ -14,34 +14,39 @@ export default class NewArchitecture implements ArchitectureStrategy {
   constructor(private plugin: NetworkPlugin) {}
 
   private setupListeners() {
-    this.networkListeners.push(
+    this.disposables.push(
       this.plugin.networkBridge.onEvent("requestWillBeSent", (payload) => {
         console.log("mleko", payload);
       })
     );
-    this.networkListeners.push(
+    this.disposables.push(
       this.plugin.networkBridge.onEvent("requestWillBeSentExtraInfo", (payload) => {
         console.log("mleko", payload);
       })
     );
-    this.networkListeners.push(
+    this.disposables.push(
       this.plugin.networkBridge.onEvent("responseReceived", (payload) => {
         console.log("mleko", payload);
       })
     );
-    this.networkListeners.push(
+    this.disposables.push(
       this.plugin.networkBridge.onEvent("loadingFinished", (payload) => {
         console.log("mleko", payload);
       })
     );
-    this.networkListeners.push(
+    this.disposables.push(
       this.plugin.networkBridge.onEvent("enable", () => {
         console.log("mleko", "Network Inspector enabled");
       })
     );
-    this.networkListeners.push(
+    this.disposables.push(
       this.plugin.networkBridge.onEvent("disable", () => {
         console.log("mleko", "Network Inspector disabled");
+      })
+    );
+    this.disposables.push(
+      this.plugin.inspectorBridge.onEvent("appReady", () => {
+        this.plugin.networkBridge.enableNetworkInspector();
       })
     );
   }
@@ -54,15 +59,11 @@ export default class NewArchitecture implements ArchitectureStrategy {
 
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
     this.setupListeners();
-
-    this.plugin.networkBridge.onEvent("runtimeEnable", () => {
-      this.plugin.networkBridge.enableNetworkInspector();
-    });
     this.plugin.networkBridge.enableNetworkInspector();
   }
 
   public deactivate(): void {
-    disposeAll(this.networkListeners);
+    disposeAll(this.disposables);
     if (!this.pluginAvailable) {
       return;
     }
@@ -76,7 +77,7 @@ export default class NewArchitecture implements ArchitectureStrategy {
   }
 
   public dispose(): void {
-    disposeAll(this.networkListeners);
+    disposeAll(this.disposables);
   }
 
   public onMessageBroadcast(cb: BroadcastListener): Disposable {

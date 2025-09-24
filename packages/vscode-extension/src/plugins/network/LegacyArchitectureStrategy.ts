@@ -11,6 +11,7 @@ import {
   CDPMessage,
   WebviewCommand,
   IDEMessage,
+  NetworkMethod,
 } from "../../network/types/panelMessageProtocol";
 import { RequestData, RequestOptions } from "../../network/types/network";
 
@@ -155,7 +156,7 @@ export default class LegacyArchitecture implements ArchitectureStrategy {
     // Enable network monitoring when app is ready
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("appReady", () => {
-        this.sendCDPMessage({ method: "Network.enable", params: {} });
+        this.sendCDPMessage({ method: NetworkMethod.Enable, params: {} });
       })
     );
   }
@@ -190,12 +191,12 @@ export default class LegacyArchitecture implements ArchitectureStrategy {
   public activate(): void {
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
     this.setupListeners();
-    this.sendCDPMessage({ method: "Network.enable", params: {} });
+    this.sendCDPMessage({ method: NetworkMethod.Enable, params: {} });
   }
 
   public deactivate(): void {
     disposeAll(this.devtoolsListeners);
-    this.sendCDPMessage({ method: "Network.disable", params: {} });
+    this.sendCDPMessage({ method: NetworkMethod.Disable, params: {} });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
   }
 

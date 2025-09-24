@@ -2,7 +2,8 @@ import { Disposable } from "vscode";
 import { AppOrientation } from "../common/Project";
 import { Logger } from "../Logger";
 import { InspectorAvailabilityStatus, NavigationRoute } from "../common/State";
-import { DebugSession, DebugNetworkEvent } from "../debugging/DebugSession";
+import { DebugSession, RNIDE_NetworkMethod } from "../debugging/DebugSession";
+import { NetworkMethod, NetworkEvent, NetworkType } from "../network/types/panelMessageProtocol";
 
 type BridgeEventsMap<K extends string> = Record<K, unknown[]>;
 
@@ -140,49 +141,43 @@ export abstract class BaseInspectorBridge
 
 // --- NetworkBridge ---
 
-export enum NetworkCommandMethod {
-  Enable = "Network.enable",
-  Disable = "Network.disable",
-  RuntimeEnable = "Runtime.enable",
-  RequestWillBeSent = "Network.requestWillBeSent",
-  RequestWillBeSentExtraInfo = "Network.requestWillBeSentExtraInfo",
-  ResponseReceived = "Network.responseReceived",
-  LoadingFinished = "Network.loadingFinished",
-}
-
 export interface RadonNetworkBridgeEvents {
   enable: [];
   disable: [];
-  runtimeEnable: [];
+  Initiator: [];
   requestWillBeSent: [{ data: any }];
   requestWillBeSentExtraInfo: [{ data: any }];
   responseReceived: [{ data: any }];
   loadingFinished: [{ data: any }];
+  loadingFailed: [{ data: any }];
+  getResponseBody: [{ data: any }];
 }
 
-export type NetworkEventNames = keyof RadonNetworkBridgeEvents;
+export type NetworkBridgeEventNames = keyof RadonNetworkBridgeEvents;
 
 export const NETWORK_EVENT_MAP = {
-  [NetworkCommandMethod.Enable]: "enable",
-  [NetworkCommandMethod.Disable]: "disable",
-  [NetworkCommandMethod.RuntimeEnable]: "runtimeEnable",
-  [NetworkCommandMethod.RequestWillBeSent]: "requestWillBeSent",
-  [NetworkCommandMethod.RequestWillBeSentExtraInfo]: "requestWillBeSentExtraInfo",
-  [NetworkCommandMethod.ResponseReceived]: "responseReceived",
-  [NetworkCommandMethod.LoadingFinished]: "loadingFinished",
+  [NetworkMethod.Enable]: "enable",
+  [NetworkMethod.Disable]: "disable",
+  [NetworkMethod.GetResponseBody]: "getResponseBody",
+  [NetworkType.Initiator]: "Initiator",
+  [NetworkEvent.RequestWillBeSent]: "requestWillBeSent",
+  [NetworkEvent.RequestWillBeSentExtraInfo]: "requestWillBeSentExtraInfo",
+  [NetworkEvent.ResponseReceived]: "responseReceived",
+  [NetworkEvent.LoadingFinished]: "loadingFinished",
+  [NetworkEvent.LoadingFailed]: "loadingFailed",
 } as const;
 
 export interface RadonNetworkBridge {
   enableNetworkInspector(): void;
   disableNetworkInspector(): void;
-  onEvent<K extends NetworkEventNames>(
+  onEvent<K extends NetworkBridgeEventNames>(
     event: K,
     listener: (...payload: RadonNetworkBridgeEvents[K]) => void
   ): Disposable;
 }
 
-export class NetworkInspectorBridge
-  extends GenericBridge<RadonNetworkBridgeEvents, NetworkEventNames>
+export class NetworkBridge
+  extends GenericBridge<RadonNetworkBridgeEvents, NetworkBridgeEventNames>
   implements RadonNetworkBridge
 {
   private debugSession?: (DebugSession & Disposable) | undefined;
@@ -195,23 +190,23 @@ export class NetworkInspectorBridge
     this.debugSession = debugSession;
   }
 
-  protected send(request: DebugNetworkEvent): void {
-    this.debugSession?.sendNetworkCommandRequest(request);
+  protected send(request: RNIDE_NetworkMethod): void {
+    this.debugSession?.invokeNetworkMethod(request);
   }
 
   public enableNetworkInspector(): void {
     if (!this.bridgeAvailable) {
       return;
     }
-    this.send(DebugNetworkEvent.Enable);
-    this.emitEvent("enable", []);
+    this.send(RNIDE_NetworkMethod.Enable);
+    // this.emitEvent("enable", []);
   }
 
   public disableNetworkInspector(): void {
     if (!this.bridgeAvailable) {
       return;
     }
-    this.send(DebugNetworkEvent.Disable);
-    this.emitEvent("disable", []);
+    this.send(RNIDE_NetworkMethod.Disable);
+    // this.emitEvent("disable", []);
   }
 }

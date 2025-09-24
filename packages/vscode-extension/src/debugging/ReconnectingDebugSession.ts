@@ -3,7 +3,12 @@ import { Cdp } from "vscode-cdp-proxy";
 import { Metro } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
 import { sleep } from "../utilities/retry";
-import { DebugNetworkEvent, DebugSession, DebugSource, JSDebugConfiguration } from "./DebugSession";
+import {
+  RNIDE_NetworkMethod,
+  DebugSession,
+  DebugSource,
+  JSDebugConfiguration,
+} from "./DebugSession";
 import { disposeAll } from "../utilities/disposables";
 import { DevtoolsServer } from "../project/devtools";
 
@@ -148,7 +153,7 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
     return this.debugSession.addBinding(name);
   }
 
-  public sendNetworkCommandRequest(request: DebugNetworkEvent): Promise<void> {
-    return this.debugSession.sendNetworkCommandRequest(request);
+  public invokeNetworkMethod(request: RNIDE_NetworkMethod): Promise<void> {
+    return this.debugSession.invokeNetworkMethod(request);
   }
 }
