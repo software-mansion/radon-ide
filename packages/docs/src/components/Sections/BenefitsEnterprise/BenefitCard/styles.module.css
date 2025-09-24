@@ -32,3 +32,14 @@
 .cardContainer p {
   margin: 0;
 }
+
+@media (max-width: 500px) {
+  .cardContainer {
+    padding: 24px;
+  }
+}
+
+.iconContainer {
+  width: 24px;
+  height: 24px;
+}

@@ -132,3 +132,10 @@
     padding: 0 24px;
   }
 }
+
+@media (max-width: 500px) {
+  .buttonContainer {
+    flex-direction: column;
+    gap: 16px;
+  }
+}

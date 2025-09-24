@@ -10,7 +10,7 @@ interface BenefitCardProps {
 export default function BenefitCard({ icon, title, description }: BenefitCardProps) {
   return (
     <div className={styles.cardContainer}>
-      <div>{icon}</div>
+      <div className={styles.iconContainer}>{icon}</div>
       <div className={styles.textContent}>
         <div>
           <h5 className={styles.cardTitle}>{title}</h5>

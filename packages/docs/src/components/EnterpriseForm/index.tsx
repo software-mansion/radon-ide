@@ -1,8 +1,21 @@
-import React, { useState, forwardRef } from "react";
+import React, { useState, forwardRef, useRef } from "react";
 import styles from "./styles.module.css";
-import ChevronDownIcon from "../ChevronDownIcon";
+import emailjs from "@emailjs/browser";
+import { CustomSelect } from "../CustomSelect";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
 const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
+  const formRef = useRef();
+  const [isSent, setisSent] = useState(false);
+  const [submitDisabled, setSubmitDisabled] = useState(false);
+
+  const { siteConfig } = useDocusaurusContext();
+
+  const SERVICE_ID = siteConfig.customFields.service_id;
+  const CONTACT_TEMPLATE_ID = siteConfig.customFields.contact_template_id;
+  const AUTO_REPLY_TEMPLATE_ID = siteConfig.customFields.auto_reply_template_id;
+  const PUBLIC_KEY = siteConfig.customFields.public_key;
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -25,8 +38,8 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     const newErrors = {
       name: formData.name.trim() === "",
       email: formData.email.trim() === "",
@@ -36,7 +49,19 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
     setError(newErrors);
 
     if (Object.values(newErrors).some((val) => val)) return;
-    window.location.href = `mailto:projects@swmansion.com?subject=Radon enterprise: ${formData.name} from ${formData.companyName}&body=Contact email: ${formData.email}%0A Role: ${formData.role}%0A Team size: ${formData.teamSize}%0A Comment: ${formData.comment}`;
+
+    try {
+      setSubmitDisabled(true);
+      await emailjs.sendForm(SERVICE_ID, CONTACT_TEMPLATE_ID, formRef.current, {
+        publicKey: PUBLIC_KEY,
+      });
+      await emailjs.sendForm(SERVICE_ID, AUTO_REPLY_TEMPLATE_ID, formRef.current, {
+        publicKey: PUBLIC_KEY,
+      });
+      setisSent(true);
+    } catch (error) {
+      console.log("FAILED...", error.text);
+    }
   };
 
   return (
@@ -49,91 +74,89 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
           Schedule a personalized demo and see how Radon IDE can improve your team’s workflow.
         </p>
       </div>
-      <div className={styles.formContainer}>
-        <form onSubmit={handleSubmit}>
-          <div>
-            <label className={error.name && styles.labelError}>Your name </label>
-            <input
-              type="text"
-              name="name"
-              id="name"
-              pattern="^[a-zA-Z]{3,50}$"
-              value={formData.name}
-              onChange={handleChange}
-            />
-            {error.name && <p className={styles.error}>{err}</p>}
+      <div className={styles.formBox}>
+        {isSent ? (
+          <div className={styles.successContainer}>
+            <h4>Thank you!</h4>
+            <p>
+              Your form has been submitted. A member of our team will contact you within 2 business
+              days to discuss your enterprise needs.
+            </p>
           </div>
-          <div>
-            <label className={error.email && styles.labelError}>Email </label>
-            <input
-              type="email"
-              name="email"
-              id="email"
-              value={formData.email}
-              onChange={handleChange}
-            />
-            {error.email && <p className={styles.error}>{err}</p>}
+        ) : (
+          <div className={styles.formContainer}>
+            <form ref={formRef} onSubmit={handleSubmit}>
+              <div>
+                <label className={error.name && styles.labelError}>Your name </label>
+                <input
+                  type="text"
+                  name="name"
+                  id="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                />
+                {error.name && <p className={styles.error}>{err}</p>}
+              </div>
+              <div>
+                <label className={error.email && styles.labelError}>Email </label>
+                <input
+                  type="email"
+                  name="email"
+                  id="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                />
+                {error.email && <p className={styles.error}>{err}</p>}
+              </div>
+              <div>
+                <label className={error.companyName && styles.labelError}>Company name</label>
+                <input
+                  type="text"
+                  name="companyName"
+                  id="company"
+                  value={formData.companyName}
+                  onChange={handleChange}
+                />
+                {error.companyName && <p className={styles.error}>{err}</p>}
+              </div>
+              <div>
+                <label>
+                  Role <span>(Optional)</span>
+                </label>
+                <input
+                  type="text"
+                  name="role"
+                  id="role"
+                  value={formData.role}
+                  onChange={handleChange}
+                />
+              </div>
+              <CustomSelect
+                label="Select team size"
+                name="teamSize"
+                value={formData.teamSize}
+                onChange={handleChange}
+                placeholder="Select a value"
+              />
+              <div>
+                <label>
+                  Tell us more about your needs <span>(Optional)</span>
+                </label>
+                <textarea
+                  name="comment"
+                  id="comment"
+                  value={formData.comment}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
+                <button className={styles.submitButton} disabled={submitDisabled} type="submit">
+                  Submit form
+                </button>
+              </div>
+            </form>
           </div>
-          <div>
-            <label className={error.companyName && styles.labelError}>Company name</label>
-            <input
-              type="text"
-              name="companyName"
-              id="company"
-              value={formData.companyName}
-              onChange={handleChange}
-            />
-            {error.companyName && <p className={styles.error}>{err}</p>}
-          </div>
-          <div>
-            <label>
-              Role <span>(Optional)</span>
-            </label>
-            <input
-              type="text"
-              name="role"
-              id="role"
-              value={formData.role}
-              onChange={handleChange}
-            />
-          </div>
-          <div className={styles.selectWrapper}>
-            <label>
-              Select team size <span>(Optional)</span>
-            </label>
-            <select
-              name="teamSize"
-              id="size"
-              value={formData.teamSize}
-              onChange={handleChange}
-              className={styles.customSelect}>
-              <option value="" disabled>
-                Select a value
-              </option>
-              <option value="1-49">1-49</option>
-              <option value="50-99">50-99</option>
-              <option value="100-249">100-249</option>
-              <option value="1000+">1000+</option>
-            </select>
-            <ChevronDownIcon className={styles.selectIcon} />
-          </div>
-          <div>
-            <label>
-              Tell us more about your needs <span>(Optional)</span>
-            </label>
-            <textarea
-              name="comment"
-              id="comment"
-              value={formData.comment}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <button className={styles.submitButton} type="submit">
-              Submit form
-            </button>
-          </div>
-        </form>
+        )}
       </div>
     </div>
   );

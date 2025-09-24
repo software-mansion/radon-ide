@@ -29,6 +29,10 @@
   margin: 0;
 }
 
+.formBox {
+  min-height: 783px;
+}
+
 .formContainer {
   width: 100%;
   border: var(--radon-border-layout);
@@ -52,8 +56,7 @@ form label span {
   color: var(--radon-subheading);
 }
 
-form input,
-form select {
+form input {
   display: flex;
   padding: 12px;
   justify-content: center;
@@ -63,6 +66,16 @@ form select {
   align-self: stretch;
   border: none;
   background-color: var(--radon-border);
+  font-size: 16px;
+  font-family: Aeonik;
+}
+
+.mainContainer form input:-webkit-autofill {
+  box-shadow: 0 0 0 100px var(--radon-border) inset !important;
+}
+
+form input:focus {
+  outline: 1px solid var(--radon-active-tab);
 }
 
 form textarea {
@@ -73,6 +86,10 @@ form textarea {
   align-self: stretch;
   border: none;
   background-color: var(--radon-border);
+}
+
+form textarea:focus {
+  border: 1px solid var(--radon-active-tab);
 }
 
 .submitButton {
@@ -108,49 +125,32 @@ form textarea {
   margin: 0;
 }
 
-select,
-::picker(select) {
-  appearance: base-select;
-  border: none;
-}
-
-select {
-  background: var(--radon-border);
-  border-radius: 0;
-  color: var(--ifm-color-primary);
-}
-
-option {
+.successContainer {
   display: flex;
-  justify-content: flex-start;
-  gap: 20px;
-  border: 1px solid var(--swm-background);
-  background: var(--radon-border);
-  padding: 10px;
-  transition: 0.4s;
+  height: 400px;
+  padding: 40px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  border: var(--radon-border-layout);
+}
+
+.successContainer h4 {
+  color: var(--radon-text-green-highlight);
+  font-size: 24px;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.successContainer p {
+  margin: 0;
   color: var(--ifm-color-primary);
-}
+  text-align: center;
 
-option:disabled {
-  color: var(--radon-subheading);
-}
-
-.selectWrapper {
-  position: relative;
-}
-
-::picker-icon {
-  content: "";
-}
-
-.selectIcon {
-  position: absolute;
-  right: 12px;
-  top: 70%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  width: 16px;
-  height: 16px;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
 }
 
 @media (max-width: 1024px) {
@@ -167,5 +167,8 @@ option:disabled {
   }
   .formContainer {
     padding: 16px;
+  }
+  .formBox {
+    min-height: auto;
   }
 }

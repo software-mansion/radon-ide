@@ -57,7 +57,15 @@ export default function Enterprise(): JSX.Element {
           <FeaturesLanding />
           <EnterprisePricingPlans ref={pricingRef} />
           <Testimonials />
-          <SWM />
+          <SWM>
+            We are core React Native contributors & creators of key React Native libraries like
+            Reanimated, Gesture Handler, or Screens.
+            <br />
+            <br />
+            For over 12 years, we’ve been blending the best of both client and community worlds,
+            building a bridge between those who use software and those who build it. With us, your
+            projects and data are in safe hands.
+          </SWM>
           <EnterpriseForm ref={formRef} />
           <FAQ />
         </div>
