@@ -78,7 +78,7 @@ export const CustomSelect = ({ name, value, onChange, label, placeholder }) => {
               key={option.value}
               className={styles.selectOption}
               onClick={() => handleOptionClick(option.value)}>
-              <div className={option.value === value && styles.active}>
+              <div className={option.value === value ? styles.active : ""}>
                 <CheckIcon />
               </div>
               {option.label}

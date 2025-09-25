@@ -11,10 +11,10 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
 
   const { siteConfig } = useDocusaurusContext();
 
-  const SERVICE_ID = siteConfig.customFields.service_id;
-  const CONTACT_TEMPLATE_ID = siteConfig.customFields.contact_template_id;
-  const AUTO_REPLY_TEMPLATE_ID = siteConfig.customFields.auto_reply_template_id;
-  const PUBLIC_KEY = siteConfig.customFields.public_key;
+  const SERVICE_ID = siteConfig.customFields.service_id as string;
+  const CONTACT_TEMPLATE_ID = siteConfig.customFields.contact_template_id as string;
+  const AUTO_REPLY_TEMPLATE_ID = siteConfig.customFields.auto_reply_template_id as string;
+  const PUBLIC_KEY = siteConfig.customFields.public_key as string;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -50,6 +50,11 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
 
     if (Object.values(newErrors).some((val) => val)) return;
 
+    if (!SERVICE_ID || !CONTACT_TEMPLATE_ID || !AUTO_REPLY_TEMPLATE_ID || !PUBLIC_KEY) {
+      console.error("EmailJS configuration is missing. Check your environment variables.");
+      return;
+    }
+
     try {
       setSubmitDisabled(true);
       await emailjs.sendForm(SERVICE_ID, CONTACT_TEMPLATE_ID, formRef.current, {
@@ -60,7 +65,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
       });
       setisSent(true);
     } catch (error) {
-      console.log("FAILED...", error.text);
+      console.error("FAILED: ", error.text);
     }
   };
 
@@ -87,7 +92,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
           <div className={styles.formContainer}>
             <form ref={formRef} onSubmit={handleSubmit}>
               <div>
-                <label className={error.name && styles.labelError}>Your name </label>
+                <label className={error.name ? styles.labelError : ""}>Your name </label>
                 <input
                   type="text"
                   name="name"
@@ -98,7 +103,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
                 {error.name && <p className={styles.error}>{err}</p>}
               </div>
               <div>
-                <label className={error.email && styles.labelError}>Email </label>
+                <label className={error.email ? styles.labelError : ""}>Email </label>
                 <input
                   type="email"
                   name="email"
@@ -109,7 +114,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
                 {error.email && <p className={styles.error}>{err}</p>}
               </div>
               <div>
-                <label className={error.companyName && styles.labelError}>Company name</label>
+                <label className={error.companyName ? styles.labelError : ""}>Company name</label>
                 <input
                   type="text"
                   name="companyName"
