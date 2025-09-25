@@ -72,7 +72,7 @@ cd "$LOCAL_PROJECT_PATH" || exit 1
 # node_modules cannot be copied to the VM, because it may not be compatible with the VM's architecture.
 for item in * .*; do
     [[ "$item" == "." || "$item" == ".." ]] && continue
-    [[ "$item" == "node_modules" || "$item" == ".gitignore" || "$item" == "data" ]] && continue
+    [[ "$item" == "node_modules" || "$item" == ".gitignore" || "$item" == "data" || "$item" == "screenshots" ]] && continue
 
     echo "Copying: $item"
     scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:$REMOTE_PATH/"

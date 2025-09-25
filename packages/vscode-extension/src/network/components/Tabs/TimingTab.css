@@ -17,3 +17,8 @@
 .response-receive-bar {
   background-color: var(--vscode-button-hoverBackground);
 }
+
+.timing-value {
+  padding-left: 8px;
+  color: var(--vscode-inputOption-activeForeground);
+}

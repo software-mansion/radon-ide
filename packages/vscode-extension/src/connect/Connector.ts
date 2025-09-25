@@ -7,7 +7,7 @@ import {
   StatusBarItem,
   window,
 } from "vscode";
-import { Metro } from "../project/metro";
+import { MetroSession } from "../project/metro";
 import { extensionContext } from "../utilities/extensionContext";
 import { disposeAll } from "../utilities/disposables";
 import { Scanner } from "./Scanner";
@@ -119,7 +119,11 @@ export class Connector implements Disposable {
     this.connectSession = null;
   }
 
-  private async tryConnectJSDebuggerWithMetro(websocketAddress: string, metro: Metro) {
+  private async tryConnectJSDebuggerWithMetro(
+    websocketAddress: string,
+    isUsingNewDebugger: boolean,
+    metro: MetroSession
+  ) {
     const connectSession = new ConnectSession(metro, {
       onSessionTerminated: () => {
         getTelemetryReporter().sendTelemetryEvent("radon-connect:disconnected", {});
@@ -132,7 +136,7 @@ export class Connector implements Disposable {
       },
     });
     try {
-      await connectSession.start(websocketAddress);
+      await connectSession.start(websocketAddress, isUsingNewDebugger);
       getTelemetryReporter().sendTelemetryEvent("radon-connect:connected", {});
       this.connectSession?.dispose();
       this.connectSession = connectSession;
@@ -153,8 +157,8 @@ export class Connector implements Disposable {
 
     this.scanner = new Scanner({
       onPortStatusUpdated: () => this.handleStateChange(),
-      onDeviceCandidateFound: async (metro, websocketAddress) => {
-        await this.tryConnectJSDebuggerWithMetro(websocketAddress, metro);
+      onDeviceCandidateFound: async (metro, websocketAddress, isUsingNewDebugger) => {
+        await this.tryConnectJSDebuggerWithMetro(websocketAddress, isUsingNewDebugger, metro);
       },
     });
     this.scanner.start();

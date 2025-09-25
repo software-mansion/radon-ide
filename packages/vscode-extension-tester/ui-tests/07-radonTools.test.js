@@ -230,6 +230,33 @@ describe("7 - Radon tools tests", () => {
     }, 5000);
   });
 
+  it("should click button in preview", async () => {
+    await driver.switchTo().defaultContent();
+    await vscodeHelperService.openFileInEditor("automatedTests.tsx");
+    const editor = new TextEditor();
+    await driver.wait(
+      async () => (await editor.getCodeLenses("Open preview")).length > 0,
+      5000
+    );
+    const lenses = await editor.getCodeLenses("Open preview");
+
+    await lenses[0].click();
+    await radonViewsService.switchToRadonIDEFrame();
+    const urlInput = await elementHelperService.findAndWaitForElementByTag(
+      "radon-top-bar-url-input"
+    );
+
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "preview-button"
+    );
+
+    const message = await appManipulationService.clickInPhoneAndWaitForMessage(
+      position
+    );
+    assert.equal(message.action, "preview-button");
+  });
+
   it("should test show touches", async () => {
     const position = await appManipulationService.getButtonCoordinates(
       appWebsocket,

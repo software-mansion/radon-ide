@@ -8,7 +8,7 @@ import SettingsDropdown from "../components/SettingsDropdown";
 import NoDeviceView from "./NoDeviceView";
 import DeviceSettingsDropdown from "../components/DeviceSettingsDropdown";
 import DeviceSettingsIcon from "../components/icons/DeviceSettingsIcon";
-import { useProject } from "../providers/ProjectProvider";
+import { Platform, useProject } from "../providers/ProjectProvider";
 import DeviceSelect from "../components/DeviceSelect";
 import { InspectDataMenu } from "../components/InspectDataMenu";
 import { Frame, InspectDataStackItem, InspectStackData } from "../../common/Project";
@@ -24,6 +24,9 @@ import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { InspectorAvailabilityStatus, ProfilingState, ZoomLevelType } from "../../common/State";
+import { useModal } from "../providers/ModalProvider";
+import Button from "../components/shared/Button";
+import { ActivateLicenseView } from "./ActivateLicenseView";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -32,6 +35,21 @@ const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.UnavailableInactive]:
     "Element Inspector is disabled when the app is inactive",
 } as const;
+
+function ActivateLicenseButton() {
+  const { openModal } = useModal();
+  const { project } = useProject();
+  return (
+    <Button
+      className="activate-license-button"
+      onClick={() => {
+        project.sendTelemetry("activateLicenseButtonClicked");
+        openModal("Activate License", <ActivateLicenseView />);
+      }}>
+      {""} {/* using empty string here as the content is controlled via css */}
+    </Button>
+  );
+}
 
 type ActiveToolState = ProfilingState;
 
@@ -78,7 +96,7 @@ function PreviewView() {
   const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
   const selectedProjectDevice = use$(selectedDeviceSessionState.deviceInfo);
 
-  const { projectState, project, deviceSettings } = useProject();
+  const { projectState, project, deviceSettings, hasActiveLicense } = useProject();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
@@ -389,6 +407,7 @@ function PreviewView() {
           <DeviceSelect />
         </div>
         <div className="spacer" />
+        {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
         <DeviceSettingsDropdown disabled={!navBarButtonsActive}>
           <IconButton
             tooltip={{ label: "Device settings", type: "primary" }}

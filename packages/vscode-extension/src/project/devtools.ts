@@ -199,27 +199,24 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   constructor(private readonly debugSession: DebugSession) {
     super();
     this.disposables.push(
-      debugSession.onScriptParsed(({ isMainBundle }) => {
-        if (isMainBundle) {
-          this.createConnection();
-        }
+      debugSession.onJSDebugSessionStarted(() => {
+        this.createConnection();
       })
     );
   }
 
   private async createConnection() {
     const debugSession = this.debugSession;
-    // NOTE: the binding survives JS reloads, and the Devtools frontend will reconnect automatically,
-    // so this should not be needed, but because the debugger on Expo Go + Android can break on reloads,
-    // this is sadly necessary.
-    debugSession.addBinding(BINDING_NAME);
-    debugSession.evaluateExpression({
-      expression: `void ${DISPATCHER_GLOBAL}.initializeDomain("${DEVTOOLS_DOMAIN_NAME}")`,
-    });
     if (this.connection) {
       // NOTE: a single `DebugSession` only supports a single devtools connection at a time
       return;
     }
+
+    // NOTE: the binding survives JS reloads, and the Devtools frontend will reconnect automatically
+    debugSession.addBinding(BINDING_NAME);
+    debugSession.evaluateExpression({
+      expression: `void ${DISPATCHER_GLOBAL}.initializeDomain("${DEVTOOLS_DOMAIN_NAME}")`,
+    });
 
     const wall: Wall = {
       listen(fn) {
@@ -261,7 +258,7 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   }
 }
 
-class WebSocketDevtoolsServer extends DevtoolsServer implements Disposable {
+export class WebSocketDevtoolsServer extends DevtoolsServer implements Disposable {
   private wss: WebSocketServer;
 
   public get port() {
@@ -273,7 +270,34 @@ class WebSocketDevtoolsServer extends DevtoolsServer implements Disposable {
     return address.port;
   }
 
-  constructor(private server: http.Server) {
+  public static async createServer(): Promise<WebSocketDevtoolsServer> {
+    const server = http.createServer(() => {});
+    const { promise: listenPromise, resolve, reject } = Promise.withResolvers<void>();
+
+    server.listen(0, () => {
+      const address = server.address();
+      assert(
+        address !== null && typeof address !== "string",
+        "The address is an instance of `AddressInfo`"
+      );
+      const serverPort = address.port;
+      Logger.info(`Devtools started on port ${serverPort}`);
+      resolve();
+    });
+
+    function onErrorCallback(error: Error) {
+      Logger.error("Devtools server error:", error);
+      reject(new Error(`Could not start the React Devtools server`));
+    }
+    server.on("error", onErrorCallback);
+
+    await listenPromise;
+
+    const devtoolsServer = new WebSocketDevtoolsServer(server);
+    return devtoolsServer;
+  }
+
+  private constructor(private server: http.Server) {
     super();
     this.wss = new WebSocketServer({ server });
 
@@ -311,31 +335,4 @@ class WebSocketDevtoolsServer extends DevtoolsServer implements Disposable {
     this.wss.close();
     this.server.close();
   }
-}
-
-export async function createWebSocketDevtoolsServer(): Promise<DevtoolsServer & { port: number }> {
-  const server = http.createServer(() => {});
-  const { promise: listenPromise, resolve, reject } = Promise.withResolvers<void>();
-
-  server.listen(0, () => {
-    const address = server.address();
-    assert(
-      address !== null && typeof address !== "string",
-      "The address is an instance of `AddressInfo`"
-    );
-    const serverPort = address.port;
-    Logger.info(`Devtools started on port ${serverPort}`);
-    resolve();
-  });
-
-  function onErrorCallback(error: Error) {
-    Logger.error("Devtools server error:", error);
-    reject(new Error(`Could not start the React Devtools server`));
-  }
-  server.on("error", onErrorCallback);
-
-  await listenPromise;
-
-  const devtoolsServer = new WebSocketDevtoolsServer(server);
-  return devtoolsServer;
 }

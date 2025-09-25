@@ -43,6 +43,8 @@
 }
 
 .approot-select-content {
+  border: var(--swm-dropdown-border);
+  box-shadow: var(--swm-dropdown-shadow);
   overflow: hidden;
   background-color: var(--swm-device-select-background);
   width: var(--swm-device-select-width);
