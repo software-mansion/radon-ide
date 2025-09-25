@@ -314,13 +314,6 @@ export class ApplicationSession implements Disposable {
       debugSession.onDebuggerResumed(this.onDebuggerResumed),
       debugSession.onProfilingCPUStarted(this.onProfilingCPUStarted),
       debugSession.onProfilingCPUStopped(this.onProfilingCPUStopped),
-      // debugSession.onScriptParsed(({ isMainBundle }) => {
-      //   // NOTE: if the scriptParsed event is received for the main bundle,
-      //   // it must have loaded successfully, so we clear any existing bundle error
-      //   if (isMainBundle) {
-      //     this.stateManager.updateState({ bundleError: null });
-      //   }
-      // }),
     ];
     return new Disposable(() => {
       disposeAll(subscriptions);
