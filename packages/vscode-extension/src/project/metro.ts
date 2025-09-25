@@ -2,13 +2,12 @@ import path from "path";
 import fs from "fs";
 import stripAnsi from "strip-ansi";
 import { Disposable, EventEmitter, ExtensionMode, Uri, workspace } from "vscode";
-import _ from "lodash";
 import { DebugSource } from "../debugging/DebugSession";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
+import { Output } from "../common/OutputChannel";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import { IDE } from "./ide";
-import { Output } from "../common/OutputChannel";
 import { extensionContext } from "../utilities/extensionContext";
 import { getOpenPort } from "../utilities/common";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
@@ -219,6 +218,11 @@ async function launchMetro({
     ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
   };
 
+  const metroOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
+
+  // Clearing logs shortly before the new bundler process is started.
+  metroOutputChannel.clear();
+
   if (devtoolsPort !== undefined) {
     metroEnv.RCT_DEVTOOLS_PORT = devtoolsPort.toString();
   }
@@ -263,10 +267,7 @@ export class Metro implements MetroSession, Disposable {
     public readonly port: number,
     protected readonly appRoot: string
   ) {
-    const metroOutputChannel =
-      IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(
-        Output.MetroBundler
-      );
+    const metroOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
     if (!metroOutputChannel) {
       throw new Error("Cannot start bundler process. The IDE is not initialized.");
     }

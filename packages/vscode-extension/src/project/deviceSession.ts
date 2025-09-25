@@ -22,7 +22,6 @@ import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { ToolKey } from "./tools";
 import { ApplicationContext } from "./ApplicationContext";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
-import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { ApplicationSession } from "./applicationSession";
 import {
@@ -40,6 +39,7 @@ import { FrameReporter } from "./FrameReporter";
 import { ScreenCapture } from "./ScreenCapture";
 import { disposeAll } from "../utilities/disposables";
 import { FileTransfer } from "./FileTransfer";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { DevtoolsServer } from "./devtools";
 import { MetroProvider, MetroSession } from "./metro";
 
@@ -100,7 +100,6 @@ export class DeviceSession implements Disposable {
     private readonly device: DeviceBase,
     private readonly devtoolsServer: (DevtoolsServer & { port: number }) | undefined,
     initialRotation: DeviceRotation,
-    private readonly outputChannelRegistry: OutputChannelRegistry,
     private readonly metroProvider: MetroProvider
   ) {
     this.frameReporter = new FrameReporter(
@@ -592,7 +591,7 @@ export class DeviceSession implements Disposable {
 
     const buildOptions = {
       forceCleanBuild: clean || buildDependenciesChanged,
-      buildOutputChannel: this.outputChannelRegistry.getOrCreateOutputChannel(
+      buildOutputChannel: OutputChannelRegistry.getOrCreateOutputChannel(
         platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
       ),
       cancelToken,
@@ -637,7 +636,7 @@ export class DeviceSession implements Disposable {
 
       this.updateStartupMessage(StartupMessage.StartingPackager);
 
-      const packageManagerOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
+      const packageManagerOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(
         Output.PackageManager
       );
 

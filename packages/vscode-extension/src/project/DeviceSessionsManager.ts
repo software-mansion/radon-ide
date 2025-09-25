@@ -10,7 +10,6 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { disposeAll } from "../utilities/disposables";
 import { DeviceId } from "../common/Project";
 import { Connector } from "../connect/Connector";
-import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
 import {
   DeviceInfo,
@@ -58,8 +57,7 @@ export class DeviceSessionsManager implements Disposable {
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
     private readonly devicesStateManager: StateManager<DevicesState>,
-    private deviceSessionManagerDelegate: DeviceSessionsManagerDelegate,
-    private readonly outputChannelRegistry: OutputChannelRegistry
+    private deviceSessionManagerDelegate: DeviceSessionsManagerDelegate
   ) {
     this.disposables.push(
       this.devicesStateManager.onSetState((partialState) => {
@@ -180,7 +178,6 @@ export class DeviceSessionsManager implements Disposable {
       device,
       await this.applicationContext.devtoolsServer,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
-      this.outputChannelRegistry,
       this.applicationContext.metroProvider
     );
 
