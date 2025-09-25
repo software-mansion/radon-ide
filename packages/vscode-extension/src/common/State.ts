@@ -182,10 +182,16 @@ export type InstallationErrorDescriptor = {
   reason: InstallationErrorReason;
 };
 
+export type ReloadErrorDescriptor = {
+  kind: "reload";
+  message: string;
+};
+
 export type FatalErrorDescriptor =
   | BuildErrorDescriptor
   | DeviceErrorDescriptor
-  | InstallationErrorDescriptor;
+  | InstallationErrorDescriptor
+  | ReloadErrorDescriptor;
 
 export type DeviceSessionStatus = "starting" | "running" | "fatalError";
 

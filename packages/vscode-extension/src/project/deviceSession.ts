@@ -294,9 +294,7 @@ export class DeviceSession implements Disposable {
           status: "fatalError",
           error: {
             message: e.message,
-            platform: this.stateManager.getState().deviceInfo.platform,
-            kind: "build",
-            buildType: null,
+            kind: "reload",
           },
         });
         return;

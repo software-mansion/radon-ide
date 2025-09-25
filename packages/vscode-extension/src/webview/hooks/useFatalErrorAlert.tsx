@@ -1,3 +1,4 @@
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 import { useToggleableAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
@@ -12,8 +13,8 @@ import {
   FatalErrorDescriptor,
   InstallationErrorDescriptor,
   InstallationErrorReason,
+  ReloadErrorDescriptor,
 } from "../../common/State";
-import { VscodeButton as Button } from "@vscode-elements/react-elements";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
 
@@ -73,6 +74,30 @@ function BootErrorActions() {
 }
 
 function InstallationErrorActions() {
+  const { project } = useProject();
+
+  let onReload = () => {
+    project.reloadCurrentSession("autoReload");
+  };
+
+  return (
+    <>
+      <Button
+        secondary
+        onClick={() => {
+          project.focusOutput(Output.Ide);
+        }}>
+        Open Logs
+      </Button>
+      <Button onClick={onReload}>
+        <span className="codicon codicon-refresh" />
+        Retry
+      </Button>
+    </>
+  );
+}
+
+function ReloadErrorActions() {
   const { project } = useProject();
 
   let onReload = () => {
@@ -165,23 +190,43 @@ function createInstallationErrorAlert(installationErrorDescriptor: InstallationE
   };
 }
 
+function createReloadErrorAlert(reloadErrorDescriptor: ReloadErrorDescriptor) {
+  let description = reloadErrorDescriptor.message;
+
+  return {
+    id: FATAL_ERROR_ALERT_ID,
+    title: "Could not restart application",
+    description,
+    actions: <ReloadErrorActions />,
+  };
+}
+
 export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undefined) {
   let errorAlert = noErrorAlert;
   const { project, projectState } = useProject();
   const { appRoot, ios } = projectState.selectedLaunchConfiguration;
   const { xcodeSchemes } = useAppRootConfig(appRoot);
 
-  if (errorDescriptor?.kind === "build") {
-    errorAlert = createBuildErrorAlert(
-      errorDescriptor,
-      ios?.scheme !== undefined,
-      xcodeSchemes || [],
-      project
-    );
-  } else if (errorDescriptor?.kind === "device") {
-    errorAlert = bootErrorAlert;
-  } else if (errorDescriptor?.kind === "installation") {
-    errorAlert = createInstallationErrorAlert(errorDescriptor);
+  switch (errorDescriptor?.kind) {
+    case "build":
+      errorAlert = createBuildErrorAlert(
+        errorDescriptor,
+        ios?.scheme !== undefined,
+        xcodeSchemes || [],
+        project
+      );
+      break;
+    case "device":
+      errorAlert = bootErrorAlert;
+      break;
+    case "installation":
+      errorAlert = createInstallationErrorAlert(errorDescriptor);
+      break;
+    case "reload":
+      errorAlert = createReloadErrorAlert(errorDescriptor);
+      break;
+    case undefined:
+      break;
   }
 
   useToggleableAlert(errorDescriptor !== undefined, errorAlert);
