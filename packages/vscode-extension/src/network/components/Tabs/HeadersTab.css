@@ -1,3 +1,44 @@
 .network-log-request-header {
   text-wrap: nowrap;
 }
+
+.status-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+
+  &.gray {
+    background-color: var(--grey-dark-100);
+  }
+
+  &.green {
+    background-color: var(--green-dark-100);
+  }
+
+  &.yellow {
+    background-color: var(--yellow-light-100);
+  }
+
+  &.red {
+    background-color: var(--red-light-100);
+  }
+}
+
+.network-log-request-header {
+  color: var(--vscode-foreground);
+}
+
+.network-log-request-header-value {
+  color: var(--vscode-inputOption-activeForeground);
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.network-log-request-header-value,
+.network-log-request-header {
+  padding-left: 8px;
+}

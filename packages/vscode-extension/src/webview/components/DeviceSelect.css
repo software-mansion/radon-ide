@@ -48,6 +48,8 @@
   background-color: var(--swm-device-select-background);
   width: var(--swm-device-select-width);
   border-radius: 18px;
+  border: var(--swm-dropdown-border);
+  box-shadow: var(--swm-dropdown-shadow);
   padding-top: 4px;
   max-height: var(--radix-select-content-available-height);
   box-shadow: var(--swm-backdrop-shadow);

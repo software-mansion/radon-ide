@@ -12,7 +12,6 @@ import {
 import { minimatch } from "minimatch";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { ApplicationContext } from "./ApplicationContext";
-import { MetroLauncher } from "./metro";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
@@ -40,12 +39,14 @@ import {
   CDPDevtoolsServer,
 } from "./devtools";
 import { RadonInspectorBridge } from "./bridge";
+import { MetroSession } from "./metro";
+import { getDebuggerTargetForDevice } from "./DebuggerTarget";
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
   device: DeviceBase;
   buildResult: BuildResult;
-  metro: MetroLauncher;
+  metro: MetroSession;
   devtoolsServer?: DevtoolsServer;
   devtoolsPort?: number;
 }
@@ -115,9 +116,6 @@ export class ApplicationSession implements Disposable {
       (device.deviceInfo.platform === DevicePlatform.IOS && launchConfig.ios?.launchArguments) ||
       [];
 
-    onLaunchStage(StartupMessage.StartingPackager);
-    await cancelToken.adapt(metro.ready());
-
     const { promise: bundleErrorPromise, resolve: resolveBundleError } =
       Promise.withResolvers<void>();
     const bundleErrorSubscription = metro.onBundleError(({ source }) => {
@@ -162,7 +160,7 @@ export class ApplicationSession implements Disposable {
     private readonly stateManager: StateManager<ApplicationSessionState>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
-    private readonly metro: MetroLauncher,
+    private readonly metro: MetroSession,
     private readonly websocketDevtoolsServer: DevtoolsServer | undefined,
     private readonly packageNameOrBundleId: string,
     private readonly supportedOrientations: DeviceRotation[]
@@ -234,6 +232,10 @@ export class ApplicationSession implements Disposable {
       this.cdpDevtoolsServer.dispose();
       this.cdpDevtoolsServer = undefined;
     }
+    if (this.websocketDevtoolsServer === undefined) {
+      this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
+      this.setupDevtoolsServer(this.cdpDevtoolsServer);
+    }
   }
 
   private async createDebugSession(): Promise<DebugSession & Disposable> {
@@ -244,6 +246,7 @@ export class ApplicationSession implements Disposable {
         useCustomJSDebugger: this.applicationContext.launchConfig.useCustomJSDebugger,
       }),
       this.metro,
+      this.device.deviceInfo,
       this.websocketDevtoolsServer
     );
 
@@ -426,9 +429,18 @@ export class ApplicationSession implements Disposable {
     this.debugSession?.stepIntoDebugger();
   }
 
+  private connectJSDebuggerCancelToken: CancelToken = new CancelToken();
   private async connectJSDebugger(cancelToken?: CancelToken) {
-    const websocketAddress = await this.metro.getDebuggerURL(-1, cancelToken);
-    if (!websocketAddress) {
+    this.connectJSDebuggerCancelToken.cancel();
+    this.connectJSDebuggerCancelToken = new CancelToken();
+    cancelToken?.onCancel(() => this.connectJSDebuggerCancelToken.cancel());
+
+    const target = await getDebuggerTargetForDevice({
+      metro: this.metro,
+      deviceInfo: this.device.deviceInfo,
+      cancelToken: this.connectJSDebuggerCancelToken,
+    });
+    if (!target) {
       Logger.error("Couldn't find a proper debugger URL to connect to");
       return;
     }
@@ -437,18 +449,11 @@ export class ApplicationSession implements Disposable {
       return;
     }
     await this.debugSession.startJSDebugSession({
-      websocketAddress,
+      ...target,
       displayDebuggerOverlay: false,
-      isUsingNewDebugger: this.metro.isUsingNewDebugger,
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
       sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
     });
-    if (this.websocketDevtoolsServer === undefined) {
-      // NOTE: we only create the CDP devtools server when using the new debugger
-      this.cdpDevtoolsServer?.dispose();
-      this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
-      this.setupDevtoolsServer(this.cdpDevtoolsServer);
-    }
   }
 
   /**
@@ -459,7 +464,7 @@ export class ApplicationSession implements Disposable {
     status: InspectorAvailabilityStatus
   ): InspectorAvailabilityStatus {
     const experimentalInspectorEnabled =
-      this.applicationContext.workspaceConfiguration.enableExperimentalElementInspector;
+      this.applicationContext.workspaceConfiguration.general.enableExperimentalElementInspector;
     const isStatusUnavailableEdgeToEdge =
       status === InspectorAvailabilityStatus.UnavailableEdgeToEdge;
 
@@ -518,20 +523,15 @@ export class ApplicationSession implements Disposable {
   //#endregion
 
   public async reloadJS(cancelToken: CancelToken) {
-    if (!this.devtools?.connected) {
-      Logger.debug(
-        "`reloadJS()` was called on an application session while the devtools are not connected. " +
-          "This should never happen, since an application session should represent a running and connected application."
-      );
-      throw new Error("Tried to reload JS on an application which disconnected from Radon");
-    }
     const { promise: bundleErrorPromise, reject: rejectBundleError } = Promise.withResolvers();
     const bundleErrorSubscription = this.metro.onBundleError(() => {
       rejectBundleError(new Error("Bundle error occurred during reload"));
     });
     try {
       const appReadyPromise = waitForAppReady(this.inspectorBridge, cancelToken);
-      await this.metro.reload();
+      await this.debugSession?.evaluateExpression({
+        expression: "void globalThis.__RADON_reloadJS()",
+      });
       await Promise.race([appReadyPromise, bundleErrorPromise]);
     } finally {
       bundleErrorSubscription.dispose();
@@ -628,7 +628,7 @@ export class ApplicationSession implements Disposable {
     if (requestStack && inspectData?.stack) {
       stack = inspectData.stack;
       const inspectorExcludePattern =
-        this.applicationContext.workspaceConfiguration.inspectorExcludePattern;
+        this.applicationContext.workspaceConfiguration.general.inspectorExcludePattern;
       const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
       function testInspectorExcludeGlobPattern(filename: string) {
         return patterns?.some((pattern) => minimatch(filename, pattern));
@@ -652,6 +652,7 @@ export class ApplicationSession implements Disposable {
 
   public async dispose() {
     disposeAll(this.disposables);
+    this.connectJSDebuggerCancelToken.cancel();
     this.debugSessionEventSubscription?.dispose();
     this.devtoolsServerSubscription?.dispose();
     await this.debugSession?.dispose();

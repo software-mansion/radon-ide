@@ -35,19 +35,83 @@ export class StateSerializer {
 
 // #endregion State Serializer
 
+// #region Device Settings
+
+export type Appearance = "light" | "dark";
+
+export type CameraSource = "emulated" | "none" | "webcam0";
+export type FrontCameraSource = CameraSource;
+export type BackCameraSource = CameraSource | "virtualscene";
+
+export interface CameraSettings {
+  back: BackCameraSource;
+  front: FrontCameraSource;
+}
+
+export type ContentSize =
+  | "xsmall"
+  | "small"
+  | "normal"
+  | "large"
+  | "xlarge"
+  | "xxlarge"
+  | "xxxlarge";
+
+export type Location = {
+  latitude: number;
+  longitude: number;
+  isDisabled: boolean;
+};
+
+export type Locale = string;
+
+export type DeviceSettings = {
+  appearance: Appearance;
+  contentSize: ContentSize;
+  deviceRotation: DeviceRotation;
+  location: Location;
+  hasEnrolledBiometrics: boolean;
+  locale: Locale;
+  replaysEnabled: boolean;
+  showTouches: boolean;
+  camera?: CameraSettings;
+};
+
+// #endregion Device Settings
+
 // #region Workspace Configuration
 
 export type PanelLocation = "tab" | "side-panel";
 
-export type WorkspaceConfiguration = {
+export type GeneralSettings = {
+  defaultMultimediaSavingLocation: string | null;
+  enableExperimentalElementInspector: boolean;
+  inspectorExcludePattern: string | null;
+};
+
+export type UserInterfaceSettings = {
   panelLocation: PanelLocation;
   showDeviceFrame: boolean;
-  stopPreviousDevices: boolean;
-  deviceRotation: DeviceRotation;
-  inspectorExcludePattern: string | null;
-  defaultMultimediaSavingLocation: string | null;
+};
+
+export type DeviceControlSettings = {
   startDeviceOnLaunch: boolean;
-  enableExperimentalElementInspector: boolean;
+  stopPreviousDevices: boolean;
+};
+
+export type MCPConfigLocation = "Project" | "Global";
+
+export type RadonAISettings = {
+  enableRadonAI: boolean;
+  MCPConfigLocation: MCPConfigLocation;
+};
+
+export type WorkspaceConfiguration = {
+  general: GeneralSettings;
+  userInterface: UserInterfaceSettings;
+  deviceSettings: DeviceSettings;
+  deviceControl: DeviceControlSettings;
+  radonAI: RadonAISettings;
 };
 
 // #endregion Workspace Configuration
@@ -486,14 +550,41 @@ export const initialState: State = {
     enabled: false,
   },
   workspaceConfiguration: {
-    panelLocation: "tab",
-    showDeviceFrame: true,
-    stopPreviousDevices: false,
-    deviceRotation: DeviceRotation.Portrait,
-    inspectorExcludePattern: null,
-    defaultMultimediaSavingLocation: null,
-    startDeviceOnLaunch: true,
-    enableExperimentalElementInspector: false,
+    general: {
+      defaultMultimediaSavingLocation: null,
+      enableExperimentalElementInspector: false,
+      inspectorExcludePattern: null,
+    },
+    userInterface: {
+      panelLocation: "tab",
+      showDeviceFrame: true,
+    },
+    deviceSettings: {
+      deviceRotation: DeviceRotation.Portrait,
+      appearance: "light",
+      contentSize: "normal",
+      location: {
+        latitude: 37.78825,
+        longitude: -122.4324,
+        isDisabled: true,
+      },
+      hasEnrolledBiometrics: false,
+      locale: "en-US",
+      replaysEnabled: false,
+      showTouches: false,
+      camera: {
+        back: "emulated",
+        front: "none",
+      },
+    },
+    deviceControl: {
+      startDeviceOnLaunch: true,
+      stopPreviousDevices: false,
+    },
+    radonAI: {
+      enableRadonAI: false,
+      MCPConfigLocation: "Project",
+    },
   },
 };
 

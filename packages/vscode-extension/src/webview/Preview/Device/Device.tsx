@@ -148,7 +148,7 @@ function getDeviceLayoutConfig(
 
 export default function Device({ device, zoomLevel, children, wrapperDivRef }: DeviceProps) {
   const store$ = useStore();
-  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
 
   const frame = useDeviceFrame(device);
 

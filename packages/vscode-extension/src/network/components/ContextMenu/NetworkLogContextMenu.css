@@ -3,9 +3,9 @@
 .radix-context-menu-content {
   min-width: 160px;
   background-color: var(--vscode-dropdown-background);
-  border: 1px solid var(--vscode-menu-border);
+  border: var(--swm-dropdown-border);
+  box-shadow: var(--swm-dropdown-shadow);
   border-radius: 6px;
-  box-shadow: 0 0 8px 2px var(--vscode-widget-shadow);
   padding: 4px;
   z-index: 10;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);

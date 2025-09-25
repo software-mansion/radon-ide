@@ -138,7 +138,7 @@ const TRANSFORM_CONFIGS = {
 const MediaCanvas = forwardRef<HTMLCanvasElement, MediaCanvasProps>(
   ({ mediaRef, src, alwaysPortrait: isAlwaysPortrait, ...rest }, ref) => {
     const store$ = useStore();
-    const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+    const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
 
     const isRunningRef = useRef(false);
     const canvasRef = ref as RefObject<HTMLCanvasElement>;

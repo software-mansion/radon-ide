@@ -21,6 +21,7 @@ on:
           - "react-native-79"
           - "react-native-80"
           - "react-native-81"
+          - "react-native-82"
           - "expo-51"
           - "expo-52-prebuild-with-plugins"
           - "expo-53"
@@ -45,10 +46,20 @@ on:
         description: Space-separated list of test numbers to exclude (none excludes nothing)
         required: false
         default: ""
+  schedule:
+    - cron: "27 1 * * *"
 
 jobs:
   build-and-test:
     runs-on: macos-latest-xlarge
+
+    env:
+      NODE_VERSION: ${{ github.event.inputs.node || '22' }}
+      PROJECT_NAME: ${{ github.event.inputs.testApp || 'expo-54' }}
+      IS_RECORDING: ${{ github.event.inputs.isRecording || 'true' }}
+      TESTS_TO_RUN: ${{ github.event.inputs.testsToRun || '' }}
+      TESTS_TO_EXCLUDE: ${{ github.event.inputs.testsToExclude || '' }}
+      IS_GITHUB_ACTIONS: "true"
 
     steps:
       - name: Checkout repository
@@ -56,14 +67,13 @@ jobs:
 
       - name: log inputs
         run: |
-          echo "testApp: ${{ github.event.inputs.testApp }}"
-          echo "isRecording: ${{ github.event.inputs.isRecording }}"
-          echo "testsToRun: ${{ github.event.inputs.testsToRun }}"
-          echo "testsToExclude: ${{ github.event.inputs.testsToExclude }}"
+          echo "PROJECT_NAME=$PROJECT_NAME"
+          echo "IS_RECORDING=$IS_RECORDING"
+          echo "TESTS_TO_RUN=$TESTS_TO_RUN"
+          echo "TESTS_TO_EXCLUDE=$TESTS_TO_EXCLUDE"
 
       - name: check sdk
-        run: |
-          xcodebuild -showsdks
+        run: xcodebuild -showsdks
 
       - name: Show Xcode version
         run: xcodebuild -version
@@ -71,7 +81,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ github.event.inputs.node || '22' }}
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: Enforce HTTPS for submodules
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
@@ -104,7 +114,7 @@ jobs:
         run: npm i -g @vscode/vsce
 
       - name: Get test app
-        run: npm run get-test-app -- ${{ github.event.inputs.testApp }}
+        run: npm run get-test-app -- $PROJECT_NAME
         working-directory: packages/vscode-extension-tester
 
       - name: Build VSIX package
@@ -114,20 +124,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Install ffmpeg
-        if: ${{ github.event.inputs.isRecording == 'true' }}
+        if: ${{ env.IS_RECORDING == 'true' }}
         run: brew install ffmpeg
 
       - name: Run setup-run-tests
-        run: npm run setup-run-tests -- ${{ github.event.inputs.testsToRun }} --exclude ${{ github.event.inputs.testsToExclude }}
+        run: npm run setup-run-tests -- $TESTS_TO_RUN --exclude $TESTS_TO_EXCLUDE
         working-directory: packages/vscode-extension-tester
-        env:
-          PROJECT_NAME: ${{ github.event.inputs.testApp }}
-          IS_RECORDING: ${{ github.event.inputs.isRecording }}
-          TESTS_OS: ${{ github.event.inputs.OS }}
-          IS_GITHUB_ACTIONS: "true"
 
       - name: make video
-        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
+        if: ${{ always() && env.IS_RECORDING == 'true' }}
         timeout-minutes: 1
         run: ffmpeg -framerate 10 -i frame-%04d.png -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
         working-directory: packages/vscode-extension-tester/videos
@@ -150,7 +155,7 @@ jobs:
           retention-days: 7
 
       - name: Upload video recording
-        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
+        if: ${{ always() && env.IS_RECORDING == 'true' }}
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
@@ -159,7 +164,7 @@ jobs:
           retention-days: 7
 
       - name: Upload screenshot made by radon
-        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
+        if: ${{ always() && env.IS_RECORDING == 'true' }}
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
@@ -168,7 +173,7 @@ jobs:
           retention-days: 7
 
       - name: Upload recording made by radon
-        if: ${{ always() && github.event.inputs.isRecording == 'true' }}
+        if: ${{ always() && env.IS_RECORDING == 'true' }}
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:

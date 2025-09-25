@@ -22,7 +22,7 @@ interface SettingsDropdownProps {
 
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const store$ = useStore();
-  const panelLocation = use$(store$.workspaceConfiguration.panelLocation);
+  const panelLocation = use$(store$.workspaceConfiguration.userInterface.panelLocation);
   const telemetryEnabled = use$(store$.telemetry.enabled);
 
   const { openModal } = useModal();

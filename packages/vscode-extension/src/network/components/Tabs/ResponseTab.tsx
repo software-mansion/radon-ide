@@ -38,17 +38,19 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
           </IconButton>
         }
       />
-      {wasTruncated && (
-        <pre className="response-tab-truncated-warning">
-          <span className="codicon codicon-warning" /> Response too large, showing truncated data.
-        </pre>
-      )}
-      <HighlightedCodeBlock
-        content={responseData}
-        language={language}
-        theme={editorThemeData}
-        placeholder="No response body"
-      />
+      <div className="tab-padding">
+        {wasTruncated && (
+          <pre className="response-tab-truncated-warning">
+            <span className="codicon codicon-warning" /> Response too large, showing truncated data.
+          </pre>
+        )}
+        <HighlightedCodeBlock
+          content={responseData}
+          language={language}
+          theme={editorThemeData}
+          placeholder="No response body"
+        />
+      </div>
     </>
   );
 };
