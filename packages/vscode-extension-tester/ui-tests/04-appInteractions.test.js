@@ -234,6 +234,15 @@ describe("4 - App interaction tests", () => {
     await elementHelperService.findAndWaitForElementByTag(
       "approot-select-dropdown-content"
     );
+    const project1 = await elementHelperService.findAndWaitForElementByTag(
+      "approot-select-item-reactNative74"
+    );
+    const project2 = await elementHelperService.findAndWaitForElementByTag(
+      "approot-select-item-reactNative81"
+    );
+
+    console.log(await project1.getText());
+    console.log(await project2.getText());
 
     await driver.sleep(10000);
   });
