@@ -42,9 +42,6 @@
   .wrapper {
     max-width: 100%;
   }
-  .container {
-    padding: 0 24px 60px;
-  }
 }
 @media (max-width: 480px) {
   .headingLabel {

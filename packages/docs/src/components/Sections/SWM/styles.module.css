@@ -2,7 +2,6 @@
   border-right: var(--radon-border-layout);
   display: flex;
   max-width: 1360px;
-  height: 600px;
   flex-shrink: 0;
   gap: 80px;
   justify-content: space-evenly;
@@ -15,7 +14,7 @@
   gap: 32px;
   max-width: 680px;
   width: 100%;
-  padding: 116px 0 0 80px;
+  padding: 120px 0 120px 80px;
 }
 
 .heading {
@@ -26,7 +25,7 @@
 }
 
 .heading span {
-  color: var(--swm-green-light-100);
+  color: var(--radon-text-green-highlight);
   font-weight: 500;
 }
 
@@ -40,10 +39,10 @@
 
 .learnMoreButton {
   padding: 16px;
-  border: 1px solid var(--radon-button-text);
+  border: 1px solid var(--radon-button-secondary);
   width: fit-content;
 
-  color: var(--radon-button-text);
+  color: var(--radon-button-secondary);
   text-align: center;
   font-size: 18px;
   font-weight: 400;
@@ -87,6 +86,7 @@
     border: none;
     height: fit-content;
     align-items: center;
+    margin-right: 0;
   }
 
   .heading {

@@ -12,18 +12,18 @@ interface FeatureGridCardProps {
 
 const FeaturesGridCard = forwardRef<HTMLDivElement, FeatureGridCardProps>(
   ({ label, title, content, imageSrc }, ref) => {
-    const { isLanding } = usePageType();
+    const { isFeatures } = usePageType();
 
     return (
-      <div ref={ref} className={isLanding ? styles.reverseContainer : styles.container}>
+      <div ref={ref} className={!isFeatures ? styles.reverseContainer : styles.container}>
         <div className={styles.content}>
           <div className={styles.header}>
-            <p className={isLanding ? styles.labelLanding : styles.label}>{label}</p>
-            <p className={isLanding ? styles.titleLanding : styles.title}> {title}</p>
+            <p className={!isFeatures ? styles.labelLanding : styles.label}>{label}</p>
+            <p className={!isFeatures ? styles.titleLanding : styles.title}> {title}</p>
           </div>
-          {!isLanding && <p className={styles.textContent}>{content}</p>}
+          {isFeatures && <p className={styles.textContent}>{content}</p>}
         </div>
-        <img className={clsx(styles.gridSvg, !isLanding && styles.widthSvg)} src={imageSrc}></img>
+        <img className={clsx(styles.gridSvg, isFeatures && styles.widthSvg)} src={imageSrc}></img>
       </div>
     );
   }

@@ -1,8 +1,9 @@
 .download p {
   font-size: 16px;
   font-weight: 400;
+  font-family: Aeonik;
 
-  color: var(--ifm-color-primary);
+  color: var(--radon-button-secondary);
 
   margin: 0;
   line-height: 24px;
@@ -14,7 +15,7 @@
   padding: 8px 12px;
   justify-content: center;
   align-items: center;
-  border: 1px solid var(--ifm-color-primary);
+  border: 1px solid var(--radon-button-secondary);
   background-color: transparent;
 }
 

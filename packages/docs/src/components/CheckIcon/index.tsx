@@ -12,9 +12,9 @@ export default function CheckIcon(props) {
       <path
         d="M20.0001 7L9.0001 18L4 13"
         stroke="#57B495"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
   );

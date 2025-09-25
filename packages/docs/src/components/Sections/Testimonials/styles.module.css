@@ -28,18 +28,19 @@
 .gradientStart {
   background: linear-gradient(
     180deg,
-    var(--radon-color-black) 0%,
-    var(--radon-gradient-black) 100%
+    var(--radon-gradient-color) 0%,
+    var(--radon-gradient-transparent) 100%
   );
   left: 0;
   top: -38px;
   z-index: 1;
 }
+
 .gradientEnd {
   background: linear-gradient(
     180deg,
-    var(--radon-gradient-black) 0%,
-    var(--radon-color-black) 100%
+    var(--radon-gradient-transparent) 0%,
+    var(--radon-gradient-color) 100%
   );
   bottom: 0;
   left: 0;

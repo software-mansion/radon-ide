@@ -29,7 +29,7 @@ export default function AI() {
             <div className={styles.message}>
               <div className={styles.messageHeading}>
                 <div className={styles.icon}>
-                  <ReactNativeIcon height="12" width="13" />
+                  <ReactNativeIcon strokeWidth="5" height="12" width="13" />
                 </div>
                 <p>Message.jsx</p>
               </div>
