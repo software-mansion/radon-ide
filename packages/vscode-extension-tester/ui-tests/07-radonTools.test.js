@@ -210,7 +210,7 @@ describe("7 - Radon tools tests", () => {
 
   it("should open preview", async () => {
     await driver.switchTo().defaultContent();
-    await vscodeHelperService.openFileInEditor("automatedTests.tsx");
+    await vscodeHelperService.openFileInEditor("MainScreen.tsx");
     const editor = new TextEditor();
     await driver.wait(
       async () => (await editor.getCodeLenses("Open preview")).length > 0,

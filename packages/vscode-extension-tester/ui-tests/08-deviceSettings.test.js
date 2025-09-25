@@ -15,7 +15,8 @@ describe("8 - Device Settings", () => {
     elementHelperService,
     radonViewsService,
     managingDevicesService,
-    appManipulationService;
+    appManipulationService,
+    radonSettingsService;
 
   before(async () => {
     ({ driver, view } = get());
@@ -25,6 +26,7 @@ describe("8 - Device Settings", () => {
       radonViewsService,
       managingDevicesService,
       appManipulationService,
+      radonSettingsService,
     } = initServices(driver));
 
     await managingDevicesService.deleteAllDevices();
@@ -51,22 +53,8 @@ describe("8 - Device Settings", () => {
 
   afterEach(async () => {
     // leave device in portrait mode
-    await rotateDevice("portrait");
+    await radonSettingsService.rotateDevice("portrait");
   });
-
-  async function rotateDevice(rotation) {
-    radonViewsService.openRadonDeviceSettingsMenu();
-    await elementHelperService.findAndClickElementByTag(
-      "device-settings-rotate-device-menu-trigger"
-    );
-
-    // this menu shows up on hover, normal click does not work because menu disappears before click happens
-    const rotationButton =
-      await elementHelperService.findAndWaitForElementByTag(
-        `device-settings-set-orientation-${rotation}`
-      );
-    await driver.executeScript("arguments[0].click();", rotationButton);
-  }
 
   it("should toggle device frame", async () => {
     await elementHelperService.findAndWaitForElementByTag("device-frame");
@@ -91,7 +79,7 @@ describe("8 - Device Settings", () => {
   });
 
   it("should rotate device", async () => {
-    await rotateDevice("landscape-left");
+    await radonSettingsService.rotateDevice("landscape-left");
 
     await driver.wait(async () => {
       const orientation =
@@ -102,7 +90,7 @@ describe("8 - Device Settings", () => {
       return orientation.value === "landscape";
     }, 5000);
 
-    await rotateDevice("portrait");
+    await radonSettingsService.rotateDevice("portrait");
 
     await driver.wait(async () => {
       const orientation =
@@ -116,7 +104,7 @@ describe("8 - Device Settings", () => {
     // rotation does not work without this sleep
     await driver.sleep(1000);
 
-    await rotateDevice("clockwise");
+    await radonSettingsService.rotateDevice("clockwise");
 
     await driver.wait(async () => {
       const orientation =
@@ -127,7 +115,7 @@ describe("8 - Device Settings", () => {
       return orientation.value === "landscape";
     }, 5000);
 
-    await rotateDevice("anticlockwise");
+    await radonSettingsService.rotateDevice("anticlockwise");
 
     await driver.wait(async () => {
       const orientation =

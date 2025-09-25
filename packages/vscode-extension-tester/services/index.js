@@ -1,10 +1,8 @@
 import { ElementHelperService, VSCodeHelperService } from "./helperServices.js";
-import {
-  RadonViewsService,
-  RadonSettingsService,
-  ManagingDevicesService,
-  AppManipulationService,
-} from "./radonInteractionsServices.js";
+import RadonViewsService from "./radonViewsService.js";
+import RadonSettingsService from "./radonSettingsService.js";
+import ManagingDevicesService from "./managingDevicesService.js";
+import AppManipulationService from "./appManipulationService.js";
 
 export default function initServices(driver) {
   return {
