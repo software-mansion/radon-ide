@@ -4,7 +4,7 @@ export default function MultipleSWMIcon(props) {
   return (
     <svg
       width="100%"
-      height="auto"
+      height="100%"
       viewBox="0 0 425 464"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -14,8 +14,8 @@ export default function MultipleSWMIcon(props) {
         fill="var(--swm-background)"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M266.655 0H408.722V63.2281L372.979 99.1946H230.91V35.8954L266.655 0ZM233.018 36.7721L266.037 3.61314V62.3526L233.018 95.5779V36.7721ZM234.505 97.0781H372.104L405.128 63.8486H267.528L234.505 97.0781ZM406.615 2.11653V61.7321H268.145V2.11653H406.615Z"
         fill="var(--radon-SWM-icon)"
       />
@@ -89,8 +89,8 @@ export default function MultipleSWMIcon(props) {
         fill="var(--swm-background)"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M104.992 64.427H247.131V127.726L184.901 190.219H42.7619L42.8339 126.92L104.992 64.427ZM44.9405 127.797L104.376 68.0426V126.85L44.8736 186.603L44.9405 127.797ZM46.361 188.103H184.028L243.533 128.346H105.866L46.361 188.103ZM245.023 66.5435V126.23H106.483V66.5435H245.023Z"
         fill="var(--radon-SWM-icon)"
       />
@@ -164,8 +164,8 @@ export default function MultipleSWMIcon(props) {
         fill="var(--swm-background)"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M231.105 97.1387H373.173V160.438L363.774 169.877H221.635L221.707 106.577L231.105 97.1387ZM223.814 107.455L230.488 100.752V159.559L223.747 166.275L223.814 107.455ZM225.249 167.76H362.901L369.575 161.058H231.976L225.249 167.76ZM371.065 99.2552V158.941H232.596V99.2552H371.065Z"
         fill="var(--radon-SWM-icon)"
       />
@@ -239,8 +239,8 @@ export default function MultipleSWMIcon(props) {
         fill="var(--swm-background)"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M266.654 167.256H408.722V230.484L372.978 266.45H230.91V203.151L266.654 167.256ZM233.018 204.028L266.037 170.869V229.608L233.018 262.833V204.028ZM234.505 264.334H372.104L405.128 231.104H267.528L234.505 264.334ZM406.614 169.372V228.988H268.145V169.372H406.614Z"
         fill="var(--radon-SWM-icon)"
       />
@@ -314,8 +314,8 @@ export default function MultipleSWMIcon(props) {
         fill="var(--swm-background)"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M266.589 228.982H408.727V292.281L312.933 388.481H170.794L170.866 325.182L266.589 228.982ZM172.972 326.059L265.972 232.597V291.404L172.906 384.865L172.972 326.059ZM174.393 386.365H312.06L405.129 292.901H267.463L174.393 386.365ZM406.62 231.098V290.784H268.08V231.098H406.62Z"
         fill="var(--radon-SWM-icon)"
       />
@@ -389,8 +389,8 @@ export default function MultipleSWMIcon(props) {
         fill="var(--swm-background)"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M96.2804 258.848H238.349V322.076L211.387 349.223H69.2474L69.3193 285.995L96.2804 258.848ZM71.426 286.871L95.664 262.466V321.2L71.3591 345.607L71.426 286.871ZM72.8465 347.107H210.513L234.756 322.696H97.1542L72.8465 347.107ZM236.241 260.964V320.58H97.7716V260.964H236.241Z"
         fill="var(--radon-SWM-icon)"
       />
@@ -464,8 +464,8 @@ export default function MultipleSWMIcon(props) {
         fill="var(--swm-background)"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M196.833 360.822H338.901V424.049L311.94 451.197H169.8L169.872 387.969L196.833 360.822ZM171.979 388.845L196.217 364.439V423.173L171.912 447.581L171.979 388.845ZM173.399 449.081H311.065L335.308 424.67H197.707L173.399 449.081ZM336.794 362.938V422.554H198.324V362.938H336.794Z"
         fill="var(--radon-SWM-icon)"
       />
@@ -539,8 +539,8 @@ export default function MultipleSWMIcon(props) {
         fill="var(--swm-background)"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M69.7287 347.168H211.867V410.467L158.559 464H16.4205L16.4924 400.701L69.7287 347.168ZM18.599 401.578L69.1118 350.784V409.59L18.5322 460.384L18.599 401.578ZM20.0195 461.884H157.687L208.269 411.087H70.6021L20.0195 461.884ZM209.759 349.284V408.971H71.2194V349.284H209.759Z"
         fill="var(--radon-SWM-icon)"
       />
@@ -614,8 +614,8 @@ export default function MultipleSWMIcon(props) {
         fill="var(--swm-background)"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M104.919 188.162H246.986V251.461L237.587 260.9H95.4482L95.5201 197.6L104.919 188.162ZM97.6267 198.478L104.301 191.775V250.582L97.5599 257.298L97.6267 198.478ZM99.0617 258.783H236.714L243.388 252.081H105.789L99.0617 258.783ZM244.879 190.278V249.964H106.409V190.278H244.879Z"
         fill="var(--radon-SWM-icon)"
       />
@@ -689,8 +689,8 @@ export default function MultipleSWMIcon(props) {
         fill="var(--swm-background)"
       />
       <path
-        fill-rule="evenodd"
-        clip-rule="evenodd"
+        fillRule="evenodd"
+        clipRule="evenodd"
         d="M140.043 91.0232H282.11V154.251L246.367 190.218H104.299V126.919L140.043 91.0232ZM106.406 127.795L139.426 94.6363V153.376L106.406 186.601V127.795ZM107.893 188.101H245.493L278.516 154.872H140.916L107.893 188.101ZM280.003 93.1397V152.755H141.533V93.1397H280.003Z"
         fill="var(--radon-SWM-icon)"
       />

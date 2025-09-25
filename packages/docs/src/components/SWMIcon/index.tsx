@@ -9,10 +9,10 @@ export default function SWMIcon(props) {
       viewBox="0 0 120 64"
       fill="none"
       {...props}>
-      <g clip-path="url(#clip0_2481_1668)">
+      <g clipPath="url(#clip0_2481_1668)">
         <path
-          fill-rule="evenodd"
-          clip-rule="evenodd"
+          fillRule="evenodd"
+          clipRule="evenodd"
           d="M0.0995483 0.0993652H100.791L119.9 19.14V63.6529H19.2093L0.0995483 44.6123V0.0993652ZM1.59332 2.64018V43.9958L18.7717 61.112V19.7565L1.59332 2.64018ZM2.64958 1.58774L19.828 18.704H117.35L100.172 1.58774H2.64958ZM118.407 62.1645H20.2655V20.1924H118.407V62.1645Z"
           fill="var(--radon-SWM-icon)"
         />
