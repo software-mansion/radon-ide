@@ -101,6 +101,11 @@ function Preview({
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLCanvasElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
+
+  useEffect(() => {
+    setShowPreviewRequested(false);
+  }, [selectedDeviceSessionStatus]);
+
   const [inspectorUnavailableBoxPosition, setInspectorUnavailableBoxPosition] =
     useState<Point | null>(null);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
@@ -120,7 +125,9 @@ function Preview({
     isRunning ? selectedDeviceSessionState.applicationSession.isRefreshing.get() : false
   );
   const debugPaused = use$(() =>
-    isRunning ? selectedDeviceSessionState.applicationSession.isDebuggerPaused.get() : false
+    isRunning || showPreviewRequested
+      ? selectedDeviceSessionState.applicationSession.isDebuggerPaused.get()
+      : false
   );
 
   const previewURL = use$(selectedDeviceSessionState.previewURL);
