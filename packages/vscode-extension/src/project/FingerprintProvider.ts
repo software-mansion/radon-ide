@@ -4,11 +4,13 @@ import { createFingerprintAsync } from "@expo/fingerprint";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { Logger } from "../Logger";
 import { command } from "../utilities/subprocess";
+import { DevicePlatform } from "../common/State";
 
 type Fingerprint = string;
 
 export interface FingerprintOptions {
   appRoot: string;
+  platform: DevicePlatform;
   env?: Record<string, string>;
   fingerprintCommand?: string;
 }
@@ -17,7 +19,7 @@ type CustomFingerprintOptions = FingerprintOptions & {
   fingerprintCommand: string;
 };
 
-const IGNORE_PATHS = [
+const IGNORE_PATHS_BASE = [
   path.join("android", ".gradle/**/*"),
   path.join("android", "build/**/*"),
   path.join("android", "app", "build/**/*"),
@@ -27,6 +29,17 @@ const IGNORE_PATHS = [
   "**/node_modules/**/.gradle/**/*",
   "**/node_modules/**/android/build/intermediates/cxx/**/*",
 ];
+
+function resolveIgnoredPaths(platform: DevicePlatform) {
+  let result = IGNORE_PATHS_BASE;
+  if (platform === DevicePlatform.IOS) {
+    result = [...result, path.join("android", "**/*")];
+  }
+  if (platform === DevicePlatform.Android) {
+    result = [...result, path.join("ios", "**/*")];
+  }
+  return result;
+}
 
 export async function runFingerprintCommand(
   options: CustomFingerprintOptions
@@ -88,7 +101,7 @@ export class FingerprintProvider implements Disposable {
       fingerprintPromise = calculateCustomFingerprint(options as CustomFingerprintOptions);
     } else {
       fingerprintPromise = createFingerprintAsync(appRoot, {
-        ignorePaths: IGNORE_PATHS,
+        ignorePaths: resolveIgnoredPaths(options.platform),
       }).then((fingerprint) => fingerprint.hash);
     }
 
@@ -104,7 +117,7 @@ export class FingerprintProvider implements Disposable {
   }
 
   private makeCacheKey(options: FingerprintOptions): string {
-    return `${options.appRoot}:${options.fingerprintCommand || ""}`;
+    return `${options.appRoot}:${options.platform}:${options.fingerprintCommand || ""}`;
   }
 
   private onProjectFilesChanged = () => {
