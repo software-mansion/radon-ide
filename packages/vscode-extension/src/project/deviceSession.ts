@@ -24,7 +24,7 @@ import { ApplicationContext } from "./ApplicationContext";
 import { watchProjectFiles } from "../utilities/watchProjectFiles";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
-import { ApplicationSession } from "./applicationSession";
+import { ApplicationSession, ReloadJSError } from "./applicationSession";
 import {
   DevicePlatform,
   DeviceRotation,
@@ -286,6 +286,17 @@ export class DeviceSession implements Disposable {
             message: e.message,
             platform: this.stateManager.getState().deviceInfo.platform,
             reason: e.reason,
+          },
+        });
+        return;
+      } else if (e instanceof ReloadJSError) {
+        this.stateManager.updateState({
+          status: "fatalError",
+          error: {
+            message: e.message,
+            platform: this.stateManager.getState().deviceInfo.platform,
+            kind: "build",
+            buildType: null,
           },
         });
         return;

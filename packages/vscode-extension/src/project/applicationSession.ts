@@ -64,6 +64,12 @@ function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: Ca
   return promise;
 }
 
+export class ReloadJSError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 export class ApplicationSession implements Disposable {
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
@@ -308,6 +314,13 @@ export class ApplicationSession implements Disposable {
       debugSession.onDebuggerResumed(this.onDebuggerResumed),
       debugSession.onProfilingCPUStarted(this.onProfilingCPUStarted),
       debugSession.onProfilingCPUStopped(this.onProfilingCPUStopped),
+      // debugSession.onScriptParsed(({ isMainBundle }) => {
+      //   // NOTE: if the scriptParsed event is received for the main bundle,
+      //   // it must have loaded successfully, so we clear any existing bundle error
+      //   if (isMainBundle) {
+      //     this.stateManager.updateState({ bundleError: null });
+      //   }
+      // }),
     ];
     return new Disposable(() => {
       disposeAll(subscriptions);
@@ -405,13 +418,13 @@ export class ApplicationSession implements Disposable {
     // when switching between devices
     this.stateManager.updateState({ inspectorBridgeStatus: InspectorBridgeStatus.Connecting });
     this.toolsManager.deactivate();
+    this.cdpDevtoolsServer?.dispose();
+    this.cdpDevtoolsServer = undefined;
     this.debugSessionEventSubscription?.dispose();
     this.debugSessionEventSubscription = undefined;
     const debugSession = this.debugSession;
     this.debugSession = undefined;
     await debugSession?.dispose();
-    this.cdpDevtoolsServer?.dispose();
-    this.cdpDevtoolsServer = undefined;
   }
 
   //#region Debugger control
@@ -525,13 +538,31 @@ export class ApplicationSession implements Disposable {
   public async reloadJS(cancelToken: CancelToken) {
     const { promise: bundleErrorPromise, reject: rejectBundleError } = Promise.withResolvers();
     const bundleErrorSubscription = this.metro.onBundleError(() => {
-      rejectBundleError(new Error("Bundle error occurred during reload"));
+      rejectBundleError(
+        new ReloadJSError(
+          "Bundle error occurred during reload. See the extension logs for details."
+        )
+      );
     });
+    const appReadyPromise = waitForAppReady(this.inspectorBridge, cancelToken);
+
     try {
-      const appReadyPromise = waitForAppReady(this.inspectorBridge, cancelToken);
-      await this.debugSession?.evaluateExpression({
-        expression: "void globalThis.__RADON_reloadJS()",
+      if (!this.debugSession) {
+        throw new Error();
+      }
+      const result = await this.debugSession.evaluateExpression({
+        expression: "globalThis.__RADON_reloadJS()",
       });
+      if (result.result.className === "Error") {
+        throw new Error();
+      }
+    } catch (e) {
+      throw new ReloadJSError(
+        "Could not trigger JS reload because the application is not connected to Radon. Try another restart option."
+      );
+    }
+
+    try {
       await Promise.race([appReadyPromise, bundleErrorPromise]);
     } finally {
       bundleErrorSubscription.dispose();
