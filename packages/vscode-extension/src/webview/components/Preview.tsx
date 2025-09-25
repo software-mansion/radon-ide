@@ -79,7 +79,7 @@ function Preview({
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
-  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
 
   const appOrientation = use$(selectedDeviceSessionState.applicationSession.appOrientation);
   const bundleError = use$(selectedDeviceSessionState.applicationSession.bundleError);

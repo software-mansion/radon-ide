@@ -85,7 +85,7 @@ export class WebviewController implements Disposable {
 
     const panelLocation = workspace
       .getConfiguration("RadonIDE")
-      .get<PanelLocation>("panelLocation");
+      .get<PanelLocation>("userInterface.panelLocation");
 
     getTelemetryReporter().sendTelemetryEvent("panelOpened", {
       panelLocation,

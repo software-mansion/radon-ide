@@ -9,7 +9,7 @@ import {
 import { RadonInspectorBridge } from "../../project/bridge";
 import { ToolPlugin } from "../../project/tools";
 import { disposeAll } from "../../utilities/disposables";
-import { InspectorAvailabilityStatus, WorkspaceConfiguration } from "../../common/State";
+import { InspectorAvailabilityStatus, REMOVE, WorkspaceConfiguration } from "../../common/State";
 import { StateManager } from "../../project/StateManager";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
@@ -39,7 +39,8 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
     private onAvailabilityChange: () => void,
     private workspaceConfigState: StateManager<WorkspaceConfiguration>
   ) {
-    this.experimentalEnable = workspaceConfigState.getState().enableExperimentalElementInspector;
+    this.experimentalEnable =
+      workspaceConfigState.getState().general.enableExperimentalElementInspector;
     this.setupEventListeners();
   }
 
@@ -68,7 +69,8 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
       ),
 
       this.workspaceConfigState.onSetState((state) => {
-        this.experimentalEnable = !!state.enableExperimentalElementInspector;
+        this.experimentalEnable =
+          state.general !== REMOVE ? !!state.general?.enableExperimentalElementInspector : false;
         this.updatePluginState();
         this.onAvailabilityChange();
       }),
