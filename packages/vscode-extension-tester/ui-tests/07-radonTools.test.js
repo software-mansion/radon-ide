@@ -99,7 +99,6 @@ describe("7 - Radon tools tests", () => {
 
     const editorView = new EditorView();
     const titles = await editorView.getOpenEditorTitles();
-    console.log(titles);
 
     assert.include(titles, componentSourceFile);
   });
@@ -211,7 +210,7 @@ describe("7 - Radon tools tests", () => {
 
   it("should open preview", async () => {
     await driver.switchTo().defaultContent();
-    await vscodeHelperService.openFileInEditor("MainScreen.tsx");
+    await vscodeHelperService.openFileInEditor("automatedTests.tsx");
     const editor = new TextEditor();
     await driver.wait(
       async () => (await editor.getCodeLenses("Open preview")).length > 0,
@@ -233,7 +232,7 @@ describe("7 - Radon tools tests", () => {
 
   it("should click button in preview", async () => {
     await driver.switchTo().defaultContent();
-    await vscodeHelperService.openFileInEditor("MainScreen.tsx");
+    await vscodeHelperService.openFileInEditor("automatedTests.tsx");
     const editor = new TextEditor();
     await driver.wait(
       async () => (await editor.getCodeLenses("Open preview")).length > 0,
