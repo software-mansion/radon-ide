@@ -55,8 +55,8 @@ jobs:
 
     env:
       NODE_VERSION: ${{ github.event.inputs.node || '22' }}
-      PROJECT_NAME: ${{ github.event.inputs.testApp || 'react-native-81' }}
-      IS_RECORDING: ${{ github.event.inputs.isRecording || 'false' }}
+      PROJECT_NAME: ${{ github.event.inputs.testApp || 'expo-54' }}
+      IS_RECORDING: ${{ github.event.inputs.isRecording || 'true' }}
       TESTS_TO_RUN: ${{ github.event.inputs.testsToRun || '' }}
       TESTS_TO_EXCLUDE: ${{ github.event.inputs.testsToExclude || '' }}
       IS_GITHUB_ACTIONS: "true"
