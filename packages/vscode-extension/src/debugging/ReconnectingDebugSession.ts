@@ -107,7 +107,6 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   public onProfilingCPUStopped = this.debugSession.onProfilingCPUStopped;
   public onBindingCalled = this.debugSession.onBindingCalled;
   public onScriptParsed = this.debugSession.onScriptParsed;
-  public onJSDebugSessionStarted = this.debugSession.onJSDebugSessionStarted;
 
   public async startParentDebugSession(): Promise<void> {
     return this.debugSession.startParentDebugSession();
