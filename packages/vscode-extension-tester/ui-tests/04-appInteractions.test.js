@@ -218,7 +218,15 @@ describe("4 - App interaction tests", () => {
     );
     const browser = VSBrowser.instance;
     browser.openResources(`./data`);
-    await radonViewsService.openRadonIDEPanel();
+    await driver.switchTo().defaultContent();
+    await driver.wait(async () => {
+      try {
+        await radonViewsService.openRadonIDEPanel();
+      } catch {
+        return false;
+      }
+      return true;
+    });
     await elementHelperService.findAndClickElementByTag(
       "radon-bottom-bar-approot-select-dropdown-trigger"
     );
@@ -226,5 +234,7 @@ describe("4 - App interaction tests", () => {
     await elementHelperService.findAndWaitForElementByTag(
       "approot-select-dropdown-content"
     );
+
+    await driver.sleep(10000);
   });
 });
