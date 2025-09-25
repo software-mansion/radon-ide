@@ -549,9 +549,9 @@ export class DeviceSession implements Disposable {
       this.device.setUpKeyboard();
       this.setupInspectorBridgeListeners(applicationSession.inspectorBridge);
 
-      // this.stateManager.updateState({
-      //   status: "running",
-      // });
+      this.stateManager.updateState({
+        status: "running",
+      });
 
       const launchDurationSec = (Date.now() - launchRequestTime) / 1000;
       Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
