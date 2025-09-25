@@ -36,8 +36,6 @@ function DeviceRow({
   isRunning,
   dataTest,
 }: PropsWithDataTest<DeviceRowProps>) {
-  const store$ = useStore();
-  const stopPreviousDevices = use$(store$.workspaceConfiguration.deviceControl.stopPreviousDevices);
   const { project } = useProject();
 
   const stopDevice = () => project.terminateSession(deviceInfo.id);

@@ -90,7 +90,8 @@ export class DeviceSessionsManager implements Disposable {
   }
 
   private get deviceLimits() {
-    const stopPreviousDevices = this.applicationContext.workspaceConfiguration.stopPreviousDevices;
+    const stopPreviousDevices =
+      this.applicationContext.workspaceConfiguration.deviceControl.stopPreviousDevices;
     const launchConfig = this.applicationContext.launchConfig;
     const usesSingleMetro = !!launchConfig.metroPort;
     const usesOldDevtools = launchConfig.useOldDevtools;
