@@ -33,7 +33,6 @@ import {
   DeviceSessionsManager,
   DeviceSessionsManagerDelegate,
   ReloadAction,
-  SelectDeviceOptions,
 } from "./DeviceSessionsManager";
 import { FingerprintProvider } from "./FingerprintProvider";
 import { Connector } from "../connect/Connector";
@@ -201,14 +200,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
-  public startOrActivateSessionForDevice(
-    deviceInfo: DeviceInfo,
-    selectDeviceOptions?: SelectDeviceOptions
-  ): Promise<void> {
-    return this.deviceSessionsManager.startOrActivateSessionForDevice(
-      deviceInfo,
-      selectDeviceOptions
-    );
+  public startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void> {
+    return this.deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
   }
 
   public terminateSession(deviceId: DeviceId): Promise<void> {

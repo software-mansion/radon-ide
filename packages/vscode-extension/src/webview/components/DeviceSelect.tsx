@@ -122,9 +122,7 @@ function DeviceSelect() {
     if (selectedDevice?.id !== value) {
       const deviceInfo = (devices ?? []).find((d) => d.id === value);
       if (deviceInfo) {
-        project.startOrActivateSessionForDevice(deviceInfo, {
-          stopPreviousDevices,
-        });
+        project.startOrActivateSessionForDevice(deviceInfo);
       }
     }
   };

@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs";
 import { ExecaChildProcess, ExecaError } from "execa";
 import mime from "mime";
+import _ from "lodash";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
@@ -589,9 +590,7 @@ export class IosSimulatorDevice extends DeviceBase {
       await this.updateInstalledAppBuildHash(build);
     } catch (e) {
       const message =
-        typeof e === "object" && e !== null && "message" in e
-          ? String((e as any).message)
-          : String(e);
+        typeof e === "object" && e !== null && "message" in e ? String(e.message) : String(e);
       throw new InstallationError(message, InstallationErrorReason.Unknown);
     }
   }
@@ -793,6 +792,9 @@ export async function listSimulators(location: SimulatorDeviceSet): Promise<IOSD
         .filter((e) => e !== undefined);
     })
     .flat();
+  if (location === SimulatorDeviceSet.RN_IDE) {
+    await ensureUniqueDisplayNames(simulators);
+  }
   return simulators;
 }
 
@@ -899,5 +901,24 @@ function convertToSimctlSize(size: DeviceSettings["contentSize"]): string {
       return "extra-extra-large";
     case "xxxlarge":
       return "extra-extra-extra-large";
+  }
+}
+
+async function ensureUniqueDisplayNames(devices: IOSDeviceInfo[]) {
+  const devicesByDisplayName = _.groupBy(devices, "displayName");
+  const uniqueNames = new Set<string>(Object.keys(devicesByDisplayName));
+
+  for (const [displayName, devicesWithSameName] of Object.entries(devicesByDisplayName)) {
+    let duplicateCounter = 1;
+    let newName = `${displayName} (${duplicateCounter})`;
+    for (const device of devicesWithSameName.slice(1)) {
+      while (uniqueNames.has(newName)) {
+        duplicateCounter += 1;
+        newName = `${displayName} (${duplicateCounter})`;
+      }
+      uniqueNames.add(newName);
+      device.displayName = newName;
+      await renameIosSimulator(device.UDID, newName);
+    }
   }
 }

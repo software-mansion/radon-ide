@@ -44,9 +44,7 @@ function DeviceRow({
   const selectDevice: MouseEventHandler = (e) => {
     if (!isSelected) {
       e.stopPropagation();
-      project.startOrActivateSessionForDevice(deviceInfo, {
-        stopPreviousDevices,
-      });
+      project.startOrActivateSessionForDevice(deviceInfo);
       closeModal();
     }
   };

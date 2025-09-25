@@ -20,12 +20,14 @@ const PayloadTab = ({ networkLog, editorThemeData }: PayloadTabProps) => {
   return (
     <>
       <TabActionButtons data={payloadData} disabled={!payloadData} />
-      <HighlightedCodeBlock
-        content={payloadData}
-        language="json"
-        theme={editorThemeData}
-        placeholder="No request body"
-      />
+      <div className="tab-padding">
+        <HighlightedCodeBlock
+          content={payloadData}
+          language="json"
+          theme={editorThemeData}
+          placeholder="No request body"
+        />
+      </div>
     </>
   );
 };

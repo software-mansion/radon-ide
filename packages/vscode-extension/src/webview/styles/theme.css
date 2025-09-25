@@ -328,4 +328,7 @@ body {
   --deep-link-history-selected-item-background: var(--navy-light-10);
 
   --swm-radio-group-indicator: var(--swm-button-background);
+
+  --swm-dropdown-border: 1px solid var(--vscode-menu-border);
+  --swm-dropdown-shadow: 0 0 8px 2px var(--vscode-widget-shadow);
 }
