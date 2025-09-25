@@ -7,6 +7,14 @@ export function centerCoordinates(position) {
   };
 }
 
+export function describeIf(condition, title, fn) {
+  if (condition) {
+    describe(title, fn);
+  } else {
+    describe.skip(title, fn);
+  }
+}
+
 export function itIf(condition, title, fn) {
   if (condition) {
     it(title, fn);

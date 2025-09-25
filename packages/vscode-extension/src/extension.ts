@@ -109,14 +109,14 @@ export async function activate(context: ExtensionContext) {
 
     const configuration = workspace.getConfiguration("RadonIDE");
 
-    let panelLocation = configuration.get<PanelLocation>("panelLocation");
+    let panelLocation = configuration.get<PanelLocation>("userInterface.panelLocation");
     if (newLocation) {
       panelLocation = newLocation === "side-panel" ? "side-panel" : "tab";
       updatingConfigProgrammatically = true;
-      if (configuration.inspect("panelLocation")?.workspaceValue) {
-        await configuration.update("panelLocation", panelLocation, false);
+      if (configuration.inspect("userInterface.panelLocation")?.workspaceValue) {
+        await configuration.update("userInterface.panelLocation", panelLocation, false);
       } else {
-        await configuration.update("panelLocation", panelLocation, true);
+        await configuration.update("userInterface.panelLocation", panelLocation, true);
       }
       updatingConfigProgrammatically = false;
     }
@@ -137,7 +137,7 @@ export async function activate(context: ExtensionContext) {
   async function closeIDEPanel(fileName?: string, lineNumber?: number) {
     const panelLocation = workspace
       .getConfiguration("RadonIDE")
-      .get<PanelLocation>("panelLocation");
+      .get<PanelLocation>("userInterface.panelLocation");
 
     if (panelLocation !== "tab") {
       commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", true);
@@ -321,14 +321,14 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-      if (event.affectsConfiguration("RadonIDE.panelLocation")) {
+      if (event.affectsConfiguration("RadonIDE.userInterface.panelLocation")) {
         showIDEPanel();
       }
     })
   );
 
   const configuration = workspace.getConfiguration("RadonIDE");
-  const enableRadonAI = configuration.get<boolean>("enableRadonAI");
+  const enableRadonAI = configuration.get<boolean>("radonAI.enableRadonAI");
 
   if (enableRadonAI) {
     // Initializes MCP part of Radon AI

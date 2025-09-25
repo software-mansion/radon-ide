@@ -13,7 +13,7 @@ import "./shared/SwitchGroup.css";
 
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
-import { AppPermissionType, DeviceRotationDirection, DeviceSettings } from "../../common/Project";
+import { AppPermissionType, DeviceRotationDirection } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
@@ -23,7 +23,7 @@ import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
-import { DevicePlatform, DeviceRotation } from "../../common/State";
+import { DevicePlatform, DeviceRotation, DeviceSettings } from "../../common/State";
 import { PropsWithDataTest } from "../../common/types";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
@@ -90,12 +90,14 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
-  const showDeviceFrame = use$(store$.workspaceConfiguration.showDeviceFrame);
-  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const showDeviceFrame = use$(store$.workspaceConfiguration.userInterface.showDeviceFrame);
+  const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
 
   const platform = use$(selectedDeviceSessionState.deviceInfo.platform);
 
-  const { project, deviceSettings } = useProject();
+  const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
+
+  const { project } = useProject();
 
   const { openModal } = useModal();
 
@@ -119,10 +121,9 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               className="radio-group-root"
               defaultValue={deviceSettings.appearance}
               onValueChange={(value) => {
-                project.updateDeviceSettings({
-                  ...deviceSettings,
-                  appearance: value as DeviceSettings["appearance"],
-                });
+                store$.workspaceConfiguration.deviceSettings.appearance.set(
+                  value as DeviceSettings["appearance"]
+                );
               }}>
               <div className="radio-group-center">
                 <RadioGroup.Item
@@ -159,10 +160,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 max={6}
                 step={1}
                 onValueCommit={([value]) => {
-                  project.updateDeviceSettings({
-                    ...deviceSettings,
-                    contentSize: contentSizes[value],
-                  });
+                  store$.workspaceConfiguration.deviceSettings.contentSize.set(contentSizes[value]);
                 }}>
                 <Slider.Track className="slider-track">
                   <Slider.Range className="slider-range" />
@@ -234,7 +232,9 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                     className="dropdown-menu-item"
                     data-testid={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
                     key={index}
-                    onSelect={() => store$.workspaceConfiguration.deviceRotation.set(option.value)}>
+                    onSelect={() =>
+                      store$.workspaceConfiguration.deviceSettings.deviceRotation.set(option.value)
+                    }>
                     <span
                       className={`codicon codicon-${option.icon}`}
                       style={{ rotate: option.rotation }}
@@ -306,7 +306,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               data-testid="device-settings-enable-replays-switch"
               id="enable-replays"
               onCheckedChange={(checked) =>
-                project.updateDeviceSettings({ ...deviceSettings, replaysEnabled: checked })
+                store$.workspaceConfiguration.deviceSettings.replaysEnabled.set(checked)
               }
               defaultChecked={deviceSettings.replaysEnabled}
               style={{ marginLeft: "auto" }}>
@@ -321,7 +321,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               data-testid="device-settings-show-touches-switch"
               id="show-touches"
               onCheckedChange={(checked) =>
-                project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })
+                store$.workspaceConfiguration.deviceSettings.showTouches.set(checked)
               }
               defaultChecked={deviceSettings.showTouches}
               style={{ marginLeft: "auto" }}>
@@ -336,7 +336,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               id="show-device-frame"
               data-testid="device-settings-show-device-frame-switch"
               onCheckedChange={(checked) =>
-                store$.workspaceConfiguration.showDeviceFrame.set(checked)
+                store$.workspaceConfiguration.userInterface.showDeviceFrame.set(checked)
               }
               defaultChecked={showDeviceFrame}
               style={{ marginLeft: "auto" }}>
@@ -398,7 +398,10 @@ function CommandItem({
 }
 
 const BiometricsItem = () => {
-  const { project, deviceSettings } = useProject();
+  const store$ = useStore();
+  const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
+
+  const { project } = useProject();
 
   return (
     <DropdownMenu.Sub>
@@ -413,10 +416,9 @@ const BiometricsItem = () => {
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              project.updateDeviceSettings({
-                ...deviceSettings,
-                hasEnrolledBiometrics: !deviceSettings.hasEnrolledBiometrics,
-              });
+              store$.workspaceConfiguration.deviceSettings.hasEnrolledBiometrics.set(
+                !deviceSettings.hasEnrolledBiometrics
+              );
             }}>
             <span className="codicon codicon-layout-sidebar-left" />
             Enrolled

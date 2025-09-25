@@ -464,7 +464,7 @@ export class ApplicationSession implements Disposable {
     status: InspectorAvailabilityStatus
   ): InspectorAvailabilityStatus {
     const experimentalInspectorEnabled =
-      this.applicationContext.workspaceConfiguration.enableExperimentalElementInspector;
+      this.applicationContext.workspaceConfiguration.general.enableExperimentalElementInspector;
     const isStatusUnavailableEdgeToEdge =
       status === InspectorAvailabilityStatus.UnavailableEdgeToEdge;
 
@@ -628,7 +628,7 @@ export class ApplicationSession implements Disposable {
     if (requestStack && inspectData?.stack) {
       stack = inspectData.stack;
       const inspectorExcludePattern =
-        this.applicationContext.workspaceConfiguration.inspectorExcludePattern;
+        this.applicationContext.workspaceConfiguration.general.inspectorExcludePattern;
       const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
       function testInspectorExcludeGlobPattern(filename: string) {
         return patterns?.some((pattern) => minimatch(filename, pattern));

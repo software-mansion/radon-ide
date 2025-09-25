@@ -95,8 +95,9 @@ function PreviewView() {
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
   const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
   const selectedProjectDevice = use$(selectedDeviceSessionState.deviceInfo);
+  const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
 
-  const { projectState, project, deviceSettings, hasActiveLicense } = useProject();
+  const { projectState, project, hasActiveLicense } = useProject();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
@@ -108,7 +109,7 @@ function PreviewView() {
   const initialized = use$(store$.projectState.initialized);
   const radonConnectConnected = projectState.connectState.connected;
   const radonConnectEnabled = projectState.connectState.enabled;
-  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
   const zoomLevel = use$(store$.projectState.previewZoom);
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {

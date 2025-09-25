@@ -12,32 +12,6 @@ import {
   ToolsState,
 } from "./State";
 
-export type Locale = string;
-
-export type CameraSource = "emulated" | "none" | "webcam0";
-export type FrontCameraSource = CameraSource;
-export type BackCameraSource = CameraSource | "virtualscene";
-
-export interface CameraSettings {
-  back: BackCameraSource;
-  front: FrontCameraSource;
-}
-
-export type DeviceSettings = {
-  appearance: "light" | "dark";
-  contentSize: "xsmall" | "small" | "normal" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
-  location: {
-    latitude: number;
-    longitude: number;
-    isDisabled: boolean;
-  };
-  hasEnrolledBiometrics: boolean;
-  locale: Locale;
-  replaysEnabled: boolean;
-  showTouches: boolean;
-  camera?: CameraSettings;
-};
-
 export type DeviceId = DeviceInfo["id"];
 
 export type ConnectState = {
@@ -69,10 +43,6 @@ export const ROTATIONS: DeviceRotation[] = [
 ] as const;
 
 export type AppOrientation = DeviceRotation | "Landscape";
-
-export function isOfEnumDeviceRotation(value: any): value is DeviceRotation {
-  return Object.values(DeviceRotation).includes(value);
-}
 
 export type Frame = {
   x: number;
@@ -117,7 +87,6 @@ export enum ActivateDeviceResult {
 
 export interface ProjectEventMap {
   projectStateChanged: ProjectState;
-  deviceSettingsChanged: DeviceSettings;
   licenseActivationChanged: boolean;
 }
 
@@ -149,8 +118,6 @@ export interface ProjectInterface {
   runDependencyChecks(): Promise<void>;
 
   rotateDevices(direction: DeviceRotationDirection): Promise<void>;
-  getDeviceSettings(): Promise<DeviceSettings>;
-  updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
 
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
   openTool(toolName: keyof ToolsState): Promise<void>;
