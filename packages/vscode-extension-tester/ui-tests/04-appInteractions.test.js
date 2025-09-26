@@ -49,15 +49,18 @@ describe("4 - App interaction tests", () => {
   });
 
   beforeEach(async function () {
+    console.log("1");
     await workbench.executeCommand("Remove All Breakpoints");
+    console.log("2");
     try {
       await radonViewsService.switchToRadonIDEFrame();
     } catch {
+      console.log("3");
       radonViewsService.openRadonIDEPanel();
     }
 
     await appManipulationService.waitForAppToLoad();
-
+    console.log("4");
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
@@ -66,15 +69,15 @@ describe("4 - App interaction tests", () => {
     // Without using this delay, the application returns incorrect button coordinates.
     // So far, I haven't found a better way to check it (it might be related to SafeAreaView).
     await driver.sleep(1000);
-
+    console.log("5");
     await appManipulationService.hideExpoOverlay(appWebsocket);
-
+    console.log("6");
     await radonViewsService.clearDebugConsole();
     await radonViewsService.switchToRadonIDEFrame();
-
+    console.log("7");
     // ensure app is fully loaded
     await appManipulationService.waitForAppToLoad();
-
+    console.log("8");
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
