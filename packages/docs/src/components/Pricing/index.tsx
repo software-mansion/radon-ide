@@ -52,8 +52,7 @@ const Pricing = ({ handleBusiness, handleIndividual }: PricingProps) => {
       <div className={styles.titleContainer}>
         <h1 className={styles.headingLabel}>Pricing</h1>
         <h3 className={styles.subheadlingLabel}>
-          Choose a plan that works for your needs. <br /> Pay monthly for flexibility or yearly for
-          the best price.
+          Choose the subscription plan tailored to your needs
         </h3>
       </div>
       <div className={styles.wrapper}>

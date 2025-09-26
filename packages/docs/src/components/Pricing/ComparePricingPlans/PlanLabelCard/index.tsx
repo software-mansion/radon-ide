@@ -4,7 +4,7 @@ import PricingButton from "../PricingButton";
 
 interface PlanLabelCardProps {
   plan: string;
-  monthlyPrice: number;
+  monthlyPrice: number | string;
   yearlyLowPrice?: number;
   yearlyFullPrice?: number;
   buttonLabel: string;
@@ -27,11 +27,16 @@ export default function PlanLabelCard({
       <div className={styles.planDetails}>
         <div className={styles.planName}>{plan}</div>
         <div className={styles.priceDescription}>
-          {plan === "ENTERPRISE" ? "From " : ""}
-          <span>${monthlyPrice}</span> /month{" "}
+          {typeof monthlyPrice == "number" ? (
+            <>
+              <span>${monthlyPrice}</span> /month{" "}
+            </>
+          ) : (
+            <span>{monthlyPrice}</span>
+          )}
           {yearlyLowPrice && (
             <>
-              or <span>${yearlyLowPrice}</span> /yearly
+              or <span>${yearlyLowPrice}</span> /year
             </>
           )}
         </div>
