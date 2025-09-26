@@ -25,6 +25,7 @@ function filePathForProfile() {
 }
 
 type IdeMessageListener = <K extends keyof RadonInspectorBridgeEvents>(event: {
+  id: number;
   type: K;
   data: RadonInspectorBridgeEvents[K];
 }) => void;
@@ -37,6 +38,7 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
   private devtoolsConnection: DevtoolsConnection | undefined;
   private devtoolsServerListener?: Disposable;
   private devtoolsConnectionListeners: Disposable[] = [];
+  private lastMessageId: number = 0;
 
   constructor() {
     super();
@@ -52,6 +54,8 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
 
     this.devtoolsConnectionListeners = [
       connection.onIdeMessage((message) => {
+        this.lastMessageId = message.id;
+        this.send({ type: "ack", id: message.id });
         this.emitEvent(message.type, message.data);
       }),
       connection.onDisconnected(() => {
@@ -63,6 +67,7 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
     ];
     const messageQueue = this.messageQueue;
     this.messageQueue = [];
+    this.send({ type: "retransmit", id: this.lastMessageId });
     for (const message of messageQueue) {
       this.send(message);
     }
