@@ -69,7 +69,19 @@ afterEach(async function () {
   await bottomBar.toggle(false);
   await new EditorView().closeAllEditors();
   await driver.switchTo().defaultContent();
-  await workbench.executeCommand("Developer: Reload Window");
+
+  // this method of reloading window seems to be more reliable than workbench.executeCommand("Developer: Reload Window")
+  await driver
+    .actions()
+    .keyDown(Key.SHIFT)
+    .keyDown(Key.COMMAND)
+    .sendKeys("p")
+    .keyUp(Key.COMMAND)
+    .keyUp(Key.SHIFT)
+    .perform();
+  await driver.actions().sendKeys("Developer: Reload Window").perform();
+  await driver.actions().sendKeys(Key.ENTER).perform();
+
   driver.wait(async () => {
     try {
       workbench = new Workbench();
