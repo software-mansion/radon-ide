@@ -69,7 +69,14 @@ afterEach(async function () {
   await bottomBar.toggle(false);
   await new EditorView().closeAllEditors();
   await workbench.executeCommand("Developer: Reload Window");
-  workbench = new Workbench();
+  driver.wait(async () => {
+    try {
+      workbench = new Workbench();
+    } catch {
+      return false;
+    }
+    return true;
+  }, 10000);
 
   // waiting for vscode to get ready after reload
   await driver.wait(async () => {

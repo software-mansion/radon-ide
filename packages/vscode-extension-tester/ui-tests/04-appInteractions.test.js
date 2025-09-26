@@ -50,8 +50,12 @@ describe("4 - App interaction tests", () => {
 
   beforeEach(async function () {
     await workbench.executeCommand("Remove All Breakpoints");
+    try {
+      await radonViewsService.switchToRadonIDEFrame();
+    } catch {
+      radonViewsService.openRadonIDEPanel();
+    }
 
-    radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
 
     await driver.wait(async () => {
@@ -66,7 +70,15 @@ describe("4 - App interaction tests", () => {
     await appManipulationService.hideExpoOverlay(appWebsocket);
 
     await radonViewsService.clearDebugConsole();
-    await radonViewsService.openRadonIDEPanel();
+    await radonViewsService.switchToRadonIDEFrame();
+
+    // ensure app is fully loaded
+    await appManipulationService.waitForAppToLoad();
+
+    await driver.wait(async () => {
+      appWebsocket = get().appWebsocket;
+      return appWebsocket != null;
+    }, 5000);
   });
 
   function execAsync(command) {
