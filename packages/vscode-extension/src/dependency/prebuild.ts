@@ -167,9 +167,12 @@ export class Prebuild implements Disposable {
 }
 
 function getExpoCliPath(appRoot: string) {
+  const expoInstallPath = require.resolve("expo", {
+    paths: [appRoot],
+  });
   try {
     return require.resolve("@expo/cli", {
-      paths: [appRoot],
+      paths: [expoInstallPath],
     });
   } catch {
     return undefined;
