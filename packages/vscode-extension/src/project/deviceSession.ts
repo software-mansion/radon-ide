@@ -1,4 +1,5 @@
 import { Disposable } from "vscode";
+import { throttle } from "lodash";
 import { RadonInspectorBridge } from "./bridge";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
@@ -10,7 +11,7 @@ import {
   inferBuildType,
 } from "../builders/BuildManager";
 import { AppPermissionType, TouchPoint, DeviceButtonType, InspectData } from "../common/Project";
-import { throttle, throttleAsync } from "../utilities/throttle";
+import { throttleAsync } from "../utilities/throttle";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { ToolKey } from "./tools";
@@ -265,6 +266,10 @@ export class DeviceSession implements Disposable {
 
     this.device?.dispose();
     this.metro?.dispose();
+
+    this.buildProgressListener.cancel();
+    this.onBundleProgress.cancel();
+    this.onProjectFilesChanged.cancel();
 
     disposeAll(this.disposables);
   }
@@ -617,6 +622,16 @@ export class DeviceSession implements Disposable {
     return false;
   }
 
+  private buildProgressListener = throttle((stageProgress: number) => {
+    const store = this.stateManager.getState();
+    if (store.status !== "starting") {
+      return;
+    }
+    if (store.startupMessage === StartupMessage.Building) {
+      this.stateManager.updateState({ stageProgress });
+    }
+  }, 100);
+
   private async buildApp({ clean, cancelToken }: { clean: boolean; cancelToken: CancelToken }) {
     const buildStartTime = Date.now();
     this.updateStartupMessage(StartupMessage.Building);
@@ -638,15 +653,7 @@ export class DeviceSession implements Disposable {
         platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
       ),
       cancelToken,
-      progressListener: throttle((stageProgress: number) => {
-        const store = this.stateManager.getState();
-        if (store.status !== "starting") {
-          return;
-        }
-        if (store.startupMessage === StartupMessage.Building) {
-          this.stateManager.updateState({ stageProgress });
-        }
-      }, 100),
+      progressListener: this.buildProgressListener,
     };
 
     const dependencyManager = this.applicationContext.applicationDependencyManager;
