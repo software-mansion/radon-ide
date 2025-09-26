@@ -25,7 +25,6 @@ describe("4 - App interaction tests", () => {
 
   before(async () => {
     ({ driver, view, workbench } = get());
-
     ({
       elementHelperService,
       radonViewsService,
@@ -49,15 +48,13 @@ describe("4 - App interaction tests", () => {
   });
 
   beforeEach(async function () {
-    await workbench.executeCommand("Remove All Breakpoints");
     try {
       await radonViewsService.switchToRadonIDEFrame();
     } catch {
-      radonViewsService.openRadonIDEPanel();
+      await radonViewsService.openRadonIDEPanel();
     }
 
     await appManipulationService.waitForAppToLoad();
-
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
@@ -66,29 +63,22 @@ describe("4 - App interaction tests", () => {
     // Without using this delay, the application returns incorrect button coordinates.
     // So far, I haven't found a better way to check it (it might be related to SafeAreaView).
     await driver.sleep(1000);
-
     await appManipulationService.hideExpoOverlay(appWebsocket);
-
     await radonViewsService.clearDebugConsole();
     await radonViewsService.switchToRadonIDEFrame();
 
     // ensure app is fully loaded
     await appManipulationService.waitForAppToLoad();
-
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
     }, 5000);
   });
 
-  function execAsync(command) {
-    return new Promise((resolve, reject) => {
-      exec(command, (err, stdout, stderr) => {
-        if (err) reject(err);
-        else resolve(stdout);
-      });
-    });
-  }
+  afterEach(async function () {
+    await driver.switchTo().defaultContent();
+    await workbench.executeCommand("Remove All Breakpoints");
+  });
 
   it("Should click in app", async () => {
     const position = await appManipulationService.getButtonCoordinates(
@@ -223,37 +213,4 @@ describe("4 - App interaction tests", () => {
 
     console.log(await outputLine.getText());
   });
-
-  // it("should change apps", async () => {
-  //   await execAsync(
-  //     "./scripts/downloadRepo.sh react-native-74 react-native-app2"
-  //   );
-  //   const browser = VSBrowser.instance;
-  //   browser.openResources(`./data`);
-  //   await driver.switchTo().defaultContent();
-  //   await driver.wait(async () => {
-  //     try {
-  //       await radonViewsService.openRadonIDEPanel();
-  //     } catch {
-  //       return false;
-  //     }
-  //     return true;
-  //   });
-  //   await elementHelperService.findAndClickElementByTag(
-  //     "radon-bottom-bar-approot-select-dropdown-trigger"
-  //   );
-
-  //   await elementHelperService.findAndWaitForElementByTag(
-  //     "approot-select-dropdown-content"
-  //   );
-  //   const project1 = await elementHelperService.findAndWaitForElementByTag(
-  //     "approot-select-item-reactNative74"
-  //   );
-  //   const project2 = await elementHelperService.findAndWaitForElementByTag(
-  //     "approot-select-item-reactNative81"
-  //   );
-
-  //   console.log(await project1.getText());
-  //   console.log(await project2.getText());
-  // });
 });

@@ -62,6 +62,13 @@ describe("5 - Network panel tests", () => {
     const bottomBar = new BottomBarPanel();
     await bottomBar.toggle(false);
     await radonViewsService.openRadonIDEPanel();
+
+    // ensure app is loaded
+    await appManipulationService.waitForAppToLoad();
+    await driver.wait(async () => {
+      appWebsocket = get().appWebsocket;
+      return appWebsocket != null;
+    }, 5000);
   });
 
   async function openNetworkPanel() {
