@@ -15,6 +15,13 @@ import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { openFileAtPosition } from "../utilities/editorOpeners";
 import { createRefCounted, RefCounted } from "../utilities/refCounted";
 
+export class MetroError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MetroError";
+  }
+}
+
 export interface MetroSession {
   port: number;
   sourceMapPathOverrides: Record<string, string>;
@@ -68,7 +75,9 @@ export class SharedMetroProvider implements MetroProvider, Disposable {
   }
 
   public async getMetroSession({ resetCache }: { resetCache: boolean }) {
-    const session = await this.metroSession;
+    const session = await this.metroSession?.catch(() => {
+      // NOTE: in this case, the metro was started previously but failed -- we want to ignore the error and retry
+    });
     if (session === undefined || session.refCount <= 0 || resetCache) {
       return this.createNewSession(resetCache);
     }
@@ -268,7 +277,7 @@ export class Metro implements MetroSession, Disposable {
         Output.MetroBundler
       );
     if (!metroOutputChannel) {
-      throw new Error("Cannot start bundler process. The IDE is not initialized.");
+      throw new MetroError("Cannot start bundler process. The IDE is not initialized.");
     }
     this.metroOutputChannel = metroOutputChannel;
   }
@@ -437,7 +446,7 @@ class SubprocessMetroSession extends Metro implements Disposable {
 
       if (line.includes("EADDRINUSE")) {
         this.bundlerReady.reject(
-          new Error(`The Metro server could not start: port ${this.port} is already in use.`)
+          new MetroError(`The Metro server could not start: port ${this.port} is already in use.`)
         );
       }
 
@@ -461,7 +470,7 @@ class SubprocessMetroSession extends Metro implements Disposable {
         // ignore the error, we are only interested in the process exit
       })
       .then(() => {
-        this.bundlerReady.reject(new Error("Metro bundler exited unexpectedly"));
+        this.bundlerReady.reject(new MetroError("Metro bundler exited unexpectedly"));
       });
   }
 
@@ -542,5 +551,7 @@ function findCustomMetroConfig(configPath: string) {
       return possibleMetroConfigLocation.fsPath;
     }
   }
-  throw new Error("Metro config cannot be found, please check if `metroConfigPath` path is valid");
+  throw new MetroError(
+    "Metro config cannot be found, please check if `metroConfigPath` path is valid"
+  );
 }

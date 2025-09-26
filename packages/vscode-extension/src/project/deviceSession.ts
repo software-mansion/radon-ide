@@ -39,7 +39,7 @@ import { ScreenCapture } from "./ScreenCapture";
 import { disposeAll } from "../utilities/disposables";
 import { FileTransfer } from "./FileTransfer";
 import { DevtoolsServer } from "./devtools";
-import { MetroProvider, MetroSession } from "./metro";
+import { MetroError, MetroProvider, MetroSession } from "./metro";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
@@ -313,6 +313,15 @@ export class DeviceSession implements Disposable {
     } catch (e) {
       if (e instanceof CancelError) {
         // reload got cancelled, we don't show any errors
+        return;
+      } else if (e instanceof MetroError) {
+        this.stateManager.updateState({
+          status: "fatalError",
+          error: {
+            kind: "metro",
+            message: e.message,
+          },
+        });
         return;
       } else if (e instanceof BuildError) {
         this.stateManager.updateState({

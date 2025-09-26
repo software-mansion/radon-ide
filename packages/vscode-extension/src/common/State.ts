@@ -227,6 +227,11 @@ export class InstallationError extends Error {
   }
 }
 
+export type MetroErrorDescriptor = {
+  kind: "metro";
+  message: string;
+};
+
 export type BuildErrorDescriptor = {
   kind: "build";
   message: string;
@@ -247,6 +252,7 @@ export type InstallationErrorDescriptor = {
 };
 
 export type FatalErrorDescriptor =
+  | MetroErrorDescriptor
   | BuildErrorDescriptor
   | DeviceErrorDescriptor
   | InstallationErrorDescriptor;
