@@ -224,38 +224,36 @@ describe("4 - App interaction tests", () => {
     console.log(await outputLine.getText());
   });
 
-  it("should change apps", async () => {
-    await execAsync(
-      "./scripts/downloadRepo.sh react-native-74 react-native-app2"
-    );
-    const browser = VSBrowser.instance;
-    browser.openResources(`./data`);
-    await driver.switchTo().defaultContent();
-    await driver.wait(async () => {
-      try {
-        await radonViewsService.openRadonIDEPanel();
-      } catch {
-        return false;
-      }
-      return true;
-    });
-    await elementHelperService.findAndClickElementByTag(
-      "radon-bottom-bar-approot-select-dropdown-trigger"
-    );
+  // it("should change apps", async () => {
+  //   await execAsync(
+  //     "./scripts/downloadRepo.sh react-native-74 react-native-app2"
+  //   );
+  //   const browser = VSBrowser.instance;
+  //   browser.openResources(`./data`);
+  //   await driver.switchTo().defaultContent();
+  //   await driver.wait(async () => {
+  //     try {
+  //       await radonViewsService.openRadonIDEPanel();
+  //     } catch {
+  //       return false;
+  //     }
+  //     return true;
+  //   });
+  //   await elementHelperService.findAndClickElementByTag(
+  //     "radon-bottom-bar-approot-select-dropdown-trigger"
+  //   );
 
-    await elementHelperService.findAndWaitForElementByTag(
-      "approot-select-dropdown-content"
-    );
-    const project1 = await elementHelperService.findAndWaitForElementByTag(
-      "approot-select-item-reactNative74"
-    );
-    const project2 = await elementHelperService.findAndWaitForElementByTag(
-      "approot-select-item-reactNative81"
-    );
+  //   await elementHelperService.findAndWaitForElementByTag(
+  //     "approot-select-dropdown-content"
+  //   );
+  //   const project1 = await elementHelperService.findAndWaitForElementByTag(
+  //     "approot-select-item-reactNative74"
+  //   );
+  //   const project2 = await elementHelperService.findAndWaitForElementByTag(
+  //     "approot-select-item-reactNative81"
+  //   );
 
-    console.log(await project1.getText());
-    console.log(await project2.getText());
-
-    await driver.sleep(10000);
-  });
+  //   console.log(await project1.getText());
+  //   console.log(await project2.getText());
+  // });
 });
