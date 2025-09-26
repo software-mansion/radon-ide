@@ -4,6 +4,7 @@ import { DevicePlatform } from "./State";
 export enum BuildType {
   Local = "local",
   ExpoGo = "expoGo",
+  DevClient = "devClient",
   Eas = "eas",
   EasLocal = "easLocal",
   Custom = "custom",
@@ -52,9 +53,26 @@ export type IOSLocalBuildConfig = {
   runtimeId: string;
 } & BuildConfigCommon;
 
+export type AndroidDevClientBuildConfig = {
+  type: BuildType.DevClient;
+  platform: DevicePlatform.Android;
+  buildType?: string;
+  productFlavor?: string;
+} & BuildConfigCommon;
+
+export type IOSDevClientBuildConfig = {
+  type: BuildType.DevClient;
+  platform: DevicePlatform.IOS;
+  scheme?: string;
+  configuration?: string;
+  runtimeId: string;
+} & BuildConfigCommon;
+
 export type BuildConfig =
   | CustomBuildConfig
   | ExpoGoBuildConfig
+  | AndroidDevClientBuildConfig
+  | IOSDevClientBuildConfig
   | EasBuildConfig
   | EasLocalBuildConfig
   | AndroidLocalBuildConfig

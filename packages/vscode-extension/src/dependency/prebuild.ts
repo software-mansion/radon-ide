@@ -2,7 +2,12 @@ import assert from "assert";
 import { Disposable } from "vscode";
 import { exec } from "../utilities/subprocess";
 import { BuildError, BuildOptions } from "../builders/BuildManager";
-import { IOSLocalBuildConfig, AndroidLocalBuildConfig } from "../common/BuildConfig";
+import {
+  IOSLocalBuildConfig,
+  AndroidLocalBuildConfig,
+  AndroidDevClientBuildConfig,
+  IOSDevClientBuildConfig,
+} from "../common/BuildConfig";
 import { DevicePlatform } from "../common/State";
 import { FingerprintProvider } from "../project/FingerprintProvider";
 import { lineReader } from "../utilities/subprocess";
@@ -64,7 +69,11 @@ export class Prebuild implements Disposable {
   }
 
   public async runPrebuildIfNeeded(
-    buildConfig: IOSLocalBuildConfig | AndroidLocalBuildConfig,
+    buildConfig:
+      | IOSLocalBuildConfig
+      | AndroidLocalBuildConfig
+      | AndroidDevClientBuildConfig
+      | IOSDevClientBuildConfig,
     buildOptions: BuildOptions
   ) {
     const { forceCleanBuild, cancelToken } = buildOptions;
@@ -118,7 +127,11 @@ export class Prebuild implements Disposable {
   }
 
   private async runPrebuild(
-    buildConfig: IOSLocalBuildConfig | AndroidLocalBuildConfig,
+    buildConfig:
+      | IOSLocalBuildConfig
+      | AndroidLocalBuildConfig
+      | AndroidDevClientBuildConfig
+      | IOSDevClientBuildConfig,
     buildOptions: BuildOptions,
     cancelToken: CancelToken
   ) {
@@ -154,9 +167,12 @@ export class Prebuild implements Disposable {
 }
 
 function getExpoCliPath(appRoot: string) {
+  const expoInstallPath = require.resolve("expo", {
+    paths: [appRoot],
+  });
   try {
     return require.resolve("@expo/cli", {
-      paths: [appRoot],
+      paths: [expoInstallPath],
     });
   } catch {
     return undefined;

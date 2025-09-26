@@ -1,4 +1,4 @@
-const { requireFromAppDir, resolveFromAppDir, appRoot } = require("./metro_helpers");
+const { requireFromAppDir, resolveFromAppDir, appRoot } = require("../metro_helpers");
 const expoInstallPath = resolveFromAppDir("expo");
 const { getConfig } = requireFromAppDir("@expo/config/build/Config.js", {
   paths: [expoInstallPath],

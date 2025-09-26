@@ -15,6 +15,7 @@ import { ResolvedLaunchConfig } from "../project/ApplicationContext";
 import { DevicePlatform, IOSDeviceInfo } from "../common/State";
 import { DeviceBase } from "../devices/DeviceBase";
 import { FingerprintProvider } from "../project/FingerprintProvider";
+import { isDevClientProject } from "./devClient";
 
 // Branded type for build fingerprints to ensure type safety
 export type BuildFingerprint = string & { readonly __brand: "BuildFingerprint" };
@@ -89,6 +90,38 @@ export function createBuildConfig(
           buildType: android?.buildType,
           fingerprintCommand,
           usePrebuild,
+        };
+      }
+    }
+    case BuildType.DevClient: {
+      if (platform === DevicePlatform.IOS) {
+        const iosDeviceInfo = device.deviceInfo as IOSDeviceInfo;
+        const runtime = iosDeviceInfo.runtimeInfo;
+        if (!runtime) {
+          throw new BuildError(
+            "No available runtime for the selected device. Cannot perform build.",
+            BuildType.DevClient
+          );
+        }
+        return {
+          appRoot,
+          platform: platform as DevicePlatform.IOS,
+          env,
+          type: BuildType.DevClient,
+          scheme: ios?.scheme,
+          configuration: ios?.configuration,
+          fingerprintCommand,
+          runtimeId: runtime.identifier,
+        };
+      } else {
+        return {
+          appRoot,
+          platform: platform as DevicePlatform.Android,
+          env,
+          type: BuildType.DevClient,
+          productFlavor: android?.productFlavor,
+          buildType: android?.buildType,
+          fingerprintCommand,
         };
       }
     }
@@ -188,6 +221,10 @@ export async function inferBuildType(
 
   if (!usePrebuild && (await isExpoGoProject(absoluteAppRoot, platform))) {
     return BuildType.ExpoGo;
+  }
+
+  if (await isDevClientProject(absoluteAppRoot, platform)) {
+    return BuildType.DevClient;
   }
 
   return BuildType.Local;

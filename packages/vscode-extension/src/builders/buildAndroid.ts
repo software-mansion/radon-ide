@@ -14,7 +14,12 @@ import { getReactNativeVersion } from "../utilities/reactNative";
 import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild, performLocalEasBuild } from "./eas";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { AndroidBuildConfig, AndroidLocalBuildConfig, BuildType } from "../common/BuildConfig";
+import {
+  AndroidBuildConfig,
+  AndroidDevClientBuildConfig,
+  AndroidLocalBuildConfig,
+  BuildType,
+} from "../common/BuildConfig";
 import { DevicePlatform } from "../common/State";
 import { BuildOptions } from "./BuildManager";
 
@@ -162,6 +167,7 @@ export async function buildAndroid(
         buildHash: await calculateAppArtifactHash(apkPath),
       };
     }
+    case BuildType.DevClient:
     case BuildType.Local: {
       return await buildLocal(buildConfig, buildOptions);
     }
@@ -169,7 +175,7 @@ export async function buildAndroid(
 }
 
 async function buildLocal(
-  buildConfig: AndroidLocalBuildConfig,
+  buildConfig: AndroidLocalBuildConfig | AndroidDevClientBuildConfig,
   buildOptions: BuildOptions
 ): Promise<AndroidBuildResult> {
   let { appRoot, env, productFlavor = "", buildType = "debug" } = buildConfig;

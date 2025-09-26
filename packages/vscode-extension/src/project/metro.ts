@@ -402,7 +402,7 @@ class SubprocessMetroSession extends Metro implements Disposable {
     expoStartExtraArgs: string[] | undefined,
     metroEnv: typeof process.env
   ): Promise<SubprocessMetroSession> {
-    const args = [path.join(libPath, "expo_start.js"), "--port", `${port}`];
+    const args = [path.join(libPath, "expo", "expo_start.js"), "--port", `${port}`];
     if (resetCache) {
       args.push("--clear");
     }
