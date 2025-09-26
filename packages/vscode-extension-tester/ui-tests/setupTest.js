@@ -68,6 +68,7 @@ afterEach(async function () {
   let bottomBar = new BottomBarPanel();
   await bottomBar.toggle(false);
   await new EditorView().closeAllEditors();
+  await driver.switchTo().defaultContent();
   await workbench.executeCommand("Developer: Reload Window");
   driver.wait(async () => {
     try {
