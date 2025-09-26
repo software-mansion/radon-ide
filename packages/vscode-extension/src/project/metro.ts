@@ -5,7 +5,7 @@ import { Disposable, EventEmitter, ExtensionMode, Uri, workspace } from "vscode"
 import _ from "lodash";
 import { DebugSource } from "../debugging/DebugSession";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
-import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
+import { ChildProcess, command, exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { IDE } from "./ide";
 import { Output } from "../common/OutputChannel";
@@ -75,9 +75,12 @@ export class SharedMetroProvider implements MetroProvider, Disposable {
   }
 
   public async getMetroSession({ resetCache }: { resetCache: boolean }) {
-    const session = await this.metroSession?.catch(() => {
-      // NOTE: in this case, the metro was started previously but failed -- we want to ignore the error and retry
-    });
+    let session;
+    try {
+      session = await this.metroSession;
+    } catch (e) {
+      // NOTE: if the previous metro session failed to start, we ignore the error and start a new one
+    }
     if (session === undefined || session.refCount <= 0 || resetCache) {
       return this.createNewSession(resetCache);
     }
@@ -435,6 +438,8 @@ class SubprocessMetroSession extends Metro implements Disposable {
     port: number
   ) {
     super(port, appRoot);
+    const PORT_IN_USE_MESSAGE = `The Metro server could not start: port ${this.port} is already in use.`;
+
     lineReader(bundlerProcess).onLineRead((line) => {
       try {
         const event = JSON.parse(line) as MetroEvent;
@@ -445,9 +450,7 @@ class SubprocessMetroSession extends Metro implements Disposable {
       Logger.debug("Metro", line);
 
       if (line.includes("EADDRINUSE")) {
-        this.bundlerReady.reject(
-          new MetroError(`The Metro server could not start: port ${this.port} is already in use.`)
-        );
+        this.bundlerReady.reject(new MetroError(PORT_IN_USE_MESSAGE));
       }
 
       if (!line.startsWith("__RNIDE__")) {
@@ -466,10 +469,14 @@ class SubprocessMetroSession extends Metro implements Disposable {
 
     // NOTE: if the process exits before the "initialize_done" event, we reject the promise
     bundlerProcess
-      .catch(() => {
+      .catch(async () => {
         // ignore the error, we are only interested in the process exit
+        const { stdout } = await command("netstat -an");
+        if (stdout.includes(`.${this.port}`)) {
+          throw new MetroError(PORT_IN_USE_MESSAGE);
+        }
       })
-      .then(() => {
+      .then((res) => {
         this.bundlerReady.reject(new MetroError("Metro bundler exited unexpectedly"));
       });
   }
