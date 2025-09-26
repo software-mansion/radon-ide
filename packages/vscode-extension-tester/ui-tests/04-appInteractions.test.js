@@ -48,7 +48,7 @@ describe("4 - App interaction tests", () => {
     await view.switchBack();
   });
 
-  beforeEach(async () => {
+  beforeEach(async function () {
     await workbench.executeCommand("Remove All Breakpoints");
 
     radonViewsService.openRadonIDEPanel();
@@ -78,139 +78,139 @@ describe("4 - App interaction tests", () => {
     });
   }
 
-  // it("Should click in app", async () => {
-  //   const position = await appManipulationService.getButtonCoordinates(
-  //     appWebsocket,
-  //     "console-log-button"
-  //   );
+  it("Should click in app", async () => {
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "console-log-button"
+    );
 
-  //   const message = await appManipulationService.clickInPhoneAndWaitForMessage(
-  //     position
-  //   );
+    const message = await appManipulationService.clickInPhoneAndWaitForMessage(
+      position
+    );
 
-  //   assert.equal(message.action, "console-log-button");
-  // });
+    assert.equal(message.action, "console-log-button");
+  });
 
-  // it("should jump to the correct line in the editor", async () => {
-  //   const position = await appManipulationService.getButtonCoordinates(
-  //     appWebsocket,
-  //     "console-log-button"
-  //   );
+  it("should jump to the correct line in the editor", async () => {
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "console-log-button"
+    );
 
-  //   await appManipulationService.clickInPhoneAndWaitForMessage(position);
+    await appManipulationService.clickInPhoneAndWaitForMessage(position);
 
-  //   const debugConsole =
-  //     await radonViewsService.openAndGetDebugConsoleElement();
+    const debugConsole =
+      await radonViewsService.openAndGetDebugConsoleElement();
 
-  //   const { file, lineNumber } =
-  //     await radonViewsService.clickOnSourceInDebugConsole(
-  //       debugConsole,
-  //       "console.log"
-  //     );
+    const { file, lineNumber } =
+      await radonViewsService.clickOnSourceInDebugConsole(
+        debugConsole,
+        "console.log"
+      );
 
-  //   const fileName = await vscodeHelperService.getFileNameInEditor();
-  //   const cursorLineNumber = await vscodeHelperService.getCursorLineInEditor();
+    const fileName = await vscodeHelperService.getFileNameInEditor();
+    const cursorLineNumber = await vscodeHelperService.getCursorLineInEditor();
 
-  //   assert.equal(fileName, await file);
-  //   assert.equal(lineNumber, cursorLineNumber);
-  // });
+    assert.equal(fileName, await file);
+    assert.equal(lineNumber, cursorLineNumber);
+  });
 
-  // it("Should stop on breakpoint", async () => {
-  //   const position = await appManipulationService.getButtonCoordinates(
-  //     appWebsocket,
-  //     "console-log-button"
-  //   );
+  it("Should stop on breakpoint", async () => {
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "console-log-button"
+    );
 
-  //   await appManipulationService.clickInPhoneAndWaitForMessage(position);
+    await appManipulationService.clickInPhoneAndWaitForMessage(position);
 
-  //   const debugConsole =
-  //     await radonViewsService.openAndGetDebugConsoleElement();
-  //   const { lineNumber } = await radonViewsService.clickOnSourceInDebugConsole(
-  //     debugConsole,
-  //     "console.log"
-  //   );
+    const debugConsole =
+      await radonViewsService.openAndGetDebugConsoleElement();
+    const { lineNumber } = await radonViewsService.clickOnSourceInDebugConsole(
+      debugConsole,
+      "console.log"
+    );
 
-  //   const bottomBar = new BottomBarPanel();
-  //   await bottomBar.toggle(false);
+    const bottomBar = new BottomBarPanel();
+    await bottomBar.toggle(false);
 
-  //   const editor = new TextEditor();
-  //   await editor.toggleBreakpoint(lineNumber);
+    const editor = new TextEditor();
+    await editor.toggleBreakpoint(lineNumber);
 
-  //   await radonViewsService.openRadonIDEPanel();
+    await radonViewsService.openRadonIDEPanel();
 
-  //   await appManipulationService.clickInsidePhoneScreen(position);
+    await appManipulationService.clickInsidePhoneScreen(position);
 
-  //   const debuggerLineStop = await driver.wait(async () => {
-  //     try {
-  //       const debuggerLineStop =
-  //         await vscodeHelperService.getDebuggerStopLineNumber();
-  //       return debuggerLineStop;
-  //     } catch {
-  //       return false;
-  //     }
-  //   });
+    const debuggerLineStop = await driver.wait(async () => {
+      try {
+        const debuggerLineStop =
+          await vscodeHelperService.getDebuggerStopLineNumber();
+        return debuggerLineStop;
+      } catch {
+        return false;
+      }
+    });
 
-  //   assert.equal(lineNumber, debuggerLineStop);
-  // });
+    assert.equal(lineNumber, debuggerLineStop);
+  });
 
-  // it("Should show breakpoint stop view on phone screen", async () => {
-  //   const position = await appManipulationService.getButtonCoordinates(
-  //     appWebsocket,
-  //     "console-log-button"
-  //   );
+  it("Should show breakpoint stop view on phone screen", async () => {
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "console-log-button"
+    );
 
-  //   await appManipulationService.clickInPhoneAndWaitForMessage(position);
+    await appManipulationService.clickInPhoneAndWaitForMessage(position);
 
-  //   const debugConsole =
-  //     await radonViewsService.openAndGetDebugConsoleElement();
-  //   const { lineNumber } = await radonViewsService.clickOnSourceInDebugConsole(
-  //     debugConsole,
-  //     "console.log"
-  //   );
+    const debugConsole =
+      await radonViewsService.openAndGetDebugConsoleElement();
+    const { lineNumber } = await radonViewsService.clickOnSourceInDebugConsole(
+      debugConsole,
+      "console.log"
+    );
 
-  //   const bottomBar = new BottomBarPanel();
-  //   await bottomBar.toggle(false);
+    const bottomBar = new BottomBarPanel();
+    await bottomBar.toggle(false);
 
-  //   const editor = new TextEditor();
-  //   await editor.toggleBreakpoint(lineNumber);
+    const editor = new TextEditor();
+    await editor.toggleBreakpoint(lineNumber);
 
-  //   await radonViewsService.openRadonIDEPanel();
-  //   await appManipulationService.clickInsidePhoneScreen(position);
+    await radonViewsService.openRadonIDEPanel();
+    await appManipulationService.clickInsidePhoneScreen(position);
 
-  //   view = new WebView();
-  //   await view.switchBack();
+    view = new WebView();
+    await view.switchBack();
 
-  //   await radonViewsService.openRadonIDEPanel();
+    await radonViewsService.openRadonIDEPanel();
 
-  //   await elementHelperService.findAndWaitForElement(
-  //     By.css(`[data-testid="app-debugger-container"]`),
-  //     "Timed out waiting for debugger stop view in app"
-  //   );
-  // });
+    await elementHelperService.findAndWaitForElement(
+      By.css(`[data-testid="app-debugger-container"]`),
+      "Timed out waiting for debugger stop view in app"
+    );
+  });
 
-  // it("should throw error in debug console", async () => {
-  //   const errorMessage = "expected error";
+  it("should throw error in debug console", async () => {
+    const errorMessage = "expected error";
 
-  //   const position = await appManipulationService.getButtonCoordinates(
-  //     appWebsocket,
-  //     "uncaught-exception-button"
-  //   );
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "uncaught-exception-button"
+    );
 
-  //   const message = await appManipulationService.clickInPhoneAndWaitForMessage(
-  //     position
-  //   );
+    const message = await appManipulationService.clickInPhoneAndWaitForMessage(
+      position
+    );
 
-  //   assert.equal(message.action, "uncaught-exception-button");
+    assert.equal(message.action, "uncaught-exception-button");
 
-  //   const debugConsole =
-  //     await radonViewsService.openAndGetDebugConsoleElement();
+    const debugConsole =
+      await radonViewsService.openAndGetDebugConsoleElement();
 
-  //   const outputLine = await debugConsole.findElement(
-  //     By.xpath(`//span[contains(text(), '${errorMessage}')]/ancestor::div[1]`)
-  //   );
+    const outputLine = await debugConsole.findElement(
+      By.xpath(`//span[contains(text(), '${errorMessage}')]/ancestor::div[1]`)
+    );
 
-  //   console.log(await outputLine.getText());
-  // });
+    console.log(await outputLine.getText());
+  });
 
   it("should change apps", async () => {
     await execAsync(
