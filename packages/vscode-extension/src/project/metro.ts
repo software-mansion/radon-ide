@@ -473,10 +473,10 @@ class SubprocessMetroSession extends Metro implements Disposable {
         // ignore the error, we are only interested in the process exit
         const { stdout } = await command("netstat -an");
         if (stdout.includes(`.${this.port}`)) {
-          throw new MetroError(PORT_IN_USE_MESSAGE);
+          this.bundlerReady.reject(new MetroError(PORT_IN_USE_MESSAGE));
         }
       })
-      .then((res) => {
+      .then(() => {
         this.bundlerReady.reject(new MetroError("Metro bundler exited unexpectedly"));
       });
   }
