@@ -6,10 +6,14 @@ if (!agent) {
 }
 
 const messageListeners = [];
+let nextMessageId = 1;
+const unacknowledgedMessages = [];
 
 const inspectorBridge = {
   sendMessage: (message) => {
-    agent.postMessage(message);
+    const messageWithId = { id: nextMessageId++, ...message };
+    unacknowledgedMessages.push(messageWithId);
+    agent.postMessage(messageWithId);
   },
   addMessageListener: (listener) => {
     messageListeners.push(listener);
@@ -33,6 +37,24 @@ agent.onmessage = (message) => {
     wakeupTimeout = setTimeout(() => {
       wakeupTimeout = null;
     }, 0);
+  }
+
+  if (message.type === "ack") {
+    const unreceivedIndex = unacknowledgedMessages.findIndex((msg) => msg.id > message.id);
+    unacknowledgedMessages.splice(
+      0,
+      unreceivedIndex === -1 ? unacknowledgedMessages.length : unreceivedIndex
+    );
+    return;
+  } else if (message.type === "retransmit") {
+    const lastReceivedId = message.id;
+    unacknowledgedMessages.forEach((msg) => {
+      if (msg.id > lastReceivedId) {
+        agent.postMessage(msg);
+      }
+    });
+    unacknowledgedMessages.length = 0;
+    return;
   }
 
   messageListeners.forEach((listener) => listener(message));
