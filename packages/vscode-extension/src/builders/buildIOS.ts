@@ -9,7 +9,12 @@ import { runExternalBuild } from "./customBuild";
 import { fetchEasBuild, performLocalEasBuild } from "./eas";
 import { calculateAppArtifactHash, calculateMD5 } from "../utilities/common";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { BuildType, IOSBuildConfig, IOSLocalBuildConfig } from "../common/BuildConfig";
+import {
+  BuildType,
+  IOSBuildConfig,
+  IOSDevClientBuildConfig,
+  IOSLocalBuildConfig,
+} from "../common/BuildConfig";
 import { DevicePlatform, DeviceRotation } from "../common/State";
 import { BuildOptions } from "./BuildManager";
 import {
@@ -202,13 +207,14 @@ export async function buildIos(
         buildHash: await calculateAppArtifactHash(appPath),
       };
     }
+    case BuildType.DevClient:
     case BuildType.Local: {
       return await buildLocal(buildConfig, buildOptions);
     }
   }
 }
 
-async function getOrMakeSimulator(buildConfig: IOSLocalBuildConfig) {
+async function getOrMakeSimulator(buildConfig: IOSLocalBuildConfig | IOSDevClientBuildConfig) {
   const { runtimeId } = buildConfig;
   const devices = await listSimulators(SimulatorDeviceSet.Default); // use default location becuase xcodebuild can't use custom device sets
   const matchingDevice = devices.find(
@@ -251,7 +257,7 @@ async function getOrMakeSimulator(buildConfig: IOSLocalBuildConfig) {
 }
 
 async function buildLocal(
-  buildConfig: IOSLocalBuildConfig,
+  buildConfig: IOSLocalBuildConfig | IOSDevClientBuildConfig,
   buildOptions: BuildOptions
 ): Promise<IOSBuildResult> {
   const { appRoot, configuration = "Debug" } = buildConfig;
