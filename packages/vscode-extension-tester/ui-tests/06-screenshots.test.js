@@ -158,7 +158,7 @@ describe("6 - screenshots tests", () => {
     await radonSettingsService.setEnableReplays(true);
 
     // some time to wait for replay to record
-    await driver.sleep(1000);
+    await driver.sleep(3000);
 
     await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-show-replay-button"
@@ -174,7 +174,7 @@ describe("6 - screenshots tests", () => {
     await radonSettingsService.setEnableReplays(true);
 
     // some time to wait for replay to record
-    await driver.sleep(1000);
+    await driver.sleep(3000);
 
     await driver
       .actions()
