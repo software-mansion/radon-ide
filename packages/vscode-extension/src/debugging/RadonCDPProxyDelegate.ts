@@ -3,7 +3,6 @@ import { EventEmitter } from "vscode";
 import { Minimatch } from "minimatch";
 import _ from "lodash";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
-import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { Logger } from "../Logger";
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
@@ -12,7 +11,6 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private consoleAPICalledEmitter = new EventEmitter();
   private bindingCalledEmitter = new EventEmitter<Cdp.Runtime.BindingCalledEvent>();
   private bundleParsedEmitter = new EventEmitter<{ isMainBundle: boolean }>();
-  private ignoredPatterns: Minimatch[] = [];
 
   private justCalledStepOver = false;
   private resumeEventTimeout: NodeJS.Timeout | undefined;
@@ -22,15 +20,6 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   public onConsoleAPICalled = this.consoleAPICalledEmitter.event;
   public onBindingCalled = this.bindingCalledEmitter.event;
   public onBundleParsed = this.bundleParsedEmitter.event;
-
-  constructor(
-    private sourceMapRegistry: SourceMapsRegistry,
-    skipFiles: string[]
-  ) {
-    this.ignoredPatterns = skipFiles.map(
-      (pattern) => new Minimatch(pattern, { flipNegate: true, dot: true })
-    );
-  }
 
   public async handleApplicationCommand(
     applicationCommand: IProtocolCommand,
@@ -52,23 +41,8 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       case "Debugger.scriptParsed": {
         return this.handleScriptParsed(applicationCommand);
       }
-      case "Runtime.executionContextsCleared": {
-        this.sourceMapRegistry.clearSourceMaps();
-        return applicationCommand;
-      }
     }
     return applicationCommand;
-  }
-
-  private shouldSkipFile(sourceURL: string): boolean {
-    return this.ignoredPatterns.reduce((shouldSkip, p) => {
-      if (p.negate) {
-        // don't skip the file if some negated pattern matches it
-        return shouldSkip && !p.match(sourceURL);
-      } else {
-        return shouldSkip || p.match(sourceURL);
-      }
-    }, false);
   }
 
   private shouldResumeImmediately(params: Cdp.Debugger.PausedEvent): boolean {
@@ -89,13 +63,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       return true;
     }
 
-    const { scriptId, lineNumber, columnNumber } = params.callFrames[0].location;
-    const { sourceURL } = this.sourceMapRegistry.findOriginalPosition(
-      scriptId,
-      lineNumber + 1,
-      columnNumber ?? 0
-    );
-    return this.shouldSkipFile(sourceURL);
+    return false;
   }
 
   private handleDebuggerResumed(command: IProtocolCommand, tunnel: ProxyTunnel) {
@@ -287,8 +255,6 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         source.includes("__prelude__")
       );
 
-      this.sourceMapRegistry.registerSourceMap(sourceMapData, url, scriptId, isMainBundle);
-
       this.bundleParsedEmitter.fire({ isMainBundle });
     } catch (e) {
       Logger.error("Could not process the source map", e);
@@ -330,23 +296,6 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       });
 
       stackTrace?.callFrames.splice(0, originalCallFrameIndex);
-    }
-
-    if (stackTrace) {
-      const filteredCallFrames = stackTrace?.callFrames.filter((frame) => {
-        const { scriptId, lineNumber, columnNumber } = frame;
-        const { sourceURL } = this.sourceMapRegistry.findOriginalPosition(
-          scriptId,
-          lineNumber + 1,
-          columnNumber ?? 0
-        );
-        return !this.shouldSkipFile(sourceURL);
-      });
-      if (filteredCallFrames.length > 0) {
-        // we only filter frames if there's at least one frame left, otherwise we would still
-        // want some location information to be available so we keep the original one.
-        stackTrace.callFrames = filteredCallFrames;
-      }
     }
 
     this.consoleAPICalledEmitter.fire({});

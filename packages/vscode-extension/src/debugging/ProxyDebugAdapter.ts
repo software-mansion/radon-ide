@@ -1,9 +1,7 @@
-import fs from "fs";
-import assert from "assert";
 import { DebugSession, ErrorDestination, Event } from "@vscode/debugadapter";
 import * as vscode from "vscode";
 import { DebugProtocol } from "@vscode/debugprotocol";
-import { Disposable } from "vscode";
+import { Disposable, debug } from "vscode";
 import { CDPProxy } from "./CDPProxy";
 import { RadonCDPProxyDelegate } from "./RadonCDPProxyDelegate";
 import { disposeAll } from "../utilities/disposables";
@@ -14,11 +12,9 @@ import {
   DEBUG_RESUMED,
   SCRIPT_PARSED,
 } from "./DebugSession";
-import { CDPProfile } from "./cdp";
-import { annotateLocations, filePathForProfile } from "./cpuProfiler";
-import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { startDebugging } from "./startDebugging";
 import { Logger } from "../Logger";
+import { CancelToken } from "../utilities/cancelToken";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
@@ -50,9 +46,9 @@ const CHILD_SESSION_TYPE = "radon-pwa-node";
 export class ProxyDebugAdapter extends DebugSession {
   private cdpProxy: CDPProxy;
   private disposables: Disposable[] = [];
-  private nodeDebugSession: vscode.DebugSession | null = null;
+  private childDebugSession: vscode.DebugSession | null = null;
+  private attachCancelToken = new CancelToken();
   private terminated: boolean = false;
-  private sourceMapRegistry: SourceMapsRegistry;
 
   constructor(private session: vscode.DebugSession) {
     super();
@@ -60,15 +56,8 @@ export class ProxyDebugAdapter extends DebugSession {
     const sourceMapAliases = sourceMapAliasesFromPathOverrides(
       this.session.configuration.sourceMapPathOverrides
     );
-    this.sourceMapRegistry = new SourceMapsRegistry(
-      this.session.configuration.expoPreludeLineCount,
-      sourceMapAliases
-    );
 
-    const proxyDelegate = new RadonCDPProxyDelegate(
-      this.sourceMapRegistry,
-      this.session.configuration.skipFiles
-    );
+    const proxyDelegate = new RadonCDPProxyDelegate();
 
     this.cdpProxy = new CDPProxy(
       "127.0.0.1",
@@ -107,8 +96,8 @@ export class ProxyDebugAdapter extends DebugSession {
     );
 
     this.disposables.push(
-      vscode.debug.onDidTerminateDebugSession(({ id }) => {
-        if (id === this.nodeDebugSession?.id) {
+      vscode.debug.onDidTerminateDebugSession((session) => {
+        if (session.parentSession?.id === this.session.id) {
           this.terminate();
         }
       })
@@ -171,7 +160,7 @@ export class ProxyDebugAdapter extends DebugSession {
     await this.cdpProxy.initializeServer();
 
     try {
-      this.nodeDebugSession = await startDebugging(
+      const vscDebugSession = await startDebugging(
         undefined,
         {
           type: CHILD_SESSION_TYPE,
@@ -181,9 +170,7 @@ export class ProxyDebugAdapter extends DebugSession {
           continueOnAttach: true,
           sourceMapPathOverrides: args.sourceMapPathOverrides,
           resolveSourceMapLocations: ["**", "!**/node_modules/!(expo)/**"],
-          // NOTE: setting skipFiles increases startup time _significantly_, so we omit them until we figure out
-          // how to work around this problem
-          skipFiles: [],
+          skipFiles: this.session.configuration.skipFiles,
           outFiles: [],
         },
         {
@@ -195,8 +182,43 @@ export class ProxyDebugAdapter extends DebugSession {
           consoleMode: vscode.DebugConsoleMode.MergeWithParent,
           lifecycleManagedByParent: true,
           compact: true,
-        }
+        },
+        this.attachCancelToken
       );
+
+      // vscode-js-debug spawns another child session that corresponds to the actual
+      // CDP debugger session. We need to use that session to send commands to control
+      // the profiling.
+      const { promise, resolve, reject } = Promise.withResolvers<void>();
+      this.attachCancelToken.onCancel(reject);
+      const onDidStartDisposable = debug.onDidStartDebugSession((session) => {
+        if (session.parentSession?.id === vscDebugSession.id) {
+          this.childDebugSession = session;
+          resolve();
+        }
+      });
+      promise.finally(() => onDidStartDisposable.dispose());
+
+      this.disposables.push(
+        debug.onDidReceiveDebugSessionCustomEvent((event) => {
+          console.log("Custom event", event);
+          if (event.session.id !== this.childDebugSession?.id) {
+            return;
+          }
+          switch (event.event) {
+            case "profileStarted":
+              this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
+              break;
+            case "profilerStateUpdate":
+              if (event.body.running === false) {
+                this.sendEvent(new Event("RNIDE_profilingCPUStopped"));
+              }
+              break;
+          }
+        })
+      );
+
+      await promise;
       this.sendResponse(response);
     } catch (e) {
       Logger.error("Error starting proxy debug adapter child session", e);
@@ -215,11 +237,11 @@ export class ProxyDebugAdapter extends DebugSession {
     args: DebugProtocol.ContinueArguments,
     request?: DebugProtocol.Request
   ): void {
-    if (!this.nodeDebugSession) {
+    if (!this.childDebugSession) {
       return;
     }
     vscode.commands.executeCommand("workbench.action.debug.continue", undefined, {
-      sessionId: this.nodeDebugSession.id,
+      sessionId: this.childDebugSession.id,
     });
   }
 
@@ -239,6 +261,7 @@ export class ProxyDebugAdapter extends DebugSession {
     if (this.terminated) {
       return;
     }
+    this.attachCancelToken.cancel();
     this.terminated = true;
     await this.cdpProxy.stopServer();
     disposeAll(this.disposables);
@@ -248,22 +271,11 @@ export class ProxyDebugAdapter extends DebugSession {
   }
 
   private async startProfiling() {
-    await this.cdpProxy.injectDebuggerCommand({ method: "Profiler.start", params: {} });
-    this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
+    await this.childDebugSession?.customRequest("startProfile", { type: "cpu" });
   }
 
   private async stopProfiling() {
-    const result = await this.cdpProxy.injectDebuggerCommand({
-      method: "Profiler.stop",
-      params: {},
-    });
-
-    assert("profile" in result, "Profiler.stop response should contain a profile");
-
-    const profile = annotateLocations(result.profile as CDPProfile, this.sourceMapRegistry);
-    const filePath = filePathForProfile();
-    await fs.promises.writeFile(filePath, JSON.stringify(profile));
-    this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
+    await this.childDebugSession?.customRequest("stopProfile");
   }
 
   private async dispatchRadonAgentMessage(args: any) {
