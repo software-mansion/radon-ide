@@ -3,7 +3,13 @@ import { AppOrientation } from "../common/Project";
 import { Logger } from "../Logger";
 import { InspectorAvailabilityStatus, NavigationRoute } from "../common/State";
 import { DebugSession, RNIDE_NetworkMethod } from "../debugging/DebugSession";
-import { NetworkMethod, NetworkEvent, NetworkType } from "../network/types/panelMessageProtocol";
+import {
+  NetworkMethod,
+  NetworkEvent,
+  NetworkType,
+  CDPMessage,
+} from "../network/types/panelMessageProtocol";
+import { GetResponseBodyResponse } from "../network/types/network";
 
 type BridgeEventsMap<K extends string> = Record<K, unknown[]>;
 
@@ -145,12 +151,15 @@ export interface RadonNetworkBridgeEvents {
   enable: [];
   disable: [];
   Initiator: [];
-  requestWillBeSent: [{ data: any }];
-  requestWillBeSentExtraInfo: [{ data: any }];
-  responseReceived: [{ data: any }];
-  loadingFinished: [{ data: any }];
-  loadingFailed: [{ data: any }];
-  getResponseBody: [{ data: any }];
+  requestWillBeSent: [CDPMessage];
+  requestWillBeSentExtraInfo: [CDPMessage];
+  responseReceived: [CDPMessage];
+  loadingFinished: [CDPMessage];
+  loadingFailed: [CDPMessage];
+  getResponseBody: [CDPMessage];
+  dataReceived: [CDPMessage];
+  storeResponseBody: [CDPMessage];
+  unknownEvent: [any];
 }
 
 export type NetworkBridgeEventNames = keyof RadonNetworkBridgeEvents;
@@ -159,12 +168,14 @@ export const NETWORK_EVENT_MAP = {
   [NetworkMethod.Enable]: "enable",
   [NetworkMethod.Disable]: "disable",
   [NetworkMethod.GetResponseBody]: "getResponseBody",
+  [NetworkMethod.StoreResponseBody]: "storeResponseBody",
   [NetworkType.Initiator]: "Initiator",
   [NetworkEvent.RequestWillBeSent]: "requestWillBeSent",
   [NetworkEvent.RequestWillBeSentExtraInfo]: "requestWillBeSentExtraInfo",
   [NetworkEvent.ResponseReceived]: "responseReceived",
   [NetworkEvent.LoadingFinished]: "loadingFinished",
   [NetworkEvent.LoadingFailed]: "loadingFailed",
+  [NetworkEvent.DataReceived]: "dataReceived",
 } as const;
 
 export interface RadonNetworkBridge {
@@ -190,8 +201,22 @@ export class NetworkBridge
     this.debugSession = debugSession;
   }
 
-  protected send(request: RNIDE_NetworkMethod): void {
-    this.debugSession?.invokeNetworkMethod(request);
+  // Method overloads for type safety
+  protected send(request: RNIDE_NetworkMethod.Enable): void;
+  protected send(request: RNIDE_NetworkMethod.Disable): void;
+  protected send(request: RNIDE_NetworkMethod, args?: Record<string, unknown>): void {
+    this.debugSession?.invokeNetworkMethod(request, args);
+  }
+
+  protected async sendAsync(
+    request: RNIDE_NetworkMethod.GetResponseBody,
+    args: { requestId: string | number }
+  ): Promise<GetResponseBodyResponse | undefined> {
+    const result = await this.debugSession?.invokeNetworkMethod<GetResponseBodyResponse>(
+      request,
+      args
+    );
+    return result;
   }
 
   public enableNetworkInspector(): void {
@@ -208,5 +233,11 @@ export class NetworkBridge
     }
     this.send(RNIDE_NetworkMethod.Disable);
     // this.emitEvent("disable", []);
+  }
+
+  public getResponseBody(
+    requestId: string | number
+  ): Promise<GetResponseBodyResponse | undefined> {
+    return this.sendAsync(RNIDE_NetworkMethod.GetResponseBody, { requestId });
   }
 }

@@ -306,7 +306,8 @@ export class ApplicationSession implements Disposable {
   private onNetworkEvent = (event: DebugSessionCustomEvent): void => {
     const method = event.body?.method;
     if (!method || !isCDPMethod(method)) {
-      console.error("Unknown network event method - aborting:", method);
+      Logger.error("Unknown network event method:", method);
+      this.networkBridge.emitEvent("unknownEvent", event.body);
       return;
     }
 

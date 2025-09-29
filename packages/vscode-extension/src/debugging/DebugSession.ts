@@ -23,6 +23,7 @@ export enum RNIDE_NetworkMethod {
   Enable = "RNIDE_enableNetworkInspector",
   Disable = "RNIDE_disableNetworkInspector",
   GetResponseBody = "RNIDE_getResponseBody",
+  StoreResponseBody = "RNIDE_storeResponseBody",
 }
 
 export interface JSDebugConfiguration {
@@ -60,7 +61,10 @@ export interface DebugSession {
   stepIntoDebugger(): void;
   evaluateExpression(params: Cdp.Runtime.EvaluateParams): Promise<Cdp.Runtime.EvaluateResult>;
   addBinding(name: string): Promise<void>;
-  invokeNetworkMethod(method: RNIDE_NetworkMethod): Promise<void>;
+  invokeNetworkMethod<T>(
+    method: RNIDE_NetworkMethod,
+    args?: Record<string, unknown>
+  ): Promise<T | undefined>;
 
   // Profiling controls
   startProfilingCPU(): Promise<void>;
@@ -332,9 +336,13 @@ export class DebugSessionImpl implements DebugSession, Disposable {
     await this.jsDebugSession.customRequest("RNIDE_addBinding", { name });
   }
 
-  public async invokeNetworkMethod(method: RNIDE_NetworkMethod) {
-    // TODO add args handling for future getResponseBody
-    await this.jsDebugSession?.customRequest(method);
+  public async invokeNetworkMethod<T>(method: RNIDE_NetworkMethod, args?: Record<string, unknown>) {
+    if (!this.jsDebugSession) {
+      throw new Error("JS Debug session is not running");
+    }
+
+    const result = await this.jsDebugSession.customRequest(method, args);
+    return result as T;
   }
 
   private cancelStartingDebugSession() {

@@ -156,14 +156,14 @@ const useNetworkTracker = (): NetworkTracker => {
 
   const toggleNetwork = (isRunning: boolean) => {
     sendWebviewCDPMessage({
-      id: "enable",
+      messageId: "enable",
       method: isRunning ? NetworkMethod.Disable : NetworkMethod.Enable,
     });
   };
 
   const getSource = (networkLog: NetworkLog) => {
     sendWebviewCDPMessage({
-      id: "initiator",
+      messageId: "initiator",
       method: NetworkType.Initiator,
       params: {
         requestId: networkLog.requestId,

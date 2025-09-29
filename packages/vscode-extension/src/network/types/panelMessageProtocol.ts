@@ -7,6 +7,7 @@ export enum NetworkEvent {
   ResponseReceived = "Network.responseReceived",
   LoadingFinished = "Network.loadingFinished",
   LoadingFailed = "Network.loadingFailed",
+  DataReceived = "Network.dataReceived",
 }
 
 export enum NetworkType {
@@ -17,6 +18,7 @@ export enum NetworkMethod {
   Enable = "Network.enable",
   Disable = "Network.disable",
   GetResponseBody = "Network.getResponseBody",
+  StoreResponseBody = "Network.storeResponseBody",
 }
 
 export const NETWORK_EVENTS = Object.values(NetworkEvent);
@@ -69,7 +71,7 @@ export interface CDPParams {
 // Generic CDP message structure
 export interface CDPMessage {
   method: CDPMethod;
-  id?: string | number;
+  messageId?: string | number;
   params?: CDPParams;
   result?: unknown;
 }
@@ -83,7 +85,7 @@ type IDEMessageParams = {
 // IDE-specific message structure
 export interface IDEMessage {
   method: IDEMethod;
-  id?: string | number;
+  messageId?: string | number;
   params?: IDEMessageParams;
   result?: unknown;
 }

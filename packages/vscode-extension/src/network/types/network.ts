@@ -28,9 +28,17 @@ export interface NetworkRequestInitiator {
   columnNumber: number;
 }
 
+export interface GetResponseBodyResponse {
+  result: {
+    body: string;
+    base64Encoded: boolean;
+  };
+}
+
 export interface ResponseBodyData {
   body: string | undefined;
-  wasTruncated: boolean;
+  wasTruncated?: boolean;
+  responseFetchFailed?: boolean;
 }
 
 export interface TimelineEvent {

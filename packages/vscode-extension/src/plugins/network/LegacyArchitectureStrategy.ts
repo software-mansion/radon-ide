@@ -77,10 +77,10 @@ export default class LegacyArchitecture extends BaseArchitectureStrategy {
   }
 
   private async handleGetTheme(message: IDEMessage) {
-    const { id, params } = message;
+    const { messageId: id, params } = message;
     const { themeDescriptor } = params || {};
     const theme = extractTheme(themeDescriptor);
-    this.sendIDEMessage({ method: "IDE.Theme", id, result: theme });
+    this.sendIDEMessage({ method: "IDE.Theme", messageId: id, result: theme });
   }
 
   private handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {

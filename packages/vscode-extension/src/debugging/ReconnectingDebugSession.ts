@@ -4,7 +4,6 @@ import { Metro } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
 import { sleep } from "../utilities/retry";
 import {
-  RNIDE_NetworkMethod,
   DebugSession,
   DebugSource,
   JSDebugConfiguration,
@@ -153,7 +152,5 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
     return this.debugSession.addBinding(name);
   }
 
-  public invokeNetworkMethod(request: RNIDE_NetworkMethod): Promise<void> {
-    return this.debugSession.invokeNetworkMethod(request);
-  }
+  public invokeNetworkMethod = this.debugSession.invokeNetworkMethod?.bind(this.debugSession);
 }

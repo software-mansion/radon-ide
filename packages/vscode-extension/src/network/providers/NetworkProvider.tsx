@@ -40,7 +40,7 @@ function createBodyResponsePromise(
   const listener = (message: MessageEvent) => {
     try {
       const { command, payload }: WebviewMessage = message.data;
-      if (command !== WebviewCommand.CDPCall || payload.id !== messageId) {
+      if (command !== WebviewCommand.CDPCall || payload.messageId !== messageId) {
         return;
       }
 
@@ -73,7 +73,7 @@ function createThemeResponsePromise(messageId: string) {
   const listener = (message: MessageEvent) => {
     try {
       const { payload }: WebviewMessage = message.data;
-      if (payload.method !== "IDE.Theme" || payload.id !== messageId) {
+      if (payload.method !== "IDE.Theme" || payload.messageId !== messageId) {
         return;
       }
 
@@ -144,7 +144,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
     // Send the message to the network-plugin backend
     sendWebviewCDPMessage({
-      id: messageId,
+      messageId: messageId,
       method: NetworkMethod.GetResponseBody,
       params: {
         requestId: requestId,
@@ -160,7 +160,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     // Send the message to the network-plugin backend
     sendWebviewIDEMessage({
       method: "IDE.getTheme",
-      id: messageId,
+      messageId: messageId,
       params: {
         themeDescriptor,
       },
@@ -180,7 +180,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     const id = Math.random().toString(36).substring(7);
 
     sendWebviewIDEMessage({
-      id,
+      messageId: id,
       method: "IDE.fetchFullResponseBody",
       params: {
         request: request,

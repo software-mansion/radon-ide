@@ -16,7 +16,11 @@ interface ResponseTabProps {
 
 const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: ResponseTabProps) => {
   const { fetchAndOpenResponseInEditor } = useNetwork();
-  const { body = undefined, wasTruncated = false } = responseBodyData || {};
+  const {
+    body = undefined,
+    wasTruncated = false,
+    responseFetchFailed = false,
+  } = responseBodyData || {};
   const responseData = getFormattedRequestBody(body);
   const contentType = networkLog.response?.headers?.["Content-Type"] || "";
   const language = responseData ? determineLanguage(contentType, responseData) : "plaintext";
@@ -25,7 +29,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
     <>
       <TabActionButtons
         data={responseData}
-        disabled={!responseData}
+        disabled={!responseData || responseFetchFailed}
         additionalButtons={
           <IconButton
             className="response-tab-copy-button"
@@ -33,7 +37,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
             onClick={() => {
               fetchAndOpenResponseInEditor(networkLog);
             }}
-            disabled={!responseData}>
+            disabled={!responseData && !responseFetchFailed}>
             <span className="codicon codicon-chrome-restore" />
           </IconButton>
         }
@@ -44,12 +48,19 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
             <span className="codicon codicon-warning" /> Response too large, showing truncated data.
           </pre>
         )}
-        <HighlightedCodeBlock
-          content={responseData}
-          language={language}
-          theme={editorThemeData}
-          placeholder="No response body"
-        />
+        {responseFetchFailed ? (
+          <div className="response-tab-failed-fetch-information">
+            <h4>Failed to load response data</h4>
+            <p>The response may be too large</p>
+          </div>
+        ) : (
+          <HighlightedCodeBlock
+            content={responseData}
+            language={language}
+            theme={editorThemeData}
+            placeholder="No response body"
+          />
+        )}
       </div>
     </>
   );

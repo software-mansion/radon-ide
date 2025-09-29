@@ -282,10 +282,16 @@ export class ProxyDebugAdapter extends DebugSession {
     await this.cdpProxy.injectDebuggerCommand({ method: NetworkMethod.Disable, params: {} });
   }
   private async getResponseBody(args: any) {
-    await this.cdpProxy.injectDebuggerCommand({
-      method: NetworkMethod.GetResponseBody,
-      params: args,
-    });
+    try {
+      const result = await this.cdpProxy.injectDebuggerCommand({
+        method: NetworkMethod.GetResponseBody,
+        params: args,
+      });
+      return result;
+    } catch (e) {
+      Logger.error("Error fetching response body", e);
+      return undefined;
+    }
   }
 
   private async dispatchRadonAgentMessage(args: any) {
@@ -351,7 +357,7 @@ export class ProxyDebugAdapter extends DebugSession {
         await this.disableNetworkInspector();
         break;
       case RNIDE_NetworkMethod.GetResponseBody:
-        await this.getResponseBody(args);
+        response.body.result = await this.getResponseBody(args);
         break;
     }
     this.sendResponse(response);
