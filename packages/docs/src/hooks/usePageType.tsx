@@ -9,6 +9,7 @@ const usePageType = () => {
     isDocumentation: location.pathname.startsWith(`${baseUrl}docs`),
     isLanding: location.pathname === baseUrl,
     isFeatures: location.pathname.startsWith(`${baseUrl}features`),
+    isEnterprise: location.pathname.startsWith(`${baseUrl}enterprise`),
   };
 };
 

@@ -14,22 +14,52 @@
 }
 
 .planName {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 500;
   line-height: 24px;
   color: var(--radon-text-green-highlight);
 }
 
 .priceDescription {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
   line-height: normal;
   color: var(--radon-subheading);
 }
 
 .priceDescription span {
-  font-size: 18px;
+  font-size: 44px;
   font-weight: 500;
   line-height: normal;
   color: var(--ifm-color-primary);
+}
+
+.planLabel {
+  font-size: 17px;
+  color: var(--radon-subheading);
+  line-height: 28px;
+  margin: 0;
+}
+
+.period {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+
+.period p {
+  margin: 0;
+  line-height: normal;
+}
+
+.fullPrice {
+  text-decoration: line-through var(--radon-text-green-highlight);
+  color: var(--ifm-color-primary);
+  font-size: 20px;
+  line-height: normal;
+}
+
+.price {
+  display: flex;
+  gap: 8px;
 }

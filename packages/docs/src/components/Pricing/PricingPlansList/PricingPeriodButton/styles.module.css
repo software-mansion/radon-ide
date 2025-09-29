@@ -1,11 +1,3 @@
-.list {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
-  list-style: none;
-  margin: 24px 0 48px;
-}
-
 .container {
   border: 1px solid var(--swm-border);
   padding: 8px;
@@ -15,12 +7,10 @@
   gap: 8px;
 }
 
-.plan_pay_annually {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+.plan_pay_annually__discount {
+  color: var(--radon-text-green-highlight);
   font-weight: 500;
+  white-space: nowrap;
 }
 
 .btn {
@@ -48,6 +38,10 @@
   color: var(--radon-button-text);
 }
 
+.btn.active .plan_pay_annually__discount {
+  color: var(--radon-button-text);
+}
+
 .btn:not(.active):hover {
   background-color: var(--swm-border);
   color: var(--radon-button-text);
@@ -63,23 +57,7 @@
   flex: 1 0 0;
 }
 
-.cardMiddle {
-  display: flex;
-  padding: 28px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-  border-top: var(--radon-border-layout);
-}
-
 @media (max-width: 1024px) {
-  .list {
-    grid-template-columns: 1fr;
-    padding: 0;
-  }
-  .plan_pay_annually {
-    padding: 0;
-  }
   .container {
     width: 100%;
   }
@@ -92,5 +70,8 @@
   .btn p {
     font-size: 14px;
     white-space: wrap;
+  }
+  .plan_pay_annually__discount {
+    font-size: 14px;
   }
 }

@@ -6,7 +6,7 @@ export const pricingIndividualData = [
     label: "For non-commercial use",
     buttonLabel: "Download",
     stylingFilled: false,
-    features: [
+    featuresAll: [
       { label: "Element inspector", info: "" },
       { label: "Debugging and logging", info: "" },
       {
@@ -32,7 +32,7 @@ export const pricingIndividualData = [
     label: "For professional developers",
     buttonLabel: "Start 14-day trial",
     stylingFilled: true,
-    features: [
+    featuresAll: [
       { label: "Screenshots & screen recording", info: "" },
       { label: "Replays", info: "" },
       { label: "Extended device emulator", info: "Phones and tablets" },

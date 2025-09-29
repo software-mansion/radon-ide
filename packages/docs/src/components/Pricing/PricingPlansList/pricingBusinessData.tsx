@@ -6,7 +6,7 @@ export const pricingBusinessData = [
     label: "For small and medium teams",
     buttonLabel: "Buy license",
     stylingFilled: true,
-    features: [
+    featuresAll: [
       { label: "Element inspector", info: "" },
       { label: "Debugging and logging", info: "" },
       {
@@ -14,7 +14,6 @@ export const pricingBusinessData = [
         info: "Outline render, JavaScript CPU profiler, Redux DevTools integration, React Query devtools plugin, React Profiler integration",
       },
       { label: "Isolated components preview", info: "" },
-
       { label: "Extended device emulator", info: "Phones and tablets" },
       { label: "Basic device emulator", info: "Phones only" },
       {
@@ -28,12 +27,14 @@ export const pricingBusinessData = [
       { label: "Replays", info: "" },
       { label: "Storybook integration", info: "" },
       { label: "Radon AI assistant", info: "" },
-
+    ],
+    featuresTeamManagement: [
       { label: "Multiple license management", info: "" },
       { label: "Centralized team billing", info: "" },
       { label: "Single sign-on for the Radon IDE Portal", info: "" },
       { label: "Insights Dashboard with usage stats", info: "" },
-
+    ],
+    featuresSupport: [
       { label: "Early access to new features", info: "" },
       { label: "Priority support via email", info: "" },
     ],
@@ -45,7 +46,7 @@ export const pricingBusinessData = [
     label: "For enterprise-grade teams",
     buttonLabel: "Get your quote",
     stylingFilled: true,
-    features: [
+    featuresAll: [
       { label: "Service-level agreement (SLA)", info: "" },
       { label: "Dedicated payment method and invoicing", info: "" },
       { label: "Onboarding meeting", info: "" },

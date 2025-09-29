@@ -1,110 +1,93 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./styles.module.css";
-import pricing from "../PricingCard/pricing.module.css";
-import Button from "../../Button";
 import PricingCard from "../PricingCard";
-import { clsx } from "clsx";
 import { PricingProps } from "..";
+import PricingCardLabel from "../PricingCard/PricingCardLabel";
+import PricingPeriodButton from "./PricingPeriodButton";
+import usePageType from "@site/src/hooks/usePageType";
+import { pricingIndividualData } from "./pricingIndividualData";
+import { pricingBusinessData } from "./pricingBusinessData";
+import PricingFeaturesList from "./PricingFeaturesList";
 
-const PricingPlansList = ({ handleBusiness, handleIndividual }: PricingProps) => {
+export interface FeatureProps {
+  label: string;
+  info: string;
+}
+
+export interface PricingCardProps {
+  plan: string;
+  price: {
+    monthly: number | string;
+    yearly: number | string;
+  };
+  yearlyFullPrice?: number | string;
+  label: string;
+  buttonLabel: string;
+  stylingFilled: boolean;
+  href?: string;
+  featuresAll: FeatureProps[];
+  featuresTeamManagement?: FeatureProps[];
+  featuresSupport?: FeatureProps[];
+}
+
+const PricingPlansList = ({ handleBusiness }: PricingProps) => {
+  const pricingCardsIndividual = pricingIndividualData;
+  const pricingCardsBusiness = pricingBusinessData;
   const [isMonthly, setIsMonthly] = useState(true);
+  const { isEnterprise } = usePageType();
+  const [isIndividual, setIsIndividual] = useState(true);
+  const [plan, setPlan] = useState<PricingCardProps[]>(pricingCardsIndividual);
 
-  const individual = isMonthly ? (
-    <>
-      $19 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/month (excl. VAT) </p>
-    </>
-  ) : (
-    <>
-      $190 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/year (excl. VAT) </p>
-    </>
-  );
-  const business = isMonthly ? (
-    <>
-      $29 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/month (excl. VAT) </p>
-    </>
-  ) : (
-    <>
-      $290 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/year (excl. VAT) </p>
-    </>
-  );
-
-  const enterprise = (
-    <>
-      Custom
-      <p className={clsx(pricing.plan__price_second_line, pricing.plan__price_second_line_hidden)}>
-        .
-      </p>
-    </>
-  );
+  useEffect(() => {
+    isIndividual ? setPlan(pricingCardsIndividual) : setPlan(pricingCardsBusiness);
+    isEnterprise && setPlan(pricingCardsBusiness);
+  }, [isIndividual, isEnterprise]);
 
   return (
     <>
       <div className={styles.plan_pay_annually}>
-        <div className={styles.container}>
-          <button
-            type="button"
-            className={isMonthly ? `${styles.btn} ${styles.active}` : styles.btn}
-            onClick={() => setIsMonthly(true)}>
-            <p>Monthly</p>
-          </button>
-          <button
-            type="button"
-            className={isMonthly ? styles.btn : `${styles.btn} ${styles.active}`}
-            onClick={() => setIsMonthly(false)}>
-            <p className={styles.yearlyContainer}>
-              Yearly<span className={styles.plan_pay_annually__discount}>(Save 16%)</span>
-            </p>
-          </button>
-        </div>
+        {!isEnterprise && (
+          <div className={styles.container}>
+            <button
+              type="button"
+              className={isIndividual ? `${styles.btn} ${styles.active}` : styles.btn}
+              onClick={() => setIsIndividual(true)}>
+              <p>For individuals</p>
+            </button>
+            <button
+              type="button"
+              className={isIndividual ? styles.btn : `${styles.btn} ${styles.active}`}
+              onClick={() => setIsIndividual(false)}>
+              <p className={styles.yearlyContainer}>For businesses</p>
+            </button>
+          </div>
+        )}
+        <PricingPeriodButton isMonthly={isMonthly} setIsMonthly={setIsMonthly} />
       </div>
-      <ul className={styles.list}>
-        <PricingCard>
-          <div className={pricing.cardHeader}>
-            <h2 className={pricing.plan__name}>Radon&nbsp;IDE&nbsp;Individual</h2>
-            <h3 className={pricing.plan__price}>{individual}</h3>
-          </div>
-          <div className={pricing.cardMiddle}>
-            <p className={pricing.plan__tagline}>
-              For individual developers and freelancers craving more enjoyable coding sessions.
-            </p>
-          </div>
-          <div className={pricing.cardButton}>
-            <Button onClick={handleIndividual}>Buy Individual</Button>
-          </div>
-        </PricingCard>
-        <PricingCard>
-          <div className={pricing.cardHeader}>
-            <h2 className={pricing.plan__name}>Radon&nbsp;IDE&nbsp;Business</h2>
-            <h3 className={pricing.plan__price}>{business}</h3>
-          </div>
-          <div className={pricing.cardMiddle}>
-            <p className={pricing.plan__tagline}>
-              For companies seeking to drastically improve their developer experience.
-            </p>
-          </div>
-          <div className={pricing.cardButton}>
-            <Button onClick={handleBusiness}>Buy Business</Button>
-          </div>
-        </PricingCard>
-        <PricingCard>
-          <div className={pricing.cardHeader}>
-            <h2 className={pricing.plan__name}>Radon&nbsp;IDE&nbsp;Enterprise</h2>
-            <h3 className={pricing.plan__price}>{enterprise}</h3>
-          </div>
-          <div className={pricing.cardMiddle}>
-            <p className={pricing.plan__tagline}>
-              For organizations that need custom contract options, pricing plans, and support.
-            </p>
-          </div>
-          <div className={pricing.cardButton}>
-            <Button href="mailto:projects@swmansion.com">Contact Us</Button>
-          </div>
-        </PricingCard>
-      </ul>
+      <div className={styles.list}>
+        {plan.map((el, idx) => (
+          <PricingCard>
+            <PricingCardLabel key={idx} plan={el} isMonthly={isMonthly} />
+            <div className={styles.cardMiddle}>
+              <PricingFeaturesList featuresList={el.featuresAll} />
+              {el.featuresTeamManagement && (
+                <>
+                  {" "}
+                  <p>Team Management</p>
+                  <PricingFeaturesList featuresList={el.featuresTeamManagement} />
+                </>
+              )}
+              {el.featuresSupport && (
+                <>
+                  {" "}
+                  <p>Support & Updates</p>
+                  <PricingFeaturesList featuresList={el.featuresSupport} />
+                </>
+              )}
+            </div>
+          </PricingCard>
+        ))}
+      </div>
     </>
   );
 };
