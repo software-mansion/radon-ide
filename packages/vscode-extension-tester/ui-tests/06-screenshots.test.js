@@ -29,6 +29,7 @@ describe("6 - screenshots tests", () => {
     await managingDevicesService.deleteAllDevices();
     await managingDevicesService.addNewDevice("newDevice");
     await elementHelperService.findAndClickElementByTag("modal-close-button");
+    await radonSettingsService.setEnableReplays(true);
     view = new WebView();
     await view.switchBack();
   });
@@ -36,7 +37,6 @@ describe("6 - screenshots tests", () => {
   beforeEach(async () => {
     await radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
-    await radonSettingsService.setEnableReplays(true);
 
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
