@@ -26,8 +26,6 @@ import {
   DeviceSessionStore,
   DeviceSettings,
   InstallationError,
-  NavigationHistoryItem,
-  NavigationRoute,
   NavigationState,
   RecursivePartial,
   REMOVE,
