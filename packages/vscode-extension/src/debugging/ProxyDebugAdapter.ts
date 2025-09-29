@@ -95,6 +95,24 @@ export class ProxyDebugAdapter extends DebugSession {
         this.sendEvent(new Event(SCRIPT_PARSED, { isMainBundle }));
       })
     );
+
+    this.disposables.push(
+      debug.onDidReceiveDebugSessionCustomEvent((event) => {
+        if (event.session.id !== this.childDebugSession?.id) {
+          return;
+        }
+        switch (event.event) {
+          case "profileStarted":
+            this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
+            break;
+          case "profilerStateUpdate":
+            if (event.body?.running === false) {
+              this.sendEvent(new Event("RNIDE_profilingCPUStopped"));
+            }
+            break;
+        }
+      })
+    );
   }
 
   protected initializeRequest(
@@ -179,27 +197,8 @@ export class ProxyDebugAdapter extends DebugSession {
         }
       });
       promise.finally(() => onDidStartDisposable.dispose());
-
-      this.disposables.push(
-        debug.onDidReceiveDebugSessionCustomEvent((event) => {
-          console.log("Custom event", event);
-          if (event.session.id !== this.childDebugSession?.id) {
-            return;
-          }
-          switch (event.event) {
-            case "profileStarted":
-              this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
-              break;
-            case "profilerStateUpdate":
-              if (event.body.running === false) {
-                this.sendEvent(new Event("RNIDE_profilingCPUStopped"));
-              }
-              break;
-          }
-        })
-      );
-
       await promise;
+
       this.sendResponse(response);
     } catch (e) {
       Logger.error("Error starting proxy debug adapter child session", e);
