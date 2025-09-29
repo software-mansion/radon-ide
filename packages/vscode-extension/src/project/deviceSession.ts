@@ -39,13 +39,13 @@ import { ScreenCapture } from "./ScreenCapture";
 import { disposeAll } from "../utilities/disposables";
 import { FileTransfer } from "./FileTransfer";
 import { DevtoolsServer } from "./devtools";
-import { MetroProvider, MetroSession } from "./metro";
+import { MetroError, MetroProvider, MetroSession } from "./metro";
 
 const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
-function isOfEnumDeviceRotation(value: any): value is DeviceRotation {
-  return Object.values(DeviceRotation).includes(value);
+function isOfEnumDeviceRotation(value: unknown): value is DeviceRotation {
+  return Object.values(DeviceRotation).includes(value as DeviceRotation);
 }
 
 type RestartOptions = {
@@ -311,34 +311,7 @@ export class DeviceSession implements Disposable {
         status: "running",
       });
     } catch (e) {
-      if (e instanceof CancelError) {
-        // reload got cancelled, we don't show any errors
-        return;
-      } else if (e instanceof BuildError) {
-        this.stateManager.updateState({
-          status: "fatalError",
-          error: {
-            kind: "build",
-            message: e.message,
-            buildType: e.buildType,
-            platform: this.stateManager.getState().deviceInfo.platform,
-          },
-        });
-        return;
-      } else if (e instanceof InstallationError) {
-        this.stateManager.updateState({
-          status: "fatalError",
-          error: {
-            kind: "installation",
-            message: e.message,
-            platform: this.stateManager.getState().deviceInfo.platform,
-            reason: e.reason,
-          },
-        });
-        return;
-      }
-      Logger.error("Failed to perform reload action", type, e);
-      throw e;
+      this.setFatalError(e as Error);
     }
   }
 
@@ -677,6 +650,64 @@ export class DeviceSession implements Disposable {
     return this.device.installApp(this.buildResult, reinstall);
   }
 
+  private setFatalError(e: Error) {
+    if (e instanceof CancelError) {
+      Logger.info("Device selection was canceled", e);
+    } else if (e instanceof DeviceBootError) {
+      this.stateManager.updateState({
+        status: "fatalError",
+        error: {
+          kind: "device",
+          message: e.message,
+        },
+      });
+      return;
+    } else if (e instanceof MetroError) {
+      this.stateManager.updateState({
+        status: "fatalError",
+        error: {
+          kind: "metro",
+          message: e.message,
+        },
+      });
+      return;
+    } else if (e instanceof BuildError) {
+      this.stateManager.updateState({
+        status: "fatalError",
+        error: {
+          kind: "build",
+          message: e.message,
+          buildType: e.buildType,
+          platform: this.stateManager.getState().deviceInfo.platform,
+        },
+      });
+      return;
+    } else if (e instanceof InstallationError) {
+      this.stateManager.updateState({
+        status: "fatalError",
+        error: {
+          kind: "installation",
+          message: e.message,
+          platform: this.stateManager.getState().deviceInfo.platform,
+          reason: e.reason,
+        },
+      });
+      return;
+    } else {
+      this.stateManager.updateState({
+        status: "fatalError",
+        error: {
+          kind: "build",
+          message: (e as Error).message,
+          buildType: null,
+          platform: this.stateManager.getState().deviceInfo.platform,
+        },
+      });
+      return;
+    }
+    throw e;
+  }
+
   public async start() {
     try {
       this.resetStartingState(StartupMessage.InitializingDevice);
@@ -707,48 +738,7 @@ export class DeviceSession implements Disposable {
       await this.launchApp(cancelToken);
       Logger.debug("Device session started");
     } catch (e) {
-      if (e instanceof CancelError) {
-        Logger.info("Device selection was canceled", e);
-      } else if (e instanceof DeviceBootError) {
-        this.stateManager.updateState({
-          status: "fatalError",
-          error: {
-            kind: "device",
-            message: e.message,
-          },
-        });
-      } else if (e instanceof BuildError) {
-        this.stateManager.updateState({
-          status: "fatalError",
-          error: {
-            kind: "build",
-            message: e.message,
-            buildType: e.buildType,
-            platform: this.stateManager.getState().deviceInfo.platform,
-          },
-        });
-      } else if (e instanceof InstallationError) {
-        this.stateManager.updateState({
-          status: "fatalError",
-          error: {
-            kind: "installation",
-            message: e.message,
-            platform: this.stateManager.getState().deviceInfo.platform,
-            reason: e.reason,
-          },
-        });
-      } else {
-        this.stateManager.updateState({
-          status: "fatalError",
-          error: {
-            kind: "build",
-            message: (e as Error).message,
-            buildType: null,
-            platform: this.stateManager.getState().deviceInfo.platform,
-          },
-        });
-      }
-      throw e;
+      this.setFatalError(e as Error);
     }
   }
 

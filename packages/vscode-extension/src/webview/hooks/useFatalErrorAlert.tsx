@@ -1,3 +1,4 @@
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 import { useToggleableAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
@@ -12,8 +13,8 @@ import {
   FatalErrorDescriptor,
   InstallationErrorDescriptor,
   InstallationErrorReason,
+  MetroErrorDescriptor,
 } from "../../common/State";
-import { VscodeButton as Button } from "@vscode-elements/react-elements";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
 
@@ -72,7 +73,7 @@ function BootErrorActions() {
   );
 }
 
-function InstallationErrorActions() {
+function ErrorActionsWithReload() {
   const { project } = useProject();
 
   let onReload = () => {
@@ -161,7 +162,18 @@ function createInstallationErrorAlert(installationErrorDescriptor: InstallationE
     id: FATAL_ERROR_ALERT_ID,
     title: "Couldn't install application on selected device",
     description,
-    actions: <InstallationErrorActions />,
+    actions: <ErrorActionsWithReload />,
+  };
+}
+
+function createMetroErrorAlert(metroErrorDescriptor: MetroErrorDescriptor) {
+  let description = metroErrorDescriptor.message;
+
+  return {
+    id: FATAL_ERROR_ALERT_ID,
+    title: "Couldn't start the Metro server",
+    description,
+    actions: <ErrorActionsWithReload />,
   };
 }
 
@@ -182,6 +194,8 @@ export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undef
     errorAlert = bootErrorAlert;
   } else if (errorDescriptor?.kind === "installation") {
     errorAlert = createInstallationErrorAlert(errorDescriptor);
+  } else if (errorDescriptor?.kind === "metro") {
+    errorAlert = createMetroErrorAlert(errorDescriptor);
   }
 
   useToggleableAlert(errorDescriptor !== undefined, errorAlert);
