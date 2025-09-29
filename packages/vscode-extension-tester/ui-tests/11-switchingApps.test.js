@@ -4,7 +4,7 @@ import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 import { exec } from "child_process";
 
-describe("4 - App switching tests", () => {
+describe("11 - App switching tests", () => {
   let driver,
     appWebsocket,
     elementHelperService,

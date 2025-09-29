@@ -116,6 +116,7 @@ export default class RadonViewsService {
   }
 
   async clearDebugConsole() {
+    // debug console button is only active when app is started
     await this.appManipulationService.waitForAppToLoad();
     await this.openAndGetDebugConsoleElement();
     const debugView = await new BottomBarPanel().openDebugConsoleView();
