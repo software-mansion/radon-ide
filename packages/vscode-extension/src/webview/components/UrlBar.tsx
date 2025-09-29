@@ -41,8 +41,8 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
     store$.projectState.applicationContext.applicationDependencies.expoRouter
   );
 
-  const navigationHistory = use$(selectedDeviceSessionState.navigationHistory);
-  const navigationRouteList = use$(selectedDeviceSessionState.navigationRouteList);
+  const navigationHistory = use$(selectedDeviceSessionState.navigationState.navigationHistory);
+  const navigationRouteList = use$(selectedDeviceSessionState.navigationState.navigationRouteList);
 
   const disabledAlsoWhenStarting = disabled || selectedDeviceSessionStatus === "starting";
   const isExpoRouterProject = !expoRouterStatus?.isOptional;
