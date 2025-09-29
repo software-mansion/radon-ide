@@ -1,6 +1,5 @@
 import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-cdp-proxy";
 import { EventEmitter } from "vscode";
-import { Minimatch } from "minimatch";
 import _ from "lodash";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
 import { Logger } from "../Logger";
@@ -244,7 +243,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   }
 
   private async handleScriptParsed(command: IProtocolCommand): Promise<IProtocolCommand> {
-    const { sourceMapURL, url, scriptId } = command.params as Cdp.Debugger.ScriptParsedEvent;
+    const { sourceMapURL } = command.params as Cdp.Debugger.ScriptParsedEvent;
     if (!sourceMapURL) {
       return command;
     }

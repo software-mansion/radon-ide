@@ -26,21 +26,6 @@ export class ProxyDebugSessionAdapterDescriptorFactory
   }
 }
 
-// strip the wildcard `*` from the sourceMapPathOverrides before passing them to the SourceMapsRegistry
-function sourceMapAliasesFromPathOverrides(
-  sourceMapPathOverrides: Record<string, string>
-): [string, string][] {
-  return Object.entries(sourceMapPathOverrides).map(([key, value]): [string, string] => {
-    if (key.endsWith("*")) {
-      key = key.slice(0, -1);
-    }
-    if (value.endsWith("*")) {
-      value = value.slice(0, -1);
-    }
-    return [key, value];
-  });
-}
-
 const CHILD_SESSION_TYPE = "radon-pwa-node";
 
 export class ProxyDebugAdapter extends DebugSession {
@@ -52,10 +37,6 @@ export class ProxyDebugAdapter extends DebugSession {
 
   constructor(private session: vscode.DebugSession) {
     super();
-
-    const sourceMapAliases = sourceMapAliasesFromPathOverrides(
-      this.session.configuration.sourceMapPathOverrides
-    );
 
     const proxyDelegate = new RadonCDPProxyDelegate();
 
@@ -96,8 +77,8 @@ export class ProxyDebugAdapter extends DebugSession {
     );
 
     this.disposables.push(
-      vscode.debug.onDidTerminateDebugSession((session) => {
-        if (session.parentSession?.id === this.session.id) {
+      vscode.debug.onDidTerminateDebugSession((terminatedSession) => {
+        if (terminatedSession.parentSession?.id === this.session.id) {
           this.terminate();
         }
       })
