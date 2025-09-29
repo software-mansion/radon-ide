@@ -557,12 +557,22 @@ export class ApplicationSession implements Disposable {
     });
     try {
       const appReadyPromise = waitForAppReady(this.inspectorBridge, cancelToken);
-      await this.debugSession?.evaluateExpression({
-        expression: "void globalThis.__RADON_reloadJS()",
-      });
+      await this.reloadWithDebugger();
       await Promise.race([appReadyPromise, bundleErrorPromise]);
     } finally {
       bundleErrorSubscription.dispose();
+    }
+  }
+
+  private async reloadWithDebugger() {
+    if (this.debugSession === undefined) {
+      throw new Error("Cannot reload JS with the debugger when the debugger is not connected");
+    }
+    const { result } = await this.debugSession.evaluateExpression({
+      expression: "void globalThis.__RADON_reloadJS()",
+    });
+    if (result.className === "Error") {
+      throw new Error("Reloading JS with the debugger failed: " + result.value.message);
     }
   }
 
