@@ -36,6 +36,7 @@ describe("6 - screenshots tests", () => {
   beforeEach(async () => {
     await radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
+    await radonSettingsService.setEnableReplays(true);
 
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
@@ -92,6 +93,32 @@ describe("6 - screenshots tests", () => {
     );
   });
 
+  it("Should record screen", async () => {
+    const filePath = path.join(cwd, "recordingTest..mp4");
+
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+
+    await elementHelperService.findAndClickElementByTag(
+      "toggle-recording-button"
+    );
+    // recording for 4 sec
+    await driver.sleep(4000);
+    await elementHelperService.findAndClickElementByTag(
+      "toggle-recording-button"
+    );
+    await driver.sleep(1000);
+
+    await radonViewsService.findAndFillSaveFileForm("recordingTest");
+
+    await driver.wait(
+      async () => {
+        return fs.existsSync(filePath);
+      },
+      10000,
+      "Timed out waiting for recording to be saved"
+    );
+  });
+
   it("Should record screen using shortcut", async () => {
     const filePath = path.join(cwd, "recordingTest..mp4");
 
@@ -128,35 +155,21 @@ describe("6 - screenshots tests", () => {
     );
   });
 
-  it("Should record screen", async () => {
-    const filePath = path.join(cwd, "recordingTest..mp4");
-
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  it("Should open replay overlay", async () => {
+    // some time to wait for replay to record
+    await driver.sleep(3000);
 
     await elementHelperService.findAndClickElementByTag(
-      "toggle-recording-button"
+      "radon-top-bar-show-replay-button"
     );
-    // recording for 4 sec
-    await driver.sleep(4000);
-    await elementHelperService.findAndClickElementByTag(
-      "toggle-recording-button"
-    );
-    await driver.sleep(1000);
 
-    await radonViewsService.findAndFillSaveFileForm("recordingTest");
-
-    await driver.wait(
-      async () => {
-        return fs.existsSync(filePath);
-      },
-      10000,
-      "Timed out waiting for recording to be saved"
+    await elementHelperService.findAndWaitForElementByTag(
+      "replay-overlay",
+      "Timed out waiting for replay overlay to appear"
     );
   });
 
   it("Should open replay overlay using shortcut", async () => {
-    await radonSettingsService.setEnableReplays(true);
-
     // some time to wait for replay to record
     await driver.sleep(3000);
 
@@ -168,22 +181,6 @@ describe("6 - screenshots tests", () => {
       .keyUp(Key.SHIFT)
       .keyUp(Key.COMMAND)
       .perform();
-
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
-  });
-
-  it("Should open replay overlay", async () => {
-    await radonSettingsService.setEnableReplays(true);
-
-    // some time to wait for replay to record
-    await driver.sleep(3000);
-
-    await elementHelperService.findAndClickElementByTag(
-      "radon-top-bar-show-replay-button"
-    );
 
     await elementHelperService.findAndWaitForElementByTag(
       "replay-overlay",
