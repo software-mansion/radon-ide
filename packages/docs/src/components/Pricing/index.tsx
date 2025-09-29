@@ -9,6 +9,8 @@ import usePaddle from "@site/src/hooks/usePaddle";
 export interface PricingProps {
   handleIndividual?: () => void;
   handleBusiness?: () => void;
+  isMonthly?: boolean;
+  setIsMonthly?: (value: boolean) => void;
 }
 
 const isProduction = process.env.NODE_ENV === "production";
@@ -59,9 +61,14 @@ const Pricing = ({ handleBusiness, handleIndividual }: PricingProps) => {
         <PricingPlansList
           handleBusiness={openBusinessCheckout}
           handleIndividual={openIndividualCheckout}
+          isMonthly={isMonthly}
+          setIsMonthly={setIsMonthly}
         />
       </div>
-      <ComparePricingPlans handleBusiness={openBusinessCheckout} />
+      <ComparePricingPlans
+        handleIndividual={openIndividualCheckout}
+        handleBusiness={openBusinessCheckout}
+      />
       <FAQ />
     </div>
   );

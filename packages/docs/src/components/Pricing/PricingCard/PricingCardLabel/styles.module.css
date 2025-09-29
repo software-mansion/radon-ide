@@ -3,14 +3,15 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  border-left: var(--radon-border-layout);
   justify-content: space-between;
+  height: 225px;
 }
 
 .planDetails {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex-grow: 1;
 }
 
 .planName {
@@ -25,6 +26,9 @@
   font-weight: 400;
   line-height: normal;
   color: var(--radon-subheading);
+  align-items: center;
+  flex-grow: 1;
+  display: flex;
 }
 
 .priceDescription span {
@@ -62,4 +66,8 @@
 .price {
   display: flex;
   gap: 8px;
+}
+
+span.customPrice {
+  font-size: 32px;
 }

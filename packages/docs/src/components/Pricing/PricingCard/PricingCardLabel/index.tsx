@@ -1,15 +1,14 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import styles from "./styles.module.css";
-import PricingButton from "../../ComparePricingPlans/PricingButton";
 import { PricingCardProps } from "../../PricingPlansList";
 
 interface PricingCardLabelProps {
   plan: PricingCardProps;
   isMonthly: boolean;
-  onClick?: () => void;
+  children: ReactNode;
 }
 
-export default function PricingCardLabel({ plan, isMonthly, onClick }: PricingCardLabelProps) {
+export default function PricingCardLabel({ plan, isMonthly, children }: PricingCardLabelProps) {
   const price = isMonthly ? plan.price.monthly : plan.price.yearly;
   return (
     <div className={styles.container}>
@@ -27,14 +26,12 @@ export default function PricingCardLabel({ plan, isMonthly, onClick }: PricingCa
               </div>
             </div>
           ) : (
-            <span>{price}</span>
+            <span className={styles.customPrice}>{price}</span>
           )}
         </div>
         <p className={styles.planLabel}>{plan.label}</p>
       </div>
-      <PricingButton href={plan.href} stylingFilled={plan.stylingFilled} onClick={onClick}>
-        {plan.buttonLabel}
-      </PricingButton>
+      {children}
     </div>
   );
 }

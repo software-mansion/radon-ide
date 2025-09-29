@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./styles.module.css";
 import CheckIcon from "../../CheckIcon";
-import PlanLabelCard from "./PlanLabelCard";
+import PlanTableLabel from "./PlanTableLabel";
 import { useModal } from "../../ModalProvider";
 import { PricingProps } from "..";
 import clsx from "clsx";
@@ -25,7 +25,7 @@ const handleCellContent = (data: string[] | boolean) => {
   }
 };
 
-export default function ComparePricingPlans({ handleBusiness }: PricingProps) {
+export default function ComparePricingPlans({ handleBusiness, handleIndividual }: PricingProps) {
   const { onOpen } = useModal();
   const pricingPlanFeatures: FeatureItem[] = planFeaturesData;
   return (
@@ -34,35 +34,34 @@ export default function ComparePricingPlans({ handleBusiness }: PricingProps) {
       <div className={styles.container}>
         <div className={styles.planColumns}>
           <div className={styles.columnName}>Features</div>
-          <PlanLabelCard
+          <PlanTableLabel
             plan="FREE"
             monthlyPrice={0}
             buttonLabel="Download"
             stylingFilled={false}
             onClick={onOpen}
           />
-          <PlanLabelCard
+          <PlanTableLabel
             plan="PRO"
             monthlyPrice={25}
             yearlyLowPrice={250}
             buttonLabel="Start 14-day trial"
             stylingFilled={true}
-            onClick={handleBusiness}
+            onClick={handleIndividual}
           />
-          <PlanLabelCard
+          <PlanTableLabel
             plan="TEAM"
             monthlyPrice={75}
             yearlyLowPrice={750}
             buttonLabel="Buy licenses"
             stylingFilled={true}
-            href="mailto:projects@swmansion.com"
+            onClick={handleBusiness}
           />
-          <PlanLabelCard
+          <PlanTableLabel
             plan="ENTERPRISE"
             monthlyPrice="Custom pricing"
             buttonLabel="Get your quote"
             stylingFilled={true}
-            href="mailto:projects@swmansion.com"
           />
         </div>
         {pricingPlanFeatures.map((feature, index) => (

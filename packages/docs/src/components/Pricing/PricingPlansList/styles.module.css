@@ -23,6 +23,10 @@
   font-weight: 500;
 }
 
+.btnCenter {
+  justify-content: center;
+}
+
 .btn {
   height: 40px;
   background-color: transparent;

@@ -1,8 +1,6 @@
 import React, { forwardRef } from "react";
 import styles from "./styles.module.css";
 import PricingPlansList from "../Pricing/PricingPlansList";
-import PricingCard from "../Pricing/PricingCard";
-import PlanLabelCard from "../Pricing/ComparePricingPlans/PlanLabelCard";
 
 const EnterprisePricingPlans = forwardRef<HTMLDivElement, {}>((props, ref) => {
   return (

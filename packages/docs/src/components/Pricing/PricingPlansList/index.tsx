@@ -5,9 +5,12 @@ import { PricingProps } from "..";
 import PricingCardLabel from "../PricingCard/PricingCardLabel";
 import PricingPeriodButton from "./PricingPeriodButton";
 import usePageType from "@site/src/hooks/usePageType";
-import { pricingIndividualData } from "./pricingIndividualData";
-import { pricingBusinessData } from "./pricingBusinessData";
+import { pricingIndividualData } from "../pricingIndividualData";
+import { pricingBusinessData } from "../pricingBusinessData";
 import PricingFeaturesList from "./PricingFeaturesList";
+import PricingButton from "../ComparePricingPlans/PricingButton";
+import { useModal } from "../../ModalProvider";
+import clsx from "clsx";
 
 export interface FeatureProps {
   label: string;
@@ -24,28 +27,49 @@ export interface PricingCardProps {
   label: string;
   buttonLabel: string;
   stylingFilled: boolean;
-  href?: string;
   featuresAll: FeatureProps[];
   featuresTeamManagement?: FeatureProps[];
   featuresSupport?: FeatureProps[];
 }
 
-const PricingPlansList = ({ handleBusiness }: PricingProps) => {
+const PricingPlansList = ({
+  handleBusiness,
+  handleIndividual,
+  isMonthly,
+  setIsMonthly,
+}: PricingProps) => {
   const pricingCardsIndividual = pricingIndividualData;
   const pricingCardsBusiness = pricingBusinessData;
-  const [isMonthly, setIsMonthly] = useState(true);
   const { isEnterprise } = usePageType();
   const [isIndividual, setIsIndividual] = useState(true);
   const [plan, setPlan] = useState<PricingCardProps[]>(pricingCardsIndividual);
+  const { onOpen } = useModal();
 
   useEffect(() => {
     isIndividual ? setPlan(pricingCardsIndividual) : setPlan(pricingCardsBusiness);
     isEnterprise && setPlan(pricingCardsBusiness);
   }, [isIndividual, isEnterprise]);
 
+  const handlePlanButtonClick = (id: string) => {
+    switch (id) {
+      case "FREE":
+        onOpen();
+        break;
+      case "PRO":
+        handleIndividual();
+        break;
+      case "TEAM":
+        handleBusiness();
+        break;
+      case "ENTERPRISE":
+        onOpen();
+        break;
+    }
+  };
+
   return (
     <>
-      <div className={styles.plan_pay_annually}>
+      <div className={clsx(styles.plan_pay_annually, isEnterprise ? styles.btnCenter : "")}>
         {!isEnterprise && (
           <div className={styles.container}>
             <button
@@ -67,7 +91,14 @@ const PricingPlansList = ({ handleBusiness }: PricingProps) => {
       <div className={styles.list}>
         {plan.map((el, idx) => (
           <PricingCard>
-            <PricingCardLabel key={idx} plan={el} isMonthly={isMonthly} />
+            <PricingCardLabel key={el.plan} plan={el} isMonthly={isMonthly}>
+              {" "}
+              <PricingButton
+                stylingFilled={el.stylingFilled}
+                onClick={() => handlePlanButtonClick(el.plan)}>
+                {el.buttonLabel}
+              </PricingButton>
+            </PricingCardLabel>
             <div className={styles.cardMiddle}>
               <PricingFeaturesList featuresList={el.featuresAll} />
               {el.featuresTeamManagement && (
