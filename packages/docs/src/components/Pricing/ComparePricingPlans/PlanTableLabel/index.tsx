@@ -2,7 +2,7 @@ import React from "react";
 import styles from "./styles.module.css";
 import PricingButton from "../PricingButton";
 
-interface PlanLabelCardProps {
+interface PlanTableLabelProps {
   plan: string;
   monthlyPrice: number | string;
   yearlyLowPrice?: number;
@@ -13,15 +13,14 @@ interface PlanLabelCardProps {
   onClick?: () => void;
 }
 
-export default function PlanLabelCard({
+export default function PlanTableLabel({
   plan,
   monthlyPrice,
   yearlyLowPrice,
   buttonLabel,
   stylingFilled,
-  href,
   onClick,
-}: PlanLabelCardProps) {
+}: PlanTableLabelProps) {
   return (
     <div className={styles.container}>
       <div className={styles.planDetails}>
@@ -41,7 +40,7 @@ export default function PlanLabelCard({
           )}
         </div>
       </div>
-      <PricingButton href={href} stylingFilled={stylingFilled} onClick={onClick}>
+      <PricingButton stylingFilled={stylingFilled} onClick={onClick}>
         {buttonLabel}
       </PricingButton>
     </div>
