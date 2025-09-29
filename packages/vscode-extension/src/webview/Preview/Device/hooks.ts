@@ -4,7 +4,7 @@ import { useStore } from "../../providers/storeProvider";
 
 export function useDeviceFrame(device: DeviceProperties) {
   const store$ = useStore();
-  const showDeviceFrame = use$(store$.workspaceConfiguration.showDeviceFrame);
+  const showDeviceFrame = use$(store$.workspaceConfiguration.userInterface.showDeviceFrame);
   const isFrameDisabled = showDeviceFrame === false;
   const frame = isFrameDisabled ? device.bezel : device.skin;
 

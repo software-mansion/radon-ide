@@ -32,8 +32,11 @@ describe("9 - Radon Settings", () => {
   });
 
   it("should zoom in and out", async () => {
+    // it may take some time to load this element especially on GitHub CI
     const phoneWrapper = await elementHelperService.findAndWaitForElementByTag(
-      "phone-wrapper"
+      "phone-wrapper",
+      "timedout waiting for phone wrapper element",
+      15000
     );
     let height = (await phoneWrapper.getRect()).height;
     let newHeight = height;
@@ -51,7 +54,9 @@ describe("9 - Radon Settings", () => {
   it("should zoom in and out to preset levels", async () => {
     const zoomLevels = [0.5, 0.6, 0.7, 0.8, 0.9, 1];
     const phoneWrapper = await elementHelperService.findAndWaitForElementByTag(
-      "phone-wrapper"
+      "phone-wrapper",
+      "timedout waiting for phone wrapper element",
+      15000
     );
     let height = 0;
 
@@ -78,7 +83,9 @@ describe("9 - Radon Settings", () => {
       );
 
     const phoneWrapper = await elementHelperService.findAndWaitForElementByTag(
-      "phone-wrapper"
+      "phone-wrapper",
+      "timedout waiting for phone wrapper element",
+      15000
     );
 
     const screenHeight = (await phoneDisplayContainer.getRect()).height;

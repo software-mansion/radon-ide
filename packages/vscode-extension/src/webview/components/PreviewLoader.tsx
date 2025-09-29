@@ -44,7 +44,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
     return store && store.status === "starting" ? store.stageProgress : undefined;
   });
 
-  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
 
   const { project } = useProject();
   const [progress, setProgress] = useState(0);

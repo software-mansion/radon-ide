@@ -8,13 +8,13 @@ import {
   AppPermissionType,
   DeviceButtonType,
   DeviceId,
-  DeviceSettings,
+  DeviceRotationDirection,
   IDEPanelMoveTarget,
-  isOfEnumDeviceRotation,
   ProjectEventListener,
   ProjectEventMap,
   ProjectInterface,
   ProjectState,
+  ROTATIONS,
   TouchPoint,
 } from "../common/Project";
 import { AppRootConfigController } from "../panels/AppRootConfigController";
@@ -36,7 +36,6 @@ import {
   DeviceSessionsManagerDelegate,
   ReloadAction,
 } from "./DeviceSessionsManager";
-import { DEVICE_SETTINGS_DEFAULT, DEVICE_SETTINGS_KEY } from "../devices/DeviceBase";
 import { FingerprintProvider } from "./FingerprintProvider";
 import { Connector } from "../connect/Connector";
 import { LaunchConfigurationsManager } from "./launchConfigurationsManager";
@@ -53,7 +52,6 @@ import {
   IOSRuntimeInfo,
   MultimediaData,
   ProjectStore,
-  RecursivePartial,
   WorkspaceConfiguration,
 } from "../common/State";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
@@ -180,21 +178,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         });
       })
     );
-    this.disposables.push(
-      this.workspaceStateManager.onSetState(
-        (partialWorkspaceConfig: RecursivePartial<WorkspaceConfiguration>) => {
-          const deviceRotation = partialWorkspaceConfig.deviceRotation;
-          if (!deviceRotation) {
-            return;
-          }
-
-          const deviceRotationResult = isOfEnumDeviceRotation(deviceRotation)
-            ? deviceRotation
-            : DeviceRotation.Portrait;
-          this.deviceSessionsManager.rotateAllDevices(deviceRotationResult);
-        }
-      )
-    );
 
     this.disposables.push(this.stateManager, this.workspaceStateManager, this.devicesStateManager);
   }
@@ -208,7 +191,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public getDeviceRotation(): DeviceRotation {
-    return this.workspaceStateManager.getState().deviceRotation;
+    return this.workspaceStateManager.getState().deviceSettings.deviceRotation;
   }
 
   private maybeStartInitialDeviceSession() {
@@ -289,20 +272,18 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Device Settings
 
-  public async getDeviceSettings() {
-    return extensionContext.workspaceState.get(DEVICE_SETTINGS_KEY, DEVICE_SETTINGS_DEFAULT);
-  }
-
-  public async updateDeviceSettings(settings: DeviceSettings) {
-    const currentSession = this.deviceSession;
-    if (currentSession) {
-      let needsRestart = await currentSession.updateDeviceSettings(settings);
-      this.eventEmitter.emit("deviceSettingsChanged", settings);
-
-      if (needsRestart) {
-        await this.deviceSessionsManager.reloadCurrentSession("reboot");
-      }
+  public async rotateDevices(direction: DeviceRotationDirection) {
+    const currentRotation = this.workspaceStateManager.getState().deviceSettings.deviceRotation;
+    if (currentRotation === undefined) {
+      Logger.warn("[Radon IDE] Device rotation is not set in the configuration.");
+      return;
     }
+
+    const currentIndex = ROTATIONS.indexOf(currentRotation);
+    const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
+    this.workspaceStateManager.updateState({
+      deviceSettings: { deviceRotation: ROTATIONS[newIndex] },
+    });
   }
 
   // #endregion Device Settings
@@ -508,7 +489,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async saveMultimedia(multimediaData: MultimediaData) {
-    const defaultSavingPath = this.workspaceStateManager.getState().defaultMultimediaSavingLocation;
+    const defaultSavingPath =
+      this.workspaceStateManager.getState().general.defaultMultimediaSavingLocation;
     return saveMultimedia(multimediaData, defaultSavingPath ?? undefined);
   }
 
@@ -608,6 +590,20 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     await this.editorBindings.showToast("Copied from device clipboard", 2000);
   }
 
+  public dispatchHomeButtonPress(): void {
+    this.deviceSession?.sendButton("home", "Down");
+    this.deviceSession?.sendButton("home", "Up");
+  }
+
+  public dispatchAppSwitchButtonPress(): void {
+    this.deviceSession?.sendButton("appSwitch", "Down");
+    this.deviceSession?.sendButton("appSwitch", "Up");
+  }
+
+  public async sendBiometricAuthorization(isMatch: boolean) {
+    await this.deviceSession?.sendBiometricAuthorization(isMatch);
+  }
+
   // #endregion Device Input
 
   // #region Reloading
@@ -704,10 +700,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
-  public async sendBiometricAuthorization(isMatch: boolean) {
-    await this.deviceSession?.sendBiometricAuthorization(isMatch);
-  }
-
   // #endregion Extension Interface
 
   // #region Logging
@@ -756,6 +748,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.editorBindings.showToast(message, timeout);
   }
 
+  public openLaunchConfigurationFile(): Promise<void> {
+    return this.editorBindings.openLaunchConfigurationFile();
+  }
+
   // #endregion Editor
 
   // #region Telemetry
@@ -801,12 +797,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #endregion Dispose
 
   // #region To Be Removed
-
-  // TODO: this should be removed from our public API
-  // to control it's surface
-  public async runCommand(command: string): Promise<void> {
-    await commands.executeCommand(command);
-  }
 
   // TODO: this should be moved to the new state management
   private updateProjectState(newState: Partial<ProjectState>) {

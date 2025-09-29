@@ -145,7 +145,7 @@ function ManageDevicesView() {
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
   const deviceSessions = use$(store$.projectState.deviceSessions);
 
-  const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
+  const stopPreviousDevices = use$(store$.workspaceConfiguration.deviceControl.stopPreviousDevices);
 
   const selectedProjectDevice = use$(selectedDeviceSessionState.deviceInfo);
 
@@ -247,7 +247,7 @@ function ManageDevicesView() {
           className="switch-root small-switch"
           checked={stopPreviousDevices}
           onCheckedChange={(checked) =>
-            store$.workspaceConfiguration.stopPreviousDevices.set(checked)
+            store$.workspaceConfiguration.deviceControl.stopPreviousDevices.set(checked)
           }>
           <Switch.Thumb className="switch-thumb" />
         </Switch.Root>

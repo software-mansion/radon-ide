@@ -55,7 +55,7 @@ function RenderOutlinesOverlay() {
 
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
-  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
   const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
   const appOrientation = use$(() =>

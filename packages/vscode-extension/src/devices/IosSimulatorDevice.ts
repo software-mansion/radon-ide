@@ -10,18 +10,20 @@ import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { BuildResult } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, Locale } from "../common/Project";
+import { AppPermissionType } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
 import { Output } from "../common/OutputChannel";
 import {
   DeviceInfo,
   DevicePlatform,
+  DeviceSettings,
   DeviceType,
   InstallationError,
   InstallationErrorReason,
   IOSDeviceInfo,
   IOSRuntimeInfo,
+  Locale,
 } from "../common/State";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 
@@ -63,10 +65,11 @@ export class IosSimulatorDevice extends DeviceBase {
   private runningAppProcess: ExecaChildProcess | undefined;
 
   constructor(
+    deviceSettings: DeviceSettings,
     private readonly deviceUDID: string,
     private readonly _deviceInfo: DeviceInfo
   ) {
-    super();
+    super(deviceSettings);
   }
 
   public get platform(): DevicePlatform {

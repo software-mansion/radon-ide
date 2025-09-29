@@ -6,13 +6,20 @@ import { DebugSource } from "../debugging/DebugSession";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
 import { Output } from "../common/OutputChannel";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
-import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
+import { ChildProcess, command, exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { getOpenPort } from "../utilities/common";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { openFileAtPosition } from "../utilities/editorOpeners";
 import { createRefCounted, RefCounted } from "../utilities/refCounted";
+
+export class MetroError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "MetroError";
+  }
+}
 
 export interface MetroSession {
   port: number;
@@ -67,7 +74,12 @@ export class SharedMetroProvider implements MetroProvider, Disposable {
   }
 
   public async getMetroSession({ resetCache }: { resetCache: boolean }) {
-    const session = await this.metroSession;
+    let session;
+    try {
+      session = await this.metroSession;
+    } catch (e) {
+      // NOTE: if the previous metro session failed to start, we ignore the error and start a new one
+    }
     if (session === undefined || session.refCount <= 0 || resetCache) {
       return this.createNewSession(resetCache);
     }
@@ -269,7 +281,7 @@ export class Metro implements MetroSession, Disposable {
   ) {
     const metroOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
     if (!metroOutputChannel) {
-      throw new Error("Cannot start bundler process. The IDE is not initialized.");
+      throw new MetroError("Cannot start bundler process. The IDE is not initialized.");
     }
     this.metroOutputChannel = metroOutputChannel;
   }
@@ -403,7 +415,7 @@ class SubprocessMetroSession extends Metro implements Disposable {
     expoStartExtraArgs: string[] | undefined,
     metroEnv: typeof process.env
   ): Promise<SubprocessMetroSession> {
-    const args = [path.join(libPath, "expo_start.js"), "--port", `${port}`];
+    const args = [path.join(libPath, "expo", "expo_start.js"), "--port", `${port}`];
     if (resetCache) {
       args.push("--clear");
     }
@@ -427,6 +439,8 @@ class SubprocessMetroSession extends Metro implements Disposable {
     port: number
   ) {
     super(port, appRoot);
+    const PORT_IN_USE_MESSAGE = `The Metro server could not start: port ${this.port} is already in use.`;
+
     lineReader(bundlerProcess).onLineRead((line) => {
       try {
         const event = JSON.parse(line) as MetroEvent;
@@ -437,9 +451,7 @@ class SubprocessMetroSession extends Metro implements Disposable {
       Logger.debug("Metro", line);
 
       if (line.includes("EADDRINUSE")) {
-        this.bundlerReady.reject(
-          new Error(`The Metro server could not start: port ${this.port} is already in use.`)
-        );
+        this.bundlerReady.reject(new MetroError(PORT_IN_USE_MESSAGE));
       }
 
       if (!line.startsWith("__RNIDE__")) {
@@ -458,11 +470,15 @@ class SubprocessMetroSession extends Metro implements Disposable {
 
     // NOTE: if the process exits before the "initialize_done" event, we reject the promise
     bundlerProcess
-      .catch(() => {
+      .catch(async () => {
         // ignore the error, we are only interested in the process exit
+        const { stdout } = await command("netstat -an");
+        if (stdout.includes(`.${this.port}`)) {
+          this.bundlerReady.reject(new MetroError(PORT_IN_USE_MESSAGE));
+        }
       })
       .then(() => {
-        this.bundlerReady.reject(new Error("Metro bundler exited unexpectedly"));
+        this.bundlerReady.reject(new MetroError("Metro bundler exited unexpectedly"));
       });
   }
 
@@ -543,5 +559,7 @@ function findCustomMetroConfig(configPath: string) {
       return possibleMetroConfigLocation.fsPath;
     }
   }
-  throw new Error("Metro config cannot be found, please check if `metroConfigPath` path is valid");
+  throw new MetroError(
+    "Metro config cannot be found, please check if `metroConfigPath` path is valid"
+  );
 }
