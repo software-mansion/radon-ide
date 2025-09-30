@@ -79,7 +79,7 @@ function transformWrapper({ filename, src, ...rest }) {
     isTransforming("node_modules/react-native-ide/index.js") || // using react-native-ide for compatibility with old NPM package name
     isTransforming("node_modules/radon-ide/index.js")
   ) {
-    src = `module.exports = { preview: require("__RNIDE_lib__/preview.js").preview };`;
+    src = `module.exports = require("__RNIDE_lib__/preview.js");`;
   } else if (isTransforming("node_modules/@dev-plugins/react-native-mmkv/build/index.js")) {
     src = `require("__RNIDE_lib__/expo_dev_plugins.js").register("@dev-plugins/react-native-mmkv");${src}`;
   } else if (isTransforming("node_modules/redux-devtools-expo-dev-plugin/build/index.js")) {
