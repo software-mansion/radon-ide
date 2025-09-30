@@ -51,9 +51,9 @@
   }
 }
 
-.no-highlight-info{
+.no-highlight-info {
   display: flex;
   align-items: center;
   margin: 0 0 14px 0;
-    color: var(--vscode-notificationsInfoIcon-foreground);
+  color: var(--vscode-notificationsInfoIcon-foreground);
 }

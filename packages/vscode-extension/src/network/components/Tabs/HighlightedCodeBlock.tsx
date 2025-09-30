@@ -38,8 +38,6 @@ import {
 import { ThemeData } from "../../../common/theme";
 import "./PayloadAndResponseTab.css";
 
-
-
 interface HighlightedCodeBlockProps {
   content: string | null | undefined;
   language?: string;
@@ -133,9 +131,12 @@ const HighlightedCodeBlock = ({
   const [highlighter, setHighlighter] = useState<unknown>(undefined);
   const [isLoading, setIsLoading] = useState(true);
 
-  const isPlainText = language === "plaintext";
   const contentLength = content?.length ?? 0;
-  const shouldHighlight = contentLength > 0 && contentLength <= MAX_HIGHLIGHT_LENGTH;
+  const shouldHighlight = contentLength <= MAX_HIGHLIGHT_LENGTH;
+  const isPlainText = language === "plaintext";
+
+  const shouldShowNoHighlightInfo = !isLoading && !isPlainText && !shouldHighlight;
+  const shouldShowPlaintext = isLoading || !highlighter || !shouldHighlight;
 
   useEffect(() => {
     // Only initialize highlighter if content should be highlighted
@@ -157,10 +158,10 @@ const HighlightedCodeBlock = ({
   }, [shouldHighlight]);
 
   // Show plain text while loading or if content is too large
-  if (isLoading || !highlighter || !shouldHighlight) {
+  if (shouldShowPlaintext) {
     return (
       <>
-        {!isLoading && !isPlainText && contentLength > MAX_HIGHLIGHT_LENGTH && (
+        {shouldShowNoHighlightInfo && (
           <pre className="no-highlight-info">
             <span className="codicon codicon-info" /> Content too large for syntax highlighting.
           </pre>
@@ -174,7 +175,7 @@ const HighlightedCodeBlock = ({
     <ShikiHighlighter
       theme={(theme as unknown) ?? "none"}
       // @ts-expect-error - Type compatibility issue with HighlighterCore for some reason
-      highlighter={highlighter as unknown}
+      highlighter={highlighter}
       language={language}
       showLanguage={false}
       addDefaultStyles={false}
