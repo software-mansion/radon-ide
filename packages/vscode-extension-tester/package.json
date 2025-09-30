@@ -6,14 +6,15 @@
     "setup-dev": "extest setup-tests --extensions_dir ./data/vscode-extensions",
     "install-vsix": "extest install-vsix -f ./data/radon-ide.vsix --extensions_dir ./data/vscode-extensions",
     "build-vsix-package": "cd ../vscode-extension && vsce package --out ../vscode-extension-tester/data/radon-ide.vsix && cd ../vscode-extension-tester",
-    "setup": "extest get-vscode && extest get-chromedriver && npm run install-vsix",
+    "setup": "extest get-vscode --code_version ${CODE_VERSION:-latest} && extest get-chromedriver --code_version ${CODE_VERSION:-latest} && npm run install-vsix",
     "ui-tests": "./scripts/run_ui_tests.sh",
     "clean": "rm -rf ./data && mkdir data",
-    "setup-run-tests": "npm run setup && npm run ui-tests -- ",
+    "setup-run-tests": "npm run setup  && npm run ui-tests -- ",
     "get-test-app": "./scripts/downloadRepo.sh",
     "prepare-and-run-tests": "./scripts/prepare_and_run_tests.sh",
     "set-up-VM-environment": "cd ./scripts && ./setupVM.sh && cd ..",
-    "run-tests-on-VM": "./scripts/run_tests_on_vm.sh"
+    "run-tests-on-VM": "./scripts/run_tests_on_vm.sh",
+    "test": "extest run-tests --help"
   },
   "keywords": [],
   "author": "",
