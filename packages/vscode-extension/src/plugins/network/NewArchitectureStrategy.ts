@@ -57,7 +57,6 @@ export default class NewArchitecture extends BaseArchitectureStrategy {
   }
 
   private broadcastCDPMessage(message: CDPMessage): void {
-    console.log("mleko", message);
     const webviewMessage: WebviewMessage = {
       command: WebviewCommand.CDPCall,
       payload: message,
@@ -94,7 +93,7 @@ export default class NewArchitecture extends BaseArchitectureStrategy {
       const emptyMessage: CDPMessage = {
         messageId,
         method: NetworkMethod.GetResponseBody,
-        result: { body: undefined, responseFetchFailed: true },
+        result: { body: undefined, wasTruncated: false },
       };
       this.broadcastCDPMessage(emptyMessage);
     };

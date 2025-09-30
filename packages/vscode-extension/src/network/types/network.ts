@@ -38,7 +38,6 @@ export interface GetResponseBodyResponse {
 export interface ResponseBodyData {
   body: string | undefined;
   wasTruncated?: boolean;
-  responseFetchFailed?: boolean;
 }
 
 export interface TimelineEvent {

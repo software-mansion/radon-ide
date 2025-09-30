@@ -19,7 +19,6 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
   const {
     body = undefined,
     wasTruncated = false,
-    responseFetchFailed = false,
   } = responseBodyData || {};
   const responseData = getFormattedRequestBody(body);
   const contentType = networkLog.response?.headers?.["Content-Type"] || "";
@@ -29,7 +28,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
     <>
       <TabActionButtons
         data={responseData}
-        disabled={!responseData || responseFetchFailed}
+        disabled={!responseData}
         additionalButtons={
           <IconButton
             className="response-tab-copy-button"
@@ -37,7 +36,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
             onClick={() => {
               fetchAndOpenResponseInEditor(networkLog);
             }}
-            disabled={!responseData && !responseFetchFailed}>
+            disabled={!responseData}>
             <span className="codicon codicon-chrome-restore" />
           </IconButton>
         }
@@ -48,10 +47,9 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
             <span className="codicon codicon-warning" /> Response too large, showing truncated data.
           </pre>
         )}
-        {responseFetchFailed ? (
+        {!responseData ? (
           <div className="response-tab-failed-fetch-information">
             <h4>Failed to load response data</h4>
-            <p>The response may be too large</p>
           </div>
         ) : (
           <HighlightedCodeBlock
