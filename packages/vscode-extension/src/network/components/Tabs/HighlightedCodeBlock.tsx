@@ -4,6 +4,7 @@ import {
   createHighlighterCore,
   createJavaScriptRegexEngine,
 } from "react-shiki/core";
+
 import { ThemeData } from "../../../common/theme";
 import "./PayloadAndResponseTab.css";
 
@@ -18,10 +19,15 @@ interface HighlightedCodeBlockProps {
 let highlighterPromise: Promise<unknown> | null = null;
 
 const JS_REGEX_ENGINE = createJavaScriptRegexEngine();
+/**
+ * Maximum content length (in characters) to apply syntax highlighting
+ * For larger content, plain text will be displayed to avoid performance issues
+ */
+const MAX_HIGHLIGHT_LENGTH = 50_000;
 
 /**
- * Array of promises with language definitions, for dynamic loading by Shiki library.
- * Supported languagues are provided explicity and used in createHighlighterCore, 
+ * Array of language definitions for Shiki library.
+ * Supported languages are provided explicitly and used in createHighlighterCore,
  * to avoid loading all languages and bloating the bundle. See bundle options section:
  * https://github.com/avgvstvs96/react-shiki
  */
@@ -78,23 +84,41 @@ const HighlightedCodeBlock = ({
   const [highlighter, setHighlighter] = useState<unknown>(undefined);
   const [isLoading, setIsLoading] = useState(true);
 
+  const isPlainText = language === "plaintext";
+  const contentLength = content?.length ?? 0;
+  const shouldHighlight = contentLength > 0 && contentLength <= MAX_HIGHLIGHT_LENGTH;
+
   useEffect(() => {
-    const initializeHighlighter = async () => {
-      try {
-        const highlighterInstance = await getHighlighter();
+    // Only initialize highlighter if content should be highlighted
+    if (!shouldHighlight) {
+      setIsLoading(false);
+      return;
+    }
+
+    getHighlighter()
+      .then((highlighterInstance) => {
         setHighlighter(highlighterInstance);
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error("Failed to initialize highlighter:", error);
-      } finally {
+      })
+      .finally(() => {
         setIsLoading(false);
-      }
-    };
+      });
+  }, [shouldHighlight]);
 
-    initializeHighlighter();
-  }, []);
-
-  if (isLoading || !highlighter) {
-    return <pre className={className}>{content ?? placeholder}</pre>;
+  // Show plain text while loading or if content is too large
+  if (isLoading || !highlighter || !shouldHighlight) {
+    return (
+      <>
+        {!isLoading && !isPlainText && contentLength > MAX_HIGHLIGHT_LENGTH && (
+          <pre className="no-highlight-info">
+            <span className="codicon codicon-info" /> Content too large for syntax highlighting.
+          </pre>
+        )}
+        <pre className={className}>{content ?? placeholder}</pre>
+      </>
+    );
   }
 
   return (
