@@ -46,6 +46,10 @@ on:
         description: Space-separated list of test numbers to exclude (none excludes nothing)
         required: false
         default: ""
+      VSCodeVersion:
+        description: vscode version to use (e.g. "1.99.1")
+        required: true
+        default: "latest"
   schedule:
     - cron: "27 1 * * *"
 
@@ -59,6 +63,7 @@ jobs:
       IS_RECORDING: ${{ github.event.inputs.isRecording || 'true' }}
       TESTS_TO_RUN: ${{ github.event.inputs.testsToRun || '' }}
       TESTS_TO_EXCLUDE: ${{ github.event.inputs.testsToExclude || '' }}
+      CODE_VERSION: ${{ github.event.inputs.VSCodeVersion || 'latest' }}
       IS_GITHUB_ACTIONS: "true"
 
     steps:
