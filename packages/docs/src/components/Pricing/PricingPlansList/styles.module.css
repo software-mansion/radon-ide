@@ -6,13 +6,11 @@
   margin: 24px 0 48px;
 }
 
-.container {
-  border: 1px solid var(--swm-border);
-  padding: 8px;
+.planBtnContainer {
   display: flex;
-  width: 344px;
   align-items: center;
-  gap: 8px;
+  gap: 40px;
+  align-self: stretch;
 }
 
 .plan_pay_annually {
@@ -28,34 +26,37 @@
 }
 
 .btn {
-  height: 40px;
   background-color: transparent;
   border: none;
-  padding: 0 40px;
+  padding: 16px 0;
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 50%;
   color: var(--ifm-color-primary);
+  opacity: 0.5;
 }
 
 .btn p {
   white-space: nowrap;
   font-size: 16px;
+  font-family: Aeonik;
   margin: 0;
   justify-content: center;
   font-weight: 500;
 }
 
 .btn.active {
-  background-color: var(--radon-button);
-  color: var(--radon-button-text);
+  color: var(--ifm-color-primary);
+  border-bottom: 2px solid var(--radon-active-tab);
+  opacity: 1;
 }
 
 .btn:not(.active):hover {
-  background-color: var(--swm-border);
-  color: var(--radon-button-text);
-  transition: 0.5s;
+  color: var(--ifm-color-primary);
+  border-bottom: 2px solid var(--radon-active-tab);
+  opacity: 1;
+  transition: opacity 0.3s;
+  cursor: pointer;
 }
 
 .yearlyContainer {
@@ -67,13 +68,30 @@
   flex: 1 0 0;
 }
 
-.cardMiddle {
+.cardMain {
   display: flex;
   padding: 28px;
   flex-direction: column;
   align-items: flex-start;
-  gap: 16px;
+  gap: 24px;
   border-top: var(--radon-border-layout);
+}
+
+.cardFeatures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.cardFeatures p {
+  margin: 0;
+  color: var(--radon-text-green-highlight);
+  font-weight: 500;
+}
+
+p.headerDefault {
+  color: var(--ifm-color-primary);
 }
 
 @media (max-width: 1024px) {

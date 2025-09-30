@@ -1,4 +1,5 @@
-.featureElements {
+.featureElement {
   display: flex;
   gap: 12px;
+  color: var(--ifm-color-primary);
 }

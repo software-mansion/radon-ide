@@ -11,7 +11,7 @@ export default function PricingFeaturesList({ featuresList }: PricingFeaturesLis
   return (
     <>
       {featuresList.map((feature, idx) => (
-        <div key={idx} className={styles.featureElements}>
+        <div key={idx} className={styles.featureElement}>
           <CheckIcon />
           {feature.label}
         </div>

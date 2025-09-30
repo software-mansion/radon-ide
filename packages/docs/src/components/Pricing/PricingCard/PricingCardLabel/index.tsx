@@ -13,7 +13,17 @@ export default function PricingCardLabel({ plan, isMonthly, children }: PricingC
   return (
     <div className={styles.container}>
       <div className={styles.planDetails}>
-        <div className={styles.planName}>{plan.plan}</div>
+        {plan.plan === "PRO" ? (
+          <div className={styles.planPro}>
+            {plan.plan}
+            <div className={styles.popularBadge}>
+              <p>Popular choice</p>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.planName}>{plan.plan}</div>
+        )}
+
         <div className={styles.priceDescription}>
           {typeof price == "number" ? (
             <div className={styles.price}>
@@ -31,6 +41,7 @@ export default function PricingCardLabel({ plan, isMonthly, children }: PricingC
         </div>
         <p className={styles.planLabel}>{plan.label}</p>
       </div>
+      {plan.plan === "PRO" && <div className={styles.proGradient} />}
       {children}
     </div>
   );

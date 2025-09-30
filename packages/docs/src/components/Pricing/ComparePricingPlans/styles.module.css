@@ -45,6 +45,7 @@
   gap: 4px;
   text-align: center;
   height: 100%;
+  color: var(--ifm-color-primary);
 }
 
 .valueCell p {

@@ -64,6 +64,21 @@ const PricingPlansList = ({
       case "ENTERPRISE":
         onOpen();
         break;
+      default:
+        return null;
+    }
+  };
+
+  const handleHeader = (planId: string) => {
+    switch (planId) {
+      case "PRO":
+        return <p className={styles.headerDefault}>All the Free features, plus:</p>;
+      case "TEAM":
+        return <p className={styles.headerTeam}>Development & Testing - All Pro features</p>;
+      case "ENTERPRISE":
+        return <p className={styles.headerDefault}>All the Team features, plus:</p>;
+      default:
+        return null;
     }
   };
 
@@ -71,18 +86,18 @@ const PricingPlansList = ({
     <>
       <div className={clsx(styles.plan_pay_annually, isEnterprise ? styles.btnCenter : "")}>
         {!isEnterprise && (
-          <div className={styles.container}>
+          <div className={styles.planBtnContainer}>
             <button
               type="button"
-              className={isIndividual ? `${styles.btn} ${styles.active}` : styles.btn}
+              className={clsx(styles.btn, isIndividual ? styles.active : "")}
               onClick={() => setIsIndividual(true)}>
               <p>For individuals</p>
             </button>
             <button
               type="button"
-              className={isIndividual ? styles.btn : `${styles.btn} ${styles.active}`}
+              className={clsx(styles.btn, isIndividual ? "" : styles.active)}
               onClick={() => setIsIndividual(false)}>
-              <p className={styles.yearlyContainer}>For businesses</p>
+              <p>For businesses</p>
             </button>
           </div>
         )}
@@ -92,28 +107,30 @@ const PricingPlansList = ({
         {plan.map((el, idx) => (
           <PricingCard>
             <PricingCardLabel key={el.plan} plan={el} isMonthly={isMonthly}>
-              {" "}
               <PricingButton
                 stylingFilled={el.stylingFilled}
                 onClick={() => handlePlanButtonClick(el.plan)}>
                 {el.buttonLabel}
               </PricingButton>
             </PricingCardLabel>
-            <div className={styles.cardMiddle}>
-              <PricingFeaturesList featuresList={el.featuresAll} />
+            <div className={styles.cardMain}>
+              <div className={styles.cardFeatures}>
+                {handleHeader(el.plan)}
+                <PricingFeaturesList featuresList={el.featuresAll} />
+              </div>
               {el.featuresTeamManagement && (
-                <>
+                <div className={styles.cardFeatures}>
                   {" "}
                   <p>Team Management</p>
                   <PricingFeaturesList featuresList={el.featuresTeamManagement} />
-                </>
+                </div>
               )}
               {el.featuresSupport && (
-                <>
+                <div className={styles.cardFeatures}>
                   {" "}
                   <p>Support & Updates</p>
                   <PricingFeaturesList featuresList={el.featuresSupport} />
-                </>
+                </div>
               )}
             </div>
           </PricingCard>
