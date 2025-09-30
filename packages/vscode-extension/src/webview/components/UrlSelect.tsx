@@ -14,7 +14,10 @@ import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 export type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
-export type RemovableHistoryItem = NavigationHistoryItem & {
+export type RemovableHistoryItem = {
+  displayName: string;
+  id: string;
+  dynamic: boolean;
   removable?: boolean;
 };
 
@@ -157,13 +160,15 @@ function UrlSelect({
     // Items from navigation history can be removed except the current one,
     // but all extracted routes should always be present in the dropdown.
     const navigationHistoryWithRemovable = navigationHistory.map((item, index) => ({
-      ...item,
+      id: item.id,
+      displayName: item.displayName,
+      dynamic: false,
       removable: index !== 0,
     }));
     const routesNotInHistory = differenceBy(
       routeItems,
       navigationHistory,
-      (item: NavigationHistoryItem) => item.displayName
+      (item) => item.displayName
     );
     return [...navigationHistoryWithRemovable, ...routesNotInHistory];
   }, [navigationHistory, routeItems]);
@@ -266,6 +271,7 @@ function UrlSelect({
                 closeDropdownWithValue({
                   id: textfieldRef.current?.value ?? "",
                   displayName: textfieldRef.current?.value ?? "",
+                  canGoBack: false,
                 });
               }
               if (e.key === "Escape") {

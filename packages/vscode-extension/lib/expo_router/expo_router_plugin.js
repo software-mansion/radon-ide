@@ -28,7 +28,7 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   }, [store.routeNode]);
 
   useEffect(() => {
-    sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange);
+    sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange, router.canGoBack());
   }, [pathname, params]);
 
   function requestNavigationChange({ pathname, params }) {

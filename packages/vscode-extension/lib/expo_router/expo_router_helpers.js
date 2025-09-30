@@ -16,7 +16,7 @@ export function checkNavigationDescriptorsEqual(a, b) {
   return Object.keys(a).every((key) => deepEqual(a[key], b[key]));
 }
 
-export function sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange) {
+export function sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange, canGoBack) {
   const pathname = routeInfo?.pathname;
   const params = routeInfo?.params;
   const filteredParams = getParamsWithoutDynamicSegments(routeInfo);
@@ -29,6 +29,7 @@ export function sendNavigationChange(previousRouteInfo, routeInfo, onNavigationC
       pathname,
       params,
       id: computeRouteIdentifier(pathname, params),
+      canGoBack,
     });
   }
   previousRouteInfo.current = routeInfo;

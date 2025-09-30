@@ -72,7 +72,7 @@ function getCurrentScene() {
   return RNInternals.SceneTracker.getActiveScene().name;
 }
 
-function noopNavigationHook({ onNavigationChange }) {
+function noopNavigationHook() {
   return {
     getCurrentNavigationDescriptor: () => undefined,
     requestNavigationChange: () => {},
@@ -219,6 +219,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
       data: {
         displayName: navigationDescriptor.name,
         id: navigationDescriptor.id,
+        canGoBack: navigationDescriptor.canGoBack,
       },
     });
   });
@@ -259,7 +260,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
         fabric,
       });
       const urlPrefix = previewKey.startsWith("sb://") ? "sb:" : "preview:";
-      handleNavigationChange({ id: previewKey, name: urlPrefix + preview.name });
+      handleNavigationChange({ id: previewKey, name: urlPrefix + preview.name, canGoBack: true });
     },
     [rootTag, handleNavigationChange, initialProps, fabric]
   );

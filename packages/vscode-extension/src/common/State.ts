@@ -323,6 +323,7 @@ export type ScreenCaptureState = {
 export type NavigationHistoryItem = {
   displayName: string;
   id: string;
+  canGoBack: boolean;
 };
 
 export type NavigationRoute = {

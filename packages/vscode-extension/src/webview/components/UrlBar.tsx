@@ -45,6 +45,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
   const navigationRouteList = use$(selectedDeviceSessionState.navigationRouteList);
 
   const disabledAlsoWhenStarting = disabled || selectedDeviceSessionStatus === "starting";
+  const canGoBack = navigationHistory?.[0]?.canGoBack;
   const isExpoRouterProject = !expoRouterStatus?.isOptional;
 
   return (
@@ -54,7 +55,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabledAlsoWhenStarting || (navigationHistory?.length ?? 0) < 1}
+        disabled={disabledAlsoWhenStarting || !canGoBack}
         onClick={() => project.navigateBack()}>
         <span className="codicon codicon-arrow-left" />
       </IconButton>
