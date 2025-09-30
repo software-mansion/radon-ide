@@ -5,6 +5,7 @@ import { extensionContext } from "../utilities/extensionContext";
 import { Metro, MetroSession } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
 import { waitForDebuggerTarget } from "../project/DebuggerTarget";
+import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 export const PORT_SCAN_INTERVAL_MS = 4000;
 export const DEFAULT_PORTS = [8081, 8082];
 
@@ -30,7 +31,10 @@ export class Scanner implements Disposable {
   private disposed = false;
   private delegate: ScannerDelegate | null = null;
 
-  public constructor(delegate: ScannerDelegate) {
+  public constructor(
+    delegate: ScannerDelegate,
+    private readonly outputChannelRegistry: OutputChannelRegistry
+  ) {
     this.delegate = delegate;
   }
 
@@ -57,7 +61,7 @@ export class Scanner implements Disposable {
   }
 
   private async verifyAndConnect(port: number, projectRoot: string) {
-    const metro = new Metro(port, projectRoot);
+    const metro = new Metro(port, projectRoot, this.outputChannelRegistry);
 
     const timeoutCancelToken = new CancelToken();
     setTimeout(() => timeoutCancelToken.cancel(), DEBUGGER_LOOKUP_TIMEOUT_MS);
