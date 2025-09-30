@@ -11,10 +11,6 @@
   background-color: transparent;
 }
 
-.plan__container__bold {
-  border: 2px solid var(--swm-border);
-}
-
 .plan__container ul {
   padding-left: 24px;
 }

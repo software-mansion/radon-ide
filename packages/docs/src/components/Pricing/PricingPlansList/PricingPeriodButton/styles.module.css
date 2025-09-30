@@ -44,7 +44,6 @@
 
 .btn:not(.active):hover {
   background-color: var(--swm-border);
-  color: var(--radon-button-text);
   transition: 0.5s;
 }
 

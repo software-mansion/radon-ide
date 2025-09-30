@@ -77,6 +77,10 @@
   border-top: var(--radon-border-layout);
 }
 
+.proCardBorder {
+  border-top: 1px solid var(--radon-border-highlight);
+}
+
 .cardFeatures {
   display: flex;
   flex-direction: column;
@@ -92,6 +96,14 @@
 
 p.headerDefault {
   color: var(--ifm-color-primary);
+}
+
+.pricingCardContainer {
+  border: var(--radon-border-layout);
+}
+
+.proCardContainer {
+  border: 1px solid var(--radon-border-highlight);
 }
 
 @media (max-width: 1024px) {

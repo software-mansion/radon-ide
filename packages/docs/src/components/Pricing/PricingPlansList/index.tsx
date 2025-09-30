@@ -17,7 +17,7 @@ export interface FeatureProps {
   info: string;
 }
 
-export interface PricingCardProps {
+export interface PricingPlanCardProps {
   plan: string;
   price: {
     monthly: number | string;
@@ -42,7 +42,7 @@ const PricingPlansList = ({
   const pricingCardsBusiness = pricingBusinessData;
   const { isEnterprise } = usePageType();
   const [isIndividual, setIsIndividual] = useState(true);
-  const [plan, setPlan] = useState<PricingCardProps[]>(pricingCardsIndividual);
+  const [plan, setPlan] = useState<PricingPlanCardProps[]>(pricingCardsIndividual);
   const { onOpen } = useModal();
 
   useEffect(() => {
@@ -105,15 +105,17 @@ const PricingPlansList = ({
       </div>
       <div className={styles.list}>
         {plan.map((el, idx) => (
-          <PricingCard>
-            <PricingCardLabel key={el.plan} plan={el} isMonthly={isMonthly}>
+          <div
+            className={el.plan === "PRO" ? styles.proCardContainer : styles.pricingCardContainer}
+            key={idx}>
+            <PricingCardLabel key={`${el.plan}_${idx}`} plan={el} isMonthly={isMonthly}>
               <PricingButton
                 stylingFilled={el.stylingFilled}
                 onClick={() => handlePlanButtonClick(el.plan)}>
                 {el.buttonLabel}
               </PricingButton>
             </PricingCardLabel>
-            <div className={styles.cardMain}>
+            <div className={clsx(styles.cardMain, el.plan === "PRO" ? styles.proCardBorder : "")}>
               <div className={styles.cardFeatures}>
                 {handleHeader(el.plan)}
                 <PricingFeaturesList featuresList={el.featuresAll} />
@@ -133,7 +135,7 @@ const PricingPlansList = ({
                 </div>
               )}
             </div>
-          </PricingCard>
+          </div>
         ))}
       </div>
     </>

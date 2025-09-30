@@ -1,9 +1,9 @@
 import React, { ReactNode } from "react";
 import styles from "./styles.module.css";
-import { PricingCardProps } from "../../PricingPlansList";
+import { PricingPlanCardProps } from "../../PricingPlansList";
 
 interface PricingCardLabelProps {
-  plan: PricingCardProps;
+  plan: PricingPlanCardProps;
   isMonthly: boolean;
   children: ReactNode;
 }

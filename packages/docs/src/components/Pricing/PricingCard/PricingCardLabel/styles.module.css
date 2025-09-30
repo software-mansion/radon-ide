@@ -101,7 +101,11 @@ span.customPrice {
 .proGradient {
   background: var(
     --gradient-plan-dark,
-    radial-gradient(50% 50% at 50% 50%, #38a880 0%, rgba(17, 17, 17, 0.07) 100%)
+    radial-gradient(
+      50% 50% at 50% 50%,
+      var(--radon-gradient-green) 0%,
+      var(--radon-gradient-color) 100%
+    )
   );
   position: absolute;
   left: 0;

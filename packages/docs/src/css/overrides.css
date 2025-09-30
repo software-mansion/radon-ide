@@ -351,3 +351,9 @@ div[class*="hireUsContainer"] p {
     width: 100%;
   }
 }
+
+button {
+  border: none;
+  background-color: transparent;
+  font-family: Aeonik;
+}

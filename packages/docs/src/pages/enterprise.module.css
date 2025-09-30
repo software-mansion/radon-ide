@@ -62,16 +62,19 @@
 }
 
 .button {
-  text-align: center;
-  font-family: Aeonik;
+  height: 60px;
   padding: 16px;
+  gap: 12px;
+
   font-size: 18px;
   line-height: 28px;
+
   display: flex;
-  height: 60px;
   justify-content: center;
+  text-align: center;
   align-items: center;
-  gap: 12px;
+
+  color: var(--radon-button-secondary);
 }
 
 .btnGreen {

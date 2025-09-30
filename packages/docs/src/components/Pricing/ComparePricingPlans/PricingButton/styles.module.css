@@ -21,6 +21,7 @@
 
 .buttonLink:hover {
   background-color: var(--radon-button-hover);
+  color: var(--radon-button-text);
 }
 .buttonLinkEmpty:hover {
   opacity: 0.75;
