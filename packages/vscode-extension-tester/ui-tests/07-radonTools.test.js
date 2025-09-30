@@ -13,6 +13,7 @@ import * as path from "path";
 import config from "../configuration.js";
 import { cropCanvas, compareImages } from "../utils/imageProcessing.js";
 import { centerCoordinates } from "../utils/helpers.js";
+import x from "side-channel-map";
 
 const cwd = process.cwd() + "/data";
 
@@ -278,6 +279,7 @@ describe("7 - Radon tools tests", () => {
   // });
 
   it("should test show touches", async () => {
+    await driver.sleep(20000);
     await elementHelperService.findAndClickElementByTag(
       "radon-bottom-bar-element-inspector-button"
     );
@@ -291,9 +293,9 @@ describe("7 - Radon tools tests", () => {
 
     const position = centerCoordinates(originalPosition);
 
-    const rect = await phoneScreen.getRect();
-    const phoneWidth = rect.width;
-    const phoneHeight = rect.height;
+    const PhoneRect = await phoneScreen.getRect();
+    const phoneWidth = PhoneRect.width;
+    const phoneHeight = PhoneRect.height;
 
     const actions = driver.actions({ bridge: true });
 
@@ -301,7 +303,7 @@ describe("7 - Radon tools tests", () => {
       .move({
         origin: phoneScreen,
         x: Math.floor((position.x + position.width / 2) * phoneWidth),
-        y: Math.floor((position.y + (position.height * 3) / 4) * phoneHeight),
+        y: Math.floor((position.y + position.height / 2) * phoneHeight),
       })
       .perform();
 
@@ -309,10 +311,21 @@ describe("7 - Radon tools tests", () => {
       "phone-inspect-area"
     );
 
-    const image = await phoneScreen.takeScreenshot();
+    const inspectAreaRect = await inspectArea.getRect();
+    const relativeRect = {
+      x: (inspectAreaRect.x - PhoneRect.x) / phoneWidth,
+      y: (inspectAreaRect.y - PhoneRect.y) / phoneHeight,
+      width: inspectAreaRect.width / phoneWidth,
+      height: inspectAreaRect.height / phoneHeight,
+    };
 
-    const filePath = path.join("screenshot.png");
-
-    fs.writeFileSync(filePath, image, "base64");
+    for (const key in originalPosition) {
+      assert.approximately(
+        originalPosition[key],
+        relativeRect[key],
+        0.001,
+        `Inspect area ${key} is incorrect`
+      );
+    }
   });
 });
