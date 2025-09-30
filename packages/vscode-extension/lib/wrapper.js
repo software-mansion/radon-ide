@@ -41,6 +41,11 @@ globalThis.__RADON_reloadJS = function () {
 let navigationHistory = new Map();
 let mainApplicationKey = undefined;
 
+// we register this component as a way of forcing the main app to be re-mounted
+// AppRegistry doesn't have a method to foce a re-mount hence we call runApplication
+// for this dummy component and then runApplication for the main app
+AppRegistry.registerComponent("__radon_dummy_component", () => View);
+
 const InternalImports = {
   get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
@@ -72,10 +77,18 @@ function getCurrentScene() {
   return RNInternals.SceneTracker.getActiveScene().name;
 }
 
-function noopNavigationHook() {
+function defaultNavigationHook({ onNavigationChange }) {
   return {
     getCurrentNavigationDescriptor: () => undefined,
-    requestNavigationChange: () => {},
+    requestNavigationChange: (navigationDescriptor) => {
+      if (navigationDescriptor.id === "__BACK__" || navigationDescriptor.id === "__HOME__") {
+        // default navigator doesn't support back, for back/home navigation we send empty navigation
+        // descriptor which is interpreted as initial navigation state
+        onNavigationChange({});
+      } else {
+        onNavigationChange(navigationDescriptor);
+      }
+    },
   };
 }
 
@@ -231,10 +244,12 @@ export function AppWrapper({ children, initialProps, fabric }) {
     });
   }, []);
 
-  const useNavigationMainHook =
-    initialProps?.__radon_previewKey !== undefined
-      ? noopNavigationHook
-      : navigationPlugins[0]?.plugin.mainHook || noopNavigationHook;
+  const navigationPluginHook = navigationPlugins[0]?.plugin.mainHook;
+  const usesDefaultNavigationHook =
+    initialProps?.__radon_previewKey !== undefined || !navigationPluginHook;
+  const useNavigationMainHook = usesDefaultNavigationHook
+    ? defaultNavigationHook
+    : navigationPluginHook;
   const { requestNavigationChange } = useNavigationMainHook({
     onNavigationChange: handleNavigationChange,
     onRouteListChange: handleRouteListChange,
@@ -249,44 +264,56 @@ export function AppWrapper({ children, initialProps, fabric }) {
         );
         throw new Error("Preview not found");
       }
+      const urlPrefix = previewKey.startsWith("sb://") ? "sb:" : "preview:";
       AppRegistry.runApplication(InternalImports.PREVIEW_APP_KEY, {
         rootTag,
         initialProps: {
           ...initialProps,
           __radon_onLayout: undefined,
-          __radon_nextNavigationDescriptor: undefined,
+          __radon_nextNavigationDescriptor: {
+            id: previewKey,
+            name: urlPrefix + preview.name,
+            canGoBack: true,
+          },
           __radon_previewKey: previewKey,
         },
         fabric,
       });
-      const urlPrefix = previewKey.startsWith("sb://") ? "sb:" : "preview:";
-      handleNavigationChange({ id: previewKey, name: urlPrefix + preview.name, canGoBack: true });
     },
     [rootTag, handleNavigationChange, initialProps, fabric]
   );
 
-  const closePreview = useCallback(
-    (nextNavigationDescriptor) => {
+  const openMainApp = useCallback(
+    (nextNavigationDescriptor, forceRerender) => {
       let closePromiseResolve;
-      const closePreviewPromise = new Promise((resolve) => {
+      const appOpenPromise = new Promise((resolve) => {
         closePromiseResolve = resolve;
       });
-      if (getCurrentScene() === InternalImports.PREVIEW_APP_KEY) {
-        AppRegistry.runApplication(mainApplicationKey ?? "main", {
-          rootTag,
-          initialProps: {
-            ...initialProps,
-            __radon_onLayout: closePromiseResolve,
-            __radon_nextNavigationDescriptor: nextNavigationDescriptor,
-            __radon_previewKey: undefined,
-          },
-          fabric,
-        });
+
+      const mainAppKey = mainApplicationKey ?? "main";
+      if (getCurrentScene() !== mainAppKey || forceRerender) {
+        const runApplication = () =>
+          AppRegistry.runApplication(mainAppKey, {
+            rootTag,
+            initialProps: {
+              ...initialProps,
+              __radon_onLayout: closePromiseResolve,
+              __radon_nextNavigationDescriptor: nextNavigationDescriptor,
+              __radon_previewKey: undefined,
+            },
+            fabric,
+          });
+        if (forceRerender) {
+          AppRegistry.runApplication("__radon_dummy_component", { rootTag, fabric });
+          setTimeout(runApplication, 0);
+        } else {
+          runApplication();
+        }
       } else {
         nextNavigationDescriptor && requestNavigationChange(nextNavigationDescriptor);
         closePromiseResolve();
       }
-      return closePreviewPromise;
+      return appOpenPromise;
     },
     [rootTag, fabric]
   );
@@ -314,9 +341,11 @@ export function AppWrapper({ children, initialProps, fabric }) {
         params: message.params || {},
       };
 
-      closePreview(navigationDescriptor);
+      const forceRerenderMainApp =
+        navigationDescriptor.id === "__HOME__" && usesDefaultNavigationHook;
+      openMainApp(navigationDescriptor, forceRerenderMainApp);
     },
-    [openPreview, closePreview, requestNavigationChange]
+    [openPreview, openMainApp, requestNavigationChange]
   );
 
   useEffect(() => {
@@ -327,7 +356,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
           openPreview(data.previewId);
           break;
         case "openUrl":
-          closePreview().then(() => {
+          openMainApp(undefined, false).then(() => {
             const url = data.url;
             Linking.openURL(url);
           });
@@ -354,7 +383,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
     };
     inspectorBridge.addMessageListener(listener);
     return () => inspectorBridge.removeMessageListener(listener);
-  }, [openPreview, closePreview, openNavigation, showStorybookStory]);
+  }, [openPreview, openMainApp, openNavigation, showStorybookStory]);
 
   useEffect(() => {
     const LoadingView = RNInternals.LoadingView;
