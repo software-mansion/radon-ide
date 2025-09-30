@@ -1,3 +1,33 @@
+// Language definitions imports
+import langJson from "@shikijs/langs/json";
+import langJavascript from "@shikijs/langs/javascript";
+import langJsx from "@shikijs/langs/jsx";
+import langTypescript from "@shikijs/langs/typescript";
+import langTsx from "@shikijs/langs/tsx";
+import langHtml from "@shikijs/langs/html";
+import langXml from "@shikijs/langs/xml";
+import langCss from "@shikijs/langs/css";
+import langLess from "@shikijs/langs/less";
+import langSass from "@shikijs/langs/sass";
+import langScss from "@shikijs/langs/scss";
+import langPython from "@shikijs/langs/python";
+import langJava from "@shikijs/langs/java";
+import langKotlin from "@shikijs/langs/kotlin";
+import langCpp from "@shikijs/langs/cpp";
+import langGo from "@shikijs/langs/go";
+import langPhp from "@shikijs/langs/php";
+import langShellscript from "@shikijs/langs/shellscript";
+import langCoffee from "@shikijs/langs/coffee";
+import langClojure from "@shikijs/langs/clojure";
+import langDart from "@shikijs/langs/dart";
+import langScala from "@shikijs/langs/scala";
+import langAngularHtml from "@shikijs/langs/angular-html";
+import langSvelte from "@shikijs/langs/svelte";
+import langVue from "@shikijs/langs/vue";
+import langMarkdown from "@shikijs/langs/markdown";
+import langWasm from "@shikijs/langs/wasm";
+import langYaml from "@shikijs/langs/yaml";
+
 import { useEffect, useState } from "react";
 import {
   ShikiHighlighter,
@@ -8,6 +38,8 @@ import {
 import { ThemeData } from "../../../common/theme";
 import "./PayloadAndResponseTab.css";
 
+
+
 interface HighlightedCodeBlockProps {
   content: string | null | undefined;
   language?: string;
@@ -15,8 +47,6 @@ interface HighlightedCodeBlockProps {
   placeholder?: string;
   className?: string;
 }
-
-let highlighterPromise: Promise<unknown> | null = null;
 
 const JS_REGEX_ENGINE = createJavaScriptRegexEngine();
 /**
@@ -32,45 +62,64 @@ const MAX_HIGHLIGHT_LENGTH = 50_000;
  * https://github.com/avgvstvs96/react-shiki
  */
 const LANG_ARRAY = [
-  import("@shikijs/langs/json"),
-  import("@shikijs/langs/javascript"),
-  import("@shikijs/langs/jsx"),
-  import("@shikijs/langs/typescript"),
-  import("@shikijs/langs/tsx"),
-  import("@shikijs/langs/html"),
-  import("@shikijs/langs/xml"),
-  import("@shikijs/langs/css"),
-  import("@shikijs/langs/less"),
-  import("@shikijs/langs/sass"),
-  import("@shikijs/langs/scss"),
-  import("@shikijs/langs/python"),
-  import("@shikijs/langs/java"),
-  import("@shikijs/langs/kotlin"),
-  import("@shikijs/langs/cpp"),
-  import("@shikijs/langs/go"),
-  import("@shikijs/langs/php"),
-  import("@shikijs/langs/shellscript"),
-  import("@shikijs/langs/coffee"),
-  import("@shikijs/langs/clojure"),
-  import("@shikijs/langs/dart"),
-  import("@shikijs/langs/scala"),
-  import("@shikijs/langs/angular-html"),
-  import("@shikijs/langs/svelte"),
-  import("@shikijs/langs/vue"),
-  import("@shikijs/langs/markdown"),
-  import("@shikijs/langs/wasm"),
-  import("@shikijs/langs/yaml"),
+  langJson,
+  langJavascript,
+  langJsx,
+  langTypescript,
+  langTsx,
+  langHtml,
+  langXml,
+  langCss,
+  langLess,
+  langSass,
+  langScss,
+  langPython,
+  langJava,
+  langKotlin,
+  langCpp,
+  langGo,
+  langPhp,
+  langShellscript,
+  langCoffee,
+  langClojure,
+  langDart,
+  langScala,
+  langAngularHtml,
+  langSvelte,
+  langVue,
+  langMarkdown,
+  langWasm,
+  langYaml,
 ];
 
+/**
+ * Memoized highlighter instance to ensure we only create one highlighter
+ * across all component instances.
+ */
+let highlighterInstance: unknown | null = null;
+let highlighterPromise: Promise<unknown> | null = null;
+
+/**
+ * Gets or creates a Shiki highlighter instance with memoization.
+ * The highlighter is created only once and reused across all calls.
+ * @returns Promise that resolves to the highlighter instance
+ */
 const getHighlighter = async () => {
-  if (!highlighterPromise) {
-    highlighterPromise = (async () => {
-      return createHighlighterCore({
-        langs: LANG_ARRAY,
-        engine: JS_REGEX_ENGINE,
-      });
-    })();
+  if (highlighterInstance) {
+    return highlighterInstance;
   }
+  if (highlighterPromise) {
+    return highlighterPromise;
+  }
+
+  highlighterPromise = createHighlighterCore({
+    langs: LANG_ARRAY,
+    engine: JS_REGEX_ENGINE,
+  }).then((instance) => {
+    highlighterInstance = instance;
+    return instance;
+  });
+
   return highlighterPromise;
 };
 
@@ -96,8 +145,8 @@ const HighlightedCodeBlock = ({
     }
 
     getHighlighter()
-      .then((highlighterInstance) => {
-        setHighlighter(highlighterInstance);
+      .then((instance) => {
+        setHighlighter(instance);
       })
       .catch((error) => {
         console.error("Failed to initialize highlighter:", error);
@@ -124,8 +173,8 @@ const HighlightedCodeBlock = ({
   return (
     <ShikiHighlighter
       theme={(theme as unknown) ?? "none"}
-      // @ts-expect-error - Type compatibility issue with HighlighterCore
-      highlighter={highlighter}
+      // @ts-expect-error - Type compatibility issue with HighlighterCore for some reason
+      highlighter={highlighter as unknown}
       language={language}
       showLanguage={false}
       addDefaultStyles={false}
