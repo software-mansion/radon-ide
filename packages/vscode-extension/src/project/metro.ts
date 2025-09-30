@@ -1,6 +1,7 @@
 import path from "path";
 import fs from "fs";
 import stripAnsi from "strip-ansi";
+import WebSocket from "ws";
 import { Disposable, EventEmitter, ExtensionMode, Uri, workspace } from "vscode";
 import { DebugSource } from "../debugging/DebugSession";
 import { ResolvedLaunchConfig } from "./ApplicationContext";

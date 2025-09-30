@@ -89,7 +89,7 @@ echo "123456" | sudo -S pmset displaysleep 0
 cd "$REMOTE_PATH"
 npm install
 npm run get-test-app -- $APP
-PROJECT_NAME=$APP npm run setup-run-tests -- $@
+PROJECT_NAME=$APP CODE_VERSION=${CODE_VERSION:-latest} npm run setup-run-tests -- $@
 cd ..
 EOF
 
