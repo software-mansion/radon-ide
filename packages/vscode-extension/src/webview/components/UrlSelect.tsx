@@ -14,9 +14,12 @@ import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 export type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
-export type RemovableHistoryItem = {
+export type HistoryItemMetadata = {
   displayName: string;
   id: string;
+};
+
+export type RemovableHistoryItem = HistoryItemMetadata & {
   dynamic: boolean;
   removable?: boolean;
 };
@@ -75,7 +78,7 @@ function UrlSelect({
     project.removeNavigationHistoryEntry(id);
   };
 
-  const findDynamicSegments = (item: NavigationHistoryItem) => {
+  const findDynamicSegments = (item: HistoryItemMetadata) => {
     const matchingRoute = routeList.find((route) => route.path === item.id);
     if (matchingRoute && matchingRoute.dynamic) {
       return matchingRoute.dynamic.map((segment) => segment.name);
@@ -83,7 +86,7 @@ function UrlSelect({
     return null;
   };
 
-  const closeDropdownWithValue = (item: NavigationHistoryItem) => {
+  const closeDropdownWithValue = (item: HistoryItemMetadata) => {
     const dynamicSegments = findDynamicSegments(item);
     if (dynamicSegments && dynamicSegments.length > 0) {
       editDynamicPath(item, dynamicSegments);
@@ -97,7 +100,7 @@ function UrlSelect({
     setTimeout(() => textfieldRef.current?.blur(), 0);
   };
 
-  const editDynamicPath = (item: NavigationHistoryItem, segmentNames: string[]) => {
+  const editDynamicPath = (item: HistoryItemMetadata, segmentNames: string[]) => {
     setInputValue(item.displayName);
     setDynamicSegmentNames(segmentNames);
     setCurrentDynamicSegment(0);
@@ -271,7 +274,6 @@ function UrlSelect({
                 closeDropdownWithValue({
                   id: textfieldRef.current?.value ?? "",
                   displayName: textfieldRef.current?.value ?? "",
-                  canGoBack: false,
                 });
               }
               if (e.key === "Escape") {
