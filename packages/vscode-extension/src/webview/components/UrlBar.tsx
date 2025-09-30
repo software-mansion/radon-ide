@@ -54,9 +54,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={
-          disabledAlsoWhenStarting || !isExpoRouterProject || (navigationHistory?.length ?? 0) < 2
-        }
+        disabled={disabledAlsoWhenStarting || (navigationHistory?.length ?? 0) < 1}
         onClick={() => project.navigateBack()}>
         <span className="codicon codicon-arrow-left" />
       </IconButton>

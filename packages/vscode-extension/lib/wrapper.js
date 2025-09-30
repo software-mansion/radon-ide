@@ -1,5 +1,7 @@
 "use no memo";
 
+import { noop } from "lodash";
+
 const { useContext, useState, useEffect, useRef, useCallback } = require("react");
 const {
   LogBox,
@@ -26,10 +28,10 @@ export function registerNavigationPlugin(name, plugin) {
 }
 
 const devtoolPlugins = new Set(["network"]);
-let devtoolPluginsChanged = undefined;
+const devtoolPluginsChangedListeners = new Set();
 export function registerDevtoolPlugin(name) {
   devtoolPlugins.add(name);
-  devtoolPluginsChanged?.();
+  devtoolPluginsChangedListeners.forEach((listener) => listener());
 }
 
 globalThis.__RADON_reloadJS = function () {
@@ -37,6 +39,7 @@ globalThis.__RADON_reloadJS = function () {
 };
 
 let navigationHistory = new Map();
+let mainApplicationKey = undefined;
 
 const InternalImports = {
   get PREVIEW_APP_KEY() {
@@ -69,7 +72,7 @@ function getCurrentScene() {
   return RNInternals.SceneTracker.getActiveScene().name;
 }
 
-function emptyNavigationHook() {
+function noopNavigationHook({ onNavigationChange }) {
   return {
     getCurrentNavigationDescriptor: () => undefined,
     requestNavigationChange: () => {},
@@ -202,16 +205,12 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
 }
 
 export function AppWrapper({ children, initialProps, fabric }) {
+  if (!mainApplicationKey) {
+    mainApplicationKey = getCurrentScene();
+  }
   const rootTag = useContext(RootTagContext);
   const [hasLayout, setHasLayout] = useState(false);
   const mainContainerRef = useRef();
-
-  const mountCallback = initialProps?.__RNIDE_onMount;
-  useEffect(() => {
-    mountCallback?.();
-  }, [mountCallback]);
-
-  const layoutCallback = initialProps?.__RNIDE_onLayout;
 
   const handleNavigationChange = useCallback((navigationDescriptor) => {
     navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
@@ -231,7 +230,10 @@ export function AppWrapper({ children, initialProps, fabric }) {
     });
   }, []);
 
-  const useNavigationMainHook = navigationPlugins[0]?.plugin.mainHook || emptyNavigationHook;
+  const useNavigationMainHook =
+    initialProps?.__radon_previewKey !== undefined
+      ? noopNavigationHook
+      : navigationPlugins[0]?.plugin.mainHook || noopNavigationHook;
   const { requestNavigationChange } = useNavigationMainHook({
     onNavigationChange: handleNavigationChange,
     onRouteListChange: handleRouteListChange,
@@ -248,7 +250,12 @@ export function AppWrapper({ children, initialProps, fabric }) {
       }
       AppRegistry.runApplication(InternalImports.PREVIEW_APP_KEY, {
         rootTag,
-        initialProps: { ...initialProps, previewKey },
+        initialProps: {
+          ...initialProps,
+          __radon_onLayout: undefined,
+          __radon_nextNavigationDescriptor: undefined,
+          __radon_previewKey: previewKey,
+        },
         fabric,
       });
       const urlPrefix = previewKey.startsWith("sb://") ? "sb:" : "preview:";
@@ -257,24 +264,31 @@ export function AppWrapper({ children, initialProps, fabric }) {
     [rootTag, handleNavigationChange, initialProps, fabric]
   );
 
-  const closePreview = useCallback(() => {
-    let closePromiseResolve;
-    const closePreviewPromise = new Promise((resolve) => {
-      closePromiseResolve = resolve;
-    });
-    if (getCurrentScene() === InternalImports.PREVIEW_APP_KEY) {
-      AppRegistry.runApplication("main", {
-        rootTag,
-        initialProps: {
-          __RNIDE_onLayout: closePromiseResolve,
-        },
-        fabric,
+  const closePreview = useCallback(
+    (nextNavigationDescriptor) => {
+      let closePromiseResolve;
+      const closePreviewPromise = new Promise((resolve) => {
+        closePromiseResolve = resolve;
       });
-    } else {
-      closePromiseResolve();
-    }
-    return closePreviewPromise;
-  }, [rootTag, fabric]);
+      if (getCurrentScene() === InternalImports.PREVIEW_APP_KEY) {
+        AppRegistry.runApplication(mainApplicationKey ?? "main", {
+          rootTag,
+          initialProps: {
+            ...initialProps,
+            __radon_onLayout: closePromiseResolve,
+            __radon_nextNavigationDescriptor: nextNavigationDescriptor,
+            __radon_previewKey: undefined,
+          },
+          fabric,
+        });
+      } else {
+        nextNavigationDescriptor && requestNavigationChange(nextNavigationDescriptor);
+        closePromiseResolve();
+      }
+      return closePreviewPromise;
+    },
+    [rootTag, fabric]
+  );
 
   const showStorybookStory = useCallback(
     async (componentTitle, storyName) => {
@@ -299,9 +313,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
         params: message.params || {},
       };
 
-      closePreview().then(() => {
-        navigationDescriptor && requestNavigationChange(navigationDescriptor);
-      });
+      closePreview(navigationDescriptor);
     },
     [openPreview, closePreview, requestNavigationChange]
   );
@@ -396,7 +408,11 @@ export function AppWrapper({ children, initialProps, fabric }) {
           navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
         },
       });
-      devtoolPluginsChanged = () => {
+
+      const nextNavigationDescriptor = initialProps?.__radon_nextNavigationDescriptor;
+      nextNavigationDescriptor && requestNavigationChange(nextNavigationDescriptor);
+
+      const pluginsChangedCallback = () => {
         inspectorBridge.sendMessage({
           type: "devtoolPluginsChanged",
           data: {
@@ -404,19 +420,23 @@ export function AppWrapper({ children, initialProps, fabric }) {
           },
         });
       };
-      devtoolPluginsChanged();
+      pluginsChangedCallback();
+
+      devtoolPluginsChangedListeners.add(pluginsChangedCallback);
       return () => {
-        devtoolPluginsChanged = undefined;
+        devtoolPluginsChangedListeners.delete(pluginsChangedCallback);
       };
     }
   }, [hasLayout]);
+
+  const onLayoutCallback = initialProps?.__radon_onLayout;
 
   return (
     <View
       ref={mainContainerRef}
       style={{ flex: 1 }}
       onLayout={(event) => {
-        layoutCallback?.();
+        onLayoutCallback?.();
         setHasLayout(true);
 
         // iPad has issues with bugged Dimensions API, so we use the onLayout event

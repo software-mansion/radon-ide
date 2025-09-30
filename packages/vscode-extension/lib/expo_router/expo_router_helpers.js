@@ -7,6 +7,9 @@ export function computeRouteIdentifier(pathname, params) {
 }
 
 export function checkNavigationDescriptorsEqual(a, b) {
+  if (!a || !b) {
+    return a === b;
+  }
   if (a.pathname !== b.pathname || Object.keys(a.params).length !== Object.keys(b.params).length) {
     return false;
   }
@@ -20,11 +23,7 @@ export function sendNavigationChange(previousRouteInfo, routeInfo, onNavigationC
   const displayParams = new URLSearchParams(filteredParams).toString();
   const displayName = `${pathname}${displayParams ? `?${displayParams}` : ""}`;
 
-  if (
-    pathname &&
-    previousRouteInfo.current &&
-    !checkNavigationDescriptorsEqual(previousRouteInfo.current, routeInfo)
-  ) {
+  if (pathname && !checkNavigationDescriptorsEqual(previousRouteInfo.current, routeInfo)) {
     onNavigationChange({
       name: displayName,
       pathname,

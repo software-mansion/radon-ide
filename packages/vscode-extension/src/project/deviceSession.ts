@@ -74,7 +74,6 @@ export class DeviceSession implements Disposable {
   private screenCapture: ScreenCapture;
 
   private isActive = false;
-  private navigationHomeTarget: NavigationHistoryItem | undefined;
 
   public fileTransfer: FileTransfer;
 
@@ -171,7 +170,6 @@ export class DeviceSession implements Disposable {
   }
 
   private resetStartingState(startupMessage: StartupMessage = StartupMessage.Restarting) {
-    this.navigationHomeTarget = undefined;
     this.stateManager.updateState({
       isUsingStaleBuild: false,
       status: "starting",
@@ -234,9 +232,6 @@ export class DeviceSession implements Disposable {
     // of the devtools instance, which is disposed when we recreate the devtools or
     // when the device session is disposed
     devtools.onEvent("navigationChanged", (payload: NavigationHistoryItem) => {
-      if (!this.navigationHomeTarget) {
-        this.navigationHomeTarget = payload;
-      }
       const navigationHistory = [
         payload,
         ...this.stateManager
@@ -848,9 +843,9 @@ export class DeviceSession implements Disposable {
   }
 
   public navigateHome() {
-    if (this.navigationHomeTarget) {
-      this.inspectorBridge?.sendOpenNavigationRequest(this.navigationHomeTarget.id);
-    }
+    // going home resets the navigation history
+    this.stateManager.updateState({ navigationHistory: [] });
+    this.inspectorBridge?.sendOpenNavigationRequest("__HOME__");
   }
 
   public navigateBack() {
