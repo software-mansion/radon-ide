@@ -622,7 +622,7 @@ export class DeviceSession implements Disposable {
 
     const buildOptions = {
       forceCleanBuild: clean || buildDependenciesChanged,
-      buildOutputChannel: this.outputChannelRegistry.getOrCreateOutputChannel(
+      buildOutputChannel: this.outputChannelRegistry.resolveOutputChannel(
         platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
       ),
       cancelToken,
@@ -717,7 +717,7 @@ export class DeviceSession implements Disposable {
 
       this.updateStartupMessage(StartupMessage.StartingPackager);
 
-      const packageManagerOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
+      const packageManagerOutputChannel = this.outputChannelRegistry.resolveOutputChannel(
         Output.PackageManager
       );
 

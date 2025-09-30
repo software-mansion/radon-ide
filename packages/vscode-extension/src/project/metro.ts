@@ -230,7 +230,7 @@ async function launchMetro({
     ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
   };
 
-  const metroOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
+  const metroOutputChannel = OutputChannelRegistry.resolveOutputChannel(Output.MetroBundler);
 
   // Clearing logs shortly before the new bundler process is started.
   metroOutputChannel.clear();
@@ -280,9 +280,7 @@ export class Metro implements MetroSession, Disposable {
     protected readonly appRoot: string,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
-    const metroOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
-      Output.MetroBundler
-    );
+    const metroOutputChannel = this.outputChannelRegistry.resolveOutputChannel(Output.MetroBundler);
     if (!metroOutputChannel) {
       throw new MetroError("Cannot start bundler process. The IDE is not initialized.");
     }

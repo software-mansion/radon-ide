@@ -711,7 +711,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (channel === Output.Ide) {
       Logger.openOutputPanel();
     } else {
-      this.outputChannelRegistry.getOrCreateOutputChannel(channel).show();
+      this.outputChannelRegistry.resolveOutputChannel(channel).show();
     }
   }
 

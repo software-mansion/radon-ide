@@ -9,7 +9,7 @@ export class OutputChannelRegistry implements Disposable {
   private channelByName = new Map<OutputExceptIde, ReadableLogOutputChannel>();
   private disposed = false;
 
-  public getOrCreateOutputChannel(channel: OutputExceptIde): ReadableLogOutputChannel {
+  public resolveOutputChannel(channel: OutputExceptIde): ReadableLogOutputChannel {
     if (this.disposed) {
       // Prevent lingering instances of OutputChannelRegistry from being used
       throw new Error(
@@ -28,14 +28,14 @@ export class OutputChannelRegistry implements Disposable {
     return newOutputChannel;
   }
 
-  public static getOrCreateOutputChannel(channel: OutputExceptIde): ReadableLogOutputChannel {
+  public static resolveOutputChannel(channel: OutputExceptIde): ReadableLogOutputChannel {
     if (!this.instance) {
       throw new Error(
         "Cannot get or create output channel - OutputChannelRegistry is not initialized."
       );
     }
 
-    return this.instance.getOrCreateOutputChannel(channel);
+    return this.instance.resolveOutputChannel(channel);
   }
 
   public static initializeInstance(): OutputChannelRegistry {

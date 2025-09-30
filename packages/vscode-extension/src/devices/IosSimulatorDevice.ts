@@ -88,7 +88,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   private get nativeLogsOutputChannel() {
-    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.IosDevice);
+    return this.outputChannelRegistry.resolveOutputChannel(Output.IosDevice);
   }
 
   public dispose() {

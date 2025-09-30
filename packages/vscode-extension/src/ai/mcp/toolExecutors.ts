@@ -47,15 +47,15 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
 
   const isAndroid = session.platform === DevicePlatform.Android;
 
-  const buildLogs = OutputChannelRegistry.getOrCreateOutputChannel(
+  const buildLogs = OutputChannelRegistry.resolveOutputChannel(
     isAndroid ? Output.BuildAndroid : Output.BuildIos
   );
 
-  const packageManagerLogs = OutputChannelRegistry.getOrCreateOutputChannel(Output.PackageManager);
+  const packageManagerLogs = OutputChannelRegistry.resolveOutputChannel(Output.PackageManager);
 
-  const metroLogs = OutputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
+  const metroLogs = OutputChannelRegistry.resolveOutputChannel(Output.MetroBundler);
 
-  const deviceLogs = OutputChannelRegistry.getOrCreateOutputChannel(
+  const deviceLogs = OutputChannelRegistry.resolveOutputChannel(
     isAndroid ? Output.AndroidDevice : Output.IosDevice
   );
 
