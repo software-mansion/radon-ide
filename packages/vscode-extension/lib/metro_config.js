@@ -1,4 +1,4 @@
-const { adaptMetroConfig, requireFromAppDir, metroServerReadyHandler } = require("./metro_helpers");
+const { adaptMetroConfig, requireFromAppDir } = require("./metro_helpers");
 
 // Below is the main code of the config overrider.
 const { loadConfig } = requireFromAppDir("metro-config");

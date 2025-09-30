@@ -1,5 +1,6 @@
 const ORIGINAL_TRANSFORMER_PATH = process.env.RADON_IDE_ORIG_BABEL_TRANSFORMER_PATH;
 const path = require("path");
+const fs = require("fs");
 const { requireFromAppDir, overrideModuleFromAppDir } = require("./metro_helpers");
 const buildPluginWarnOnDeeImports = require("./babel_plugins/build-plugin-warn-on-deep-imports");
 
@@ -108,6 +109,13 @@ function transformWrapper({ filename, src, ...rest }) {
     // a lot of further changes along with it. Also, based on the commit message, this approach
     // is experimental as it has some performance implications and may be removed in future versions.
     //
+    // Because of pnpm workspace structure, we cannot use module re-exports like:
+    // module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}")
+    //
+    // The issue is that when the renderer imports file, pnpm resolves them only
+    // from the application's own node_modules and not from the application's dependencies.
+    // This breaks module resolution inside the renderer, so we must replace the entire
+    // renderer source code in-place instead of using module re-exports.
     const { version } = requireFromAppDir("react-native/package.json");
     const rendererFileName = filename.split(path.sep).pop();
     if (
@@ -116,16 +124,20 @@ function transformWrapper({ filename, src, ...rest }) {
       version.startsWith("0.76") ||
       version.startsWith("0.77")
     ) {
-      src = `module.exports = require("__RNIDE_lib__/rn-renderer/react-native-74-77/${rendererFileName}");`;
+      const rendererAsString = fs.readFileSync(`${process.env.RADON_IDE_LIB_PATH}/rn-renderer/react-native-74-77/${rendererFileName}`, "utf-8");
+      src = rendererAsString;
     }
     if (version.startsWith("0.78") || version.startsWith("0.79")) {
-      src = `module.exports = require("__RNIDE_lib__/rn-renderer/react-native-78-79/${rendererFileName}");`;
+      const rendererAsString = fs.readFileSync(`${process.env.RADON_IDE_LIB_PATH}/rn-renderer/react-native-78-79/${rendererFileName}`, "utf-8");
+      src = rendererAsString;
     }
     if (version.startsWith("0.80") || version.startsWith("0.81")) {
-      src = `module.exports = require("__RNIDE_lib__/rn-renderer/react-native-80-81/${rendererFileName}");`;
+      const rendererAsString = fs.readFileSync(`${process.env.RADON_IDE_LIB_PATH}/rn-renderer/react-native-80-81/${rendererFileName}`, "utf-8");
+      src = rendererAsString;
     }
     if (version.startsWith("0.82")) {
-      src = `module.exports = require("__RNIDE_lib__/rn-renderer/react-native-82/${rendererFileName}");`;
+      const rendererAsString = fs.readFileSync(`${process.env.RADON_IDE_LIB_PATH}/rn-renderer/react-native-82/${rendererFileName}`, "utf-8");
+      src = rendererAsString;
     }
   } else if (isTransforming("node_modules/react/cjs/react-jsx-dev-runtime.development.js")) {
     const { version } = requireFromAppDir("react-native/package.json");

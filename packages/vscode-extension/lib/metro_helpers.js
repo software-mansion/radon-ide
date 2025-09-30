@@ -2,6 +2,8 @@ const path = require("path");
 
 const appRoot = path.resolve();
 
+const { resolvePnpmPackageFromAppRoot } = require("./pnpm/resolve_pnpm_module");
+
 // Instead of using require in this code, we should use require_app, which will
 // resolve modules relative to the app root, not the extension lib root.
 function requireFromAppDir(module, options) {
@@ -11,7 +13,16 @@ function requireFromAppDir(module, options) {
 
 function resolveFromAppDir(module, options) {
   const paths = options && options.paths ? [...options.paths, appRoot] : [appRoot];
-  return require.resolve(module, { paths });
+  try {
+    return require.resolve(module, { paths });
+  } catch (e) {
+    // if there was an error, we try to resolve the module via pnpm resolution
+  }
+
+  // we try pnpm resolution here as it is our only "special-cased" resolution mechanism
+  // if we need to support other package managers, we can add more resolution mechanisms here
+  // and switch between them based on some criteria (e.g. presence of lock file)
+  return resolvePnpmPackageFromAppRoot(module);
 }
 
 function overrideModuleFromAppDir(moduleName, exports, options) {
