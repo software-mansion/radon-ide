@@ -7,6 +7,26 @@ type OutputExceptIde = Exclude<Output, Output.Ide>;
 export class OutputChannelRegistry implements Disposable {
   private static instance: OutputChannelRegistry | null = null;
   private channelByName = new Map<OutputExceptIde, ReadableLogOutputChannel>();
+  private disposed = false;
+
+  public getOrCreateOutputChannel(channel: OutputExceptIde): ReadableLogOutputChannel {
+    if (this.disposed) {
+      // Prevent lingering instances of OutputChannelRegistry from being used
+      throw new Error(
+        "Cannot get or create output channel - this instance of OutputChannelRegistry has already been disposed."
+      );
+    }
+
+    const logOutput = this.channelByName.get(channel);
+
+    if (logOutput) {
+      return logOutput;
+    }
+
+    const newOutputChannel = createReadableOutputChannel(channel);
+    this.channelByName.set(channel, newOutputChannel);
+    return newOutputChannel;
+  }
 
   public static getOrCreateOutputChannel(channel: OutputExceptIde): ReadableLogOutputChannel {
     if (!this.instance) {
@@ -15,15 +35,7 @@ export class OutputChannelRegistry implements Disposable {
       );
     }
 
-    const logOutput = this.instance.channelByName.get(channel);
-
-    if (logOutput) {
-      return logOutput;
-    }
-
-    const newOutputChannel = createReadableOutputChannel(channel);
-    this.instance.channelByName.set(channel, newOutputChannel);
-    return newOutputChannel;
+    return this.instance.getOrCreateOutputChannel(channel);
   }
 
   public static initializeInstance(): OutputChannelRegistry {
@@ -45,6 +57,7 @@ export class OutputChannelRegistry implements Disposable {
   public dispose() {
     this.channelByName.values().forEach((channel) => channel.dispose());
     this.channelByName.clear();
+    this.disposed = true;
     OutputChannelRegistry.instance = null;
   }
 }
