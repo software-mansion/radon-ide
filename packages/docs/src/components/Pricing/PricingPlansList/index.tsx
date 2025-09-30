@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import styles from "./styles.module.css";
-import PricingCard from "../PricingCard";
 import { PricingProps } from "..";
 import PricingCardLabel from "../PricingCard/PricingCardLabel";
 import PricingPeriodButton from "./PricingPeriodButton";
@@ -35,6 +34,7 @@ export interface PricingPlanCardProps {
 const PricingPlansList = ({
   handleBusiness,
   handleIndividual,
+  handleCustom,
   isMonthly,
   setIsMonthly,
 }: PricingProps) => {
@@ -62,7 +62,7 @@ const PricingPlansList = ({
         handleBusiness();
         break;
       case "ENTERPRISE":
-        onOpen();
+        handleCustom();
         break;
       default:
         return null;

@@ -14,6 +14,13 @@ import EnterprisePricingPlans from "../components/EnterprisePricingPlans";
 export default function Enterprise(): JSX.Element {
   const pricingRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLDivElement | null>(null);
+
+  const handleScrollToForm = () => {
+    formRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  };
+
   return (
     <Layout>
       <div className={styles.preventfulContainer}>
@@ -31,11 +38,7 @@ export default function Enterprise(): JSX.Element {
               <div className={styles.buttonContainer}>
                 <button
                   className={clsx(styles.button, styles.btnGreen)}
-                  onClick={() =>
-                    formRef.current?.scrollIntoView({
-                      behavior: "smooth",
-                    })
-                  }>
+                  onClick={handleScrollToForm}>
                   Schedule a demo
                 </button>
                 <button
@@ -55,7 +58,7 @@ export default function Enterprise(): JSX.Element {
           </div>
           <BenefitsEnterprise />
           <FeaturesLanding />
-          <EnterprisePricingPlans ref={pricingRef} />
+          <EnterprisePricingPlans ref={pricingRef} onFormScrollButtonClick={handleScrollToForm} />
           <Testimonials />
           <SWM>
             We are core React Native contributors & creators of key React Native libraries like

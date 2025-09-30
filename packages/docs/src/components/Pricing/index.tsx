@@ -1,14 +1,16 @@
-import React from "react";
+import React, { useRef } from "react";
 import styles from "./styles.module.css";
 import PricingPlansList from "./PricingPlansList";
 import FAQ from "../Sections/FAQ";
 import clsx from "clsx";
 import ComparePricingPlans from "./ComparePricingPlans";
 import { usePricingLogic } from "@site/src/hooks/usePricingLogic";
+import EnterpriseForm from "../EnterpriseForm";
 
 export interface PricingProps {
   handleIndividual?: () => void;
   handleBusiness?: () => void;
+  handleCustom?: () => void;
   isMonthly?: boolean;
   setIsMonthly?: (value: boolean) => void;
 }
@@ -16,6 +18,13 @@ export interface PricingProps {
 const Pricing = () => {
   const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout } =
     usePricingLogic();
+  const formRef = useRef<HTMLDivElement | null>(null);
+
+  const handleCustom = () =>
+    formRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+
   return (
     <div className={clsx(styles.container, "border-layout")}>
       <div className={styles.titleContainer}>
@@ -28,6 +37,7 @@ const Pricing = () => {
         <PricingPlansList
           handleBusiness={openBusinessCheckout}
           handleIndividual={openIndividualCheckout}
+          handleCustom={handleCustom}
           isMonthly={isMonthly}
           setIsMonthly={setIsMonthly}
         />
@@ -37,6 +47,7 @@ const Pricing = () => {
         handleBusiness={openBusinessCheckout}
       />
       <FAQ />
+      <EnterpriseForm ref={formRef} />
     </div>
   );
 };
