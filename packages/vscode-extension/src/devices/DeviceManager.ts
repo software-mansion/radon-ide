@@ -33,6 +33,7 @@ import {
 } from "../common/State";
 import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
+import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
@@ -40,7 +41,10 @@ export class DeviceAlreadyUsedError extends Error {}
 export class DeviceManager implements Disposable {
   private disposables: Disposable[] = [];
 
-  constructor(private readonly stateManager: StateManager<DevicesState>) {
+  constructor(
+    private readonly stateManager: StateManager<DevicesState>,
+    private readonly outputChannelRegistry: OutputChannelRegistry
+  ) {
     this.loadDevicesIntoState();
     this.listInstalledIOSRuntimes().then((runtimes) => {
       this.stateManager.updateState({
@@ -67,7 +71,12 @@ export class DeviceManager implements Disposable {
       if (!simulatorInfo || simulatorInfo.platform !== DevicePlatform.IOS) {
         throw new Error(`Simulator ${deviceInfo.id} not found`);
       }
-      const device = new IosSimulatorDevice(deviceSettings, simulatorInfo.UDID, simulatorInfo);
+      const device = new IosSimulatorDevice(
+        deviceSettings,
+        simulatorInfo.UDID,
+        simulatorInfo,
+        this.outputChannelRegistry
+      );
       if (await device.acquire()) {
         return device;
       } else {
@@ -79,7 +88,12 @@ export class DeviceManager implements Disposable {
       if (!emulatorInfo || emulatorInfo.platform !== DevicePlatform.Android) {
         throw new Error(`Emulator ${deviceInfo.id} not found`);
       }
-      const device = new AndroidEmulatorDevice(deviceSettings, emulatorInfo.avdId, emulatorInfo);
+      const device = new AndroidEmulatorDevice(
+        deviceSettings,
+        emulatorInfo.avdId,
+        emulatorInfo,
+        this.outputChannelRegistry
+      );
       if (await device.acquire()) {
         return device;
       } else {

@@ -67,7 +67,8 @@ export class IosSimulatorDevice extends DeviceBase {
   constructor(
     deviceSettings: DeviceSettings,
     private readonly deviceUDID: string,
-    private readonly _deviceInfo: DeviceInfo
+    private readonly _deviceInfo: DeviceInfo,
+    private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     super(deviceSettings);
   }
@@ -87,7 +88,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   private get nativeLogsOutputChannel() {
-    return OutputChannelRegistry.getOrCreateOutputChannel(Output.IosDevice);
+    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.IosDevice);
   }
 
   public dispose() {

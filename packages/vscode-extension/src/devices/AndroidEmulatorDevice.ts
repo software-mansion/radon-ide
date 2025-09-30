@@ -71,7 +71,8 @@ export class AndroidEmulatorDevice extends DeviceBase {
   constructor(
     deviceSettings: DeviceSettings,
     private readonly avdId: string,
-    private readonly info: DeviceInfo
+    private readonly info: DeviceInfo,
+    private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     super(deviceSettings);
   }
@@ -91,7 +92,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   private get nativeLogsOutputChannel() {
-    return OutputChannelRegistry.getOrCreateOutputChannel(Output.AndroidDevice);
+    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.AndroidDevice);
   }
 
   public dispose(): void {

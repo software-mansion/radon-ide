@@ -103,6 +103,7 @@ export class DeviceSession implements Disposable {
     private readonly device: DeviceBase,
     private readonly devtoolsServer: (DevtoolsServer & { port: number }) | undefined,
     initialRotation: DeviceRotation,
+    private readonly outputChannelRegistry: OutputChannelRegistry,
     private readonly metroProvider: MetroProvider
   ) {
     this.deviceSettingsStateManager =
@@ -621,7 +622,7 @@ export class DeviceSession implements Disposable {
 
     const buildOptions = {
       forceCleanBuild: clean || buildDependenciesChanged,
-      buildOutputChannel: OutputChannelRegistry.getOrCreateOutputChannel(
+      buildOutputChannel: this.outputChannelRegistry.getOrCreateOutputChannel(
         platform === DevicePlatform.IOS ? Output.BuildIos : Output.BuildAndroid
       ),
       cancelToken,
@@ -716,7 +717,7 @@ export class DeviceSession implements Disposable {
 
       this.updateStartupMessage(StartupMessage.StartingPackager);
 
-      const packageManagerOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(
+      const packageManagerOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
         Output.PackageManager
       );
 

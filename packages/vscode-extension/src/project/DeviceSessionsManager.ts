@@ -21,6 +21,7 @@ import {
   ProjectStore,
   REMOVE,
 } from "../common/State";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -57,7 +58,8 @@ export class DeviceSessionsManager implements Disposable {
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
     private readonly devicesStateManager: StateManager<DevicesState>,
-    private deviceSessionManagerDelegate: DeviceSessionsManagerDelegate
+    private deviceSessionManagerDelegate: DeviceSessionsManagerDelegate,
+    private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     this.disposables.push(
       this.devicesStateManager.onSetState((partialState) => {
@@ -173,6 +175,7 @@ export class DeviceSessionsManager implements Disposable {
       device,
       await this.applicationContext.devtoolsServer,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
+      this.outputChannelRegistry,
       this.applicationContext.metroProvider
     );
 

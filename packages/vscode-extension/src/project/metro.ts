@@ -277,9 +277,12 @@ export class Metro implements MetroSession, Disposable {
 
   constructor(
     public readonly port: number,
-    protected readonly appRoot: string
+    protected readonly appRoot: string,
+    private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
-    const metroOutputChannel = OutputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
+    const metroOutputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(
+      Output.MetroBundler
+    );
     if (!metroOutputChannel) {
       throw new MetroError("Cannot start bundler process. The IDE is not initialized.");
     }
@@ -438,7 +441,7 @@ class SubprocessMetroSession extends Metro implements Disposable {
     appRoot: string,
     port: number
   ) {
-    super(port, appRoot);
+    super(port, appRoot, OutputChannelRegistry.getInstance());
     const PORT_IN_USE_MESSAGE = `The Metro server could not start: port ${this.port} is already in use.`;
 
     lineReader(bundlerProcess).onLineRead((line) => {

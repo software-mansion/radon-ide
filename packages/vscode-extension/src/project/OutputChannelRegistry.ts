@@ -54,6 +54,16 @@ export class OutputChannelRegistry implements Disposable {
     return OutputChannelRegistry.instance;
   }
 
+  public static getInstance() {
+    const instance = OutputChannelRegistry.getInstanceIfExists();
+
+    if (!instance) {
+      throw new Error("Cannot initialize IDE instance - OutputChannelRegistry is not initialized");
+    }
+
+    return instance;
+  }
+
   public dispose() {
     this.channelByName.values().forEach((channel) => channel.dispose());
     this.channelByName.clear();

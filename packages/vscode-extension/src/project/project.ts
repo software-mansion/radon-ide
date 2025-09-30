@@ -116,6 +116,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     private readonly devicesStateManager: StateManager<DevicesState>,
     private readonly deviceManager: DeviceManager,
     private readonly editorBindings: EditorBindings,
+    private readonly outputChannelRegistry: OutputChannelRegistry,
     private readonly environmentDependencyManager: EnvironmentDependencyManager,
     private readonly telemetry: Telemetry,
     initialLaunchConfigOptions?: LaunchConfiguration
@@ -137,7 +138,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this.applicationContext,
       this.deviceManager,
       this.devicesStateManager,
-      this
+      this,
+      this.outputChannelRegistry
     );
 
     const connector = Connector.getInstance();
@@ -246,7 +248,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this.applicationContext,
       this.deviceManager,
       this.devicesStateManager,
-      this
+      this,
+      this.outputChannelRegistry
     );
     this.maybeStartInitialDeviceSession();
 
@@ -708,7 +711,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (channel === Output.Ide) {
       Logger.openOutputPanel();
     } else {
-      OutputChannelRegistry.getOrCreateOutputChannel(channel).show();
+      this.outputChannelRegistry.getOrCreateOutputChannel(channel).show();
     }
   }
 

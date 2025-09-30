@@ -11,6 +11,7 @@ import { StateManager } from "./StateManager";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 import { Telemetry } from "./telemetry";
 import { EditorBindings } from "./EditorBindings";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
@@ -44,7 +45,13 @@ export class IDE implements Disposable {
 
     this.telemetry = new Telemetry(this.stateManager.getDerived("telemetry"));
 
-    this.deviceManager = new DeviceManager(this.stateManager.getDerived("devicesState"));
+    const outputChannelRegistry = OutputChannelRegistry.getInstance();
+
+    this.deviceManager = new DeviceManager(
+      this.stateManager.getDerived("devicesState"),
+      outputChannelRegistry
+    );
+
     this.editorBindings = new EditorBindings();
 
     this.environmentDependencyManager = new EnvironmentDependencyManager(
@@ -61,6 +68,7 @@ export class IDE implements Disposable {
       this.stateManager.getDerived("devicesState"),
       this.deviceManager,
       this.editorBindings,
+      outputChannelRegistry,
       this.environmentDependencyManager,
       this.telemetry,
       initialLaunchConfig
