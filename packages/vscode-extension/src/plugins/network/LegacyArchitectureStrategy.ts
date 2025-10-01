@@ -3,30 +3,13 @@ import { NetworkPlugin } from "./network-plugin";
 import { RadonInspectorBridge } from "../../project/bridge";
 import { disposeAll } from "../../utilities/disposables";
 import { Logger } from "../../Logger";
-import { openContentInEditor, showDismissableError } from "../../utilities/editorOpeners";
-import { determineLanguage } from "../../network/utils/requestFormatters";
-import { extractTheme } from "../../utilities/themeExtractor";
 import {
   WebviewMessage,
   CDPMessage,
   WebviewCommand,
-  IDEMessage,
   NetworkMethod,
 } from "../../network/types/panelMessageProtocol";
-import { RequestData, RequestOptions } from "../../network/types/network";
 import { BaseArchitectureStrategy } from "./BaseArchitectureStrategy";
-
-function formatDataBasedOnLanguage(body: string, language: string): string {
-  if (language === "json") {
-    try {
-      const parsed = JSON.parse(body);
-      return JSON.stringify(parsed, null, 2);
-    } catch {
-      // If JSON parsing fails, return original body
-    }
-  }
-  return body;
-}
 
 export default class LegacyArchitecture extends BaseArchitectureStrategy {
   private devtoolsListeners: Disposable[] = [];
@@ -36,51 +19,6 @@ export default class LegacyArchitecture extends BaseArchitectureStrategy {
   constructor(private plugin: NetworkPlugin) {
     super();
     this.inspectorBridge = this.plugin.inspectorBridge;
-  }
-
-  public get pluginAvailable() {
-    return true;
-  }
-
-  private async fetchResponse(requestData: RequestData): Promise<Response> {
-    const fetchOptions: RequestOptions = {
-      method: requestData.method,
-      headers: requestData.headers || {},
-    };
-
-    if (requestData.postData) {
-      fetchOptions.body = requestData.postData;
-    }
-
-    return fetch(requestData.url, fetchOptions);
-  }
-
-  private async handleFetchFullResponseBody(requestData: RequestData | undefined): Promise<void> {
-    if (!requestData) {
-      Logger.warn("fetchFullResponseBody called without request data");
-      return;
-    }
-
-    try {
-      const response = await this.fetchResponse(requestData);
-      const contentType = response.headers.get("content-type") || "";
-      const responseBody = await response.text();
-
-      const language = determineLanguage(contentType, responseBody);
-      const formattedData = formatDataBasedOnLanguage(responseBody, language);
-
-      openContentInEditor(formattedData, language);
-    } catch (error) {
-      Logger.error("Failed to fetch response body:", error);
-      showDismissableError("Could not fetch response data.");
-    }
-  }
-
-  private async handleGetTheme(message: IDEMessage) {
-    const { messageId: id, params } = message;
-    const { themeDescriptor } = params || {};
-    const theme = extractTheme(themeDescriptor);
-    this.sendIDEMessage({ method: "IDE.Theme", messageId: id, result: theme });
   }
 
   private handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
@@ -93,31 +31,8 @@ export default class LegacyArchitecture extends BaseArchitectureStrategy {
     }
   }
 
-  private handleIDEMessage(message: WebviewMessage & { command: WebviewCommand.IDECall }): void {
-    const { payload } = message;
-
-    switch (payload.method) {
-      case "IDE.fetchFullResponseBody":
-        this.handleFetchFullResponseBody(payload.params?.request);
-        break;
-      case "IDE.getTheme":
-        this.handleGetTheme(payload);
-        break;
-      default:
-        Logger.warn("Unknown IDE method received");
-    }
-  }
-
   private sendCDPMessage(messageData: CDPMessage) {
     this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
-  }
-
-  private sendIDEMessage(payload: IDEMessage) {
-    const message: WebviewMessage = {
-      command: WebviewCommand.IDECall,
-      payload,
-    };
-    this.broadcastMessage(message);
   }
 
   /**
@@ -197,5 +112,9 @@ export default class LegacyArchitecture extends BaseArchitectureStrategy {
 
   public dispose(): void {
     disposeAll(this.devtoolsListeners);
+  }
+
+  public get pluginAvailable() {
+    return true;
   }
 }

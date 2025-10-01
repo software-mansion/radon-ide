@@ -23,10 +23,6 @@ export default class NewArchitecture extends BaseArchitectureStrategy {
   private readonly inspectorBridge: RadonInspectorBridge;
   private readonly networkBridge: NetworkBridge;
 
-  public get pluginAvailable() {
-    return this.plugin.networkBridge.bridgeAvailable;
-  }
-
   constructor(private plugin: NetworkPlugin) {
     super();
     this.networkBridge = this.plugin.networkBridge;
@@ -77,6 +73,7 @@ export default class NewArchitecture extends BaseArchitectureStrategy {
         this.networkBridge.enableNetworkInspector();
       }),
     ];
+
     this.disposables.push(...subscriptions, ...knownEventsSubscriptions);
   }
 
@@ -141,33 +138,10 @@ export default class NewArchitecture extends BaseArchitectureStrategy {
         this.networkBridge.disableNetworkInspector();
         break;
       case NetworkMethod.GetResponseBody:
-        const { messageId } = payload || {};
-        if (!messageId) {
-          Logger.warn(
-            "Could not invoke method getResponseBody: missing messageId (id of webview message sent)"
-          );
-          return;
-        }
         this.handleGetResponseBody(payload);
-
         break;
     }
   }
-
-  // private handleIDEMessage(message: WebviewMessage & { command: WebviewCommand.IDECall }): void {
-  //   const { payload } = message;
-
-  //   switch (payload.method) {
-  //     case "IDE.fetchFullResponseBody":
-  //       this.handleFetchFullResponseBody(payload.params?.request);
-  //       break;
-  //     case "IDE.getTheme":
-  //       this.handleGetTheme(payload);
-  //       break;
-  //     default:
-  //       Logger.warn("Unknown IDE method received");
-  //   }
-  // }
 
   public activate(): void {
     if (!this.pluginAvailable) {
@@ -202,7 +176,7 @@ export default class NewArchitecture extends BaseArchitectureStrategy {
           this.handleCDPMessage(message);
           break;
         case WebviewCommand.IDECall:
-          // this.handleIDEMessage(message);
+          this.handleIDEMessage(message);
           break;
         default:
           Logger.warn("Unknown message type received");
@@ -210,5 +184,9 @@ export default class NewArchitecture extends BaseArchitectureStrategy {
     } catch (error) {
       Logger.error("Invalid WebSocket message format:", error);
     }
+  }
+
+  public get pluginAvailable() {
+    return this.plugin.networkBridge.bridgeAvailable;
   }
 }
