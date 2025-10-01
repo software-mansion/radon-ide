@@ -262,6 +262,8 @@ describe("3 - Adding device tests", () => {
     await radonViewsService.openRadonIDEPanel();
     await managingDevicesService.addNewDevice(deviceName1);
     await elementHelperService.findAndClickElementByTag("modal-close-button");
+    await appManipulationService.waitForAppToLoad();
+
     await managingDevicesService.addNewDevice(deviceName2);
     await elementHelperService.findAndClickElementByTag(
       `device-row-start-button-device-${deviceName2}`
@@ -270,13 +272,12 @@ describe("3 - Adding device tests", () => {
       "device-select-value-text"
     );
 
-    await appManipulationService.waitForAppToLoad();
-
     await driver.wait(async () => {
       const text = await chosenDevice.getText();
       return text === deviceName2;
     }, 5000);
-
+    
+    await appManipulationService.waitForAppToLoad();
     await driver
       .actions()
       .keyDown(Key.COMMAND)
