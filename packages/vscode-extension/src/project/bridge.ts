@@ -235,9 +235,7 @@ export class NetworkBridge
     // this.emitEvent("disable", []);
   }
 
-  public getResponseBody(
-    requestId: string | number
-  ): Promise<GetResponseBodyResponse | undefined> {
+  public getResponseBody(requestId: string | number): Promise<GetResponseBodyResponse | undefined> {
     return this.sendAsync(RNIDE_NetworkMethod.GetResponseBody, { requestId });
   }
 }

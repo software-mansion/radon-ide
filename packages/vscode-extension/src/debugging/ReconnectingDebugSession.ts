@@ -3,11 +3,7 @@ import { Cdp } from "vscode-cdp-proxy";
 import { Metro } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
 import { sleep } from "../utilities/retry";
-import {
-  DebugSession,
-  DebugSource,
-  JSDebugConfiguration,
-} from "./DebugSession";
+import { DebugSession, DebugSource, JSDebugConfiguration } from "./DebugSession";
 import { disposeAll } from "../utilities/disposables";
 import { DevtoolsServer } from "../project/devtools";
 

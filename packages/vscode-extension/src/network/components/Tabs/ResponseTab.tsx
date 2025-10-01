@@ -16,10 +16,7 @@ interface ResponseTabProps {
 
 const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: ResponseTabProps) => {
   const { fetchAndOpenResponseInEditor } = useNetwork();
-  const {
-    body = undefined,
-    wasTruncated = false,
-  } = responseBodyData || {};
+  const { body = undefined, wasTruncated = false } = responseBodyData || {};
   const responseData = getFormattedRequestBody(body);
   const contentType = networkLog.response?.headers?.["Content-Type"] || "";
   const language = responseData ? determineLanguage(contentType, responseData) : "plaintext";

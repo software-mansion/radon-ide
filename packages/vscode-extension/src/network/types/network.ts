@@ -51,4 +51,3 @@ export interface TimelineEvent {
   ttfb?: number;
   downloadTime?: number;
 }
-
