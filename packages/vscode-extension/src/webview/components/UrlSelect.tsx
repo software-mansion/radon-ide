@@ -15,7 +15,7 @@ import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 export type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
 export type HistoryItemMetadata = {
-  displayName: string;
+  displayName: string | undefined;
   id: string;
 };
 
@@ -71,7 +71,7 @@ function UrlSelect({
     if (!itemForID) {
       return id;
     }
-    return itemForID.displayName;
+    return itemForID.displayName ?? "/";
   };
 
   const removeHistoryEntry = (id: string) => {
@@ -92,7 +92,7 @@ function UrlSelect({
       editDynamicPath(item, dynamicSegments);
       return;
     }
-    setInputValue(item.displayName);
+    setInputValue(item.displayName ?? "/");
     onValueChange(item.id);
     setIsDropdownOpen(false);
     setDynamicSegmentNames([]);
@@ -101,7 +101,7 @@ function UrlSelect({
   };
 
   const editDynamicPath = (item: HistoryItemMetadata, segmentNames: string[]) => {
-    setInputValue(item.displayName);
+    setInputValue(item.displayName ?? "/");
     setDynamicSegmentNames(segmentNames);
     setCurrentDynamicSegment(0);
     setTimeout(() => {

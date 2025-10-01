@@ -81,8 +81,9 @@ function defaultNavigationHook({ onNavigationChange }) {
     requestNavigationChange: (navigationDescriptor) => {
       if (navigationDescriptor.id === "__BACK__" || navigationDescriptor.id === "__HOME__") {
         // default navigator doesn't support back, for back/home navigation we send empty navigation
-        // descriptor which is interpreted as initial navigation state
-        onNavigationChange({});
+        // descriptor which is interpreted as initial navigation state. Using undefined for the
+        // name will result in the Url bar showing the default starting label ("/")
+        onNavigationChange({ id: "__HOME__", name: undefined, canGoBack: false });
       } else {
         onNavigationChange(navigationDescriptor);
       }
