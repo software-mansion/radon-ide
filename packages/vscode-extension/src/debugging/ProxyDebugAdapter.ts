@@ -34,6 +34,8 @@ export class ProxyDebugAdapter extends DebugSession {
   private childDebugSession: vscode.DebugSession | null = null;
   private attachCancelToken = new CancelToken();
   private terminated: boolean = false;
+  private attached: boolean = false;
+  private eventsQueue: Event[] = [];
 
   constructor(private session: vscode.DebugSession) {
     super();
@@ -113,6 +115,19 @@ export class ProxyDebugAdapter extends DebugSession {
         }
       })
     );
+  }
+
+  private sendEvent(event: Event) {
+    if (this.attached) {
+      super.sendEvent(event);
+    } else {
+      this.eventsQueue.push(event);
+    }
+  }
+
+  private flushEventsQueue() {
+    this.eventsQueue.forEach((event) => super.sendEvent(event));
+    this.eventsQueue = [];
   }
 
   protected initializeRequest(
@@ -200,6 +215,8 @@ export class ProxyDebugAdapter extends DebugSession {
       await promise;
 
       this.sendResponse(response);
+      this.attached = true;
+      this.flushEventsQueue();
     } catch (e) {
       Logger.error("Error starting proxy debug adapter child session", e);
       this.sendErrorResponse(
@@ -242,6 +259,7 @@ export class ProxyDebugAdapter extends DebugSession {
       return;
     }
     this.attachCancelToken.cancel();
+    this.attached = false;
     this.terminated = true;
     await this.cdpProxy.stopServer();
     disposeAll(this.disposables);
