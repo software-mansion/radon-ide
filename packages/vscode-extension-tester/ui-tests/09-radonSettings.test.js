@@ -103,6 +103,44 @@ describe("9 - Radon Settings", () => {
     assert.equal(screenHeight, phoneHeight);
   });
 
+  it("should fit device width to screen for device in landscape orientation", async () => {
+    await driver.executeScript(`
+        const evt = new KeyboardEvent('keydown', {
+          key: '0',
+          code: 'Digit0',
+          altKey: true,
+          ctrlKey: true,
+          bubbles: true
+        });
+        document.dispatchEvent(evt);
+        `);
+
+    const phoneDisplayContainer =
+      await elementHelperService.findAndWaitForElementByTag(
+        "phone-display-container"
+      );
+
+    const phoneWrapper = await elementHelperService.findAndWaitForElementByTag(
+      "phone-wrapper",
+      "timedout waiting for phone wrapper element",
+      15000
+    );
+
+    const screenWidth = (await phoneDisplayContainer.getRect()).width;
+
+    await radonViewsService.showZoomControls();
+    await elementHelperService.findAndClickElementByTag("zoom-select-trigger");
+    await elementHelperService.findAndClickElementByTag(`zoom-select-item-0.5`);
+
+    await radonViewsService.showZoomControls();
+    await elementHelperService.findAndClickElementByTag("zoom-select-trigger");
+    await elementHelperService.findAndClickElementByTag(`zoom-select-item-fit`);
+
+    const phoneWidth = (await phoneWrapper.getRect()).width;
+
+    assert.equal(screenWidth, phoneWidth);
+  });
+
   it("should move Radon IDE between side bar and editor area", async () => {
     await radonViewsService.openRadonSettingsMenu();
     await elementHelperService.findAndClickElementByTag(

@@ -106,55 +106,70 @@ describe("7 - Radon tools tests", () => {
     assert.include(titles, componentSourceFile);
   });
 
-  it("should show inspect overlay in correct place", async () => {
-    await elementHelperService.findAndClickElementByTag(
-      "radon-bottom-bar-element-inspector-button"
-    );
+  const inspectOverlayParamsTable = [
+    { name: "portrait orientation", rotate: false },
+    { name: "landscape orientation", rotate: true },
+  ];
 
-    // Corresponds to the element's location in the test application
-    const originalPosition = { x: 0.1, y: 0.1, width: 0.1, height: 0.1 };
+  inspectOverlayParamsTable.forEach(({ name, rotate }) => {
+    it(`should show inspect overlay in correct place ${name}`, async function () {
+      try {
+        await radonSettingsService.rotateDevice(
+          rotate ? "landscape-left" : "portrait"
+        );
+        await elementHelperService.findAndClickElementByTag(
+          "radon-bottom-bar-element-inspector-button"
+        );
 
-    const phoneScreen = await elementHelperService.findAndWaitForElement(
-      By.css(`[data-testid="phone-screen"]`),
-      "Timed out waiting for phone-screen"
-    );
+        // Corresponds to the element's location in the test application
+        const originalPosition = { x: 0.1, y: 0.1, width: 0.1, height: 0.1 };
 
-    const position = centerCoordinates(originalPosition);
+        const phoneScreen = await elementHelperService.findAndWaitForElement(
+          By.css(`[data-testid="phone-screen"]`),
+          "Timed out waiting for phone-screen"
+        );
 
-    const PhoneRect = await phoneScreen.getRect();
-    const phoneWidth = PhoneRect.width;
-    const phoneHeight = PhoneRect.height;
+        const position = centerCoordinates(originalPosition);
 
-    const actions = driver.actions({ bridge: true });
+        const PhoneRect = await phoneScreen.getRect();
+        const phoneWidth = PhoneRect.width;
+        const phoneHeight = PhoneRect.height;
 
-    await actions
-      .move({
-        origin: phoneScreen,
-        x: Math.floor((position.x + position.width / 2) * phoneWidth),
-        y: Math.floor((position.y + position.height / 2) * phoneHeight),
-      })
-      .perform();
+        const actions = driver.actions({ bridge: true });
 
-    const inspectArea = await elementHelperService.findAndWaitForElementByTag(
-      "phone-inspect-area"
-    );
+        await actions
+          .move({
+            origin: phoneScreen,
+            x: Math.floor((position.x + position.width / 2) * phoneWidth),
+            y: Math.floor((position.y + position.height / 2) * phoneHeight),
+          })
+          .perform();
 
-    const inspectAreaRect = await inspectArea.getRect();
-    const relativeRect = {
-      x: (inspectAreaRect.x - PhoneRect.x) / phoneWidth,
-      y: (inspectAreaRect.y - PhoneRect.y) / phoneHeight,
-      width: inspectAreaRect.width / phoneWidth,
-      height: inspectAreaRect.height / phoneHeight,
-    };
+        const inspectArea =
+          await elementHelperService.findAndWaitForElementByTag(
+            "phone-inspect-area"
+          );
 
-    for (const key in originalPosition) {
-      assert.approximately(
-        originalPosition[key],
-        relativeRect[key],
-        0.001,
-        `Inspect area ${key} is incorrect`
-      );
-    }
+        const inspectAreaRect = await inspectArea.getRect();
+        const relativeRect = {
+          x: (inspectAreaRect.x - PhoneRect.x) / phoneWidth,
+          y: (inspectAreaRect.y - PhoneRect.y) / phoneHeight,
+          width: inspectAreaRect.width / phoneWidth,
+          height: inspectAreaRect.height / phoneHeight,
+        };
+
+        for (const key in originalPosition) {
+          assert.approximately(
+            originalPosition[key],
+            relativeRect[key],
+            0.001,
+            `Inspect area ${key} is incorrect`
+          );
+        }
+      } finally {
+        await radonSettingsService.rotateDevice("portrait");
+      }
+    });
   });
 
   it("Right Click on App element: Should open component source file", async () => {
