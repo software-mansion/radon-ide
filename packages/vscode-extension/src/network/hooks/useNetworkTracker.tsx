@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import _ from "lodash";
+import { useEffect, useRef, useState } from "react";
 import { vscode } from "../../webview/utilities/vscode";
 import { NetworkLog } from "../types/networkLog";
 import {
@@ -30,9 +31,95 @@ export const networkTrackerInitialState: NetworkTracker = {
   sendWebviewIDEMessage: () => {},
 };
 
+interface NetworkEventTimestampMap {
+  [NetworkEvent.RequestWillBeSent]?: number;
+  [NetworkEvent.ResponseReceived]?: number;
+  [NetworkEvent.LoadingFinished]?: number;
+  [NetworkEvent.LoadingFailed]?: number;
+}
+
+interface RequestDurationData {
+  totalTime?: number;
+  ttfb?: number;
+  downloadTime?: number;
+}
+
+/**
+ * Necessitated by the new network inspector architecture, which does not provide
+ * durationMs and ttfb fields directly in the events. Instead, the class calculates the time
+ * differences based on the timestamps of the relevant events:
+ * - totalTime = loadingFinished.timestamp - requestWillBeSent.timestamp;
+ * - ttfb = responseReceived.timestamp - requestWillBeSent.timestamp;
+ * - downloadTime = loadingFinished.timestamp - responseReceived.timestamp;
+ */
+class RequestTimingTracker {
+  private requestTimestampMap: Map<string | number, NetworkEventTimestampMap> = new Map();
+
+  private calculateTimeDifference(timeStart: number, timeEnd: number): number {
+    return _.round((timeEnd - timeStart) * 1000, 2);
+  }
+
+  public setRequestTimestamp(message: CDPMessage) {
+    const { method, params } = message;
+    const { requestId, timestamp } = params || {};
+    if (!requestId || !timestamp) {
+      return;
+    }
+
+    const existingTimestamps = this.requestTimestampMap.get(requestId) || {};
+    this.requestTimestampMap.set(requestId, {
+      ...existingTimestamps,
+      [method]: timestamp,
+    });
+  }
+
+  public getRequestDurationData(message: CDPMessage): RequestDurationData {
+    const { requestId } = message.params || {};
+    if (!requestId) {
+      return {};
+    }
+    const timestamps = this.requestTimestampMap.get(requestId);
+    if (!timestamps) {
+      return {};
+    }
+
+    const requestWillBeSentTimestamp = timestamps[NetworkEvent.RequestWillBeSent];
+    const responseReceivedTimestamp = timestamps[NetworkEvent.ResponseReceived];
+    const loadingFinishedTimestamp =
+      timestamps[NetworkEvent.LoadingFinished] ?? timestamps[NetworkEvent.LoadingFailed];
+
+    const timingData: RequestDurationData = {};
+
+    if (responseReceivedTimestamp !== undefined && requestWillBeSentTimestamp !== undefined) {
+      timingData.ttfb = this.calculateTimeDifference(
+        requestWillBeSentTimestamp,
+        responseReceivedTimestamp
+      );
+    }
+
+    if (loadingFinishedTimestamp !== undefined && requestWillBeSentTimestamp !== undefined) {
+      timingData.totalTime = this.calculateTimeDifference(
+        requestWillBeSentTimestamp,
+        loadingFinishedTimestamp
+      );
+    }
+
+    if (loadingFinishedTimestamp !== undefined && responseReceivedTimestamp !== undefined) {
+      timingData.downloadTime = this.calculateTimeDifference(
+        responseReceivedTimestamp,
+        loadingFinishedTimestamp
+      );
+    }
+
+    return timingData;
+  }
+}
+
 const useNetworkTracker = (): NetworkTracker => {
   const [networkLogs, setNetworkLogs] = useState<NetworkLog[]>([]);
   const [cdpMessages, setCdpMessages] = useState<CDPMessage[]>([]);
+  const requestTimtingTrakcerRef = useRef(new RequestTimingTracker());
+  const requestTimingTracker = requestTimtingTrakcerRef.current;
 
   const validateCDPMessage = (message: WebviewMessage): CDPMessage | null => {
     try {
@@ -43,7 +130,9 @@ const useNetworkTracker = (): NetworkTracker => {
         return null;
       }
 
-      const haveRequiredFields = payload.params?.timestamp && payload.params?.requestId;
+      // Timestamp check was removed because Network.requestExtraInfo does not have information about it
+      // but provides response duration
+      const haveRequiredFields = payload.params?.requestId;
       const isNetworkEvent = NETWORK_EVENTS.includes(payload.method as NetworkEvent);
 
       if (!isNetworkEvent || !haveRequiredFields) {
@@ -61,9 +150,12 @@ const useNetworkTracker = (): NetworkTracker => {
     const { method, params } = cdpMessage;
 
     // Already checked in validateCDPMessage, but TS needs more convincing
-    if (!params?.requestId || !params?.timestamp) {
+    if (!params?.requestId) {
       return;
     }
+
+    requestTimingTracker.setRequestTimestamp(cdpMessage);
+    const requestDurationData = requestTimingTracker.getRequestDurationData(cdpMessage);
 
     const networkEventMethod = method as NetworkEvent;
     const existingIndex = newLogs.findIndex((log) => log.requestId === params.requestId);
@@ -81,8 +173,10 @@ const useNetworkTracker = (): NetworkTracker => {
           ...existingLog.timeline,
           timestamp: params.timestamp,
           wallTime: params.wallTime,
-          durationMs: params.duration || existingLog.timeline.durationMs,
-          ttfb: params.ttfb || existingLog.timeline.ttfb,
+          durationMs:
+            params.duration ?? requestDurationData.totalTime ?? existingLog.timeline.durationMs,
+          ttfb: params.ttfb ?? requestDurationData.ttfb ?? existingLog.timeline.ttfb,
+          downloadTime: requestDurationData.downloadTime ?? existingLog.timeline.downloadTime,
         },
         type: params.type || existingLog.type,
         encodedDataLength: params.encodedDataLength || existingLog.encodedDataLength,

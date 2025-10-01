@@ -20,12 +20,16 @@ export interface ResponseData {
   headers?: Record<string, string>;
   content?: unknown;
   mimeType?: string;
+  url?: string;
+  encodedDataLength?: number;
 }
 
 export interface NetworkRequestInitiator {
-  sourceUrl: string;
-  lineNumber: number;
-  columnNumber: number;
+  type: "parser" | "script" | "preload" | "SignedExchange" | "preflight" | "other";
+  sourceUrl?: string;
+  lineNumber?: number;
+  columnNumber?: number;
+  stack?: unknown;
 }
 
 export interface GetResponseBodyResponse {
@@ -41,8 +45,10 @@ export interface ResponseBodyData {
 }
 
 export interface TimelineEvent {
-  timestamp: number;
+  timestamp?: number;
   wallTime?: number;
   durationMs?: number;
   ttfb?: number;
+  downloadTime?: number;
 }
+
