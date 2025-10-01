@@ -150,7 +150,16 @@ export default function Device({ device, zoomLevel, children, wrapperDivRef }: D
   const store$ = useStore();
   const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
 
-  const frame = useDeviceFrame(device);
+  const frame =
+    useDeviceFrame(device) ??
+    ({
+      height: 800,
+      width: 400,
+      offsetX: 0,
+      offsetY: 0,
+      image: "",
+      imageLandscape: "",
+    } as DevicePropertiesFrame);
 
   const phoneContentRef = useRef<HTMLDivElement>(null);
 

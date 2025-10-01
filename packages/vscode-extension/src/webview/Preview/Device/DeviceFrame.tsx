@@ -1,7 +1,7 @@
 import { DevicePropertiesFrame } from "../../utilities/deviceConstants";
 
 type DeviceFrameProps = {
-  frame: DevicePropertiesFrame;
+  frame?: DevicePropertiesFrame;
   isLandscape?: boolean;
 };
 
