@@ -5,6 +5,7 @@ import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils
 import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
+import { ReloadAction } from "../../project/DeviceSessionsManager";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -27,8 +28,9 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
 }
 
 interface AppReloadRequest {
-  // To avoid placing too much confusion on the AI, we're limiting the reload options to these three basic methods.
-  reloadMethod: "reloadJs" | "rebuild" | "restartProcess";
+  // Limiting the reload options to these three basic methods,
+  // as others require too much nuance and domain specific knowledge from the AI.
+  reloadMethod: Extract<ReloadAction, "reloadJs" | "rebuild" | "restartProcess">;
 }
 
 export async function restartDeviceExec(input: AppReloadRequest): Promise<ToolResponse> {
