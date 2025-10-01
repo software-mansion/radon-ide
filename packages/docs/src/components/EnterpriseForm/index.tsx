@@ -1,6 +1,5 @@
 import React, { useState, forwardRef, useRef } from "react";
 import styles from "./styles.module.css";
-import emailjs from "@emailjs/browser";
 import { CustomSelect } from "../CustomSelect";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 
@@ -8,13 +7,8 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
   const formRef = useRef();
   const [isSent, setisSent] = useState(false);
   const [submitDisabled, setSubmitDisabled] = useState(false);
-
   const { siteConfig } = useDocusaurusContext();
-
-  const SERVICE_ID = siteConfig.customFields.service_id as string;
-  const CONTACT_TEMPLATE_ID = siteConfig.customFields.contact_template_id as string;
-  const AUTO_REPLY_TEMPLATE_ID = siteConfig.customFields.auto_reply_template_id as string;
-  const PUBLIC_KEY = siteConfig.customFields.public_key as string;
+  const API_URL = siteConfig.customFields.api_url as string;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -22,7 +16,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
     companyName: "",
     role: "",
     teamSize: "",
-    comment: "",
+    message: "",
   });
 
   const [error, setError] = useState({
@@ -49,24 +43,25 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
     setError(newErrors);
 
     if (Object.values(newErrors).some((val) => val)) return;
-
-    if (!SERVICE_ID || !CONTACT_TEMPLATE_ID || !AUTO_REPLY_TEMPLATE_ID || !PUBLIC_KEY) {
-      console.error("EmailJS configuration is missing. Check your environment variables.");
-      return;
-    }
-
     try {
       setSubmitDisabled(true);
-      await emailjs.sendForm(SERVICE_ID, CONTACT_TEMPLATE_ID, formRef.current, {
-        publicKey: PUBLIC_KEY,
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       });
-      await emailjs.sendForm(SERVICE_ID, AUTO_REPLY_TEMPLATE_ID, formRef.current, {
-        publicKey: PUBLIC_KEY,
-      });
-      setisSent(true);
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Success:", data);
     } catch (error) {
       console.error("FAILED: ", error.text);
     }
+    setisSent(true);
   };
 
   return (
@@ -148,9 +143,9 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
                   Tell us more about your needs <span>(Optional)</span>
                 </label>
                 <textarea
-                  name="comment"
-                  id="comment"
-                  value={formData.comment}
+                  name="message"
+                  id="message"
+                  value={formData.message}
                   onChange={handleChange}
                 />
               </div>

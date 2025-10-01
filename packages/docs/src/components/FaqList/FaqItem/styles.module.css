@@ -35,6 +35,7 @@
 
 .answer a {
   text-decoration: underline;
+  color: var(--radon-text-green-highlight);
 }
 
 .answer strong {

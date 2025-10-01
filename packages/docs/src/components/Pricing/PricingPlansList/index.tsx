@@ -118,7 +118,7 @@ const PricingPlansList = ({
             <div className={clsx(styles.cardMain, el.plan === "PRO" ? styles.proCardBorder : "")}>
               <div className={styles.cardFeatures}>
                 {handleHeader(el.plan)}
-                <PricingFeaturesList featuresList={el.featuresAll} />
+                <PricingFeaturesList featuresList={el.featuresAll} plan={el.plan} />
               </div>
               {el.featuresTeamManagement && (
                 <div className={styles.cardFeatures}>
