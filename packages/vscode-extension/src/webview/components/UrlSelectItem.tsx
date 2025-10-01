@@ -1,6 +1,5 @@
 import React, { PropsWithChildren } from "react";
 import { UrlSelectFocusable, RemovableHistoryItem } from "./UrlSelect";
-import { NavigationHistoryItem } from "../../common/State";
 
 interface UrlSelectItemProps {
   item: RemovableHistoryItem;
