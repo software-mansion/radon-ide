@@ -15,6 +15,7 @@ import { Platform } from "../utilities/platform";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import {
+  AndroidEmulatorInfo,
   AndroidSystemImageInfo,
   CameraSettings,
   DeviceInfo,
@@ -488,7 +489,7 @@ async function getAvdIds(avdDirectory: string) {
   return stdout.split(EOL).filter((id) => UUID_REGEX.test(id));
 }
 
-export async function listEmulators() {
+export async function listEmulators(): Promise<AndroidEmulatorInfo[]> {
   const avdDirectory = getOrCreateAvdDirectory();
   const emulators = listEmulatorsForDirectory(avdDirectory);
   const oldAvdDirectory = getOldAvdDirectoryLocation();
@@ -519,7 +520,7 @@ async function listEmulatorsForDirectory(avdDirectory: string) {
         systemName: systemImageName ?? "Unknown",
         displayName: displayName,
         available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
-      } as DeviceInfo;
+      } as AndroidEmulatorInfo;
     })
   );
 }

@@ -22,6 +22,7 @@ import {
   ProjectStore,
   REMOVE,
 } from "../common/State";
+import { AndroidPhysicalDevice } from "../devices/AndroidPhysicalDevice";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -317,7 +318,7 @@ export class DeviceSessionsManager implements Disposable {
       );
       return undefined;
     }
-    let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
+    let device: IosSimulatorDevice | AndroidEmulatorDevice | AndroidPhysicalDevice | undefined;
     try {
       device = await this.deviceManager.acquireDevice(
         deviceInfo,
