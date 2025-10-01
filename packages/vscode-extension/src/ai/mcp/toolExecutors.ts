@@ -6,6 +6,16 @@ import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
 
+interface AppLoadResult {
+  didSucceed: boolean;
+  details: string;
+}
+
+async function didAppLoadingSucceed(): Promise<AppLoadResult> {
+  // TODO: Await app to be either running or to have failed to launch before responding
+  return { didSucceed: true, details: "" };
+}
+
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
 
@@ -24,6 +34,31 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
   return {
     content: [pngToToolContent(contents)],
   };
+}
+
+interface AppReloadRequest {
+  // To avoid placing too much confusion on the AI, we're limiting the reload options to these three basic methods.
+  reloadMethod: "reloadJs" | "rebuild" | "restartProcess";
+}
+
+export async function restartDeviceExec(input: AppReloadRequest): Promise<ToolResponse> {
+  const ideInstance = IDE.getInstanceIfExists();
+
+  if (!ideInstance) {
+    return textToToolResponse(
+      "Couldn't reload app - Radon IDE is not launched. Open Radon IDE first."
+    );
+  }
+
+  ideInstance.project.deviceSession?.performReloadAction(input.reloadMethod);
+
+  const loadRapport = await didAppLoadingSucceed();
+
+  if (loadRapport.didSucceed) {
+    return textToToolResponse("App reloaded successfully.");
+  } else {
+    return textToToolResponse(`Failed to reload the app. Details: ${loadRapport.details}`);
+  }
 }
 
 export async function readLogsToolExec(): Promise<ToolResponse> {
