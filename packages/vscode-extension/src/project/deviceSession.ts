@@ -172,7 +172,6 @@ export class DeviceSession implements Disposable {
   }
 
   private resetStartingState(startupMessage: StartupMessage = StartupMessage.Restarting) {
-    this.applicationSession?.resetHomeTarget();
     this.stateManager.updateState({
       isUsingStaleBuild: false,
       status: "starting",

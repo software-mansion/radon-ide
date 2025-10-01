@@ -321,8 +321,9 @@ export type ScreenCaptureState = {
 // #region Navigation
 
 export type NavigationHistoryItem = {
-  displayName: string;
+  displayName: string | undefined;
   id: string;
+  canGoBack: boolean;
 };
 
 export type NavigationRoute = {

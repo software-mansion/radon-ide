@@ -77,7 +77,6 @@ export class ApplicationSession implements Disposable {
   private isActive = false;
   private inspectCallID = 7621;
   private devtools: DevtoolsConnection | undefined;
-  private navigationHomeTarget: NavigationHistoryItem | undefined;
   private toolsManager: ToolsManager;
   private lastRegisteredInspectorAvailability: InspectorAvailabilityStatus =
     InspectorAvailabilityStatus.UnavailableInactive;
@@ -538,9 +537,6 @@ export class ApplicationSession implements Disposable {
         }
       ),
       inspectorBridge.onEvent("navigationChanged", (payload: NavigationHistoryItem) => {
-        if (!this.navigationHomeTarget) {
-          this.navigationHomeTarget = payload;
-        }
         const navigationHistory = [
           payload,
           ...this.navigationStateManager
@@ -696,18 +692,14 @@ export class ApplicationSession implements Disposable {
     this.stateManager.updateState({ logCounter: 0 });
   }
 
-  public resetHomeTarget() {
-    this.navigationHomeTarget = undefined;
-  }
-
   public openNavigation(id: string) {
     this.inspectorBridge?.sendOpenNavigationRequest(id);
   }
 
   public navigateHome() {
-    if (this.navigationHomeTarget) {
-      this.inspectorBridge?.sendOpenNavigationRequest(this.navigationHomeTarget.id);
-    }
+    // going home resets the navigation history
+    this.navigationStateManager.updateState({ navigationHistory: [] });
+    this.inspectorBridge?.sendOpenNavigationRequest("__HOME__");
   }
 
   public navigateBack() {
