@@ -1,7 +1,5 @@
 "use no memo";
 
-import { noop } from "lodash";
-
 const { useContext, useState, useEffect, useRef, useCallback } = require("react");
 const {
   LogBox,
