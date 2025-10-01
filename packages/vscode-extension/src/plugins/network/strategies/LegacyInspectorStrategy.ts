@@ -1,17 +1,17 @@
 import { commands, Disposable } from "vscode";
-import { NetworkPlugin } from "./network-plugin";
-import { RadonInspectorBridge } from "../../project/bridge";
-import { disposeAll } from "../../utilities/disposables";
-import { Logger } from "../../Logger";
+import { NetworkPlugin } from "../network-plugin";
+import { RadonInspectorBridge } from "../../../project/bridge";
+import { disposeAll } from "../../../utilities/disposables";
+import { Logger } from "../../../Logger";
 import {
   WebviewMessage,
   CDPMessage,
   WebviewCommand,
   NetworkMethod,
-} from "../../network/types/panelMessageProtocol";
-import { BaseArchitectureStrategy } from "./BaseArchitectureStrategy";
+} from "../../../network/types/panelMessageProtocol";
+import { BaseInspectorStrategy } from "./BaseInspectorStrategy";
 
-export default class LegacyArchitecture extends BaseArchitectureStrategy {
+export default class LegacyInspectorStrategy extends BaseInspectorStrategy {
   private devtoolsListeners: Disposable[] = [];
 
   private readonly inspectorBridge: RadonInspectorBridge;

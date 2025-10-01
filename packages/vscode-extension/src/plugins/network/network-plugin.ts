@@ -4,15 +4,15 @@ import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { Logger } from "../../Logger";
 import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider";
-
-import LegacyArchitecture from "./LegacyArchitectureStrategy";
-import NewArchitecture from "./NewArchitectureStrategy";
 import { WebviewMessage } from "../../network/types/panelMessageProtocol";
 
-export const NETWORK_PLUGIN_ID = "network";
-const NEW_ARCHITECTURE = true;
+import LegacyInspectorStrategy from "./strategies/LegacyInspectorStrategy";
+import NewInspectorStrategy from "./strategies/NewInspectorStrategy";
 
-export interface ArchitectureStrategy {
+export const NETWORK_PLUGIN_ID = "network";
+const ENABLE_NEW_INSPECTOR = true;
+
+export interface InspectorStrategy {
   activate(): void;
   deactivate(): void;
   openTool(): void;
@@ -49,13 +49,15 @@ export class NetworkPlugin implements ToolPlugin {
 
   public toolInstalled = false;
 
-  private readonly strategy: ArchitectureStrategy;
+  private readonly strategy: InspectorStrategy;
 
   constructor(
     readonly inspectorBridge: RadonInspectorBridge,
     readonly networkBridge: NetworkBridge
   ) {
-    this.strategy = NEW_ARCHITECTURE ? new NewArchitecture(this) : new LegacyArchitecture(this);
+    this.strategy = ENABLE_NEW_INSPECTOR
+      ? new NewInspectorStrategy(this)
+      : new LegacyInspectorStrategy(this);
     initialize();
   }
 

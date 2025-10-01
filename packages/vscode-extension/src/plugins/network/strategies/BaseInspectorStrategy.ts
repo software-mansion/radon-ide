@@ -1,17 +1,17 @@
 import { Disposable } from "vscode";
-import { ArchitectureStrategy, BroadcastListener } from "./network-plugin";
+import { InspectorStrategy, BroadcastListener } from "../network-plugin";
 import {
   WebviewMessage,
   IDEMessage,
   WebviewCommand,
-} from "../../network/types/panelMessageProtocol";
-import { RequestData, RequestOptions } from "../../network/types/network";
-import { Logger } from "../../Logger";
-import { determineLanguage } from "../../network/utils/requestFormatters";
-import { openContentInEditor, showDismissableError } from "../../utilities/editorOpeners";
-import { extractTheme } from "../../utilities/themeExtractor";
+} from "../../../network/types/panelMessageProtocol";
+import { RequestData, RequestOptions } from "../../../network/types/network";
+import { Logger } from "../../../Logger";
+import { determineLanguage } from "../../../network/utils/requestFormatters";
+import { openContentInEditor, showDismissableError } from "../../../utilities/editorOpeners";
+import { extractTheme } from "../../../utilities/themeExtractor";
 
-export abstract class BaseArchitectureStrategy implements ArchitectureStrategy {
+export abstract class BaseInspectorStrategy implements InspectorStrategy {
   protected broadcastListeners: BroadcastListener[] = [];
 
   // #region abstract

@@ -1,24 +1,24 @@
 import { commands, Disposable } from "vscode";
-import { NetworkPlugin } from "./network-plugin";
-import { disposeAll } from "../../utilities/disposables";
-import { Logger } from "../../Logger";
+import { NetworkPlugin } from "../network-plugin";
+import { disposeAll } from "../../../utilities/disposables";
+import { Logger } from "../../../Logger";
 import {
   CDPMessage,
   NetworkMethod,
   WebviewCommand,
   WebviewMessage,
-} from "../../network/types/panelMessageProtocol";
-import { BaseArchitectureStrategy } from "./BaseArchitectureStrategy";
+} from "../../../network/types/panelMessageProtocol";
+import { BaseInspectorStrategy } from "./BaseInspectorStrategy";
 
-import { NETWORK_EVENTS } from "../../network/types/panelMessageProtocol";
-import { NETWORK_EVENT_MAP, NetworkBridge, RadonInspectorBridge } from "../../project/bridge";
-import { ResponseBodyData } from "../../network/types/network";
+import { NETWORK_EVENTS } from "../../../network/types/panelMessageProtocol";
+import { NETWORK_EVENT_MAP, NetworkBridge, RadonInspectorBridge } from "../../../project/bridge";
+import { ResponseBodyData } from "../../../network/types/network";
 
 // Truncation constants
 const MAX_MESSAGE_LENGTH = 1000000;
 const TRUNCATED_LENGTH = 1000000;
 
-export default class NewArchitecture extends BaseArchitectureStrategy {
+export default class NewInspectorStrategy extends BaseInspectorStrategy {
   private disposables: Disposable[] = [];
   private readonly inspectorBridge: RadonInspectorBridge;
   private readonly networkBridge: NetworkBridge;
