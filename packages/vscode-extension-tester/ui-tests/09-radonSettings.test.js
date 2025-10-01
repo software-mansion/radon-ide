@@ -29,14 +29,18 @@ describe("9 - Radon Settings", () => {
 
   beforeEach(async () => {
     radonViewsService.openRadonIDEPanel();
-  });
-
-  it("should zoom in and out", async () => {
     // it may take some time to load this element especially on GitHub CI
     const phoneWrapper = await elementHelperService.findAndWaitForElementByTag(
       "phone-wrapper",
       "timedout waiting for phone wrapper element",
       15000
+    );
+  });
+
+  it("should zoom in and out", async () => {
+    // it may take some time to load this element especially on GitHub CI
+    const phoneWrapper = await elementHelperService.findAndWaitForElementByTag(
+      "phone-wrapper"
     );
     let height = (await phoneWrapper.getRect()).height;
     let newHeight = height;
@@ -54,9 +58,7 @@ describe("9 - Radon Settings", () => {
   it("should zoom in and out to preset levels", async () => {
     const zoomLevels = [0.5, 0.6, 0.7, 0.8, 0.9, 1];
     const phoneWrapper = await elementHelperService.findAndWaitForElementByTag(
-      "phone-wrapper",
-      "timedout waiting for phone wrapper element",
-      15000
+      "phone-wrapper"
     );
     let height = 0;
 
@@ -83,9 +85,7 @@ describe("9 - Radon Settings", () => {
       );
 
     const phoneWrapper = await elementHelperService.findAndWaitForElementByTag(
-      "phone-wrapper",
-      "timedout waiting for phone wrapper element",
-      15000
+      "phone-wrapper"
     );
 
     const screenHeight = (await phoneDisplayContainer.getRect()).height;
@@ -104,7 +104,8 @@ describe("9 - Radon Settings", () => {
   });
 
   it("should fit device width to screen for device in landscape orientation", async () => {
-    await driver.executeScript(`
+    try {
+      await driver.executeScript(`
         const evt = new KeyboardEvent('keydown', {
           key: '0',
           code: 'Digit0',
@@ -115,30 +116,52 @@ describe("9 - Radon Settings", () => {
         document.dispatchEvent(evt);
         `);
 
-    const phoneDisplayContainer =
-      await elementHelperService.findAndWaitForElementByTag(
-        "phone-display-container"
+      const phoneDisplayContainer =
+        await elementHelperService.findAndWaitForElementByTag(
+          "phone-display-container"
+        );
+
+      const phoneWrapper =
+        await elementHelperService.findAndWaitForElementByTag("phone-wrapper");
+
+      const screenWidth = (await phoneDisplayContainer.getRect()).width;
+
+      await radonViewsService.showZoomControls();
+      await elementHelperService.findAndClickElementByTag(
+        "zoom-select-trigger"
+      );
+      await elementHelperService.findAndClickElementByTag(
+        `zoom-select-item-0.5`
       );
 
-    const phoneWrapper = await elementHelperService.findAndWaitForElementByTag(
-      "phone-wrapper",
-      "timedout waiting for phone wrapper element",
-      15000
-    );
+      await radonViewsService.showZoomControls();
+      await elementHelperService.findAndClickElementByTag(
+        "zoom-select-trigger"
+      );
+      await elementHelperService.findAndClickElementByTag(
+        `zoom-select-item-fit`
+      );
 
-    const screenWidth = (await phoneDisplayContainer.getRect()).width;
+      const phoneWidth = (await phoneWrapper.getRect()).width;
 
-    await radonViewsService.showZoomControls();
-    await elementHelperService.findAndClickElementByTag("zoom-select-trigger");
-    await elementHelperService.findAndClickElementByTag(`zoom-select-item-0.5`);
-
-    await radonViewsService.showZoomControls();
-    await elementHelperService.findAndClickElementByTag("zoom-select-trigger");
-    await elementHelperService.findAndClickElementByTag(`zoom-select-item-fit`);
-
-    const phoneWidth = (await phoneWrapper.getRect()).width;
-
-    assert.equal(screenWidth, phoneWidth);
+      assert.equal(screenWidth, phoneWidth);
+    } finally {
+      const phoneWrapper =
+        await elementHelperService.findAndWaitForElementByTag("phone-wrapper");
+      const phoneRect = await phoneWrapper.getRect();
+      if (phoneRect.width > phoneRect.height) {
+        await driver.executeScript(`
+        const evt = new KeyboardEvent('keydown', {
+          key: '9',
+          code: 'Digit9',
+          altKey: true,
+          ctrlKey: true,
+          bubbles: true
+        });
+        document.dispatchEvent(evt);
+        `);
+      }
+    }
   });
 
   it("should move Radon IDE between side bar and editor area", async () => {
