@@ -31,6 +31,7 @@ import {
   NavigationHistoryItem,
   NavigationRoute,
   NavigationState,
+  REMOVE,
   StartupMessage,
 } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
@@ -242,6 +243,10 @@ export class ApplicationSession implements Disposable {
       this.cdpDevtoolsServer.dispose();
       this.cdpDevtoolsServer = undefined;
     }
+    if (this.websocketDevtoolsServer === undefined) {
+      this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
+      this.setupDevtoolsServer(this.cdpDevtoolsServer);
+    }
   }
 
   private async createDebugSession(): Promise<DebugSession & Disposable> {
@@ -376,6 +381,9 @@ export class ApplicationSession implements Disposable {
   //#region Metro event listeners
 
   private async onBundleError(message: string, source: DebugSource) {
+    if (!this.isActive) {
+      return;
+    }
     Logger.error("[Bundling Error]", message);
     this.stateManager.updateState({
       bundleError: {
@@ -407,9 +415,15 @@ export class ApplicationSession implements Disposable {
 
   public async deactivate(): Promise<void> {
     this.isActive = false;
-    // NOTE: we reset the state to "connecting" here to prevent showing the "disconnected" alert
-    // when switching between devices
-    this.stateManager.updateState({ inspectorBridgeStatus: InspectorBridgeStatus.Connecting });
+    this.stateManager.updateState({
+      // NOTE: we reset the state to "connecting" here to prevent showing the "disconnected" alert
+      // when switching between devices
+      inspectorBridgeStatus: InspectorBridgeStatus.Connecting,
+      // NOTE: we reset the bundle error here to prevent showing stale errors when switching between devices.
+      // If, after swithcing, the app still has a bundle error,
+      // the debugger connecting and fetching the source will cause it to appear again.
+      bundleError: REMOVE,
+    });
     this.toolsManager.deactivate();
     this.debugSessionEventSubscription?.dispose();
     this.debugSessionEventSubscription = undefined;
@@ -460,12 +474,6 @@ export class ApplicationSession implements Disposable {
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
       sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
     });
-    if (this.websocketDevtoolsServer === undefined) {
-      // NOTE: we only create the CDP devtools server when using the new debugger
-      this.cdpDevtoolsServer?.dispose();
-      this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
-      this.setupDevtoolsServer(this.cdpDevtoolsServer);
-    }
   }
 
   /**
@@ -557,12 +565,22 @@ export class ApplicationSession implements Disposable {
     });
     try {
       const appReadyPromise = waitForAppReady(this.inspectorBridge, cancelToken);
-      await this.debugSession?.evaluateExpression({
-        expression: "void globalThis.__RADON_reloadJS()",
-      });
+      await this.reloadWithDebugger();
       await Promise.race([appReadyPromise, bundleErrorPromise]);
     } finally {
       bundleErrorSubscription.dispose();
+    }
+  }
+
+  private async reloadWithDebugger() {
+    if (this.debugSession === undefined) {
+      throw new Error("Cannot reload JS with the debugger when the debugger is not connected");
+    }
+    const { result } = await this.debugSession.evaluateExpression({
+      expression: "void globalThis.__RADON_reloadJS()",
+    });
+    if (result.className === "Error") {
+      throw new Error("Reloading JS failed.");
     }
   }
 
