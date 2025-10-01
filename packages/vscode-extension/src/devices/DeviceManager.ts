@@ -28,12 +28,14 @@ import {
   DevicePlatform,
   DeviceSettings,
   DevicesState,
+  DeviceType,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
 } from "../common/State";
 import { StateManager } from "../project/StateManager";
 import { Disposable } from "vscode";
 import { disposeAll } from "../utilities/disposables";
+import { AndroidPhysicalDevice, listConnectedDevices } from "./AndroidPhysicalDevice";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
@@ -66,6 +68,17 @@ export class DeviceManager implements Disposable {
         deviceSettings,
         simulatorInfo.UDID,
         simulatorInfo,
+        this.outputChannelRegistry
+      );
+      if (await device.acquire()) {
+        return device;
+      } else {
+        device.dispose();
+      }
+    } else if (deviceInfo.deviceType === DeviceType.Physical) {
+      const device = new AndroidPhysicalDevice(
+        deviceInfo,
+        deviceSettings,
         this.outputChannelRegistry
       );
       if (await device.acquire()) {
@@ -120,6 +133,7 @@ export class DeviceManager implements Disposable {
   }
 
   private async loadDevicesInternal() {
+    const physicalDevices = await listConnectedDevices();
     const emulators = listEmulators().catch((e) => {
       Logger.error("Error fetching emulators", e);
       return [];
@@ -139,7 +153,7 @@ export class DeviceManager implements Disposable {
         })
       : Promise.resolve([]);
     const [androidDevices, iosDevices] = await Promise.all([emulators, simulators]);
-    const devices = [...androidDevices, ...iosDevices];
+    const devices = [...androidDevices, ...iosDevices, ...physicalDevices];
     return devices;
   }
 
@@ -216,7 +230,7 @@ export class DeviceManager implements Disposable {
     if (device.platform === DevicePlatform.IOS) {
       await renameIosSimulator(device.UDID, newDisplayName);
     }
-    if (device.platform === DevicePlatform.Android) {
+    if (device.platform === DevicePlatform.Android && device.deviceType !== DeviceType.Physical) {
       await renameEmulator(device.avdId, newDisplayName);
     }
     await this.loadDevices();
@@ -236,7 +250,7 @@ export class DeviceManager implements Disposable {
     if (device.platform === DevicePlatform.IOS) {
       await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
     }
-    if (device.platform === DevicePlatform.Android) {
+    if (device.platform === DevicePlatform.Android && device.deviceType !== DeviceType.Physical) {
       await removeEmulator(device.avdId);
     }
 

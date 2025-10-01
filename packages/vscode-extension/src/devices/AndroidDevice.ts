@@ -3,7 +3,6 @@ import xml2js from "xml2js";
 import { Disposable } from "vscode";
 import { exec, lineReader } from "../utilities/subprocess";
 import {
-  DeviceInfo,
   DevicePlatform,
   DeviceSettings,
   InstallationError,
@@ -13,7 +12,6 @@ import { DeviceBase } from "./DeviceBase";
 import { CancelToken } from "../utilities/cancelToken";
 import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType } from "../common/Project";
-import { Preview } from "./preview";
 import { Logger } from "../Logger";
 import { retry } from "../utilities/retry";
 import { ANDROID_HOME } from "../utilities/android";
@@ -394,26 +392,5 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
   public dispose() {
     super.dispose();
     this.nativeLogsCancelToken?.cancel();
-  }
-}
-
-export class AndroidPhysicalDevice extends AndroidDevice {
-  get lockFilePath(): string {
-    throw new Error("Method not implemented.");
-  }
-  async bootDevice(): Promise<void> {
-    // NOOP
-  }
-  protected changeSettings(settings: DeviceSettings): Promise<boolean> {
-    throw new Error("Method not implemented.");
-  }
-  getClipboard(): Promise<string | void> {
-    throw new Error("Method not implemented.");
-  }
-  protected makePreview(): Preview {
-    return new Preview(["android_device", "--id", this.serial!]);
-  }
-  get deviceInfo(): DeviceInfo {
-    throw new Error("Method not implemented.");
   }
 }
