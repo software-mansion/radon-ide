@@ -6,16 +6,6 @@ import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
 
-interface AppLoadResult {
-  didSucceed: boolean;
-  details: string;
-}
-
-async function didAppLoadingSucceed(): Promise<AppLoadResult> {
-  // TODO: Await app to be either running or to have failed to launch before responding
-  return { didSucceed: true, details: "" };
-}
-
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
 
@@ -50,14 +40,11 @@ export async function restartDeviceExec(input: AppReloadRequest): Promise<ToolRe
     );
   }
 
-  ideInstance.project.deviceSession?.performReloadAction(input.reloadMethod);
-
-  const loadRapport = await didAppLoadingSucceed();
-
-  if (loadRapport.didSucceed) {
+  try {
+    await ideInstance.project.deviceSession?.performReloadAction(input.reloadMethod);
     return textToToolResponse("App reloaded successfully.");
-  } else {
-    return textToToolResponse(`Failed to reload the app. Details: ${loadRapport.details}`);
+  } catch (error) {
+    return textToToolResponse(`Failed to reload the app. Details: ${String(error)}`);
   }
 }
 
