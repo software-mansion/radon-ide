@@ -117,7 +117,7 @@ export class ProxyDebugAdapter extends DebugSession {
     );
   }
 
-  private sendEvent(event: Event) {
+  public sendEvent(event: Event) {
     if (this.attached) {
       super.sendEvent(event);
     } else {
