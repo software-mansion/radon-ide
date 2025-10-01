@@ -25,7 +25,11 @@ const handleCellContent = (data: string[] | boolean) => {
   }
 };
 
-export default function ComparePricingPlans({ handleBusiness, handleIndividual }: PricingProps) {
+export default function ComparePricingPlans({
+  handleBusiness,
+  handleIndividual,
+  handleCustom,
+}: PricingProps) {
   const { onOpen } = useModal();
   const pricingPlanFeatures: FeatureItem[] = planFeaturesData;
   return (
@@ -62,6 +66,7 @@ export default function ComparePricingPlans({ handleBusiness, handleIndividual }
             monthlyPrice="Custom pricing"
             buttonLabel="Get your quote"
             stylingFilled={true}
+            onClick={handleCustom}
           />
         </div>
         {pricingPlanFeatures.map((feature, index) => (

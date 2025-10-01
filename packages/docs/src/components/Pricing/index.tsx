@@ -8,22 +8,17 @@ import { usePricingLogic } from "@site/src/hooks/usePricingLogic";
 import EnterpriseForm from "../EnterpriseForm";
 
 export interface PricingProps {
-  handleIndividual?: () => void;
-  handleBusiness?: () => void;
-  handleCustom?: () => void;
+  handleIndividual: () => void;
+  handleBusiness: () => void;
+  handleCustom: () => void;
   isMonthly?: boolean;
   setIsMonthly?: (value: boolean) => void;
 }
 
 const Pricing = () => {
-  const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout } =
+  const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout, scrollToForm } =
     usePricingLogic();
   const formRef = useRef<HTMLDivElement | null>(null);
-
-  const handleCustom = () =>
-    formRef.current?.scrollIntoView({
-      behavior: "smooth",
-    });
 
   return (
     <div className={clsx(styles.container, "border-layout")}>
@@ -37,7 +32,7 @@ const Pricing = () => {
         <PricingPlansList
           handleBusiness={openBusinessCheckout}
           handleIndividual={openIndividualCheckout}
-          handleCustom={handleCustom}
+          handleCustom={() => scrollToForm(formRef)}
           isMonthly={isMonthly}
           setIsMonthly={setIsMonthly}
         />
@@ -45,6 +40,7 @@ const Pricing = () => {
       <ComparePricingPlans
         handleIndividual={openIndividualCheckout}
         handleBusiness={openBusinessCheckout}
+        handleCustom={() => scrollToForm(formRef)}
       />
       <FAQ />
       <EnterpriseForm ref={formRef} />

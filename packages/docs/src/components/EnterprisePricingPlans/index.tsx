@@ -9,7 +9,7 @@ interface EnterprisePricingPlansProps {
 
 const EnterprisePricingPlans = forwardRef<HTMLDivElement, EnterprisePricingPlansProps>(
   (props, ref) => {
-    const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout } =
+    const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout, scrollToForm } =
       usePricingLogic();
 
     return (
