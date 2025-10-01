@@ -28,6 +28,9 @@ import {
   DeviceType,
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
+  NavigationHistoryItem,
+  NavigationRoute,
+  NavigationState,
   StartupMessage,
 } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
@@ -41,6 +44,8 @@ import {
 import { RadonInspectorBridge } from "./bridge";
 import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
+
+const MAX_URL_HISTORY_SIZE = 20;
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
@@ -82,6 +87,7 @@ export class ApplicationSession implements Disposable {
 
   public static async launch(
     stateManager: StateManager<ApplicationSessionState>,
+    navigationStateManager: StateManager<NavigationState>,
     {
       applicationContext,
       device,
@@ -100,6 +106,7 @@ export class ApplicationSession implements Disposable {
       buildResult.platform === DevicePlatform.IOS ? buildResult.supportedInterfaceOrientations : [];
     const session = new ApplicationSession(
       stateManager,
+      navigationStateManager,
       applicationContext,
       device,
       metro,
@@ -158,6 +165,8 @@ export class ApplicationSession implements Disposable {
 
   private constructor(
     private readonly stateManager: StateManager<ApplicationSessionState>,
+    // owned by DeviceSession
+    private readonly navigationStateManager: StateManager<NavigationState>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroSession,
@@ -519,6 +528,19 @@ export class ApplicationSession implements Disposable {
           this.stateManager.updateState({ elementInspectorAvailability: status });
         }
       ),
+      inspectorBridge.onEvent("navigationChanged", (payload: NavigationHistoryItem) => {
+        const navigationHistory = [
+          payload,
+          ...this.navigationStateManager
+            .getState()
+            .navigationHistory.filter((record) => record.id !== payload.id),
+        ].slice(0, MAX_URL_HISTORY_SIZE);
+
+        this.navigationStateManager.updateState({ navigationHistory });
+      }),
+      inspectorBridge.onEvent("navigationRouteListUpdated", (payload: NavigationRoute[]) => {
+        this.navigationStateManager.updateState({ navigationRouteList: payload });
+      }),
     ];
     return subscriptions;
   }
@@ -650,6 +672,28 @@ export class ApplicationSession implements Disposable {
 
   public resetLogCounter() {
     this.stateManager.updateState({ logCounter: 0 });
+  }
+
+  public openNavigation(id: string) {
+    this.inspectorBridge?.sendOpenNavigationRequest(id);
+  }
+
+  public navigateHome() {
+    // going home resets the navigation history
+    this.navigationStateManager.updateState({ navigationHistory: [] });
+    this.inspectorBridge?.sendOpenNavigationRequest("__HOME__");
+  }
+
+  public navigateBack() {
+    this.inspectorBridge?.sendOpenNavigationRequest("__BACK__");
+  }
+
+  public removeNavigationHistoryEntry(id: string) {
+    this.navigationStateManager.updateState({
+      navigationHistory: this.navigationStateManager
+        .getState()
+        .navigationHistory.filter((record) => record.id !== id),
+    });
   }
 
   public async dispose() {

@@ -26,8 +26,7 @@ import {
   DeviceSessionStore,
   DeviceSettings,
   InstallationError,
-  NavigationHistoryItem,
-  NavigationRoute,
+  NavigationState,
   RecursivePartial,
   REMOVE,
   StartupMessage,
@@ -41,7 +40,6 @@ import { FileTransfer } from "./FileTransfer";
 import { DevtoolsServer } from "./devtools";
 import { MetroError, MetroProvider, MetroSession } from "./metro";
 
-const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 function isOfEnumDeviceRotation(value: unknown): value is DeviceRotation {
@@ -71,6 +69,7 @@ export class DeviceSession implements Disposable {
   private cancelToken: CancelToken = new CancelToken();
   private deviceSettingsStateManager: StateManager<DeviceSettings>;
   private frameReporter: FrameReporter;
+  private navigationStateManager: StateManager<NavigationState>;
   private screenCapture: ScreenCapture;
 
   private isActive = false;
@@ -151,6 +150,9 @@ export class DeviceSession implements Disposable {
     );
     this.disposables.push(this.frameReporter);
 
+    this.navigationStateManager = this.stateManager.getDerived("navigationState");
+    this.disposables.push(this.navigationStateManager);
+
     this.screenCapture = new ScreenCapture(
       this.stateManager.getDerived("screenCapture"),
       this.device,
@@ -226,25 +228,6 @@ export class DeviceSession implements Disposable {
   }, 100);
 
   //#endregion
-
-  private setupInspectorBridgeListeners(devtools: RadonInspectorBridge) {
-    // We don't need to store event disposables here as they are tied to the lifecycle
-    // of the devtools instance, which is disposed when we recreate the devtools or
-    // when the device session is disposed
-    devtools.onEvent("navigationChanged", (payload: NavigationHistoryItem) => {
-      const navigationHistory = [
-        payload,
-        ...this.stateManager
-          .getState()
-          .navigationHistory.filter((record) => record.id !== payload.id),
-      ].slice(0, MAX_URL_HISTORY_SIZE);
-
-      this.stateManager.updateState({ navigationHistory });
-    });
-    devtools.onEvent("navigationRouteListUpdated", (payload: NavigationRoute[]) => {
-      this.stateManager.updateState({ navigationRouteList: payload });
-    });
-  }
 
   /**
   This method is async to allow for awaiting it during restarts, please keep in mind tho that
@@ -499,6 +482,7 @@ export class DeviceSession implements Disposable {
 
     const applicationSessionPromise = ApplicationSession.launch(
       this.stateManager.getDerived("applicationSession"),
+      this.navigationStateManager,
       {
         applicationContext: this.applicationContext,
         device: this.device,
@@ -520,7 +504,6 @@ export class DeviceSession implements Disposable {
 
       // NOTE: on iOS, we need to change keyboard langugage to match the device locale after the app is ready
       this.device.setUpKeyboard();
-      this.setupInspectorBridgeListeners(applicationSession.inspectorBridge);
 
       this.stateManager.updateState({
         status: "running",
@@ -839,22 +822,20 @@ export class DeviceSession implements Disposable {
   }
 
   public openNavigation(id: string) {
-    this.inspectorBridge?.sendOpenNavigationRequest(id);
+    this.applicationSession?.openNavigation(id);
   }
 
   public navigateHome() {
-    // going home resets the navigation history
-    this.stateManager.updateState({ navigationHistory: [] });
-    this.inspectorBridge?.sendOpenNavigationRequest("__HOME__");
+    this.applicationSession?.navigateHome();
   }
 
   public navigateBack() {
-    this.inspectorBridge?.sendOpenNavigationRequest("__BACK__");
+    this.applicationSession?.navigateBack();
   }
 
   public removeNavigationHistoryEntry(id: string) {
-    this.stateManager.updateState({
-      navigationHistory: this.stateManager
+    this.navigationStateManager.updateState({
+      navigationHistory: this.navigationStateManager
         .getState()
         .navigationHistory.filter((record) => record.id !== id),
     });
