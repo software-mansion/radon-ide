@@ -547,9 +547,10 @@ function Preview({
     }
   }, [isUsingStaleBuild]);
 
-  const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === modelId;
-  });
+  const device =
+    iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
+      return sd.modelId === modelId;
+    }) ?? AndroidSupportedDevices[0];
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;

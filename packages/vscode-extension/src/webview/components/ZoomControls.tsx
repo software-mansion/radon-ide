@@ -80,7 +80,7 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsSelectOpen }: ZoomCont
 };
 
 function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomControlsProps) {
-  const frame = useDeviceFrame(device!);
+  const frame = useDeviceFrame(device!) ?? { height: 800, width: 400 };
   const [isSelectOpen, setIsSelectOpen] = useState(false);
 
   function handleZoom(shouldIncrease: boolean) {
