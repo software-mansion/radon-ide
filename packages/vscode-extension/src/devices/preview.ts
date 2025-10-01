@@ -76,6 +76,7 @@ export class Preview implements Disposable {
 
     const subprocess = exec(simControllerBinary, this.args, {
       buffer: false,
+      cwd: path.dirname(simControllerBinary),
     });
     this.subprocess = subprocess;
     this.disposables.push(new Disposable(() => subprocess.kill()));
