@@ -49,6 +49,7 @@ export async function restartDeviceExec(input: AppReloadRequest): Promise<ToolRe
   }
 
   try {
+    // `performReloadAction` awaits `stateManager.status` to be set to `running` before returning.
     await deviceSession.performReloadAction(input.reloadMethod);
     return textToToolResponse("App reloaded successfully.");
   } catch (error) {
