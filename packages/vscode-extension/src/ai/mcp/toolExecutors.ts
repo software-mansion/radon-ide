@@ -40,8 +40,14 @@ export async function restartDeviceExec(input: AppReloadRequest): Promise<ToolRe
     );
   }
 
+  const deviceSession = ideInstance.project.deviceSession;
+
+  if (!deviceSession) {
+    return textToToolResponse("Couldn't reload app - There isn't any app-bearing device running.");
+  }
+
   try {
-    await ideInstance.project.deviceSession?.performReloadAction(input.reloadMethod);
+    await deviceSession.performReloadAction(input.reloadMethod);
     return textToToolResponse("App reloaded successfully.");
   } catch (error) {
     return textToToolResponse(`Failed to reload the app. Details: ${String(error)}`);
