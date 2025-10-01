@@ -283,9 +283,9 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
   const openMainApp = useCallback(
     (nextNavigationDescriptor, forceRerender) => {
-      let closePromiseResolve;
+      let appOpenPromiseResolve;
       const appOpenPromise = new Promise((resolve) => {
-        closePromiseResolve = resolve;
+        appOpenPromiseResolve = resolve;
       });
 
       const mainAppKey = mainApplicationKey ?? "main";
@@ -295,7 +295,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
             rootTag,
             initialProps: {
               ...initialProps,
-              __radon_onLayout: closePromiseResolve,
+              __radon_onLayout: appOpenPromiseResolve,
               __radon_nextNavigationDescriptor: nextNavigationDescriptor,
               __radon_previewKey: undefined,
             },
@@ -309,7 +309,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
         }
       } else {
         nextNavigationDescriptor && requestNavigationChange(nextNavigationDescriptor);
-        closePromiseResolve();
+        appOpenPromiseResolve();
       }
       return appOpenPromise;
     },
