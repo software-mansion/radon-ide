@@ -1,13 +1,13 @@
 import { useCallback, useEffect } from "react";
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 import { useAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
-import { VscodeButton as Button } from "@vscode-elements/react-elements";
 
 const alertId = "devtools-disconnected-alert";
 
 export function useApplicationDisconnectedAlert(shouldShow: boolean) {
   const { project } = useProject();
-  const { openAlert } = useAlert();
+  const { openAlert, closeAlert } = useAlert();
 
   const open = useCallback(() => {
     openAlert({
@@ -35,7 +35,7 @@ export function useApplicationDisconnectedAlert(shouldShow: boolean) {
     if (shouldShow) {
       open();
     } else {
-      close();
+      closeAlert(alertId);
     }
   }, [shouldShow]);
 }

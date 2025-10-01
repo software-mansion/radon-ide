@@ -1,4 +1,4 @@
-import { EventEmitter, Disposable } from "vscode";
+import { Disposable } from "vscode";
 import { Cdp } from "vscode-cdp-proxy";
 import { CancelToken } from "../utilities/cancelToken";
 import { sleep } from "../utilities/retry";
@@ -13,11 +13,10 @@ const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {
   private disposables: Disposable[] = [];
   private reconnectCancelToken: CancelToken | undefined;
-  private readonly sessionTerminatedEventEmitter = new EventEmitter<void>();
 
   private isRunning: boolean = false;
 
-  public readonly onDebugSessionTerminated = this.sessionTerminatedEventEmitter.event;
+  public readonly onDebugSessionTerminated = this.debugSession.onDebugSessionTerminated;
 
   constructor(
     private readonly debugSession: DebugSession & Partial<Disposable>,
@@ -94,8 +93,6 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   async dispose() {
     disposeAll(this.disposables);
     this.reconnectCancelToken?.cancel();
-    this.sessionTerminatedEventEmitter.fire();
-    this.sessionTerminatedEventEmitter.dispose();
     await this.debugSession.dispose?.();
   }
 
