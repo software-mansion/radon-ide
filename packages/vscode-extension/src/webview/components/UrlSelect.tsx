@@ -225,6 +225,17 @@ function UrlSelect({
     }
   }, []);
 
+  // Close dropdown when focus leaves the IDE panel (e.g., clicking on text editor)
+  useEffect(() => {
+    const blurListener = () => {
+      setIsDropdownOpen(false);
+    };
+    window.addEventListener("blur", blurListener);
+    return () => {
+      window.removeEventListener("blur", blurListener);
+    };
+  }, []);
+
   // Hacky way to change the cursor style of a readonly input,
   // since the VscodeTextfield component doesn't provide any parts
   // or props, and according to the authors, it's not going to.
