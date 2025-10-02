@@ -428,17 +428,16 @@ export enum DevicePlatform {
 export enum DeviceType {
   Phone = "Phone",
   Tablet = "Tablet",
-  Physical = "Physical",
 }
 
 export type DeviceInfo = AndroidEmulatorInfo | AndroidPhysicalDeviceInfo | IOSDeviceInfo;
 
 export type AndroidEmulatorInfo = AndroidDeviceInfo & {
   avdId: string;
-  deviceType: DeviceType.Phone;
+  emulator: true;
 };
 
-export type AndroidPhysicalDeviceInfo = AndroidDeviceInfo & { deviceType: DeviceType.Physical };
+export type AndroidPhysicalDeviceInfo = AndroidDeviceInfo & { emulator: false };
 
 export type AndroidDeviceInfo = {
   id: string;

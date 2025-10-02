@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { Disposable } from "vscode";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import {
   IosSimulatorDevice,
@@ -28,12 +29,10 @@ import {
   DevicePlatform,
   DeviceSettings,
   DevicesState,
-  DeviceType,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
 } from "../common/State";
 import { StateManager } from "../project/StateManager";
-import { Disposable } from "vscode";
 import { disposeAll } from "../utilities/disposables";
 import { AndroidPhysicalDevice, listConnectedDevices } from "./AndroidPhysicalDevice";
 
@@ -75,7 +74,7 @@ export class DeviceManager implements Disposable {
       } else {
         device.dispose();
       }
-    } else if (deviceInfo.deviceType === DeviceType.Physical) {
+    } else if (!deviceInfo.emulator) {
       const device = new AndroidPhysicalDevice(
         deviceInfo,
         deviceSettings,
@@ -230,7 +229,7 @@ export class DeviceManager implements Disposable {
     if (device.platform === DevicePlatform.IOS) {
       await renameIosSimulator(device.UDID, newDisplayName);
     }
-    if (device.platform === DevicePlatform.Android && device.deviceType !== DeviceType.Physical) {
+    if (device.platform === DevicePlatform.Android && device.emulator) {
       await renameEmulator(device.avdId, newDisplayName);
     }
     await this.loadDevices();
@@ -250,7 +249,7 @@ export class DeviceManager implements Disposable {
     if (device.platform === DevicePlatform.IOS) {
       await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
     }
-    if (device.platform === DevicePlatform.Android && device.deviceType !== DeviceType.Physical) {
+    if (device.platform === DevicePlatform.Android && device.emulator) {
       await removeEmulator(device.avdId);
     }
 
