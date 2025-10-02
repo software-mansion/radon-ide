@@ -181,11 +181,15 @@ export const NETWORK_EVENT_MAP = {
 export interface RadonNetworkBridge {
   enableNetworkInspector(): void;
   disableNetworkInspector(): void;
+  getResponseBody(requestId: string | number): Promise<GetResponseBodyResponse | undefined>;
   onEvent<K extends NetworkBridgeEventNames>(
     event: K,
     listener: (...payload: RadonNetworkBridgeEvents[K]) => void
   ): Disposable;
 }
+
+export type NetworkBridgeSendMethodArgs = Record<string, unknown>;
+export type NetworkBridgeGetResponseBodyArgs = { requestId: string | number };
 
 export class NetworkBridge
   extends GenericBridge<RadonNetworkBridgeEvents, NetworkBridgeEventNames>
@@ -204,13 +208,13 @@ export class NetworkBridge
   // Method overloads for type safety
   protected send(request: RNIDE_NetworkMethod.Enable): void;
   protected send(request: RNIDE_NetworkMethod.Disable): void;
-  protected send(request: RNIDE_NetworkMethod, args?: Record<string, unknown>): void {
+  protected send(request: RNIDE_NetworkMethod, args?: NetworkBridgeSendMethodArgs): void {
     this.debugSession?.invokeNetworkMethod(request, args);
   }
 
   protected async sendAsync(
     request: RNIDE_NetworkMethod.GetResponseBody,
-    args: { requestId: string | number }
+    args: NetworkBridgeGetResponseBodyArgs
   ): Promise<GetResponseBodyResponse | undefined> {
     const result = await this.debugSession?.invokeNetworkMethod<GetResponseBodyResponse>(
       request,
@@ -224,7 +228,6 @@ export class NetworkBridge
       return;
     }
     this.send(RNIDE_NetworkMethod.Enable);
-    // this.emitEvent("enable", []);
   }
 
   public disableNetworkInspector(): void {
@@ -232,7 +235,6 @@ export class NetworkBridge
       return;
     }
     this.send(RNIDE_NetworkMethod.Disable);
-    // this.emitEvent("disable", []);
   }
 
   public getResponseBody(requestId: string | number): Promise<GetResponseBodyResponse | undefined> {

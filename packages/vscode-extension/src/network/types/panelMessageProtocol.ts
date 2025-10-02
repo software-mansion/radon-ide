@@ -29,7 +29,11 @@ export const NETWORK_TYPES = Object.values(NetworkType);
 
 export type CDPMethod = NetworkEvent | NetworkMethod | NetworkType;
 
-export type IDEMethod = "IDE.fetchFullResponseBody" | "IDE.getTheme" | "IDE.Theme";
+export enum IDEMethod {
+  FetchFullResponseBody = "IDE.fetchFullResponseBody",
+  GetTheme = "IDE.getTheme",
+  Theme = "IDE.Theme",
+}
 
 export function isCDPMethod(method: string): method is CDPMethod {
   return (

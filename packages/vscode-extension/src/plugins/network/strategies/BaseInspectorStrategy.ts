@@ -4,6 +4,7 @@ import {
   WebviewMessage,
   IDEMessage,
   WebviewCommand,
+  IDEMethod,
 } from "../../../network/types/panelMessageProtocol";
 import { RequestData, RequestOptions } from "../../../network/types/network";
 import { Logger } from "../../../Logger";
@@ -16,12 +17,11 @@ export abstract class BaseInspectorStrategy implements InspectorStrategy {
 
   // #region abstract
 
-  abstract activate(): void;
-  abstract deactivate(): void;
-  abstract openTool(): void;
-  abstract dispose(): void;
-  abstract handleWebviewMessage(message: WebviewMessage): void;
-  abstract readonly pluginAvailable: boolean;
+  public abstract activate(): void;
+  public abstract deactivate(): void;
+  public abstract dispose(): void;
+  protected abstract handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void;
+  public abstract readonly pluginAvailable: boolean;
 
   // #endregion
 
@@ -39,6 +39,23 @@ export abstract class BaseInspectorStrategy implements InspectorStrategy {
 
   protected broadcastMessage(message: Parameters<BroadcastListener>[0]): void {
     this.broadcastListeners.forEach((cb) => cb(message));
+  }
+
+  public handleWebviewMessage(message: WebviewMessage): void {
+    try {
+      switch (message.command) {
+        case WebviewCommand.CDPCall:
+          this.handleCDPMessage(message);
+          break;
+        case WebviewCommand.IDECall:
+          this.handleIDEMessage(message);
+          break;
+        default:
+          Logger.warn("Unknown message type received");
+      }
+    } catch (error) {
+      Logger.error("Invalid WebSocket message format:", error);
+    }
   }
 
   //#endregion
@@ -112,7 +129,7 @@ export abstract class BaseInspectorStrategy implements InspectorStrategy {
     const { messageId: id, params } = message;
     const { themeDescriptor } = params || {};
     const theme = extractTheme(themeDescriptor);
-    this.sendIDEMessage({ method: "IDE.Theme", messageId: id, result: theme });
+    this.sendIDEMessage({ method: IDEMethod.Theme, messageId: id, result: theme });
   }
 
   /**
@@ -122,10 +139,10 @@ export abstract class BaseInspectorStrategy implements InspectorStrategy {
     const { payload } = message;
 
     switch (payload.method) {
-      case "IDE.fetchFullResponseBody":
+      case IDEMethod.FetchFullResponseBody:
         this.handleFetchFullResponseBody(payload.params?.request);
         break;
-      case "IDE.getTheme":
+      case IDEMethod.GetTheme:
         this.handleGetTheme(payload);
         break;
       default:

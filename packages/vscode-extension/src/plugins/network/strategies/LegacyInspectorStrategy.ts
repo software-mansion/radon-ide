@@ -21,7 +21,7 @@ export default class LegacyInspectorStrategy extends BaseInspectorStrategy {
     this.inspectorBridge = this.plugin.inspectorBridge;
   }
 
-  private handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
+  protected handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
     const { payload } = message;
 
     if (payload.method.startsWith("Network.")) {
@@ -77,23 +77,6 @@ export default class LegacyInspectorStrategy extends BaseInspectorStrategy {
     );
   }
 
-  public handleWebviewMessage(message: WebviewMessage) {
-    try {
-      switch (message.command) {
-        case WebviewCommand.CDPCall:
-          this.handleCDPMessage(message);
-          break;
-        case WebviewCommand.IDECall:
-          this.handleIDEMessage(message);
-          break;
-        default:
-          Logger.warn("Unknown message type received");
-      }
-    } catch (error) {
-      Logger.error("Invalid WebSocket message format:", error);
-    }
-  }
-
   public activate(): void {
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
     this.setupListeners();
@@ -104,10 +87,6 @@ export default class LegacyInspectorStrategy extends BaseInspectorStrategy {
     disposeAll(this.devtoolsListeners);
     this.sendCDPMessage({ method: NetworkMethod.Disable, params: {} });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
-  }
-
-  public openTool(): void {
-    commands.executeCommand(`RNIDE.Tool.Network.view.focus`);
   }
 
   public dispose(): void {

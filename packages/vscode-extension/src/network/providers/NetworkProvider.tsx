@@ -13,7 +13,7 @@ import useNetworkTracker, {
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { NetworkLog } from "../types/networkLog";
-import { WebviewMessage, WebviewCommand, NetworkMethod } from "../types/panelMessageProtocol";
+import { WebviewMessage, WebviewCommand, NetworkMethod, IDEMethod } from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
 import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
@@ -73,7 +73,7 @@ function createThemeResponsePromise(messageId: string) {
   const listener = (message: MessageEvent) => {
     try {
       const { payload }: WebviewMessage = message.data;
-      if (payload.method !== "IDE.Theme" || payload.messageId !== messageId) {
+      if (payload.method !== IDEMethod.Theme || payload.messageId !== messageId) {
         return;
       }
 
@@ -159,7 +159,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
     // Send the message to the network-plugin backend
     sendWebviewIDEMessage({
-      method: "IDE.getTheme",
+      method: IDEMethod.GetTheme,
       messageId: messageId,
       params: {
         themeDescriptor,
@@ -181,7 +181,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
     sendWebviewIDEMessage({
       messageId: id,
-      method: "IDE.fetchFullResponseBody",
+      method: IDEMethod.FetchFullResponseBody,
       params: {
         request: request,
       },

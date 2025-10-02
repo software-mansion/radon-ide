@@ -131,8 +131,7 @@ const useNetworkTracker = (): NetworkTracker => {
       }
 
       // Timestamp check was removed because Network.requestExtraInfo does not have information about it
-      // but provides response duration
-      const haveRequiredFields = payload.params?.requestId;
+      const haveRequiredFields = !!payload.params?.requestId;
       const isNetworkEvent = NETWORK_EVENTS.includes(payload.method as NetworkEvent);
 
       if (!isNetworkEvent || !haveRequiredFields) {

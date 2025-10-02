@@ -127,7 +127,7 @@ export default class NewInspectorStrategy extends BaseInspectorStrategy {
     this.broadcastCDPMessage(message);
   }
 
-  private handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
+  protected handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
     const { payload } = message;
 
     switch (payload.method) {
@@ -161,29 +161,8 @@ export default class NewInspectorStrategy extends BaseInspectorStrategy {
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
   }
 
-  public openTool(): void {
-    commands.executeCommand(`RNIDE.Tool.Network.view.focus`);
-  }
-
   public dispose(): void {
     disposeAll(this.disposables);
-  }
-
-  public handleWebviewMessage(message: WebviewMessage): void {
-    try {
-      switch (message.command) {
-        case WebviewCommand.CDPCall:
-          this.handleCDPMessage(message);
-          break;
-        case WebviewCommand.IDECall:
-          this.handleIDEMessage(message);
-          break;
-        default:
-          Logger.warn("Unknown message type received");
-      }
-    } catch (error) {
-      Logger.error("Invalid WebSocket message format:", error);
-    }
   }
 
   public get pluginAvailable() {

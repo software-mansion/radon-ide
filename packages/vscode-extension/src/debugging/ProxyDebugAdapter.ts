@@ -18,6 +18,7 @@ import { startDebugging } from "./startDebugging";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
 import { NetworkMethod } from "../network/types/panelMessageProtocol";
+import { NetworkBridgeGetResponseBodyArgs } from "../project/bridge";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
@@ -278,7 +279,7 @@ export class ProxyDebugAdapter extends DebugSession {
   private async disableNetworkInspector() {
     await this.cdpProxy.injectDebuggerCommand({ method: NetworkMethod.Disable, params: {} });
   }
-  private async getResponseBody(args: any) {
+  private async getResponseBody(args: NetworkBridgeGetResponseBodyArgs) {
     try {
       const result = await this.cdpProxy.injectDebuggerCommand({
         method: NetworkMethod.GetResponseBody,

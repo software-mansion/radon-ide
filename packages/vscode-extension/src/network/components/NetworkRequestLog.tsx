@@ -315,8 +315,8 @@ function TableBody({
     handleSelectedRequest(id);
   };
 
-  const isSelectedNetworkLog = (log: NetworkLog) => selectedNetworkLog?.requestId === log.requestId;
-  const isRequestFailed = (log: NetworkLog) =>
+  const isSelected = (log: NetworkLog) => selectedNetworkLog?.requestId === log.requestId;
+  const isFailed = (log: NetworkLog) =>
     log.currentState === NetworkEvent.LoadingFailed ||
     Number(log.response?.status) >= 400;
 
@@ -341,12 +341,12 @@ function TableBody({
               }}
               className={classNames(
                 "table-row",
-                isSelectedNetworkLog(log) && "selected",
-                isRequestFailed(log) && "failed"
+                isSelected(log) && "selected",
+                isFailed(log) && "failed"
               )}
               onClick={() =>
                 innerHandleSelectedRequest(
-                  isSelectedNetworkLog(log) ? null : log.requestId,
+                  isSelected(log) ? null : log.requestId,
                   virtualRow.index
                 )
               }>

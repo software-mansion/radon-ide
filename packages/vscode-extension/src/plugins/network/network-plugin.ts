@@ -1,4 +1,4 @@
-import { Disposable, window } from "vscode";
+import { commands, Disposable, window } from "vscode";
 import { NetworkBridge, RadonInspectorBridge } from "../../project/bridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
@@ -12,17 +12,16 @@ import NewInspectorStrategy from "./strategies/NewInspectorStrategy";
 export const NETWORK_PLUGIN_ID = "network";
 const ENABLE_NEW_INSPECTOR = true;
 
+export type BroadcastListener = (message: WebviewMessage) => void;
+
 export interface InspectorStrategy {
   activate(): void;
   deactivate(): void;
-  openTool(): void;
   dispose(): void;
   onMessageBroadcast(cb: BroadcastListener): Disposable;
   handleWebviewMessage(message: WebviewMessage): void;
   readonly pluginAvailable: boolean;
 }
-
-export type BroadcastListener = (message: WebviewMessage) => void;
 
 let initialized = false;
 async function initialize() {
@@ -45,8 +44,7 @@ async function initialize() {
 export class NetworkPlugin implements ToolPlugin {
   public readonly id: ToolKey = NETWORK_PLUGIN_ID;
   public readonly label = "Network";
-  public readonly persist = true;
-
+  public readonly persist = false;
   public toolInstalled = false;
 
   private readonly strategy: InspectorStrategy;
@@ -73,18 +71,17 @@ export class NetworkPlugin implements ToolPlugin {
     this.strategy.deactivate();
   }
 
-  openTool(): void {
-    this.strategy.openTool();
-  }
-
   dispose() {
     this.strategy.dispose();
   }
-
+  
+  public openTool(): void {
+    commands.executeCommand(`RNIDE.Tool.Network.view.focus`);
+  }
   public onMessageBroadcast(cb: BroadcastListener): Disposable {
     return this.strategy.onMessageBroadcast(cb);
   }
-
+  
   handleWebviewMessage(message: WebviewMessage) {
     this.strategy.handleWebviewMessage(message);
   }

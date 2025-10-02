@@ -23,6 +23,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
   const language = responseData ? determineLanguage(contentType, responseData) : "plaintext";
 
   const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;
+  const dataFetchFailure = requestFailed && !responseData;
 
   return (
     <>
@@ -36,7 +37,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
             onClick={() => {
               fetchAndOpenResponseInEditor(networkLog);
             }}
-            disabled={requestFailed && !responseData}>
+            disabled={dataFetchFailure}>
             <span className="codicon codicon-chrome-restore" />
           </IconButton>
         }
@@ -47,7 +48,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
             <span className="codicon codicon-warning" /> Response too large, showing truncated data.
           </pre>
         )}
-        {requestFailed && !responseData ? (
+        {dataFetchFailure ? (
           <div className="response-tab-failed-fetch-information">
             <h4>Failed to load response data</h4>
           </div>
