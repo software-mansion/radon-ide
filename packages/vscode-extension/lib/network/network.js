@@ -51,7 +51,7 @@ function enableNetworkInspect(networkProxy) {
   async function sendResponseBody(responsePromise, message) {
     const responseBodyData = responsePromise ? await responsePromise : undefined;
     const responseObject = {
-      id: message.id,
+      messageId: message.messageId,
       result: responseBodyData,
     };
     networkProxy.sendMessage("cdp-message", JSON.stringify(responseObject));
