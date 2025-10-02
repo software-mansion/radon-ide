@@ -60,10 +60,17 @@
     npx react-native run-ios --extra-params OTHER_CFLAGS="-DREACT_NATIVE_DEBUGGER_ENABLED=1"
    ```
 
-The experimental network inspector should now be enabled on IOS device. The user must send message with method `Network.enable` command through debugger web socket connection to enable network request recording:
+  The experimental network inspector should now be enabled on IOS device. The user must send message with method `Network.enable` command through debugger web socket connection to enable network request recording:
 
-```ts
-{method: "Network.enable", params: {}}
-```
+  ```ts
+  {method: "Network.enable", params: {}}
+  ```
 
-The network request are all also sent through the debugger web socket connection. The connection can be found by quering endpoint: `http://localhost:METRO_PORT/json`
+  The network request are all also sent through the debugger web socket connection. The connection can be found by quering endpoint: `http://localhost:METRO_PORT/json`
+
+3. To enablen new inspector support in network-plugin set the flag:
+  ```ts
+  ENABLE_NEW_INSPECTOR = true;
+  ```
+
+

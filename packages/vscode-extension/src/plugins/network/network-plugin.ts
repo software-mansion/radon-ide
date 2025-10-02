@@ -10,7 +10,12 @@ import LegacyInspectorStrategy from "./strategies/LegacyInspectorStrategy";
 import NewInspectorStrategy from "./strategies/NewInspectorStrategy";
 
 export const NETWORK_PLUGIN_ID = "network";
-const ENABLE_NEW_INSPECTOR = true;
+/**
+ * Toggles usage of handling the new network inspector devtools communication.
+ * Disabled by default until new network inspector is integradated into react native.
+ * The instructions to enable the features are in plugins/network/README.md
+ */
+const ENABLE_NEW_INSPECTOR = false;
 
 export type BroadcastListener = (message: WebviewMessage) => void;
 
