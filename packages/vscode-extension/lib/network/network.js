@@ -111,6 +111,7 @@ function enableNetworkInspect(networkProxy) {
             canceled: true,
           });
         } catch (error) {}
+        xhr._aborted = true;
       });
 
       xhr.addEventListener("error", (event) => {
@@ -123,6 +124,7 @@ function enableNetworkInspect(networkProxy) {
             cancelled: false,
           });
         } catch (error) {}
+        xhr._error = true;
       });
 
       xhr.addEventListener("readystatechange", (event) => {
@@ -134,6 +136,10 @@ function enableNetworkInspect(networkProxy) {
       });
 
       xhr.addEventListener("load", (event) => {
+        if(xhr._error || xhr._aborted) {
+          return;
+        }
+
         try {
           const mimeType = mimeTypeFromResponseType(xhr.responseType);
           sendCDPMessage("Network.responseReceived", {
@@ -156,6 +162,9 @@ function enableNetworkInspect(networkProxy) {
       });
 
       xhr.addEventListener("loadend", (event) => {
+        if(xhr._error || xhr._aborted) {
+          return;
+        }
         // We only store the xhr response body object, so we only put on
         // the buffer when loading ends, to get the actual loaded response
         const responsePromise = readResponseText(xhr);
