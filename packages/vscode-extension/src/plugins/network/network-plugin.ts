@@ -74,14 +74,14 @@ export class NetworkPlugin implements ToolPlugin {
   dispose() {
     this.strategy.dispose();
   }
-  
+
   public openTool(): void {
     commands.executeCommand(`RNIDE.Tool.Network.view.focus`);
   }
   public onMessageBroadcast(cb: BroadcastListener): Disposable {
     return this.strategy.onMessageBroadcast(cb);
   }
-  
+
   handleWebviewMessage(message: WebviewMessage) {
     this.strategy.handleWebviewMessage(message);
   }

@@ -20,7 +20,9 @@ export abstract class BaseInspectorStrategy implements InspectorStrategy {
   public abstract activate(): void;
   public abstract deactivate(): void;
   public abstract dispose(): void;
-  protected abstract handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void;
+  protected abstract handleCDPMessage(
+    message: WebviewMessage & { command: WebviewCommand.CDPCall }
+  ): void;
   public abstract readonly pluginAvailable: boolean;
 
   // #endregion

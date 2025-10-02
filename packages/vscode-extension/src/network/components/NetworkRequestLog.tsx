@@ -317,8 +317,7 @@ function TableBody({
 
   const isSelected = (log: NetworkLog) => selectedNetworkLog?.requestId === log.requestId;
   const isFailed = (log: NetworkLog) =>
-    log.currentState === NetworkEvent.LoadingFailed ||
-    Number(log.response?.status) >= 400;
+    log.currentState === NetworkEvent.LoadingFailed || Number(log.response?.status) >= 400;
 
   return (
     <VscodeTableBody style={{ height: `${rowVirtualizer.getTotalSize()}px` }} slot="body">
@@ -345,10 +344,7 @@ function TableBody({
                 isFailed(log) && "failed"
               )}
               onClick={() =>
-                innerHandleSelectedRequest(
-                  isSelected(log) ? null : log.requestId,
-                  virtualRow.index
-                )
+                innerHandleSelectedRequest(isSelected(log) ? null : log.requestId, virtualRow.index)
               }>
               {LOG_DETAILS_CONFIG.map(({ title, getClass }, i) => (
                 <VscodeTableCell

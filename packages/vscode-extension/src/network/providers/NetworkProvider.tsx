@@ -13,7 +13,12 @@ import useNetworkTracker, {
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { NetworkLog } from "../types/networkLog";
-import { WebviewMessage, WebviewCommand, NetworkMethod, IDEMethod } from "../types/panelMessageProtocol";
+import {
+  WebviewMessage,
+  WebviewCommand,
+  NetworkMethod,
+  IDEMethod,
+} from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
 import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
