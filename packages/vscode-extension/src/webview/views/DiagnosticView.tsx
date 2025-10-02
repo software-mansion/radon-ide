@@ -77,6 +77,13 @@ function DiagnosticView() {
           <span slot="start" className="codicon codicon-refresh" />
           Re-run checks
         </Button>
+        <Button
+          onClick={() => project.saveDiagnosticReport()}
+          type="secondary"
+          data-testid="save-diagnostic-report-button">
+          <span slot="start" className="codicon codicon-save" />
+          Save Diagnostic Report
+        </Button>
       </div>
     </div>
   );

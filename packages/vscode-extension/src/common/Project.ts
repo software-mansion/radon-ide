@@ -206,6 +206,8 @@ export interface ProjectInterface {
   reportIssue(): Promise<void>;
   sendTelemetry(eventName: string, properties?: TelemetryEventProperties): Promise<void>;
 
+  saveDiagnosticReport(): Promise<void>;
+
   addListener<K extends keyof ProjectEventMap>(
     eventType: K,
     listener: ProjectEventListener<ProjectEventMap[K]>

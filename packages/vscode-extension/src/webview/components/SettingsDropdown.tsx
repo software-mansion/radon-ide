@@ -53,6 +53,15 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="settings-dropdown-save-diagnostic-report-button"
+            onSelect={() => {
+              project.saveDiagnosticReport();
+            }}>
+            <span className="codicon codicon-save" />
+            Save diagnostic report...
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
             data-testid="settings-dropdown-manage-devices-button"
             onSelect={() => {
               openModal("Manage Devices", <ManageDevicesView />);

@@ -749,6 +749,27 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.telemetry.sendTelemetry(eventName, properties);
   }
 
+  public async saveDiagnosticReport(): Promise<void> {
+    const { saveDiagnosticReport } = await import("../utilities/diagnosticReport");
+    const extensionVersion = extensionContext.extension.packageJSON.version;
+    const appRootPath = this.applicationContext.appRootFolder;
+    const applicationDependencies =
+      this.workspaceStateManager.getState().applicationContext.applicationDependencies;
+    const environmentDependencies = this.environmentDependencyManager["stateManager"].getState();
+    const defaultSavingLocation =
+      this.workspaceStateManager.getState().workspaceConfiguration.general
+        .defaultMultimediaSavingLocation || undefined;
+
+    await saveDiagnosticReport(
+      extensionVersion,
+      appRootPath,
+      applicationDependencies,
+      environmentDependencies,
+      this.outputChannelRegistry,
+      defaultSavingLocation
+    );
+  }
+
   // #endregion Telemetry
 
   // #region Event Emitter
