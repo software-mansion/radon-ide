@@ -2,9 +2,11 @@ import React, { useState, forwardRef, useRef } from "react";
 import styles from "./styles.module.css";
 import { CustomSelect } from "../CustomSelect";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
+import Captcha, { type CaptchaRef } from "./Captcha";
 
 const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
   const formRef = useRef();
+  const captchaRef = useRef<CaptchaRef>();
   const [isSent, setisSent] = useState(false);
   const [submitDisabled, setSubmitDisabled] = useState(false);
   const { siteConfig } = useDocusaurusContext();
@@ -149,6 +151,8 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
                   onChange={handleChange}
                 />
               </div>
+
+              <Captcha ref={captchaRef} />
               <div>
                 <button className={styles.submitButton} disabled={submitDisabled} type="submit">
                   Submit form
