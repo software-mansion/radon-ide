@@ -1197,7 +1197,6 @@
     "rollup": "^4.40.0",
     "rollup-plugin-license": "^3.6.0",
     "semver": "^7.7.1",
-    "shiki": "^3.12.2",
     "sinon": "^20.0.0",
     "source-map": "^0.7.6",
     "tar": "^7.4.3",
