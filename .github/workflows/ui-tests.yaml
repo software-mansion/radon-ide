@@ -59,6 +59,9 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - id: set-matrix
         run: |
           if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
