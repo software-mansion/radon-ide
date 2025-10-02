@@ -39,7 +39,7 @@ export class AndroidPhysicalDevice extends AndroidDevice {
   }
 }
 
-const ADB_ENTRY_REGEX = /^([a-z0-9\-]+)\s+device\s+((\w+:[\w\-]+\s?)*)$/;
+const ADB_ENTRY_REGEX = /^([a-zA-Z0-9\-]+)\s+device\s+((\w+:[\w\-]+\s?)*)$/;
 
 export async function listConnectedDevices(): Promise<DeviceInfo[]> {
   const { stdout } = await exec(ADB_PATH, ["devices", "-l"]);
