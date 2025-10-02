@@ -1,14 +1,15 @@
 import React, { useState, forwardRef, useRef } from "react";
 import styles from "./styles.module.css";
 import { CustomSelect } from "../CustomSelect";
-import Captcha, { type CaptchaRef } from "./Captcha";
+import Captcha from "./Captcha";
 
-const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
+const isProduction = process.env.NODE_ENV === "production";
+const API_URL = isProduction ? "https://swmansion.dev" : "http://localhost:8787";
+
+const EnterpriseForm = forwardRef<HTMLDivElement, {}>((_, ref) => {
   const formRef = useRef();
-  const captchaRef = useRef<CaptchaRef>();
   const [isSent, setisSent] = useState(false);
   const [submitDisabled, setSubmitDisabled] = useState(false);
-  const API_URL = "https://integration-sandbox.swm-test.workers.dev/api/request-contact";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -17,12 +18,14 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
     role: "",
     teamSize: "",
     message: "",
+    token: "",
   });
 
   const [error, setError] = useState({
     name: false,
     email: false,
     companyName: false,
+    token: false,
   });
 
   const err = "This field is required.";
@@ -32,12 +35,17 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleCaptchaSolve = (token: string) => {
+    setFormData((prev) => ({ ...prev, token }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {
       name: formData.name.trim() === "",
       email: formData.email.trim() === "",
       companyName: formData.companyName.trim() === "",
+      token: formData.token.trim() === "",
     };
 
     setError(newErrors);
@@ -45,7 +53,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
     if (Object.values(newErrors).some((val) => val)) return;
     try {
       setSubmitDisabled(true);
-      const response = await fetch(API_URL, {
+      const response = await fetch(API_URL + "/api/request-contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -150,7 +158,11 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
                 />
               </div>
 
-              <Captcha ref={captchaRef} />
+              <div>
+                <Captcha onSolve={handleCaptchaSolve} />
+                {error.token && <p className={styles.error}>{err}</p>}
+              </div>
+
               <div>
                 <button className={styles.submitButton} disabled={submitDisabled} type="submit">
                   Submit form

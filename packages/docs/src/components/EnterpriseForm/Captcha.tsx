@@ -1,4 +1,4 @@
-import { useEffect, forwardRef, useRef, useImperativeHandle } from "react";
+import { useEffect, useRef } from "react";
 
 declare global {
   interface Window {
@@ -17,43 +17,19 @@ declare global {
   }
 }
 
-export interface CaptchaRef {
-  reset: () => void;
-  getToken: () => string;
+interface CaptchaProps {
+  onSolve: (token: string) => void;
 }
 
 const CAPTCHA_ID = "recaptcha-container";
-
 const isProduction = process.env.NODE_ENV === "production";
 
 const reCaptchaSiteKey = isProduction
   ? "6Lcz8tsrAAAAANZ7zDBvT5u6YgjqVowQNBcV3MB8"
   : "6Lc49dsrAAAAAPaODuCn15YUCo_0tnrofIGE9pdy";
 
-const Captcha = forwardRef((_, captchaRef) => {
-  const captchaId = useRef<number | null>(null);
-
-  useImperativeHandle(
-    captchaRef,
-    () => ({
-      reset: () => {
-        if (
-          captchaId.current !== null &&
-          window.grecaptcha?.enterprise &&
-          window.grecaptcha.enterprise.getResponse(captchaId.current)
-        ) {
-          window.grecaptcha.enterprise.reset(captchaId.current);
-        }
-      },
-      getToken: () => {
-        if (captchaId.current !== null && window.grecaptcha?.enterprise) {
-          return window.grecaptcha.enterprise.getResponse(captchaId.current);
-        }
-        return "";
-      },
-    }),
-    []
-  );
+const Captcha = ({ onSolve }: CaptchaProps) => {
+  const widgetId = useRef<number | null>(null);
 
   useEffect(() => {
     window.captchaOnLoad = () => {
@@ -62,8 +38,9 @@ const Captcha = forwardRef((_, captchaRef) => {
         return;
       }
 
-      captchaId.current = window.grecaptcha.enterprise.render(CAPTCHA_ID, {
+      widgetId.current = window.grecaptcha.enterprise.render(CAPTCHA_ID, {
         sitekey: reCaptchaSiteKey,
+        callback: onSolve,
       });
     };
     if (document.getElementById("grecaptcha-script") === null) {
@@ -79,7 +56,8 @@ const Captcha = forwardRef((_, captchaRef) => {
       window.captchaOnLoad();
     }
   }, []);
+
   return <div id={CAPTCHA_ID} />;
-});
+};
 
 export default Captcha;
