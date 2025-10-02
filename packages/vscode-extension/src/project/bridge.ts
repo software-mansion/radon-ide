@@ -78,7 +78,7 @@ export interface RadonInspectorBridgeEvents {
   appReady: [];
   connected: [];
   disconnected: [];
-  navigationChanged: [{ displayName: string; id: string }];
+  navigationChanged: [{ displayName: string; id: string; canGoBack: boolean }];
   navigationRouteListUpdated: [NavigationRoute[]];
   fastRefreshStarted: [];
   fastRefreshComplete: [];

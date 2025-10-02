@@ -2,12 +2,15 @@ import fs from "fs";
 import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, TouchPoint, DeviceButtonType } from "../common/Project";
+import { AppPermissionType, TouchPoint, DeviceButtonType } from "../common/Project";
 import { tryAcquiringLock } from "../utilities/common";
-import { extensionContext } from "../utilities/extensionContext";
-import { getTelemetryReporter } from "../utilities/telemetry";
-import { getChanges } from "../utilities/diffing";
-import { DeviceInfo, DevicePlatform, DeviceRotation, FrameRateReport } from "../common/State";
+import {
+  DeviceInfo,
+  DevicePlatform,
+  DeviceRotation,
+  DeviceSettings,
+  FrameRateReport,
+} from "../common/State";
 
 const LEFT_META_HID_CODE = 0xe3;
 const RIGHT_META_HID_CODE = 0xe7;
@@ -16,32 +19,15 @@ const C_KEY_HID_CODE = 0x06;
 
 export const REBOOT_TIMEOUT = 3000;
 
-export const DEVICE_SETTINGS_KEY = "device_settings_v4";
-export const DEVICE_SETTINGS_DEFAULT: DeviceSettings = {
-  appearance: "dark",
-  contentSize: "normal",
-  location: {
-    latitude: 50.048653,
-    longitude: 19.965474,
-    isDisabled: false,
-  },
-  hasEnrolledBiometrics: false,
-  locale: "en_US",
-  replaysEnabled: false,
-  showTouches: false,
-};
-
 export abstract class DeviceBase implements Disposable {
   protected preview: Preview | undefined;
   private previewStartPromise: Promise<string> | undefined;
   private acquired = false;
   private pressingLeftMetaKey = false;
   private pressingRightMetaKey = false;
-  protected deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
-    DEVICE_SETTINGS_KEY,
-    DEVICE_SETTINGS_DEFAULT
-  );
   private _rotation: DeviceRotation = DeviceRotation.Portrait;
+
+  constructor(protected deviceSettings: DeviceSettings) {}
 
   abstract get lockFilePath(): string;
 
@@ -64,14 +50,6 @@ export abstract class DeviceBase implements Disposable {
   }
 
   async updateDeviceSettings(settings: DeviceSettings) {
-    const changes = getChanges(this.deviceSettings, settings);
-
-    getTelemetryReporter().sendTelemetryEvent("device-settings:update-device-settings", {
-      platform: this.platform,
-      changedSetting: JSON.stringify(changes),
-    });
-
-    extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
     this.deviceSettings = settings;
     this.applyPreviewSettings();
 

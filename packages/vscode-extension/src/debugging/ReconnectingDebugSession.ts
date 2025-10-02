@@ -1,25 +1,27 @@
-import { EventEmitter, Disposable } from "vscode";
+import { Disposable } from "vscode";
 import { Cdp } from "vscode-cdp-proxy";
-import { Metro } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
 import { sleep } from "../utilities/retry";
 import { DebugSession, DebugSource, JSDebugConfiguration } from "./DebugSession";
 import { disposeAll } from "../utilities/disposables";
 import { DevtoolsServer } from "../project/devtools";
+import { MetroSession } from "../project/metro";
+import { DeviceInfo } from "../common/State";
+import { getDebuggerTargetForDevice } from "../project/DebuggerTarget";
 
 const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {
   private disposables: Disposable[] = [];
   private reconnectCancelToken: CancelToken | undefined;
-  private readonly sessionTerminatedEventEmitter = new EventEmitter<void>();
 
   private isRunning: boolean = false;
 
-  public readonly onDebugSessionTerminated = this.sessionTerminatedEventEmitter.event;
+  public readonly onDebugSessionTerminated = this.debugSession.onDebugSessionTerminated;
 
   constructor(
     private readonly debugSession: DebugSession & Partial<Disposable>,
-    private readonly metro: Metro,
+    private readonly metro: MetroSession,
+    private readonly deviceInfo: DeviceInfo,
     devtoolsServer?: DevtoolsServer
   ) {
     this.disposables.push(debugSession.onDebugSessionTerminated(this.maybeReconnect));
@@ -64,14 +66,17 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
           // if we're connected to a responsive session, we can break
           break;
         }
-        const websocketAddress = await this.metro.getDebuggerURL(undefined, cancelToken);
-        if (!websocketAddress) {
+        const target = await getDebuggerTargetForDevice({
+          metro: this.metro,
+          deviceInfo: this.deviceInfo,
+          cancelToken,
+        });
+        if (!target) {
           throw new Error("No connected device listed");
         }
         await this.debugSession.startJSDebugSession({
-          websocketAddress,
+          ...target,
           displayDebuggerOverlay: false,
-          isUsingNewDebugger: this.metro.isUsingNewDebugger,
           expoPreludeLineCount: this.metro.expoPreludeLineCount,
           sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
         });
@@ -88,8 +93,6 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   async dispose() {
     disposeAll(this.disposables);
     this.reconnectCancelToken?.cancel();
-    this.sessionTerminatedEventEmitter.fire();
-    this.sessionTerminatedEventEmitter.dispose();
     await this.debugSession.dispose?.();
   }
 
@@ -101,6 +104,7 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   public onProfilingCPUStopped = this.debugSession.onProfilingCPUStopped;
   public onBindingCalled = this.debugSession.onBindingCalled;
   public onScriptParsed = this.debugSession.onScriptParsed;
+  public onJSDebugSessionStarted = this.debugSession.onJSDebugSessionStarted;
   public onNetworkEvent = this.debugSession.onNetworkEvent;
 
   public async startParentDebugSession(): Promise<void> {

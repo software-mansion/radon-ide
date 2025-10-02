@@ -1,14 +1,20 @@
 import { Disposable, workspace } from "vscode";
-import { Metro } from "../project/metro";
 import { sleep } from "../utilities/retry";
 import { RADON_CONNECT_PORT_KEY } from "./Connector";
 import { extensionContext } from "../utilities/extensionContext";
+import { Metro, MetroSession } from "../project/metro";
+import { CancelToken } from "../utilities/cancelToken";
+import { waitForDebuggerTarget } from "../project/DebuggerTarget";
 export const PORT_SCAN_INTERVAL_MS = 4000;
 export const DEFAULT_PORTS = [8081, 8082];
 
 export type ScannerDelegate = {
   onPortStatusUpdated: () => void;
-  onDeviceCandidateFound: (metro: Metro, websocketAddress: string) => Promise<void>;
+  onDeviceCandidateFound: (
+    metro: MetroSession,
+    websocketAddress: string,
+    isUsingNewDebugger: boolean
+  ) => Promise<void>;
 };
 
 function isInWorkspace(absoluteFilePath: string) {
@@ -18,6 +24,7 @@ function isInWorkspace(absoluteFilePath: string) {
   );
 }
 
+const DEBUGGER_LOOKUP_TIMEOUT_MS = 5000;
 export class Scanner implements Disposable {
   public portsStatus: Map<number, string> = new Map();
   private disposed = false;
@@ -50,19 +57,28 @@ export class Scanner implements Disposable {
   }
 
   private async verifyAndConnect(port: number, projectRoot: string) {
-    const metro = new Metro(port, [projectRoot]);
-    const websocketAddress = await metro.getDebuggerURL();
-    if (!websocketAddress) {
+    const metro = new Metro(port, projectRoot);
+
+    const timeoutCancelToken = new CancelToken();
+    setTimeout(() => timeoutCancelToken.cancel(), DEBUGGER_LOOKUP_TIMEOUT_MS);
+
+    const debuggerTarget = await waitForDebuggerTarget({ metro, cancelToken: timeoutCancelToken });
+
+    if (!debuggerTarget) {
       this.portsStatus.set(port, "no connected device listed");
       return false;
     }
-    if (!metro.isUsingNewDebugger) {
+    if (!debuggerTarget.isUsingNewDebugger) {
       this.portsStatus.set(port, "using old debugger");
       return false;
     }
 
     this.portsStatus.set(port, "connecting...");
-    await this.delegate?.onDeviceCandidateFound(metro, websocketAddress);
+    await this.delegate?.onDeviceCandidateFound(
+      metro,
+      debuggerTarget.websocketAddress,
+      debuggerTarget.isUsingNewDebugger
+    );
   }
 
   private async scanPort(port: number) {

@@ -108,4 +108,8 @@ export class EditorBindings {
       }
     );
   }
+
+  public async openLaunchConfigurationFile() {
+    commands.executeCommand("workbench.action.debug.configure");
+  }
 }

@@ -33,7 +33,7 @@ function InspectOverlay({
 }: InspectOverlayProps) {
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
-  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
   const appOrientation = use$(selectedDeviceSessionState.applicationSession.appOrientation);
   const deviceSessionStatus = use$(selectedDeviceSessionState.status);
 

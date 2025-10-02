@@ -18,6 +18,7 @@ button {
   overflow-y: auto;
 
   --menu-item-padding: 0 6px;
+  --base-transform: translateX(0) translateY(0);
 }
 
 .dropdown-menu-subcontent {
@@ -117,27 +118,59 @@ button {
 @keyframes slideUpAndFade {
   from {
     opacity: 0;
-    transform: translateY(3px);
+    transform: var(--base-transform) translateY(3px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: var(--base-transform) translateY(0);
   }
 }
 
 @keyframes slideDownAndFade {
   from {
     opacity: 0;
-    transform: translateY(-3px);
+    transform: var(--base-transform) translateY(-3px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: var(--base-transform) translateY(0);
+  }
+}
+
+@keyframes slideRightAndFade {
+  from {
+    opacity: 0;
+    transform: var(--base-transform) translateX(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: var(--base-transform) translateX(0);
+  }
+}
+
+@keyframes slideLeftAndFade {
+  from {
+    opacity: 0;
+    transform: var(--base-transform) translateX(2px);
+  }
+  to {
+    opacity: 1;
+    transform: var(--base-transform) translateX(0);
   }
 }
 
 @media (max-width: 460px) {
   .dropdown-menu-subcontent {
-    transform: translateX(85%) translateY(28px);
+    --base-transform: translateX(85%) translateY(28px);
+    transform: var(--base-transform);
+  }
+
+  .dropdown-menu-content[data-side="left"],
+  .dropdown-menu-subcontent[data-side="left"] {
+    animation-name: slideUpAndFade;
+  }
+  .dropdown-menu-content[data-side="right"],
+  .dropdown-menu-subcontent[data-side="right"] {
+    animation-name: slideUpAndFade;
   }
 }

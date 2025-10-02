@@ -13,12 +13,7 @@ import "./shared/SwitchGroup.css";
 
 import Label from "./shared/Label";
 import { useProject } from "../providers/ProjectProvider";
-import {
-  AppPermissionType,
-  DeviceRotationDirection,
-  DeviceSettings,
-  ProjectInterface,
-} from "../../common/Project";
+import { AppPermissionType, DeviceRotationDirection } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
@@ -28,7 +23,7 @@ import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
-import { DevicePlatform, DeviceRotation } from "../../common/State";
+import { DevicePlatform, DeviceRotation, DeviceSettings } from "../../common/State";
 import { PropsWithDataTest } from "../../common/types";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
@@ -90,36 +85,19 @@ const setOrientationOptions: Array<{
     rotation: "90deg",
   },
 ];
-const rotateOptions: Array<{
-  label: string;
-  value: DeviceRotationDirection;
-  icon: string;
-  commandName: string;
-}> = [
-  {
-    label: "Clockwise",
-    value: DeviceRotationDirection.Clockwise,
-    icon: "refresh",
-    commandName: "RNIDE.rotateDeviceClockwise",
-  },
-  {
-    label: "Anticlockwise",
-    value: DeviceRotationDirection.Anticlockwise,
-    icon: "refresh mirror",
-    commandName: "RNIDE.rotateDeviceAnticlockwise",
-  },
-];
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
-  const showDeviceFrame = use$(store$.workspaceConfiguration.showDeviceFrame);
-  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const showDeviceFrame = use$(store$.workspaceConfiguration.userInterface.showDeviceFrame);
+  const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
 
   const platform = use$(selectedDeviceSessionState.deviceInfo.platform);
 
-  const { project, deviceSettings } = useProject();
+  const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
+
+  const { project } = useProject();
 
   const { openModal } = useModal();
 
@@ -143,10 +121,9 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               className="radio-group-root"
               defaultValue={deviceSettings.appearance}
               onValueChange={(value) => {
-                project.updateDeviceSettings({
-                  ...deviceSettings,
-                  appearance: value as DeviceSettings["appearance"],
-                });
+                store$.workspaceConfiguration.deviceSettings.appearance.set(
+                  value as DeviceSettings["appearance"]
+                );
               }}>
               <div className="radio-group-center">
                 <RadioGroup.Item
@@ -183,10 +160,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 max={6}
                 step={1}
                 onValueCommit={([value]) => {
-                  project.updateDeviceSettings({
-                    ...deviceSettings,
-                    contentSize: contentSizes[value],
-                  });
+                  store$.workspaceConfiguration.deviceSettings.contentSize.set(contentSizes[value]);
                 }}>
                 <Slider.Track className="slider-track">
                   <Slider.Range className="slider-range" />
@@ -207,14 +181,14 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <div className="device-settings-margin" />
           </form>
           <CommandItem
-            project={project}
+            onSelect={() => project.dispatchHomeButtonPress()}
             commandName="RNIDE.deviceHomeButtonPress"
             label="Press Home Button"
             icon="home"
             dataTest="press-home-button"
           />
           <CommandItem
-            project={project}
+            onSelect={() => project.dispatchAppSwitchButtonPress()}
             commandName="RNIDE.deviceAppSwitchButtonPress"
             label="Open App Switcher"
             icon="chrome-restore"
@@ -235,15 +209,20 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 sideOffset={2}
                 alignOffset={-5}>
                 <Label>Rotate</Label>
-                {rotateOptions.map((option) => (
-                  <CommandItem
-                    project={project}
-                    commandName={option.commandName}
-                    label={option.label}
-                    dataTest={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
-                    icon={option.icon}
-                  />
-                ))}
+                <CommandItem
+                  onSelect={() => project.rotateDevices(DeviceRotationDirection.Clockwise)}
+                  commandName={"RNIDE.rotateDeviceClockwise"}
+                  label={"Clockwise"}
+                  dataTest={`device-settings-set-orientation-clockwise`}
+                  icon={"refresh"}
+                />
+                <CommandItem
+                  onSelect={() => project.rotateDevices(DeviceRotationDirection.Anticlockwise)}
+                  commandName={"RNIDE.rotateDeviceAnticlockwise"}
+                  label={"Anticlockwise"}
+                  dataTest={`device-settings-set-orientation-anticlockwise`}
+                  icon={"refresh mirror"}
+                />
 
                 <div className="device-settings-margin" />
                 <Label>Set Orientation</Label>
@@ -253,7 +232,9 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                     className="dropdown-menu-item"
                     data-testid={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
                     key={index}
-                    onSelect={() => store$.workspaceConfiguration.deviceRotation.set(option.value)}>
+                    onSelect={() =>
+                      store$.workspaceConfiguration.deviceSettings.deviceRotation.set(option.value)
+                    }>
                     <span
                       className={`codicon codicon-${option.icon}`}
                       style={{ rotate: option.rotation }}
@@ -325,7 +306,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               data-testid="device-settings-enable-replays-switch"
               id="enable-replays"
               onCheckedChange={(checked) =>
-                project.updateDeviceSettings({ ...deviceSettings, replaysEnabled: checked })
+                store$.workspaceConfiguration.deviceSettings.replaysEnabled.set(checked)
               }
               defaultChecked={deviceSettings.replaysEnabled}
               style={{ marginLeft: "auto" }}>
@@ -340,7 +321,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               data-testid="device-settings-show-touches-switch"
               id="show-touches"
               onCheckedChange={(checked) =>
-                project.updateDeviceSettings({ ...deviceSettings, showTouches: checked })
+                store$.workspaceConfiguration.deviceSettings.showTouches.set(checked)
               }
               defaultChecked={deviceSettings.showTouches}
               style={{ marginLeft: "auto" }}>
@@ -355,7 +336,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               id="show-device-frame"
               data-testid="device-settings-show-device-frame-switch"
               onCheckedChange={(checked) =>
-                store$.workspaceConfiguration.showDeviceFrame.set(checked)
+                store$.workspaceConfiguration.userInterface.showDeviceFrame.set(checked)
               }
               defaultChecked={showDeviceFrame}
               style={{ marginLeft: "auto" }}>
@@ -386,14 +367,14 @@ const LocalizationItem = () => {
 };
 
 function CommandItem({
-  project,
+  onSelect,
   commandName,
   label,
   icon,
   disabled = false,
   dataTest,
 }: PropsWithDataTest<{
-  project: ProjectInterface;
+  onSelect: () => void;
   commandName: string;
   label: string;
   icon: string;
@@ -402,9 +383,7 @@ function CommandItem({
   return (
     <DropdownMenu.Item
       className="dropdown-menu-item"
-      onSelect={() => {
-        project.runCommand(commandName);
-      }}
+      onSelect={onSelect}
       disabled={disabled}
       data-testid={dataTest}>
       <span className="dropdown-menu-item-wraper">
@@ -419,7 +398,10 @@ function CommandItem({
 }
 
 const BiometricsItem = () => {
-  const { project, deviceSettings } = useProject();
+  const store$ = useStore();
+  const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
+
+  const { project } = useProject();
 
   return (
     <DropdownMenu.Sub>
@@ -434,10 +416,9 @@ const BiometricsItem = () => {
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              project.updateDeviceSettings({
-                ...deviceSettings,
-                hasEnrolledBiometrics: !deviceSettings.hasEnrolledBiometrics,
-              });
+              store$.workspaceConfiguration.deviceSettings.hasEnrolledBiometrics.set(
+                !deviceSettings.hasEnrolledBiometrics
+              );
             }}>
             <span className="codicon codicon-layout-sidebar-left" />
             Enrolled
@@ -446,14 +427,18 @@ const BiometricsItem = () => {
             )}
           </DropdownMenu.Item>
           <CommandItem
-            project={project}
+            onSelect={() => {
+              project.sendBiometricAuthorization(true);
+            }}
             commandName="RNIDE.performBiometricAuthorization"
             label="Matching ID"
             icon="layout-sidebar-left"
             disabled={!deviceSettings.hasEnrolledBiometrics}
           />
           <CommandItem
-            project={project}
+            onSelect={() => {
+              project.sendBiometricAuthorization(false);
+            }}
             commandName="RNIDE.performFailedBiometricAuthorization"
             label="Non-Matching ID"
             icon="layout-sidebar-left"

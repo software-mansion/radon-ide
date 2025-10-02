@@ -12,7 +12,6 @@ import {
 import { minimatch } from "minimatch";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { ApplicationContext } from "./ApplicationContext";
-import { MetroLauncher } from "./metro";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
@@ -29,6 +28,10 @@ import {
   DeviceType,
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
+  NavigationHistoryItem,
+  NavigationRoute,
+  NavigationState,
+  REMOVE,
   StartupMessage,
 } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
@@ -40,12 +43,16 @@ import {
   CDPDevtoolsServer,
 } from "./devtools";
 import { RadonInspectorBridge, NETWORK_EVENT_MAP, NetworkBridge } from "./bridge";
+import { MetroSession } from "./metro";
+import { getDebuggerTargetForDevice } from "./DebuggerTarget";
+
+const MAX_URL_HISTORY_SIZE = 20;
 import { isCDPMethod } from "../network/types/panelMessageProtocol";
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
   device: DeviceBase;
   buildResult: BuildResult;
-  metro: MetroLauncher;
+  metro: MetroSession;
   devtoolsServer?: DevtoolsServer;
   devtoolsPort?: number;
 }
@@ -82,6 +89,7 @@ export class ApplicationSession implements Disposable {
 
   public static async launch(
     stateManager: StateManager<ApplicationSessionState>,
+    navigationStateManager: StateManager<NavigationState>,
     {
       applicationContext,
       device,
@@ -100,6 +108,7 @@ export class ApplicationSession implements Disposable {
       buildResult.platform === DevicePlatform.IOS ? buildResult.supportedInterfaceOrientations : [];
     const session = new ApplicationSession(
       stateManager,
+      navigationStateManager,
       applicationContext,
       device,
       metro,
@@ -115,9 +124,6 @@ export class ApplicationSession implements Disposable {
     const launchArguments =
       (device.deviceInfo.platform === DevicePlatform.IOS && launchConfig.ios?.launchArguments) ||
       [];
-
-    onLaunchStage(StartupMessage.StartingPackager);
-    await cancelToken.adapt(metro.ready());
 
     const { promise: bundleErrorPromise, resolve: resolveBundleError } =
       Promise.withResolvers<void>();
@@ -161,9 +167,11 @@ export class ApplicationSession implements Disposable {
 
   private constructor(
     private readonly stateManager: StateManager<ApplicationSessionState>,
+    // owned by DeviceSession
+    private readonly navigationStateManager: StateManager<NavigationState>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
-    private readonly metro: MetroLauncher,
+    private readonly metro: MetroSession,
     private readonly websocketDevtoolsServer: DevtoolsServer | undefined,
     private readonly packageNameOrBundleId: string,
     private readonly supportedOrientations: DeviceRotation[]
@@ -239,6 +247,10 @@ export class ApplicationSession implements Disposable {
       this.cdpDevtoolsServer.dispose();
       this.cdpDevtoolsServer = undefined;
     }
+    if (this.websocketDevtoolsServer === undefined) {
+      this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
+      this.setupDevtoolsServer(this.cdpDevtoolsServer);
+    }
   }
 
   private async createDebugSession(): Promise<DebugSession & Disposable> {
@@ -249,6 +261,7 @@ export class ApplicationSession implements Disposable {
         useCustomJSDebugger: this.applicationContext.launchConfig.useCustomJSDebugger,
       }),
       this.metro,
+      this.device.deviceInfo,
       this.websocketDevtoolsServer
     );
 
@@ -384,6 +397,9 @@ export class ApplicationSession implements Disposable {
   //#region Metro event listeners
 
   private async onBundleError(message: string, source: DebugSource) {
+    if (!this.isActive) {
+      return;
+    }
     Logger.error("[Bundling Error]", message);
     this.stateManager.updateState({
       bundleError: {
@@ -415,9 +431,15 @@ export class ApplicationSession implements Disposable {
 
   public async deactivate(): Promise<void> {
     this.isActive = false;
-    // NOTE: we reset the state to "connecting" here to prevent showing the "disconnected" alert
-    // when switching between devices
-    this.stateManager.updateState({ inspectorBridgeStatus: InspectorBridgeStatus.Connecting });
+    this.stateManager.updateState({
+      // NOTE: we reset the state to "connecting" here to prevent showing the "disconnected" alert
+      // when switching between devices
+      inspectorBridgeStatus: InspectorBridgeStatus.Connecting,
+      // NOTE: we reset the bundle error here to prevent showing stale errors when switching between devices.
+      // If, after swithcing, the app still has a bundle error,
+      // the debugger connecting and fetching the source will cause it to appear again.
+      bundleError: REMOVE,
+    });
     this.toolsManager.deactivate();
     this.debugSessionEventSubscription?.dispose();
     this.debugSessionEventSubscription = undefined;
@@ -443,9 +465,18 @@ export class ApplicationSession implements Disposable {
     this.debugSession?.stepIntoDebugger();
   }
 
+  private connectJSDebuggerCancelToken: CancelToken = new CancelToken();
   private async connectJSDebugger(cancelToken?: CancelToken) {
-    const websocketAddress = await this.metro.getDebuggerURL(-1, cancelToken);
-    if (!websocketAddress) {
+    this.connectJSDebuggerCancelToken.cancel();
+    this.connectJSDebuggerCancelToken = new CancelToken();
+    cancelToken?.onCancel(() => this.connectJSDebuggerCancelToken.cancel());
+
+    const target = await getDebuggerTargetForDevice({
+      metro: this.metro,
+      deviceInfo: this.device.deviceInfo,
+      cancelToken: this.connectJSDebuggerCancelToken,
+    });
+    if (!target) {
       Logger.error("Couldn't find a proper debugger URL to connect to");
       return;
     }
@@ -454,18 +485,11 @@ export class ApplicationSession implements Disposable {
       return;
     }
     await this.debugSession.startJSDebugSession({
-      websocketAddress,
+      ...target,
       displayDebuggerOverlay: false,
-      isUsingNewDebugger: this.metro.isUsingNewDebugger,
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
       sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
     });
-    if (this.websocketDevtoolsServer === undefined) {
-      // NOTE: we only create the CDP devtools server when using the new debugger
-      this.cdpDevtoolsServer?.dispose();
-      this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
-      this.setupDevtoolsServer(this.cdpDevtoolsServer);
-    }
   }
 
   /**
@@ -476,7 +500,7 @@ export class ApplicationSession implements Disposable {
     status: InspectorAvailabilityStatus
   ): InspectorAvailabilityStatus {
     const experimentalInspectorEnabled =
-      this.applicationContext.workspaceConfiguration.enableExperimentalElementInspector;
+      this.applicationContext.workspaceConfiguration.general.enableExperimentalElementInspector;
     const isStatusUnavailableEdgeToEdge =
       status === InspectorAvailabilityStatus.UnavailableEdgeToEdge;
 
@@ -529,29 +553,47 @@ export class ApplicationSession implements Disposable {
           this.stateManager.updateState({ elementInspectorAvailability: status });
         }
       ),
+      inspectorBridge.onEvent("navigationChanged", (payload: NavigationHistoryItem) => {
+        const navigationHistory = [
+          payload,
+          ...this.navigationStateManager
+            .getState()
+            .navigationHistory.filter((record) => record.id !== payload.id),
+        ].slice(0, MAX_URL_HISTORY_SIZE);
+
+        this.navigationStateManager.updateState({ navigationHistory });
+      }),
+      inspectorBridge.onEvent("navigationRouteListUpdated", (payload: NavigationRoute[]) => {
+        this.navigationStateManager.updateState({ navigationRouteList: payload });
+      }),
     ];
     return subscriptions;
   }
   //#endregion
 
   public async reloadJS(cancelToken: CancelToken) {
-    if (!this.devtools?.connected) {
-      Logger.debug(
-        "`reloadJS()` was called on an application session while the devtools are not connected. " +
-          "This should never happen, since an application session should represent a running and connected application."
-      );
-      throw new Error("Tried to reload JS on an application which disconnected from Radon");
-    }
     const { promise: bundleErrorPromise, reject: rejectBundleError } = Promise.withResolvers();
     const bundleErrorSubscription = this.metro.onBundleError(() => {
       rejectBundleError(new Error("Bundle error occurred during reload"));
     });
     try {
       const appReadyPromise = waitForAppReady(this.inspectorBridge, cancelToken);
-      await this.metro.reload();
+      await this.reloadWithDebugger();
       await Promise.race([appReadyPromise, bundleErrorPromise]);
     } finally {
       bundleErrorSubscription.dispose();
+    }
+  }
+
+  private async reloadWithDebugger() {
+    if (this.debugSession === undefined) {
+      throw new Error("Cannot reload JS with the debugger when the debugger is not connected");
+    }
+    const { result } = await this.debugSession.evaluateExpression({
+      expression: "void globalThis.__RADON_reloadJS()",
+    });
+    if (result.className === "Error") {
+      throw new Error("Reloading JS failed.");
     }
   }
 
@@ -645,7 +687,7 @@ export class ApplicationSession implements Disposable {
     if (requestStack && inspectData?.stack) {
       stack = inspectData.stack;
       const inspectorExcludePattern =
-        this.applicationContext.workspaceConfiguration.inspectorExcludePattern;
+        this.applicationContext.workspaceConfiguration.general.inspectorExcludePattern;
       const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
       function testInspectorExcludeGlobPattern(filename: string) {
         return patterns?.some((pattern) => minimatch(filename, pattern));
@@ -667,8 +709,31 @@ export class ApplicationSession implements Disposable {
     this.stateManager.updateState({ logCounter: 0 });
   }
 
+  public openNavigation(id: string) {
+    this.inspectorBridge?.sendOpenNavigationRequest(id);
+  }
+
+  public navigateHome() {
+    // going home resets the navigation history
+    this.navigationStateManager.updateState({ navigationHistory: [] });
+    this.inspectorBridge?.sendOpenNavigationRequest("__HOME__");
+  }
+
+  public navigateBack() {
+    this.inspectorBridge?.sendOpenNavigationRequest("__BACK__");
+  }
+
+  public removeNavigationHistoryEntry(id: string) {
+    this.navigationStateManager.updateState({
+      navigationHistory: this.navigationStateManager
+        .getState()
+        .navigationHistory.filter((record) => record.id !== id),
+    });
+  }
+
   public async dispose() {
     disposeAll(this.disposables);
+    this.connectJSDebuggerCancelToken.cancel();
     this.debugSessionEventSubscription?.dispose();
     this.devtoolsServerSubscription?.dispose();
     await this.debugSession?.dispose();

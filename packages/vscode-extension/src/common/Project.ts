@@ -1,5 +1,5 @@
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
-import { ReloadAction, SelectDeviceOptions } from "../project/DeviceSessionsManager";
+import { ReloadAction } from "../project/DeviceSessionsManager";
 import { LaunchConfiguration } from "./LaunchConfig";
 import { Output } from "./OutputChannel";
 import {
@@ -11,32 +11,6 @@ import {
   MultimediaData,
   ToolsState,
 } from "./State";
-
-export type Locale = string;
-
-export type CameraSource = "emulated" | "none" | "webcam0";
-export type FrontCameraSource = CameraSource;
-export type BackCameraSource = CameraSource | "virtualscene";
-
-export interface CameraSettings {
-  back: BackCameraSource;
-  front: FrontCameraSource;
-}
-
-export type DeviceSettings = {
-  appearance: "light" | "dark";
-  contentSize: "xsmall" | "small" | "normal" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
-  location: {
-    latitude: number;
-    longitude: number;
-    isDisabled: boolean;
-  };
-  hasEnrolledBiometrics: boolean;
-  locale: Locale;
-  replaysEnabled: boolean;
-  showTouches: boolean;
-  camera?: CameraSettings;
-};
 
 export type DeviceId = DeviceInfo["id"];
 
@@ -61,11 +35,14 @@ export enum DeviceRotationDirection {
   Anticlockwise = 1,
 }
 
-export type AppOrientation = DeviceRotation | "Landscape";
+export const ROTATIONS: DeviceRotation[] = [
+  DeviceRotation.LandscapeLeft,
+  DeviceRotation.Portrait,
+  DeviceRotation.LandscapeRight,
+  DeviceRotation.PortraitUpsideDown,
+] as const;
 
-export function isOfEnumDeviceRotation(value: any): value is DeviceRotation {
-  return Object.values(DeviceRotation).includes(value);
-}
+export type AppOrientation = DeviceRotation | "Landscape";
 
 export type Frame = {
   x: number;
@@ -110,7 +87,6 @@ export enum ActivateDeviceResult {
 
 export interface ProjectEventMap {
   projectStateChanged: ProjectState;
-  deviceSettingsChanged: DeviceSettings;
   licenseActivationChanged: boolean;
 }
 
@@ -141,9 +117,7 @@ export interface ProjectInterface {
 
   runDependencyChecks(): Promise<void>;
 
-  getDeviceSettings(): Promise<DeviceSettings>;
-  updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
-  runCommand(command: string): Promise<void>;
+  rotateDevices(direction: DeviceRotationDirection): Promise<void>;
 
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
   openTool(toolName: keyof ToolsState): Promise<void>;
@@ -194,12 +168,13 @@ export interface ProjectInterface {
   dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number): void;
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;
+  dispatchHomeButtonPress(): void;
+  dispatchAppSwitchButtonPress(): void;
+
+  sendBiometricAuthorization(isMatch: boolean): Promise<void>;
 
   reloadCurrentSession(type: ReloadAction): Promise<void>;
-  startOrActivateSessionForDevice(
-    deviceInfo: DeviceInfo,
-    selectDeviceOptions?: SelectDeviceOptions
-  ): Promise<void>;
+  startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void>;
   terminateSession(deviceId: DeviceId): Promise<void>;
 
   inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<InspectData>;
@@ -226,6 +201,7 @@ export interface ProjectInterface {
   openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
   showDismissableError(errorMessage: string): Promise<void>;
   showToast(message: string, timeout: number): Promise<void>;
+  openLaunchConfigurationFile(): Promise<void>;
 
   reportIssue(): Promise<void>;
   sendTelemetry(eventName: string, properties?: TelemetryEventProperties): Promise<void>;

@@ -72,7 +72,7 @@ cd "$LOCAL_PROJECT_PATH" || exit 1
 # node_modules cannot be copied to the VM, because it may not be compatible with the VM's architecture.
 for item in * .*; do
     [[ "$item" == "." || "$item" == ".." ]] && continue
-    [[ "$item" == "node_modules" || "$item" == ".gitignore" || "$item" == "data" ]] && continue
+    [[ "$item" == "node_modules" || "$item" == ".gitignore" || "$item" == "data" || "$item" == "screenshots" ]] && continue
 
     echo "Copying: $item"
     scp -i ./scripts/id_vm_mac -r "$item" "$VM_USER@$VM_IP:$REMOTE_PATH/"
@@ -89,7 +89,7 @@ echo "123456" | sudo -S pmset displaysleep 0
 cd "$REMOTE_PATH"
 npm install
 npm run get-test-app -- $APP
-PROJECT_NAME=$APP npm run setup-run-tests -- $@
+PROJECT_NAME=$APP CODE_VERSION=${CODE_VERSION:-latest} npm run setup-run-tests -- $@
 cd ..
 EOF
 

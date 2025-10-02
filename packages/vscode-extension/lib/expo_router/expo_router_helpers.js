@@ -7,29 +7,29 @@ export function computeRouteIdentifier(pathname, params) {
 }
 
 export function checkNavigationDescriptorsEqual(a, b) {
+  if (!a || !b) {
+    return a === b;
+  }
   if (a.pathname !== b.pathname || Object.keys(a.params).length !== Object.keys(b.params).length) {
     return false;
   }
   return Object.keys(a).every((key) => deepEqual(a[key], b[key]));
 }
 
-export function sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange) {
+export function sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange, canGoBack) {
   const pathname = routeInfo?.pathname;
   const params = routeInfo?.params;
   const filteredParams = getParamsWithoutDynamicSegments(routeInfo);
   const displayParams = new URLSearchParams(filteredParams).toString();
   const displayName = `${pathname}${displayParams ? `?${displayParams}` : ""}`;
 
-  if (
-    pathname &&
-    previousRouteInfo.current &&
-    !checkNavigationDescriptorsEqual(previousRouteInfo.current, routeInfo)
-  ) {
+  if (pathname && !checkNavigationDescriptorsEqual(previousRouteInfo.current, routeInfo)) {
     onNavigationChange({
       name: displayName,
       pathname,
       params,
       id: computeRouteIdentifier(pathname, params),
+      canGoBack,
     });
   }
   previousRouteInfo.current = routeInfo;

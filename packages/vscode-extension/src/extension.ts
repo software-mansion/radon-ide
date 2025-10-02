@@ -35,18 +35,10 @@ import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
 import { launchConfigurationFromOptions } from "./project/launchConfigurationsManager";
 import { isIdeConfig } from "./utilities/launchConfiguration";
-import { DeviceRotation, PanelLocation } from "./common/State";
+import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
-import { updatePartialWorkspaceConfig } from "./utilities/updatePartialWorkspaceConfig";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
-
-const ROTATIONS: DeviceRotation[] = [
-  DeviceRotation.LandscapeLeft,
-  DeviceRotation.Portrait,
-  DeviceRotation.LandscapeRight,
-  DeviceRotation.PortraitUpsideDown,
-] as const;
 
 function handleUncaughtErrors(context: ExtensionContext) {
   process.on("unhandledRejection", (error) => {
@@ -117,14 +109,14 @@ export async function activate(context: ExtensionContext) {
 
     const configuration = workspace.getConfiguration("RadonIDE");
 
-    let panelLocation = configuration.get<PanelLocation>("panelLocation");
+    let panelLocation = configuration.get<PanelLocation>("userInterface.panelLocation");
     if (newLocation) {
       panelLocation = newLocation === "side-panel" ? "side-panel" : "tab";
       updatingConfigProgrammatically = true;
-      if (configuration.inspect("panelLocation")?.workspaceValue) {
-        await configuration.update("panelLocation", panelLocation, false);
+      if (configuration.inspect("userInterface.panelLocation")?.workspaceValue) {
+        await configuration.update("userInterface.panelLocation", panelLocation, false);
       } else {
-        await configuration.update("panelLocation", panelLocation, true);
+        await configuration.update("userInterface.panelLocation", panelLocation, true);
       }
       updatingConfigProgrammatically = false;
     }
@@ -145,7 +137,7 @@ export async function activate(context: ExtensionContext) {
   async function closeIDEPanel(fileName?: string, lineNumber?: number) {
     const panelLocation = workspace
       .getConfiguration("RadonIDE")
-      .get<PanelLocation>("panelLocation");
+      .get<PanelLocation>("userInterface.panelLocation");
 
     if (panelLocation !== "tab") {
       commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", true);
@@ -329,14 +321,14 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-      if (event.affectsConfiguration("RadonIDE.panelLocation")) {
+      if (event.affectsConfiguration("RadonIDE.userInterface.panelLocation")) {
         showIDEPanel();
       }
     })
   );
 
   const configuration = workspace.getConfiguration("RadonIDE");
-  const enableRadonAI = configuration.get<boolean>("enableRadonAI");
+  const enableRadonAI = configuration.get<boolean>("radonAI.enableRadonAI");
 
   if (enableRadonAI) {
     // Initializes MCP part of Radon AI
@@ -408,14 +400,12 @@ async function performFailedBiometricAuthorization() {
 
 async function deviceHomeButtonPress() {
   const project = IDE.getInstanceIfExists()?.project;
-  project?.dispatchButton("home", "Down");
-  project?.dispatchButton("home", "Up");
+  project?.dispatchHomeButtonPress();
 }
 
 async function deviceAppSwitchButtonPress() {
   const project = IDE.getInstanceIfExists()?.project;
-  project?.dispatchButton("appSwitch", "Down");
-  project?.dispatchButton("appSwitch", "Up");
+  project?.dispatchAppSwitchButtonPress();
 }
 
 async function deviceVolumeIncrease() {
@@ -448,16 +438,7 @@ async function rotateDevice(direction: DeviceRotationDirection) {
     throw new Error("Radon IDE is not initialized yet.");
   }
 
-  const configuration = workspace.getConfiguration("RadonIDE");
-
-  const currentRotation = configuration.get<DeviceRotation>("deviceRotation");
-  if (currentRotation === undefined) {
-    Logger.warn("[Radon IDE] Device rotation is not set in the configuration.");
-    return;
-  }
-  const currentIndex = ROTATIONS.indexOf(currentRotation);
-  const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
-  await updatePartialWorkspaceConfig(configuration, ["deviceRotation", ROTATIONS[newIndex]]);
+  project.rotateDevices(direction);
 }
 
 async function rotateDeviceAnticlockwise() {

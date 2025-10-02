@@ -223,10 +223,34 @@
         "mac": "ctrl+alt+9"
       }
     ],
-    "configuration": {
-      "title": "Radon IDE",
+    "configuration": [
+      {
+        "title": "General",
+        "properties": {
+          "RadonIDE.general.inspectorExcludePattern": {
+            "type": "string",
+            "scope": "window",
+            "default": null,
+            "description": "Files matching this pattern fill be excluded for the inspector jump to file functionality. This can be used if your codebase has some design system primitives that are used everywhere in your codebase and that you don't want to always get opened when using inspect functionality."
+          },
+          "RadonIDE.general.defaultMultimediaSavingLocation": {
+            "type": "string",
+            "scope": "window",
+            "default": null,
+            "description": "Controls the default saving location for multimedia files."
+          },
+          "RadonIDE.general.enableExperimentalElementInspector": {
+          "type": "boolean",
+          "scope": "window",
+          "default": false,
+          "description": "Enables experimental support for element inspector in non-Edge-to-Edge applications, which may cause visual issues."
+        }
+        }
+      },
+    {
+      "title": "User Interface",
       "properties": {
-        "RadonIDE.panelLocation": {
+         "RadonIDE.userInterface.panelLocation": {
           "type": "string",
           "scope": "window",
           "default": "tab",
@@ -236,7 +260,7 @@
           ],
           "description": "Controls the location of the Radon IDE panel. When side-panel is selected, you can use right-click menu on the panel to move it to the secondary side panel if you wish."
         },
-        "RadonIDE.themeType": {
+        "RadonIDE.userInterface.themeType": {
           "type": "string",
           "scope": "window",
           "default": "vscode",
@@ -247,47 +271,60 @@
           ],
           "description": "Controls the theme of the IDE panel. If you encounter any issues, please report them. And set this to 'built-in' to use the built-in theme."
         },
-        "RadonIDE.showDeviceFrame": {
+        "RadonIDE.userInterface.showDeviceFrame": {
           "type": "boolean",
           "scope": "window",
           "default": true,
           "description": "Shows device frame in the IDE panel."
-        },
-        "RadonIDE.inspectorExcludePattern": {
-          "type": "string",
+        }
+      }
+    },
+      {
+      "title": "Device Control",
+      "properties": {
+        "RadonIDE.deviceControl.startDeviceOnLaunch": {
+          "type": "boolean",
           "scope": "window",
-          "default": null,
-          "description": "Files matching this pattern fill be excluded for the inspector jump to file functionality. This can be used if your codebase has some design system primitives that are used everywhere in your codebase and that you don't want to always get opened when using inspect functionality."
+          "default": true,
+          "description": "Automatically starts the last used device when opening the IDE Panel."
         },
-        "RadonIDE.defaultMultimediaSavingLocation": {
-          "type": "string",
-          "scope": "window",
-          "default": null,
-          "description": "Controls the default saving location for multimedia files."
-        },
-        "RadonIDE.stopPreviousDevices": {
+        "RadonIDE.deviceControl.stopPreviousDevices": {
           "type": "string",
           "scope": "window",
           "default": false,
           "description": "When set, switching between devices will shut down the previous device instead of leaving it running in the background."
-        },
-        "RadonIDE.enableRadonAI": {
-          "type": "boolean",
-          "scope": "window",
-          "default": true,
-          "description": "Enables the Radon AI functionality in the extension. Note: A full restart of the IDE is required for this setting to take effect."
-        },
-        "RadonIDE.MCPConfigLocation": {
+        }
+      }
+    },
+  {
+    "title": "Device Settings",
+    "properties": {
+       "RadonIDE.deviceSettings.appearance": {
           "type": "string",
           "scope": "window",
-          "default": "Project",
           "enum": [
-            "Project",
-            "Global"
+            "light",
+            "dark"
           ],
-          "markdownDescription": "Sets the write location for `mcp.json` when using Cursor or a legacy VSCode version (`<1.101.0`)."
+          "default": "light",
+          "description": "Controls the appearance on the simulated device."
         },
-        "RadonIDE.deviceRotation": {
+        "RadonIDE.deviceSettings.contentSize": {
+          "type": "string",
+          "scope": "window",
+          "enum": [
+            "xsmall",
+            "small",
+            "normal",
+            "large",
+            "xlarge",
+            "xxlarge",
+            "xxxlarge"
+          ],
+          "default": "normal",
+          "description": "Controls the content size on the simulated device."
+        },
+        "RadonIDE.deviceSettings.deviceRotation": {
           "type": "string",
           "scope": "window",
           "default": "Portrait",
@@ -299,20 +336,96 @@
           ],
           "description": "Controls the default device rotation for simulators and emulators when they are created or launched."
         },
-        "RadonIDE.startDeviceOnLaunch": {
-          "type": "boolean",
+        "RadonIDE.deviceSettings.location": {
+          "type": "object",
           "scope": "window",
-          "default": true,
-          "description": "Automatically starts the last used device when opening the IDE Panel."
+          "properties": {
+            "latitude": "number",
+            "longitude": "number",
+            "isDisabled": "boolean"
+          },
+          "default": {
+            "latitude": 50.048653,
+            "longitude": 19.965474,
+            "isDisabled": false
+          },
+          "description": "Controls the emulators/simulator location."
         },
-        "RadonIDE.enableExperimentalElementInspector": {
+        "RadonIDE.deviceSettings.hasEnrolledBiometrics": {
           "type": "boolean",
           "scope": "window",
           "default": false,
-          "description": "Enables experimental support for element inspector in non-Edge-to-Edge applications, which may cause visual issues."
+          "description": "Controls whether the device has enrolled biometrics. Note: this setting affects only iOS simulators."
+        },
+        "RadonIDE.deviceSettings.locale": {
+          "type": "string",
+          "scope": "window",
+          "default": "en-US",
+          "description": "Controls the localization of the simulated device."
+        },
+        "RadonIDE.deviceSettings.replaysEnabled": {
+          "type": "boolean",
+          "scope": "window",
+          "default": false,
+          "description": "Controls whether the device has replay functionality enabled."
+        },
+        "RadonIDE.deviceSettings.showTouches": {
+          "type": "boolean",
+          "scope": "window",
+          "default": false,
+          "description": "Controls whether the device shows touch interactions."
+        },
+        "RadonIDE.deviceSettings.camera": {
+          "type": "object",
+          "scope": "window",
+          "properties": {
+            "back": {
+              "type": "string",
+              "enum": [
+                "emulated",
+                "none",
+                "virtualscene",
+                "webcam0"
+              ]
+            },
+            "front": {
+              "type": "string",
+              "enum": [
+                "emulated",
+                "none",
+                "webcam0"
+              ]
+            }
+          },
+          "default": {
+            "back": "emulated",
+            "front": "none"
+          },
+          "description": "Controls the camera settings for the device. Note: this setting affects only Android emulators."
         }
       }
     },
+    {
+      "title": "Radon AI",
+      "properties": {
+        "RadonIDE.radonAI.enableRadonAI": {
+          "type": "boolean",
+          "scope": "window",
+          "default": true,
+          "description": "Enables the Radon AI functionality in the extension. Note: A full restart of the IDE is required for this setting to take effect."
+        },
+        "RadonIDE.radonAI.MCPConfigLocation": {
+          "type": "string",
+          "scope": "window",
+          "default": "Project",
+          "enum": [
+            "Project",
+            "Global"
+          ],
+          "markdownDescription": "Sets the write location for `mcp.json` when using Cursor or a legacy VSCode version (`<1.101.0`)."
+        }
+      }
+    }],
     "viewsContainers": {
       "activitybar": [
         {
@@ -355,7 +468,7 @@
           "type": "webview",
           "id": "RadonIDE.view",
           "name": "Radon IDE",
-          "when": "RNIDE.extensionIsActive && config.RadonIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
+          "when": "RNIDE.extensionIsActive && config.RadonIDE.userInterface.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
         }
       ],
       "RadonIDEToolExpoDevPluginMMKV": [
@@ -632,6 +745,10 @@
               "useCustomJSDebugger": {
                 "type": "boolean",
                 "description": "When set to true, Radon will use a custom implementation of the JavaScript debugger. This is an experimental feature, use with caution."
+              },
+              "metroPort": {
+                "type": "number",
+                "description": "Port number that will be used by Metro bundler. If not specified, a free port will be automatically chosen."
               }
             }
           }
@@ -862,6 +979,10 @@
               "useCustomJSDebugger": {
                 "type": "boolean",
                 "description": "When set to true, Radon will use a custom implementation of the JavaScript debugger. This is an experimental feature, use with caution."
+              },
+              "metroPort": {
+                "type": "number",
+                "description": "Port number that will be used by Metro bundler. If not specified, a free port will be automatically chosen."
               }
             }
           }
@@ -1078,7 +1199,7 @@
     "semver": "^7.7.1",
     "shiki": "^3.12.2",
     "sinon": "^20.0.0",
-    "source-map": "^0.8.0-beta.0",
+    "source-map": "^0.7.6",
     "tar": "^7.4.3",
     "ts-loader": "^9.5.2",
     "typescript": "^5.8.3",
