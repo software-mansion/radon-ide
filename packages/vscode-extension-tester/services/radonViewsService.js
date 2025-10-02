@@ -124,6 +124,7 @@ export default class RadonViewsService {
   async findAndFillSaveFileForm(filename) {
     await this.driver.switchTo().defaultContent();
 
+    await this.driver.sleep(10000);
     const quickInput = await this.elementHelperService.findAndWaitForElement(
       By.css(".quick-input-widget input"),
       "Timed out waiting for quick input"
