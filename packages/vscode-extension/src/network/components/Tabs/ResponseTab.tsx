@@ -7,6 +7,7 @@ import { ResponseBodyData } from "../../types/network";
 import { NetworkLog } from "../../types/networkLog";
 import "./PayloadAndResponseTab.css";
 import { ThemeData } from "../../../common/theme";
+import { NetworkEvent } from "../../types/panelMessageProtocol";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
@@ -21,6 +22,8 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
   const contentType = networkLog.response?.headers?.["Content-Type"] || "";
   const language = responseData ? determineLanguage(contentType, responseData) : "plaintext";
 
+  const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;
+
   return (
     <>
       <TabActionButtons
@@ -33,7 +36,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
             onClick={() => {
               fetchAndOpenResponseInEditor(networkLog);
             }}
-            disabled={!responseData}>
+            disabled={requestFailed && !responseData}>
             <span className="codicon codicon-chrome-restore" />
           </IconButton>
         }
@@ -44,7 +47,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
             <span className="codicon codicon-warning" /> Response too large, showing truncated data.
           </pre>
         )}
-        {!responseData ? (
+        {requestFailed && !responseData ? (
           <div className="response-tab-failed-fetch-information">
             <h4>Failed to load response data</h4>
           </div>

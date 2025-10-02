@@ -45,14 +45,6 @@ export abstract class BaseInspectorStrategy implements InspectorStrategy {
 
   // #region IDE messages
 
-  private sendIDEMessage(payload: IDEMessage): void {
-    const message: WebviewMessage = {
-      command: WebviewCommand.IDECall,
-      payload,
-    };
-    this.broadcastMessage(message);
-  }
-
   private formatDataBasedOnLanguage(body: string, language: string): string {
     if (language === "json") {
       try {
@@ -63,6 +55,14 @@ export abstract class BaseInspectorStrategy implements InspectorStrategy {
       }
     }
     return body;
+  }
+
+  private sendIDEMessage(payload: IDEMessage): void {
+    const message: WebviewMessage = {
+      command: WebviewCommand.IDECall,
+      payload,
+    };
+    this.broadcastMessage(message);
   }
 
   /**
