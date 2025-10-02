@@ -68,6 +68,9 @@ describe("5 - Network panel tests", () => {
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
+    await driver.wait(() => {
+      appWebsocket = get().appWebsocket;
+      return appWebsocket != null;
     }, 5000);
   });
 
