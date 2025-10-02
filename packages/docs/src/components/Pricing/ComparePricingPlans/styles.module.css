@@ -1,3 +1,7 @@
+.tableDisplay {
+  padding-top: 40px;
+}
+
 .title {
   color: var(--ifm-color-primary);
   text-align: center;

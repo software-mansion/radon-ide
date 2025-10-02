@@ -2,12 +2,16 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+.titleContainer {
+  padding: 80px 0 20px 0;
+  display: flex;
+  flex-direction: column;
   gap: 24px;
 }
 
 .headingLabel {
-  margin-top: 60px;
-  margin-bottom: 24px;
   text-align: center;
   text-wrap: balance;
   font-size: 64px;
@@ -17,7 +21,7 @@
 .subheadlingLabel {
   text-align: center;
   text-wrap: balance;
-  margin-bottom: 20px;
+  margin: 0;
   line-height: 32px;
   gap: 24px;
   font-weight: normal;
@@ -30,7 +34,9 @@
 }
 
 .wrapper {
-  padding: 0 180px;
+  display: flex;
+  justify-content: center;
+  padding: 0 24px;
 }
 
 .disclaimer {
@@ -38,15 +44,15 @@
   margin-top: 36px;
 }
 
-@media (max-width: 1360px) {
-  .wrapper {
-    max-width: 100%;
+/* @media (max-width: 480px) {
+  
+} */
+
+@media (max-width: 767px) {
+  .titleContainer {
+    padding: 40px 24px 24px;
   }
-}
-@media (max-width: 480px) {
   .headingLabel {
-    margin-top: 60px;
-    margin-bottom: 20px;
     text-align: left;
     text-wrap: balance;
     font-size: 32px;
@@ -57,6 +63,5 @@
     text-wrap: balance;
     font-weight: 400;
     font-size: 16px;
-    margin-bottom: 32px;
   }
 }

@@ -72,19 +72,19 @@ const PricingPlansList = ({
   const handleHeader = (planId: string) => {
     switch (planId) {
       case "PRO":
-        return <p className={styles.headerDefault}>All the Free features, plus:</p>;
+        return <p>All the Free features, plus:</p>;
       case "TEAM":
-        return <p className={styles.headerTeam}>Development & Testing - All Pro features</p>;
+        return <p>Development & Testing - All Pro features</p>;
       case "ENTERPRISE":
-        return <p className={styles.headerDefault}>All the Team features, plus:</p>;
+        return <p>All the Team features, plus:</p>;
       default:
         return null;
     }
   };
 
   return (
-    <>
-      <div className={clsx(styles.plan_pay_annually, isEnterprise ? styles.btnCenter : "")}>
+    <div className={styles.planContainer}>
+      <div className={clsx(styles.plan_pay_individual, isEnterprise ? styles.btnCenter : "")}>
         {!isEnterprise && (
           <div className={styles.planBtnContainer}>
             <button
@@ -97,7 +97,7 @@ const PricingPlansList = ({
               type="button"
               className={clsx(styles.btn, isIndividual ? "" : styles.active)}
               onClick={() => setIsIndividual(false)}>
-              <p>For businesses</p>
+              <p>For organizations</p>
             </button>
           </div>
         )}
@@ -138,7 +138,7 @@ const PricingPlansList = ({
           </div>
         ))}
       </div>
-    </>
+    </div>
   );
 };
 
