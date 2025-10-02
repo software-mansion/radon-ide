@@ -48,6 +48,7 @@
   display: flex;
   justify-content: flex-end;
   margin: 0 10px;
+  gap: 8px;
 }
 
 .diagnostic-error-wrapper {
