@@ -65,8 +65,9 @@ export async function listConnectedDevices(): Promise<DeviceInfo[]> {
         modelId: props["model"],
         systemName: "Unknown",
         displayName: `${props["device"]} ${props["model"]}`.trim(),
-        deviceType: DeviceType.Physical,
+        deviceType: DeviceType.Phone,
         available: true,
+        emulator: false,
       };
     })
     .filter((device) => device !== undefined);
