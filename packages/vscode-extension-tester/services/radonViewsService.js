@@ -133,7 +133,7 @@ export default class RadonViewsService {
       } catch {
         return false;
       }
-    });
+    }, 10000);
 
     await this.driver.executeScript("arguments[0].value = '';", quickInput);
 
