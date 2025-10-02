@@ -49,6 +49,7 @@ export async function runFingerprintCommand(
     const output = await command(fingerprintCommand, {
       env,
       cwd: appRoot,
+      shell: true,
     });
     if (!output) {
       return undefined;
