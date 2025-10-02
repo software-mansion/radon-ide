@@ -180,6 +180,12 @@ export async function generateDiagnosticReport(
 
   // Output Channel Logs
   reportLines.push("# Output Channel Logs");
+  reportLines.push("");
+  reportLines.push(
+    "Note: The main 'Radon IDE' output channel logs are not included in this report."
+  );
+  reportLines.push("If needed, you can access them via View > Output > Radon IDE.");
+  reportLines.push("");
   const logs = collectOutputChannelLogs(outputChannelRegistry);
   reportLines.push(logs);
 
