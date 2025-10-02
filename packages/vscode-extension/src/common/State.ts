@@ -418,7 +418,6 @@ export enum DevicePlatform {
 export enum DeviceType {
   Phone = "Phone",
   Tablet = "Tablet",
-  Physical = "Physical",
 }
 
 export enum RadonAIEnabledState {
@@ -430,10 +429,10 @@ export type DeviceInfo = AndroidEmulatorInfo | AndroidPhysicalDeviceInfo | IOSDe
 
 export type AndroidEmulatorInfo = AndroidDeviceInfo & {
   avdId: string;
-  deviceType: DeviceType.Phone;
+  emulator: true;
 };
 
-export type AndroidPhysicalDeviceInfo = AndroidDeviceInfo & { deviceType: DeviceType.Physical };
+export type AndroidPhysicalDeviceInfo = AndroidDeviceInfo & { emulator: false };
 
 export type AndroidDeviceInfo = {
   id: string;

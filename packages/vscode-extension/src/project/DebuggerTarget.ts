@@ -1,6 +1,6 @@
 import _ from "lodash";
 import { EXPO_GO_BUNDLE_ID, EXPO_GO_PACKAGE_NAME } from "../builders/expoGo";
-import { DeviceInfo, DevicePlatform, DeviceType } from "../common/State";
+import { DeviceInfo, DevicePlatform } from "../common/State";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
 import { connectCDPAndEval } from "../utilities/connectCDPAndEval";
@@ -19,10 +19,7 @@ function targetDeviceFilter(deviceInfo: DeviceInfo) {
     if (deviceInfo.platform === DevicePlatform.IOS) {
       // On iOS, we want to connect to the target that has the same device name as our device
       return target.deviceName === deviceInfo.displayName;
-    } else if (
-      deviceInfo.platform === DevicePlatform.Android &&
-      deviceInfo.deviceType === DeviceType.Physical
-    ) {
+    } else if (deviceInfo.platform === DevicePlatform.Android && !deviceInfo.emulator) {
       return target.deviceName.startsWith(deviceInfo.modelId);
     } else {
       // TODO: figure out how to get this string from the AVD or system image
