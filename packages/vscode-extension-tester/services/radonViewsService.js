@@ -124,11 +124,16 @@ export default class RadonViewsService {
   async findAndFillSaveFileForm(filename) {
     await this.driver.switchTo().defaultContent();
 
-    await this.driver.sleep(10000);
-    const quickInput = await this.elementHelperService.findAndWaitForElement(
-      By.css(".quick-input-widget input"),
-      "Timed out waiting for quick input"
-    );
+    const quickInput = await this.driver.wait(async () => {
+      try {
+        return await this.elementHelperService.findAndWaitForElement(
+          By.css(".quick-input-widget input"),
+          "Timed out waiting for quick input"
+        );
+      } catch {
+        return false;
+      }
+    });
 
     await this.driver.executeScript("arguments[0].value = '';", quickInput);
 
