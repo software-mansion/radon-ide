@@ -1,10 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 import { store, useRouteInfo } from "expo-router/build/global-state/router-store.js";
-import { 
+import {
   computeRouteIdentifier,
   extractNestedRouteList,
-  sendNavigationChange
+  sendNavigationChange,
 } from "./expo_router_helpers.js";
 
 function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
@@ -28,7 +28,7 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   }, [store.routeNode]);
 
   useEffect(() => {
-    sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange);
+    sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange, router.canGoBack());
   }, [pathname, params]);
 
   function requestNavigationChange({ pathname, params }) {
@@ -36,6 +36,13 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
       if (router.canGoBack()) {
         router.back();
       }
+      return;
+    } else if (pathname === "__HOME__") {
+      // we use dismissTo instead of dismissAll, as it optimistically navigates to / already
+      // in which case the following navigate call would be ignored and won't trigger two events
+      router.dismissTo("/");
+      // we still need to navigate to / in case the root navigator is a tab navigator
+      router.navigate("/");
       return;
     }
     router.navigate(pathname);

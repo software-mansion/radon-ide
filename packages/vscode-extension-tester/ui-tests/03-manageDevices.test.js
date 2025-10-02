@@ -276,7 +276,7 @@ describe("3 - Adding device tests", () => {
       const text = await chosenDevice.getText();
       return text === deviceName2;
     }, 5000);
-    
+
     await appManipulationService.waitForAppToLoad();
     await driver
       .actions()
