@@ -245,6 +245,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
 
   private async configureMetroPort(packageName: string, metroPort: number) {
     // read preferences
+    await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
     let prefs: { map: any };
     try {
       const { stdout } = await exec(
@@ -273,7 +274,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     // filter out existing debug_http_host record
     prefs.map.string = prefs.map.string?.filter((s: any) => s.$.name !== "debug_http_host") || [];
     // add new debug_http_host record pointing to 10.0.2.2:metroPort (localhost from emulator)
-    prefs.map.string.push({ $: { name: "debug_http_host" }, _: `10.0.2.2:${metroPort}` });
+    prefs.map.string.push({ $: { name: "debug_http_host" }, _: `localhost:${metroPort}` });
     const prefsXML = new xml2js.Builder().buildObject(prefs);
 
     // write prefs
