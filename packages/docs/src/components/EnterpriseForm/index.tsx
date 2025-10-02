@@ -1,7 +1,6 @@
 import React, { useState, forwardRef, useRef } from "react";
 import styles from "./styles.module.css";
 import { CustomSelect } from "../CustomSelect";
-import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Captcha, { type CaptchaRef } from "./Captcha";
 
 const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
@@ -9,8 +8,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
   const captchaRef = useRef<CaptchaRef>();
   const [isSent, setisSent] = useState(false);
   const [submitDisabled, setSubmitDisabled] = useState(false);
-  const { siteConfig } = useDocusaurusContext();
-  const API_URL = siteConfig.customFields.api_url as string;
+  const API_URL = "https://integration-sandbox.swm-test.workers.dev/api/request-contact";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -56,14 +54,14 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
       });
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
+      } else {
+        setisSent(true);
       }
-
       const data = await response.json();
       console.log("Success:", data);
     } catch (error) {
       console.error("FAILED: ", error.text);
     }
-    setisSent(true);
   };
 
   return (

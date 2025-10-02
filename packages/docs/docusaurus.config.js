@@ -24,13 +24,6 @@ const config = {
     defaultLocale: "en",
     locales: ["en"],
   },
-  customFields: {
-    service_id: process.env.DOCUSAURUS_EMAILJS_SERVICE_ID,
-    contact_template_id: process.env.DOCUSAURUS_EMAILJS_CONTACT_TEMPLATE_ID,
-    auto_reply_template_id: process.env.DOCUSAURUS_EMAILJS_AUTO_REPLY_TEMPLATE_ID,
-    public_key: process.env.DOCUSAURUS_EMAILJS_PUBLIC_KEY,
-  },
-
   presets: [
     [
       "classic",
