@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getToolSchema, invokeToolCall } from "../shared/api";
 import { ToolSchema } from "./models";
 import { readLogsToolExec, screenshotToolExec } from "./toolExecutors";

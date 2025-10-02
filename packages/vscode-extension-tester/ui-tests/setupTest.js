@@ -68,8 +68,28 @@ afterEach(async function () {
   let bottomBar = new BottomBarPanel();
   await bottomBar.toggle(false);
   await new EditorView().closeAllEditors();
-  await workbench.executeCommand("Developer: Reload Window");
-  workbench = new Workbench();
+  await driver.switchTo().defaultContent();
+
+  // this method of reloading window seems to be more reliable than workbench.executeCommand("Developer: Reload Window")
+  await driver
+    .actions()
+    .keyDown(Key.SHIFT)
+    .keyDown(Key.COMMAND)
+    .sendKeys("p")
+    .keyUp(Key.COMMAND)
+    .keyUp(Key.SHIFT)
+    .perform();
+  await driver.actions().sendKeys("Developer: Reload Window").perform();
+  await driver.actions().sendKeys(Key.ENTER).perform();
+
+  driver.wait(async () => {
+    try {
+      workbench = new Workbench();
+    } catch {
+      return false;
+    }
+    return true;
+  }, 10000);
 
   // waiting for vscode to get ready after reload
   await driver.wait(async () => {

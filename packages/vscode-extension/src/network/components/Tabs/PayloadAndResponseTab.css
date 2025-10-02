@@ -62,3 +62,10 @@
     background-color: transparent !important;
   }
 }
+
+.no-highlight-info {
+  display: flex;
+  align-items: center;
+  margin: 0 0 14px 0;
+  color: var(--vscode-notificationsInfoIcon-foreground);
+}

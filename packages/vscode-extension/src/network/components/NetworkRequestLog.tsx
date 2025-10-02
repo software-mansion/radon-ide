@@ -350,6 +350,7 @@ function TableBody({
                 <VscodeTableCell
                   key={`${log.requestId}-${title}`}
                   className={getClass?.(log) ?? ""}
+                  data-testid={`network-panel-row-${getNetworkLogValue(log, NetworkLogColumn.Name)}-${title}`}
                   style={{ width: cellWidths[i] || "auto" }}>
                   {getNetworkLogValue(log, title)}
                 </VscodeTableCell>
