@@ -67,7 +67,7 @@ jobs:
           if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
             echo "matrix={\"include\":[{\"testApp\":\"${{ github.event.inputs.testApp }}\",\"node\":\"${{ github.event.inputs.node || '22' }}\",\"isRecording\":\"${{ github.event.inputs.isRecording }}\",\"testsToRun\":\"${{ github.event.inputs.testsToRun }}\",\"testsToExclude\":\"${{ github.event.inputs.testsToExclude }}\",\"codeVersion\":\"${{ github.event.inputs.VSCodeVersion || 'latest' }}\"}]}" >> $GITHUB_OUTPUT
           else
-            MATRIX=$(cat autorun_test_params.json)
+            MATRIX=$(jq -c . autorun_test_params.json)
             echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
           fi
         working-directory: .github/matrices
