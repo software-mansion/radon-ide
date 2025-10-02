@@ -1,11 +1,11 @@
 import { useSyncExternalStore, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 import { store } from "expo-router/build/global-state/router-store.js";
-import { 
+import {
   computeRouteIdentifier,
   extractNestedRouteList,
-  sendNavigationChange
-} from "../expo_router_helpers.js";
+  sendNavigationChange,
+} from "./expo_router_helpers.js";
 
 function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   const router = useRouter();
@@ -28,7 +28,7 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   }, [store.routeNode]);
 
   useEffect(() => {
-    sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange);
+    sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange, router.canGoBack());
   }, [pathname, params]);
 
   function requestNavigationChange({ pathname, params }) {
@@ -36,6 +36,11 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
       if (router.canGoBack()) {
         router.back();
       }
+      return;
+    } else if (pathname === "__HOME__") {
+      router.dismissAll();
+      // we still need to navigate to / in case the root navigator is a tab navigator
+      router.navigate("/");
       return;
     }
     router.navigate(pathname);

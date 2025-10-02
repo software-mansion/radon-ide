@@ -25,6 +25,7 @@ function filePathForProfile() {
 }
 
 type IdeMessageListener = <K extends keyof RadonInspectorBridgeEvents>(event: {
+  id: number;
   type: K;
   data: RadonInspectorBridgeEvents[K];
 }) => void;
@@ -37,6 +38,7 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
   private devtoolsConnection: DevtoolsConnection | undefined;
   private devtoolsServerListener?: Disposable;
   private devtoolsConnectionListeners: Disposable[] = [];
+  private lastMessageId: number = 0;
 
   constructor() {
     super();
@@ -52,6 +54,8 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
 
     this.devtoolsConnectionListeners = [
       connection.onIdeMessage((message) => {
+        this.lastMessageId = message.id;
+        this.send({ type: "ack", id: message.id });
         this.emitEvent(message.type, message.data);
       }),
       connection.onDisconnected(() => {
@@ -63,6 +67,7 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
     ];
     const messageQueue = this.messageQueue;
     this.messageQueue = [];
+    this.send({ type: "retransmit", id: this.lastMessageId });
     for (const message of messageQueue) {
       this.send(message);
     }
@@ -199,6 +204,9 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   constructor(private readonly debugSession: DebugSession) {
     super();
     this.disposables.push(
+      debugSession.onJSDebugSessionStarted(() => {
+        this.createConnection();
+      }),
       debugSession.onScriptParsed(({ isMainBundle }) => {
         if (isMainBundle) {
           this.createConnection();
@@ -209,15 +217,20 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
 
   private async createConnection() {
     const debugSession = this.debugSession;
-    // NOTE: the binding survives JS reloads, and the Devtools frontend will reconnect automatically,
-    // so this should not be needed, but because the debugger on Expo Go + Android can break on reloads,
-    // this is sadly necessary.
-    debugSession.addBinding(BINDING_NAME);
-    debugSession.evaluateExpression({
-      expression: `void ${DISPATCHER_GLOBAL}.initializeDomain("${DEVTOOLS_DOMAIN_NAME}")`,
-    });
     if (this.connection) {
       // NOTE: a single `DebugSession` only supports a single devtools connection at a time
+      return;
+    }
+
+    // NOTE: the binding survives JS reloads, and the Devtools frontend will reconnect automatically
+    await debugSession.addBinding(BINDING_NAME);
+    const { result } = await debugSession.evaluateExpression({
+      expression: `${DISPATCHER_GLOBAL}.initializeDomain("${DEVTOOLS_DOMAIN_NAME}")`,
+    });
+    if (result.className === "Error") {
+      // NOTE: if the dispatcher is not present, it's likely the app
+      // has not loaded yet or failed to load the JS bundle.
+      // In either case, there's nothing to connect to.
       return;
     }
 

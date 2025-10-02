@@ -46,6 +46,10 @@ on:
         description: Space-separated list of test numbers to exclude (none excludes nothing)
         required: false
         default: ""
+      VSCodeVersion:
+        description: vscode version to use (e.g. "1.99.1")
+        required: true
+        default: "latest"
   schedule:
     - cron: "27 1 * * *"
 
@@ -58,12 +62,12 @@ jobs:
       - id: set-matrix
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "matrix={\"include\":[{\"testApp\":\"${{ github.event.inputs.testApp }}\",\"node\":\"${{ github.event.inputs.node || '22' }}\",\"isRecording\":\"${{ github.event.inputs.isRecording }}\",\"testsToRun\":\"${{ github.event.inputs.testsToRun }}\",\"testsToExclude\":\"${{ github.event.inputs.testsToExclude }}\"}]}" >> $GITHUB_OUTPUT
+            echo "matrix={\"include\":[{\"testApp\":\"${{ github.event.inputs.testApp }}\",\"node\":\"${{ github.event.inputs.node || '22' }}\",\"isRecording\":\"${{ github.event.inputs.isRecording }}\",\"testsToRun\":\"${{ github.event.inputs.testsToRun }}\",\"testsToExclude\":\"${{ github.event.inputs.testsToExclude }}\",\"codeVersion\":\"${{ github.event.inputs.codeVersion || 'latest' }}\"}]}" >> $GITHUB_OUTPUT
           else
             echo "matrix={\"include\":[ \
-              {\"testApp\":\"react-native-81\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\"}, \
-              {\"testApp\":\"expo-53\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\"}, \
-              {\"testApp\":\"expo-54\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\"} \
+              {\"testApp\":\"react-native-81\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"latest\"}, \
+              {\"testApp\":\"expo-53\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"latest\"}, \
+              {\"testApp\":\"expo-54\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"latest\"} \
             ]}" >> $GITHUB_OUTPUT
           fi
 
@@ -84,6 +88,7 @@ jobs:
           echo "isRecording: ${{ matrix.isRecording }}"
           echo "testsToRun: ${{ matrix.testsToRun }}"
           echo "testsToExclude: ${{ matrix.testsToExclude }}"
+          echo "testsToExclude: ${{ matrix.codeVersion }}"
 
       - name: check sdk
         run: xcodebuild -showsdks
@@ -146,6 +151,7 @@ jobs:
         env:
           PROJECT_NAME: ${{ matrix.testApp }}
           IS_RECORDING: ${{ matrix.isRecording }}
+          CODE_VERSION: ${{ matrix.codeVersion }}
           IS_GITHUB_ACTIONS: "true"
 
       - name: make video

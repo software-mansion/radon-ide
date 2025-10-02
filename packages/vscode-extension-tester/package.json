@@ -6,7 +6,7 @@
     "setup-dev": "extest setup-tests --extensions_dir ./data/vscode-extensions",
     "install-vsix": "extest install-vsix -f ./data/radon-ide.vsix --extensions_dir ./data/vscode-extensions",
     "build-vsix-package": "cd ../vscode-extension && vsce package --out ../vscode-extension-tester/data/radon-ide.vsix && cd ../vscode-extension-tester",
-    "setup": "extest get-vscode && extest get-chromedriver && npm run install-vsix",
+    "setup": "extest get-vscode --code_version ${CODE_VERSION:-latest} && extest get-chromedriver --code_version ${CODE_VERSION:-latest} && npm run install-vsix",
     "ui-tests": "./scripts/run_ui_tests.sh",
     "clean": "rm -rf ./data && mkdir data",
     "setup-run-tests": "npm run setup && npm run ui-tests -- ",

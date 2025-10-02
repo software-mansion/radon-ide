@@ -1,20 +1,16 @@
 import path from "path";
 import http from "http";
-import fs from "fs";
 import { extensionContext } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
 import { CancelToken } from "../utilities/cancelToken";
 import { DevicePlatform } from "../common/State";
 import { checkNativeDirectoryExists } from "../utilities/checkNativeDirectoryExists";
+import { fileExists } from "../utilities/fileExists";
 
 type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 
 export const EXPO_GO_BUNDLE_ID = "host.exp.Exponent";
 export const EXPO_GO_PACKAGE_NAME = "host.exp.exponent";
-
-function fileExists(filePath: string, ...additionalPaths: string[]) {
-  return fs.existsSync(path.join(filePath, ...additionalPaths));
-}
 
 export async function isExpoGoProject(appRoot: string, platform: DevicePlatform): Promise<boolean> {
   // There is no straightforward way to tell apart different react native project
@@ -40,6 +36,7 @@ export async function isExpoGoProject(appRoot: string, platform: DevicePlatform)
   const expoGoProjectTesterScript = path.join(
     extensionContext.extensionPath,
     "lib",
+    "expo",
     "expo_go_project_tester.js"
   );
   try {
@@ -95,7 +92,12 @@ export async function downloadExpoGo(
   cancelToken: CancelToken,
   appRoot: string
 ) {
-  const downloadScript = path.join(extensionContext.extensionPath, "lib", "expo_go_download.js");
+  const downloadScript = path.join(
+    extensionContext.extensionPath,
+    "lib",
+    "expo",
+    "expo_go_download.js"
+  );
   const { stdout } = await cancelToken.adapt(
     exec("node", [downloadScript, platform], {
       cwd: appRoot,
