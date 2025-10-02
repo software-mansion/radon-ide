@@ -24,10 +24,6 @@ const config = {
     defaultLocale: "en",
     locales: ["en"],
   },
-  customFields: {
-    api_url: process.env.API_URL,
-  },
-
   presets: [
     [
       "classic",

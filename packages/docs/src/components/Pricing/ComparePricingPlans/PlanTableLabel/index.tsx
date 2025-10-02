@@ -40,7 +40,7 @@ export default function PlanTableLabel({
           )}
         </div>
       </div>
-      <PricingButton stylingFilled={stylingFilled} onClick={onClick}>
+      <PricingButton stylingFilled={stylingFilled} onClick={onClick} isTable={true}>
         {buttonLabel}
       </PricingButton>
     </div>

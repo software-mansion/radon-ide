@@ -2,7 +2,8 @@
   border: 1px solid var(--swm-border);
   padding: 8px;
   display: flex;
-  width: 344px;
+  max-width: 344px;
+  width: 100%;
   align-items: center;
   gap: 8px;
 }
@@ -45,6 +46,7 @@
 .btn:not(.active):hover {
   background-color: var(--swm-border);
   transition: 0.5s;
+  cursor: pointer;
 }
 
 .yearlyContainer {

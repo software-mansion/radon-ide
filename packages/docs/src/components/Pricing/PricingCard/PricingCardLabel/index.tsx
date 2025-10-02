@@ -10,6 +10,7 @@ interface PricingCardLabelProps {
 
 export default function PricingCardLabel({ plan, isMonthly, children }: PricingCardLabelProps) {
   const price = isMonthly ? plan.price.monthly : plan.price.yearly;
+  const isTEAM = plan.plan === "TEAM" ? "per seat" : "";
   return (
     <div className={styles.container}>
       <div className={styles.planDetails}>
@@ -32,7 +33,7 @@ export default function PricingCardLabel({ plan, isMonthly, children }: PricingC
                 {!isMonthly && plan.yearlyFullPrice && (
                   <p className={styles.fullPrice}> ${plan.yearlyFullPrice}</p>
                 )}
-                <p>{isMonthly ? "/month" : "/year"} </p>
+                <p>{isMonthly ? `/month ${isTEAM}` : `/year ${isTEAM}`} </p>
               </div>
             </div>
           ) : (

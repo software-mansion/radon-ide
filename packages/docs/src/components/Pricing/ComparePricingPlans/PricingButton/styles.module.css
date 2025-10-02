@@ -1,12 +1,22 @@
 .buttonLink,
 .buttonLinkEmpty {
   display: flex;
-  height: 40px;
-  padding: 8px 12px;
   justify-content: center;
   align-items: center;
   gap: 12px;
   align-self: stretch;
+}
+
+.buttonCard {
+  font-size: 18px;
+  padding: 16px;
+  height: 60px;
+}
+
+.buttonTable {
+  font-size: 16px;
+  padding: 8px 12px;
+  height: 40px;
 }
 
 .buttonLink {
@@ -25,4 +35,10 @@
 }
 .buttonLinkEmpty:hover {
   opacity: 0.75;
+}
+
+@media (max-width: 767px) {
+  .buttonCard {
+    font-size: 16px;
+  }
 }

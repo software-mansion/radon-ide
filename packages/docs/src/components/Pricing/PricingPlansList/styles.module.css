@@ -1,8 +1,10 @@
 .list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 480px));
+  grid-template-columns: repeat(2, minmax(275px, 480px));
   gap: 40px;
   list-style: none;
+  overflow: hidden;
+  justify-content: center;
 }
 
 .planContainer {
@@ -16,7 +18,6 @@
   display: flex;
   align-items: center;
   gap: 40px;
-  align-self: stretch;
 }
 
 .plan_pay_individual {
@@ -100,12 +101,6 @@
   font-weight: 500;
 }
 
-/* .pricingCardContainer,
-.proCardContainer {
-  max-width: 480px;
-  width: 100%;
-} */
-
 .pricingCardContainer {
   border: var(--radon-border-layout);
 }
@@ -115,12 +110,25 @@
 }
 
 @media (max-width: 1024px) {
-  /* .list {
-    grid-template-columns: 1fr;
-    padding: 0;
-  } */
   .plan_pay_individual {
     padding: 0;
+  }
+}
+
+@media (max-width: 794px) {
+  .plan_pay_individual {
+    flex-direction: column;
+    justify-content: center;
+    gap: 24px;
+  }
+  .planBtnContainer {
+    gap: initial;
+    max-width: 344px;
+    width: 100%;
+    justify-content: space-evenly;
+  }
+  .btn {
+    width: 100%;
   }
 }
 
@@ -130,15 +138,12 @@
   }
   .planContainer {
     padding: 0;
+    gap: 32px;
   }
 }
 
-@media (max-width: 480px) {
-  .btn {
-    padding: 8px 12px;
-  }
-  .btn p {
-    font-size: 14px;
-    white-space: wrap;
+@media (max-width: 640px) {
+  .list {
+    grid-template-columns: minmax(275px, 480px);
   }
 }
