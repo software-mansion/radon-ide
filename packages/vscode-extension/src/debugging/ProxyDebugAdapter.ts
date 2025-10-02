@@ -51,7 +51,11 @@ export class ProxyDebugAdapter extends DebugSession {
       proxyDelegate
     );
 
-    this.disposables.push(
+    this.setupListeners(proxyDelegate);
+  }
+
+  private setupListeners(proxyDelegate: RadonCDPProxyDelegate) {
+    const subscriptions = [
       proxyDelegate.onDebuggerPaused(({ reason }) => {
         this.sendEvent(new Event(DEBUG_PAUSED, { reason }));
         if (this.session.configuration.displayDebuggerOverlay) {
@@ -62,9 +66,7 @@ export class ProxyDebugAdapter extends DebugSession {
             },
           });
         }
-      })
-    );
-    this.disposables.push(
+      }),
       proxyDelegate.onDebuggerResumed(() => {
         this.sendEvent(new Event(DEBUG_RESUMED));
         if (this.session.configuration.displayDebuggerOverlay) {
@@ -73,35 +75,21 @@ export class ProxyDebugAdapter extends DebugSession {
             params: {},
           });
         }
-      })
-    );
-    this.disposables.push(
+      }),
       proxyDelegate.onConsoleAPICalled(() => {
         this.sendEvent(new Event(DEBUG_CONSOLE_LOG));
-      })
-    );
-
-    this.disposables.push(
+      }),
       vscode.debug.onDidTerminateDebugSession((terminatedSession) => {
         if (terminatedSession.parentSession?.id === this.session.id) {
           this.terminate();
         }
-      })
-    );
-
-    this.disposables.push(
+      }),
       proxyDelegate.onBindingCalled(({ name, payload }) => {
         this.sendEvent(new Event(BINDING_CALLED, { name, payload }));
-      })
-    );
-
-    this.disposables.push(
+      }),
       proxyDelegate.onBundleParsed(({ isMainBundle }) => {
         this.sendEvent(new Event(SCRIPT_PARSED, { isMainBundle }));
-      })
-    );
-
-    this.disposables.push(
+      }),
       debug.onDidReceiveDebugSessionCustomEvent((event) => {
         if (event.session.id !== this.childDebugSession?.id) {
           return;
@@ -116,14 +104,13 @@ export class ProxyDebugAdapter extends DebugSession {
             }
             break;
         }
-      })
-    );
-
-    this.disposables.push(
+      }),
       proxyDelegate.onNetworkEvent((e) => {
         this.sendEvent(new Event(RNIDE_NETWORK_EVENT, e));
-      })
-    );
+      }),
+    ];
+
+    this.disposables.push(...subscriptions);
   }
 
   public sendEvent(event: Event) {
