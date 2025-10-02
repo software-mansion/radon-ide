@@ -3,6 +3,8 @@ import styles from "./styles.module.css";
 import CheckIcon from "@site/src/components/CheckIcon";
 import { FeatureProps } from "..";
 import Tooltip from "@site/src/components/Tooltip";
+import ChevronDownIcon from "@site/src/components/ChevronDownIcon";
+import clsx from "clsx";
 
 interface PricingFeaturesListProps {
   featuresList: FeatureProps[];
@@ -36,8 +38,13 @@ export default function PricingFeaturesList({ featuresList, plan }: PricingFeatu
       ))}
 
       {isExpandable && (
-        <button type="button" onClick={handleExpanding}>
-          {isExpanded ? "Show fever features" : "Show all features"}
+        <button type="button" className={styles.expandButton} onClick={handleExpanding}>
+          <p className={styles.expandBtnLabel}>
+            {isExpanded ? "Show fever features" : "Show all features"}
+          </p>
+          <div className={clsx(styles.chevronIcon, isExpanded ? styles.chevronRotate : "")}>
+            <ChevronDownIcon />
+          </div>
         </button>
       )}
     </>

@@ -3,3 +3,36 @@
   gap: 12px;
   color: var(--ifm-color-primary);
 }
+
+.expandButton {
+  display: flex;
+  padding: 0;
+  gap: 8px;
+  cursor: pointer;
+}
+
+p.expandBtnLabel {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--radon-subheading);
+}
+
+p.expandBtnLabel:hover {
+  color: var(--ifm-color-primary);
+  transition: color 0.3s;
+}
+
+.chevronIcon svg {
+  height: 13px;
+  width: 13px;
+}
+
+.chevronIcon {
+  display: flex;
+  align-items: center;
+}
+
+.chevronRotate {
+  transform: rotate(180deg);
+}
