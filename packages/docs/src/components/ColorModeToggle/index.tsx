@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import clsx from "clsx";
 import styles from "./styles.module.css";
 import IconLightMode from "../IconLightMode";
@@ -8,9 +8,14 @@ import { useColorMode } from "@docusaurus/theme-common";
 
 function ColorModeToggle() {
   const { colorMode, setColorMode } = useColorMode();
-  const [theme, setTheme] = useState("system");
+  const [theme, setTheme] = useState<"system" | "light" | "dark">("system");
 
-  const current = theme === "system" ? "system" : colorMode;
+  useEffect(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light" || saved === "dark" || saved === "system") {
+      setTheme(saved);
+    }
+  }, []);
 
   const handleModeChange = (mode: "system" | "light" | "dark") => {
     if (mode === "system") {
@@ -21,12 +26,11 @@ function ColorModeToggle() {
       setTheme(mode);
     }
   };
-
   return (
     <div className={styles.toggle}>
       <button
         type="button"
-        className={clsx(current === "system" && styles.active)}
+        className={clsx(theme === "system" && styles.active)}
         onClick={() => {
           handleModeChange("system");
         }}>
@@ -34,7 +38,7 @@ function ColorModeToggle() {
       </button>
       <button
         type="button"
-        className={clsx(current === "light" && styles.active)}
+        className={clsx(theme === "light" && styles.active)}
         onClick={() => {
           handleModeChange("light");
         }}>
@@ -42,7 +46,7 @@ function ColorModeToggle() {
       </button>
       <button
         type="button"
-        className={clsx(current === "dark" && styles.active)}
+        className={clsx(theme === "dark" && styles.active)}
         onClick={() => {
           handleModeChange("dark");
         }}>

@@ -218,6 +218,10 @@ a.menu__link {
   font-weight: 400;
 }
 
+[class*="menu__list-item-collapsible"] a {
+  color: var(--ifm-color-primary) !important;
+}
+
 a[class*="menu__link"]:not([class*="active"]):hover {
   color: var(--ifm-color-primary);
   opacity: 1;
@@ -294,8 +298,8 @@ div[class*="hireUsContainer"] p {
   border: var(--radon-border-layout) !important;
 }
 
-[class*="buttonTOCStyling"] svg {
-  stroke: var(--ifm-color-primary) !important;
+[class*="buttonTOCStyling"]:hover svg {
+  stroke: var(--radon-button-text) !important;
 }
 
 .col[class*="col--3"] {

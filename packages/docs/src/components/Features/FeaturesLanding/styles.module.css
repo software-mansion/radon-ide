@@ -20,7 +20,7 @@
 }
 
 .heading span {
-  color: var(--swm-green-light-100);
+  color: var(--radon-text-green-highlight);
 
   font-size: 48px;
   font-weight: 500;
@@ -53,6 +53,12 @@
   align-items: center;
   text-align: center;
   gap: 12px;
+}
+.learnMoreLink:hover,
+.learnMoreLinkBottom:hover {
+  background-color: transparent;
+  opacity: 0.75;
+  transition: opacity 0.3s;
 }
 
 .learnMoreLink {
@@ -101,6 +107,6 @@
     justify-self: end;
   }
   .textContent {
-    padding: 0 24px;
+    padding-right: 24px;
   }
 }

@@ -11,6 +11,7 @@
 
 .buttonLink {
   background: var(--radon-button);
+  color: var(--radon-button-text);
 }
 
 .buttonLinkEmpty {

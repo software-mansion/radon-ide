@@ -36,10 +36,10 @@
   gap: 8px;
   width: fit-content;
 
-  background: var(--swm-card-border);
+  background: var(--radon-badge);
   font-size: 14px;
   line-height: 20px;
-  color: var(--radon-color-primary);
+  color: var(--radon-badge-text);
 }
 
 .cardTitle {

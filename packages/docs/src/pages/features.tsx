@@ -24,7 +24,10 @@ export default function Features(): JSX.Element {
           <FeatureSliderLanding />
           <FeaturesGrid />
           <AI />
-          <SWM />
+          <SWM>
+            We are core React Native contributors & creators and maintainers of key React Native
+            libraries like Reanimated, Gesture Handler, or Screens.
+          </SWM>
           <LearnMoreFooter />
         </div>
       </div>

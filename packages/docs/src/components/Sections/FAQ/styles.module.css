@@ -30,7 +30,7 @@
 
 @media (max-width: 1024px) {
   .faq {
-    padding: 0;
+    padding: 24px 40px;
     gap: 24px;
     grid-template-columns: 1fr;
   }

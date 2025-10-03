@@ -11,6 +11,7 @@
   gap: 20px;
   padding: 40px 40px 0 40px;
   max-width: 620px;
+  justify-content: space-between;
 }
 
 .reverseContainer {
