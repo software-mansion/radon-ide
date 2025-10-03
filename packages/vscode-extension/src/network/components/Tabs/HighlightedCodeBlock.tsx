@@ -17,7 +17,8 @@ interface HighlightedCodeBlockProps {
  * Maximum content length (in characters) to apply syntax highlighting
  * For larger content, plain text will be displayed to avoid performance issues
  */
-const MAX_HIGHLIGHT_LENGTH = 50_000;
+const MAX_HIGHLIGHT_LENGTH = 100_000;
+const HIGHLIGHT_THROTTLE = 100; // milliseconds
 
 const HighlightedCodeBlock = ({
   content,
@@ -77,6 +78,7 @@ const HighlightedCodeBlock = ({
       language={language}
       showLanguage={false}
       addDefaultStyles={false}
+      delay={HIGHLIGHT_THROTTLE}
       className={className}>
       {content ?? placeholder}
     </ShikiHighlighter>
