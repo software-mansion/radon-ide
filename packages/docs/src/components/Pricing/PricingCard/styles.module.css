@@ -14,3 +14,37 @@
 .plan__container ul {
   padding-left: 24px;
 }
+
+.cardMain {
+  display: flex;
+  padding: 28px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+  border-top: var(--radon-border-layout);
+}
+
+.proCardBorder {
+  border-top: 1px solid var(--radon-border-highlight);
+}
+
+.cardFeatures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.cardFeatures p {
+  margin: 0;
+  color: var(--radon-text-green-highlight);
+  font-weight: 500;
+}
+
+.pricingCardContainer {
+  border: var(--radon-border-layout);
+}
+
+.proCardContainer {
+  border: 1px solid var(--radon-border-highlight);
+}
