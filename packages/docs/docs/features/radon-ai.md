@@ -84,6 +84,7 @@ The AI models automatically discover and invoke tools when they decide it will b
 - `get_library_description` Provides a detailed description of a library and its use cases.
 - `query_documentation` Retrieves documentation snippets relevant to a provided query.
 - `view_screenshot` Captures a device preview screenshot. Can help the agent to debug issues or make UI adjustements. Currenlty only supported in Gemini and Claude models.
+- `reload_application` Triggers reload of the application. The AI may choose whether to restart the application process, reload just the JS bundle, or rebuild the entire app.
 
 ## Limitations
 
