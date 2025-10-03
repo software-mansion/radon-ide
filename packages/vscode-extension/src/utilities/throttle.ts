@@ -73,8 +73,10 @@ export function throttleAsync<T extends AsyncFn>(
   };
 
   throttledFunction.flush = () => {
+    const args = recentArgs;
     throttledFunction.cancel();
     if (!running) {
+      recentArgs = args;
       execute();
     }
   };
