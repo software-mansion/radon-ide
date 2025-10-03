@@ -47,7 +47,7 @@ function DeviceRow({
     }
   };
 
-  const deviceModelName = mapIdToModel(deviceInfo.modelId);
+  const deviceModelName = mapIdToModel(deviceInfo.modelId) ?? deviceInfo.displayName;
   const deviceSubtitle =
     deviceModelName !== deviceInfo.displayName
       ? `${deviceModelName} - ${deviceInfo.systemName}`
