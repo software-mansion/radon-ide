@@ -15,11 +15,26 @@ export interface ReadableLogOutputChannel extends LogOutputChannel {
   isEmpty: () => boolean;
 }
 
-function createMockOutputChannel(channel: Output): LogOutputChannel {
-  // All five functions required for writing, reading and clearing logs are already implemented by `createReadableOutputChannel`.
-  // Remaining functions provided by `window.createOutputChannel` are never used within our codebase, and thus don't have to be present.
-  // LogLevel.Info is the default log level for any newly initialized output channel.
-  return { name: channel, logLevel: LogLevel.Info } as LogOutputChannel;
+function createMockOutputChannel(channel: Output) {
+  return {
+    name: channel,
+    logLevel: LogLevel.Info,
+    dispose: () => {},
+    onDidChangeLogLevel: () => {
+      return { dispose: () => {} };
+    },
+    trace: (message: string, ...args: any[]) => {},
+    debug: (message: string, ...args: any[]) => {},
+    info: (message: string, ...args: any[]) => {},
+    warn: (message: string, ...args: any[]) => {},
+    error: (message: string, ...args: any[]) => {},
+    append: (value: string) => {},
+    appendLine: (value: string) => {},
+    clear: () => {},
+    show: () => {},
+    hide: () => {},
+    replace: () => {},
+  };
 }
 
 export function createReadableOutputChannel(channel: Output): ReadableLogOutputChannel {

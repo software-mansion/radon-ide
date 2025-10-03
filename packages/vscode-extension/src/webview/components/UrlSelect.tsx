@@ -14,7 +14,13 @@ import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 export type UrlSelectFocusable = HTMLDivElement | HTMLInputElement;
 
-export type RemovableHistoryItem = NavigationHistoryItem & {
+export type HistoryItemMetadata = {
+  displayName: string | undefined;
+  id: string;
+};
+
+export type RemovableHistoryItem = HistoryItemMetadata & {
+  dynamic: boolean;
   removable?: boolean;
 };
 
@@ -65,14 +71,14 @@ function UrlSelect({
     if (!itemForID) {
       return id;
     }
-    return itemForID.displayName;
+    return itemForID.displayName ?? "/";
   };
 
   const removeHistoryEntry = (id: string) => {
     project.removeNavigationHistoryEntry(id);
   };
 
-  const findDynamicSegments = (item: NavigationHistoryItem) => {
+  const findDynamicSegments = (item: HistoryItemMetadata) => {
     const matchingRoute = routeList.find((route) => route.path === item.id);
     if (matchingRoute && matchingRoute.dynamic) {
       return matchingRoute.dynamic.map((segment) => segment.name);
@@ -80,13 +86,13 @@ function UrlSelect({
     return null;
   };
 
-  const closeDropdownWithValue = (item: NavigationHistoryItem) => {
+  const closeDropdownWithValue = (item: HistoryItemMetadata) => {
     const dynamicSegments = findDynamicSegments(item);
     if (dynamicSegments && dynamicSegments.length > 0) {
       editDynamicPath(item, dynamicSegments);
       return;
     }
-    setInputValue(item.displayName);
+    setInputValue(item.displayName ?? "/");
     onValueChange(item.id);
     setIsDropdownOpen(false);
     setDynamicSegmentNames([]);
@@ -94,8 +100,8 @@ function UrlSelect({
     setTimeout(() => textfieldRef.current?.blur(), 0);
   };
 
-  const editDynamicPath = (item: NavigationHistoryItem, segmentNames: string[]) => {
-    setInputValue(item.displayName);
+  const editDynamicPath = (item: HistoryItemMetadata, segmentNames: string[]) => {
+    setInputValue(item.displayName ?? "/");
     setDynamicSegmentNames(segmentNames);
     setCurrentDynamicSegment(0);
     setTimeout(() => {
@@ -157,13 +163,15 @@ function UrlSelect({
     // Items from navigation history can be removed except the current one,
     // but all extracted routes should always be present in the dropdown.
     const navigationHistoryWithRemovable = navigationHistory.map((item, index) => ({
-      ...item,
+      id: item.id,
+      displayName: item.displayName,
+      dynamic: false,
       removable: index !== 0,
     }));
     const routesNotInHistory = differenceBy(
       routeItems,
       navigationHistory,
-      (item: NavigationHistoryItem) => item.displayName
+      (item) => item.displayName
     );
     return [...navigationHistoryWithRemovable, ...routesNotInHistory];
   }, [navigationHistory, routeItems]);
@@ -215,6 +223,17 @@ function UrlSelect({
       resizeObserver.observe(textfieldRef.current);
       return () => resizeObserver.disconnect();
     }
+  }, []);
+
+  // Close dropdown when focus leaves the IDE panel (e.g., clicking on text editor)
+  useEffect(() => {
+    const blurListener = () => {
+      setIsDropdownOpen(false);
+    };
+    window.addEventListener("blur", blurListener);
+    return () => {
+      window.removeEventListener("blur", blurListener);
+    };
   }, []);
 
   // Hacky way to change the cursor style of a readonly input,

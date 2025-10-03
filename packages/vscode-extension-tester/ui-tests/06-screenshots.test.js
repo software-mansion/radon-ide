@@ -29,6 +29,7 @@ describe("6 - screenshots tests", () => {
     await managingDevicesService.deleteAllDevices();
     await managingDevicesService.addNewDevice("newDevice");
     await elementHelperService.findAndClickElementByTag("modal-close-button");
+    await radonSettingsService.setEnableReplays(true);
     view = new WebView();
     await view.switchBack();
   });
@@ -155,10 +156,8 @@ describe("6 - screenshots tests", () => {
   });
 
   it("Should open replay overlay", async () => {
-    await radonSettingsService.setEnableReplays(true);
-
     // some time to wait for replay to record
-    await driver.sleep(1000);
+    await driver.sleep(3000);
 
     await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-show-replay-button"
@@ -171,10 +170,8 @@ describe("6 - screenshots tests", () => {
   });
 
   it("Should open replay overlay using shortcut", async () => {
-    await radonSettingsService.setEnableReplays(true);
-
     // some time to wait for replay to record
-    await driver.sleep(1000);
+    await driver.sleep(3000);
 
     await driver
       .actions()

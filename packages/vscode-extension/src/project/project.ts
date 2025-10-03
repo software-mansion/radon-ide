@@ -352,28 +352,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     getTelemetryReporter().sendTelemetryEvent("url-bar:go-home", {
       platform: this.deviceSession?.platform,
     });
-
-    if (this.applicationContext.applicationDependencyManager === undefined) {
-      Logger.error(
-        "[PROJECT] Dependency manager not initialized. this code should be unreachable."
-      );
-      throw new Error("[PROJECT] Dependency manager not initialized");
-    }
-
-    if (await this.applicationContext.applicationDependencyManager.checkProjectUsesExpoRouter()) {
-      await this.deviceSession?.navigateHome();
-    } else {
-      await this.reloadMetro();
-    }
-  }
-
-  private async reloadMetro() {
-    try {
-      await this.deviceSession?.performReloadAction("reloadJs");
-      return true;
-    } catch {
-      return false;
-    }
+    this.deviceSession?.navigateHome();
   }
 
   public async removeNavigationHistoryEntry(id: string): Promise<void> {

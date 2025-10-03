@@ -49,6 +49,8 @@ describe("8 - Device Settings", () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
     }, 5000);
+
+    await appManipulationService.hideExpoOverlay(appWebsocket);
   });
 
   afterEach(async () => {
