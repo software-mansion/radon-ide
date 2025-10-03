@@ -88,7 +88,7 @@ export function getCurrentWorkspaceConfiguration(config: WorkspaceConfiguration)
       hasEnrolledBiometrics:
         config.get<boolean>(WorkspaceConfigurationKeyMap.deviceSettings.hasEnrolledBiometrics) ??
         false,
-      locale: config.get<Locale>(WorkspaceConfigurationKeyMap.deviceSettings.locale) ?? "en-US",
+      locale: config.get<Locale>(WorkspaceConfigurationKeyMap.deviceSettings.locale) ?? "en_US",
       replaysEnabled:
         config.get<boolean>(WorkspaceConfigurationKeyMap.deviceSettings.replaysEnabled) ?? false,
       showTouches:
