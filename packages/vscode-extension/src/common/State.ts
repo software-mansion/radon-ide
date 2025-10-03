@@ -437,7 +437,13 @@ export type AndroidEmulatorInfo = AndroidDeviceInfo & {
   emulator: true;
 };
 
-export type AndroidPhysicalDeviceInfo = AndroidDeviceInfo & { emulator: false };
+export type AndroidPhysicalDeviceInfo = AndroidDeviceInfo & {
+  emulator: false;
+  properties: {
+    screenWidth: number;
+    screenHeight: number;
+  };
+};
 
 export type AndroidDeviceInfo = {
   id: string;
