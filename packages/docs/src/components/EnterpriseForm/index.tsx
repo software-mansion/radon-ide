@@ -8,7 +8,7 @@ const API_URL = isProduction ? "https://swmansion.dev" : "http://localhost:8787"
 
 const EnterpriseForm = forwardRef<HTMLDivElement, {}>((_, ref) => {
   const formRef = useRef();
-  const [isSent, setisSent] = useState(false);
+  const [isSent, setIsSent] = useState(false);
   const [submitDisabled, setSubmitDisabled] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -27,6 +27,8 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((_, ref) => {
     companyName: false,
     token: false,
   });
+
+  const [submitError, setSubmitError] = useState("");
 
   const err = "This field is required.";
 
@@ -49,6 +51,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((_, ref) => {
     };
 
     setError(newErrors);
+    setSubmitError("");
 
     if (Object.values(newErrors).some((val) => val)) return;
     try {
@@ -60,15 +63,17 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((_, ref) => {
         },
         body: JSON.stringify(formData),
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      } else {
-        setisSent(true);
-      }
+
       const data = await response.json();
-      console.log("Success:", data);
+      if (response.ok) {
+        setIsSent(true);
+      } else {
+        setSubmitError(data?.error?.message || "Failed to submit form. Please try again.");
+      }
     } catch (error) {
-      console.error("FAILED: ", error.text);
+      setSubmitError(error.message || "Something went wrong. Please try again.");
+    } finally {
+      setSubmitDisabled(false);
     }
   };
 
@@ -162,6 +167,12 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((_, ref) => {
                 <Captcha onSolve={handleCaptchaSolve} />
                 {error.token && <p className={styles.error}>{err}</p>}
               </div>
+
+              {submitError && (
+                <div>
+                  <p className={styles.error}>{submitError}</p>
+                </div>
+              )}
 
               <div>
                 <button className={styles.submitButton} disabled={submitDisabled} type="submit">
