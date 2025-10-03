@@ -22,6 +22,7 @@ import { NetworkLogColumn, NetworkLog } from "../types/networkLog";
 import { SortState, SortDirection } from "../types/networkFilter";
 import { useNetworkFilter } from "../providers/NetworkFilterProvider";
 import "./NetworkRequestLog.css";
+import { NetworkEvent } from "../types/panelMessageProtocol";
 
 interface NetworkRequestLogProps {
   networkLogs: NetworkLog[];
@@ -314,6 +315,10 @@ function TableBody({
     handleSelectedRequest(id);
   };
 
+  const isSelected = (log: NetworkLog) => selectedNetworkLog?.requestId === log.requestId;
+  const isFailed = (log: NetworkLog) =>
+    log.currentState === NetworkEvent.LoadingFailed || Number(log.response?.status) >= 400;
+
   return (
     <VscodeTableBody style={{ height: `${rowVirtualizer.getTotalSize()}px` }} slot="body">
       {rowVirtualizer.getVirtualItems().map((virtualRow, index) => {
@@ -335,13 +340,11 @@ function TableBody({
               }}
               className={classNames(
                 "table-row",
-                selectedNetworkLog?.requestId === log.requestId && "selected"
+                isSelected(log) && "selected",
+                isFailed(log) && "failed"
               )}
               onClick={() =>
-                innerHandleSelectedRequest(
-                  selectedNetworkLog?.requestId === log.requestId ? null : log.requestId,
-                  virtualRow.index
-                )
+                innerHandleSelectedRequest(isSelected(log) ? null : log.requestId, virtualRow.index)
               }>
               {LOG_DETAILS_CONFIG.map(({ title, getClass }, i) => (
                 <VscodeTableCell

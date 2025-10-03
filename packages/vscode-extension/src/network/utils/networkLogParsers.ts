@@ -1,10 +1,37 @@
 import { NetworkLog } from "../types/networkLog";
 import { NetworkLogColumn, NETWORK_LOG_COLUMNS } from "../types/networkLog";
 import { FilterBadge } from "../types/networkFilter";
+import { NetworkEvent } from "../types/panelMessageProtocol";
 
 interface ParsedText {
   badge: FilterBadge | null;
   remainingText: string;
+}
+
+/**
+ * Higher-order function that handles common state checking logic for network log formatters.
+ * Returns appropriate messages based on the loading state and value presence.
+ */
+function getLogValueWithChecks<T>(
+  log: NetworkLog,
+  extractLogValue: (log: NetworkLog) => T | undefined | null,
+  unknownMessage: string = "(unknown)",
+  failedMessage: string = "(failed)",
+  pendingMessage: string = "(pending)"
+): string {
+  const isFinished = log.currentState === NetworkEvent.LoadingFinished;
+  const isFailed = log.currentState === NetworkEvent.LoadingFailed;
+  const value = extractLogValue(log);
+
+  if (isFinished && !value) {
+    return unknownMessage;
+  }
+
+  if (isFailed && !value) {
+    return failedMessage;
+  }
+
+  return String(value || pendingMessage);
 }
 
 /**
@@ -23,39 +50,54 @@ const NetworkLogFormatters = {
 
       return maybeLastPathSegment || hostname;
     } catch (error) {
-      return "";
+      return "(unknown)";
     }
   },
 
   status: (log: NetworkLog): string => {
-    return String(log.response?.status || "(pending)");
+    const exctractLogStatus = () => log.response?.status;
+    return getLogValueWithChecks(log, exctractLogStatus);
   },
 
   method: (log: NetworkLog): string => {
-    return log.request?.method || "(pending)";
+    const exctractLogMethod = () => log.request?.method;
+    return getLogValueWithChecks(log, exctractLogMethod);
   },
 
   type: (log: NetworkLog): string => {
-    return log.type || "(pending)";
+    const exctractLogType = () => log.type;
+    return getLogValueWithChecks(log, exctractLogType);
   },
 
   size: (log: NetworkLog): string => {
-    const size = log.encodedDataLength;
-    if (!size) {
-      return "(pending)";
-    }
-    const units = ["B", "KB", "MB", "GB", "TB"];
-    let unitIndex = 0;
-    let formattedSize = size;
-    while (formattedSize >= 1024 && unitIndex < units.length - 1) {
-      formattedSize /= 1024;
-      unitIndex++;
-    }
-    return `${parseFloat(formattedSize.toFixed(2) || "")} ${units[unitIndex]}`;
+    const exctractLogSize = () => {
+      const size = log.encodedDataLength;
+      const status = log.response?.status;
+      if (size === undefined || status === 204) {
+        return undefined;
+      }
+
+      const units = ["B", "KB", "MB", "GB", "TB"];
+      let unitIndex = 0;
+      let formattedSize = size;
+      while (formattedSize >= 1024 && unitIndex < units.length - 1) {
+        formattedSize /= 1024;
+        unitIndex++;
+      }
+      return `${parseFloat(formattedSize.toFixed(2) || "")} ${units[unitIndex]}`;
+    };
+
+    return getLogValueWithChecks(
+      log,
+      exctractLogSize,
+      "0 B", // unknownMessage
+      "0 B" // failedMessage
+    );
   },
 
   time: (log: NetworkLog): string => {
-    return log.timeline?.durationMs ? `${log.timeline?.durationMs} ms` : "(pending)";
+    const exctractLogTime = () => log.timeline?.durationMs && `${log.timeline?.durationMs} ms`;
+    return getLogValueWithChecks(log, exctractLogTime);
   },
 } as const;
 

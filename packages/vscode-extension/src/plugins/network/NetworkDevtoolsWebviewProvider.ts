@@ -47,9 +47,9 @@ export class NetworkDevtoolsWebviewProvider implements WebviewViewProvider, Disp
       throw new Error("Couldn't retrieve the network plugin");
     }
 
-    this.messageListenerDisposable = webview.onDidReceiveMessage((event) =>
-      networkPlugin.handleWebviewMessage(event)
-    );
+    this.messageListenerDisposable = webview.onDidReceiveMessage((event) => {
+      networkPlugin.handleWebviewMessage(event);
+    });
 
     this.broadcastRepeaterDisposable = networkPlugin.onMessageBroadcast((message) => {
       webview.postMessage(message);

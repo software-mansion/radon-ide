@@ -8,6 +8,7 @@ interface TimingTabProps {
 const TimingTab = ({ networkLog }: TimingTabProps) => {
   const totalTime = networkLog.timeline.durationMs || 0;
   const ttfb = networkLog.timeline.ttfb || 0;
+  const downloadTime = networkLog.timeline.downloadTime || 0;
 
   const ttfbPercent = (ttfb / totalTime) * 100;
   const responseLoadingPercent = ((totalTime - ttfb) / totalTime) * 100;
@@ -26,7 +27,7 @@ const TimingTab = ({ networkLog }: TimingTabProps) => {
         </tr>
         <tr>
           <td>Downloading response:</td>
-          <td className="timing-value">{totalTime - ttfb} ms</td>{" "}
+          <td className="timing-value">{downloadTime} ms</td>{" "}
         </tr>
         <tr>
           <td>Total:</td>

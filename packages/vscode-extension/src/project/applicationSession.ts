@@ -42,12 +42,12 @@ import {
   DevtoolsServer,
   CDPDevtoolsServer,
 } from "./devtools";
-import { RadonInspectorBridge } from "./bridge";
+import { RadonInspectorBridge, NETWORK_EVENT_MAP, NetworkBridge } from "./bridge";
 import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
 
 const MAX_URL_HISTORY_SIZE = 20;
-
+import { isCDPMethod } from "../network/types/panelMessageProtocol";
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
   device: DeviceBase;
@@ -74,6 +74,7 @@ export class ApplicationSession implements Disposable {
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
   private debugSessionEventSubscription?: Disposable;
+  private networkBridge: NetworkBridge;
   private isActive = false;
   private inspectCallID = 7621;
   private devtools: DevtoolsConnection | undefined;
@@ -176,6 +177,7 @@ export class ApplicationSession implements Disposable {
     private readonly supportedOrientations: DeviceRotation[]
   ) {
     this.registerMetroListeners();
+    this.networkBridge = new NetworkBridge();
 
     const devtoolsInspectorBridge = new DevtoolsInspectorBridge();
     this._inspectorBridge = devtoolsInspectorBridge;
@@ -195,8 +197,10 @@ export class ApplicationSession implements Disposable {
     this.toolsManager = new ToolsManager(
       this.stateManager.getDerived("toolsState"),
       devtoolsInspectorBridge,
+      this.networkBridge,
       this.applicationContext.workspaceConfigState
     );
+
     this.disposables.push(this.toolsManager);
     this.disposables.push(this.stateManager);
   }
@@ -238,6 +242,7 @@ export class ApplicationSession implements Disposable {
   private async setupDebugSession(): Promise<void> {
     this.debugSession = await this.createDebugSession();
     this.debugSessionEventSubscription = this.registerDebugSessionListeners(this.debugSession);
+    this.networkBridge.setDebugSession(this.debugSession);
     if (this.cdpDevtoolsServer) {
       this.cdpDevtoolsServer.dispose();
       this.cdpDevtoolsServer = undefined;
@@ -311,6 +316,17 @@ export class ApplicationSession implements Disposable {
     }
   };
 
+  private onNetworkEvent = (event: DebugSessionCustomEvent): void => {
+    const method = event.body?.method;
+    if (!method || !isCDPMethod(method)) {
+      Logger.error("Unknown network event method:", method);
+      this.networkBridge.emitEvent("unknownEvent", event.body);
+      return;
+    }
+
+    this.networkBridge.emitEvent(NETWORK_EVENT_MAP[method], event.body);
+  };
+
   private registerDebugSessionListeners(debugSession: DebugSession): Disposable {
     const subscriptions: Disposable[] = [
       debugSession.onConsoleLog(this.onConsoleLog),
@@ -318,6 +334,7 @@ export class ApplicationSession implements Disposable {
       debugSession.onDebuggerResumed(this.onDebuggerResumed),
       debugSession.onProfilingCPUStarted(this.onProfilingCPUStarted),
       debugSession.onProfilingCPUStopped(this.onProfilingCPUStopped),
+      debugSession.onNetworkEvent(this.onNetworkEvent),
     ];
     return new Disposable(() => {
       disposeAll(subscriptions);

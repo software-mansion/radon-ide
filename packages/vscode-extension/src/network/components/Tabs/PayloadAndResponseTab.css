@@ -24,6 +24,18 @@
   color: var(--vscode-problemsWarningIcon-foreground);
   margin: 0 0 14px 0;
 }
+.response-tab-failed-fetch-information {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+
+  p {
+    margin: 0px;
+  }
+}
 
 .response-tab-button-wrapper {
   position: sticky;
