@@ -4,11 +4,11 @@ on:
     branches:
       - main
     paths:
-      - ".github/workflows/lint-extension.yml"
+      - ".github/workflows/lint-extension-tester.yml"
       - "packages/vscode-extension-tester/**"
   pull_request:
     paths:
-      - ".github/workflows/lint-extension.yml"
+      - ".github/workflows/lint-extension-tester.yml"
       - "packages/vscode-extension-tester/**"
 
 concurrency:
