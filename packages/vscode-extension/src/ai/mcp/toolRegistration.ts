@@ -3,7 +3,7 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getToolSchema, invokeToolCall } from "../shared/api";
 import { ToolSchema } from "./models";
-import { readLogsToolExec, screenshotToolExec } from "./toolExecutors";
+import { readLogsToolExec, restartDeviceExec, screenshotToolExec } from "./toolExecutors";
 import { ConnectionListener } from "../shared/ConnectionListener";
 
 const PLACEHOLDER_ID = "3241"; // This placeholder is needed by the API, but the value doesn't matter
@@ -23,6 +23,25 @@ export async function registerMcpTools(server: McpServer, connectionListener: Co
       inputSchema: {},
     },
     screenshotToolExec
+  );
+
+  server.registerTool(
+    "reload_application",
+    {
+      description:
+        "Trigger a reload of the app running in the development emulator. The three methods of reloading the app are:\n" +
+        "- `reloadJs`: This method triggers the JS bundle to be reloaded, it does not trigger any rebuild or restart of the native part of the app\n" +
+        "- `restartProcess`: This method restarts the native part of the app. This method is useful for restarting the state of buggy native libraries or components.\n" +
+        "- `rebuild`: This method rebuilds both the js and the native parts of the app. Use it whenever changes are made to the native part.",
+      inputSchema: {
+        reloadMethod: z.union([
+          z.literal("reloadJs"),
+          z.literal("restartProcess"),
+          z.literal("rebuild"),
+        ]),
+      },
+    },
+    restartDeviceExec
   );
 
   server.registerTool(
