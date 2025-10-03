@@ -1,7 +1,7 @@
+import { assert } from "chai";
 import { WebView, BottomBarPanel } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
-import { assert } from "chai";
 
 describe("5 - Network panel tests", () => {
   let driver,
@@ -100,9 +100,7 @@ describe("5 - Network panel tests", () => {
     );
     await driver.sleep(1000);
 
-    const networkIFrame = await radonViewsService.findWebViewIFrame(
-      "Radon Network Inspector"
-    );
+    await radonViewsService.findWebViewIFrame("Radon Network Inspector");
   });
 
   it("Should show fetch in network panel", async () => {

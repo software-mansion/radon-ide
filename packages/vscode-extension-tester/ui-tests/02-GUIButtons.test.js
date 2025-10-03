@@ -1,6 +1,5 @@
-import initServices from "../services/index.js";
 import { WebView, EditorView } from "vscode-extension-tester";
-
+import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
 describe("2 - Main interface buttons tests", () => {
