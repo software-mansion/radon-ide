@@ -23,7 +23,9 @@ export function throttleAsync<T extends AsyncFn>(
       return;
     }
     const currentCallCount = callCount;
-    const result = func(...recentArgs);
+    const args = recentArgs;
+    recentArgs = null;
+    const result = func(...args);
     result
       .catch(() => {})
       .then(() => {
