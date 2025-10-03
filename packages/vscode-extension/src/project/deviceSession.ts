@@ -173,7 +173,6 @@ export class DeviceSession implements Disposable {
 
   private resetStartingState(startupMessage: StartupMessage = StartupMessage.Restarting) {
     this.stateManager.updateState({
-      isUsingStaleBuild: false,
       status: "starting",
       startupMessage,
       stageProgress: 0,
@@ -431,7 +430,6 @@ export class DeviceSession implements Disposable {
     });
 
     const { isUsingStaleBuild } = this.stateManager.getState();
-    this.resetStartingState();
 
     if (this.maybeBuildResult && isUsingStaleBuild) {
       await this.restartDevice({ forceClean: false });
