@@ -1,9 +1,6 @@
 const {
   adaptMetroConfig,
-  requireFromAppDir,
   requireFromAppDependency,
-  resolveFromAppDir,
-  overrideModuleFromAppDir,
   overrideModuleFromAppDependency,
 } = require("../metro_helpers");
 
@@ -20,14 +17,8 @@ metroConfig.loadConfig = async function (...args) {
 // base terminal reporter class from metro that Expo CLI extends
 overrideModuleFromAppDependency("react-native", "metro/src/lib/TerminalReporter", require("../metro_reporter"));
 
-const expoInstallPath = resolveFromAppDir("expo");
-
 // since expo 54 this is the new path that the Terminal reporter is imported from, by expo
-overrideModuleFromAppDir("@expo/metro/metro/lib/TerminalReporter", require("../metro_reporter"), {
-  paths: [expoInstallPath],
-});
+overrideModuleFromAppDependency("expo", "@expo/metro/metro/lib/TerminalReporter", require("../metro_reporter"));
 
-const { expoStart } = requireFromAppDir("@expo/cli/build/src/start/index", {
-  paths: [expoInstallPath],
-});
+const { expoStart } = requireFromAppDependency("expo", "@expo/cli/build/src/start/index");
 expoStart(process.argv.slice(2)); // pass argv but strip node and script name
