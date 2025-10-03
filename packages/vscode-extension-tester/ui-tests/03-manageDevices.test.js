@@ -1,3 +1,4 @@
+import { exec } from "child_process";
 import { assert } from "chai";
 import {
   By,
@@ -7,9 +8,8 @@ import {
   ActivityBar,
 } from "vscode-extension-tester";
 import initServices from "../services/index.js";
-import { get } from "./setupTest.js";
-import { exec } from "child_process";
 import getConfiguration from "../configuration.js";
+import { get } from "./setupTest.js";
 
 describe("3 - Adding device tests", () => {
   let driver,

@@ -13,7 +13,8 @@
     "get-test-app": "./scripts/downloadRepo.sh",
     "prepare-and-run-tests": "./scripts/prepare_and_run_tests.sh",
     "set-up-VM-environment": "cd ./scripts && ./setupVM.sh && cd ..",
-    "run-tests-on-VM": "./scripts/run_tests_on_vm.sh"
+    "run-tests-on-VM": "./scripts/run_tests_on_vm.sh",
+    "lint": "eslint ./**/*.\\{ts,tsx,js,jsx\\}"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +24,8 @@
   "license": "ISC",
   "devDependencies": {
     "chai": "^5.2.0",
+    "eslint": "^9.36.0",
+    "eslint-plugin-import": "^2.32.0",
     "mocha": "^11.7.1",
     "typescript": "^5.8.3",
     "vscode-extension-tester": "^8.17.0"

@@ -1,10 +1,9 @@
 import { WebView, By, Key } from "vscode-extension-tester";
-import { assert } from "chai";
 import initServices from "../services/index.js";
-import { get } from "./setupTest.js";
 import { getAppWebsocket } from "../server/webSocketServer.js";
 import { itIf } from "../utils/helpers.js";
 import getConfiguration from "../configuration.js";
+import { get } from "./setupTest.js";
 
 const rotationSequence = "1010110010101110010010111011100100100111";
 
