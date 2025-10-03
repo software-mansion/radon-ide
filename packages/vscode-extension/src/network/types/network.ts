@@ -42,6 +42,7 @@ export interface GetResponseBodyResponse {
 export interface ResponseBodyData {
   body: string | undefined;
   wasTruncated?: boolean;
+  base64Encoded?: boolean;
 }
 
 export interface TimelineEvent {

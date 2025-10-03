@@ -6,6 +6,7 @@ import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import HeadersTab from "./Tabs/HeadersTab";
 import PayloadTab from "./Tabs/PayloadTab";
 import ResponseTab from "./Tabs/ResponseTab";
+import PreviewTab from "./Tabs/PreviewTab";
 import TimingTab from "./Tabs/TimingTab";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../types/networkLog";
@@ -41,6 +42,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
   const { getResponseBody } = useNetwork();
 
   const themeData = useThemeExtractor();
+  const isImage = networkLog.type === "Image";
 
   useEffect(() => {
     getResponseBody(networkLog).then((data) => {
@@ -58,12 +60,18 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
       Tab: PayloadTab,
       props: { editorThemeData: themeData },
     },
-    {
-      title: "Response",
-      Tab: ResponseTab,
-      props: { responseBodyData, editorThemeData: themeData },
-      warning: wasTruncated,
-    },
+    isImage
+      ? {
+          title: "Preview",
+          Tab: PreviewTab,
+          props: { responseBodyData },
+        }
+      : {
+          title: "Response",
+          Tab: ResponseTab,
+          props: { responseBodyData, editorThemeData: themeData },
+          warning: wasTruncated,
+        },
     {
       title: "Timing",
       Tab: TimingTab,
@@ -114,6 +122,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
                   <Tab networkLog={networkLog} {...props} />
                 </div>
               </OverlayScrollbarsComponent>
+               
             </VscodeTabPanel>
           </Fragment>
         ))}

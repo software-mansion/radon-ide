@@ -134,7 +134,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   };
 
   const getResponseBody = (networkLog: NetworkLog): Promise<ResponseBodyData | undefined> => {
-    const requestId = networkLog.requestId;
+    const { requestId, type } = networkLog;
 
     if (!requestId) {
       return Promise.resolve(undefined);
@@ -153,6 +153,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       method: NetworkMethod.GetResponseBody,
       params: {
         requestId: requestId,
+        type: type,
       },
     });
 

@@ -15,7 +15,7 @@ export const NETWORK_PLUGIN_ID = "network";
  * Disabled by default until new network inspector is integradated into react native.
  * The instructions to enable the features are in plugins/network/README.md
  */
-const ENABLE_NEW_INSPECTOR = false;
+const ENABLE_NEW_INSPECTOR = true;
 
 export type BroadcastListener = (message: WebviewMessage) => void;
 

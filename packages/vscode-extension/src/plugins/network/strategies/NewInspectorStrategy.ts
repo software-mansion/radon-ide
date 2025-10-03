@@ -41,15 +41,27 @@ export default class NewInspectorStrategy extends BaseInspectorStrategy {
   /**
    * Truncate response body if it exceeds the maximum allowed length to prevent UI freezing.
    */
-  private truncateResponseBodyData(body: string): ResponseBodyData {
-    if (body.length > MAX_MESSAGE_LENGTH) {
+  private formatResponseBodyData(
+    responseBodyData: ResponseBodyData,
+    contentType: string | undefined
+  ): ResponseBodyData {
+    const { body, base64Encoded } = responseBodyData;
+    if (!body || !contentType) {
+      return { body: undefined, wasTruncated: false, base64Encoded: false };
+    }
+
+    const shouldDecode = base64Encoded && contentType !== "Image";
+    const responseBody = shouldDecode ? this.decodeBase64(body) : body;
+
+    if (responseBody.length > MAX_MESSAGE_LENGTH) {
       return {
-        body: body.slice(0, TRUNCATED_LENGTH),
+        body: responseBody.slice(0, TRUNCATED_LENGTH),
         wasTruncated: true,
+        base64Encoded: !shouldDecode,
       };
     }
 
-    return { body, wasTruncated: false };
+    return { body: responseBody, wasTruncated: false, base64Encoded: !shouldDecode };
   }
 
   private broadcastCDPMessage(message: CDPMessage): void {
@@ -79,6 +91,8 @@ export default class NewInspectorStrategy extends BaseInspectorStrategy {
 
   private async handleGetResponseBody(payload: CDPMessage) {
     const { messageId } = payload || {};
+    const { type } = payload?.params || {};
+
     if (!messageId) {
       Logger.warn(
         "Could not invoke method getResponseBody: missing messageId (id of webview message sent)"
@@ -90,7 +104,7 @@ export default class NewInspectorStrategy extends BaseInspectorStrategy {
       const emptyMessage: CDPMessage = {
         messageId,
         method: NetworkMethod.GetResponseBody,
-        result: { body: undefined, wasTruncated: false },
+        result: { body: undefined, wasTruncated: false, base64Encoded: false },
       };
       this.broadcastCDPMessage(emptyMessage);
     };
@@ -113,10 +127,7 @@ export default class NewInspectorStrategy extends BaseInspectorStrategy {
       return;
     }
 
-    const { body, base64Encoded } = responseBodyData;
-    const responseBody = base64Encoded ? this.decodeBase64(body) : body;
-
-    const responseBodyResult = this.truncateResponseBodyData(responseBody);
+    const responseBodyResult = this.formatResponseBodyData(responseBodyData, type);
 
     const message: CDPMessage = {
       messageId,

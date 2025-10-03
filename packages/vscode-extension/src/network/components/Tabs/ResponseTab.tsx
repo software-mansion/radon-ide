@@ -50,6 +50,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
         )}
         {dataFetchFailure ? (
           <div className="response-tab-failed-fetch-information">
+            <span className="codicon codicon-info" />
             <h4>Failed to load response data</h4>
           </div>
         ) : (

@@ -265,6 +265,39 @@ const LANGUAGE_BY_CONTENT_TYPE = {
   "text/yaml": "yaml",
 };
 
+/**
+ * Image and graphics MIME types that can be displayed in a preview
+ */
+const PREVIEWABLE_IMAGE_TYPES = [
+  // image
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/bmp",
+  "image/tiff",
+  "image/x-icon",
+  "image/vnd.microsoft.icon",
+  "image/avif",
+  "image/apng",
+
+  // SVG
+  "image/svg+xml",
+];
+
+/**
+ * Checks if the content type represents a previewable image format
+ */
+export function isPreviewableImage(contentType: string): boolean {
+  if (!contentType) {
+    return false;
+  }
+
+  const contentTypeLowerCase = contentType.toLowerCase();
+  return PREVIEWABLE_IMAGE_TYPES.some((imageType) => contentTypeLowerCase.includes(imageType));
+}
+
 export function determineLanguage(contentType: string, body: string): string {
   const contentTypeLowerCase = contentType.toLowerCase();
 
