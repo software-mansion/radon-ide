@@ -37,6 +37,7 @@ import { launchConfigurationFromOptions } from "./project/launchConfigurationsMa
 import { isIdeConfig } from "./utilities/launchConfiguration";
 import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
+import { OutputChannelRegistry } from "./project/OutputChannelRegistry";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -66,10 +67,13 @@ export function deactivate(context: ExtensionContext): undefined {
   IDE.getInstanceIfExists()?.dispose();
   commands.executeCommand("setContext", "RNIDE.extensionIsActive", false);
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
+  OutputChannelRegistry.getInstanceIfExists()?.dispose();
   return undefined;
 }
 
 export async function activate(context: ExtensionContext) {
+  OutputChannelRegistry.initializeInstance();
+
   // We reset RNIDE.panelIsOpen context to false on activation
   // to avoid situations when "Open IDE Panel" button is not shown
   // after improper deactivation of the extension.

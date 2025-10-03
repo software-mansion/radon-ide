@@ -7,11 +7,11 @@ import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
 import { initialState, RecursivePartial, State } from "../common/State";
 import { LaunchConfiguration } from "../common/LaunchConfig";
-import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 import { Telemetry } from "./telemetry";
 import { EditorBindings } from "./EditorBindings";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
@@ -26,7 +26,6 @@ export class IDE implements Disposable {
   public readonly editorBindings: EditorBindings;
   public readonly project: Project;
   public readonly workspaceConfigController: WorkspaceConfigController;
-  public readonly outputChannelRegistry = new OutputChannelRegistry();
 
   private environmentDependencyManager: EnvironmentDependencyManager;
 
@@ -46,10 +45,13 @@ export class IDE implements Disposable {
 
     this.telemetry = new Telemetry(this.stateManager.getDerived("telemetry"));
 
+    const outputChannelRegistry = OutputChannelRegistry.getInstance();
+
     this.deviceManager = new DeviceManager(
       this.stateManager.getDerived("devicesState"),
-      this.outputChannelRegistry
+      outputChannelRegistry
     );
+
     this.editorBindings = new EditorBindings();
 
     this.environmentDependencyManager = new EnvironmentDependencyManager(
@@ -66,7 +68,7 @@ export class IDE implements Disposable {
       this.stateManager.getDerived("devicesState"),
       this.deviceManager,
       this.editorBindings,
-      this.outputChannelRegistry,
+      outputChannelRegistry,
       this.environmentDependencyManager,
       this.telemetry,
       initialLaunchConfig
@@ -76,12 +78,8 @@ export class IDE implements Disposable {
       this.stateManager.updateState({ applicationRoots });
     });
 
-    this.disposables.push(
-      this.project,
-      this.workspaceConfigController,
-      this.outputChannelRegistry,
-      this.telemetry
-    );
+    this.disposables.push(this.project, this.workspaceConfigController, this.telemetry);
+
     // register disposable with context
     extensionContext.subscriptions.push(this);
   }

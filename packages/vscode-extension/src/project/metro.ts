@@ -3,13 +3,12 @@ import fs from "fs";
 import stripAnsi from "strip-ansi";
 import WebSocket from "ws";
 import { Disposable, EventEmitter, ExtensionMode, Uri, workspace } from "vscode";
-import _ from "lodash";
 import { DebugSource } from "../debugging/DebugSession";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
+import { Output } from "../common/OutputChannel";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { ChildProcess, command, exec, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
-import { IDE } from "./ide";
-import { Output } from "../common/OutputChannel";
 import { extensionContext } from "../utilities/extensionContext";
 import { getOpenPort } from "../utilities/common";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
@@ -232,6 +231,11 @@ async function launchMetro({
     ...(isExtensionDev ? { RADON_IDE_DEV: "1" } : {}),
   };
 
+  const metroOutputChannel = OutputChannelRegistry.resolveOutputChannel(Output.MetroBundler);
+
+  // Clearing logs shortly before the new bundler process is started.
+  metroOutputChannel.clear();
+
   if (devtoolsPort !== undefined) {
     metroEnv.RCT_DEVTOOLS_PORT = devtoolsPort.toString();
   }
@@ -274,12 +278,10 @@ export class Metro implements MetroSession, Disposable {
 
   constructor(
     public readonly port: number,
-    protected readonly appRoot: string
+    protected readonly appRoot: string,
+    private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
-    const metroOutputChannel =
-      IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(
-        Output.MetroBundler
-      );
+    const metroOutputChannel = this.outputChannelRegistry.resolveOutputChannel(Output.MetroBundler);
     if (!metroOutputChannel) {
       throw new MetroError("Cannot start bundler process. The IDE is not initialized.");
     }
@@ -438,7 +440,7 @@ class SubprocessMetroSession extends Metro implements Disposable {
     appRoot: string,
     port: number
   ) {
-    super(port, appRoot);
+    super(port, appRoot, OutputChannelRegistry.getInstance());
     const PORT_IN_USE_MESSAGE = `The Metro server could not start: port ${this.port} is already in use.`;
 
     lineReader(bundlerProcess).onLineRead((line) => {
