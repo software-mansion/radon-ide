@@ -582,7 +582,7 @@ export const initialState: State = {
         isDisabled: true,
       },
       hasEnrolledBiometrics: false,
-      locale: "en-US",
+      locale: "en_US",
       replaysEnabled: false,
       showTouches: false,
       camera: {
