@@ -13,9 +13,6 @@ function resolveFromAppDir(module, options) {
   const paths = options && options.paths ? [...options.paths, appRoot] : [appRoot];
 
   return require.resolve(module, { paths });
-
-  // const frytki = resolveFromAppDependency("react-native", module, options);
-  // console.log("Frytki: ", frytki);
 }
 
 function requireFromAppDependency(dependency, module, options) {
