@@ -220,15 +220,27 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
     if (this.connection) {
       // NOTE: a single `DebugSession` only supports a single devtools connection at a time
       return;
-    } else if (this.initializeConnectionPromise) {
+    }
+    const initializeInternal = () => {
+      const initializePromise = this.initializeConnection();
+      initializePromise.catch((error) => {
+        Logger.error("Failed to initialize devtools connection", error);
+      });
+      initializePromise.then(() => {
+        this.initializeConnectionPromise = undefined;
+      });
+      return initializePromise;
+    };
+
+    if (this.initializeConnectionPromise) {
       // devtools connections cannot be initialized concurrently, we only can establish
       // one connection, so if we are already in a process of initializing one, we only schedule
       // a new attempt if the previous one fails
       this.initializeConnectionPromise = this.initializeConnectionPromise.catch(() => {
-        return this.initializeConnection();
+        return initializeInternal();
       });
     } else {
-      this.initializeConnectionPromise = this.initializeConnection();
+      this.initializeConnectionPromise = initializeInternal();
     }
   }
 
