@@ -39,16 +39,16 @@ function PricingCard({ planData, isMonthly, onButtonClick, children, bold }: Pri
           {headerText && <p>{headerText}</p>}
           <PricingFeaturesList featuresList={featuresAll} plan={plan} />
         </div>
-        {featuresTeamManagement && (
-          <div className={styles.cardFeatures}>
-            <p>Team Management</p>
-            <PricingFeaturesList featuresList={featuresTeamManagement} />
-          </div>
-        )}
         {featuresSupport && (
           <div className={styles.cardFeatures}>
             <p>Support & Updates</p>
             <PricingFeaturesList featuresList={featuresSupport} />
+          </div>
+        )}
+        {featuresTeamManagement && (
+          <div className={styles.cardFeatures}>
+            <p>Team Management</p>
+            <PricingFeaturesList featuresList={featuresTeamManagement} />
           </div>
         )}
       </div>

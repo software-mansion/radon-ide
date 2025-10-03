@@ -30,7 +30,6 @@ export const pricingBusinessData = [
     featuresTeamManagement: [
       { label: "Multiple license management", info: "" },
       { label: "Centralized team billing", info: "" },
-      { label: "Single sign-on for the Radon IDE Portal", info: "" },
       { label: "Insights Dashboard with usage stats", info: "" },
     ],
     featuresSupport: [
@@ -46,6 +45,11 @@ export const pricingBusinessData = [
     buttonLabel: "Get your quote",
     stylingFilled: true,
     featuresAll: [
+      {
+        label: "Usage-based pricing",
+        info: "You only pay for the number of seats that your employees are actually using",
+      },
+      { label: "Single sign-on for the Radon IDE Portal", info: "" },
       { label: "Service-level agreement (SLA)", info: "" },
       { label: "Dedicated payment method and invoicing", info: "" },
       { label: "Onboarding meeting", info: "" },
