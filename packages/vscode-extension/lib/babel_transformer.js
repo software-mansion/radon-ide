@@ -124,19 +124,23 @@ function transformWrapper({ filename, src, ...rest }) {
       version.startsWith("0.76") ||
       version.startsWith("0.77")
     ) {
-      const rendererAsString = fs.readFileSync(`${process.env.RADON_IDE_LIB_PATH}/rn-renderer/react-native-74-77/${rendererFileName}`, "utf-8");
+      const rendererFilePath = path.join(process.env.RADON_IDE_LIB_PATH, "rn-renderer", "react-native-74-77", rendererFileName);
+      const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
       src = rendererAsString;
     }
     if (version.startsWith("0.78") || version.startsWith("0.79")) {
-      const rendererAsString = fs.readFileSync(`${process.env.RADON_IDE_LIB_PATH}/rn-renderer/react-native-78-79/${rendererFileName}`, "utf-8");
+      const rendererFilePath = path.join(process.env.RADON_IDE_LIB_PATH, "rn-renderer", "react-native-78-79", rendererFileName);
+      const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
       src = rendererAsString;
     }
     if (version.startsWith("0.80") || version.startsWith("0.81")) {
-      const rendererAsString = fs.readFileSync(`${process.env.RADON_IDE_LIB_PATH}/rn-renderer/react-native-80-81/${rendererFileName}`, "utf-8");
+      const rendererFilePath = path.join(process.env.RADON_IDE_LIB_PATH, "rn-renderer", "react-native-80-81", rendererFileName);
+      const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
       src = rendererAsString;
     }
     if (version.startsWith("0.82")) {
-      const rendererAsString = fs.readFileSync(`${process.env.RADON_IDE_LIB_PATH}/rn-renderer/react-native-82/${rendererFileName}`, "utf-8");
+      const rendererFilePath = path.join(process.env.RADON_IDE_LIB_PATH, "rn-renderer", "react-native-82", rendererFileName);
+      const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
       src = rendererAsString;
     }
   } else if (isTransforming("node_modules/react/cjs/react-jsx-dev-runtime.development.js")) {
