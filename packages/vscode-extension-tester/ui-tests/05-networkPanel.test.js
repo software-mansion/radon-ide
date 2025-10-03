@@ -65,9 +65,6 @@ describe("5 - Network panel tests", () => {
 
     // ensure app is loaded
     await appManipulationService.waitForAppToLoad();
-    await driver.wait(async () => {
-      appWebsocket = get().appWebsocket;
-      return appWebsocket != null;
     await driver.wait(() => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
