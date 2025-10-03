@@ -91,12 +91,12 @@ export function useAlert() {
 }
 
 export function useToggleableAlert(open: boolean, alert: AlertDescriptor) {
-  const { openAlert, isOpen, closeAlert } = useAlert();
+  const { openAlert, closeAlert } = useAlert();
   useEffect(() => {
-    if (open && !isOpen(alert.id)) {
+    if (open) {
       openAlert(alert);
-    } else if (!open && isOpen(alert.id)) {
+    } else if (!open) {
       closeAlert(alert.id);
     }
-  }, [open, alert, isOpen, openAlert, closeAlert]);
+  }, [open, alert, openAlert, closeAlert]);
 }
