@@ -200,27 +200,40 @@ const DEVTOOLS_DOMAIN_NAME = "react-devtools";
 
 export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   private disposables: Disposable[] = [];
+  private initializeConnectionPromise: Promise<void> | undefined;
 
   constructor(private readonly debugSession: DebugSession) {
     super();
     this.disposables.push(
       debugSession.onJSDebugSessionStarted(() => {
-        this.createConnection();
+        this.maybeInitializeConnection();
       }),
       debugSession.onScriptParsed(({ isMainBundle }) => {
         if (isMainBundle) {
-          this.createConnection();
+          this.maybeInitializeConnection();
         }
       })
     );
   }
 
-  private async createConnection() {
-    const debugSession = this.debugSession;
+  private maybeInitializeConnection() {
     if (this.connection) {
       // NOTE: a single `DebugSession` only supports a single devtools connection at a time
       return;
+    } else if (this.initializeConnectionPromise) {
+      // devtools connections cannot be initialized concurrently, we only can establish
+      // one connection, so if we are already in a process of initializing one, we only schedule
+      // a new attempt if the previous one fails
+      this.initializeConnectionPromise = this.initializeConnectionPromise.catch(() => {
+        return this.initializeConnection();
+      });
+    } else {
+      this.initializeConnectionPromise = this.initializeConnection();
     }
+  }
+
+  private async initializeConnection() {
+    const debugSession = this.debugSession;
 
     // NOTE: the binding survives JS reloads, and the Devtools frontend will reconnect automatically
     await debugSession.addBinding(BINDING_NAME);
@@ -231,7 +244,7 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
       // NOTE: if the dispatcher is not present, it's likely the app
       // has not loaded yet or failed to load the JS bundle.
       // In either case, there's nothing to connect to.
-      return;
+      throw new Error("Failed to initialize devtools connection, dispatcher not present");
     }
 
     const wall: Wall = {
@@ -261,7 +274,9 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
       shutdownListener.dispose();
     });
     connection.onDisconnected(() => {
-      this.setConnection(undefined);
+      if (this.connection === connection) {
+        this.setConnection(undefined);
+      }
     });
 
     this.setConnection(connection);
