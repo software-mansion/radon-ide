@@ -360,7 +360,7 @@
         "RadonIDE.deviceSettings.locale": {
           "type": "string",
           "scope": "window",
-          "default": "en-US",
+          "default": "en_US",
           "description": "Controls the localization of the simulated device."
         },
         "RadonIDE.deviceSettings.replaysEnabled": {
