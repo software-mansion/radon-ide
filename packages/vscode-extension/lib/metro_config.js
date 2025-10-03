@@ -1,7 +1,7 @@
-const { adaptMetroConfig, requireFromAppDir } = require("./metro_helpers");
+const { adaptMetroConfig, requireFromAppDependency } = require("./metro_helpers");
 
 // Below is the main code of the config overrider.
-const { loadConfig } = requireFromAppDir("metro-config");
+const { loadConfig } = requireFromAppDependency("react-native", "metro-config");
 
 module.exports = async function () {
   const customMetroConfigPath = process.env.RN_IDE_METRO_CONFIG_PATH;

@@ -2,8 +2,6 @@ const path = require("path");
 
 const appRoot = path.resolve();
 
-const { resolvePnpmPackageFromAppRoot } = require("./pnpm/resolve_pnpm_module");
-
 // Instead of using require in this code, we should use require_app, which will
 // resolve modules relative to the app root, not the extension lib root.
 function requireFromAppDir(module, options) {
@@ -13,16 +11,38 @@ function requireFromAppDir(module, options) {
 
 function resolveFromAppDir(module, options) {
   const paths = options && options.paths ? [...options.paths, appRoot] : [appRoot];
-  try {
-    return require.resolve(module, { paths });
-  } catch (e) {
-    // if there was an error, we try to resolve the module via pnpm resolution
-  }
 
-  // we try pnpm resolution here as it is our only "special-cased" resolution mechanism
-  // if we need to support other package managers, we can add more resolution mechanisms here
-  // and switch between them based on some criteria (e.g. presence of lock file)
-  return resolvePnpmPackageFromAppRoot(module);
+  return require.resolve(module, { paths });
+
+  // const frytki = resolveFromAppDependency("react-native", module, options);
+  // console.log("Frytki: ", frytki);
+}
+
+function requireFromAppDependency(dependency, module, options) {
+  const path = resolveFromAppDependency(dependency, module, options);
+  return require(path);
+}
+
+function overrideModuleFromAppDependency(dependency, moduleName, exports, options) {
+  try {
+    const moduleToOverride = resolveFromAppDependency(dependency, moduleName, options);
+    require.cache[moduleToOverride] = {
+      exports,
+    };
+  } catch (e) {
+    // the code may throw MODULE_NOT_FOUND error, in which case we don't do anything
+    // as there is nothing to override
+  }
+}
+
+function resolveFromAppDependency(dependency, module, options) {
+  let paths = options && options.paths ? [...options.paths, appRoot] : [appRoot];
+
+  const dependencyPath = require.resolve(dependency, { paths });
+
+  paths = [path.dirname(dependencyPath), ...paths];
+
+  return require.resolve(module, { paths });
 }
 
 function overrideModuleFromAppDir(moduleName, exports, options) {
@@ -189,6 +209,8 @@ module.exports = {
   appRoot,
   adaptMetroConfig,
   requireFromAppDir,
+  requireFromAppDependency,
   resolveFromAppDir,
   overrideModuleFromAppDir,
+  overrideModuleFromAppDependency,
 };

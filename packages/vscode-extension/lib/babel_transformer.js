@@ -1,7 +1,7 @@
 const ORIGINAL_TRANSFORMER_PATH = process.env.RADON_IDE_ORIG_BABEL_TRANSFORMER_PATH;
 const path = require("path");
 const fs = require("fs");
-const { requireFromAppDir, overrideModuleFromAppDir } = require("./metro_helpers");
+const { requireFromAppDir, requireFromAppDependency, overrideModuleFromAppDependency } = require("./metro_helpers");
 const buildPluginWarnOnDeeImports = require("./babel_plugins/build-plugin-warn-on-deep-imports");
 
 // In some configurations, React Native may pull several different version of JSX transform plugins:
@@ -29,13 +29,13 @@ const buildPluginWarnOnDeeImports = require("./babel_plugins/build-plugin-warn-o
 // The downside of the current approach is if the dev version is used first and the non-dev version is listed later,
 // we will end up replacing the non-dev version and as a result we will run the dev version twice which will result in
 // an error. In practice we haven't yet encountered such a setup.
-const jsxDevTransformer = requireFromAppDir("@babel/plugin-transform-react-jsx/lib/development");
+const jsxDevTransformer = requireFromAppDependency("react-native", "@babel/plugin-transform-react-jsx/lib/development");
 let nonJSXDevTransformUsed = false;
-overrideModuleFromAppDir("@babel/plugin-transform-react-jsx", (...args) => {
+overrideModuleFromAppDependency("react-native", "@babel/plugin-transform-react-jsx", (...args) => {
   nonJSXDevTransformUsed = true;
   return jsxDevTransformer.default(...args);
 });
-overrideModuleFromAppDir("@babel/plugin-transform-react-jsx-development", (...args) => {
+overrideModuleFromAppDependency("react-native", "@babel/plugin-transform-react-jsx-development", (...args) => {
   if (nonJSXDevTransformUsed) {
     return {
       name: "rnide-disabled-jsx-dev-transform",
@@ -45,16 +45,16 @@ overrideModuleFromAppDir("@babel/plugin-transform-react-jsx-development", (...ar
     return jsxDevTransformer.default(...args);
   }
 });
-overrideModuleFromAppDir("@babel/plugin-transform-react-jsx-source", {
+overrideModuleFromAppDependency("react-native", "@babel/plugin-transform-react-jsx-source", {
   name: "rnide-disabled-jsx-source-transform",
   visitor: {},
 });
-overrideModuleFromAppDir("@babel/plugin-transform-react-jsx-self", {
+overrideModuleFromAppDependency("react-native", "@babel/plugin-transform-react-jsx-self", {
   name: "rnide-disabled-jsx-self-transform",
   visitor: {},
 });
 
-overrideModuleFromAppDir("@react-native/babel-preset/src/plugin-warn-on-deep-imports.js", buildPluginWarnOnDeeImports(process.env.RADON_IDE_LIB_PATH))
+overrideModuleFromAppDependency("react-native", "@react-native/babel-preset/src/plugin-warn-on-deep-imports.js", buildPluginWarnOnDeeImports(process.env.RADON_IDE_LIB_PATH))
 
 function transformWrapper({ filename, src, ...rest }) {
   function isTransforming(unixPath) {
