@@ -1,12 +1,15 @@
 import React, { useState, forwardRef, useRef } from "react";
 import styles from "./styles.module.css";
 import { CustomSelect } from "../CustomSelect";
+import Captcha from "./Captcha";
 
-const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
+const isProduction = process.env.NODE_ENV === "production";
+const API_URL = isProduction ? "https://swmansion.dev" : "http://localhost:8787";
+
+const EnterpriseForm = forwardRef<HTMLDivElement, {}>((_, ref) => {
   const formRef = useRef();
-  const [isSent, setisSent] = useState(false);
+  const [isSent, setIsSent] = useState(false);
   const [submitDisabled, setSubmitDisabled] = useState(false);
-  const API_URL = "https://integration-sandbox.swm-test.workers.dev/api/request-contact";
 
   const [formData, setFormData] = useState({
     name: "",
@@ -15,13 +18,17 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
     role: "",
     teamSize: "",
     message: "",
+    token: "",
   });
 
   const [error, setError] = useState({
     name: false,
     email: false,
     companyName: false,
+    token: false,
   });
+
+  const [submitError, setSubmitError] = useState("");
 
   const err = "This field is required.";
 
@@ -30,35 +37,43 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleCaptchaSolve = (token: string) => {
+    setFormData((prev) => ({ ...prev, token }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {
       name: formData.name.trim() === "",
       email: formData.email.trim() === "",
       companyName: formData.companyName.trim() === "",
+      token: formData.token.trim() === "",
     };
 
     setError(newErrors);
+    setSubmitError("");
 
     if (Object.values(newErrors).some((val) => val)) return;
     try {
       setSubmitDisabled(true);
-      const response = await fetch(API_URL, {
+      const response = await fetch(API_URL + "/api/request-contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      } else {
-        setisSent(true);
-      }
+
       const data = await response.json();
-      console.log("Success:", data);
+      if (response.ok) {
+        setIsSent(true);
+      } else {
+        setSubmitError(data?.error?.message || "Failed to submit form. Please try again.");
+      }
     } catch (error) {
-      console.error("FAILED: ", error.text);
+      setSubmitError(error.message || "Something went wrong. Please try again.");
+    } finally {
+      setSubmitDisabled(false);
     }
   };
 
@@ -147,6 +162,18 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((props, ref) => {
                   onChange={handleChange}
                 />
               </div>
+
+              <div>
+                <Captcha onSolve={handleCaptchaSolve} />
+                {error.token && <p className={styles.error}>{err}</p>}
+              </div>
+
+              {submitError && (
+                <div>
+                  <p className={styles.error}>{submitError}</p>
+                </div>
+              )}
+
               <div>
                 <button className={styles.submitButton} disabled={submitDisabled} type="submit">
                   Submit form
