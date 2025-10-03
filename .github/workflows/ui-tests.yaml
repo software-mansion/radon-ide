@@ -1,45 +1,206 @@
-name: Lint vscode-extension
+name: Build VSIX and Run Tests (macOS)
+
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - ".github/workflows/lint-extension.yml"
-      - "packages/vscode-extension-tester/**"
-  pull_request:
-    paths:
-      - ".github/workflows/lint-extension.yml"
-      - "packages/vscode-extension-tester/**"
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+    inputs:
+      node:
+        description: Node.js version to use
+        required: false
+        default: "22"
+      testApp:
+        description: Project app name to test
+        type: choice
+        required: true
+        default: "react-native-81"
+        options:
+          - "react-native-74"
+          - "react-native-75"
+          - "react-native-76"
+          - "react-native-77"
+          - "react-native-78"
+          - "react-native-79"
+          - "react-native-80"
+          - "react-native-81"
+          - "react-native-82"
+          - "expo-51"
+          - "expo-52-prebuild-with-plugins"
+          - "expo-53"
+          - "expo-54"
+          # - "expo-52-eas"
+          # - "expo-50-dev-client"
+          # - "expo-51-dev-client"
+          # - "expo-go"
+          # - "expo-router"
+          # - "nx-monorepo"
+          # - "pnpm-monorepo"
+      isRecording:
+        description: Whether to record video
+        type: boolean
+        required: false
+        default: "true"
+      testsToRun:
+        description: Space-separated list of test numbers to run (none runs all tests)
+        required: false
+        default: ""
+      testsToExclude:
+        description: Space-separated list of test numbers to exclude (none excludes nothing)
+        required: false
+        default: ""
+      VSCodeVersion:
+        description: vscode version to use (e.g. "1.99.1")
+        required: true
+        default: "latest"
+  schedule:
+    - cron: "27 1 * * *"
 
 jobs:
-  check:
-    if: github.repository == 'software-mansion/radon-ide'
+  set-matrix:
     runs-on: ubuntu-latest
-    env:
-      WORKING_DIRECTORY_TESTER: packages/vscode-extension-tester
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
-      - name: Checkout
+      - id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "matrix={\"include\":[{\"testApp\":\"${{ github.event.inputs.testApp }}\",\"node\":\"${{ github.event.inputs.node || '22' }}\",\"isRecording\":\"${{ github.event.inputs.isRecording }}\",\"testsToRun\":\"${{ github.event.inputs.testsToRun }}\",\"testsToExclude\":\"${{ github.event.inputs.testsToExclude }}\",\"codeVersion\":\"${{ github.event.inputs.VSCodeVersion || 'latest' }}\"}]}" >> $GITHUB_OUTPUT
+          else
+            echo "matrix={\"include\":[ \
+              {\"testApp\":\"react-native-81\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"latest\"}, \
+              {\"testApp\":\"expo-53\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"latest\"}, \
+              {\"testApp\":\"expo-54\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"latest\"}, \
+              {\"testApp\":\"react-native-81\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"1.99.1\"} \
+            ]}" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-test:
+    needs: set-matrix
+    runs-on: macos-latest-xlarge
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
+
+    steps:
+      - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: log inputs
+        run: |
+          echo "testApp: ${{ matrix.testApp }}"
+          echo "isRecording: ${{ matrix.isRecording }}"
+          echo "testsToRun: ${{ matrix.testsToRun }}"
+          echo "testsToExclude: ${{ matrix.testsToExclude }}"
+          echo "testsToExclude: ${{ matrix.codeVersion }}"
+
+      - name: check sdk
+        run: xcodebuild -showsdks
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
 
       - name: Enforce HTTPS for submodules
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
-      - name: Setup node
-        uses: actions/setup-node@v4
+      - name: Cache npm (extension)
+        uses: actions/cache@v4
         with:
-          node-version: 20
-          cache: "npm"
-          cache-dependency-path: packages/vscode-extension/package-lock.json
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('packages/vscode-extension/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
-      - name: Install node dependencies
-        working-directory: ${{ env.WORKING_DIRECTORY_TESTER }}
+      - name: Install dependencies (extension)
         run: npm ci
+        working-directory: packages/vscode-extension
 
-      - name: Lint extension tester
-        working-directory: ${{ env.WORKING_DIRECTORY_TESTER }}
-        run: npm run lint
+      - name: Cache npm (tester)
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('packages/vscode-extension-tester/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies (tester)
+        run: npm ci
+        working-directory: packages/vscode-extension-tester
+
+      - name: Install vsce CLI
+        run: npm i -g @vscode/vsce
+
+      - name: Get test app
+        run: npm run get-test-app -- ${{ matrix.testApp }}
+        working-directory: packages/vscode-extension-tester
+
+      - name: Build VSIX package
+        run: npm run build-vsix-package
+        working-directory: packages/vscode-extension-tester
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Install ffmpeg
+        if: ${{ matrix.isRecording == 'true' }}
+        run: brew install ffmpeg
+
+      - name: Run setup-run-tests
+        run: npm run setup-run-tests -- ${{ matrix.testsToRun }} --exclude ${{ matrix.testsToExclude }}
+        working-directory: packages/vscode-extension-tester
+        env:
+          PROJECT_NAME: ${{ matrix.testApp }}
+          IS_RECORDING: ${{ matrix.isRecording }}
+          CODE_VERSION: ${{ matrix.codeVersion }}
+          IS_GITHUB_ACTIONS: "true"
+
+      - name: make video
+        if: ${{ always() && matrix.isRecording == 'true' }}
+        timeout-minutes: 1
+        run: ffmpeg -framerate 10 -i frame-%04d.png -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
+        working-directory: packages/vscode-extension-tester/videos
+
+      - name: Upload screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vscode-ui-screenshots
+          path: packages/vscode-extension-tester/screenshots/
+          retention-days: 7
+
+      - name: build output
+        if: always()
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: output
+          path: packages/vscode-extension-tester/output.txt
+          retention-days: 7
+
+      - name: Upload video recording
+        if: ${{ always() && matrix.isRecording == 'true' }}
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: vscode-ui-recording
+          path: packages/vscode-extension-tester/videos/vscode-ui-recording.mp4
+          retention-days: 7
+
+      - name: Upload screenshot made by radon
+        if: ${{ always() && matrix.isRecording == 'true' }}
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: radon-screenshot
+          path: packages/vscode-extension-tester/data/screenshotTest..png
+          retention-days: 7
+
+      - name: Upload recording made by radon
+        if: ${{ always() && matrix.isRecording == 'true' }}
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: radon-recording
+          path: packages/vscode-extension-tester/data/recordingTest..mp4
+          retention-days: 7

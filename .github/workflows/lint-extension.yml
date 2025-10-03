@@ -6,12 +6,10 @@ on:
     paths:
       - ".github/workflows/lint-extension.yml"
       - "packages/vscode-extension/src/**"
-      - "packages/vscode-extension-tester/**"
   pull_request:
     paths:
       - ".github/workflows/lint-extension.yml"
       - "packages/vscode-extension/src/**"
-      - "packages/vscode-extension-tester/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -23,7 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       WORKING_DIRECTORY: packages/vscode-extension
-      WORKING_DIRECTORY_TESTER: packages/vscode-extension-tester
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -44,12 +41,4 @@ jobs:
 
       - name: Lint extension
         working-directory: ${{ env.WORKING_DIRECTORY }}
-        run: npm run lint
-
-      - name: Install node dependencies
-        working-directory: ${{ env.WORKING_DIRECTORY_TESTER }}
-        run: npm ci
-
-      - name: Lint extension tester
-        working-directory: ${{ env.WORKING_DIRECTORY_TESTER }}
         run: npm run lint

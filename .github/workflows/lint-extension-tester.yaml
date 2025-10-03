@@ -1,4 +1,4 @@
-name: Lint vscode-extension
+name: Lint vscode-extension-tester
 on:
   push:
     branches:
@@ -33,7 +33,7 @@ jobs:
         with:
           node-version: 20
           cache: "npm"
-          cache-dependency-path: packages/vscode-extension/package-lock.json
+          cache-dependency-path: packages/vscode-extension-tester/package-lock.json
 
       - name: Install node dependencies
         working-directory: ${{ env.WORKING_DIRECTORY_TESTER }}
