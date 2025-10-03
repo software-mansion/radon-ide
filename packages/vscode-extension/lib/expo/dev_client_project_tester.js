@@ -1,8 +1,6 @@
-const { requireFromAppDir, resolveFromAppDir, appRoot } = require("../metro_helpers");
-const expoInstallPath = resolveFromAppDir("expo");
-const { resolveOptionsAsync } = requireFromAppDir("@expo/cli/build/src/start/resolveOptions", {
-  paths: [expoInstallPath],
-});
+const { requireFromAppDependency, appRoot } = require("../metro_helpers");
+
+const { resolveOptionsAsync } = requireFromAppDependency("expo", "@expo/cli/build/src/start/resolveOptions");
 
 // This is a test script to ensure that the project is dev client project.
 // It is expected to fail either due to missing imports or because of devClient flag is set to false/ undefined.
