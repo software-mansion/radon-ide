@@ -2,6 +2,7 @@ import readline from "readline";
 import execa, { ExecaChildProcess } from "execa";
 import { Logger } from "../Logger";
 import { Platform } from "./platform";
+import { fileExists } from "./fileExists";
 
 export type ChildProcess = ExecaChildProcess<string>;
 
@@ -19,6 +20,14 @@ async function getPathEnv(appRoot: string) {
 
   const shellPath = process.env.SHELL ?? "/bin/zsh";
 
+  // Check if .nvmrc file exists in the app root
+  const hasNvmrc = fileExists(appRoot, ".nvmrc");
+
+  // If .nvmrc exists, run 'nvm use' to load the correct Node.js version.
+  // We use a conditional command that only runs 'nvm use' if nvm is available,
+  // preventing errors in environments where nvm is not installed.
+  const nvmCommand = hasNvmrc ? "type nvm > /dev/null 2>&1 && nvm use; " : "";
+
   // Our goal is to determine the PATH variable that would be set when running commands from the application root.
   // To simulate this accurately, we need to avoid inheriting the vscode process's environment variables.
   // Therefore, we explicitly set the environment variable object to empty and disable automatic extension,
@@ -29,7 +38,7 @@ async function getPathEnv(appRoot: string) {
       "-i",
       "-l",
       "-c",
-      `cd "${appRoot}" && echo "${RNIDE_PATH_DELIMITER}$PATH${RNIDE_PATH_DELIMITER}"`,
+      `cd "${appRoot}" && ${nvmCommand}echo "${RNIDE_PATH_DELIMITER}$PATH${RNIDE_PATH_DELIMITER}"`,
     ],
     {
       extendEnv: false,
