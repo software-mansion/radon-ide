@@ -10,11 +10,19 @@ interface PricingCardLabelProps {
 
 export default function PricingCardLabel({ plan, isMonthly, children }: PricingCardLabelProps) {
   const price = isMonthly ? plan.price.monthly : plan.price.yearly;
-  const isTEAM = plan.plan === "TEAM" ? "per seat" : "";
+  const isProPlan = plan.plan === "PRO";
+  const isTeamPlan = plan.plan === "TEAM";
+
+  const perSeatText = isTeamPlan ? "per seat" : "";
+  const periodText = isMonthly ? `/month ${perSeatText}` : `/year ${perSeatText}`;
+  const isCustomPrice = typeof price !== "number";
+
+  const showYearlyFullPrice = !isMonthly && plan.yearlyFullPrice;
+
   return (
     <div className={styles.container}>
       <div className={styles.planDetails}>
-        {plan.plan === "PRO" ? (
+        {isProPlan ? (
           <div className={styles.planPro}>
             {plan.plan}
             <div className={styles.popularBadge}>
@@ -26,14 +34,14 @@ export default function PricingCardLabel({ plan, isMonthly, children }: PricingC
         )}
 
         <div className={styles.priceDescription}>
-          {typeof price == "number" ? (
+          {!isCustomPrice ? (
             <div className={styles.price}>
               <span>${price}</span>
               <div className={styles.period}>
-                {!isMonthly && plan.yearlyFullPrice && (
+                {showYearlyFullPrice && (
                   <p className={styles.fullPrice}> ${plan.yearlyFullPrice}</p>
                 )}
-                <p>{isMonthly ? `/month ${isTEAM}` : `/year ${isTEAM}`} </p>
+                <p>{periodText} </p>
               </div>
             </div>
           ) : (
@@ -42,7 +50,7 @@ export default function PricingCardLabel({ plan, isMonthly, children }: PricingC
         </div>
         <p className={styles.planLabel}>{plan.label}</p>
       </div>
-      {plan.plan === "PRO" && <div className={styles.proGradient} />}
+      {isProPlan && <div className={styles.proGradient} />}
       {children}
     </div>
   );

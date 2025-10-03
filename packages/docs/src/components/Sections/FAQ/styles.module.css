@@ -1,14 +1,16 @@
 .faq {
   display: grid;
-  grid-template-columns: 1.5fr 2fr;
+  grid-template-columns: 1fr 1.3fr;
   padding: 80px;
   gap: 80px;
   justify-content: center;
 }
+
 .faqMain {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  width: 100%;
 }
 
 .faqHeading {
@@ -28,9 +30,16 @@
   margin: 0;
 }
 
+@media (max-width: 1200px) {
+  .faq {
+    padding: 40px;
+    gap: 40px;
+  }
+}
+
 @media (max-width: 1024px) {
   .faq {
-    padding: 24px 40px;
+    padding: 40px 24px;
     gap: 24px;
     grid-template-columns: 1fr;
   }
@@ -43,11 +52,5 @@
   .faqSubheading {
     font-size: 16px;
     line-height: 24px;
-  }
-}
-
-@media (max-width: 767px) {
-  .faq {
-    padding: 40px 24px;
   }
 }

@@ -1,6 +1,7 @@
 .faqItemContainer {
   margin-bottom: 0.5rem;
   width: 640px;
+  border-bottom: 1px solid var(--radon-border-grid-subtle);
 }
 
 .faqItemContainer button {
@@ -11,13 +12,13 @@
 }
 
 .faqItemQuestion {
-  padding: 1rem 1.5rem;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   align-items: center;
   gap: 1.5rem;
   width: 100%;
+  padding: 16px 16px 16px 0;
 }
 
 .answerContainer {
@@ -26,9 +27,8 @@
 }
 
 .answer {
-  border-bottom: 1px solid var(--radon-border-grid-subtle);
   font-family: var(--swm-body-font);
-  padding: 0.5rem 1.5rem;
+  padding: 16px 0 24px 0;
   font-size: 16px;
   color: var(--radon-subheading);
 }
@@ -56,7 +56,6 @@
 
 .faqItemNormal {
   background-color: transparent;
-  border-bottom: 1px solid var(--radon-border-grid-subtle);
 }
 
 .faqItemExpanded {
@@ -65,20 +64,26 @@
 
 .icon {
   color: var(--ifm-color-primary);
+  display: flex;
+  align-items: center;
+}
+
+.icon svg {
+  display: flex;
+  align-items: center;
 }
 
 @media (max-width: 1024px) {
-  .question,
-  .answer {
+  .question {
     font-size: 16px;
   }
 
-  .faqItemQuestion {
+  /* .faqItemQuestion {
     padding: 16px 0;
   }
   .answer {
     padding: 16px 0 24px 0;
-  }
+  } */
   .faqItemContainer {
     width: 100%;
   }
