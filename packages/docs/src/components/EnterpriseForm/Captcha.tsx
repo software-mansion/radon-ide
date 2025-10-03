@@ -26,7 +26,7 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const reCaptchaSiteKey = isProduction
   ? "6Lcz8tsrAAAAANZ7zDBvT5u6YgjqVowQNBcV3MB8"
-  : "6Lc49dsrAAAAAPaODuCn15YUCo_0tnrofIGE9pdy";
+  : "6Lf81tsrAAAAAJmwn8scgOHiSCIutG-l9GjMrTLt";
 
 const Captcha = ({ onSolve }: CaptchaProps) => {
   const widgetId = useRef<number | null>(null);
