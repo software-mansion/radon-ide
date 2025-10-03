@@ -16,33 +16,30 @@ export function throttleAsync<T extends AsyncFn>(
   limitMs: number
 ): ThrottledAsyncFn<(...args: Parameters<T>) => Promise<void>> {
   let timeoutId: NodeJS.Timeout | null = null;
-  let recentArgs: Parameters<T> | null;
-  let scheduled = false;
+  let recentArgs: Parameters<T> | null = null;
   let running = false;
+  let wasFlushed = false;
+
+  function isScheduled() {
+    return recentArgs !== null;
+  }
 
   function execute() {
+    unschedule();
     if (recentArgs === null) {
-      timeoutId = null;
-      scheduled = false;
       return;
     }
     assert(!running, "Throttled function is never called concurrently");
     const args = recentArgs;
-
     recentArgs = null;
-    timeoutId = null;
 
     running = true;
-    scheduled = false;
     const result = func(...args);
     result
       .catch(() => {})
       .then(() => {
         running = false;
-        if (!scheduled) {
-          timeoutId = null;
-          recentArgs = null;
-        } else {
+        if (isScheduled()) {
           // If call count has changed while the function was executing,
           // we need to run it again to ensure we run the function with the
           // latest arguments and after the latest call.
@@ -50,35 +47,42 @@ export function throttleAsync<T extends AsyncFn>(
           // to ensure the function is not run more often than once every
           // `limitMs` milliseconds, we schedule it to run after the provided
           // limit.
-          timeoutId = setTimeout(execute, limitMs);
+          timeoutId = setTimeout(execute, wasFlushed ? 0 : limitMs);
+          wasFlushed = false;
         }
       });
   }
 
   const throttledFunction = async function (...args: Parameters<T>) {
-    if (!running && !scheduled) {
+    if (!running && !isScheduled()) {
       timeoutId = setTimeout(execute, limitMs);
     }
-    scheduled = true;
     recentArgs = args;
   };
 
-  throttledFunction.cancel = () => {
+  function unschedule() {
     if (timeoutId !== null) {
       clearTimeout(timeoutId);
-      timeoutId = null;
-      scheduled = false;
-      recentArgs = null;
     }
+    timeoutId = null;
+  }
+
+  throttledFunction.cancel = () => {
+    unschedule();
+    recentArgs = null;
   };
 
   throttledFunction.flush = () => {
-    const args = recentArgs;
-    throttledFunction.cancel();
-    if (!running) {
-      recentArgs = args;
-      execute();
+    if (running) {
+      // NOTE: if the throttled function is currently executing,
+      // we want to execute the last invocation immediately after it finished,
+      // which we do by simply setting the flag
+      wasFlushed = true;
+      return;
     }
+
+    // NOTE: otherwise, execute immediately
+    execute();
   };
 
   return throttledFunction;
