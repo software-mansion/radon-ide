@@ -4,11 +4,11 @@ import globals from "globals";
 
 export default [
   {
-    ignores: ["node_modules/**/*", "data/**/*"], // ignorowanie wybranych folderów
+    ignores: ["node_modules/**/*", "data/**/*"],
   },
   eslint.configs.recommended,
   {
-    files: ["**/*.{js,jsx}"], // tylko JS/JSX
+    files: ["**/*.{js,jsx}"],
     languageOptions: {
       parserOptions: {
         ecmaVersion: "latest",
@@ -18,10 +18,8 @@ export default [
         ...globals.node,
         ...globals.browser,
         React: "readonly",
-        // VSCode API globals
         acquireVsCodeApi: "readonly",
         Thenable: "readonly",
-        // globals testów (Mocha/Jest)
         describe: "readonly",
         it: "readonly",
         before: "readonly",
