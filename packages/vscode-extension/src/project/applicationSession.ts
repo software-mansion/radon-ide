@@ -147,9 +147,8 @@ export class ApplicationSession implements Disposable {
         await cancelToken.adapt(Promise.race([activatePromise, bundleErrorPromise]));
       }
 
-      const hasBundleError = stateManager.getState().bundleError !== null;
-      if (!hasBundleError && getIsActive()) {
-        await cancelToken.adapt(appReadyPromise);
+      if (getIsActive()) {
+        await cancelToken.adapt(Promise.race([appReadyPromise, bundleErrorPromise]));
       }
 
       return session;
