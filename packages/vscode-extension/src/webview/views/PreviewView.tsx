@@ -19,7 +19,6 @@ import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 import ToolsDropdown from "../components/ToolsDropdown";
 import AppRootSelect from "../components/AppRootSelect";
-import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
