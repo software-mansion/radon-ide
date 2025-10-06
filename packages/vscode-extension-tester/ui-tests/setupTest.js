@@ -56,7 +56,10 @@ afterEach(async function () {
     const image = await driver.takeScreenshot();
 
     const screenshotDir = path.join(process.cwd(), "screenshots");
-    const filePath = path.join(screenshotDir, `${this.currentTest.title}.png`);
+    const filePath = path.join(
+      screenshotDir,
+      `${this.currentTest.title}-${Date.now()}.png`
+    );
 
     fs.mkdirSync(screenshotDir, { recursive: true });
     fs.writeFileSync(filePath, image, "base64");
