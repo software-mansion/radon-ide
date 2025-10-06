@@ -29,10 +29,11 @@ export async function registerMcpTools(server: McpServer, connectionListener: Co
     "reload_application",
     {
       description:
-        "Trigger a reload of the app running in the development emulator. The three methods of reloading the app are:\n" +
-        "- `reloadJs`: This method triggers the JS bundle to be reloaded, it does not trigger any rebuild or restart of the native part of the app\n" +
-        "- `restartProcess`: This method restarts the native part of the app. This method is useful for restarting the state of buggy native libraries or components.\n" +
-        "- `rebuild`: This method rebuilds both the js and the native parts of the app. Use it whenever changes are made to the native part.",
+        "Trigger a reload of the app running in the development emulator. Use this tool whenever you are debugging the state and want to reset it, or when the app crashes or breaks due to an interaction.\n" +
+        "There are 3 ways you can reload the app:\n" +
+        "- `reloadJs`: Causes the JS bundle to be reloaded, it does not trigger any rebuild or restart of the native part of the app. Use this to restart the JS state of the app.\n" +
+        "- `restartProcess`: Restarts the native part of the app. Use this method for resetting state of bugged **NATIVE** libraries or components.\n" +
+        "- `rebuild`: Rebuilds both the js and the native parts of the app. Use it whenever changes are made to the native part, as such changes require a full rebuild.",
       inputSchema: {
         reloadMethod: z.union([
           z.literal("reloadJs"),
