@@ -120,7 +120,13 @@ export default class RadonViewsService {
     await this.appManipulationService.waitForAppToLoad();
     await this.openAndGetDebugConsoleElement();
     const debugView = await new BottomBarPanel().openDebugConsoleView();
-    await debugView.clearText();
+    // in vscode 1.99.1 method clearText() doesnt work
+    await this.driver
+      .actions()
+      .keyDown(Key.CONTROL)
+      .sendKeys("a")
+      .keyUp(Key.CONTROL)
+      .perform();
     const bottomBar = new BottomBarPanel();
     await bottomBar.toggle(false);
   }

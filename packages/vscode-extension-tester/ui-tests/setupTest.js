@@ -13,6 +13,7 @@ import {
   getAppWebsocket,
   closeServer,
 } from "../server/webSocketServer.js";
+import initServices from "../services/index.js";
 import startRecording from "../utils/screenRecording.js";
 import getConfiguration from "../configuration.js";
 
@@ -51,6 +52,10 @@ before(async function () {
 });
 
 afterEach(async function () {
+  // in case some modal stayed opened after tests
+  await driver.actions().sendKeys(Key.ESCAPE).perform();
+
+  const { vscodeHelperService } = initServices(driver);
   if (this.currentTest.state === "failed") {
     driver = VSBrowser.instance.driver;
     const image = await driver.takeScreenshot();
@@ -73,17 +78,9 @@ afterEach(async function () {
   await new EditorView().closeAllEditors();
   await driver.switchTo().defaultContent();
 
-  // this method of reloading window seems to be more reliable than workbench.executeCommand("Developer: Reload Window")
-  await driver
-    .actions()
-    .keyDown(Key.SHIFT)
-    .keyDown(Key.COMMAND)
-    .sendKeys("p")
-    .keyUp(Key.COMMAND)
-    .keyUp(Key.SHIFT)
-    .perform();
-  await driver.actions().sendKeys("Developer: Reload Window").perform();
-  await driver.actions().sendKeys(Key.ENTER).perform();
+  await vscodeHelperService.openCommandLineAndExecute(
+    "Developer: Reload Window"
+  );
 
   driver.wait(async () => {
     try {

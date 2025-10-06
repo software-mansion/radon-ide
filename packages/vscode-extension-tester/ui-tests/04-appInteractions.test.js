@@ -55,6 +55,7 @@ describe("4 - App interaction tests", () => {
     }, 5000);
     await appManipulationService.hideExpoOverlay(appWebsocket);
 
+    await driver.sleep(100000);
     await radonViewsService.clearDebugConsole();
     await radonViewsService.switchToRadonIDEFrame();
   });
