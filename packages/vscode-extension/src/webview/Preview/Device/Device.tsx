@@ -148,7 +148,7 @@ function getDeviceLayoutConfig(
 
 export default function Device({ device, zoomLevel, children, wrapperDivRef }: DeviceProps) {
   const store$ = useStore();
-  const rotation = use$(store$.workspaceConfiguration.deviceRotation);
+  const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
 
   const frame = useDeviceFrame(device);
 
@@ -210,7 +210,7 @@ export default function Device({ device, zoomLevel, children, wrapperDivRef }: D
   }, [device, frame, rotation, wrapperDivRef, zoomLevel]);
 
   return (
-    <div className="phone-wrapper">
+    <div className="phone-wrapper" data-testid="phone-wrapper">
       <div ref={phoneContentRef} className="phone-content">
         <DeviceFrame frame={frame} isLandscape={isLandscape} />
         {children}

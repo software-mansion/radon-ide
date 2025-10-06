@@ -10,7 +10,6 @@ import RichSelectItem from "./shared/RichSelectItem";
 import { useStore } from "../providers/storeProvider";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
-import IconButton from "./shared/IconButton";
 import { useAlert } from "../providers/AlertProvider";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
@@ -59,6 +58,7 @@ function renderLaunchConfigurations(
         <RichSelectItem
           value={`${prefix}:${idx}`}
           key={idx}
+          data-testid={`approot-select-item-${config.appRoot}`}
           icon={<span className="codicon codicon-folder" />}
           title={displayNameForConfig(config) ?? config.appRoot ?? "./"}
           subtitle={displayNameForConfig(config) ? config.appRoot : undefined}
@@ -123,14 +123,7 @@ function useUnknownConfigurationAlert(shouldOpen: boolean) {
         description:
           "The selected launch configration was deleted or modified in the workspace's launch.json file. " +
           "Radon IDE will continue to use the last selected configuration, but you may want to select a different one.",
-        actions: (
-          <IconButton
-            type="secondary"
-            onClick={() => closeAlert(alertId)}
-            tooltip={{ label: "Close notification", side: "bottom" }}>
-            <span className="codicon codicon-close" />
-          </IconButton>
-        ),
+        closeable: true,
       });
     } else if (!shouldOpen && isOpen(alertId)) {
       closeAlert(alertId);

@@ -24,6 +24,7 @@ const InspectItem = React.forwardRef<HTMLDivElement, InspectItemProps>(
     return (
       <DropdownMenu.Item
         className="inspect-data-menu-item"
+        data-testid={`inspect-data-menu-item-${item.componentName}-${fileName + fileExtension}-${item.source.line0Based}`}
         key={item.source.fileName + item.source.line0Based}
         onSelect={() => onSelected(item)}
         onMouseEnter={() => onHover(item)}
@@ -101,6 +102,7 @@ export function InspectDataMenu({
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="inspect-data-menu-content"
+          data-testid="inspect-data-menu-content"
           sideOffset={5}
           align={inspectMenuAlign}
           collisionPadding={5}>

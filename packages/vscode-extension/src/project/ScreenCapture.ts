@@ -20,7 +20,9 @@ export class ScreenCapture implements Disposable {
   ) {
     this.disposables.push(
       new Disposable(() => {
-        this.stopRecording();
+        if (this.recordingTimeout || this.recordingTimer) {
+          this.stopRecording();
+        }
       })
     );
 
@@ -28,13 +30,13 @@ export class ScreenCapture implements Disposable {
   }
 
   public startRecording(): void {
-    this.stateManager.setState({ isRecording: true, recordingTime: 0 });
+    this.stateManager.updateState({ isRecording: true, recordingTime: 0 });
 
     this.device.startRecording();
 
     this.recordingTimer = setInterval(() => {
       const recordingTime = this.stateManager.getState().recordingTime;
-      this.stateManager.setState({
+      this.stateManager.updateState({
         recordingTime: recordingTime + 1,
       });
     }, 1000);
@@ -59,27 +61,27 @@ export class ScreenCapture implements Disposable {
 
   public async captureReplay() {
     const replayData = await this.device.captureReplay(
-      this.applicationContext.workspaceConfiguration.deviceRotation
+      this.applicationContext.workspaceConfiguration.deviceSettings.deviceRotation
     );
-    this.stateManager.setState({ replayData });
+    this.stateManager.updateState({ replayData });
   }
 
   public async captureScreenshot() {
     const screenshot = await this.device.captureScreenshot(
-      this.applicationContext.workspaceConfiguration.deviceRotation
+      this.applicationContext.workspaceConfiguration.deviceSettings.deviceRotation
     );
     await this.saveMultimedia(screenshot);
   }
 
   public async getScreenshot() {
     return this.device.captureScreenshot(
-      this.applicationContext.workspaceConfiguration.deviceRotation
+      this.applicationContext.workspaceConfiguration.deviceSettings.deviceRotation
     );
   }
 
   private async saveMultimedia(multimediaData: MultimediaData) {
     const defaultPath =
-      this.applicationContext.workspaceConfiguration.defaultMultimediaSavingLocation;
+      this.applicationContext.workspaceConfiguration.general.defaultMultimediaSavingLocation;
     return saveMultimedia(multimediaData, defaultPath ?? undefined);
   }
 
@@ -87,10 +89,13 @@ export class ScreenCapture implements Disposable {
     clearTimeout(this.recordingTimeout);
     clearInterval(this.recordingTimer);
 
-    this.stateManager.setState({ isRecording: false, recordingTime: 0 });
+    this.recordingTimeout = undefined;
+    this.recordingTimer = undefined;
+
+    this.stateManager.updateState({ isRecording: false, recordingTime: 0 });
 
     return this.device.captureAndStopRecording(
-      this.applicationContext.workspaceConfiguration.deviceRotation
+      this.applicationContext.workspaceConfiguration.deviceSettings.deviceRotation
     );
   }
 

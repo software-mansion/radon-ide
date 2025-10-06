@@ -315,7 +315,7 @@ function LaunchConfigurationView({
           className="launch-configuration-text-button"
           role="button"
           onClick={() => {
-            project.runCommand("workbench.action.debug.configure");
+            project.openLaunchConfigurationFile();
             closeModal();
           }}>
           Edit in launch.json

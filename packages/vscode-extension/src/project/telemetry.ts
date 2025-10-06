@@ -11,11 +11,11 @@ export class Telemetry implements Disposable {
   constructor(private readonly stateManager: StateManager<TelemetryState>) {
     const isTelemetryEnabled = env.isTelemetryEnabled;
 
-    this.stateManager.setState({ enabled: isTelemetryEnabled });
+    this.stateManager.updateState({ enabled: isTelemetryEnabled });
 
     this.disposables.push(
       env.onDidChangeTelemetryEnabled((telemetryEnabled) => {
-        this.stateManager.setState({ enabled: telemetryEnabled });
+        this.stateManager.updateState({ enabled: telemetryEnabled });
       })
     );
 

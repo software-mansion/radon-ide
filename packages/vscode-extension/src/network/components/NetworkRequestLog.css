@@ -5,9 +5,10 @@
   background: var(--vscode-editor-background);
 }
 
-.table-row:hover {
+.table-row:hover,
+.table-row[data-state="open"] {
   cursor: pointer;
-  background-color: var(--vscode-list-hoverBackground);
+  background-color: var(--swm-url-select-highlighted-background);
 }
 
 .table-header-cell {
@@ -92,9 +93,24 @@ vscode-table-header-cell:hover .table-header-cell button {
 .selected,
 .selected:hover {
   background-color: var(--vscode-terminal-selectionBackground);
+
+  vscode-table-cell {
+    color: var(--vscode-menu-selectionForeground);
+  }
+}
+
+/* Fallback for high-contrast */
+.vscode-high-contrast .selected vscode-table-cell,
+.vscode-high-contrast-light .selected vscode-table-cell {
+  color: var(--vscode-editor-selectionForeground);
 }
 
 .hack-table-row {
   visibility: hidden;
   pointer-events: none;
+}
+
+.context-menu-row {
+  width: auto;
+  position: absolute;
 }

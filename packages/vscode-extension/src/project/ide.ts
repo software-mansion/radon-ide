@@ -73,7 +73,7 @@ export class IDE implements Disposable {
     );
 
     this.project.appRootConfigController.getAvailableApplicationRoots().then((applicationRoots) => {
-      this.stateManager.setState({ applicationRoots });
+      this.stateManager.updateState({ applicationRoots });
     });
 
     this.disposables.push(
@@ -104,8 +104,8 @@ export class IDE implements Disposable {
     return this.stateManager.getState();
   }
 
-  public async setState(partialState: RecursivePartial<State>) {
-    this.stateManager.setState(partialState);
+  public async updateState(partialState: RecursivePartial<State>) {
+    this.stateManager.updateState(partialState);
   }
 
   public handleStateChanged = (partialState: RecursivePartial<State>) => {

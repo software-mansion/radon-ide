@@ -55,7 +55,13 @@ export default defineConfig({
       },
       output: {
         entryFileNames: "[name].js",
-        chunkFileNames: "[name].js",
+        chunkFileNames: (chunkInfo) => {
+          // Move shiki chunks, containing language definitions, to a separate directory
+          if(chunkInfo.moduleIds.some(id => id.includes("@shikijs"))) {
+            return "shiki/[name].js";
+          }
+          return "[name].js";
+        },
         assetFileNames: (assetInfo) =>
           assetInfo.name.endsWith(".css") ? "[name].css" : "assets/[name]-[hash][extname]",
       },

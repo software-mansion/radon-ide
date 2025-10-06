@@ -1,25 +1,15 @@
 import { assert } from "chai";
 import { By } from "vscode-extension-tester";
-import { texts } from "../data/testData.js";
-import { ElementHelperService } from "../utils/helpers.js";
-import { RadonViewsService } from "./interactions.js";
+import { texts } from "../utils/constants.js";
+import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
-describe("Smoke tests Radon IDE", () => {
+describe("1 - Smoke tests Radon IDE", () => {
   let driver, workbench, elementHelperService, radonViewsService;
 
   beforeEach(async function () {
     ({ driver, workbench } = get());
-    elementHelperService = new ElementHelperService(driver);
-    radonViewsService = new RadonViewsService(driver);
-  });
-
-  it("should open Radon IDE webview using Radon IDE button", async function () {
-    try {
-      await radonViewsService.openRadonIDEPanel();
-    } catch (error) {
-      throw error;
-    }
+    ({ elementHelperService, radonViewsService } = initServices(driver));
   });
 
   it("should open Radon IDE view using command line", async function () {
@@ -38,6 +28,10 @@ describe("Smoke tests Radon IDE", () => {
     await driver.switchTo().frame(iframe);
   });
 
+  it("should open Radon IDE webview using Radon IDE button", async function () {
+    await radonViewsService.openRadonIDEPanel();
+  });
+
   it("should open Radon IDE webview for a specific project", async function () {
     await radonViewsService.openRadonIDEPanel();
 
@@ -52,9 +46,13 @@ describe("Smoke tests Radon IDE", () => {
       By.css('[data-testid="approot-select-value"]')
     );
 
-    await driver.wait(async () => {
-      const text = await approot.getText();
-      return text.toLowerCase() === texts.expectedProjectName.toLowerCase();
-    }, 5000);
+    await driver.wait(
+      async () => {
+        const text = await approot.getText();
+        return text.toLowerCase() === texts.expectedProjectName.toLowerCase();
+      },
+      5000,
+      `Timed out waiting for project name to be: ${texts.expectedProjectName}`
+    );
   });
 });

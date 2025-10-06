@@ -1,4 +1,4 @@
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
 interface ImageContent {
   [x: string]: unknown;
@@ -60,6 +60,7 @@ export {
   EditorType,
   Session,
   McpEntry,
+  ImageContent,
   TextContent,
   ToolResponse,
   ToolResult,

@@ -8,15 +8,17 @@ button {
   min-width: 220px;
   background-color: var(--swm-popover-background);
   border-radius: 6px;
+  border: var(--swm-dropdown-border);
+  box-shadow: var(--swm-dropdown-shadow);
   padding: 4px;
   animation-duration: 400ms;
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform, opacity;
-  box-shadow: var(--swm-backdrop-shadow);
   max-height: calc(var(--radix-dropdown-menu-content-available-height) - 40px);
   overflow-y: auto;
 
   --menu-item-padding: 0 6px;
+  --base-transform: translateX(0) translateY(0);
 }
 
 .dropdown-menu-subcontent {
@@ -35,6 +37,14 @@ button {
 .dropdown-menu-content[data-side="top"],
 .dropdown-menu-subcontent[data-side="top"] {
   animation-name: slideDownAndFade;
+}
+.dropdown-menu-content[data-side="left"],
+.dropdown-menu-subcontent[data-side="left"] {
+  animation-name: slideRightAndFade;
+}
+.dropdown-menu-content[data-side="right"],
+.dropdown-menu-subcontent[data-side="right"] {
+  animation-name: slideLeftAndFade;
 }
 
 .dropdown-menu-item {
@@ -108,27 +118,59 @@ button {
 @keyframes slideUpAndFade {
   from {
     opacity: 0;
-    transform: translateY(3px);
+    transform: var(--base-transform) translateY(3px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: var(--base-transform) translateY(0);
   }
 }
 
 @keyframes slideDownAndFade {
   from {
     opacity: 0;
-    transform: translateY(-3px);
+    transform: var(--base-transform) translateY(-3px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: var(--base-transform) translateY(0);
+  }
+}
+
+@keyframes slideRightAndFade {
+  from {
+    opacity: 0;
+    transform: var(--base-transform) translateX(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: var(--base-transform) translateX(0);
+  }
+}
+
+@keyframes slideLeftAndFade {
+  from {
+    opacity: 0;
+    transform: var(--base-transform) translateX(2px);
+  }
+  to {
+    opacity: 1;
+    transform: var(--base-transform) translateX(0);
   }
 }
 
 @media (max-width: 460px) {
   .dropdown-menu-subcontent {
-    transform: translateX(85%) translateY(28px);
+    --base-transform: translateX(85%) translateY(28px);
+    transform: var(--base-transform);
+  }
+
+  .dropdown-menu-content[data-side="left"],
+  .dropdown-menu-subcontent[data-side="left"] {
+    animation-name: slideUpAndFade;
+  }
+  .dropdown-menu-content[data-side="right"],
+  .dropdown-menu-subcontent[data-side="right"] {
+    animation-name: slideUpAndFade;
   }
 }

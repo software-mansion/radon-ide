@@ -1,20 +1,20 @@
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 import { useToggleableAlert } from "../providers/AlertProvider";
 import { useProject } from "../providers/ProjectProvider";
-
-import IconButton from "../components/shared/IconButton";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
 import { BuildType } from "../../common/BuildConfig";
+import { ProjectInterface } from "../../common/Project";
+import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
+import { Output } from "../../common/OutputChannel";
 import {
   BuildErrorDescriptor,
+  DevicePlatform,
   FatalErrorDescriptor,
   InstallationErrorDescriptor,
   InstallationErrorReason,
-  ProjectInterface,
-} from "../../common/Project";
-import { useAppRootConfig } from "../providers/ApplicationRootsProvider";
-import { Output } from "../../common/OutputChannel";
-import { DevicePlatform } from "../../common/State";
+  MetroErrorDescriptor,
+} from "../../common/State";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
 
@@ -29,8 +29,8 @@ function BuildErrorActions({
   const { openModal } = useModal();
   return (
     <>
-      <IconButton
-        type="secondary"
+      <Button
+        secondary
         onClick={() => {
           openModal(
             <LaunchConfigurationView
@@ -39,25 +39,21 @@ function BuildErrorActions({
             />,
             { title: "Launch Configuration" }
           );
-        }}
-        tooltip={{ label: "Launch Configuration", side: "bottom" }}>
-        <span className="codicon codicon-rocket" />
-      </IconButton>
-      <IconButton
-        type="secondary"
-        dataTest="alert-open-logs-button"
+        }}>
+        Open Configuration
+      </Button>
+      <Button
+        secondary
+        data-testid="alert-open-logs-button"
         onClick={() => {
           project.focusOutput(logsButtonDestination ?? Output.Ide);
-        }}
-        tooltip={{ label: "Open build logs", side: "bottom" }}>
-        <span className="codicon codicon-symbol-keyword" />
-      </IconButton>
-      <IconButton
-        type="secondary"
-        onClick={onReload}
-        tooltip={{ label: "Reload IDE", side: "bottom" }}>
+        }}>
+        Open Logs
+      </Button>
+      <Button onClick={onReload}>
         <span className="codicon codicon-refresh" />
-      </IconButton>
+        Retry
+      </Button>
     </>
   );
 }
@@ -66,19 +62,18 @@ function BootErrorActions() {
   const { project } = useProject();
   return (
     <>
-      <IconButton
-        type="secondary"
+      <Button
+        data-testid="alert-open-logs-button"
         onClick={() => {
           project.focusOutput(Output.Ide);
-        }}
-        tooltip={{ label: "Open IDE logs", side: "bottom" }}>
-        <span className="codicon codicon-output" />
-      </IconButton>
+        }}>
+        Open Logs
+      </Button>
     </>
   );
 }
 
-function InstallationErrorActions() {
+function ErrorActionsWithReload() {
   const { project } = useProject();
 
   let onReload = () => {
@@ -87,20 +82,17 @@ function InstallationErrorActions() {
 
   return (
     <>
-      <IconButton
-        type="secondary"
+      <Button
+        secondary
         onClick={() => {
           project.focusOutput(Output.Ide);
-        }}
-        tooltip={{ label: "Open IDE logs", side: "bottom" }}>
-        <span className="codicon codicon-output" />
-      </IconButton>
-      <IconButton
-        type="secondary"
-        onClick={onReload}
-        tooltip={{ label: "Reload IDE", side: "bottom" }}>
+        }}>
+        Open Logs
+      </Button>
+      <Button onClick={onReload}>
         <span className="codicon codicon-refresh" />
-      </IconButton>
+        Retry
+      </Button>
     </>
   );
 }
@@ -170,7 +162,18 @@ function createInstallationErrorAlert(installationErrorDescriptor: InstallationE
     id: FATAL_ERROR_ALERT_ID,
     title: "Couldn't install application on selected device",
     description,
-    actions: <InstallationErrorActions />,
+    actions: <ErrorActionsWithReload />,
+  };
+}
+
+function createMetroErrorAlert(metroErrorDescriptor: MetroErrorDescriptor) {
+  let description = metroErrorDescriptor.message;
+
+  return {
+    id: FATAL_ERROR_ALERT_ID,
+    title: "Couldn't start the Metro server",
+    description,
+    actions: <ErrorActionsWithReload />,
   };
 }
 
@@ -191,6 +194,8 @@ export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undef
     errorAlert = bootErrorAlert;
   } else if (errorDescriptor?.kind === "installation") {
     errorAlert = createInstallationErrorAlert(errorDescriptor);
+  } else if (errorDescriptor?.kind === "metro") {
+    errorAlert = createMetroErrorAlert(errorDescriptor);
   }
 
   useToggleableAlert(errorDescriptor !== undefined, errorAlert);

@@ -2,9 +2,9 @@ import React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
-import "./Modal.css";
 import classNames from "classnames";
 import IconButton from "./IconButton";
+import "./Modal.css";
 
 interface ModalProps {
   title?: string;

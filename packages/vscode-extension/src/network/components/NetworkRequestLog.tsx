@@ -12,18 +12,16 @@ import {
   VscodeTableRow,
 } from "@vscode-elements/react-elements";
 import VscodeTable from "./VscodeTableInternalFix";
+import RowContextMenu from "./ContextMenu/RowContextMenu";
+import TableContextMenu from "./ContextMenu/TableContextMenu";
 import IconButton from "../../webview/components/shared/IconButton";
-import { getNetworkLogValue, sortNetworkLogs } from "../utils/networkLogUtils";
-import { NetworkLogColumn } from "../types/network";
-import { useNetworkFilter } from "../providers/NetworkFilterProvider";
-import { SortDirection } from "../types/network";
-import { NetworkLog } from "../hooks/useNetworkTracker";
-import "./NetworkRequestLog.css";
+import { sortNetworkLogs } from "../utils/networkLogsSort";
+import { getNetworkLogValue } from "../utils/networkLogParsers";
 
-interface SortState {
-  column: NetworkLogColumn | null;
-  direction: SortDirection | null;
-}
+import { NetworkLogColumn, NetworkLog } from "../types/networkLog";
+import { SortState, SortDirection } from "../types/networkFilter";
+import { useNetworkFilter } from "../providers/NetworkFilterProvider";
+import "./NetworkRequestLog.css";
 
 interface NetworkRequestLogProps {
   networkLogs: NetworkLog[];
@@ -72,6 +70,29 @@ function getStatusClass(status: number | string | undefined) {
   return "";
 }
 
+function changeSortState(prevState: SortState, column: NetworkLogColumn) {
+  if (prevState.column === column) {
+    switch (prevState.direction) {
+      case SortDirection.Asc:
+        return { column, direction: SortDirection.Desc };
+      case SortDirection.Desc:
+        return { column: null, direction: null };
+      case null:
+      default:
+        return { column, direction: SortDirection.Asc };
+    }
+  }
+  // If clicking on a different column or no current sort, start with ascending
+  return { column, direction: SortDirection.Asc };
+}
+
+export function getSortIcon(column: NetworkLogColumn, sortState: SortState) {
+  if (sortState.column !== column) {
+    return "hidden"; // No icon when not sorting by this column
+  }
+  return sortState.direction === SortDirection.Asc ? "codicon-chevron-up" : "codicon-chevron-down";
+}
+
 /**
  * Navigates through the shadow DOM hierarchy to find the scrollable container within a VSCode table element.
  *
@@ -104,22 +125,7 @@ const NetworkRequestLog = ({
   }, [networkLogs, sortState]);
 
   const handleHeaderClick = (column: NetworkLogColumn) => {
-    setSortState((prevState) => {
-      // If clicking on the same column, cycle through: asc -> desc -> null
-      if (prevState.column === column) {
-        switch (prevState.direction) {
-          case SortDirection.Asc:
-            return { column, direction: SortDirection.Desc };
-          case SortDirection.Desc:
-            return { column: null, direction: null };
-          case null:
-          default:
-            return { column, direction: SortDirection.Asc };
-        }
-      }
-      // If clicking on a different column or no current sort, start with ascending
-      return { column, direction: SortDirection.Asc };
-    });
+    setSortState((prevState) => changeSortState(prevState, column));
   };
 
   const handleHeaderFilterClick = (e: React.MouseEvent, column: NetworkLogColumn) => {
@@ -128,45 +134,44 @@ const NetworkRequestLog = ({
     addColumnFilterToInputField(column);
   };
 
-  const getSortIcon = (column: NetworkLogColumn) => {
-    if (sortState.column !== column) {
-      return "hidden"; // No icon when not sorting by this column
-    }
-    return sortState.direction === SortDirection.Asc
-      ? "codicon-chevron-up"
-      : "codicon-chevron-down";
+  const handleSort = (column: NetworkLogColumn) => {
+    setSortState((prevState) => changeSortState(prevState, column));
   };
 
   return (
     <div className="table-container">
       <div style={{ width: "100%", overflowX: "hidden" }}>
-        <VscodeTable
-          zebra
-          bordered-columns
-          resizable
-          style={{ height: parentHeight }}
-          ref={tableRef}>
-          <VscodeTableHeader slot="header">
-            {LOG_DETAILS_CONFIG.map(({ title }) => (
-              <VscodeTableHeaderCell key={title} onClick={() => handleHeaderClick(title)}>
-                <div className="table-header-cell">
-                  <span className="table-header-title">{capitalize(title)}</span>
-                  <IconButton onClick={(e) => handleHeaderFilterClick(e, title)}>
-                    <span className={`codicon codicon-filter-filled`}></span>
-                  </IconButton>
-                  <span className={`codicon ${getSortIcon(title)}`}></span>
-                </div>
-              </VscodeTableHeaderCell>
-            ))}
-          </VscodeTableHeader>
-          <TableBody
-            networkLogs={sortedNetworkLogs}
-            selectedNetworkLog={selectedNetworkLog}
-            handleSelectedRequest={handleSelectedRequest}
-            tableRef={tableRef}
-            parentHeight={parentHeight}
-          />
-        </VscodeTable>
+        <TableContextMenu handleSort={handleSort} sortState={sortState}>
+          <VscodeTable
+            zebra
+            bordered-columns
+            resizable
+            style={{ height: parentHeight }}
+            ref={tableRef}>
+            <VscodeTableHeader slot="header">
+              {LOG_DETAILS_CONFIG.map(({ title }) => (
+                <VscodeTableHeaderCell key={title} onClick={() => handleHeaderClick(title)}>
+                  <div className="table-header-cell">
+                    <span className="table-header-title">{capitalize(title)}</span>
+                    <IconButton onClick={(e) => handleHeaderFilterClick(e, title)}>
+                      <span className={`codicon codicon-filter-filled`}></span>
+                    </IconButton>
+                    <span className={`codicon ${getSortIcon(title, sortState)}`}></span>
+                  </div>
+                </VscodeTableHeaderCell>
+              ))}
+            </VscodeTableHeader>
+            <TableBody
+              networkLogs={sortedNetworkLogs}
+              selectedNetworkLog={selectedNetworkLog}
+              handleSelectedRequest={handleSelectedRequest}
+              tableRef={tableRef}
+              parentHeight={parentHeight}
+              onSort={handleSort}
+              sortState={sortState}
+            />
+          </VscodeTable>
+        </TableContextMenu>
       </div>
     </div>
   );
@@ -178,6 +183,8 @@ interface TableBodyProps {
   handleSelectedRequest: (requestId: string | null) => void;
   tableRef: React.RefObject<VscodeTableElement | null>;
   parentHeight: number | undefined;
+  onSort: (column: NetworkLogColumn) => void;
+  sortState: SortState;
 }
 
 const CELL_DEFAULT_HEIGHT = 24;
@@ -189,6 +196,8 @@ function TableBody({
   handleSelectedRequest,
   tableRef,
   parentHeight,
+  onSort: handleSort,
+  sortState,
 }: TableBodyProps) {
   const [selectedRequestIndex, setSelectedRequestIndex] = useState<number>(0);
   const [cellWidths, setCellWidths] = useState<number[]>([]);
@@ -310,33 +319,41 @@ function TableBody({
       {rowVirtualizer.getVirtualItems().map((virtualRow, index) => {
         const log = networkLogs[virtualRow.index];
         return (
-          <VscodeTableRow
-            data-index={virtualRow.index}
+          <RowContextMenu
             key={log.requestId}
-            // Style needs to be overwritten using virtualizer values
-            style={{
-              height: `${virtualRow.size}px`,
-              transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
-            }}
-            className={classNames(
-              "table-row",
-              selectedNetworkLog?.requestId === log.requestId && "selected"
-            )}
-            onClick={() =>
-              innerHandleSelectedRequest(
-                selectedNetworkLog?.requestId === log.requestId ? null : log.requestId,
-                virtualRow.index
-              )
-            }>
-            {LOG_DETAILS_CONFIG.map(({ title, getClass }, i) => (
-              <VscodeTableCell
-                key={`${log.requestId}-${title}`}
-                className={getClass?.(log) ?? ""}
-                style={{ width: cellWidths[i] || "auto" }}>
-                {getNetworkLogValue(log, title)}
-              </VscodeTableCell>
-            ))}
-          </VscodeTableRow>
+            networkLog={log}
+            handleSort={handleSort}
+            sortState={sortState}>
+            <VscodeTableRow
+              key={log.requestId}
+              data-index={virtualRow.index}
+              data-testid={`network-panel-row-${getNetworkLogValue(log, NetworkLogColumn.Name)}`}
+              // Style needs to be overwritten using virtualizer values
+              style={{
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
+              }}
+              className={classNames(
+                "table-row",
+                selectedNetworkLog?.requestId === log.requestId && "selected"
+              )}
+              onClick={() =>
+                innerHandleSelectedRequest(
+                  selectedNetworkLog?.requestId === log.requestId ? null : log.requestId,
+                  virtualRow.index
+                )
+              }>
+              {LOG_DETAILS_CONFIG.map(({ title, getClass }, i) => (
+                <VscodeTableCell
+                  key={`${log.requestId}-${title}`}
+                  className={getClass?.(log) ?? ""}
+                  data-testid={`network-panel-row-${getNetworkLogValue(log, NetworkLogColumn.Name)}-${title}`}
+                  style={{ width: cellWidths[i] || "auto" }}>
+                  {getNetworkLogValue(log, title)}
+                </VscodeTableCell>
+              ))}
+            </VscodeTableRow>
+          </RowContextMenu>
         );
       })}
       {/* Below row, renedered unconditionally, is needed, because the VscodeTableBody

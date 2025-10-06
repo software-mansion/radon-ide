@@ -1,5 +1,5 @@
 const RNInternals = require("./rn-internals/rn-internals");
-const AppRegistry = RNInternals.AppRegistry;
+const { AppRegistry } = require("react-native");
 const parseErrorStack = RNInternals.parseErrorStack;
 
 // We add log this trace to diagnose issues with loading runtime in the IDE
@@ -33,8 +33,8 @@ function wrapConsole(logFunctionKey) {
 
   if (parseErrorStack === undefined) {
     // This is a dummy evaluation to ensure that the parseErrorStack function is available
-    // before the new console function is returned. This is seeden becae since RN 0.80 
-    // a "metroRequire" function that is called the first time an import is used 
+    // before the new console function is returned. This is seeden becae since RN 0.80
+    // a "metroRequire" function that is called the first time an import is used
     // is may call a "conosole.warn", whitch would trigger an infinite loop
   }
 
@@ -87,7 +87,7 @@ AppRegistry.setWrapperComponentProvider((appParameters) => {
 });
 
 // Some apps may use AppRegistry.setWrapperComponentProvider to provide a custom wrapper component.
-// Apparenlty, this method only supports one provided per app. In order for this to work, we
+// Apparenlty, this method only supports one provider per app. In order for this to work, we
 // overwrite the method to wrap the custom wrapper component with the app wrapper that IDE uses
 // from the wrapper.js file.
 const origSetWrapperComponentProvider = AppRegistry.setWrapperComponentProvider;

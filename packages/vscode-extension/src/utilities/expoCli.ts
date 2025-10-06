@@ -23,9 +23,12 @@ export function shouldUseExpoCLI(launchConfig: ResolvedLaunchConfig) {
   let hasExpoConfigInAppJson = false;
   let hasExpoConfigInAppConfigJs = false;
   try {
+    const expoInstallPath = require.resolve("expo", {
+      paths: [appRoot],
+    });
     hasExpoCLIInstalled =
-      require.resolve("@expo/cli/build/src/start/index", {
-        paths: [appRoot],
+      require.resolve("@expo/cli", {
+        paths: [expoInstallPath],
       }) !== undefined;
   } catch (e) {}
 

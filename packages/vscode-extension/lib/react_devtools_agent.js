@@ -14,27 +14,39 @@ const agent = {
 
 const setDevtoolsAgent = (newDevtoolsAgent) => {
   if (!newDevtoolsAgent) {
+    devtoolsAgent = undefined;
     return;
   }
   devtoolsAgent = newDevtoolsAgent;
-  devtoolsAgent._bridge.addListener("RNIDE_message", (message) => {
+  const bridge = devtoolsAgent._bridge;
+
+  function onIdeMessage(message) {
     if (agent.onmessage) {
       agent.onmessage(message);
     }
-  });
+  }
+
+  function onBridgeShutdown() {
+    if (devtoolsAgent === newDevtoolsAgent) {
+      devtoolsAgent = undefined;
+    }
+  }
+
+  bridge.addListener("RNIDE_message", onIdeMessage);
+  bridge.addListener("shutdown", onBridgeShutdown);
+
   const messages = messageQueue;
   messageQueue = [];
   messages.forEach((message) => {
-    devtoolsAgent._bridge.send("RNIDE_message", message);
+    bridge.send("RNIDE_message", message);
   });
 };
 
 const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__;
 if (hook.reactDevtoolsAgent) {
   setDevtoolsAgent(hook.reactDevtoolsAgent);
-} else {
-  hook.on("react-devtools", setDevtoolsAgent);
 }
+hook.on("react-devtools", setDevtoolsAgent);
 
 globalThis.__radon_agent = agent;
 

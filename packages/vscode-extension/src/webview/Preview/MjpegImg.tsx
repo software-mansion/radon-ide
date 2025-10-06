@@ -90,7 +90,14 @@ const MjpegImg = forwardRef<
         onError={handleError}
       />
 
-      <MediaCanvas ref={ref} mediaRef={sourceImgRef} src={src} {...rest} alwaysPortrait />
+      <MediaCanvas
+        ref={ref}
+        mediaRef={sourceImgRef}
+        src={src}
+        data-testid="phone-screen"
+        {...rest}
+        alwaysPortrait
+      />
     </>
   );
 });

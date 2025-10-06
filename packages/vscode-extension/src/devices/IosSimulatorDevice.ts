@@ -2,6 +2,7 @@ import path from "path";
 import fs from "fs";
 import { ExecaChildProcess, ExecaError } from "execa";
 import mime from "mime";
+import _ from "lodash";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
@@ -9,13 +10,7 @@ import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
 import { BuildResult } from "../builders/BuildManager";
-import {
-  AppPermissionType,
-  DeviceSettings,
-  InstallationError,
-  InstallationErrorReason,
-  Locale,
-} from "../common/Project";
+import { AppPermissionType } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
@@ -23,9 +18,13 @@ import { Output } from "../common/OutputChannel";
 import {
   DeviceInfo,
   DevicePlatform,
+  DeviceSettings,
   DeviceType,
+  InstallationError,
+  InstallationErrorReason,
   IOSDeviceInfo,
   IOSRuntimeInfo,
+  Locale,
 } from "../common/State";
 
 interface SimulatorInfo {
@@ -40,7 +39,7 @@ interface SimulatorInfo {
   type?: "simulator" | "device" | "catalyst";
   booted?: boolean;
   lastBootedAt?: string;
-  deviceTypeIdentifier: string;
+  deviceTypeIdentifier?: string;
 }
 
 interface SimulatorData {
@@ -66,11 +65,12 @@ export class IosSimulatorDevice extends DeviceBase {
   private runningAppProcess: ExecaChildProcess | undefined;
 
   constructor(
+    deviceSettings: DeviceSettings,
     private readonly deviceUDID: string,
     private readonly _deviceInfo: DeviceInfo,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
-    super();
+    super(deviceSettings);
   }
 
   public get platform(): DevicePlatform {
@@ -94,25 +94,25 @@ export class IosSimulatorDevice extends DeviceBase {
   public dispose() {
     super.dispose();
     this.runningAppProcess?.cancel();
-    return exec("xcrun", [
-      "simctl",
-      "--set",
-      getOrCreateDeviceSet(this.deviceUDID),
-      "shutdown",
-      this.deviceUDID,
-    ]);
+    return exec(
+      "xcrun",
+      ["simctl", "--set", getOrCreateDeviceSet(this.deviceUDID), "shutdown", this.deviceUDID],
+      {
+        reject: false, // we ignore the error here, as the shutdown command may fail if the device is already shutdown
+      }
+    );
   }
 
   public async reboot() {
     super.reboot();
     this.runningAppProcess?.cancel();
-    await exec("xcrun", [
-      "simctl",
-      "--set",
-      getOrCreateDeviceSet(this.deviceUDID),
-      "shutdown",
-      this.deviceUDID,
-    ]);
+    await exec(
+      "xcrun",
+      ["simctl", "--set", getOrCreateDeviceSet(this.deviceUDID), "shutdown", this.deviceUDID],
+      {
+        reject: false, // we ignore the error here, as the shutdown command may fail if the device is already shutdown
+      }
+    );
 
     await this.internalBootDevice();
   }
@@ -313,28 +313,25 @@ export class IosSimulatorDevice extends DeviceBase {
       `${bundleID}.plist`
     );
     Logger.debug(`Defaults location ${userDefaultsLocation}`);
-    try {
-      await exec(
-        "/usr/libexec/PlistBuddy",
-        [
-          "-c",
-          "Delete :RCT_jsLocation",
-          "-c",
-          `Add :RCT_jsLocation string localhost:${metroPort}`,
-          userDefaultsLocation,
-        ],
-        { allowNonZeroExit: true }
-      );
-    } catch (e) {
-      // Delete command fails if the key doesn't exists, but later commands run regardless,
-      // despite that process exits with non-zero code. We can ignore this error.
-    }
-    try {
-      // Simulator may keep the defaults in memory with cfprefsd, we restart the deamon to make sure
-      // it reads the latest values from disk.
-      // We'd normally try to use defaults command that would write the updates via the daemon, however
-      // for some reason that doesn't work with custom device sets.
-      await exec("xcrun", [
+    await exec(
+      "/usr/libexec/PlistBuddy",
+      [
+        "-c",
+        "Delete :RCT_jsLocation",
+        "-c",
+        `Add :RCT_jsLocation string localhost:${metroPort}`,
+        userDefaultsLocation,
+      ],
+      { allowNonZeroExit: true, reject: false }
+    );
+
+    // Simulator may keep the defaults in memory with cfprefsd, we restart the daemon to make sure
+    // it reads the latest values from disk.
+    // We'd normally try to use defaults command that would write the updates via the daemon, however
+    // for some reason that doesn't work with custom device sets.
+    await exec(
+      "xcrun",
+      [
         "simctl",
         "--set",
         deviceSetLocation,
@@ -343,10 +340,45 @@ export class IosSimulatorDevice extends DeviceBase {
         "launchctl",
         "stop",
         "com.apple.cfprefsd.xpc.daemon",
-      ]);
-    } catch (e) {
-      // ignore errors here and hope for the best
-    }
+      ],
+      { reject: false }
+    );
+
+    // Restarting cfprefsd breaks the SpringBoard process which in particular controls things like
+    // the appearance settings. We need to restart it following the cfprefsd reset.
+    await exec(
+      "xcrun",
+      [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "spawn",
+        this.deviceUDID,
+        "launchctl",
+        "kickstart",
+        "-k",
+        "system/com.apple.SpringBoard",
+      ],
+      { reject: false }
+    );
+
+    // Restarting SpringBoard process breaks the backboardd which in particular controls things like
+    // the rotation settings. We need to restart it following the cfprefsd springboard reset.
+    await exec(
+      "xcrun",
+      [
+        "simctl",
+        "--set",
+        deviceSetLocation,
+        "spawn",
+        this.deviceUDID,
+        "launchctl",
+        "kickstart",
+        "-k",
+        "system/com.apple.backboardd",
+      ],
+      { reject: false }
+    );
   }
 
   async terminateApp(bundleID: string) {
@@ -460,7 +492,7 @@ export class IosSimulatorDevice extends DeviceBase {
   async launchApp(
     build: BuildResult,
     metroPort: number,
-    _devtoolsPort: number,
+    _devtoolsPort: number | undefined,
     launchArguments: string[]
   ) {
     if (build.platform !== DevicePlatform.IOS) {
@@ -558,9 +590,7 @@ export class IosSimulatorDevice extends DeviceBase {
       await this.updateInstalledAppBuildHash(build);
     } catch (e) {
       const message =
-        typeof e === "object" && e !== null && "message" in e
-          ? String((e as any).message)
-          : String(e);
+        typeof e === "object" && e !== null && "message" in e ? String(e.message) : String(e);
       throw new InstallationError(message, InstallationErrorReason.Unknown);
     }
   }
@@ -740,23 +770,31 @@ export async function listSimulators(location: SimulatorDeviceSet): Promise<IOSD
     .map(([runtimeID, devices]) => {
       const runtime = runtimes.find((item) => item.identifier === runtimeID);
 
-      return devices.map((device) => {
-        return {
-          id: `ios-${device.udid}`,
-          platform: DevicePlatform.IOS as const,
-          UDID: device.udid,
-          modelId: device.deviceTypeIdentifier,
-          systemName: runtime?.name ?? "Unknown",
-          displayName: device.name,
-          deviceType: device.deviceTypeIdentifier.includes("iPad")
-            ? DeviceType.Tablet
-            : DeviceType.Phone,
-          available: device.isAvailable ?? false,
-          runtimeInfo: runtime,
-        };
-      });
+      return devices
+        .map((device) => {
+          if (!device.deviceTypeIdentifier) {
+            return undefined;
+          }
+          return {
+            id: `ios-${device.udid}`,
+            platform: DevicePlatform.IOS as const,
+            UDID: device.udid,
+            modelId: device.deviceTypeIdentifier,
+            systemName: runtime?.name ?? "Unknown",
+            displayName: device.name,
+            deviceType: device.deviceTypeIdentifier.includes("iPad")
+              ? DeviceType.Tablet
+              : DeviceType.Phone,
+            available: device.isAvailable ?? false,
+            runtimeInfo: runtime,
+          };
+        })
+        .filter((e) => e !== undefined);
     })
     .flat();
+  if (location === SimulatorDeviceSet.RN_IDE) {
+    await ensureUniqueDisplayNames(simulators);
+  }
   return simulators;
 }
 
@@ -863,5 +901,24 @@ function convertToSimctlSize(size: DeviceSettings["contentSize"]): string {
       return "extra-extra-large";
     case "xxxlarge":
       return "extra-extra-extra-large";
+  }
+}
+
+async function ensureUniqueDisplayNames(devices: IOSDeviceInfo[]) {
+  const devicesByDisplayName = _.groupBy(devices, "displayName");
+  const uniqueNames = new Set<string>(Object.keys(devicesByDisplayName));
+
+  for (const [displayName, devicesWithSameName] of Object.entries(devicesByDisplayName)) {
+    let duplicateCounter = 1;
+    let newName = `${displayName} (${duplicateCounter})`;
+    for (const device of devicesWithSameName.slice(1)) {
+      while (uniqueNames.has(newName)) {
+        duplicateCounter += 1;
+        newName = `${displayName} (${duplicateCounter})`;
+      }
+      uniqueNames.add(newName);
+      device.displayName = newName;
+      await renameIosSimulator(device.UDID, newName);
+    }
   }
 }

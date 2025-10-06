@@ -1,5 +1,5 @@
 import "./ManageDevicesView.css";
-import { MouseEventHandler, useState } from "react";
+import { MouseEventHandler, useEffect, useState } from "react";
 import * as Switch from "@radix-ui/react-switch";
 import { use$ } from "@legendapp/state/react";
 import IconButton from "../components/shared/IconButton";
@@ -17,6 +17,7 @@ import "../components/shared/SwitchGroup.css";
 import { useStore } from "../providers/storeProvider";
 import { PropsWithDataTest } from "../../common/types";
 import { DeviceInfo, DevicePlatform } from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -24,6 +25,7 @@ interface DeviceRowProps {
   onDeviceDelete: (device: DeviceInfo) => void;
   isSelected: boolean;
   isRunning: boolean;
+  dataTest?: string;
 }
 
 function DeviceRow({
@@ -34,17 +36,13 @@ function DeviceRow({
   isRunning,
   dataTest,
 }: PropsWithDataTest<DeviceRowProps>) {
-  const store$ = useStore();
-  const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
   const { project } = useProject();
 
   const stopDevice = () => project.terminateSession(deviceInfo.id);
   const selectDevice: MouseEventHandler = (e) => {
     if (!isSelected) {
       e.stopPropagation();
-      project.startOrActivateSessionForDevice(deviceInfo, {
-        stopPreviousDevices,
-      });
+      project.startOrActivateSessionForDevice(deviceInfo);
       closeModal();
     }
   };
@@ -104,6 +102,7 @@ function DeviceRow({
               type: "secondary",
             }}
             disabled={!deviceInfo.available}
+            dataTest={`device-row-start-button-device-${deviceInfo.displayName}`}
             onClick={selectDevice}>
             <span className="codicon codicon-play" />
           </IconButton>
@@ -142,11 +141,16 @@ function DeviceRow({
 }
 
 function ManageDevicesView() {
+  const { project } = useProject();
+
   const store$ = useStore();
-  const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
-  const { projectState, selectedDeviceSession } = useProject();
-  const { deviceSessions } = projectState;
-  const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+  const deviceSessions = use$(store$.projectState.deviceSessions);
+
+  const stopPreviousDevices = use$(store$.workspaceConfiguration.deviceControl.stopPreviousDevices);
+
+  const selectedProjectDevice = use$(selectedDeviceSessionState.deviceInfo);
+
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
@@ -160,6 +164,10 @@ function ManageDevicesView() {
   const androidDevices = (devices ?? []).filter(
     ({ platform, modelId }) => platform === DevicePlatform.Android && modelId.length > 0
   );
+
+  useEffect(() => {
+    project.loadInstalledImages();
+  }, []);
 
   const handleDeviceRename = (device: DeviceInfo) => {
     setSelectedDevice(device);
@@ -201,7 +209,7 @@ function ManageDevicesView() {
       <DeviceRow
         key={deviceInfo.id}
         deviceInfo={deviceInfo}
-        dataTest={`manage-devices-menu-row-device-${deviceInfo.displayName}`}
+        dataTest={`manage-devices-menu-row-device-${deviceInfo.displayName}--${deviceInfo.id}`}
         onDeviceRename={handleDeviceRename}
         onDeviceDelete={handleDeviceDelete}
         isSelected={deviceInfo.id === selectedProjectDevice?.id}
@@ -245,7 +253,7 @@ function ManageDevicesView() {
           className="switch-root small-switch"
           checked={stopPreviousDevices}
           onCheckedChange={(checked) =>
-            store$.workspaceConfiguration.stopPreviousDevices.set(checked)
+            store$.workspaceConfiguration.deviceControl.stopPreviousDevices.set(checked)
           }>
           <Switch.Thumb className="switch-thumb" />
         </Switch.Root>

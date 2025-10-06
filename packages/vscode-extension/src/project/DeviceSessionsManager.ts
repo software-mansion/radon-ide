@@ -8,7 +8,7 @@ import { DeviceSession } from "./deviceSession";
 import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceId, DeviceSessionsManagerState } from "../common/Project";
+import { DeviceId } from "../common/Project";
 import { Connector } from "../connect/Connector";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
@@ -18,16 +18,13 @@ import {
   DeviceRotation,
   DeviceSessions,
   DevicesState,
-  initialDeviceSessionStore,
+  generateInitialDeviceSessionStore,
   ProjectStore,
+  REMOVE,
 } from "../common/State";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
-
-export type SelectDeviceOptions = {
-  stopPreviousDevices?: boolean;
-};
 
 export type ReloadAction =
   | "autoReload" // automatic reload mode
@@ -41,7 +38,6 @@ export type ReloadAction =
 
 export type DeviceSessionsManagerDelegate = {
   onInitialized(): void;
-  onDeviceSessionsManagerStateChange(state: DeviceSessionsManagerState): void;
   getDeviceRotation(): DeviceRotation;
 };
 
@@ -62,13 +58,13 @@ export class DeviceSessionsManager implements Disposable {
     private readonly applicationContext: ApplicationContext,
     private readonly deviceManager: DeviceManager,
     private readonly devicesStateManager: StateManager<DevicesState>,
-    private readonly deviceSessionManagerDelegate: DeviceSessionsManagerDelegate,
+    private deviceSessionManagerDelegate: DeviceSessionsManagerDelegate,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     this.disposables.push(
       this.devicesStateManager.onSetState((partialState) => {
         const devices = partialState.devices;
-        if (devices !== undefined && devices !== null) {
+        if (devices !== undefined && devices !== null && devices !== REMOVE) {
           this.devicesChangedListener(devices);
         }
       })
@@ -81,12 +77,6 @@ export class DeviceSessionsManager implements Disposable {
     return this.activeSessionId ? this.deviceSessions.get(this.activeSessionId) : undefined;
   }
 
-  public rotateAllDevices(rotation: DeviceRotation) {
-    this.deviceSessions.forEach((session) => {
-      session.sendRotate(rotation);
-    });
-  }
-
   public async terminateSession(deviceId: string) {
     const session = this.deviceSessions.get(deviceId);
     if (session) {
@@ -94,17 +84,24 @@ export class DeviceSessionsManager implements Disposable {
         this.updateSelectedSession(undefined);
       }
       this.deviceSessions.delete(deviceId);
-      this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
+      this.projectStateManager.updateState({ deviceSessions: { [deviceId]: REMOVE } });
       await session.dispose();
     }
   }
 
-  private get state(): DeviceSessionsManagerState {
+  private get deviceLimits() {
+    const stopPreviousDevices =
+      this.applicationContext.workspaceConfiguration.deviceControl.stopPreviousDevices;
+    const launchConfig = this.applicationContext.launchConfig;
+    const usesSingleMetro = !!launchConfig.metroPort;
+    const usesOldDevtools = launchConfig.useOldDevtools;
+    const totalDeviceLimit =
+      stopPreviousDevices || (usesSingleMetro && usesOldDevtools) ? 1 : Number.MAX_SAFE_INTEGER;
+    const androidEmulatorLimit = usesSingleMetro ? 1 : Number.MAX_SAFE_INTEGER;
     return {
-      selectedSessionId: this.activeSessionId ?? null,
-      deviceSessions: Object.fromEntries(
-        this.deviceSessions.entries().map(([k, v]) => [k, v.getState()])
-      ),
+      totalDeviceLimit,
+      [DevicePlatform.Android]: androidEmulatorLimit,
+      [DevicePlatform.IOS]: Number.MAX_SAFE_INTEGER,
     };
   }
 
@@ -117,15 +114,6 @@ export class DeviceSessionsManager implements Disposable {
     return await deviceSession.performReloadAction(type);
   }
 
-  private async terminatePreviousSessions() {
-    const previousSessionEntries = Array.from(this.deviceSessions.entries()).filter(
-      ([deviceId, _session]) => deviceId !== this.activeSessionId
-    );
-    return Promise.all(
-      previousSessionEntries.map(([deviceId, _session]) => this.terminateSession(deviceId))
-    );
-  }
-
   public async terminateAllSessions() {
     const sessionEntries = Array.from(this.deviceSessions.entries());
     return Promise.all(
@@ -133,20 +121,37 @@ export class DeviceSessionsManager implements Disposable {
     );
   }
 
-  public async startOrActivateSessionForDevice(
-    deviceInfo: DeviceInfo,
-    selectDeviceOptions?: SelectDeviceOptions
-  ) {
+  private async terminateSessionsOverLimit({ platform, id: deviceId }: DeviceInfo) {
+    const samePlatformSessions = Object.entries(this.stateManager.getState()).filter(
+      ([_id, session]) => {
+        return session.deviceInfo.id !== deviceId && session.deviceInfo.platform === platform;
+      }
+    );
+    const samePlatformDevicesToStop = Math.max(
+      0,
+      samePlatformSessions.length + 1 - this.deviceLimits[platform]
+    );
+    await Promise.all(
+      samePlatformSessions
+        .slice(0, samePlatformDevicesToStop)
+        .map(([id]) => this.terminateSession(id))
+    );
+
+    const sessions = Object.entries(this.stateManager.getState()).filter(([_id, session]) => {
+      return session.deviceInfo.id !== deviceId;
+    });
+    const devicesToStop = Math.max(0, sessions.length + 1 - this.deviceLimits.totalDeviceLimit);
+    await Promise.all(sessions.slice(0, devicesToStop).map(([id]) => this.terminateSession(id)));
+  }
+
+  public async startOrActivateSessionForDevice(deviceInfo: DeviceInfo) {
     Connector.getInstance().disable();
-    const stopPreviousDevices = selectDeviceOptions?.stopPreviousDevices;
 
     // if there's an existing session for the device, we use it instead of starting a new one
     const existingDeviceSession = this.deviceSessions.get(deviceInfo.id);
     if (existingDeviceSession) {
       this.updateSelectedSession(existingDeviceSession);
-      if (stopPreviousDevices) {
-        await this.terminatePreviousSessions();
-      }
+      await this.terminateSessionsOverLimit(deviceInfo);
       return;
     }
 
@@ -159,35 +164,27 @@ export class DeviceSessionsManager implements Disposable {
 
     if (!this.stateManager.getState()[deviceInfo.id]) {
       // we need to initialize the device session state before deriving a new state manager
-      this.stateManager.setState({ [deviceInfo.id]: initialDeviceSessionStore });
+      this.stateManager.updateState({
+        [deviceInfo.id]: generateInitialDeviceSessionStore({ deviceInfo }),
+      });
     }
 
     const newDeviceSession = new DeviceSession(
       this.stateManager.getDerived(deviceInfo.id),
       this.applicationContext,
       device,
+      await this.applicationContext.devtoolsServer,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
-      {
-        onStateChange: (state) => {
-          if (!this.deviceSessions.has(state.deviceInfo.id)) {
-            // NOTE: the device is being removed, we shouldn't report state updates
-            return;
-          }
-          this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
-        },
-      },
-      this.outputChannelRegistry
+      this.outputChannelRegistry,
+      this.applicationContext.metroProvider
     );
 
-    this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
     this.maybeWarnAboutRunningDevices();
     this.updateSelectedSession(newDeviceSession);
     this.deviceSessionManagerDelegate.onInitialized();
 
-    if (stopPreviousDevices) {
-      await this.terminatePreviousSessions();
-    }
+    await this.terminateSessionsOverLimit(deviceInfo);
 
     try {
       await newDeviceSession.start();
@@ -204,7 +201,7 @@ export class DeviceSessionsManager implements Disposable {
 
     const [iosDevices, androidDevices] = _.partition(
       this.deviceSessions.values().toArray(),
-      (session) => session.getState().deviceInfo.platform === DevicePlatform.IOS
+      (session) => session.platform === DevicePlatform.IOS
     );
 
     if (
@@ -227,7 +224,7 @@ export class DeviceSessionsManager implements Disposable {
   }
 
   public findInitialDeviceAndStartSession = async () => {
-    if (!this.applicationContext.workspaceConfiguration.startDeviceOnLaunch) {
+    if (!this.applicationContext.workspaceConfiguration.deviceControl.startDeviceOnLaunch) {
       this.deviceSessionManagerDelegate.onInitialized();
       return;
     }
@@ -298,20 +295,18 @@ export class DeviceSessionsManager implements Disposable {
 
   private async updateSelectedSession(session: DeviceSession | undefined) {
     const previousSession = this.selectedDeviceSession;
-    this.activeSessionId = session?.getState().deviceInfo.id;
+    this.activeSessionId = session?.id;
     if (previousSession === session) {
       return;
     }
     if (session === undefined) {
-      this.projectStateManager.setState({ selectedDeviceSessionId: null });
-      this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
+      this.projectStateManager.updateState({ selectedDeviceSessionId: null });
       return;
     }
+    extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, this.activeSessionId);
+    this.projectStateManager.updateState({ selectedDeviceSessionId: this.activeSessionId });
     await previousSession?.deactivate();
     await session.activate();
-    extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, this.activeSessionId);
-    this.projectStateManager.setState({ selectedDeviceSessionId: this.activeSessionId });
-    this.deviceSessionManagerDelegate.onDeviceSessionsManagerStateChange(this.state);
   }
 
   private async acquireDeviceByDeviceInfo(deviceInfo: DeviceInfo) {
@@ -324,7 +319,10 @@ export class DeviceSessionsManager implements Disposable {
     }
     let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
     try {
-      device = await this.deviceManager.acquireDevice(deviceInfo);
+      device = await this.deviceManager.acquireDevice(
+        deviceInfo,
+        this.applicationContext.workspaceConfigState.getState().deviceSettings
+      );
     } catch (e) {
       if (e instanceof DeviceAlreadyUsedError) {
         window.showErrorMessage(
@@ -352,7 +350,22 @@ export class DeviceSessionsManager implements Disposable {
     this.updateSelectedSession(this.deviceSessions.get(runningSessions[nextSessionIndex]));
   }, SWITCH_DEVICE_THROTTLE_MS);
 
+  clearState() {
+    const currentState = this.stateManager.getState();
+    const newState = _.mapValues(currentState, (): typeof REMOVE => REMOVE);
+    this.stateManager.updateState(newState);
+  }
+
   dispose() {
-    disposeAll([...this.deviceSessions.values().toArray(), ...this.disposables]);
+    // NOTE: we overwrite the delegate to avoid calling it during/after dispose
+    this.deviceSessionManagerDelegate = {
+      onInitialized: () => {},
+      getDeviceRotation: () => DeviceRotation.Portrait,
+    };
+    const deviceSessions = this.deviceSessions.values().toArray();
+    this.deviceSessions.clear();
+    this.activeSessionId = undefined;
+    this.clearState();
+    disposeAll([...deviceSessions, ...this.disposables]);
   }
 }

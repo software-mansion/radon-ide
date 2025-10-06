@@ -26,6 +26,7 @@ import {
   AndroidSystemImageInfo,
   DeviceInfo,
   DevicePlatform,
+  DeviceSettings,
   DevicesState,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
@@ -45,21 +46,12 @@ export class DeviceManager implements Disposable {
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     this.loadDevicesIntoState();
-    this.listInstalledIOSRuntimes().then((runtimes) => {
-      this.stateManager.setState({
-        iOSRuntimes: runtimes,
-      });
-    });
-    this.listInstalledAndroidImages().then((images) => {
-      this.stateManager.setState({
-        androidImages: images,
-      });
-    });
+    this.loadInstalledImages();
 
     this.disposables.push(this.stateManager);
   }
 
-  public async acquireDevice(deviceInfo: DeviceInfo) {
+  public async acquireDevice(deviceInfo: DeviceInfo, deviceSettings: DeviceSettings) {
     if (deviceInfo.platform === DevicePlatform.IOS) {
       if (Platform.OS !== "macos") {
         throw new Error("Invalid platform. Expected macos.");
@@ -71,6 +63,7 @@ export class DeviceManager implements Disposable {
         throw new Error(`Simulator ${deviceInfo.id} not found`);
       }
       const device = new IosSimulatorDevice(
+        deviceSettings,
         simulatorInfo.UDID,
         simulatorInfo,
         this.outputChannelRegistry
@@ -87,6 +80,7 @@ export class DeviceManager implements Disposable {
         throw new Error(`Emulator ${deviceInfo.id} not found`);
       }
       const device = new AndroidEmulatorDevice(
+        deviceSettings,
         emulatorInfo.avdId,
         emulatorInfo,
         this.outputChannelRegistry
@@ -120,7 +114,7 @@ export class DeviceManager implements Disposable {
     }
     const devices = await this.loadDevicesPromise;
     if (!_.isEqual(previousDevices, devices)) {
-      this.stateManager.setState({ devices });
+      this.stateManager.updateState({ devices });
     }
     return devices;
   }
@@ -164,7 +158,7 @@ export class DeviceManager implements Disposable {
     if (devices) {
       // we still want to perform load here in case anything changes, just won't wait for it
       this.loadDevices();
-      this.stateManager.setState({ devices });
+      this.stateManager.updateState({ devices });
     } else {
       return await this.loadDevices();
     }
@@ -205,6 +199,19 @@ export class DeviceManager implements Disposable {
     return simulator;
   }
 
+  public loadInstalledImages() {
+    this.listInstalledIOSRuntimes().then((runtimes) => {
+      this.stateManager.updateState({
+        iOSRuntimes: runtimes,
+      });
+    });
+    this.listInstalledAndroidImages().then((images) => {
+      this.stateManager.updateState({
+        androidImages: images,
+      });
+    });
+  }
+
   public async renameDevice(device: DeviceInfo, newDisplayName: string) {
     if (device.platform === DevicePlatform.IOS) {
       await renameIosSimulator(device.UDID, newDisplayName);
@@ -224,7 +231,7 @@ export class DeviceManager implements Disposable {
     // This is an optimization to update before costly operations
     const previousDevices = this.stateManager.getState().devices ?? [];
     const devices = previousDevices.filter((d) => d.id !== device.id);
-    this.stateManager.setState({ devices });
+    this.stateManager.updateState({ devices });
 
     if (device.platform === DevicePlatform.IOS) {
       await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);

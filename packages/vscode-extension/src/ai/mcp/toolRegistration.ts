@@ -1,9 +1,9 @@
 import { z } from "zod";
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getToolSchema, invokeToolCall } from "../shared/api";
 import { ToolSchema } from "./models";
-import { screenshotToolExec } from "./toolExecutors";
+import { readLogsToolExec, screenshotToolExec } from "./toolExecutors";
 import { ConnectionListener } from "../shared/ConnectionListener";
 
 const PLACEHOLDER_ID = "3241"; // This placeholder is needed by the API, but the value doesn't matter
@@ -23,6 +23,17 @@ export async function registerMcpTools(server: McpServer, connectionListener: Co
       inputSchema: {},
     },
     screenshotToolExec
+  );
+
+  server.registerTool(
+    "view_application_logs",
+    {
+      description:
+        "Returns all the build, bundling and runtime logs. Use this function whenever the user has any issue with the app, " +
+        "if it's builds are failing, or when there are errors in the console. These logs are always a useful debugging aid.",
+      inputSchema: {},
+    },
+    readLogsToolExec
   );
 
   const toolSchema = await getToolSchema(connectionListener);

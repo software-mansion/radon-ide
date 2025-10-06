@@ -5,35 +5,32 @@ import assert from "assert";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
 import { Preview } from "./preview";
-import {
-  DEVICE_SETTINGS_DEFAULT,
-  DEVICE_SETTINGS_KEY,
-  DeviceBase,
-  REBOOT_TIMEOUT,
-} from "./DeviceBase";
+import { DeviceBase, REBOOT_TIMEOUT } from "./DeviceBase";
 import { retry, cancellableRetry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { BuildResult } from "../builders/BuildManager";
 import { Logger } from "../Logger";
-import {
-  AppPermissionType,
-  CameraSettings,
-  DeviceSettings,
-  InstallationError,
-  InstallationErrorReason,
-  Locale,
-} from "../common/Project";
+import { AppPermissionType } from "../common/Project";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Platform } from "../utilities/platform";
 import { AndroidBuildResult } from "../builders/buildAndroid";
 import { CancelError, CancelToken } from "../utilities/cancelToken";
-import { extensionContext } from "../utilities/extensionContext";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
-import { AndroidSystemImageInfo, DeviceInfo, DevicePlatform, DeviceType } from "../common/State";
+import {
+  AndroidSystemImageInfo,
+  CameraSettings,
+  DeviceInfo,
+  DevicePlatform,
+  DeviceSettings,
+  DeviceType,
+  InstallationError,
+  InstallationErrorReason,
+  Locale,
+} from "../common/State";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -56,14 +53,6 @@ const ADB_PATH = path.join(
 
 const DISPOSE_TIMEOUT = 9000;
 
-const DEVICE_SETTINGS_EMULATOR_DEFAULT = {
-  ...DEVICE_SETTINGS_DEFAULT,
-  camera: {
-    back: "virtualscene" as const,
-    front: "emulated" as const,
-  },
-};
-
 interface EmulatorProcessInfo {
   pid: number;
   serialPort: number;
@@ -78,17 +67,14 @@ export class AndroidEmulatorDevice extends DeviceBase {
   private emulatorProcess: ChildProcess | undefined;
   private serial: string | undefined;
   private nativeLogsCancelToken: CancelToken | undefined;
-  protected override deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
-    DEVICE_SETTINGS_KEY,
-    DEVICE_SETTINGS_EMULATOR_DEFAULT
-  );
 
   constructor(
+    deviceSettings: DeviceSettings,
     private readonly avdId: string,
     private readonly info: DeviceInfo,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
-    super();
+    super(deviceSettings);
   }
 
   public get platform(): DevicePlatform {
@@ -518,17 +504,23 @@ export class AndroidEmulatorDevice extends DeviceBase {
     ]);
   }
 
-  async launchWithExpoDeeplink(metroPort: number, devtoolsPort: number, expoDeeplink: string) {
+  async launchWithExpoDeeplink(
+    metroPort: number,
+    devtoolsPort: number | undefined,
+    expoDeeplink: string
+  ) {
     // For Expo dev-client and expo go setup, we use deeplink to launch the app. Since Expo's manifest is configured to
     // return localhost:PORT as the destination, we need to setup adb reverse for metro port first.
     await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
-    await exec(ADB_PATH, [
-      "-s",
-      this.serial!,
-      "reverse",
-      `tcp:${devtoolsPort}`,
-      `tcp:${devtoolsPort}`,
-    ]);
+    if (devtoolsPort !== undefined) {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "reverse",
+        `tcp:${devtoolsPort}`,
+        `tcp:${devtoolsPort}`,
+      ]);
+    }
     // next, we open the link
     await exec(ADB_PATH, [
       "-s",
@@ -595,7 +587,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
   }
 
-  async launchApp(build: BuildResult, metroPort: number, devtoolsPort: number) {
+  async launchApp(build: BuildResult, metroPort: number, devtoolsPort?: number) {
     if (build.platform !== DevicePlatform.Android) {
       throw new Error("Invalid platform");
     }

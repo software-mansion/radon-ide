@@ -11,6 +11,7 @@ import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
 import { useStore } from "../providers/storeProvider";
 import { DeviceInfo, DevicePlatform } from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -28,7 +29,10 @@ function RunningBadgeButton({ onStopClick }: { onStopClick?: (e: React.MouseEven
         e.stopPropagation();
       }}
       onClick={onStopClick}>
-      <Badge variant="activity-bar-counter" className="running-badge-button">
+      <Badge
+        variant="activity-bar-counter"
+        className="running-badge-button"
+        data-testid="device-running-badge">
         <span />
       </Badge>
     </div>
@@ -87,21 +91,19 @@ function partitionDevices(devices: DeviceInfo[]): Record<string, DeviceInfo[]> {
 
 function DeviceSelect() {
   const store$ = useStore();
-  const stopPreviousDevices = use$(store$.workspaceConfiguration.stopPreviousDevices);
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
-  const { selectedDeviceSession, projectState, project } = useProject();
+  const { projectState, project } = useProject();
 
   const devices = use$(store$.devicesState.devices) ?? [];
   const { openModal } = useModal();
 
-  const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
-
   const hasNoDevices = devices.length === 0;
-  const selectedDevice = selectedDeviceSession?.deviceInfo;
+  const selectedDevice = use$(selectedDeviceSessionState.deviceInfo);
+  const deviceSessions = use$(store$.projectState.deviceSessions);
 
   const radonConnectEnabled = projectState.connectState.enabled;
 
-  const { deviceSessions } = projectState;
   const runningSessionIds = Object.keys(deviceSessions);
 
   const deviceSections = partitionDevices(devices ?? []);
@@ -118,9 +120,7 @@ function DeviceSelect() {
     if (selectedDevice?.id !== value) {
       const deviceInfo = (devices ?? []).find((d) => d.id === value);
       if (deviceInfo) {
-        project.startOrActivateSessionForDevice(deviceInfo, {
-          stopPreviousDevices,
-        });
+        project.startOrActivateSessionForDevice(deviceInfo);
       }
     }
   };
@@ -171,7 +171,7 @@ function DeviceSelect() {
               renderDevices(
                 label,
                 sectionDevices,
-                selectedProjectDevice,
+                selectedDevice,
                 runningSessionIds,
                 handleDeviceStop
               )

@@ -1,18 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 import * as ScrollArea from "@radix-ui/react-scroll-area";
-import { useProject } from "../providers/ProjectProvider";
+import { use$ } from "@legendapp/state/react";
 import "./DeviceLocalizationView.css";
 import "../components/shared/SwitchGroup.css";
 import localesList from "../utilities/localeList.json";
-import { Locale } from "../../common/Project";
 import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
 import { Input } from "../components/shared/Input";
+import { useStore } from "../providers/storeProvider";
+import { Locale } from "../../common/State";
 
 type LocaleWithDescription = { localeIdentifier: Locale; Description: string };
 
 export function DeviceLocalizationView() {
-  const { deviceSettings } = useProject();
+  const store$ = useStore();
+  const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
   const { openModal } = useModal();
   const [searchPhrase, setSearchPhrase] = useState("");
 
@@ -94,9 +96,8 @@ type LocalizationChangeConfirmationViewProps = {
 const LocalizationChangeConfirmationView = ({
   locale,
 }: LocalizationChangeConfirmationViewProps) => {
+  const store$ = useStore();
   const { openModal, closeModal } = useModal();
-
-  const { project, deviceSettings } = useProject();
 
   const onCancel = () => {
     openModal(<DeviceLocalizationView />, { title: "Localization" });
@@ -116,7 +117,7 @@ const LocalizationChangeConfirmationView = ({
           className="localization-change-button"
           type="ternary"
           onClick={async () => {
-            project.updateDeviceSettings({ ...deviceSettings, locale: locale.localeIdentifier });
+            store$.workspaceConfiguration.deviceSettings.locale.set(locale.localeIdentifier);
             closeModal();
           }}>
           Confirm

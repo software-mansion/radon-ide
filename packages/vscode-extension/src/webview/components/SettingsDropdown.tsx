@@ -22,7 +22,7 @@ interface SettingsDropdownProps {
 
 function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
   const store$ = useStore();
-  const panelLocation = use$(store$.workspaceConfiguration.panelLocation);
+  const panelLocation = use$(store$.workspaceConfiguration.userInterface.panelLocation);
   const telemetryEnabled = use$(store$.telemetry.enabled);
 
   const { openModal } = useModal();
@@ -75,7 +75,9 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             </span>
           </DropdownMenu.Item>
           <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+            <DropdownMenu.SubTrigger
+              className="dropdown-menu-item"
+              data-testid="settings-dropdown-change-ide-location-trigger">
               <span className="codicon codicon-layout" />
               Change IDE location
               <span className="codicon codicon-chevron-right right-slot" />
@@ -88,6 +90,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                 {panelLocation !== "side-panel" && (
                   <DropdownMenu.Item
                     className="dropdown-menu-item"
+                    data-testid="settings-dropdown-move-to-side-panel-button"
                     onSelect={() => project.movePanelTo("side-panel")}>
                     <span className="codicon codicon-layout-sidebar-right" />
                     Move to Side Panel
@@ -95,12 +98,14 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                 )}
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
+                  data-testid="settings-dropdown-move-to-editor-tab-button"
                   onSelect={() => project.movePanelTo("editor-tab")}>
                   <span className="codicon codicon-layout-centered" />
                   Move to Editor Tab
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
+                  data-testid="settings-dropdown-move-to-new-window-button"
                   onSelect={() => project.movePanelTo("new-window")}>
                   <span className="codicon codicon-multiple-windows" />
                   Move to New Window

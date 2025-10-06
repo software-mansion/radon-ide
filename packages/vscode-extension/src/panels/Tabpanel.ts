@@ -59,7 +59,7 @@ export class TabPanel implements Disposable {
         if (!event.affectsConfiguration("RadonIDE")) {
           return;
         }
-        if (workspace.getConfiguration("RadonIDE").get("panelLocation") !== "tab") {
+        if (workspace.getConfiguration("RadonIDE").get("userInterface.panelLocation") !== "tab") {
           this.dispose();
         }
       },
@@ -144,7 +144,7 @@ export class TabPanelSerializer implements WebviewPanelSerializer {
     // This can happen if user switches the panel location from tab to side panel
     // via user settings. This is quite obscure case, as the default accessible by or UI
     // is to switch the panel location via workspace settings.
-    if (workspace.getConfiguration("RadonIDE").get("panelLocation") !== "tab") {
+    if (workspace.getConfiguration("RadonIDE").get("userInterface.panelLocation") !== "tab") {
       webviewPanel.dispose();
       TabPanel.currentPanel?.dispose();
       commands.executeCommand("RNIDE.showPanel");

@@ -1,0 +1,104 @@
+name: Build VSIX Nightly
+
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "47 0 * * *"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref }}
+
+      - name: Enforce HTTPS for submodules
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: packages/vscode-extension/package-lock.json
+
+      - name: Install dependencies
+        working-directory: packages/vscode-extension
+        run: npm ci
+
+      - name: Prepare nightly version
+        working-directory: packages/vscode-extension
+        id: prepare_version
+        run: |
+          commit=$(git rev-parse --short=6 HEAD)
+
+          date=$(date +'%Y%m%d')
+
+          preid="nightly.${date}+${commit}"
+          echo "Using preid: $preid"
+
+          npm version preminor --preid=$preid --no-git-tag-version
+
+          new_version=$(node -p "require('./package.json').version")
+          echo "nightly_version=$new_version" >> $GITHUB_OUTPUT
+
+      - name: Prepare package name for artifact upload
+        id: prepare_name
+        run: |
+          ref_name=$(echo -n "${{ github.event.inputs.ref }}" | xargs | sed 's/[\\\/'"'"':<>|*?]/-/g') 
+          package_name=radon-ide-${ref_name}-${{ steps.prepare_version.outputs.nightly_version }}
+          echo "package_name=$package_name" >> $GITHUB_OUTPUT
+
+      - name: Set targets
+        id: set_targets
+        run: |
+          targets="darwin-arm64 darwin-x64 win32-x64 linux-x64"
+          echo "Building extension for targets: $targets"
+          echo "targets=$targets" >> $GITHUB_OUTPUT
+
+      - name: Package extension for each target
+        working-directory: packages/vscode-extension
+        id: package_and_upload
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          IFS=' ' read -r -a targets <<< "${{ steps.set_targets.outputs.targets }}"
+          output_paths=""
+          for target in "${targets[@]}"; do
+            out_path=/tmp/${{ steps.prepare_name.outputs.package_name }}-$target.vsix
+            npm run vscode:package -- --out $out_path --target $target
+            output_paths="$output_paths $out_path"
+          done
+          echo "output_paths=$output_paths" >> $GITHUB_OUTPUT
+
+      - name: upload mac arm
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare_name.outputs.package_name }}-darwin-arm64.vsix
+          path: /tmp/${{ steps.prepare_name.outputs.package_name }}-*darwin-arm64*.vsix
+          retention-days: 7
+
+      - name: upload mac x64
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare_name.outputs.package_name }}-darwin-x64.vsix
+          path: /tmp/${{ steps.prepare_name.outputs.package_name }}-*darwin-x64*.vsix
+          retention-days: 7
+
+      - name: upload windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare_name.outputs.package_name }}-win32-x64.vsix
+          path: /tmp/${{ steps.prepare_name.outputs.package_name }}-*win32*.vsix
+          retention-days: 7
+
+      - name: upload linux
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.prepare_name.outputs.package_name }}-linux-x64.vsix
+          path: /tmp/${{ steps.prepare_name.outputs.package_name }}-*linux*.vsix
+          retention-days: 7

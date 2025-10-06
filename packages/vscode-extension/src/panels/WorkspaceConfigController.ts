@@ -1,10 +1,18 @@
 import _ from "lodash";
 import { ConfigurationChangeEvent, workspace, Disposable } from "vscode";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { DeviceRotation, PanelLocation, WorkspaceConfiguration } from "../common/State";
+import { WorkspaceConfiguration } from "../common/State";
 import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
-import { updatePartialWorkspaceConfig } from "../utilities/updatePartialWorkspaceConfig";
+import {
+  getCurrentWorkspaceConfiguration,
+  updateWorkspaceConfig,
+} from "../utilities/workspaceConfiguration";
+import {
+  merge,
+  mergeAndCalculateChanges,
+  splitRecursivePartialToSingleLeaves,
+} from "../common/Merge";
 
 export class WorkspaceConfigController implements Disposable {
   private disposables: Disposable[] = [];
@@ -12,39 +20,24 @@ export class WorkspaceConfigController implements Disposable {
 
   constructor(private stateManager: StateManager<WorkspaceConfiguration>) {
     const configuration = workspace.getConfiguration("RadonIDE");
-    const workspaceConfig = {
-      panelLocation: configuration.get<PanelLocation>("panelLocation")!,
-      showDeviceFrame: configuration.get<boolean>("showDeviceFrame")!,
-      stopPreviousDevices: configuration.get<boolean>("stopPreviousDevices")!,
-      deviceRotation: configuration.get<DeviceRotation>("deviceRotation")!,
-      startDeviceOnLaunch: configuration.get<boolean>("startDeviceOnLaunch") ?? true,
-    };
 
-    this.stateManager.setState(workspaceConfig);
+    const workspaceConfig = getCurrentWorkspaceConfiguration(configuration);
+
+    this.stateManager.updateState(workspaceConfig);
 
     this.disposables.push(workspace.onDidChangeConfiguration(this.onConfigurationChange));
 
     this.stateManager.onSetState(async (partialState) => {
-      const partialStateEntries = Object.entries(partialState);
-
       const config = workspace.getConfiguration("RadonIDE");
 
-      const currentWorkspaceConfig: WorkspaceConfiguration = {
-        panelLocation: config.get<PanelLocation>("panelLocation")!,
-        showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
-        stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
-        deviceRotation: config.get<DeviceRotation>("deviceRotation")!,
-        inspectorExcludePattern: config.get<string>("inspectorExcludePattern") ?? null,
-        defaultMultimediaSavingLocation:
-          config.get<string>("defaultMultimediaSavingLocation") ?? null,
-        startDeviceOnLaunch: config.get<boolean>("startDeviceOnLaunch") ?? true,
-      };
+      const currentWorkspaceConfig: WorkspaceConfiguration =
+        getCurrentWorkspaceConfiguration(config);
 
-      for (const partialStateEntry of partialStateEntries) {
-        const updatedConfig = {
-          ...currentWorkspaceConfig,
-          [partialStateEntry[0]]: partialStateEntry[1],
-        };
+      const [_result, changes] = mergeAndCalculateChanges(currentWorkspaceConfig, partialState);
+      const singleChangesArray = splitRecursivePartialToSingleLeaves(changes);
+
+      for (const singleChange of singleChangesArray) {
+        const updatedConfig = merge(currentWorkspaceConfig, singleChange);
 
         const shouldSkipUpdate = _.isEqual(updatedConfig, currentWorkspaceConfig);
         if (shouldSkipUpdate) {
@@ -52,7 +45,8 @@ export class WorkspaceConfigController implements Disposable {
         }
 
         this.workspaceConfigurationUpdatesToIgnore.push(updatedConfig);
-        await updatePartialWorkspaceConfig(config, partialStateEntry);
+
+        await updateWorkspaceConfig(config, singleChange);
       }
     });
 
@@ -65,16 +59,7 @@ export class WorkspaceConfigController implements Disposable {
     }
     const config = workspace.getConfiguration("RadonIDE");
 
-    const newConfig = {
-      panelLocation: config.get<PanelLocation>("panelLocation")!,
-      showDeviceFrame: config.get<boolean>("showDeviceFrame")!,
-      stopPreviousDevices: config.get<boolean>("stopPreviousDevices")!,
-      deviceRotation: config.get<DeviceRotation>("deviceRotation")!,
-      inspectorExcludePattern: config.get<string>("inspectorExcludePattern") ?? null,
-      defaultMultimediaSavingLocation:
-        config.get<string>("defaultMultimediaSavingLocation") ?? null,
-      startDeviceOnLaunch: config.get<boolean>("startDeviceOnLaunch") ?? true,
-    };
+    const newConfig = getCurrentWorkspaceConfiguration(config);
 
     const index = this.workspaceConfigurationUpdatesToIgnore.findIndex((cfg) =>
       _.isEqual(cfg, newConfig)
@@ -87,20 +72,20 @@ export class WorkspaceConfigController implements Disposable {
 
     const oldConfig = this.stateManager.getState();
 
-    if (newConfig.panelLocation !== oldConfig.panelLocation) {
+    if (newConfig.userInterface.panelLocation !== oldConfig.userInterface.panelLocation) {
       getTelemetryReporter().sendTelemetryEvent("workspace-configuration:panel-location-changed", {
-        newPanelLocation: newConfig.panelLocation,
+        newPanelLocation: newConfig.userInterface.panelLocation,
       });
     }
 
-    if (newConfig.showDeviceFrame !== oldConfig.showDeviceFrame) {
+    if (newConfig.userInterface.showDeviceFrame !== oldConfig.userInterface.showDeviceFrame) {
       getTelemetryReporter().sendTelemetryEvent(
         "workspace-configuration:show-device-frame-changed",
-        { showDeviceFrame: String(newConfig.showDeviceFrame) }
+        { showDeviceFrame: String(newConfig.userInterface.showDeviceFrame) }
       );
     }
 
-    this.stateManager.setState(newConfig);
+    this.stateManager.updateState(newConfig);
   };
 
   dispose() {

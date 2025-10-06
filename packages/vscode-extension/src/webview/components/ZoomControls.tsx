@@ -39,7 +39,10 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsSelectOpen }: ZoomCont
       onOpenChange={setIsSelectOpen}
       onValueChange={onValueChange}
       value={zoomLevel === "Fit" ? "Fit" : zoomLevel.toString()}>
-      <Select.Trigger className="zoom-select-trigger" disabled={false}>
+      <Select.Trigger
+        className="zoom-select-trigger"
+        data-testid="zoom-select-trigger"
+        disabled={false}>
         <Select.Value>
           <div style={{ fontStretch: fontStretchStyle }} className="zoom-select-value">
             {zoomLevel === "Fit" ? "Fit" : `${zoomLevel}x`}
@@ -53,12 +56,19 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsSelectOpen }: ZoomCont
           side="right"
           position="popper">
           <Select.Viewport className="zoom-select-viewport">
-            <Select.SelectItem value="Fit" className="zoom-select-item">
+            <Select.SelectItem
+              value="Fit"
+              className="zoom-select-item"
+              data-testid="zoom-select-item-fit">
               Fit
             </Select.SelectItem>
             <Select.Separator className="zoom-select-item-separator" />
             {ZOOM_SELECT_NUMERIC_VALUES.map((level) => (
-              <Select.SelectItem key={level} value={level.toString()} className="zoom-select-item">
+              <Select.SelectItem
+                key={level}
+                value={level.toString()}
+                className="zoom-select-item"
+                data-testid={`zoom-select-item-${level}`}>
                 {level}x
               </Select.SelectItem>
             ))}
@@ -96,6 +106,7 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
     <div className={`zoom-controls ${isSelectOpen ? "select-open" : ""}`}>
       <IconButton
         className="zoom-in-button"
+        dataTest="zoom-in-button"
         tooltip={{
           label: "Zoom in",
           side: "top",
@@ -110,6 +121,7 @@ function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomC
       />
       <IconButton
         className="zoom-out-button"
+        dataTest="zoom-out-button"
         tooltip={{
           label: "Zoom out",
           side: "bottom",

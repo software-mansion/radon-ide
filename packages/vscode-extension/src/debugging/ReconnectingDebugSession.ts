@@ -1,11 +1,13 @@
 import { Disposable } from "vscode";
 import { Cdp } from "vscode-cdp-proxy";
-import { Metro } from "../project/metro";
 import { CancelToken } from "../utilities/cancelToken";
 import { sleep } from "../utilities/retry";
 import { DebugSession, DebugSource, JSDebugConfiguration } from "./DebugSession";
-import { Devtools } from "../project/devtools";
 import { disposeAll } from "../utilities/disposables";
+import { DevtoolsServer } from "../project/devtools";
+import { MetroSession } from "../project/metro";
+import { DeviceInfo } from "../common/State";
+import { getDebuggerTargetForDevice } from "../project/DebuggerTarget";
 
 const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {
@@ -14,13 +16,20 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
 
   private isRunning: boolean = false;
 
+  public readonly onDebugSessionTerminated = this.debugSession.onDebugSessionTerminated;
+
   constructor(
     private readonly debugSession: DebugSession & Partial<Disposable>,
-    private readonly metro: Metro,
-    devtools: Devtools
+    private readonly metro: MetroSession,
+    private readonly deviceInfo: DeviceInfo,
+    devtoolsServer?: DevtoolsServer
   ) {
     this.disposables.push(debugSession.onDebugSessionTerminated(this.maybeReconnect));
-    this.disposables.push(devtools.onEvent("appReady", this.maybeReconnect));
+    if (devtoolsServer) {
+      // NOTE: with Expo Go on Android, the debugger can become unresponsive after a JS reload.
+      // Since a JS reload causes the devtools to reconnect, we can use that as a hint to reconnect the debugger.
+      this.disposables.push(devtoolsServer.onConnection(this.maybeReconnect));
+    }
   }
 
   public async startJSDebugSession(configuration: JSDebugConfiguration) {
@@ -57,14 +66,17 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
           // if we're connected to a responsive session, we can break
           break;
         }
-        const websocketAddress = await this.metro.getDebuggerURL(undefined, cancelToken);
-        if (!websocketAddress) {
+        const target = await getDebuggerTargetForDevice({
+          metro: this.metro,
+          deviceInfo: this.deviceInfo,
+          cancelToken,
+        });
+        if (!target) {
           throw new Error("No connected device listed");
         }
         await this.debugSession.startJSDebugSession({
-          websocketAddress,
+          ...target,
           displayDebuggerOverlay: false,
-          isUsingNewDebugger: this.metro.isUsingNewDebugger,
           expoPreludeLineCount: this.metro.expoPreludeLineCount,
           sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
         });
@@ -91,7 +103,8 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   public onProfilingCPUStarted = this.debugSession.onProfilingCPUStarted;
   public onProfilingCPUStopped = this.debugSession.onProfilingCPUStopped;
   public onBindingCalled = this.debugSession.onBindingCalled;
-  public onDebugSessionTerminated = this.debugSession.onDebugSessionTerminated;
+  public onScriptParsed = this.debugSession.onScriptParsed;
+  public onJSDebugSessionStarted = this.debugSession.onJSDebugSessionStarted;
 
   public async startParentDebugSession(): Promise<void> {
     return this.debugSession.startParentDebugSession();
@@ -133,5 +146,8 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
     params: Cdp.Runtime.EvaluateParams
   ): Promise<Cdp.Runtime.EvaluateResult> {
     return this.debugSession.evaluateExpression(params);
+  }
+  public async addBinding(name: string): Promise<void> {
+    return this.debugSession.addBinding(name);
   }
 }

@@ -4,7 +4,7 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
-import { PanelLocation, RecursivePartial, State } from "../common/State";
+import { PanelLocation, RecursivePartial, State, StateSerializer } from "../common/State";
 
 type EventBase = Record<string, unknown>;
 
@@ -14,14 +14,8 @@ interface CallCommand extends EventBase {
 interface GetStateCommand extends EventBase {
   command: "RNIDE_get_state";
 }
-interface SetStateCommand extends EventBase {
-  command: "RNIDE_set_state";
-}
-interface FocusPreviewCommand extends EventBase {
-  command: "focusPreview";
-}
-interface BlurPreviewCommand extends EventBase {
-  command: "blurPreview";
+interface UpdateStateCommand extends EventBase {
+  command: "RNIDE_update_state";
 }
 
 interface CallArgs {
@@ -33,23 +27,16 @@ interface CallArgs {
 interface GetStateArgs {
   callId: string;
 }
-interface SetStateArgs {
+interface UpdateStateArgs {
   callId: string;
-  state: RecursivePartial<State>;
+  state: string;
 }
 
 type CallEvent = CallCommand & CallArgs;
 type GetStateEvent = GetStateCommand & GetStateArgs;
-type SetStateEvent = SetStateCommand & SetStateArgs;
-type FocusPreviewEvent = FocusPreviewCommand;
-type BlurPreviewEvent = BlurPreviewCommand;
+type UpdateStateEvent = UpdateStateCommand & UpdateStateArgs;
 
-export type WebviewEvent =
-  | CallEvent
-  | GetStateEvent
-  | SetStateEvent
-  | FocusPreviewEvent
-  | BlurPreviewEvent;
+export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent;
 
 export class WebviewController implements Disposable {
   private disposables: Disposable[] = [];
@@ -85,7 +72,7 @@ export class WebviewController implements Disposable {
 
     const panelLocation = workspace
       .getConfiguration("RadonIDE")
-      .get<PanelLocation>("panelLocation");
+      .get<PanelLocation>("userInterface.panelLocation");
 
     getTelemetryReporter().sendTelemetryEvent("panelOpened", {
       panelLocation,
@@ -95,7 +82,7 @@ export class WebviewController implements Disposable {
   public onStateUpdated = (partialState: RecursivePartial<State>) => {
     this.webview.postMessage({
       command: "RNIDE_state_updated",
-      state: partialState,
+      state: StateSerializer.serialize(partialState),
     });
   };
 
@@ -120,12 +107,8 @@ export class WebviewController implements Disposable {
           this.handleRemoteCall(message);
         } else if (message.command === "RNIDE_get_state") {
           this.handleGetState(message);
-        } else if (message.command === "RNIDE_set_state") {
-          this.handleSetState(message);
-        } else if (message.command === "focusPreview") {
-          commands.executeCommand("setContext", "RNIDE.isPreviewFocused", true);
-        } else if (message.command === "blurPreview") {
-          commands.executeCommand("setContext", "RNIDE.isPreviewFocused", false);
+        } else if (message.command === "RNIDE_update_state") {
+          this.handleUpdateState(message);
         }
       },
       undefined,
@@ -203,7 +186,7 @@ export class WebviewController implements Disposable {
     });
   }
 
-  private async handleSetState(message: SetStateArgs) {
-    await this.ide.setState(message.state);
+  private async handleUpdateState(message: UpdateStateArgs) {
+    await this.ide.updateState(StateSerializer.deserialize(message.state));
   }
 }
