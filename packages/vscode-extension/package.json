@@ -409,7 +409,9 @@
       "title": "Radon AI",
       "properties": {
         "RadonIDE.radonAI.enabled": {
-          "type": "boolean",
+          "type": "string",
+          "enum": ["enabled", "disabled", "default"],
+          "default": "default",
           "scope": "window",
           "description": "Enables the Radon AI functionality in the extension."
         },

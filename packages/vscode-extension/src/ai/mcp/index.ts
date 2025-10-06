@@ -104,16 +104,18 @@ function isDirectLoadingAvailable() {
   );
 }
 
-export default function registerRadonAi(context: ExtensionContext): Disposable {
+function isEnabledInSettings() {
   // Radon AI is enabled by default on VSCode only, where we can use the API to register the MCP server
   // On other editors, we need to write to mcp.json file which introduces additional friction for the user
   // and hence we want the users to explicitely enable it
   const enableRadonAiByDefault = getEditorType() === EditorType.VSCODE;
 
-  const radonAiEnabled =
-    workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabled") ??
-    enableRadonAiByDefault;
+  const enabledVal = workspace.getConfiguration("RadonIDE").get<string>("radonAI.enabled");
+  return enabledVal === "enabled" || (enabledVal === "default" && enableRadonAiByDefault);
+}
 
+export default function registerRadonAi(context: ExtensionContext): Disposable {
+  const radonAiEnabled = isEnabledInSettings();
   registerRadonChat(context, radonAiEnabled);
 
   const disposables: Disposable[] = [];
@@ -140,11 +142,8 @@ export default function registerRadonAi(context: ExtensionContext): Disposable {
 
   const configChangeDisposable = workspace.onDidChangeConfiguration((event) => {
     if (event.affectsConfiguration("RadonIDE.radonAI.enabled")) {
-      const newValue =
-        workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabled") ??
-        enableRadonAiByDefault;
       disposeAll(disposables);
-      if (newValue) {
+      if (isEnabledInSettings()) {
         loadRadonAi();
       } else {
         unloadRadonAi();
