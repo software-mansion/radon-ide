@@ -23,6 +23,14 @@
       "testsToRun": "",
       "testsToExclude": "",
       "codeVersion": "latest"
+    },
+    {
+      "testApp": "react-native-81",
+      "node": "22",
+      "isRecording": "true",
+      "testsToRun": "",
+      "testsToExclude": "",
+      "codeVersion": "1.99.1"
     }
   ]
 }
