@@ -1,24 +1,16 @@
 import initServices from "../services/index.js";
-import { WebView, EditorView, By, Key } from "vscode-extension-tester";
+import { WebView, EditorView } from "vscode-extension-tester";
 
 import { get } from "./setupTest.js";
 
 describe("2 - Main interface buttons tests", () => {
-  let driver,
-    elementHelperService,
-    radonViewsService,
-    managingDevicesService,
-    vscodeHelperService;
+  let driver, elementHelperService, radonViewsService, managingDevicesService;
 
   before(async () => {
     driver = get().driver;
 
-    ({
-      elementHelperService,
-      radonViewsService,
-      managingDevicesService,
-      vscodeHelperService,
-    } = initServices(driver));
+    ({ elementHelperService, radonViewsService, managingDevicesService } =
+      initServices(driver));
 
     await managingDevicesService.deleteAllDevices();
     const view = new WebView();

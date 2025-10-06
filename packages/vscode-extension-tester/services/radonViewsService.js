@@ -124,7 +124,7 @@ export default class RadonViewsService {
     await this.driver
       .actions()
       .keyDown(Key.CONTROL)
-      .sendKeys("a")
+      .sendKeys("k")
       .keyUp(Key.CONTROL)
       .perform();
     const bottomBar = new BottomBarPanel();

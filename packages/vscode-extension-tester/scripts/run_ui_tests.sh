@@ -41,4 +41,4 @@ if [ "${#EXCLUDE_ARGS[@]}" -gt 0 ]; then
   done
 fi
 
-extest run-tests $TEST_FILES --extensions_dir ./data/vscode-extensions -r ./data/react-native-app --code_version 1.99.1
+extest run-tests $TEST_FILES --extensions_dir ./data/vscode-extensions -r ./data/react-native-app

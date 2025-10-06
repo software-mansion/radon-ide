@@ -11,10 +11,8 @@ import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 import * as fs from "fs";
 import * as path from "path";
-import config from "../configuration.js";
 import { cropCanvas, compareImages } from "../utils/imageProcessing.js";
 import { centerCoordinates } from "../utils/helpers.js";
-import { createCanvas } from "canvas";
 
 const cwd = process.cwd() + "/data";
 

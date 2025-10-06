@@ -136,7 +136,7 @@ export class VSCodeHelperService {
     return line;
   }
 
-  // in some situations workbench.executeCommand("Developer: Reload Window") is not working properly
+  // in some situations workbench.executeCommand() is not working properly
   async openCommandLineAndExecute(command) {
     await this.driver.switchTo().defaultContent();
     await this.driver
