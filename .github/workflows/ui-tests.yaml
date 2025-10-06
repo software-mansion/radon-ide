@@ -64,7 +64,7 @@ jobs:
 
       - id: set-matrix
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+          if [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
             echo "matrix={\"include\":[{\"testApp\":\"${{ github.event.inputs.testApp }}\",\"node\":\"${{ github.event.inputs.node || '22' }}\",\"isRecording\":\"${{ github.event.inputs.isRecording }}\",\"testsToRun\":\"${{ github.event.inputs.testsToRun }}\",\"testsToExclude\":\"${{ github.event.inputs.testsToExclude }}\",\"codeVersion\":\"${{ github.event.inputs.VSCodeVersion || 'latest' }}\"}]}" >> $GITHUB_OUTPUT
           else
             MATRIX=$(jq -c . autorun_test_params.json)
