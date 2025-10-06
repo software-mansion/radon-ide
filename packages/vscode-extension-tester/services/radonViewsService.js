@@ -1,6 +1,6 @@
 import { createCanvas } from "canvas";
 import { ElementHelperService } from "./helperServices.js";
-import { By, BottomBarPanel } from "vscode-extension-tester";
+import { By, BottomBarPanel, Key } from "vscode-extension-tester";
 import AppManipulationService from "./appManipulationService.js";
 
 export default class RadonViewsService {
@@ -121,11 +121,12 @@ export default class RadonViewsService {
     await this.openAndGetDebugConsoleElement();
     const debugView = await new BottomBarPanel().openDebugConsoleView();
     // in vscode 1.99.1 method clearText() doesnt work
+
     await this.driver
       .actions()
-      .keyDown(Key.CONTROL)
+      .keyDown(Key.COMMAND)
       .sendKeys("k")
-      .keyUp(Key.CONTROL)
+      .keyUp(Key.COMMAND)
       .perform();
     const bottomBar = new BottomBarPanel();
     await bottomBar.toggle(false);
@@ -137,7 +138,7 @@ export default class RadonViewsService {
     const quickInput = await this.driver.wait(async () => {
       try {
         return await this.elementHelperService.findAndWaitForElement(
-          By.css(".quick-input-widget input"),
+          By.css(".quick-input-widget .input"),
           "Timed out waiting for quick input"
         );
       } catch {
