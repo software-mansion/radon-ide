@@ -24,7 +24,7 @@ export default function LandingBanner() {
         </div>
         <div className={styles.iconContainer}>
           <div className={styles.reactNativeIcon}>
-            <ReactNativeIcon width="112" height="102" viewBox="0 0 112 102" />
+            <ReactNativeIcon width="112" height="102" />
           </div>
           <div className={styles.expoIcon}>
             <ExpoIcon />

@@ -32,7 +32,7 @@
 }
 
 .radonText p span {
-  color: var(--swm-green-light-100);
+  color: var(--radon-text-green-highlight);
   font-size: 48px;
   font-weight: 500;
   line-height: normal;
@@ -87,6 +87,7 @@
   justify-content: center;
   align-items: center;
   border-right: var(--radon-border-layout);
+  color: var(--radon-image-in-grid);
 }
 
 .expoIcon {

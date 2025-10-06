@@ -50,6 +50,7 @@
   gap: 8px;
   aspect-ratio: 1/1;
   opacity: 0.75;
+  color: var(--radon-button-secondary);
 }
 
 .arrow {

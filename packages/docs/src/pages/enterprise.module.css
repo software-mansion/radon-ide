@@ -1,0 +1,141 @@
+.preventfulContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.headerWrapper {
+  margin: 0 auto;
+  gap: 60px;
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  border-bottom: var(--radon-border-layout);
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 0 40px;
+}
+
+.titleContainer {
+  gap: 24px;
+  width: 100%;
+  max-width: 1280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.headingLabel {
+  margin-top: 60px;
+  margin-bottom: 20px;
+  text-align: center;
+  text-wrap: balance;
+  font-size: 64px;
+  font-weight: 400;
+  line-height: 72px;
+}
+
+.headingLabel span {
+  color: var(--radon-text-green-highlight);
+  font-size: 64px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 72px;
+}
+
+.subheadingLabel {
+  text-align: center;
+  text-wrap: balance;
+  font-weight: 400;
+  font-size: 20px;
+  color: var(--radon-subheading);
+}
+
+.buttonContainer {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+}
+
+.button {
+  text-align: center;
+  font-family: Aeonik;
+  padding: 16px;
+  font-size: 18px;
+  line-height: 28px;
+  display: flex;
+  height: 60px;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+.btnGreen {
+  background-color: var(--radon-button);
+  color: var(--radon-button-text);
+}
+
+.btnGreen:hover {
+  background-color: var(--radon-button-hover);
+  color: var(--radon-button-text);
+  transition: 0.3s;
+}
+
+.btnBorder {
+  border: 1px solid var(--radon-button-secondary);
+}
+
+.btnBorder:hover {
+  opacity: 0.75;
+  transition: opacity 0.3s;
+  background: transparent;
+}
+
+.heroGraphic {
+  width: 100%;
+  max-height: 385px;
+  min-height: 120px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  height: calc(385px - (1200px - 100vw) * 0.27);
+}
+
+.heroGraphic svg {
+  flex-shrink: 0;
+  width: auto;
+  height: 385px;
+  transform: translateX(calc(max(0px, (1200px - 180vw) * 0.1)));
+}
+
+@media (max-width: 767px) {
+  .headingLabel,
+  .headingLabel span {
+    margin: 0;
+    text-align: left;
+    text-wrap: balance;
+    font-size: 32px;
+    font-weight: 400;
+  }
+  .subheadingLabel {
+    text-align: left;
+    text-wrap: balance;
+    font-weight: 400;
+    font-size: 16px;
+    margin: 0;
+  }
+  .headerText {
+    padding: 0 24px;
+  }
+}
+
+@media (max-width: 500px) {
+  .buttonContainer {
+    flex-direction: column;
+    gap: 16px;
+  }
+}

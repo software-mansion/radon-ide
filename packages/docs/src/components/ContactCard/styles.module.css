@@ -41,7 +41,7 @@
   transition-property: border, background-color;
   transition-duration: 0.2s;
   transition-timing-function: ease-in-out;
-  color: var(--radon-color-primary);
+  color: var(--radon-button-text);
   font-weight: 400;
   height: 48px;
 }
@@ -53,6 +53,7 @@
 .contactButton:hover {
   background-color: var(--radon-button-hover);
   text-decoration: none;
+  color: initial;
 }
 
 @media (max-width: 1024px) {

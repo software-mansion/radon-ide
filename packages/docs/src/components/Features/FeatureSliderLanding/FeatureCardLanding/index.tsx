@@ -46,6 +46,7 @@ export default function FeatureCardLanding({
       <LayoutGroup>
         <motion.div
           layout
+          layoutScroll={false}
           key={index}
           role="region"
           aria-labelledby={`feature-${index}`}
