@@ -104,11 +104,6 @@ function isDirectLoadingAvailable() {
   );
 }
 
-function loadRadonAi() {
-  const connectionListener = new ConnectionListener();
-  const server = new LocalMcpServer(connectionListener);
-}
-
 export default function registerRadonAi(context: ExtensionContext): Disposable {
   // Radon AI is enabled by default on VSCode only, where we can use the API to register the MCP server
   // On other editors, we need to write to mcp.json file which introduces additional friction for the user
