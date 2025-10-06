@@ -1,11 +1,13 @@
+import { By, BottomBarPanel } from "vscode-extension-tester";
 import { createCanvas } from "canvas";
 import { ElementHelperService } from "./helperServices.js";
-import { By, BottomBarPanel } from "vscode-extension-tester";
+import AppManipulationService from "./appManipulationService.js";
 
 export default class RadonViewsService {
   constructor(driver) {
     this.driver = driver;
     this.elementHelperService = new ElementHelperService(driver);
+    this.appManipulationService = new AppManipulationService(driver);
   }
 
   async openRadonIDEPanel() {
@@ -114,6 +116,8 @@ export default class RadonViewsService {
   }
 
   async clearDebugConsole() {
+    // debug console button is only active when app is started
+    await this.appManipulationService.waitForAppToLoad();
     await this.openAndGetDebugConsoleElement();
     const debugView = await new BottomBarPanel().openDebugConsoleView();
     await debugView.clearText();

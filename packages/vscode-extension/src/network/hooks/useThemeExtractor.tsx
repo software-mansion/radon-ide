@@ -72,7 +72,7 @@ export default function useThemeExtractor() {
     });
 
     return () => observer.disconnect();
-  }, [getThemeData]);
+  }, []);
 
   return editorThemeData;
 }

@@ -188,18 +188,81 @@ export function createFetchCommand(log: NetworkLog): string {
   return fetchCode;
 }
 
+/**
+ * Supported language resolving based on react-native-devtools-frontend implementation
+ * https://github.com/facebook/react-native-devtools-frontend/blob/main/front_end/ui/components/code_highlighter/CodeHighlighter.ts
+ */
 const LANGUAGE_BY_CONTENT_TYPE = {
+  // JSON
   "application/json": "json",
+  "application/manifest+json": "json",
+  "application/ld+json": "json",
   "text/json": "json",
-  "text/html": "html",
-  "application/xhtml+xml": "html",
-  "text/xml": "xml",
-  "application/xml": "xml",
-  "text/css": "css",
+
+  // JavaScript and variants
   "text/javascript": "javascript",
   "application/javascript": "javascript",
+  "application/ecmascript": "javascript",
+  "application/x-ecmascript": "javascript",
   "application/x-javascript": "javascript",
-  "text/plain": "text",
+  "text/ecmascript": "javascript",
+  "text/javascript1.0": "javascript",
+  "text/javascript1.1": "javascript",
+  "text/javascript1.2": "javascript",
+  "text/javascript1.3": "javascript",
+  "text/javascript1.4": "javascript",
+  "text/javascript1.5": "javascript",
+  "text/jscript": "javascript",
+  "text/livescript": "javascript",
+  "text/x-ecmascript": "javascript",
+  "text/x-javascript": "javascript",
+
+  // JSX
+  "text/jsx": "jsx",
+
+  // TypeScript
+  "text/typescript": "typescript",
+  "text/typescript-jsx": "tsx",
+
+  // HTML
+  "text/html": "html",
+  "application/xhtml+xml": "html",
+
+  // XML and SVG
+  "text/xml": "xml",
+  "application/xml": "xml",
+  "image/svg+xml": "xml",
+  "application/xul": "xml",
+
+  // CSS and variants
+  "text/css": "css",
+  "text/x-less": "less",
+  "text/x-sass": "sass",
+  "text/x-scss": "scss",
+
+  // Programming languages
+  "text/x-python": "python",
+  "text/x-java": "java",
+  "text/x-kotlin": "kotlin",
+  "text/x-c++src": "cpp",
+  "text/x-go": "go",
+  "application/x-httpd-php": "php",
+  "text/x-sh": "shellscript",
+  "application/x-sh": "shellscript",
+  "text/x-coffeescript": "coffee",
+  "text/x-clojure": "clojure",
+  "application/vnd.dart": "dart",
+  "text/x-scala": "scala",
+  "text/x.angular": "angular-html",
+  "text/x.svelte": "svelte",
+  "text/x.vue": "vue",
+
+  // Other formats
+  "text/markdown": "markdown",
+  "application/wasm": "wasm",
+  "text/plain": "plaintext",
+  "application/yaml": "yaml",
+  "text/yaml": "yaml",
 };
 
 export function determineLanguage(contentType: string, body: string): string {
@@ -220,5 +283,5 @@ export function determineLanguage(contentType: string, body: string): string {
     return "json";
   }
 
-  return "text";
+  return "plaintext";
 }

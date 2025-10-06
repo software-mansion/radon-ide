@@ -1,9 +1,9 @@
 import {
   By,
-  EditorView,
   WebView,
   BottomBarPanel,
   TextEditor,
+  EditorView,
 } from "vscode-extension-tester";
 import { assert } from "chai";
 import initServices from "../services/index.js";
@@ -23,7 +23,6 @@ describe("4 - App interaction tests", () => {
 
   before(async () => {
     ({ driver, view, workbench } = get());
-
     ({
       elementHelperService,
       radonViewsService,
@@ -42,29 +41,27 @@ describe("4 - App interaction tests", () => {
     await appManipulationService.waitForAppToLoad();
     await radonSettingsService.setShowTouches(true);
 
-    view = new WebView();
-    await view.switchBack();
+    await driver.switchTo().defaultContent();
+    await new EditorView().closeAllEditors();
   });
 
-  beforeEach(async () => {
-    await workbench.executeCommand("Remove All Breakpoints");
+  beforeEach(async function () {
+    await radonViewsService.openRadonIDEPanel();
 
-    radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
-
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
     }, 5000);
-
-    // Without using this delay, the application returns incorrect button coordinates.
-    // So far, I haven't found a better way to check it (it might be related to SafeAreaView).
-    await driver.sleep(1000);
-
     await appManipulationService.hideExpoOverlay(appWebsocket);
 
     await radonViewsService.clearDebugConsole();
-    await radonViewsService.openRadonIDEPanel();
+    await radonViewsService.switchToRadonIDEFrame();
+  });
+
+  afterEach(async function () {
+    await driver.switchTo().defaultContent();
+    await workbench.executeCommand("Remove All Breakpoints");
   });
 
   it("Should click in app", async () => {

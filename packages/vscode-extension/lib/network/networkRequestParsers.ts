@@ -27,18 +27,31 @@ type RequestData = string | SerializedTypedArray | null | object;
 
 // Allowed content types for processing text-based data
 const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
+  // Shell scripts
   "application/x-sh",
   "application/x-csh",
-  "application/rtf",
-  "application/manifest+json",
-  "application/xhtml+xml",
-  "application/xml",
-  "application/XUL",
-  "application/ld+json",
+  
+  // JSON variants
   "application/json",
+  "application/manifest+json",
+  "application/ld+json",
+  
+  // JavaScript variants
   "application/javascript",
+  "application/ecmascript",
+  "application/x-ecmascript",
   "application/x-javascript",
+  
+  // XML variants
+  "application/xml",
+  "application/xhtml+xml",
+  "application/xul",
+  
+  // Other text-based formats
   "application/yaml",
+  "application/rtf",
+  "application/x-httpd-php",
+  "application/vnd.dart",
 ]);
 
 /**

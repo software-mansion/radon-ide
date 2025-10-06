@@ -321,8 +321,9 @@ export type ScreenCaptureState = {
 // #region Navigation
 
 export type NavigationHistoryItem = {
-  displayName: string;
+  displayName: string | undefined;
   id: string;
+  canGoBack: boolean;
 };
 
 export type NavigationRoute = {
@@ -331,6 +332,11 @@ export type NavigationRoute = {
   children: NavigationRoute[];
   dynamic: { name: string; deep: boolean; notFound?: boolean }[] | null;
   type: string;
+};
+
+export type NavigationState = {
+  navigationHistory: NavigationHistoryItem[];
+  navigationRouteList: NavigationRoute[];
 };
 
 // #endregion Navigation
@@ -370,8 +376,7 @@ export type DeviceSessionStore = {
   deviceInfo: DeviceInfo;
   frameReporting: FrameReportingState;
   isUsingStaleBuild: boolean;
-  navigationHistory: NavigationHistoryItem[];
-  navigationRouteList: NavigationRoute[];
+  navigationState: NavigationState;
   previewURL: string | undefined;
   fileTransfer: FileTransferState;
   screenCapture: ScreenCaptureState;
@@ -517,8 +522,10 @@ const initialDeviceSessionStore: DeviceSessionStore = {
     frameReport: null,
   },
   isUsingStaleBuild: false,
-  navigationHistory: [],
-  navigationRouteList: [],
+  navigationState: {
+    navigationHistory: [],
+    navigationRouteList: [],
+  },
   previewURL: undefined,
   screenCapture: {
     isRecording: false,
@@ -575,7 +582,7 @@ export const initialState: State = {
         isDisabled: true,
       },
       hasEnrolledBiometrics: false,
-      locale: "en-US",
+      locale: "en_US",
       replaysEnabled: false,
       showTouches: false,
       camera: {

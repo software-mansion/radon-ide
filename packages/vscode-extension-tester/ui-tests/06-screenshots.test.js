@@ -1,9 +1,8 @@
+import * as fs from "fs";
+import * as path from "path";
 import { WebView, Key, By } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
 
 describe("6 - screenshots tests", () => {
   let driver,
@@ -29,6 +28,7 @@ describe("6 - screenshots tests", () => {
     await managingDevicesService.deleteAllDevices();
     await managingDevicesService.addNewDevice("newDevice");
     await elementHelperService.findAndClickElementByTag("modal-close-button");
+    await radonSettingsService.setEnableReplays(true);
     view = new WebView();
     await view.switchBack();
   });
@@ -155,10 +155,8 @@ describe("6 - screenshots tests", () => {
   });
 
   it("Should open replay overlay", async () => {
-    await radonSettingsService.setEnableReplays(true);
-
     // some time to wait for replay to record
-    await driver.sleep(1000);
+    await driver.sleep(3000);
 
     await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-show-replay-button"
@@ -171,10 +169,8 @@ describe("6 - screenshots tests", () => {
   });
 
   it("Should open replay overlay using shortcut", async () => {
-    await radonSettingsService.setEnableReplays(true);
-
     // some time to wait for replay to record
-    await driver.sleep(1000);
+    await driver.sleep(3000);
 
     await driver
       .actions()
