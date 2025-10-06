@@ -1,4 +1,13 @@
-import { lm, McpHttpServerDefinition, Uri, EventEmitter, version, Disposable } from "vscode";
+import {
+  lm,
+  McpHttpServerDefinition,
+  Uri,
+  EventEmitter,
+  version,
+  Disposable,
+  workspace,
+  ExtensionContext,
+} from "vscode";
 import { Logger } from "../../Logger";
 import { getTelemetryReporter } from "../../utilities/telemetry";
 import { insertRadonEntry, newMcpConfig, removeRadonEntry } from "./configCreator";
@@ -8,6 +17,17 @@ import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { LocalMcpServer } from "./LocalMcpServer";
 import { disposeAll } from "../../utilities/disposables";
 import { ConnectionListener } from "../shared/ConnectionListener";
+import { EditorType, getEditorType } from "../../utilities/editorType";
+import { registerRadonChat } from "../chat";
+
+async function removeMcpConfig(location: ConfigLocation) {
+  const mcpConfig = await readMcpConfig(location);
+  if (!mcpConfig) {
+    return;
+  }
+  const updatedConfig = removeRadonEntry(mcpConfig);
+  await writeMcpConfig(updatedConfig, location);
+}
 
 async function updateMcpConfig(port: number) {
   const location = getConfigLocation();
@@ -18,39 +38,46 @@ async function updateMcpConfig(port: number) {
   // Remove MCP entry from the config we no longer write to.
   const unusedLocation =
     location === ConfigLocation.Global ? ConfigLocation.Project : ConfigLocation.Global;
-  const unusedMcpConfig = await readMcpConfig(unusedLocation);
-
-  if (!unusedMcpConfig) {
-    return; // No unused config: no-op
-  }
-
-  const updatedUnusedConfig = removeRadonEntry(unusedMcpConfig);
-  await writeMcpConfig(updatedUnusedConfig, unusedLocation);
+  await removeMcpConfig(unusedLocation);
 }
 
-function directLoadRadonAI(server: LocalMcpServer): Disposable {
+function directLoadRadonAI(server: LocalMcpServer, disposables: Disposable[]) {
   const didChangeEmitter = new EventEmitter<void>();
 
-  const onReloadDisposable = server.onReload(() => {
-    didChangeEmitter.fire();
-  });
+  disposables.push(
+    server.onReload(() => {
+      didChangeEmitter.fire();
+    })
+  );
 
-  const mcpServerEntry = lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
-    onDidChangeMcpServerDefinitions: didChangeEmitter.event,
-    provideMcpServerDefinitions: async () => {
-      const port = await server.getPort();
-      return [
-        new McpHttpServerDefinition(
-          "RadonAI",
-          Uri.parse(`http://127.0.0.1:${port}/mcp`),
-          {},
-          server.getVersion()
-        ),
-      ];
-    },
-  });
+  disposables.push(
+    lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
+      onDidChangeMcpServerDefinitions: didChangeEmitter.event,
+      provideMcpServerDefinitions: async () => {
+        const port = await server.getPort();
+        return [
+          new McpHttpServerDefinition(
+            "RadonAI",
+            Uri.parse(`http://127.0.0.1:${port}/mcp`),
+            {},
+            server.getVersion()
+          ),
+        ];
+      },
+    })
+  );
+}
 
-  return new Disposable(() => disposeAll([onReloadDisposable, mcpServerEntry]));
+async function fsUnloadRadonAi() {
+  await Promise.all([
+    removeMcpConfig(ConfigLocation.Global),
+    removeMcpConfig(ConfigLocation.Project),
+  ]).catch((e) => {
+    Logger.error(
+      MCP_LOG,
+      `Failed removing MCP config: ${e instanceof Error ? e.message : String(e)}`
+    );
+  });
 }
 
 async function fsLoadRadonAI(server: LocalMcpServer) {
@@ -77,19 +104,67 @@ function isDirectLoadingAvailable() {
   );
 }
 
-export default function registerRadonAi(): Disposable {
+function loadRadonAi() {
   const connectionListener = new ConnectionListener();
   const server = new LocalMcpServer(connectionListener);
+}
 
-  if (isDirectLoadingAvailable()) {
-    const disposables = directLoadRadonAI(server);
+export default function registerRadonAi(context: ExtensionContext): Disposable {
+  // Radon AI is enabled by default on VSCode only, where we can use the API to register the MCP server
+  // On other editors, we need to write to mcp.json file which introduces additional friction for the user
+  // and hence we want the users to explicitely enable it
+  const enableRadonAiByDefault = getEditorType() === EditorType.VSCODE;
 
-    return new Disposable(() => disposeAll([disposables, server, connectionListener]));
-  } else {
-    const onReloadDisposable = server.onReload(() => {
-      fsLoadRadonAI(server);
-    });
+  const radonAiEnabled =
+    workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabled") ??
+    enableRadonAiByDefault;
 
-    return new Disposable(() => disposeAll([onReloadDisposable, server, connectionListener]));
+  registerRadonChat(context, radonAiEnabled);
+
+  const disposables: Disposable[] = [];
+
+  function loadRadonAi() {
+    const connectionListener = new ConnectionListener();
+    const server = new LocalMcpServer(connectionListener);
+    disposables.push(server, connectionListener);
+
+    if (isDirectLoadingAvailable()) {
+      directLoadRadonAI(server, disposables);
+    } else {
+      disposables.push(
+        server.onReload(() => {
+          fsLoadRadonAI(server);
+        })
+      );
+    }
   }
+
+  function unloadRadonAi() {
+    fsUnloadRadonAi();
+  }
+
+  const configChangeDisposable = workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration("RadonIDE.radonAI.enabled")) {
+      const newValue =
+        workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabled") ??
+        enableRadonAiByDefault;
+      disposeAll(disposables);
+      if (newValue) {
+        loadRadonAi();
+      } else {
+        unloadRadonAi();
+      }
+    }
+  });
+
+  if (radonAiEnabled) {
+    loadRadonAi();
+  } else {
+    unloadRadonAi();
+  }
+
+  return new Disposable(() => {
+    disposeAll(disposables);
+    configChangeDisposable.dispose();
+  });
 }

@@ -29,7 +29,7 @@ import {
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
-import { registerRadonChat, registerRadonAi } from "./ai";
+import { registerRadonChat, registerRadonAi, unloadRadonAI } from "./ai";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
@@ -37,6 +37,7 @@ import { launchConfigurationFromOptions } from "./project/launchConfigurationsMa
 import { isIdeConfig } from "./utilities/launchConfiguration";
 import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
+import { EditorType, getEditorType } from "./utilities/editorType";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -327,16 +328,7 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
-  const configuration = workspace.getConfiguration("RadonIDE");
-  const enableRadonAI = configuration.get<boolean>("radonAI.enableRadonAI");
-
-  if (enableRadonAI) {
-    // Initializes MCP part of Radon AI
-    context.subscriptions.push(registerRadonAi());
-  }
-
-  // You can configure the chat in package.json under the `chatParticipants` key
-  registerRadonChat(context, !!enableRadonAI);
+  context.subscriptions.push(registerRadonAi(context));
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 

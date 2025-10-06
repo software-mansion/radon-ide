@@ -6,14 +6,11 @@ import {
   DeviceRotation,
   Locale,
   Location,
-  MCPConfigLocation,
   PanelLocation,
   RecursivePartial,
   REMOVE,
   WorkspaceConfiguration as WorkspaceConfigurationState,
 } from "../common/State";
-import { getEditorType } from "../ai/mcp/utils";
-import { EditorType } from "../ai/mcp/models";
 
 const WorkspaceConfigurationKeyMap = {
   general: {
@@ -40,19 +37,9 @@ const WorkspaceConfigurationKeyMap = {
     startDeviceOnLaunch: "deviceControl.startDeviceOnLaunch",
     stopPreviousDevices: "deviceControl.stopPreviousDevices",
   },
-  radonAI: {
-    enableRadonAI: "radonAI.enableRadonAI",
-    MCPConfigLocation: "radonAI.MCPConfigLocation",
-  },
 };
 
 export function getCurrentWorkspaceConfiguration(config: WorkspaceConfiguration) {
-  // Radon AI is enabled by default on VSCode only, where we can use the API to register the MCP server
-  // On other editors, we need to write to mcp.json file which introduces additional friction for the user
-  // and hence we want the users to explicitely enable it
-  const editorType = getEditorType();
-  const enableRadonAIByDefault = editorType === EditorType.VSCODE;
-
   const currentWorkspaceConfig: WorkspaceConfigurationState = {
     general: {
       inspectorExcludePattern:
@@ -105,14 +92,6 @@ export function getCurrentWorkspaceConfiguration(config: WorkspaceConfiguration)
         back: "emulated",
         front: "none",
       },
-    },
-    radonAI: {
-      enableRadonAI:
-        config.get<boolean>(WorkspaceConfigurationKeyMap.radonAI.enableRadonAI) ??
-        enableRadonAIByDefault,
-      MCPConfigLocation:
-        config.get<MCPConfigLocation>(WorkspaceConfigurationKeyMap.radonAI.MCPConfigLocation) ??
-        "Project",
     },
   };
 
