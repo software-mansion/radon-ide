@@ -261,19 +261,7 @@ function PreviewView() {
   );
 
   return (
-    <div
-      className="panel-view"
-      data-testid="radon-panel-view"
-      onFocus={(e) => {
-        vscode.postMessage({
-          command: "focusPreview",
-        });
-      }}
-      onBlur={(e) => {
-        vscode.postMessage({
-          command: "blurPreview",
-        });
-      }}>
+    <div className="panel-view" data-testid="radon-panel-view">
       <div className="button-group-top">
         <div className="button-group-top-left">
           <UrlBar disabled={!selectedProjectDevice} />
