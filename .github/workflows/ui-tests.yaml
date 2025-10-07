@@ -150,7 +150,7 @@ jobs:
         run: |
           mkdir -p artifacts
           npm run setup-run-tests -- ${{ matrix.testsToRun }} --exclude ${{ matrix.testsToExclude }} \
-            | tee artifacts/result-${{ matrix.testApp }}-${{ matrix.codeVersion }}.txt
+            | tee artifacts/test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}.txt
         working-directory: packages/vscode-extension-tester
         env:
           PROJECT_NAME: ${{ matrix.testApp }}
