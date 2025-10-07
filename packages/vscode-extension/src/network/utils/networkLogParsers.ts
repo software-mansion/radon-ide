@@ -8,20 +8,36 @@ interface ParsedText {
   remainingText: string;
 }
 
+function extractSize(log: NetworkLog): string | undefined {
+  const size = log.encodedDataLength;
+  const status = log.response?.status;
+  if (size === undefined || status === 204) {
+    return undefined;
+  }
+
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let unitIndex = 0;
+  let formattedSize = size;
+  while (formattedSize >= 1024 && unitIndex < units.length - 1) {
+    formattedSize /= 1024;
+    unitIndex++;
+  }
+  return `${parseFloat(formattedSize.toFixed(2) || "")} ${units[unitIndex]}`;
+}
+
 /**
  * Higher-order function that handles common state checking logic for network log formatters.
  * Returns appropriate messages based on the loading state and value presence.
  */
 function getLogValueWithChecks<T>(
   log: NetworkLog,
-  extractLogValue: (log: NetworkLog) => T | undefined | null,
+  value: T | undefined | null,
   unknownMessage: string = "(unknown)",
   failedMessage: string = "(failed)",
   pendingMessage: string = "(pending)"
 ): string {
   const isFinished = log.currentState === NetworkEvent.LoadingFinished;
   const isFailed = log.currentState === NetworkEvent.LoadingFailed;
-  const value = extractLogValue(log);
 
   if (isFinished && !value) {
     return unknownMessage;
@@ -55,49 +71,30 @@ const NetworkLogFormatters = {
   },
 
   status: (log: NetworkLog): string => {
-    const exctractLogStatus = () => log.response?.status;
-    return getLogValueWithChecks(log, exctractLogStatus);
+    return getLogValueWithChecks(log, log.response?.status);
   },
 
   method: (log: NetworkLog): string => {
-    const exctractLogMethod = () => log.request?.method;
-    return getLogValueWithChecks(log, exctractLogMethod);
+    return getLogValueWithChecks(log, log.request?.method);
   },
 
   type: (log: NetworkLog): string => {
-    const exctractLogType = () => log.type;
-    return getLogValueWithChecks(log, exctractLogType);
+    return getLogValueWithChecks(log, log.type);
   },
 
   size: (log: NetworkLog): string => {
-    const exctractLogSize = () => {
-      const size = log.encodedDataLength;
-      const status = log.response?.status;
-      if (size === undefined || status === 204) {
-        return undefined;
-      }
-
-      const units = ["B", "KB", "MB", "GB", "TB"];
-      let unitIndex = 0;
-      let formattedSize = size;
-      while (formattedSize >= 1024 && unitIndex < units.length - 1) {
-        formattedSize /= 1024;
-        unitIndex++;
-      }
-      return `${parseFloat(formattedSize.toFixed(2) || "")} ${units[unitIndex]}`;
-    };
-
+    const size = extractSize(log);
     return getLogValueWithChecks(
       log,
-      exctractLogSize,
+      size,
       "0 B", // unknownMessage
       "0 B" // failedMessage
     );
   },
 
   time: (log: NetworkLog): string => {
-    const exctractLogTime = () => log.timeline?.durationMs && `${log.timeline?.durationMs} ms`;
-    return getLogValueWithChecks(log, exctractLogTime);
+    const time = log.timeline?.durationMs && `${log.timeline?.durationMs} ms`;
+    return getLogValueWithChecks(log, time);
   },
 } as const;
 
