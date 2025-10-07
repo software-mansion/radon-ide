@@ -241,7 +241,7 @@
 
   /* Typography */
   --ifm-heading-color: var(--ifm-color-primary);
-  --ifm-font-color-base: var(--swm-navy-light-100);
+  --ifm-font-color-base: var(--ifm-color-primary);
   --radon-sub-subheading: var(--ifm-color-primary);
 
   /* Tabs */
