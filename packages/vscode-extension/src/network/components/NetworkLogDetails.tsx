@@ -2,18 +2,20 @@ import "./NetworkLogDetails.css";
 import { VscodeTabHeader, VscodeTabPanel, VscodeTabs } from "@vscode-elements/react-elements";
 import { type VscodeTabHeader as VscodeTabHeaderElement } from "@vscode-elements/elements/dist/vscode-tab-header/vscode-tab-header.js";
 import { Fragment, useEffect, useRef, useState } from "react";
-import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
 import HeadersTab from "./Tabs/HeadersTab";
 import PayloadTab from "./Tabs/PayloadTab";
 import ResponseTab from "./Tabs/ResponseTab";
 import PreviewTab from "./Tabs/PreviewTab";
 import TimingTab from "./Tabs/TimingTab";
+import TabScrollable from "./Tabs/TabScrollable";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../types/networkLog";
 import { ResponseBodyData } from "../types/network";
 import { ThemeData } from "../../common/theme";
 import useThemeExtractor from "../hooks/useThemeExtractor";
 import "overlayscrollbars/overlayscrollbars.css";
+import { NetworkEvent } from "../types/panelMessageProtocol";
+// import InfoBar from "./Tabs/InfoBar";
 
 interface NetworkLogDetailsProps {
   networkLog: NetworkLog;
@@ -45,10 +47,16 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
   const isImage = networkLog.type === "Image";
 
   useEffect(() => {
-    getResponseBody(networkLog).then((data) => {
-      setResponseBodyData(data);
-    });
-  }, [networkLog.requestId]);
+    if (
+      networkLog.currentState === NetworkEvent.LoadingFinished ||
+      networkLog.currentState === NetworkEvent.LoadingFailed
+    ) {
+      getResponseBody(networkLog).then((data) => {
+        console.log("MLEKO", data);
+        setResponseBodyData(data);
+      });
+    }
+  }, [networkLog.requestId, networkLog.currentState]);
 
   const TABS: Tab[] = [
     {
@@ -80,8 +88,9 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
 
   const calculateScrollableHeight = () => {
     const header = headerRef.current;
+
     if (!parentHeight || !header) {
-      return undefined;
+      return 0;
     }
     const headerHeight = header.clientHeight;
     return parentHeight - headerHeight;
@@ -106,23 +115,19 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
               </div>
             </VscodeTabHeader>
             <VscodeTabPanel data-testid={`network-panel-tab-panel-${title.toLowerCase()}`}>
-              <OverlayScrollbarsComponent
-                options={{
-                  scrollbars: {
-                    autoHide: "leave",
-                    autoHideDelay: 100,
-                    visibility: "auto",
-                  },
+              {/* <div style={{ height: `${height - 40}px`, overflow: "hidden" }}> */}
+              <TabScrollable height={calculateScrollableHeight()}>
+                <Tab networkLog={networkLog} {...props} />
+              </TabScrollable>
+              {/* </div> */}
+              {/* <InfoBar
+                ref={infoBarRef}
+                data={{
+                  method: networkLog.request?.method || "Unknown",
+                  status: networkLog.response?.status?.toString() || "Unknown",
+                  type: networkLog.response?.headers?.["Content-Type"] || "Unknown",
                 }}
-                className="network-log-details-tab-scrollable"
-                style={{
-                  height: calculateScrollableHeight(),
-                }}>
-                <div className="network-log-details-tab">
-                  <Tab networkLog={networkLog} {...props} />
-                </div>
-              </OverlayScrollbarsComponent>
-               
+              /> */}
             </VscodeTabPanel>
           </Fragment>
         ))}
