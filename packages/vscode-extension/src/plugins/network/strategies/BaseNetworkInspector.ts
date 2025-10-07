@@ -1,5 +1,5 @@
 import { Disposable } from "vscode";
-import { InspectorStrategy, BroadcastListener } from "../network-plugin";
+import { NetworkInspector, BroadcastListener } from "../network-plugin";
 import {
   WebviewMessage,
   IDEMessage,
@@ -12,7 +12,7 @@ import { determineLanguage } from "../../../network/utils/requestFormatters";
 import { openContentInEditor, showDismissableError } from "../../../utilities/editorOpeners";
 import { extractTheme } from "../../../utilities/themeExtractor";
 
-export abstract class BaseInspectorStrategy implements InspectorStrategy {
+export abstract class BaseInspectorStrategy implements NetworkInspector {
   protected broadcastListeners: BroadcastListener[] = [];
 
   // #region abstract

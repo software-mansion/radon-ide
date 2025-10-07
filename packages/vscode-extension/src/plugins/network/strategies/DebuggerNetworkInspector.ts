@@ -8,7 +8,7 @@ import {
   WebviewCommand,
   WebviewMessage,
 } from "../../../network/types/panelMessageProtocol";
-import { BaseInspectorStrategy } from "./BaseInspectorStrategy";
+import { BaseInspectorStrategy } from "./BaseNetworkInspector";
 
 import { NETWORK_EVENTS } from "../../../network/types/panelMessageProtocol";
 import { NETWORK_EVENT_MAP, NetworkBridge, RadonInspectorBridge } from "../../../project/bridge";
@@ -18,7 +18,7 @@ import { ResponseBodyData } from "../../../network/types/network";
 const MAX_MESSAGE_LENGTH = 1000000;
 const TRUNCATED_LENGTH = 1000000;
 
-export default class NewInspectorStrategy extends BaseInspectorStrategy {
+export default class DebuggerNetworkInspector extends BaseInspectorStrategy {
   private disposables: Disposable[] = [];
   private readonly inspectorBridge: RadonInspectorBridge;
   private readonly networkBridge: NetworkBridge;
