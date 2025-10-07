@@ -162,7 +162,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}
-          path: packages/vscode-extension-tester/artifacts/result-${{ matrix.testApp }}-${{ matrix.codeVersion }}.txt
+          path: packages/vscode-extension-tester/artifacts/test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}.txt
           retention-days: 7
 
       - name: make video
