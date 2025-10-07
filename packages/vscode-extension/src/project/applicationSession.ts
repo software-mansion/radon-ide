@@ -64,9 +64,13 @@ function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: Ca
     reject(new CancelError("Cancelled while waiting for the app to be ready."));
   });
   const appReadyListener = inspectorBridge.onEvent("appReady", resolve);
-  promise.finally(() => {
-    appReadyListener.dispose();
-  });
+  promise
+    .finally(() => {
+      appReadyListener.dispose();
+    })
+    .catch(() => {
+      // we ignore cancellation rejections as this is another surfaces for it to bubble up
+    });
   return promise;
 }
 

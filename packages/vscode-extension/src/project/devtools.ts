@@ -206,11 +206,25 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
     super();
     this.disposables.push(
       debugSession.onJSDebugSessionStarted(() => {
-        this.maybeInitializeConnection();
+        this.maybeInitializeConnection()
+          .then(() => {
+            Logger.debug(
+              "[Devtools] Devtools connection initialized after JS Debug session started"
+            );
+          })
+          .catch(() => {
+            // we expect the method might fail to initialize the connection
+          });
       }),
       debugSession.onScriptParsed(({ isMainBundle }) => {
         if (isMainBundle) {
-          this.maybeInitializeConnection();
+          this.maybeInitializeConnection()
+            .then(() => {
+              Logger.debug("[Devtools] Devtools connection initialized after main bundle loaded");
+            })
+            .catch(() => {
+              // we expect the method might fail to initialize the connection
+            });
         }
       })
     );
@@ -219,16 +233,20 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   private maybeInitializeConnection() {
     if (this.connection) {
       // NOTE: a single `DebugSession` only supports a single devtools connection at a time
-      return;
+      return Promise.reject(new Error("[Devtools] Connection already established."));
     }
     const initializeInternal = () => {
       const initializePromise = this.initializeConnection();
-      initializePromise.catch((error) => {
-        Logger.error("Failed to initialize devtools connection", error);
-      });
-      initializePromise.then(() => {
-        this.initializeConnectionPromise = undefined;
-      });
+      initializePromise
+        .then(() => {
+          this.initializeConnectionPromise = undefined;
+        })
+        .catch(() => {
+          // we expect the method might fail to initialize the connection
+          // as the app might not be ready to connect yet
+          Logger.debug("[Devtools] Failed to initialize devtools connection");
+        });
+
       return initializePromise;
     };
 
@@ -242,6 +260,8 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
     } else {
       this.initializeConnectionPromise = initializeInternal();
     }
+
+    return this.initializeConnectionPromise;
   }
 
   private async initializeConnection() {
@@ -274,9 +294,14 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
       },
       send(event, payload, _transferable) {
         const serializedMessage = JSON.stringify({ event, payload });
-        debugSession.evaluateExpression({
-          expression: `void ${DISPATCHER_GLOBAL}.sendMessage("${DEVTOOLS_DOMAIN_NAME}", '${serializedMessage}')`,
-        });
+        debugSession
+          .evaluateExpression({
+            expression: `void ${DISPATCHER_GLOBAL}.sendMessage("${DEVTOOLS_DOMAIN_NAME}", '${serializedMessage}')`,
+          })
+          .catch(() => {
+            // this method might be used by the devtools bridge implementation while JS Debugger
+            // is disconnected so we just ignore any errors here
+          });
       },
     };
 
