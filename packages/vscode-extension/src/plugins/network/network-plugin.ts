@@ -15,7 +15,7 @@ export const NETWORK_PLUGIN_ID = "network";
  * Disabled by default until new network inspector is integradated into react native.
  * The instructions to enable the features are in plugins/network/README.md
  */
-const ENABLE_NEW_INSPECTOR = false;
+const ENABLE_DEBUGGER_INSPECTOR = false;
 
 export type BroadcastListener = (message: WebviewMessage) => void;
 
@@ -58,7 +58,7 @@ export class NetworkPlugin implements ToolPlugin {
     readonly inspectorBridge: RadonInspectorBridge,
     readonly networkBridge: NetworkBridge
   ) {
-    this.networkInspector = ENABLE_NEW_INSPECTOR
+    this.networkInspector = ENABLE_DEBUGGER_INSPECTOR
       ? new DebuggerNetworkInspector(this)
       : new InspectorBridgeNetworkInspector(this);
     initialize();
