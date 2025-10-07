@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useState } from "react";
+import React, { createContext, useCallback, useMemo, useState } from "react";
 import Modal from "../components/shared/Modal";
 
 interface ModalState {
@@ -29,7 +29,7 @@ const ModalContext = createContext<ModalContextProps>({
 export default function ModalProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<ModalState | null>(null);
 
-  const openModal = (modalComponent: React.ReactNode, options?: ModalOptions) => {
+  const openModal = useCallback((modalComponent: React.ReactNode, options?: ModalOptions) => {
     setState({
       title: options?.title ?? "",
       component: modalComponent,
@@ -37,24 +37,28 @@ export default function ModalProvider({ children }: { children: React.ReactNode 
       headerShown: true,
       fullscreen: options?.fullscreen || false,
     });
-  };
+  }, []);
 
-  const closeModal = () => {
+  const closeModal = useCallback(() => {
     setState(null);
-  };
+  }, []);
 
-  const showHeader = useCallback(
-    (value: boolean) => {
-      if (state === null) {
-        return;
+  const showHeader = useCallback((value: boolean) => {
+    setState((prevState) => {
+      if (prevState === null) {
+        return null;
       }
-      setState({ ...state, headerShown: value });
-    },
-    [state]
+      return { ...prevState, headerShown: value };
+    });
+  }, []);
+
+  const value = useMemo(
+    () => ({ openModal, closeModal, showHeader }),
+    [openModal, closeModal, showHeader]
   );
 
   return (
-    <ModalContext.Provider value={{ openModal, closeModal, showHeader }}>
+    <ModalContext.Provider value={value}>
       {children}
       {state !== null && (
         <Modal
