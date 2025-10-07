@@ -57,16 +57,24 @@ interface LaunchApplicationSessionDeps {
   devtoolsPort?: number;
 }
 
-function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: CancelToken) {
+function waitForAppReady(
+  inspectorBridge: RadonInspectorBridge,
+  cancelToken?: CancelToken,
+  message?: string
+) {
   // set up `appReady` promise
   const { promise, resolve, reject } = Promise.withResolvers<void>();
   cancelToken?.onCancel(() => {
-    reject(new CancelError("Cancelled while waiting for the app to be ready."));
+    reject(new CancelError("Cancelled while waiting for the app to be ready." + message));
   });
   const appReadyListener = inspectorBridge.onEvent("appReady", resolve);
-  promise.finally(() => {
-    appReadyListener.dispose();
-  });
+  promise
+    .finally(() => {
+      appReadyListener.dispose();
+    })
+    .catch(() => {
+      // we ignore cancellation rejections as this is another surfaces for it to bubble up
+    });
   return promise;
 }
 
@@ -147,9 +155,8 @@ export class ApplicationSession implements Disposable {
         await cancelToken.adapt(Promise.race([activatePromise, bundleErrorPromise]));
       }
 
-      const hasBundleError = stateManager.getState().bundleError !== null;
-      if (!hasBundleError && getIsActive()) {
-        await cancelToken.adapt(appReadyPromise);
+      if (getIsActive()) {
+        await cancelToken.adapt(Promise.race([appReadyPromise, bundleErrorPromise]));
       }
 
       return session;

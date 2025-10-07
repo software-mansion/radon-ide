@@ -250,6 +250,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
 
     try {
       const sourceMapData = await this.getSourceMapData(sourceMapURL);
+      if (sourceMapData.sources === undefined) {
+        return command;
+      }
       const isMainBundle = sourceMapData.sources.some((source: string) =>
         source.includes("__prelude__")
       );
