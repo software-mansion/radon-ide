@@ -420,6 +420,11 @@ export enum DeviceType {
   Tablet = "Tablet",
 }
 
+export enum RadonAIEnabledState {
+  Enabled = "enabled",
+  Default = "default",
+}
+
 export type DeviceInfo = AndroidDeviceInfo | IOSDeviceInfo;
 
 export type AndroidDeviceInfo = {

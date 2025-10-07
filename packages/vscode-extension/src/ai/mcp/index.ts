@@ -18,6 +18,7 @@ import { LocalMcpServer } from "./LocalMcpServer";
 import { disposeAll } from "../../utilities/disposables";
 import { ConnectionListener } from "../shared/ConnectionListener";
 import { EditorType, getEditorType } from "../../utilities/editorType";
+import { RadonAIEnabledState } from "../../common/State";
 import { registerRadonChat } from "../chat";
 
 async function removeMcpConfig(location: ConfigLocation) {
@@ -110,8 +111,13 @@ function isEnabledInSettings() {
   // and hence we want the users to explicitely enable it
   const enableRadonAiByDefault = getEditorType() === EditorType.VSCODE;
 
-  const enabledVal = workspace.getConfiguration("RadonIDE").get<string>("radonAI.enabled");
-  return enabledVal === "enabled" || (enabledVal === "default" && enableRadonAiByDefault);
+  const enabledVal = workspace
+    .getConfiguration("RadonIDE")
+    .get<RadonAIEnabledState>("radonAI.enabled");
+  return (
+    enabledVal === RadonAIEnabledState.Enabled ||
+    (enabledVal === RadonAIEnabledState.Default && enableRadonAiByDefault)
+  );
 }
 
 export default function registerRadonAi(context: ExtensionContext): Disposable {
