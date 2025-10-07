@@ -12,7 +12,7 @@ export type InternalResponseBodyData = {
 export const ContentTypeHeader = {
   IOS: "Content-Type",
   ANDROID: "content-type",
-};
+} as const;
 
 interface SerializedTypedArray {
   length: number;
