@@ -258,7 +258,7 @@ async function launchMetro({
 
 export class Metro implements MetroSession, Disposable {
   protected _expoPreludeLineCount = 0;
-  protected _watchFolders: string[] | undefined = undefined;
+  protected _watchFolders: string[] | undefined;
   protected readonly metroOutputChannel;
 
   protected readonly bundleErrorEventEmitter = new EventEmitter<BundleErrorEvent>();
@@ -274,8 +274,11 @@ export class Metro implements MetroSession, Disposable {
 
   constructor(
     public readonly port: number,
-    protected readonly appRoot: string
+    protected readonly appRoot: string,
+    watchFolders: string[] | undefined = undefined
   ) {
+    this._watchFolders = watchFolders;
+
     const metroOutputChannel =
       IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(
         Output.MetroBundler
