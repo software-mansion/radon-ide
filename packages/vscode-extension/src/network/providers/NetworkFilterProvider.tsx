@@ -113,7 +113,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
 
     // AND between columns, OR within column values
     return NETWORK_LOG_COLUMNS.every((columnName) => {
-      const columnValue = getNetworkLogValue(log, columnName).toLowerCase();
+      const columnValueLowerCase = getNetworkLogValue(log, columnName).toLowerCase();
 
       // if there are no column filters of the type, leave early
       if (!badgeByColumnLookup[columnName] && !(inputTextBadge?.columnName === columnName)) {
@@ -122,14 +122,16 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
 
       // try matching inputTextBadge (OR logic)
       if (inputTextBadge && inputTextBadge.columnName === columnName) {
-        if (columnValue.includes(inputTextBadge.value)) {
+        const inputTextBadgeValueLowerCase = inputTextBadge.value.toLowerCase();
+        if (columnValueLowerCase.includes(inputTextBadgeValueLowerCase)) {
           return true;
         }
       }
 
       // match filterBadges within column (OR logic)
       return badgeByColumnLookup[columnName]?.some((value) => {
-        if (columnValue.includes(value)) {
+        const valueLowerCase = value.toLowerCase();
+        if (columnValueLowerCase.includes(valueLowerCase)) {
           return true;
         }
       });
@@ -151,6 +153,7 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
       NETWORK_LOG_COLUMNS.some((column) =>
         getNetworkLogValue(log, column).toLowerCase().includes(filterTextValue.toLowerCase())
       );
+    console.log(globalMatches);
 
     return globalMatches;
   };
