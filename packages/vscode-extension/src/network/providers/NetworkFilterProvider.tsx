@@ -153,7 +153,6 @@ export function NetworkFilterProvider({ children }: PropsWithChildren) {
       NETWORK_LOG_COLUMNS.some((column) =>
         getNetworkLogValue(log, column).toLowerCase().includes(filterTextValue.toLowerCase())
       );
-    console.log(globalMatches);
 
     return globalMatches;
   };
