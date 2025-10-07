@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
-import { EditorType, McpEntry } from "./models";
-import { getEditorType } from "./utils";
+import { McpEntry } from "./models";
+import { EditorType, getEditorType } from "../../utilities/editorType";
 
 // jsonc-parser by default builds a UMD bundle that esbuild can't resolve.
 const { applyEdits, modify }: typeof import("jsonc-parser/lib/esm/main") = require("jsonc-parser");

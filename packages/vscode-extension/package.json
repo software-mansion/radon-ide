@@ -408,11 +408,12 @@
     {
       "title": "Radon AI",
       "properties": {
-        "RadonIDE.radonAI.enableRadonAI": {
-          "type": "boolean",
+        "RadonIDE.radonAI.enabled": {
+          "type": "string",
+          "enum": ["enabled", "disabled", "default"],
+          "default": "default",
           "scope": "window",
-          "default": true,
-          "description": "Enables the Radon AI functionality in the extension. Note: A full restart of the IDE is required for this setting to take effect."
+          "description": "Enables the Radon AI functionality in the extension."
         },
         "RadonIDE.radonAI.MCPConfigLocation": {
           "type": "string",
