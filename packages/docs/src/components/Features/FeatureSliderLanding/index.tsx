@@ -1,13 +1,16 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./styles.module.css";
 import FeatureCardLanding, { ActiveItem } from "./FeatureCardLanding";
 import { motion, AnimatePresence } from "motion/react";
 import useBaseUrl from "@docusaurus/useBaseUrl";
+import { useInView } from "react-intersection-observer";
 
 export default function FeatureSliderLanding() {
   const [activeItem, setActiveItem] = useState<ActiveItem>({
     index: 0,
   });
+
+  const cardRefs = useRef([]);
 
   const features = [
     {
@@ -40,16 +43,37 @@ export default function FeatureSliderLanding() {
     },
   ];
 
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      setActiveItem((prev) => {
-        const nextIndex = (prev.index + 1) % features.length;
-        return { index: nextIndex };
-      });
-    }, 6000);
+  const { ref: inViewRef, inView } = useInView({ threshold: 0.2 });
 
-    return () => clearTimeout(timeout);
-  }, [activeItem]);
+  useEffect(() => {
+    const node = cardRefs.current[activeItem.index];
+    if (node) inViewRef(node);
+  }, [activeItem.index, inViewRef]);
+
+  const [progress, setProgress] = useState(0);
+  const duration = 6000;
+
+  useEffect(() => {
+    if (!inView) return;
+
+    const start = Date.now();
+
+    const interval = setInterval(() => {
+      const timeElapsed = Date.now() - start;
+      const progressFraction = Math.min(timeElapsed / duration, 1);
+      setProgress(progressFraction);
+
+      if (timeElapsed >= duration) {
+        clearInterval(interval);
+        setActiveItem((prev) => ({
+          index: (prev.index + 1) % features.length,
+        }));
+        setProgress(0);
+      }
+    }, 50);
+
+    return () => clearInterval(interval);
+  }, [inView, activeItem.index, features.length]);
 
   return (
     <div className={styles.container}>
@@ -57,11 +81,13 @@ export default function FeatureSliderLanding() {
         {features.map((feature, index) => (
           <FeatureCardLanding
             key={index}
+            ref={(el) => (cardRefs.current[index] = el)}
             index={index}
             badge={feature.badge}
             title={feature.title}
             content={feature.content}
             isExpanded={activeItem.index === index}
+            progress={activeItem.index === index ? progress : 0}
             setActiveItem={setActiveItem}
           />
         ))}
