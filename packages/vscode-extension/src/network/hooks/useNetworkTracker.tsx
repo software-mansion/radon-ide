@@ -55,7 +55,13 @@ interface RequestDurationData {
 class RequestTimingTracker {
   private requestTimestampMap: Map<string | number, NetworkEventTimestampMap> = new Map();
 
-  private calculateTimeDifference(timeStart: number, timeEnd: number): number {
+  private calculateTimeDifference(
+    timeStart: number | undefined,
+    timeEnd: number | undefined
+  ): number | undefined {
+    if (timeStart === undefined || timeEnd === undefined) {
+      return undefined;
+    }
     return _.round((timeEnd - timeStart) * 1000, 2);
   }
 
@@ -90,26 +96,20 @@ class RequestTimingTracker {
 
     const timingData: RequestDurationData = {};
 
-    if (responseReceivedTimestamp !== undefined && requestWillBeSentTimestamp !== undefined) {
-      timingData.ttfb = this.calculateTimeDifference(
-        requestWillBeSentTimestamp,
-        responseReceivedTimestamp
-      );
-    }
+    timingData.ttfb = this.calculateTimeDifference(
+      requestWillBeSentTimestamp,
+      responseReceivedTimestamp
+    );
 
-    if (loadingFinishedTimestamp !== undefined && requestWillBeSentTimestamp !== undefined) {
-      timingData.totalTime = this.calculateTimeDifference(
-        requestWillBeSentTimestamp,
-        loadingFinishedTimestamp
-      );
-    }
+    timingData.totalTime = this.calculateTimeDifference(
+      requestWillBeSentTimestamp,
+      loadingFinishedTimestamp
+    );
 
-    if (loadingFinishedTimestamp !== undefined && responseReceivedTimestamp !== undefined) {
-      timingData.downloadTime = this.calculateTimeDifference(
-        responseReceivedTimestamp,
-        loadingFinishedTimestamp
-      );
-    }
+    timingData.downloadTime = this.calculateTimeDifference(
+      responseReceivedTimestamp,
+      loadingFinishedTimestamp
+    );
 
     return timingData;
   }
