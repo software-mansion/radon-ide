@@ -1,4 +1,4 @@
-import React, { Children } from "react";
+import React from "react";
 import styles from "./styles.module.css";
 import clsx from "clsx";
 import PricingCardLabel from "../PricingCard/PricingCardLabel";

@@ -55,13 +55,13 @@ export default function FeatureSliderLanding() {
   useEffect(() => {
     if (!inView) return;
 
-    const timer = setTimeout(() => {
+    const timeout = setTimeout(() => {
       setActiveItem((prev) => ({
         index: (prev.index + 1) % features.length,
       }));
     }, duration);
 
-    return () => clearTimeout(timer);
+    return () => clearTimeout(timeout);
   }, [inView, activeItem.index, features.length]);
 
   return (
