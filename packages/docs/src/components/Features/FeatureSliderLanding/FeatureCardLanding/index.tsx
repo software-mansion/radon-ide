@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./styles.module.css";
 import clsx from "clsx";
 import { motion, LayoutGroup } from "motion/react";
@@ -13,19 +13,26 @@ interface FeatureCardLandingProps {
   title: string;
   content: string;
   isExpanded: boolean;
-  progress: number;
+  inView: boolean;
   setActiveItem: (value: ActiveItem | null) => void;
 }
 
 const FeatureCardLanding = React.forwardRef<HTMLDivElement, FeatureCardLandingProps>(
-  ({ index, badge, title, content, isExpanded, progress, setActiveItem }, ref) => {
+  ({ index, badge, title, content, isExpanded, inView, setActiveItem }, ref) => {
     const contentRef = useRef<HTMLDivElement | null>(null);
+    const [progressKey, setProgressKey] = useState(0);
 
     const toggleAnswer = () => {
       if (!isExpanded) {
         setActiveItem({ index: index });
       }
     };
+
+    useEffect(() => {
+      if (isExpanded || inView) {
+        setProgressKey((prev) => prev + 1);
+      }
+    }, [isExpanded, inView]);
 
     return (
       <div
@@ -64,9 +71,12 @@ const FeatureCardLanding = React.forwardRef<HTMLDivElement, FeatureCardLandingPr
                 <div className={styles.progressContainer}>
                   <div className={styles.progressBg}>
                     <motion.div
+                      key={progressKey}
                       className={styles.progressBar}
-                      animate={{ width: `${progress * 100}%` }}
-                      transition={{ ease: "linear", duration: 0.05 }}
+                      initial={{ width: 0 }}
+                      animate={{ width: `auto` }}
+                      exit={{ width: "100%" }}
+                      transition={{ ease: "linear", duration: 6 }}
                     />
                   </div>
                 </div>

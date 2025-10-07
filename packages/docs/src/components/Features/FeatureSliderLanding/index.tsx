@@ -50,7 +50,6 @@ export default function FeatureSliderLanding() {
     if (node) inViewRef(node);
   }, [activeItem.index, inViewRef]);
 
-  const [progress, setProgress] = useState(0);
   const duration = 6000;
 
   useEffect(() => {
@@ -60,15 +59,12 @@ export default function FeatureSliderLanding() {
 
     const interval = setInterval(() => {
       const timeElapsed = Date.now() - start;
-      const progressFraction = Math.min(timeElapsed / duration, 1);
-      setProgress(progressFraction);
 
       if (timeElapsed >= duration) {
         clearInterval(interval);
         setActiveItem((prev) => ({
           index: (prev.index + 1) % features.length,
         }));
-        setProgress(0);
       }
     }, 50);
 
@@ -87,7 +83,7 @@ export default function FeatureSliderLanding() {
             title={feature.title}
             content={feature.content}
             isExpanded={activeItem.index === index}
-            progress={activeItem.index === index ? progress : 0}
+            inView={inView}
             setActiveItem={setActiveItem}
           />
         ))}
