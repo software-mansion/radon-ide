@@ -57,15 +57,11 @@ interface LaunchApplicationSessionDeps {
   devtoolsPort?: number;
 }
 
-function waitForAppReady(
-  inspectorBridge: RadonInspectorBridge,
-  cancelToken?: CancelToken,
-  message?: string
-) {
+function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: CancelToken) {
   // set up `appReady` promise
   const { promise, resolve, reject } = Promise.withResolvers<void>();
   cancelToken?.onCancel(() => {
-    reject(new CancelError("Cancelled while waiting for the app to be ready." + message));
+    reject(new CancelError("Cancelled while waiting for the app to be ready."));
   });
   const appReadyListener = inspectorBridge.onEvent("appReady", resolve);
   promise
