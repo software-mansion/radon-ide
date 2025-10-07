@@ -233,7 +233,7 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   private maybeInitializeConnection() {
     if (this.connection) {
       // NOTE: a single `DebugSession` only supports a single devtools connection at a time
-      return Promise.reject("[Devtools] Connection already established.");
+      return Promise.reject(new Error("[Devtools] Connection already established."));
     }
     const initializeInternal = () => {
       const initializePromise = this.initializeConnection();
