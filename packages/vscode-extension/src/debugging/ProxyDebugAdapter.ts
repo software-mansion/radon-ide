@@ -36,6 +36,7 @@ export class ProxyDebugAdapter extends DebugSession {
   private terminated: boolean = false;
   private attached: boolean = false;
   private eventsQueue: Event[] = [];
+  private cpuProfileFilePath: string | undefined;
 
   constructor(private session: vscode.DebugSession) {
     super();
@@ -105,11 +106,15 @@ export class ProxyDebugAdapter extends DebugSession {
         }
         switch (event.event) {
           case "profileStarted":
+            this.cpuProfileFilePath = event.body.file;
             this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
             break;
           case "profilerStateUpdate":
             if (event.body?.running === false) {
-              this.sendEvent(new Event("RNIDE_profilingCPUStopped"));
+              this.sendEvent(
+                new Event("RNIDE_profilingCPUStopped", { filePath: this.cpuProfileFilePath })
+              );
+              this.cpuProfileFilePath = undefined;
             }
             break;
         }
