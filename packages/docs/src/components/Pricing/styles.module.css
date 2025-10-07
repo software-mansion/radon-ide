@@ -20,7 +20,6 @@
 
 .subheadlingLabel {
   text-align: center;
-  text-wrap: balance;
   margin: 0;
   line-height: 32px;
   gap: 24px;
@@ -56,7 +55,6 @@
   }
   .subheadlingLabel {
     text-align: left;
-    text-wrap: balance;
     font-weight: 400;
     font-size: 16px;
   }

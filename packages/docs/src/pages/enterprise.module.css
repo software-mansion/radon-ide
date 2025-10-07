@@ -27,13 +27,11 @@
   max-width: 1280px;
   display: flex;
   flex-direction: column;
+  padding: 80px 0 40px 0;
 }
 
 .headingLabel {
-  margin-top: 80px;
-  margin-bottom: 20px;
   text-align: center;
-  text-wrap: balance;
   font-size: 64px;
   font-weight: 400;
   line-height: 72px;
@@ -49,7 +47,6 @@
 
 .subheadingLabel {
   text-align: center;
-  text-wrap: balance;
   font-weight: 400;
   font-size: 20px;
   color: var(--radon-subheading);
@@ -128,13 +125,14 @@
   }
   .subheadingLabel {
     text-align: left;
-    text-wrap: balance;
-    font-weight: 400;
     font-size: 16px;
     margin: 0;
   }
   .headerText {
     padding: 0 24px;
+  }
+  .titleContainer {
+    padding: 40px 0 24px 0;
   }
 }
 

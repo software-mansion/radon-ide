@@ -33,23 +33,19 @@
 }
 
 .btn {
-  background-color: transparent;
-  border: none;
-  padding: 16px 0;
   display: flex;
-  justify-content: center;
   align-items: center;
-  color: var(--ifm-color-primary);
-  opacity: 0.5;
-}
-
-.btn p {
-  white-space: nowrap;
-  font-size: 16px;
-  font-family: Aeonik;
-  margin: 0;
   justify-content: center;
+  padding: 16px 0;
+
+  font-size: 18px;
+  font-family: Aeonik;
   font-weight: 500;
+
+  background-color: transparent;
+  color: var(--ifm-color-primary);
+  border: none;
+  opacity: 0.5;
 }
 
 .btn.active {
@@ -86,6 +82,7 @@
   }
   .btn {
     width: 100%;
+    font-size: 16px;
   }
 }
 

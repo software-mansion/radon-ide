@@ -73,13 +73,13 @@ const PricingPlansList = ({
               type="button"
               className={clsx(styles.btn, isIndividual ? styles.active : "")}
               onClick={() => setIsIndividual(true)}>
-              <p>For individuals</p>
+              For individuals
             </button>
             <button
               type="button"
               className={clsx(styles.btn, isIndividual ? "" : styles.active)}
               onClick={() => setIsIndividual(false)}>
-              <p>For organizations</p>
+              For organizations
             </button>
           </div>
         )}
