@@ -39,3 +39,8 @@ export interface TimelineEvent {
   durationMs?: number;
   ttfb?: number;
 }
+
+export enum ContentTypeHeader {
+  IOS = "Content-Type",
+  ANDROID = "content-type",
+}

@@ -6,6 +6,14 @@ export type InternalResponseBodyData = {
   dataSize: number;
 };
 
+// Redeclared here from definition in
+// src/network/typesc/network.ts
+//  due to import conflicts from "src" directory
+export const ContentTypeHeader = {
+  IOS: "Content-Type",
+  ANDROID: "content-type",
+};
+
 interface SerializedTypedArray {
   length: number;
   [key: number]: number;
@@ -30,23 +38,23 @@ const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
   // Shell scripts
   "application/x-sh",
   "application/x-csh",
-  
+
   // JSON variants
   "application/json",
   "application/manifest+json",
   "application/ld+json",
-  
+
   // JavaScript variants
   "application/javascript",
   "application/ecmascript",
   "application/x-ecmascript",
   "application/x-javascript",
-  
+
   // XML variants
   "application/xml",
   "application/xhtml+xml",
   "application/xul",
-  
+
   // Other text-based formats
   "application/yaml",
   "application/rtf",
@@ -136,7 +144,10 @@ async function readResponseText(
     }
 
     if (responseType === "blob") {
-      const contentType = xhr.getResponseHeader("Content-Type") || "";
+      const contentType =
+        xhr.getResponseHeader(ContentTypeHeader.IOS) ||
+        xhr.getResponseHeader(ContentTypeHeader.ANDROID) ||
+        "";
       const isTextType = contentType.startsWith("text/");
       const isParsableApplicationType = Array.from(PARSABLE_APPLICATION_CONTENT_TYPES).some(
         (type) => contentType.startsWith(type)
@@ -253,4 +264,5 @@ module.exports = {
   readResponseText,
   deserializeRequestData,
   mimeTypeFromResponseType,
+  ContentTypeHeader
 };
