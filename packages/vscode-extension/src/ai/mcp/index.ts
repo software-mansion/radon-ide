@@ -133,11 +133,8 @@ export default function registerRadonAi(context: ExtensionContext): Disposable {
           fsLoadRadonAI(server);
         })
       );
+      disposables.push(new Disposable(() => fsUnloadRadonAi()));
     }
-  }
-
-  function unloadRadonAi() {
-    fsUnloadRadonAi();
   }
 
   const configChangeDisposable = workspace.onDidChangeConfiguration((event) => {
@@ -145,8 +142,6 @@ export default function registerRadonAi(context: ExtensionContext): Disposable {
       disposeAll(disposables);
       if (isEnabledInSettings()) {
         loadRadonAi();
-      } else {
-        unloadRadonAi();
       }
     }
   });
@@ -154,11 +149,16 @@ export default function registerRadonAi(context: ExtensionContext): Disposable {
   if (radonAiEnabled) {
     loadRadonAi();
   } else {
-    unloadRadonAi();
+    // we call `fsUnload` here because we want to clear some possible leftovers
+    // from the MCP configuration from earlier versions.
+    fsUnloadRadonAi();
   }
 
   return new Disposable(() => {
     disposeAll(disposables);
+    // configChangeDisposable cannot be added to the disposables array because
+    // the array is only used for disposables associated with enabling the MCP server.
+    // if we added it there, it'd be called on config change and we'd stop receiving config updates.
     configChangeDisposable.dispose();
   });
 }
