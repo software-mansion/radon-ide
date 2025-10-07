@@ -3,7 +3,7 @@ import { WebView, EditorView, By, Key } from "vscode-extension-tester";
 
 import { get } from "./setupTest.js";
 
-describe("2 - Main interface buttons tests", () => {
+describe("12 - Radon AI tests", () => {
   let driver,
     elementHelperService,
     radonViewsService,
