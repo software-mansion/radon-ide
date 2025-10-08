@@ -8,7 +8,10 @@ import { Output } from "../common/OutputChannel";
 const KEEP_FIRST_N = 50;
 const KEEP_LAST_N = 150;
 
-const hiddenOutputChannels = [Output.MetroBundler];
+const hiddenOutputChannels = [
+  Output.MetroBundler, // Radon AI only
+  Output.Application, // Radon AI only - User may access these logs via the Debug console
+];
 
 export interface ReadableLogOutputChannel extends LogOutputChannel {
   readAll: () => string[];
