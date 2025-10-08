@@ -281,15 +281,12 @@ export class Metro implements MetroSession, Disposable {
 
     const outputChannelRegistry = IDE.getInstanceIfExists()?.outputChannelRegistry;
 
-    const metroOutputChannel = outputChannelRegistry?.getOrCreateOutputChannel(Output.MetroBundler);
-    const appOutputChannel = outputChannelRegistry?.getOrCreateOutputChannel(Output.Application);
-
-    if (!metroOutputChannel || !appOutputChannel) {
+    if (!outputChannelRegistry) {
       throw new MetroError("Cannot start bundler process. The IDE is not initialized.");
     }
 
-    this.metroOutputChannel = metroOutputChannel;
-    this.appOutputChannel = appOutputChannel;
+    this.metroOutputChannel = outputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
+    this.appOutputChannel = outputChannelRegistry.getOrCreateOutputChannel(Output.Application);
   }
 
   public async getDebuggerPages(): Promise<CDPTargetDescription[]> {
