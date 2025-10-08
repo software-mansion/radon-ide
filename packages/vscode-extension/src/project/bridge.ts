@@ -159,6 +159,7 @@ export interface RadonNetworkBridgeEvents {
   getResponseBody: [CDPMessage];
   dataReceived: [CDPMessage];
   storeResponseBody: [CDPMessage];
+  bridgeAvailable: [];
   unknownEvent: [any];
 }
 
@@ -203,6 +204,7 @@ export class NetworkBridge
 
   public setDebugSession(debugSession: DebugSession & Disposable) {
     this.debugSession = debugSession;
+    this.emitEvent("bridgeAvailable", []);
   }
 
   // Method overloads for type safety
