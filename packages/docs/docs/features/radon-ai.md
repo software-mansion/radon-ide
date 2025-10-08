@@ -58,8 +58,10 @@ There you can adjust which tools are enabled or disable the Radon AI MCP server 
 
 ## Usage in Cursor
 
-> **Radon AI is disabled in Cursor by default.**  
-> To enable it, go to the `Settings -> VS Code Settings` tab (or press `Cmd + ,`), type `Radon AI` into the search bar, and select `Enabled`.
+:::tip
+**Radon AI is disabled in Cursor by default.**  
+To enable it, go to the `Settings -> VS Code Settings` tab (or press `Cmd + ,`), type `Radon AI` into the search bar, press the first result and select `Enabled`.
+:::
 
 Radon AI assistant integrates with Cursor's `agent mode` via Model Context Protocol (MCP) server.
 
