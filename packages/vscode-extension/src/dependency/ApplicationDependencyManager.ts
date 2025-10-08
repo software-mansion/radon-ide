@@ -110,7 +110,7 @@ export class ApplicationDependencyManager implements Disposable {
 
   public async ensureDependenciesForBuild(buildConfig: BuildConfig, buildOptions: BuildOptions) {
     if (buildConfig.type === BuildType.Local || buildConfig.type === BuildType.DevClient) {
-      if (buildConfig.type === BuildType.DevClient || buildConfig.usePrebuild) {
+      if (buildConfig.type === BuildType.DevClient && buildConfig.usePrebuild !== false) {
         try {
           await this.prebuild.runPrebuildIfNeeded(buildConfig, buildOptions);
         } catch (e) {
