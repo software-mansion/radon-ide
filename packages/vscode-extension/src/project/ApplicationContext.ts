@@ -2,7 +2,7 @@ import path from "path";
 import { Disposable, workspace } from "vscode";
 import { loadProjectEnv } from "@expo/env";
 import _ from "lodash";
-import semver from "semver";
+import semver, { SemVer } from "semver";
 import { BuildCache } from "../builders/BuildCache";
 import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
@@ -30,23 +30,34 @@ export type ResolvedLaunchConfig = LaunchOptions & {
   useOldDevtools: boolean;
 };
 
-function checkFuseboxSupport(appRoot: string): boolean {
+function getReactNativeVersion(appRoot: string): SemVer | null {
+  try {
+    const reactNativePackage = requireNoCache("react-native/package.json", {
+      paths: [appRoot],
+    });
+    const installedReactNativeVersion = new SemVer(reactNativePackage.version);
+    return installedReactNativeVersion;
+  } catch {}
   try {
     const appPackage = requireNoCache("./package.json", {
       paths: [appRoot],
     });
-    const reactNativeVersion = semver.coerce(appPackage.dependencies["react-native"]);
-    if (reactNativeVersion === null) {
-      return false;
-    }
-    const supportsFusebox = reactNativeVersion.compare("0.76.0") >= 0;
-    return supportsFusebox;
-  } catch {
+    const reactNativeDependencyVersion = semver.coerce(appPackage.dependencies["react-native"]);
+    return reactNativeDependencyVersion;
+  } catch {}
+  return null;
+}
+
+function checkFuseboxSupport(appRoot: string): boolean {
+  const reactNativeVersion = getReactNativeVersion(appRoot);
+  if (reactNativeVersion === null) {
     Logger.error(
-      "Couldn't read react-native version from `package.json`. Defaulting to no fusebox support."
+      "Couldn't read react-native version for project. Defaulting to no fusebox support."
     );
     return false;
   }
+  const supportsFusebox = reactNativeVersion.compare("0.76.0") >= 0;
+  return supportsFusebox;
 }
 
 function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunchConfig {
