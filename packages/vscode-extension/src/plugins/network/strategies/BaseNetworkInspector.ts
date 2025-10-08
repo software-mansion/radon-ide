@@ -11,6 +11,7 @@ import { Logger } from "../../../Logger";
 import { determineLanguage } from "../../../network/utils/requestFormatters";
 import { openContentInEditor, showDismissableError } from "../../../utilities/editorOpeners";
 import { extractTheme } from "../../../utilities/themeExtractor";
+import { ContentTypeHeader } from "../../../network/types/network";
 
 export abstract class BaseInspectorStrategy implements NetworkInspector {
   protected broadcastListeners: BroadcastListener[] = [];
@@ -111,7 +112,10 @@ export abstract class BaseInspectorStrategy implements NetworkInspector {
 
     try {
       const response = await this.fetchResponse(requestData);
-      const contentType = response.headers.get("content-type") || "";
+      const contentType =
+        response.headers.get(ContentTypeHeader.IOS) ||
+        response.headers.get(ContentTypeHeader.ANDROID) ||
+        "";
       const responseBody = await response.text();
 
       const language = determineLanguage(contentType, responseBody);

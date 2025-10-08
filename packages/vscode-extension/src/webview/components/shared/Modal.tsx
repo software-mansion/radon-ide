@@ -1,33 +1,57 @@
 import React from "react";
 import * as Dialog from "@radix-ui/react-dialog";
+import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 
+import classNames from "classnames";
 import IconButton from "./IconButton";
 import "./Modal.css";
 
 interface ModalProps {
-  title: string;
+  title?: string;
   component: React.ReactNode;
-  open: boolean;
-  setOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isOpen: boolean;
+  onClose: () => void;
   headerShown?: boolean;
+  fullscreen?: boolean;
 }
 
-export default function Modal({ title, component, open, setOpen, headerShown }: ModalProps) {
-  const close = () => setOpen(false);
+export default function Modal({
+  title,
+  component,
+  isOpen,
+  onClose,
+  headerShown,
+  fullscreen,
+}: ModalProps) {
   return (
-    <Dialog.Root open={open}>
+    <Dialog.Root open={isOpen}>
       <Dialog.Portal>
-        <Dialog.Overlay className="modal-overlay" onClick={close} />
-        <Dialog.Content className="modal-content" onEscapeKeyDown={close}>
-          {headerShown && <Dialog.Title className="modal-title">{title}</Dialog.Title>}
+        <Dialog.Overlay className="modal-overlay" onClick={onClose} />
+        <Dialog.Content
+          className={classNames("modal-content", fullscreen && "modal-content-fullscreen")}
+          onEscapeKeyDown={onClose}
+          aria-description={title}>
+          {headerShown && title ? (
+            <Dialog.Title className="modal-title">{title}</Dialog.Title>
+          ) : (
+            <VisuallyHidden.Root>
+              <Dialog.Title className="modal-title">Modal</Dialog.Title>
+            </VisuallyHidden.Root>
+          )}
 
-          <div className="modal-content-container">{component}</div>
+          <div
+            className={classNames(
+              "modal-content-container",
+              fullscreen && "modal-content-container-fullscreen"
+            )}>
+            {component}
+          </div>
           <Dialog.Close asChild>
             <IconButton
               className="modal-close-button"
               dataTest="modal-close-button"
               aria-label="Close"
-              onClick={close}>
+              onClick={onClose}>
               <span className="codicon codicon-close" />
             </IconButton>
           </Dialog.Close>

@@ -1,0 +1,159 @@
+.paywall-view {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100vh - 40px);
+}
+
+.paywall-container {
+  max-width: 400px;
+  width: 100%;
+  text-align: center;
+}
+
+.paywall-title {
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.paywall-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 24px 0;
+  text-align: left;
+}
+
+.paywall-benefit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+
+.paywall-benefit:nth-child(1) {
+  animation-delay: 350ms;
+}
+.paywall-benefit:nth-child(2) {
+  animation-delay: 400ms;
+}
+.paywall-benefit:nth-child(3) {
+  animation-delay: 450ms;
+}
+.paywall-benefit:nth-child(4) {
+  animation-delay: 500ms;
+}
+.paywall-benefit:nth-child(5) {
+  animation-delay: 550ms;
+}
+.paywall-benefit:nth-child(6) {
+  animation-delay: 600ms;
+}
+.paywall-benefit:nth-child(7) {
+  animation-delay: 650ms;
+}
+.paywall-benefit:nth-child(8) {
+  animation-delay: 700ms;
+}
+.paywall-benefit:nth-child(9) {
+  animation-delay: 750ms;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.subscription-options-caption {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.3s ease-out forwards;
+  animation-delay: 800ms;
+}
+
+.recurring-billing-label {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+
+.recurring-billing-label.no-prices {
+  animation-delay: 800ms;
+}
+
+.recurring-billing-label.with-prices {
+  animation-delay: 900ms;
+}
+
+.paywall-benefit .codicon-check {
+  color: var(--vscode-progressBar-background);
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.subscription-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 32px;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.4s ease-out forwards;
+  animation-delay: 1250ms;
+  min-height: auto;
+  justify-content: flex-start;
+}
+
+.continue-button-container {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+
+.continue-button-container.no-prices {
+  animation-delay: 850ms;
+}
+
+.continue-button-container.with-prices {
+  animation-delay: 950ms;
+}
+
+.continue-button {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 12px 24px;
+  font-size: 16px;
+  height: unset;
+}
+
+.continue-button:disabled {
+  cursor: not-allowed;
+  color: var(--swm-button);
+  background-color: var(--swm-button-background);
+}
+
+.paywall-background-image {
+  width: 100%;
+  position: absolute;
+  top: -20%;
+  right: -50%;
+  z-index: -1;
+}
+
+.paywall-background-image path {
+  stroke: var(--vscode-badge-background);
+}
