@@ -67,6 +67,17 @@ export default class DebuggerNetworkInspector extends BaseInspectorStrategy {
     this.broadcastMessage(webviewMessage);
   }
 
+  private completeActivation(): void {
+    if (this.activationState === ActivationState.Active) {
+      return; // activated
+    }
+
+    commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
+    this.setupNetworkListeners();
+    this.networkBridge.enableNetworkInspector();
+    this.activationState = ActivationState.Active;
+  }
+
   private setupNetworkListeners(): void {
     const knownEventsSubscriptions: Disposable[] = NETWORK_EVENTS.map((event) =>
       this.networkBridge.onEvent(NETWORK_EVENT_MAP[event], (message) =>
@@ -159,17 +170,6 @@ export default class DebuggerNetworkInspector extends BaseInspectorStrategy {
         this.handleGetResponseBody(payload);
         break;
     }
-  }
-
-  private completeActivation(): void {
-    if (this.activationState === ActivationState.Active) {
-      return; // activated
-    }
-
-    commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
-    this.setupNetworkListeners();
-    this.networkBridge.enableNetworkInspector();
-    this.activationState = ActivationState.Active;
   }
 
   public activate(): void {
