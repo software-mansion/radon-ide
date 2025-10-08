@@ -30,7 +30,7 @@ function ColorModeToggle() {
     <div className={styles.toggle}>
       <button
         type="button"
-        className={clsx(theme === "system" && styles.active)}
+        className={clsx(styles.button, theme === "system" && styles.active)}
         onClick={() => {
           handleModeChange("system");
         }}>
@@ -38,7 +38,7 @@ function ColorModeToggle() {
       </button>
       <button
         type="button"
-        className={clsx(theme === "light" && styles.active)}
+        className={clsx(styles.button, theme === "light" && styles.active)}
         onClick={() => {
           handleModeChange("light");
         }}>
@@ -46,7 +46,7 @@ function ColorModeToggle() {
       </button>
       <button
         type="button"
-        className={clsx(theme === "dark" && styles.active)}
+        className={clsx(styles.button, theme === "dark" && styles.active)}
         onClick={() => {
           handleModeChange("dark");
         }}>

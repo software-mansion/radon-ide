@@ -42,7 +42,6 @@
 .arrowLeft,
 .arrowRight {
   display: flex;
-  width: px;
   height: 40px;
   padding: 12px 8px;
   justify-content: center;

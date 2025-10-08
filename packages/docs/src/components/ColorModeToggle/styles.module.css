@@ -6,7 +6,7 @@
   height: 40px;
 }
 
-button {
+.button {
   padding: 8px;
   background-color: transparent;
   border: none;
@@ -15,11 +15,11 @@ button {
   color: var(--ifm-color-primary);
 }
 
-button:hover {
+.button:hover {
   background-color: var(--swm-border);
 }
 
-button.active {
+.button.active {
   background-color: var(--radon-button);
   color: var(--radon-button-text);
 }

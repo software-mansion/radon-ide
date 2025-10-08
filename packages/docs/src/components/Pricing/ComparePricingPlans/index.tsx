@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./styles.module.css";
 import CheckIcon from "../../CheckIcon";
-import PlanLabelCard from "./PlanLabelCard";
+import PlanTableLabel from "./PlanTableLabel";
 import { useModal } from "../../ModalProvider";
 import { PricingProps } from "..";
 import clsx from "clsx";
@@ -11,6 +11,7 @@ export interface FeatureItem {
   label: string;
   free: string[] | boolean;
   pro: string[] | boolean;
+  team: string[] | boolean;
   enterprise: string[] | boolean;
 }
 
@@ -24,37 +25,48 @@ const handleCellContent = (data: string[] | boolean) => {
   }
 };
 
-export default function ComparePricingPlans({ handleBusiness }: PricingProps) {
+export default function ComparePricingPlans({
+  handleBusiness,
+  handleIndividual,
+  handleCustom,
+}: PricingProps) {
   const { onOpen } = useModal();
   const pricingPlanFeatures: FeatureItem[] = planFeaturesData;
   return (
-    <div>
+    <div className={styles.tableDisplay}>
       <div className={styles.title}>Compare plans</div>
       <div className={styles.container}>
         <div className={styles.planColumns}>
           <div className={styles.columnName}>Features</div>
-          <PlanLabelCard
+          <PlanTableLabel
             plan="FREE"
             monthlyPrice={0}
-            buttonLabel="Download"
+            buttonLabel="Install"
             stylingFilled={false}
             onClick={onOpen}
           />
-          <PlanLabelCard
+          <PlanTableLabel
             plan="PRO"
-            monthlyPrice={39}
-            yearlyLowPrice={390}
+            monthlyPrice={25}
+            yearlyLowPrice={250}
             buttonLabel="Start 14-day trial"
+            stylingFilled={true}
+            onClick={handleIndividual}
+          />
+          <PlanTableLabel
+            plan="TEAM"
+            monthlyPrice={75}
+            yearlyLowPrice={750}
+            buttonLabel="Buy licenses"
             stylingFilled={true}
             onClick={handleBusiness}
           />
-          <PlanLabelCard
+          <PlanTableLabel
             plan="ENTERPRISE"
-            monthlyPrice={99}
-            yearlyLowPrice={990}
+            monthlyPrice="Custom pricing"
             buttonLabel="Get your quote"
             stylingFilled={true}
-            href="mailto:projects@swmansion.com"
+            onClick={handleCustom}
           />
         </div>
         {pricingPlanFeatures.map((feature, index) => (
@@ -69,6 +81,7 @@ export default function ComparePricingPlans({ handleBusiness }: PricingProps) {
             <div className={styles.featureLabelCell}>{feature.label}</div>
             <div className={styles.valueCell}>{handleCellContent(feature.free)}</div>
             <div className={styles.valueCell}>{handleCellContent(feature.pro)}</div>
+            <div className={styles.valueCell}>{handleCellContent(feature.team)}</div>
             <div className={styles.valueCell}>{handleCellContent(feature.enterprise)}</div>
           </div>
         ))}

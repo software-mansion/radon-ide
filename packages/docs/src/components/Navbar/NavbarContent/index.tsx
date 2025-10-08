@@ -58,6 +58,7 @@ export default function NavbarContent() {
         <div className={styles.navbarRight}>
           <a
             href="https://github.com/software-mansion/radon-ide/"
+            target="_blank"
             className={styles.headerGithub}></a>
           <NavbarDownloadButton isMobile={false} onOpen={onOpen} />
         </div>

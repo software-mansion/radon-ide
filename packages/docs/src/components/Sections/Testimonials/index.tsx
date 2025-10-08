@@ -91,7 +91,7 @@ const rightColumn: Testimonial[] = [
     handle: "@alecdhansen",
     body: "Congrats SM team. I find Radon especially useful for hopping in an unfamiliar codebase. Tap a component, get taken right to the code. Saves a ton of time!",
     avatar:
-      "https://media.licdn.com/dms/image/v2/D4E03AQFy_VU4VjIe8A/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1712089763617?e=1759363200&v=beta&t=ko2ECeiCC4jpePBHMwKnBW7XsbNe494EcsIUu-8-mDM",
+      "https://media.licdn.com/dms/image/v2/D4E03AQFy_VU4VjIe8A/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1712089763617?e=1762387200&v=beta&t=OnWkhJa3nS1xT4qJuGGkZS7x9bJO2edmFBlW-V-dUhg",
   },
 ];
 

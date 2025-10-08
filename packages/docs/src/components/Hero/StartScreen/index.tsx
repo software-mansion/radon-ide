@@ -54,9 +54,6 @@ const StartScreen = () => {
           <div className={styles.buttonContainer}>
             <DownloadButtons vertical={false} />
           </div>
-          <div className={styles.headingDisclaimer}>
-            Try 30 days for free. No sign up or credit card required.
-          </div>
         </div>
         <div className={styles.gradientContainer}>
           <div className={styles.imageContainer}>

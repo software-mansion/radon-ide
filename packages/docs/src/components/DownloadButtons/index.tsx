@@ -12,14 +12,14 @@ const DownloadButtons = ({ vertical }: HomepageButtonsProps) => {
       <HomeButton
         target="_blank"
         href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
-        title="Download for VSCode"
+        title="Install in VSCode"
         icon="vscode"
         vertical={vertical}
       />
       <HomeButton
         target="_blank"
         href="https://open-vsx.org/extension/swmansion/react-native-ide"
-        title="Download for Cursor"
+        title="Install in Cursor"
         icon="cursor"
         vertical={vertical}
       />

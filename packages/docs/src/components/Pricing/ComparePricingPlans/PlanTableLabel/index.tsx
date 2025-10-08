@@ -2,9 +2,9 @@ import React from "react";
 import styles from "./styles.module.css";
 import PricingButton from "../PricingButton";
 
-interface PlanLabelCardProps {
+interface PlanTableLabelProps {
   plan: string;
-  monthlyPrice: number;
+  monthlyPrice: number | string;
   yearlyLowPrice?: number;
   yearlyFullPrice?: number;
   buttonLabel: string;
@@ -13,30 +13,34 @@ interface PlanLabelCardProps {
   onClick?: () => void;
 }
 
-export default function PlanLabelCard({
+export default function PlanTableLabel({
   plan,
   monthlyPrice,
   yearlyLowPrice,
   buttonLabel,
   stylingFilled,
-  href,
   onClick,
-}: PlanLabelCardProps) {
+}: PlanTableLabelProps) {
   return (
     <div className={styles.container}>
       <div className={styles.planDetails}>
         <div className={styles.planName}>{plan}</div>
         <div className={styles.priceDescription}>
-          {plan === "ENTERPRISE" ? "From " : ""}
-          <span>${monthlyPrice}</span> /month{" "}
+          {typeof monthlyPrice == "number" ? (
+            <>
+              <span>${monthlyPrice}</span> /month{" "}
+            </>
+          ) : (
+            <span>{monthlyPrice}</span>
+          )}
           {yearlyLowPrice && (
             <>
-              or <span>${yearlyLowPrice}</span> /yearly
+              or <span>${yearlyLowPrice}</span> /year
             </>
           )}
         </div>
       </div>
-      <PricingButton href={href} stylingFilled={stylingFilled} onClick={onClick}>
+      <PricingButton stylingFilled={stylingFilled} onClick={onClick} isTable={true}>
         {buttonLabel}
       </PricingButton>
     </div>

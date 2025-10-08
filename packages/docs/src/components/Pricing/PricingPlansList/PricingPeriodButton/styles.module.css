@@ -1,0 +1,71 @@
+.container {
+  border: 1px solid var(--swm-border);
+  padding: 8px;
+  display: flex;
+  max-width: 344px;
+  width: 100%;
+  align-items: center;
+  gap: 8px;
+}
+
+.plan_pay_annually__discount {
+  color: var(--radon-text-green-highlight);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.btn {
+  background-color: transparent;
+  border: none;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 50%;
+  color: var(--ifm-color-primary);
+}
+
+.btn p {
+  white-space: nowrap;
+  font-size: 16px;
+  font-family: Aeonik;
+  margin: 0;
+  justify-content: center;
+  font-weight: 500;
+}
+
+.btn.active {
+  background-color: var(--radon-button);
+  color: var(--radon-button-text);
+}
+
+.btn.active .plan_pay_annually__discount {
+  color: var(--radon-button-text);
+}
+
+.btn:not(.active):hover {
+  background-color: var(--swm-border);
+  transition: 0.5s;
+  cursor: pointer;
+}
+
+.yearlyContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  flex: 1 0 0;
+}
+
+@media (max-width: 480px) {
+  .btn {
+    padding: 8px 12px;
+  }
+  .btn p {
+    font-size: 14px;
+    white-space: wrap;
+  }
+  .plan_pay_annually__discount {
+    font-size: 14px;
+  }
+}

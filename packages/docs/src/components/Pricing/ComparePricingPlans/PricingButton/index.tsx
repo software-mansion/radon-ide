@@ -5,24 +5,26 @@ import clsx from "clsx";
 interface PricingButtonProps {
   children: string;
   stylingFilled?: boolean;
-  href?: string;
+  isTable?: boolean;
   target?: "_blank" | "_parent" | "_self" | "_top";
   onClick?: () => void;
 }
 
 function PricingButton({
   children,
-  href,
   target = "_self",
   onClick,
   stylingFilled,
+  isTable = false,
 }: PricingButtonProps) {
   return (
     <a
-      href={href}
       target={target}
       onClick={onClick}
-      className={clsx(stylingFilled ? styles.buttonLink : styles.buttonLinkEmpty)}>
+      className={clsx(
+        stylingFilled ? styles.buttonLink : styles.buttonLinkEmpty,
+        isTable ? styles.buttonTable : styles.buttonCard
+      )}>
       <div className={styles.button}>{children}</div>
     </a>
   );
