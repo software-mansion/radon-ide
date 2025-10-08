@@ -4,7 +4,7 @@ export const pricingBusinessData = [
     price: { monthly: 75, yearly: 750 },
     yearlyFullPrice: 900,
     label: "For small and medium teams",
-    buttonLabel: "Buy license",
+    buttonLabel: "Buy your licenses",
     stylingFilled: true,
     featuresAll: [
       { label: "Element inspector", info: "" },

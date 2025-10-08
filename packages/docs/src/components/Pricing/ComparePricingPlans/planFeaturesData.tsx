@@ -89,11 +89,14 @@ export const planFeaturesData = [
   { label: "Radon AI assistant",                      free: false, pro: true, team: true, enterprise: true },
   { label: "Multiple license management",             free: false, pro: false, team: true, enterprise: true },
   { label: "Centralized team billing",                free: false, pro: false, team: true, enterprise: true },
-  { label: "Single sign-on for the Radon IDE Portal", free: false, pro: false, team: true, enterprise: true },
   { label: "Insights Dashboard with usage stats",     free: false, pro: false, team: true, enterprise: true },
+  { label: "Usage-based pricing",                     free: false, pro: false, team: false, enterprise: true },
+  { label: "Single sign-on for the Radon IDE Portal", free: false, pro: false, team: false, enterprise: true },
   { label: "Service-level Agreement (SLA)",           free: false, pro: false, team: false, enterprise: true },
   { label: "Dedicated payment method and invoicing",  free: false, pro: false, team: false, enterprise: true },
-  { label: "Onboarding meeting",                      free: false, pro: false, team: false, enterprise: true },{
+  { label: "Onboarding meeting",                      free: false, pro: false, team: false, enterprise: true },
+  { label: "Expert React Native consulting",          free: false, pro: false, team: false, enterprise: true },
+  {
     label: "Support",
     free: ["via GitHub issues"],
     pro: ["via GitHub or email"],
