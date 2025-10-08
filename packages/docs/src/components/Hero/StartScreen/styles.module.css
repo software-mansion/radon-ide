@@ -117,15 +117,6 @@ span.dot {
   padding: 32px 0;
 }
 
-.headingDisclaimer {
-  color: var(--radon-sub-subheading);
-  text-align: center;
-
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-}
-
 @media (max-width: 800px) {
   .imageContainer {
     padding: 0 24px;
@@ -174,12 +165,6 @@ span.dot {
 
   br {
     display: none;
-  }
-
-  .headingDisclaimer {
-    text-align: left;
-    font-size: 14px;
-    margin-bottom: 11px;
   }
 
   .buttonContainer {

@@ -4,7 +4,7 @@ export const pricingIndividualData = [
     price: { monthly: 0, yearly: 0 },
     yearlyFullPrice: "",
     label: "For non-commercial use",
-    buttonLabel: "Download",
+    buttonLabel: "Install",
     stylingFilled: false,
     featuresAll: [
       { label: "Element inspector", info: "" },

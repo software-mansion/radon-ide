@@ -41,7 +41,7 @@ export default function ComparePricingPlans({
           <PlanTableLabel
             plan="FREE"
             monthlyPrice={0}
-            buttonLabel="Download"
+            buttonLabel="Install"
             stylingFilled={false}
             onClick={onOpen}
           />
