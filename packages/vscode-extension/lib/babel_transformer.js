@@ -1,6 +1,7 @@
 const ORIGINAL_TRANSFORMER_PATH = process.env.RADON_IDE_ORIG_BABEL_TRANSFORMER_PATH;
 const path = require("path");
 const fs = require("fs");
+const Semver = require("./third-party-modules/semver");
 const { requireFromAppDir, requireFromAppDependency, overrideModuleFromAppDependency } = require("./metro_helpers");
 const buildPluginWarnOnDeeImports = require("./babel_plugins/build-plugin-warn-on-deep-imports");
 
@@ -67,13 +68,14 @@ function transformWrapper({ filename, src, ...rest }) {
   } else if (isTransforming("node_modules/expo-router/entry.js")) {
     // expo-router v2 and v3 integration
     const { version } = requireFromAppDir("expo-router/package.json");
-    if (version.startsWith("2.")) {
+    const semverVersion = Semver.coerce(version);
+    if (Semver.satisfies(semverVersion, "2.x")) {
       src = `${src};require("__RNIDE_lib__/expo_router/expo_router_v2_plugin.js");`;
-    } else if (version.startsWith("3.") || version.startsWith("4.")) {
+    } else if (Semver.satisfies(semverVersion, "3.x || 4.x")) {
       src = `${src};require("__RNIDE_lib__/expo_router/expo_router_plugin.js");`;
-    } else if (version.startsWith("5.")) {
+    } else if (Semver.satisfies(semverVersion, "5.x")) {
       src = `${src};require("__RNIDE_lib__/expo_router/expo_router_v5_plugin.js");`;
-    } else if (version.startsWith("6.")) {
+    } else if (Semver.satisfies(semverVersion, "6.x")) {
       src = `${src};require("__RNIDE_lib__/expo_router/expo_router_v6_plugin.js");`;
     }
   } else if (
@@ -117,42 +119,41 @@ function transformWrapper({ filename, src, ...rest }) {
     // This breaks module resolution inside the renderer, so we must replace the entire
     // renderer source code in-place instead of using module re-exports.
     const { version } = requireFromAppDir("react-native/package.json");
+    const semverVersion = Semver.coerce(version);
     const rendererFileName = filename.split(path.sep).pop();
     if (
-      version.startsWith("0.74") ||
-      version.startsWith("0.75") ||
-      version.startsWith("0.76") ||
-      version.startsWith("0.77")
+      Semver.satisfies(semverVersion, ">=0.74 <0.78")
     ) {
       const rendererFilePath = path.join(process.env.RADON_IDE_LIB_PATH, "rn-renderer", "react-native-74-77", rendererFileName);
       const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
       src = rendererAsString;
     }
-    if (version.startsWith("0.78") || version.startsWith("0.79")) {
+    if (Semver.satisfies(semverVersion, ">=0.78 <0.80")) {
       const rendererFilePath = path.join(process.env.RADON_IDE_LIB_PATH, "rn-renderer", "react-native-78-79", rendererFileName);
       const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
       src = rendererAsString;
     }
-    if (version.startsWith("0.80") || version.startsWith("0.81")) {
+    if (Semver.satisfies(semverVersion, ">=0.80 <0.82")) {
       const rendererFilePath = path.join(process.env.RADON_IDE_LIB_PATH, "rn-renderer", "react-native-80-81", rendererFileName);
       const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
       src = rendererAsString;
     }
-    if (version.startsWith("0.82")) {
+    if (Semver.satisfies(semverVersion, ">=0.82")) {
       const rendererFilePath = path.join(process.env.RADON_IDE_LIB_PATH, "rn-renderer", "react-native-82", rendererFileName);
       const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
       src = rendererAsString;
     }
   } else if (isTransforming("node_modules/react/cjs/react-jsx-dev-runtime.development.js")) {
     const { version } = requireFromAppDir("react-native/package.json");
+    const semverVersion = Semver.coerce(version);
     const jsxRuntimeFileName = filename.split(path.sep).pop();
-    if (version.startsWith("0.78") || version.startsWith("0.79")) {
+    if (Semver.satisfies(semverVersion, ">=0.78 <0.80")) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}");`;
     }
-    if (version.startsWith("0.80") || version.startsWith("0.81")) {
+    if (Semver.satisfies(semverVersion, ">=0.80 <0.82")) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-80-81/${jsxRuntimeFileName}");`;
     }
-    if (version.startsWith("0.82")) {
+    if (Semver.satisfies(semverVersion, ">=0.82")) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-82/${jsxRuntimeFileName}");`;
     }
   } else if (
