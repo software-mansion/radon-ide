@@ -112,6 +112,7 @@ export function createBuildConfig(
           configuration: ios?.configuration,
           fingerprintCommand,
           runtimeId: runtime.identifier,
+          usePrebuild,
         };
       } else {
         return {
@@ -122,6 +123,7 @@ export function createBuildConfig(
           productFlavor: android?.productFlavor,
           buildType: android?.buildType,
           fingerprintCommand,
+          usePrebuild,
         };
       }
     }
