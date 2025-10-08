@@ -77,7 +77,7 @@ export function createBuildConfig(
           scheme: ios?.scheme,
           configuration: ios?.configuration,
           fingerprintCommand,
-          usePrebuild,
+          usePrebuild: usePrebuild ?? false,
           runtimeId: runtime.identifier,
         };
       } else {
@@ -89,7 +89,7 @@ export function createBuildConfig(
           productFlavor: android?.productFlavor,
           buildType: android?.buildType,
           fingerprintCommand,
-          usePrebuild,
+          usePrebuild: usePrebuild ?? false,
         };
       }
     }
@@ -112,7 +112,7 @@ export function createBuildConfig(
           configuration: ios?.configuration,
           fingerprintCommand,
           runtimeId: runtime.identifier,
-          usePrebuild,
+          usePrebuild: usePrebuild ?? true,
         };
       } else {
         return {
@@ -123,7 +123,7 @@ export function createBuildConfig(
           productFlavor: android?.productFlavor,
           buildType: android?.buildType,
           fingerprintCommand,
-          usePrebuild,
+          usePrebuild: usePrebuild ?? true,
         };
       }
     }
