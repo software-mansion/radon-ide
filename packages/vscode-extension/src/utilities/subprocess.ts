@@ -19,11 +19,24 @@ async function getPathEnv(appRoot: string) {
 
   const shellPath = process.env.SHELL ?? "/bin/zsh";
 
-  // Run 'nvm use' to load the correct Node.js version from .nvmrc if present.
-  // We use a conditional command that only runs 'nvm use' if nvm is available,
-  // preventing errors in environments where nvm is not installed.
-  // If .nvmrc is not present, nvm use will simply do nothing.
-  const nvmCommand = "type nvm > /dev/null 2>&1 && nvm use; ";
+  // Test if nvm is available and set up correctly with a dry-run.
+  // Only include 'nvm use' in the command if this succeeds.
+  let nvmCommand = "";
+  try {
+    await execa(
+      shellPath,
+      ["-i", "-l", "-c", `cd "${appRoot}" && type nvm > /dev/null 2>&1 && nvm use`],
+      {
+        extendEnv: false,
+        env: {},
+      }
+    );
+    // If the dry-run succeeds, include nvm use in the actual command
+    nvmCommand = "nvm use; ";
+  } catch (error) {
+    // nvm is not available or nvm use failed, proceed without it
+    Logger.debug("nvm is not available or not set up correctly, proceeding without nvm");
+  }
 
   // Our goal is to determine the PATH variable that would be set when running commands from the application root.
   // To simulate this accurately, we need to avoid inheriting the vscode process's environment variables.
