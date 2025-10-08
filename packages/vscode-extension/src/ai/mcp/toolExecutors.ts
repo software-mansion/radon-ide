@@ -79,12 +79,12 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
   }
 
   if (!deviceLogs.isEmpty()) {
-    const rawLogs = ["=== DEVICE LOGS ===\n\n", ...deviceLogs.readAll()];
+    const rawLogs = ["=== NATIVE APP LOGS ===\n\n", ...deviceLogs.readAll()];
     combinedLogsContent.push(textToToolContent(rawLogs.join("")));
   }
 
   if (!appLogs.isEmpty()) {
-    const rawLogs = ["=== APPLICATION LOGS ===\n\n", ...appLogs.readAll()];
+    const rawLogs = ["=== JS APP LOGS ===\n\n", ...appLogs.readAll()];
     combinedLogsContent.push(textToToolContent(rawLogs.join("")));
   }
 
