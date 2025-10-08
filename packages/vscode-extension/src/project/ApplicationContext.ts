@@ -2,7 +2,7 @@ import path from "path";
 import { Disposable, workspace } from "vscode";
 import { loadProjectEnv } from "@expo/env";
 import _ from "lodash";
-import { SemVer } from "semver";
+import semver from "semver";
 import { BuildCache } from "../builders/BuildCache";
 import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
@@ -31,12 +31,22 @@ export type ResolvedLaunchConfig = LaunchOptions & {
 };
 
 function checkFuseboxSupport(appRoot: string): boolean {
-  const reactNativePackage = requireNoCache("react-native/package.json", {
-    paths: [appRoot],
-  });
-  const reactNativeVersion = new SemVer(reactNativePackage.version);
-  const supportsFusebox = reactNativeVersion.compare("0.76.0") >= 0;
-  return supportsFusebox;
+  try {
+    const appPackage = requireNoCache("./package.json", {
+      paths: [appRoot],
+    });
+    const reactNativeVersion = semver.coerce(appPackage.dependencies["react-native"]);
+    if (reactNativeVersion === null) {
+      return false;
+    }
+    const supportsFusebox = reactNativeVersion.compare("0.76.0") >= 0;
+    return supportsFusebox;
+  } catch {
+    Logger.error(
+      "Couldn't read react-native version from `package.json`. Defaulting to no fusebox support."
+    );
+    return false;
+  }
 }
 
 function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunchConfig {
