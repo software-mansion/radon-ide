@@ -9,9 +9,9 @@ import {
   WebviewCommand,
   NetworkMethod,
 } from "../../../network/types/panelMessageProtocol";
-import { BaseInspectorStrategy } from "./BaseInspectorStrategy";
+import { BaseInspectorStrategy as BaseNetworkInspector } from "./BaseNetworkInspector";
 
-export default class LegacyInspectorStrategy extends BaseInspectorStrategy {
+export default class InspectorBridgeNetworkInspector extends BaseNetworkInspector {
   private devtoolsListeners: Disposable[] = [];
 
   private readonly inspectorBridge: RadonInspectorBridge;

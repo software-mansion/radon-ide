@@ -7,6 +7,7 @@ import { ResponseBodyData } from "../../types/network";
 import { NetworkLog } from "../../types/networkLog";
 import "./PayloadAndResponseTab.css";
 import { ThemeData } from "../../../common/theme";
+import { ContentTypeHeader } from "../../types/network";
 import { NetworkEvent } from "../../types/panelMessageProtocol";
 
 interface ResponseTabProps {
@@ -19,7 +20,10 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
   const { fetchAndOpenResponseInEditor } = useNetwork();
   const { body = undefined, wasTruncated = false } = responseBodyData || {};
   const responseData = getFormattedRequestBody(body);
-  const contentType = networkLog.response?.headers?.["Content-Type"] || "";
+  const contentType =
+    networkLog.response?.headers?.[ContentTypeHeader.IOS] ||
+    networkLog.response?.headers?.[ContentTypeHeader.ANDROID] ||
+    "";
   const language = responseData ? determineLanguage(contentType, responseData) : "plaintext";
 
   const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;

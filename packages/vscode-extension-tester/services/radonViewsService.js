@@ -1,6 +1,6 @@
+import { By, BottomBarPanel } from "vscode-extension-tester";
 import { createCanvas } from "canvas";
 import { ElementHelperService } from "./helperServices.js";
-import { By, BottomBarPanel } from "vscode-extension-tester";
 import AppManipulationService from "./appManipulationService.js";
 
 export default class RadonViewsService {

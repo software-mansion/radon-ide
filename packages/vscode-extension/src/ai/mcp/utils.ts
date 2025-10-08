@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { EditorType, ImageContent, TextContent, ToolResponse } from "./models";
+import { ImageContent, TextContent, ToolResponse } from "./models";
 
 export const MCP_LOG = "[MCP]";
 
@@ -11,15 +11,6 @@ export enum ConfigLocation {
 export function getConfigLocation(): ConfigLocation {
   const configuration = vscode.workspace.getConfiguration("RadonIDE");
   return configuration.get<ConfigLocation>("radonAI.MCPConfigLocation") ?? ConfigLocation.Project;
-}
-
-export function getEditorType(): EditorType {
-  // Cursor features different settings than VSCode
-  const config = vscode.workspace.getConfiguration();
-  if (config.get("cursor") !== undefined) {
-    return EditorType.CURSOR;
-  }
-  return EditorType.VSCODE;
 }
 
 export function pngToToolContent(base64Encoded: string): ImageContent {

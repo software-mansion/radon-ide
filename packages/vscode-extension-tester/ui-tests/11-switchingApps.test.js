@@ -1,8 +1,8 @@
+import { exec } from "child_process";
 import { By, VSBrowser } from "vscode-extension-tester";
 import { assert } from "chai";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
-import { exec } from "child_process";
 
 describe("11 - App switching tests", () => {
   let driver,

@@ -8,7 +8,7 @@ import {
   WebviewCommand,
   WebviewMessage,
 } from "../../../network/types/panelMessageProtocol";
-import { BaseInspectorStrategy } from "./BaseInspectorStrategy";
+import { BaseInspectorStrategy } from "./BaseNetworkInspector";
 
 import { NETWORK_EVENTS } from "../../../network/types/panelMessageProtocol";
 import { NETWORK_EVENT_MAP, NetworkBridge, RadonInspectorBridge } from "../../../project/bridge";
@@ -18,10 +18,17 @@ import { ResponseBodyData } from "../../../network/types/network";
 const MAX_MESSAGE_LENGTH = 1000000;
 const TRUNCATED_LENGTH = 1000000;
 
-export default class NewInspectorStrategy extends BaseInspectorStrategy {
+enum ActivationState {
+  Inactive = "inactive",
+  Pending = "pending",
+  Active = "active",
+}
+
+export default class DebuggerNetworkInspector extends BaseInspectorStrategy {
   private disposables: Disposable[] = [];
   private readonly inspectorBridge: RadonInspectorBridge;
   private readonly networkBridge: NetworkBridge;
+  private activationState = ActivationState.Inactive;
 
   constructor(private plugin: NetworkPlugin) {
     super();
@@ -72,7 +79,18 @@ export default class NewInspectorStrategy extends BaseInspectorStrategy {
     this.broadcastMessage(webviewMessage);
   }
 
-  private setupListeners() {
+  private completeActivation(): void {
+    if (this.activationState === ActivationState.Active) {
+      return; // activated
+    }
+
+    commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
+    this.setupNetworkListeners();
+    this.networkBridge.enableNetworkInspector();
+    this.activationState = ActivationState.Active;
+  }
+
+  private setupNetworkListeners(): void {
     const knownEventsSubscriptions: Disposable[] = NETWORK_EVENTS.map((event) =>
       this.networkBridge.onEvent(NETWORK_EVENT_MAP[event], (message) =>
         this.broadcastCDPMessage(message)
@@ -87,6 +105,17 @@ export default class NewInspectorStrategy extends BaseInspectorStrategy {
     ];
 
     this.disposables.push(...subscriptions, ...knownEventsSubscriptions);
+  }
+
+  private setupBridgeAvailableListener(): void {
+    const bridgeAvailableSubscription = this.networkBridge.onEvent("bridgeAvailable", () => {
+      if (this.activationState === ActivationState.Pending) {
+        this.completeActivation();
+      }
+      bridgeAvailableSubscription.dispose();
+    });
+
+    this.disposables.push(bridgeAvailableSubscription);
   }
 
   private async handleGetResponseBody(payload: CDPMessage) {
@@ -155,21 +184,33 @@ export default class NewInspectorStrategy extends BaseInspectorStrategy {
   }
 
   public activate(): void {
+    if (this.activationState !== ActivationState.Inactive) {
+      return; // activated or activation in progress
+    }
+
     if (!this.pluginAvailable) {
+      this.activationState = ActivationState.Pending;
+      this.setupBridgeAvailableListener();
       return;
     }
-    commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
-    this.setupListeners();
-    this.networkBridge.enableNetworkInspector();
+
+    this.completeActivation();
   }
 
   public deactivate(): void {
-    disposeAll(this.disposables);
-    if (!this.pluginAvailable) {
+    if (this.activationState === ActivationState.Inactive) {
       return;
     }
-    this.networkBridge.disableNetworkInspector();
-    commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
+
+    disposeAll(this.disposables);
+    this.disposables = [];
+
+    if (this.pluginAvailable) {
+      this.networkBridge.disableNetworkInspector();
+      commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
+    }
+
+    this.activationState = ActivationState.Inactive;
   }
 
   public dispose(): void {

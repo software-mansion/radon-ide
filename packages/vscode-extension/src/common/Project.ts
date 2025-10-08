@@ -189,6 +189,7 @@ export interface ProjectInterface {
     displayName: string,
     runtime: IOSRuntimeInfo
   ): Promise<DeviceInfo>;
+  loadInstalledImages(): void;
   renameDevice(device: DeviceInfo, newDisplayName: string): Promise<void>;
   removeDevice(device: DeviceInfo): Promise<void>;
 

@@ -6,8 +6,8 @@ import { Logger } from "../../Logger";
 import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider";
 import { WebviewMessage } from "../../network/types/panelMessageProtocol";
 
-import LegacyInspectorStrategy from "./strategies/LegacyInspectorStrategy";
-import NewInspectorStrategy from "./strategies/NewInspectorStrategy";
+import InspectorBridgeNetworkInspector from "./strategies/InspectorBridgeNetworkInspector";
+import DebuggerNetworkInspector from "./strategies/DebuggerNetworkInspector";
 
 export const NETWORK_PLUGIN_ID = "network";
 /**
@@ -15,11 +15,11 @@ export const NETWORK_PLUGIN_ID = "network";
  * Disabled by default until new network inspector is integradated into react native.
  * The instructions to enable the features are in plugins/network/README.md
  */
-const ENABLE_NEW_INSPECTOR = true;
+const ENABLE_DEBUGGER_INSPECTOR = false;
 
 export type BroadcastListener = (message: WebviewMessage) => void;
 
-export interface InspectorStrategy {
+export interface NetworkInspector {
   activate(): void;
   deactivate(): void;
   dispose(): void;
@@ -52,42 +52,42 @@ export class NetworkPlugin implements ToolPlugin {
   public readonly persist = false;
   public toolInstalled = false;
 
-  private readonly strategy: InspectorStrategy;
+  private readonly networkInspector: NetworkInspector;
 
   constructor(
     readonly inspectorBridge: RadonInspectorBridge,
     readonly networkBridge: NetworkBridge
   ) {
-    this.strategy = ENABLE_NEW_INSPECTOR
-      ? new NewInspectorStrategy(this)
-      : new LegacyInspectorStrategy(this);
+    this.networkInspector = ENABLE_DEBUGGER_INSPECTOR
+      ? new DebuggerNetworkInspector(this)
+      : new InspectorBridgeNetworkInspector(this);
     initialize();
   }
 
   public get pluginAvailable(): boolean {
-    return this.strategy.pluginAvailable;
+    return this.networkInspector.pluginAvailable;
   }
 
   activate(): void {
-    this.strategy.activate();
+    this.networkInspector.activate();
   }
 
   deactivate(): void {
-    this.strategy.deactivate();
+    this.networkInspector.deactivate();
   }
 
   dispose() {
-    this.strategy.dispose();
+    this.networkInspector.dispose();
   }
 
   public openTool(): void {
     commands.executeCommand(`RNIDE.Tool.Network.view.focus`);
   }
   public onMessageBroadcast(cb: BroadcastListener): Disposable {
-    return this.strategy.onMessageBroadcast(cb);
+    return this.networkInspector.onMessageBroadcast(cb);
   }
 
   handleWebviewMessage(message: WebviewMessage) {
-    this.strategy.handleWebviewMessage(message);
+    this.networkInspector.handleWebviewMessage(message);
   }
 }

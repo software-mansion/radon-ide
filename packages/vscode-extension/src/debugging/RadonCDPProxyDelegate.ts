@@ -4,6 +4,22 @@ import _ from "lodash";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
 import { Logger } from "../Logger";
 
+function isProfilerStopResult(result: object): result is Cdp.Profiler.StopResult {
+  // StopResult has a "profile" property
+  if (!("profile" in result) || typeof result.profile !== "object") {
+    return false;
+  }
+
+  // The "profile" property has a list of "nodes"
+  if (!result.profile || !("nodes" in result.profile)) {
+    return false;
+  }
+
+  // if we're here, then either the result has the required type,
+  // or the result is malformed (which we don't care to handle)
+  return true;
+}
+
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter<{ reason: "breakpoint" | "exception" }>();
   private debuggerResumedEmitter = new EventEmitter();
@@ -14,6 +30,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
 
   private justCalledStepOver = false;
   private resumeEventTimeout: NodeJS.Timeout | undefined;
+  private mainScriptId: string | undefined;
 
   public onDebuggerPaused = this.debuggerPausedEmitter.event;
   public onDebuggerResumed = this.debuggerResumedEmitter.event;
@@ -209,6 +226,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       const finalReply = await this.maybeRetrySetBreakpointByUrl(reply, tunnel);
       return finalReply;
     }
+    if ("result" in reply && isProfilerStopResult(reply.result)) {
+      this.fixProfileResults(reply.result);
+    }
     return reply;
   }
 
@@ -216,6 +236,15 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     reply: IProtocolSuccess | IProtocolError
   ): Promise<IProtocolSuccess | IProtocolError | undefined> {
     return reply;
+  }
+
+  private fixProfileResults(result: Cdp.Profiler.StopResult) {
+    if (!this.mainScriptId) {
+      return;
+    }
+    for (const node of result.profile.nodes) {
+      node.callFrame.scriptId = this.mainScriptId;
+    }
   }
 
   private async onRuntimeEnable(tunnel: ProxyTunnel) {
@@ -257,16 +286,24 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   }
 
   private async handleScriptParsed(command: IProtocolCommand): Promise<IProtocolCommand> {
-    const { sourceMapURL } = command.params as Cdp.Debugger.ScriptParsedEvent;
+    const params = command.params as Cdp.Debugger.ScriptParsedEvent;
+    const { sourceMapURL } = params;
     if (!sourceMapURL) {
       return command;
     }
 
     try {
       const sourceMapData = await this.getSourceMapData(sourceMapURL);
+      if (sourceMapData.sources === undefined) {
+        return command;
+      }
       const isMainBundle = sourceMapData.sources.some((source: string) =>
         source.includes("__prelude__")
       );
+
+      if (isMainBundle) {
+        this.mainScriptId = params.scriptId;
+      }
 
       this.bundleParsedEmitter.fire({ isMainBundle });
     } catch (e) {

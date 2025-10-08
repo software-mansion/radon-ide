@@ -1,6 +1,6 @@
+import { EventEmitter } from "node:events";
 import { Disposable } from "vscode";
 import { AppOrientation } from "../common/Project";
-import { Logger } from "../Logger";
 import { InspectorAvailabilityStatus, NavigationRoute } from "../common/State";
 import { DebugSession, RNIDE_NetworkMethod } from "../debugging/DebugSession";
 import {
@@ -11,7 +11,7 @@ import {
 } from "../network/types/panelMessageProtocol";
 import { GetResponseBodyResponse } from "../network/types/network";
 
-type BridgeEventsMap<K extends string> = Record<K, unknown[]>;
+type EventMap<K extends string> = Record<K, unknown[]>;
 
 /**
  * Abstract base class that provides an event-based bridging mechanism.
@@ -24,49 +24,25 @@ type BridgeEventsMap<K extends string> = Record<K, unknown[]>;
  * @template E - Map of event names to listener-argument tuples (e.g. { foo: [number, string] }).
  * @template K - Union of string literal event names (keys of E).
  */
-abstract class GenericBridge<E extends BridgeEventsMap<K>, K extends string> {
-  private listeners = new Map<K, Array<(...payload: any) => void>>();
+abstract class EventDispatcher<E extends EventMap<K>, K extends string> {
+  private emitter = new EventEmitter({ captureRejections: true });
 
-  protected abstract send(message: any): void;
+  public emitEvent: <L extends K>(event: L, payload: E[L]) => void;
 
-  public emitEvent<L extends K>(event: L, payload: E[L]) {
-    const listeners = this.listeners.get(event);
-    if (!listeners) {
-      return;
-    }
+  constructor() {
+    this.emitEvent = this.emitter.emit.bind(this.emitter);
 
-    // We need to clone the listeners array to avoid issues with concurrent modifications
-    // it is a common pattern to create listeners that dispose themselves which could lead to
-    // issues if we modify the array while iterating over it.
-    const listenersCopy = [...listeners];
-    listenersCopy.forEach((listener) => {
-      try {
-        listener(payload);
-      } catch (error) {
-        Logger.error(`[Bridge] Error in listener for event ${String(event)}:`, error);
-      }
+    this.emitter.on("error", (error) => {
+      console.error("EventDispatcher error:", error);
     });
   }
 
   public onEvent<L extends K>(event: L, listener: (...payload: E[L]) => void): Disposable {
-    const listeners = this.listeners.get(event);
-    if (!listeners) {
-      this.listeners.set(event, [listener]);
-    } else {
-      const index = listeners.indexOf(listener);
-      if (index === -1) {
-        listeners.push(listener as (...payload: any) => void);
-      }
-    }
+    this.emitter.on(event, listener);
+
     return {
       dispose: () => {
-        const listenersToClean = this.listeners.get(event);
-        if (listenersToClean) {
-          const index = listenersToClean.indexOf(listener as (...payload: any) => void);
-          if (index !== -1) {
-            listenersToClean.splice(index, 1);
-          }
-        }
+        this.emitter.off(event, listener);
       },
     };
   }
@@ -106,9 +82,10 @@ export interface RadonInspectorBridge {
 }
 
 export abstract class BaseInspectorBridge
-  extends GenericBridge<RadonInspectorBridgeEvents, RadonInspectorEventName>
+  extends EventDispatcher<RadonInspectorBridgeEvents, RadonInspectorEventName>
   implements RadonInspectorBridge
 {
+  protected abstract send(message: { type: string; data?: any }): void;
   sendPluginMessage(pluginId: string, type: string, data: any): void {
     this.send({
       type: "pluginMessage",
@@ -159,6 +136,7 @@ export interface RadonNetworkBridgeEvents {
   getResponseBody: [CDPMessage];
   dataReceived: [CDPMessage];
   storeResponseBody: [CDPMessage];
+  bridgeAvailable: [];
   unknownEvent: [any];
 }
 
@@ -192,7 +170,7 @@ export type NetworkBridgeSendMethodArgs = Record<string, unknown>;
 export type NetworkBridgeGetResponseBodyArgs = { requestId: string | number };
 
 export class NetworkBridge
-  extends GenericBridge<RadonNetworkBridgeEvents, NetworkBridgeEventNames>
+  extends EventDispatcher<RadonNetworkBridgeEvents, NetworkBridgeEventNames>
   implements RadonNetworkBridge
 {
   private debugSession?: (DebugSession & Disposable) | undefined;
@@ -203,16 +181,17 @@ export class NetworkBridge
 
   public setDebugSession(debugSession: DebugSession & Disposable) {
     this.debugSession = debugSession;
+    this.emitEvent("bridgeAvailable", []);
   }
 
   // Method overloads for type safety
-  protected send(request: RNIDE_NetworkMethod.Enable): void;
-  protected send(request: RNIDE_NetworkMethod.Disable): void;
-  protected send(request: RNIDE_NetworkMethod, args?: NetworkBridgeSendMethodArgs): void {
+  private send(request: RNIDE_NetworkMethod.Enable): void;
+  private send(request: RNIDE_NetworkMethod.Disable): void;
+  private send(request: RNIDE_NetworkMethod, args?: NetworkBridgeSendMethodArgs): void {
     this.debugSession?.invokeNetworkMethod(request, args);
   }
 
-  protected async sendAsync(
+  private async sendAsync(
     request: RNIDE_NetworkMethod.GetResponseBody,
     args: NetworkBridgeGetResponseBodyArgs
   ): Promise<GetResponseBodyResponse | undefined> {

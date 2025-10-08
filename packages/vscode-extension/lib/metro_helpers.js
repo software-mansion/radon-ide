@@ -11,6 +11,34 @@ function requireFromAppDir(module, options) {
 
 function resolveFromAppDir(module, options) {
   const paths = options && options.paths ? [...options.paths, appRoot] : [appRoot];
+
+  return require.resolve(module, { paths });
+}
+
+function requireFromAppDependency(dependency, module, options) {
+  const path = resolveFromAppDependency(dependency, module, options);
+  return require(path);
+}
+
+function overrideModuleFromAppDependency(dependency, moduleName, exports, options) {
+  try {
+    const moduleToOverride = resolveFromAppDependency(dependency, moduleName, options);
+    require.cache[moduleToOverride] = {
+      exports,
+    };
+  } catch (e) {
+    // the code may throw MODULE_NOT_FOUND error, in which case we don't do anything
+    // as there is nothing to override
+  }
+}
+
+function resolveFromAppDependency(dependency, module, options) {
+  let paths = options && options.paths ? [...options.paths, appRoot] : [appRoot];
+
+  const dependencyPath = require.resolve(dependency, { paths });
+
+  paths = [path.dirname(dependencyPath), ...paths];
+
   return require.resolve(module, { paths });
 }
 
@@ -178,6 +206,8 @@ module.exports = {
   appRoot,
   adaptMetroConfig,
   requireFromAppDir,
+  requireFromAppDependency,
   resolveFromAppDir,
   overrideModuleFromAppDir,
+  overrideModuleFromAppDependency,
 };

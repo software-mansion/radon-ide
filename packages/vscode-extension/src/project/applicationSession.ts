@@ -64,9 +64,13 @@ function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: Ca
     reject(new CancelError("Cancelled while waiting for the app to be ready."));
   });
   const appReadyListener = inspectorBridge.onEvent("appReady", resolve);
-  promise.finally(() => {
-    appReadyListener.dispose();
-  });
+  promise
+    .finally(() => {
+      appReadyListener.dispose();
+    })
+    .catch(() => {
+      // we ignore cancellation rejections as this is another surfaces for it to bubble up
+    });
   return promise;
 }
 
@@ -148,9 +152,8 @@ export class ApplicationSession implements Disposable {
         await cancelToken.adapt(Promise.race([activatePromise, bundleErrorPromise]));
       }
 
-      const hasBundleError = stateManager.getState().bundleError !== null;
-      if (!hasBundleError && getIsActive()) {
-        await cancelToken.adapt(appReadyPromise);
+      if (getIsActive()) {
+        await cancelToken.adapt(Promise.race([appReadyPromise, bundleErrorPromise]));
       }
 
       return session;
