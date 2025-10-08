@@ -57,7 +57,7 @@ export class Scanner implements Disposable {
   }
 
   private async verifyAndConnect(port: number, projectRoot: string) {
-    const metro = new Metro(port, projectRoot);
+    const metro = new Metro(port, projectRoot, [projectRoot]);
 
     const timeoutCancelToken = new CancelToken();
     setTimeout(() => timeoutCancelToken.cancel(), DEBUGGER_LOOKUP_TIMEOUT_MS);

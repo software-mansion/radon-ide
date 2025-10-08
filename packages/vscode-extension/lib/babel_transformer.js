@@ -82,9 +82,9 @@ function transformWrapper({ filename, src, ...rest }) {
   ) {
     src = `module.exports = require("__RNIDE_lib__/preview.js");`;
   } else if (isTransforming("node_modules/@dev-plugins/react-native-mmkv/build/index.js")) {
-    src = `require("__RNIDE_lib__/expo_dev_plugins.js").register("@dev-plugins/react-native-mmkv");${src}`;
+    src = `require("__RNIDE_lib__/plugins/expo_dev_plugins.js").register("@dev-plugins/react-native-mmkv");${src}`;
   } else if (isTransforming("node_modules/redux-devtools-expo-dev-plugin/build/index.js")) {
-    src = `require("__RNIDE_lib__/expo_dev_plugins.js").register("redux-devtools-expo-dev-plugin");${src}`;
+    src = `require("__RNIDE_lib__/plugins/expo_dev_plugins.js").register("redux-devtools-expo-dev-plugin");${src}`;
   } else if (
     isTransforming(
       "node_modules/react-native/Libraries/Renderer/implementations/ReactFabric-dev.js"

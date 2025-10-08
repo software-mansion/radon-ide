@@ -99,19 +99,11 @@ export type DeviceControlSettings = {
   stopPreviousDevices: boolean;
 };
 
-export type MCPConfigLocation = "Project" | "Global";
-
-export type RadonAISettings = {
-  enableRadonAI: boolean;
-  MCPConfigLocation: MCPConfigLocation;
-};
-
 export type WorkspaceConfiguration = {
   general: GeneralSettings;
   userInterface: UserInterfaceSettings;
   deviceSettings: DeviceSettings;
   deviceControl: DeviceControlSettings;
-  radonAI: RadonAISettings;
 };
 
 // #endregion Workspace Configuration
@@ -428,6 +420,11 @@ export enum DeviceType {
   Tablet = "Tablet",
 }
 
+export enum RadonAIEnabledState {
+  Enabled = "enabled",
+  Default = "default",
+}
+
 export type DeviceInfo = AndroidDeviceInfo | IOSDeviceInfo;
 
 export type AndroidDeviceInfo = {
@@ -593,10 +590,6 @@ export const initialState: State = {
     deviceControl: {
       startDeviceOnLaunch: true,
       stopPreviousDevices: false,
-    },
-    radonAI: {
-      enableRadonAI: false,
-      MCPConfigLocation: "Project",
     },
   },
 };

@@ -6,7 +6,6 @@ import {
   DeviceRotation,
   Locale,
   Location,
-  MCPConfigLocation,
   PanelLocation,
   RecursivePartial,
   REMOVE,
@@ -37,10 +36,6 @@ const WorkspaceConfigurationKeyMap = {
   deviceControl: {
     startDeviceOnLaunch: "deviceControl.startDeviceOnLaunch",
     stopPreviousDevices: "deviceControl.stopPreviousDevices",
-  },
-  radonAI: {
-    enableRadonAI: "radonAI.enableRadonAI",
-    MCPConfigLocation: "radonAI.MCPConfigLocation",
   },
 };
 
@@ -97,13 +92,6 @@ export function getCurrentWorkspaceConfiguration(config: WorkspaceConfiguration)
         back: "emulated",
         front: "none",
       },
-    },
-    radonAI: {
-      enableRadonAI:
-        config.get<boolean>(WorkspaceConfigurationKeyMap.radonAI.enableRadonAI) ?? true,
-      MCPConfigLocation:
-        config.get<MCPConfigLocation>(WorkspaceConfigurationKeyMap.radonAI.MCPConfigLocation) ??
-        "Project",
     },
   };
 
