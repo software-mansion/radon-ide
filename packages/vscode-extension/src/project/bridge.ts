@@ -27,7 +27,7 @@ type EventMap<K extends string> = Record<K, unknown[]>;
 abstract class EventDispatcher<E extends EventMap<K>, K extends string> {
   private emitter = new EventEmitter({ captureRejections: true });
 
-  public emitEvent: <L extends K>(event: L, ...payload: E[L]) => void;
+  public emitEvent: <L extends K>(event: L, payload: E[L]) => void;
 
   constructor() {
     this.emitEvent = this.emitter.emit.bind(this.emitter);
@@ -181,7 +181,7 @@ export class NetworkBridge
 
   public setDebugSession(debugSession: DebugSession & Disposable) {
     this.debugSession = debugSession;
-    this.emitEvent("bridgeAvailable");
+    this.emitEvent("bridgeAvailable", []);
   }
 
   // Method overloads for type safety
