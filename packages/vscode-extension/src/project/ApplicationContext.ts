@@ -26,7 +26,7 @@ export type ResolvedLaunchConfig = LaunchOptions & {
     waitForAppLaunch: boolean;
   };
   env: Record<string, string>;
-  usePrebuild: boolean;
+  usePrebuild?: boolean;
   useOldDevtools: boolean;
 };
 
@@ -103,7 +103,7 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
     preview: {
       waitForAppLaunch: configuration.preview?.waitForAppLaunch ?? true,
     },
-    usePrebuild: configuration.usePrebuild ?? false,
+    usePrebuild: configuration.usePrebuild,
     useOldDevtools: configuration.useOldDevtools ?? !checkFuseboxSupport(absoluteAppRoot),
   };
 }
