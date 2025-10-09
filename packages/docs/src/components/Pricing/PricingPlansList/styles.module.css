@@ -1,15 +1,27 @@
 .list {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
   list-style: none;
   padding: 0;
   margin: 24px 0 48px;
 }
 
-@media (max-width: 920px) {
+@media (max-width: 1550px) {
+  .list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .list > :nth-child(4) {
+    grid-column: 1 / -1;
+    max-width: none;
+  }
+}
+
+@media (max-width: 900px) {
   .list {
     grid-template-columns: 1fr;
+    max-width: 420px;
   }
 }
 
