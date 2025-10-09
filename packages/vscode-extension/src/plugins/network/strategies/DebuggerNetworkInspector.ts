@@ -1,5 +1,4 @@
 import { commands, Disposable } from "vscode";
-import { NetworkPlugin } from "../network-plugin";
 import { disposeAll } from "../../../utilities/disposables";
 import { Logger } from "../../../Logger";
 import {
@@ -26,14 +25,13 @@ enum ActivationState {
 
 export default class DebuggerNetworkInspector extends BaseNetworkInspector {
   private disposables: Disposable[] = [];
-  private readonly inspectorBridge: RadonInspectorBridge;
-  private readonly networkBridge: NetworkBridge;
   private activationState = ActivationState.Inactive;
 
-  constructor(private plugin: NetworkPlugin) {
+  constructor(
+    private readonly inspectorBridge: RadonInspectorBridge,
+    private readonly networkBridge: NetworkBridge
+  ) {
     super();
-    this.networkBridge = this.plugin.networkBridge;
-    this.inspectorBridge = this.plugin.inspectorBridge;
   }
 
   private decodeBase64(base64String: string): string {
@@ -207,6 +205,6 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
   }
 
   public get pluginAvailable() {
-    return this.plugin.networkBridge.bridgeAvailable;
+    return this.networkBridge.bridgeAvailable;
   }
 }
