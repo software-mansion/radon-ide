@@ -107,6 +107,11 @@ after(async function () {
     await recorder.stop();
   }
   closeServer();
+  console.log(
+    `==== Summary app: ${constants.texts.expectedProjectName} | code version: ${
+      process.env["CODE_VERSION"] || "latest"
+    } ====`
+  );
   // console log additional informations after standard mocha report
   setTimeout(() => {
     if (failedTests.length > 0) {
@@ -127,6 +132,7 @@ after(async function () {
         `npm run run-tests-on-VM -- <test-app> ${failingTestNumbers.join(" ")}`
       );
     }
+    console.log("============");
   }, 0);
 });
 

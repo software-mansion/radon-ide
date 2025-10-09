@@ -219,17 +219,21 @@ jobs:
     needs: build-and-test
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Download all test output artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./all_results
+          working-directory: packages/vscode-extension-tester
 
       - name: Combine all test logs
         run: |
           mkdir -p combined
           find ./all_results -type f -name "test-output-*.txt" -exec cat {} + > combined/all_results.txt
-          echo "===== Combined Test Results ====="
-          cat combined/all_results.txt
+          python3 scripts/make_summary.py combined/all_results.txt
+        working-directory: packages/vscode-extension-tester
 
       - name: Upload combined results
         uses: actions/upload-artifact@v4
