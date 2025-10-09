@@ -6,10 +6,12 @@ import {
   WebView,
   BottomBarPanel,
   TextEditor,
+  Key,
 } from "vscode-extension-tester";
 import { assert } from "chai";
 import { cropCanvas, compareImages } from "../utils/imageProcessing.js";
 import initServices from "../services/index.js";
+import { centerCoordinates } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
 const cwd = process.cwd() + "/data";
@@ -100,6 +102,72 @@ describe("7 - Radon tools tests", () => {
     const titles = await editorView.getOpenEditorTitles();
 
     assert.include(titles, componentSourceFile);
+  });
+
+  const inspectOverlayParamsTable = [
+    { name: "portrait orientation", rotate: false },
+    { name: "landscape orientation", rotate: true },
+  ];
+
+  inspectOverlayParamsTable.forEach(({ name, rotate }) => {
+    it(`should show inspect overlay in correct place ${name}`, async function () {
+      try {
+        await radonSettingsService.rotateDevice(
+          rotate ? "landscape-left" : "portrait"
+        );
+        await elementHelperService.findAndClickElementByTag(
+          "radon-bottom-bar-element-inspector-button"
+        );
+
+        // Corresponds to the element's location in the test application
+        const originalPosition = { x: 0.1, y: 0.1, width: 0.1, height: 0.1 };
+
+        const phoneScreen = await elementHelperService.findAndWaitForElement(
+          By.css(`[data-testid="phone-screen"]`),
+          "Timed out waiting for phone-screen"
+        );
+
+        const position = centerCoordinates(originalPosition);
+
+        const PhoneRect = await phoneScreen.getRect();
+        const phoneWidth = PhoneRect.width;
+        const phoneHeight = PhoneRect.height;
+
+        const actions = driver.actions({ bridge: true });
+
+        await actions
+          .move({
+            origin: phoneScreen,
+            x: Math.floor((position.x + position.width / 2) * phoneWidth),
+            y: Math.floor((position.y + position.height / 2) * phoneHeight),
+          })
+          .perform();
+
+        const inspectArea =
+          await elementHelperService.findAndWaitForElementByTag(
+            "phone-inspect-area"
+          );
+
+        const inspectAreaRect = await inspectArea.getRect();
+        const relativeRect = {
+          x: (inspectAreaRect.x - PhoneRect.x) / phoneWidth,
+          y: (inspectAreaRect.y - PhoneRect.y) / phoneHeight,
+          width: inspectAreaRect.width / phoneWidth,
+          height: inspectAreaRect.height / phoneHeight,
+        };
+
+        for (const key in originalPosition) {
+          assert.approximately(
+            originalPosition[key],
+            relativeRect[key],
+            0.005,
+            `Inspect area ${key} is incorrect`
+          );
+        }
+      } finally {
+        await radonSettingsService.rotateDevice("portrait");
+      }
+    });
   });
 
   it("Right Click on App element: Should open component source file", async () => {
@@ -209,7 +277,7 @@ describe("7 - Radon tools tests", () => {
 
   it("should open preview", async () => {
     await driver.switchTo().defaultContent();
-    await vscodeHelperService.openFileInEditor("MainScreen.tsx");
+    await vscodeHelperService.openFileInEditor("automatedTests.tsx");
     const editor = new TextEditor();
     await driver.wait(
       async () => (await editor.getCodeLenses("Open preview")).length > 0,
@@ -273,5 +341,50 @@ describe("7 - Radon tools tests", () => {
     let buttonAfterClick = cropCanvas(canvas, position);
 
     assert.isFalse(compareImages(button, buttonAfterClick));
+  });
+
+  // it doesn't check if location where outlines appear is correct
+  it("should show outlines", async () => {
+    await elementHelperService.findAndClickElementByTag(
+      "radon-top-bar-tools-dropdown-trigger"
+    );
+    await elementHelperService.findAndWaitForElementByTag(
+      "radon-tools-dropdown-menu"
+    );
+
+    await elementHelperService.findAndClickElementByTag(
+      "dev-tool-Outline-Renders"
+    );
+
+    await driver.actions().sendKeys(Key.ESCAPE).perform();
+
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "toggle-element-button"
+    );
+
+    await appManipulationService.clickInsidePhoneScreen(position);
+    // time for outlines to appear
+    await driver.sleep(250);
+
+    const pixels = await driver.executeScript(() => {
+      const canvas = document.querySelector(".render-outlines-overlay");
+      const ctx = canvas.getContext("2d");
+      const { data, width, height } = ctx.getImageData(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+      );
+      return { data: Array.from(data), width, height };
+    });
+
+    // counts pixels with non zero alpha channel
+    const nonZeroCount = pixels.data.reduce((acc, val, i) => {
+      if (i % 4 === 3 && val !== 0) acc++;
+      return acc;
+    }, 0);
+
+    assert.isAbove(nonZeroCount, 1000);
   });
 });

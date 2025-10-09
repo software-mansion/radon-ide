@@ -87,10 +87,10 @@ function transformWrapper({ filename, src, ...rest }) {
     src = `require("__RNIDE_lib__/plugins/expo_dev_plugins.js").register("redux-devtools-expo-dev-plugin");${src}`;
   } else if (
     isTransforming(
-      "node_modules/react-native/Libraries/Renderer/implementations/ReactFabric-dev.js"
+      "react-native/Libraries/Renderer/implementations/ReactFabric-dev.js"
     ) ||
     isTransforming(
-      "node_modules/react-native/Libraries/Renderer/implementations/ReactNativeRenderer-dev.js"
+      "react-native/Libraries/Renderer/implementations/ReactNativeRenderer-dev.js"
     )
   ) {
     // This is a temporary workaround for inspector in React Native 0.74 & 0.75 & 0.76

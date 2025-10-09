@@ -48,6 +48,18 @@ const PricingPlansList = () => {
     </>
   );
 
+  const ultra = isMonthly ? (
+    <>
+      $75 <span className={pricing.plan__currency}>USD</span>
+      <p className={pricing.plan__price_second_line}> per seat/month excl. VAT </p>
+    </>
+  ) : (
+    <>
+      $750 <span className={pricing.plan__currency}>USD</span>
+      <p className={pricing.plan__price_second_line}> per seat/year excl. VAT </p>
+    </>
+  );
+
   const enterprise = (
     <>
       Custom
@@ -110,6 +122,15 @@ const PricingPlansList = () => {
           </p>
           <div className={pricing.plan__spacer} />
           <Button onClick={openBusinessCheckout}>Buy Business</Button>
+        </PricingCard>
+        <PricingCard>
+          <h2 className={pricing.plan__name}>Radon IDE Ultra</h2>
+          <h3 className={pricing.plan__price}>{ultra}</h3>
+          <p className={pricing.plan__tagline}>
+            For high-performing teams that value reduced context switching.
+          </p>
+          <div className={pricing.plan__spacer} />
+          <Button href="mailto:projects@swmansion.com">Contact Us</Button>
         </PricingCard>
         <PricingCard>
           <h2 className={pricing.plan__name}>Radon IDE Enterprise</h2>
