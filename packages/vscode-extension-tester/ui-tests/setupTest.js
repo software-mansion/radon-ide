@@ -16,6 +16,7 @@ import {
 import initServices from "../services/index.js";
 import startRecording from "../utils/screenRecording.js";
 import getConfiguration from "../configuration.js";
+import texts from "../utils/constants.js";
 
 const { IS_RECORDING } = getConfiguration();
 
@@ -108,7 +109,7 @@ after(async function () {
   }
   closeServer();
   console.log(
-    `==== Summary app: ${constants.texts.expectedProjectName} | code version: ${
+    `==== Summary app: ${texts.expectedProjectName} | code version: ${
       process.env["CODE_VERSION"] || "latest"
     } ====`
   );
