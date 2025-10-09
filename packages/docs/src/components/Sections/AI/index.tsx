@@ -22,7 +22,11 @@ const word = {
   visible: { opacity: 1 },
 };
 
-const text = `Lorem ipsum dolor sit amet consectetur, adipisicing elit. Cumque soluta commodi accusantium architecto earum voluptatum in perspiciatis eveniet accusamus tempora est, expedita error quod natus quis debitis! In nulla ad sapiente delectus nesciunt nihil error porro accusantium dignissimos cupiditate aperiam temporibus doloremque repudiandae libero, mollitia ab. Veritatis odio unde aliquid sint tenetur natus saepe deserunt neque provident consequuntur. Possimus praesentium laudantium nemo quibusdam aut quia tempore rerum pariatur a iure, est autem tempora suscipit excepturi vel dignissimos quod corrupti nesciunt ex ab, quo voluptate eum reprehenderit optio. `;
+const text = `Radon AI is a dedicated React Native AI assistant enhanced with up-to-date information about the React Native ecosystem. At its heart is our extensive React Native knowledge database, which is queried before answering your question.
+
+We index all of the popular React Native libraries to match questions to relevant pieces of documentation, providing additional, accurate context to your conversation.
+
+Our knowledge database is updated daily to provide the most up-to-date information.`;
 
 export default function AI() {
   const { ref, inView } = useInView({ triggerOnce: true });
