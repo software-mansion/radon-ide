@@ -119,7 +119,7 @@ export default class RadonViewsService {
     // debug console button is only active when app is started
     await this.appManipulationService.waitForAppToLoad();
     await this.openAndGetDebugConsoleElement();
-    const debugView = await new BottomBarPanel().openDebugConsoleView();
+    await new BottomBarPanel().openDebugConsoleView();
     // in vscode 1.99.1 method clearText() doesnt work
 
     await this.driver

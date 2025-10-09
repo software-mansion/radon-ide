@@ -351,10 +351,10 @@ describe("7 - Radon tools tests", () => {
     await elementHelperService.findAndWaitForElementByTag(
       "radon-tools-dropdown-menu"
     );
-    const outlineRendersSwitch =
-      await elementHelperService.findAndClickElementByTag(
-        "dev-tool-Outline-Renders"
-      );
+
+    await elementHelperService.findAndClickElementByTag(
+      "dev-tool-Outline-Renders"
+    );
 
     await driver.actions().sendKeys(Key.ESCAPE).perform();
 

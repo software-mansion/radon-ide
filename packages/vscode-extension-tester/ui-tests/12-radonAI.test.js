@@ -8,12 +8,10 @@ describe("12 - Radon AI tests", () => {
     elementHelperService,
     radonViewsService,
     managingDevicesService,
-    vscodeHelperService,
-    workbench;
+    vscodeHelperService;
 
   before(async () => {
     driver = get().driver;
-    workbench = get().workbench;
 
     ({
       elementHelperService,
