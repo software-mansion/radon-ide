@@ -9,7 +9,7 @@ import {
   WebviewCommand,
   NetworkMethod,
 } from "../../../network/types/panelMessageProtocol";
-import { BaseInspectorStrategy as BaseNetworkInspector } from "./BaseNetworkInspector";
+import { BaseNetworkInspector } from "./BaseNetworkInspector";
 
 export default class InspectorBridgeNetworkInspector extends BaseNetworkInspector {
   private devtoolsListeners: Disposable[] = [];

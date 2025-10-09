@@ -8,7 +8,7 @@ import {
   WebviewCommand,
   WebviewMessage,
 } from "../../../network/types/panelMessageProtocol";
-import { BaseInspectorStrategy } from "./BaseNetworkInspector";
+import { BaseNetworkInspector } from "./BaseNetworkInspector";
 
 import { NETWORK_EVENTS } from "../../../network/types/panelMessageProtocol";
 import { NETWORK_EVENT_MAP, NetworkBridge, RadonInspectorBridge } from "../../../project/bridge";
@@ -24,7 +24,7 @@ enum ActivationState {
   Active = "active",
 }
 
-export default class DebuggerNetworkInspector extends BaseInspectorStrategy {
+export default class DebuggerNetworkInspector extends BaseNetworkInspector {
   private disposables: Disposable[] = [];
   private readonly inspectorBridge: RadonInspectorBridge;
   private readonly networkBridge: NetworkBridge;
