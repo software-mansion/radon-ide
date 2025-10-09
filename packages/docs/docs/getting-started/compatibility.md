@@ -40,9 +40,9 @@ Radon IDE supports projects bootstrapped with the [React Native Community CLI](h
 
 <div className="compatibility">
 
-| 0.72  | 0.73   | 0.74   | 0.75   | 0.76   | 0.77   | 0.78   | 0.79   | 0.80   | 0.81   |
-| ----- | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| <No/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> |
+| 0.72  | 0.73   | 0.74   | 0.75   | 0.76   | 0.77   | 0.78   | 0.79   | 0.80   | 0.81   | 0.82   |
+| ----- | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
+| <No/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> |
 
 </div>
 
@@ -85,16 +85,30 @@ You can use Radon IDE on Windows and Linux using free Beta license.
 
 Radon IDE supports usage of iOS simulators and Android emulators, managing its instances separately from the ones you normally create with Xcode or Android Studio. [Learn more about Device Management.](/docs/guides/device-management)
 
-<div className="phone-table">
-
-| iOS                               | Android         |
-| --------------------------------- | --------------- |
-| iPhone 16 Pro                     | Google Pixel 9  |
-| iPhone 15 Pro                     | Google Pixel 8  |
-| iPhone SE (3rd generation)        | Google Pixel 7  |
-| iPad (A16)                        | Google Pixel 6a |
-| iPad Pro 11-inch (4th generation) |                 |
-
+<div className="phone-table-wrapper">
+    <div className="phone-table">
+    
+    | iOS                               |
+    | --------------------------------- |
+    | iPhone 16 Pro                     |
+    | iPhone 15 Pro                     |
+    | iPhone SE (3rd generation)        |
+    | iPhone 17 Pro                     |
+    | iPhone Air                        |
+    | iPad (A16)                        |
+    | iPad Pro 11-inch (4th generation) |
+    
+    </div>
+    <div className="phone-table">
+    
+    | Android         |
+    | --------------- |
+    | Google Pixel 9  |
+    | Google Pixel 8  |
+    | Google Pixel 7  |
+    | Google Pixel 6a |
+    
+    </div>
 </div>
 
 ### Connect Mode
