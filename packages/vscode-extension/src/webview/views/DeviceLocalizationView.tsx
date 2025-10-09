@@ -28,7 +28,7 @@ export function DeviceLocalizationView() {
 
   const onSelectNewLocale = (locale: any): (() => void) => {
     return () => {
-      openModal("", <LocalizationChangeConfirmationView locale={locale} />);
+      openModal(<LocalizationChangeConfirmationView locale={locale} />);
     };
   };
 
@@ -100,7 +100,7 @@ const LocalizationChangeConfirmationView = ({
   const { openModal, closeModal } = useModal();
 
   const onCancel = () => {
-    openModal("Localization", <DeviceLocalizationView />);
+    openModal(<DeviceLocalizationView />, { title: "Localization" });
   };
 
   return (

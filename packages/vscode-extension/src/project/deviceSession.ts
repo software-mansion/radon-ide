@@ -162,7 +162,7 @@ export class DeviceSession implements Disposable {
 
     this.buildManager = this.applicationContext.buildManager;
 
-    this.disposables.push(watchProjectFiles(this.onProjectFilesChanged));
+    this.disposables.push(watchProjectFiles(this.checkIsUsingStaleBuild));
     this.device.sendRotate(initialRotation);
 
     this.disposables.push(this.stateManager);
@@ -173,7 +173,6 @@ export class DeviceSession implements Disposable {
 
   private resetStartingState(startupMessage: StartupMessage = StartupMessage.Restarting) {
     this.stateManager.updateState({
-      isUsingStaleBuild: false,
       status: "starting",
       startupMessage,
       stageProgress: 0,
@@ -204,7 +203,7 @@ export class DeviceSession implements Disposable {
     return currentFingerprint !== build.fingerprint;
   }
 
-  private onProjectFilesChanged = throttleAsync(async () => {
+  private checkIsUsingStaleBuild = throttleAsync(async () => {
     const lastSuccessfulBuild = this.maybeBuildResult;
     if (!lastSuccessfulBuild || this.stateManager.getState().status !== "running") {
       // we only monitor for stale builds when the session is in 'running' state
@@ -247,7 +246,7 @@ export class DeviceSession implements Disposable {
 
     this.buildProgressListener.cancel();
     this.onBundleProgress.cancel();
-    this.onProjectFilesChanged.cancel();
+    this.checkIsUsingStaleBuild.cancel();
 
     disposeAll(this.disposables);
   }
@@ -430,11 +429,15 @@ export class DeviceSession implements Disposable {
       platform: this.stateManager.getState().deviceInfo.platform,
     });
 
-    this.resetStartingState();
-    if (this.maybeBuildResult && (await this.isBuildStale(this.maybeBuildResult))) {
+    const { isUsingStaleBuild } = this.stateManager.getState();
+
+    if (this.maybeBuildResult && isUsingStaleBuild) {
       await this.restartDevice({ forceClean: false });
       return;
     }
+
+    this.checkIsUsingStaleBuild();
+    this.checkIsUsingStaleBuild.flush();
 
     // if reloading JS is possible, we try to do it first and exit in case of success
     // otherwise we continue to restart using more invasive methods

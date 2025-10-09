@@ -1,9 +1,9 @@
-import { ElementHelperService } from "./helperServices.js";
-import { waitForMessage } from "../server/webSocketServer.js";
-import { By, BottomBarPanel } from "vscode-extension-tester";
 import * as fs from "fs";
+import { By, BottomBarPanel } from "vscode-extension-tester";
 import getConfiguration from "../configuration.js";
 import { centerCoordinates } from "../utils/helpers.js";
+import { waitForMessage } from "../server/webSocketServer.js";
+import { ElementHelperService } from "./helperServices.js";
 
 export default class AppManipulationService {
   constructor(driver) {

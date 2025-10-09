@@ -2,7 +2,6 @@ import { WebView, SideBarView, EditorView } from "vscode-extension-tester";
 import { assert } from "chai";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
-import { getAppWebsocket } from "../server/webSocketServer.js";
 
 describe("9 - Radon Settings", () => {
   let driver,

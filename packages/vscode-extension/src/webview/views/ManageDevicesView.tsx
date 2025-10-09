@@ -1,5 +1,5 @@
 import "./ManageDevicesView.css";
-import { MouseEventHandler, useState } from "react";
+import { MouseEventHandler, useEffect, useState } from "react";
 import * as Switch from "@radix-ui/react-switch";
 import { use$ } from "@legendapp/state/react";
 import IconButton from "../components/shared/IconButton";
@@ -141,6 +141,8 @@ function DeviceRow({
 }
 
 function ManageDevicesView() {
+  const { project } = useProject();
+
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
   const deviceSessions = use$(store$.projectState.deviceSessions);
@@ -162,6 +164,10 @@ function ManageDevicesView() {
   const androidDevices = (devices ?? []).filter(
     ({ platform, modelId }) => platform === DevicePlatform.Android && modelId.length > 0
   );
+
+  useEffect(() => {
+    project.loadInstalledImages();
+  }, []);
 
   const handleDeviceRename = (device: DeviceInfo) => {
     setSelectedDevice(device);

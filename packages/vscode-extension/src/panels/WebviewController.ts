@@ -17,12 +17,6 @@ interface GetStateCommand extends EventBase {
 interface UpdateStateCommand extends EventBase {
   command: "RNIDE_update_state";
 }
-interface FocusPreviewCommand extends EventBase {
-  command: "focusPreview";
-}
-interface BlurPreviewCommand extends EventBase {
-  command: "blurPreview";
-}
 
 interface CallArgs {
   callId: string;
@@ -41,15 +35,8 @@ interface UpdateStateArgs {
 type CallEvent = CallCommand & CallArgs;
 type GetStateEvent = GetStateCommand & GetStateArgs;
 type UpdateStateEvent = UpdateStateCommand & UpdateStateArgs;
-type FocusPreviewEvent = FocusPreviewCommand;
-type BlurPreviewEvent = BlurPreviewCommand;
 
-export type WebviewEvent =
-  | CallEvent
-  | GetStateEvent
-  | UpdateStateEvent
-  | FocusPreviewEvent
-  | BlurPreviewEvent;
+export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent;
 
 export class WebviewController implements Disposable {
   private disposables: Disposable[] = [];
@@ -122,10 +109,6 @@ export class WebviewController implements Disposable {
           this.handleGetState(message);
         } else if (message.command === "RNIDE_update_state") {
           this.handleUpdateState(message);
-        } else if (message.command === "focusPreview") {
-          commands.executeCommand("setContext", "RNIDE.isPreviewFocused", true);
-        } else if (message.command === "blurPreview") {
-          commands.executeCommand("setContext", "RNIDE.isPreviewFocused", false);
         }
       },
       undefined,
