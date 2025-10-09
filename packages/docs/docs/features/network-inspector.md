@@ -66,7 +66,3 @@ Clicking on the network log shows more details about the contents of the request
 
 Right clicking on the network log opens **Context Menu**, allowing for sorting and filtering the logs, copying the request details, refetching and opening responses in the editor's tab.
 
-
-
-
-
