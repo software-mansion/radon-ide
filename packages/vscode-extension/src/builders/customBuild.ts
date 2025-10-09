@@ -12,11 +12,23 @@ import { DevicePlatform } from "../common/State";
 type Env = Record<string, string> | undefined;
 
 export function extractFilePath(line: string): string | null {
-  // Fixed regex pattern to properly capture only the path
-  const regex =
-    /["']([^"']*\.(?:tar\.gz|app|apk))["']|([a-zA-Z]:\\[^"']*\.(?:tar\.gz|app|apk))|(\/[^"']*\.(?:tar\.gz|app|apk))|(\.\/[^"']*\.(?:tar\.gz|app|apk))/i;
+  // Define file extensions we're looking for
+  const fileExtensions = "(?:tar\\.gz|app|apk)";
 
-  const match = line.match(regex);
+  // Single regex that handles all cases:
+  // 1. Quoted paths: "path.ext" or 'path.ext' (any format inside quotes)
+  // 2. Windows paths: C:\path\file.ext
+  // 3. Unix absolute paths: /path/file.ext
+  // 4. Relative paths: ./path/file.ext
+  const pathRegex = new RegExp(
+    `["']([^"']*\\.${fileExtensions})["']|` + // Quoted: "any/path.ext"
+      `([a-zA-Z]:\\\\[^"']*\\.${fileExtensions})|` + // Windows: C:\path\file.ext
+      `(\\/[^"']*\\.${fileExtensions})|` + // Unix absolute: /path/file.ext
+      `(\\.\\/[^"']*\\.${fileExtensions})`, // Relative: ./path/file.ext
+    "i"
+  );
+
+  const match = line.match(pathRegex);
   if (match) {
     // Return the first non-undefined capture group
     return match[1] || match[2] || match[3] || match[4];
