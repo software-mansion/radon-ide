@@ -15,10 +15,13 @@ if not log_path.exists():
 with open(log_path, "r", encoding="utf-8") as f:
     text = f.read()
 
-pattern = r"`==== Summary app:[\s\S]*?============"
+pattern = r"==== Summary app:[\s\S]*?============"
 
 matches = re.findall(pattern, text)
 
 for match in matches:
-    print(match)
+    for line in match.splitlines():
+        if "==========" not in line and "WebSocket server closed" not in line:
+            print(line)
+    print()
 
