@@ -41,9 +41,11 @@ export default function ChangelogScreen() {
           </div>
           <article className={styles.article}>
             <DateItem item={item} />
-            <h2 id={item.version} className={styles.title}>
-              {item.title}
-            </h2>
+            <h2
+              id={item.version}
+              className={styles.title}
+              dangerouslySetInnerHTML={{ __html: item.title }}
+            />
             {item.content && (
               <div className={styles.content}>
                 <Markdown rehypePlugins={[rehypeRaw]}>{item.content}</Markdown>
