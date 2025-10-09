@@ -1,7 +1,10 @@
 import React, { useEffect } from "react";
-import HomepageButton, { ButtonStyling, BorderStyling } from "@site/src/components/HomepageButton";
 import styles from "./styles.module.css";
 import { track } from "@vercel/analytics";
+import DownloadButtons from "../../DownloadButtons";
+import RadonIconGreen from "../../RadonIconGreen";
+import usePageType from "@site/src/hooks/usePageType";
+import clsx from "clsx";
 
 const RADON_IDE_MARKETPLACE_URL =
   "https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide";
@@ -14,6 +17,7 @@ const LearnMoreFooter = () => {
 
   const [isLoaded, setIsLoaded] = React.useState(false);
   const [installs, setInstalls] = React.useState(DEFAULT_INSTALLS_NO);
+  const { isLanding } = usePageType();
 
   useEffect(() => {
     async function getInstalls() {
@@ -41,22 +45,32 @@ const LearnMoreFooter = () => {
   }, []);
 
   return (
-    <div className={`${styles.learnMoreSectionFooter} ${isLoaded ? styles.show : ""}`}>
-      <div className={styles.ellipse} />
-      <div className={styles.ellipse} />
-      <div className={styles.contentContainer}>
+    <div
+      className={clsx(
+        styles.learnMoreSectionFooter,
+        isLoaded && styles.show,
+        isLanding ? styles.sectionLanding : styles.sectionFeature
+      )}>
+      <div
+        className={clsx(
+          styles.contentContainer,
+          isLanding ? styles.containerLanding : styles.containerFeature
+        )}>
         <h2>
-          Join {installs} engineers using Radon IDE for faster, more efficient app development.
+          Join <span>{installs} developers</span>
+          <br /> using Radon IDE for faster,
+          <br /> more efficient app development
         </h2>
+        <div className={styles.buttonContainer}>
+          <DownloadButtons />
+        </div>
+        <p className={styles.try}>Try 30 days for free. No sign up or credit card required.</p>
       </div>
-      <HomepageButton
-        target="_blank"
-        href="https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide"
-        backgroundStyling={ButtonStyling.TO_WHITE}
-        borderStyling={BorderStyling.NAVY}
-        title="Try Radon IDE for Free"
-        onClick={handleBottomCTAClick}
-      />
+      {isLanding && (
+        <div className={styles.radonIconGreen}>
+          <RadonIconGreen />
+        </div>
+      )}
     </div>
   );
 };

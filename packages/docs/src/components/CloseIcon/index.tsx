@@ -3,17 +3,17 @@ export default function CloseIcon(props) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
-      width={16}
-      height={16}
-      fill="none"
+      width="24"
+      height="24"
       viewBox="0 0 24 24"
+      fill="none"
       {...props}>
       <path
-        stroke="#001A72"
+        d="M18 6L6 18M6 6L18 18"
+        stroke="var(--ifm-color-primary)"
+        strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        strokeWidth={1.5}
-        d="m5.833 5.833 16.333 16.334m-16.333 0L22.166 5.833"
       />
     </svg>
   );

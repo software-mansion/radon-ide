@@ -1,0 +1,8 @@
+.spacer {
+  display: flex;
+  flex: 1;
+  justify-content: center;
+}
+.spacerBorder {
+  flex: 1;
+}

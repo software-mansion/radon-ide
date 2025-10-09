@@ -1,0 +1,23 @@
+.navbar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+
+  background-color: transparent;
+
+  position: sticky;
+  top: 0;
+  width: 100%;
+
+  height: 80px;
+  padding: 0;
+
+  z-index: 1000;
+}
+
+@media (max-width: 830px) {
+  .navbar {
+    height: 72px;
+  }
+}

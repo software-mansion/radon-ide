@@ -1,32 +1,68 @@
-import React from "react";
+import React, { useState } from "react";
 import styles from "./styles.module.css";
 import PricingPlansList from "./PricingPlansList";
 import FAQ from "../Sections/FAQ";
-import Motivation from "../Motivation";
-import { CompatibilityInfo } from "./CompatibilityInfo";
+import clsx from "clsx";
+import ComparePricingPlans from "./ComparePricingPlans";
+import usePaddle from "@site/src/hooks/usePaddle";
 
-const Pricing = () => {
+export interface PricingProps {
+  handleIndividual?: () => void;
+  handleBusiness?: () => void;
+}
+
+const isProduction = process.env.NODE_ENV === "production";
+
+const INDIVIDUAL_MONTHLY_PRICE_ID = isProduction
+  ? "pri_01hx944ht3wnpvgktatj6v5k4b"
+  : "pri_01j0tjqzqhv6vezhf14pwtxfm0";
+const INDIVIDUAL_YEARLY_PRICE_ID = isProduction
+  ? "pri_01hzf02s579nwrwb756enh8r7g"
+  : "pri_01jb1ajv7btj3cbnshrdq4ncjf";
+const BUSINESS_MONTHLY_PRICE_ID = isProduction
+  ? "pri_01jdyc0j8wkfqx3a7nbf6tsaxy"
+  : "pri_01jdyap7jcydxvewmek2r0e35q";
+const BUSINESS_YEARLY_PRICE_ID = isProduction
+  ? "pri_01jdyc1z1nh3pgp01ya4h8g075"
+  : "pri_01jdyaqnwf3w4pm6hsgwehm1by";
+
+const Pricing = ({ handleBusiness, handleIndividual }: PricingProps) => {
+  const paddle = usePaddle();
+
+  const [isMonthly, setIsMonthly] = useState(true);
+  const openIndividualCheckout = () => {
+    paddle?.Checkout.open({
+      items: [
+        {
+          priceId: isMonthly ? INDIVIDUAL_MONTHLY_PRICE_ID : INDIVIDUAL_YEARLY_PRICE_ID,
+          quantity: 1,
+        },
+      ],
+    });
+  };
+  const openBusinessCheckout = () => {
+    paddle?.Checkout.open({
+      items: [
+        { priceId: isMonthly ? BUSINESS_MONTHLY_PRICE_ID : BUSINESS_YEARLY_PRICE_ID, quantity: 1 },
+      ],
+    });
+  };
   return (
-    <div className={styles.container}>
-      <h1 className={styles.headingLabel}>
-        Get the best developer experience with our IDE for React Native
-      </h1>
-      <h3 className={styles.subheadlingLabel}>
-        Choose a plan that works for your needs. Pay monthly for flexibility or yearly for the best
-        price.
-      </h3>
-      <div className={styles.wrapper}>
-        <PricingPlansList />
+    <div className={clsx(styles.container, "border-layout")}>
+      <div className={styles.titleContainer}>
+        <h1 className={styles.headingLabel}>Pricing</h1>
+        <h3 className={styles.subheadlingLabel}>
+          Choose a plan that works for your needs. <br /> Pay monthly for flexibility or yearly for
+          the best price.
+        </h3>
       </div>
-      <CompatibilityInfo />
-      <p>
-        Windows users can use beta version of Radon IDE for Windows which is available under{" "}
-        <a href="https://ide.swmansion.com/legal" target="_blank" className={styles.highlight}>
-          free beta license
-        </a>
-        .
-      </p>
-      <Motivation />
+      <div className={styles.wrapper}>
+        <PricingPlansList
+          handleBusiness={openBusinessCheckout}
+          handleIndividual={openIndividualCheckout}
+        />
+      </div>
+      <ComparePricingPlans handleBusiness={openBusinessCheckout} />
       <FAQ />
     </div>
   );

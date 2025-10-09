@@ -1,0 +1,18 @@
+:root {
+  --radon-border-width: 1360px;
+  --radon-border-layout: 1px solid var(--swm-border);
+}
+
+.border-layout {
+  max-width: var(--radon-border-width);
+  border-left: var(--radon-border-layout);
+  border-right: var(--radon-border-layout);
+  width: 100%;
+}
+
+@media (max-width: 1360px) {
+  .border-layout {
+    border-left: none;
+    border-right: none;
+  }
+}

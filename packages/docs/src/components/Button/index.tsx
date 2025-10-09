@@ -1,8 +1,8 @@
 import React from "react";
 import styles from "./styles.module.css";
 
-import ArrowRight from "@site/static/img/arrow-right-hero.svg";
 import clsx from "clsx";
+import ArrowRightSmallIcon from "../ArrowRightSmallIcon";
 
 interface ButtonProps {
   children: string;
@@ -25,7 +25,7 @@ function Button({ children, href, target = "_self", onClick, disabled, tooltip }
         {children}
         {!disabled && (
           <div className={styles.arrow}>
-            <ArrowRight />
+            <ArrowRightSmallIcon />
           </div>
         )}
       </div>

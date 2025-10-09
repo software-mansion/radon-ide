@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./styles.module.css";
-import HomepageButton, { BorderStyling, ButtonStyling } from "../../HomepageButton";
 import { track } from "@vercel/analytics";
+import HomeButton from "../../DownloadButtons/HomeButton";
 
 export function CompatibilityInfo() {
   const handleCompatibilityClick = () => {
@@ -24,11 +24,9 @@ export function CompatibilityInfo() {
         for 30 days before making a purchase. Also, consult the compatibility page to see whether
         your project is officially supported by Radon IDE.
       </p>
-      <HomepageButton
+      <HomeButton
         href="/docs/getting-started/compatibility"
         title="See&nbsp;compatibility"
-        backgroundStyling={ButtonStyling.TO_WHITE}
-        borderStyling={BorderStyling.NAVY}
         onClick={handleCompatibilityClick}
       />
     </div>
