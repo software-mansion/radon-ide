@@ -56,6 +56,16 @@
   font-size: var(--vscode-editor-font-size);
 }
 
+.response-tab-base64-wrap,
+.response-tab-base64-wrap > pre {
+  margin: 0 14px 14px 0;
+  font-size: var(--vscode-editor-font-size);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
 .shiki {
   background-color: transparent !important;
 
