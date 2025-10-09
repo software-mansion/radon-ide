@@ -1,9 +1,10 @@
 import React from "react";
 import styles from "./styles.module.css";
+import { useModal } from "../../ModalProvider";
 
 interface FooterProps {
   title: string;
-  links: { label: string; to: string }[];
+  links: { label: string; to?: string }[];
 }
 
 const footerLinks: FooterProps[] = [
@@ -15,7 +16,6 @@ const footerLinks: FooterProps[] = [
       { label: "Pricing", to: "/pricing" },
       {
         label: "Download",
-        to: "https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide",
       },
     ],
   },
@@ -38,6 +38,7 @@ const footerLinks: FooterProps[] = [
 ];
 
 export default function FooterNavigation() {
+  const { onOpen } = useModal();
   return (
     <>
       {footerLinks.map((section, index) => (
@@ -46,9 +47,11 @@ export default function FooterNavigation() {
           <ul className={styles.sectionLinks}>
             {section.links.map((link, idx) => (
               <li key={idx}>
-                <a href={link.to} className={styles.footerLink}>
-                  {link.label}
-                </a>
+                {link.to ? (
+                  <a href={link.to}>{link.label}</a>
+                ) : (
+                  <a onClick={onOpen}>{link.label}</a>
+                )}
               </li>
             ))}
           </ul>
