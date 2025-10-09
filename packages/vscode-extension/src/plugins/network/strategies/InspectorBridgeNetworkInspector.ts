@@ -1,5 +1,5 @@
 import { commands, Disposable } from "vscode";
-import { RadonInspectorBridge } from "../../../project/bridge";
+import { RadonInspectorBridge } from "../../../project/inspectorBridge";
 import { disposeAll } from "../../../utilities/disposables";
 import { Logger } from "../../../Logger";
 import {

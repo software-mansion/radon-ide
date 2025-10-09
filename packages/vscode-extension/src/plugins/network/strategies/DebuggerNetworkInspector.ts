@@ -10,7 +10,8 @@ import {
 import { BaseNetworkInspector } from "./BaseNetworkInspector";
 
 import { NETWORK_EVENTS } from "../../../network/types/panelMessageProtocol";
-import { NETWORK_EVENT_MAP, NetworkBridge, RadonInspectorBridge } from "../../../project/bridge";
+import { RadonInspectorBridge } from "../../../project/inspectorBridge";
+import { NETWORK_EVENT_MAP, NetworkBridge } from "../../../project/networkBridge";
 import { ResponseBodyData } from "../../../network/types/network";
 
 // Truncation constants

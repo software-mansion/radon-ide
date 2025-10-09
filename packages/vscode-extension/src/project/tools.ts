@@ -1,6 +1,7 @@
 import { Disposable } from "vscode";
 import _ from "lodash";
-import { NetworkBridge, RadonInspectorBridge } from "./bridge";
+import { RadonInspectorBridge } from "./inspectorBridge";
+import { NetworkBridge } from "./networkBridge";
 import { extensionContext } from "../utilities/extensionContext";
 import {
   createExpoDevPluginTools,

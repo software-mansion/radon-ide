@@ -7,7 +7,7 @@ import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
-import { NetworkBridgeSendMethodArgs as NetworkBridgeMethodArgs } from "../project/bridge";
+import { NetworkBridgeSendMethodArgs } from "../project/networkBridge";
 
 const MASTER_DEBUGGER_TYPE = "com.swmansion.react-native-debugger";
 const CUSTOM_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
@@ -341,7 +341,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
     await this.jsDebugSession.customRequest("RNIDE_addBinding", { name });
   }
 
-  public async invokeNetworkMethod<T>(method: RNIDE_NetworkMethod, args?: NetworkBridgeMethodArgs) {
+  public async invokeNetworkMethod<T>(method: RNIDE_NetworkMethod, args?: NetworkBridgeSendMethodArgs) {
     if (!this.jsDebugSession) {
       throw new Error("JS Debug session is not running");
     }

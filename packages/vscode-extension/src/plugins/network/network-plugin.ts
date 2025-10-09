@@ -1,5 +1,6 @@
 import { commands, Disposable, window } from "vscode";
-import { NetworkBridge, RadonInspectorBridge } from "../../project/bridge";
+import { RadonInspectorBridge } from "../../project/inspectorBridge";
+import { NetworkBridge } from "../../project/networkBridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { Logger } from "../../Logger";
