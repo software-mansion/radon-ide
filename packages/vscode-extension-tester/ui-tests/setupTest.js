@@ -16,7 +16,7 @@ import {
 import initServices from "../services/index.js";
 import startRecording from "../utils/screenRecording.js";
 import getConfiguration from "../configuration.js";
-import texts from "../utils/constants.js";
+import { texts } from "../utils/constants.js";
 
 const { IS_RECORDING } = getConfiguration();
 
