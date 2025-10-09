@@ -1,7 +1,7 @@
-import { useEffect, useState, startTransition } from "react";
+import { useEffect, useState } from "react";
 
 import { ThemeData } from "../../../common/theme";
-import { useHighlightCache } from "../../providers/HighlighterCacheProvider";
+import { useHighlighter } from "../../providers/HighlighterProvider";
 import "./PayloadAndResponseTab.css";
 
 interface HighlightedCodeBlockProps {
@@ -25,7 +25,7 @@ const HighlightedCodeBlock = ({
   placeholder = "No content",
   className = "response-tab-pre",
 }: HighlightedCodeBlockProps) => {
-  const cache = useHighlightCache();
+  const highlighter = useHighlighter();
   const [html, setHtml] = useState<string>("");
 
   const contentLength = content?.length ?? 0;
@@ -35,34 +35,27 @@ const HighlightedCodeBlock = ({
   // Tried startTransition approach - highlight operation still blocks the main thread
   useEffect(() => {
     if (!shouldHighlight || isPlainText || !content) {
-      startTransition(() => {
-        setHtml("");
-      });
+      setHtml("");
       return;
     }
 
     let cancelled = false;
 
-    startTransition(() => {
-      cache
-        .getHighlightedCode(content, language, theme)
-        .then((result) => {
-          if (cancelled) {
-            return;
-          }
-          startTransition(() => {
-            setHtml(result);
-          });
-        })
-        .catch((err) => {
-          console.error("Failed to get highlighted code:", err);
-        });
-    });
+    highlighter
+      .getHighlightedCode(content, language, theme)
+      .then((result) => {
+        if (!cancelled) {
+          setHtml(result);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to get highlighted code:", err);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [content, language, theme, shouldHighlight, isPlainText, cache]);
+  }, [content, language, theme, shouldHighlight, isPlainText]);
 
   const shouldShowNoHighlightInfo = !isPlainText && !shouldHighlight;
 
