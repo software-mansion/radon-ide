@@ -31,7 +31,7 @@ const footerLinks: FooterProps[] = [
   {
     title: "Legal",
     links: [
-      { label: "Privacy", to: "/privacy" },
+      { label: "Privacy", to: "/legal/privacy-policy" },
       { label: "Legal", to: "/legal" },
     ],
   },

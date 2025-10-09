@@ -331,6 +331,7 @@ div[class*="hireUsContainer"] p {
   border: var(--radon-border-layout);
   height: 100%;
 }
+
 [class*="generatedIndexPage"] header h1[class*="title"] {
   padding-left: 10px;
 }
@@ -360,4 +361,54 @@ button {
   border: none;
   background-color: transparent;
   font-family: Aeonik;
+}
+
+[class*="margin-vert"] {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  display: flex;
+  justify-content: center;
+}
+
+.mdxPageWrapper_j9I6 {
+  width: 1360px;
+  border-left: var(--radon-border-layout);
+  border-right: var(--radon-border-layout);
+  justify-content: space-between !important;
+}
+
+.mdxPageWrapper_j9I6 > .col--8 {
+  padding: 80px;
+  max-width: 1110px;
+  --ifm-col-width: 100%;
+  flex: 1;
+}
+
+.mdxPageWrapper_j9I6 > .col--2 {
+  width: 240px;
+  padding: 0;
+  border-left: var(--radon-border-layout);
+  flex: 1;
+}
+
+.container--fluid {
+  max-width: 1360px !important;
+}
+
+@media (max-width: 1360px) {
+  .mdxPageWrapper_j9I6 {
+    border-left: none;
+    border-right: none;
+  }
+}
+
+@media (max-width: 997px) {
+  .mdxPageWrapper_j9I6 > .col--8 {
+    flex: initial;
+  }
+}
+@media (max-width: 800px) {
+  .mdxPageWrapper_j9I6 > .col--8 {
+    padding: 40px 24px;
+  }
 }
