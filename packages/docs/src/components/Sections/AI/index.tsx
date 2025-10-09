@@ -1,10 +1,33 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./styles.module.css";
 import RadonIcon from "../../RadonIcon";
 import ReactNativeIcon from "../../ReactNativeIcon";
 import EyeIcon from "../../EyeIcon";
+import { useInView } from "react-intersection-observer";
+import { motion } from "motion/react";
+
+const sentence = {
+  hidden: { opacity: 1 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 2.3,
+    },
+  },
+};
+
+const word = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1 },
+};
+
+const text = `Lorem ipsum dolor sit amet consectetur, adipisicing elit. Cumque soluta commodi accusantium architecto earum voluptatum in perspiciatis eveniet accusamus tempora est, expedita error quod natus quis debitis! In nulla ad sapiente delectus nesciunt nihil error porro accusantium dignissimos cupiditate aperiam temporibus doloremque repudiandae libero, mollitia ab. Veritatis odio unde aliquid sint tenetur natus saepe deserunt neque provident consequuntur. Possimus praesentium laudantium nemo quibusdam aut quia tempore rerum pariatur a iure, est autem tempora suscipit excepturi vel dignissimos quod corrupti nesciunt ex ab, quo voluptate eum reprehenderit optio. `;
 
 export default function AI() {
+  const { ref, inView } = useInView({ triggerOnce: true });
+  const answer = text.split(" ");
+
   return (
     <div className={styles.container}>
       <div className={styles.left}>
@@ -22,26 +45,58 @@ export default function AI() {
       <div className={styles.radonBackgroundImage}>
         <RadonIcon />
       </div>
-      <div className={styles.right}>
-        <div className={styles.content}>
-          <p>/help What can you do?</p>
-          <div className={styles.chat}>
-            <div className={styles.message}>
-              <div className={styles.messageHeading}>
-                <div className={styles.icon}>
-                  <ReactNativeIcon strokeWidth="5" height="12" width="13" />
+      <div ref={ref} className={styles.right}>
+        {inView && (
+          <div className={styles.content}>
+            <motion.div
+              className={styles.emptyDiv}
+              initial={{ height: 0 }}
+              animate={{ height: 36 }}
+              transition={{ duration: 0.3, delay: 2 }}
+            />
+            <motion.p
+              initial={{ opacity: 1, height: "auto" }}
+              animate={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, delay: 2 }}>
+              /help What can you do?
+            </motion.p>
+
+            <div className={styles.chat}>
+              <div className={styles.message}>
+                <div className={styles.messageHeading}>
+                  <div className={styles.icon}>
+                    <ReactNativeIcon strokeWidth="5" height="12" width="13" />
+                  </div>
+                  <p>Message.jsx</p>
                 </div>
-                <p>Message.jsx</p>
+                <p className={styles.current}>Current file</p>
+                <EyeIcon />
               </div>
-              <p className={styles.current}>Current file</p>
-              <EyeIcon />
+              <p className={styles.question}>
+                <span>@radon</span>
+                How to run LLMs locally?
+              </p>
             </div>
-            <p className={styles.question}>
-              <span>@radon</span>
-              How to run LLMs locally?
-            </p>
+            <motion.div
+              className={styles.answerContainer}
+              initial={{ height: 0 }}
+              animate={{ height: 200 }}
+              transition={{ duration: 0.3, delay: 2 }}>
+              <div className={styles.gradient} />
+              <motion.div
+                className={styles.answer}
+                variants={sentence}
+                initial="hidden"
+                animate="visible">
+                {answer.map((wordText, i) => (
+                  <motion.span key={i} variants={word} style={{ marginRight: "8px" }}>
+                    {wordText}
+                  </motion.span>
+                ))}
+              </motion.div>
+            </motion.div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
