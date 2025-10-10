@@ -3,6 +3,7 @@ import { NetworkLog } from "../../types/networkLog";
 import { ResponseBodyData } from "../../types/network";
 import { isPreviewableImage } from "../../utils/requestFormatters";
 import { NetworkEvent } from "../../types/panelMessageProtocol";
+import { useLogDetailsBar } from "../../providers/LogDetailsBar";
 import "./PreviewTab.css";
 import "./PayloadAndResponseTab.css";
 
@@ -18,6 +19,22 @@ interface ImageMetadata {
   mime: string;
 }
 
+function PreviewInfoBar({ metadata }: { metadata: ImageMetadata }) {
+  return (
+    <div style={{ display: "flex", gap: "16px", fontSize: "12px" }}>
+      <span>
+        <strong>Dimensions:</strong> {metadata.width} × {metadata.height}
+      </span>
+      <span>
+        <strong>Aspect Ratio:</strong> {metadata.aspectRatio}
+      </span>
+      <span>
+        <strong>MIME Type:</strong> {metadata.mime}
+      </span>
+    </div>
+  );
+}
+
 function calculateAspectRatio(width: number, height: number) {
   const gcd = (a: number, b: number): number => (b === 0 ? a : gcd(b, a % b));
   const divisor = gcd(width, height);
@@ -26,6 +43,7 @@ function calculateAspectRatio(width: number, height: number) {
 
 const PreviewTab = ({ networkLog, responseBodyData }: PreviewTabProps) => {
   const imageRef = useRef<HTMLImageElement>(null);
+  const { setContent, setIsVisible } = useLogDetailsBar();
 
   const [loading, setLoading] = useState(!imageRef.current?.complete);
   const [error, setError] = useState<boolean>(false);
@@ -62,6 +80,22 @@ const PreviewTab = ({ networkLog, responseBodyData }: PreviewTabProps) => {
       aspectRatio: calculateAspectRatio(naturalWidth, naturalHeight),
     });
   }, [loading]);
+
+  // Update the info bar content when metadata is available
+  useEffect(() => {
+    if (metadata) {
+      setContent(<PreviewInfoBar metadata={metadata} />);
+      setIsVisible(true);
+    } else {
+      setIsVisible(false);
+    }
+
+    // Cleanup: hide info bar when component unmounts
+    return () => {
+      setIsVisible(false);
+      setContent(null);
+    };
+  }, [metadata, setContent, setIsVisible]);
 
   if (dataFetchFailure) {
     return (

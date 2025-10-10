@@ -1,7 +1,7 @@
 import "./NetworkLogDetails.css";
 import { VscodeTabHeader, VscodeTabPanel, VscodeTabs } from "@vscode-elements/react-elements";
 import { type VscodeTabHeader as VscodeTabHeaderElement } from "@vscode-elements/elements/dist/vscode-tab-header/vscode-tab-header.js";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import HeadersTab from "./Tabs/HeadersTab";
 import PayloadTab from "./Tabs/PayloadTab";
 import ResponseTab from "./Tabs/ResponseTab";
@@ -15,6 +15,9 @@ import { ThemeData } from "../../common/theme";
 import useThemeExtractor from "../hooks/useThemeExtractor";
 import "overlayscrollbars/overlayscrollbars.css";
 import { NetworkEvent } from "../types/panelMessageProtocol";
+import { VscTabsSelectEvent } from "@vscode-elements/elements/dist/vscode-tabs/vscode-tabs";
+import InfoBar from "./Tabs/InfoBar";
+import { useLogDetailsBar } from "../providers/LogDetailsBar";
 // import InfoBar from "./Tabs/InfoBar";
 
 interface NetworkLogDetailsProps {
@@ -40,7 +43,8 @@ interface Tab {
 
 const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLogDetailsProps) => {
   const headerRef = useRef<VscodeTabHeaderElement>(null);
-  const selectedTabIndexRef = useRef(0);
+  const [selectedTabIndex, setSelectedTabIndex] = useState(0);
+  const { infoBarHeight } = useLogDetailsBar();
 
   const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
   const { wasTruncated = false } = responseBodyData || {};
@@ -48,7 +52,6 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
 
   const themeData = useThemeExtractor();
   const isImage = networkLog.type === "Image";
-  const selectedTabIndex = selectedTabIndexRef.current;
 
   useEffect(() => {
     if (
@@ -61,33 +64,37 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
     }
   }, [networkLog.requestId, networkLog.currentState]);
 
-  const TABS: Tab[] = [
-    {
-      title: "Headers",
-      Tab: HeadersTab,
-    },
-    {
-      title: "Payload",
-      Tab: PayloadTab,
-      props: { editorThemeData: themeData },
-    },
-    {
-      title: "Preview",
-      Tab: PreviewTab,
-      props: { responseBodyData },
-      hideTab: !isImage,
-    },
-    {
-      title: "Response",
-      Tab: ResponseTab,
-      props: { responseBodyData, editorThemeData: themeData, isImage },
-      warning: wasTruncated,
-    },
-    {
-      title: "Timing",
-      Tab: TimingTab,
-    },
-  ];
+  // Define tabs with stable indices - memoized to prevent unnecessary recalculations
+  const tabs: Tab[] = useMemo(
+    () => [
+      {
+        title: "Headers",
+        Tab: HeadersTab,
+      },
+      {
+        title: "Payload",
+        Tab: PayloadTab,
+        props: { editorThemeData: themeData },
+      },
+      {
+        title: "Preview",
+        Tab: PreviewTab,
+        props: { responseBodyData },
+        hideTab: !isImage,
+      },
+      {
+        title: "Response",
+        Tab: ResponseTab,
+        props: { responseBodyData, editorThemeData: themeData, isImage },
+        warning: wasTruncated,
+      },
+      {
+        title: "Timing",
+        Tab: TimingTab,
+      },
+    ],
+    [themeData, responseBodyData, isImage, wasTruncated]
+  );
 
   const calculateScrollableHeight = () => {
     const header = headerRef.current;
@@ -95,12 +102,29 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
     if (!parentHeight || !header) {
       return 0;
     }
+
     const headerHeight = header.clientHeight;
-    return parentHeight - headerHeight;
+    return parentHeight - headerHeight - infoBarHeight;
   };
 
+  /**
+   * Handle tab visibility changes - currently only Preview tab case
+   */
+  useEffect(() => {
+    const currentTab = tabs[selectedTabIndex];
+    if (currentTab?.title === "Preview" && currentTab.hideTab) {
+      // Switch Preview tab to Response tab
+      const responseTabIndex = tabs.findIndex((tab) => tab.title === "Response");
+      const updatedIndex = responseTabIndex !== -1 ? responseTabIndex : 0;
+      setSelectedTabIndex(updatedIndex);
+    }
+  }, [tabs, selectedTabIndex]);
+
+  const handleVscTabsSelect = ({ detail }: VscTabsSelectEvent) =>
+    setSelectedTabIndex(detail.selectedIndex);
+
   return (
-    <Fragment key={networkLog.requestId}>
+    <Fragment>
       {/* TODO: use VscodeToolbarButton when it will be available in @vscode-elements/react-elements  */}
       <button className="network-log-details-close-button" onClick={handleClose}>
         <span className="codicon codicon-close" />
@@ -108,38 +132,31 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
       <VscodeTabs
         data-testid="network-panel-log-details-tabs"
         selectedIndex={selectedTabIndex}
-        onVscTabsSelect={({ detail }) => (selectedTabIndexRef.current = detail.selectedIndex)}>
-        {TABS.map(
-          ({ title, Tab, props, warning, hideTab }) =>
-            !hideTab && (
-              <Fragment key={`${title}`}>
-                <VscodeTabHeader
-                  ref={headerRef}
-                  className="network-log-details-tab-header"
-                  data-testid={`network-panel-tab-header-${title.toLowerCase()}`}>
-                  <div>
-                    {title}
-                    {warning && <span className="codicon codicon-warning" />}
-                  </div>
-                </VscodeTabHeader>
-                <VscodeTabPanel data-testid={`network-panel-tab-panel-${title.toLowerCase()}`}>
-                  {/* <div style={{ height: `${height - 40}px`, overflow: "hidden" }}> */}
+        onVscTabsSelect={handleVscTabsSelect}>
+        {tabs.map(({ title, Tab, props, warning, hideTab }, index) => (
+          <Fragment key={title}>
+            <VscodeTabHeader
+              ref={headerRef}
+              className="network-log-details-tab-header"
+              style={{ display: hideTab ? "none" : "flex" }}
+              data-testid={`network-panel-tab-header-${title.toLowerCase()}`}>
+              <div>
+                {title}
+                {warning && <span className="codicon codicon-warning" />}
+              </div>
+            </VscodeTabHeader>
+            <VscodeTabPanel data-testid={`network-panel-tab-panel-${title.toLowerCase()}`}>
+              {index === selectedTabIndex && (
+                <>
                   <TabScrollable height={calculateScrollableHeight()}>
                     <Tab networkLog={networkLog} {...props} />
                   </TabScrollable>
-                  {/* </div> */}
-                  {/* <InfoBar
-                ref={infoBarRef}
-                data={{
-                  method: networkLog.request?.method || "Unknown",
-                  status: networkLog.response?.status?.toString() || "Unknown",
-                  type: networkLog.response?.headers?.["Content-Type"] || "Unknown",
-                }}
-              /> */}
-                </VscodeTabPanel>
-              </Fragment>
-            )
-        )}
+                  <InfoBar />
+                </>
+              )}
+            </VscodeTabPanel>
+          </Fragment>
+        ))}
       </VscodeTabs>
     </Fragment>
   );

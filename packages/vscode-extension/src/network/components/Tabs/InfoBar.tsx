@@ -1,21 +1,24 @@
+import { useEffect, useRef } from "react";
+import { useLogDetailsBar } from "../../providers/LogDetailsBar";
 import "./InfoBar.css";
 
-interface InfoBarProps {
-  data?: Record<string, string>;
-  ref: React.RefObject<HTMLDivElement | null>;
-}
+const InfoBar = () => {
+  const ref = useRef<HTMLDivElement>(null);
+  const { content, isVisible, setInfoBarHeight } = useLogDetailsBar();
 
-const InfoBar = ({ data, ref }: InfoBarProps) => {
-  if (!data || Object.keys(data).length === 0) {
+  useEffect(() => {
+    setInfoBarHeight(ref.current?.offsetHeight || 0);
+
+    return () => setInfoBarHeight(0);
+  }, []);
+
+  if (!isVisible) {
     return null;
   }
 
-  const values = Object.values(data);
-  const displayText = values.join(" | ");
-
   return (
     <div ref={ref} className="info-bar">
-      {displayText}
+      {content}
     </div>
   );
 };
