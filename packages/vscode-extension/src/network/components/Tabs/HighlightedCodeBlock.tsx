@@ -1,24 +1,25 @@
 import { useEffect, useState } from "react";
-import { ShikiHighlighter } from "react-shiki/core";
-import { getHighlighter } from "../../utils/highlighter";
 
 import { ThemeData } from "../../../common/theme";
+import { useHighlighter } from "../../providers/HighlighterProvider";
 import "./PayloadAndResponseTab.css";
 
 interface HighlightedCodeBlockProps {
-  content: string | null | undefined;
+  content: string | undefined;
+  requestId: string | number;
   language?: string;
   theme?: ThemeData;
   placeholder?: string;
   className?: string;
+  isActive?: boolean;
+  showTruncatedWarning?: boolean;
 }
 
 /**
  * Maximum content length (in characters) to apply syntax highlighting
  * For larger content, plain text will be displayed to avoid performance issues
  */
-const MAX_HIGHLIGHT_LENGTH = 100_000;
-const HIGHLIGHT_THROTTLE = 100; // milliseconds
+const MAX_HIGHLIGHT_LENGTH = 65_000;
 
 const HighlightedCodeBlock = ({
   content,
@@ -26,62 +27,67 @@ const HighlightedCodeBlock = ({
   theme,
   placeholder = "No content",
   className = "response-tab-pre",
+  requestId,
+  isActive = false,
+  showTruncatedWarning = false,
 }: HighlightedCodeBlockProps) => {
-  const [highlighter, setHighlighter] = useState<unknown>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
+  const highlighter = useHighlighter();
+  const [highlightedHtml, setHighlightedHtml] = useState<string>("");
 
-  const contentLength = content?.length ?? 0;
-  const shouldHighlight = contentLength <= MAX_HIGHLIGHT_LENGTH;
+  // Determine if highlighting is possible and necessary
   const isPlainText = language === "plaintext";
-
-  const shouldShowNoHighlightInfo = !isLoading && !isPlainText && !shouldHighlight;
-  const shouldShowPlaintext = isLoading || !highlighter || !shouldHighlight;
+  const contentTooLarge = (content?.length ?? 0) > MAX_HIGHLIGHT_LENGTH;
+  const canHighlight = !!content && !isPlainText && !contentTooLarge;
+  const showSizeWarning = contentTooLarge && !isPlainText;
 
   useEffect(() => {
-    // Only initialize highlighter if content should be highlighted
-    if (!shouldHighlight) {
-      setIsLoading(false);
+    if (!canHighlight) {
+      setHighlightedHtml("");
       return;
     }
 
-    getHighlighter()
-      .then((instance) => {
-        setHighlighter(instance);
+    const isCached = highlighter.isCodeCached(content, language, theme, requestId);
+    if (!isCached && !isActive) {
+      setHighlightedHtml("");
+      return;
+    }
+
+    let cancelled = false;
+
+    highlighter
+      .getHighlightedCode(content, language, theme, requestId)
+      .then((result) => {
+        if (!cancelled) {
+          setHighlightedHtml(result);
+        }
       })
       .catch((error) => {
-        console.error("Failed to initialize highlighter:", error);
-      })
-      .finally(() => {
-        setIsLoading(false);
+        console.error("Failed to highlight code:", error);
       });
-  }, [shouldHighlight]);
 
-  // Show plain text while loading or if content is too large
-  if (shouldShowPlaintext) {
-    return (
-      <>
-        {shouldShowNoHighlightInfo && (
-          <pre className="no-highlight-info">
-            <span className="codicon codicon-info" /> Content too large for syntax highlighting.
-          </pre>
-        )}
-        <pre className={className}>{content ?? placeholder}</pre>
-      </>
-    );
-  }
+    return () => {
+      cancelled = true;
+    };
+  }, [canHighlight, isActive, content, language, theme, requestId, highlighter]);
 
   return (
-    <ShikiHighlighter
-      theme={(theme as unknown) ?? "none"}
-      // @ts-expect-error - Type compatibility issue with HighlighterCore for some reason
-      highlighter={highlighter}
-      language={language}
-      showLanguage={false}
-      addDefaultStyles={false}
-      delay={HIGHLIGHT_THROTTLE}
-      className={className}>
-      {content ?? placeholder}
-    </ShikiHighlighter>
+    <>
+      {showTruncatedWarning && (
+        <pre className="response-tab-truncated-warning">
+          <span className="codicon codicon-warning" /> Response too large, showing truncated data.
+        </pre>
+      )}
+      {showSizeWarning && (
+        <pre className="no-highlight-info">
+          <span className="codicon codicon-info" /> Content too large for syntax highlighting.
+        </pre>
+      )}
+      {highlightedHtml ? (
+        <div className={className} dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
+      ) : (
+        <pre className={className}>{content ?? placeholder}</pre>
+      )}
+    </>
   );
 };
 

@@ -3,6 +3,7 @@ import { VscodeTabHeader, VscodeTabPanel, VscodeTabs } from "@vscode-elements/re
 import { type VscodeTabHeader as VscodeTabHeaderElement } from "@vscode-elements/elements/dist/vscode-tab-header/vscode-tab-header.js";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { OverlayScrollbarsComponent } from "overlayscrollbars-react";
+import { VscTabsSelectEvent } from "@vscode-elements/elements/dist/vscode-tabs/vscode-tabs";
 import HeadersTab from "./Tabs/HeadersTab";
 import PayloadTab from "./Tabs/PayloadTab";
 import ResponseTab from "./Tabs/ResponseTab";
@@ -24,6 +25,7 @@ interface TabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
   editorThemeData?: ThemeData;
+  isActive?: boolean;
 }
 
 interface Tab {
@@ -35,6 +37,7 @@ interface Tab {
 
 const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLogDetailsProps) => {
   const headerRef = useRef<VscodeTabHeaderElement>(null);
+  const [selectedTabIndex, setSelectedTabIndex] = useState(0);
 
   const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
   const { wasTruncated = false } = responseBodyData || {};
@@ -79,14 +82,19 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
     return parentHeight - headerHeight;
   };
 
+  const handleVscTabsSelect = ({ detail }: VscTabsSelectEvent) =>
+    setSelectedTabIndex(detail.selectedIndex);
+
   return (
     <>
       {/* TODO: use VscodeToolbarButton when it will be available in @vscode-elements/react-elements  */}
       <button className="network-log-details-close-button" onClick={handleClose}>
         <span className="codicon codicon-close" />
       </button>
-      <VscodeTabs data-testid="network-panel-log-details-tabs">
-        {TABS.map(({ title, Tab, props, warning }) => (
+      <VscodeTabs
+        onVscTabsSelect={handleVscTabsSelect}
+        data-testid="network-panel-log-details-tabs">
+        {TABS.map(({ title, Tab, props, warning }, index) => (
           <Fragment key={title}>
             <VscodeTabHeader
               ref={headerRef}
@@ -111,7 +119,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
                   height: calculateScrollableHeight(),
                 }}>
                 <div className="network-log-details-tab">
-                  <Tab networkLog={networkLog} {...props} />
+                  <Tab networkLog={networkLog} isActive={index === selectedTabIndex} {...props} />
                 </div>
               </OverlayScrollbarsComponent>
             </VscodeTabPanel>

@@ -1,4 +1,5 @@
-import { createHighlighterCore, createJavaScriptRegexEngine } from "react-shiki/core";
+import { createHighlighterCore, HighlighterCore } from "shiki/core";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
 
 // Language definitions imports
 import langJson from "@shikijs/langs/json";
@@ -73,15 +74,15 @@ const JS_REGEX_ENGINE = createJavaScriptRegexEngine();
  * Memoized highlighter instance to ensure we only create one highlighter
  * across all component instances.
  */
-let highlighterInstance: unknown | null = null;
-let highlighterPromise: Promise<unknown> | null = null;
+let highlighterInstance: HighlighterCore | null = null;
+let highlighterPromise: Promise<HighlighterCore> | null = null;
 
 /**
  * Gets or creates a Shiki highlighter instance with memoization.
  * The highlighter is created only once and reused across all calls.
  * @returns Promise that resolves to the highlighter instance
  */
-export async function getHighlighter() {
+export async function getHighlighter(): Promise<HighlighterCore> {
   if (highlighterInstance) {
     return highlighterInstance;
   }
