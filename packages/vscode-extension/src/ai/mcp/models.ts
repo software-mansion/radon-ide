@@ -1,4 +1,4 @@
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 
 interface ImageContent {
   [x: string]: unknown;
@@ -40,11 +40,6 @@ interface ToolResult {
   }[];
 }
 
-enum EditorType {
-  CURSOR = "cursor",
-  VSCODE = "vscode",
-}
-
 type McpEntry = {
   url: `http://127.0.0.1:${number}/mcp`;
   type: "http";
@@ -57,7 +52,6 @@ type Session = {
 } | null;
 
 export {
-  EditorType,
   Session,
   McpEntry,
   ImageContent,

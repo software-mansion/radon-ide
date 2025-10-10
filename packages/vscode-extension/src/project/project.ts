@@ -625,6 +625,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.deviceManager.createIOSDevice(deviceType, displayName, runtime);
   }
 
+  public loadInstalledImages(): void {
+    this.deviceManager.loadInstalledImages();
+  }
+
   public removeDevice(device: DeviceInfo): Promise<void> {
     return this.deviceManager.removeDevice(device);
   }

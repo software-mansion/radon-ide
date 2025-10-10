@@ -200,27 +200,72 @@ const DEVTOOLS_DOMAIN_NAME = "react-devtools";
 
 export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
   private disposables: Disposable[] = [];
+  private initializeConnectionPromise: Promise<void> | undefined;
 
   constructor(private readonly debugSession: DebugSession) {
     super();
     this.disposables.push(
       debugSession.onJSDebugSessionStarted(() => {
-        this.createConnection();
+        this.maybeInitializeConnection()
+          .then(() => {
+            Logger.debug(
+              "[Devtools] Devtools connection initialized after JS Debug session started"
+            );
+          })
+          .catch(() => {
+            // we expect the method might fail to initialize the connection
+          });
       }),
       debugSession.onScriptParsed(({ isMainBundle }) => {
         if (isMainBundle) {
-          this.createConnection();
+          this.maybeInitializeConnection()
+            .then(() => {
+              Logger.debug("[Devtools] Devtools connection initialized after main bundle loaded");
+            })
+            .catch(() => {
+              // we expect the method might fail to initialize the connection
+            });
         }
       })
     );
   }
 
-  private async createConnection() {
-    const debugSession = this.debugSession;
+  private maybeInitializeConnection() {
     if (this.connection) {
       // NOTE: a single `DebugSession` only supports a single devtools connection at a time
-      return;
+      return Promise.reject(new Error("[Devtools] Connection already established."));
     }
+    const initializeInternal = () => {
+      const initializePromise = this.initializeConnection();
+      initializePromise
+        .then(() => {
+          this.initializeConnectionPromise = undefined;
+        })
+        .catch(() => {
+          // we expect the method might fail to initialize the connection
+          // as the app might not be ready to connect yet
+          Logger.debug("[Devtools] Failed to initialize devtools connection");
+        });
+
+      return initializePromise;
+    };
+
+    if (this.initializeConnectionPromise) {
+      // devtools connections cannot be initialized concurrently, we only can establish
+      // one connection, so if we are already in a process of initializing one, we only schedule
+      // a new attempt if the previous one fails
+      this.initializeConnectionPromise = this.initializeConnectionPromise.catch(() => {
+        return initializeInternal();
+      });
+    } else {
+      this.initializeConnectionPromise = initializeInternal();
+    }
+
+    return this.initializeConnectionPromise;
+  }
+
+  private async initializeConnection() {
+    const debugSession = this.debugSession;
 
     // NOTE: the binding survives JS reloads, and the Devtools frontend will reconnect automatically
     await debugSession.addBinding(BINDING_NAME);
@@ -231,7 +276,7 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
       // NOTE: if the dispatcher is not present, it's likely the app
       // has not loaded yet or failed to load the JS bundle.
       // In either case, there's nothing to connect to.
-      return;
+      throw new Error("Failed to initialize devtools connection, dispatcher not present");
     }
 
     const wall: Wall = {
@@ -249,9 +294,14 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
       },
       send(event, payload, _transferable) {
         const serializedMessage = JSON.stringify({ event, payload });
-        debugSession.evaluateExpression({
-          expression: `void ${DISPATCHER_GLOBAL}.sendMessage("${DEVTOOLS_DOMAIN_NAME}", '${serializedMessage}')`,
-        });
+        debugSession
+          .evaluateExpression({
+            expression: `void ${DISPATCHER_GLOBAL}.sendMessage("${DEVTOOLS_DOMAIN_NAME}", '${serializedMessage}')`,
+          })
+          .catch(() => {
+            // this method might be used by the devtools bridge implementation while JS Debugger
+            // is disconnected so we just ignore any errors here
+          });
       },
     };
 
@@ -261,7 +311,9 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
       shutdownListener.dispose();
     });
     connection.onDisconnected(() => {
-      this.setConnection(undefined);
+      if (this.connection === connection) {
+        this.setConnection(undefined);
+      }
     });
 
     this.setConnection(connection);

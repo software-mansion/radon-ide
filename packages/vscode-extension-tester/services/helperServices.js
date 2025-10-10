@@ -1,3 +1,4 @@
+import * as path from "path";
 import { until } from "selenium-webdriver";
 import {
   By,
@@ -7,7 +8,6 @@ import {
   Key,
   InputBox,
 } from "vscode-extension-tester";
-import * as path from "path";
 
 export class ElementHelperService {
   constructor(driver) {

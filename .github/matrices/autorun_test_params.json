@@ -3,32 +3,32 @@
     {
       "testApp": "react-native-81",
       "node": "22",
-      "isRecording": "false",
-      "testsToRun": "1",
+      "isRecording": "true",
+      "testsToRun": "",
       "testsToExclude": "",
       "codeVersion": "latest"
     },
     {
       "testApp": "expo-53",
       "node": "22",
-      "isRecording": "false",
-      "testsToRun": "1",
+      "isRecording": "true",
+      "testsToRun": "",
       "testsToExclude": "",
       "codeVersion": "latest"
     },
     {
       "testApp": "expo-54",
       "node": "22",
-      "isRecording": "false",
-      "testsToRun": "1",
+      "isRecording": "true",
+      "testsToRun": "",
       "testsToExclude": "",
       "codeVersion": "latest"
     },
     {
       "testApp": "react-native-81",
       "node": "22",
-      "isRecording": "false",
-      "testsToRun": "1",
+      "isRecording": "true",
+      "testsToRun": "",
       "testsToExclude": "",
       "codeVersion": "1.99.1"
     }

@@ -1,8 +1,7 @@
-import initServices from "../services/index.js";
 import { WebView, EditorView, By, Key } from "vscode-extension-tester";
-
-import { get } from "./setupTest.js";
+import initServices from "../services/index.js";
 import { describeIf } from "../utils/helpers.js";
+import { get } from "./setupTest.js";
 
 const isLatestCode =
   !process.env.CODE_VERSION || process.env.CODE_VERSION === "latest";
@@ -13,12 +12,10 @@ describeIf(isLatestCode, "12 - Radon AI tests", () => {
     elementHelperService,
     radonViewsService,
     managingDevicesService,
-    vscodeHelperService,
-    workbench;
+    vscodeHelperService;
 
   before(async () => {
     driver = get().driver;
-    workbench = get().workbench;
 
     ({
       elementHelperService,

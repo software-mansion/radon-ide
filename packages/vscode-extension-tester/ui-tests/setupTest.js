@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import {
   VSBrowser,
   WebView,
@@ -6,8 +8,6 @@ import {
   BottomBarPanel,
   Key,
 } from "vscode-extension-tester";
-import path from "path";
-import fs from "fs";
 import {
   initServer,
   getAppWebsocket,

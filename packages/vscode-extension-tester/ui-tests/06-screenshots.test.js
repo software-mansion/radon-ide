@@ -1,9 +1,8 @@
+import * as fs from "fs";
+import * as path from "path";
 import { WebView, Key, By } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
-import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
 
 describe("6 - screenshots tests", () => {
   let driver,

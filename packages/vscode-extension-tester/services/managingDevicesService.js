@@ -1,6 +1,6 @@
-import { ElementHelperService } from "./helperServices.js";
 import { By, Key, WebView, EditorView } from "vscode-extension-tester";
 import getConfiguration from "../configuration.js";
+import { ElementHelperService } from "./helperServices.js";
 import RadonViewsService from "./radonViewsService.js";
 
 export default class ManagingDevicesService {

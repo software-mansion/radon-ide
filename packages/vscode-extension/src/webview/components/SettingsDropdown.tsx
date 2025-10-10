@@ -46,7 +46,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             className="dropdown-menu-item"
             data-testid="settings-dropdown-run-diagnostics-button"
             onSelect={() => {
-              openModal("Diagnostics", <DiagnosticView />);
+              openModal(<DiagnosticView />, { title: "Diagnostics" });
             }}>
             <DoctorIcon color="var(--swm-default-text)" />
             Run diagnostics...
@@ -55,7 +55,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             className="dropdown-menu-item"
             data-testid="settings-dropdown-manage-devices-button"
             onSelect={() => {
-              openModal("Manage Devices", <ManageDevicesView />);
+              openModal(<ManageDevicesView />, { title: "Manage Devices" });
             }}>
             <span className="codicon codicon-device-mobile" />
             Manage devices...

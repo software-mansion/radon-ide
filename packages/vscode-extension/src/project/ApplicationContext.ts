@@ -2,7 +2,7 @@ import path from "path";
 import { Disposable, workspace } from "vscode";
 import { loadProjectEnv } from "@expo/env";
 import _ from "lodash";
-import { SemVer } from "semver";
+import semver, { SemVer } from "semver";
 import { BuildCache } from "../builders/BuildCache";
 import { disposeAll } from "../utilities/disposables";
 import { BuildManagerImpl, BuildManager } from "../builders/BuildManager";
@@ -26,15 +26,36 @@ export type ResolvedLaunchConfig = LaunchOptions & {
     waitForAppLaunch: boolean;
   };
   env: Record<string, string>;
-  usePrebuild: boolean;
+  usePrebuild?: boolean;
   useOldDevtools: boolean;
 };
 
+function getReactNativeVersion(appRoot: string): SemVer | null {
+  try {
+    const reactNativePackage = requireNoCache("react-native/package.json", {
+      paths: [appRoot],
+    });
+    const installedReactNativeVersion = new SemVer(reactNativePackage.version);
+    return installedReactNativeVersion;
+  } catch {}
+  try {
+    const appPackage = requireNoCache("./package.json", {
+      paths: [appRoot],
+    });
+    const reactNativeDependencyVersion = semver.coerce(appPackage.dependencies["react-native"]);
+    return reactNativeDependencyVersion;
+  } catch {}
+  return null;
+}
+
 function checkFuseboxSupport(appRoot: string): boolean {
-  const reactNativePackage = requireNoCache("react-native/package.json", {
-    paths: [appRoot],
-  });
-  const reactNativeVersion = new SemVer(reactNativePackage.version);
+  const reactNativeVersion = getReactNativeVersion(appRoot);
+  if (reactNativeVersion === null) {
+    Logger.error(
+      "Couldn't read react-native version for project. Defaulting to no fusebox support."
+    );
+    return false;
+  }
   const supportsFusebox = reactNativeVersion.compare("0.76.0") >= 0;
   return supportsFusebox;
 }
@@ -82,7 +103,7 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
     preview: {
       waitForAppLaunch: configuration.preview?.waitForAppLaunch ?? true,
     },
-    usePrebuild: configuration.usePrebuild ?? false,
+    usePrebuild: configuration.usePrebuild,
     useOldDevtools: configuration.useOldDevtools ?? !checkFuseboxSupport(absoluteAppRoot),
   };
 }
