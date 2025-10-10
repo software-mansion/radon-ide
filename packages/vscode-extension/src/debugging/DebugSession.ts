@@ -341,7 +341,10 @@ export class DebugSessionImpl implements DebugSession, Disposable {
     await this.jsDebugSession.customRequest("RNIDE_addBinding", { name });
   }
 
-  public async invokeNetworkMethod<T>(method: RNIDE_NetworkMethod, args?: NetworkBridgeSendMethodArgs) {
+  public async invokeNetworkMethod<T>(
+    method: RNIDE_NetworkMethod,
+    args?: NetworkBridgeSendMethodArgs
+  ) {
     if (!this.jsDebugSession) {
       throw new Error("JS Debug session is not running");
     }

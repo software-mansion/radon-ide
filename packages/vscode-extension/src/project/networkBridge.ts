@@ -7,7 +7,7 @@ import {
   NetworkType,
   NetworkEvent,
 } from "../network/types/panelMessageProtocol";
-import EventDispatcher from "./eventDispatcher";
+import { EventDispatcher, EventDispatcherBase } from "./eventDispatcher";
 
 export interface RadonNetworkBridgeEvents {
   enable: [];
@@ -41,21 +41,18 @@ export const NETWORK_EVENT_MAP = {
   [NetworkEvent.DataReceived]: "dataReceived",
 } as const;
 
-export interface RadonNetworkBridge {
+export interface RadonNetworkBridge
+  extends EventDispatcher<RadonNetworkBridgeEvents, NetworkBridgeEventNames> {
   enableNetworkInspector(): void;
   disableNetworkInspector(): void;
   getResponseBody(requestId: string | number): Promise<GetResponseBodyResponse | undefined>;
-  onEvent<K extends NetworkBridgeEventNames>(
-    event: K,
-    listener: (...payload: RadonNetworkBridgeEvents[K]) => void
-  ): Disposable;
 }
 
 export type NetworkBridgeSendMethodArgs = Record<string, unknown>;
 export type NetworkBridgeGetResponseBodyArgs = { requestId: string | number };
 
 export class NetworkBridge
-  extends EventDispatcher<RadonNetworkBridgeEvents, NetworkBridgeEventNames>
+  extends EventDispatcherBase<RadonNetworkBridgeEvents, NetworkBridgeEventNames>
   implements RadonNetworkBridge
 {
   private debugSession?: (DebugSession & Disposable) | undefined;
