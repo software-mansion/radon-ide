@@ -13,7 +13,10 @@ import { BaseNetworkInspector } from "./BaseNetworkInspector";
 export default class InspectorBridgeNetworkInspector extends BaseNetworkInspector {
   private devtoolsListeners: Disposable[] = [];
 
-  constructor(private readonly inspectorBridge: RadonInspectorBridge, metroPort: number) {
+  constructor(
+    private readonly inspectorBridge: RadonInspectorBridge,
+    metroPort: number
+  ) {
     super(metroPort);
   }
 

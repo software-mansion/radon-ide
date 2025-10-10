@@ -88,7 +88,10 @@ export class ToolsManager implements Disposable {
     };
 
     this.plugins.set(REDUX_PLUGIN_ID, new ReduxDevtoolsPlugin(inspectorBridge));
-    this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(inspectorBridge, networkBridge, metroPort));
+    this.plugins.set(
+      NETWORK_PLUGIN_ID,
+      new NetworkPlugin(inspectorBridge, networkBridge, metroPort)
+    );
     this.plugins.set(
       RENDER_OUTLINES_PLUGIN_ID,
       new RenderOutlinesPlugin(
