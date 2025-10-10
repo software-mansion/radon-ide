@@ -227,7 +227,7 @@ jobs:
         with:
           path: ./all_results
 
-      - name: Combine all test logs
+      - name: Summary
         run: |
           mkdir -p packages/vscode-extension-tester/combined
           find ./all_results -type f -name "test-output-*.txt" -exec cat {} + > packages/vscode-extension-tester/combined/all_results.txt
