@@ -136,6 +136,9 @@ jobs:
         run: npm run get-test-app -- ${{ matrix.testApp }}
         working-directory: packages/vscode-extension-tester
 
+      - name: Install watchman
+        run: brew install watchman
+
       - name: Build VSIX package
         run: npm run build-vsix-package
         working-directory: packages/vscode-extension-tester
@@ -148,6 +151,7 @@ jobs:
 
       - name: Run setup-run-tests and save output
         run: |
+          set -o pipefail
           mkdir -p artifacts
           npm run setup-run-tests -- ${{ matrix.testsToRun }} --exclude ${{ matrix.testsToExclude }} \
             | tee artifacts/test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}.txt
@@ -159,7 +163,9 @@ jobs:
           IS_GITHUB_ACTIONS: "true"
 
       - name: Upload test output artifact
+        if: always()
         uses: actions/upload-artifact@v4
+        timeout-minutes: 1
         with:
           name: test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}
           path: packages/vscode-extension-tester/artifacts/test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}.txt
@@ -206,6 +212,15 @@ jobs:
           path: packages/vscode-extension-tester/data/screenshotTest..png
           retention-days: 7
 
+      - name: Upload automatedTests.tsx
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: automatedTests.tsx
+          path: packages/vscode-extension-tester/data/react-native-app/shared/automatedTests.tsx
+          retention-days: 7
+
       - name: Upload recording made by radon
         if: ${{ always() && matrix.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
@@ -218,6 +233,8 @@ jobs:
   summarize:
     needs: build-and-test
     runs-on: ubuntu-latest
+    if: always()
+    timeout-minutes: 2
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

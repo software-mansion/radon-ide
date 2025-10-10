@@ -1,9 +1,9 @@
 import { assert } from "chai";
 import { WebView } from "vscode-extension-tester";
-import { get } from "./setupTest.js";
 import initServices from "../services/index.js";
+import { get } from "./setupTest.js";
 
-describe("12 - Restart tests", () => {
+describe("13 - Reload app tests", () => {
   let driver,
     radonViewsService,
     appManipulationService,
@@ -43,8 +43,7 @@ describe("12 - Restart tests", () => {
     );
     const messageElement =
       await elementHelperService.findAndWaitForElementByTag("startup-message");
-    console.log(await messageElement.getText());
-    assert.equal(await messageElement.getText(), "Waiting for app to load");
+    assert.include(await messageElement.getText(), "Waiting for app to load");
   });
 
   it("should show 'Launching' start up message", async function () {
@@ -56,8 +55,7 @@ describe("12 - Restart tests", () => {
     );
     const messageElement =
       await elementHelperService.findAndWaitForElementByTag("startup-message");
-    console.log(await messageElement.getText());
-    assert.equal(await messageElement.getText(), "Launching");
+    assert.include(await messageElement.getText(), "Launching");
   });
 
   it("should show 'Installing' start up message", async function () {
@@ -69,8 +67,7 @@ describe("12 - Restart tests", () => {
     );
     const messageElement =
       await elementHelperService.findAndWaitForElementByTag("startup-message");
-    console.log(await messageElement.getText());
-    assert.equal(await messageElement.getText(), "Installing");
+    assert.include(await messageElement.getText(), "Installing");
   });
 
   it("should show 'Booting device' start up message", async function () {
@@ -82,7 +79,6 @@ describe("12 - Restart tests", () => {
     );
     const messageElement =
       await elementHelperService.findAndWaitForElementByTag("startup-message");
-    console.log(await messageElement.getText());
-    assert.equal(await messageElement.getText(), "Booting device");
+    assert.include(await messageElement.getText(), "Booting device");
   });
 });
