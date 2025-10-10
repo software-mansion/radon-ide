@@ -50,7 +50,7 @@ async function initialize() {
 export class NetworkPlugin implements ToolPlugin {
   public readonly id: ToolKey = NETWORK_PLUGIN_ID;
   public readonly label = "Network";
-  public readonly persist = false;
+  public readonly persist = true;
   public toolInstalled = false;
 
   private readonly networkInspector: NetworkInspector;
