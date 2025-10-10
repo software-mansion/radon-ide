@@ -121,7 +121,9 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             }}>
             <span className="dropdown-menu-item-wraper">
               <span className="codicon codicon-report" />
-              <div className="dropdown-menu-item-content">Report Issue</div>
+              <div className="dropdown-menu-item-content" data-testid="settings-report-issue">
+                Report Issue
+              </div>
             </span>
           </DropdownMenu.Item>
           {telemetryEnabled && <SendFeedbackItem />}

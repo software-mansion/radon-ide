@@ -6,7 +6,7 @@ import {
   RenderOutlinesEventMap,
   RenderOutlinesInterface,
 } from "../../common/RenderOutlines";
-import { RadonInspectorBridge } from "../../project/bridge";
+import { RadonInspectorBridge } from "../../project/inspectorBridge";
 import { ToolPlugin } from "../../project/tools";
 import { disposeAll } from "../../utilities/disposables";
 import { InspectorAvailabilityStatus, REMOVE, WorkspaceConfiguration } from "../../common/State";

@@ -41,6 +41,8 @@ describe("6 - screenshots tests", () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
     }, 5000);
+
+    await appManipulationService.hideExpoOverlay(appWebsocket);
   });
 
   it("Should take a screenshot", async () => {

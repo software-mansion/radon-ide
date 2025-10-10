@@ -105,6 +105,7 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   public onBindingCalled = this.debugSession.onBindingCalled;
   public onScriptParsed = this.debugSession.onScriptParsed;
   public onJSDebugSessionStarted = this.debugSession.onJSDebugSessionStarted;
+  public onNetworkEvent = this.debugSession.onNetworkEvent;
 
   public async startParentDebugSession(): Promise<void> {
     return this.debugSession.startParentDebugSession();
@@ -150,4 +151,6 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   public async addBinding(name: string): Promise<void> {
     return this.debugSession.addBinding(name);
   }
+
+  public invokeNetworkMethod = this.debugSession.invokeNetworkMethod?.bind(this.debugSession);
 }

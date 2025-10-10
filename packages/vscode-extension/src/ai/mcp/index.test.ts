@@ -82,7 +82,7 @@ describe("creatingMcpConfig", () => {
   it("should differenciate vscode and cursor", async () => {
     const cursorStub = stub().withArgs("cursor").returns({});
     const onCursor = proxyquire("./configCreator", {
-      "./utils": proxyquire("./utils", {
+      "../../utilities/editorType": proxyquire("../../utilities/editorType", {
         vscode: { workspace: { getConfiguration: () => ({ get: cursorStub }) } },
       }),
     });
