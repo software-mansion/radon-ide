@@ -13,7 +13,6 @@ import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType } from "../common/Project";
 import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { IOSBuildResult } from "../builders/buildIOS";
-import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import {
   DeviceInfo,
@@ -26,6 +25,7 @@ import {
   IOSRuntimeInfo,
   Locale,
 } from "../common/State";
+import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 
 interface SimulatorInfo {
   availability?: string;
@@ -88,7 +88,7 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   private get nativeLogsOutputChannel() {
-    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.IosDevice);
+    return this.outputChannelRegistry.resolveOutputChannel(Output.IosDevice);
   }
 
   public dispose() {

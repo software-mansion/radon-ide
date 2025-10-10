@@ -10,7 +10,6 @@ import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { disposeAll } from "../utilities/disposables";
 import { DeviceId } from "../common/Project";
 import { Connector } from "../connect/Connector";
-import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
 import {
   DeviceInfo,
@@ -22,6 +21,7 @@ import {
   ProjectStore,
   REMOVE,
 } from "../common/State";
+import { OutputChannelRegistry } from "./OutputChannelRegistry";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;

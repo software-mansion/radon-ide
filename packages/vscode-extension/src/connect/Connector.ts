@@ -14,6 +14,7 @@ import { Scanner } from "./Scanner";
 import ConnectSession from "./ConnectSession";
 import { ConnectState } from "../common/Project";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 
 const RADON_CONNECT_ENABLED_KEY = "radon_connect_enabled";
 export const RADON_CONNECT_PORT_KEY = "radon_connect_port";
@@ -30,7 +31,7 @@ export class Connector implements Disposable {
   private connectStateChangedEmitter = new EventEmitter<ConnectState>();
   public onConnectStateChanged = this.connectStateChangedEmitter.event;
 
-  private constructor() {
+  private constructor(private readonly outputChannelRegistry: OutputChannelRegistry) {
     this.statusBarItem = window.createStatusBarItem(
       StatusBarAlignment.Left,
       Number.MIN_SAFE_INTEGER
@@ -155,12 +156,15 @@ export class Connector implements Disposable {
       this.scanner.dispose();
     }
 
-    this.scanner = new Scanner({
-      onPortStatusUpdated: () => this.handleStateChange(),
-      onDeviceCandidateFound: async (metro, websocketAddress, isUsingNewDebugger) => {
-        await this.tryConnectJSDebuggerWithMetro(websocketAddress, isUsingNewDebugger, metro);
+    this.scanner = new Scanner(
+      {
+        onPortStatusUpdated: () => this.handleStateChange(),
+        onDeviceCandidateFound: async (metro, websocketAddress, isUsingNewDebugger) => {
+          await this.tryConnectJSDebuggerWithMetro(websocketAddress, isUsingNewDebugger, metro);
+        },
       },
-    });
+      this.outputChannelRegistry
+    );
     this.scanner.start();
   }
 
@@ -228,7 +232,7 @@ export class Connector implements Disposable {
 
   public static getInstance(): Connector {
     if (!Connector.instance) {
-      Connector.instance = new Connector();
+      Connector.instance = new Connector(OutputChannelRegistry.getInstance());
     }
     return Connector.instance;
   }

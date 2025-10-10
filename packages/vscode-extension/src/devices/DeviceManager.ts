@@ -1,4 +1,5 @@
 import _ from "lodash";
+import { Disposable } from "vscode";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import {
   IosSimulatorDevice,
@@ -20,7 +21,6 @@ import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { Platform } from "../utilities/platform";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { checkXcodeExists } from "../utilities/checkXcodeExists";
 import {
   AndroidSystemImageInfo,
@@ -32,8 +32,8 @@ import {
   IOSRuntimeInfo,
 } from "../common/State";
 import { StateManager } from "../project/StateManager";
-import { Disposable } from "vscode";
 import { disposeAll } from "../utilities/disposables";
+import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
