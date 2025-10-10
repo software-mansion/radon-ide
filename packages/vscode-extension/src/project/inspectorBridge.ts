@@ -1,7 +1,6 @@
-import { Disposable } from "vscode";
 import { AppOrientation } from "../common/Project";
 import { InspectorAvailabilityStatus, NavigationRoute } from "../common/State";
-import EventDispatcher from "./eventDispatcher";
+import { EventDispatcherBase, EventDispatcher } from "./eventDispatcher";
 
 export interface RadonInspectorBridgeEvents {
   appReady: [];
@@ -22,20 +21,17 @@ export interface RadonInspectorBridgeEvents {
 
 export type RadonInspectorEventName = keyof RadonInspectorBridgeEvents;
 
-export interface RadonInspectorBridge {
+export interface RadonInspectorBridge
+  extends EventDispatcher<RadonInspectorBridgeEvents, RadonInspectorEventName> {
   sendPluginMessage(pluginId: string, type: string, data: any): void;
   sendInspectRequest(x: number, y: number, id: number, requestStack: boolean): void;
   sendOpenNavigationRequest(id: string): void;
   sendOpenPreviewRequest(previewId: string): void;
   sendShowStorybookStoryRequest(componentTitle: string, storyName: string): void;
-  onEvent<K extends RadonInspectorEventName>(
-    event: K,
-    listener: (...payload: RadonInspectorBridgeEvents[K]) => void
-  ): Disposable;
 }
 
 export abstract class InspectorBridge
-  extends EventDispatcher<RadonInspectorBridgeEvents, RadonInspectorEventName>
+  extends EventDispatcherBase<RadonInspectorBridgeEvents, RadonInspectorEventName>
   implements RadonInspectorBridge
 {
   protected abstract send(message: { type: string; data?: any }): void;
