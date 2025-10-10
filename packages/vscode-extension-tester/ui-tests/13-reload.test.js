@@ -1,9 +1,9 @@
 import { assert } from "chai";
 import { WebView } from "vscode-extension-tester";
-import { get } from "./setupTest.js";
 import initServices from "../services/index.js";
+import { get } from "./setupTest.js";
 
-describe("13 - Relaod app tests", () => {
+describe("13 - Reload app tests", () => {
   let driver,
     radonViewsService,
     appManipulationService,

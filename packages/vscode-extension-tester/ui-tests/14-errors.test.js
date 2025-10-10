@@ -1,7 +1,7 @@
 import { assert } from "chai";
-import { WebView, TextEditor, EditorView, Key } from "vscode-extension-tester";
-import { get } from "./setupTest.js";
+import { WebView, EditorView, Key } from "vscode-extension-tester";
 import initServices from "../services/index.js";
+import { get } from "./setupTest.js";
 
 describe("14 - Error tests", () => {
   let driver,
@@ -34,6 +34,13 @@ describe("14 - Error tests", () => {
   beforeEach(async function () {
     await radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
+    await driver
+      .actions()
+      .keyDown(Key.COMMAND)
+      .sendKeys("d")
+      .keyUp(Key.COMMAND)
+      .perform();
+    await driver.sleep(20000);
   });
 
   it("should show bundle error", async function () {
