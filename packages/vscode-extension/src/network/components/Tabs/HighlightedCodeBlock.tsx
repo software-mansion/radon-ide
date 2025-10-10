@@ -35,23 +35,19 @@ const HighlightedCodeBlock = ({
   const [highlightedHtml, setHighlightedHtml] = useState<string>("");
 
   // Determine if highlighting is possible and necessary
-  const hasContent = !!content;
   const isPlainText = language === "plaintext";
   const contentTooLarge = (content?.length ?? 0) > MAX_HIGHLIGHT_LENGTH;
-  const canHighlight = hasContent && !isPlainText && !contentTooLarge;
+  const canHighlight = !!content && !isPlainText && !contentTooLarge;
   const showSizeWarning = contentTooLarge && !isPlainText;
 
   useEffect(() => {
-    if (!content) {
+    if (!canHighlight) {
       setHighlightedHtml("");
       return;
     }
 
     const isCached = highlighter.isCodeCached(content, language, theme, requestId);
-    const canGetCachedCode = isActive || isCached;
-    const shouldGetCode = canGetCachedCode && canHighlight;
-
-    if (!canHighlight && !shouldGetCode) {
+    if (!isCached && !isActive) {
       setHighlightedHtml("");
       return;
     }
