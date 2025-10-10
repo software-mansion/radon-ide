@@ -5,13 +5,14 @@ import { useHighlighter } from "../../providers/HighlighterProvider";
 import "./PayloadAndResponseTab.css";
 
 interface HighlightedCodeBlockProps {
-  content: string | null | undefined;
+  content: string | undefined;
+  requestId: string | number;
   language?: string;
   theme?: ThemeData;
   placeholder?: string;
   className?: string;
-  requestId: string | number;
   isActive?: boolean;
+  showTruncatedWarning?: boolean;
 }
 
 /**
@@ -27,22 +28,31 @@ const HighlightedCodeBlock = ({
   placeholder = "No content",
   className = "response-tab-pre",
   requestId,
-  isActive,
+  isActive = false,
+  showTruncatedWarning = false,
 }: HighlightedCodeBlockProps) => {
   const highlighter = useHighlighter();
-  const [html, setHtml] = useState<string>("");
+  const [highlightedHtml, setHighlightedHtml] = useState<string>("");
 
+  // Determine if highlighting is possible and necessary
+  const hasContent = !!content;
   const isPlainText = language === "plaintext";
   const contentTooLarge = (content?.length ?? 0) > MAX_HIGHLIGHT_LENGTH;
-  const triggerTooLargeInfo = contentTooLarge && !isPlainText;
-  const canHighlight = content && !isPlainText && !contentTooLarge;
+  const canHighlight = hasContent && !isPlainText && !contentTooLarge;
+  const showSizeWarning = contentTooLarge && !isPlainText;
 
   useEffect(() => {
-    const shouldHighlightCode =
-      canHighlight && (isActive || highlighter.isCodeCached(content, language, theme, requestId));
+    if (!content) {
+      setHighlightedHtml("");
+      return;
+    }
 
-    if (!shouldHighlightCode) {
-      setHtml("");
+    const isCached = highlighter.isCodeCached(content, language, theme, requestId);
+    const canGetCachedCode = isActive || isCached;
+    const shouldGetCode = canGetCachedCode && canHighlight;
+
+    if (!canHighlight && !shouldGetCode) {
+      setHighlightedHtml("");
       return;
     }
 
@@ -52,30 +62,35 @@ const HighlightedCodeBlock = ({
       .getHighlightedCode(content, language, theme, requestId)
       .then((result) => {
         if (!cancelled) {
-          setHtml(result);
+          setHighlightedHtml(result);
         }
       })
-      .catch((err) => {
-        console.error("Failed to get highlighted code:", err);
+      .catch((error) => {
+        console.error("Failed to highlight code:", error);
       });
 
     return () => {
       cancelled = true;
     };
-  }, [isActive, content, language, theme]);
-
-  if (html) {
-    return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />;
-  }
+  }, [canHighlight, isActive, content, language, theme, requestId, highlighter]);
 
   return (
     <>
-      {triggerTooLargeInfo && (
+      {showTruncatedWarning && (
+        <pre className="response-tab-truncated-warning">
+          <span className="codicon codicon-warning" /> Response too large, showing truncated data.
+        </pre>
+      )}
+      {showSizeWarning && (
         <pre className="no-highlight-info">
           <span className="codicon codicon-info" /> Content too large for syntax highlighting.
         </pre>
       )}
-      <pre className={className}>{content ?? placeholder}</pre>
+      {highlightedHtml ? (
+        <div className={className} dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
+      ) : (
+        <pre className={className}>{content ?? placeholder}</pre>
+      )}
     </>
   );
 };

@@ -24,7 +24,8 @@ const ResponseTab = ({
   isActive,
 }: ResponseTabProps) => {
   const { fetchAndOpenResponseInEditor } = useNetwork();
-  const { body = undefined, wasTruncated = false } = responseBodyData || {};
+
+  const { body, wasTruncated = false } = responseBodyData || {};
   const responseData = getFormattedRequestBody(body);
   const contentType =
     networkLog.response?.headers?.[ContentTypeHeader.IOS] ||
@@ -33,7 +34,11 @@ const ResponseTab = ({
   const language = responseData ? determineLanguage(contentType, responseData) : "plaintext";
 
   const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;
-  const dataFetchFailure = requestFailed && !responseData;
+  const fetchFailed = requestFailed && !responseData;
+
+  const handleOpenInEditor = () => {
+    fetchAndOpenResponseInEditor(networkLog);
+  };
 
   return (
     <>
@@ -44,21 +49,14 @@ const ResponseTab = ({
           <IconButton
             className="response-tab-copy-button"
             tooltip={{ label: "Open response in editor", side: "bottom" }}
-            onClick={() => {
-              fetchAndOpenResponseInEditor(networkLog);
-            }}
-            disabled={dataFetchFailure}>
+            onClick={handleOpenInEditor}
+            disabled={fetchFailed}>
             <span className="codicon codicon-chrome-restore" />
           </IconButton>
         }
       />
       <div className="tab-padding">
-        {wasTruncated && (
-          <pre className="response-tab-truncated-warning">
-            <span className="codicon codicon-warning" /> Response too large, showing truncated data.
-          </pre>
-        )}
-        {dataFetchFailure ? (
+        {fetchFailed ? (
           <div className="response-tab-failed-fetch-information">
             <h4>Failed to load response data</h4>
           </div>
@@ -70,6 +68,7 @@ const ResponseTab = ({
             theme={editorThemeData}
             placeholder="No response body"
             isActive={isActive}
+            showTruncatedWarning={wasTruncated}
           />
         )}
       </div>

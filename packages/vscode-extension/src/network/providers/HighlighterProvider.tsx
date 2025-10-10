@@ -3,19 +3,6 @@ import { HighlighterCore } from "shiki";
 import { ThemeData } from "../../common/theme";
 import { getHighlighter } from "../utils/highlighter";
 
-/**
- * Simple hash function for generating cache keys from content
- */
-function getHash(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  return hash.toString(36);
-}
-
 enum CacheEntryState {
   Done = "done",
   PendingRequest = "pendingRequest",
@@ -40,6 +27,19 @@ interface HighlighterContextValue {
     theme: ThemeData | undefined,
     requestId: string | number
   ) => boolean;
+}
+
+/**
+ * Simple hash function for generating cache keys from content
+ */
+function getHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  return hash.toString(36);
 }
 
 const HighlighterContext = createContext<HighlighterContextValue | null>(null);
