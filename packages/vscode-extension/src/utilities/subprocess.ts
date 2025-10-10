@@ -32,7 +32,7 @@ async function getPathEnv(appRoot: string) {
       }
     );
     // If the dry-run succeeds, include nvm use in the actual command
-    nvmCommand = "nvm use; ";
+    nvmCommand = "nvm use && ";
   } catch (error) {
     // nvm is not available or nvm use failed, proceed without it
     Logger.debug("nvm is not available or not set up correctly, proceeding without nvm");
