@@ -25,6 +25,8 @@ import {
   Locale,
 } from "../common/State";
 import { ADB_PATH, AndroidDevice } from "./AndroidDevice";
+import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
+import { DevicesProvider } from "./DevicesProvider";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -770,5 +772,45 @@ function getNativeQemuArch() {
       return CPU_ARCH.ARM64;
     default:
       throw new Error("Unsupported CPU architecture.");
+  }
+}
+
+export class AndroidEmulatorProvider implements DevicesProvider<AndroidEmulatorInfo> {
+  constructor(private outputChannelRegistry: OutputChannelRegistry) {}
+
+  public async acquireDevice(
+    deviceInfo: DeviceInfo,
+    deviceSettings: DeviceSettings
+  ): Promise<AndroidEmulatorDevice | undefined> {
+    if (deviceInfo.platform !== DevicePlatform.Android || !deviceInfo.emulator) {
+      return undefined;
+    }
+
+    const emulators = await listEmulators();
+    const emulatorInfo = emulators.find((device) => device.id === deviceInfo.id);
+    if (!emulatorInfo || emulatorInfo.platform !== DevicePlatform.Android) {
+      throw new Error(`Emulator ${deviceInfo.id} not found`);
+    }
+    const device = new AndroidEmulatorDevice(
+      deviceSettings,
+      emulatorInfo.avdId,
+      emulatorInfo,
+      this.outputChannelRegistry
+    );
+
+    if (await device.acquire()) {
+      return device;
+    }
+
+    device.dispose();
+    throw new DeviceAlreadyUsedError();
+  }
+
+  public listDevices() {
+    const emulators = listEmulators().catch((e) => {
+      Logger.error("Error fetching emulators", e);
+      return [];
+    });
+    return emulators;
   }
 }

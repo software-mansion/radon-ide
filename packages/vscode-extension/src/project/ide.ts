@@ -12,6 +12,9 @@ import { StateManager } from "./StateManager";
 import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
 import { Telemetry } from "./telemetry";
 import { EditorBindings } from "./EditorBindings";
+import { PhysicalAndroidDeviceProvider } from "../devices/AndroidPhysicalDevice";
+import { AndroidEmulatorProvider } from "../devices/AndroidEmulatorDevice";
+import { IosSimulatorProvider } from "../devices/IosSimulatorDevice";
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
@@ -46,10 +49,11 @@ export class IDE implements Disposable {
 
     this.telemetry = new Telemetry(this.stateManager.getDerived("telemetry"));
 
-    this.deviceManager = new DeviceManager(
-      this.stateManager.getDerived("devicesState"),
-      this.outputChannelRegistry
-    );
+    this.deviceManager = new DeviceManager(this.stateManager.getDerived("devicesState"), [
+      new IosSimulatorProvider(this.outputChannelRegistry),
+      new AndroidEmulatorProvider(this.outputChannelRegistry),
+      new PhysicalAndroidDeviceProvider(this.outputChannelRegistry),
+    ]);
     this.editorBindings = new EditorBindings();
 
     this.environmentDependencyManager = new EnvironmentDependencyManager(

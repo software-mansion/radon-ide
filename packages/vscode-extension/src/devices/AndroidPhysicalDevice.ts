@@ -10,6 +10,8 @@ import { exec } from "../utilities/subprocess";
 import { ADB_PATH, AndroidDevice } from "./AndroidDevice";
 import { Preview } from "./preview";
 import { extensionContext } from "../utilities/extensionContext";
+import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
+import { DevicesProvider } from "./DevicesProvider";
 
 export class AndroidPhysicalDevice extends AndroidDevice {
   constructor(
@@ -97,4 +99,30 @@ export async function listConnectedDevices(): Promise<AndroidPhysicalDeviceInfo[
     )
   ).filter((device) => device !== undefined);
   return devices;
+}
+
+export class PhysicalAndroidDeviceProvider implements DevicesProvider<AndroidPhysicalDeviceInfo> {
+  constructor(private outputChannelRegistry: OutputChannelRegistry) {}
+
+  public async acquireDevice(
+    deviceInfo: AndroidPhysicalDeviceInfo,
+    deviceSettings: DeviceSettings
+  ): Promise<AndroidPhysicalDevice | undefined> {
+    const device = new AndroidPhysicalDevice(
+      deviceInfo,
+      deviceSettings,
+      this.outputChannelRegistry
+    );
+
+    if (await device.acquire()) {
+      return device;
+    }
+
+    device.dispose();
+    throw new DeviceAlreadyUsedError();
+  }
+
+  public listDevices() {
+    return listConnectedDevices();
+  }
 }

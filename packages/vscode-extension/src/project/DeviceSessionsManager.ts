@@ -1,12 +1,11 @@
 import { Disposable, window } from "vscode";
 import _ from "lodash";
-import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
+import { DeviceManager } from "../devices/DeviceManager";
+import { DeviceAlreadyUsedError } from "../devices/DeviceAlreadyUsedError";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { ApplicationContext } from "./ApplicationContext";
 import { DeviceSession } from "./deviceSession";
-import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { disposeAll } from "../utilities/disposables";
 import { DeviceId } from "../common/Project";
 import { Connector } from "../connect/Connector";
@@ -22,7 +21,7 @@ import {
   ProjectStore,
   REMOVE,
 } from "../common/State";
-import { AndroidPhysicalDevice } from "../devices/AndroidPhysicalDevice";
+import { DeviceBase } from "../devices/DeviceBase";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -318,7 +317,7 @@ export class DeviceSessionsManager implements Disposable {
       );
       return undefined;
     }
-    let device: IosSimulatorDevice | AndroidEmulatorDevice | AndroidPhysicalDevice | undefined;
+    let device: DeviceBase | undefined;
     try {
       device = await this.deviceManager.acquireDevice(
         deviceInfo,
