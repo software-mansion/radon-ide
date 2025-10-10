@@ -20,8 +20,8 @@ const Pricing = () => {
   const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout, scrollToForm } =
     usePricingLogic();
   const formRef = useRef<HTMLDivElement | null>(null);
-  const handleSubmitCTAClick = () => {
-    track("Pricing form submit CTA");
+  const handleSubmitTrack = () => {
+    track("Pricing form submit");
   };
 
   return (
@@ -47,7 +47,7 @@ const Pricing = () => {
         handleCustom={() => scrollToForm(formRef)}
       />
       <FAQ />
-      <EnterpriseForm ref={formRef} trackSubmit={handleSubmitCTAClick} />
+      <EnterpriseForm ref={formRef} trackSubmit={handleSubmitTrack} />
     </div>
   );
 };

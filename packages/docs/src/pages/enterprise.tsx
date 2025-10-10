@@ -18,8 +18,8 @@ export default function Enterprise(): JSX.Element {
   const formRef = useRef<HTMLDivElement | null>(null);
   const { scrollToForm } = usePricingLogic();
 
-  const handleSubmitCTAClick = () => {
-    track("Enterprise form submit CTA");
+  const handleSubmitTrack = () => {
+    track("Enterprise form submit");
   };
 
   return (
@@ -73,7 +73,7 @@ export default function Enterprise(): JSX.Element {
             building a bridge between those who use software and those who build it. With us, your
             projects and data are in safe hands.
           </SWM>
-          <EnterpriseForm ref={formRef} trackSubmit={handleSubmitCTAClick} />
+          <EnterpriseForm ref={formRef} trackSubmit={handleSubmitTrack} />
           <FAQ />
         </div>
       </div>
