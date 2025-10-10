@@ -3,23 +3,18 @@ import { Disposable } from "vscode";
 
 type EventMap<K extends string> = Record<K, unknown[]>;
 
-export interface EventDispatcher<E extends EventMap<K>, K extends string> {
-  onEvent<L extends K>(event: L, listener: (...payload: E[L]) => void): Disposable;
-}
-
 /**
  * Abstract base class that provides an event-based bridging mechanism.
  *
  * This class manages event listeners keyed by event names and exposes:
  * - onEvent method to register listeners,
  * - emitEvent method to invoke listeners,
+ * - abstract send method that subclasses must implement to forward messages externally
  *
  * @template E - Map of event names to listener-argument tuples (e.g. { foo: [number, string] }).
  * @template K - Union of string literal event names (keys of E).
  */
-export abstract class EventDispatcherBase<E extends EventMap<K>, K extends string>
-  implements EventDispatcher<E, K>
-{
+export default abstract class EventDispatcher<E extends EventMap<K>, K extends string> {
   private emitter = new EventEmitter({ captureRejections: true });
 
   public emitEvent: <L extends K>(event: L, payload: E[L]) => void;
