@@ -8,9 +8,10 @@ import { ThemeData } from "../../../common/theme";
 interface PayloadTabProps {
   networkLog: NetworkLog;
   editorThemeData?: ThemeData;
+  isActive?: boolean;
 }
 
-const PayloadTab = ({ networkLog, editorThemeData }: PayloadTabProps) => {
+const PayloadTab = ({ networkLog, editorThemeData, isActive }: PayloadTabProps) => {
   if (!networkLog.request) {
     return null;
   }
@@ -22,10 +23,12 @@ const PayloadTab = ({ networkLog, editorThemeData }: PayloadTabProps) => {
       <TabActionButtons data={payloadData} disabled={!payloadData} />
       <div className="tab-padding">
         <HighlightedCodeBlock
+          requestId={networkLog.requestId}
           content={payloadData}
           language="json"
           theme={editorThemeData}
           placeholder="No request body"
+          isActive={isActive}
         />
       </div>
     </>

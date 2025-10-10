@@ -31,8 +31,15 @@ interface HighlighterContextValue {
   getHighlightedCode: (
     content: string,
     language: string,
-    theme: ThemeData | undefined
+    theme: ThemeData | undefined,
+    requestId: string | number
   ) => Promise<string>;
+  isCodeCached: (
+    content: string,
+    language: string,
+    theme: ThemeData | undefined,
+    requestId: string | number
+  ) => boolean;
 }
 
 const HighlighterContext = createContext<HighlighterContextValue | null>(null);
@@ -41,18 +48,34 @@ export default function HighlighterProvider({ children }: { children: ReactNode 
   const cacheRef = useRef<Map<string, CacheEntry>>(new Map());
   const highlighterPromiseRef = useRef<Promise<HighlighterCore>>(getHighlighter());
 
-  const generateCacheKey = (language: string, theme: ThemeData | undefined, content: string) => {
+  const generateCacheKey = (
+    language: string,
+    theme: ThemeData | undefined,
+    content: string,
+    requestId: string | number
+  ) => {
     const contentHash = getHash(content);
     const themeName = theme?.name || "none";
-    return `${language}::${themeName}::${contentHash}`;
+    return `${language}:${themeName}:${requestId}:${contentHash}`;
+  };
+
+  const isCodeCached = (
+    content: string,
+    language: string,
+    theme: ThemeData | undefined,
+    requestId: string | number
+  ) => {
+    const cacheKey = generateCacheKey(language, theme, content, requestId);
+    return cacheRef.current.has(cacheKey);
   };
 
   const getHighlightedCode = async (
     content: string,
     language: string,
-    theme: ThemeData | undefined
+    theme: ThemeData | undefined,
+    requestId: string | number
   ): Promise<string> => {
-    const cacheKey = generateCacheKey(language, theme, content);
+    const cacheKey = generateCacheKey(language, theme, content, requestId);
     const entry = cacheRef.current.get(cacheKey);
 
     if (entry?.state === CacheEntryState.Done && entry.html) {
@@ -100,6 +123,7 @@ export default function HighlighterProvider({ children }: { children: ReactNode 
 
   const contextValue: HighlighterContextValue = {
     getHighlightedCode,
+    isCodeCached,
   };
 
   useEffect(() => {

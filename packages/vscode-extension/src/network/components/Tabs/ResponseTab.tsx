@@ -14,9 +14,15 @@ interface ResponseTabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
   editorThemeData?: ThemeData;
+  isActive?: boolean;
 }
 
-const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: ResponseTabProps) => {
+const ResponseTab = ({
+  networkLog,
+  responseBodyData,
+  editorThemeData,
+  isActive,
+}: ResponseTabProps) => {
   const { fetchAndOpenResponseInEditor } = useNetwork();
   const { body = undefined, wasTruncated = false } = responseBodyData || {};
   const responseData = getFormattedRequestBody(body);
@@ -58,10 +64,12 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
           </div>
         ) : (
           <HighlightedCodeBlock
+            requestId={networkLog.requestId}
             content={responseData}
             language={language}
             theme={editorThemeData}
             placeholder="No response body"
+            isActive={isActive}
           />
         )}
       </div>

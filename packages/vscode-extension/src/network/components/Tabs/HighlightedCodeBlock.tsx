@@ -10,6 +10,8 @@ interface HighlightedCodeBlockProps {
   theme?: ThemeData;
   placeholder?: string;
   className?: string;
+  requestId: string | number;
+  isActive?: boolean;
 }
 
 /**
@@ -24,17 +26,22 @@ const HighlightedCodeBlock = ({
   theme,
   placeholder = "No content",
   className = "response-tab-pre",
+  requestId,
+  isActive,
 }: HighlightedCodeBlockProps) => {
   const highlighter = useHighlighter();
   const [html, setHtml] = useState<string>("");
 
-  const contentLength = content?.length ?? 0;
-  const shouldHighlight = contentLength <= MAX_HIGHLIGHT_LENGTH;
   const isPlainText = language === "plaintext";
+  const contentTooLarge = (content?.length ?? 0) > MAX_HIGHLIGHT_LENGTH;
+  const triggerTooLargeInfo = contentTooLarge && !isPlainText;
+  const canHighlight = content && !isPlainText && !contentTooLarge;
 
-  // Tried startTransition approach - highlight operation still blocks the main thread
   useEffect(() => {
-    if (!shouldHighlight || isPlainText || !content) {
+    const shouldHighlightCode =
+      canHighlight && (isActive || highlighter.isCodeCached(content, language, theme, requestId));
+
+    if (!shouldHighlightCode) {
       setHtml("");
       return;
     }
@@ -42,7 +49,7 @@ const HighlightedCodeBlock = ({
     let cancelled = false;
 
     highlighter
-      .getHighlightedCode(content, language, theme)
+      .getHighlightedCode(content, language, theme, requestId)
       .then((result) => {
         if (!cancelled) {
           setHtml(result);
@@ -55,9 +62,7 @@ const HighlightedCodeBlock = ({
     return () => {
       cancelled = true;
     };
-  }, [content, language, theme, shouldHighlight, isPlainText]);
-
-  const shouldShowNoHighlightInfo = !isPlainText && !shouldHighlight;
+  }, [isActive, content, language, theme]);
 
   if (html) {
     return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />;
@@ -65,7 +70,7 @@ const HighlightedCodeBlock = ({
 
   return (
     <>
-      {shouldShowNoHighlightInfo && (
+      {triggerTooLargeInfo && (
         <pre className="no-highlight-info">
           <span className="codicon codicon-info" /> Content too large for syntax highlighting.
         </pre>

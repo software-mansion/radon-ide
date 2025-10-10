@@ -25,6 +25,7 @@ interface TabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
   editorThemeData?: ThemeData;
+  isActive?: boolean;
 }
 
 interface Tab {
@@ -36,7 +37,7 @@ interface Tab {
 
 const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLogDetailsProps) => {
   const headerRef = useRef<VscodeTabHeaderElement>(null);
-  const [activeTabIndex, setActiveTabIndex] = useState(0);
+  const [selectedTabIndex, setSelectedTabIndex] = useState(0);
 
   const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
   const { wasTruncated = false } = responseBodyData || {};
@@ -81,9 +82,8 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
     return parentHeight - headerHeight;
   };
 
-  const handleTabChange = (e: VscTabsSelectEvent) => {
-    setActiveTabIndex(e.detail.selectedIndex);
-  };
+    const handleVscTabsSelect = ({ detail }: VscTabsSelectEvent) =>
+    setSelectedTabIndex(detail.selectedIndex);
 
   return (
     <>
@@ -91,7 +91,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
       <button className="network-log-details-close-button" onClick={handleClose}>
         <span className="codicon codicon-close" />
       </button>
-      <VscodeTabs onVscTabsSelect={handleTabChange} data-testid="network-panel-log-details-tabs">
+      <VscodeTabs onVscTabsSelect={handleVscTabsSelect} data-testid="network-panel-log-details-tabs">
         {TABS.map(({ title, Tab, props, warning }, index) => (
           <Fragment key={title}>
             <VscodeTabHeader
@@ -117,7 +117,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
                   height: calculateScrollableHeight(),
                 }}>
                 <div className="network-log-details-tab">
-                  {index === activeTabIndex && <Tab networkLog={networkLog} {...props} />}
+                  <Tab networkLog={networkLog} isActive={index === selectedTabIndex} {...props} />
                 </div>
               </OverlayScrollbarsComponent>
             </VscodeTabPanel>
