@@ -5,14 +5,15 @@ import { track } from "@vercel/analytics";
 
 interface HomepageButtonsProps {
   vertical?: boolean;
+  trackFrom?: string;
 }
 
-const DownloadButtons = ({ vertical }: HomepageButtonsProps) => {
+const DownloadButtons = ({ vertical, trackFrom }: HomepageButtonsProps) => {
   const handleVSCodeCTAClick = () => {
-    track("VSCode CTA");
+    track(`${trackFrom}: Install in VSCode`);
   };
   const handleCursorCTAClick = () => {
-    track("Cursor CTA");
+    track(`${trackFrom}: Install in Cursor`);
   };
 
   return (

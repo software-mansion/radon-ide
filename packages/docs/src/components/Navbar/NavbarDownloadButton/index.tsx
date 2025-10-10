@@ -4,16 +4,16 @@ import { track } from "@vercel/analytics";
 
 interface NavbarDownloadButtonProps {
   isMobile: boolean;
-  onOpen: () => void;
+  onOpen: (trackForm: string) => void;
 }
 export default function NavbarDownloadButton({ isMobile, onOpen }: NavbarDownloadButtonProps) {
-  const handleNavbarCTA = () => {
-    track("Navbar CTA");
+  const handleNavbarDownload = () => {
+    track("Navbar download button");
   };
 
   const handleDialogOpen = () => {
-    handleNavbarCTA();
-    onOpen();
+    handleNavbarDownload();
+    onOpen("Navbar modal");
   };
   return (
     <button

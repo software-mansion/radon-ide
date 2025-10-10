@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import styles from "./styles.module.css";
-import { track } from "@vercel/analytics";
 import DownloadButtons from "../../DownloadButtons";
 import RadonIconGreen from "../../RadonIconGreen";
 import usePageType from "@site/src/hooks/usePageType";
@@ -11,13 +10,10 @@ const RADON_IDE_MARKETPLACE_URL =
 const DEFAULT_INSTALLS_NO = "20,000+";
 
 const LearnMoreFooter = () => {
-  const handleBottomCTAClick = () => {
-    track("Bottom CTA");
-  };
-
   const [isLoaded, setIsLoaded] = React.useState(false);
   const [installs, setInstalls] = React.useState(DEFAULT_INSTALLS_NO);
   const { isLanding } = usePageType();
+  const trackFrom = isLanding ? "Landing bottom" : "Features bottom";
 
   useEffect(() => {
     async function getInstalls() {
@@ -61,8 +57,8 @@ const LearnMoreFooter = () => {
           <br /> using Radon IDE for faster,
           <br /> more efficient app development
         </h2>
-        <div className={styles.buttonContainer} onClick={handleBottomCTAClick}>
-          <DownloadButtons />
+        <div className={styles.buttonContainer}>
+          <DownloadButtons trackFrom={trackFrom} />
         </div>
       </div>
       {isLanding && (

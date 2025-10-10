@@ -34,8 +34,8 @@ export default function ComparePricingPlans({
   const { onOpen } = useModal();
   const pricingPlanFeatures: FeatureItem[] = planFeaturesData;
 
-  const handleTableCTA = () => {
-    track("Pricing table CTA");
+  const handleTableInstall = () => {
+    track("Pricing table");
   };
 
   return (
@@ -50,8 +50,8 @@ export default function ComparePricingPlans({
             buttonLabel="Install"
             stylingFilled={false}
             onClick={() => {
-              handleTableCTA();
-              onOpen();
+              handleTableInstall();
+              onOpen("Pricing table modal");
             }}
           />
           <PlanTableLabel

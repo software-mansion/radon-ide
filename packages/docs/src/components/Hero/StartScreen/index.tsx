@@ -23,9 +23,9 @@ const StartScreen = () => {
     };
   }, [isOpen]);
 
-  const handleCTAClick = () => {
-    track("Main CTA");
-  };
+  // const handleCTAClick = () => {
+  //   track("Main CTA");
+  // };
 
   const handleDialogOpen = () => {
     track("Secondary CTA");
@@ -55,8 +55,8 @@ const StartScreen = () => {
               Trusted by <span>24,000+ engineers worldwide</span>.
             </p>
           </h2>
-          <div className={styles.buttonContainer} onClick={handleCTAClick}>
-            <DownloadButtons vertical={false} />
+          <div className={styles.buttonContainer}>
+            <DownloadButtons vertical={false} trackFrom="Hero" />
           </div>
         </div>
         <div className={styles.gradientContainer}>

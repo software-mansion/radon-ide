@@ -41,8 +41,8 @@ const footerLinks: FooterProps[] = [
 export default function FooterNavigation() {
   const { onOpen } = useModal();
 
-  const handleFooterCTAClick = () => {
-    track("Footer CTA");
+  const handleFooterDownloadClick = () => {
+    track("Footer download button");
   };
 
   return (
@@ -60,8 +60,8 @@ export default function FooterNavigation() {
                 ) : (
                   <a
                     onClick={() => {
-                      onOpen();
-                      handleFooterCTAClick();
+                      handleFooterDownloadClick();
+                      onOpen("Footer modal");
                     }}>
                     {link.label}
                   </a>

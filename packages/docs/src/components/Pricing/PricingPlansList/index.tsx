@@ -46,15 +46,15 @@ const PricingPlansList = ({
     return isIndividual ? pricingIndividualData : pricingBusinessData;
   }, [isIndividual, isEnterprise]);
 
-  const handlePricingCTA = () => {
-    track("Pricing CTA");
+  const handlePricingInstall = () => {
+    track("Pricing card");
   };
 
   const handlePlanButtonClick = (id: string) => {
     switch (id) {
       case "FREE":
-        onOpen();
-        handlePricingCTA();
+        onOpen("Pricing card modal");
+        handlePricingInstall();
         break;
       case "PRO":
         handleIndividual();
