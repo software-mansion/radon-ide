@@ -1,6 +1,7 @@
 import React from "react";
 import styles from "./styles.module.css";
 import { useModal } from "../../ModalProvider";
+import { track } from "@vercel/analytics";
 
 interface FooterProps {
   title: string;
@@ -22,7 +23,7 @@ const footerLinks: FooterProps[] = [
   {
     title: "Support",
     links: [
-      { label: "Customer Portal", to: "/customer-portal" },
+      { label: "Customer Portal", to: "https://portal.ide.swmansion.com/" },
       { label: "Docs", to: "/docs/category/getting-started" },
       { label: "Changelog", to: "/docs/getting-started/changelog" },
       { label: "Contact", to: "/contact" },
@@ -39,6 +40,11 @@ const footerLinks: FooterProps[] = [
 
 export default function FooterNavigation() {
   const { onOpen } = useModal();
+
+  const handleFooterCTAClick = () => {
+    track("Footer CTA");
+  };
+
   return (
     <>
       {footerLinks.map((section, index) => (
@@ -48,9 +54,17 @@ export default function FooterNavigation() {
             {section.links.map((link, idx) => (
               <li key={idx}>
                 {link.to ? (
-                  <a href={link.to}>{link.label}</a>
+                  <a href={link.to} target={link.to.startsWith("https:") ? "_blank" : "_self"}>
+                    {link.label}
+                  </a>
                 ) : (
-                  <a onClick={onOpen}>{link.label}</a>
+                  <a
+                    onClick={() => {
+                      onOpen();
+                      handleFooterCTAClick();
+                    }}>
+                    {link.label}
+                  </a>
                 )}
               </li>
             ))}
