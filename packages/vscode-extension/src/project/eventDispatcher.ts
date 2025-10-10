@@ -5,7 +5,6 @@ type EventMap<K extends string> = Record<K, unknown[]>;
 
 export interface EventDispatcher<E extends EventMap<K>, K extends string> {
   onEvent<L extends K>(event: L, listener: (...payload: E[L]) => void): Disposable;
-  emitEvent: <L extends K>(event: L, payload: E[L]) => void;
 }
 
 /**
