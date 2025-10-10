@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "es2022",
+    "moduleResolution": "bundler",
     "target": "es6",
     "outDir": "out",
     "lib": ["es6", "dom", "ESNext"],

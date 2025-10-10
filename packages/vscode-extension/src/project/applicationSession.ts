@@ -28,6 +28,10 @@ import {
   DeviceType,
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
+  NavigationHistoryItem,
+  NavigationRoute,
+  NavigationState,
+  REMOVE,
   StartupMessage,
 } from "../common/State";
 import { isAppSourceFile } from "../utilities/isAppSourceFile";
@@ -41,6 +45,8 @@ import {
 import { RadonInspectorBridge } from "./bridge";
 import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
+
+const MAX_URL_HISTORY_SIZE = 20;
 
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
@@ -58,9 +64,13 @@ function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: Ca
     reject(new CancelError("Cancelled while waiting for the app to be ready."));
   });
   const appReadyListener = inspectorBridge.onEvent("appReady", resolve);
-  promise.finally(() => {
-    appReadyListener.dispose();
-  });
+  promise
+    .finally(() => {
+      appReadyListener.dispose();
+    })
+    .catch(() => {
+      // we ignore cancellation rejections as this is another surfaces for it to bubble up
+    });
   return promise;
 }
 
@@ -82,6 +92,7 @@ export class ApplicationSession implements Disposable {
 
   public static async launch(
     stateManager: StateManager<ApplicationSessionState>,
+    navigationStateManager: StateManager<NavigationState>,
     {
       applicationContext,
       device,
@@ -100,6 +111,7 @@ export class ApplicationSession implements Disposable {
       buildResult.platform === DevicePlatform.IOS ? buildResult.supportedInterfaceOrientations : [];
     const session = new ApplicationSession(
       stateManager,
+      navigationStateManager,
       applicationContext,
       device,
       metro,
@@ -139,9 +151,8 @@ export class ApplicationSession implements Disposable {
         await cancelToken.adapt(Promise.race([activatePromise, bundleErrorPromise]));
       }
 
-      const hasBundleError = stateManager.getState().bundleError !== null;
-      if (!hasBundleError && getIsActive()) {
-        await cancelToken.adapt(appReadyPromise);
+      if (getIsActive()) {
+        await cancelToken.adapt(Promise.race([appReadyPromise, bundleErrorPromise]));
       }
 
       return session;
@@ -158,6 +169,8 @@ export class ApplicationSession implements Disposable {
 
   private constructor(
     private readonly stateManager: StateManager<ApplicationSessionState>,
+    // owned by DeviceSession
+    private readonly navigationStateManager: StateManager<NavigationState>,
     private readonly applicationContext: ApplicationContext,
     private readonly device: DeviceBase,
     private readonly metro: MetroSession,
@@ -231,6 +244,10 @@ export class ApplicationSession implements Disposable {
     if (this.cdpDevtoolsServer) {
       this.cdpDevtoolsServer.dispose();
       this.cdpDevtoolsServer = undefined;
+    }
+    if (this.websocketDevtoolsServer === undefined) {
+      this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
+      this.setupDevtoolsServer(this.cdpDevtoolsServer);
     }
   }
 
@@ -366,6 +383,9 @@ export class ApplicationSession implements Disposable {
   //#region Metro event listeners
 
   private async onBundleError(message: string, source: DebugSource) {
+    if (!this.isActive) {
+      return;
+    }
     Logger.error("[Bundling Error]", message);
     this.stateManager.updateState({
       bundleError: {
@@ -397,9 +417,15 @@ export class ApplicationSession implements Disposable {
 
   public async deactivate(): Promise<void> {
     this.isActive = false;
-    // NOTE: we reset the state to "connecting" here to prevent showing the "disconnected" alert
-    // when switching between devices
-    this.stateManager.updateState({ inspectorBridgeStatus: InspectorBridgeStatus.Connecting });
+    this.stateManager.updateState({
+      // NOTE: we reset the state to "connecting" here to prevent showing the "disconnected" alert
+      // when switching between devices
+      inspectorBridgeStatus: InspectorBridgeStatus.Connecting,
+      // NOTE: we reset the bundle error here to prevent showing stale errors when switching between devices.
+      // If, after swithcing, the app still has a bundle error,
+      // the debugger connecting and fetching the source will cause it to appear again.
+      bundleError: REMOVE,
+    });
     this.toolsManager.deactivate();
     this.debugSessionEventSubscription?.dispose();
     this.debugSessionEventSubscription = undefined;
@@ -450,12 +476,6 @@ export class ApplicationSession implements Disposable {
       expoPreludeLineCount: this.metro.expoPreludeLineCount,
       sourceMapPathOverrides: this.metro.sourceMapPathOverrides,
     });
-    if (this.websocketDevtoolsServer === undefined) {
-      // NOTE: we only create the CDP devtools server when using the new debugger
-      this.cdpDevtoolsServer?.dispose();
-      this.cdpDevtoolsServer = new CDPDevtoolsServer(this.debugSession);
-      this.setupDevtoolsServer(this.cdpDevtoolsServer);
-    }
   }
 
   /**
@@ -519,6 +539,19 @@ export class ApplicationSession implements Disposable {
           this.stateManager.updateState({ elementInspectorAvailability: status });
         }
       ),
+      inspectorBridge.onEvent("navigationChanged", (payload: NavigationHistoryItem) => {
+        const navigationHistory = [
+          payload,
+          ...this.navigationStateManager
+            .getState()
+            .navigationHistory.filter((record) => record.id !== payload.id),
+        ].slice(0, MAX_URL_HISTORY_SIZE);
+
+        this.navigationStateManager.updateState({ navigationHistory });
+      }),
+      inspectorBridge.onEvent("navigationRouteListUpdated", (payload: NavigationRoute[]) => {
+        this.navigationStateManager.updateState({ navigationRouteList: payload });
+      }),
     ];
     return subscriptions;
   }
@@ -531,12 +564,22 @@ export class ApplicationSession implements Disposable {
     });
     try {
       const appReadyPromise = waitForAppReady(this.inspectorBridge, cancelToken);
-      await this.debugSession?.evaluateExpression({
-        expression: "void globalThis.__RADON_reloadJS()",
-      });
+      await this.reloadWithDebugger();
       await Promise.race([appReadyPromise, bundleErrorPromise]);
     } finally {
       bundleErrorSubscription.dispose();
+    }
+  }
+
+  private async reloadWithDebugger() {
+    if (this.debugSession === undefined) {
+      throw new Error("Cannot reload JS with the debugger when the debugger is not connected");
+    }
+    const { result } = await this.debugSession.evaluateExpression({
+      expression: "void globalThis.__RADON_reloadJS()",
+    });
+    if (result.className === "Error") {
+      throw new Error("Reloading JS failed.");
     }
   }
 
@@ -650,6 +693,28 @@ export class ApplicationSession implements Disposable {
 
   public resetLogCounter() {
     this.stateManager.updateState({ logCounter: 0 });
+  }
+
+  public openNavigation(id: string) {
+    this.inspectorBridge?.sendOpenNavigationRequest(id);
+  }
+
+  public navigateHome() {
+    // going home resets the navigation history
+    this.navigationStateManager.updateState({ navigationHistory: [] });
+    this.inspectorBridge?.sendOpenNavigationRequest("__HOME__");
+  }
+
+  public navigateBack() {
+    this.inspectorBridge?.sendOpenNavigationRequest("__BACK__");
+  }
+
+  public removeNavigationHistoryEntry(id: string) {
+    this.navigationStateManager.updateState({
+      navigationHistory: this.navigationStateManager
+        .getState()
+        .navigationHistory.filter((record) => record.id !== id),
+    });
   }
 
   public async dispose() {

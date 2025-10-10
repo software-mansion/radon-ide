@@ -8,7 +8,7 @@ import { NetworkDevtoolsWebviewProvider } from "./NetworkDevtoolsWebviewProvider
 import { disposeAll } from "../../utilities/disposables";
 import { openContentInEditor, showDismissableError } from "../../utilities/editorOpeners";
 
-import { RequestData, RequestOptions } from "../../network/types/network";
+import { ContentTypeHeader, RequestData, RequestOptions } from "../../network/types/network";
 import {
   WebviewMessage,
   CDPMessage,
@@ -89,7 +89,10 @@ export class NetworkPlugin implements ToolPlugin {
 
     try {
       const response = await this.fetchResponse(requestData);
-      const contentType = response.headers.get("content-type") || "";
+      const contentType =
+        response.headers.get(ContentTypeHeader.IOS) ||
+        response.headers.get(ContentTypeHeader.ANDROID) ||
+        "";
       const responseBody = await response.text();
 
       const language = determineLanguage(contentType, responseBody);

@@ -1,3 +1,5 @@
+import * as fs from "fs";
+import * as path from "path";
 import {
   By,
   EditorView,
@@ -6,12 +8,9 @@ import {
   TextEditor,
 } from "vscode-extension-tester";
 import { assert } from "chai";
+import { cropCanvas, compareImages } from "../utils/imageProcessing.js";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
-import * as fs from "fs";
-import * as path from "path";
-import config from "../configuration.js";
-import { cropCanvas, compareImages } from "../utils/imageProcessing.js";
 
 const cwd = process.cwd() + "/data";
 
@@ -242,7 +241,7 @@ describe("7 - Radon tools tests", () => {
 
     await lenses[0].click();
     await radonViewsService.switchToRadonIDEFrame();
-    const urlInput = await elementHelperService.findAndWaitForElementByTag(
+    await elementHelperService.findAndWaitForElementByTag(
       "radon-top-bar-url-input"
     );
 

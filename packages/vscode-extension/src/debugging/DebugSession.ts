@@ -67,6 +67,7 @@ export interface DebugSession {
   onBindingCalled(listener: (event: Cdp.Runtime.BindingCalledEvent) => void): Disposable;
   onScriptParsed(listener: (event: { isMainBundle: boolean }) => void): Disposable;
   onDebugSessionTerminated(listener: () => void): Disposable;
+  onJSDebugSessionStarted(listener: () => void): Disposable;
 }
 
 export class DebugSessionImpl implements DebugSession, Disposable {
@@ -84,6 +85,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   private bindingCalledEventEmitter = new vscode.EventEmitter<Cdp.Runtime.BindingCalledEvent>();
   private debugSessionTerminatedEventEmitter = new vscode.EventEmitter<void>();
   private scriptParsedEventEmitter = new vscode.EventEmitter<{ isMainBundle: boolean }>();
+  private jsDebugSessionStartedEmitter = new vscode.EventEmitter<void>();
 
   public onConsoleLog = this.consoleLogEventEmitter.event;
   public onDebuggerPaused = this.debuggerPausedEventEmitter.event;
@@ -93,6 +95,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   public onBindingCalled = this.bindingCalledEventEmitter.event;
   public onDebugSessionTerminated = this.debugSessionTerminatedEventEmitter.event;
   public onScriptParsed = this.scriptParsedEventEmitter.event;
+  public onJSDebugSessionStarted = this.jsDebugSessionStartedEmitter.event;
 
   constructor(private options: DebugSessionOptions = { displayName: "Radon IDE Debugger" }) {
     this.disposables.push(
@@ -265,6 +268,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
       debug.stopDebugging(this.jsDebugSession);
     }
     this.jsDebugSession = newDebugSession;
+    this.jsDebugSessionStartedEmitter.fire();
   }
 
   public resumeDebugger() {

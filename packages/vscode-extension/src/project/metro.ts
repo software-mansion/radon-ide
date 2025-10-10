@@ -262,7 +262,7 @@ async function launchMetro({
 
 export class Metro implements MetroSession, Disposable {
   protected _expoPreludeLineCount = 0;
-  protected _watchFolders: string[] | undefined = undefined;
+  protected _watchFolders: string[] | undefined;
   protected readonly metroOutputChannel;
 
   protected readonly bundleErrorEventEmitter = new EventEmitter<BundleErrorEvent>();
@@ -279,9 +279,13 @@ export class Metro implements MetroSession, Disposable {
   constructor(
     public readonly port: number,
     protected readonly appRoot: string,
-    private readonly outputChannelRegistry: OutputChannelRegistry
+    private readonly outputChannelRegistry: OutputChannelRegistry,
+    watchFolders: string[] | undefined = undefined
   ) {
+    this._watchFolders = watchFolders;
+
     const metroOutputChannel = this.outputChannelRegistry.resolveOutputChannel(Output.MetroBundler);
+
     if (!metroOutputChannel) {
       throw new MetroError("Cannot start bundler process. The IDE is not initialized.");
     }

@@ -85,16 +85,19 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
       <button className="network-log-details-close-button" onClick={handleClose}>
         <span className="codicon codicon-close" />
       </button>
-      <VscodeTabs>
+      <VscodeTabs data-testid="network-panel-log-details-tabs">
         {TABS.map(({ title, Tab, props, warning }) => (
           <Fragment key={title}>
-            <VscodeTabHeader ref={headerRef} className="network-log-details-tab-header">
+            <VscodeTabHeader
+              ref={headerRef}
+              className="network-log-details-tab-header"
+              data-testid={`network-panel-tab-header-${title.toLowerCase()}`}>
               <div>
                 {title}
                 {warning && <span className="codicon codicon-warning" />}
               </div>
             </VscodeTabHeader>
-            <VscodeTabPanel>
+            <VscodeTabPanel data-testid={`network-panel-tab-panel-${title.toLowerCase()}`}>
               <OverlayScrollbarsComponent
                 options={{
                   scrollbars: {

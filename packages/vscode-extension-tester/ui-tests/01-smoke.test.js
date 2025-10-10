@@ -29,11 +29,7 @@ describe("1 - Smoke tests Radon IDE", () => {
   });
 
   it("should open Radon IDE webview using Radon IDE button", async function () {
-    try {
-      await radonViewsService.openRadonIDEPanel();
-    } catch (error) {
-      throw error;
-    }
+    await radonViewsService.openRadonIDEPanel();
   });
 
   it("should open Radon IDE webview for a specific project", async function () {

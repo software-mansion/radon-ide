@@ -19,7 +19,6 @@ import ReplayIcon from "../components/icons/ReplayIcon";
 import RecordingIcon from "../components/icons/RecordingIcon";
 import ToolsDropdown from "../components/ToolsDropdown";
 import AppRootSelect from "../components/AppRootSelect";
-import { vscode } from "../utilities/vscode";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
@@ -44,7 +43,7 @@ function ActivateLicenseButton() {
       className="activate-license-button"
       onClick={() => {
         project.sendTelemetry("activateLicenseButtonClicked");
-        openModal("Activate License", <ActivateLicenseView />);
+        openModal(<ActivateLicenseView />, { title: "Activate License" });
       }}>
       {""} {/* using empty string here as the content is controlled via css */}
     </Button>
@@ -261,19 +260,7 @@ function PreviewView() {
   );
 
   return (
-    <div
-      className="panel-view"
-      data-testid="radon-panel-view"
-      onFocus={(e) => {
-        vscode.postMessage({
-          command: "focusPreview",
-        });
-      }}
-      onBlur={(e) => {
-        vscode.postMessage({
-          command: "blurPreview",
-        });
-      }}>
+    <div className="panel-view" data-testid="radon-panel-view">
       <div className="button-group-top">
         <div className="button-group-top-left">
           <UrlBar disabled={!selectedProjectDevice} />

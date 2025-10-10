@@ -58,6 +58,7 @@ function renderLaunchConfigurations(
         <RichSelectItem
           value={`${prefix}:${idx}`}
           key={idx}
+          data-testid={`approot-select-item-${config.appRoot}`}
           icon={<span className="codicon codicon-folder" />}
           title={displayNameForConfig(config) ?? config.appRoot ?? "./"}
           subtitle={displayNameForConfig(config) ? config.appRoot : undefined}
@@ -147,10 +148,9 @@ function AppRootSelect() {
   const { openModal } = useModal();
 
   function onEditConfig(config: LaunchConfiguration, isSelected: boolean) {
-    openModal(
-      "Launch Configuration",
-      <LaunchConfigurationView launchConfig={config} isCurrentConfig={isSelected} />
-    );
+    openModal(<LaunchConfigurationView launchConfig={config} isCurrentConfig={isSelected} />, {
+      title: "Launch Configuration",
+    });
   }
 
   const detectedConfigurations = useMemo(
@@ -168,7 +168,7 @@ function AppRootSelect() {
 
   const handleAppRootChange = async (value: string) => {
     if (value === "manage") {
-      openModal("Launch Configuration", <LaunchConfigurationView />);
+      openModal(<LaunchConfigurationView />, { title: "Launch Configuration" });
       return;
     }
     const isDetected = value.startsWith("detected:");
