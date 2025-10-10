@@ -54,17 +54,30 @@ on:
     - cron: "27 1 * * *"
 
 jobs:
-  build-and-test:
-    runs-on: macos-latest-xlarge
+  set-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "matrix={\"include\":[{\"testApp\":\"${{ github.event.inputs.testApp }}\",\"node\":\"${{ github.event.inputs.node || '22' }}\",\"isRecording\":\"${{ github.event.inputs.isRecording }}\",\"testsToRun\":\"${{ github.event.inputs.testsToRun }}\",\"testsToExclude\":\"${{ github.event.inputs.testsToExclude }}\",\"codeVersion\":\"${{ github.event.inputs.VSCodeVersion || 'latest' }}\"}]}" >> $GITHUB_OUTPUT
+          else
+            echo "matrix={\"include\":[ \
+              {\"testApp\":\"react-native-81\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"latest\"}, \
+              {\"testApp\":\"expo-53\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"latest\"}, \
+              {\"testApp\":\"expo-54\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"latest\"}, \
+              {\"testApp\":\"react-native-81\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"1.99.1\"} \
+            ]}" >> $GITHUB_OUTPUT
+          fi
 
-    env:
-      NODE_VERSION: ${{ github.event.inputs.node || '22' }}
-      PROJECT_NAME: ${{ github.event.inputs.testApp || 'expo-54' }}
-      IS_RECORDING: ${{ github.event.inputs.isRecording || 'true' }}
-      TESTS_TO_RUN: ${{ github.event.inputs.testsToRun || '' }}
-      TESTS_TO_EXCLUDE: ${{ github.event.inputs.testsToExclude || '' }}
-      CODE_VERSION: ${{ github.event.inputs.VSCodeVersion || 'latest' }}
-      IS_GITHUB_ACTIONS: "true"
+  build-and-test:
+    needs: set-matrix
+    runs-on: macos-latest-xlarge
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
 
     steps:
       - name: Checkout repository
@@ -72,10 +85,11 @@ jobs:
 
       - name: log inputs
         run: |
-          echo "PROJECT_NAME=$PROJECT_NAME"
-          echo "IS_RECORDING=$IS_RECORDING"
-          echo "TESTS_TO_RUN=$TESTS_TO_RUN"
-          echo "TESTS_TO_EXCLUDE=$TESTS_TO_EXCLUDE"
+          echo "testApp: ${{ matrix.testApp }}"
+          echo "isRecording: ${{ matrix.isRecording }}"
+          echo "testsToRun: ${{ matrix.testsToRun }}"
+          echo "testsToExclude: ${{ matrix.testsToExclude }}"
+          echo "testsToExclude: ${{ matrix.codeVersion }}"
 
       - name: check sdk
         run: xcodebuild -showsdks
@@ -86,7 +100,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version: ${{ matrix.node }}
 
       - name: Enforce HTTPS for submodules
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
@@ -119,7 +133,7 @@ jobs:
         run: npm i -g @vscode/vsce
 
       - name: Get test app
-        run: npm run get-test-app -- $PROJECT_NAME
+        run: npm run get-test-app -- ${{ matrix.testApp }}
         working-directory: packages/vscode-extension-tester
 
       - name: Build VSIX package
@@ -129,15 +143,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Install ffmpeg
-        if: ${{ env.IS_RECORDING == 'true' }}
+        if: ${{ matrix.isRecording == 'true' }}
         run: brew install ffmpeg
 
       - name: Run setup-run-tests
-        run: npm run setup-run-tests -- $TESTS_TO_RUN --exclude $TESTS_TO_EXCLUDE
+        run: npm run setup-run-tests -- ${{ matrix.testsToRun }} --exclude ${{ matrix.testsToExclude }}
         working-directory: packages/vscode-extension-tester
+        env:
+          PROJECT_NAME: ${{ matrix.testApp }}
+          IS_RECORDING: ${{ matrix.isRecording }}
+          CODE_VERSION: ${{ matrix.codeVersion }}
+          IS_GITHUB_ACTIONS: "true"
 
       - name: make video
-        if: ${{ always() && env.IS_RECORDING == 'true' }}
+        if: ${{ always() && matrix.isRecording == 'true' }}
         timeout-minutes: 1
         run: ffmpeg -framerate 10 -i frame-%04d.png -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
         working-directory: packages/vscode-extension-tester/videos
@@ -160,7 +179,7 @@ jobs:
           retention-days: 7
 
       - name: Upload video recording
-        if: ${{ always() && env.IS_RECORDING == 'true' }}
+        if: ${{ always() && matrix.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
@@ -169,7 +188,7 @@ jobs:
           retention-days: 7
 
       - name: Upload screenshot made by radon
-        if: ${{ always() && env.IS_RECORDING == 'true' }}
+        if: ${{ always() && matrix.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
@@ -178,7 +197,7 @@ jobs:
           retention-days: 7
 
       - name: Upload recording made by radon
-        if: ${{ always() && env.IS_RECORDING == 'true' }}
+        if: ${{ always() && matrix.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:

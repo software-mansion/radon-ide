@@ -8,7 +8,8 @@ if [ -z "$1" ]; then
 fi
 
 FOLDER_NAME="$APP"
-TARGET_DIR="./data/react-native-app"
+TARGET_SUBDIR="${2:-react-native-app}"
+TARGET_DIR="./data/$TARGET_SUBDIR"
 REPO_URL="https://github.com/software-mansion-labs/radon-ide-test-apps.git"
 TMP_DIR="./tmp-radon-ide-test-apps"
 
@@ -28,13 +29,13 @@ git pull --depth 1 origin main
 
 mkdir -p ../data
 
-mv "$FOLDER_NAME" ../data/react-native-app
-mv "shared" ../data/ || true  # przenosimy shared do katalogu aplikacji
+mv "$FOLDER_NAME" "../$TARGET_DIR"
+mv "shared" ../data/ || true  # move shared to app directory
 
 cd ..
 rm -rf "$TMP_DIR"
 
-cd ./data/react-native-app
+cd $TARGET_DIR
 npm install
 npm run copy-shared
 cd ../..

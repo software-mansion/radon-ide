@@ -39,7 +39,6 @@ export function CameraSettingsView() {
       selectedFrontCamera !== deviceSettings.camera?.front
     ) {
       openModal(
-        "",
         <CameraChangeConfirmationView
           backCamera={selectedBackCamera}
           frontCamera={selectedFrontCamera}
@@ -134,7 +133,7 @@ const CameraChangeConfirmationView = ({
   const { openModal, closeModal } = useModal();
 
   const onCancel = () => {
-    openModal("Camera Settings", <CameraSettingsView />);
+    openModal(<CameraSettingsView />, { title: "Camera Settings" });
   };
 
   return (

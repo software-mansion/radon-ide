@@ -88,7 +88,6 @@ function Preview({
   const inspectorBridgeStatus = use$(
     selectedDeviceSessionState.applicationSession.inspectorBridgeStatus
   );
-  const isUsingStaleBuild = use$(selectedDeviceSessionState.isUsingStaleBuild);
   const modelId = use$(selectedDeviceSessionState.deviceInfo.modelId);
   const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
@@ -100,6 +99,9 @@ function Preview({
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const previewRef = useRef<HTMLCanvasElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
+
+  const isUsingStaleBuild = use$(selectedDeviceSessionState.isUsingStaleBuild);
+  useNativeRebuildAlert(isUsingStaleBuild);
 
   useEffect(() => {
     setShowPreviewRequested(false);
@@ -141,8 +143,6 @@ function Preview({
 
   const bundleErrorDescriptor = isRunning ? bundleError : null;
   useBundleErrorAlert(bundleErrorDescriptor);
-
-  const openRebuildAlert = useNativeRebuildAlert();
 
   /**
    * Converts mouse event coordinates to normalized touch coordinates ([0-1] range)
@@ -540,12 +540,6 @@ function Preview({
       document.removeEventListener("keyup", keyEventHandler);
     };
   }, [project, shouldPreventInputEvents]);
-
-  useEffect(() => {
-    if (isUsingStaleBuild) {
-      openRebuildAlert();
-    }
-  }, [isUsingStaleBuild]);
 
   const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === modelId;

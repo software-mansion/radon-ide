@@ -26,8 +26,7 @@ import {
   DeviceSessionStore,
   DeviceSettings,
   InstallationError,
-  NavigationHistoryItem,
-  NavigationRoute,
+  NavigationState,
   RecursivePartial,
   REMOVE,
   StartupMessage,
@@ -41,7 +40,6 @@ import { FileTransfer } from "./FileTransfer";
 import { DevtoolsServer } from "./devtools";
 import { MetroError, MetroProvider, MetroSession } from "./metro";
 
-const MAX_URL_HISTORY_SIZE = 20;
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
 function isOfEnumDeviceRotation(value: unknown): value is DeviceRotation {
@@ -71,10 +69,10 @@ export class DeviceSession implements Disposable {
   private cancelToken: CancelToken = new CancelToken();
   private deviceSettingsStateManager: StateManager<DeviceSettings>;
   private frameReporter: FrameReporter;
+  private navigationStateManager: StateManager<NavigationState>;
   private screenCapture: ScreenCapture;
 
   private isActive = false;
-  private navigationHomeTarget: NavigationHistoryItem | undefined;
 
   public fileTransfer: FileTransfer;
 
@@ -152,6 +150,9 @@ export class DeviceSession implements Disposable {
     );
     this.disposables.push(this.frameReporter);
 
+    this.navigationStateManager = this.stateManager.getDerived("navigationState");
+    this.disposables.push(this.navigationStateManager);
+
     this.screenCapture = new ScreenCapture(
       this.stateManager.getDerived("screenCapture"),
       this.device,
@@ -161,7 +162,7 @@ export class DeviceSession implements Disposable {
 
     this.buildManager = this.applicationContext.buildManager;
 
-    this.disposables.push(watchProjectFiles(this.onProjectFilesChanged));
+    this.disposables.push(watchProjectFiles(this.checkIsUsingStaleBuild));
     this.device.sendRotate(initialRotation);
 
     this.disposables.push(this.stateManager);
@@ -171,9 +172,7 @@ export class DeviceSession implements Disposable {
   }
 
   private resetStartingState(startupMessage: StartupMessage = StartupMessage.Restarting) {
-    this.navigationHomeTarget = undefined;
     this.stateManager.updateState({
-      isUsingStaleBuild: false,
       status: "starting",
       startupMessage,
       stageProgress: 0,
@@ -204,7 +203,7 @@ export class DeviceSession implements Disposable {
     return currentFingerprint !== build.fingerprint;
   }
 
-  private onProjectFilesChanged = throttleAsync(async () => {
+  private checkIsUsingStaleBuild = throttleAsync(async () => {
     const lastSuccessfulBuild = this.maybeBuildResult;
     if (!lastSuccessfulBuild || this.stateManager.getState().status !== "running") {
       // we only monitor for stale builds when the session is in 'running' state
@@ -229,28 +228,6 @@ export class DeviceSession implements Disposable {
 
   //#endregion
 
-  private setupInspectorBridgeListeners(devtools: RadonInspectorBridge) {
-    // We don't need to store event disposables here as they are tied to the lifecycle
-    // of the devtools instance, which is disposed when we recreate the devtools or
-    // when the device session is disposed
-    devtools.onEvent("navigationChanged", (payload: NavigationHistoryItem) => {
-      if (!this.navigationHomeTarget) {
-        this.navigationHomeTarget = payload;
-      }
-      const navigationHistory = [
-        payload,
-        ...this.stateManager
-          .getState()
-          .navigationHistory.filter((record) => record.id !== payload.id),
-      ].slice(0, MAX_URL_HISTORY_SIZE);
-
-      this.stateManager.updateState({ navigationHistory });
-    });
-    devtools.onEvent("navigationRouteListUpdated", (payload: NavigationRoute[]) => {
-      this.stateManager.updateState({ navigationRouteList: payload });
-    });
-  }
-
   /**
   This method is async to allow for awaiting it during restarts, please keep in mind tho that
   build in vscode dispose system ignores async keyword and works synchronously.
@@ -269,7 +246,7 @@ export class DeviceSession implements Disposable {
 
     this.buildProgressListener.cancel();
     this.onBundleProgress.cancel();
-    this.onProjectFilesChanged.cancel();
+    this.checkIsUsingStaleBuild.cancel();
 
     disposeAll(this.disposables);
   }
@@ -452,11 +429,15 @@ export class DeviceSession implements Disposable {
       platform: this.stateManager.getState().deviceInfo.platform,
     });
 
-    this.resetStartingState();
-    if (this.maybeBuildResult && (await this.isBuildStale(this.maybeBuildResult))) {
+    const { isUsingStaleBuild } = this.stateManager.getState();
+
+    if (this.maybeBuildResult && isUsingStaleBuild) {
       await this.restartDevice({ forceClean: false });
       return;
     }
+
+    this.checkIsUsingStaleBuild();
+    this.checkIsUsingStaleBuild.flush();
 
     // if reloading JS is possible, we try to do it first and exit in case of success
     // otherwise we continue to restart using more invasive methods
@@ -504,6 +485,7 @@ export class DeviceSession implements Disposable {
 
     const applicationSessionPromise = ApplicationSession.launch(
       this.stateManager.getDerived("applicationSession"),
+      this.navigationStateManager,
       {
         applicationContext: this.applicationContext,
         device: this.device,
@@ -525,7 +507,6 @@ export class DeviceSession implements Disposable {
 
       // NOTE: on iOS, we need to change keyboard langugage to match the device locale after the app is ready
       this.device.setUpKeyboard();
-      this.setupInspectorBridgeListeners(applicationSession.inspectorBridge);
 
       this.stateManager.updateState({
         status: "running",
@@ -844,22 +825,20 @@ export class DeviceSession implements Disposable {
   }
 
   public openNavigation(id: string) {
-    this.inspectorBridge?.sendOpenNavigationRequest(id);
+    this.applicationSession?.openNavigation(id);
   }
 
   public navigateHome() {
-    if (this.navigationHomeTarget) {
-      this.inspectorBridge?.sendOpenNavigationRequest(this.navigationHomeTarget.id);
-    }
+    this.applicationSession?.navigateHome();
   }
 
   public navigateBack() {
-    this.inspectorBridge?.sendOpenNavigationRequest("__BACK__");
+    this.applicationSession?.navigateBack();
   }
 
   public removeNavigationHistoryEntry(id: string) {
-    this.stateManager.updateState({
-      navigationHistory: this.stateManager
+    this.navigationStateManager.updateState({
+      navigationHistory: this.navigationStateManager
         .getState()
         .navigationHistory.filter((record) => record.id !== id),
     });

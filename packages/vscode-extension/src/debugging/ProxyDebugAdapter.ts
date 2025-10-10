@@ -34,6 +34,9 @@ export class ProxyDebugAdapter extends DebugSession {
   private childDebugSession: vscode.DebugSession | null = null;
   private attachCancelToken = new CancelToken();
   private terminated: boolean = false;
+  private attached: boolean = false;
+  private eventsQueue: Event[] = [];
+  private cpuProfileFilePath: string | undefined;
 
   constructor(private session: vscode.DebugSession) {
     super();
@@ -103,16 +106,33 @@ export class ProxyDebugAdapter extends DebugSession {
         }
         switch (event.event) {
           case "profileStarted":
+            this.cpuProfileFilePath = event.body.file;
             this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
             break;
           case "profilerStateUpdate":
             if (event.body?.running === false) {
-              this.sendEvent(new Event("RNIDE_profilingCPUStopped"));
+              this.sendEvent(
+                new Event("RNIDE_profilingCPUStopped", { filePath: this.cpuProfileFilePath })
+              );
+              this.cpuProfileFilePath = undefined;
             }
             break;
         }
       })
     );
+  }
+
+  public sendEvent(event: Event) {
+    if (this.attached) {
+      super.sendEvent(event);
+    } else {
+      this.eventsQueue.push(event);
+    }
+  }
+
+  private flushEventsQueue() {
+    this.eventsQueue.forEach((event) => super.sendEvent(event));
+    this.eventsQueue = [];
   }
 
   protected initializeRequest(
@@ -200,6 +220,8 @@ export class ProxyDebugAdapter extends DebugSession {
       await promise;
 
       this.sendResponse(response);
+      this.attached = true;
+      this.flushEventsQueue();
     } catch (e) {
       Logger.error("Error starting proxy debug adapter child session", e);
       this.sendErrorResponse(
@@ -242,6 +264,7 @@ export class ProxyDebugAdapter extends DebugSession {
       return;
     }
     this.attachCancelToken.cancel();
+    this.attached = false;
     this.terminated = true;
     await this.cdpProxy.stopServer();
     disposeAll(this.disposables);

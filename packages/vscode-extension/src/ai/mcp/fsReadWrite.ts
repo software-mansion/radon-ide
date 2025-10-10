@@ -4,8 +4,8 @@ import * as os from "os";
 import * as vscode from "vscode";
 import { Logger } from "../../Logger";
 import { getTelemetryReporter } from "../../utilities/telemetry";
-import { EditorType } from "./models";
-import { ConfigLocation, getEditorType, MCP_LOG } from "./utils";
+import { ConfigLocation, MCP_LOG } from "./utils";
+import { EditorType, getEditorType } from "../../utilities/editorType";
 
 const VSCODE_DIR_PATH = ".vscode";
 const CURSOR_DIR_PATH = ".cursor";

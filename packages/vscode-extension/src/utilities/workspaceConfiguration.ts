@@ -6,7 +6,6 @@ import {
   DeviceRotation,
   Locale,
   Location,
-  MCPConfigLocation,
   PanelLocation,
   RecursivePartial,
   REMOVE,
@@ -37,10 +36,6 @@ const WorkspaceConfigurationKeyMap = {
   deviceControl: {
     startDeviceOnLaunch: "deviceControl.startDeviceOnLaunch",
     stopPreviousDevices: "deviceControl.stopPreviousDevices",
-  },
-  radonAI: {
-    enableRadonAI: "radonAI.enableRadonAI",
-    MCPConfigLocation: "radonAI.MCPConfigLocation",
   },
 };
 
@@ -88,7 +83,7 @@ export function getCurrentWorkspaceConfiguration(config: WorkspaceConfiguration)
       hasEnrolledBiometrics:
         config.get<boolean>(WorkspaceConfigurationKeyMap.deviceSettings.hasEnrolledBiometrics) ??
         false,
-      locale: config.get<Locale>(WorkspaceConfigurationKeyMap.deviceSettings.locale) ?? "en-US",
+      locale: config.get<Locale>(WorkspaceConfigurationKeyMap.deviceSettings.locale) ?? "en_US",
       replaysEnabled:
         config.get<boolean>(WorkspaceConfigurationKeyMap.deviceSettings.replaysEnabled) ?? false,
       showTouches:
@@ -97,13 +92,6 @@ export function getCurrentWorkspaceConfiguration(config: WorkspaceConfiguration)
         back: "emulated",
         front: "none",
       },
-    },
-    radonAI: {
-      enableRadonAI:
-        config.get<boolean>(WorkspaceConfigurationKeyMap.radonAI.enableRadonAI) ?? true,
-      MCPConfigLocation:
-        config.get<MCPConfigLocation>(WorkspaceConfigurationKeyMap.radonAI.MCPConfigLocation) ??
-        "Project",
     },
   };
 

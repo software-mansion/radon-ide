@@ -1,0 +1,44 @@
+name: Lint vscode-extension-tester
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/lint-extension-tester.yml"
+      - "packages/vscode-extension-tester/**"
+  pull_request:
+    paths:
+      - ".github/workflows/lint-extension-tester.yml"
+      - "packages/vscode-extension-tester/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    if: github.repository == 'software-mansion/radon-ide'
+    runs-on: ubuntu-latest
+    env:
+      WORKING_DIRECTORY_TESTER: packages/vscode-extension-tester
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Enforce HTTPS for submodules
+        run: git config --global url."https://github.com/".insteadOf "git@github.com:"
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: packages/vscode-extension-tester/package-lock.json
+
+      - name: Install node dependencies
+        working-directory: ${{ env.WORKING_DIRECTORY_TESTER }}
+        run: npm ci
+
+      - name: Lint extension tester
+        working-directory: ${{ env.WORKING_DIRECTORY_TESTER }}
+        run: npm run lint

@@ -1,9 +1,9 @@
+import * as fs from "fs";
+import { assert } from "chai";
 import { WebView, Key } from "vscode-extension-tester";
 import initServices from "../services/index.js";
-import { get } from "./setupTest.js";
-import { assert } from "chai";
-import * as fs from "fs";
 import { describeIf } from "../utils/helpers.js";
+import { get } from "./setupTest.js";
 
 const raw = fs.readFileSync("./data/react-native-app/package.json");
 const data = JSON.parse(raw);
@@ -13,7 +13,6 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
   let driver,
     appWebsocket,
     view,
-    workbench,
     elementHelperService,
     radonViewsService,
     managingDevicesService,
@@ -21,7 +20,7 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
     radonSettingsService;
 
   before(async () => {
-    ({ driver, view, workbench } = get());
+    ({ driver, view } = get());
 
     ({
       elementHelperService,

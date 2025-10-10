@@ -39,3 +39,11 @@ export interface TimelineEvent {
   durationMs?: number;
   ttfb?: number;
 }
+
+// Declared here and re-declared as object inside
+// `lib/network/networkRequestParsers.ts` due to import conflicts
+// inside `lib` from "src" directory
+export enum ContentTypeHeader {
+  IOS = "Content-Type",
+  ANDROID = "content-type",
+}

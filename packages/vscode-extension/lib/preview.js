@@ -5,8 +5,8 @@ export const PREVIEW_APP_KEY = "RNIDE_preview";
 
 global.__RNIDE_previews ||= new Map();
 
-export function Preview({ previewKey }) {
-  const previewData = global.__RNIDE_previews.get(previewKey);
+export function Preview({ __radon_previewKey }) {
+  const previewData = global.__RNIDE_previews.get(__radon_previewKey);
   if (!previewData || !previewData.component) {
     return null;
   }

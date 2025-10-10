@@ -46,16 +46,7 @@ export class DeviceManager implements Disposable {
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     this.loadDevicesIntoState();
-    this.listInstalledIOSRuntimes().then((runtimes) => {
-      this.stateManager.updateState({
-        iOSRuntimes: runtimes,
-      });
-    });
-    this.listInstalledAndroidImages().then((images) => {
-      this.stateManager.updateState({
-        androidImages: images,
-      });
-    });
+    this.loadInstalledImages();
 
     this.disposables.push(this.stateManager);
   }
@@ -206,6 +197,19 @@ export class DeviceManager implements Disposable {
     );
     await this.loadDevices(true);
     return simulator;
+  }
+
+  public loadInstalledImages() {
+    this.listInstalledIOSRuntimes().then((runtimes) => {
+      this.stateManager.updateState({
+        iOSRuntimes: runtimes,
+      });
+    });
+    this.listInstalledAndroidImages().then((images) => {
+      this.stateManager.updateState({
+        androidImages: images,
+      });
+    });
   }
 
   public async renameDevice(device: DeviceInfo, newDisplayName: string) {

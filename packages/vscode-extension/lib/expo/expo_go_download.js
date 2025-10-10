@@ -1,11 +1,6 @@
-const { requireFromAppDir, resolveFromAppDir, appRoot } = require("../metro_helpers");
-const expoInstallPath = resolveFromAppDir("expo");
-const { getConfig } = requireFromAppDir("@expo/config/build/Config.js", {
-  paths: [expoInstallPath],
-});
-const { downloadExpoGoAsync } = requireFromAppDir("@expo/cli/build/src/utils/downloadExpoGoAsync", {
-  paths: [expoInstallPath],
-});
+const { requireFromAppDependency, appRoot } = require("../metro_helpers");
+const { getConfig } = requireFromAppDependency("expo", "@expo/config/build/Config.js");
+const { downloadExpoGoAsync } = requireFromAppDependency("expo", "@expo/cli/build/src/utils/downloadExpoGoAsync");
 
 async function main() {
   let platform = process.argv[2]; // 'Android' or 'iOS'
