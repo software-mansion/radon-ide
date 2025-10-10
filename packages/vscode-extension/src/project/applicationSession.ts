@@ -46,9 +46,9 @@ import { RadonInspectorBridge } from "./inspectorBridge";
 import { NETWORK_EVENT_MAP, NetworkBridge } from "./networkBridge";
 import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
+import { isCDPMethod } from "../network/types/panelMessageProtocol";
 
 const MAX_URL_HISTORY_SIZE = 20;
-import { CDPMessage, isCDPMethod } from "../network/types/panelMessageProtocol";
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
   device: DeviceBase;
@@ -202,7 +202,8 @@ export class ApplicationSession implements Disposable {
       this.stateManager.getDerived("toolsState"),
       devtoolsInspectorBridge,
       this.networkBridge,
-      this.applicationContext.workspaceConfigState
+      this.applicationContext.workspaceConfigState,
+      this.metro.port
     );
 
     this.disposables.push(this.toolsManager);
@@ -320,30 +321,11 @@ export class ApplicationSession implements Disposable {
     }
   };
 
-  private isInternalRequest(message: CDPMessage, port: number): boolean {
-    const url = message?.params?.request?.url ?? "";
-
-    try {
-      const parsedUrl = new URL(url);
-      const isLocalhost = /^(localhost|127\.0\.0\.1)$/.test(parsedUrl.hostname);
-      const isPortMatch = parsedUrl.port === port.toString();
-
-      return isLocalhost && isPortMatch;
-    } catch (error) {
-      return false;
-    }
-  }
-
   private onNetworkEvent = (event: DebugSessionCustomEvent): void => {
     const method = event.body?.method;
     if (!method || !isCDPMethod(method)) {
       Logger.error("Unknown network event method:", method);
       this.networkBridge.emitEvent("unknownEvent", event.body);
-      return;
-    }
-
-    if (this.isInternalRequest(event.body, this.metro.port)) {
-      Logger.info("Internal React Native network event, ignoring");
       return;
     }
 

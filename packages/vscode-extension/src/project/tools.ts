@@ -64,7 +64,8 @@ export class ToolsManager implements Disposable {
     private readonly stateManager: StateManager<ToolsState>,
     public readonly inspectorBridge: RadonInspectorBridge,
     public readonly networkBridge: NetworkBridge,
-    public readonly workspaceConfigState: StateManager<WorkspaceConfiguration>
+    public readonly workspaceConfigState: StateManager<WorkspaceConfiguration>,
+    public readonly metroPort: number
   ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
     for (const plugin of createExpoDevPluginTools()) {
@@ -87,7 +88,7 @@ export class ToolsManager implements Disposable {
     };
 
     this.plugins.set(REDUX_PLUGIN_ID, new ReduxDevtoolsPlugin(inspectorBridge));
-    this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(inspectorBridge, networkBridge));
+    this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(inspectorBridge, networkBridge, metroPort));
     this.plugins.set(
       RENDER_OUTLINES_PLUGIN_ID,
       new RenderOutlinesPlugin(
