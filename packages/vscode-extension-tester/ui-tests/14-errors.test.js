@@ -9,6 +9,7 @@ describe("14 - Error tests", () => {
     appManipulationService,
     elementHelperService,
     managingDevicesService,
+    appWebsocket,
     vscodeHelperService;
 
   before(async () => {
@@ -34,6 +35,11 @@ describe("14 - Error tests", () => {
   beforeEach(async function () {
     await radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
+    await driver.wait(async () => {
+      appWebsocket = get().appWebsocket;
+      return appWebsocket != null;
+    }, 5000);
+    await appManipulationService.hideExpoOverlay(appWebsocket);
     await driver
       .actions()
       .keyDown(Key.COMMAND)
@@ -41,21 +47,25 @@ describe("14 - Error tests", () => {
       .keyUp(Key.COMMAND)
       .perform();
     await driver.sleep(20000);
+    await appManipulationService.hideExpoOverlay(appWebsocket);
+    await driver
+      .actions()
+      .keyDown(Key.COMMAND)
+      .sendKeys("d")
+      .keyUp(Key.COMMAND)
+      .perform();
   });
 
   it("should show bundle error", async function () {
     await vscodeHelperService.openCommandLineAndExecute("View: Split Editor");
     await vscodeHelperService.openFileInEditor(
-      "/data/react-native-app/shared/automatedTests.tsx"
+      "/data/react-native-app/shared/MainScreen.tsx"
     );
     const editor = await new EditorView().openEditor("automatedTests.tsx", 1);
     const originalText = await editor.getText();
     try {
       await editor.moveCursor(1, 1);
-      await editor.typeText(`
-        import NotExisting from 'not-existing';
-        NotExisting;
-    `);
+      await editor.setText(``);
       await driver
         .actions()
         .keyDown(Key.COMMAND)
@@ -84,7 +94,7 @@ describe("14 - Error tests", () => {
       assert.equal(await dialogTitle.getText(), "Bundle error");
     } finally {
       await driver.switchTo().defaultContent();
-      const editor = await new EditorView().openEditor("automatedTests.tsx", 1);
+      const editor = await new EditorView().openEditor("MainScreen.tsx", 1);
       await editor.setText(originalText);
       await driver
         .actions()
