@@ -510,8 +510,9 @@ class SubprocessMetroSession extends Metro implements Disposable {
         this.bundlerReady.resolve();
         break;
       case "client_log":
-        if (event.data[0] !== "__RNIDE_INTERNAL") {
-          this.appOutputChannel.appendLine(stripAnsi(event.data[0]));
+        const content = event.data[0];
+        if (content !== "__RNIDE_INTERNAL") {
+          this.appOutputChannel.appendLine(stripAnsi(content));
         }
         break;
       case "RNIDE_watch_folders":
