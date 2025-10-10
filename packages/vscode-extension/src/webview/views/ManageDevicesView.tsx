@@ -2,6 +2,8 @@ import "./ManageDevicesView.css";
 import { MouseEventHandler, useEffect, useState } from "react";
 import * as Switch from "@radix-ui/react-switch";
 import { use$ } from "@legendapp/state/react";
+import _ from "lodash";
+import classNames from "classnames";
 import IconButton from "../components/shared/IconButton";
 import DeviceRenameDialog from "../components/DeviceRenameDialog";
 import DeviceRemovalConfirmation from "../components/DeviceRemovalConfirmation";
@@ -37,6 +39,7 @@ function DeviceRow({
   dataTest,
 }: PropsWithDataTest<DeviceRowProps>) {
   const { project } = useProject();
+  const { closeModal } = useModal();
 
   const stopDevice = () => project.terminateSession(deviceInfo.id);
   const selectDevice: MouseEventHandler = (e) => {
@@ -53,7 +56,19 @@ function DeviceRow({
       ? `${deviceModelName} - ${deviceInfo.systemName}`
       : deviceInfo.systemName;
 
-  const { closeModal } = useModal();
+  const isPhysicalDevice = deviceInfo.platform === DevicePlatform.Android && !deviceInfo.emulator;
+
+  const renameTooltipLabel = isPhysicalDevice
+    ? "Renaming physical devices is not supported"
+    : "Rename device";
+
+  const removeTooltipLabel =
+    deviceInfo.platform === DevicePlatform.IOS
+      ? "Remove device with its runtime"
+      : !isPhysicalDevice
+        ? "Remove device with its system image"
+        : "Removing physical devices is not supported";
+
   return (
     <button
       className="device-row"
@@ -109,10 +124,12 @@ function DeviceRow({
         )}
         <IconButton
           tooltip={{
-            label: "Rename device",
+            label: renameTooltipLabel,
             side: "bottom",
             type: "secondary",
           }}
+          shouldDisplayLabelWhileDisabled
+          disabled={isPhysicalDevice}
           data-testid={`manage-devices-menu-rename-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
@@ -122,18 +139,20 @@ function DeviceRow({
         </IconButton>
         <IconButton
           tooltip={{
-            label: `Remove device with its ${
-              deviceInfo.platform === DevicePlatform.IOS ? "runtime" : "system image"
-            }`,
+            label: removeTooltipLabel,
             side: "bottom",
             type: "secondary",
           }}
+          shouldDisplayLabelWhileDisabled
+          disabled={isPhysicalDevice}
           data-testid={`manage-devices-menu-delete-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceDelete(deviceInfo);
           }}>
-          <span className="codicon codicon-trash delete-icon" />
+          <span
+            className={classNames("codicon", "codicon-trash", isPhysicalDevice || "delete-icon")}
+          />
         </IconButton>
       </span>
     </button>
@@ -158,12 +177,19 @@ function ManageDevicesView() {
 
   const devices = use$(store$.devicesState.devices) ?? [];
 
-  const iosDevices = (devices ?? []).filter(
-    ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0
-  );
-  const androidDevices = (devices ?? []).filter(
-    ({ platform, modelId }) => platform === DevicePlatform.Android && modelId.length > 0
-  );
+  const {
+    iosDevices = [],
+    androidEmulatorDevices = [],
+    androidPhysicalDevices = [],
+  } = _.groupBy(devices, (deviceInfo) => {
+    if (deviceInfo.platform === DevicePlatform.IOS) {
+      return "iosDevices";
+    }
+    if (deviceInfo.emulator) {
+      return "androidEmulatorDevices";
+    }
+    return "androidPhysicalDevices";
+  });
 
   useEffect(() => {
     project.loadInstalledImages();
@@ -226,10 +252,16 @@ function ManageDevicesView() {
           {iosDevices.map(renderRow)}
         </>
       )}
-      {androidDevices.length > 0 && (
+      {androidEmulatorDevices.length > 0 && (
         <>
-          <Label>Android Devices</Label>
-          {androidDevices.map(renderRow)}
+          <Label>Android Emulators</Label>
+          {androidEmulatorDevices.map(renderRow)}
+        </>
+      )}
+      {androidPhysicalDevices.length > 0 && (
+        <>
+          <Label>Connected Android Devices</Label>
+          {androidPhysicalDevices.map(renderRow)}
         </>
       )}
       <Button
