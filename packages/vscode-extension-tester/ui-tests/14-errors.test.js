@@ -37,10 +37,11 @@ describe("14 - Error tests", () => {
   });
 
   it("should show bundle error", async function () {
+    await vscodeHelperService.openCommandLineAndExecute("View: Split Editor");
     await vscodeHelperService.openFileInEditor(
       "/data/react-native-app/shared/automatedTests.tsx"
     );
-    const editor = new TextEditor();
+    const editor = await new EditorView().openEditor("automatedTests.tsx", 1);
     const originalText = await editor.getText();
     try {
       await editor.moveCursor(1, 1);
@@ -48,7 +49,12 @@ describe("14 - Error tests", () => {
         import NotExisting from 'not-existing';
         NotExisting;
     `);
-      await editor.save();
+      await driver
+        .actions()
+        .keyDown(Key.COMMAND)
+        .sendKeys("s")
+        .keyUp(Key.COMMAND)
+        .perform();
       await radonViewsService.openRadonIDEPanel();
       await driver.wait(
         async () => {
@@ -61,7 +67,8 @@ describe("14 - Error tests", () => {
             return false;
           }
         },
-        10000,
+        // it may take some time for radon to fast refresh especially on GitHub CI
+        20000,
         "Error dialog did not show up"
       );
       const dialogTitle = await elementHelperService.findAndWaitForElementByTag(
@@ -69,12 +76,15 @@ describe("14 - Error tests", () => {
       );
       assert.equal(await dialogTitle.getText(), "Bundle error");
     } finally {
-      await vscodeHelperService.openFileInEditor(
-        "/data/react-native-app/shared/automatedTests.tsx"
-      );
-      const textEditor = new TextEditor();
-      await textEditor.setText(originalText);
-      await textEditor.save();
+      await driver.switchTo().defaultContent();
+      const editor = await new EditorView().openEditor("automatedTests.tsx", 1);
+      await editor.setText(originalText);
+      await driver
+        .actions()
+        .keyDown(Key.COMMAND)
+        .sendKeys("s")
+        .keyUp(Key.COMMAND)
+        .perform();
     }
   });
 });

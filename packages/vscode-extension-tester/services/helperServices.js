@@ -6,7 +6,6 @@ import {
   WebView,
   ActivityBar,
   Key,
-  InputBox,
 } from "vscode-extension-tester";
 
 export class ElementHelperService {
@@ -89,6 +88,7 @@ export class VSCodeHelperService {
   async openFileInEditor(path) {
     await this.driver.switchTo().defaultContent();
     await this.openCommandLineAndExecute("workbench.action.files.openFile");
+    console.log("Opening file: " + process.cwd() + path);
     this.driver
       .actions()
       .keyDown(Key.COMMAND)
