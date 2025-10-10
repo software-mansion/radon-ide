@@ -115,7 +115,7 @@ To disable Radon AI assistant navigate to the editor settings.
 
 You can type "Preferences: Open User Settings" in the command palette (Ctrl+Shift+P or Cmd+Shift+P).
 
-Within editor settings, type "Radon AI: Enabled" into the search bar, press the first result and select `Disabled`.
+Within editor settings, type "Radon AI: Enabled", press the first result and select `Disabled`.
 
 ## Privacy
 
