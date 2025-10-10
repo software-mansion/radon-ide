@@ -135,4 +135,19 @@ export class VSCodeHelperService {
 
     return line;
   }
+
+  // in some situations workbench.executeCommand() is not working properly
+  async openCommandLineAndExecute(command) {
+    await this.driver.switchTo().defaultContent();
+    await this.driver
+      .actions()
+      .keyDown(Key.COMMAND)
+      .keyDown(Key.SHIFT)
+      .sendKeys("p")
+      .keyUp(Key.SHIFT)
+      .keyUp(Key.COMMAND)
+      .perform();
+    await this.driver.actions().sendKeys(command).perform();
+    await this.driver.actions().sendKeys(Key.ENTER).perform();
+  }
 }

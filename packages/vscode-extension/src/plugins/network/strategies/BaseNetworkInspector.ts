@@ -13,7 +13,7 @@ import { openContentInEditor, showDismissableError } from "../../../utilities/ed
 import { extractTheme } from "../../../utilities/themeExtractor";
 import { ContentTypeHeader } from "../../../network/types/network";
 
-export abstract class BaseInspectorStrategy implements NetworkInspector {
+export abstract class BaseNetworkInspector implements NetworkInspector {
   protected broadcastListeners: BroadcastListener[] = [];
 
   // #region abstract

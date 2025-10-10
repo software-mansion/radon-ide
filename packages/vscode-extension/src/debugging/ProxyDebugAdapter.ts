@@ -18,7 +18,7 @@ import { startDebugging } from "./startDebugging";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
 import { NetworkMethod } from "../network/types/panelMessageProtocol";
-import { NetworkBridgeGetResponseBodyArgs } from "../project/bridge";
+import { NetworkBridgeGetResponseBodyArgs } from "../project/networkBridge";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory

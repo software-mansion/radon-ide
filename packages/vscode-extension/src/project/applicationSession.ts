@@ -42,7 +42,8 @@ import {
   DevtoolsServer,
   CDPDevtoolsServer,
 } from "./devtools";
-import { RadonInspectorBridge, NETWORK_EVENT_MAP, NetworkBridge } from "./bridge";
+import { RadonInspectorBridge } from "./inspectorBridge";
+import { NETWORK_EVENT_MAP, NetworkBridge } from "./networkBridge";
 import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
 

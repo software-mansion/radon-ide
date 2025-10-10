@@ -1,5 +1,4 @@
 import { commands, Disposable } from "vscode";
-import { NetworkPlugin } from "../network-plugin";
 import { disposeAll } from "../../../utilities/disposables";
 import { Logger } from "../../../Logger";
 import {
@@ -8,10 +7,11 @@ import {
   WebviewCommand,
   WebviewMessage,
 } from "../../../network/types/panelMessageProtocol";
-import { BaseInspectorStrategy } from "./BaseNetworkInspector";
+import { BaseNetworkInspector } from "./BaseNetworkInspector";
 
 import { NETWORK_EVENTS } from "../../../network/types/panelMessageProtocol";
-import { NETWORK_EVENT_MAP, NetworkBridge, RadonInspectorBridge } from "../../../project/bridge";
+import { RadonInspectorBridge } from "../../../project/inspectorBridge";
+import { NETWORK_EVENT_MAP, NetworkBridge } from "../../../project/networkBridge";
 import { ResponseBodyData } from "../../../network/types/network";
 
 // Truncation constants
@@ -24,16 +24,15 @@ enum ActivationState {
   Active = "active",
 }
 
-export default class DebuggerNetworkInspector extends BaseInspectorStrategy {
+export default class DebuggerNetworkInspector extends BaseNetworkInspector {
   private disposables: Disposable[] = [];
-  private readonly inspectorBridge: RadonInspectorBridge;
-  private readonly networkBridge: NetworkBridge;
   private activationState = ActivationState.Inactive;
 
-  constructor(private plugin: NetworkPlugin) {
+  constructor(
+    private readonly inspectorBridge: RadonInspectorBridge,
+    private readonly networkBridge: NetworkBridge
+  ) {
     super();
-    this.networkBridge = this.plugin.networkBridge;
-    this.inspectorBridge = this.plugin.inspectorBridge;
   }
 
   private decodeBase64(base64String: string): string {
@@ -218,6 +217,6 @@ export default class DebuggerNetworkInspector extends BaseInspectorStrategy {
   }
 
   public get pluginAvailable() {
-    return this.plugin.networkBridge.bridgeAvailable;
+    return this.networkBridge.bridgeAvailable;
   }
 }

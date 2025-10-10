@@ -1,6 +1,5 @@
 import { commands, Disposable } from "vscode";
-import { NetworkPlugin } from "../network-plugin";
-import { RadonInspectorBridge } from "../../../project/bridge";
+import { RadonInspectorBridge } from "../../../project/inspectorBridge";
 import { disposeAll } from "../../../utilities/disposables";
 import { Logger } from "../../../Logger";
 import {
@@ -9,16 +8,13 @@ import {
   WebviewCommand,
   NetworkMethod,
 } from "../../../network/types/panelMessageProtocol";
-import { BaseInspectorStrategy as BaseNetworkInspector } from "./BaseNetworkInspector";
+import { BaseNetworkInspector } from "./BaseNetworkInspector";
 
 export default class InspectorBridgeNetworkInspector extends BaseNetworkInspector {
   private devtoolsListeners: Disposable[] = [];
 
-  private readonly inspectorBridge: RadonInspectorBridge;
-
-  constructor(private plugin: NetworkPlugin) {
+  constructor(private readonly inspectorBridge: RadonInspectorBridge) {
     super();
-    this.inspectorBridge = this.plugin.inspectorBridge;
   }
 
   protected handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {

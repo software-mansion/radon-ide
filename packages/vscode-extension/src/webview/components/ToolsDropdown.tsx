@@ -50,7 +50,7 @@ function DevToolCheckbox({
         <Switch.Root
           disabled={!enabled}
           className="switch-root small-switch"
-          data-testid={`dev-tool-${label}`}
+          data-testid={`dev-tool-${label.replace(" ", "-")}`}
           onCheckedChange={onCheckedChange}
           defaultChecked={checked}
           style={{ marginLeft: "auto" }}>

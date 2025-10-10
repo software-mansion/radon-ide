@@ -1,5 +1,6 @@
 import { commands, Disposable, window } from "vscode";
-import { NetworkBridge, RadonInspectorBridge } from "../../project/bridge";
+import { RadonInspectorBridge } from "../../project/inspectorBridge";
+import { NetworkBridge } from "../../project/networkBridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { Logger } from "../../Logger";
@@ -50,18 +51,15 @@ async function initialize() {
 export class NetworkPlugin implements ToolPlugin {
   public readonly id: ToolKey = NETWORK_PLUGIN_ID;
   public readonly label = "Network";
-  public readonly persist = false;
+  public readonly persist = true;
   public toolInstalled = false;
 
   private readonly networkInspector: NetworkInspector;
 
-  constructor(
-    readonly inspectorBridge: RadonInspectorBridge,
-    readonly networkBridge: NetworkBridge
-  ) {
+  constructor(inspectorBridge: RadonInspectorBridge, networkBridge: NetworkBridge) {
     this.networkInspector = ENABLE_DEBUGGER_INSPECTOR
-      ? new DebuggerNetworkInspector(this)
-      : new InspectorBridgeNetworkInspector(this);
+      ? new DebuggerNetworkInspector(inspectorBridge, networkBridge)
+      : new InspectorBridgeNetworkInspector(inspectorBridge);
     initialize();
   }
 

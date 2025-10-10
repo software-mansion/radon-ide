@@ -46,7 +46,7 @@ function InspectOverlay({
   const cssProperties = getCssProperties(translatedInspectFrame);
   return (
     <div className="phone-screen phone-inspect-overlay">
-      <div className="inspect-area" style={cssProperties} />
+      <div className="inspect-area" style={cssProperties} data-testid="phone-inspect-area" />
       {isInspecting && (
         <DimensionsBox
           device={device}
