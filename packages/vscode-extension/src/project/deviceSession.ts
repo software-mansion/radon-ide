@@ -1,6 +1,6 @@
 import { Disposable } from "vscode";
 import { throttle } from "lodash";
-import { RadonInspectorBridge } from "./bridge";
+import { RadonInspectorBridge } from "./inspectorBridge";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
 import {

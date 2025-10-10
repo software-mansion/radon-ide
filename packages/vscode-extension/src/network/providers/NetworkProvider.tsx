@@ -13,7 +13,12 @@ import useNetworkTracker, {
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { NetworkLog } from "../types/networkLog";
-import { WebviewMessage, WebviewCommand } from "../types/panelMessageProtocol";
+import {
+  WebviewMessage,
+  WebviewCommand,
+  NetworkMethod,
+  IDEMethod,
+} from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
 import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
@@ -40,7 +45,7 @@ function createBodyResponsePromise(
   const listener = (message: MessageEvent) => {
     try {
       const { command, payload }: WebviewMessage = message.data;
-      if (command !== WebviewCommand.CDPCall || payload.id !== messageId) {
+      if (command !== WebviewCommand.CDPCall || payload.messageId !== messageId) {
         return;
       }
 
@@ -73,7 +78,7 @@ function createThemeResponsePromise(messageId: string) {
   const listener = (message: MessageEvent) => {
     try {
       const { payload }: WebviewMessage = message.data;
-      if (payload.method !== "IDE.Theme" || payload.id !== messageId) {
+      if (payload.method !== IDEMethod.Theme || payload.messageId !== messageId) {
         return;
       }
 
@@ -144,8 +149,8 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
     // Send the message to the network-plugin backend
     sendWebviewCDPMessage({
-      id: messageId,
-      method: "Network.getResponseBody",
+      messageId: messageId,
+      method: NetworkMethod.GetResponseBody,
       params: {
         requestId: requestId,
       },
@@ -159,8 +164,8 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
 
     // Send the message to the network-plugin backend
     sendWebviewIDEMessage({
-      method: "IDE.getTheme",
-      id: messageId,
+      method: IDEMethod.GetTheme,
+      messageId: messageId,
       params: {
         themeDescriptor,
       },
@@ -180,8 +185,8 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     const id = Math.random().toString(36).substring(7);
 
     sendWebviewIDEMessage({
-      id,
-      method: "IDE.fetchFullResponseBody",
+      messageId: id,
+      method: IDEMethod.FetchFullResponseBody,
       params: {
         request: request,
       },

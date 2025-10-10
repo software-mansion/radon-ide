@@ -1,7 +1,7 @@
 import { commands, window, Webview, Disposable } from "vscode";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
-import { RadonInspectorBridge } from "../../project/bridge";
+import { RadonInspectorBridge } from "../../project/inspectorBridge";
 import { ReduxDevToolsPluginWebviewProvider } from "./ReduxDevToolsPluginWebviewProvider";
 import { disposeAll } from "../../utilities/disposables";
 
