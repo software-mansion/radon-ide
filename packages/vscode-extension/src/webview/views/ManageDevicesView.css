@@ -12,7 +12,7 @@
   padding-left: 2.5%;
 }
 
-.delete-icon {
+.delete-icon:not(.disabled) {
   color: var(--swm-device-delete-icon);
 }
 

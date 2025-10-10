@@ -81,14 +81,15 @@ function renderDevices(
 function partitionDevices(devices: DeviceInfo[]): Record<string, DeviceInfo[]> {
   const validDevices = devices.filter(({ modelId }) => modelId.length > 0);
 
-  const [iosDevices, androidDevices] = _.partition(
-    validDevices,
-    ({ platform }) => platform === DevicePlatform.IOS
-  );
-  return {
-    iOS: iosDevices,
-    Android: androidDevices,
-  };
+  return _.groupBy(validDevices, (deviceInfo) => {
+    if (deviceInfo.platform === DevicePlatform.IOS) {
+      return "iOS";
+    }
+    if (deviceInfo.emulator) {
+      return "Android Emulators";
+    }
+    return "Connected Android Devices";
+  });
 }
 
 function DeviceSelect() {

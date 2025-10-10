@@ -406,7 +406,7 @@ export async function createEmulator(
   modelId: string,
   displayName: string,
   systemImage: AndroidSystemImageInfo
-) {
+): Promise<AndroidEmulatorInfo> {
   const avdDirectory = getOrCreateAvdDirectory();
   const avdId = uuidv4();
   const avdIni = path.join(avdDirectory, `${avdId}.ini`);
@@ -478,7 +478,8 @@ export async function createEmulator(
     displayName: displayName,
     deviceType: DeviceType.Phone,
     available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
-  } as DeviceInfo;
+    emulator: true,
+  };
 }
 const UUID_REGEX = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/;
 async function getAvdIds(avdDirectory: string) {
@@ -502,7 +503,7 @@ export async function listEmulators(): Promise<AndroidEmulatorInfo[]> {
   return combinedEmulators[0].concat(combinedEmulators[1]);
 }
 
-async function listEmulatorsForDirectory(avdDirectory: string) {
+async function listEmulatorsForDirectory(avdDirectory: string): Promise<AndroidEmulatorInfo[]> {
   const avdIds = await getAvdIds(avdDirectory);
   const systemImages = await getAndroidSystemImages();
   return Promise.all(
@@ -522,7 +523,9 @@ async function listEmulatorsForDirectory(avdDirectory: string) {
         systemName: systemImageName ?? "Unknown",
         displayName: displayName,
         available: true, // TODO: there is no easy way to check if emulator is available, we'd need to parse config.ini
-      } as AndroidEmulatorInfo;
+        deviceType: DeviceType.Phone,
+        emulator: true,
+      };
     })
   );
 }
