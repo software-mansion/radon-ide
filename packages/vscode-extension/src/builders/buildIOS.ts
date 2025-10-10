@@ -94,7 +94,6 @@ function buildProject(
     "-configuration",
     configuration,
     "TARGETED_DEVICE_FAMILY=1,2",
-    'OTHER_CFLAGS="-DREACT_NATIVE_DEBUGGER_ENABLED=1"',
     "-scheme",
     scheme,
     "-destination",
