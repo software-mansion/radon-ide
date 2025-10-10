@@ -16,6 +16,8 @@ import { ContentTypeHeader } from "../../../network/types/network";
 export abstract class BaseNetworkInspector implements NetworkInspector {
   protected broadcastListeners: BroadcastListener[] = [];
 
+  constructor(private readonly metroPort: number) {}
+
   // #region abstract
 
   public abstract activate(): void;
@@ -40,7 +42,30 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     });
   }
 
+  private isInternalRequest(message: WebviewMessage, port: number): boolean {
+    if (message.command !== WebviewCommand.CDPCall) {
+      return false;
+    }
+
+    const url = message?.payload.params?.request?.url ?? "";
+
+    try {
+      const parsedUrl = new URL(url);
+      const isLocalhost = /^(localhost|127\.0\.0\.1)$/.test(parsedUrl.hostname);
+      const isPortMatch = parsedUrl.port === port.toString();
+
+      return isLocalhost && isPortMatch;
+    } catch (error) {
+      return false;
+    }
+  }
+
   protected broadcastMessage(message: Parameters<BroadcastListener>[0]): void {
+    if (this.isInternalRequest(message, this.metroPort)) {
+      Logger.info("Internal React Native network event, ignoring");
+      return;
+    }
+
     this.broadcastListeners.forEach((cb) => cb(message));
   }
 
@@ -64,7 +89,6 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   //#endregion
 
   // #region IDE messages
-
   private formatDataBasedOnLanguage(body: string, language: string): string {
     if (language === "json") {
       try {

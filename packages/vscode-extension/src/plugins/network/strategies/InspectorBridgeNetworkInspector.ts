@@ -13,8 +13,11 @@ import { BaseNetworkInspector } from "./BaseNetworkInspector";
 export default class InspectorBridgeNetworkInspector extends BaseNetworkInspector {
   private devtoolsListeners: Disposable[] = [];
 
-  constructor(private readonly inspectorBridge: RadonInspectorBridge) {
-    super();
+  constructor(
+    private readonly inspectorBridge: RadonInspectorBridge,
+    metroPort: number
+  ) {
+    super(metroPort);
   }
 
   protected handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {

@@ -55,10 +55,14 @@ export class NetworkPlugin implements ToolPlugin {
 
   private readonly networkInspector: NetworkInspector;
 
-  constructor(inspectorBridge: RadonInspectorBridge, networkBridge: NetworkBridge) {
+  constructor(
+    inspectorBridge: RadonInspectorBridge,
+    networkBridge: NetworkBridge,
+    metroPort: number
+  ) {
     this.networkInspector = ENABLE_DEBUGGER_INSPECTOR
-      ? new DebuggerNetworkInspector(inspectorBridge, networkBridge)
-      : new InspectorBridgeNetworkInspector(inspectorBridge);
+      ? new DebuggerNetworkInspector(inspectorBridge, networkBridge, metroPort)
+      : new InspectorBridgeNetworkInspector(inspectorBridge, metroPort);
     initialize();
   }
 

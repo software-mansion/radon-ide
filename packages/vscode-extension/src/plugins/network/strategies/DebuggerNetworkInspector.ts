@@ -30,9 +30,10 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
 
   constructor(
     private readonly inspectorBridge: RadonInspectorBridge,
-    private readonly networkBridge: NetworkBridge
+    private readonly networkBridge: NetworkBridge,
+    metroPort: number
   ) {
-    super();
+    super(metroPort);
   }
 
   private decodeBase64(base64String: string): string {
