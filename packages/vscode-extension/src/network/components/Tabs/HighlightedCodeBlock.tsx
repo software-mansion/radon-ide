@@ -19,7 +19,7 @@ interface HighlightedCodeBlockProps {
  * Maximum content length (in characters) to apply syntax highlighting
  * For larger content, plain text will be displayed to avoid performance issues
  */
-const MAX_HIGHLIGHT_LENGTH = 100_000;
+const MAX_HIGHLIGHT_LENGTH = 65_000;
 
 const HighlightedCodeBlock = ({
   content,
