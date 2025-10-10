@@ -2,27 +2,15 @@ import _ from "lodash";
 import { Disposable } from "vscode";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import {
-  IosSimulatorDevice,
   SimulatorDeviceSet,
   createSimulator,
-  listSimulators,
   renameIosSimulator,
   removeIosSimulator,
 } from "./IosSimulatorDevice";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
-import {
-  AndroidEmulatorDevice,
-  createEmulator,
-  listEmulators,
-  renameEmulator,
-  removeEmulator,
-} from "./AndroidEmulatorDevice";
-import { Logger } from "../Logger";
+import { createEmulator, renameEmulator, removeEmulator } from "./AndroidEmulatorDevice";
 import { extensionContext } from "../utilities/extensionContext";
-import { Platform } from "../utilities/platform";
 import { getTelemetryReporter } from "../utilities/telemetry";
-import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
-import { checkXcodeExists } from "../utilities/checkXcodeExists";
 import {
   AndroidSystemImageInfo,
   DeviceInfo,
@@ -34,17 +22,16 @@ import {
 } from "../common/State";
 import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
-import { AndroidPhysicalDevice, listConnectedDevices } from "./AndroidPhysicalDevice";
+import { DevicesProvider } from "./DevicesProvider";
 
 const DEVICE_LIST_CACHE_KEY = "device_list_cache";
 
-export class DeviceAlreadyUsedError extends Error {}
 export class DeviceManager implements Disposable {
   private disposables: Disposable[] = [];
 
   constructor(
     private readonly stateManager: StateManager<DevicesState>,
-    private readonly outputChannelRegistry: OutputChannelRegistry
+    private readonly devicesProviders: DevicesProvider[]
   ) {
     this.loadDevicesIntoState();
     this.loadInstalledImages();
@@ -53,58 +40,13 @@ export class DeviceManager implements Disposable {
   }
 
   public async acquireDevice(deviceInfo: DeviceInfo, deviceSettings: DeviceSettings) {
-    if (deviceInfo.platform === DevicePlatform.IOS) {
-      if (Platform.OS !== "macos") {
-        throw new Error("Invalid platform. Expected macos.");
-      }
-
-      const simulators = await listSimulators(SimulatorDeviceSet.RN_IDE);
-      const simulatorInfo = simulators.find((device) => device.id === deviceInfo.id);
-      if (!simulatorInfo || simulatorInfo.platform !== DevicePlatform.IOS) {
-        throw new Error(`Simulator ${deviceInfo.id} not found`);
-      }
-      const device = new IosSimulatorDevice(
-        deviceSettings,
-        simulatorInfo.UDID,
-        simulatorInfo,
-        this.outputChannelRegistry
-      );
-      if (await device.acquire()) {
-        return device;
-      } else {
-        device.dispose();
-      }
-    } else if (!deviceInfo.emulator) {
-      const device = new AndroidPhysicalDevice(
-        deviceInfo,
-        deviceSettings,
-        this.outputChannelRegistry
-      );
-      if (await device.acquire()) {
-        return device;
-      } else {
-        device.dispose();
-      }
-    } else {
-      const emulators = await listEmulators();
-      const emulatorInfo = emulators.find((device) => device.id === deviceInfo.id);
-      if (!emulatorInfo || emulatorInfo.platform !== DevicePlatform.Android) {
-        throw new Error(`Emulator ${deviceInfo.id} not found`);
-      }
-      const device = new AndroidEmulatorDevice(
-        deviceSettings,
-        emulatorInfo.avdId,
-        emulatorInfo,
-        this.outputChannelRegistry
-      );
-      if (await device.acquire()) {
-        return device;
-      } else {
-        device.dispose();
+    for (const provider of this.devicesProviders) {
+      const maybeDevice = await provider.acquireDevice(deviceInfo, deviceSettings);
+      if (maybeDevice !== undefined) {
+        return maybeDevice;
       }
     }
-
-    throw new DeviceAlreadyUsedError();
+    throw new Error(`Device ${deviceInfo.displayName} is not available`);
   }
 
   private loadDevicesPromise: Promise<DeviceInfo[]> | undefined;
@@ -132,27 +74,7 @@ export class DeviceManager implements Disposable {
   }
 
   private async loadDevicesInternal() {
-    const physicalDevices = await listConnectedDevices();
-    const emulators = listEmulators().catch((e) => {
-      Logger.error("Error fetching emulators", e);
-      return [];
-    });
-
-    let shouldLoadSimulators = Platform.OS === "macos";
-
-    if (shouldLoadSimulators && !(await checkXcodeExists())) {
-      shouldLoadSimulators = false;
-      Logger.debug("Couldn't list iOS simulators as XCode installation wasn't found");
-    }
-
-    const simulators = shouldLoadSimulators
-      ? listSimulators(SimulatorDeviceSet.RN_IDE).catch((e) => {
-          Logger.error("Error fetching simulators", e);
-          return [];
-        })
-      : Promise.resolve([]);
-    const [androidDevices, iosDevices] = await Promise.all([emulators, simulators]);
-    const devices = [...androidDevices, ...iosDevices, ...physicalDevices];
+    const devices = (await Promise.all(this.devicesProviders.map((p) => p.listDevices()))).flat();
     return devices;
   }
 
