@@ -61,7 +61,7 @@ const LearnMoreFooter = () => {
           <br /> using Radon IDE for faster,
           <br /> more efficient app development
         </h2>
-        <div className={styles.buttonContainer}>
+        <div className={styles.buttonContainer} onClick={handleBottomCTAClick}>
           <DownloadButtons />
         </div>
       </div>

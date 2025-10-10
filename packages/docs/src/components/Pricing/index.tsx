@@ -1,11 +1,12 @@
 import React, { useRef } from "react";
 import styles from "./styles.module.css";
+import { track } from "@vercel/analytics";
 import PricingPlansList from "./PricingPlansList";
 import FAQ from "../Sections/FAQ";
 import clsx from "clsx";
 import ComparePricingPlans from "./ComparePricingPlans";
-import { usePricingLogic } from "@site/src/hooks/usePricingLogic";
 import EnterpriseForm from "../EnterpriseForm";
+import { usePricingLogic } from "@site/src/hooks/usePricingLogic";
 
 export interface PricingProps {
   handleIndividual: () => void;
@@ -19,6 +20,9 @@ const Pricing = () => {
   const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout, scrollToForm } =
     usePricingLogic();
   const formRef = useRef<HTMLDivElement | null>(null);
+  const handleSubmitCTAClick = () => {
+    track("Pricing form submit CTA");
+  };
 
   return (
     <div className={clsx(styles.container, "border-layout")}>
@@ -43,7 +47,7 @@ const Pricing = () => {
         handleCustom={() => scrollToForm(formRef)}
       />
       <FAQ />
-      <EnterpriseForm ref={formRef} />
+      <EnterpriseForm ref={formRef} trackSubmit={handleSubmitCTAClick} />
     </div>
   );
 };

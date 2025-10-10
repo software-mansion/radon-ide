@@ -6,6 +6,7 @@ import { useModal } from "../../ModalProvider";
 import { PricingProps } from "..";
 import clsx from "clsx";
 import { planFeaturesData } from "./planFeaturesData";
+import { track } from "@vercel/analytics";
 
 export interface FeatureItem {
   label: string;
@@ -32,6 +33,11 @@ export default function ComparePricingPlans({
 }: PricingProps) {
   const { onOpen } = useModal();
   const pricingPlanFeatures: FeatureItem[] = planFeaturesData;
+
+  const handleTableCTA = () => {
+    track("Pricing table CTA");
+  };
+
   return (
     <div className={styles.tableDisplay}>
       <div className={styles.title}>Compare plans</div>
@@ -43,7 +49,10 @@ export default function ComparePricingPlans({
             monthlyPrice={0}
             buttonLabel="Install"
             stylingFilled={false}
-            onClick={onOpen}
+            onClick={() => {
+              handleTableCTA();
+              onOpen();
+            }}
           />
           <PlanTableLabel
             plan="PRO"

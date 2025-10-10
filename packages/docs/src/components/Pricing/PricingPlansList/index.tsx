@@ -8,6 +8,7 @@ import { pricingBusinessData } from "../pricingBusinessData";
 import { useModal } from "../../ModalProvider";
 import clsx from "clsx";
 import PricingCard from "../PricingCard";
+import { track } from "@vercel/analytics";
 
 export interface FeatureProps {
   label: string;
@@ -45,10 +46,15 @@ const PricingPlansList = ({
     return isIndividual ? pricingIndividualData : pricingBusinessData;
   }, [isIndividual, isEnterprise]);
 
+  const handlePricingCTA = () => {
+    track("Pricing CTA");
+  };
+
   const handlePlanButtonClick = (id: string) => {
     switch (id) {
       case "FREE":
         onOpen();
+        handlePricingCTA();
         break;
       case "PRO":
         handleIndividual();

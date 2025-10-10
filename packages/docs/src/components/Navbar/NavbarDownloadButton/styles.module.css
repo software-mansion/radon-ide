@@ -17,6 +17,7 @@
   align-items: center;
   border: 1px solid var(--radon-button-secondary);
   background-color: transparent;
+  cursor: pointer;
 }
 
 .download:hover {

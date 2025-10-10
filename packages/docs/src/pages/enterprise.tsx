@@ -1,6 +1,7 @@
-import Layout from "@theme/Layout";
-import clsx from "clsx";
 import React, { useRef } from "react";
+import clsx from "clsx";
+import { track } from "@vercel/analytics";
+import Layout from "@theme/Layout";
 import styles from "./enterprise.module.css";
 import FeaturesLanding from "../components/Features/FeaturesLanding";
 import SWM from "../components/Sections/SWM";
@@ -16,6 +17,10 @@ export default function Enterprise(): JSX.Element {
   const pricingRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLDivElement | null>(null);
   const { scrollToForm } = usePricingLogic();
+
+  const handleSubmitCTAClick = () => {
+    track("Enterprise form submit CTA");
+  };
 
   return (
     <Layout>
@@ -68,7 +73,7 @@ export default function Enterprise(): JSX.Element {
             building a bridge between those who use software and those who build it. With us, your
             projects and data are in safe hands.
           </SWM>
-          <EnterpriseForm ref={formRef} />
+          <EnterpriseForm ref={formRef} trackSubmit={handleSubmitCTAClick} />
           <FAQ />
         </div>
       </div>

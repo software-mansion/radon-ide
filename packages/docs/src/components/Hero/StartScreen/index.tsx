@@ -23,6 +23,10 @@ const StartScreen = () => {
     };
   }, [isOpen]);
 
+  const handleCTAClick = () => {
+    track("Main CTA");
+  };
+
   const handleDialogOpen = () => {
     track("Secondary CTA");
     setOpen(true);
@@ -51,7 +55,7 @@ const StartScreen = () => {
               Trusted by <span>24,000+ engineers worldwide</span>.
             </p>
           </h2>
-          <div className={styles.buttonContainer}>
+          <div className={styles.buttonContainer} onClick={handleCTAClick}>
             <DownloadButtons vertical={false} />
           </div>
         </div>

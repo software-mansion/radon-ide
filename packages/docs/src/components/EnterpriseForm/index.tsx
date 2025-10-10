@@ -6,7 +6,11 @@ import Captcha from "./Captcha";
 const isProduction = process.env.NODE_ENV === "production";
 const API_URL = isProduction ? "https://swmansion.dev" : "http://localhost:8787";
 
-const EnterpriseForm = forwardRef<HTMLDivElement, {}>((_, ref) => {
+type EnterpriseFormProps = {
+  trackSubmit: () => void;
+};
+
+const EnterpriseForm = forwardRef<HTMLDivElement, EnterpriseFormProps>(({ trackSubmit }, ref) => {
   const formRef = useRef();
   const [isSent, setIsSent] = useState(false);
   const [submitDisabled, setSubmitDisabled] = useState(false);
@@ -67,6 +71,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, {}>((_, ref) => {
       const data = await response.json();
       if (response.ok) {
         setIsSent(true);
+        trackSubmit();
       } else {
         setSubmitError(data?.error?.message || "Failed to submit form. Please try again.");
       }

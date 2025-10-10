@@ -1,12 +1,20 @@
 import React from "react";
 import styles from "./styles.module.css";
 import HomeButton from "./HomeButton";
+import { track } from "@vercel/analytics";
 
 interface HomepageButtonsProps {
   vertical?: boolean;
 }
 
 const DownloadButtons = ({ vertical }: HomepageButtonsProps) => {
+  const handleVSCodeCTAClick = () => {
+    track("VSCode CTA");
+  };
+  const handleCursorCTAClick = () => {
+    track("Cursor CTA");
+  };
+
   return (
     <div className={`${styles.buttonContainer} ${vertical ? styles.vertical : ""}`}>
       <HomeButton
@@ -15,6 +23,7 @@ const DownloadButtons = ({ vertical }: HomepageButtonsProps) => {
         title="Install in VSCode"
         icon="vscode"
         vertical={vertical}
+        onClick={handleVSCodeCTAClick}
       />
       <HomeButton
         target="_blank"
@@ -22,6 +31,7 @@ const DownloadButtons = ({ vertical }: HomepageButtonsProps) => {
         title="Install in Cursor"
         icon="cursor"
         vertical={vertical}
+        onClick={handleCursorCTAClick}
       />
     </div>
   );
