@@ -82,7 +82,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
     return parentHeight - headerHeight;
   };
 
-    const handleVscTabsSelect = ({ detail }: VscTabsSelectEvent) =>
+  const handleVscTabsSelect = ({ detail }: VscTabsSelectEvent) =>
     setSelectedTabIndex(detail.selectedIndex);
 
   return (
@@ -91,7 +91,9 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
       <button className="network-log-details-close-button" onClick={handleClose}>
         <span className="codicon codicon-close" />
       </button>
-      <VscodeTabs onVscTabsSelect={handleVscTabsSelect} data-testid="network-panel-log-details-tabs">
+      <VscodeTabs
+        onVscTabsSelect={handleVscTabsSelect}
+        data-testid="network-panel-log-details-tabs">
         {TABS.map(({ title, Tab, props, warning }, index) => (
           <Fragment key={title}>
             <VscodeTabHeader
