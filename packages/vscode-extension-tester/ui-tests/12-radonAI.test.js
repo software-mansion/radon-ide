@@ -2,8 +2,13 @@ import initServices from "../services/index.js";
 import { WebView, EditorView, By, Key } from "vscode-extension-tester";
 
 import { get } from "./setupTest.js";
+import { describeIf } from "../utils/helpers.js";
 
-describe("12 - Radon AI tests", () => {
+const isLatestCode =
+  !process.env.CODE_VERSION || process.env.CODE_VERSION === "latest";
+
+// on older versions vscode requires logging to github to use AI chat
+describeIf(isLatestCode, "12 - Radon AI tests", () => {
   let driver,
     elementHelperService,
     radonViewsService,
