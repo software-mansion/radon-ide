@@ -14,6 +14,7 @@ import { DeviceInfo, DevicePlatform, DeviceType } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { Feature } from "../../common/License";
+import { useDevices } from "../hooks/useDevices";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -78,27 +79,14 @@ function renderDevices(
   );
 }
 
-function partitionDevices(devices: DeviceInfo[]): Record<string, DeviceInfo[]> {
-  const validDevices = devices.filter(({ modelId }) => modelId.length > 0);
-
-  return _.groupBy(validDevices, (deviceInfo) => {
-    if (deviceInfo.platform === DevicePlatform.IOS) {
-      return "iOS";
-    }
-    if (deviceInfo.emulator) {
-      return "Android Emulators";
-    }
-    return "Connected Android Devices";
-  });
-}
-
 function DeviceSelect() {
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
   const { projectState, project } = useProject();
 
-  const devices = use$(store$.devicesState.devices) ?? [];
+  const devicesByType = use$(store$.devicesState.devicesByType);
+  const devices = useDevices(store$);
 
   const { openModal } = useModal();
 
@@ -110,7 +98,11 @@ function DeviceSelect() {
 
   const runningSessionIds = Object.keys(deviceSessions);
 
-  const deviceSections = partitionDevices(devices ?? []);
+  const deviceSections = {
+    "iOS": devicesByType?.iosSimulators ?? [],
+    "Android Emulators": devicesByType?.androidEmulators ?? [],
+    "Connected Android Devices": devicesByType?.androidPhysicalDevices ?? [],
+  };
 
   const handleStartOrActivateSessionForIOSTabletDevice = usePaywalledCallback(
     async (deviceInfo: DeviceInfo) => {

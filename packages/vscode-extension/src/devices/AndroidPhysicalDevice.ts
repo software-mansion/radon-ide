@@ -30,10 +30,12 @@ export class AndroidPhysicalDevice extends AndroidDevice {
     // NOOP
   }
   protected changeSettings(settings: DeviceSettings): Promise<boolean> {
-    throw new Error("Method not implemented.");
+    // throw new Error("Method not implemented.");
+    return Promise.resolve(false);
   }
   public getClipboard(): Promise<string | void> {
-    throw new Error("Method not implemented.");
+    // throw new Error("Method not implemented.");
+    return Promise.resolve("");
   }
   protected makePreview(): Preview {
     return new Preview(["android_device", "--id", this.serial!]);

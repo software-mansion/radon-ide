@@ -50,6 +50,15 @@ export class DeviceSessionsManager implements Disposable {
   private activeSessionId: DeviceId | undefined;
   private findingDevice: boolean = false;
   private previousDevices: DeviceInfo[] = [];
+  private get devices(): DeviceInfo[] {
+    const devicesByType = this.devicesStateManager.getState().devicesByType;
+    if (devicesByType === null) {
+      return [];
+    }
+    return (["iosSimulators", "androidEmulators", "androidPhysicalDevices"] as const)
+      .map((deviceType) => devicesByType[deviceType])
+      .flat();
+  }
 
   constructor(
     private readonly stateManager: StateManager<DeviceSessions>,
@@ -63,9 +72,9 @@ export class DeviceSessionsManager implements Disposable {
   ) {
     this.disposables.push(
       this.devicesStateManager.onSetState((partialState) => {
-        const devices = partialState.devices;
+        const devices = partialState.devicesByType;
         if (devices !== undefined && devices !== null && devices !== REMOVE) {
-          this.devicesChangedListener(devices);
+          this.devicesChangedListener();
         }
       })
     );
@@ -239,8 +248,8 @@ export class DeviceSessionsManager implements Disposable {
     try {
       this.findingDevice = true;
 
-      const devices = this.devicesStateManager.getState().devices;
-      if (devices === null) {
+      const devices = this.devices;
+      if (devices.length === 0) {
         // If no devices are found, we can return early
         return;
       }
@@ -267,8 +276,10 @@ export class DeviceSessionsManager implements Disposable {
   };
 
   // used in callbacks, needs to be an arrow function
-  private devicesChangedListener = async (devices: DeviceInfo[]) => {
+  private devicesChangedListener = async () => {
     const previousDevices = this.previousDevices;
+    const devices = this.devices;
+
     const removedDevices = previousDevices.filter(
       (prevDevice) => !devices.some((device) => device.id === prevDevice.id)
     );
