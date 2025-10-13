@@ -1,9 +1,11 @@
 import path from "path";
+import { Disposable } from "vscode";
 import {
   DeviceSettings,
   AndroidPhysicalDeviceInfo,
   DevicePlatform,
   DeviceType,
+  DevicesByType,
 } from "../common/State";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { exec } from "../utilities/subprocess";
@@ -12,6 +14,7 @@ import { Preview } from "./preview";
 import { extensionContext } from "../utilities/extensionContext";
 import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
 import { DevicesProvider } from "./DevicesProvider";
+import { StateManager } from "../project/StateManager";
 
 export class AndroidPhysicalDevice extends AndroidDevice {
   constructor(
@@ -103,8 +106,19 @@ export async function listConnectedDevices(): Promise<AndroidPhysicalDeviceInfo[
   return devices;
 }
 
-export class PhysicalAndroidDeviceProvider implements DevicesProvider<AndroidPhysicalDeviceInfo> {
-  constructor(private outputChannelRegistry: OutputChannelRegistry) {}
+export class PhysicalAndroidDeviceProvider
+  implements DevicesProvider<AndroidPhysicalDeviceInfo>, Disposable
+{
+  private intervalId: NodeJS.Timeout;
+
+  constructor(
+    private stateManager: StateManager<DevicesByType>,
+    private outputChannelRegistry: OutputChannelRegistry
+  ) {
+    this.intervalId = setInterval(() => {
+      this.listDevices().catch(() => {});
+    }, 1000);
+  }
 
   public async acquireDevice(
     deviceInfo: AndroidPhysicalDeviceInfo,
@@ -124,7 +138,17 @@ export class PhysicalAndroidDeviceProvider implements DevicesProvider<AndroidPhy
     throw new DeviceAlreadyUsedError();
   }
 
-  public listDevices() {
-    return listConnectedDevices();
+  public async listDevices() {
+    const devices = await listConnectedDevices();
+    this.stateManager.updateState({
+      androidPhysicalDevices: devices,
+    });
+
+    return devices;
+  }
+
+  public dispose() {
+    clearInterval(this.intervalId);
+    this.stateManager.dispose();
   }
 }

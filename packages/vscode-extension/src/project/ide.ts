@@ -49,11 +49,26 @@ export class IDE implements Disposable {
 
     this.telemetry = new Telemetry(this.stateManager.getDerived("telemetry"));
 
-    this.deviceManager = new DeviceManager(this.stateManager.getDerived("devicesState"), [
-      new IosSimulatorProvider(this.outputChannelRegistry),
-      new AndroidEmulatorProvider(this.outputChannelRegistry),
-      new PhysicalAndroidDeviceProvider(this.outputChannelRegistry),
-    ]);
+    const devicesStateManager = this.stateManager.getDerived("devicesState");
+    const deviceProviders = [
+      new IosSimulatorProvider(
+        devicesStateManager.getDerived("devicesByType"),
+        this.outputChannelRegistry
+      ),
+      new AndroidEmulatorProvider(
+        devicesStateManager.getDerived("devicesByType"),
+        this.outputChannelRegistry
+      ),
+      new PhysicalAndroidDeviceProvider(
+        devicesStateManager.getDerived("devicesByType"),
+        this.outputChannelRegistry
+      ),
+    ];
+
+    this.deviceManager = new DeviceManager(
+      this.stateManager.getDerived("devicesState"),
+      deviceProviders
+    );
     this.editorBindings = new EditorBindings();
 
     this.environmentDependencyManager = new EnvironmentDependencyManager(
@@ -85,7 +100,9 @@ export class IDE implements Disposable {
       this.project,
       this.workspaceConfigController,
       this.outputChannelRegistry,
-      this.telemetry
+      this.telemetry,
+      devicesStateManager,
+      ...deviceProviders
     );
     // register disposable with context
     extensionContext.subscriptions.push(this);
