@@ -2,6 +2,7 @@ import "./NetworkLogDetails.css";
 import { VscodeTabHeader, VscodeTabPanel, VscodeTabs } from "@vscode-elements/react-elements";
 import { type VscodeTabHeader as VscodeTabHeaderElement } from "@vscode-elements/elements/dist/vscode-tab-header/vscode-tab-header.js";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { VscTabsSelectEvent } from "@vscode-elements/elements/dist/vscode-tabs/vscode-tabs";
 import HeadersTab from "./Tabs/HeadersTab";
 import PayloadTab from "./Tabs/PayloadTab";
 import ResponseTab from "./Tabs/ResponseTab";
@@ -15,10 +16,8 @@ import { ThemeData } from "../../common/theme";
 import useThemeExtractor from "../hooks/useThemeExtractor";
 import "overlayscrollbars/overlayscrollbars.css";
 import { NetworkEvent } from "../types/panelMessageProtocol";
-import { VscTabsSelectEvent } from "@vscode-elements/elements/dist/vscode-tabs/vscode-tabs";
 import InfoBar from "./Tabs/InfoBar";
 import { useLogDetailsBar } from "../providers/LogDetailsBar";
-// import InfoBar from "./Tabs/InfoBar";
 
 interface NetworkLogDetailsProps {
   networkLog: NetworkLog;
