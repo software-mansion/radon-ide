@@ -29,7 +29,7 @@ We index all of the popular React Native libraries to match questions to relevan
 Our knowledge database is updated daily to provide the most up-to-date information.`;
 
 export default function AI() {
-  const { ref, inView } = useInView({ triggerOnce: true });
+  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.5 });
   const answer = text.split(" ");
 
   return (

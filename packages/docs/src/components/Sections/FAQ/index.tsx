@@ -15,18 +15,18 @@ const faqs = [
   },
   {
     topic: "How can I get the license key?",
-    answer: `You should receive your license key via e-mail after you make a purchase. Alternatively, you can get your license key from the <a href="https://portal.ide.swmansion.com/" target="_blank">Radon IDE Portal</a>. See the <a href="https://ide.swmansion.com/docs/guides/activation-manual" target="_blank">License Activation</a> guide for more details.
+    answer: `You should receive your license key via e-mail after you make a purchase. Alternatively, you can get your license key from the <a href="https://portal.ide.swmansion.com/" target="_blank">Radon IDE Portal</a>. See the <a href="/docs/guides/activation-manual" target="_blank">License Activation</a> guide for more details.
     `,
   },
   {
     topic: "How do I activate my license?",
     answer: `You activate the product by providing a license key in the extension panel.
-    See the <a href="https://ide.swmansion.com/docs/guides/activation-manual" target="_blank">License Activation</a> page for a step-by-step guide.
+    See the <a href="/docs/guides/activation-manual" target="_blank">License Activation</a> page for a step-by-step guide.
     `,
   },
   {
     topic: "Who can use the Free plan?",
-    answer: `Radon’s Free plan was created for those who are starting their React Native adventure - mainly students and hobbyists. If you’re a professional React Native developer working in commercial projects, according to our <a href="https://ide.swmansion.com/legal/personal-license-terms" target="_blank">Subscription Agreement</a>, you should use the Pro tier.
+    answer: `Radon’s Free plan was created for those who are starting their React Native adventure - mainly students and hobbyists. If you’re a professional React Native developer working in commercial projects, according to our <a href="/legal/personal-license-terms" target="_blank">Subscription Agreement</a>, you should use the Pro tier.
     `,
   },
   {
@@ -35,7 +35,7 @@ const faqs = [
   },
   {
     topic: "Can I use Radon on Windows and Linux?",
-    answer: `Due to limited capacity, support for Linux and Windows is considered beta. Because of that, we don't distribute Windows or Linux builds via VSCode marketplace and you have to follow <a href="/">manual installation instructions</a>. Since Windows and Linux support is in beta, you don't have to purchase a license to use Radon IDE on those platforms, and you can use it under the free Beta license but keep in mind that the number of features will be limited.`,
+    answer: `Due to limited capacity, support for Linux and Windows is considered beta. Because of that, we don't distribute Windows or Linux builds via VSCode marketplace and you have to follow <a href="/docs/getting-started/installation" target="_blank">manual installation instructions</a>. Since Windows and Linux support is in beta, you don't have to purchase a license to use Radon IDE on those platforms, and you can use it under the free Beta license but keep in mind that the number of features will be limited.`,
   },
   {
     topic: "Can I use Radon in WebStorm?",
