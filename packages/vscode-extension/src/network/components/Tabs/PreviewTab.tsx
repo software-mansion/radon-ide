@@ -4,6 +4,8 @@ import { ResponseBodyData } from "../../types/network";
 import { isPreviewableImage } from "../../utils/requestFormatters";
 import { NetworkEvent } from "../../types/panelMessageProtocol";
 import { useLogDetailsBar } from "../../providers/LogDetailsBar";
+import { getNetworkLogValue } from "../../utils/networkLogParsers";
+import { NetworkLogColumn } from "../../types/networkLog";
 import "./PreviewTab.css";
 import "./PayloadAndResponseTab.css";
 
@@ -13,24 +15,19 @@ interface PreviewTabProps {
 }
 
 interface ImageMetadata {
-  width: number;
-  height: number;
+  size: string;
+  resolution: string;
   aspectRatio: string;
   mime: string;
 }
 
 function PreviewInfoBar({ metadata }: { metadata: ImageMetadata }) {
   return (
-    <div style={{ display: "flex", gap: "16px", fontSize: "12px" }}>
-      <span>
-        <strong>Dimensions:</strong> {metadata.width} × {metadata.height}
-      </span>
-      <span>
-        <strong>Aspect Ratio:</strong> {metadata.aspectRatio}
-      </span>
-      <span>
-        <strong>MIME Type:</strong> {metadata.mime}
-      </span>
+    <div className="preview-bar">
+      <div>{metadata.size}</div>
+      <div >{metadata.resolution}</div>
+      <div >{metadata.aspectRatio}</div>
+      <div>{metadata.mime}</div>
     </div>
   );
 }
@@ -51,6 +48,7 @@ const PreviewTab = ({ networkLog, responseBodyData }: PreviewTabProps) => {
 
   const { body = undefined, base64Encoded = false } = responseBodyData || {};
   const contentType = networkLog.response?.headers?.["Content-Type"] || "";
+  const imageSize = getNetworkLogValue(networkLog, NetworkLogColumn.Size) || "";
   const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;
   const dataFetchFailure = requestFailed && !body;
 
@@ -67,7 +65,7 @@ const PreviewTab = ({ networkLog, responseBodyData }: PreviewTabProps) => {
   }, [networkLog.requestId]);
 
   useEffect(() => {
-    if (loading || metadata !== null) {
+    if (loading) {
       return;
     }
     const naturalWidth = imageRef.current?.naturalWidth || 0;
@@ -75,27 +73,28 @@ const PreviewTab = ({ networkLog, responseBodyData }: PreviewTabProps) => {
 
     setMetadata({
       mime: contentType,
-      width: naturalWidth,
-      height: naturalHeight,
+      resolution: `${naturalWidth} × ${naturalHeight}`,
       aspectRatio: calculateAspectRatio(naturalWidth, naturalHeight),
+      size: imageSize,
     });
-  }, [loading]);
+  }, [loading, networkLog.requestId]);
+
+  useEffect(() => {
+    setIsVisible(true);
+    return () => setIsVisible(false);
+  }, [setIsVisible]);
 
   // Update the info bar content when metadata is available
   useEffect(() => {
     if (metadata) {
       setContent(<PreviewInfoBar metadata={metadata} />);
-      setIsVisible(true);
-    } else {
-      setIsVisible(false);
     }
 
     // Cleanup: hide info bar when component unmounts
     return () => {
-      setIsVisible(false);
       setContent(null);
     };
-  }, [metadata, setContent, setIsVisible]);
+  }, [metadata, setContent]);
 
   if (dataFetchFailure) {
     return (

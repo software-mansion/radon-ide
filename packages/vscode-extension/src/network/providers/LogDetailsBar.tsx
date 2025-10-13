@@ -12,7 +12,7 @@ interface LogDetailsBarContextValue {
 const LogDetailsBarContext = createContext<LogDetailsBarContextValue | undefined>(undefined);
 
 export default function LogDetailsBarProvider({ children }: PropsWithChildren) {
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
   const [content, setContent] = useState<React.ReactNode>(null);
   const [infoBarHeight, setInfoBarHeight] = useState(0);
 
