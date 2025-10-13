@@ -16872,13 +16872,18 @@ __DEV__ &&
     setSuspenseHandler = function (newShouldSuspendImpl) {
       shouldSuspendImpl = newShouldSuspendImpl;
     };
-    var isomorphicReactPackageVersion = React.version;
-    if ("19.1.1" !== isomorphicReactPackageVersion)
-      throw Error(
-        'Incompatible React versions: The "react" and "react-native-renderer" packages must have the exact same version. Instead got:\n  - react:                  ' +
-          (isomorphicReactPackageVersion +
-            "\n  - react-native-renderer:  19.1.1\nLearn more: https://react.dev/warnings/version-mismatch")
-      );
+    // [Radon IDE] This Code here is commented out to prevent React version mismatch errors.
+    // this error when thrown is shown in the Log box as unhandled excepton and does not actulally prevent applicatin from running 
+    // it might be usefull for deguging perpouses for very small section of users but is currentlly blocing users using expo cannary's that 
+    // use non canonical react versions from useing radon so we remove this check for now. 
+    // TODO: create a patching sollution that is capable of working with arbitrary react renderer version
+    // var isomorphicReactPackageVersion = React.version;
+    // if ("19.1.1" !== isomorphicReactPackageVersion)
+    //   throw Error(
+    //     'Incompatible React versions: The "react" and "react-native-renderer" packages must have the exact same version. Instead got:\n  - react:                  ' +
+    //       (isomorphicReactPackageVersion +
+    //         "\n  - react-native-renderer:  19.1.1\nLearn more: https://react.dev/warnings/version-mismatch")
+    //   );
     if (
       "function" !==
       typeof ReactNativePrivateInterface.ReactFiberErrorDialog.showErrorDialog
