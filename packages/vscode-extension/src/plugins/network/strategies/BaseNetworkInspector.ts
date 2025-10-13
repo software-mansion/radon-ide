@@ -42,7 +42,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     });
   }
 
-  private isInternalRequest(message: WebviewMessage, port: number): boolean {
+  private isInternalRequest(message: WebviewMessage): boolean {
     if (message.command !== WebviewCommand.CDPCall) {
       return false;
     }
@@ -51,17 +51,18 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
 
     try {
       const parsedUrl = new URL(url);
-      const isLocalhost = /^(localhost|127\.0\.0\.1)$/.test(parsedUrl.hostname);
-      const isPortMatch = parsedUrl.port === port.toString();
+      const isLocalhost = parsedUrl.hostname === "localhost" || parsedUrl.hostname === "127.0.0.1";
+      const isAndroidHost = parsedUrl.hostname === "10.0.2.2";
+      const isPortMatch = parsedUrl.port === this.metroPort.toString();
 
-      return isLocalhost && isPortMatch;
+      return (isLocalhost || isAndroidHost) && isPortMatch;
     } catch (error) {
       return false;
     }
   }
 
   protected broadcastMessage(message: Parameters<BroadcastListener>[0]): void {
-    if (this.isInternalRequest(message, this.metroPort)) {
+    if (this.isInternalRequest(message)) {
       Logger.info("Internal React Native network event, ignoring");
       return;
     }
