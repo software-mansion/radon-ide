@@ -484,13 +484,13 @@ export type IOSRuntimeInfo = {
 };
 
 export type DevicesByType = {
-  androidEmulators: AndroidEmulatorInfo[];
-  androidPhysicalDevices: AndroidPhysicalDeviceInfo[];
-  iosSimulators: IOSDeviceInfo[];
+  androidEmulators: AndroidEmulatorInfo[] | null;
+  androidPhysicalDevices: AndroidPhysicalDeviceInfo[] | null;
+  iosSimulators: IOSDeviceInfo[] | null;
 };
 
 export type DevicesState = {
-  devicesByType: DevicesByType | null;
+  devicesByType: DevicesByType;
   androidImages: AndroidSystemImageInfo[] | null;
   iOSRuntimes: IOSRuntimeInfo[] | null;
 };
@@ -560,7 +560,11 @@ const initialDeviceSessionStore: DeviceSessionStore = {
 export const initialState: State = {
   applicationRoots: [],
   devicesState: {
-    devicesByType: null,
+    devicesByType: {
+      iosSimulators: null,
+      androidEmulators: null,
+      androidPhysicalDevices: null,
+    },
     androidImages: null,
     iOSRuntimes: null,
   },

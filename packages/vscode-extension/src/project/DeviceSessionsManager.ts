@@ -55,9 +55,9 @@ export class DeviceSessionsManager implements Disposable {
     if (devicesByType === null) {
       return [];
     }
-    return (["iosSimulators", "androidEmulators", "androidPhysicalDevices"] as const)
-      .map((deviceType) => devicesByType[deviceType])
-      .flat();
+    return (
+      ["iosSimulators", "androidEmulators", "androidPhysicalDevices"] as const
+    ).flatMap<DeviceInfo>((deviceType) => devicesByType[deviceType] ?? []);
   }
 
   constructor(

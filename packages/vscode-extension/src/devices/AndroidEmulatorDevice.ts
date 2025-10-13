@@ -3,6 +3,7 @@ import fs from "fs";
 import { EOL } from "node:os";
 import assert from "assert";
 import { v4 as uuidv4 } from "uuid";
+import { Disposable } from "vscode";
 import { Preview } from "./preview";
 import { REBOOT_TIMEOUT } from "./DeviceBase";
 import { cancellableRetry } from "../utilities/retry";
@@ -20,6 +21,7 @@ import {
   CameraSettings,
   DeviceInfo,
   DevicePlatform,
+  DevicesByType,
   DeviceSettings,
   DeviceType,
   Locale,
@@ -27,6 +29,7 @@ import {
 import { ADB_PATH, AndroidDevice } from "./AndroidDevice";
 import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
 import { DevicesProvider } from "./DevicesProvider";
+import { StateManager } from "../project/StateManager";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -778,8 +781,15 @@ function getNativeQemuArch() {
   }
 }
 
-export class AndroidEmulatorProvider implements DevicesProvider<AndroidEmulatorInfo> {
-  constructor(private outputChannelRegistry: OutputChannelRegistry) {}
+export class AndroidEmulatorProvider implements DevicesProvider<AndroidEmulatorInfo>, Disposable {
+  constructor(
+    private readonly stateManager: StateManager<DevicesByType>,
+    private outputChannelRegistry: OutputChannelRegistry
+  ) {}
+
+  public dispose() {
+    this.stateManager.dispose();
+  }
 
   public async acquireDevice(
     deviceInfo: DeviceInfo,
@@ -809,11 +819,12 @@ export class AndroidEmulatorProvider implements DevicesProvider<AndroidEmulatorI
     throw new DeviceAlreadyUsedError();
   }
 
-  public listDevices() {
-    const emulators = listEmulators().catch((e) => {
+  public async listDevices() {
+    const emulators = await listEmulators().catch((e) => {
       Logger.error("Error fetching emulators", e);
       return [];
     });
+    this.stateManager.updateState({ androidEmulators: emulators });
     return emulators;
   }
 }
