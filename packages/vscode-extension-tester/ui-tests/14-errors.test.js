@@ -41,6 +41,8 @@ describe("14 - Error tests", () => {
 
   beforeEach(async function () {});
 
+  // in github CI this test was failing when there was to many files to observe
+  // it was fixed by adding a .watchmanignore file and ignoring node_modules
   it("should show bundle error", async function () {
     await radonViewsService.openRadonIDEPanel();
     await driver.sleep(5000);
