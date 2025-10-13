@@ -50,7 +50,7 @@ table thead tr {
 }
 
 [class*="codeBlockContent"] pre {
-  border: 1px solid var(--swm-border);
+  border: 1px solid var(--radon-border);
 }
 
 [class*="codeBlockContainer"] {
@@ -125,8 +125,8 @@ div[class^="announcementBar_"] {
 
   color: var(--swm-navy-light-100);
   font-weight: 500;
-  border-bottom: 1px solid var(--swm-border);
-  border-top: 1px solid var(--swm-border);
+  border-bottom: 1px solid var(--radon-border);
+  border-top: 1px solid var(--radon-border);
   background-color: var(--swm-off-background);
 }
 

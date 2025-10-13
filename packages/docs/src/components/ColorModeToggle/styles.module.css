@@ -13,10 +13,11 @@
   align-items: center;
   display: flex;
   color: var(--ifm-color-primary);
+  cursor: pointer;
 }
 
 .button:hover {
-  background-color: var(--swm-border);
+  background-color: var(--radon-border);
 }
 
 .button.active {

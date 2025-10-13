@@ -1,6 +1,6 @@
 :root {
   --radon-border-width: 1360px;
-  --radon-border-layout: 1px solid var(--swm-border);
+  --radon-border-layout: 1px solid var(--radon-border);
 }
 
 .border-layout {

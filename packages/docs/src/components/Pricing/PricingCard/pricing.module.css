@@ -1,5 +1,5 @@
 .cardHeader {
-  border-bottom: 1px solid var(--swm-border);
+  border-bottom: 1px solid var(--radon-border);
   display: flex;
   padding: 40px;
   flex-direction: column;

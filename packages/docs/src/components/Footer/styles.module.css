@@ -8,7 +8,7 @@
   display: flex;
   padding: 40px 80px 80px;
   justify-content: space-between;
-  border-top: 1px solid var(--swm-border);
+  border-top: 1px solid var(--radon-border);
   align-items: center;
 }
 

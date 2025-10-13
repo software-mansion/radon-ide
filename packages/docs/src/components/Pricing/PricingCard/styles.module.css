@@ -4,7 +4,7 @@
 }
 
 .plan__container {
-  border: 1px solid var(--swm-border);
+  border: 1px solid var(--radon-border);
   height: 100%;
   display: flex;
   flex-direction: column;
