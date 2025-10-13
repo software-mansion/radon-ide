@@ -2,6 +2,8 @@ import React, { useState, forwardRef, useRef } from "react";
 import styles from "./styles.module.css";
 import { CustomSelect } from "../CustomSelect";
 import Captcha from "./Captcha";
+import usePageType from "@site/src/hooks/usePageType";
+import clsx from "clsx";
 
 const isProduction = process.env.NODE_ENV === "production";
 const API_URL = isProduction ? "https://swmansion.dev" : "http://localhost:8787";
@@ -14,6 +16,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, EnterpriseFormProps>(({ trackS
   const formRef = useRef();
   const [isSent, setIsSent] = useState(false);
   const [submitDisabled, setSubmitDisabled] = useState(false);
+  const { isEnterprise } = usePageType();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -83,7 +86,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, EnterpriseFormProps>(({ trackS
   };
 
   return (
-    <div ref={ref} className={styles.mainContainer}>
+    <div ref={ref} className={clsx(styles.mainContainer, isEnterprise ? styles.bottomBorder : "")}>
       <div className={styles.description}>
         <h2 className={styles.heading}>
           Ready to streamline your team’s React Native development?
