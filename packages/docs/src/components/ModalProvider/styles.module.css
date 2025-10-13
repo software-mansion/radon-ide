@@ -6,6 +6,7 @@ dialog.modalContainer {
   gap: 24px;
   padding: 24px;
   background-color: var(--swm-background);
+  transition: opacity 0.3s ease;
 }
 
 dialog.modalContainer[open]::backdrop {
