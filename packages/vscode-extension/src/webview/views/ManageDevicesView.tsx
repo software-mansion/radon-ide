@@ -175,21 +175,11 @@ function ManageDevicesView() {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
 
-  const devices = use$(store$.devicesState.devices) ?? [];
+  const devicesByType = use$(store$.devicesState.devicesByType);
 
-  const {
-    iosDevices = [],
-    androidEmulatorDevices = [],
-    androidPhysicalDevices = [],
-  } = _.groupBy(devices, (deviceInfo) => {
-    if (deviceInfo.platform === DevicePlatform.IOS) {
-      return "iosDevices";
-    }
-    if (deviceInfo.emulator) {
-      return "androidEmulatorDevices";
-    }
-    return "androidPhysicalDevices";
-  });
+  const iosDevices = devicesByType?.iosSimulators ?? [];
+  const androidEmulatorDevices = devicesByType?.androidEmulators ?? [];
+  const androidPhysicalDevices = devicesByType?.androidPhysicalDevices ?? [];
 
   useEffect(() => {
     project.loadInstalledImages();

@@ -15,6 +15,7 @@ import {
   AndroidSystemImageInfo,
   DeviceInfo,
   DevicePlatform,
+  DevicesByType,
   DeviceSettings,
   DevicesState,
   IOSDeviceTypeInfo,
@@ -24,7 +25,7 @@ import { StateManager } from "../project/StateManager";
 import { disposeAll } from "../utilities/disposables";
 import { DevicesProvider } from "./DevicesProvider";
 
-const DEVICE_LIST_CACHE_KEY = "device_list_cache";
+const DEVICE_LIST_CACHE_KEY = "device_by_type_list_cache";
 
 export class DeviceManager implements Disposable {
   private disposables: Disposable[] = [];
@@ -52,9 +53,6 @@ export class DeviceManager implements Disposable {
   private loadDevicesPromise: Promise<DeviceInfo[]> | undefined;
 
   private async loadDevices(forceReload = false) {
-    const previousDevices = extensionContext.globalState.get(DEVICE_LIST_CACHE_KEY) as
-      | DeviceInfo[]
-      | undefined;
     if (forceReload) {
       // Clear the cache when force reload is requested
       extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, undefined);
@@ -67,9 +65,17 @@ export class DeviceManager implements Disposable {
       });
     }
     const devices = await this.loadDevicesPromise;
-    if (!_.isEqual(previousDevices, devices)) {
-      this.stateManager.updateState({ devices });
-    }
+    this.stateManager.updateState({
+      devicesByType: {
+        iosSimulators: devices.filter((d) => d.platform === DevicePlatform.IOS),
+        androidEmulators: devices.filter(
+          (d) => d.platform === DevicePlatform.Android && d.emulator
+        ),
+        androidPhysicalDevices: devices.filter(
+          (d) => d.platform === DevicePlatform.Android && !d.emulator
+        ),
+      },
+    });
     return devices;
   }
 
@@ -87,15 +93,13 @@ export class DeviceManager implements Disposable {
   }
 
   private async loadDevicesIntoState() {
-    const devices = extensionContext.globalState.get(DEVICE_LIST_CACHE_KEY) as
-      | DeviceInfo[]
-      | undefined;
-    if (devices) {
+    const devicesByType = extensionContext.globalState.get<DevicesByType>(DEVICE_LIST_CACHE_KEY);
+    if (devicesByType) {
       // we still want to perform load here in case anything changes, just won't wait for it
       this.loadDevices();
-      this.stateManager.updateState({ devices });
+      this.stateManager.updateState({ devicesByType });
     } else {
-      return await this.loadDevices();
+      await this.loadDevices();
     }
   }
 
@@ -163,10 +167,13 @@ export class DeviceManager implements Disposable {
       systemName: String(device.systemName),
     });
 
+    const devicesKey =
+      device.platform === DevicePlatform.IOS ? "iosSimulators" : "androidEmulators";
+
     // This is an optimization to update before costly operations
-    const previousDevices = this.stateManager.getState().devices ?? [];
+    const previousDevices = this.stateManager.getState().devicesByType?.[devicesKey] ?? [];
     const devices = previousDevices.filter((d) => d.id !== device.id);
-    this.stateManager.updateState({ devices });
+    this.stateManager.updateState({ devicesByType: { [devicesKey]: devices } });
 
     if (device.platform === DevicePlatform.IOS) {
       await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
