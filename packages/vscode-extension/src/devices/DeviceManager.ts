@@ -65,17 +65,6 @@ export class DeviceManager implements Disposable {
       });
     }
     const devices = await this.loadDevicesPromise;
-    this.stateManager.updateState({
-      devicesByType: {
-        iosSimulators: devices.filter((d) => d.platform === DevicePlatform.IOS),
-        androidEmulators: devices.filter(
-          (d) => d.platform === DevicePlatform.Android && d.emulator
-        ),
-        androidPhysicalDevices: devices.filter(
-          (d) => d.platform === DevicePlatform.Android && !d.emulator
-        ),
-      },
-    });
     return devices;
   }
 
@@ -97,7 +86,6 @@ export class DeviceManager implements Disposable {
     if (devicesByType) {
       // we still want to perform load here in case anything changes, just won't wait for it
       this.loadDevices();
-      this.stateManager.updateState({ devicesByType });
     } else {
       await this.loadDevices();
     }
