@@ -20,6 +20,9 @@ describe("14 - Error tests", () => {
     vscodeHelperService;
 
   before(async () => {
+    exec(
+      `mv ${process.cwd()}/.watchmanconfig ${process.cwd()}/data/react-native-app/.watchmanconfig`
+    );
     driver = get().driver;
     ({
       radonViewsService,
@@ -65,7 +68,7 @@ describe("14 - Error tests", () => {
       exec(
         `echo "import notExisting from 'not-existing'; notExisting();" > ${process.cwd()}/data/react-native-app/shared/automatedTests.tsx`
       );
-      exec(`watchman-diag`);
+
       await driver.sleep(10000);
 
       await driver.sleep(1000);
