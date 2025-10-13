@@ -15,6 +15,13 @@ metroConfigReactNative.loadConfig = async function (...args) {
 
 // in projects using expo 54 and newer, the metro config dependency can be found as a dependency of expo
 try {
+  // this is a location that expo CLI uses to import loadConfig method 
+  // unfortunately we can not use something simpler like requireFromAppDependency("expo", "metro-config")
+  // as it would point to the same instance as the one imported from react-native above 
+  // we also need to be careful not to require "@expo/metro-config" witch also exists but is a different package
+  // used for generating "default metro config". This is something we might want to adapt in the future as well.
+  // But for now we want to adapt the config that expo CLI uses in expected scenarios,
+  // which is imported from "@expo/metro/metro-config"
   const metroConfigExpo = requireFromAppDependency("expo", "@expo/metro/metro-config");
   // when the project has "flat"/"no-hoisting" node_modules, the metro-config package
   // will be found as a dependency of both react-native and expo, but they will resolve
