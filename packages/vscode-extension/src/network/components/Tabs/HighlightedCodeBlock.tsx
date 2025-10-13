@@ -33,8 +33,6 @@ const HighlightedCodeBlock = ({
 }: HighlightedCodeBlockProps) => {
   const highlighter = useHighlighter();
   const [highlightedHtml, setHighlightedHtml] = useState<string>("");
-
-  // Determine if highlighting is possible and necessary
   const isPlainText = language === "plaintext";
   const contentTooLarge = (content?.length ?? 0) > MAX_HIGHLIGHT_LENGTH;
   const canHighlight = !!content && !isPlainText && !contentTooLarge;
