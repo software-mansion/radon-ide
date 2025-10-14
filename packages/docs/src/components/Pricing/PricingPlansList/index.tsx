@@ -8,11 +8,12 @@ import { pricingBusinessData } from "../pricingBusinessData";
 import clsx from "clsx";
 import PricingCard from "../PricingCard";
 
+export type PlanType = "FREE" | "PRO" | "TEAM" | "ENTERPRISE";
+
 export interface FeatureProps {
   label: string;
   info: string;
 }
-type PlanType = "FREE" | "PRO" | "TEAM" | "ENTERPRISE";
 
 export interface PricingPlanCardProps {
   plan: PlanType;

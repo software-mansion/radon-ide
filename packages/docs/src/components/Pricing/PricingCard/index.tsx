@@ -3,17 +3,18 @@ import styles from "./styles.module.css";
 import clsx from "clsx";
 import PricingCardLabel from "../PricingCard/PricingCardLabel";
 import PricingButton from "../ComparePricingPlans/PricingButton";
-import { PricingPlanCardProps } from "../PricingPlansList";
+import { PricingPlanCardProps, PlanType } from "../PricingPlansList";
 import PricingFeaturesList from "../PricingPlansList/PricingFeaturesList";
 
 interface PricingCardProps {
   planData?: PricingPlanCardProps;
   isMonthly?: boolean;
-  onButtonClick?: (planId: string) => void;
+  onButtonClick?: (planId: PlanType) => void;
   children?: React.ReactNode;
 }
 
-const PlanHeaders = {
+const PlanHeaders: Record<PlanType, string> = {
+  FREE: "",
   PRO: "All the Free features, plus:",
   TEAM: "Development & Testing - All Pro features",
   ENTERPRISE: "All the Team features, plus:",
@@ -28,7 +29,7 @@ function PricingCard({ planData, isMonthly, onButtonClick, children }: PricingCa
 
   return (
     <div className={isProPlan ? styles.proCardContainer : styles.pricingCardContainer}>
-      <PricingCardLabel plan={planData} isMonthly={isMonthly}>
+      <PricingCardLabel planData={planData} isMonthly={isMonthly}>
         <PricingButton stylingFilled={stylingFilled} onClick={() => onButtonClick(plan)}>
           {buttonLabel}
         </PricingButton>

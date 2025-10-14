@@ -1,9 +1,10 @@
 import React from "react";
 import styles from "./styles.module.css";
 import PricingButton from "../PricingButton";
+import { PlanType } from "../../PricingPlansList";
 
 interface PlanTableLabelProps {
-  plan: string;
+  plan: PlanType;
   monthlyPrice: number | string;
   yearlyLowPrice?: number;
   yearlyFullPrice?: number;

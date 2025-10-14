@@ -3,34 +3,34 @@ import styles from "./styles.module.css";
 import { PricingPlanCardProps } from "../../PricingPlansList";
 
 interface PricingCardLabelProps {
-  plan: PricingPlanCardProps;
+  planData: PricingPlanCardProps;
   isMonthly: boolean;
   children: ReactNode;
 }
 
-export default function PricingCardLabel({ plan, isMonthly, children }: PricingCardLabelProps) {
-  const price = isMonthly ? plan.price.monthly : plan.price.yearly;
-  const isProPlan = plan.plan === "PRO";
-  const isTeamPlan = plan.plan === "TEAM";
+export default function PricingCardLabel({ planData, isMonthly, children }: PricingCardLabelProps) {
+  const price = isMonthly ? planData.price.monthly : planData.price.yearly;
+  const isProPlan = planData.plan === "PRO";
+  const isTeamPlan = planData.plan === "TEAM";
 
   const perSeatText = isTeamPlan ? "per seat" : "";
   const periodText = isMonthly ? `/month ${perSeatText}` : `/year ${perSeatText}`;
   const isCustomPrice = typeof price !== "number";
 
-  const showYearlyFullPrice = !isMonthly && plan.yearlyFullPrice;
+  const showYearlyFullPrice = !isMonthly && planData.yearlyFullPrice;
 
   return (
     <div className={styles.container}>
       <div className={styles.planDetails}>
         {isProPlan ? (
           <div className={styles.planPro}>
-            {plan.plan}
+            {planData.plan}
             <div className={styles.popularBadge}>
               <p>Popular choice</p>
             </div>
           </div>
         ) : (
-          <div className={styles.planName}>{plan.plan}</div>
+          <div className={styles.planName}>{planData.plan}</div>
         )}
 
         <div className={styles.priceDescription}>
@@ -39,7 +39,7 @@ export default function PricingCardLabel({ plan, isMonthly, children }: PricingC
               <span>${price}</span>
               <div className={styles.period}>
                 {showYearlyFullPrice && (
-                  <p className={styles.fullPrice}> ${plan.yearlyFullPrice}</p>
+                  <p className={styles.fullPrice}> ${planData.yearlyFullPrice}</p>
                 )}
                 <p>{periodText} </p>
               </div>
@@ -48,7 +48,7 @@ export default function PricingCardLabel({ plan, isMonthly, children }: PricingC
             <span className={styles.customPrice}>{price}</span>
           )}
         </div>
-        <p className={styles.planLabel}>{plan.label}</p>
+        <p className={styles.planLabel}>{planData.label}</p>
       </div>
       {isProPlan && <div className={styles.proGradient} />}
       {children}

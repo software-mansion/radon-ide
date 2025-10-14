@@ -1,4 +1,6 @@
-export const pricingIndividualData = [
+import { PricingPlanCardProps } from "./PricingPlansList";
+
+export const pricingIndividualData: PricingPlanCardProps[] = [
   {
     plan: "FREE",
     price: { monthly: 0, yearly: 0 },
