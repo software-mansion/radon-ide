@@ -1,4 +1,5 @@
 import * as fs from "fs";
+import { exec } from "child_process";
 import { assert } from "chai";
 import {
   WebView,
@@ -8,7 +9,6 @@ import {
 } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
-import { exec } from "child_process";
 
 describe("14 - Error tests", () => {
   let driver,
