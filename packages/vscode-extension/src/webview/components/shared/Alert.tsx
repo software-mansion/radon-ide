@@ -21,7 +21,9 @@ function Alert({ open, title, description, actions, type, close }: AlertProps) {
             <div className="alert-dialog-icon">
               <span className={`codicon codicon-${type}`} />
             </div>
-            <AlertDialog.Title className="alert-dialog-title">{title}</AlertDialog.Title>
+            <AlertDialog.Title className="alert-dialog-title" data-testid="alert-dialog-title">
+              {title}
+            </AlertDialog.Title>
             {close && (
               <ToolbarButton className="alert-dialog-close-button" onClick={close} title="Close">
                 <span className="codicon codicon-close" />
