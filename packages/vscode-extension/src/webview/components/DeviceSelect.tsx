@@ -10,8 +10,11 @@ import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
 import { useStore } from "../providers/storeProvider";
-import { DeviceInfo, DevicePlatform } from "../../common/State";
+import { DeviceInfo, DevicePlatform, DeviceType } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { hasAccessToProFeatures } from "../../common/License";
+import { usePaywall } from "../hooks/usePaywall";
+import { RestrictedFunctionalityError } from "../../common/Errors";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -96,7 +99,10 @@ function DeviceSelect() {
   const { projectState, project } = useProject();
 
   const devices = use$(store$.devicesState.devices) ?? [];
+  const licensedStatus = use$(store$.license.status);
+
   const { openModal } = useModal();
+  const { openPaywall } = usePaywall();
 
   const hasNoDevices = devices.length === 0;
   const selectedDevice = use$(selectedDeviceSessionState.deviceInfo);
@@ -120,7 +126,18 @@ function DeviceSelect() {
     if (selectedDevice?.id !== value) {
       const deviceInfo = (devices ?? []).find((d) => d.id === value);
       if (deviceInfo) {
-        project.startOrActivateSessionForDevice(deviceInfo);
+        if (deviceInfo.deviceType === DeviceType.Tablet && hasAccessToProFeatures(licensedStatus)) {
+          openPaywall();
+          return;
+        }
+        try {
+          await project.startOrActivateSessionForDevice(deviceInfo);
+        } catch (e) {
+          if (e instanceof RestrictedFunctionalityError) {
+            openPaywall();
+            return;
+          }
+        }
       }
     }
   };

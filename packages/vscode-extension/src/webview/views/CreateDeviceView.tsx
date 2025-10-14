@@ -14,6 +14,8 @@ import { Input } from "../components/shared/Input";
 import { useDependencyErrors } from "../hooks/useDependencyErrors";
 import { useStore } from "../providers/storeProvider";
 import { Platform, useProject } from "../providers/ProjectProvider";
+import { RestrictedFunctionalityError } from "../../common/Errors";
+import { usePaywall } from "../hooks/usePaywall";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -40,6 +42,7 @@ function useSupportedDevices() {
               .map((device) => ({
                 value: device.modelId,
                 label: device.modelName,
+                disabled: device.modelName.includes("iPad"),
               })),
           },
       windows: { label: "", items: [] },
@@ -64,6 +67,8 @@ export function formatDisplayName(name: string) {
 }
 
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
+  const { openPaywall } = usePaywall();
+
   const [deviceProperties, setDeviceProperties] = useState<DeviceProperties | undefined>(undefined);
   const [selectedSystemName, selectSystemName] = useState<string>("");
   const [isSystemCompatible, setIsSystemCompatible] = useState(true);
@@ -135,6 +140,11 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           displayName.trim(),
           systemImage
         );
+      }
+    } catch (e) {
+      if (e instanceof RestrictedFunctionalityError) {
+        openPaywall();
+        return;
       }
     } finally {
       onCreate();

@@ -176,9 +176,18 @@ function PreviewView() {
   }, []);
 
   function toggleRecording() {
+    if (!hasAccessToProFeatures(licenseStatus)) {
+      openPaywall();
+      return;
+    }
+
     try {
       project.toggleRecording();
     } catch (e) {
+      if (e instanceof RestrictedFunctionalityError) {
+        openPaywall();
+        return;
+      }
       if (isRecording) {
         project.showDismissableError("Failed to capture recording");
       }
@@ -215,7 +224,20 @@ function PreviewView() {
   }
 
   async function captureScreenshot() {
-    project.captureScreenshot();
+    if (!hasAccessToProFeatures(licenseStatus)) {
+      openPaywall();
+      return;
+    }
+
+    try {
+      await project.captureScreenshot();
+    } catch (e) {
+      if (e instanceof RestrictedFunctionalityError) {
+        openPaywall();
+        return;
+      }
+      project.showDismissableError("Failed to capture screenshot");
+    }
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {

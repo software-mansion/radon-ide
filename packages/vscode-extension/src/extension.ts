@@ -37,6 +37,7 @@ import { launchConfigurationFromOptions } from "./project/launchConfigurationsMa
 import { isIdeConfig } from "./utilities/launchConfiguration";
 import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
+import { RestrictedFunctionalityError } from "./common/Errors";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -160,7 +161,15 @@ export async function activate(context: ExtensionContext) {
     commands.executeCommand("RNIDE.openPanel");
     const ide = IDE.getInstanceIfExists();
     if (ide) {
-      ide.project.showStorybookStory(componentTitle, storyName);
+      try {
+        ide.project.showStorybookStory(componentTitle, storyName);
+      } catch (e) {
+        if (e instanceof RestrictedFunctionalityError) {
+          window.showInformationMessage(
+            "Storybook integration is a Pro feature. Please upgrade your plan to access it."
+          );
+        }
+      }
     } else {
       window.showWarningMessage("Wait for the app to load before launching storybook.", "Dismiss");
     }
@@ -428,8 +437,15 @@ async function rotateDevice(direction: DeviceRotationDirection) {
   if (!project) {
     throw new Error("Radon IDE is not initialized yet.");
   }
-
-  project.rotateDevices(direction);
+  try {
+    await project.rotateDevices(direction);
+  } catch (error) {
+    if (error instanceof RestrictedFunctionalityError) {
+      window.showInformationMessage(
+        "Device rotation is a Pro feature. Please upgrade your plan to access it."
+      );
+    }
+  }
 }
 
 async function rotateDeviceAnticlockwise() {

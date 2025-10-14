@@ -26,6 +26,9 @@ import { useStore } from "../providers/storeProvider";
 import { DevicePlatform, DeviceRotation, DeviceSettings } from "../../common/State";
 import { PropsWithDataTest } from "../../common/types";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { hasAccessToProFeatures } from "../../common/License";
+import { usePaywall } from "../hooks/usePaywall";
+import { RestrictedFunctionalityError } from "../../common/Errors";
 
 const contentSizes = [
   "xsmall",
@@ -97,11 +100,39 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
   const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
 
+  const licenseStatus = use$(store$.license.status);
+  const hasProAccess = hasAccessToProFeatures(licenseStatus);
+
   const { project } = useProject();
 
   const { openModal } = useModal();
 
+  const { openPaywall } = usePaywall();
+
   const resetOptions = platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
+
+  const handleRotateDevice = async (direction: DeviceRotationDirection) => {
+    if (!hasProAccess) {
+      openPaywall();
+      return;
+    }
+
+    try {
+      await project.rotateDevices(direction);
+    } catch (error) {
+      if (error instanceof RestrictedFunctionalityError) {
+        openPaywall();
+      }
+    }
+  };
+
+  const handleSetRotateDevice = async (rotation: DeviceRotation) => {
+    if (!hasProAccess && rotation !== DeviceRotation.Portrait) {
+      openPaywall();
+      return;
+    }
+    store$.workspaceConfiguration.deviceSettings.deviceRotation.set(rotation);
+  };
 
   return (
     <DropdownMenuRoot>
@@ -210,14 +241,14 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 alignOffset={-5}>
                 <Label>Rotate</Label>
                 <CommandItem
-                  onSelect={() => project.rotateDevices(DeviceRotationDirection.Clockwise)}
+                  onSelect={() => handleRotateDevice(DeviceRotationDirection.Clockwise)}
                   commandName={"RNIDE.rotateDeviceClockwise"}
                   label={"Clockwise"}
                   dataTest={`device-settings-set-orientation-clockwise`}
                   icon={"refresh"}
                 />
                 <CommandItem
-                  onSelect={() => project.rotateDevices(DeviceRotationDirection.Anticlockwise)}
+                  onSelect={() => handleRotateDevice(DeviceRotationDirection.Anticlockwise)}
                   commandName={"RNIDE.rotateDeviceAnticlockwise"}
                   label={"Anticlockwise"}
                   dataTest={`device-settings-set-orientation-anticlockwise`}
@@ -232,9 +263,8 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                     className="dropdown-menu-item"
                     data-testid={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
                     key={index}
-                    onSelect={() =>
-                      store$.workspaceConfiguration.deviceSettings.deviceRotation.set(option.value)
-                    }>
+                    disabled={!hasProAccess && option.value !== DeviceRotation.Portrait}
+                    onSelect={() => handleSetRotateDevice(option.value)}>
                     <span
                       className={`codicon codicon-${option.icon}`}
                       style={{ rotate: option.rotation }}

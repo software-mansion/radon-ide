@@ -1,7 +1,11 @@
 // #region License Helpers
 
 export function hasAccessToProFeatures(licenseStatus: LicenseStatus) {
-  return licenseStatus === LicenseStatus.Pro || licenseStatus === LicenseStatus.Enterprise;
+  return (
+    licenseStatus === LicenseStatus.Pro ||
+    licenseStatus === LicenseStatus.Team ||
+    licenseStatus === LicenseStatus.Enterprise
+  );
 }
 
 // #endregion License Helpers
@@ -16,6 +20,7 @@ export enum LicenseStatus {
   Inactive = "inactive",
   Free = "free",
   Pro = "pro",
+  Team = "team",
   Enterprise = "enterprise",
 }
 

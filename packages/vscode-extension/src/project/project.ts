@@ -48,6 +48,7 @@ import {
   DeviceInfo,
   DeviceRotation,
   DevicesState,
+  DeviceType,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
   MultimediaData,
@@ -219,6 +220,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void> {
+    if (deviceInfo.deviceType === DeviceType.Tablet) {
+      this.guardProFeatures();
+    }
+
     return this.deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
   }
 
@@ -292,6 +297,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region Device Settings
 
   public async rotateDevices(direction: DeviceRotationDirection) {
+    this.guardProFeatures();
+
     const currentRotation = this.workspaceStateManager.getState().deviceSettings.deviceRotation;
     if (currentRotation === undefined) {
       Logger.warn("[Radon IDE] Device rotation is not set in the configuration.");
@@ -469,6 +476,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region Recording
 
   public async toggleRecording() {
+    this.guardProFeatures();
+
     getTelemetryReporter().sendTelemetryEvent("recording:toggle-recording", {
       platform: this.deviceSession?.platform,
     });
@@ -491,7 +500,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async captureScreenshot() {
-    // throw new RestrictedFunctionalityError("Method not implemented.", [LicenseStatus.Pro, LicenseStatus.Enterprise]);
+    this.guardProFeatures();
+
     getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
       platform: this.deviceSession?.platform,
     });
@@ -653,6 +663,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     displayName: string,
     runtime: IOSRuntimeInfo
   ): Promise<DeviceInfo> {
+    if (deviceType.name.includes("iPad")) {
+      this.guardProFeatures();
+    }
+
     return this.deviceManager.createIOSDevice(deviceType, displayName, runtime);
   }
 
@@ -709,6 +723,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       );
       throw new Error("[PROJECT] Dependency manager not initialized");
     }
+
+    this.guardProFeatures();
 
     if (await this.applicationContext.applicationDependencyManager.checkProjectUsesStorybook()) {
       this.deviceSession?.openStorybookStory(componentTitle, storyName);
