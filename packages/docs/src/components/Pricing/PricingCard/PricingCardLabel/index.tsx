@@ -9,46 +9,42 @@ interface PricingCardLabelProps {
 }
 
 export default function PricingCardLabel({ planData, isMonthly, children }: PricingCardLabelProps) {
-  const price = isMonthly ? planData.price.monthly : planData.price.yearly;
-  const isProPlan = planData.plan === "PRO";
-  const isTeamPlan = planData.plan === "TEAM";
+  const { price, plan, label, yearlyFullPrice } = planData;
+  const periodPrice = isMonthly ? price.monthly : price.yearly;
+  const isProPlan = plan === "PRO";
 
-  const perSeatText = isTeamPlan ? "per seat" : "";
-  const periodText = isMonthly ? `/month ${perSeatText}` : `/year ${perSeatText}`;
-  const isCustomPrice = typeof price !== "number";
+  const perSeatText = plan === "TEAM" ? "per seat" : "";
+  const periodText = isMonthly ? `/month ` : `/year `;
 
-  const showYearlyFullPrice = !isMonthly && planData.yearlyFullPrice;
+  const showYearlyFullPrice = !isMonthly && yearlyFullPrice;
 
   return (
     <div className={styles.container}>
       <div className={styles.planDetails}>
-        {isProPlan ? (
-          <div className={styles.planPro}>
-            {planData.plan}
+        <div className={isProPlan ? styles.planPro : styles.planName}>
+          {plan}
+          {isProPlan && (
             <div className={styles.popularBadge}>
               <p>Popular choice</p>
             </div>
-          </div>
-        ) : (
-          <div className={styles.planName}>{planData.plan}</div>
-        )}
+          )}
+        </div>
 
         <div className={styles.priceDescription}>
-          {!isCustomPrice ? (
+          {typeof periodPrice === "number" ? (
             <div className={styles.price}>
-              <span>${price}</span>
+              <span>${periodPrice}</span>
               <div className={styles.period}>
-                {showYearlyFullPrice && (
-                  <p className={styles.fullPrice}> ${planData.yearlyFullPrice}</p>
-                )}
-                <p>{periodText} </p>
+                {showYearlyFullPrice && <p className={styles.fullPrice}>${yearlyFullPrice}</p>}
+                <p>{`${periodText}${perSeatText}`}</p>
               </div>
             </div>
           ) : (
-            <span className={styles.customPrice}>{price}</span>
+            <span className={styles.customPrice}>{periodPrice}</span>
           )}
         </div>
-        <p className={styles.planLabel}>{planData.label}</p>
+
+        <p className={styles.planLabel}>{label}</p>
       </div>
       {isProPlan && <div className={styles.proGradient} />}
       {children}
