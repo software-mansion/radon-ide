@@ -60,14 +60,11 @@ describe("14 - Error tests", () => {
     const originalText = await editor.getText();
     try {
       await editor.moveCursor(1, 1);
-      // await editor.typeText(`
-      //   import notExisting from 'not-existing';
-      //   notExisting();
-      //   `);
-      // await editor.save();
-      exec(
-        `echo "import notExisting from 'not-existing'; notExisting();" > ${process.cwd()}/data/react-native-app/shared/automatedTests.tsx`
-      );
+      await editor.typeText(`
+        import notExisting from 'not-existing';
+        notExisting();
+        `);
+      await editor.save();
 
       await driver.sleep(10000);
 
