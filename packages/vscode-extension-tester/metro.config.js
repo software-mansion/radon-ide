@@ -1,6 +1,6 @@
 const { getDefaultConfig, mergeConfig } = require("@react-native/metro-config");
 
-if (process.env.CI) {
+if (process.env.IS_GITHUB_ACTIONS) {
   console.log("Running in CI — enabling polling file watcher");
   process.env.METRO_NO_WATCHMAN = "1";
   process.env.METRO_USE_POLLING = "true";
