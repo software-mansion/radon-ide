@@ -140,11 +140,18 @@ export class PhysicalAndroidDeviceProvider
 
   public async listDevices() {
     const devices = await listConnectedDevices();
+    const previousDevices = this.stateManager.getState().androidPhysicalDevices ?? [];
+    const disconnectedDevices = previousDevices.filter(
+      (d) => !devices.some(({ id }) => id === d.id)
+    );
+    disconnectedDevices.forEach((d) => {
+      d.available = false;
+    });
     this.stateManager.updateState({
-      androidPhysicalDevices: devices,
+      androidPhysicalDevices: devices.concat(disconnectedDevices),
     });
 
-    return devices;
+    return devices.concat(disconnectedDevices);
   }
 
   public dispose() {
