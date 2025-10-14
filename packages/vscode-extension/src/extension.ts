@@ -391,11 +391,31 @@ async function openDevMenu() {
 }
 
 async function performBiometricAuthorization() {
-  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
+  try {
+    await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
+  } catch (error) {
+    if (error instanceof RestrictedFunctionalityError) {
+      window.showInformationMessage(
+        "Biometric authentication is a Pro feature. Please upgrade your plan to access it."
+      );
+      return;
+    }
+    throw error;
+  }
 }
 
 async function performFailedBiometricAuthorization() {
-  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
+  try {
+    await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
+  } catch (error) {
+    if (error instanceof RestrictedFunctionalityError) {
+      window.showInformationMessage(
+        "Biometric authentication is a Pro feature. Please upgrade your plan to access it."
+      );
+      return;
+    }
+    throw error;
+  }
 }
 
 async function deviceHomeButtonPress() {

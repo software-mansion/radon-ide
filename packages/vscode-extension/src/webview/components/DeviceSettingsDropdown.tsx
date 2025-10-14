@@ -29,7 +29,6 @@ import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { hasAccessToProFeatures } from "../../common/License";
 import { usePaywall } from "../hooks/usePaywall";
 import { RestrictedFunctionalityError } from "../../common/Errors";
-import { has } from "lodash";
 
 const contentSizes = [
   "xsmall",
@@ -127,12 +126,12 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
     }
   };
 
-  const handleSetRotateDevice = async (rotation: DeviceRotation) => {
-    if (!hasProAccess && rotation !== DeviceRotation.Portrait) {
+  const handleSetRotateDevice = async (deviceRotation: DeviceRotation) => {
+    if (!hasProAccess && deviceRotation !== DeviceRotation.Portrait) {
       openPaywall();
       return;
     }
-    store$.workspaceConfiguration.deviceSettings.deviceRotation.set(rotation);
+    store$.workspaceConfiguration.deviceSettings.deviceRotation.set(deviceRotation);
   };
 
   const handleOpenLocationView = () => {
