@@ -105,6 +105,9 @@ jobs:
       - name: Enforce HTTPS for submodules
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
+      - name: set ulimit
+        run: ulimit -n 1048575
+
       - name: Cache npm (extension)
         uses: actions/cache@v4
         with:
@@ -136,11 +139,8 @@ jobs:
         run: npm run get-test-app -- ${{ matrix.testApp }}
         working-directory: packages/vscode-extension-tester
 
-      # - name: Install watchman
-      #   run: brew install watchman
-
-      - name: test
-        run: ulimit -n
+      - name: Install watchman
+        run: brew install watchman
 
       - name: Build VSIX package
         run: npm run build-vsix-package
