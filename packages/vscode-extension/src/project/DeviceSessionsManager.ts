@@ -284,6 +284,12 @@ export class DeviceSessionsManager implements Disposable {
       (prevDevice) => !devices.some((device) => device.id === prevDevice.id)
     );
 
+    const disconnectedDevices = devices.filter((d) => {
+      return (
+        !d.available && previousDevices.some((device) => device.id === d.id && device.available)
+      );
+    });
+
     if (removedDevices.length > 1) {
       Logger.warn(
         "Multiple devices were removed in one update, the results might be unpredictable. These devices were removed:",
@@ -291,8 +297,13 @@ export class DeviceSessionsManager implements Disposable {
       );
     }
 
+    // NOTE: stop removed devices and (unselected) disconnected physical devices
+    const devicesToStop = removedDevices.concat(
+      disconnectedDevices.filter((d) => d.id !== this.activeSessionId)
+    );
+
     await Promise.all(
-      removedDevices.map((device) => {
+      devicesToStop.map((device) => {
         this.terminateSession(device.id);
       })
     );
@@ -306,6 +317,7 @@ export class DeviceSessionsManager implements Disposable {
 
   private async updateSelectedSession(session: DeviceSession | undefined) {
     const previousSession = this.selectedDeviceSession;
+    const previousSessionId = this.activeSessionId;
     this.activeSessionId = session?.id;
     if (previousSession === session) {
       return;
@@ -316,16 +328,29 @@ export class DeviceSessionsManager implements Disposable {
     }
     extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, this.activeSessionId);
     this.projectStateManager.updateState({ selectedDeviceSessionId: this.activeSessionId });
-    await previousSession?.deactivate();
+
+    const wasPreviousDeviceDisconnected = !this.devices.find((d) => d.id === previousSessionId)
+      ?.available;
+
+    // NOTE: if previous device was already disconnected,
+    // we terminate its session instead of deactivating it,
+    // since after reconnecting it will need restarting anyway
+    if (previousSessionId && wasPreviousDeviceDisconnected) {
+      await this.terminateSession(previousSessionId);
+    } else {
+      await previousSession?.deactivate();
+    }
+
     await session.activate();
   }
 
   private async acquireDeviceByDeviceInfo(deviceInfo: DeviceInfo) {
     if (!deviceInfo.available) {
-      window.showErrorMessage(
-        "Selected device is not available. Perhaps the system image it uses is not installed. Please select another device.",
-        "Dismiss"
-      );
+      const message =
+        deviceInfo.platform === DevicePlatform.Android && !deviceInfo.emulator
+          ? "Selected device is not connected anymore. Please connect it to your computer and try again."
+          : "Selected device is not available. Perhaps the system image it uses is not installed. Please select another device.";
+      window.showErrorMessage(message, "Dismiss");
       return undefined;
     }
     let device: DeviceBase | undefined;

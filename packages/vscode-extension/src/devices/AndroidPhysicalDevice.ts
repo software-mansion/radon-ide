@@ -15,6 +15,7 @@ import { extensionContext } from "../utilities/extensionContext";
 import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
 import { DevicesProvider } from "./DevicesProvider";
 import { StateManager } from "../project/StateManager";
+import _ from "lodash";
 
 export class AndroidPhysicalDevice extends AndroidDevice {
   constructor(
@@ -141,17 +142,21 @@ export class PhysicalAndroidDeviceProvider
   public async listDevices() {
     const devices = await listConnectedDevices();
     const previousDevices = this.stateManager.getState().androidPhysicalDevices ?? [];
-    const disconnectedDevices = previousDevices.filter(
-      (d) => !devices.some(({ id }) => id === d.id)
-    );
-    disconnectedDevices.forEach((d) => {
-      d.available = false;
-    });
-    this.stateManager.updateState({
-      androidPhysicalDevices: devices.concat(disconnectedDevices),
-    });
+    const disconnectedDevices = previousDevices
+      .filter((d) => !devices.some(({ id }) => id === d.id))
+      .map((d) =>
+        Object.assign({}, d, {
+          available: false,
+        })
+      );
+    const updatedDevices = devices.concat(disconnectedDevices);
+    if (!_.isEqual(updatedDevices, previousDevices)) {
+      this.stateManager.updateState({
+        androidPhysicalDevices: updatedDevices,
+      });
+    }
 
-    return devices.concat(disconnectedDevices);
+    return updatedDevices;
   }
 
   public dispose() {
