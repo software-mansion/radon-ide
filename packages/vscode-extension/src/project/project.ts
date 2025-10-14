@@ -624,6 +624,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async sendBiometricAuthorization(isMatch: boolean) {
+    this.guardProFeatures();
+
     await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }
 

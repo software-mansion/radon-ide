@@ -29,6 +29,7 @@ import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { hasAccessToProFeatures } from "../../common/License";
 import { usePaywall } from "../hooks/usePaywall";
 import { RestrictedFunctionalityError } from "../../common/Errors";
+import { has } from "lodash";
 
 const contentSizes = [
   "xsmall",
@@ -132,6 +133,15 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
       return;
     }
     store$.workspaceConfiguration.deviceSettings.deviceRotation.set(rotation);
+  };
+
+  const handleOpenLocationView = () => {
+    if (!hasProAccess) {
+      openPaywall();
+      return;
+    }
+
+    openModal(<DeviceLocationView />, { title: "Location" });
   };
 
   return (
@@ -289,9 +299,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           <DropdownMenu.Item
             className="dropdown-menu-item"
             data-testid="device-settings-location"
-            onSelect={() => {
-              openModal(<DeviceLocationView />, { title: "Location" });
-            }}>
+            onSelect={handleOpenLocationView}>
             <span className="codicon codicon-location" />
             Location
           </DropdownMenu.Item>
@@ -381,14 +389,25 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 }
 
 const LocalizationItem = () => {
+  const store$ = useStore();
+  const licenseStatus = use$(store$.license.status);
+  const hasProAccess = hasAccessToProFeatures(licenseStatus);
+
   const { openModal } = useModal();
+  const { openPaywall } = usePaywall();
+
+  const handleOpenLocationView = () => {
+    if (!hasProAccess) {
+      openPaywall();
+      return;
+    }
+
+    openModal(<DeviceLocalizationView />, { title: "Localization" });
+  };
+
   return (
     <>
-      <DropdownMenu.Item
-        className="dropdown-menu-item"
-        onSelect={() => {
-          openModal(<DeviceLocalizationView />, { title: "Localization" });
-        }}>
+      <DropdownMenu.Item className="dropdown-menu-item" onSelect={handleOpenLocationView}>
         <span className="codicon codicon-globe" />
         Localization
       </DropdownMenu.Item>
@@ -430,8 +449,38 @@ function CommandItem({
 const BiometricsItem = () => {
   const store$ = useStore();
   const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
+  const licenseStatus = use$(store$.license.status);
+  const hasProAccess = hasAccessToProFeatures(licenseStatus);
+
+  const { openPaywall } = usePaywall();
 
   const { project } = useProject();
+
+  const handleToggleBiometricsEnrolment = () => {
+    if (!hasProAccess) {
+      openPaywall();
+      return;
+    }
+
+    store$.workspaceConfiguration.deviceSettings.hasEnrolledBiometrics.set(
+      !deviceSettings.hasEnrolledBiometrics
+    );
+  };
+
+  const handleSendBiometricAuthorization = async (isMatching: boolean) => {
+    if (!hasProAccess) {
+      openPaywall();
+      return;
+    }
+
+    try {
+      await project.sendBiometricAuthorization(isMatching);
+    } catch (error) {
+      if (error instanceof RestrictedFunctionalityError) {
+        openPaywall();
+      }
+    }
+  };
 
   return (
     <DropdownMenu.Sub>
@@ -445,11 +494,7 @@ const BiometricsItem = () => {
         <DropdownMenu.SubContent className="dropdown-menu-subcontent">
           <DropdownMenu.Item
             className="dropdown-menu-item"
-            onSelect={() => {
-              store$.workspaceConfiguration.deviceSettings.hasEnrolledBiometrics.set(
-                !deviceSettings.hasEnrolledBiometrics
-              );
-            }}>
+            onSelect={handleToggleBiometricsEnrolment}>
             <span className="codicon codicon-layout-sidebar-left" />
             Enrolled
             {deviceSettings.hasEnrolledBiometrics && (
@@ -458,7 +503,7 @@ const BiometricsItem = () => {
           </DropdownMenu.Item>
           <CommandItem
             onSelect={() => {
-              project.sendBiometricAuthorization(true);
+              handleSendBiometricAuthorization(true);
             }}
             commandName="RNIDE.performBiometricAuthorization"
             label="Matching ID"
@@ -467,7 +512,7 @@ const BiometricsItem = () => {
           />
           <CommandItem
             onSelect={() => {
-              project.sendBiometricAuthorization(false);
+              handleSendBiometricAuthorization(false);
             }}
             commandName="RNIDE.performFailedBiometricAuthorization"
             label="Non-Matching ID"
