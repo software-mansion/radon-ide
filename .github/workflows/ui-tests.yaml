@@ -136,8 +136,8 @@ jobs:
         run: npm run get-test-app -- ${{ matrix.testApp }}
         working-directory: packages/vscode-extension-tester
 
-      - name: Install watchman
-        run: brew install watchman
+      # - name: Install watchman
+      #   run: brew install watchman
 
       - name: Build VSIX package
         run: npm run build-vsix-package

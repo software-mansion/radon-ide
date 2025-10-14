@@ -11,17 +11,21 @@ import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
 describe("14 - Error tests", () => {
-  let driver,
+  let driver, appWebsocket;
+  let {
     radonViewsService,
     appManipulationService,
     elementHelperService,
     managingDevicesService,
-    appWebsocket,
-    vscodeHelperService;
+    vscodeHelperService,
+  } = initServices(driver);
 
   before(async () => {
     exec(
       `cp ${process.cwd()}/.watchmanconfig ${process.cwd()}/data/react-native-app/.watchmanconfig`
+    );
+    exec(
+      `cp ${process.cwd()}/metro.config.js ${process.cwd()}/data/react-native-app/metro.config.js`
     );
     driver = get().driver;
     ({
