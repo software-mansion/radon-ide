@@ -98,10 +98,20 @@ function DeviceSelect() {
 
   const runningSessionIds = Object.keys(deviceSessions);
 
+  function shouldShowDevice(device: DeviceInfo) {
+    // NOTE: we hide disconnected physical devices in the dropdown, since they're not selectable anyway
+    if (device.platform === DevicePlatform.Android && !device.emulator) {
+      return device.available;
+    }
+
+    return true;
+  }
+
   const deviceSections = {
-    "iOS": devicesByType?.iosSimulators ?? [],
-    "Android Emulators": devicesByType?.androidEmulators ?? [],
-    "Connected Android Devices": devicesByType?.androidPhysicalDevices ?? [],
+    "iOS": devicesByType.iosSimulators ?? [],
+    "Android Emulators": devicesByType.androidEmulators ?? [],
+    "Connected Android Devices":
+      devicesByType.androidPhysicalDevices?.filter(shouldShowDevice) ?? [],
   };
 
   const handleStartOrActivateSessionForIOSTabletDevice = usePaywalledCallback(
