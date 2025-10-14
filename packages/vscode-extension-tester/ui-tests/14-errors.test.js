@@ -48,14 +48,7 @@ describe("14 - Error tests", () => {
 
   beforeEach(async function () {});
 
-  // in github CI this test was failing when there was to many files to observe
-  // it was fixed by adding a .watchmanignore file and ignoring node_modules
   it("should show bundle error", async function () {
-    await radonViewsService.openRadonIDEPanel();
-    await driver.sleep(5000);
-    await elementHelperService.findAndClickElementByTag("startup-message");
-    await appManipulationService.waitForAppToLoad();
-
     await vscodeHelperService.openCommandLineAndExecute("View: Split Editor");
     await vscodeHelperService.openFileInEditor(
       "/data/react-native-app/shared/automatedTests.tsx"
@@ -70,22 +63,11 @@ describe("14 - Error tests", () => {
         `);
       await editor.save();
 
-      await driver.sleep(10000);
-
-      await driver.sleep(1000);
-      await driver.switchTo().defaultContent();
-      const bottomBar = await new BottomBarPanel().openOutputView();
-      const text = await bottomBar.getText();
-      console.log("build error saved to output.txt");
-      await driver.sleep(1000);
-      fs.writeFileSync("output.txt", text);
-      await driver.sleep(1000);
       await radonViewsService.openRadonIDEPanel();
       await appManipulationService.waitForAppToLoad();
-      await driver.wait(async () => {
-        appWebsocket = get().appWebsocket;
-        return appWebsocket != null;
-      }, 5000);
+      await driver.switchTo().defaultContent();
+      await radonViewsService.openRadonIDEPanel();
+
       await driver.wait(
         async () => {
           try {
@@ -109,12 +91,7 @@ describe("14 - Error tests", () => {
       await driver.switchTo().defaultContent();
       const editor = await new EditorView().openEditor("automatedTests.tsx", 1);
       await editor.setText(originalText);
-      await driver
-        .actions()
-        .keyDown(Key.COMMAND)
-        .sendKeys("s")
-        .keyUp(Key.COMMAND)
-        .perform();
+      await editor.save();
     }
   });
 });
