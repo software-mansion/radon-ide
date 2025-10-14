@@ -1,17 +1,13 @@
-import * as fs from "fs";
-import { exec } from "child_process";
 import { assert } from "chai";
-import {
-  WebView,
-  EditorView,
-  Key,
-  BottomBarPanel,
-} from "vscode-extension-tester";
+import { WebView, EditorView } from "vscode-extension-tester";
+import { itIf } from "../utils/helpers.js";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
+const IS_GITHUB_ACTIONS = process.env.IS_GITHUB_ACTIONS === "true";
+
 describe("14 - Error tests", () => {
-  let driver, appWebsocket;
+  let driver;
   let {
     radonViewsService,
     appManipulationService,
@@ -21,12 +17,6 @@ describe("14 - Error tests", () => {
   } = initServices(driver);
 
   before(async () => {
-    exec(
-      `cp ${process.cwd()}/.watchmanconfig ${process.cwd()}/data/react-native-app/.watchmanconfig`
-    );
-    exec(
-      `cp ${process.cwd()}/metro.config.js ${process.cwd()}/data/react-native-app/metro.config.js`
-    );
     driver = get().driver;
     ({
       radonViewsService,
@@ -46,8 +36,7 @@ describe("14 - Error tests", () => {
     await view.switchBack();
   });
 
-  beforeEach(async function () {});
-
+  // this test creates bundle error before building app
   it("should show bundle error", async function () {
     await vscodeHelperService.openCommandLineAndExecute("View: Split Editor");
     await vscodeHelperService.openFileInEditor(
@@ -79,8 +68,7 @@ describe("14 - Error tests", () => {
             return false;
           }
         },
-        // it may take some time for radon to fast refresh especially on GitHub CI
-        20000,
+        10000,
         "Error dialog did not show up"
       );
       const dialogTitle = await elementHelperService.findAndWaitForElementByTag(
@@ -94,4 +82,60 @@ describe("14 - Error tests", () => {
       await editor.save();
     }
   });
+
+  // on github actions the app does not fast refresh on .tsx file change
+  // so far I haven't found a solution nor the reason why
+  // the watchman seem to start correctly in metro as the logs show it
+  // but does not see the changes. For now the test is skipped on GH actions
+  itIf(
+    !IS_GITHUB_ACTIONS,
+    "should show bundle error dynamically",
+    async function () {
+      await radonViewsService.openRadonIDEPanel();
+      await appManipulationService.waitForAppToLoad();
+      await vscodeHelperService.openCommandLineAndExecute("View: Split Editor");
+      await vscodeHelperService.openFileInEditor(
+        "/data/react-native-app/shared/automatedTests.tsx"
+      );
+      const editor = await new EditorView().openEditor("automatedTests.tsx", 1);
+      const originalText = await editor.getText();
+      try {
+        await editor.moveCursor(1, 1);
+        await editor.typeText(`
+        import notExisting from 'not-existing';
+        notExisting();
+        `);
+        await editor.save();
+        await radonViewsService.openRadonIDEPanel();
+
+        await driver.wait(
+          async () => {
+            try {
+              await elementHelperService.findAndWaitForElementByTag(
+                "alert-dialog-content"
+              );
+              return true;
+            } catch {
+              return false;
+            }
+          },
+          10000,
+          "Error dialog did not show up"
+        );
+        const dialogTitle =
+          await elementHelperService.findAndWaitForElementByTag(
+            "alert-dialog-title"
+          );
+        assert.equal(await dialogTitle.getText(), "Bundle error");
+      } finally {
+        await driver.switchTo().defaultContent();
+        const editor = await new EditorView().openEditor(
+          "automatedTests.tsx",
+          1
+        );
+        await editor.setText(originalText);
+        await editor.save();
+      }
+    }
+  );
 });
