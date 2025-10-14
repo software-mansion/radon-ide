@@ -21,7 +21,7 @@ describe("14 - Error tests", () => {
 
   before(async () => {
     exec(
-      `mv ${process.cwd()}/.watchmanconfig ${process.cwd()}/data/react-native-app/.watchmanconfig`
+      `cp ${process.cwd()}/.watchmanconfig ${process.cwd()}/data/react-native-app/.watchmanconfig`
     );
     driver = get().driver;
     ({
