@@ -174,49 +174,22 @@ describe("7 - Radon tools tests", () => {
   });
 
   // test scenario:
-  // creates two devices
-  // rotates one of them
-  // the element inspector should work correctly after switching to second device
-  it(`should show inspect overlay in correct place after changing device`, async function () {
+  // - creates two devices
+  // - rotates one of them
+  // - the element inspector should work correctly after switching to second device
+  it(`should show inspect overlay in correct place after rotating and changing device`, async function () {
     try {
       const deviceName1 = "newDevice";
       const deviceName2 = "newDevice2";
+
       await managingDevicesService.addNewDevice(deviceName2);
-      await elementHelperService.findAndClickElementByTag(
-        `device-row-start-button-device-${deviceName2}`
-      );
-      await driver.wait(
-        async () => {
-          const chosenDevice =
-            await elementHelperService.findAndWaitForElementByTag(
-              "device-select-value-text"
-            );
-          return deviceName2 === (await chosenDevice.getText());
-        },
-        10000,
-        "timed out waiting for device to be switched"
-      );
+      await elementHelperService.findAndClickElementByTag(`close-modal-button`);
+      await managingDevicesService.switchToDevice(deviceName2);
       await appManipulationService.waitForAppToLoad();
+
       await radonSettingsService.rotateDevice("landscape-left");
-      await driver
-        .actions()
-        .keyDown(Key.COMMAND)
-        .keyDown(Key.SHIFT)
-        .sendKeys("9")
-        .keyUp(Key.SHIFT)
-        .keyUp(Key.COMMAND)
-        .perform();
-      await driver.wait(
-        async () => {
-          const chosenDevice =
-            await elementHelperService.findAndWaitForElementByTag(
-              "device-select-value-text"
-            );
-          return deviceName1 === (await chosenDevice.getText());
-        },
-        10000,
-        "timed out waiting for device to be switched"
-      );
+
+      await managingDevicesService.switchToDevice(deviceName1);
 
       await testIfInspectElementAppearsInCorrectPlace();
     } finally {
