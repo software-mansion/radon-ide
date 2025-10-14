@@ -83,10 +83,10 @@ describe("14 - Error tests", () => {
     }
   });
 
-  // on github actions the app does not fast refresh on .tsx file change
-  // so far I haven't found a solution nor the reason why
-  // the watchman seem to start correctly in metro as the logs show it
-  // but does not see the changes. For now the test is skipped on GH actions
+  // TODO: Re-enable this test on GitHub Actions.
+  // The test is currently skipped because Fast Refresh does not trigger on file changes in the CI environment.
+  // This is likely caused by an issue with the file watching mechanism (Watchman) on the macOS runners,
+  // where the initial file crawl seems to succeed but subsequent modifications are not detected.
   itIf(
     !IS_GITHUB_ACTIONS,
     "should show bundle error dynamically",
