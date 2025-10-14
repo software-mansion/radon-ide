@@ -8,6 +8,7 @@ import { DevtoolsServer } from "../project/devtools";
 import { MetroSession } from "../project/metro";
 import { DeviceInfo } from "../common/State";
 import { getDebuggerTargetForDevice } from "../project/DebuggerTarget";
+import { SourceInfo } from "../common/Project";
 
 const PING_TIMEOUT = 1000;
 export class ReconnectingDebugSession implements DebugSession, Disposable {
@@ -149,5 +150,8 @@ export class ReconnectingDebugSession implements DebugSession, Disposable {
   }
   public async addBinding(name: string): Promise<void> {
     return this.debugSession.addBinding(name);
+  }
+  public async findOriginalPosition(sourceInfo: SourceInfo): Promise<SourceInfo> {
+    return this.debugSession.findOriginalPosition(sourceInfo);
   }
 }

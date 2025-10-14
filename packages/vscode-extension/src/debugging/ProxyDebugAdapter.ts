@@ -15,6 +15,7 @@ import {
 import { startDebugging } from "./startDebugging";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
+import { SourceInfo } from "../common/Project";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
@@ -314,6 +315,20 @@ export class ProxyDebugAdapter extends DebugSession {
     });
   }
 
+  private async findOriginalPosition(sourceInfo: SourceInfo) {
+    try {
+      const res = await this.childDebugSession?.customRequest("getPreferredUILocation", {
+        originalUrl: sourceInfo.fileName,
+        line: sourceInfo.line0Based,
+        column: sourceInfo.column0Based,
+      });
+      return { fileName: res.source.path, line0Based: res.line, column0Based: res.column };
+    } catch (e) {
+      Logger.error("Error calling getPreferredLocation from the JS debugger", e);
+      return { error: e };
+    }
+  }
+
   protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
@@ -322,6 +337,9 @@ export class ProxyDebugAdapter extends DebugSession {
   ) {
     response.body = response.body || {};
     switch (command) {
+      case "RNIDE_findOriginalPosition":
+        response.body = await this.findOriginalPosition(args);
+        break;
       case "RNIDE_startProfiling":
         await this.startProfiling();
         break;

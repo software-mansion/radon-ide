@@ -15,7 +15,7 @@ import { ApplicationContext } from "./ApplicationContext";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
-import { AppOrientation, InspectData } from "../common/Project";
+import { AppOrientation, InspectData, InspectDataStackItem } from "../common/Project";
 import { disposeAll } from "../utilities/disposables";
 import { ToolKey, ToolPlugin, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
@@ -672,6 +672,16 @@ export class ApplicationSession implements Disposable {
     let stack = undefined;
     if (requestStack && inspectData?.stack) {
       stack = inspectData.stack;
+      // for stack entries with source names that start with http, we need to decipher original source positions
+      // using source maps via the debugger
+      await Promise.all(
+        stack.map(async (item) => {
+          if (item.source?.fileName.startsWith("http") && this.debugSession) {
+            item.source = await this.debugSession.findOriginalPosition(item.source);
+          }
+        })
+      );
+
       const inspectorExcludePattern =
         this.applicationContext.workspaceConfiguration.general.inspectorExcludePattern;
       const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());

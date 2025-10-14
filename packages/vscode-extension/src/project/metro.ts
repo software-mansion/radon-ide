@@ -223,6 +223,7 @@ async function launchMetro({
     RCT_METRO_PORT: `${port}`,
     RADON_IDE_LIB_PATH: libPath,
     RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
+    RADON_IDE_RN_VERSION: "0.81",
     REACT_EDITOR: fakeEditorPath,
     // NOTE: At least as of version 52, Expo uses a different mechanism to open stack frames in the editor,
     // which doesn't allow passing a path to the EDITOR executable.
