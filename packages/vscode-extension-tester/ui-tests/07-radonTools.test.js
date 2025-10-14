@@ -68,6 +68,57 @@ describe("7 - Radon tools tests", () => {
     await appManipulationService.hideExpoOverlay(appWebsocket);
   });
 
+  const testIfInspectElementAppearsInCorrectPlace = async () => {
+    await elementHelperService.findAndClickElementByTag(
+      "radon-bottom-bar-element-inspector-button"
+    );
+
+    // Corresponds to the element's location in the test application
+    const originalPosition = { x: 0.1, y: 0.1, width: 0.1, height: 0.1 };
+
+    const phoneScreen = await elementHelperService.findAndWaitForElement(
+      By.css(`[data-testid="phone-screen"]`),
+      "Timed out waiting for phone-screen"
+    );
+
+    const position = centerCoordinates(originalPosition);
+
+    const PhoneRect = await phoneScreen.getRect();
+    const phoneWidth = PhoneRect.width;
+    const phoneHeight = PhoneRect.height;
+
+    const actions = driver.actions({ bridge: true });
+
+    await actions
+      .move({
+        origin: phoneScreen,
+        x: Math.floor((position.x + position.width / 2) * phoneWidth),
+        y: Math.floor((position.y + position.height / 2) * phoneHeight),
+      })
+      .perform();
+
+    const inspectArea = await elementHelperService.findAndWaitForElementByTag(
+      "phone-inspect-area"
+    );
+
+    const inspectAreaRect = await inspectArea.getRect();
+    const relativeRect = {
+      x: (inspectAreaRect.x - PhoneRect.x) / phoneWidth,
+      y: (inspectAreaRect.y - PhoneRect.y) / phoneHeight,
+      width: inspectAreaRect.width / phoneWidth,
+      height: inspectAreaRect.height / phoneHeight,
+    };
+
+    for (const key in originalPosition) {
+      assert.approximately(
+        originalPosition[key],
+        relativeRect[key],
+        0.005,
+        `Inspect area ${key} is incorrect`
+      );
+    }
+  };
+
   it("Should make element inspector active", async () => {
     const elementInspectorButton =
       await elementHelperService.findAndClickElementByTag(
@@ -115,59 +166,62 @@ describe("7 - Radon tools tests", () => {
         await radonSettingsService.rotateDevice(
           rotate ? "landscape-left" : "portrait"
         );
-        await elementHelperService.findAndClickElementByTag(
-          "radon-bottom-bar-element-inspector-button"
-        );
-
-        // Corresponds to the element's location in the test application
-        const originalPosition = { x: 0.1, y: 0.1, width: 0.1, height: 0.1 };
-
-        const phoneScreen = await elementHelperService.findAndWaitForElement(
-          By.css(`[data-testid="phone-screen"]`),
-          "Timed out waiting for phone-screen"
-        );
-
-        const position = centerCoordinates(originalPosition);
-
-        const PhoneRect = await phoneScreen.getRect();
-        const phoneWidth = PhoneRect.width;
-        const phoneHeight = PhoneRect.height;
-
-        const actions = driver.actions({ bridge: true });
-
-        await actions
-          .move({
-            origin: phoneScreen,
-            x: Math.floor((position.x + position.width / 2) * phoneWidth),
-            y: Math.floor((position.y + position.height / 2) * phoneHeight),
-          })
-          .perform();
-
-        const inspectArea =
-          await elementHelperService.findAndWaitForElementByTag(
-            "phone-inspect-area"
-          );
-
-        const inspectAreaRect = await inspectArea.getRect();
-        const relativeRect = {
-          x: (inspectAreaRect.x - PhoneRect.x) / phoneWidth,
-          y: (inspectAreaRect.y - PhoneRect.y) / phoneHeight,
-          width: inspectAreaRect.width / phoneWidth,
-          height: inspectAreaRect.height / phoneHeight,
-        };
-
-        for (const key in originalPosition) {
-          assert.approximately(
-            originalPosition[key],
-            relativeRect[key],
-            0.005,
-            `Inspect area ${key} is incorrect`
-          );
-        }
+        await testIfInspectElementAppearsInCorrectPlace();
       } finally {
         await radonSettingsService.rotateDevice("portrait");
       }
     });
+  });
+
+  // test scenario:
+  // creates two devices
+  // rotates one of them
+  // the element inspector should work correctly after switching to second device
+  it(`should show inspect overlay in correct place after changing device`, async function () {
+    try {
+      const deviceName1 = "newDevice";
+      const deviceName2 = "newDevice2";
+      await managingDevicesService.addNewDevice(deviceName2);
+      await elementHelperService.findAndClickElementByTag(
+        `device-row-start-button-device-${deviceName2}`
+      );
+      await driver.wait(
+        async () => {
+          const chosenDevice =
+            await elementHelperService.findAndWaitForElementByTag(
+              "device-select-value-text"
+            );
+          return deviceName2 === (await chosenDevice.getText());
+        },
+        10000,
+        "timed out waiting for device to be switched"
+      );
+      await appManipulationService.waitForAppToLoad();
+      await radonSettingsService.rotateDevice("landscape-left");
+      await driver
+        .actions()
+        .keyDown(Key.COMMAND)
+        .keyDown(Key.SHIFT)
+        .sendKeys("9")
+        .keyUp(Key.SHIFT)
+        .keyUp(Key.COMMAND)
+        .perform();
+      await driver.wait(
+        async () => {
+          const chosenDevice =
+            await elementHelperService.findAndWaitForElementByTag(
+              "device-select-value-text"
+            );
+          return deviceName1 === (await chosenDevice.getText());
+        },
+        10000,
+        "timed out waiting for device to be switched"
+      );
+
+      await testIfInspectElementAppearsInCorrectPlace();
+    } finally {
+      await radonSettingsService.rotateDevice("portrait");
+    }
   });
 
   it("Right Click on App element: Should open component source file", async () => {
