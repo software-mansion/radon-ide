@@ -161,10 +161,11 @@ export class WebviewController implements Disposable {
             });
           })
           .catch((error) => {
+            const errorClassName = error?.constructor?.name;
             this.webview.postMessage({
               command: "callResult",
               callId,
-              error: { name: error.name, message: error.message },
+              error: { name: error.name, message: error.message, className: errorClassName },
             });
           });
       } else {

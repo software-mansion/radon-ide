@@ -58,6 +58,8 @@ import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependenc
 import { Telemetry } from "./telemetry";
 import { EditorBindings } from "./EditorBindings";
 import { saveMultimedia } from "../utilities/saveMultimedia";
+import { hasAccessToProFeatures, LicenseState, LicenseStatus } from "../common/License";
+import { RestrictedFunctionalityError } from "../common/Errors";
 
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 
@@ -114,6 +116,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     private readonly stateManager: StateManager<ProjectStore>,
     private readonly workspaceStateManager: StateManager<WorkspaceConfiguration>,
     private readonly devicesStateManager: StateManager<DevicesState>,
+    private readonly licenseStateManager: StateManager<LicenseState>,
     private readonly deviceManager: DeviceManager,
     private readonly editorBindings: EditorBindings,
     private readonly outputChannelRegistry: OutputChannelRegistry,
@@ -154,6 +157,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       },
     };
 
+    getLicenseToken().then((token) => {
+      this.licenseStateManager.updateState({
+        status: token ? LicenseStatus.Pro : LicenseStatus.Inactive,
+      });
+    });
+
     this.maybeStartInitialDeviceSession();
 
     this.disposables.push(
@@ -169,8 +178,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.disposables.push(refreshTokenPeriodically());
     this.disposables.push(
       watchLicenseTokenChange(async () => {
-        const hasActiveLicense = await this.hasActiveLicense();
-        this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
+        const hasActiveLicense = !!(await getLicenseToken());
+        this.licenseStateManager.updateState({
+          status: hasActiveLicense ? LicenseStatus.Pro : LicenseStatus.Inactive,
+        });
       })
     );
     this.disposables.push(
@@ -181,7 +192,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       })
     );
 
-    this.disposables.push(this.stateManager, this.workspaceStateManager, this.devicesStateManager);
+    this.disposables.push(
+      this.stateManager,
+      this.workspaceStateManager,
+      this.devicesStateManager,
+      this.licenseStateManager
+    );
   }
 
   // #endregion Constructor
@@ -377,8 +393,20 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return activated;
   }
 
-  public async hasActiveLicense() {
-    return !!(await getLicenseToken());
+  /**
+   * Checks if the current license status allows access to Pro features
+   * @throws {RestrictedFunctionalityError} if the user does not have access to Pro features
+   */
+  private guardProFeatures() {
+    const licenseStatus = this.licenseStateManager.getState().status;
+    if (hasAccessToProFeatures(licenseStatus)) {
+      return;
+    }
+
+    throw new RestrictedFunctionalityError("This feature requires a Pro or Enterprise license.", [
+      LicenseStatus.Pro,
+      LicenseStatus.Enterprise,
+    ]);
   }
 
   // #endregion License
@@ -451,6 +479,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async captureReplay() {
+    this.guardProFeatures();
+
     getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
       platform: this.deviceSession?.platform,
     });
@@ -461,6 +491,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async captureScreenshot() {
+    // throw new RestrictedFunctionalityError("Method not implemented.", [LicenseStatus.Pro, LicenseStatus.Enterprise]);
     getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
       platform: this.deviceSession?.platform,
     });

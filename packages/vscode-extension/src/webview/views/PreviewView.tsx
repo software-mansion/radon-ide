@@ -26,6 +26,9 @@ import { InspectorAvailabilityStatus, ProfilingState, ZoomLevelType } from "../.
 import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
 import { ActivateLicenseView } from "./ActivateLicenseView";
+import { usePaywall } from "../hooks/usePaywall";
+import { hasAccessToProFeatures, LicenseStatus } from "../../common/License";
+import { RestrictedFunctionalityError } from "../../common/Errors";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -95,8 +98,11 @@ function PreviewView() {
   const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
   const selectedProjectDevice = use$(selectedDeviceSessionState.deviceInfo);
   const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
+  const licenseStatus = use$(store$.license.status);
 
-  const { projectState, project, hasActiveLicense } = useProject();
+  const { projectState, project } = useProject();
+
+  const { openPaywall } = usePaywall();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
@@ -192,9 +198,18 @@ function PreviewView() {
   }
 
   async function handleReplay() {
+    if (!hasAccessToProFeatures(licenseStatus)) {
+      openPaywall();
+      return;
+    }
+
     try {
       await project.captureReplay();
     } catch (e) {
+      if (e instanceof RestrictedFunctionalityError) {
+        openPaywall();
+        return;
+      }
       project.showDismissableError("Failed to capture replay");
     }
   }
@@ -395,7 +410,9 @@ function PreviewView() {
           <DeviceSelect />
         </div>
         <div className="spacer" />
-        {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
+        {Platform.OS === "macos" && licenseStatus === LicenseStatus.Inactive && (
+          <ActivateLicenseButton />
+        )}
         <DeviceSettingsDropdown disabled={!navBarButtonsActive}>
           <IconButton
             tooltip={{ label: "Device settings", type: "primary" }}

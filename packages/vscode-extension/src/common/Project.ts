@@ -139,7 +139,6 @@ export interface ProjectInterface {
   openDevMenu(): Promise<void>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
-  hasActiveLicense(): Promise<boolean>;
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
