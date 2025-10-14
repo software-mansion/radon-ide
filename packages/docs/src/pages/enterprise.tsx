@@ -10,12 +10,12 @@ import EnterpriseGridGraphic from "../components/EnterpriseGridGraphic";
 import BenefitsEnterprise from "../components/Sections/BenefitsEnterprise";
 import EnterpriseForm from "../components/EnterpriseForm";
 import EnterprisePricingPlans from "../components/EnterprisePricingPlans";
-import { usePricingLogic } from "../hooks/usePricingLogic";
+import { useScrollToForm } from "../hooks/useScrollToForm";
 
 export default function Enterprise(): JSX.Element {
   const pricingRef = useRef<HTMLDivElement | null>(null);
   const formRef = useRef<HTMLDivElement | null>(null);
-  const { scrollToForm } = usePricingLogic();
+  const { scrollToForm } = useScrollToForm();
 
   return (
     <Layout>

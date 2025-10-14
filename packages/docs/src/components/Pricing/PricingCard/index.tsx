@@ -11,7 +11,6 @@ interface PricingCardProps {
   isMonthly?: boolean;
   onButtonClick?: (planId: string) => void;
   children?: React.ReactNode;
-  bold?: boolean;
 }
 
 const PlanHeaders = {
@@ -20,7 +19,7 @@ const PlanHeaders = {
   ENTERPRISE: "All the Team features, plus:",
 };
 
-function PricingCard({ planData, isMonthly, onButtonClick, children, bold }: PricingCardProps) {
+function PricingCard({ planData, isMonthly, onButtonClick, children }: PricingCardProps) {
   const { plan, stylingFilled, buttonLabel, featuresAll, featuresTeamManagement, featuresSupport } =
     planData;
 

@@ -2,6 +2,7 @@ import React, { forwardRef } from "react";
 import styles from "./styles.module.css";
 import PricingPlansList from "../Pricing/PricingPlansList";
 import { usePricingLogic } from "@site/src/hooks/usePricingLogic";
+import { useModal } from "../ModalProvider";
 
 interface EnterprisePricingPlansProps {
   onFormScrollButtonClick: () => void;
@@ -9,17 +10,19 @@ interface EnterprisePricingPlansProps {
 
 const EnterprisePricingPlans = forwardRef<HTMLDivElement, EnterprisePricingPlansProps>(
   (props, ref) => {
-    const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout, scrollToForm } =
+    const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout } =
       usePricingLogic();
+    const { onOpen } = useModal();
 
     return (
       <div ref={ref} className={styles.container}>
         <p className={styles.heading}>Enterprise plans tailored to your business</p>
         <p className={styles.subheading}>Choose the subscription plan tailored to your needs</p>
         <PricingPlansList
-          handleBusiness={openBusinessCheckout}
-          handleIndividual={openIndividualCheckout}
-          handleCustom={props.onFormScrollButtonClick}
+          handleFree={onOpen}
+          handleTeam={openBusinessCheckout}
+          handlePro={openIndividualCheckout}
+          handleEnterprise={props.onFormScrollButtonClick}
           isMonthly={isMonthly}
           setIsMonthly={setIsMonthly}
         />

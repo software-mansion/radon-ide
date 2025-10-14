@@ -5,7 +5,6 @@ import PricingPeriodButton from "./PricingPeriodButton";
 import usePageType from "@site/src/hooks/usePageType";
 import { pricingIndividualData } from "../pricingIndividualData";
 import { pricingBusinessData } from "../pricingBusinessData";
-import { useModal } from "../../ModalProvider";
 import clsx from "clsx";
 import PricingCard from "../PricingCard";
 
@@ -13,9 +12,10 @@ export interface FeatureProps {
   label: string;
   info: string;
 }
+type PlanType = "FREE" | "PRO" | "TEAM" | "ENTERPRISE";
 
 export interface PricingPlanCardProps {
-  plan: string;
+  plan: PlanType;
   price: {
     monthly: number | string;
     yearly: number | string;
@@ -30,38 +30,26 @@ export interface PricingPlanCardProps {
 }
 
 const PricingPlansList = ({
-  handleBusiness,
-  handleIndividual,
-  handleCustom,
+  handleFree,
+  handleTeam,
+  handlePro,
+  handleEnterprise,
   isMonthly,
   setIsMonthly,
 }: PricingProps) => {
   const { isEnterprise } = usePageType();
   const [isIndividual, setIsIndividual] = useState(true);
-  const { onOpen } = useModal();
 
   const currentPlans = useMemo(() => {
     if (isEnterprise) return pricingBusinessData;
     return isIndividual ? pricingIndividualData : pricingBusinessData;
   }, [isIndividual, isEnterprise]);
 
-  const handlePlanButtonClick = (id: string) => {
-    switch (id) {
-      case "FREE":
-        onOpen();
-        break;
-      case "PRO":
-        handleIndividual();
-        break;
-      case "TEAM":
-        handleBusiness();
-        break;
-      case "ENTERPRISE":
-        handleCustom();
-        break;
-      default:
-        return;
-    }
+  const actions: Record<PlanType, () => void> = {
+    FREE: handleFree,
+    PRO: handlePro,
+    TEAM: handleTeam,
+    ENTERPRISE: handleEnterprise,
   };
 
   return (
@@ -86,12 +74,12 @@ const PricingPlansList = ({
         <PricingPeriodButton isMonthly={isMonthly} setIsMonthly={setIsMonthly} />
       </div>
       <div className={styles.list}>
-        {currentPlans.map((planData: PricingPlanCardProps) => (
+        {currentPlans.map((planData) => (
           <PricingCard
             key={planData.plan}
             planData={planData}
             isMonthly={isMonthly}
-            onButtonClick={handlePlanButtonClick}
+            onButtonClick={(planId: PlanType) => actions[planId]?.()}
           />
         ))}
       </div>

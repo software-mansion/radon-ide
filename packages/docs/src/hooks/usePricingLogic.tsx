@@ -38,17 +38,10 @@ export const usePricingLogic = () => {
     });
   };
 
-  const scrollToForm = <T extends HTMLElement>(ref: React.RefObject<T>) => {
-    ref.current?.scrollIntoView({
-      behavior: "smooth",
-    });
-  };
-
   return {
     isMonthly,
     setIsMonthly,
     openIndividualCheckout,
     openBusinessCheckout,
-    scrollToForm,
   };
 };

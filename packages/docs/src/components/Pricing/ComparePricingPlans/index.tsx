@@ -2,7 +2,6 @@ import React from "react";
 import styles from "./styles.module.css";
 import CheckIcon from "../../CheckIcon";
 import PlanTableLabel from "./PlanTableLabel";
-import { useModal } from "../../ModalProvider";
 import { PricingProps } from "..";
 import clsx from "clsx";
 import { planFeaturesData } from "./planFeaturesData";
@@ -26,11 +25,11 @@ const handleCellContent = (data: string[] | boolean) => {
 };
 
 export default function ComparePricingPlans({
-  handleBusiness,
-  handleIndividual,
-  handleCustom,
+  handleFree,
+  handleTeam,
+  handlePro,
+  handleEnterprise,
 }: PricingProps) {
-  const { onOpen } = useModal();
   const pricingPlanFeatures: FeatureItem[] = planFeaturesData;
   return (
     <div className={styles.tableDisplay}>
@@ -43,7 +42,7 @@ export default function ComparePricingPlans({
             monthlyPrice={0}
             buttonLabel="Install"
             stylingFilled={false}
-            onClick={onOpen}
+            onClick={handleFree}
           />
           <PlanTableLabel
             plan="PRO"
@@ -51,7 +50,7 @@ export default function ComparePricingPlans({
             yearlyLowPrice={250}
             buttonLabel="Start 14-day trial"
             stylingFilled={true}
-            onClick={handleIndividual}
+            onClick={handlePro}
           />
           <PlanTableLabel
             plan="TEAM"
@@ -59,14 +58,14 @@ export default function ComparePricingPlans({
             yearlyLowPrice={750}
             buttonLabel="Buy licenses"
             stylingFilled={true}
-            onClick={handleBusiness}
+            onClick={handleTeam}
           />
           <PlanTableLabel
             plan="ENTERPRISE"
             monthlyPrice="Custom pricing"
             buttonLabel="Get your quote"
             stylingFilled={true}
-            onClick={handleCustom}
+            onClick={handleEnterprise}
           />
         </div>
         {pricingPlanFeatures.map((feature, index) => (
