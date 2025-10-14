@@ -49,14 +49,18 @@ function DeviceRow({
       closeModal();
     }
   };
+  const isPhysicalDevice = deviceInfo.platform === DevicePlatform.Android && !deviceInfo.emulator;
 
   const deviceModelName = mapIdToModel(deviceInfo.modelId) ?? deviceInfo.displayName;
-  const deviceSubtitle =
-    deviceModelName !== deviceInfo.displayName
+  const deviceSubtitle = (() => {
+    if (isPhysicalDevice) {
+      return deviceInfo.available ? "Connected" : "Disconnected";
+    }
+
+    return deviceModelName !== deviceInfo.displayName
       ? `${deviceModelName} - ${deviceInfo.systemName}`
       : deviceInfo.systemName;
-
-  const isPhysicalDevice = deviceInfo.platform === DevicePlatform.Android && !deviceInfo.emulator;
+  })();
 
   const renameTooltipLabel = isPhysicalDevice
     ? "Renaming physical devices is not supported"
@@ -69,14 +73,19 @@ function DeviceRow({
         ? "Remove device with its system image"
         : "Removing physical devices is not supported";
 
+  const disabled = !deviceInfo.available || (isPhysicalDevice && !deviceInfo.available);
+
   return (
     <button
       className="device-row"
+      disabled={disabled}
       onClick={selectDevice}
       data-selected={isSelected}
       data-testid={dataTest}>
       <div className={isSelected ? "device-icon-selected" : "device-icon"}>
-        {!deviceInfo.available ? (
+        {isPhysicalDevice && !deviceInfo.available ? (
+          <span className="codicon codicon-debug-disconnect" />
+        ) : !deviceInfo.available ? (
           <Tooltip
             label="This device cannot be used. Perhaps the system image or runtime is missing. Try deleting and creating a new device instead."
             instant
@@ -116,7 +125,7 @@ function DeviceRow({
               side: "bottom",
               type: "secondary",
             }}
-            disabled={!deviceInfo.available}
+            disabled={disabled}
             dataTest={`device-row-start-button-device-${deviceInfo.displayName}`}
             onClick={selectDevice}>
             <span className="codicon codicon-play" />
@@ -250,7 +259,7 @@ function ManageDevicesView() {
       )}
       {androidPhysicalDevices.length > 0 && (
         <>
-          <Label>Connected Android Devices</Label>
+          <Label>Physical Android Devices</Label>
           {androidPhysicalDevices.map(renderRow)}
         </>
       )}

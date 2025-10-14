@@ -50,7 +50,7 @@ export class DeviceManager implements Disposable {
     throw new Error(`Device ${deviceInfo.displayName} is not available`);
   }
 
-  private loadDevicesPromise: Promise<DeviceInfo[]> | undefined;
+  private loadDevicesPromise: Promise<void> | undefined;
 
   private async loadDevices(forceReload = false) {
     if (forceReload) {
@@ -58,19 +58,20 @@ export class DeviceManager implements Disposable {
       extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, undefined);
     }
     if (!this.loadDevicesPromise || forceReload) {
-      this.loadDevicesPromise = this.loadDevicesInternal().then((devices) => {
+      this.loadDevicesPromise = this.loadDevicesInternal().then(() => {
+        const devices = this.stateManager.getState().devicesByType;
         this.loadDevicesPromise = undefined;
-        extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, devices);
-        return devices;
+        // NOTE: only remember virtual devices,
+        // since available physical devices are likely to change
+        const { androidPhysicalDevices: _physical, ...emulators } = devices;
+        extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, emulators);
       });
     }
-    const devices = await this.loadDevicesPromise;
-    return devices;
+    await this.loadDevicesPromise;
   }
 
   private async loadDevicesInternal() {
-    const devices = (await Promise.all(this.devicesProviders.map((p) => p.listDevices()))).flat();
-    return devices;
+    await Promise.all(this.devicesProviders.map((p) => p.listDevices()));
   }
 
   private async listInstalledAndroidImages() {

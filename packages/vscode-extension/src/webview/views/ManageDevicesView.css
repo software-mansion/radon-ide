@@ -12,7 +12,7 @@
   padding-left: 2.5%;
 }
 
-.delete-icon:not(.disabled) {
+.delete-icon {
   color: var(--swm-device-delete-icon);
 }
 
@@ -32,7 +32,10 @@
   cursor: default;
 }
 
-.device-row:hover {
+.device-row:disabled {
+  cursor: default;
+}
+.device-row:hover:not(:disabled) {
   outline: none;
   background-color: var(--swm-device-select-highlighted);
 }
