@@ -39,6 +39,7 @@ import { disposeAll } from "../utilities/disposables";
 import { FileTransfer } from "./FileTransfer";
 import { DevtoolsServer } from "./devtools";
 import { MetroError, MetroProvider, MetroSession } from "./metro";
+import { application } from "express";
 
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
@@ -162,7 +163,9 @@ export class DeviceSession implements Disposable {
 
     this.buildManager = this.applicationContext.buildManager;
 
-    this.disposables.push(watchProjectFiles(this.checkIsUsingStaleBuild));
+    if (!this.applicationContext.launchConfig.disableNativeBuildStaleChecks) {
+      this.disposables.push(watchProjectFiles(this.checkIsUsingStaleBuild));
+    }
     this.device.sendRotate(initialRotation);
 
     this.disposables.push(this.stateManager);
@@ -436,8 +439,10 @@ export class DeviceSession implements Disposable {
       return;
     }
 
-    this.checkIsUsingStaleBuild();
-    this.checkIsUsingStaleBuild.flush();
+    if (!this.applicationContext.launchConfig.disableNativeBuildStaleChecks) {
+      this.checkIsUsingStaleBuild();
+      this.checkIsUsingStaleBuild.flush();
+    }
 
     // if reloading JS is possible, we try to do it first and exit in case of success
     // otherwise we continue to restart using more invasive methods
