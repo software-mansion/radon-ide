@@ -1,5 +1,4 @@
 const ORIGINAL_TRANSFORMER_PATH = process.env.RADON_IDE_ORIG_BABEL_TRANSFORMER_PATH;
-const RN_VERSION = process.env.RADON_IDE_RN_VERSION;
 const path = require("path");
 const fs = require("fs");
 const {
@@ -8,6 +7,8 @@ const {
   overrideModuleFromAppDependency,
 } = require("./metro_helpers");
 const buildPluginWarnOnDeeImports = require("./babel_plugins/build-plugin-warn-on-deep-imports");
+
+const RN_VERSION = requireFromAppDir("react-native/package.json").version;
 
 // The access to component stack in versions prior to 0.80 we rely on the JSX transform plugin. Apparently
 // in many setup the transform is misconfigured and does not produce the desirable output that we can later access.
@@ -75,13 +76,13 @@ if (RN_VERSION.startsWith("0.7")) {
     name: "rnide-disabled-jsx-self-transform",
     visitor: {},
   });
-
-  overrideModuleFromAppDependency(
-    "react-native",
-    "@react-native/babel-preset/src/plugin-warn-on-deep-imports.js",
-    buildPluginWarnOnDeeImports(process.env.RADON_IDE_LIB_PATH)
-  );
 }
+
+overrideModuleFromAppDependency(
+  "react-native",
+  "@react-native/babel-preset/src/plugin-warn-on-deep-imports.js",
+  buildPluginWarnOnDeeImports(process.env.RADON_IDE_LIB_PATH)
+);
 
 function transformWrapper({ filename, src, ...rest }) {
   function isTransforming(unixPath) {

@@ -695,7 +695,11 @@ export class ApplicationSession implements Disposable {
       await Promise.all(
         stack.map(async (item) => {
           if (item.source?.fileName.startsWith("http") && this.debugSession) {
-            item.source = await this.debugSession.findOriginalPosition(item.source);
+            try {
+              item.source = await this.debugSession.findOriginalPosition(item.source);
+            } catch (e) {
+              Logger.error("Error finding original source position for stack item", item, e);
+            }
           }
         })
       );
