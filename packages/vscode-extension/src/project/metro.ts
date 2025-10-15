@@ -15,6 +15,7 @@ import { getOpenPort } from "../utilities/common";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { openFileAtPosition } from "../utilities/editorOpeners";
 import { createRefCounted, RefCounted } from "../utilities/refCounted";
+import { requireNoCache } from "../utilities/requireNoCache";
 
 export class MetroError extends Error {
   constructor(message: string) {
@@ -223,7 +224,10 @@ async function launchMetro({
     RCT_METRO_PORT: `${port}`,
     RADON_IDE_LIB_PATH: libPath,
     RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
-    RADON_IDE_RN_VERSION: "0.81",
+    // we pass the RN version as environment variable as it is used in some of the transformer initialization code.
+    // it is ok to set this particular version for the metro process as RN updates ship with different versions of metro
+    // and the metro process would need to be restarted anyway.
+    RADON_IDE_RN_VERSION: findReactNativeVersion(appRoot),
     REACT_EDITOR: fakeEditorPath,
     // NOTE: At least as of version 52, Expo uses a different mechanism to open stack frames in the editor,
     // which doesn't allow passing a path to the EDITOR executable.
@@ -554,6 +558,13 @@ class SubprocessMetroSession extends Metro implements Disposable {
     super.dispose();
     this.bundlerProcess.kill();
   }
+}
+
+function findReactNativeVersion(appRoot: string) {
+  const packageJson = requireNoCache(path.join("react-native", "package.json"), {
+    paths: [appRoot],
+  });
+  return packageJson.version;
 }
 
 function findCustomMetroConfig(configPath: string) {
