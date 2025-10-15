@@ -142,7 +142,13 @@ export class ApplicationSession implements Disposable {
     try {
       onLaunchStage(StartupMessage.Launching);
       await cancelToken.adapt(
-        device.launchApp(buildResult, metro.port, devtoolsPort, launchArguments)
+        device.launchApp(
+          buildResult,
+          metro.port,
+          devtoolsPort,
+          launchArguments,
+          applicationContext.appRootFolder
+        )
       );
 
       const appReadyPromise = waitForAppReady(session.inspectorBridge, cancelToken);

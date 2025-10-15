@@ -6,6 +6,7 @@ import { CancelToken } from "../utilities/cancelToken";
 import { DevicePlatform } from "../common/State";
 import { checkNativeDirectoryExists } from "../utilities/checkNativeDirectoryExists";
 import { fileExists } from "../utilities/fileExists";
+import { requireNoCache } from "../utilities/requireNoCache";
 
 type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 
@@ -48,6 +49,13 @@ export async function isExpoGoProject(appRoot: string, platform: DevicePlatform)
   } catch (e) {
     return false;
   }
+}
+
+export function getExpoVersion(appRoot: string) {
+  const expoPackage = requireNoCache(path.join("expo", "package.json"), {
+    paths: [appRoot],
+  });
+  return expoPackage.version;
 }
 
 export function fetchExpoLaunchDeeplink(
