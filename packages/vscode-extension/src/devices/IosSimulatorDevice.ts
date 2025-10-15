@@ -26,6 +26,7 @@ import {
   IOSRuntimeInfo,
   Locale,
 } from "../common/State";
+import assert from "assert";
 
 interface SimulatorInfo {
   availability?: string;
@@ -506,17 +507,22 @@ export class IosSimulatorDevice extends DeviceBase {
       const expoVersion = getExpoVersion(appRoot);
       // parseInt will return int corresponding to the major version
       if (parseInt(expoVersion) >= 52) {
+        // for Expo SDK 52+ we can use the --initialUrl parameter to pass to the launched process on iOS
+        // this option allows us to avoid launching via deeplink and this way to avoid linking permission
+        // overrides as well as allows us to capture the process logs into the output channel.
+        assert(
+          !launchArguments.includes("--initialUrl"),
+          "Launch arguments include --initialUrl parameter. This parameter is not supported for expo-go and dev-client setups. Please remove it from the launch arguments."
+        );
         Logger.info(
           "Launching the app",
           build.bundleID,
           "using --initialUrl parameter",
           expoDeeplink
         );
-        // for Expo SDK 52+ we can use the --initialUrl parameter to pass to the launched process on iOS
-        // this option allows us to avoid launching via deeplink and this way to avoid linking permission
-        // overrides as well as allows us to capture the process logs into the output channel.
-        await this.configureMetroPort(build.bundleID, metroPort);
+
         const launchArgsWithInitialUrl = [...launchArguments, "--initialUrl", expoDeeplink];
+        await this.configureMetroPort(build.bundleID, metroPort);
         await this.launchWithBuild(build, launchArgsWithInitialUrl);
       } else {
         // for older Expo SDKs we need to launch via deeplink
