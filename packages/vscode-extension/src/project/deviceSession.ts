@@ -39,7 +39,6 @@ import { disposeAll } from "../utilities/disposables";
 import { FileTransfer } from "./FileTransfer";
 import { DevtoolsServer } from "./devtools";
 import { MetroError, MetroProvider, MetroSession } from "./metro";
-import { application } from "express";
 
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
