@@ -11,11 +11,15 @@ import {
   DEBUG_PAUSED,
   DEBUG_RESUMED,
   SCRIPT_PARSED,
+  RNIDE_NETWORK_EVENT,
+  RNIDE_NetworkMethod,
 } from "./DebugSession";
 import { startDebugging } from "./startDebugging";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
 import { SourceInfo } from "../common/Project";
+import { NetworkMethod } from "../network/types/panelMessageProtocol";
+import { NetworkBridgeGetResponseBodyArgs } from "../project/networkBridge";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
@@ -50,7 +54,11 @@ export class ProxyDebugAdapter extends DebugSession {
       proxyDelegate
     );
 
-    this.disposables.push(
+    this.setupListeners(proxyDelegate);
+  }
+
+  private setupListeners(proxyDelegate: RadonCDPProxyDelegate) {
+    const subscriptions = [
       proxyDelegate.onDebuggerPaused(({ reason }) => {
         this.sendEvent(new Event(DEBUG_PAUSED, { reason }));
         if (this.session.configuration.displayDebuggerOverlay) {
@@ -61,9 +69,7 @@ export class ProxyDebugAdapter extends DebugSession {
             },
           });
         }
-      })
-    );
-    this.disposables.push(
+      }),
       proxyDelegate.onDebuggerResumed(() => {
         this.sendEvent(new Event(DEBUG_RESUMED));
         if (this.session.configuration.displayDebuggerOverlay) {
@@ -72,35 +78,21 @@ export class ProxyDebugAdapter extends DebugSession {
             params: {},
           });
         }
-      })
-    );
-    this.disposables.push(
+      }),
       proxyDelegate.onConsoleAPICalled(() => {
         this.sendEvent(new Event(DEBUG_CONSOLE_LOG));
-      })
-    );
-
-    this.disposables.push(
+      }),
       vscode.debug.onDidTerminateDebugSession((terminatedSession) => {
         if (terminatedSession.parentSession?.id === this.session.id) {
           this.terminate();
         }
-      })
-    );
-
-    this.disposables.push(
+      }),
       proxyDelegate.onBindingCalled(({ name, payload }) => {
         this.sendEvent(new Event(BINDING_CALLED, { name, payload }));
-      })
-    );
-
-    this.disposables.push(
+      }),
       proxyDelegate.onBundleParsed(({ isMainBundle }) => {
         this.sendEvent(new Event(SCRIPT_PARSED, { isMainBundle }));
-      })
-    );
-
-    this.disposables.push(
+      }),
       debug.onDidReceiveDebugSessionCustomEvent((event) => {
         if (event.session.id !== this.childDebugSession?.id) {
           return;
@@ -119,8 +111,13 @@ export class ProxyDebugAdapter extends DebugSession {
             }
             break;
         }
-      })
-    );
+      }),
+      proxyDelegate.onNetworkEvent((e) => {
+        this.sendEvent(new Event(RNIDE_NETWORK_EVENT, e));
+      }),
+    ];
+
+    this.disposables.push(...subscriptions);
   }
 
   public sendEvent(event: Event) {
@@ -282,6 +279,25 @@ export class ProxyDebugAdapter extends DebugSession {
     await this.childDebugSession?.customRequest("stopProfile");
   }
 
+  private async enableNetworkInspector() {
+    await this.cdpProxy.injectDebuggerCommand({ method: NetworkMethod.Enable, params: {} });
+  }
+  private async disableNetworkInspector() {
+    await this.cdpProxy.injectDebuggerCommand({ method: NetworkMethod.Disable, params: {} });
+  }
+  private async getResponseBody(args: NetworkBridgeGetResponseBodyArgs) {
+    try {
+      const result = await this.cdpProxy.injectDebuggerCommand({
+        method: NetworkMethod.GetResponseBody,
+        params: args,
+      });
+      return result;
+    } catch (e) {
+      Logger.error("Error fetching response body", e);
+      return undefined;
+    }
+  }
+
   private async dispatchRadonAgentMessage(args: any) {
     this.cdpProxy.injectDebuggerCommand({
       method: "Runtime.evaluate",
@@ -354,6 +370,15 @@ export class ProxyDebugAdapter extends DebugSession {
         break;
       case "RNIDE_addBinding":
         await this.addBinding(args.name);
+        break;
+      case RNIDE_NetworkMethod.Enable:
+        await this.enableNetworkInspector();
+        break;
+      case RNIDE_NetworkMethod.Disable:
+        await this.disableNetworkInspector();
+        break;
+      case RNIDE_NetworkMethod.GetResponseBody:
+        response.body.result = await this.getResponseBody(args);
         break;
     }
     this.sendResponse(response);

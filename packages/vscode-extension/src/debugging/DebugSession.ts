@@ -8,6 +8,7 @@ import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
 import { SourceInfo } from "../common/Project";
+import { NetworkBridgeSendMethodArgs } from "../project/networkBridge";
 
 const MASTER_DEBUGGER_TYPE = "com.swmansion.react-native-debugger";
 const CUSTOM_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
@@ -18,6 +19,14 @@ export const DEBUG_PAUSED = "RNIDE_paused";
 export const DEBUG_RESUMED = "RNIDE_continued";
 export const SCRIPT_PARSED = "RNIDE_scriptParsed";
 export const BINDING_CALLED = "RNIDE_bindingCalled";
+export const RNIDE_NETWORK_EVENT = "RNIDE_networkEvent";
+
+export enum RNIDE_NetworkMethod {
+  Enable = "RNIDE_enableNetworkInspector",
+  Disable = "RNIDE_disableNetworkInspector",
+  GetResponseBody = "RNIDE_getResponseBody",
+  StoreResponseBody = "RNIDE_storeResponseBody",
+}
 
 export interface JSDebugConfiguration {
   websocketAddress: string;
@@ -54,6 +63,10 @@ export interface DebugSession {
   stepIntoDebugger(): void;
   evaluateExpression(params: Cdp.Runtime.EvaluateParams): Promise<Cdp.Runtime.EvaluateResult>;
   addBinding(name: string): Promise<void>;
+  invokeNetworkMethod<T>(
+    method: RNIDE_NetworkMethod,
+    args?: Record<string, unknown>
+  ): Promise<T | undefined>;
 
   // Profiling controls
   startProfilingCPU(): Promise<void>;
@@ -72,6 +85,7 @@ export interface DebugSession {
   onScriptParsed(listener: (event: { isMainBundle: boolean }) => void): Disposable;
   onDebugSessionTerminated(listener: () => void): Disposable;
   onJSDebugSessionStarted(listener: () => void): Disposable;
+  onNetworkEvent(listener: DebugSessionCustomEventListener): Disposable;
 }
 
 export class DebugSessionImpl implements DebugSession, Disposable {
@@ -90,6 +104,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   private debugSessionTerminatedEventEmitter = new vscode.EventEmitter<void>();
   private scriptParsedEventEmitter = new vscode.EventEmitter<{ isMainBundle: boolean }>();
   private jsDebugSessionStartedEmitter = new vscode.EventEmitter<void>();
+  private networkEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
 
   public onConsoleLog = this.consoleLogEventEmitter.event;
   public onDebuggerPaused = this.debuggerPausedEventEmitter.event;
@@ -100,6 +115,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
   public onDebugSessionTerminated = this.debugSessionTerminatedEventEmitter.event;
   public onScriptParsed = this.scriptParsedEventEmitter.event;
   public onJSDebugSessionStarted = this.jsDebugSessionStartedEmitter.event;
+  public onNetworkEvent = this.networkEventEmitter.event;
 
   constructor(private options: DebugSessionOptions = { displayName: "Radon IDE Debugger" }) {
     this.disposables.push(
@@ -135,6 +151,9 @@ export class DebugSessionImpl implements DebugSession, Disposable {
             break;
           case SCRIPT_PARSED:
             this.scriptParsedEventEmitter.fire(event.body);
+            break;
+          case RNIDE_NETWORK_EVENT:
+            this.networkEventEmitter.fire(event);
             break;
           default:
             // ignore other events
@@ -341,6 +360,18 @@ export class DebugSessionImpl implements DebugSession, Disposable {
       throw new Error("JS Debug session is not running");
     }
     await this.jsDebugSession.customRequest("RNIDE_addBinding", { name });
+  }
+
+  public async invokeNetworkMethod<T>(
+    method: RNIDE_NetworkMethod,
+    args?: NetworkBridgeSendMethodArgs
+  ) {
+    if (!this.jsDebugSession) {
+      throw new Error("JS Debug session is not running");
+    }
+
+    const result = await this.jsDebugSession.customRequest(method, args);
+    return result as T;
   }
 
   private cancelStartingDebugSession() {
