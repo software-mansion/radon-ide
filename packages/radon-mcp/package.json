@@ -1,6 +1,6 @@
 {
   "name": "radon-mcp",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "MCP server proxy that connects MCP clients to Radon IDE instances running in VS Code or Cursor",
   "main": "dist/index.js",
   "type": "module",
