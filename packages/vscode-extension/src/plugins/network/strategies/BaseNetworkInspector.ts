@@ -16,6 +16,8 @@ import { ContentTypeHeader } from "../../../network/types/network";
 export abstract class BaseNetworkInspector implements NetworkInspector {
   protected broadcastListeners: BroadcastListener[] = [];
 
+  constructor(private readonly metroPort: number) {}
+
   // #region abstract
 
   public abstract activate(): void;
@@ -40,7 +42,31 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     });
   }
 
+  private isInternalRequest(message: WebviewMessage): boolean {
+    if (message.command !== WebviewCommand.CDPCall) {
+      return false;
+    }
+
+    const url = message?.payload.params?.request?.url ?? "";
+
+    try {
+      const parsedUrl = new URL(url);
+      const isLocalhost = parsedUrl.hostname === "localhost" || parsedUrl.hostname === "127.0.0.1";
+      const isAndroidHost = parsedUrl.hostname === "10.0.2.2";
+      const isPortMatch = parsedUrl.port === this.metroPort.toString();
+
+      return (isLocalhost || isAndroidHost) && isPortMatch;
+    } catch (error) {
+      return false;
+    }
+  }
+
   protected broadcastMessage(message: Parameters<BroadcastListener>[0]): void {
+    if (this.isInternalRequest(message)) {
+      Logger.info(`Http request to metro filtered out: ${message.payload.params?.request?.url}`);
+      return;
+    }
+
     this.broadcastListeners.forEach((cb) => cb(message));
   }
 
@@ -64,7 +90,6 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   //#endregion
 
   // #region IDE messages
-
   private formatDataBasedOnLanguage(body: string, language: string): string {
     if (language === "json") {
       try {

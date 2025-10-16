@@ -32,6 +32,10 @@
   width: 100%;
   height: 100%;
 
+  p {
+    margin: 0px;
+  }
+
   .codicon {
     opacity: 0.6;
     font-size: 48px;
@@ -81,7 +85,7 @@
   color: var(--vscode-notificationsInfoIcon-foreground);
 }
 
-.base64-code{
+.base64-code {
   margin-top: 0;
   white-space: pre-wrap;
   word-wrap: break-word;

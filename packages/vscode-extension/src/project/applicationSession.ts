@@ -46,9 +46,9 @@ import { RadonInspectorBridge } from "./inspectorBridge";
 import { NETWORK_EVENT_MAP, NetworkBridge } from "./networkBridge";
 import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
+import { isCDPMethod } from "../network/types/panelMessageProtocol";
 
 const MAX_URL_HISTORY_SIZE = 20;
-import { isCDPMethod } from "../network/types/panelMessageProtocol";
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
   device: DeviceBase;
@@ -142,7 +142,13 @@ export class ApplicationSession implements Disposable {
     try {
       onLaunchStage(StartupMessage.Launching);
       await cancelToken.adapt(
-        device.launchApp(buildResult, metro.port, devtoolsPort, launchArguments)
+        device.launchApp(
+          buildResult,
+          metro.port,
+          devtoolsPort,
+          launchArguments,
+          applicationContext.appRootFolder
+        )
       );
 
       const appReadyPromise = waitForAppReady(session.inspectorBridge, cancelToken);
@@ -202,7 +208,8 @@ export class ApplicationSession implements Disposable {
       this.stateManager.getDerived("toolsState"),
       devtoolsInspectorBridge,
       this.networkBridge,
-      this.applicationContext.workspaceConfigState
+      this.applicationContext.workspaceConfigState,
+      this.metro.port
     );
 
     this.disposables.push(this.toolsManager);

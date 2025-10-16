@@ -11,8 +11,30 @@ import { DevicePlatform } from "../common/State";
 
 type Env = Record<string, string> | undefined;
 
-// Extracts all paths from the last line, both Unix and Windows format
-const BUILD_PATH_REGEX = /(\/.*?\.\S*)|([a-zA-Z]:\\.*?\.\S*)/g;
+export function extractFilePath(line: string): string | null {
+  // Define file extensions we're looking for
+  const fileExtensions = "(?:tar\\.gz|app|apk)";
+
+  // Single regex that handles all cases:
+  // 1. Quoted paths: "path.ext" or 'path.ext' (any format inside quotes)
+  // 2. Windows paths: C:\path\file.ext
+  // 3. Unix absolute paths: /path/file.ext
+  // 4. Relative paths: ./path/file.ext
+  const pathRegex = new RegExp(
+    `["']([^"']*\\.${fileExtensions})["']|` + // Quoted: "any/path.ext"
+      `([a-zA-Z]:\\\\[^"']*\\.${fileExtensions})|` + // Windows: C:\path\file.ext
+      `(\\/[^"']*\\.${fileExtensions})|` + // Unix absolute: /path/file.ext
+      `(\\.\\/[^"']*\\.${fileExtensions})`, // Relative: ./path/file.ext
+    "i"
+  );
+
+  const match = line.match(pathRegex);
+  if (match) {
+    // Return the first non-undefined capture group
+    return match[1] || match[2] || match[3] || match[4];
+  }
+  return null;
+}
 
 export async function runExternalBuild(
   cancelToken: CancelToken,
@@ -28,15 +50,9 @@ export async function runExternalBuild(
     return undefined;
   }
 
-  let binaryPath = output.lastLine;
+  let binaryPath = extractFilePath(output.lastLine);
 
-  // We run regex to extract paths from the first line and we take the first one
-  const groups = output.lastLine.match(BUILD_PATH_REGEX);
-  if (groups?.[0]) {
-    binaryPath = groups[0];
-  }
-
-  if (binaryPath && !fs.existsSync(binaryPath)) {
+  if (!binaryPath || !fs.existsSync(binaryPath)) {
     Logger.error(
       `External script: ${buildCommand} failed to output any existing app path, got: ${binaryPath}`
     );
