@@ -5,7 +5,7 @@ import express from "express";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import { Disposable, workspace } from "vscode";
+import { Disposable, EventEmitter, workspace } from "vscode";
 import { Logger } from "../../Logger";
 import { registerMcpTools } from "./toolRegistration";
 import { Session } from "./models";
@@ -24,6 +24,7 @@ export class LocalMcpServer implements Disposable {
   private mcpServer: McpServer | null = null;
   private serverPort: Promise<number>;
   private resolveServerPort: (port: number) => void;
+  private serverReloadEmitter = new EventEmitter();
 
   private connectionListener: ConnectionListener;
   private reconnectionSubscription: Disposable;
@@ -51,6 +52,7 @@ export class LocalMcpServer implements Disposable {
   public async dispose(): Promise<void> {
     this.reconnectionSubscription.dispose();
     this.licenseTokenSubscription.dispose();
+    this.serverReloadEmitter.dispose();
     this.mcpServer?.close();
     this.expressServer?.closeAllConnections();
     this.expressServer?.close();
@@ -65,6 +67,10 @@ export class LocalMcpServer implements Disposable {
     this.versionSuffix += 1;
     this.session?.transport.close();
     this.session = null;
+  }
+
+  public onReload(cb: () => void): Disposable {
+    return this.serverReloadEmitter.event(cb);
   }
 
   public getVersion(): string {

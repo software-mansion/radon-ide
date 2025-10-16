@@ -34,7 +34,9 @@ async function updateMcpConfig(port: number) {
   const location = getConfigLocation();
   const mcpConfig = (await readMcpConfig(location)) || newMcpConfig();
   const updatedConfig = insertRadonEntry(mcpConfig, port);
-  await writeMcpConfig(updatedConfig, location);
+  if (updatedConfig !== mcpConfig) {
+    await writeMcpConfig(updatedConfig, location);
+  }
 
   // Remove MCP entry from the config we no longer write to.
   const unusedLocation =
