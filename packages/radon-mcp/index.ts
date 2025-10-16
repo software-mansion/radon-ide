@@ -22,10 +22,7 @@ function normalizeWorkspacePath(workspacePath: string): string {
   const resolvedPath = resolve(workspacePath);
 
   // Normalize the path (removes redundant separators, resolves . and ..)
-  const normalizedPath = normalize(resolvedPath);
-
-  // Remove trailing slash if present (except for root directory)
-  return normalizedPath.replace(/\/$/, '') || '/';
+  return normalize(resolvedPath);
 }
 
 function getWorkspaceConfig(normalizedPath: string): string {
@@ -38,6 +35,7 @@ function getWorkspaceConfig(normalizedPath: string): string {
     'Library',
     'Caches',
     'com.swmansion.radon-ide',
+    'Mcp',
     `radon-mcp-${hash}.json`
   );
 
@@ -197,14 +195,8 @@ class MCPProxyServer {
 
 async function main() {
   try {
-    // Get workspace path from command line arguments
-    const workspacePath = process.argv[2];
-
-    if (!workspacePath) {
-      console.error('Usage: radon-mcp <workspacePath>');
-      console.error('Example: radon-mcp /path/to/your/react-native/project');
-      process.exit(1);
-    }
+    // Get workspace path from command line arguments or use current directory
+    const workspacePath = process.argv[2] || process.cwd();
 
     // Normalize the workspace path once
     const normalizedPath = normalizeWorkspacePath(workspacePath);

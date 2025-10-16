@@ -30,11 +30,13 @@ Add this server to your Claude Code MCP configuration:
   "mcpServers": {
     "radon": {
       "command": "npx",
-      "args": ["radon-mcp", "/path/to/your/react-native/project"]
+      "args": ["-y", "radon-mcp", "/path/to/your/react-native/project"]
     }
   }
 }
 ```
+
+**Note:** The workspace path is optional. If omitted, the proxy will use the current working directory. In particular, if you run the Claude Code instance from the workspace folder directory, you don't need to supply the workspace path argument.
 
 #### Other MCP-Compatible Tools
 
@@ -45,11 +47,17 @@ For other MCP-compatible tools, use the same configuration format as shown above
 For advanced users or debugging purposes, the proxy can be run directly from the command line:
 
 ```bash
-npx radon-mcp <workspacePath>
+npx radon-mcp [workspacePath]
 ```
 
-Example:
+Examples:
 
 ```bash
+# Use current directory as workspace
+npx radon-mcp
+
+# Specify a specific workspace
 npx radon-mcp /path/to/your/react-native/project
 ```
+
+If no workspace path is provided, the proxy will use the current working directory.
