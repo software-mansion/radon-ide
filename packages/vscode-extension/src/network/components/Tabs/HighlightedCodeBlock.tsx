@@ -6,7 +6,6 @@ import "./PayloadAndResponseTab.css";
 
 interface HighlightedCodeBlockProps {
   content: string | undefined;
-  requestId: string | number;
   language?: string;
   theme?: ThemeData;
   placeholder?: string;
@@ -27,7 +26,6 @@ const HighlightedCodeBlock = ({
   theme,
   placeholder = "No content",
   className = "response-tab-pre",
-  requestId,
   isActive = false,
   showTruncatedWarning = false,
 }: HighlightedCodeBlockProps) => {
@@ -46,28 +44,26 @@ const HighlightedCodeBlock = ({
 
     let cancelled = false;
 
-    highlighter.isCodeCached(content, language, theme, requestId).then((isCached) => {
+    highlighter.isCodeCached(content, language, theme).then(async (isCached) => {
       if (!isCached && !isActive) {
         setHighlightedHtml("");
         return;
       }
 
-      highlighter
-        .getHighlightedCode(content, language, theme, requestId)
-        .then((result) => {
-          if (!cancelled) {
-            setHighlightedHtml(result);
-          }
-        })
-        .catch((error) => {
-          console.error("Failed to highlight code:", error);
-        });
-
-      return () => {
-        cancelled = true;
-      };
+      try {
+        const result = await highlighter.getHighlightedCode(content, language, theme);
+        if (!cancelled) {
+          setHighlightedHtml(result);
+        }
+      } catch (error) {
+        console.error("Failed to highlight code:", error);
+      }
     });
-  }, [canHighlight, isActive, content, language, theme, requestId, highlighter]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [canHighlight, isActive, content, language, theme, highlighter]);
 
   return (
     <>

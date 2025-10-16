@@ -20,14 +20,12 @@ interface HighlighterContextValue {
   getHighlightedCode: (
     content: string,
     language: string,
-    theme: ThemeData | undefined,
-    requestId: string | number
+    theme: ThemeData | undefined
   ) => Promise<string>;
   isCodeCached: (
     content: string,
     language: string,
-    theme: ThemeData | undefined,
-    requestId: string | number
+    theme: ThemeData | undefined
   ) => Promise<boolean>;
 }
 
@@ -40,9 +38,7 @@ async function getHash(str: string): Promise<string> {
   const data = encoder.encode(str);
   const hashBuffer = await crypto.subtle.digest("SHA-1", data);
   const hashArray = new Uint8Array(hashBuffer);
-  return Array.from(hashArray)
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+  return hashArray.reduce((res, byte) => res + byte.toString(16).padStart(2, "0"), "");
 }
 
 const HighlighterContext = createContext<HighlighterContextValue | null>(null);
@@ -83,31 +79,24 @@ export default function HighlighterProvider({ children }: { children: ReactNode 
   const generateCacheKey = async (
     language: string,
     theme: ThemeData | undefined,
-    content: string,
-    requestId: string | number
+    content: string
   ) => {
     const contentHash = await getHash(content);
     const themeName = theme?.name || "none";
-    return `${language}:${themeName}:${requestId}:${contentHash}`;
+    return `${language}:${themeName}:${contentHash}`;
   };
 
-  const isCodeCached = async (
-    content: string,
-    language: string,
-    theme: ThemeData | undefined,
-    requestId: string | number
-  ) => {
-    const cacheKey = await generateCacheKey(language, theme, content, requestId);
+  const isCodeCached = async (content: string, language: string, theme: ThemeData | undefined) => {
+    const cacheKey = await generateCacheKey(language, theme, content);
     return cacheRef.current.has(cacheKey);
   };
 
   const getHighlightedCode = async (
     content: string,
     language: string,
-    theme: ThemeData | undefined,
-    requestId: string | number
+    theme: ThemeData | undefined
   ): Promise<string> => {
-    const cacheKey = await generateCacheKey(language, theme, content, requestId);
+    const cacheKey = await generateCacheKey(language, theme, content);
     const entry = cacheRef.current.get(cacheKey);
     const shouldCache = content.length >= MINIMUM_SIZE_TO_CACHE;
 

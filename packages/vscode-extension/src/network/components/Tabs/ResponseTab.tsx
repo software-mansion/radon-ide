@@ -62,7 +62,6 @@ const ResponseTab = ({
           </div>
         ) : (
           <HighlightedCodeBlock
-            requestId={networkLog.requestId}
             content={responseData}
             language={language}
             theme={editorThemeData}
