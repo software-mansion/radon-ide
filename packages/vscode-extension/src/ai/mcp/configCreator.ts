@@ -11,7 +11,7 @@ export function insertRadonEntry(incompleteConfig: string, port: number): string
   const rootKey = getEditorType() === EditorType.VSCODE ? VSCODE_KEY : CURSOR_KEY;
   const radonMcpEntry = {
     command: "npx",
-    args: ["-y", "radon-ai-mcp@latest", "${workspaceFolder}"],
+    args: ["-y", "radon-mcp@latest", "${workspaceFolder}"],
   };
 
   try {
