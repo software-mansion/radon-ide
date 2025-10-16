@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-import { McpEntry } from "./models";
 import { EditorType, getEditorType } from "../../utilities/editorType";
 
 // jsonc-parser by default builds a UMD bundle that esbuild can't resolve.
@@ -7,16 +5,13 @@ const { applyEdits, modify }: typeof import("jsonc-parser/lib/esm/main") = requi
 
 const CURSOR_KEY = "mcpServers";
 const VSCODE_KEY = "servers";
-const ENTRY_KEY = "RadonAi";
+const ENTRY_KEY = "RadonAI";
 
 export function insertRadonEntry(incompleteConfig: string, port: number): string {
   const rootKey = getEditorType() === EditorType.VSCODE ? VSCODE_KEY : CURSOR_KEY;
-  const radonMcpEntry: McpEntry = {
-    url: `http://127.0.0.1:${port}/mcp` as const,
-    type: "http" as const,
-    headers: {
-      nonce: randomUUID(),
-    },
+  const radonMcpEntry = {
+    command: "npx",
+    args: ["-y", "radon-ai-mcp@latest", "${workspaceFolder}"],
   };
 
   try {

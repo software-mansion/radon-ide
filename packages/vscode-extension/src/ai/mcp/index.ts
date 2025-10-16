@@ -134,11 +134,7 @@ export default function registerRadonAi(context: ExtensionContext): Disposable {
     if (isDirectLoadingAvailable()) {
       directLoadRadonAI(server, disposables);
     } else {
-      disposables.push(
-        server.onReload(() => {
-          fsLoadRadonAI(server);
-        })
-      );
+      fsLoadRadonAI(server);
       disposables.push(new Disposable(() => fsUnloadRadonAi()));
     }
   }
