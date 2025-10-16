@@ -63,17 +63,14 @@ export default function HighlighterProvider({ children }: { children: ReactNode 
     const cache = cacheRef.current;
     const entries = Array.from(cache.entries()).sort(([, a], [, b]) => a.accessTime - b.accessTime);
 
-    let freedSpace = 0;
     for (const [key, entry] of entries) {
-      if (cacheSizeRef.current - freedSpace + requiredSpace <= MAX_CACHE_SIZE) {
+      if (cacheSizeRef.current + requiredSpace <= MAX_CACHE_SIZE) {
         break;
       }
 
       cache.delete(key);
-      freedSpace += entry.size;
+      cacheSizeRef.current -= entry.size;
     }
-
-    cacheSizeRef.current -= freedSpace;
   };
 
   const generateCacheKey = async (
