@@ -522,7 +522,6 @@ export class IosSimulatorDevice extends DeviceBase {
         );
 
         const launchArgsWithInitialUrl = [...launchArguments, "--initialUrl", expoDeeplink];
-        await this.configureMetroPort(build.bundleID, metroPort);
         await this.launchWithBuild(build, launchArgsWithInitialUrl);
       } else {
         // for older Expo SDKs we need to launch via deeplink
