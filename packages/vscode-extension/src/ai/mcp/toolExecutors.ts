@@ -34,15 +34,7 @@ interface AppReloadRequest {
 }
 
 export async function restartDeviceExec(input: AppReloadRequest): Promise<ToolResponse> {
-  const ideInstance = IDE.getInstanceIfExists();
-
-  if (!ideInstance) {
-    return textToToolResponse(
-      "Couldn't reload app - Radon IDE is not launched. Open Radon IDE first."
-    );
-  }
-
-  const project = ideInstance.project;
+  const project = IDE.getInstanceIfExists()?.project;
 
   if (!project || !project.deviceSession) {
     return textToToolResponse(
