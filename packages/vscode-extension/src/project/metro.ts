@@ -286,7 +286,7 @@ export class Metro implements MetroSession, Disposable {
     }
 
     this.metroOutputChannel = outputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
-    this.appOutputChannel = outputChannelRegistry.getOrCreateOutputChannel(Output.Application);
+    this.appOutputChannel = outputChannelRegistry.getOrCreateOutputChannel(Output.JSApplication);
   }
 
   public async getDebuggerPages(): Promise<CDPTargetDescription[]> {

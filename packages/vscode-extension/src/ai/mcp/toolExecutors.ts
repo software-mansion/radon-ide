@@ -59,7 +59,7 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
     isAndroid ? Output.AndroidDevice : Output.IosDevice
   );
 
-  const appLogs = registry.getOrCreateOutputChannel(Output.Application);
+  const appLogs = registry.getOrCreateOutputChannel(Output.JSApplication);
 
   const combinedLogsContent: TextContent[] = [];
 
