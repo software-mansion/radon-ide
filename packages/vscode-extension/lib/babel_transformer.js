@@ -2,7 +2,6 @@ const ORIGINAL_TRANSFORMER_PATH = process.env.RADON_IDE_ORIG_BABEL_TRANSFORMER_P
 const path = require("path");
 const fs = require("fs");
 const { requireFromAppDir, requireFromAppDependency, overrideModuleFromAppDependency } = require("./metro_helpers");
-const buildPluginWarnOnDeeImports = require("./babel_plugins/build-plugin-warn-on-deep-imports");
 
 // In some configurations, React Native may pull several different version of JSX transform plugins:
 // plugin-transform-react-jsx-self, plugin-transform-react-jsx-source, plugin-transform-react-jsx and
@@ -53,8 +52,6 @@ overrideModuleFromAppDependency("react-native", "@babel/plugin-transform-react-j
   name: "rnide-disabled-jsx-self-transform",
   visitor: {},
 });
-
-overrideModuleFromAppDependency("react-native", "@react-native/babel-preset/src/plugin-warn-on-deep-imports.js", buildPluginWarnOnDeeImports(process.env.RADON_IDE_LIB_PATH))
 
 function transformWrapper({ filename, src, ...rest }) {
   function isTransforming(unixPath) {
