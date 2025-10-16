@@ -38,7 +38,7 @@ export async function restartDeviceExec(input: AppReloadRequest): Promise<ToolRe
 
   if (!project || !project.deviceSession) {
     return textToToolResponse(
-      "Couldn't reload app!" +
+      "Could not reload the app!" +
         "The development device is likely turned off.\n" +
         "Please turn on the Radon IDE emulator before proceeding."
     );
