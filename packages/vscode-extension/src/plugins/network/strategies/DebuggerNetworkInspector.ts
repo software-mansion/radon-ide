@@ -62,12 +62,13 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     if (responseBody.length > MAX_MESSAGE_LENGTH) {
       return {
         body: responseBody.slice(0, TRUNCATED_LENGTH),
+        fullBody: responseBody,
         wasTruncated: true,
         base64Encoded: !shouldDecode,
       };
     }
 
-    return { body: responseBody, wasTruncated: false, base64Encoded: !shouldDecode };
+    return { body: responseBody, fullBody: responseBody, wasTruncated: false, base64Encoded: !shouldDecode };
   }
 
   private broadcastCDPMessage(message: CDPMessage): void {

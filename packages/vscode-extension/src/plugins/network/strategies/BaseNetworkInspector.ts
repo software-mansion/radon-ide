@@ -101,12 +101,21 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     return fetch(requestData.url, fetchOptions);
   }
 
+  private async responseToBase64(response: Response): Promise<string> {
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    return buffer.toString("base64");
+  }
+
   /**
    * Handle fetching full response body and opening it in editor
    */
-  private async handleFetchFullResponseBody(requestData: RequestData | undefined): Promise<void> {
-    if (!requestData) {
-      Logger.warn("fetchFullResponseBody called without request data");
+  private async handleFetchFullResponseBody(
+    requestData: RequestData | undefined,
+    base64Encoded: boolean | undefined
+  ): Promise<void> {
+    if (!requestData || !base64Encoded) {
+      Logger.warn("fetchFullResponseBody called without proper parameters");
       return;
     }
 
@@ -116,7 +125,10 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
         response.headers.get(ContentTypeHeader.IOS) ||
         response.headers.get(ContentTypeHeader.ANDROID) ||
         "";
-      const responseBody = await response.text();
+
+      const responseBody = base64Encoded
+        ? await this.responseToBase64(response)
+        : await response.text();
 
       const language = determineLanguage(contentType, responseBody);
       const formattedData = this.formatDataBasedOnLanguage(responseBody, language);
@@ -146,7 +158,8 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
 
     switch (payload.method) {
       case IDEMethod.FetchFullResponseBody:
-        this.handleFetchFullResponseBody(payload.params?.request);
+        const { request, base64Encoded } = payload.params || {};
+        this.handleFetchFullResponseBody(request, base64Encoded);
         break;
       case IDEMethod.GetTheme:
         this.handleGetTheme(payload);

@@ -79,7 +79,13 @@ export class AsyncBoundedResponseBuffer {
 
       const storedPromise = responseBodyPromise
         .then((response) =>
-          response ? { body: response.body, wasTruncated: response.wasTruncated } : undefined
+          response
+            ? {
+                body: response.body,
+                base64Encoded: response.base64Encoded,
+                wasTruncated: response.wasTruncated,
+              }
+            : undefined
         )
         .catch((error) => {
           console.warn("Error processing response body for requestId", requestId, error);
@@ -98,7 +104,7 @@ export class AsyncBoundedResponseBuffer {
       }
 
       // Do not keep track of empty responses, negligible size
-      if(!response){
+      if (!response) {
         return true;
       }
 

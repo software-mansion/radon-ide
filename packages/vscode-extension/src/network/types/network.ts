@@ -41,6 +41,7 @@ export interface GetResponseBodyResponse {
 
 export interface ResponseBodyData {
   body: string | undefined;
+  fullBody?: string;
   wasTruncated?: boolean;
   base64Encoded?: boolean;
 }

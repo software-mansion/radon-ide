@@ -80,3 +80,10 @@
   margin: 0 0 14px 0;
   color: var(--vscode-notificationsInfoIcon-foreground);
 }
+
+.base64-code{
+  margin-top: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}

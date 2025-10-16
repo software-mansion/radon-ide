@@ -3,6 +3,7 @@ import { TextDecoder } from "../polyfills";
 export type InternalResponseBodyData = {
   body: string | undefined;
   wasTruncated: boolean;
+  base64Encoded: boolean | undefined;
   dataSize: number;
 };
 
@@ -86,9 +87,12 @@ const TRUNCATED_LENGTH = 1000; // 1000 characters
  * @param responseBody The string body to inspect and potentially truncate.
  * @returns An InternalResponseBodyData with `body`, `wasTruncated` and `dataSize`.
  */
-function truncateResponseBody(responseBody: string | undefined): InternalResponseBodyData {
+function truncateResponseBody(
+  responseBody: string | undefined,
+  base64Encoded?: boolean
+): InternalResponseBodyData {
   if (!responseBody) {
-    return { body: undefined, wasTruncated: false, dataSize: 0 };
+    return { body: undefined, wasTruncated: false, base64Encoded, dataSize: 0 };
   }
 
   const dataSize = new Blob([responseBody]).size;
@@ -98,11 +102,65 @@ function truncateResponseBody(responseBody: string | undefined): InternalRespons
     return {
       body: `${slicedBody}...`,
       wasTruncated: true,
+      base64Encoded,
       dataSize: new Blob([slicedBody]).size,
     };
   }
 
-  return { body: responseBody, wasTruncated: false, dataSize };
+  return { body: responseBody, base64Encoded, wasTruncated: false, dataSize };
+}
+
+function handleReadError(error: unknown): InternalResponseBodyData {
+  console.warn("Failed to read response body content:", error);
+  return truncateResponseBody(undefined);
+}
+
+/**
+ * Image and octet-stream handling.
+ */
+function readBlobAsBase64(blob: Blob): Promise<InternalResponseBodyData> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      let textResult: string | undefined;
+      if (reader.result instanceof ArrayBuffer) {
+        // convert ArrayBuffer to base64
+        const uint8Array = new Uint8Array(reader.result);
+        textResult = dataToBase64(uint8Array as unknown as SerializedTypedArray);
+      } else if (typeof reader.result === "string") {
+        textResult = reader.result;
+      }
+      resolve(truncateResponseBody(textResult, true));
+    };
+
+    reader.onerror = (error) => {
+      resolve(handleReadError(error));
+    };
+
+    reader.readAsArrayBuffer(blob);
+  });
+}
+
+/**
+ * Text and parsable application types handling.
+ */
+function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const result = reader.result;
+      const textResult = typeof result === "string" ? result : undefined;
+      resolve(truncateResponseBody(textResult));
+    };
+
+    reader.onerror = (error) => {
+      resolve(handleReadError(error));
+    };
+
+    reader.readAsText(blob);
+  });
 }
 
 /**
@@ -152,29 +210,22 @@ async function readResponseText(
       const isParsableApplicationType = Array.from(PARSABLE_APPLICATION_CONTENT_TYPES).some(
         (type) => contentType.startsWith(type)
       );
+      const isImageType = contentType.startsWith("image/");
+      const isOctetStream = contentType === "application/octet-stream";
+
+      if (isImageType || isOctetStream) {
+        return readBlobAsBase64(xhr.response);
+      }
 
       if (isTextType || isParsableApplicationType) {
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const result = reader.result;
-            const textResult = typeof result === "string" ? result : undefined;
-            resolve(truncateResponseBody(textResult));
-          };
-          reader.onerror = (error) => {
-            console.warn("Failed to read response body content:", error);
-            resolve(truncateResponseBody(undefined));
-          };
-          reader.readAsText(xhr.response);
-        });
+        return readBlobAsText(xhr.response);
       }
     }
 
     // don't read binary data
     return undefined;
   } catch (error) {
-    console.warn("Failed to read response body content:", error);
-    return undefined;
+    return handleReadError(error);
   }
 }
 
@@ -224,7 +275,12 @@ function reconstructTypedArray(serializedData: SerializedTypedArray): Uint8Array
 }
 
 function dataToBase64(array: SerializedTypedArray) {
-  return btoa(String.fromCharCode.apply(null, Array.from(array)));
+  // this somewhat works
+  const result = [];
+  for (let char of array) {
+    result.push(String.fromCharCode(char));
+  }
+  return btoa(result.join(""));
 }
 
 function decode(array: Uint8Array) {
@@ -264,5 +320,5 @@ module.exports = {
   readResponseText,
   deserializeRequestData,
   mimeTypeFromResponseType,
-  ContentTypeHeader
+  ContentTypeHeader,
 };

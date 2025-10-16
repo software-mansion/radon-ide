@@ -25,8 +25,8 @@ function PreviewInfoBar({ metadata }: { metadata: ImageMetadata }) {
   return (
     <div className="preview-bar">
       <div>{metadata.size}</div>
-      <div >{metadata.resolution}</div>
-      <div >{metadata.aspectRatio}</div>
+      <div>{metadata.resolution}</div>
+      <div>{metadata.aspectRatio}</div>
       <div>{metadata.mime}</div>
     </div>
   );
@@ -46,8 +46,11 @@ const PreviewTab = ({ networkLog, responseBodyData }: PreviewTabProps) => {
   const [error, setError] = useState<boolean>(false);
   const [metadata, setMetadata] = useState<ImageMetadata | null>(null);
 
-  const { body = undefined, base64Encoded = false } = responseBodyData || {};
-  const contentType = networkLog.response?.headers?.["Content-Type"] || "";
+  const { body = undefined, fullBody = undefined, base64Encoded = false } = responseBodyData || {};
+  const contentType =
+    networkLog.response?.headers?.["Content-Type"] ||
+    networkLog.response?.headers?.["content-type"] ||
+    "";
   const imageSize = getNetworkLogValue(networkLog, NetworkLogColumn.Size) || "";
   const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;
   const dataFetchFailure = requestFailed && !body;
@@ -89,11 +92,7 @@ const PreviewTab = ({ networkLog, responseBodyData }: PreviewTabProps) => {
     if (metadata) {
       setContent(<PreviewInfoBar metadata={metadata} />);
     }
-
-    // Cleanup: hide info bar when component unmounts
-    return () => {
-      setContent(null);
-    };
+    return () => setContent(null);
   }, [metadata, setContent]);
 
   if (dataFetchFailure) {
@@ -118,8 +117,8 @@ const PreviewTab = ({ networkLog, responseBodyData }: PreviewTabProps) => {
   }
 
   const imageUrl = base64Encoded
-    ? `data:${contentType};base64,${body}`
-    : `data:${contentType};base64,${btoa(body)}`;
+    ? `data:${contentType};base64,${fullBody || body}`
+    : `data:${contentType};base64,${btoa(fullBody || body)}`;
 
   return (
     <>

@@ -30,7 +30,7 @@ interface NetworkProviderProps extends NetworkTracker {
   toggleScrolling: () => void;
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
-  fetchAndOpenResponseInEditor: (networkLog: NetworkLog) => Promise<void>;
+  fetchAndOpenResponseInEditor: (networkLog: NetworkLog, base64encoded: boolean) => Promise<void>;
   getResponseBody: (networkLog: NetworkLog) => Promise<ResponseBodyData | undefined>;
   getThemeData: (themeDescriptor: ThemeDescriptor) => Promise<ThemeData>;
 }
@@ -175,7 +175,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     return promise;
   };
 
-  const fetchAndOpenResponseInEditor = async (networkLog: NetworkLog) => {
+  const fetchAndOpenResponseInEditor = async (networkLog: NetworkLog, base64Encoded: boolean) => {
     const requestId = networkLog.requestId;
     const request = networkLog.request;
 
@@ -190,6 +190,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       method: IDEMethod.FetchFullResponseBody,
       params: {
         request: request,
+        base64Encoded: base64Encoded,
       },
     });
   };

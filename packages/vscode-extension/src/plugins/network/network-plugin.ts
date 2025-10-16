@@ -17,7 +17,7 @@ export const NETWORK_PLUGIN_ID = "network";
  * The instructions to enable the features are in plugins/network/README.md
  */
 // const ENABLE_DEBUGGER_INSPECTOR = false;
-const ENABLE_DEBUGGER_INSPECTOR = true;
+const ENABLE_DEBUGGER_INSPECTOR = false;
 
 export type BroadcastListener = (message: WebviewMessage) => void;
 

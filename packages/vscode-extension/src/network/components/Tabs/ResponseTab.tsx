@@ -14,7 +14,6 @@ interface ResponseTabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
   editorThemeData?: ThemeData;
-  isImage?: boolean;
 }
 
 interface ResponseBodyContentProps {
@@ -23,8 +22,15 @@ interface ResponseBodyContentProps {
   responseData: string | undefined;
   language: string;
   editorThemeData?: ThemeData;
-  isImage?: boolean;
   base64Encoded: boolean;
+}
+
+function ResponseTooLargeWarning() {
+  return (
+    <pre className="response-tab-truncated-warning">
+      <span className="codicon codicon-warning" /> Response too large, showing truncated data.
+    </pre>
+  );
 }
 
 const ResponseBodyContent = ({
@@ -33,26 +39,8 @@ const ResponseBodyContent = ({
   responseData,
   language,
   editorThemeData,
-  isImage,
   base64Encoded,
 }: ResponseBodyContentProps) => {
-  if (wasTruncated) {
-    return (
-      <>
-        <pre className="response-tab-truncated-warning">
-          <span className="codicon codicon-warning" /> Response too large, showing truncated data.
-        </pre>
-        <HighlightedCodeBlock
-          content={responseData}
-          language={language}
-          theme={editorThemeData}
-          placeholder="No response body"
-          className={isImage && base64Encoded ? "response-tab-base64-wrap" : "response-tab-pre"}
-        />
-      </>
-    );
-  }
-
   if (dataFetchFailure) {
     return (
       <div className="response-tab-failed-fetch-information">
@@ -62,28 +50,35 @@ const ResponseBodyContent = ({
     );
   }
 
+  // Base64 messages are not truncated by default in ordert
+  if (base64Encoded) {
+    return (
+      <>
+        {wasTruncated && <ResponseTooLargeWarning />}
+        <pre className="base64-code">{responseData}</pre>
+      </>
+    );
+  }
+
   return (
-    <HighlightedCodeBlock
-      content={responseData}
-      language={language}
-      theme={editorThemeData}
-      placeholder="No response body"
-      className={isImage && base64Encoded ? "response-tab-base64-wrap" : "response-tab-pre"}
-    />
+    <>
+      {wasTruncated && <ResponseTooLargeWarning />}
+      <HighlightedCodeBlock
+        content={responseData}
+        language={language}
+        theme={editorThemeData}
+        placeholder="No response body"
+      />
+    </>
   );
 };
 
-const ResponseTab = ({
-  networkLog,
-  responseBodyData,
-  editorThemeData,
-  isImage,
-}: ResponseTabProps) => {
+const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: ResponseTabProps) => {
   const { fetchAndOpenResponseInEditor } = useNetwork();
   const { body = undefined, wasTruncated = false, base64Encoded = false } = responseBodyData || {};
 
   // For images, display the base64-encoded body as-is without formatting
-  const responseData = isImage && base64Encoded ? body : getFormattedRequestBody(body);
+  const responseData = base64Encoded ? body : getFormattedRequestBody(body);
 
   const contentType =
     networkLog.response?.headers?.[ContentTypeHeader.IOS] ||
@@ -91,12 +86,11 @@ const ResponseTab = ({
     "";
 
   // For base64-encoded images, use plaintext to avoid syntax highlighting
-  const language =
-    isImage && base64Encoded
-      ? "plaintext"
-      : responseData
-        ? determineLanguage(contentType, responseData)
-        : "plaintext";
+  const language = base64Encoded
+    ? "plaintext"
+    : responseData
+      ? determineLanguage(contentType, responseData)
+      : "plaintext";
 
   const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;
   const dataFetchFailure = requestFailed && !responseData;
@@ -111,7 +105,7 @@ const ResponseTab = ({
             className="response-tab-copy-button"
             tooltip={{ label: "Open response in editor", side: "bottom" }}
             onClick={() => {
-              fetchAndOpenResponseInEditor(networkLog);
+              fetchAndOpenResponseInEditor(networkLog, base64Encoded);
             }}
             disabled={dataFetchFailure}>
             <span className="codicon codicon-chrome-restore" />
@@ -125,7 +119,6 @@ const ResponseTab = ({
           responseData={responseData}
           language={language}
           editorThemeData={editorThemeData}
-          isImage={isImage}
           base64Encoded={base64Encoded}
         />
       </div>

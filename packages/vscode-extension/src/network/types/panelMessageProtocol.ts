@@ -83,6 +83,7 @@ export interface CDPMessage {
 // IDE message parameters
 type IDEMessageParams = {
   request?: RequestData;
+  base64Encoded?: boolean;
   themeDescriptor?: ThemeDescriptor;
 };
 

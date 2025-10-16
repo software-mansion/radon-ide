@@ -50,7 +50,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
   const { getResponseBody } = useNetwork();
 
   const themeData = useThemeExtractor();
-  const isImage = networkLog.type === "Image";
+  const isImage = networkLog.type === "Image" || networkLog.response?.headers?.["content-type"]?.startsWith("image/");
 
   useEffect(() => {
     if (

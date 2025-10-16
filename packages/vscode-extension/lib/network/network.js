@@ -140,7 +140,7 @@ function enableNetworkInspect(networkProxy) {
       });
 
       xhr.addEventListener("load", (event) => {
-        if(xhr._error || xhr._aborted) {
+        if (xhr._error || xhr._aborted) {
           return;
         }
 
@@ -166,7 +166,7 @@ function enableNetworkInspect(networkProxy) {
       });
 
       xhr.addEventListener("loadend", (event) => {
-        if(xhr._error || xhr._aborted) {
+        if (xhr._error || xhr._aborted) {
           return;
         }
         // We only store the xhr response body object, so we only put on
