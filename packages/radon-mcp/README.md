@@ -30,7 +30,7 @@ Add this server to your Claude Code MCP configuration:
   "mcpServers": {
     "radon": {
       "command": "npx",
-      "args": ["-y", "radon-mcp", "/path/to/your/react-native/project"]
+      "args": ["-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
     }
   }
 }
