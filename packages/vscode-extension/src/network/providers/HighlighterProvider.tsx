@@ -12,6 +12,8 @@ interface CacheEntry {
   state: CacheEntryState;
   html?: string;
   promise?: Promise<string>;
+  size: number; // Track the size of the cached content
+  accessTime: number; // Track when the entry was last accessed
 }
 
 interface HighlighterContextValue {
@@ -26,46 +28,76 @@ interface HighlighterContextValue {
     language: string,
     theme: ThemeData | undefined,
     requestId: string | number
-  ) => boolean;
+  ) => Promise<boolean>;
 }
 
+const encoder = new TextEncoder();
+
 /**
- * Simple hash function for generating cache keys from content
+ * Generate SHA-1 hash for cache key from content string
  */
-function getHash(str: string): string {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  return hash.toString(36);
+async function getHash(str: string): Promise<string> {
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest("SHA-1", data);
+  const hashArray = new Uint8Array(hashBuffer);
+  return Array.from(hashArray)
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 const HighlighterContext = createContext<HighlighterContextValue | null>(null);
+/**
+ * Cache size limit in characters (after the html colouring is applied)
+ */
+const MAX_CACHE_SIZE = 5_000_000;
+/**
+ * Minimum size for a text block to be cached (before the html colouring is applied)
+ */
+const MINIMUM_SIZE_TO_CACHE = 20_000;
 
 export default function HighlighterProvider({ children }: { children: ReactNode }) {
   const cacheRef = useRef<Map<string, CacheEntry>>(new Map());
+  const cacheSizeRef = useRef<number>(0); // Track total cache size
   const highlighterPromiseRef = useRef<Promise<HighlighterCore>>(getHighlighter());
 
-  const generateCacheKey = (
+  /**
+   * Evict oldest entries from cache until size is under the limit
+   */
+  const evictOldestEntries = (requiredSpace: number) => {
+    const cache = cacheRef.current;
+    const entries = Array.from(cache.entries()).sort(([, a], [, b]) => a.accessTime - b.accessTime);
+
+    let freedSpace = 0;
+    for (const [key, entry] of entries) {
+      if (cacheSizeRef.current - freedSpace + requiredSpace <= MAX_CACHE_SIZE) {
+        break;
+      }
+
+      cache.delete(key);
+      freedSpace += entry.size;
+    }
+
+    cacheSizeRef.current -= freedSpace;
+  };
+
+  const generateCacheKey = async (
     language: string,
     theme: ThemeData | undefined,
     content: string,
     requestId: string | number
   ) => {
-    const contentHash = getHash(content);
+    const contentHash = await getHash(content);
     const themeName = theme?.name || "none";
     return `${language}:${themeName}:${requestId}:${contentHash}`;
   };
 
-  const isCodeCached = (
+  const isCodeCached = async (
     content: string,
     language: string,
     theme: ThemeData | undefined,
     requestId: string | number
   ) => {
-    const cacheKey = generateCacheKey(language, theme, content, requestId);
+    const cacheKey = await generateCacheKey(language, theme, content, requestId);
     return cacheRef.current.has(cacheKey);
   };
 
@@ -75,10 +107,12 @@ export default function HighlighterProvider({ children }: { children: ReactNode 
     theme: ThemeData | undefined,
     requestId: string | number
   ): Promise<string> => {
-    const cacheKey = generateCacheKey(language, theme, content, requestId);
+    const cacheKey = await generateCacheKey(language, theme, content, requestId);
     const entry = cacheRef.current.get(cacheKey);
+    const shouldCache = content.length >= MINIMUM_SIZE_TO_CACHE;
 
     if (entry?.state === CacheEntryState.Done && entry.html) {
+      entry.accessTime = Date.now();
       return entry.html;
     }
 
@@ -93,30 +127,53 @@ export default function HighlighterProvider({ children }: { children: ReactNode 
           return "";
         }
 
-        const code = highlighter.codeToHtml(content, {
+        const highlightResult = highlighter.codeToHtml(content, {
           lang: language,
           theme: (theme as unknown) || "none",
         });
-        const cacheEntry = {
+        const code = highlightResult || "";
+        const totalSize = code.length;
+
+        if (!shouldCache) {
+          return code;
+        }
+
+        // Check if we need to evict old entries
+        if (cacheSizeRef.current + totalSize > MAX_CACHE_SIZE) {
+          evictOldestEntries(totalSize);
+        }
+
+        const cacheEntry: CacheEntry = {
           state: CacheEntryState.Done,
           html: code ?? "",
+          size: totalSize,
+          accessTime: Date.now(),
         };
 
         cacheRef.current.set(cacheKey, cacheEntry);
-        return code ?? "";
+        cacheSizeRef.current += totalSize;
+        return code;
       })
       .catch((error) => {
         console.error("Failed to highlight code:", error);
+        const existingEntry = cacheRef.current.get(cacheKey);
+        if (existingEntry) {
+          cacheSizeRef.current -= existingEntry.size;
+        }
         cacheRef.current.delete(cacheKey);
         return "";
       });
 
-    const cacheEntry = {
+    const estimatedSize = content.length;
+    const pendingEntry: CacheEntry = {
       state: CacheEntryState.PendingRequest,
       promise: highlightPromise,
+      size: estimatedSize,
+      accessTime: Date.now(),
     };
 
-    cacheRef.current.set(cacheKey, cacheEntry);
+    cacheRef.current.set(cacheKey, pendingEntry);
+    cacheSizeRef.current += estimatedSize;
 
     return highlightPromise;
   };
@@ -129,6 +186,7 @@ export default function HighlighterProvider({ children }: { children: ReactNode 
   useEffect(() => {
     return () => {
       cacheRef.current.clear();
+      cacheSizeRef.current = 0;
     };
   }, []);
 

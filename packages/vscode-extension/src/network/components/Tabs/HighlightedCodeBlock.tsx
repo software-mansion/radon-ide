@@ -34,7 +34,7 @@ const HighlightedCodeBlock = ({
   const highlighter = useHighlighter();
   const [highlightedHtml, setHighlightedHtml] = useState<string>("");
   const isPlainText = language === "plaintext";
-  const contentTooLarge = (content?.length ?? 0) > MAX_HIGHLIGHT_LENGTH;
+  const contentTooLarge = !!content && content.length > MAX_HIGHLIGHT_LENGTH;
   const canHighlight = !!content && !isPlainText && !contentTooLarge;
   const showSizeWarning = contentTooLarge && !isPlainText;
 
@@ -44,28 +44,29 @@ const HighlightedCodeBlock = ({
       return;
     }
 
-    const isCached = highlighter.isCodeCached(content, language, theme, requestId);
-    if (!isCached && !isActive) {
-      setHighlightedHtml("");
-      return;
-    }
-
     let cancelled = false;
 
-    highlighter
-      .getHighlightedCode(content, language, theme, requestId)
-      .then((result) => {
-        if (!cancelled) {
-          setHighlightedHtml(result);
-        }
-      })
-      .catch((error) => {
-        console.error("Failed to highlight code:", error);
-      });
+    highlighter.isCodeCached(content, language, theme, requestId).then((isCached) => {
+      if (!isCached && !isActive) {
+        setHighlightedHtml("");
+        return;
+      }
 
-    return () => {
-      cancelled = true;
-    };
+      highlighter
+        .getHighlightedCode(content, language, theme, requestId)
+        .then((result) => {
+          if (!cancelled) {
+            setHighlightedHtml(result);
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to highlight code:", error);
+        });
+
+      return () => {
+        cancelled = true;
+      };
+    });
   }, [canHighlight, isActive, content, language, theme, requestId, highlighter]);
 
   return (
