@@ -737,7 +737,7 @@
               },
               "usePrebuild": {
                 "type": "boolean",
-                "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
+                "description": "When set to true, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
               },
               "useOldDevtools": {
                 "type": "boolean",
@@ -750,6 +750,10 @@
               "metroPort": {
                 "type": "number",
                 "description": "Port number that will be used by Metro bundler. If not specified, a free port will be automatically chosen."
+              },
+              "disableNativeBuildStaleChecks": {
+                "type": "boolean",
+                "description": "When set to true, Radon will not run fingerprint checks on reloads and after file changes that would detect whether the native code needs to be rebuilt."
               }
             }
           }
@@ -971,7 +975,7 @@
               },
               "usePrebuild": {
                 "type": "boolean",
-                "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
+                "description": "When set to true, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
               },
               "useOldDevtools": {
                 "type": "boolean",
@@ -984,6 +988,10 @@
               "metroPort": {
                 "type": "number",
                 "description": "Port number that will be used by Metro bundler. If not specified, a free port will be automatically chosen."
+              },
+              "disableNativeBuildStaleChecks": {
+                "type": "boolean",
+                "description": "When set to true, Radon will not run fingerprint checks on reloads and after file changes that would detect whether the native code needs to be rebuilt."
               }
             }
           }
