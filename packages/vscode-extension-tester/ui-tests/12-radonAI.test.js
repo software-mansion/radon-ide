@@ -48,28 +48,26 @@ describe("12 - Radon AI tests", () => {
     );
   });
 
-  // it("Radon AI should show in suggestions after typing @ in chat", async function () {
-  //   await driver.actions().sendKeys("@").perform();
-  //   await driver.switchTo().defaultContent();
+  it("Radon AI should show in suggestions after typing @ in chat", async function () {
+    await driver.actions().sendKeys("@").perform();
+    await driver.switchTo().defaultContent();
 
-  //   // it's vscode native element we have to find it by css class
-  //   const suggestionsPopUp = await elementHelperService.findAndWaitForElement(
-  //     By.css(".suggest-widget")
-  //   );
-  //   await suggestionsPopUp.findElement(
-  //     By.xpath("//*[contains(text(), 'radon')]")
-  //   );
-  // });
+    // it's vscode native element we have to find it by css class
+    const suggestionsPopUp = await elementHelperService.findAndWaitForElement(
+      By.css(".suggest-widget")
+    );
+    await suggestionsPopUp.findElement(
+      By.xpath("//*[contains(text(), 'radon')]")
+    );
+  });
 
-  it("Radon AI user should appear in chat", async function () {
+  it("Radon AI user should start responding", async function () {
     await driver.actions().sendKeys("@radon test").perform();
     await driver.actions().sendKeys(Key.ENTER).perform();
 
     const auxiliaryBar = await elementHelperService.findAndWaitForElement(
       By.css(".auxiliarybar")
     );
-
-    console.log((await auxiliaryBar.findElements(By.css(".username"))).length);
 
     const usernameElements = await driver.wait(
       async () => {
