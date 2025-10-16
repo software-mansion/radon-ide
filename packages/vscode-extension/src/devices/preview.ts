@@ -7,6 +7,7 @@ import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
 import { disposeAll } from "../utilities/disposables";
 import { DeviceRotation, FrameRateReport, MultimediaData } from "../common/State";
+import { sleep } from "../utilities/retry";
 
 interface MultimediaPromiseHandlers {
   resolve: (value: MultimediaData) => void;
@@ -79,7 +80,21 @@ export class Preview implements Disposable {
       cwd: path.dirname(simControllerBinary),
     });
     this.subprocess = subprocess;
-    this.disposables.push(new Disposable(() => subprocess.kill()));
+    this.disposables.push(
+      new Disposable(async () => {
+        const EXIT_SIM_SERVER_TIMEOUT = 1000;
+        subprocess.stdin?.end();
+        this.subprocess = undefined;
+        const result = await Promise.race([
+          subprocess,
+          sleep(EXIT_SIM_SERVER_TIMEOUT).then(() => "timeout"),
+        ]);
+        if (result === "timeout") {
+          Logger.debug(`sim-server did not exit within ${EXIT_SIM_SERVER_TIMEOUT}ms, killing it`);
+          subprocess.kill("SIGKILL");
+        }
+      })
+    );
 
     this.tokenChangeListener = watchLicenseTokenChange((token) => {
       if (token) {
