@@ -63,7 +63,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
 
   protected broadcastMessage(message: Parameters<BroadcastListener>[0]): void {
     if (this.isInternalRequest(message)) {
-      Logger.info("Internal React Native network event, ignoring");
+      Logger.info(`Http request to metro filtered out: ${message.payload.params?.request?.url}`);
       return;
     }
 
