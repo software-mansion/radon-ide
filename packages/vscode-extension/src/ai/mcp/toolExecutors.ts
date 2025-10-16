@@ -44,8 +44,12 @@ export async function restartDeviceExec(input: AppReloadRequest): Promise<ToolRe
 
   const project = ideInstance.project;
 
-  if (!project) {
-    return textToToolResponse("Couldn't reload app - There isn't any app-bearing device running.");
+  if (!project || !project.deviceSession) {
+    return textToToolResponse(
+      "Couldn't reload app!" +
+        "The development device is likely turned off.\n" +
+        "Please turn on the Radon IDE emulator before proceeding."
+    );
   }
 
   try {
