@@ -202,7 +202,7 @@ function LaunchConfigurationView({
   const launchConfigAttrs = useMemo(getLaunchConfigAttrs, []);
 
   return (
-    <div className="launch-configuration-modal">
+    <div className="launch-configuration-modal" data-testid="launch-configuration-modal">
       <form
         ref={formContainerRef}
         className="launch-configuration-container"
@@ -224,6 +224,7 @@ function LaunchConfigurationView({
           </FormHelper>
           <TextField
             name="name"
+            data-testid="launch-configuration-name-input"
             initialValue={launchConfig?.name ?? ""}
             placeholder="Configuration Name"
           />
@@ -330,7 +331,11 @@ function LaunchConfigurationView({
             Delete
           </Button>
         )}
-        <Button onClick={save} disabled={!useFormValidity(formContainerRef)} type="submit">
+        <Button
+          onClick={save}
+          disabled={!useFormValidity(formContainerRef)}
+          type="submit"
+          data-testid="launch-configuration-modal-save-button">
           Save{isCurrentConfig ? " and restart" : ""}
         </Button>
       </div>
