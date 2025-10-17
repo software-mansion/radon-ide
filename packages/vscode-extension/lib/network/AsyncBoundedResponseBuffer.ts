@@ -83,8 +83,8 @@ export class AsyncBoundedResponseBuffer {
             return undefined;
           }
 
-          const { dataSize: _dataSize, ...rest } = response || {};
-          return rest;
+          const { dataSize: _dataSize, ...responseBody } = response || {};
+          return responseBody;
         })
         .catch((error) => {
           console.warn("Error processing response body for requestId", requestId, error);

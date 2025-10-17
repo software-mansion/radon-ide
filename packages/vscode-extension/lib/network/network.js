@@ -5,7 +5,7 @@ const {
   deserializeRequestData,
   mimeTypeFromResponseType,
   readResponseText,
-  getContentTypeHeaders,
+  getContentTypeHeader,
 } = require("./networkRequestParsers");
 
 let setupCompleted = false;
@@ -94,7 +94,7 @@ function enableNetworkInspect(networkProxy) {
           url: xhr._url,
           method: xhr._method,
           headers: xhr._headers,
-          postData: deserializeRequestData(data, getContentTypeHeaders(xhr)),
+          postData: deserializeRequestData(data, getContentTypeHeader(xhr)),
         },
         type: "XHR",
         initiator: {

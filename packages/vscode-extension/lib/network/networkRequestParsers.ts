@@ -82,13 +82,22 @@ const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
 const MAX_BODY_SIZE = 1024 * 1024; // 1 MB
 const TRUNCATED_LENGTH = 1000; // 1000 characters
 
+const DEFAULT_RESPONSE_BODY_DATA = {
+  body: undefined,
+  wasTruncated: false,
+  base64Encoded: false,
+  type: ResponseBodyDataType.Other,
+  dataSize: 0,
+};
+
 /**
- * Truncate and measure a response body for buffering.
+ * Parse data gotten from Network.getResponseBody, truncate if needed and measure the body for buffering.
  *
- * - If `responseBody` is falsy, returns an object with no body and zero size.
+ * - Add metadata fields defined in IDE.getResponseBodyData method,
+ * - If `responseBody` is falsy, returns an object with no body, zero size and default metadata values.
  * - If the serialized size of `responseBody` exceeds `MAX_BODY_SIZE`, the
  *   body is sliced to `TRUNCATED_LENGTH` characters and marked as truncated.
- * - Otherwise returns the original body and its computed byte size.
+ * - Otherwise returns the original body, its computed byte size and metadata
  *
  * Returns an InternalResponseBodyData containing the (possibly truncated)
  * body, a `wasTruncated` flag, and the measured `dataSize` in bytes.
@@ -99,13 +108,13 @@ const TRUNCATED_LENGTH = 1000; // 1000 characters
  * @param responseBody The string body to inspect and potentially truncate.
  * @returns An InternalResponseBodyData with `body`, `wasTruncated` and `dataSize`.
  */
-function truncateResponseBody(
+function parseResponseBodyData(
   responseBody: string | undefined,
   base64Encoded: boolean = false,
   type: ResponseBodyDataType = ResponseBodyDataType.Other
 ): InternalResponseBodyData {
   if (!responseBody) {
-    return { body: undefined, wasTruncated: false, base64Encoded, type, dataSize: 0 };
+    return DEFAULT_RESPONSE_BODY_DATA;
   }
 
   const dataSize = new Blob([responseBody]).size;
@@ -126,13 +135,13 @@ function truncateResponseBody(
 
 function handleReadError(error: unknown): InternalResponseBodyData {
   console.warn("Failed to read response body content:", error);
-  return truncateResponseBody(undefined);
+  return parseResponseBodyData(undefined);
 }
 
 /**
  * Image and octet-stream handling.
  */
-function readBlobAsBase64(blob: Blob): Promise<InternalResponseBodyData> {
+function readBlobAsBase64(blob: Blob, isImage?: boolean): Promise<InternalResponseBodyData> {
   return new Promise((resolve) => {
     const reader = new FileReader();
 
@@ -141,11 +150,14 @@ function readBlobAsBase64(blob: Blob): Promise<InternalResponseBodyData> {
       if (reader.result instanceof ArrayBuffer) {
         // convert ArrayBuffer to base64
         const uint8Array = new Uint8Array(reader.result);
-        textResult = dataToBase64(uint8Array as unknown as SerializedTypedArray);
+        textResult = dataToBase64(uint8Array);
       } else if (typeof reader.result === "string") {
         textResult = reader.result;
       }
-      resolve(truncateResponseBody(textResult, true, ResponseBodyDataType.Image));
+
+      const type = isImage ? ResponseBodyDataType.Image : ResponseBodyDataType.Other;
+
+      resolve(parseResponseBodyData(textResult, true, type));
     };
 
     reader.onerror = (error) => {
@@ -166,7 +178,7 @@ function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
     reader.onload = () => {
       const result = reader.result;
       const textResult = typeof result === "string" ? result : undefined;
-      resolve(truncateResponseBody(textResult, false, ResponseBodyDataType.Other));
+      resolve(parseResponseBodyData(textResult, false, ResponseBodyDataType.Other));
     };
 
     reader.onerror = (error) => {
@@ -212,14 +224,11 @@ async function readResponseText(
     const responseType = xhr.responseType;
 
     if (responseType === "" || responseType === "text") {
-      return truncateResponseBody(xhr.responseText);
+      return parseResponseBodyData(xhr.responseText);
     }
 
     if (responseType === "blob") {
-      const contentType =
-        xhr.getResponseHeader(ContentTypeHeader.Default) ||
-        xhr.getResponseHeader(ContentTypeHeader.LowerCase) ||
-        "";
+      const contentType = getContentTypeHeader(xhr);
       const isTextType = contentType.startsWith("text/");
       const isParsableApplicationType = Array.from(PARSABLE_APPLICATION_CONTENT_TYPES).some(
         (type) => contentType.startsWith(type)
@@ -228,7 +237,7 @@ async function readResponseText(
       const isOctetStream = contentType === "application/octet-stream";
 
       if (isImageType || isOctetStream) {
-        return readBlobAsBase64(xhr.response);
+        return readBlobAsBase64(xhr.response, isImageType);
       }
 
       if (isTextType || isParsableApplicationType) {
@@ -289,6 +298,8 @@ function reconstructTypedArray(serializedData: SerializedTypedArray): Uint8Array
 }
 
 function dataToBase64(array: SerializedTypedArray) {
+  // cannot be done as oneliner String.fromCharCode.apply(null, Array.from(array))
+  // because of Hermes' "Maximum call stack size exceeded" for large arrays
   const result = [];
   for (let char of array) {
     result.push(String.fromCharCode(char));
@@ -329,7 +340,7 @@ function deserializeRequestData(data: RequestData, contentType: string | undefin
   return data;
 }
 
-function getContentTypeHeaders(xhr: XMLHttpRequest): Record<string, string> {
+function getContentTypeHeader(xhr: XMLHttpRequest): string {
   // @ts-ignore - RN-specific property
   return xhr._headers[ContentTypeHeader.LowerCase] || xhr._headers[ContentTypeHeader.Default] || {};
 }
@@ -338,5 +349,5 @@ module.exports = {
   readResponseText,
   deserializeRequestData,
   mimeTypeFromResponseType,
-  getContentTypeHeaders,
+  getContentTypeHeader,
 };
