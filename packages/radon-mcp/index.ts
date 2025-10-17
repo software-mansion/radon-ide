@@ -13,24 +13,19 @@ import { readFileSync } from 'fs';
 import { join, resolve, normalize } from 'path';
 import { homedir } from 'os';
 
+const RETRY_DELAY_MS = 5000;
+
 interface RadonConfig {
   mcpServerUrl: string;
   workspaceFolder: string;
 }
 
 function normalizeWorkspacePath(workspacePath: string): string {
-  // Resolve the path to get absolute path and normalize separators
-  const resolvedPath = resolve(workspacePath);
-
-  // Normalize the path (removes redundant separators, resolves . and ..)
-  return normalize(resolvedPath);
+  return normalize(resolve(workspacePath));
 }
 
 function getWorkspaceConfig(normalizedPath: string): string {
-  // Generate MD5 hash of the normalized workspace path
   const hash = createHash('md5').update(normalizedPath).digest('hex');
-
-  // Construct the config file path
   const configPath = join(
     homedir(),
     'Library',
@@ -48,7 +43,6 @@ function getWorkspaceConfig(normalizedPath: string): string {
       throw new Error('mcpServerUrl not found in config file');
     }
 
-    // Verify that the workspace folder in the config matches our provided path
     if (config.workspaceFolder !== normalizedPath) {
       throw new Error(
         `Workspace folder mismatch: expected ${normalizedPath}, got ${config.workspaceFolder}`
@@ -61,58 +55,16 @@ function getWorkspaceConfig(normalizedPath: string): string {
   }
 }
 
-async function waitForConfigAndConnection(
-  normalizedPath: string
-): Promise<{ httpServerUrl: string; httpClient: Client }> {
-  while (true) {
-    let httpServerUrl: string;
-
-    try {
-      // Always read the config file fresh on each attempt
-      httpServerUrl = getWorkspaceConfig(normalizedPath);
-      console.error(`✓ Config file found: ${httpServerUrl}`);
-    } catch (error) {
-      console.error(`✗ Config file missing or invalid: ${error}`);
-      console.error('Retrying in 5 seconds...');
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-      continue;
-    }
-
-    try {
-      // Create the actual client that will be used for proxying
-      const httpClient = new Client({
-        name: 'radon-mcp-client',
-        version: '1.0.0',
-      });
-
-      // Test the connection with the actual client
-      const transport = new StreamableHTTPClientTransport(
-        new URL(httpServerUrl)
-      );
-      await httpClient.connect(transport);
-
-      // If we get here, both config and connection are successful
-      console.error(`✓ Server connection successful: ${httpServerUrl}`);
-      return { httpServerUrl, httpClient };
-    } catch (error) {
-      console.error(`✗ Server connection failed: ${error}`);
-      console.error('Retrying in 5 seconds...');
-      await new Promise((resolve) => setTimeout(resolve, 5000));
-    }
-  }
-}
-
 class MCPProxyServer {
   private server: Server;
-  private httpClient: Client;
-  private httpServerUrl: string;
-  private isConnected: boolean = false;
-  private abortController: AbortController | null = null;
+  private httpClient: Client | null = null;
+  private httpTransport: StreamableHTTPClientTransport | null = null;
+  private isConnecting: boolean = false;
+  private connectionTimeout: NodeJS.Timeout | null = null;
+  private normalizedPath: string;
 
-  constructor(httpServerUrl: string, httpClient: Client) {
-    this.httpServerUrl = httpServerUrl;
-    this.httpClient = httpClient;
-    this.isConnected = true; // Client is already connected
+  constructor(normalizedPath: string) {
+    this.normalizedPath = normalizedPath;
 
     // Create MCP server for stdio transport
     this.server = new Server(
@@ -130,94 +82,120 @@ class MCPProxyServer {
     this.setupHandlers();
   }
 
+  private async isConnectionLost(): Promise<boolean> {
+    if (!this.httpClient) {
+      return true;
+    }
+
+    try {
+      await this.httpClient.ping();
+      return false; // Connection is still alive
+    } catch (error) {
+      console.error('Ping failed, connection is lost:', error);
+      return true; // Connection is lost
+    }
+  }
+
+  private async checkAndHandleConnectionLoss(): Promise<void> {
+    if (await this.isConnectionLost()) {
+      if (this.isConnecting) {
+        return;
+      }
+
+      this.isConnecting = true;
+
+      console.error('Connection lost. Attempting to reconnect...');
+      await this.disconnect();
+      this.server.sendToolListChanged();
+      this.attemptConnection();
+    }
+  }
+
   private setupHandlers() {
-    // List tools handler
     this.server.setRequestHandler(ListToolsRequestSchema, async () => {
+      if (!this.httpClient) {
+        return { tools: [] };
+      }
+
       try {
-        if (!this.isConnected) {
-          throw new Error('Not connected to HTTP server');
-        }
         return await this.httpClient.listTools();
       } catch (error) {
         console.error('Failed to list tools:', error);
-        throw error;
+        this.checkAndHandleConnectionLoss();
+        return { tools: [] };
       }
     });
 
-    // Call tool handler
     this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+      if (!this.httpClient) {
+        throw new Error('Not connected to HTTP server');
+      }
+
       try {
-        if (!this.isConnected) {
-          throw new Error('Not connected to HTTP server');
-        }
         return await this.httpClient.callTool({
           name: request.params.name,
           arguments: request.params.arguments,
         });
       } catch (error) {
         console.error('Failed to call tool:', error);
+        this.checkAndHandleConnectionLoss();
         throw error;
       }
     });
   }
 
+  private async attemptConnection() {
+    try {
+      const httpServerUrl = getWorkspaceConfig(this.normalizedPath);
+      console.error(`✓ Config file found: ${httpServerUrl}`);
+
+      this.httpClient = new Client({
+        name: 'radon-mcp-client',
+        version: '1.0.0',
+      });
+
+      this.httpTransport = new StreamableHTTPClientTransport(
+        new URL(httpServerUrl)
+      );
+      await this.httpClient.connect(this.httpTransport);
+
+      this.isConnecting = false;
+
+      console.error(`✓ Server connection successful: ${httpServerUrl}`);
+      this.server.sendToolListChanged();
+    } catch (error) {
+      console.error(`✗ Connection attempt failed: ${error}`);
+      console.error('Retrying in 5 seconds...');
+      setTimeout(() => this.attemptConnection(), RETRY_DELAY_MS);
+    }
+  }
+
+  private async disconnect() {
+    await this.httpTransport?.close().catch(() => {});
+    await this.httpClient?.close().catch(() => {});
+    this.httpClient = null;
+    this.httpTransport = null;
+  }
+
   async start() {
-    // Client is already connected from waitForConfigAndConnection
-    // Set up connection monitoring
-    this.abortController = new AbortController();
-
-    // Monitor connection health periodically
-    const healthCheckInterval = setInterval(async () => {
-      try {
-        // Try to list tools to check if connection is still alive
-        await this.httpClient.listTools();
-      } catch (error) {
-        console.error('Connection lost. Shutting down...');
-        clearInterval(healthCheckInterval);
-        this.abortController?.abort();
-        process.exit(1);
-      }
-    }, 10000); // Check every 10 seconds
-
-    // Handle graceful shutdown
-    process.on('SIGINT', () => {
-      console.error('Received SIGINT. Shutting down...');
-      clearInterval(healthCheckInterval);
-      this.abortController?.abort();
-      process.exit(0);
-    });
-
-    process.on('SIGTERM', () => {
-      console.error('Received SIGTERM. Shutting down...');
-      clearInterval(healthCheckInterval);
-      this.abortController?.abort();
-      process.exit(0);
-    });
-
-    // Start the MCP server
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
     console.error('MCP Proxy Server started successfully');
+
+    this.isConnecting = true;
+    this.attemptConnection();
   }
 }
 
 async function main() {
   try {
-    // Get workspace path from command line arguments or use current directory
     const workspacePath = process.argv[2] || process.cwd();
-
-    // Normalize the workspace path once
     const normalizedPath = normalizeWorkspacePath(workspacePath);
 
     console.error(`Using workspace: ${normalizedPath}`);
-    console.error('Waiting for Radon AI to be ready...');
+    console.error('Starting MCP Proxy Server...');
 
-    // Wait for config file and connection with retries
-    const { httpServerUrl, httpClient } = await waitForConfigAndConnection(
-      normalizedPath
-    );
-
-    const proxyServer = new MCPProxyServer(httpServerUrl, httpClient);
+    const proxyServer = new MCPProxyServer(normalizedPath);
     await proxyServer.start();
   } catch (error) {
     console.error('Failed to start MCP proxy server:', error);
@@ -225,7 +203,4 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error('Unhandled error:', error);
-  process.exit(1);
-});
+main();
