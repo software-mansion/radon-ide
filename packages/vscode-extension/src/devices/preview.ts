@@ -28,7 +28,7 @@ enum MultimediaType {
 export class PreviewError extends Error {
   constructor(
     message: string,
-    public reason: PreviewErrorReason
+    public reason: PreviewErrorReason | null = null
   ) {
     super(message);
   }
@@ -113,22 +113,20 @@ export class Preview implements Disposable {
       cwd: path.dirname(simControllerBinary),
     });
     this.subprocess = subprocess;
-    this.disposables.push(
-      new Disposable(async () => {
-        const EXIT_SIM_SERVER_TIMEOUT = 1000;
-        subprocess.stdin?.end();
-        this.subprocess = undefined;
-        const result = await Promise.race([
-          subprocess,
-          sleep(EXIT_SIM_SERVER_TIMEOUT).then(() => "timeout"),
-        ]);
-        if (result === "timeout") {
-          Logger.debug(`sim-server did not exit within ${EXIT_SIM_SERVER_TIMEOUT}ms, killing it`);
-          subprocess.kill("SIGKILL");
-        }
-      })
-    );
-
+    subprocess.then(() => {
+      this.closedEventEmitter.fire();
+    });
+    subprocess.catch((error) => {
+      if (error.exitCode === 1) {
+        this.closedEventEmitter.fire(
+          new PreviewError("Device disconnected.", PreviewErrorReason.StreamClosed)
+        );
+      } else {
+        this.closedEventEmitter.fire(
+          new PreviewError("Device screen mirroring closed unexpectedly.")
+        );
+      }
+    });
     this.tokenChangeListener = watchLicenseTokenChange((token) => {
       if (token) {
         this.sendCommandOrThrow(`token ${token}\n`);
