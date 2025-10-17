@@ -1,4 +1,10 @@
-import { NetworkRequestInitiator, RequestData, ResponseBodyDataType, ResponseData, TimelineEvent } from "./network";
+import {
+  NetworkRequestInitiator,
+  RequestData,
+  ResponseBodyDataType,
+  ResponseData,
+  TimelineEvent,
+} from "./network";
 import { NetworkEvent } from "./panelMessageProtocol";
 
 export interface NetworkLog {

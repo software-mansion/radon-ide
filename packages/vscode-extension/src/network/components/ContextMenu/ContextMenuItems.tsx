@@ -217,7 +217,10 @@ export function OpenInEditorItem({ networkLog, responseBodyData }: OpenInEditorI
     <ContextMenu.Item
       className="radix-context-menu-item"
       disabled={!responseBodyData?.body || !networkLog?.response}
-      onSelect={() => networkLog && fetchAndOpenResponseInEditor(networkLog, responseBodyData?.base64Encoded ?? false)}>
+      onSelect={() =>
+        networkLog &&
+        fetchAndOpenResponseInEditor(networkLog, responseBodyData?.base64Encoded ?? false)
+      }>
       <span className="codicon codicon-chrome-restore"></span>
       Open Response
     </ContextMenu.Item>
