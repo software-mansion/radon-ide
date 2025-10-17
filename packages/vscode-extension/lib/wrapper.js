@@ -155,7 +155,6 @@ function extractComponentStack(startNode, viewDataHierarchy) {
 
 function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, callback) {
   const { width: screenWidth, height: screenHeight } = DimensionsObserver.getScreenDimensions();
-  console.log("foobar aaa:", x * screenWidth, y * screenHeight);
   RNInternals.getInspectorDataForViewAtPoint(
     mainContainerRef.current,
     x * screenWidth,
@@ -252,18 +251,18 @@ function viewComponentTree(component, depth = 0) {
   return repr;
 }
 
-function viewComponentTreeFromRoot(mainContainerRef) {
-  /// const { width, height } = DimensionsObserver.getScreenDimensions();
+function viewComponentTreeFromRoot(mainContainerRef, x, y) {
+  const { width, height } = DimensionsObserver.getScreenDimensions();
 
-  // const center = {
-  //   x: width / 2,
-  //   y: height / 2,
-  // };
+  const center = {
+    x: x * width, // width / 2,
+    y: y * height, // height / 2,
+  };
 
   RNInternals.getInspectorDataForViewAtPoint(
     mainContainerRef.current,
-    225.0, // center.x,
-    700.0, // center.y,
+    center.x,
+    center.y,
     (viewData) => {
       const comp = viewData.closestPublicInstance.__internalInstanceHandle;
       const repr = viewComponentTree(comp);
@@ -435,10 +434,9 @@ export function AppWrapper({ children, initialProps, fabric }) {
         case "inspect":
           const { id, x, y, requestStack } = data;
 
-          viewComponentTreeFromRoot(mainContainerRef);
+          viewComponentTreeFromRoot(mainContainerRef, x, y);
 
           getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, (inspectorData) => {
-            console.log("inspectorData:", inspectorData);
             inspectorBridge.sendMessage({
               type: "inspectData",
               data: {
