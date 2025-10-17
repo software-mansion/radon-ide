@@ -17,7 +17,7 @@ interface ResponseTabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
   editorThemeData?: ThemeData;
-  isActive: boolean;
+  isActive?: boolean;
 }
 
 interface ResponseBodyContentProps {
@@ -27,7 +27,7 @@ interface ResponseBodyContentProps {
   language: string;
   editorThemeData?: ThemeData;
   base64Encoded: boolean;
-  isActive: boolean;
+  isActive?: boolean;
 }
 
 function ResponseTooLargeWarning() {

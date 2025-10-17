@@ -7,7 +7,6 @@ import { ResponseBodyData, ResponseBodyDataType } from "../types/network";
 import { NetworkEvent } from "../types/panelMessageProtocol";
 import { ThemeData } from "../../common/theme";
 import { useNetwork } from "../providers/NetworkProvider";
-import { useTabBar } from "../providers/TabBarProvider";
 import useThemeExtractor from "../hooks/useThemeExtractor";
 import HeadersTab from "./Tabs/HeadersTab";
 import PayloadTab from "./Tabs/PayloadTab";
@@ -34,20 +33,21 @@ interface TabProps {
 }
 
 interface Tab {
+  Tab: React.FC<TabProps>;
   title: string;
   props?: Omit<TabProps, "networkLog">;
   warning?: boolean;
-  Tab: React.FC<TabProps>;
-  hideTab?: boolean;
+  hide?: boolean;
+  showTabBar?: boolean;
 }
 
 const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLogDetailsProps) => {
   const headerRef = useRef<VscodeTabHeaderElement>(null);
+  const tabBarRef = useRef<HTMLDivElement>(null);
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
   const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
 
   const { getResponseBody } = useNetwork();
-  const { height: tabBarHeight } = useTabBar();
   const themeData = useThemeExtractor();
 
   const { wasTruncated = false, type = ResponseBodyDataType.Other } = responseBodyData || {};
@@ -80,7 +80,8 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
         title: "Preview",
         Tab: PreviewTab,
         props: { responseBodyData },
-        hideTab: !isImage,
+        hide: !isImage,
+        showTabBar: true,
       },
       {
         title: "Response",
@@ -98,6 +99,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
 
   const calculateScrollableHeight = (): number => {
     const header = headerRef.current;
+    const tabBarHeight = tabBarRef.current?.clientHeight || 0;
 
     if (!parentHeight || !header) {
       return 0;
@@ -110,7 +112,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
   // Auto-switch from hidden Preview tab to Response tab
   useEffect(() => {
     const currentTab = tabs[selectedTabIndex];
-    if (currentTab?.title === "Preview" && currentTab.hideTab) {
+    if (currentTab?.title === "Preview" && currentTab.hide) {
       const responseTabIndex = tabs.findIndex((tab) => tab.title === "Response");
       const fallbackIndex = responseTabIndex !== -1 ? responseTabIndex : 0;
       setSelectedTabIndex(fallbackIndex);
@@ -131,12 +133,12 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
         onVscTabsSelect={handleTabSelect}
         data-testid="network-panel-log-details-tabs"
         selectedIndex={selectedTabIndex}>
-        {tabs.map(({ title, Tab, props, warning, hideTab }, index) => (
+        {tabs.map(({ title, Tab, props, warning, hide, showTabBar }, index) => (
           <Fragment key={title}>
             <VscodeTabHeader
               ref={headerRef}
               className="network-log-details-tab-header"
-              style={{ display: hideTab ? "none" : "flex" }}
+              style={{ display: hide ? "none" : "flex" }}
               data-testid={`network-panel-tab-header-${title.toLowerCase()}`}>
               <div>
                 {title}
@@ -144,12 +146,12 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
               </div>
             </VscodeTabHeader>
             <VscodeTabPanel data-testid={`network-panel-tab-panel-${title.toLowerCase()}`}>
-                <>
-                  <TabScrollable height={calculateScrollableHeight()}>
-                    <Tab networkLog={networkLog} isActive={index === selectedTabIndex} {...props} />
-                  </TabScrollable>
-                  <TabBar />
-                </>
+              <>
+                <TabScrollable height={calculateScrollableHeight()}>
+                  <Tab networkLog={networkLog} isActive={index === selectedTabIndex} {...props} />
+                </TabScrollable>
+                {showTabBar && <TabBar ref={tabBarRef} />}
+              </>
             </VscodeTabPanel>
           </Fragment>
         ))}

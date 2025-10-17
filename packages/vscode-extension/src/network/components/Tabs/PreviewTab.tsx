@@ -11,6 +11,7 @@ import "./PayloadAndResponseTab.css";
 interface PreviewTabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
+  isActive?: boolean;
 }
 
 interface ImageMetadata {
@@ -56,16 +57,22 @@ function MetadataTabBar({ metadata }: MetadataTabBarProps) {
   );
 }
 
-function PreviewTab({ networkLog, responseBodyData }: PreviewTabProps) {
+function PreviewTab({ networkLog, responseBodyData, isActive }: PreviewTabProps) {
   const imageRef = useRef<HTMLImageElement>(null);
-  const { setContent: setTabBarContent, setIsVisible: setIsTabBarVisible } = useTabBar();
+  const { setContent: setTabBarContent } = useTabBar();
 
   const [loading, setLoading] = useState(!imageRef.current?.complete);
   const [error, setError] = useState(false);
   const [metadata, setMetadata] = useState<ImageMetadata | null>(null);
 
   // Extract response body data
-  const { body, fullBody, base64Encoded = false, wasTruncated = false, type = ResponseBodyDataType.Other } = responseBodyData || {};
+  const {
+    body,
+    fullBody,
+    base64Encoded = false,
+    wasTruncated = false,
+    type = ResponseBodyDataType.Other,
+  } = responseBodyData || {};
 
   // Determine preview availability
   const contentType = getNetworkResponseContentType(networkLog.response);
@@ -109,12 +116,6 @@ function PreviewTab({ networkLog, responseBodyData }: PreviewTabProps) {
       size: imageSize,
     });
   }, [loading, networkLog.requestId, contentType, imageSize]);
-
-  // Manage info bar visibility
-  useEffect(() => {
-    setIsTabBarVisible(true);
-    return () => setIsTabBarVisible(false);
-  }, [setIsTabBarVisible]);
 
   // Update info bar content with metadata
   useEffect(() => {
