@@ -1,22 +1,37 @@
 import path from "path";
-import { Disposable, workspace } from "vscode";
+import assert from "assert";
+import { Disposable, EventEmitter, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { TouchPoint, DeviceButtonType } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceRotation, FrameRateReport, MultimediaData } from "../common/State";
+import {
+  DeviceRotation,
+  FrameRateReport,
+  MultimediaData,
+  PreviewErrorReason,
+} from "../common/State";
 import { sleep } from "../utilities/retry";
 
 interface MultimediaPromiseHandlers {
   resolve: (value: MultimediaData) => void;
-  reject: (reason?: any) => void;
+  reject: (reason?: unknown) => void;
 }
 
 enum MultimediaType {
   Video = "video",
   Screenshot = "screenshot",
+}
+
+export class PreviewError extends Error {
+  constructor(
+    message: string,
+    public reason: PreviewErrorReason
+  ) {
+    super(message);
+  }
 }
 
 export class Preview implements Disposable {
@@ -28,7 +43,13 @@ export class Preview implements Disposable {
   public streamURL?: string;
   private replaysStarted = false;
 
-  constructor(private args: string[]) {}
+  private closedEventEmitter = new EventEmitter<void | PreviewError>();
+
+  public readonly onClosed = this.closedEventEmitter.event;
+
+  constructor(private args: string[]) {
+    this.disposables.push(new Disposable(this.stop), this.closedEventEmitter);
+  }
 
   dispose() {
     disposeAll(this.disposables);
@@ -52,25 +73,37 @@ export class Preview implements Disposable {
       throw new Error("sim-server process not available");
     }
 
-    let resolvePromise: (value: MultimediaData) => void;
-    let rejectPromise: (reason?: any) => void;
-    const promise = new Promise<MultimediaData>((resolve, reject) => {
-      resolvePromise = resolve;
-      rejectPromise = reject;
-    });
+    const { promise, resolve, reject } = Promise.withResolvers<MultimediaData>();
 
     const lastPromise = this.multimediaPromises.get(id);
     if (lastPromise) {
       promise.then(lastPromise.resolve, lastPromise.reject);
     }
 
-    const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
-    this.multimediaPromises.set(id, newPromiseHandler);
+    this.multimediaPromises.set(id, { resolve, reject });
     stdin.write(`${type} ${id} ${type === "video" ? "save " : ""}-r ${rotation}\n`);
     return promise;
   }
 
-  async start() {
+  private stop = async () => {
+    if (this.subprocess === undefined) {
+      return;
+    }
+    const subprocess = this.subprocess;
+    const EXIT_SIM_SERVER_TIMEOUT = 1000;
+    subprocess.stdin?.end();
+    const result = await Promise.race([
+      subprocess,
+      sleep(EXIT_SIM_SERVER_TIMEOUT).then(() => "timeout"),
+    ]);
+    if (result === "timeout") {
+      Logger.debug(`sim-server did not exit within ${EXIT_SIM_SERVER_TIMEOUT}ms, killing it`);
+      subprocess.kill("SIGKILL");
+    }
+  };
+
+  public async start() {
+    assert(this.subprocess === undefined, "Preview.start() is only called once");
     const simControllerBinary = simulatorServerBinary();
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
@@ -108,16 +141,17 @@ export class Preview implements Disposable {
         // we expect the preview server to produce a line with the URL
         // if it doesn't do that and exists w/o error, we still want to reject
         // the promise to prevent the caller from waiting indefinitely
-        reject(new Error("Preview server exited without URL"));
+        reject(new PreviewError("Preview server exited without URL", PreviewErrorReason.EarlyExit));
       });
 
       lineReader(subprocess).onLineRead((line, stderr) => {
         if (stderr) {
           if (line.match(/Device .+ is not connected or not available/)) {
             reject(
-              new Error(
+              new PreviewError(
                 "Could not connect to the device. " +
-                  "Verify the selected device is connected to your computer and try again."
+                  "Verify the selected device is connected to your computer and try again.",
+                PreviewErrorReason.DeviceNotConnected
               )
             );
           }
@@ -281,7 +315,7 @@ export class Preview implements Disposable {
   ) {
     // transform touch coordinates to account for different device orientations before
     // translation and sending them to the simulator-server.
-    const transformedTouches = touches.map((touch, i) => {
+    const transformedTouches = touches.map((touch) => {
       const { xRatio: x, yRatio: y } = touch;
       switch (rotation) {
         // 90° anticlockwise map (x,y) to (1-y, x)

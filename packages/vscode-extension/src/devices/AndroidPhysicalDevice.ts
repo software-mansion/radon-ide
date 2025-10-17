@@ -1,5 +1,6 @@
 import path from "path";
 import { Disposable } from "vscode";
+import _ from "lodash";
 import {
   DeviceSettings,
   AndroidPhysicalDeviceInfo,
@@ -15,7 +16,6 @@ import { extensionContext } from "../utilities/extensionContext";
 import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
 import { DevicesProvider } from "./DevicesProvider";
 import { StateManager } from "../project/StateManager";
-import _ from "lodash";
 
 export class AndroidPhysicalDevice extends AndroidDevice {
   constructor(
@@ -33,10 +33,12 @@ export class AndroidPhysicalDevice extends AndroidDevice {
   async bootDevice(): Promise<void> {
     // NOOP
   }
-  protected changeSettings(settings: DeviceSettings): Promise<boolean> {
+  // TODO:
+  protected changeSettings(_settings: DeviceSettings): Promise<boolean> {
     // throw new Error("Method not implemented.");
     return Promise.resolve(false);
   }
+  // TODO:
   public getClipboard(): Promise<string | void> {
     // throw new Error("Method not implemented.");
     return Promise.resolve("");

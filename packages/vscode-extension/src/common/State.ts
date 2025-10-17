@@ -253,11 +253,24 @@ export type InstallationErrorDescriptor = {
   reason: InstallationErrorReason;
 };
 
+export enum PreviewErrorReason {
+  DeviceNotConnected = "device-not-connected",
+  EarlyExit = "early-exit",
+  StreamClosed = "stream-closed",
+}
+
+export type PreviewErrorDescriptor = {
+  kind: "preview";
+  message: string;
+  reason: PreviewErrorReason;
+};
+
 export type FatalErrorDescriptor =
   | MetroErrorDescriptor
   | BuildErrorDescriptor
   | DeviceErrorDescriptor
-  | InstallationErrorDescriptor;
+  | InstallationErrorDescriptor
+  | PreviewErrorDescriptor;
 
 export type DeviceSessionStatus = "starting" | "running" | "fatalError";
 
