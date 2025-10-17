@@ -252,7 +252,7 @@ export enum PreviewErrorReason {
 export type PreviewErrorDescriptor = {
   kind: "preview";
   message: string;
-  reason: PreviewErrorReason;
+  reason: PreviewErrorReason | null;
 };
 
 export type FatalErrorDescriptor =

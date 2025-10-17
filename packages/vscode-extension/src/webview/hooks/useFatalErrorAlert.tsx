@@ -15,6 +15,7 @@ import {
   InstallationErrorReason,
   MetroErrorDescriptor,
   PreviewErrorDescriptor,
+  PreviewErrorReason,
 } from "../../common/State";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
@@ -180,6 +181,15 @@ function createMetroErrorAlert(metroErrorDescriptor: MetroErrorDescriptor) {
 
 function createPreviewErrorAlert(previewErrorDescriptor: PreviewErrorDescriptor) {
   let description = previewErrorDescriptor.message;
+
+  switch (previewErrorDescriptor.reason) {
+    case PreviewErrorReason.StreamClosed: {
+      description =
+        "Device screen mirroring ended while the application was running. " +
+        "Make sure the device is connected and try again.";
+    }
+  }
+
   return {
     id: FATAL_ERROR_ALERT_ID,
     title: "The device was disconnected from Radon",
