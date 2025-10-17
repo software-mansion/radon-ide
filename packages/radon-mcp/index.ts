@@ -15,6 +15,7 @@ import { homedir } from 'os';
 
 interface RadonConfig {
   mcpServerUrl: string;
+  workspaceFolder: string;
 }
 
 function normalizeWorkspacePath(workspacePath: string): string {
@@ -45,6 +46,13 @@ function getWorkspaceConfig(normalizedPath: string): string {
 
     if (!config.mcpServerUrl) {
       throw new Error('mcpServerUrl not found in config file');
+    }
+
+    // Verify that the workspace folder in the config matches our provided path
+    if (config.workspaceFolder !== normalizedPath) {
+      throw new Error(
+        `Workspace folder mismatch: expected ${normalizedPath}, got ${config.workspaceFolder}`
+      );
     }
 
     return config.mcpServerUrl;
