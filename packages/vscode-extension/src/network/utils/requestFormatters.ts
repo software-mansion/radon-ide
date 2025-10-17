@@ -1,3 +1,4 @@
+import { ContentTypeHeader, ResponseData } from "../types/network";
 import { NetworkLog } from "../types/networkLog";
 
 function prettyStringify(obj: unknown): string {
@@ -317,4 +318,11 @@ export function determineLanguage(contentType: string, body: string): string {
   }
 
   return "plaintext";
+}
+
+export function getNetworkResponseContentType(
+  response: ResponseData | Response | undefined
+): string {
+  const headers = (response?.headers || {}) as Record<string, string>;
+  return headers[ContentTypeHeader.Default] || headers[ContentTypeHeader.LowerCase] || "";
 }

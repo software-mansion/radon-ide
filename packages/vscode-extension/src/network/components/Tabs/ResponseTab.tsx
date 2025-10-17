@@ -1,5 +1,5 @@
 import { useNetwork } from "../../providers/NetworkProvider";
-import { determineLanguage, getFormattedRequestBody } from "../../utils/requestFormatters";
+import { determineLanguage, getFormattedRequestBody, getNetworkResponseContentType } from "../../utils/requestFormatters";
 import IconButton from "../../../webview/components/shared/IconButton";
 import TabActionButtons from "./TabActionButtons";
 import HighlightedCodeBlock from "./HighlightedCodeBlock";
@@ -7,7 +7,6 @@ import { ResponseBodyData } from "../../types/network";
 import { NetworkLog } from "../../types/networkLog";
 import "./PayloadAndResponseTab.css";
 import { ThemeData } from "../../../common/theme";
-import { ContentTypeHeader } from "../../types/network";
 import { NetworkEvent } from "../../types/panelMessageProtocol";
 
 interface ResponseTabProps {
@@ -93,10 +92,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
   // For images, display the base64-encoded body as-is without formatting
   const responseData = base64Encoded ? body : getFormattedRequestBody(body);
 
-  const contentType =
-    networkLog.response?.headers?.[ContentTypeHeader.Default] ||
-    networkLog.response?.headers?.[ContentTypeHeader.LowerCase] ||
-    "";
+  const contentType = getNetworkResponseContentType(networkLog.response);
 
   // For base64-encoded images, use plaintext to avoid syntax highlighting
   const language = base64Encoded

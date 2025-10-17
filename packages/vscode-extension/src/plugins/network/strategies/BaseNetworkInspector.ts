@@ -8,10 +8,12 @@ import {
 } from "../../../network/types/panelMessageProtocol";
 import { RequestData, RequestOptions } from "../../../network/types/network";
 import { Logger } from "../../../Logger";
-import { determineLanguage } from "../../../network/utils/requestFormatters";
+import {
+  determineLanguage,
+  getNetworkResponseContentType,
+} from "../../../network/utils/requestFormatters";
 import { openContentInEditor, showDismissableError } from "../../../utilities/editorOpeners";
 import { extractTheme } from "../../../utilities/themeExtractor";
-import { ContentTypeHeader } from "../../../network/types/network";
 
 export abstract class BaseNetworkInspector implements NetworkInspector {
   protected broadcastListeners: BroadcastListener[] = [];
@@ -147,7 +149,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
 
     try {
       const response = await this.fetchResponse(requestData);
-      const contentType = response.headers.get(ContentTypeHeader.Default) || "";
+      const contentType = getNetworkResponseContentType(response);
 
       if (base64Encoded) {
         const responseBody = await this.responseToBase64(response);

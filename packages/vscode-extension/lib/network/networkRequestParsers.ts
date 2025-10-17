@@ -22,8 +22,8 @@ export type InternalResponseBodyData = {
 // src/network/typesc/network.ts
 //  due to import conflicts from "src" directory
 export const ContentTypeHeader = {
-  IOS: "Content-Type",
-  ANDROID: "content-type",
+  Default: "Content-Type",
+  LowerCase: "content-type",
 } as const;
 
 interface SerializedTypedArray {
@@ -217,8 +217,8 @@ async function readResponseText(
 
     if (responseType === "blob") {
       const contentType =
-        xhr.getResponseHeader(ContentTypeHeader.IOS) ||
-        xhr.getResponseHeader(ContentTypeHeader.ANDROID) ||
+        xhr.getResponseHeader(ContentTypeHeader.Default) ||
+        xhr.getResponseHeader(ContentTypeHeader.LowerCase) ||
         "";
       const isTextType = contentType.startsWith("text/");
       const isParsableApplicationType = Array.from(PARSABLE_APPLICATION_CONTENT_TYPES).some(
@@ -329,9 +329,14 @@ function deserializeRequestData(data: RequestData, contentType: string | undefin
   return data;
 }
 
+function getContentTypeHeaders(xhr: XMLHttpRequest): Record<string, string> {
+  // @ts-ignore - RN-specific property
+  return xhr._headers[ContentTypeHeader.LowerCase] || xhr._headers[ContentTypeHeader.Default] || {};
+}
+
 module.exports = {
   readResponseText,
   deserializeRequestData,
   mimeTypeFromResponseType,
-  ContentTypeHeader,
+  getContentTypeHeaders,
 };

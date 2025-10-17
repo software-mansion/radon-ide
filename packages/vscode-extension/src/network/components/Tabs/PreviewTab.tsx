@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { NetworkLog, NetworkLogColumn } from "../../types/networkLog";
-import { ContentTypeHeader, ResponseBodyData } from "../../types/network";
-import { isPreviewableImage } from "../../utils/requestFormatters";
+import { ResponseBodyData } from "../../types/network";
+import { getNetworkResponseContentType, isPreviewableImage } from "../../utils/requestFormatters";
 import { NetworkEvent } from "../../types/panelMessageProtocol";
 import { useLogDetailsBar } from "../../providers/LogDetailsBar";
 import { getNetworkLogValue } from "../../utils/networkLogParsers";
@@ -26,11 +26,6 @@ const calculateGCD = (a: number, b: number): number => (b === 0 ? a : calculateG
 const calculateAspectRatio = (width: number, height: number): string => {
   const divisor = calculateGCD(width, height);
   return `${width / divisor}:${height / divisor}`;
-};
-
-const getContentType = (networkLog: NetworkLog): string => {
-  const headers = networkLog.response?.headers || {};
-  return headers[ContentTypeHeader.Default] || headers[ContentTypeHeader.LowerCase] || "";
 };
 
 const createImageUrl = (contentType: string, body: string, base64Encoded: boolean): string => {
@@ -63,7 +58,7 @@ function PreviewTab({ networkLog, responseBodyData }: PreviewTabProps) {
   const { body, fullBody, base64Encoded = false, wasTruncated = false } = responseBodyData || {};
 
   // Determine preview availability
-  const contentType = getContentType(networkLog);
+  const contentType = getNetworkResponseContentType(networkLog.response);
   const canPreview = isPreviewableImage(contentType);
   const imageSize = getNetworkLogValue(networkLog, NetworkLogColumn.Size) || "";
 
