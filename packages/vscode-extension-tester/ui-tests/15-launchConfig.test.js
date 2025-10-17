@@ -1,5 +1,5 @@
-import { assert } from "chai";
 import * as fs from "fs";
+import { assert } from "chai";
 import { WebView, EditorView, Key, By } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
