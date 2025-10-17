@@ -1,3 +1,7 @@
+.tableDisplay {
+  padding-top: 40px;
+}
+
 .title {
   color: var(--ifm-color-primary);
   text-align: center;
@@ -14,7 +18,7 @@
 
 .planColumns {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   border-bottom: var(--radon-border-layout);
   background-color: var(--swm-background);
   position: sticky;
@@ -24,7 +28,7 @@
 
 .table {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
   border-bottom: var(--radon-border-layout);
 }
 
@@ -45,6 +49,7 @@
   gap: 4px;
   text-align: center;
   height: 100%;
+  color: var(--ifm-color-primary);
 }
 
 .valueCell p {
@@ -70,4 +75,21 @@
 
 p.notIncluded {
   color: var(--radon-subheading);
+}
+
+@media (max-width: 1300px) {
+  .container {
+    margin: 80px 24px 0;
+  }
+}
+@media (max-width: 1120px) {
+  .valueCell {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .tableDisplay {
+    display: none;
+  }
 }

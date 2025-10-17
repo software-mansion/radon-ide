@@ -107,36 +107,20 @@
   overflow: hidden;
 }
 
-.progress {
+.progressBg {
+  width: 100%;
+  border-bottom: var(--radon-border-layout);
+}
+
+.progressBar {
   display: flex;
   height: 4px;
   background: transparent;
-  border-bottom: var(--radon-border-layout);
   flex-direction: column;
   justify-content: center;
   align-items: flex-start;
   align-self: stretch;
-}
-
-.progressBar {
-  height: 4px;
-}
-
-.progressMoved .progressBar {
-  width: 100%;
   background-color: var(--radon-gradient-green);
-  animation: progressAnimation 6.6s infinite;
-}
-
-@keyframes progressAnimation {
-  0% {
-    width: 0%;
-    background-color: var(--radon-gradient-green);
-  }
-  100% {
-    width: 100%;
-    background-color: var(--radon-gradient-green);
-  }
 }
 
 @media (max-width: 1024px) {

@@ -73,14 +73,6 @@
   color: var(--radon-gradient-green);
 }
 
-.try {
-  color: var(--radon-sub-subheading);
-
-  font-size: 16px;
-  line-height: 24px;
-  margin: 0;
-}
-
 .radonIconGreen {
   position: absolute;
   top: 50%;

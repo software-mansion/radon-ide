@@ -8,16 +8,6 @@
   align-self: stretch;
   height: 40%;
 }
-.cardMiddle {
-  display: flex;
-  padding: 40px;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 16px;
-  flex: 1 0 0;
-  align-self: stretch;
-  height: 30%;
-}
 
 .cardButton {
   display: flex;

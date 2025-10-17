@@ -4,23 +4,16 @@
   align-items: center;
 }
 
-.headerWrapper {
-  margin: 0 auto;
-
-  padding: 0 40px;
-}
-
 .titleContainer {
   gap: 24px;
   width: 100%;
   max-width: 1280px;
   display: flex;
   flex-direction: column;
+  padding: 80px 0 40px 0;
 }
 
 .headingLabel {
-  margin-top: 60px;
-  margin-bottom: 20px;
   text-align: center;
   text-wrap: balance;
   font-size: 64px;
@@ -32,7 +25,6 @@
 
 .subheadingLabel {
   text-align: center;
-  text-wrap: balance;
   font-weight: 400;
   font-size: 20px;
   margin-bottom: 32px;
@@ -40,7 +32,7 @@
 }
 
 @media (max-width: 767px) {
-  .headerWrapper {
+  .titleContainer {
     padding: 40px 24px 24px;
   }
   .headingLabel {
@@ -52,8 +44,6 @@
   }
   .subheadingLabel {
     text-align: left;
-    text-wrap: balance;
-    font-weight: 400;
     font-size: 16px;
     margin: 0;
   }

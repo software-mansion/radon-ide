@@ -4,7 +4,9 @@
   flex-direction: column;
   gap: 16px;
   border-left: var(--radon-border-layout);
+  justify-content: space-between;
 }
+
 .planDetails {
   display: flex;
   flex-direction: column;

@@ -163,7 +163,7 @@
   --radon-border-grid-dark: var(--radon-color-gray-dark-800);
   --radon-border-grid-light: var(--radon-color-gray-light-200);
   --radon-border-grid-subtle-light: var(--radon-color-gray-light-100);
-  --radon-border-accent-dark: var(--swm-green-light-100);
+  --radon-border-accent: var(--swm-green-light-100);
 
   /* ---------------- Badge ---------------- */
   --radon-badge-text-dark: var(--radon-color-white-light-100);
@@ -180,6 +180,7 @@
 
   --radon-border-grid-subtle: var(--radon-border-grid-subtle-light);
   --radon-border: var(--radon-border-grid-light);
+  --radon-border-highlight: var(--radon-border-accent);
 
   --radon-button: var(--radon-button-primary-background-light);
   --radon-button-hover: var(--radon-button-primary-background-hover-light);
@@ -240,7 +241,7 @@
 
   /* Typography */
   --ifm-heading-color: var(--ifm-color-primary);
-  --ifm-font-color-base: var(--swm-navy-light-100);
+  --ifm-font-color-base: var(--ifm-color-primary);
   --radon-sub-subheading: var(--ifm-color-primary);
 
   /* Tabs */

@@ -64,7 +64,6 @@ const LearnMoreFooter = () => {
         <div className={styles.buttonContainer}>
           <DownloadButtons />
         </div>
-        <p className={styles.try}>Try 30 days for free. No sign up or credit card required.</p>
       </div>
       {isLanding && (
         <div className={styles.radonIconGreen}>

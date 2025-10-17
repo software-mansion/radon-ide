@@ -1,101 +1,103 @@
 .list {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, minmax(275px, 480px));
   gap: 40px;
   list-style: none;
-  padding: 0 40px;
-  margin: 24px 0 48px;
-}
-.container {
-  border: 1px solid var(--swm-border);
-  padding: 8px;
-  display: flex;
-  width: 344px;
-  align-items: center;
-  gap: 8px;
+  overflow: hidden;
+  justify-content: center;
 }
 
-.plan_pay_annually {
+.planContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 40px 0;
+  gap: 40px;
+}
+
+.planBtnContainer {
   display: flex;
   align-items: center;
-  justify-content: center;
+  gap: 40px;
+}
+
+.plan_pay_individual {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 10px;
   font-weight: 500;
-  padding: 0 24px;
 }
 
-.plan_pay_annually__discount {
-  color: var(--radon-text-green-highlight);
-  font-weight: 500;
-  white-space: nowrap;
+.btnCenter {
+  justify-content: center;
 }
 
 .btn {
-  height: 40px;
-  background-color: transparent;
-  border: none;
-  padding: 0 40px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  width: 50%;
-  color: var(--ifm-color-primary);
-}
-
-.btn p {
-  white-space: nowrap;
-  font-size: 16px;
-  margin: 0;
   justify-content: center;
+  padding: 16px 0;
+
+  font-size: 18px;
+  font-family: Aeonik;
   font-weight: 500;
+
+  background-color: transparent;
+  color: var(--ifm-color-primary);
+  border: none;
+  opacity: 0.5;
 }
 
 .btn.active {
-  background-color: var(--radon-button);
-  color: var(--radon-button-text);
-}
-
-.btn.active .plan_pay_annually__discount {
-  color: var(--radon-button-text);
+  color: var(--ifm-color-primary);
+  border-bottom: 2px solid var(--radon-active-tab);
+  opacity: 1;
 }
 
 .btn:not(.active):hover {
-  background-color: var(--swm-border);
-  color: var(--radon-button-text);
-  transition: 0.5s;
-}
-
-.yearlyContainer {
-  display: flex;
-  padding: 8px 12px;
-  justify-content: center;
-  align-items: center;
-  gap: 4px;
-  flex: 1 0 0;
+  color: var(--ifm-color-primary);
+  border-bottom: 2px solid var(--radon-active-tab);
+  opacity: 1;
+  transition: opacity 0.3s;
+  cursor: pointer;
 }
 
 @media (max-width: 1024px) {
-  .list {
-    grid-template-columns: 1fr;
+  .plan_pay_individual {
     padding: 0;
-  }
-  .plan_pay_annually {
-    padding: 0;
-  }
-  .container {
-    width: 100%;
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 794px) {
+  .plan_pay_individual {
+    flex-direction: column;
+    justify-content: center;
+    gap: 24px;
+  }
+  .planBtnContainer {
+    gap: initial;
+    max-width: 344px;
+    width: 100%;
+    justify-content: space-evenly;
+  }
   .btn {
-    padding: 8px 12px;
+    width: 100%;
+    font-size: 16px;
   }
-  .btn p {
-    font-size: 14px;
-    white-space: wrap;
+}
+
+@media (max-width: 767px) {
+  .list {
+    gap: 24px;
   }
-  .plan_pay_annually__discount {
-    font-size: 14px;
+  .planContainer {
+    padding: 0;
+    gap: 32px;
+  }
+}
+
+@media (max-width: 640px) {
+  .list {
+    grid-template-columns: minmax(275px, 480px);
   }
 }

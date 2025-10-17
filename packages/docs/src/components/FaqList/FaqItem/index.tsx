@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import clsx from "clsx";
 import styles from "./styles.module.css";
-import { type Dispatch, useRef } from "react";
+import { useRef } from "react";
 import PlusIcon from "../PlusIcon";
 import MinusIcon from "../MinusIcon";
 
@@ -60,7 +60,7 @@ const FaqItem = ({ index, topic, answer, activeItems, setActiveItems }: FaqItemP
           style={{
             maxHeight:
               isExpanded && contentRef.current?.clientHeight
-                ? `calc(${contentRef.current?.clientHeight}px + 0.5rem)`
+                ? `calc(${contentRef.current?.clientHeight}px)`
                 : 0,
           }}>
           <div

@@ -1,6 +1,5 @@
 import React from "react";
 import Layout from "@theme/Layout";
-
 import styles from "./contact.module.css";
 import MailIcon from "../components/MailIcon";
 import MessageIcon from "../components/MessageIcon";
@@ -16,7 +15,7 @@ export default function Contact(): JSX.Element {
         <div className={clsx(styles.wrapper, "border-layout")}>
           <div className={styles.titleContainer}>
             <h1 className={styles.headingLabel}>Contact</h1>
-            <h3 className={styles.subheadingLabel}>Get in touch with our sales or support team.</h3>
+            <h3 className={styles.subheadingLabel}>Get in touch with our sales or support team:</h3>
           </div>
           <div className={styles.row}>
             <ContactCard

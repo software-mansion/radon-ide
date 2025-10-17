@@ -1,13 +1,18 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styles from "./styles.module.css";
 import FeatureCardLanding, { ActiveItem } from "./FeatureCardLanding";
 import { motion, AnimatePresence } from "motion/react";
 import useBaseUrl from "@docusaurus/useBaseUrl";
+import { useInView } from "react-intersection-observer";
+
+const PROGRESS_BAR_DURATION = 6000;
 
 export default function FeatureSliderLanding() {
   const [activeItem, setActiveItem] = useState<ActiveItem>({
     index: 0,
   });
+
+  const cardRefs = useRef([]);
 
   const features = [
     {
@@ -40,16 +45,24 @@ export default function FeatureSliderLanding() {
     },
   ];
 
+  const { ref: inViewRef, inView } = useInView({ threshold: 0.2 });
+
   useEffect(() => {
+    const node = cardRefs.current[activeItem.index];
+    if (node) inViewRef(node);
+  }, [activeItem.index, inViewRef]);
+
+  useEffect(() => {
+    if (!inView) return;
+
     const timeout = setTimeout(() => {
-      setActiveItem((prev) => {
-        const nextIndex = (prev.index + 1) % features.length;
-        return { index: nextIndex };
-      });
-    }, 6000);
+      setActiveItem((prev) => ({
+        index: (prev.index + 1) % features.length,
+      }));
+    }, PROGRESS_BAR_DURATION);
 
     return () => clearTimeout(timeout);
-  }, [activeItem]);
+  }, [inView, activeItem.index, features.length]);
 
   return (
     <div className={styles.container}>
@@ -57,11 +70,13 @@ export default function FeatureSliderLanding() {
         {features.map((feature, index) => (
           <FeatureCardLanding
             key={index}
+            ref={(el) => (cardRefs.current[index] = el)}
             index={index}
             badge={feature.badge}
             title={feature.title}
             content={feature.content}
             isExpanded={activeItem.index === index}
+            inView={inView}
             setActiveItem={setActiveItem}
           />
         ))}
