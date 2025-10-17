@@ -706,6 +706,7 @@ export class DeviceSession implements Disposable {
         error: {
           kind: "preview",
           message: e.message,
+          reason: e.reason,
         },
       });
     } else {
