@@ -29,6 +29,15 @@ const Pricing = () => {
     track("Pricing form submit");
   };
 
+  const handlePricingTableInstall = () => {
+    track("Pricing table install button");
+    onOpen("Pricing table modal");
+  };
+  const handlePricingCardInstall = () => {
+    track("Pricing card install button");
+    onOpen("Pricing card modal");
+  };
+
   return (
     <div className={clsx(styles.container, "border-layout")}>
       <div className={styles.titleContainer}>
@@ -39,7 +48,7 @@ const Pricing = () => {
       </div>
       <div className={styles.wrapper}>
         <PricingPlansList
-          handleFree={onOpen}
+          handleFree={handlePricingCardInstall}
           handleTeam={openBusinessCheckout}
           handlePro={openIndividualCheckout}
           handleEnterprise={() => scrollToForm(formRef)}
@@ -48,7 +57,7 @@ const Pricing = () => {
         />
       </div>
       <ComparePricingPlans
-        handleFree={onOpen}
+        handleFree={handlePricingTableInstall}
         handlePro={openIndividualCheckout}
         handleTeam={openBusinessCheckout}
         handleEnterprise={() => scrollToForm(formRef)}

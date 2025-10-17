@@ -33,10 +33,6 @@ export default function ComparePricingPlans({
   handleEnterprise,
 }: PricingProps) {
   const pricingPlanFeatures: FeatureItem[] = planFeaturesData;
-  const { onOpen } = useModal();
-  const handleTableInstall = () => {
-    track("Pricing table");
-  };
 
   return (
     <div className={styles.tableDisplay}>
@@ -49,10 +45,6 @@ export default function ComparePricingPlans({
             monthlyPrice={0}
             buttonLabel="Install"
             stylingFilled={false}
-            onClick={() => {
-              handleTableInstall();
-              onOpen("Pricing table modal");
-            }}
             onClick={handleFree}
           />
           <PlanTableLabel
