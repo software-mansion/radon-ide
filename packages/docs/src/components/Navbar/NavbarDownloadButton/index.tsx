@@ -9,16 +9,13 @@ interface NavbarDownloadButtonProps {
 export default function NavbarDownloadButton({ isMobile, onOpen }: NavbarDownloadButtonProps) {
   const handleNavbarDownload = () => {
     track("Navbar download button");
-  };
-
-  const handleDialogOpen = () => {
-    handleNavbarDownload();
     onOpen("Navbar modal");
   };
+
   return (
     <button
       className={isMobile ? styles.mobileDownload : styles.download}
-      onClick={handleDialogOpen}>
+      onClick={handleNavbarDownload}>
       <p>Download</p>
     </button>
   );

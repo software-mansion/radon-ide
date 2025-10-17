@@ -43,6 +43,7 @@ export default function FooterNavigation() {
 
   const handleFooterDownloadClick = () => {
     track("Footer download button");
+    onOpen("Footer modal");
   };
 
   return (
@@ -58,13 +59,7 @@ export default function FooterNavigation() {
                     {link.label}
                   </a>
                 ) : (
-                  <a
-                    onClick={() => {
-                      handleFooterDownloadClick();
-                      onOpen("Footer modal");
-                    }}>
-                    {link.label}
-                  </a>
+                  <a onClick={handleFooterDownloadClick}>{link.label}</a>
                 )}
               </li>
             ))}
