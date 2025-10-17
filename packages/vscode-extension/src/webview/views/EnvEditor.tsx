@@ -92,6 +92,7 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
                 {editingKey === key || key === null ? (
                   <VscodeTextfield
                     placeholder="Key"
+                    data-testid="env-editor-key-input"
                     value={editingKeyValue}
                     data-no-submit
                     onInput={(e) => setEditingKeyValue((e.target as HTMLInputElement).value)}
@@ -110,6 +111,7 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
                 {editingKey === key || key === null ? (
                   <VscodeTextfield
                     placeholder="Value"
+                    data-testid="env-editor-value-input"
                     value={editingValue}
                     data-no-submit
                     onInput={(e) => setEditingValue((e.target as HTMLInputElement).value)}
@@ -128,7 +130,10 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
                 <div className="env-editor-table-cell-actions">
                   {editingKey === key || key === null ? (
                     <>
-                      <Button disabled={!editingKeyValue} onClick={save}>
+                      <Button
+                        disabled={!editingKeyValue}
+                        onClick={save}
+                        data-testid="env-editor-save-variable-button">
                         OK
                       </Button>
                       <Button onClick={cancel} secondary>
@@ -155,7 +160,11 @@ function EnvEditor({ initialValue, onChange }: EnvEditorProps) {
           ))}
         </VscodeTableBody>
       </VscodeTable>
-      {!showAddForm && <Button onClick={() => startEditing(null)}>Add Variable</Button>}
+      {!showAddForm && (
+        <Button data-testid="env-add-variable-button" onClick={() => startEditing(null)}>
+          Add Variable
+        </Button>
+      )}
       <input type="hidden" name="env" value={JSON.stringify(env)} />
     </>
   );

@@ -172,6 +172,7 @@ function LaunchConfigurationView({
         <div className="launch-configuration-button-group">
           <Button
             className="button-secondary"
+            data-testid="cancel-delete-launch-configuration-button"
             onClick={() =>
               openModal(
                 <LaunchConfigurationView
@@ -184,6 +185,7 @@ function LaunchConfigurationView({
             Cancel
           </Button>
           <Button
+            data-testid="confirm-delete-launch-configuration-button"
             onClick={() => {
               project.createOrUpdateLaunchConfiguration(undefined, launchConfig);
               closeModal();
@@ -253,6 +255,7 @@ function LaunchConfigurationView({
           <FormHelper>{launchConfigAttrs?.properties?.metroConfigPath?.description}</FormHelper>
           <TextField
             placeholder="Detect automatically"
+            data-testid="launch-configuration-metro-config-path-input"
             name="metroConfigPath"
             initialValue={launchConfig?.metroConfigPath ?? ""}
           />
@@ -262,13 +265,22 @@ function LaunchConfigurationView({
           <Label>Use Expo CLI</Label>
           <FormHelper>{launchConfigAttrs?.properties?.isExpo?.description}</FormHelper>
           <SingleSelect
+            data-testid="launch-configuration-use-expo-select"
             name="isExpo"
             initialValue={
               launchConfig?.isExpo === undefined ? "" : launchConfig.isExpo ? "true" : "false"
             }>
-            <Option value="">Detect automatically</Option>
-            <Option value="true">Yes</Option>
-            <Option value="false">No</Option>
+            <Option
+              value=""
+              data-testid="launch-configuration-use-expo-select-detect-automatically">
+              Detect automatically
+            </Option>
+            <Option value="true" data-testid="launch-configuration-use-expo-select-yes">
+              Yes
+            </Option>
+            <Option value="false" data-testid="launch-configuration-use-expo-select-no">
+              No
+            </Option>
           </SingleSelect>
         </FormGroup>
 
@@ -276,10 +288,15 @@ function LaunchConfigurationView({
           <Label>Use Expo Prebuild</Label>
           <FormHelper>{launchConfigAttrs?.properties?.usePrebuild?.description}</FormHelper>
           <SingleSelect
+            data-testid="launch-configuration-use-prebuild-select"
             name="usePrebuild"
             initialValue={launchConfig?.usePrebuild ? "true" : "false"}>
-            <Option value="true">Yes</Option>
-            <Option value="false">No</Option>
+            <Option value="true" data-testid="launch-configuration-use-prebuild-yes">
+              Yes
+            </Option>
+            <Option value="false" data-testid="launch-configuration-use-prebuild-no">
+              No
+            </Option>
           </SingleSelect>
         </FormGroup>
 
@@ -290,7 +307,9 @@ function LaunchConfigurationView({
         </FormGroup>
 
         <Tabs panel>
-          <TabHeader>iOS Build Settings</TabHeader>
+          <TabHeader data-testid="launch-configuration-ios-build-settings-tab">
+            iOS Build Settings
+          </TabHeader>
           <TabPanel panel>
             <BuildConfiguration
               appRootConfig={appRootConfig}
@@ -299,7 +318,9 @@ function LaunchConfigurationView({
               launchConfigAttrs={launchConfigAttrs}
             />
           </TabPanel>
-          <TabHeader>Android Build Settings</TabHeader>
+          <TabHeader data-testid="launch-configuration-android-build-settings-tab">
+            Android Build Settings
+          </TabHeader>
           <TabPanel panel>
             <BuildConfiguration
               appRootConfig={appRootConfig}
@@ -324,6 +345,7 @@ function LaunchConfigurationView({
         {launchConfig && (
           <Button
             secondary
+            data-testid="launch-configuration-delete-button"
             onClick={() => {
               openModal(<DeleteConfirmationModal />);
             }}>
@@ -455,6 +477,7 @@ function StandardBuildConfiguration({
             {launchConfigAttrs?.properties?.ios?.properties?.configuration?.description}
           </FormHelper>
           <TextField
+            data-testid="launch-configuration-ios-configuration-input"
             initialValue={config?.ios?.configuration ?? ""}
             placeholder="Debug"
             name="ios.configuration"
@@ -473,6 +496,7 @@ function StandardBuildConfiguration({
             {launchConfigAttrs?.properties?.android?.properties?.buildType?.description}
           </FormHelper>
           <TextField
+            data-testid="launch-configuration-android-configuration-input"
             initialValue={config?.android?.buildType ?? ""}
             placeholder="debug"
             name="android.buildType"
