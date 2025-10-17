@@ -28,6 +28,7 @@ export class ElementHelperService {
       timeout,
       timeoutMessage
     );
+    await this.driver.executeScript("arguments[0].scrollIntoView()", element);
     await this.waitForElement(element);
     return element;
   }
