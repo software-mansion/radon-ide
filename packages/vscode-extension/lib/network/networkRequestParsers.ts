@@ -113,7 +113,7 @@ function truncateResponseBody(
   if (dataSize > MAX_BODY_SIZE) {
     const slicedBody = responseBody.slice(0, TRUNCATED_LENGTH);
     return {
-      body: `${slicedBody}...`,
+      body: slicedBody,
       wasTruncated: true,
       base64Encoded,
       type,

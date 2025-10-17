@@ -55,7 +55,7 @@ const ResponseBodyContent = ({
     return (
       <>
         {wasTruncated && <ResponseTooLargeWarning />}
-        <pre className="base64-code">{responseData}</pre>
+        <pre className="base64-code">{`${responseData}...`}</pre>
       </>
     );
   }
@@ -64,7 +64,7 @@ const ResponseBodyContent = ({
     <>
       {wasTruncated && <ResponseTooLargeWarning />}
       <HighlightedCodeBlock
-        content={responseData}
+        content={`${responseData}...`}
         language={language}
         theme={editorThemeData}
         placeholder="No response body"
