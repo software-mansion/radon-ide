@@ -113,6 +113,14 @@ export class Preview implements Disposable {
 
       lineReader(subprocess).onLineRead((line, stderr) => {
         if (stderr) {
+          if (line.match(/Device .+ is not connected or not available/)) {
+            reject(
+              new Error(
+                "Could not connect to the device. " +
+                  "Verify the selected device is connected to your computer and try again."
+              )
+            );
+          }
           Logger.info("sim-server:", line);
           return;
         }
