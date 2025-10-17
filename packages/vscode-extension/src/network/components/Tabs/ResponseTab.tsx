@@ -50,7 +50,11 @@ const ResponseBodyContent = ({
     );
   }
 
-  // Base64 messages are not truncated by default in ordert
+  if (!responseData) {
+    return <pre className="response-tab-no-data">No response body</pre>;
+  }
+
+  // Base64 messages are not truncated by default in order to allow viewing full images/files
   if (base64Encoded) {
     return (
       <>
@@ -60,11 +64,20 @@ const ResponseBodyContent = ({
     );
   }
 
+  if (wasTruncated) {
+    return (
+      <>
+        <ResponseTooLargeWarning />
+        {`${responseData}...`}
+      </>
+    );
+  }
+
   return (
     <>
       {wasTruncated && <ResponseTooLargeWarning />}
       <HighlightedCodeBlock
-        content={`${responseData}...`}
+        content={responseData}
         language={language}
         theme={editorThemeData}
         placeholder="No response body"

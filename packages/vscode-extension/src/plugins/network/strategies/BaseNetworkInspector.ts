@@ -188,7 +188,6 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
         this.handleFetchFullResponseBody(request, base64Encoded);
         break;
       case IDEMethod.GetResponseBodyData:
-        console.log("MLEKO MLEKO 2")
         this.handleGetResponseBodyData(payload);
         break;
       case IDEMethod.GetTheme:
