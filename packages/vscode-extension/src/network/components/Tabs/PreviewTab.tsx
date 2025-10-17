@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { PropsWithChildren, useEffect, useRef, useState } from "react";
 import { NetworkLog, NetworkLogColumn } from "../../types/networkLog";
 import { ResponseBodyData } from "../../types/network";
 import { getNetworkResponseContentType, isPreviewableImage } from "../../utils/requestFormatters";
 import { NetworkEvent } from "../../types/panelMessageProtocol";
-import { useLogDetailsBar } from "../../providers/LogDetailsBar";
+import { useTabBar } from "../../providers/TabBarProvider";
 import { getNetworkLogValue } from "../../utils/networkLogParsers";
 import "./PreviewTab.css";
 import "./PayloadAndResponseTab.css";
@@ -20,7 +20,10 @@ interface ImageMetadata {
   mime: string;
 }
 
-// Helper functions
+interface MetadataTabBarProps {
+  metadata: ImageMetadata;
+}
+
 const calculateGCD = (a: number, b: number): number => (b === 0 ? a : calculateGCD(b, a % b));
 
 const getAspectRatio = (width: number, height: number): string => {
@@ -34,8 +37,15 @@ const createImageUrl = (contentType: string, body: string, base64Encoded: boolea
     : `data:${contentType};base64,${btoa(body)}`;
 };
 
-// Components
-function PreviewInfoBar({ metadata }: { metadata: ImageMetadata }) {
+function DefaultTabBar({ children }: PropsWithChildren) {
+  return (
+    <div className="preview-bar">
+      <div>{children}</div>
+    </div>
+  );
+}
+
+function MetadataTabBar({ metadata }: MetadataTabBarProps) {
   return (
     <div className="preview-bar">
       <div>{metadata.size}</div>
@@ -48,7 +58,7 @@ function PreviewInfoBar({ metadata }: { metadata: ImageMetadata }) {
 
 function PreviewTab({ networkLog, responseBodyData }: PreviewTabProps) {
   const imageRef = useRef<HTMLImageElement>(null);
-  const { setContent, setIsVisible } = useLogDetailsBar();
+  const { setContent: setTabBarContent, setIsVisible: setIsTabBarVisible } = useTabBar();
 
   const [loading, setLoading] = useState(!imageRef.current?.complete);
   const [error, setError] = useState(false);
@@ -67,6 +77,7 @@ function PreviewTab({ networkLog, responseBodyData }: PreviewTabProps) {
   const dataFetchFailed = requestFailed && !body;
   const isFullBodyNotAvailable = !fullBody && wasTruncated;
   const isImageLoading = loading && !error;
+  const isNoPreviewAvailable = !canPreview || !body || isFullBodyNotAvailable;
 
   // Reset loading state when request changes
   useEffect(() => {
@@ -87,6 +98,10 @@ function PreviewTab({ networkLog, responseBodyData }: PreviewTabProps) {
     const naturalWidth = imageRef.current?.naturalWidth || 0;
     const naturalHeight = imageRef.current?.naturalHeight || 0;
 
+    if (naturalWidth === 0 || naturalHeight === 0) {
+      return;
+    }
+
     setMetadata({
       mime: contentType,
       resolution: `${naturalWidth} × ${naturalHeight}`,
@@ -97,17 +112,19 @@ function PreviewTab({ networkLog, responseBodyData }: PreviewTabProps) {
 
   // Manage info bar visibility
   useEffect(() => {
-    setIsVisible(true);
-    return () => setIsVisible(false);
-  }, [setIsVisible]);
+    setIsTabBarVisible(true);
+    return () => setIsTabBarVisible(false);
+  }, [setIsTabBarVisible]);
 
   // Update info bar content with metadata
   useEffect(() => {
-    if (metadata) {
-      setContent(<PreviewInfoBar metadata={metadata} />);
+    if (dataFetchFailed || isNoPreviewAvailable) {
+      setTabBarContent(<DefaultTabBar>No information available</DefaultTabBar>);
+    } else if (metadata) {
+      setTabBarContent(<MetadataTabBar metadata={metadata} />);
     }
-    return () => setContent(null);
-  }, [metadata, setContent]);
+    return () => setTabBarContent(null);
+  }, [metadata, dataFetchFailed, isNoPreviewAvailable, setTabBarContent]);
 
   // Render error states
   if (dataFetchFailed) {
@@ -122,7 +139,7 @@ function PreviewTab({ networkLog, responseBodyData }: PreviewTabProps) {
     );
   }
 
-  if (!canPreview || !body || isFullBodyNotAvailable) {
+  if (isNoPreviewAvailable) {
     return (
       <div className="tab-padding">
         <div className="preview-tab-content">

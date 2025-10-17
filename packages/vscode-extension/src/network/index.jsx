@@ -2,16 +2,15 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
 import NetworkProvider from "./providers/NetworkProvider";
-
+import TabBarProvider from "./providers/TabBarProvider";
 import "../webview/styles/theme.css";
-import LogDetailsBarProvider from "./providers/LogDetailsBar";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <NetworkProvider>
-      <LogDetailsBarProvider>
+      <TabBarProvider>
         <App />
-      </LogDetailsBarProvider>
+      </TabBarProvider>
     </NetworkProvider>
   </React.StrictMode>
 );

@@ -7,7 +7,7 @@ import { ResponseBodyData, ResponseBodyDataType } from "../types/network";
 import { NetworkEvent } from "../types/panelMessageProtocol";
 import { ThemeData } from "../../common/theme";
 import { useNetwork } from "../providers/NetworkProvider";
-import { useLogDetailsBar } from "../providers/LogDetailsBar";
+import { useTabBar } from "../providers/TabBarProvider";
 import useThemeExtractor from "../hooks/useThemeExtractor";
 import HeadersTab from "./Tabs/HeadersTab";
 import PayloadTab from "./Tabs/PayloadTab";
@@ -15,7 +15,7 @@ import ResponseTab from "./Tabs/ResponseTab";
 import PreviewTab from "./Tabs/PreviewTab";
 import TimingTab from "./Tabs/TimingTab";
 import TabScrollable from "./Tabs/TabScrollable";
-import InfoBar from "./Tabs/InfoBar";
+import TabBar from "./Tabs/TabBar";
 import "overlayscrollbars/overlayscrollbars.css";
 import "./NetworkLogDetails.css";
 
@@ -46,7 +46,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
   const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
 
   const { getResponseBody } = useNetwork();
-  const { infoBarHeight } = useLogDetailsBar();
+  const { height: tabBarHeight } = useTabBar();
   const themeData = useThemeExtractor();
 
   const { wasTruncated = false, type = ResponseBodyDataType.Other } = responseBodyData || {};
@@ -103,7 +103,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
     }
 
     const headerHeight = header.clientHeight;
-    return parentHeight - headerHeight - infoBarHeight;
+    return parentHeight - headerHeight - tabBarHeight;
   };
 
   // Auto-switch from hidden Preview tab to Response tab
@@ -148,7 +148,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
                   <TabScrollable height={calculateScrollableHeight()}>
                     <Tab networkLog={networkLog} {...props} />
                   </TabScrollable>
-                  <InfoBar />
+                  <TabBar />
                 </>
               )}
             </VscodeTabPanel>
