@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "motion/react";
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import { useInView } from "react-intersection-observer";
 
+const PROGRESS_BAR_DURATION = 6000;
+
 export default function FeatureSliderLanding() {
   const [activeItem, setActiveItem] = useState<ActiveItem>({
     index: 0,
@@ -50,8 +52,6 @@ export default function FeatureSliderLanding() {
     if (node) inViewRef(node);
   }, [activeItem.index, inViewRef]);
 
-  const duration = 6000;
-
   useEffect(() => {
     if (!inView) return;
 
@@ -59,7 +59,7 @@ export default function FeatureSliderLanding() {
       setActiveItem((prev) => ({
         index: (prev.index + 1) % features.length,
       }));
-    }, duration);
+    }, PROGRESS_BAR_DURATION);
 
     return () => clearTimeout(timeout);
   }, [inView, activeItem.index, features.length]);

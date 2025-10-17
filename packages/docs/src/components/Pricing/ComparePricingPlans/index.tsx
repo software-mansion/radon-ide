@@ -27,13 +27,13 @@ const handleCellContent = (data: string[] | boolean) => {
 };
 
 export default function ComparePricingPlans({
-  handleBusiness,
-  handleIndividual,
-  handleCustom,
+  handleFree,
+  handleTeam,
+  handlePro,
+  handleEnterprise,
 }: PricingProps) {
-  const { onOpen } = useModal();
   const pricingPlanFeatures: FeatureItem[] = planFeaturesData;
-
+  const { onOpen } = useModal();
   const handleTableInstall = () => {
     track("Pricing table");
   };
@@ -53,6 +53,7 @@ export default function ComparePricingPlans({
               handleTableInstall();
               onOpen("Pricing table modal");
             }}
+            onClick={handleFree}
           />
           <PlanTableLabel
             plan="PRO"
@@ -60,7 +61,7 @@ export default function ComparePricingPlans({
             yearlyLowPrice={250}
             buttonLabel="Start 14-day trial"
             stylingFilled={true}
-            onClick={handleIndividual}
+            onClick={handlePro}
           />
           <PlanTableLabel
             plan="TEAM"
@@ -68,14 +69,14 @@ export default function ComparePricingPlans({
             yearlyLowPrice={750}
             buttonLabel="Buy licenses"
             stylingFilled={true}
-            onClick={handleBusiness}
+            onClick={handleTeam}
           />
           <PlanTableLabel
             plan="ENTERPRISE"
             monthlyPrice="Custom pricing"
             buttonLabel="Get your quote"
             stylingFilled={true}
-            onClick={handleCustom}
+            onClick={handleEnterprise}
           />
         </div>
         {pricingPlanFeatures.map((feature, index) => (

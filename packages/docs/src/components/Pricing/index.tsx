@@ -5,20 +5,25 @@ import PricingPlansList from "./PricingPlansList";
 import FAQ from "../Sections/FAQ";
 import clsx from "clsx";
 import ComparePricingPlans from "./ComparePricingPlans";
-import EnterpriseForm from "../EnterpriseForm";
 import { usePricingLogic } from "@site/src/hooks/usePricingLogic";
+import EnterpriseForm from "../EnterpriseForm";
+import { useScrollToForm } from "@site/src/hooks/useScrollToForm";
+import { useModal } from "../ModalProvider";
 
 export interface PricingProps {
-  handleIndividual: () => void;
-  handleBusiness: () => void;
-  handleCustom: () => void;
+  handleFree: () => void;
+  handlePro: () => void;
+  handleTeam: () => void;
+  handleEnterprise: () => void;
   isMonthly?: boolean;
   setIsMonthly?: (value: boolean) => void;
 }
 
 const Pricing = () => {
-  const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout, scrollToForm } =
+  const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout } =
     usePricingLogic();
+  const { scrollToForm } = useScrollToForm();
+  const { onOpen } = useModal();
   const formRef = useRef<HTMLDivElement | null>(null);
   const handleSubmitTrack = () => {
     track("Pricing form submit");
@@ -34,17 +39,19 @@ const Pricing = () => {
       </div>
       <div className={styles.wrapper}>
         <PricingPlansList
-          handleBusiness={openBusinessCheckout}
-          handleIndividual={openIndividualCheckout}
-          handleCustom={() => scrollToForm(formRef)}
+          handleFree={onOpen}
+          handleTeam={openBusinessCheckout}
+          handlePro={openIndividualCheckout}
+          handleEnterprise={() => scrollToForm(formRef)}
           isMonthly={isMonthly}
           setIsMonthly={setIsMonthly}
         />
       </div>
       <ComparePricingPlans
-        handleIndividual={openIndividualCheckout}
-        handleBusiness={openBusinessCheckout}
-        handleCustom={() => scrollToForm(formRef)}
+        handleFree={onOpen}
+        handlePro={openIndividualCheckout}
+        handleTeam={openBusinessCheckout}
+        handleEnterprise={() => scrollToForm(formRef)}
       />
       <FAQ />
       <EnterpriseForm ref={formRef} trackSubmit={handleSubmitTrack} />
