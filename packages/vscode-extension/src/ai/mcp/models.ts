@@ -1,5 +1,3 @@
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-
 export interface ImageContent {
   [x: string]: unknown;
   type: "image";
@@ -39,8 +37,3 @@ export interface ToolResult {
     tool_call_id: string;
   }[];
 }
-
-export type Session = {
-  sessionId: string;
-  transport: StreamableHTTPServerTransport;
-} | null;

@@ -8,7 +8,6 @@ import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { Disposable, workspace } from "vscode";
 import { Logger } from "../../Logger";
 import { registerLocalMcpTools, registerRemoteMcpTool } from "./toolRegistration";
-import { Session } from "./models";
 import { extensionContext } from "../../utilities/extensionContext";
 import { watchLicenseTokenChange } from "../../utilities/license";
 import { getAppCachesDir } from "../../utilities/common";
@@ -20,7 +19,7 @@ import { throttleAsync } from "../../utilities/throttle";
 const NETWORK_RETRY_INTERVAL_MS = 15 * 1000; // 15 seconds
 
 export class LocalMcpServer implements Disposable {
-  private sessions: Map<string, Session> = new Map();
+  private transports: Map<string, StreamableHTTPServerTransport> = new Map();
 
   private expressServer: http.Server;
   private mcpServer: McpServer;
@@ -28,7 +27,7 @@ export class LocalMcpServer implements Disposable {
   private resolveServerPort: (port: number) => void;
 
   private remoteTools: Map<string, RegisteredTool> = new Map();
-  private retryReloadToolsScheduled: boolean = false;
+  private retryReloadToolsTimeout: NodeJS.Timeout | null = null;
 
   private licenseTokenSubscription: Disposable;
 
@@ -44,6 +43,8 @@ export class LocalMcpServer implements Disposable {
     this.resolveServerPort = resolve;
 
     this.licenseTokenSubscription = watchLicenseTokenChange(() => {
+      // cancel any pending retries and reload immediately
+      this.cancelRetryReloadTools();
       this.reloadRemoteTools();
     });
 
@@ -51,6 +52,7 @@ export class LocalMcpServer implements Disposable {
   }
 
   public dispose() {
+    this.cancelRetryReloadTools();
     this.licenseTokenSubscription.dispose();
     this.mcpServer.close();
     this.expressServer.closeAllConnections();
@@ -64,17 +66,15 @@ export class LocalMcpServer implements Disposable {
   private async handleSessionRequest(req: express.Request, res: express.Response) {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
     if (!sessionId) {
-      res.status(400).send("Missing session ID");
+      res.status(400).send("Session ID is missing");
       return;
     }
-
-    const session = this.sessions.get(sessionId);
-    if (!session) {
+    const transport = this.transports.get(sessionId);
+    if (!transport) {
       res.status(400).send("Invalid session ID");
       return;
     }
-
-    await session.transport.handleRequest(req, res);
+    await transport.handleRequest(req, res);
   }
 
   private async updateMcpServerRecord() {
@@ -127,14 +127,20 @@ export class LocalMcpServer implements Disposable {
   }
 
   private retryReloadRemoteTools() {
-    if (this.retryReloadToolsScheduled) {
+    if (this.retryReloadToolsTimeout) {
       return;
     }
-    this.retryReloadToolsScheduled = true;
-    setTimeout(() => {
-      this.retryReloadToolsScheduled = false;
+    this.retryReloadToolsTimeout = setTimeout(() => {
+      this.retryReloadToolsTimeout = null;
       this.reloadRemoteTools();
     }, NETWORK_RETRY_INTERVAL_MS);
+  }
+
+  private cancelRetryReloadTools() {
+    if (this.retryReloadToolsTimeout) {
+      clearTimeout(this.retryReloadToolsTimeout);
+      this.retryReloadToolsTimeout = null;
+    }
   }
 
   /**
@@ -197,39 +203,41 @@ export class LocalMcpServer implements Disposable {
 
     app.post("/mcp", async (req, res) => {
       const sessionId = req.headers["mcp-session-id"] as string | undefined;
+      let transport: StreamableHTTPServerTransport;
 
-      if (!sessionId && isInitializeRequest(req.body)) {
-        const transport = new StreamableHTTPServerTransport({
+      if (sessionId && this.transports.has(sessionId)) {
+        // reuse existing transport
+        transport = this.transports.get(sessionId)!;
+      } else if (!sessionId && isInitializeRequest(req.body)) {
+        transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
           onsessioninitialized: (sessionId: string) => {
-            // Register the session when it's properly initialized
-            const newSession: Session = {
-              sessionId,
-              transport,
-            };
-            this.sessions.set(sessionId, newSession);
+            console.log("session initialized", sessionId);
+            this.transports.set(sessionId, transport);
             transport.onclose = () => {
-              this.sessions.delete(sessionId);
+              if (transport.sessionId) {
+                console.log("session closed", sessionId);
+                this.transports.delete(transport.sessionId);
+              }
             };
           },
         });
 
-        res.on("close", () => transport.close());
-
         await this.mcpServer.connect(transport);
+      } else {
+        // Invalid request
+        res.status(400).json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32000,
+            message: "Bad Request: No valid session ID provided",
+          },
+          id: null,
+        });
+        return;
       }
 
-      // Handle request for existing session
-      if (sessionId) {
-        const session = this.sessions.get(sessionId);
-        if (session) {
-          await session.transport.handleRequest(req, res, req.body);
-        } else {
-          res.status(400).send("Invalid session ID");
-        }
-      } else {
-        res.status(400).send("Missing session ID");
-      }
+      await transport.handleRequest(req, res, req.body);
     });
 
     app.get("/mcp", this.handleSessionRequest.bind(this));
