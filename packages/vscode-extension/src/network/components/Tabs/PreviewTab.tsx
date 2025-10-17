@@ -1,7 +1,7 @@
 import { PropsWithChildren, useEffect, useRef, useState } from "react";
 import { NetworkLog, NetworkLogColumn } from "../../types/networkLog";
 import { ResponseBodyData, ResponseBodyDataType } from "../../types/network";
-import { getNetworkResponseContentType, isPreviewableImage } from "../../utils/requestFormatters";
+import { getNetworkResponseContentType, canPreviewImage } from "../../utils/requestFormatters";
 import { NetworkEvent } from "../../types/panelMessageProtocol";
 import { useTabBar } from "../../providers/TabBarProvider";
 import { getNetworkLogValue } from "../../utils/networkLogParsers";
@@ -74,17 +74,21 @@ function PreviewTab({ networkLog, responseBodyData, isActive }: PreviewTabProps)
     type = ResponseBodyDataType.Other,
   } = responseBodyData || {};
 
-  // Determine preview availability
   const contentType = getNetworkResponseContentType(networkLog.response);
-  const canPreview = isPreviewableImage(contentType, type);
   const imageSize = getNetworkLogValue(networkLog, NetworkLogColumn.Size) || "";
 
-  // Determine display states
+  const isImagePreviewable = canPreviewImage(contentType, type);
+  const isImageLoading = loading && !error;
+
+  /**
+   * Full support for sending fullBody was implemented only in the DebuggerNetworkInspector
+   * due to storage and websocket limitations in InspectorBridgeNetworkInspector.
+   */
+  const isFullBodyNotAvailable = !fullBody && wasTruncated;
+  const isNoPreviewAvailable = !isImagePreviewable || !body || isFullBodyNotAvailable;
+
   const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;
   const dataFetchFailed = requestFailed && !body;
-  const isFullBodyNotAvailable = !fullBody && wasTruncated;
-  const isImageLoading = loading && !error;
-  const isNoPreviewAvailable = !canPreview || !body || isFullBodyNotAvailable;
 
   // Reset loading state when request changes
   useEffect(() => {
@@ -117,7 +121,7 @@ function PreviewTab({ networkLog, responseBodyData, isActive }: PreviewTabProps)
     });
   }, [loading, networkLog.requestId, contentType, imageSize]);
 
-  // Update info bar content with metadata
+  // Update info bar content with metadata or error message
   useEffect(() => {
     if (dataFetchFailed || isNoPreviewAvailable) {
       setTabBarContent(<DefaultTabBar>No information available</DefaultTabBar>);
@@ -158,12 +162,7 @@ function PreviewTab({ networkLog, responseBodyData, isActive }: PreviewTabProps)
   const imageUrl = createImageUrl(contentType, imageBody, base64Encoded);
 
   const handleImageLoad = () => setLoading(false);
-
-  const handleImageError = () => {
-    if (!loading) {
-      setError(true);
-    }
-  };
+  const handleImageError = () => !loading && setError(true);
 
   return (
     <div className="tab-padding">

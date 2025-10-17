@@ -1,5 +1,8 @@
 import { TextDecoder } from "../polyfills";
 
+// Due to import conflicts from "src" directory, some types
+// are redeclared here from src/network/types/network.ts
+
 // Redeclared in src/network/types/network.ts
 // Based on resourceTypeFromMimeType method in React-Native's resourceTypyFromMimeType
 enum ResponseBodyDataType {
@@ -20,7 +23,6 @@ export type InternalResponseBodyData = {
 
 // Redeclared here from definition in
 // src/network/typesc/network.ts
-//  due to import conflicts from "src" directory
 export const ContentTypeHeader = {
   Default: "Content-Type",
   LowerCase: "content-type",
@@ -148,7 +150,6 @@ function readBlobAsBase64(blob: Blob, isImage?: boolean): Promise<InternalRespon
     reader.onload = () => {
       let textResult: string | undefined;
       if (reader.result instanceof ArrayBuffer) {
-        // convert ArrayBuffer to base64
         const uint8Array = new Uint8Array(reader.result);
         textResult = dataToBase64(uint8Array);
       } else if (typeof reader.result === "string") {
@@ -298,7 +299,7 @@ function reconstructTypedArray(serializedData: SerializedTypedArray): Uint8Array
 }
 
 function dataToBase64(array: SerializedTypedArray) {
-  // cannot be done as oneliner String.fromCharCode.apply(null, Array.from(array))
+  // cannot be done as one-liner such as String.fromCharCode.apply(null, Array.from(array))
   // because of Hermes' "Maximum call stack size exceeded" for large arrays
   const result = [];
   for (let char of array) {

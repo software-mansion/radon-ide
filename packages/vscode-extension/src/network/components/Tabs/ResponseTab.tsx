@@ -47,7 +47,7 @@ const ResponseBodyContent = ({
   language,
   editorThemeData,
   base64Encoded,
-  isActive
+  isActive,
 }: ResponseBodyContentProps) => {
   if (dataFetchFailed) {
     return (
@@ -59,7 +59,7 @@ const ResponseBodyContent = ({
   }
 
   if (!responseData) {
-    return <pre className="response-tab-no-data">{NO_RESPONSE_PLACEHOLDER}</pre>;
+    return <pre className="response-tab-pre">{NO_RESPONSE_PLACEHOLDER}</pre>;
   }
 
   // Base64 messages are not truncated by default in order to allow viewing full images/files

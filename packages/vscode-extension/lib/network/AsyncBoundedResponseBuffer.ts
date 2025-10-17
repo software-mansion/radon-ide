@@ -63,12 +63,12 @@ export class AsyncBoundedResponseBuffer {
    * there is enough space or the buffer is empty.
    *
    * @param requestId Unique identifier for the request
-   * @param responseBodyPromise The response promise object, with data from xhr response
+   * @param responseBodyDataPromise The response body data promise object, with parsed data from xhr response
    * @returns Promise<boolean> True if the response body processing was initiated successfully
    */
   public async put(
     requestId: string,
-    responseBodyPromise: Promise<InternalResponseBodyData | undefined>
+    responseBodyDataPromise: Promise<InternalResponseBodyData | undefined>
   ): Promise<boolean> {
     try {
       // Remove existing request with the same ID, if any
@@ -77,14 +77,14 @@ export class AsyncBoundedResponseBuffer {
         this.remove(requestId);
       }
 
-      const storedPromise = responseBodyPromise
+      const storedPromise = responseBodyDataPromise
         .then((response) => {
           if (!response) {
             return undefined;
           }
 
-          const { dataSize: _dataSize, ...responseBody } = response || {};
-          return responseBody;
+          const { dataSize: _dataSize, ...responseBodyData } = response || {};
+          return responseBodyData;
         })
         .catch((error) => {
           console.warn("Error processing response body for requestId", requestId, error);
@@ -95,7 +95,7 @@ export class AsyncBoundedResponseBuffer {
       this.order.push(requestId);
 
       // Handle the response when it resolves
-      const response = await responseBodyPromise;
+      const response = await responseBodyDataPromise;
 
       // Check if the request was removed while we were processing
       if (this.responseMap.get(requestId) !== storedPromise) {

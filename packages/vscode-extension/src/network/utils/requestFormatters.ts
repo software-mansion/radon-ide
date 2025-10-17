@@ -290,7 +290,7 @@ const PREVIEWABLE_IMAGE_TYPES = [
 /**
  * Checks if the content type represents a previewable image format
  */
-export function isPreviewableImage(
+export function canPreviewImage(
   networkLogContentType: string,
   responseBodyType: ResponseBodyDataType
 ): boolean {

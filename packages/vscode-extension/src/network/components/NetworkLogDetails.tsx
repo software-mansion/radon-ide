@@ -29,7 +29,6 @@ interface TabProps {
   responseBodyData?: ResponseBodyData;
   editorThemeData?: ThemeData;
   isActive?: boolean;
-  isImage?: boolean;
 }
 
 interface Tab {
@@ -44,6 +43,7 @@ interface Tab {
 const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLogDetailsProps) => {
   const headerRef = useRef<VscodeTabHeaderElement>(null);
   const tabBarRef = useRef<HTMLDivElement>(null);
+
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
   const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
 
@@ -86,7 +86,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
       {
         title: "Response",
         Tab: ResponseTab,
-        props: { responseBodyData, editorThemeData: themeData, isImage },
+        props: { responseBodyData, editorThemeData: themeData },
         warning: wasTruncated,
       },
       {
@@ -125,7 +125,6 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
 
   return (
     <Fragment>
-      {/* TODO: use VscodeToolbarButton when it will be available in @vscode-elements/react-elements  */}
       <button className="network-log-details-close-button" onClick={handleClose}>
         <span className="codicon codicon-close" />
       </button>
@@ -145,13 +144,12 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
                 {warning && <span className="codicon codicon-warning" />}
               </div>
             </VscodeTabHeader>
+
             <VscodeTabPanel data-testid={`network-panel-tab-panel-${title.toLowerCase()}`}>
-              <>
-                <TabScrollable height={calculateScrollableHeight()}>
-                  <Tab networkLog={networkLog} isActive={index === selectedTabIndex} {...props} />
-                </TabScrollable>
-                {showTabBar && <TabBar ref={tabBarRef} />}
-              </>
+              <TabScrollable height={calculateScrollableHeight()}>
+                <Tab networkLog={networkLog} isActive={index === selectedTabIndex} {...props} />
+              </TabScrollable>
+              {showTabBar && <TabBar ref={tabBarRef} />}
             </VscodeTabPanel>
           </Fragment>
         ))}

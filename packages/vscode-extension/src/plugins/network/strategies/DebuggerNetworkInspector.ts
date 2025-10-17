@@ -39,7 +39,6 @@ const DEFAULT_RESPONSE_BODY_DATA: ResponseBodyData = {
   type: ResponseBodyDataType.Other,
 };
 
-
 export default class DebuggerNetworkInspector extends BaseNetworkInspector {
   private disposables: Disposable[] = [];
   private activationState = ActivationState.Inactive;
@@ -161,12 +160,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
       const emptyMessage: IDEMessage = {
         messageId,
         method: IDEMethod.GetResponseBodyData,
-        result: {
-          body: undefined,
-          wasTruncated: false,
-          base64Encoded: false,
-          type: ResponseBodyDataType.Other,
-        },
+        result: DEFAULT_RESPONSE_BODY_DATA,
       };
       this.broadcastWebviewMessage(emptyMessage, WebviewCommand.IDECall);
     };
