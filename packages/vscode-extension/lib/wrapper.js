@@ -234,7 +234,17 @@ function viewComponentTree(component, depth = 0) {
   const typeData = component.type;
   const displayName = typeData?.displayName ?? typeData?.name ?? "__unknown__";
 
-  let repr = indentString + `<${displayName}>\n`;
+  let repr;
+
+  // FIXME: This path is absolute, we cannot make it relative in wrapper.js
+  //        ^ Move all this logic to Radon IDE core.
+  const sourceFileName = component?._source?.fileName;
+
+  if (sourceFileName?.includes("/node_modules/") === false) {
+    repr = indentString + `<${displayName}> // ${sourceFileName}\n`;
+  } else {
+    repr = indentString + `<${displayName}>\n`;
+  }
 
   Children.forEach(children, (child) => {
     const childRepr = viewComponentTree(child, depth + 1);
