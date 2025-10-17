@@ -2,7 +2,6 @@ import {
   lm,
   McpHttpServerDefinition,
   Uri,
-  EventEmitter,
   version,
   Disposable,
   workspace,
@@ -16,10 +15,10 @@ import { ConfigLocation, getConfigLocation, MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { LocalMcpServer } from "./LocalMcpServer";
 import { disposeAll } from "../../utilities/disposables";
-import { ConnectionListener } from "../shared/ConnectionListener";
 import { EditorType, getEditorType } from "../../utilities/editorType";
 import { RadonAIEnabledState } from "../../common/State";
 import { registerRadonChat } from "../chat";
+import { extensionContext } from "../../utilities/extensionContext";
 
 async function removeMcpConfig(location: ConfigLocation) {
   const mcpConfig = await readMcpConfig(location);
@@ -45,17 +44,8 @@ async function updateMcpConfig(port: number) {
 }
 
 function directLoadRadonAI(server: LocalMcpServer, disposables: Disposable[]) {
-  const didChangeEmitter = new EventEmitter<void>();
-
-  disposables.push(
-    server.onReload(() => {
-      didChangeEmitter.fire();
-    })
-  );
-
   disposables.push(
     lm.registerMcpServerDefinitionProvider("RadonAIMCPProvider", {
-      onDidChangeMcpServerDefinitions: didChangeEmitter.event,
       provideMcpServerDefinitions: async () => {
         const port = await server.getPort();
         return [
@@ -63,7 +53,7 @@ function directLoadRadonAI(server: LocalMcpServer, disposables: Disposable[]) {
             "RadonAI",
             Uri.parse(`http://127.0.0.1:${port}/mcp`),
             {},
-            server.getVersion()
+            extensionContext.extension.packageJSON.version
           ),
         ];
       },
@@ -129,9 +119,8 @@ export default function registerRadonAi(context: ExtensionContext): Disposable {
   const disposables: Disposable[] = [];
 
   function loadRadonAi() {
-    const connectionListener = new ConnectionListener();
-    const server = new LocalMcpServer(connectionListener);
-    disposables.push(server, connectionListener);
+    const server = new LocalMcpServer();
+    disposables.push(server);
 
     if (isDirectLoadingAvailable()) {
       directLoadRadonAI(server, disposables);
