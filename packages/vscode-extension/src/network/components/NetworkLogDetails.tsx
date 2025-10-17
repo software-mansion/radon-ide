@@ -29,6 +29,7 @@ interface TabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
   editorThemeData?: ThemeData;
+  isActive?: boolean;
   isImage?: boolean;
 }
 
@@ -127,9 +128,9 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
         <span className="codicon codicon-close" />
       </button>
       <VscodeTabs
+        onVscTabsSelect={handleTabSelect}
         data-testid="network-panel-log-details-tabs"
-        selectedIndex={selectedTabIndex}
-        onVscTabsSelect={handleTabSelect}>
+        selectedIndex={selectedTabIndex}>
         {tabs.map(({ title, Tab, props, warning, hideTab }, index) => (
           <Fragment key={title}>
             <VscodeTabHeader
@@ -143,14 +144,12 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
               </div>
             </VscodeTabHeader>
             <VscodeTabPanel data-testid={`network-panel-tab-panel-${title.toLowerCase()}`}>
-              {index === selectedTabIndex && (
                 <>
                   <TabScrollable height={calculateScrollableHeight()}>
-                    <Tab networkLog={networkLog} {...props} />
+                    <Tab networkLog={networkLog} isActive={index === selectedTabIndex} {...props} />
                   </TabScrollable>
                   <TabBar />
                 </>
-              )}
             </VscodeTabPanel>
           </Fragment>
         ))}

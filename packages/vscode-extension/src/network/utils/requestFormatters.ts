@@ -1,4 +1,4 @@
-import { ContentTypeHeader, ResponseData } from "../types/network";
+import { ContentTypeHeader, ResponseBodyDataType, ResponseData } from "../types/network";
 import { NetworkLog } from "../types/networkLog";
 
 function prettyStringify(obj: unknown): string {
@@ -290,13 +290,21 @@ const PREVIEWABLE_IMAGE_TYPES = [
 /**
  * Checks if the content type represents a previewable image format
  */
-export function isPreviewableImage(contentType: string): boolean {
-  if (!contentType) {
+export function isPreviewableImage(
+  networkLogContentType: string,
+  responseBodyType: ResponseBodyDataType
+): boolean {
+  if (!networkLogContentType) {
     return false;
   }
 
-  const contentTypeLowerCase = contentType.toLowerCase();
-  return PREVIEWABLE_IMAGE_TYPES.some((imageType) => contentTypeLowerCase.includes(imageType));
+  const contentTypeLowerCase = networkLogContentType.toLowerCase();
+  const isImageResponseType = responseBodyType === ResponseBodyDataType.Image;
+  const isContentTypePreviewable = PREVIEWABLE_IMAGE_TYPES.some((imageType) =>
+    contentTypeLowerCase.includes(imageType)
+  );
+
+  return isContentTypePreviewable && isImageResponseType;
 }
 
 export function determineLanguage(contentType: string, body: string): string {

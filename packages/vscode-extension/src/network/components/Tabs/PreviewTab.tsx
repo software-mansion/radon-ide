@@ -1,6 +1,6 @@
 import { PropsWithChildren, useEffect, useRef, useState } from "react";
 import { NetworkLog, NetworkLogColumn } from "../../types/networkLog";
-import { ResponseBodyData } from "../../types/network";
+import { ResponseBodyData, ResponseBodyDataType } from "../../types/network";
 import { getNetworkResponseContentType, isPreviewableImage } from "../../utils/requestFormatters";
 import { NetworkEvent } from "../../types/panelMessageProtocol";
 import { useTabBar } from "../../providers/TabBarProvider";
@@ -65,11 +65,11 @@ function PreviewTab({ networkLog, responseBodyData }: PreviewTabProps) {
   const [metadata, setMetadata] = useState<ImageMetadata | null>(null);
 
   // Extract response body data
-  const { body, fullBody, base64Encoded = false, wasTruncated = false } = responseBodyData || {};
+  const { body, fullBody, base64Encoded = false, wasTruncated = false, type = ResponseBodyDataType.Other } = responseBodyData || {};
 
   // Determine preview availability
   const contentType = getNetworkResponseContentType(networkLog.response);
-  const canPreview = isPreviewableImage(contentType);
+  const canPreview = isPreviewableImage(contentType, type);
   const imageSize = getNetworkLogValue(networkLog, NetworkLogColumn.Size) || "";
 
   // Determine display states

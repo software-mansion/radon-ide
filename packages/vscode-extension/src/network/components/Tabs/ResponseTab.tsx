@@ -17,6 +17,7 @@ interface ResponseTabProps {
   networkLog: NetworkLog;
   responseBodyData?: ResponseBodyData;
   editorThemeData?: ThemeData;
+  isActive: boolean;
 }
 
 interface ResponseBodyContentProps {
@@ -26,6 +27,7 @@ interface ResponseBodyContentProps {
   language: string;
   editorThemeData?: ThemeData;
   base64Encoded: boolean;
+  isActive: boolean;
 }
 
 function ResponseTooLargeWarning() {
@@ -45,6 +47,7 @@ const ResponseBodyContent = ({
   language,
   editorThemeData,
   base64Encoded,
+  isActive
 }: ResponseBodyContentProps) => {
   if (dataFetchFailed) {
     return (
@@ -84,13 +87,20 @@ const ResponseBodyContent = ({
       language={language}
       theme={editorThemeData}
       placeholder={NO_RESPONSE_PLACEHOLDER}
+      isActive={isActive}
     />
   );
 };
 
-const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: ResponseTabProps) => {
+const ResponseTab = ({
+  networkLog,
+  responseBodyData,
+  editorThemeData,
+  isActive,
+}: ResponseTabProps) => {
   const { fetchAndOpenResponseInEditor } = useNetwork();
-  const { body = undefined, wasTruncated = false, base64Encoded = false } = responseBodyData || {};
+
+  const { body, wasTruncated = false, base64Encoded = false } = responseBodyData || {};
 
   // For images, display the base64-encoded body as-is without formatting
   const responseData = base64Encoded ? body : getFormattedRequestBody(body);
@@ -112,6 +122,10 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
   const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;
   const dataFetchFailed = requestFailed && !responseData;
 
+  const handleOpenInEditor = () => {
+    fetchAndOpenResponseInEditor(networkLog, base64Encoded);
+  };
+
   return (
     <>
       <TabActionButtons
@@ -121,9 +135,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
           <IconButton
             className="response-tab-copy-button"
             tooltip={{ label: "Open response in editor", side: "bottom" }}
-            onClick={() => {
-              fetchAndOpenResponseInEditor(networkLog, base64Encoded);
-            }}
+            onClick={handleOpenInEditor}
             disabled={dataFetchFailed}>
             <span className="codicon codicon-chrome-restore" />
           </IconButton>
@@ -137,6 +149,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
           language={language}
           editorThemeData={editorThemeData}
           base64Encoded={base64Encoded}
+          isActive={isActive}
         />
       </div>
     </>
