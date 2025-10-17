@@ -12,7 +12,7 @@ export type PlanType = "FREE" | "PRO" | "TEAM" | "ENTERPRISE";
 
 export interface FeatureProps {
   label: string;
-  info: string;
+  info?: string;
 }
 
 export interface PricingPlanCardProps {

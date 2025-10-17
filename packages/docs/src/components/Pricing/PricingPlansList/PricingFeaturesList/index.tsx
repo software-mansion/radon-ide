@@ -34,7 +34,7 @@ export default function PricingFeaturesList({ featuresList, plan }: PricingFeatu
         <div key={idx} className={styles.featureElement}>
           <CheckIcon />
           {feature.label}
-          {feature.info !== "" && <Tooltip info={feature.info} />}
+          {feature.info && <Tooltip info={feature.info} />}
         </div>
       ))}
 
