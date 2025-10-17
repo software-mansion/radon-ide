@@ -341,8 +341,14 @@ function deserializeRequestData(data: RequestData, contentType: string | undefin
 }
 
 function getContentTypeHeader(xhr: XMLHttpRequest): string {
-  // @ts-ignore - RN-specific property
-  return xhr._headers[ContentTypeHeader.LowerCase] || xhr._headers[ContentTypeHeader.Default] || {};
+  const hiddenPropertyHeadersValue =
+    // @ts-ignore - RN-specific property
+    xhr._headers[ContentTypeHeader.LowerCase] || xhr._headers[ContentTypeHeader.Default] || "";
+
+  if (xhr.getResponseHeader) {
+    return xhr.getResponseHeader(ContentTypeHeader.Default) || hiddenPropertyHeadersValue;
+  }
+  return hiddenPropertyHeadersValue;
 }
 
 module.exports = {
