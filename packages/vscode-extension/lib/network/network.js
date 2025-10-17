@@ -55,7 +55,7 @@ function enableNetworkInspect(networkProxy) {
       messageId: message.messageId,
       result: responseBodyData,
     };
-    networkProxy.sendMessage("cdp-message", JSON.stringify(responseObject));
+    networkProxy.sendMessage("ide-message", JSON.stringify(responseObject));
   }
 
   function listener(message) {

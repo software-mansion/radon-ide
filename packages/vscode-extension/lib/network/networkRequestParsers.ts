@@ -1,9 +1,20 @@
 import { TextDecoder } from "../polyfills";
 
+// Redeclared in src/network/types/network.ts
+// Based on resourceTypeFromMimeType method in React-Native's resourceTypyFromMimeType
+enum ResponseBodyDataType {
+  Media = "Media",
+  Image = "Image",
+  Script = "Script",
+  XHR = "XHR",
+  Other = "Other",
+}
+
 export type InternalResponseBodyData = {
   body: string | undefined;
   wasTruncated: boolean;
-  base64Encoded: boolean | undefined;
+  base64Encoded: boolean;
+  type: ResponseBodyDataType;
   dataSize: number;
 };
 
@@ -18,6 +29,7 @@ export const ContentTypeHeader = {
 interface SerializedTypedArray {
   length: number;
   [key: number]: number;
+  [Symbol.iterator](): Iterator<number>;
 }
 
 function isSerializedTypedArray(obj: unknown): obj is SerializedTypedArray {
@@ -89,10 +101,11 @@ const TRUNCATED_LENGTH = 1000; // 1000 characters
  */
 function truncateResponseBody(
   responseBody: string | undefined,
-  base64Encoded?: boolean
+  base64Encoded: boolean = false,
+  type: ResponseBodyDataType = ResponseBodyDataType.Other
 ): InternalResponseBodyData {
   if (!responseBody) {
-    return { body: undefined, wasTruncated: false, base64Encoded, dataSize: 0 };
+    return { body: undefined, wasTruncated: false, base64Encoded, type, dataSize: 0 };
   }
 
   const dataSize = new Blob([responseBody]).size;
@@ -103,11 +116,12 @@ function truncateResponseBody(
       body: `${slicedBody}...`,
       wasTruncated: true,
       base64Encoded,
+      type,
       dataSize: new Blob([slicedBody]).size,
     };
   }
 
-  return { body: responseBody, base64Encoded, wasTruncated: false, dataSize };
+  return { body: responseBody, base64Encoded, wasTruncated: false, type, dataSize };
 }
 
 function handleReadError(error: unknown): InternalResponseBodyData {
@@ -131,7 +145,7 @@ function readBlobAsBase64(blob: Blob): Promise<InternalResponseBodyData> {
       } else if (typeof reader.result === "string") {
         textResult = reader.result;
       }
-      resolve(truncateResponseBody(textResult, true));
+      resolve(truncateResponseBody(textResult, true, ResponseBodyDataType.Image));
     };
 
     reader.onerror = (error) => {
@@ -152,7 +166,7 @@ function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
     reader.onload = () => {
       const result = reader.result;
       const textResult = typeof result === "string" ? result : undefined;
-      resolve(truncateResponseBody(textResult));
+      resolve(truncateResponseBody(textResult, false, ResponseBodyDataType.Other));
     };
 
     reader.onerror = (error) => {
@@ -275,7 +289,6 @@ function reconstructTypedArray(serializedData: SerializedTypedArray): Uint8Array
 }
 
 function dataToBase64(array: SerializedTypedArray) {
-  // this somewhat works
   const result = [];
   for (let char of array) {
     result.push(String.fromCharCode(char));

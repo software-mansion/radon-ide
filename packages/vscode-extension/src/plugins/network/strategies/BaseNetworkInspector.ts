@@ -23,6 +23,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   public abstract activate(): void;
   public abstract deactivate(): void;
   public abstract dispose(): void;
+  protected abstract handleGetResponseBodyData(payload: IDEMessage): Promise<void>;
   protected abstract handleCDPMessage(
     message: WebviewMessage & { command: WebviewCommand.CDPCall }
   ): void;
@@ -137,24 +138,24 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
    */
   private async handleFetchFullResponseBody(
     requestData: RequestData | undefined,
-    base64Encoded: boolean | undefined
+    base64Encoded: boolean = false
   ): Promise<void> {
-    if (!requestData || !base64Encoded) {
+    if (!requestData) {
       Logger.warn("fetchFullResponseBody called without proper parameters");
       return;
     }
 
     try {
       const response = await this.fetchResponse(requestData);
-      const contentType =
-        response.headers.get(ContentTypeHeader.IOS) ||
-        response.headers.get(ContentTypeHeader.ANDROID) ||
-        "";
+      const contentType = response.headers.get(ContentTypeHeader.Default) || "";
 
-      const responseBody = base64Encoded
-        ? await this.responseToBase64(response)
-        : await response.text();
+      if (base64Encoded) {
+        const responseBody = await this.responseToBase64(response);
+        openContentInEditor(responseBody, "plaintext");
+        return;
+      }
 
+      const responseBody = await response.text();
       const language = determineLanguage(contentType, responseBody);
       const formattedData = this.formatDataBasedOnLanguage(responseBody, language);
 
@@ -185,6 +186,10 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
       case IDEMethod.FetchFullResponseBody:
         const { request, base64Encoded } = payload.params || {};
         this.handleFetchFullResponseBody(request, base64Encoded);
+        break;
+      case IDEMethod.GetResponseBodyData:
+        console.log("MLEKO MLEKO 2")
+        this.handleGetResponseBodyData(payload);
         break;
       case IDEMethod.GetTheme:
         this.handleGetTheme(payload);

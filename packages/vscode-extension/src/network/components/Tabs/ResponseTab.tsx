@@ -81,8 +81,8 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
   const responseData = base64Encoded ? body : getFormattedRequestBody(body);
 
   const contentType =
-    networkLog.response?.headers?.[ContentTypeHeader.IOS] ||
-    networkLog.response?.headers?.[ContentTypeHeader.ANDROID] ||
+    networkLog.response?.headers?.[ContentTypeHeader.Default] ||
+    networkLog.response?.headers?.[ContentTypeHeader.LowerCase] ||
     "";
 
   // For base64-encoded images, use plaintext to avoid syntax highlighting

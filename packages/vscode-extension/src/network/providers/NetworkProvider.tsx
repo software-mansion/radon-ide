@@ -13,12 +13,7 @@ import useNetworkTracker, {
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { NetworkLog } from "../types/networkLog";
-import {
-  WebviewMessage,
-  WebviewCommand,
-  NetworkMethod,
-  IDEMethod,
-} from "../types/panelMessageProtocol";
+import { WebviewMessage, IDEMethod, WebviewCommand } from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
 import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
@@ -44,8 +39,8 @@ function createBodyResponsePromise(
 
   const listener = (message: MessageEvent) => {
     try {
-      const { command, payload }: WebviewMessage = message.data;
-      if (command !== WebviewCommand.CDPCall || payload.messageId !== messageId) {
+      const { payload, command }: WebviewMessage = message.data;
+      if (payload.messageId !== messageId || command !== WebviewCommand.IDECall) {
         return;
       }
 
@@ -113,8 +108,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
-  const { clearLogs, toggleNetwork, sendWebviewIDEMessage, sendWebviewCDPMessage, networkLogs } =
-    networkTracker;
+  const { clearLogs, toggleNetwork, sendWebviewIDEMessage, networkLogs } = networkTracker;
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
@@ -148,12 +142,12 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     const promise = createBodyResponsePromise(messageId, requestId, responseBodiesRef);
 
     // Send the message to the network-plugin backend
-    sendWebviewCDPMessage({
+    sendWebviewIDEMessage({
       messageId: messageId,
-      method: NetworkMethod.GetResponseBody,
+      method: IDEMethod.GetResponseBodyData,
       params: {
-        requestId: requestId,
-        type: type,
+        requestId,
+        type,
       },
     });
 

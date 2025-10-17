@@ -46,17 +46,25 @@ const PreviewTab = ({ networkLog, responseBodyData }: PreviewTabProps) => {
   const [error, setError] = useState<boolean>(false);
   const [metadata, setMetadata] = useState<ImageMetadata | null>(null);
 
-  const { body = undefined, fullBody = undefined, base64Encoded = false } = responseBodyData || {};
+  const {
+    body = undefined,
+    fullBody = undefined,
+    base64Encoded = false,
+    wasTruncated = false,
+  } = responseBodyData || {};
+
+  const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;
+  const noFullBodyAvailable = !fullBody && wasTruncated;
+  const dataFetchFailure = requestFailed && !body;
+  const displayLoading = loading && !error;
+
   const contentType =
     networkLog.response?.headers?.["Content-Type"] ||
     networkLog.response?.headers?.["content-type"] ||
     "";
-  const imageSize = getNetworkLogValue(networkLog, NetworkLogColumn.Size) || "";
-  const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;
-  const dataFetchFailure = requestFailed && !body;
-
   const canPreview = isPreviewableImage(contentType);
-  const displayLoading = loading && !error;
+
+  const imageSize = getNetworkLogValue(networkLog, NetworkLogColumn.Size) || "";
 
   useEffect(() => {
     const image = imageRef.current;
@@ -105,12 +113,12 @@ const PreviewTab = ({ networkLog, responseBodyData }: PreviewTabProps) => {
     );
   }
 
-  if (!canPreview || !body) {
+  if (!canPreview || !body || noFullBodyAvailable) {
     return (
       <div className="preview-tab-container">
         <div className="preview-tab-no-preview">
           <span className="codicon codicon-file-media" />
-          <p>No preview available for this content type</p>
+          <p>No preview available</p>
         </div>
       </div>
     );

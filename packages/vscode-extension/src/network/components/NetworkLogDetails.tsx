@@ -11,7 +11,7 @@ import TimingTab from "./Tabs/TimingTab";
 import TabScrollable from "./Tabs/TabScrollable";
 import { useNetwork } from "../providers/NetworkProvider";
 import { NetworkLog } from "../types/networkLog";
-import { ResponseBodyData } from "../types/network";
+import { ResponseBodyData, ResponseBodyDataType } from "../types/network";
 import { ThemeData } from "../../common/theme";
 import useThemeExtractor from "../hooks/useThemeExtractor";
 import "overlayscrollbars/overlayscrollbars.css";
@@ -46,11 +46,11 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
   const { infoBarHeight } = useLogDetailsBar();
 
   const [responseBodyData, setResponseBodyData] = useState<ResponseBodyData | undefined>(undefined);
-  const { wasTruncated = false } = responseBodyData || {};
+  const { wasTruncated = false, type = ResponseBodyDataType.Other } = responseBodyData || {};
   const { getResponseBody } = useNetwork();
 
   const themeData = useThemeExtractor();
-  const isImage = networkLog.type === "Image" || networkLog.response?.headers?.["content-type"]?.startsWith("image/");
+  const isImage = type === ResponseBodyDataType.Image;
 
   useEffect(() => {
     if (

@@ -1,5 +1,10 @@
 import { ThemeDescriptor } from "../../common/theme";
-import { RequestData, ResponseData, NetworkRequestInitiator } from "./network";
+import {
+  RequestData,
+  ResponseData,
+  NetworkRequestInitiator,
+  ResponseBodyDataType,
+} from "./network";
 
 export enum NetworkEvent {
   RequestWillBeSent = "Network.requestWillBeSent",
@@ -31,6 +36,7 @@ export type CDPMethod = NetworkEvent | NetworkMethod | NetworkType;
 
 export enum IDEMethod {
   FetchFullResponseBody = "IDE.fetchFullResponseBody",
+  GetResponseBodyData = "IDE.getResponseBodyData",
   GetTheme = "IDE.getTheme",
   Theme = "IDE.Theme",
 }
@@ -54,7 +60,7 @@ export interface CDPParams {
 
   // Response-related
   response?: ResponseData;
-  type?: string;
+  type?: ResponseBodyDataType;
 
   // Timing / performance
   encodedDataLength?: number;
@@ -82,7 +88,9 @@ export interface CDPMessage {
 
 // IDE message parameters
 type IDEMessageParams = {
+  requestId?: string;
   request?: RequestData;
+  type?: ResponseBodyDataType;
   base64Encoded?: boolean;
   themeDescriptor?: ThemeDescriptor;
 };
@@ -98,6 +106,11 @@ export interface IDEMessage {
 export enum WebviewCommand {
   CDPCall = "cdp-call",
   IDECall = "ide-call",
+}
+
+export enum WebviewMessageDescriptor {
+  CDPMessage = "cdp-message",
+  IDEMessage = "ide-message",
 }
 
 // Union type for all webview messages

@@ -3,6 +3,8 @@ import { disposeAll } from "../../../utilities/disposables";
 import { Logger } from "../../../Logger";
 import {
   CDPMessage,
+  IDEMessage,
+  IDEMethod,
   NetworkMethod,
   WebviewCommand,
   WebviewMessage,
@@ -12,7 +14,11 @@ import { BaseNetworkInspector } from "./BaseNetworkInspector";
 import { NETWORK_EVENTS } from "../../../network/types/panelMessageProtocol";
 import { RadonInspectorBridge } from "../../../project/inspectorBridge";
 import { NETWORK_EVENT_MAP, NetworkBridge } from "../../../project/networkBridge";
-import { ResponseBodyData } from "../../../network/types/network";
+import {
+  ResponseBody,
+  ResponseBodyData,
+  ResponseBodyDataType,
+} from "../../../network/types/network";
 
 // Truncation constants
 const MAX_MESSAGE_LENGTH = 1000000;
@@ -49,34 +55,54 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
    * Truncate response body if it exceeds the maximum allowed length to prevent UI freezing.
    */
   private formatResponseBodyData(
-    responseBodyData: ResponseBodyData,
-    contentType: string | undefined
+    responseBodyData: ResponseBody,
+    type: ResponseBodyDataType
   ): ResponseBodyData {
     const { body, base64Encoded } = responseBodyData;
-    if (!body || !contentType) {
-      return { body: undefined, wasTruncated: false, base64Encoded: false };
+    const isImage = type === ResponseBodyDataType.Image;
+
+    if (!body) {
+      return {
+        body: undefined,
+        wasTruncated: false,
+        base64Encoded: false,
+        type: ResponseBodyDataType.Other,
+      };
     }
 
-    const shouldDecode = base64Encoded && contentType !== "Image";
+    const shouldDecode = base64Encoded && !isImage;
     const responseBody = shouldDecode ? this.decodeBase64(body) : body;
+    const isResponseBase64Encoded = base64Encoded && !shouldDecode;
 
     if (responseBody.length > MAX_MESSAGE_LENGTH) {
       return {
         body: responseBody.slice(0, TRUNCATED_LENGTH),
         fullBody: responseBody,
         wasTruncated: true,
-        base64Encoded: !shouldDecode,
+        base64Encoded: isResponseBase64Encoded,
+        type,
       };
     }
 
-    return { body: responseBody, fullBody: responseBody, wasTruncated: false, base64Encoded: !shouldDecode };
+    return {
+      body: responseBody,
+      fullBody: responseBody,
+      wasTruncated: false,
+      base64Encoded: isResponseBase64Encoded,
+      type,
+    };
   }
 
-  private broadcastCDPMessage(message: CDPMessage): void {
+  private broadcastWebviewMessage(message: IDEMessage, command: WebviewCommand.IDECall): void;
+  private broadcastWebviewMessage(message: CDPMessage, command: WebviewCommand.CDPCall): void;
+  private broadcastWebviewMessage(
+    message: IDEMessage | CDPMessage,
+    command: WebviewCommand.IDECall | WebviewCommand.CDPCall
+  ): void {
     const webviewMessage: WebviewMessage = {
-      command: WebviewCommand.CDPCall,
+      command: command,
       payload: message,
-    };
+    } as WebviewMessage;
     this.broadcastMessage(webviewMessage);
   }
 
@@ -94,12 +120,14 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
   private setupNetworkListeners(): void {
     const knownEventsSubscriptions: Disposable[] = NETWORK_EVENTS.map((event) =>
       this.networkBridge.onEvent(NETWORK_EVENT_MAP[event], (message) =>
-        this.broadcastCDPMessage(message)
+        this.broadcastWebviewMessage(message, WebviewCommand.CDPCall)
       )
     );
 
     const subscriptions: Disposable[] = [
-      this.networkBridge.onEvent("unknownEvent", (e) => this.broadcastCDPMessage(e)),
+      this.networkBridge.onEvent("unknownEvent", (e) =>
+        this.broadcastWebviewMessage(e, WebviewCommand.IDECall)
+      ),
       this.inspectorBridge.onEvent("appReady", () => {
         this.networkBridge.enableNetworkInspector();
       }),
@@ -119,7 +147,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     this.disposables.push(bridgeAvailableSubscription);
   }
 
-  private async handleGetResponseBody(payload: CDPMessage) {
+  protected async handleGetResponseBodyData(payload: IDEMessage) {
     const { messageId } = payload || {};
     const { type } = payload?.params || {};
 
@@ -131,12 +159,17 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     }
 
     const sendEmptyResponse = () => {
-      const emptyMessage: CDPMessage = {
+      const emptyMessage: IDEMessage = {
         messageId,
-        method: NetworkMethod.GetResponseBody,
-        result: { body: undefined, wasTruncated: false, base64Encoded: false },
+        method: IDEMethod.GetResponseBodyData,
+        result: {
+          body: undefined,
+          wasTruncated: false,
+          base64Encoded: false,
+          type: ResponseBodyDataType.Other,
+        },
       };
-      this.broadcastCDPMessage(emptyMessage);
+      this.broadcastWebviewMessage(emptyMessage, WebviewCommand.IDECall);
     };
 
     const { requestId } = payload?.params || {};
@@ -148,24 +181,23 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
       return;
     }
 
-    const { result: responseBodyData } =
-      (await this.networkBridge.getResponseBody(requestId)) || {};
+    const { result: responseBody } = (await this.networkBridge.getResponseBody(requestId)) || {};
 
-    if (!responseBodyData) {
+    if (!responseBody) {
       Logger.warn("No response body data received");
       sendEmptyResponse();
       return;
     }
 
-    const responseBodyResult = this.formatResponseBodyData(responseBodyData, type);
+    const responseBodyData = this.formatResponseBodyData(responseBody, type ?? ResponseBodyDataType.Other);
 
-    const message: CDPMessage = {
+    const message: IDEMessage = {
       messageId,
-      method: NetworkMethod.GetResponseBody,
-      result: responseBodyResult,
+      method: IDEMethod.GetResponseBodyData,
+      result: responseBodyData,
     };
 
-    this.broadcastCDPMessage(message);
+    this.broadcastWebviewMessage(message, WebviewCommand.IDECall);
   }
 
   protected handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
@@ -177,9 +209,6 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
         break;
       case NetworkMethod.Disable:
         this.networkBridge.disableNetworkInspector();
-        break;
-      case NetworkMethod.GetResponseBody:
-        this.handleGetResponseBody(payload);
         break;
     }
   }

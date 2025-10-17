@@ -49,6 +49,7 @@ import { getDebuggerTargetForDevice } from "./DebuggerTarget";
 import { isCDPMethod } from "../network/types/panelMessageProtocol";
 
 const MAX_URL_HISTORY_SIZE = 20;
+
 interface LaunchApplicationSessionDeps {
   applicationContext: ApplicationContext;
   device: DeviceBase;

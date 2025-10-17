@@ -78,15 +78,14 @@ export class AsyncBoundedResponseBuffer {
       }
 
       const storedPromise = responseBodyPromise
-        .then((response) =>
-          response
-            ? {
-                body: response.body,
-                base64Encoded: response.base64Encoded,
-                wasTruncated: response.wasTruncated,
-              }
-            : undefined
-        )
+        .then((response) => {
+          if (!response) {
+            return undefined;
+          }
+
+          const { dataSize: _dataSize, ...rest } = response || {};
+          return rest;
+        })
         .catch((error) => {
           console.warn("Error processing response body for requestId", requestId, error);
           return undefined;
