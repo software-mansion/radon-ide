@@ -1,6 +1,6 @@
 "use no memo";
 
-const { useContext, useState, useEffect, useRef, useCallback } = require("react");
+const { useContext, useState, useEffect, useRef, useCallback, Children } = require("react");
 const {
   LogBox,
   AppRegistry,
@@ -114,7 +114,6 @@ function getRendererConfig() {
  */
 function extractComponentStack(startNode, viewDataHierarchy) {
   const rendererConfig = getRendererConfig();
-
   let stackItems = [];
   if (rendererConfig) {
     // when we find renderer config with getInspectorDataForInstance we use fiber node
@@ -156,7 +155,7 @@ function extractComponentStack(startNode, viewDataHierarchy) {
 
 function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, callback) {
   const { width: screenWidth, height: screenHeight } = DimensionsObserver.getScreenDimensions();
-
+  console.log("foobar aaa:", x * screenWidth, y * screenHeight);
   RNInternals.getInspectorDataForViewAtPoint(
     mainContainerRef.current,
     x * screenWidth,
@@ -214,6 +213,66 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
       });
     }
   );
+}
+
+function viewComponentTree(component, depth = 0) {
+  const children =
+    component.props?.children ??
+    component.memoizedProps?.children ??
+    component.pendingProps?.children;
+
+  const indent = 2;
+  const indentString = " ".repeat(depth * indent);
+
+  if (typeof component === "string") {
+    return indentString + component;
+  }
+
+  if (typeof children === "string") {
+    return indentString + children;
+  }
+
+  const typeData = component.type;
+  const displayName = typeData?.displayName ?? typeData?.name ?? "__unknown__";
+
+  let repr = indentString + `<${displayName}>\n`;
+
+  Children.forEach(children, (child) => {
+    const childRepr = viewComponentTree(child, depth + 1);
+
+    if (childRepr.trim().length === 0) {
+      return;
+    }
+
+    repr += childRepr.trimEnd() + "\n";
+  });
+
+  repr += indentString + `</${displayName}>\n`;
+
+  return repr;
+}
+
+function viewComponentTreeFromRoot(mainContainerRef) {
+  /// const { width, height } = DimensionsObserver.getScreenDimensions();
+
+  // const center = {
+  //   x: width / 2,
+  //   y: height / 2,
+  // };
+
+  RNInternals.getInspectorDataForViewAtPoint(
+    mainContainerRef.current,
+    225.0, // center.x,
+    700.0, // center.y,
+    (viewData) => {
+      const comp = viewData.closestPublicInstance.__internalInstanceHandle;
+      const repr = viewComponentTree(comp);
+      console.log("repr", repr);
+      // resolve(viewData);
+    }
+  );
+
+  // return promise;
 }
 
 export function AppWrapper({ children, initialProps, fabric }) {
@@ -309,7 +368,9 @@ export function AppWrapper({ children, initialProps, fabric }) {
           runApplication();
         }
       } else {
-        nextNavigationDescriptor && requestNavigationChange(nextNavigationDescriptor);
+        if (nextNavigationDescriptor) {
+          requestNavigationChange(nextNavigationDescriptor);
+        }
         appOpenPromiseResolve();
       }
       return appOpenPromise;
@@ -320,7 +381,9 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const showStorybookStory = useCallback(
     async (componentTitle, storyName) => {
       const previewKey = await storybookPreview(componentTitle, storyName);
-      previewKey !== undefined && openPreview(previewKey);
+      if (previewKey !== undefined) {
+        openPreview(previewKey);
+      }
     },
     [handleNavigationChange]
   );
@@ -363,9 +426,19 @@ export function AppWrapper({ children, initialProps, fabric }) {
         case "openNavigation":
           openNavigation(data);
           break;
+        case "viewComponentTree":
+          viewComponentTreeFromRoot(mainContainerRef).then((root) => {
+            const repr = viewComponentTree(root);
+            console.log("viewComponentTree:", repr);
+          });
+          break;
         case "inspect":
           const { id, x, y, requestStack } = data;
+
+          viewComponentTreeFromRoot(mainContainerRef);
+
           getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, (inspectorData) => {
+            console.log("inspectorData:", inspectorData);
             inspectorBridge.sendMessage({
               type: "inspectData",
               data: {
@@ -439,7 +512,10 @@ export function AppWrapper({ children, initialProps, fabric }) {
       });
 
       const nextNavigationDescriptor = initialProps?.__radon_nextNavigationDescriptor;
-      nextNavigationDescriptor && requestNavigationChange(nextNavigationDescriptor);
+
+      if (nextNavigationDescriptor) {
+        requestNavigationChange(nextNavigationDescriptor);
+      }
 
       const pluginsChangedCallback = () => {
         inspectorBridge.sendMessage({
