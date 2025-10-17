@@ -20,15 +20,25 @@ import {
   ResponseBodyDataType,
 } from "../../../network/types/network";
 
-// Truncation constants
-const MAX_MESSAGE_LENGTH = 1000000;
-const TRUNCATED_LENGTH = 1000000;
-
 enum ActivationState {
   Inactive = "inactive",
   Pending = "pending",
   Active = "active",
 }
+
+// Truncation constants
+const MAX_MESSAGE_LENGTH = 1000000;
+const TRUNCATED_LENGTH = 1000000;
+
+// Default ResponseBodyData
+
+const DEFAULT_RESPONSE_BODY_DATA: ResponseBodyData = {
+  body: undefined,
+  wasTruncated: false,
+  base64Encoded: false,
+  type: ResponseBodyDataType.Other,
+};
+
 
 export default class DebuggerNetworkInspector extends BaseNetworkInspector {
   private disposables: Disposable[] = [];
@@ -52,43 +62,32 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
   }
 
   /**
-   * Truncate response body if it exceeds the maximum allowed length to prevent UI freezing.
+   * Parse and optionally truncate response body if it exceeds the maximum allowed length to prevent UI freezing.
+   * Base64-encoded images are kept as-is, while other base64 content is decoded.
    */
-  private formatResponseBodyData(
-    responseBodyData: ResponseBody,
+  private parseResponseBodyData(
+    responseBody: ResponseBody,
     type: ResponseBodyDataType
   ): ResponseBodyData {
-    const { body, base64Encoded } = responseBodyData;
-    const isImage = type === ResponseBodyDataType.Image;
+    const { body, base64Encoded } = responseBody;
 
     if (!body) {
-      return {
-        body: undefined,
-        wasTruncated: false,
-        base64Encoded: false,
-        type: ResponseBodyDataType.Other,
-      };
+      return DEFAULT_RESPONSE_BODY_DATA;
     }
 
-    const shouldDecode = base64Encoded && !isImage;
-    const responseBody = shouldDecode ? this.decodeBase64(body) : body;
-    const isResponseBase64Encoded = base64Encoded && !shouldDecode;
+    const isImage = type === ResponseBodyDataType.Image;
 
-    if (responseBody.length > MAX_MESSAGE_LENGTH) {
-      return {
-        body: responseBody.slice(0, TRUNCATED_LENGTH),
-        fullBody: responseBody,
-        wasTruncated: true,
-        base64Encoded: isResponseBase64Encoded,
-        type,
-      };
-    }
+    const shouldDecodeBase64 = base64Encoded && !isImage;
+    const parsedBody = shouldDecodeBase64 ? this.decodeBase64(body) : body;
+
+    const shouldKeepBase64Encoding = base64Encoded && !shouldDecodeBase64;
+    const shouldTruncate = parsedBody.length > MAX_MESSAGE_LENGTH;
 
     return {
-      body: responseBody,
-      fullBody: responseBody,
-      wasTruncated: false,
-      base64Encoded: isResponseBase64Encoded,
+      body: shouldTruncate ? parsedBody.slice(0, TRUNCATED_LENGTH) : parsedBody,
+      fullBody: parsedBody,
+      wasTruncated: shouldTruncate,
+      base64Encoded: shouldKeepBase64Encoding,
       type,
     };
   }
@@ -126,7 +125,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
 
     const subscriptions: Disposable[] = [
       this.networkBridge.onEvent("unknownEvent", (e) =>
-        this.broadcastWebviewMessage(e, WebviewCommand.IDECall)
+        this.broadcastWebviewMessage(e, WebviewCommand.CDPCall)
       ),
       this.inspectorBridge.onEvent("appReady", () => {
         this.networkBridge.enableNetworkInspector();
@@ -189,7 +188,10 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
       return;
     }
 
-    const responseBodyData = this.formatResponseBodyData(responseBody, type ?? ResponseBodyDataType.Other);
+    const responseBodyData = this.parseResponseBodyData(
+      responseBody,
+      type ?? ResponseBodyDataType.Other
+    );
 
     const message: IDEMessage = {
       messageId,

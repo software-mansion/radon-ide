@@ -23,7 +23,7 @@ interface ImageMetadata {
 // Helper functions
 const calculateGCD = (a: number, b: number): number => (b === 0 ? a : calculateGCD(b, a % b));
 
-const calculateAspectRatio = (width: number, height: number): string => {
+const getAspectRatio = (width: number, height: number): string => {
   const divisor = calculateGCD(width, height);
   return `${width / divisor}:${height / divisor}`;
 };
@@ -90,7 +90,7 @@ function PreviewTab({ networkLog, responseBodyData }: PreviewTabProps) {
     setMetadata({
       mime: contentType,
       resolution: `${naturalWidth} × ${naturalHeight}`,
-      aspectRatio: calculateAspectRatio(naturalWidth, naturalHeight),
+      aspectRatio: getAspectRatio(naturalWidth, naturalHeight),
       size: imageSize,
     });
   }, [loading, networkLog.requestId, contentType, imageSize]);

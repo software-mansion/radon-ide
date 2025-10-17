@@ -1,5 +1,9 @@
 import { useNetwork } from "../../providers/NetworkProvider";
-import { determineLanguage, getFormattedRequestBody, getNetworkResponseContentType } from "../../utils/requestFormatters";
+import {
+  determineLanguage,
+  getFormattedRequestBody,
+  getNetworkResponseContentType,
+} from "../../utils/requestFormatters";
 import IconButton from "../../../webview/components/shared/IconButton";
 import TabActionButtons from "./TabActionButtons";
 import HighlightedCodeBlock from "./HighlightedCodeBlock";
@@ -17,7 +21,7 @@ interface ResponseTabProps {
 
 interface ResponseBodyContentProps {
   wasTruncated: boolean;
-  dataFetchFailure: boolean;
+  dataFetchFailed: boolean;
   responseData: string | undefined;
   language: string;
   editorThemeData?: ThemeData;
@@ -32,15 +36,17 @@ function ResponseTooLargeWarning() {
   );
 }
 
+const NO_RESPONSE_PLACEHOLDER = "No response body";
+
 const ResponseBodyContent = ({
   wasTruncated,
-  dataFetchFailure,
+  dataFetchFailed,
   responseData,
   language,
   editorThemeData,
   base64Encoded,
 }: ResponseBodyContentProps) => {
-  if (dataFetchFailure) {
+  if (dataFetchFailed) {
     return (
       <div className="response-tab-failed-fetch-information">
         <span className="codicon codicon-info" />
@@ -50,7 +56,7 @@ const ResponseBodyContent = ({
   }
 
   if (!responseData) {
-    return <pre className="response-tab-no-data">No response body</pre>;
+    return <pre className="response-tab-no-data">{NO_RESPONSE_PLACEHOLDER}</pre>;
   }
 
   // Base64 messages are not truncated by default in order to allow viewing full images/files
@@ -58,7 +64,7 @@ const ResponseBodyContent = ({
     return (
       <>
         {wasTruncated && <ResponseTooLargeWarning />}
-        <pre className="base64-code">{`${responseData}...`}</pre>
+        <pre className="base64-code">{wasTruncated ? `${responseData}...` : responseData}</pre>
       </>
     );
   }
@@ -73,15 +79,12 @@ const ResponseBodyContent = ({
   }
 
   return (
-    <>
-      {wasTruncated && <ResponseTooLargeWarning />}
-      <HighlightedCodeBlock
-        content={responseData}
-        language={language}
-        theme={editorThemeData}
-        placeholder="No response body"
-      />
-    </>
+    <HighlightedCodeBlock
+      content={responseData}
+      language={language}
+      theme={editorThemeData}
+      placeholder={NO_RESPONSE_PLACEHOLDER}
+    />
   );
 };
 
@@ -91,18 +94,23 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
 
   // For images, display the base64-encoded body as-is without formatting
   const responseData = base64Encoded ? body : getFormattedRequestBody(body);
-
   const contentType = getNetworkResponseContentType(networkLog.response);
 
-  // For base64-encoded images, use plaintext to avoid syntax highlighting
-  const language = base64Encoded
-    ? "plaintext"
-    : responseData
-      ? determineLanguage(contentType, responseData)
-      : "plaintext";
+  // Determine language for syntax highlighting
+  const getLanguage = (): string => {
+    if (base64Encoded) {
+      return "plaintext";
+    }
+    if (responseData) {
+      return determineLanguage(contentType, responseData);
+    }
+    return "plaintext";
+  };
+
+  const language = getLanguage();
 
   const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;
-  const dataFetchFailure = requestFailed && !responseData;
+  const dataFetchFailed = requestFailed && !responseData;
 
   return (
     <>
@@ -116,7 +124,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
             onClick={() => {
               fetchAndOpenResponseInEditor(networkLog, base64Encoded);
             }}
-            disabled={dataFetchFailure}>
+            disabled={dataFetchFailed}>
             <span className="codicon codicon-chrome-restore" />
           </IconButton>
         }
@@ -124,7 +132,7 @@ const ResponseTab = ({ networkLog, responseBodyData, editorThemeData }: Response
       <div className="tab-padding">
         <ResponseBodyContent
           wasTruncated={wasTruncated}
-          dataFetchFailure={dataFetchFailure}
+          dataFetchFailed={dataFetchFailed}
           responseData={responseData}
           language={language}
           editorThemeData={editorThemeData}

@@ -40,6 +40,7 @@ export interface GetResponseBodyResponse {
 }
 
 // Redeclared in lib/network/networkRequestParsers.ts
+// Based on resourceTypeFromMimeType method in React-Native's resourceTypyFromMimeType
 export enum ResponseBodyDataType {
   Media = "Media",
   Image = "Image",
