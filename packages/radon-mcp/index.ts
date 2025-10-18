@@ -7,6 +7,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ToolListChangedNotificationSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 import { createHash } from 'crypto';
 import { readFileSync } from 'fs';
@@ -166,6 +167,12 @@ class MCPProxyServer {
         name: 'radon-mcp-client',
         version: '1.0.0',
       });
+      this.httpClient.setNotificationHandler(
+        ToolListChangedNotificationSchema,
+        (notification) => {
+          this.server.sendToolListChanged();
+        }
+      );
 
       this.httpTransport = new StreamableHTTPClientTransport(
         new URL(httpServerUrl)
