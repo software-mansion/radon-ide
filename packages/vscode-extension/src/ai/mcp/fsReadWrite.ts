@@ -45,6 +45,12 @@ function getMcpConfigDirPath(location: ConfigLocation): string {
   return filePath;
 }
 
+export async function touchMcpConfig(location: ConfigLocation) {
+  const filePath = path.join(getMcpConfigDirPath(location), MCP_FILE_NAME);
+  const now = new Date();
+  await fs.utimes(filePath, now, now);
+}
+
 export async function readMcpConfig(location: ConfigLocation): Promise<string | null> {
   let filePath = path.join(getMcpConfigDirPath(location), MCP_FILE_NAME);
 

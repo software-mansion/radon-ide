@@ -5,7 +5,7 @@ import express from "express";
 import { McpServer, RegisteredTool } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import { Disposable, workspace } from "vscode";
+import { Disposable, EventEmitter, workspace } from "vscode";
 import { Logger } from "../../Logger";
 import { registerLocalMcpTools, registerRemoteMcpTool } from "./toolRegistration";
 import { extensionContext } from "../../utilities/extensionContext";
@@ -31,6 +31,8 @@ export class LocalMcpServer implements Disposable {
 
   private licenseTokenSubscription: Disposable;
 
+  protected onToolListChangedEmitter = new EventEmitter<void>();
+
   constructor() {
     this.mcpServer = new McpServer({
       name: "RadonAI",
@@ -42,6 +44,8 @@ export class LocalMcpServer implements Disposable {
     this.serverPort = promise;
     this.resolveServerPort = resolve;
 
+    // the callback is called immediately and then with future changes of the token
+    // therefore we don't need to trigger reloadRemoteTools here separately
     this.licenseTokenSubscription = watchLicenseTokenChange(() => {
       // cancel any pending retries and reload immediately
       this.cancelRetryReloadTools();
@@ -61,6 +65,10 @@ export class LocalMcpServer implements Disposable {
 
   public async getPort() {
     return this.serverPort;
+  }
+
+  public onToolListChanged(listener: () => void) {
+    return this.onToolListChangedEmitter.event(listener);
   }
 
   private async handleSessionRequest(req: express.Request, res: express.Response) {
@@ -169,6 +177,7 @@ export class LocalMcpServer implements Disposable {
       // remove all tools that were registered before but are no longer on the server
       const remoteToolsToRemove = new Set<string>(this.remoteTools.keys());
       const toolsToRegister = [];
+      let toolsChanged = false;
       for (const tool of fetchedTools) {
         remoteToolsToRemove.delete(tool.name);
         if (!this.remoteTools.has(tool.name)) {
@@ -180,6 +189,7 @@ export class LocalMcpServer implements Disposable {
         if (toolToRemove) {
           toolToRemove.remove();
           this.remoteTools.delete(toolName);
+          toolsChanged = true;
         }
       }
       for (const tool of toolsToRegister) {
@@ -187,8 +197,12 @@ export class LocalMcpServer implements Disposable {
           tool.name,
           registerRemoteMcpTool(this.mcpServer, tool, this.handleRemoteToolsError.bind(this))
         );
+        toolsChanged = true;
       }
-      this.mcpServer.sendToolListChanged();
+      if (toolsChanged) {
+        this.mcpServer.sendToolListChanged();
+        this.onToolListChangedEmitter.fire();
+      }
     } catch (error) {
       Logger.error("[RADON-MCP] Failed to fetch remote tool schema:", error);
       this.handleRemoteToolsError(error as Error);

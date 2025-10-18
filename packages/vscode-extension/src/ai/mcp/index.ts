@@ -6,11 +6,17 @@ import {
   Disposable,
   workspace,
   ExtensionContext,
+  commands,
 } from "vscode";
 import { Logger } from "../../Logger";
 import { getTelemetryReporter } from "../../utilities/telemetry";
-import { insertRadonEntry, newMcpConfig, removeRadonEntry } from "./configCreator";
-import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
+import {
+  insertRadonEntry,
+  newMcpConfig,
+  removeOldRadonEntry,
+  removeRadonEntry,
+} from "./configCreator";
+import { readMcpConfig, touchMcpConfig, writeMcpConfig } from "./fsReadWrite";
 import { ConfigLocation, getConfigLocation, MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { LocalMcpServer } from "./LocalMcpServer";
@@ -20,27 +26,18 @@ import { RadonAIEnabledState } from "../../common/State";
 import { registerRadonChat } from "../chat";
 import { extensionContext } from "../../utilities/extensionContext";
 
-async function removeMcpConfig(location: ConfigLocation) {
+async function updateMcpConfig(
+  location: ConfigLocation,
+  updateFn: (config: string) => string | undefined
+) {
   const mcpConfig = await readMcpConfig(location);
   if (!mcpConfig) {
     return;
   }
-  const updatedConfig = removeRadonEntry(mcpConfig);
-  await writeMcpConfig(updatedConfig, location);
-}
-
-async function updateMcpConfig(port: number) {
-  const location = getConfigLocation();
-  const mcpConfig = (await readMcpConfig(location)) || newMcpConfig();
-  const updatedConfig = insertRadonEntry(mcpConfig, port);
-  if (updatedConfig !== mcpConfig) {
+  const updatedConfig = updateFn(mcpConfig);
+  if (updatedConfig) {
     await writeMcpConfig(updatedConfig, location);
   }
-
-  // Remove MCP entry from the config we no longer write to.
-  const unusedLocation =
-    location === ConfigLocation.Global ? ConfigLocation.Project : ConfigLocation.Global;
-  await removeMcpConfig(unusedLocation);
 }
 
 function directLoadRadonAI(server: LocalMcpServer, disposables: Disposable[]) {
@@ -63,8 +60,8 @@ function directLoadRadonAI(server: LocalMcpServer, disposables: Disposable[]) {
 
 async function fsUnloadRadonAi() {
   await Promise.all([
-    removeMcpConfig(ConfigLocation.Global),
-    removeMcpConfig(ConfigLocation.Project),
+    updateMcpConfig(ConfigLocation.Global, removeRadonEntry),
+    updateMcpConfig(ConfigLocation.Project, removeRadonEntry),
   ]).catch((e) => {
     Logger.error(
       MCP_LOG,
@@ -79,7 +76,15 @@ async function fsLoadRadonAI(server: LocalMcpServer) {
     const port = await server.getPort();
 
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
-    await updateMcpConfig(port);
+    const location = getConfigLocation();
+    // remove radon from the other location (in case it is there)
+    await updateMcpConfig(
+      location === ConfigLocation.Global ? ConfigLocation.Project : ConfigLocation.Global,
+      removeRadonEntry
+    );
+    // update the config with the new entry for Radon MCP server
+    const mcpConfig = (await readMcpConfig(location)) || newMcpConfig();
+    await updateMcpConfig(location, () => insertRadonEntry(mcpConfig));
 
     getTelemetryReporter().sendTelemetryEvent("radon-ai:mcp-started");
   } catch (error) {
@@ -112,9 +117,12 @@ function isEnabledInSettings() {
   );
 }
 
-export default function registerRadonAi(context: ExtensionContext): Disposable {
+export default function registerRadonAi(context: ExtensionContext) {
   const radonAiEnabled = isEnabledInSettings();
   registerRadonChat(context, radonAiEnabled);
+
+  updateMcpConfig(ConfigLocation.Global, removeOldRadonEntry);
+  updateMcpConfig(ConfigLocation.Project, removeOldRadonEntry);
 
   const disposables: Disposable[] = [];
 
@@ -126,7 +134,12 @@ export default function registerRadonAi(context: ExtensionContext): Disposable {
       directLoadRadonAI(server, disposables);
     } else {
       fsLoadRadonAI(server);
-      disposables.push(new Disposable(() => fsUnloadRadonAi()));
+      server.onToolListChanged(() => {
+        // Cursor has a bug where it doesn't respond to the tool list changed notification
+        // This bug is reported meny times including here: https://forum.cursor.com/t/mcp-client-update-tools/77294
+        // To workaround it, we use a hidden command that Cursor exposes: `mcp.toolListChanged`
+        commands.executeCommand("mcp.toolListChanged");
+      });
     }
   }
 
@@ -135,6 +148,8 @@ export default function registerRadonAi(context: ExtensionContext): Disposable {
       disposeAll(disposables);
       if (isEnabledInSettings()) {
         loadRadonAi();
+      } else {
+        fsUnloadRadonAi();
       }
     }
   });
