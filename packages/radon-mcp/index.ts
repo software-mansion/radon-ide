@@ -62,6 +62,7 @@ class MCPProxyServer {
   private isConnecting: boolean = false;
   private connectionTimeout: NodeJS.Timeout | null = null;
   private normalizedPath: string;
+  private pendingRequests: Array<() => void> = [];
 
   constructor(normalizedPath: string) {
     this.normalizedPath = normalizedPath;
@@ -96,6 +97,31 @@ class MCPProxyServer {
     }
   }
 
+  private async executeWhenConnected<T>(
+    fn: (client: Client) => Promise<T>
+  ): Promise<T> {
+    try {
+      if (this.httpClient) {
+        return await fn(this.httpClient);
+      }
+
+      return new Promise<T>((resolve, reject) => {
+        this.pendingRequests.push(async () => {
+          try {
+            const result = await fn(this.httpClient!);
+            resolve(result);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Request failed:', error);
+      this.checkAndHandleConnectionLoss();
+      throw error;
+    }
+  }
+
   private async checkAndHandleConnectionLoss(): Promise<void> {
     if (await this.isConnectionLost()) {
       if (this.isConnecting) {
@@ -112,35 +138,22 @@ class MCPProxyServer {
   }
 
   private setupHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => {
-      if (!this.httpClient) {
-        return { tools: [] };
-      }
-
-      try {
-        return await this.httpClient.listTools();
-      } catch (error) {
-        console.error('Failed to list tools:', error);
-        this.checkAndHandleConnectionLoss();
-        return { tools: [] };
-      }
+    this.server.setRequestHandler(ListToolsRequestSchema, () => {
+      return this.executeWhenConnected((client) => client.listTools()).catch(
+        (error) => {
+          console.error('Failed to list tools:', error);
+          return { tools: [] };
+        }
+      );
     });
 
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      if (!this.httpClient) {
-        throw new Error('Not connected to HTTP server');
-      }
-
-      try {
-        return await this.httpClient.callTool({
+    this.server.setRequestHandler(CallToolRequestSchema, (request) => {
+      return this.executeWhenConnected((client) =>
+        client.callTool({
           name: request.params.name,
           arguments: request.params.arguments,
-        });
-      } catch (error) {
-        console.error('Failed to call tool:', error);
-        this.checkAndHandleConnectionLoss();
-        throw error;
-      }
+        })
+      );
     });
   }
 
@@ -162,6 +175,12 @@ class MCPProxyServer {
       this.isConnecting = false;
 
       console.error(`✓ Server connection successful: ${httpServerUrl}`);
+
+      // Execute all pending requests
+      this.pendingRequests.forEach((execute) => execute());
+      this.pendingRequests = [];
+
+      // send tool list changed notification as the tools can now be loaded from the server
       this.server.sendToolListChanged();
     } catch (error) {
       console.error(`✗ Connection attempt failed: ${error}`);
