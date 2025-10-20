@@ -2,6 +2,8 @@ import { randomUUID, createHash } from "node:crypto";
 import { AddressInfo } from "node:net";
 import http from "node:http";
 import express from "express";
+import * as path from "path";
+import * as fs from "fs/promises";
 import { McpServer, RegisteredTool } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
@@ -11,8 +13,6 @@ import { registerLocalMcpTools, registerRemoteMcpTool } from "./toolRegistration
 import { extensionContext } from "../../utilities/extensionContext";
 import { watchLicenseTokenChange } from "../../utilities/license";
 import { getAppCachesDir } from "../../utilities/common";
-import * as path from "path";
-import * as fs from "fs/promises";
 import { AuthenticationError, fetchRemoteToolSchema, ServerUnreachableError } from "../shared/api";
 import { throttleAsync } from "../../utilities/throttle";
 
@@ -225,17 +225,15 @@ export class LocalMcpServer implements Disposable {
       } else if (!sessionId && isInitializeRequest(req.body)) {
         transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: () => randomUUID(),
-          onsessioninitialized: (sessionId: string) => {
-            console.log("session initialized", sessionId);
-            this.transports.set(sessionId, transport);
-            transport.onclose = () => {
-              if (transport.sessionId) {
-                console.log("session closed", sessionId);
-                this.transports.delete(transport.sessionId);
-              }
-            };
+          onsessioninitialized: (newSessionId: string) => {
+            this.transports.set(newSessionId, transport);
           },
         });
+        transport.onclose = () => {
+          if (transport.sessionId) {
+            this.transports.delete(transport.sessionId);
+          }
+        };
 
         await this.mcpServer.connect(transport);
       } else {

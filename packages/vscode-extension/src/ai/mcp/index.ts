@@ -16,7 +16,7 @@ import {
   removeOldRadonEntry,
   removeRadonEntry,
 } from "./configCreator";
-import { readMcpConfig, touchMcpConfig, writeMcpConfig } from "./fsReadWrite";
+import { readMcpConfig, writeMcpConfig } from "./fsReadWrite";
 import { ConfigLocation, getConfigLocation, MCP_LOG } from "./utils";
 import "../../../vscode.mcpConfigurationProvider.d.ts";
 import { LocalMcpServer } from "./LocalMcpServer";
@@ -72,9 +72,6 @@ async function fsUnloadRadonAi() {
 
 async function fsLoadRadonAI(server: LocalMcpServer) {
   try {
-    // The local server has to be online before the config is written
-    const port = await server.getPort();
-
     // Enables Radon AI tooling on editors utilizing mcp.json configs.
     const location = getConfigLocation();
     // remove radon from the other location (in case it is there)

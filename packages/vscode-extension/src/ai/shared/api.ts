@@ -3,7 +3,7 @@ import { Logger } from "../../Logger";
 import { getLicenseToken } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
 import { CHAT_LOG } from "../chat";
-import { ToolResponse, ToolResult, ToolSchema, ToolsInfo } from "../mcp/models";
+import { ToolResponse, ToolResult, ToolsInfo } from "../mcp/models";
 import { textToToolResponse } from "../mcp/utils";
 
 const BACKEND_URL = "https://radon-ai-backend.swmansion.com/api/";
@@ -24,7 +24,11 @@ export class ServerUnreachableError extends Error {
   }
 }
 
-export async function invokeToolCall(toolName: string, args: unknown): Promise<ToolResponse> {
+export async function invokeToolCall(
+  toolName: string,
+  args: unknown,
+  callId: string = PLACEHOLDER_ID
+): Promise<ToolResponse> {
   getTelemetryReporter().sendTelemetryEvent("radon-ai:tool-called", { toolName });
   const url = new URL("/api/tool_calls/", BACKEND_URL);
   const token = await getLicenseToken();
@@ -40,7 +44,7 @@ export async function invokeToolCall(toolName: string, args: unknown): Promise<T
         tool_calls: [
           {
             name: toolName,
-            id: PLACEHOLDER_ID,
+            id: callId,
             args,
           },
         ],
