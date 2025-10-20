@@ -41,6 +41,20 @@ import { RestrictedFunctionalityError } from "./common/Errors";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
+function wrapPaywalledFunction(fn: (...args: any[]) => any, messageOnRestricted: string) {
+  return async (...args: any[]) => {
+    try {
+      await fn(...args);
+    } catch (e) {
+      if (e instanceof RestrictedFunctionalityError) {
+        window.showInformationMessage(messageOnRestricted);
+        return;
+      }
+      throw e;
+    }
+  };
+}
+
 function handleUncaughtErrors(context: ExtensionContext) {
   process.on("unhandledRejection", (error) => {
     Logger.error("Unhandled promise rejection", error);
@@ -157,23 +171,18 @@ export async function activate(context: ExtensionContext) {
       });
   }
 
-  async function showStorybookStory(componentTitle: string, storyName: string) {
+  const showStorybookStory = wrapPaywalledFunction(async function (
+    componentTitle: string,
+    storyName: string
+  ) {
     commands.executeCommand("RNIDE.openPanel");
     const ide = IDE.getInstanceIfExists();
     if (ide) {
-      try {
-        ide.project.showStorybookStory(componentTitle, storyName);
-      } catch (e) {
-        if (e instanceof RestrictedFunctionalityError) {
-          window.showInformationMessage(
-            "Storybook integration is a Pro feature. Please upgrade your plan to access it."
-          );
-        }
-      }
+      ide.project.showStorybookStory(componentTitle, storyName);
     } else {
       window.showWarningMessage("Wait for the app to load before launching storybook.", "Dismiss");
     }
-  }
+  }, "Storybook integration is a Pro feature. Please upgrade your plan to access it.");
 
   async function showInlinePreview(fileName: string, lineNumber: number) {
     commands.executeCommand("RNIDE.openPanel");
@@ -390,33 +399,13 @@ async function openDevMenu() {
   IDE.getInstanceIfExists()?.project.openDevMenu();
 }
 
-async function performBiometricAuthorization() {
-  try {
-    await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
-  } catch (error) {
-    if (error instanceof RestrictedFunctionalityError) {
-      window.showInformationMessage(
-        "Biometric authentication is a Pro feature. Please upgrade your plan to access it."
-      );
-      return;
-    }
-    throw error;
-  }
-}
+const performBiometricAuthorization = wrapPaywalledFunction(async function () {
+  await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
+}, "Biometric authentication is a Pro feature. Please upgrade your plan to access it.");
 
-async function performFailedBiometricAuthorization() {
-  try {
-    await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
-  } catch (error) {
-    if (error instanceof RestrictedFunctionalityError) {
-      window.showInformationMessage(
-        "Biometric authentication is a Pro feature. Please upgrade your plan to access it."
-      );
-      return;
-    }
-    throw error;
-  }
-}
+const performFailedBiometricAuthorization = wrapPaywalledFunction(async function () {
+  await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
+}, "Biometric authentication is a Pro feature. Please upgrade your plan to access it.");
 
 async function deviceHomeButtonPress() {
   const project = IDE.getInstanceIfExists()?.project;
@@ -452,21 +441,13 @@ async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
 }
 
-async function rotateDevice(direction: DeviceRotationDirection) {
+const rotateDevice = wrapPaywalledFunction(async function (direction: DeviceRotationDirection) {
   const project = IDE.getInstanceIfExists()?.project;
   if (!project) {
     throw new Error("Radon IDE is not initialized yet.");
   }
-  try {
-    await project.rotateDevices(direction);
-  } catch (error) {
-    if (error instanceof RestrictedFunctionalityError) {
-      window.showInformationMessage(
-        "Device rotation is a Pro feature. Please upgrade your plan to access it."
-      );
-    }
-  }
-}
+  await project.rotateDevices(direction);
+}, "Device rotation is a Pro feature. Please upgrade your plan to access it.");
 
 async function rotateDeviceAnticlockwise() {
   await rotateDevice(DeviceRotationDirection.Anticlockwise);
