@@ -242,4 +242,29 @@ describe("15 - Launch Configuration Tests", () => {
       "Created launch configuration file is different than expected"
     );
   });
+
+  it("should open .json file to edit launch configurations", async function () {
+    copyLaunchConfigs();
+    await elementHelperService.findAndClickElementByTag(
+      "radon-bottom-bar-approot-select-dropdown-trigger"
+    );
+
+    await elementHelperService.findAndClickElementByTag(
+      "edit-launch-config-button-testConfig"
+    );
+    await elementHelperService.findAndClickElementByTag(
+      "launch-configuration-edit-in-file-link"
+    );
+
+    driver.switchTo().defaultContent();
+
+    const editorView = new EditorView();
+    const titles = await editorView.getOpenEditorTitles();
+
+    assert.include(
+      titles,
+      "launch.json",
+      "launch.json file is not opened in editor"
+    );
+  });
 });

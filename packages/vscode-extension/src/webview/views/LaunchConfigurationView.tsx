@@ -335,6 +335,7 @@ function LaunchConfigurationView({
       <div className="launch-configuration-button-group">
         <a
           className="launch-configuration-text-button"
+          data-testid="launch-configuration-edit-in-file-link"
           role="button"
           onClick={() => {
             project.openLaunchConfigurationFile();
