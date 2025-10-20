@@ -87,9 +87,7 @@ export class LocalMcpServer implements Disposable {
 
   private async updateMcpServerRecord() {
     const port = await this.getPort();
-    const appCachesDir = getAppCachesDir();
 
-    // Get the workspace folder path
     const workspaceFolder = workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
       Logger.warn("No workspace folder found, cannot update MCP server record");
@@ -97,29 +95,23 @@ export class LocalMcpServer implements Disposable {
     }
 
     const workspacePath = path.normalize(workspaceFolder.uri.fsPath);
-
-    // Calculate MD5 hash of the workspace folder path
     const workspaceHash = createHash("md5").update(workspacePath).digest("hex");
 
-    // Create the JSON config file path
     const mcpServerRecordLocation = path.join(
-      appCachesDir,
+      getAppCachesDir(),
       "Mcp",
       `radon-mcp-${workspaceHash}.json`
     );
 
-    // Ensure the Mcp directory exists
-    const mcpDir = path.dirname(mcpServerRecordLocation);
-    await fs.mkdir(mcpDir, { recursive: true });
-
-    // Create the JSON object with workspaceFolder and mcpServerUrl
     const mcpServerRecord = {
       workspaceFolder: workspacePath,
       mcpServerUrl: `http://127.0.0.1:${port}/mcp`,
     };
 
-    // Write the JSON file
     try {
+      // Ensure the Mcp directory exists and write the JSON file
+      const mcpDir = path.dirname(mcpServerRecordLocation);
+      await fs.mkdir(mcpDir, { recursive: true });
       await fs.writeFile(mcpServerRecordLocation, JSON.stringify(mcpServerRecord, null, 2));
       Logger.info(`Updated MCP server record at ${mcpServerRecordLocation}`);
     } catch (error) {
