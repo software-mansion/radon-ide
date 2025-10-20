@@ -3,7 +3,7 @@ import { z } from "zod";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { getToolSchema, invokeToolCall } from "../shared/api";
 import { ToolSchema } from "./models";
-import { readLogsToolExec, screenshotToolExec } from "./toolExecutors";
+import { readLogsToolExec, screenshotToolExec, viewComponentTreeExec } from "./toolExecutors";
 import { ConnectionListener } from "../shared/ConnectionListener";
 
 const PLACEHOLDER_ID = "3241"; // This placeholder is needed by the API, but the value doesn't matter
@@ -23,6 +23,16 @@ export async function registerMcpTools(server: McpServer, connectionListener: Co
       inputSchema: {},
     },
     screenshotToolExec
+  );
+
+  server.registerTool(
+    "view_component_tree",
+    {
+      description:
+        "View the component tree of the running app. Use this tool to learn see the general structure of this project.",
+      inputSchema: {},
+    },
+    viewComponentTreeExec
   );
 
   server.registerTool(

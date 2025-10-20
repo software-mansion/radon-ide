@@ -5,6 +5,7 @@ import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils
 import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
+import { Logger } from "../../Logger";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -23,6 +24,25 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
 
   return {
     content: [pngToToolContent(contents)],
+  };
+}
+
+export async function viewComponentTreeExec(): Promise<ToolResponse> {
+  const project = IDE.getInstanceIfExists()?.project;
+
+  if (!project?.deviceSession) {
+    return textToToolResponse(
+      "Could not capture a screenshot!\n" +
+        "The development viewport device is likely turned off.\n" +
+        "Please turn on the Radon IDE emulator before proceeding."
+    );
+  }
+
+  const store = project.deviceSession.devtoolsStore;
+  Logger.log(`Testing test: ${store}`);
+
+  return {
+    content: [],
   };
 }
 
