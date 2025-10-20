@@ -332,17 +332,12 @@ export class ProxyDebugAdapter extends DebugSession {
   }
 
   private async findOriginalPosition(sourceInfo: SourceInfo) {
-    try {
-      const res = await this.childDebugSession?.customRequest("getPreferredUILocation", {
-        originalUrl: sourceInfo.fileName,
-        line: sourceInfo.line0Based,
-        column: sourceInfo.column0Based,
-      });
-      return { fileName: res.source.path, line0Based: res.line, column0Based: res.column };
-    } catch (e) {
-      Logger.error("Error calling getPreferredLocation from the JS debugger", e);
-      return { error: e };
-    }
+    const res = await this.childDebugSession?.customRequest("getPreferredUILocation", {
+      originalUrl: sourceInfo.fileName,
+      line: sourceInfo.line0Based,
+      column: sourceInfo.column0Based,
+    });
+    return { fileName: res.source.path, line0Based: res.line, column0Based: res.column };
   }
 
   protected async customRequest(
@@ -352,35 +347,49 @@ export class ProxyDebugAdapter extends DebugSession {
     request?: DebugProtocol.Request | undefined
   ) {
     response.body = response.body || {};
-    switch (command) {
-      case "RNIDE_findOriginalPosition":
-        response.body = await this.findOriginalPosition(args);
-        break;
-      case "RNIDE_startProfiling":
-        await this.startProfiling();
-        break;
-      case "RNIDE_stopProfiling":
-        await this.stopProfiling();
-        break;
-      case "RNIDE_dispatchRadonAgentMessage":
-        await this.dispatchRadonAgentMessage(args);
-        break;
-      case "RNIDE_evaluate":
-        response.body.result = await this.evaluateExpression(args);
-        break;
-      case "RNIDE_addBinding":
-        await this.addBinding(args.name);
-        break;
-      case RNIDE_NetworkMethod.Enable:
-        await this.enableNetworkInspector();
-        break;
-      case RNIDE_NetworkMethod.Disable:
-        await this.disableNetworkInspector();
-        break;
-      case RNIDE_NetworkMethod.GetResponseBody:
-        response.body.result = await this.getResponseBody(args);
-        break;
+    try {
+      switch (command) {
+        case "RNIDE_findOriginalPosition":
+          response.body = await this.findOriginalPosition(args);
+          break;
+        case "RNIDE_startProfiling":
+          await this.startProfiling();
+          break;
+        case "RNIDE_stopProfiling":
+          await this.stopProfiling();
+          break;
+        case "RNIDE_dispatchRadonAgentMessage":
+          await this.dispatchRadonAgentMessage(args);
+          break;
+        case "RNIDE_evaluate":
+          response.body.result = await this.evaluateExpression(args);
+          break;
+        case "RNIDE_addBinding":
+          await this.addBinding(args.name);
+          break;
+        case RNIDE_NetworkMethod.Enable:
+          await this.enableNetworkInspector();
+          break;
+        case RNIDE_NetworkMethod.Disable:
+          await this.disableNetworkInspector();
+          break;
+        case RNIDE_NetworkMethod.GetResponseBody:
+          response.body.result = await this.getResponseBody(args);
+          break;
+      }
+      this.sendResponse(response);
+    } catch (e) {
+      Logger.error("Error executing custom debugger request command:", command, e);
+      this.sendErrorResponse(
+        response,
+        {
+          format: (e as Error).message,
+          id: 1,
+        },
+        undefined,
+        undefined,
+        ErrorDestination.User
+      );
     }
-    this.sendResponse(response);
   }
 }

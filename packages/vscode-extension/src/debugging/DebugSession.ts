@@ -174,10 +174,11 @@ export class DebugSessionImpl implements DebugSession, Disposable {
 
   public async findOriginalPosition(sourceInfo: SourceInfo): Promise<SourceInfo> {
     try {
-      const response = await this.jsDebugSession?.customRequest(
-        "RNIDE_findOriginalPosition",
-        sourceInfo
-      );
+      const jsDebugSession = this.jsDebugSession;
+      if (!jsDebugSession) {
+        throw new Error("Coun't get original source position: JS debugger is not connected");
+      }
+      const response = await jsDebugSession.customRequest("RNIDE_findOriginalPosition", sourceInfo);
       return {
         fileName: response.fileName,
         line0Based: response.line0Based,
