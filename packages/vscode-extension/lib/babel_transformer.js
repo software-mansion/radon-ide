@@ -6,7 +6,6 @@ const {
   requireFromAppDependency,
   overrideModuleFromAppDependency,
 } = require("./metro_helpers");
-const buildPluginWarnOnDeeImports = require("./babel_plugins/build-plugin-warn-on-deep-imports");
 
 const RN_VERSION = requireFromAppDir("react-native/package.json").version;
 
@@ -77,12 +76,6 @@ if (RN_VERSION.startsWith("0.7")) {
     visitor: {},
   });
 }
-
-overrideModuleFromAppDependency(
-  "react-native",
-  "@react-native/babel-preset/src/plugin-warn-on-deep-imports.js",
-  buildPluginWarnOnDeeImports(process.env.RADON_IDE_LIB_PATH)
-);
 
 function transformWrapper({ filename, src, ...rest }) {
   function isTransforming(unixPath) {

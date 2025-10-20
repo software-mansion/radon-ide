@@ -1,18 +1,23 @@
 module.exports = {
-  parseErrorStack: require("react-native/Libraries/Core/Devtools/parseErrorStack").default,
+  parseErrorStack: require("__REACT_NATIVE_INTERNALS__/Libraries/Core/Devtools/parseErrorStack")
+    .default,
   get LogBoxData() {
-    return require("react-native/Libraries/LogBox/Data/LogBoxData");
+    return require("__REACT_NATIVE_INTERNALS__/Libraries/LogBox/Data/LogBoxData");
   },
   get SceneTracker() {
-    return require("react-native/Libraries/Utilities/SceneTracker").default;
+    return require("__REACT_NATIVE_INTERNALS__/Libraries/Utilities/SceneTracker").default;
   },
   get getInspectorDataForViewAtPoint() {
-    return require("react-native/src/private/inspector/getInspectorDataForViewAtPoint").default;
+    return require("__REACT_NATIVE_INTERNALS__/src/private/inspector/getInspectorDataForViewAtPoint")
+      .default;
   },
   get LoadingView() {
-    return require("react-native/Libraries/Utilities/DevLoadingView").default;
+    return require("__REACT_NATIVE_INTERNALS__/Libraries/Utilities/DevLoadingView").default;
   },
   get XHRInterceptor() {
-    return require("react-native/src/private/inspector/XHRInterceptor").default;
+    return require("__REACT_NATIVE_INTERNALS__/src/private/inspector/XHRInterceptor").default;
+  },
+  get FabricUIManager() {
+    return require("__REACT_NATIVE_INTERNALS__/Libraries/ReactNative/FabricUIManager");
   },
 };
