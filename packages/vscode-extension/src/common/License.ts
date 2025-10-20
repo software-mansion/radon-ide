@@ -36,16 +36,27 @@ export function getFeatureAvailabilityStatus(
 
 export function getLicensesForFeature(feature: Feature) {
   const licenses = [];
-  if (FreeFeatures.has(feature)) {
+  if (
+    getFeatureAvailabilityStatus(LicenseStatus.Free, feature) ===
+    FeatureAvailabilityStatus.Available
+  ) {
     licenses.push(LicenseStatus.Free);
   }
-  if (ProFeatures.has(feature)) {
+  if (
+    getFeatureAvailabilityStatus(LicenseStatus.Pro, feature) === FeatureAvailabilityStatus.Available
+  ) {
     licenses.push(LicenseStatus.Pro);
   }
-  if (TeamFeatures.has(feature)) {
+  if (
+    getFeatureAvailabilityStatus(LicenseStatus.Team, feature) ===
+    FeatureAvailabilityStatus.Available
+  ) {
     licenses.push(LicenseStatus.Team);
   }
-  if (EnterpriseFeatures.has(feature)) {
+  if (
+    getFeatureAvailabilityStatus(LicenseStatus.Enterprise, feature) ===
+    FeatureAvailabilityStatus.Available
+  ) {
     licenses.push(LicenseStatus.Enterprise);
   }
   return licenses;
