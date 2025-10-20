@@ -1,6 +1,6 @@
 "use no memo";
 
-const { useContext, useState, useEffect, useRef, useCallback, Children } = require("react");
+const { useContext, useState, useEffect, useRef, useCallback } = require("react");
 const {
   LogBox,
   AppRegistry,
@@ -214,95 +214,6 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
   );
 }
 
-function viewComponentTree(component, depth = 0) {
-  const children =
-    component.props?.children ??
-    component.memoizedProps?.children ??
-    component.pendingProps?.children;
-
-  const indent = 2;
-  const indentString = " ".repeat(depth * indent);
-
-  if (typeof component === "string") {
-    return indentString + component;
-  }
-
-  if (typeof children === "string") {
-    return indentString + children;
-  }
-
-  const typeData = component.type;
-  const displayName = typeData?.displayName ?? typeData?.name ?? "__unknown__";
-
-  let repr;
-
-  // FIXME: This path is absolute, we cannot make it relative in wrapper.js
-  //        ^ Move all this logic to Radon IDE core.
-  const sourceFileName = component?._source?.fileName;
-
-  if (sourceFileName?.includes("/node_modules/") === false) {
-    repr = indentString + `<${displayName}> // ${sourceFileName}\n`;
-  } else {
-    repr = indentString + `<${displayName}>\n`;
-  }
-
-  Children.forEach(children, (child) => {
-    const childRepr = viewComponentTree(child, depth + 1);
-
-    if (childRepr.trim().length === 0) {
-      return;
-    }
-
-    repr += childRepr.trimEnd() + "\n";
-  });
-
-  repr += indentString + `</${displayName}>\n`;
-
-  return repr;
-}
-
-function findLocalRootInHierarchy(hierarchy) {
-  console.log("hierarchy:", hierarchy);
-
-  // navigate through hierarchy, find view root
-  // ensure the `children` hierarchy is propagated
-
-  for (let it = 0; it < hierarchy.length; it++) {
-    const idx = -1 - it;
-    const data = hierarchy?.at(idx)?.getInspectorData?.(findNodeHandle);
-    console.log(it, ":", data);
-  }
-}
-
-function viewComponentTreeFromRoot(mainContainerRef, x, y) {
-  const { width, height } = DimensionsObserver.getScreenDimensions();
-
-  const center = {
-    x: x * width, // width / 2,
-    y: y * height, // height / 2,
-  };
-
-  RNInternals.getInspectorDataForViewAtPoint(
-    mainContainerRef.current,
-    center.x,
-    center.y,
-    (viewData) => {
-      const comp = viewData.closestPublicInstance.__internalInstanceHandle;
-
-      console.log("data:", comp, viewData, findLocalRootInHierarchy(viewData.hierarchy));
-
-      // if (comp) {
-      //   const repr = viewComponentTree(comp);
-      //   console.log("repr", repr);
-      // }
-
-      // resolve(viewData);
-    }
-  );
-
-  // return promise;
-}
-
 export function AppWrapper({ children, initialProps, fabric }) {
   if (!mainApplicationKey) {
     mainApplicationKey = getCurrentScene();
@@ -454,17 +365,8 @@ export function AppWrapper({ children, initialProps, fabric }) {
         case "openNavigation":
           openNavigation(data);
           break;
-        case "viewComponentTree":
-          viewComponentTreeFromRoot(mainContainerRef).then((root) => {
-            const repr = viewComponentTree(root);
-            console.log("viewComponentTree:", repr);
-          });
-          break;
         case "inspect":
           const { id, x, y, requestStack } = data;
-
-          viewComponentTreeFromRoot(mainContainerRef, x, y);
-
           getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, (inspectorData) => {
             inspectorBridge.sendMessage({
               type: "inspectData",
