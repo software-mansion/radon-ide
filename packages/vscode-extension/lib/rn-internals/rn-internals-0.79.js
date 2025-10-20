@@ -17,4 +17,7 @@ module.exports = {
   get XHRInterceptor() {
     return require("__REACT_NATIVE_INTERNALS__/src/private/inspector/XHRInterceptor").default;
   },
+  get FabricUIManager() {
+    return require("__REACT_NATIVE_INTERNALS__/Libraries/ReactNative/FabricUIManager");
+  },
 };

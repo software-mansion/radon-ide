@@ -15,4 +15,7 @@ module.exports = {
   get XHRInterceptor() {
     return require("__REACT_NATIVE_INTERNALS__/Libraries/Network/XHRInterceptor");
   },
+  get FabricUIManager() {
+    return require("__REACT_NATIVE_INTERNALS__/Libraries/ReactNative/FabricUIManager");
+  },
 };

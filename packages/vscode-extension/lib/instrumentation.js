@@ -8,12 +8,10 @@ const {
   isCompositeFiber,
   traverseRenderedFibers,
 } = require("__RNIDE_lib__/bippy");
-const {
-  getFabricUIManager,
-} = require("__REACT_NATIVE_INTERNALS__/Libraries/ReactNative/FabricUIManager.js");
+const RNInternals = require("./rn-internals/rn-internals");
 const { StatusBar, UIManager, Platform } = require("react-native");
 const DimensionsObserver = require("./dimensions_observer");
-const FabricUIManager = getFabricUIManager();
+const FabricUIManager = RNInternals.FabricUIManager.getFabricUIManager();
 
 const CORE_COMPONENT_NAMES = new Set([
   "ActivityIndicator",
