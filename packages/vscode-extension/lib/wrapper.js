@@ -261,6 +261,19 @@ function viewComponentTree(component, depth = 0) {
   return repr;
 }
 
+function findLocalRootInHierarchy(hierarchy) {
+  console.log("hierarchy:", hierarchy);
+
+  // navigate through hierarchy, find view root
+  // ensure the `children` hierarchy is propagated
+
+  for (let it = 0; it < hierarchy.length; it++) {
+    const idx = -1 - it;
+    const data = hierarchy?.at(idx)?.getInspectorData?.(findNodeHandle);
+    console.log(it, ":", data);
+  }
+}
+
 function viewComponentTreeFromRoot(mainContainerRef, x, y) {
   const { width, height } = DimensionsObserver.getScreenDimensions();
 
@@ -275,8 +288,14 @@ function viewComponentTreeFromRoot(mainContainerRef, x, y) {
     center.y,
     (viewData) => {
       const comp = viewData.closestPublicInstance.__internalInstanceHandle;
-      const repr = viewComponentTree(comp);
-      console.log("repr", repr);
+
+      console.log("data:", comp, viewData, findLocalRootInHierarchy(viewData.hierarchy));
+
+      // if (comp) {
+      //   const repr = viewComponentTree(comp);
+      //   console.log("repr", repr);
+      // }
+
       // resolve(viewData);
     }
   );
