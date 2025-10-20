@@ -7,6 +7,7 @@ import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
+import { SourceInfo } from "../common/Project";
 import { NetworkBridgeSendMethodArgs } from "../project/networkBridge";
 
 const MASTER_DEBUGGER_TYPE = "com.swmansion.react-native-debugger";
@@ -70,6 +71,9 @@ export interface DebugSession {
   // Profiling controls
   startProfilingCPU(): Promise<void>;
   stopProfilingCPU(): Promise<void>;
+
+  // source map related
+  findOriginalPosition(sourceInfo: SourceInfo): Promise<SourceInfo>;
 
   // events
   onConsoleLog(listener: DebugSessionCustomEventListener): Disposable;
@@ -166,6 +170,24 @@ export class DebugSessionImpl implements DebugSession, Disposable {
       this.bindingCalledEventEmitter,
       this.debugSessionTerminatedEventEmitter
     );
+  }
+
+  public async findOriginalPosition(sourceInfo: SourceInfo): Promise<SourceInfo> {
+    try {
+      const jsDebugSession = this.jsDebugSession;
+      if (!jsDebugSession) {
+        throw new Error("Coun't get original source position: JS debugger is not connected");
+      }
+      const response = await jsDebugSession.customRequest("RNIDE_findOriginalPosition", sourceInfo);
+      return {
+        fileName: response.fileName,
+        line0Based: response.line0Based,
+        column0Based: response.column0Based,
+      };
+    } catch (error) {
+      Logger.error("Error getting original source position from the debugger", error);
+      throw error;
+    }
   }
 
   public async startParentDebugSession() {
