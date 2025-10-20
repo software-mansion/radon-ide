@@ -6,12 +6,7 @@
  */
 
 // Directly re-export the necessary types from the source package
-export type {
-  Wall,
-  FrontendBridge,
-  Store,
-  Config,
-} from 'react-devtools-inline/frontend';
+export type { Wall, FrontendBridge, Store, Config } from "react-devtools-inline/frontend";
 
 // Import the types locally to use them in function signatures within this file
 import type {
@@ -20,14 +15,17 @@ import type {
   Store,
   Config,
   ProfilingDataFrontend,
-} from 'react-devtools-inline/frontend';
+} from "react-devtools-inline/frontend";
+
+import type { StateContext } from "react-devtools-shared/src/devtools/views/Components/TreeContext";
 
 // Define function signatures using the locally imported types
 export function createBridge(wall: Wall): FrontendBridge;
 export function createStore(bridge: FrontendBridge, config?: Config): Store;
-export function prepareProfilingDataExport(
-  profilingDataFrontend: ProfilingDataFrontend,
-): any;
-export function prepareProfilingDataFrontendFromExport(
-  exportString: any,
-): ProfilingDataFrontend;
+export function prepareProfilingDataExport(profilingDataFrontend: ProfilingDataFrontend): any;
+export function prepareProfilingDataFrontendFromExport(exportString: any): ProfilingDataFrontend;
+export function printStore(
+  store: Store,
+  includeWeight: boolean = false,
+  state: StateContext | null = null
+): string;
