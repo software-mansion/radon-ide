@@ -151,11 +151,13 @@ function extractComponentStack(startNode, viewDataHierarchy) {
             let { file, lineNumber, column } = parsedStack[1];
             // the bundle url for which the source map is being registered does use localhost as the host,
             // but in some setups (e.g. expo 54) the debugStack source file names use the numerical IP address
-            // instead resulting in failure to find the source map. To avoid this issue we normalize the address
-            // to localhost here.
+            // in a local network ( 192.x.x.x ) instead resulting in failure to find the source map. 
+            // To avoid this issue we override the address to localhost here. If it is in that range.
             if (file.startsWith("http")) {
               const url = new URL(file);
-              url.hostname = "localhost";
+              if (/^192\.(\d{1,3}\.){2}\d{1,3}$/.test(url.hostname)) {
+                url.hostname = "localhost";
+              }
               file = url.toString();
             }
             source = {
