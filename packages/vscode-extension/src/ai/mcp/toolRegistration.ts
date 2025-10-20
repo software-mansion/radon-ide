@@ -29,7 +29,7 @@ export async function registerMcpTools(server: McpServer, connectionListener: Co
     "view_component_tree",
     {
       description:
-        "View the component tree of the running app. Use this tool to learn see the general structure of this project.",
+        "View the component tree (view hierarchy) of the running app. Use this tool to learn see the general structure of this project.",
       inputSchema: {},
     },
     viewComponentTreeExec

@@ -6,6 +6,7 @@ import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
 import { Logger } from "../../Logger";
+import { printStore } from "../../../third-party/react-devtools/headless";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -32,18 +33,28 @@ export async function viewComponentTreeExec(): Promise<ToolResponse> {
 
   if (!project?.deviceSession) {
     return textToToolResponse(
-      "Could not capture a screenshot!\n" +
-        "The development viewport device is likely turned off.\n" +
+      "Could not extract a component tree from the app, the app is not running!\n" +
+        "The development device is likely turned off.\n" +
         "Please turn on the Radon IDE emulator before proceeding."
     );
   }
 
   const store = project.deviceSession.devtoolsStore;
-  Logger.log(`Testing test: ${store}`);
 
-  return {
-    content: [],
-  };
+  Logger.log(`Testing store:`, store);
+
+  if (!store) {
+    return textToToolResponse(
+      "Could not extract a component tree from the app, the devtools are not accessible!\n"
+      // TODO: Actionable description
+    );
+  }
+
+  const repr = printStore(store);
+
+  Logger.log(`Testing test: ${repr}`);
+
+  return textToToolResponse(repr);
 }
 
 export async function readLogsToolExec(): Promise<ToolResponse> {
