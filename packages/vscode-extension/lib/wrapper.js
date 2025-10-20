@@ -148,7 +148,16 @@ function extractComponentStack(startNode, viewDataHierarchy) {
           // on the debug stack (at index 1):
           const parsedStack = RNInternals.parseErrorStack(debugStack.stack);
           if (parsedStack.length > 1) {
-            const { file, lineNumber, column } = parsedStack[1];
+            let { file, lineNumber, column } = parsedStack[1];
+            // the bundle url for which the source map is being registered does use localhost as the host,
+            // but in some setups (e.g. expo 54) the debugStack source file names use the numerical IP address
+            // instead resulting in failure to find the source map. To avoid this issue we normalize the address
+            // to localhost here.
+            if (file.startsWith("http")) {
+              const url = new URL(file);
+              url.hostname = "localhost";
+              file = url.toString();
+            }
             source = {
               fileName: file,
               line0Based: lineNumber - 1,
@@ -451,7 +460,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
         // 2. when the fullscreen LogBox is minimized, new errors won't bring it up unless we clear the old ones
         RNInternals.LogBoxData.clear();
         originalErrorHandler(error, isFatal);
-      } catch {}
+      } catch { }
     }
 
     global.ErrorUtils.setGlobalHandler(wrappedGlobalErrorHandler);
