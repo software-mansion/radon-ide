@@ -114,6 +114,7 @@ function getRendererConfig() {
  */
 function extractComponentStack(startNode, viewDataHierarchy) {
   const rendererConfig = getRendererConfig();
+
   let stackItems = [];
   if (rendererConfig) {
     // when we find renderer config with getInspectorDataForInstance we use fiber node
@@ -155,6 +156,7 @@ function extractComponentStack(startNode, viewDataHierarchy) {
 
 function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, callback) {
   const { width: screenWidth, height: screenHeight } = DimensionsObserver.getScreenDimensions();
+
   RNInternals.getInspectorDataForViewAtPoint(
     mainContainerRef.current,
     x * screenWidth,
@@ -307,9 +309,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
           runApplication();
         }
       } else {
-        if (nextNavigationDescriptor) {
-          requestNavigationChange(nextNavigationDescriptor);
-        }
+        nextNavigationDescriptor && requestNavigationChange(nextNavigationDescriptor);
         appOpenPromiseResolve();
       }
       return appOpenPromise;
@@ -320,9 +320,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
   const showStorybookStory = useCallback(
     async (componentTitle, storyName) => {
       const previewKey = await storybookPreview(componentTitle, storyName);
-      if (previewKey !== undefined) {
-        openPreview(previewKey);
-      }
+      previewKey !== undefined && openPreview(previewKey);
     },
     [handleNavigationChange]
   );
@@ -441,10 +439,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
       });
 
       const nextNavigationDescriptor = initialProps?.__radon_nextNavigationDescriptor;
-
-      if (nextNavigationDescriptor) {
-        requestNavigationChange(nextNavigationDescriptor);
-      }
+      nextNavigationDescriptor && requestNavigationChange(nextNavigationDescriptor);
 
       const pluginsChangedCallback = () => {
         inspectorBridge.sendMessage({
