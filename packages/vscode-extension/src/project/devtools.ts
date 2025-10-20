@@ -90,7 +90,7 @@ export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disp
 
 export class DevtoolsConnection implements Disposable {
   private bridge: FrontendBridge;
-  private store: Store;
+  private _store: Store;
 
   public connected: boolean = true;
 
@@ -105,31 +105,35 @@ export class DevtoolsConnection implements Disposable {
   constructor(private readonly wall: Wall) {
     // create the DevTools frontend for the connection
     this.bridge = createBridge(wall);
-    this.store = createStore(this.bridge);
+    this._store = createStore(this.bridge);
 
     this.bridge.addListener("RNIDE_message", (payload: unknown) => {
       this.ideMessageEventEmitter.fire(payload as IdeMessage);
     });
 
     // Register for isProfiling event on the profiler store
-    this.store.profilerStore.addListener("isProfiling", () => {
+    this._store.profilerStore.addListener("isProfiling", () => {
       // @ts-ignore - isProfilingBasedOnUserInput exists but types are outdated
-      const isProfiling = this.store.profilerStore.isProfilingBasedOnUserInput;
+      const isProfiling = this._store.profilerStore.isProfilingBasedOnUserInput;
       this.profilingEventEmitter.fire(isProfiling);
     });
   }
 
+  public get store() {
+    return this._store;
+  }
+
   public async startProfilingReact() {
-    this.store?.profilerStore.startProfiling();
+    this._store?.profilerStore.startProfiling();
   }
 
   public async stopProfilingReact() {
     const { resolve, reject, promise } = Promise.withResolvers<Uri>();
     const saveProfileListener = async () => {
-      const isProcessingData = this.store?.profilerStore.isProcessingData;
+      const isProcessingData = this._store?.profilerStore.isProcessingData;
       if (!isProcessingData) {
-        this.store?.profilerStore.removeListener("isProcessingData", saveProfileListener);
-        const profilingData = this.store?.profilerStore.profilingData;
+        this._store?.profilerStore.removeListener("isProcessingData", saveProfileListener);
+        const profilingData = this._store?.profilerStore.profilingData;
         if (profilingData) {
           const exportData = prepareProfilingDataExport(profilingData);
           const filePath = filePathForProfile();
@@ -141,8 +145,8 @@ export class DevtoolsConnection implements Disposable {
       }
     };
 
-    this.store?.profilerStore.addListener("isProcessingData", saveProfileListener);
-    this.store?.profilerStore.stopProfiling();
+    this._store?.profilerStore.addListener("isProcessingData", saveProfileListener);
+    this._store?.profilerStore.stopProfiling();
     this.bridge.addListener("shutdown", () => {
       this.disconnect();
     });

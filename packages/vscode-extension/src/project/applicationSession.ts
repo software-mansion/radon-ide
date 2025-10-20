@@ -90,6 +90,10 @@ export class ApplicationSession implements Disposable {
     return this._inspectorBridge;
   }
 
+  public get devtoolsStore() {
+    return this.devtools?.store;
+  }
+
   public static async launch(
     stateManager: StateManager<ApplicationSessionState>,
     navigationStateManager: StateManager<NavigationState>,
