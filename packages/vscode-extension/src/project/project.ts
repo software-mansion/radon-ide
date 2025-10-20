@@ -59,12 +59,58 @@ import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependenc
 import { Telemetry } from "./telemetry";
 import { EditorBindings } from "./EditorBindings";
 import { saveMultimedia } from "../utilities/saveMultimedia";
-import { hasAccessToProFeatures, LicenseState, LicenseStatus } from "../common/License";
+import {
+  Feature,
+  FeatureAvailabilityStatus,
+  getFeatureAvailabilityStatus,
+  getLicensesForFeature,
+  LicenseState,
+  LicenseStatus,
+} from "../common/License";
 import { RestrictedFunctionalityError } from "../common/Errors";
 
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 
 const DEEP_LINKS_HISTORY_LIMIT = 50;
+
+/**
+ * Checks if the current license status allows access to the specified feature.
+ * @argument feature - The feature to check access for.
+ * @throws {RestrictedFunctionalityError} if the user does not have access to Pro features
+ */
+function guardFeatureAccess(
+  feature: Feature,
+  shouldSkipLicenseCheck?: (...args: any[]) => boolean
+) {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    descriptor.value = function (this: Project, ...args: any[]) {
+      if (shouldSkipLicenseCheck) {
+        const shouldSkip = shouldSkipLicenseCheck(args);
+        if (shouldSkip) {
+          return originalMethod.apply(this, args);
+        }
+      }
+
+      const licenseStatus = this.licenseState.status;
+
+      const availabilityStatus = getFeatureAvailabilityStatus(licenseStatus, feature);
+
+      switch (availabilityStatus) {
+        case FeatureAvailabilityStatus.Available:
+          return originalMethod.apply(this, args);
+        case FeatureAvailabilityStatus.InsufficientLicense:
+          const allowedLicenses = getLicensesForFeature(feature);
+          throw new RestrictedFunctionalityError(
+            `This feature requires one of the following licenses: ${allowedLicenses.join(", ")}`,
+            allowedLicenses
+          );
+      }
+    };
+
+    return descriptor;
+  };
+}
 
 export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
   // #region Properties
@@ -219,11 +265,13 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
+  @guardFeatureAccess(Feature.AndroidSmartphoneEmulators)
+  @guardFeatureAccess(Feature.IOSSmartphoneSimulators)
+  @guardFeatureAccess(Feature.IOSTabletSimulators, (args) => {
+    const [deviceInfo] = args;
+    return deviceInfo.deviceType !== DeviceType.Tablet;
+  })
   public startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void> {
-    if (deviceInfo.deviceType === DeviceType.Tablet) {
-      this.guardProFeatures();
-    }
-
     return this.deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
   }
 
@@ -296,9 +344,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Device Settings
 
+  @guardFeatureAccess(Feature.DeviceRotation)
   public async rotateDevices(direction: DeviceRotationDirection) {
-    this.guardProFeatures();
-
     const currentRotation = this.workspaceStateManager.getState().deviceSettings.deviceRotation;
     if (currentRotation === undefined) {
       Logger.warn("[Radon IDE] Device rotation is not set in the configuration.");
@@ -400,20 +447,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return activated;
   }
 
-  /**
-   * Checks if the current license status allows access to Pro features
-   * @throws {RestrictedFunctionalityError} if the user does not have access to Pro features
-   */
-  private guardProFeatures() {
-    const licenseStatus = this.licenseStateManager.getState().status;
-    if (hasAccessToProFeatures(licenseStatus)) {
-      return;
-    }
-
-    throw new RestrictedFunctionalityError("This feature requires a Pro or Enterprise license.", [
-      LicenseStatus.Pro,
-      LicenseStatus.Enterprise,
-    ]);
+  public get licenseState() {
+    return this.licenseStateManager.getState();
   }
 
   // #endregion License
@@ -475,9 +510,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Recording
 
+  @guardFeatureAccess(Feature.ScreenRecording)
   public async toggleRecording() {
-    this.guardProFeatures();
-
     getTelemetryReporter().sendTelemetryEvent("recording:toggle-recording", {
       platform: this.deviceSession?.platform,
     });
@@ -487,9 +521,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSession.toggleRecording();
   }
 
+  @guardFeatureAccess(Feature.ScreenReplay)
   public async captureReplay() {
-    this.guardProFeatures();
-
     getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
       platform: this.deviceSession?.platform,
     });
@@ -499,9 +532,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSession.captureReplay();
   }
 
+  @guardFeatureAccess(Feature.Screenshot)
   public async captureScreenshot() {
-    this.guardProFeatures();
-
     getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
       platform: this.deviceSession?.platform,
     });
@@ -623,9 +655,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSession?.sendButton("appSwitch", "Up");
   }
 
+  @guardFeatureAccess(Feature.Biometrics)
   public async sendBiometricAuthorization(isMatch: boolean) {
-    this.guardProFeatures();
-
     await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }
 
@@ -660,15 +691,17 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.deviceManager.createAndroidDevice(modelId, displayName, systemImage);
   }
 
+  @guardFeatureAccess(Feature.AndroidSmartphoneEmulators)
+  @guardFeatureAccess(Feature.IOSSmartphoneSimulators)
+  @guardFeatureAccess(Feature.IOSTabletSimulators, (args) => {
+    const [deviceType] = args;
+    return !deviceType.name.includes("iPad");
+  })
   public createIOSDevice(
     deviceType: IOSDeviceTypeInfo,
     displayName: string,
     runtime: IOSRuntimeInfo
   ): Promise<DeviceInfo> {
-    if (deviceType.name.includes("iPad")) {
-      this.guardProFeatures();
-    }
-
     return this.deviceManager.createIOSDevice(deviceType, displayName, runtime);
   }
 
@@ -718,6 +751,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
+  @guardFeatureAccess(Feature.StorybookIntegration)
   public async showStorybookStory(componentTitle: string, storyName: string) {
     if (this.applicationContext.applicationDependencyManager === undefined) {
       Logger.error(
@@ -725,8 +759,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       );
       throw new Error("[PROJECT] Dependency manager not initialized");
     }
-
-    this.guardProFeatures();
 
     if (await this.applicationContext.applicationDependencyManager.checkProjectUsesStorybook()) {
       this.deviceSession?.openStorybookStory(componentTitle, storyName);

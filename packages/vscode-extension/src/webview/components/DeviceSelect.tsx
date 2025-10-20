@@ -12,9 +12,8 @@ import RichSelectItem from "./shared/RichSelectItem";
 import { useStore } from "../providers/storeProvider";
 import { DeviceInfo, DevicePlatform, DeviceType } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
-import { hasAccessToProFeatures } from "../../common/License";
-import { usePaywall } from "../hooks/usePaywall";
-import { RestrictedFunctionalityError } from "../../common/Errors";
+import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import { Feature } from "../../common/License";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -99,10 +98,8 @@ function DeviceSelect() {
   const { projectState, project } = useProject();
 
   const devices = use$(store$.devicesState.devices) ?? [];
-  const licensedStatus = use$(store$.license.status);
 
   const { openModal } = useModal();
-  const { openPaywall } = usePaywall();
 
   const hasNoDevices = devices.length === 0;
   const selectedDevice = use$(selectedDeviceSessionState.deviceInfo);
@@ -113,6 +110,38 @@ function DeviceSelect() {
   const runningSessionIds = Object.keys(deviceSessions);
 
   const deviceSections = partitionDevices(devices ?? []);
+
+  const handleStartOrActivateSessionForIOSTabletDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.IOSTabletSimulators,
+    []
+  );
+
+  const handleStartOrActivateSessionForAndroidTabletDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.AndroidTabletEmulators,
+    []
+  );
+
+  const handleStartOrActivateSessionForIOSSmartphoneDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.IOSSmartphoneSimulators,
+    []
+  );
+
+  const handleStartOrActivateSessionForAndroidSmartphoneDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.AndroidSmartphoneEmulators,
+    []
+  );
 
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
@@ -126,17 +155,23 @@ function DeviceSelect() {
     if (selectedDevice?.id !== value) {
       const deviceInfo = (devices ?? []).find((d) => d.id === value);
       if (deviceInfo) {
-        if (deviceInfo.deviceType === DeviceType.Tablet && hasAccessToProFeatures(licensedStatus)) {
-          openPaywall();
-          return;
-        }
-        try {
-          await project.startOrActivateSessionForDevice(deviceInfo);
-        } catch (e) {
-          if (e instanceof RestrictedFunctionalityError) {
-            openPaywall();
-            return;
-          }
+        switch (deviceInfo.platform) {
+          case DevicePlatform.IOS:
+            if (deviceInfo.deviceType === DeviceType.Tablet) {
+              await handleStartOrActivateSessionForIOSTabletDevice(deviceInfo);
+              return;
+            } else {
+              await handleStartOrActivateSessionForIOSSmartphoneDevice(deviceInfo);
+              return;
+            }
+          case DevicePlatform.Android:
+            if (deviceInfo.deviceType === DeviceType.Tablet) {
+              await handleStartOrActivateSessionForAndroidTabletDevice(deviceInfo);
+              return;
+            } else {
+              await handleStartOrActivateSessionForAndroidSmartphoneDevice(deviceInfo);
+              return;
+            }
         }
       }
     }

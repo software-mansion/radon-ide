@@ -26,9 +26,12 @@ import { useStore } from "../providers/storeProvider";
 import { DevicePlatform, DeviceRotation, DeviceSettings } from "../../common/State";
 import { PropsWithDataTest } from "../../common/types";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
-import { hasAccessToProFeatures } from "../../common/License";
-import { usePaywall } from "../hooks/usePaywall";
-import { RestrictedFunctionalityError } from "../../common/Errors";
+import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import {
+  Feature,
+  FeatureAvailabilityStatus,
+  getFeatureAvailabilityStatus,
+} from "../../common/License";
 
 const contentSizes = [
   "xsmall",
@@ -101,47 +104,40 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
   const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
 
   const licenseStatus = use$(store$.license.status);
-  const hasProAccess = hasAccessToProFeatures(licenseStatus);
+
+  const isDeviceRotationAvailable =
+    getFeatureAvailabilityStatus(licenseStatus, Feature.DeviceRotation) ===
+    FeatureAvailabilityStatus.Available;
 
   const { project } = useProject();
 
   const { openModal } = useModal();
 
-  const { openPaywall } = usePaywall();
-
   const resetOptions = platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
 
-  const handleRotateDevice = async (direction: DeviceRotationDirection) => {
-    if (!hasProAccess) {
-      openPaywall();
-      return;
-    }
+  const handleRotateDevice = usePaywalledCallback(
+    (direction: DeviceRotationDirection) => {
+      project.rotateDevices(direction);
+    },
+    Feature.DeviceRotation,
+    []
+  );
 
-    try {
-      await project.rotateDevices(direction);
-    } catch (error) {
-      if (error instanceof RestrictedFunctionalityError) {
-        openPaywall();
-      }
-    }
-  };
+  const handleSetRotateDevice = usePaywalledCallback(
+    (deviceRotation: DeviceRotation) => {
+      store$.workspaceConfiguration.deviceSettings.deviceRotation.set(deviceRotation);
+    },
+    Feature.DeviceRotation,
+    []
+  );
 
-  const handleSetRotateDevice = async (deviceRotation: DeviceRotation) => {
-    if (!hasProAccess && deviceRotation !== DeviceRotation.Portrait) {
-      openPaywall();
-      return;
-    }
-    store$.workspaceConfiguration.deviceSettings.deviceRotation.set(deviceRotation);
-  };
-
-  const handleOpenLocationView = () => {
-    if (!hasProAccess) {
-      openPaywall();
-      return;
-    }
-
-    openModal(<DeviceLocationView />, { title: "Location" });
-  };
+  const handleOpenLocationView = usePaywalledCallback(
+    () => {
+      openModal(<DeviceLocationView />, { title: "Location" });
+    },
+    Feature.LocationSimulation,
+    []
+  );
 
   return (
     <DropdownMenuRoot>
@@ -272,7 +268,9 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                     className="dropdown-menu-item"
                     data-testid={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
                     key={index}
-                    disabled={!hasProAccess && option.value !== DeviceRotation.Portrait}
+                    disabled={
+                      !isDeviceRotationAvailable && option.value !== DeviceRotation.Portrait
+                    }
                     onSelect={() => handleSetRotateDevice(option.value)}>
                     <span
                       className={`codicon codicon-${option.icon}`}
@@ -388,21 +386,15 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 }
 
 const LocalizationItem = () => {
-  const store$ = useStore();
-  const licenseStatus = use$(store$.license.status);
-  const hasProAccess = hasAccessToProFeatures(licenseStatus);
-
   const { openModal } = useModal();
-  const { openPaywall } = usePaywall();
 
-  const handleOpenLocationView = () => {
-    if (!hasProAccess) {
-      openPaywall();
-      return;
-    }
-
-    openModal(<DeviceLocalizationView />, { title: "Localization" });
-  };
+  const handleOpenLocationView = usePaywalledCallback(
+    () => {
+      openModal(<DeviceLocalizationView />, { title: "Localization" });
+    },
+    Feature.DeviceLocalizationSettings,
+    []
+  );
 
   return (
     <>
@@ -448,38 +440,26 @@ function CommandItem({
 const BiometricsItem = () => {
   const store$ = useStore();
   const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
-  const licenseStatus = use$(store$.license.status);
-  const hasProAccess = hasAccessToProFeatures(licenseStatus);
-
-  const { openPaywall } = usePaywall();
 
   const { project } = useProject();
 
-  const handleToggleBiometricsEnrolment = () => {
-    if (!hasProAccess) {
-      openPaywall();
-      return;
-    }
+  const handleToggleBiometricsEnrolment = usePaywalledCallback(
+    () => {
+      store$.workspaceConfiguration.deviceSettings.hasEnrolledBiometrics.set(
+        !deviceSettings.hasEnrolledBiometrics
+      );
+    },
+    Feature.Biometrics,
+    []
+  );
 
-    store$.workspaceConfiguration.deviceSettings.hasEnrolledBiometrics.set(
-      !deviceSettings.hasEnrolledBiometrics
-    );
-  };
-
-  const handleSendBiometricAuthorization = async (isMatching: boolean) => {
-    if (!hasProAccess) {
-      openPaywall();
-      return;
-    }
-
-    try {
+  const handleSendBiometricAuthorization = usePaywalledCallback(
+    async (isMatching: boolean) => {
       await project.sendBiometricAuthorization(isMatching);
-    } catch (error) {
-      if (error instanceof RestrictedFunctionalityError) {
-        openPaywall();
-      }
-    }
-  };
+    },
+    Feature.Biometrics,
+    []
+  );
 
   return (
     <DropdownMenu.Sub>

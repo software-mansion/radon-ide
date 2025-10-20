@@ -26,9 +26,8 @@ import { InspectorAvailabilityStatus, ProfilingState, ZoomLevelType } from "../.
 import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
 import { ActivateLicenseView } from "./ActivateLicenseView";
-import { usePaywall } from "../hooks/usePaywall";
-import { hasAccessToProFeatures, LicenseStatus } from "../../common/License";
-import { RestrictedFunctionalityError } from "../../common/Errors";
+import { Feature, LicenseStatus } from "../../common/License";
+import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -102,8 +101,6 @@ function PreviewView() {
 
   const { projectState, project } = useProject();
 
-  const { openPaywall } = usePaywall();
-
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
@@ -175,19 +172,18 @@ function PreviewView() {
     };
   }, []);
 
-  function toggleRecording() {
-    if (!hasAccessToProFeatures(licenseStatus)) {
-      openPaywall();
-      return;
-    }
+  const paywalledToggleRecording = usePaywalledCallback(
+    async () => {
+      await project.toggleRecording();
+    },
+    Feature.ScreenRecording,
+    []
+  );
 
+  function toggleRecording() {
     try {
-      project.toggleRecording();
+      paywalledToggleRecording();
     } catch (e) {
-      if (e instanceof RestrictedFunctionalityError) {
-        openPaywall();
-        return;
-      }
       if (isRecording) {
         project.showDismissableError("Failed to capture recording");
       }
@@ -206,36 +202,34 @@ function PreviewView() {
     project.stopReportingFrameRate();
   }
 
-  async function handleReplay() {
-    if (!hasAccessToProFeatures(licenseStatus)) {
-      openPaywall();
-      return;
-    }
-
-    try {
+  const paywalledCaptureReplay = usePaywalledCallback(
+    async () => {
       await project.captureReplay();
+    },
+    Feature.ScreenReplay,
+    []
+  );
+
+  async function handleReplay() {
+    try {
+      await paywalledCaptureReplay();
     } catch (e) {
-      if (e instanceof RestrictedFunctionalityError) {
-        openPaywall();
-        return;
-      }
       project.showDismissableError("Failed to capture replay");
     }
   }
 
-  async function captureScreenshot() {
-    if (!hasAccessToProFeatures(licenseStatus)) {
-      openPaywall();
-      return;
-    }
-
-    try {
+  const paywalledCaptureScreenshot = usePaywalledCallback(
+    async () => {
       await project.captureScreenshot();
+    },
+    Feature.Screenshot,
+    []
+  );
+
+  async function captureScreenshot() {
+    try {
+      await paywalledCaptureScreenshot();
     } catch (e) {
-      if (e instanceof RestrictedFunctionalityError) {
-        openPaywall();
-        return;
-      }
       project.showDismissableError("Failed to capture screenshot");
     }
   }
