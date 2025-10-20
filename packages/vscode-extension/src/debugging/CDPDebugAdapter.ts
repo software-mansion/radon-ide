@@ -11,6 +11,7 @@ import {
   TerminatedEvent,
   ThreadEvent,
   StackFrame,
+  ErrorDestination,
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { Logger } from "../Logger";
@@ -443,10 +444,16 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
       this.sendResponse(response);
     } catch (e) {
       Logger.error("Error executing custom debugger request command:", command, e);
-      this.sendErrorResponse(response, {
-        format: (e as Error).message,
-        id: 1,
-      });
+      this.sendErrorResponse(
+        response,
+        {
+          format: (e as Error).message,
+          id: 1,
+        },
+        undefined,
+        undefined,
+        ErrorDestination.User
+      );
     }
   }
 
