@@ -30,7 +30,7 @@ export async function invokeToolCall(
   callId: string = PLACEHOLDER_ID
 ): Promise<ToolResponse> {
   getTelemetryReporter().sendTelemetryEvent("radon-ai:tool-called", { toolName });
-  const url = new URL("/api/tool_calls/", BACKEND_URL);
+  const url = new URL("/tool_calls/", BACKEND_URL);
   const token = await getLicenseToken();
   let response: Response | null = null;
   try {
