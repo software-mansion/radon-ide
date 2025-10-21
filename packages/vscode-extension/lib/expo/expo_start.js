@@ -9,7 +9,7 @@ function createMetroConfigProxy(metroConfig) {
     get(_target, prop, _receiver) {
       const original = Reflect.get(...arguments);
       if (prop === "loadConfig") {
-        return async function pain(...args) {
+        return async function (...args) {
           const config = await original(...args);
           return adaptMetroConfig(config);
         };
@@ -40,7 +40,6 @@ try {
   // to the same instance, so we need to make sure we don't override the loadConfig twice
   const wasMetroConfigAlreadyOverloaded = metroConfigExpo === metroConfigProxy;
   if (!wasMetroConfigAlreadyOverloaded) {
-    console.log("NOT OVERRIDEN");
     overrideModuleFromAppDependency(
       "expo",
       "@expo/metro/metro-config",
