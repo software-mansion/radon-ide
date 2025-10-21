@@ -5,7 +5,7 @@ const { applyEdits, modify }: typeof import("jsonc-parser/lib/esm/main") = requi
 
 const CURSOR_KEY = "mcpServers";
 const VSCODE_KEY = "servers";
-const ENTRY_KEY = "RadonAI";
+export const ENTRY_KEY = "RadonAI";
 const OLD_ENTRY_KEY = "RadonAi";
 
 export function insertRadonEntry(config: string): string | undefined {

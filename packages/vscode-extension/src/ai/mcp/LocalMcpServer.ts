@@ -15,6 +15,7 @@ import { watchLicenseTokenChange } from "../../utilities/license";
 import { getAppCachesDir } from "../../utilities/common";
 import { AuthenticationError, fetchRemoteToolSchema, ServerUnreachableError } from "../shared/api";
 import { throttleAsync } from "../../utilities/throttle";
+import { ENTRY_KEY } from "./configCreator";
 
 const NETWORK_RETRY_INTERVAL_MS = 15 * 1000; // 15 seconds
 
