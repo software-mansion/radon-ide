@@ -47,14 +47,13 @@ function getComponentName({ type }) {
 
 async function getCallSourceFromStack(stack) {
   const parsedStack = RNInternals.parseErrorStack(stack);
-  const symbolicatedStack = (await RNInternals.symbolicateStackTrace(parsedStack)).stack;
-
-  const callerFrame = symbolicatedStack[1];
+  const callerFrame = parsedStack[1];
+  const symbolicatedCallerFrame = (await RNInternals.symbolicateStackTrace([callerFrame])).stack[0];
 
   return {
-    fileName: callerFrame.file,
-    lineNumber: callerFrame.lineNumber,
-    columnNumber: callerFrame.column,
+    fileName: symbolicatedCallerFrame.file,
+    lineNumber: symbolicatedCallerFrame.lineNumber,
+    columnNumber: symbolicatedCallerFrame.column,
   }
 }
 
