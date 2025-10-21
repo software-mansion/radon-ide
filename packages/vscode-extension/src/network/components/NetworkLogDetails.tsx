@@ -36,6 +36,8 @@ interface Tab {
   Tab: React.FC<TabProps>;
 }
 
+let prevRequestId: string | null = null;
+
 const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLogDetailsProps) => {
   const headerRef = useRef<VscodeTabHeaderElement>(null);
   const [selectedTabIndex, setSelectedTabIndex] = useState(0);
@@ -46,14 +48,19 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
 
   const themeData = useThemeExtractor();
 
+  // Update response body whenever requestId changes
+  // and when the request finishes loading
   useEffect(() => {
-    if (
+    const shouldUpdate =
+      prevRequestId === networkLog.requestId &&
       networkLog.currentState !== NetworkEvent.LoadingFinished &&
-      networkLog.currentState !== NetworkEvent.LoadingFailed
-    ) {
+      networkLog.currentState !== NetworkEvent.LoadingFailed;
+
+    if (!shouldUpdate) {
       return;
     }
 
+    prevRequestId = networkLog.requestId;
     getResponseBody(networkLog).then((data) => {
       setResponseBodyData(data);
     });
