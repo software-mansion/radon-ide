@@ -4,7 +4,6 @@ import { createCanvas, loadImage } from "canvas";
 import ffmpeg from "fluent-ffmpeg";
 import ffprobeStatic from "ffprobe-static";
 import { assert } from "chai";
-import { isNonNullChain } from "typescript";
 
 export function cropCanvas(canvas, position) {
   const x = Math.floor(position.x * canvas.width);

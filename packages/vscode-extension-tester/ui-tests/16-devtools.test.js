@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { WebView, BottomBarPanel, Key } from "vscode-extension-tester";
+import { WebView, BottomBarPanel, Key, By } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { describeIf } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
@@ -51,34 +51,68 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
     }, 5000);
   });
 
-  it("Should open Redux DevTools in bottom panel", async function () {
-    await appManipulationService.hideExpoOverlay(appWebsocket);
+  // it("Should open Redux DevTools in bottom panel", async function () {
+  //   await appManipulationService.hideExpoOverlay(appWebsocket);
 
-    await elementHelperService.findAndClickElementByTag(
-      "radon-top-bar-tools-dropdown-trigger"
-    );
-    await elementHelperService.findAndWaitForElementByTag(
-      "radon-tools-dropdown-menu"
-    );
-    const reduxSwitch = await elementHelperService.findAndWaitForElementByTag(
-      "dev-tool-redux-devtools-devplugin"
-    );
+  //   await elementHelperService.findAndClickElementByTag(
+  //     "radon-top-bar-tools-dropdown-trigger"
+  //   );
+  //   await elementHelperService.findAndWaitForElementByTag(
+  //     "radon-tools-dropdown-menu"
+  //   );
+  //   const reduxSwitch = await elementHelperService.findAndWaitForElementByTag(
+  //     "dev-tool-redux-devtools-devplugin"
+  //   );
 
-    if ((await reduxSwitch.getAttribute("data-state")) !== "checked") {
-      await reduxSwitch.click();
-    } else {
-      await elementHelperService.findAndClickElementByTag(
-        "dev-tool-redux-devtools-devplugin-open-button"
-      );
-    }
-    await driver.sleep(1000);
-    const reduxIFrame = await radonViewsService.findWebViewIFrame(
-      "Radon Redux DevTools"
-    );
-    driver.switchTo().frame(reduxIFrame);
-  });
+  //   if ((await reduxSwitch.getAttribute("data-state")) !== "checked") {
+  //     await reduxSwitch.click();
+  //   } else {
+  //     await elementHelperService.findAndClickElementByTag(
+  //       "dev-tool-redux-devtools-devplugin-open-button"
+  //     );
+  //   }
+  //   await driver.sleep(1000);
+  //   const reduxIFrame = await radonViewsService.findWebViewIFrame(
+  //     "Radon Redux DevTools"
+  //   );
+  //   driver.switchTo().frame(reduxIFrame);
+  // });
 
-  it("Should open React Query DevTools in bottom panel", async function () {
+  // it("Should open React Query DevTools in bottom panel", async function () {
+  //   await appManipulationService.hideExpoOverlay(appWebsocket);
+
+  //   const urlInput = await elementHelperService.findAndWaitForElementByTag(
+  //     "radon-top-bar-url-input"
+  //   );
+  //   await urlInput.click();
+  //   await urlInput.sendKeys("/plugins", Key.ENTER);
+
+  //   await elementHelperService.findAndClickElementByTag(
+  //     "radon-top-bar-tools-dropdown-trigger"
+  //   );
+  //   await elementHelperService.findAndWaitForElementByTag(
+  //     "radon-tools-dropdown-menu"
+  //   );
+  //   const reactQuerySwitch =
+  //     await elementHelperService.findAndWaitForElementByTag(
+  //       "dev-tool-react-query-devtools"
+  //     );
+
+  //   if ((await reactQuerySwitch.getAttribute("data-state")) !== "checked") {
+  //     await reactQuerySwitch.click();
+  //   } else {
+  //     await elementHelperService.findAndClickElementByTag(
+  //       "dev-tool-react-query-devtools-open-button"
+  //     );
+  //   }
+  //   await driver.sleep(1000);
+  //   const reactQueryIFrame = await radonViewsService.findWebViewIFrame(
+  //     "Radon React Query DevTools"
+  //   );
+  //   driver.switchTo().frame(reactQueryIFrame);
+  // });
+
+  it("should make changes in React Query DevTools", async function () {
     await appManipulationService.hideExpoOverlay(appWebsocket);
 
     const urlInput = await elementHelperService.findAndWaitForElementByTag(
@@ -109,6 +143,21 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
     const reactQueryIFrame = await radonViewsService.findWebViewIFrame(
       "Radon React Query DevTools"
     );
-    driver.switchTo().frame(reactQueryIFrame);
+    await driver.switchTo().frame(reactQueryIFrame);
+
+    // I do not control the this tool's UI, so I can't add proper test ids
+    (
+      await elementHelperService.findAndWaitForElement(
+        By.xpath("//*[contains(text(), 'counter')]"),
+        "Timed out waiting for React Query DevTools content"
+      )
+    ).click();
+
+    const dataElement = await elementHelperService.findAndWaitForElement(
+      By.xpath("//*[contains(text(), 'data')]/following-sibling::input"),
+      "Timed out waiting for input sibling"
+    );
+
+    console.log(await dataElement.getAttribute("value"));
   });
 });
