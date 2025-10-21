@@ -698,6 +698,20 @@ export class ApplicationSession implements Disposable {
     let stack = undefined;
     if (requestStack && inspectData?.stack) {
       stack = inspectData.stack;
+      // for stack entries with source names that start with http, we need to decipher original source positions
+      // using source maps via the debugger
+      await Promise.all(
+        stack.map(async (item) => {
+          if (item.source?.fileName.startsWith("http") && this.debugSession) {
+            try {
+              item.source = await this.debugSession.findOriginalPosition(item.source);
+            } catch (e) {
+              Logger.error("Error finding original source position for stack item", item, e);
+            }
+          }
+        })
+      );
+
       const inspectorExcludePattern =
         this.applicationContext.workspaceConfiguration.general.inspectorExcludePattern;
       const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());
