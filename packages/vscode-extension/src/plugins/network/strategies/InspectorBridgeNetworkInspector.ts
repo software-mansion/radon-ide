@@ -7,6 +7,8 @@ import {
   CDPMessage,
   WebviewCommand,
   NetworkMethod,
+  IDEMessage,
+  WebviewMessageDescriptor,
 } from "../../../network/types/panelMessageProtocol";
 import { BaseNetworkInspector } from "./BaseNetworkInspector";
 
@@ -31,22 +33,40 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
   }
 
   private sendCDPMessage(messageData: CDPMessage) {
-    this.inspectorBridge.sendPluginMessage("network", "cdp-message", messageData);
+    this.inspectorBridge.sendPluginMessage(
+      "network",
+      WebviewMessageDescriptor.CDPMessage,
+      messageData
+    );
   }
 
   /**
    * Parse CDPMessage into WebviewMessage format and broadcast to all listeners
    */
-  private broadcastCDPMessage(message: string) {
+  private broadcastWebviewMessage(
+    message: string,
+    command: WebviewCommand = WebviewCommand.CDPCall
+  ): void {
     try {
       const webviewMessage: WebviewMessage = {
-        command: WebviewCommand.CDPCall,
+        command: command,
         payload: JSON.parse(message),
       };
       this.broadcastMessage(webviewMessage);
     } catch {
-      console.error("Failed to parse CDP message:", message);
+      console.error("Failed to parse Webview message:", message);
     }
+  }
+
+  protected async handleGetResponseBodyData(message: IDEMessage): Promise<void> {
+    const { messageId, params } = message;
+    this.sendCDPMessage({
+      messageId,
+      method: NetworkMethod.GetResponseBody,
+      params: {
+        requestId: params?.requestId,
+      },
+    });
   }
 
   /**
@@ -63,7 +83,11 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("pluginMessage", (payload) => {
         if (payload.pluginId === "network") {
-          this.broadcastCDPMessage(payload.data);
+          if (payload.type === WebviewMessageDescriptor.IDEMessage) {
+            this.broadcastWebviewMessage(payload.data, WebviewCommand.IDECall);
+          } else {
+            this.broadcastWebviewMessage(payload.data, WebviewCommand.CDPCall);
+          }
         }
       })
     );

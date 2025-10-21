@@ -213,11 +213,16 @@ export function FilterItem({ onFocusFilter }: FilterItemProps) {
 
 export function OpenInEditorItem({ networkLog, responseBodyData }: OpenInEditorItemProps) {
   const { fetchAndOpenResponseInEditor } = useNetwork();
+
+  const handleSelect = () =>
+    networkLog &&
+    fetchAndOpenResponseInEditor(networkLog, responseBodyData?.base64Encoded ?? false);
+
   return (
     <ContextMenu.Item
       className="radix-context-menu-item"
       disabled={!responseBodyData?.body || !networkLog?.response}
-      onSelect={() => networkLog && fetchAndOpenResponseInEditor(networkLog)}>
+      onSelect={handleSelect}>
       <span className="codicon codicon-chrome-restore"></span>
       Open Response
     </ContextMenu.Item>
