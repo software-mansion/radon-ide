@@ -79,7 +79,7 @@ export class LocalMcpServer implements Disposable {
     }
     const transport = this.transports.get(sessionId);
     if (!transport) {
-      res.status(400).send("Invalid session ID");
+      res.status(404).send("Invalid session ID");
       return;
     }
     await transport.handleRequest(req, res);
