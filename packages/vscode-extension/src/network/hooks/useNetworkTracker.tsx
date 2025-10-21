@@ -11,6 +11,7 @@ import {
   WebviewCommand,
   NetworkMethod,
   NetworkType,
+  IDEMethod,
 } from "../types/panelMessageProtocol";
 
 export interface NetworkTracker {
@@ -206,6 +207,8 @@ const useNetworkTracker = (): NetworkTracker => {
       }
     };
     window.addEventListener("message", listener);
+    getLogHistory();
+
     return () => {
       window.removeEventListener("message", listener);
     };
@@ -245,6 +248,13 @@ const useNetworkTracker = (): NetworkTracker => {
     sendWebviewCDPMessage({
       messageId: "enable",
       method: isRunning ? NetworkMethod.Disable : NetworkMethod.Enable,
+    });
+  };
+
+  const getLogHistory = () => {
+    sendWebviewIDEMessage({
+      messageId: "loghistory",
+      method: IDEMethod.GetLogHistory,
     });
   };
 

@@ -59,11 +59,12 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     return { body, wasTruncated: false };
   }
 
-  private broadcastCDPMessage(message: CDPMessage): void {
+  private storeAndBroadcastCDPMessage(message: CDPMessage): void {
     const webviewMessage: WebviewMessage = {
       command: WebviewCommand.CDPCall,
       payload: message,
     };
+    this.storeMessage(webviewMessage);
     this.broadcastMessage(webviewMessage);
   }
 
@@ -80,13 +81,13 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
 
   private setupNetworkListeners(): void {
     const knownEventsSubscriptions: Disposable[] = NETWORK_EVENTS.map((event) =>
-      this.networkBridge.onEvent(NETWORK_EVENT_MAP[event], (message) =>
-        this.broadcastCDPMessage(message)
-      )
+      this.networkBridge.onEvent(NETWORK_EVENT_MAP[event], (message) => {
+        this.storeAndBroadcastCDPMessage(message);
+      })
     );
 
     const subscriptions: Disposable[] = [
-      this.networkBridge.onEvent("unknownEvent", (e) => this.broadcastCDPMessage(e)),
+      this.networkBridge.onEvent("unknownEvent", (e) => this.storeAndBroadcastCDPMessage(e)),
       this.inspectorBridge.onEvent("appReady", () => {
         this.networkBridge.enableNetworkInspector();
       }),
@@ -121,7 +122,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
         method: NetworkMethod.GetResponseBody,
         result: { body: undefined, wasTruncated: false },
       };
-      this.broadcastCDPMessage(emptyMessage);
+      this.storeAndBroadcastCDPMessage(emptyMessage);
     };
 
     const { requestId } = payload?.params || {};
@@ -153,7 +154,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
       result: responseBodyResult,
     };
 
-    this.broadcastCDPMessage(message);
+    this.storeAndBroadcastCDPMessage(message);
   }
 
   protected handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {

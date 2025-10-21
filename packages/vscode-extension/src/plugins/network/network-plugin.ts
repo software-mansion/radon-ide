@@ -26,6 +26,7 @@ export interface NetworkInspector {
   dispose(): void;
   onMessageBroadcast(cb: BroadcastListener): Disposable;
   handleWebviewMessage(message: WebviewMessage): void;
+  broadcastStoredMessages(): void;
   readonly pluginAvailable: boolean;
 }
 

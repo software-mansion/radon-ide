@@ -33,6 +33,7 @@ export enum IDEMethod {
   FetchFullResponseBody = "IDE.fetchFullResponseBody",
   GetTheme = "IDE.getTheme",
   Theme = "IDE.Theme",
+  GetLogHistory = "IDE.getLogHistory",
 }
 
 export function isCDPMethod(method: string): method is CDPMethod {

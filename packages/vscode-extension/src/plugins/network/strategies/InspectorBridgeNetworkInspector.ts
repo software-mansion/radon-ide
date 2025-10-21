@@ -37,12 +37,13 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
   /**
    * Parse CDPMessage into WebviewMessage format and broadcast to all listeners
    */
-  private broadcastCDPMessage(message: string) {
+  private storeAndBroadcastCDPMessage(message: string) {
     try {
       const webviewMessage: WebviewMessage = {
         command: WebviewCommand.CDPCall,
         payload: JSON.parse(message),
       };
+      this.storeMessage(webviewMessage);
       this.broadcastMessage(webviewMessage);
     } catch {
       console.error("Failed to parse CDP message:", message);
@@ -63,7 +64,8 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("pluginMessage", (payload) => {
         if (payload.pluginId === "network") {
-          this.broadcastCDPMessage(payload.data);
+          this.storeAndBroadcastCDPMessage(payload.data);
+          
         }
       })
     );

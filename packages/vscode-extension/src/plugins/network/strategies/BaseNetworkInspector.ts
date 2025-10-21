@@ -15,6 +15,7 @@ import { ContentTypeHeader } from "../../../network/types/network";
 
 export abstract class BaseNetworkInspector implements NetworkInspector {
   protected broadcastListeners: BroadcastListener[] = [];
+  private networkMessages: WebviewMessage[] = [];
 
   constructor(private readonly metroPort: number) {}
 
@@ -59,6 +60,16 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     } catch (error) {
       return false;
     }
+  }
+
+  public broadcastStoredMessages(): void {
+    this.networkMessages.forEach((message) => {
+      this.broadcastMessage(message);
+    });
+  }
+
+  protected storeMessage(message: WebviewMessage): void {
+    this.networkMessages.push(message);
   }
 
   protected broadcastMessage(message: Parameters<BroadcastListener>[0]): void {
@@ -163,6 +174,10 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     this.sendIDEMessage({ method: IDEMethod.Theme, messageId: id, result: theme });
   }
 
+  private async handleGetLogHistory(): Promise<void> {
+    this.broadcastStoredMessages();
+  }
+
   /**
    * Handle IDE messages from webview
    */
@@ -175,6 +190,9 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
         break;
       case IDEMethod.GetTheme:
         this.handleGetTheme(payload);
+        break;
+      case IDEMethod.GetLogHistory:
+        this.handleGetLogHistory();
         break;
       default:
         Logger.warn("Unknown IDE method received");
