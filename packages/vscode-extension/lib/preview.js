@@ -47,29 +47,7 @@ function getComponentName({ type }) {
 
 async function getCallSourceFromStack(stack) {
   const parsedStack = RNInternals.parseErrorStack(stack);
-
-  const { file } = parsedStack[0];
-
-  const url = new URL(file);
-  const metroAddress = url.origin;
-
-  // unfortunately I don't believe this endpoint is documented in any public metro docs
-  // but it is used by RN internally for error symbolication and here is its entry point in code:
-  // https://github.com/facebook/metro/blob/34bb8913ec4b5b02690b39d2246599faf094f721/packages/metro/src/Server.js#L679
-  const metroSymbolicateResponse = await fetch(
-    `${metroAddress}/symbolicate`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        stack: parsedStack,
-        extraData: {
-        }
-      }),
-    }
-  );
-  const metroSymbolicateJson = await metroSymbolicateResponse.json();
-  const symbolicatedStack = metroSymbolicateJson.stack;
+  const symbolicatedStack = (await RNInternals.symbolicateStackTrace(parsedStack)).stack;
 
   const callerFrame = symbolicatedStack[1];
 
