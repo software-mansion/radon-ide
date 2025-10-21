@@ -1,8 +1,6 @@
 import { useTabBar } from "../../providers/TabBarProvider";
 import "./TabBar.css";
 
-// const TAB_BAR_HEIGHT = 32;
-
 interface TabBarProps {
   ref: React.RefObject<HTMLDivElement | null>;
 }

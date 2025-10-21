@@ -64,7 +64,7 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
     }
   }, [networkLog.requestId, networkLog.currentState]);
 
-  // Define tabs configuration
+  /** Define tabs configuration */
   const tabs: Tab[] = useMemo(
     () => [
       {

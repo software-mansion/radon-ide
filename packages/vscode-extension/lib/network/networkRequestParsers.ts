@@ -215,7 +215,7 @@ async function readResponseText(
   xhr: XMLHttpRequest
 ): Promise<InternalResponseBodyData | undefined> {
   try {
-    // @ts-ignore - RN-specific property // @ts-ignore - RN-specific property
+    // @ts-ignore - RN-specific property
     if (!xhr || !xhr._cachedResponse) {
       // if response was not accessed, it's not cached and we don't want to read it
       // here to avoid potential side effects

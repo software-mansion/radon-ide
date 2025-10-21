@@ -106,7 +106,7 @@ const ResponseTab = ({
   const responseData = base64Encoded ? body : getFormattedRequestBody(body);
   const contentType = getNetworkResponseContentType(networkLog.response);
 
-  // Determine language for syntax highlighting
+  /** Determine language for syntax highlighting */
   const getLanguage = (): string => {
     if (base64Encoded) {
       return "plaintext";
