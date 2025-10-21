@@ -45,19 +45,17 @@ function getComponentName({ type }) {
   return "(unnamed)";
 }
 
-async function getSourceFromComponent(component) {
-  if (component._source) {
-    return component._source;
-  }
+async function getCallSourceFromStack(stack) {
+  const parsedStack = RNInternals.parseErrorStack(stack);
 
-  const debugStack = component._debugStack;
-  const parsedStack = RNInternals.parseErrorStack(debugStack.stack);
-
-  const { file } = parsedStack[1];
+  const { file } = parsedStack[0];
 
   const url = new URL(file);
   const metroAddress = url.origin;
 
+  // unfortunately I don't believe this endpoint is documented in any public metro docs
+  // but it is used by RN internally for error symbolication and here is its entry point in code:
+  // https://github.com/facebook/metro/blob/34bb8913ec4b5b02690b39d2246599faf094f721/packages/metro/src/Server.js#L679
   const metroSymbolicateResponse = await fetch(
     `${metroAddress}/symbolicate`,
     {
@@ -70,28 +68,26 @@ async function getSourceFromComponent(component) {
       }),
     }
   );
-
   const metroSymbolicateJson = await metroSymbolicateResponse.json();
-
   const symbolicatedStack = metroSymbolicateJson.stack;
 
-  const sourceFrame = symbolicatedStack[1];
+  const callerFrame = symbolicatedStack[1];
 
   return {
-    fileName: sourceFrame.file,
-    lineNumber: sourceFrame.lineNumber,
-    columnNumber: sourceFrame.column,
+    fileName: callerFrame.file,
+    lineNumber: callerFrame.lineNumber,
+    columnNumber: callerFrame.column,
   }
 }
 
 export function preview(component) {
   // eslint-disable-next-line eqeqeq
-  if (!component || (component._debugStack == null && component._source == null)) {
+  if (!component) {
     return;
   }
 
-  getSourceFromComponent(component).then((source) => {
-    const key = `preview:/${source.fileName}:${source.lineNumber}`;
+  getCallSourceFromStack(new Error().stack).then((callSource) => {
+    const key = `preview:/${callSource.fileName}:${callSource.lineNumber}`;
 
     const lastPreview = global.__RNIDE_previews.get(key);
 
