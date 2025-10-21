@@ -14,6 +14,7 @@ import { ResponseBodyData } from "../types/network";
 import { ThemeData } from "../../common/theme";
 import useThemeExtractor from "../hooks/useThemeExtractor";
 import "overlayscrollbars/overlayscrollbars.css";
+import { NetworkEvent } from "../types/panelMessageProtocol";
 
 interface NetworkLogDetailsProps {
   networkLog: NetworkLog;
@@ -46,10 +47,17 @@ const NetworkLogDetails = ({ networkLog, handleClose, parentHeight }: NetworkLog
   const themeData = useThemeExtractor();
 
   useEffect(() => {
+    if (
+      networkLog.currentState !== NetworkEvent.LoadingFinished &&
+      networkLog.currentState !== NetworkEvent.LoadingFailed
+    ) {
+      return;
+    }
+
     getResponseBody(networkLog).then((data) => {
       setResponseBodyData(data);
     });
-  }, [networkLog.requestId]);
+  }, [networkLog.requestId, networkLog.currentState]);
 
   const TABS: Tab[] = [
     {
