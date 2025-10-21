@@ -225,7 +225,7 @@ async function readResponseText(
     const responseType = xhr.responseType;
 
     if (responseType === "" || responseType === "text") {
-      return parseResponseBodyData(xhr.responseText);
+      return await parseResponseBodyData(xhr.responseText);
     }
 
     if (responseType === "blob") {
@@ -237,23 +237,18 @@ async function readResponseText(
       const isImageType = contentType.startsWith("image/");
       const isOctetStream = contentType === "application/octet-stream";
 
-      let promise: Promise<InternalResponseBodyData> | undefined = undefined;
-
       if (isImageType || isOctetStream) {
-        promise = readBlobAsBase64(xhr.response, isImageType);
+        return await readBlobAsBase64(xhr.response, isImageType);
       }
 
       if (isTextType || isParsableApplicationType) {
-        promise = readBlobAsText(xhr.response);
+        return await readBlobAsText(xhr.response);
       }
-
-      return promise?.catch((error) => handleReadResponseError(error));
     }
 
     // don't read binary data
     return undefined;
   } catch (error) {
-    // in case synchronous errors occur
     return handleReadResponseError(error);
   }
 }
