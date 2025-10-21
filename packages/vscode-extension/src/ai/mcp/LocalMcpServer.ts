@@ -35,7 +35,7 @@ export class LocalMcpServer implements Disposable {
 
   constructor() {
     this.mcpServer = new McpServer({
-      name: "RadonAI",
+      name: ENTRY_KEY,
       version: extensionContext.extension.packageJSON.version,
     });
     registerLocalMcpTools(this.mcpServer);
