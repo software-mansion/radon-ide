@@ -172,7 +172,9 @@ function transformWrapper({ filename, src, ...rest }) {
     }
   } else if (
     isTransforming("node_modules/@tanstack/react-query/src/index.ts") ||
-    isTransforming("node_modules/@tanstack/react-query/build/lib/index.js")
+    isTransforming("node_modules/@tanstack/react-query/build/lib/index.js") ||
+    isTransforming("node_modules/@tanstack/react-query/build/legacy/index.js") ||
+    isTransforming("node_modules/@tanstack/react-query/build/modern/index.js")
   ) {
     src = `require("__RNIDE_lib__/plugins/react-query-devtools.js");${src}`;
   } else if (isTransforming("/lib/rn-internals/rn-internals.js")) {
