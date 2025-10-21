@@ -176,7 +176,7 @@ function enableNetworkInspect(networkProxy) {
             requestId: requestId,
             timestamp: Date.now() / 1000,
             duration: Date.now() - sendTime,
-            encodedDataLength: xhr._response.size || xhr._response.length, // when response is blob, we use size, and length otherwise
+            encodedDataLength: xhr._response?.size || xhr._response?.length, // when response is blob, we use size, and length otherwise
           });
         } catch (error) {}
       });

@@ -135,7 +135,7 @@ function parseResponseBodyData(
   return { body: responseBody, base64Encoded, wasTruncated: false, type, dataSize };
 }
 
-function handleReadError(error: unknown): InternalResponseBodyData {
+function handleReadResponseError(error: unknown): InternalResponseBodyData {
   console.warn("Failed to read response body content:", error);
   return parseResponseBodyData(undefined);
 }
@@ -144,7 +144,7 @@ function handleReadError(error: unknown): InternalResponseBodyData {
  * Image and octet-stream handling.
  */
 function readBlobAsBase64(blob: Blob, isImage?: boolean): Promise<InternalResponseBodyData> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
     reader.onload = () => {
@@ -162,7 +162,7 @@ function readBlobAsBase64(blob: Blob, isImage?: boolean): Promise<InternalRespon
     };
 
     reader.onerror = (error) => {
-      resolve(handleReadError(error));
+      reject(error);
     };
 
     reader.readAsArrayBuffer(blob);
@@ -173,7 +173,7 @@ function readBlobAsBase64(blob: Blob, isImage?: boolean): Promise<InternalRespon
  * Text and parsable application types handling.
  */
 function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const reader = new FileReader();
 
     reader.onload = () => {
@@ -183,7 +183,7 @@ function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
     };
 
     reader.onerror = (error) => {
-      resolve(handleReadError(error));
+      reject(error);
     };
 
     reader.readAsText(blob);
@@ -215,7 +215,7 @@ async function readResponseText(
   xhr: XMLHttpRequest
 ): Promise<InternalResponseBodyData | undefined> {
   try {
-    // @ts-ignore - RN-specific property
+    // @ts-ignore - RN-specific property // @ts-ignore - RN-specific property
     if (!xhr || !xhr._cachedResponse) {
       // if response was not accessed, it's not cached and we don't want to read it
       // here to avoid potential side effects
@@ -237,19 +237,24 @@ async function readResponseText(
       const isImageType = contentType.startsWith("image/");
       const isOctetStream = contentType === "application/octet-stream";
 
+      let promise: Promise<InternalResponseBodyData> | undefined = undefined;
+
       if (isImageType || isOctetStream) {
-        return readBlobAsBase64(xhr.response, isImageType);
+        promise = readBlobAsBase64(xhr.response, isImageType);
       }
 
       if (isTextType || isParsableApplicationType) {
-        return readBlobAsText(xhr.response);
+        promise = readBlobAsText(xhr.response);
       }
+
+      return promise?.catch((error) => handleReadResponseError(error));
     }
 
     // don't read binary data
     return undefined;
   } catch (error) {
-    return handleReadError(error);
+    // in case synchronous errors occur
+    return handleReadResponseError(error);
   }
 }
 
@@ -344,7 +349,7 @@ function deserializeRequestData(data: RequestData, contentType: string | undefin
 function getContentTypeHeader(xhr: XMLHttpRequest): string {
   const hiddenPropertyHeadersValue =
     // @ts-ignore - RN-specific property
-    xhr._headers[ContentTypeHeader.LowerCase] || xhr._headers[ContentTypeHeader.Default] || "";
+    xhr._headers?.[ContentTypeHeader.LowerCase] || xhr._headers?.[ContentTypeHeader.Default] || "";
 
   if (xhr.getResponseHeader) {
     return xhr.getResponseHeader(ContentTypeHeader.Default) || hiddenPropertyHeadersValue;
