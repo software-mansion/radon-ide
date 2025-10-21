@@ -75,16 +75,16 @@ async function getSourceFromComponent(component) {
 
   const symbolicatedStack = metroSymbolicateJson.stack;
 
+  const sourceFrame = symbolicatedStack[1];
+
   return {
-    fileName: symbolicatedStack[1].file,
-    lineNumber: symbolicatedStack[1].lineNumber,
-    columnNumber: symbolicatedStack[1].column,
+    fileName: sourceFrame.file,
+    lineNumber: sourceFrame.lineNumber,
+    columnNumber: sourceFrame.column,
   }
 }
 
 export function preview(component) {
-
-  console.log("Frytki preview registered", RNInternals.parseErrorStack(component._debugStack.stack));
   // eslint-disable-next-line eqeqeq
   if (!component || (component._debugStack == null && component._source == null)) {
     return;
