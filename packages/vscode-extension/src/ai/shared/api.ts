@@ -87,7 +87,7 @@ export async function invokeToolCall(
 }
 
 export async function fetchRemoteToolSchema(): Promise<ToolsInfo> {
-  const url = new URL("/api/get_tool_schema/", BACKEND_URL);
+  const url = new URL("/get_tool_schema/", BACKEND_URL);
   const token = await getLicenseToken();
   let response: Response | null = null;
   try {
@@ -128,7 +128,7 @@ interface SystemResponse {
 }
 
 export async function getSystemPrompt(userPrompt: string): Promise<SystemResponse> {
-  const url = new URL("/api/system_prompt/", BACKEND_URL);
+  const url = new URL("/system_prompt/", BACKEND_URL);
   const token = await getLicenseToken();
   const response = await fetch(url, {
     method: "POST",
