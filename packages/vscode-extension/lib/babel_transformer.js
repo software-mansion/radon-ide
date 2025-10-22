@@ -137,13 +137,13 @@ function transformWrapper({ filename, src, ...rest }) {
     // Thankfully, in RN 0.80 the new owner stack-based approach made it possible to
     // retrieve the actual call-site stack for components. Therefore the below logic
     // only covers versions on or after 0.74 but before 0.80.
-    const { version } = requireFromAppDir("react-native/package.json");
+    const { version: reactNativeVersion } = requireFromAppDir("react-native/package.json");
     const rendererFileName = filename.split(path.sep).pop();
     if (
-      version.startsWith("0.74") ||
-      version.startsWith("0.75") ||
-      version.startsWith("0.76") ||
-      version.startsWith("0.77")
+      reactNativeVersion.startsWith("0.74") ||
+      reactNativeVersion.startsWith("0.75") ||
+      reactNativeVersion.startsWith("0.76") ||
+      reactNativeVersion.startsWith("0.77")
     ) {
       const rendererFilePath = path.join(
         process.env.RADON_IDE_LIB_PATH,
@@ -154,7 +154,8 @@ function transformWrapper({ filename, src, ...rest }) {
       const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
       src = rendererAsString;
     }
-    if (version.startsWith("0.78") || version.startsWith("0.79")) {
+    const { version: reactVersion } = requireFromAppDir("react/package.json");
+    if ((reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) && reactVersion.startsWith("19.0")) {
       const rendererFilePath = path.join(
         process.env.RADON_IDE_LIB_PATH,
         "rn-renderer",
@@ -165,9 +166,10 @@ function transformWrapper({ filename, src, ...rest }) {
       src = rendererAsString;
     }
   } else if (isTransforming("node_modules/react/cjs/react-jsx-dev-runtime.development.js")) {
-    const { version } = requireFromAppDir("react-native/package.json");
+    const { version: reactNativeVersion } = requireFromAppDir("react-native/package.json");
     const jsxRuntimeFileName = filename.split(path.sep).pop();
-    if (version.startsWith("0.78") || version.startsWith("0.79")) {
+    const reactVersion = requireFromAppDir("react/package.json").version;
+    if ((reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) && reactVersion.startsWith("19.0")) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}");`;
     }
   } else if (
