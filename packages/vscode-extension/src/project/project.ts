@@ -491,6 +491,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region File Transfer
 
+  @guardFeatureAccess(Feature.SendFile)
   public async openSendFileDialog() {
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -498,6 +499,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSession.fileTransfer.openSendFileDialog();
   }
 
+  @guardFeatureAccess(Feature.SendFile)
   public async sendFileToDevice({
     fileName,
     data,

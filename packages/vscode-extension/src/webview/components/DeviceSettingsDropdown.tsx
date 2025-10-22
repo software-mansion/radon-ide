@@ -139,6 +139,12 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
     []
   );
 
+  const openSendFileDialog = usePaywalledCallback(
+    () => project.openSendFileDialog(),
+    Feature.SendFile,
+    []
+  );
+
   return (
     <DropdownMenuRoot>
       <DropdownMenu.Trigger asChild disabled={disabled}>
@@ -289,7 +295,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           <DropdownMenu.Item
             className="dropdown-menu-item"
             data-testid="device-settings-send-file"
-            onSelect={() => project.openSendFileDialog()}>
+            onSelect={openSendFileDialog}>
             <span className="codicon codicon-share" />
             Send File
           </DropdownMenu.Item>
