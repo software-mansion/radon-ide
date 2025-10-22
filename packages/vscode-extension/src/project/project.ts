@@ -88,8 +88,11 @@ function guardFeatureAccess<K extends keyof Project>(
   feature: Feature,
   shouldSkipLicenseCheck?: (...args: ProjectMethodParameters<K>) => boolean
 ) {
-  return function (target: Project, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: Project, propertyKey: K, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
+    if (!originalMethod || typeof originalMethod !== "function") {
+      return descriptor;
+    }
     descriptor.value = function (this: Project, ...args: ProjectMethodParameters<K>) {
       if (shouldSkipLicenseCheck) {
         const shouldSkip = shouldSkipLicenseCheck(...args);
