@@ -1,17 +1,20 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { AddressInfo } from "node:net";
 import http from "node:http";
 import express from "express";
+import * as path from "path";
+import * as fs from "fs/promises";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import { Disposable, EventEmitter } from "vscode";
+import { Disposable, EventEmitter, workspace } from "vscode";
 import { Logger } from "../../Logger";
 import { registerMcpTools } from "./toolRegistration";
 import { Session } from "./models";
 import { extensionContext } from "../../utilities/extensionContext";
 import { ConnectionListener } from "../shared/ConnectionListener";
 import { watchLicenseTokenChange } from "../../utilities/license";
+import { getAppCachesDir } from "../../utilities/common";
 
 export class LocalMcpServer implements Disposable {
   private session: Session | null = null;
@@ -88,6 +91,40 @@ export class LocalMcpServer implements Disposable {
     await this.session.transport.handleRequest(req, res);
   }
 
+  private async updateMcpServerRecord() {
+    const port = await this.getPort();
+
+    const workspaceFolder = workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+      Logger.warn("No workspace folder found, cannot update MCP server record");
+      return;
+    }
+
+    const workspacePath = path.normalize(workspaceFolder.uri.fsPath);
+    const workspaceHash = createHash("md5").update(workspacePath).digest("hex");
+
+    const mcpServerRecordLocation = path.join(
+      getAppCachesDir(),
+      "Mcp",
+      `radon-mcp-${workspaceHash}.json`
+    );
+
+    const mcpServerRecord = {
+      workspaceFolder: workspacePath,
+      mcpServerUrl: `http://127.0.0.1:${port}/mcp`,
+    };
+
+    try {
+      // Ensure the Mcp directory exists and write the JSON file
+      const mcpDir = path.dirname(mcpServerRecordLocation);
+      await fs.mkdir(mcpDir, { recursive: true });
+      await fs.writeFile(mcpServerRecordLocation, JSON.stringify(mcpServerRecord, null, 2));
+      Logger.info(`Updated MCP server record at ${mcpServerRecordLocation}`);
+    } catch (error) {
+      Logger.error("Failed to write MCP server record:", error);
+    }
+  }
+
   private initializeHttpServer(): http.Server {
     const app = express();
     app.use(express.json());
@@ -131,11 +168,12 @@ export class LocalMcpServer implements Disposable {
     app.get("/mcp", this.handleSessionRequest.bind(this));
     app.delete("/mcp", this.handleSessionRequest.bind(this));
 
-    return app.listen(0, "127.0.0.1").on("listening", () => {
+    return app.listen(0, "127.0.0.1").on("listening", async () => {
       // On "listening", listener.address() will always return AddressInfo
       const addressInfo = this.expressServer?.address() as AddressInfo;
       this.resolveServerPort(addressInfo.port);
       Logger.info(`Started local MCP server on port ${addressInfo.port}.`);
+      await this.updateMcpServerRecord();
     });
   }
 }
