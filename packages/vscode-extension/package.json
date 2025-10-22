@@ -413,16 +413,6 @@
           "default": true,
           "scope": "window",
           "description": "Enables the Radon AI functionality in the extension."
-        },
-        "RadonIDE.radonAI.MCPConfigLocation": {
-          "type": "string",
-          "scope": "window",
-          "default": "Project",
-          "enum": [
-            "Project",
-            "Global"
-          ],
-          "markdownDescription": "Sets the write location for `mcp.json` when using Cursor or a legacy VSCode version (`<1.101.0`)."
         }
       }
     }],
