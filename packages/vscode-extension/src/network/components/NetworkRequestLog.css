@@ -99,6 +99,21 @@ vscode-table-header-cell:hover .table-header-cell button {
   }
 }
 
+.failed {
+  vscode-table-cell {
+    color: var(--vscode-list-errorForeground);
+  }
+
+  &.selected,
+  &.selected:hover {
+    background-color: var(--vscode-mergeEditor-changeBase\.background);
+
+    vscode-table-cell {
+      color: var(--vscode-list-errorForeground);
+    }
+  }
+}
+
 /* Fallback for high-contrast */
 .vscode-high-contrast .selected vscode-table-cell,
 .vscode-high-contrast-light .selected vscode-table-cell {

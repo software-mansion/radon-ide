@@ -104,6 +104,18 @@ function getRendererConfig() {
   return undefined;
 }
 
+function sourceInfoFromInspectorData(inspectorData) {
+  const source = inspectorData.source;
+  if (source) {
+    return {
+      fileName: source.fileName,
+      line0Based: source.lineNumber - 1,
+      column0Based: source.columnNumber - 1,
+    };
+  }
+  return undefined;
+}
+
 /**
  * Return an array of component data representing a stack of components by traversing
  * the component hierarchy up from the startNode.
@@ -115,7 +127,7 @@ function getRendererConfig() {
 function extractComponentStack(startNode, viewDataHierarchy) {
   const rendererConfig = getRendererConfig();
 
-  let stackItems = [];
+  const componentStack = [];
   if (rendererConfig) {
     // when we find renderer config with getInspectorDataForInstance we use fiber node
     // "return" property to traverse the component hierarchy
@@ -126,7 +138,33 @@ function extractComponentStack(startNode, viewDataHierarchy) {
       try {
         const data = rendererConfig.getInspectorDataForInstance(node);
         const item = data.hierarchy[data.hierarchy.length - 1];
-        stackItems.push(item);
+
+        const inspectorData = item.getInspectorData(findNodeHandle);
+        let source = sourceInfoFromInspectorData(inspectorData);
+
+        const debugStack = node._debugStack;
+        if (debugStack && debugStack.stack) {
+          // the place where the component is "rendered" is indicated by the second frame
+          // on the debug stack (at index 1):
+          const parsedStack = RNInternals.parseErrorStack(debugStack.stack);
+          if (parsedStack.length > 1) {
+            const { file, lineNumber, column } = parsedStack[1];
+            source = {
+              fileName: file,
+              line0Based: lineNumber - 1,
+              column0Based: column - 1,
+            };
+          }
+        }
+
+        if (source) {
+          componentStack.push({
+            name: item.name,
+            source,
+            measure: inspectorData.measure,
+          });
+        }
+
         node = node.return;
       } catch (e) {
         // In the preview mode getInspectorDataForInstance may throw an error
@@ -137,20 +175,22 @@ function extractComponentStack(startNode, viewDataHierarchy) {
     }
   } else if (viewDataHierarchy && viewDataHierarchy.length > 0) {
     // fallback to using viewDataHierarchy
-    stackItems = viewDataHierarchy.reverse();
+    viewDataHierarchy.reverse().forEach((item) => {
+      let inspectorData = {};
+      if (item.getInspectorData) {
+        inspectorData = item.getInspectorData(findNodeHandle);
+      }
+      const source = sourceInfoFromInspectorData(inspectorData);
+      if (source) {
+        componentStack.push({
+          name: item.name,
+          source,
+          measure: inspectorData.measure,
+        });
+      }
+    });
   }
 
-  const componentStack = [];
-  stackItems.forEach((item) => {
-    const inspectorData = item.getInspectorData(findNodeHandle);
-    if (inspectorData.source) {
-      componentStack.push({
-        name: item.name,
-        source: inspectorData.source,
-        measure: inspectorData.measure,
-      });
-    }
-  });
   return componentStack;
 }
 
@@ -183,16 +223,11 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
         inspectorDataStack.map(
           (inspectorData) =>
             new Promise((res, rej) => {
-              const source = {
-                fileName: inspectorData.source.fileName,
-                line0Based: inspectorData.source.lineNumber - 1,
-                column0Based: inspectorData.source.columnNumber - 1,
-              };
               try {
                 inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
                   res({
                     componentName: inspectorData.name,
-                    source,
+                    source: inspectorData.source,
                     frame: {
                       x: pageX / screenWidth,
                       y: pageY / screenHeight,
@@ -202,7 +237,7 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
                   });
                 });
               } catch (e) {
-                res({ componentName: inspectorData.name, source });
+                res({ componentName: inspectorData.name, source: inspectorData.source });
               }
             })
         )

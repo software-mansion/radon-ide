@@ -54,7 +54,6 @@ describe("4 - App interaction tests", () => {
       return appWebsocket != null;
     }, 5000);
     await appManipulationService.hideExpoOverlay(appWebsocket);
-
     await radonViewsService.clearDebugConsole();
     await radonViewsService.switchToRadonIDEFrame();
   });
