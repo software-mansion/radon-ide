@@ -56,14 +56,23 @@ export class NetworkBridge
   implements RadonNetworkBridge
 {
   private debugSession?: (DebugSession & Disposable) | undefined;
+  private jsDebugSessionAvailable: boolean = false;
 
   public get bridgeAvailable(): boolean {
-    return !!this.debugSession;
+    return this.jsDebugSessionAvailable;
   }
 
   public setDebugSession(debugSession: DebugSession & Disposable) {
     this.debugSession = debugSession;
-    this.emitEvent("bridgeAvailable", []);
+    this.debugSession.onJSDebugSessionStarted(() => {
+      this.jsDebugSessionAvailable = true;
+      this.emitEvent("bridgeAvailable", []);
+    });
+  }
+
+  public clearDebugSession() {
+    this.debugSession = undefined;
+    this.jsDebugSessionAvailable = false;
   }
 
   // Method overloads for type safety
