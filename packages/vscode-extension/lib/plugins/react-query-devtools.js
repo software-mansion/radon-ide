@@ -1,6 +1,9 @@
 // IMPORTANT: this file is injected at the beginning of React Query index file 
 // so we need to use variable names that won't conflict with React Query's own variables
 // hence the "RadonIDE" suffixes on everything.
+
+// We import QueryClient from @tanstack/query-core directly
+// as in v4 version of React Query it is unavailable from the main package
 import { QueryClient as QueryClientRadonIDE } from "@tanstack/query-core";
 const { register: registerRadonIDE } = require("__RNIDE_lib__/plugins/expo_dev_plugins");
 const { PluginMessageBridge: PluginMessageBridgeRadonIDE } = require("__RNIDE_lib__/plugins/PluginMessageBridge");
