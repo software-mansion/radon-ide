@@ -16,6 +16,11 @@ import { useStore } from "../providers/storeProvider";
 import { Platform, useProject } from "../providers/ProjectProvider";
 import { RestrictedFunctionalityError } from "../../common/Errors";
 import { usePaywall } from "../hooks/usePaywall";
+import {
+  Feature,
+  FeatureAvailabilityStatus,
+  getFeatureAvailabilityStatus,
+} from "../../common/License";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -25,6 +30,12 @@ interface CreateDeviceViewProps {
 function useSupportedDevices() {
   const store$ = useStore();
   const iOSRuntimes = use$(store$.devicesState.iOSRuntimes) ?? [];
+
+  const licenseStatus = use$(store$.license.status);
+  const hasAccessToIPads =
+    getFeatureAvailabilityStatus(licenseStatus, Feature.IOSTabletSimulators) ===
+    FeatureAvailabilityStatus.Available;
+
   const errors = useDependencyErrors();
 
   return [
@@ -42,7 +53,7 @@ function useSupportedDevices() {
               .map((device) => ({
                 value: device.modelId,
                 label: device.modelName,
-                disabled: device.modelName.includes("iPad"),
+                disabled: device.modelName.includes("iPad") && !hasAccessToIPads,
               })),
           },
       windows: { label: "", items: [] },
