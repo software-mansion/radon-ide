@@ -41,8 +41,11 @@ import { RestrictedFunctionalityError } from "./common/Errors";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
-function wrapPaywalledFunction(fn: (...args: any[]) => any, messageOnRestricted: string) {
-  return async (...args: any[]) => {
+function wrapPaywalledFunction<F extends (...args: any[]) => Promise<void> | void>(
+  fn: F,
+  messageOnRestricted: string
+) {
+  return async (...args: Parameters<F>) => {
     try {
       await fn(...args);
     } catch (e) {

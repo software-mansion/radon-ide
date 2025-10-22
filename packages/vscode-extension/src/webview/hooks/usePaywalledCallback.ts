@@ -10,14 +10,14 @@ import {
 import { usePaywall } from "./usePaywall";
 import { RestrictedFunctionalityError } from "../../common/Errors";
 
-function withPaywallGuard(
-  fn: (...args: any[]) => any,
+function withPaywallGuard<F extends (...args: any[]) => Promise<void> | void>(
+  fn: F,
   feature: Feature,
   licenseStatus: LicenseStatus
-) {
+): (...args: Parameters<F>) => Promise<void> {
   const { openPaywall } = usePaywall();
 
-  return async (...args: any[]) => {
+  return async (...args: Parameters<F>): Promise<void> => {
     const featureAvailability = getFeatureAvailabilityStatus(licenseStatus, feature);
     switch (featureAvailability) {
       case FeatureAvailabilityStatus.Available:
@@ -38,8 +38,8 @@ function withPaywallGuard(
   };
 }
 
-export function usePaywalledCallback(
-  fn: (...args: any[]) => any,
+export function usePaywalledCallback<F extends (...args: any[]) => Promise<void> | void>(
+  fn: F,
   feature: Feature,
   dependencies: unknown[]
 ) {

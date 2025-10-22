@@ -73,20 +73,26 @@ const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 
 const DEEP_LINKS_HISTORY_LIMIT = 50;
 
+type ProjectMethodParameters<K extends keyof Project> = Project[K] extends (
+  ...args: infer P
+) => unknown
+  ? P
+  : never;
+
 /**
  * Checks if the current license status allows access to the specified feature.
  * @argument feature - The feature to check access for.
- * @throws {RestrictedFunctionalityError} if the user does not have access to Pro features
+ * @throws {RestrictedFunctionalityError} if the user does not have access to the feature.
  */
-function guardFeatureAccess(
+function guardFeatureAccess<K extends keyof Project>(
   feature: Feature,
-  shouldSkipLicenseCheck?: (...args: any[]) => boolean
+  shouldSkipLicenseCheck?: (...args: ProjectMethodParameters<K>) => boolean
 ) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: Project, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
-    descriptor.value = function (this: Project, ...args: any[]) {
+    descriptor.value = function (this: Project, ...args: ProjectMethodParameters<K>) {
       if (shouldSkipLicenseCheck) {
-        const shouldSkip = shouldSkipLicenseCheck(args);
+        const shouldSkip = shouldSkipLicenseCheck(...args);
         if (shouldSkip) {
           return originalMethod.apply(this, args);
         }
@@ -267,8 +273,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   @guardFeatureAccess(Feature.AndroidSmartphoneEmulators)
   @guardFeatureAccess(Feature.IOSSmartphoneSimulators)
-  @guardFeatureAccess(Feature.IOSTabletSimulators, (args) => {
-    const [deviceInfo] = args;
+  @guardFeatureAccess(Feature.IOSTabletSimulators, (deviceInfo: DeviceInfo) => {
     return deviceInfo.deviceType !== DeviceType.Tablet;
   })
   public startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void> {
@@ -693,9 +698,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   @guardFeatureAccess(Feature.AndroidSmartphoneEmulators)
   @guardFeatureAccess(Feature.IOSSmartphoneSimulators)
-  @guardFeatureAccess(Feature.IOSTabletSimulators, (args) => {
-    const [deviceType] = args;
-    return !deviceType.name.includes("iPad");
+  @guardFeatureAccess(Feature.IOSTabletSimulators, (deviceInfo: IOSDeviceTypeInfo) => {
+    return !deviceInfo.name.includes("iPad");
   })
   public createIOSDevice(
     deviceType: IOSDeviceTypeInfo,
