@@ -41,7 +41,8 @@ export async function viewComponentTreeExec(): Promise<ToolResponse> {
 
   const store = project.deviceSession.devtoolsStore;
 
-  Logger.log(`Testing store:`, store);
+  Logger.log(`Entire store:`, store);
+  console.log(`Entire store:`, store);
 
   if (!store) {
     return textToToolResponse(
@@ -51,8 +52,6 @@ export async function viewComponentTreeExec(): Promise<ToolResponse> {
   }
 
   const repr = printStore(store);
-
-  Logger.log(`Testing test: ${repr}`);
 
   return textToToolResponse(repr);
 }
