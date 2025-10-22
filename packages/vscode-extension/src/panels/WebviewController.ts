@@ -149,29 +149,30 @@ export class WebviewController implements Disposable {
         }
         return arg;
       });
-      // @ts-ignore
-      const result = callableObject[method](...argsWithCallbacks);
-      if (result instanceof Promise) {
-        result
-          .then((res) => {
+      try {
+        // @ts-ignore
+        const result = callableObject[method](...argsWithCallbacks);
+        if (result instanceof Promise) {
+          result.then((res) => {
             this.webview.postMessage({
               command: "callResult",
               callId,
               result: res,
             });
-          })
-          .catch((error) => {
-            this.webview.postMessage({
-              command: "callResult",
-              callId,
-              error: { name: error.name, message: error.message },
-            });
           });
-      } else {
+        } else {
+          this.webview.postMessage({
+            command: "callResult",
+            callId,
+            result,
+          });
+        }
+      } catch (error: any) {
+        const errorClassName = error?.constructor?.name;
         this.webview.postMessage({
           command: "callResult",
           callId,
-          result,
+          error: { name: error.name, message: error.message, className: errorClassName },
         });
       }
     }

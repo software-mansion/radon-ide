@@ -1,5 +1,6 @@
 import { ApplicationRoot } from "./AppRootConfig";
 import { BuildType } from "./BuildConfig";
+import { LicenseState, LicenseStatus } from "./License";
 import { merge } from "./Merge";
 import { DeviceId } from "./Project";
 
@@ -142,6 +143,15 @@ export type ApplicationDependencyStatuses = Partial<
 >;
 
 // #endregion Dependencies
+
+// #region Radon AI State
+
+export enum RadonAIEnabledState {
+  Enabled = "enabled",
+  Default = "default",
+}
+
+// #endregion Radon AI State
 
 // #region Tools State
 
@@ -420,11 +430,6 @@ export enum DeviceType {
   Tablet = "Tablet",
 }
 
-export enum RadonAIEnabledState {
-  Enabled = "enabled",
-  Default = "default",
-}
-
 export type DeviceInfo = AndroidDeviceInfo | IOSDeviceInfo;
 
 export type AndroidDeviceInfo = {
@@ -483,6 +488,7 @@ export type State = {
   applicationRoots: ApplicationRoot[];
   devicesState: DevicesState;
   environmentDependencies: EnvironmentDependencyStatuses;
+  license: LicenseState;
   projectState: ProjectStore;
   telemetry: TelemetryState;
   workspaceConfiguration: WorkspaceConfiguration;
@@ -547,6 +553,9 @@ export const initialState: State = {
     iOSRuntimes: null,
   },
   environmentDependencies: {},
+  license: {
+    status: LicenseStatus.Inactive,
+  },
   projectState: {
     applicationContext: {
       applicationDependencies: {},

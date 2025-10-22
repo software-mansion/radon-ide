@@ -8,6 +8,8 @@ import _ from "lodash";
 import { useProject } from "../providers/ProjectProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { merge } from "../../common/Merge";
+import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import { Feature } from "../../common/License";
 
 const RETAIN_SUCCESS_SCREEN_TIMEOUT = 1000; // ms
 const RETAIN_ERROR_SCREEN_TIMEOUT = 5000; // ms
@@ -50,6 +52,14 @@ export function SendFilesOverlay() {
     });
   }, [store$]);
 
+  const sendFileToDevice = usePaywalledCallback(
+    async (fileDescription: { fileName: string; data: ArrayBuffer }) => {
+      await project.sendFileToDevice(fileDescription);
+    },
+    Feature.SendFile,
+    []
+  );
+
   // Hide overlay after success and error animations
   useEffect(() => {
     if (!isLoading && (erroredFiles.length > 0 || sentFiles.length > 0)) {
@@ -77,7 +87,7 @@ export function SendFilesOverlay() {
         ]);
         return;
       }
-      await project.sendFileToDevice({
+      await sendFileToDevice({
         fileName: file.name,
         data: buf,
       });

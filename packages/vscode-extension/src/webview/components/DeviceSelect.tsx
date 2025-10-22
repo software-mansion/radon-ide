@@ -10,8 +10,10 @@ import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
 import { useStore } from "../providers/storeProvider";
-import { DeviceInfo, DevicePlatform } from "../../common/State";
+import { DeviceInfo, DevicePlatform, DeviceType } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import { Feature } from "../../common/License";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -96,6 +98,7 @@ function DeviceSelect() {
   const { projectState, project } = useProject();
 
   const devices = use$(store$.devicesState.devices) ?? [];
+
   const { openModal } = useModal();
 
   const hasNoDevices = devices.length === 0;
@@ -107,6 +110,38 @@ function DeviceSelect() {
   const runningSessionIds = Object.keys(deviceSessions);
 
   const deviceSections = partitionDevices(devices ?? []);
+
+  const handleStartOrActivateSessionForIOSTabletDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.IOSTabletSimulators,
+    []
+  );
+
+  const handleStartOrActivateSessionForAndroidTabletDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.AndroidTabletEmulators,
+    []
+  );
+
+  const handleStartOrActivateSessionForIOSSmartphoneDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.IOSSmartphoneSimulators,
+    []
+  );
+
+  const handleStartOrActivateSessionForAndroidSmartphoneDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.AndroidSmartphoneEmulators,
+    []
+  );
 
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
@@ -120,7 +155,24 @@ function DeviceSelect() {
     if (selectedDevice?.id !== value) {
       const deviceInfo = (devices ?? []).find((d) => d.id === value);
       if (deviceInfo) {
-        project.startOrActivateSessionForDevice(deviceInfo);
+        switch (deviceInfo.platform) {
+          case DevicePlatform.IOS:
+            if (deviceInfo.deviceType === DeviceType.Tablet) {
+              await handleStartOrActivateSessionForIOSTabletDevice(deviceInfo);
+              return;
+            } else {
+              await handleStartOrActivateSessionForIOSSmartphoneDevice(deviceInfo);
+              return;
+            }
+          case DevicePlatform.Android:
+            if (deviceInfo.deviceType === DeviceType.Tablet) {
+              await handleStartOrActivateSessionForAndroidTabletDevice(deviceInfo);
+              return;
+            } else {
+              await handleStartOrActivateSessionForAndroidSmartphoneDevice(deviceInfo);
+              return;
+            }
+        }
       }
     }
   };
