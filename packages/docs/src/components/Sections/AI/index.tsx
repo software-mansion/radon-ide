@@ -22,11 +22,7 @@ const word = {
   visible: { opacity: 1 },
 };
 
-const text = `Radon AI is a dedicated React Native AI assistant enhanced with up-to-date information about the React Native ecosystem. At its heart is our extensive React Native knowledge database, which is queried before answering your question.
-
-We index all of the popular React Native libraries to match questions to relevant pieces of documentation, providing additional, accurate context to your conversation.
-
-Our knowledge database is updated daily to provide the most up-to-date information.`;
+const text = `To run Large Language Models (LLMs) locally in React Native using React Native ExecuTorch, you first need to install the react-native-executorch library in your project, which acts as a bridge to Meta's on-device AI runtime. Next, you must ensure your LLM—like a Llama or Qwen model—is exported and optimized into the .pte (PyTorch ExecuTorch) format, which is required for the on-device inference engine. Within your React Native component, you can then utilize the useLLM hook, providing the local path or remote URL to your .pte model file and its tokenizer. Finally, call the generate function from the hook with your prompt to initiate local, private, and serverless text generation on the mobile device, with the response updating the llm.response state progressively.`;
 
 export default function AI() {
   const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.5 });

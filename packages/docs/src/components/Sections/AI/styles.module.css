@@ -183,7 +183,6 @@ p.current {
   max-width: 560px;
   width: 100%;
   height: 120px;
-  flex-shrink: 0;
   pointer-events: none;
 }
 
