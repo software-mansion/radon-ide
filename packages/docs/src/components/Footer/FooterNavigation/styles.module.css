@@ -21,6 +21,7 @@ ul.sectionLinks {
 
 .sectionLinks li:hover {
   opacity: 1;
+  cursor: pointer;
 }
 
 p.sectionTitle {

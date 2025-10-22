@@ -1,5 +1,6 @@
 import React, { useRef } from "react";
 import styles from "./styles.module.css";
+import { track } from "@vercel/analytics";
 import PricingPlansList from "./PricingPlansList";
 import FAQ from "../Sections/FAQ";
 import clsx from "clsx";
@@ -24,6 +25,18 @@ const Pricing = () => {
   const { scrollToForm } = useScrollToForm();
   const { onOpen } = useModal();
   const formRef = useRef<HTMLDivElement | null>(null);
+  const handleSubmitTrack = () => {
+    track("Pricing form submit");
+  };
+
+  const handlePricingTableInstall = () => {
+    track("Pricing table install button");
+    onOpen("Pricing table modal");
+  };
+  const handlePricingCardInstall = () => {
+    track("Pricing card install button");
+    onOpen("Pricing card modal");
+  };
 
   return (
     <div className={clsx(styles.container, "border-layout")}>
@@ -35,7 +48,7 @@ const Pricing = () => {
       </div>
       <div className={styles.wrapper}>
         <PricingPlansList
-          handleFree={onOpen}
+          handleFree={handlePricingCardInstall}
           handleTeam={openBusinessCheckout}
           handlePro={openIndividualCheckout}
           handleEnterprise={() => scrollToForm(formRef)}
@@ -44,13 +57,13 @@ const Pricing = () => {
         />
       </div>
       <ComparePricingPlans
-        handleFree={onOpen}
+        handleFree={handlePricingTableInstall}
         handlePro={openIndividualCheckout}
         handleTeam={openBusinessCheckout}
         handleEnterprise={() => scrollToForm(formRef)}
       />
       <FAQ />
-      <EnterpriseForm ref={formRef} />
+      <EnterpriseForm ref={formRef} trackSubmit={handleSubmitTrack} />
     </div>
   );
 };

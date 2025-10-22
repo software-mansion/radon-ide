@@ -1,6 +1,7 @@
 import React from "react";
 import Layout from "@theme/Layout";
 import styles from "./index.module.css";
+import clsx from "clsx";
 
 const data = [
   {
@@ -49,13 +50,15 @@ export default function Legal(): JSX.Element {
   return (
     <Layout description="An IDE for React Native">
       <div className={styles.preventfulContainer}>
-        <div className={styles.container}>
-          <h1>Software Mansion Radon IDE Terms & Policies</h1>
-          {data.map((item) => (
-            <a href={item.link} className={styles.card}>
-              <div>{item.label}</div> <span className={styles.button}>Read document</span>
-            </a>
-          ))}
+        <div className={clsx(styles.wrapper, "border-layout")}>
+          <div className={styles.container}>
+            <h1>Software Mansion Radon IDE Terms & Policies</h1>
+            {data.map((item) => (
+              <a href={item.link} className={styles.card}>
+                <div>{item.label}</div> <span className={styles.button}>Read document</span>
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </Layout>

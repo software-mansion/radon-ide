@@ -10,7 +10,9 @@
 }
 
 .container {
-  border: var(--radon-border-layout);
+  border-top: var(--radon-border-layout);
+  border-left: var(--radon-border-layout);
+  border-right: var(--radon-border-layout);
   max-width: 100%;
   margin: 80px 40px 0;
   position: relative;

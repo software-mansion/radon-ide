@@ -38,7 +38,7 @@ const StartScreen = () => {
         <div className={styles.heading}>
           <p className={styles.preheadingLabel}>
             <span className={styles.left}>Trusted by</span>
-            <span className={styles.center}>24,000+ engineers</span> worldwide
+            <span className={styles.center}>34,000+ engineers</span> worldwide
           </p>
           <h1 className={styles.headingLabel}>
             The Best <span className={styles.headingIde}>IDE</span> <br /> for&nbsp;
@@ -48,11 +48,11 @@ const StartScreen = () => {
             Radon IDE extension turns your VSCode or Cursor editor <br /> into fully-featured IDE
             for faster and more efficient development<span className={styles.dot}>.</span>{" "}
             <p>
-              Trusted by <span>24,000+ engineers worldwide</span>.
+              Trusted by <span>34,000+ engineers worldwide</span>.
             </p>
           </h2>
           <div className={styles.buttonContainer}>
-            <DownloadButtons vertical={false} />
+            <DownloadButtons vertical={false} trackFrom="Hero" />
           </div>
         </div>
         <div className={styles.gradientContainer}>

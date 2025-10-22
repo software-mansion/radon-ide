@@ -7,7 +7,7 @@
 }
 
 .testimonial:hover {
-  background-color: var(--swm-border);
+  background-color: var(--radon-border);
   text-decoration: none;
 }
 

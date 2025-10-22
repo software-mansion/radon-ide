@@ -1,6 +1,5 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import styles from "./styles.module.css";
-import { track } from "@vercel/analytics";
 import DownloadButtons from "../../DownloadButtons";
 import RadonIconGreen from "../../RadonIconGreen";
 import usePageType from "@site/src/hooks/usePageType";
@@ -8,40 +7,46 @@ import clsx from "clsx";
 
 const RADON_IDE_MARKETPLACE_URL =
   "https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide";
-const DEFAULT_INSTALLS_NO = "20,000+";
+const RADON_IDE_OPEN_VSX_API = "https://open-vsx.org/api/swmansion/react-native-ide";
+const DEFAULT_INSTALLS_NO = "34,000+";
 
 const LearnMoreFooter = () => {
-  const handleBottomCTAClick = () => {
-    track("Bottom CTA");
-  };
-
-  const [isLoaded, setIsLoaded] = React.useState(false);
-  const [installs, setInstalls] = React.useState(DEFAULT_INSTALLS_NO);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [summaryInstalls, setSummaryInstalls] = useState<string | number>(DEFAULT_INSTALLS_NO);
   const { isLanding } = usePageType();
+  const trackFrom = isLanding ? "Landing bottom" : "Features bottom";
 
   useEffect(() => {
-    async function getInstalls() {
+    async function fetchData() {
       try {
-        const response = await fetch(RADON_IDE_MARKETPLACE_URL);
-        if (!response.ok) {
-          throw new Error("Failed to fetch marketplace page");
+        const marketplaceResponse = await fetch(RADON_IDE_MARKETPLACE_URL);
+        let installsCount = 0;
+        if (marketplaceResponse.ok) {
+          const htmlString = await marketplaceResponse.text();
+          const regex = /<span class="installs-text"[^>]*>\s*([\d,]+)\s*installs\s*<\/span>/i;
+          const match = htmlString.match(regex);
+          if (match) installsCount = parseInt(match[1].replace(/,/g, ""));
         }
 
-        const htmlString = await response.text();
-        const regex =
-          /<span class="installs-text" [^>]*>\s*\d{1,3}(?:,\d{3})*\s*installs\s*<\/span>/g;
-        const match = htmlString.match(regex);
-        const installsWithLabel = match[0].replace(/<\/?[^>]+(>|$)/g, "").trim();
-        const installsWithoutLabel = installsWithLabel.replace(/installs/i, "").trim();
-        setInstalls(installsWithoutLabel);
+        const openvsxResponse = await fetch(RADON_IDE_OPEN_VSX_API);
+        let downloadsCount = 0;
+        if (openvsxResponse.ok) {
+          const data = await openvsxResponse.json();
+          downloadsCount = parseInt(data.downloadCount ?? 0);
+        }
+
+        const sum = installsCount + downloadsCount;
+        if (marketplaceResponse.ok && openvsxResponse.ok) {
+          setSummaryInstalls(sum.toLocaleString("en-US"));
+        }
       } catch (err) {
         console.error(err);
-        setInstalls(DEFAULT_INSTALLS_NO);
       } finally {
         setIsLoaded(true);
       }
     }
-    getInstalls();
+
+    fetchData();
   }, []);
 
   return (
@@ -57,12 +62,12 @@ const LearnMoreFooter = () => {
           isLanding ? styles.containerLanding : styles.containerFeature
         )}>
         <h2>
-          Join <span>{installs} developers</span>
+          Join <span>{summaryInstalls} developers</span>
           <br /> using Radon IDE for faster,
           <br /> more efficient app development
         </h2>
         <div className={styles.buttonContainer}>
-          <DownloadButtons />
+          <DownloadButtons trackFrom={trackFrom} />
         </div>
       </div>
       {isLanding && (

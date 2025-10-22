@@ -1,9 +1,11 @@
 import React from "react";
 import styles from "./styles.module.css";
+import { useModal } from "../../ModalProvider";
+import { track } from "@vercel/analytics";
 
 interface FooterProps {
   title: string;
-  links: { label: string; to: string }[];
+  links: { label: string; to?: string }[];
 }
 
 const footerLinks: FooterProps[] = [
@@ -15,14 +17,13 @@ const footerLinks: FooterProps[] = [
       { label: "Pricing", to: "/pricing" },
       {
         label: "Download",
-        to: "https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide",
       },
     ],
   },
   {
     title: "Support",
     links: [
-      { label: "Customer Portal", to: "/customer-portal" },
+      { label: "Customer Portal", to: "https://portal.ide.swmansion.com/" },
       { label: "Docs", to: "/docs/category/getting-started" },
       { label: "Changelog", to: "/docs/getting-started/changelog" },
       { label: "Contact", to: "/contact" },
@@ -31,13 +32,20 @@ const footerLinks: FooterProps[] = [
   {
     title: "Legal",
     links: [
-      { label: "Privacy", to: "/privacy" },
+      { label: "Privacy", to: "/legal/privacy-policy" },
       { label: "Legal", to: "/legal" },
     ],
   },
 ];
 
 export default function FooterNavigation() {
+  const { onOpen } = useModal();
+
+  const handleFooterDownloadClick = () => {
+    track("Footer download button");
+    onOpen("Footer modal");
+  };
+
   return (
     <>
       {footerLinks.map((section, index) => (
@@ -46,9 +54,13 @@ export default function FooterNavigation() {
           <ul className={styles.sectionLinks}>
             {section.links.map((link, idx) => (
               <li key={idx}>
-                <a href={link.to} className={styles.footerLink}>
-                  {link.label}
-                </a>
+                {link.to ? (
+                  <a href={link.to} target={link.to.startsWith("https:") ? "_blank" : "_self"}>
+                    {link.label}
+                  </a>
+                ) : (
+                  <a onClick={handleFooterDownloadClick}>{link.label}</a>
+                )}
               </li>
             ))}
           </ul>

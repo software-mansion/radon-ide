@@ -2,9 +2,11 @@ import React from "react";
 import styles from "./styles.module.css";
 import CheckIcon from "../../CheckIcon";
 import PlanTableLabel from "./PlanTableLabel";
+import { useModal } from "../../ModalProvider";
 import { PricingProps } from "..";
 import clsx from "clsx";
 import { planFeaturesData } from "./planFeaturesData";
+import { track } from "@vercel/analytics";
 
 export interface FeatureItem {
   label: string;
@@ -31,6 +33,7 @@ export default function ComparePricingPlans({
   handleEnterprise,
 }: PricingProps) {
   const pricingPlanFeatures: FeatureItem[] = planFeaturesData;
+
   return (
     <div className={styles.tableDisplay}>
       <div className={styles.title}>Compare plans</div>

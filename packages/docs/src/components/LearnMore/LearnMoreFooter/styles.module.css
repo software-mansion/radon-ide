@@ -57,8 +57,9 @@
     transform: translateY(0);
   }
 }
+
 .buttonContainer {
-  padding: 40px 0;
+  padding: 40px 0 0 0;
   width: fit-content;
 }
 
@@ -106,6 +107,9 @@
   }
   .buttonContainer {
     width: 100%;
-    padding: 27px 0;
+    padding: 27px 0 0 0;
+  }
+  .sectionLanding {
+    height: auto;
   }
 }

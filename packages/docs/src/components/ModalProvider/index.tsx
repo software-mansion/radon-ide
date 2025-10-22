@@ -5,14 +5,16 @@ import DownloadButtons from "../DownloadButtons";
 
 type ModalContextType = {
   isOpen: boolean;
-  onOpen: () => void;
+  onOpen: (trackSource?: string) => void;
   onClose: () => void;
+  trackSource?: string;
 };
 
 const ModalContext = createContext<ModalContextType>({
   isOpen: false,
   onOpen: () => {},
   onClose: () => {},
+  trackSource: undefined,
 });
 
 export const useModal = (): ModalContextType => {
@@ -26,10 +28,17 @@ type ModalProviderProps = {
 
 export function ModalProvider({ children }: ModalProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [trackSource, setTrackSource] = useState<string | undefined>(undefined);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
-  const onOpen = () => setIsOpen(true);
-  const onClose = () => setIsOpen(false);
+  const onOpen = (trackSource?: string) => {
+    setTrackSource(trackSource);
+    setIsOpen(true);
+  };
+  const onClose = () => {
+    setTrackSource(undefined);
+    setIsOpen(false);
+  };
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -58,7 +67,7 @@ export function ModalProvider({ children }: ModalProviderProps) {
             </button>
           </div>
           <p className={styles.modalSubheading}>Choose how you want to use Radon IDE:</p>
-          <DownloadButtons vertical={true} />
+          <DownloadButtons vertical={true} trackFrom={trackSource} />
         </dialog>
       )}
     </ModalContext.Provider>

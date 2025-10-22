@@ -20,7 +20,8 @@
   left: 50%;
   transform: translateX(-50%);
 
-  background-color: var(--swm-border);
+  background-color: var(--radon-border);
+  opacity: 0;
 }
 
 .tooltiptextContainer::after {
@@ -31,7 +32,7 @@
   margin-left: -5px;
   border-width: 5px;
   border-style: solid;
-  border-color: var(--swm-border) transparent transparent transparent;
+  border-color: var(--radon-border) transparent transparent transparent;
 }
 
 p.tooltiptext {
@@ -43,4 +44,6 @@ p.tooltiptext {
 
 .tooltip:hover .tooltiptextContainer {
   visibility: visible;
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }

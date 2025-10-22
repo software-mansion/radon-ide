@@ -21,7 +21,7 @@
   align-items: center;
   gap: 8px;
   align-self: stretch;
-  border-right: 1px solid var(--swm-border);
+  border-right: 1px solid var(--radon-border);
   width: 250px;
 }
 

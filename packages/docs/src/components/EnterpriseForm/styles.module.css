@@ -3,9 +3,12 @@
   gap: 80px;
   padding: 80px;
   border-top: var(--radon-border-layout);
-  border-bottom: var(--radon-border-layout);
   grid-template-columns: 1fr 1.2fr;
   scroll-margin-top: 80px;
+}
+
+.bottomBorder {
+  border-bottom: var(--radon-border-layout);
 }
 
 .description {
