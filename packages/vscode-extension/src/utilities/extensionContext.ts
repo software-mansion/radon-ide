@@ -162,22 +162,5 @@ export function findAppRootFolder() {
     return appRootCandidates[0];
   }
 
-  const manageLaunchConfigButton = "Manage Launch Configuration";
-  window
-    .showErrorMessage(
-      `
-    Radon IDE couldn't find root application folder in this workspace.\n
-    Please make sure that the opened workspace contains a valid React Native or Expo project.\n
-    The way extension verifies the project is by looking for either: app.json, metro.config.js,
-    or node_modules/react-native folder. If your project structure is different, you can set the
-    app root using launch configuration.`,
-      manageLaunchConfigButton,
-      "Dismiss"
-    )
-    .then((item) => {
-      if (item === manageLaunchConfigButton) {
-        commands.executeCommand("debug.addConfiguration");
-      }
-    });
   return undefined;
 }
