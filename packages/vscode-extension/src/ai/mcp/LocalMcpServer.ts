@@ -5,7 +5,7 @@ import express from "express";
 import { McpServer, RegisteredTool } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
-import { Disposable, EventEmitter, workspace } from "vscode";
+import { Disposable, EventEmitter } from "vscode";
 import { Logger } from "../../Logger";
 import { registerLocalMcpTools, registerRemoteMcpTool } from "./toolRegistration";
 import { extensionContext } from "../../utilities/extensionContext";
