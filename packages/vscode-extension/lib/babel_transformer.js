@@ -81,7 +81,6 @@ function transformWrapper({ filename, src, ...rest }) {
   function isTransforming(unixPath) {
     return filename.endsWith(path.normalize(unixPath));
   }
-
   const { transform } = require(ORIGINAL_TRANSFORMER_PATH);
   if (isTransforming("node_modules/react-native/Libraries/Core/InitializeCore.js")) {
     src = `${src};require("__RNIDE_lib__/runtime.js");`;
@@ -174,9 +173,23 @@ function transformWrapper({ filename, src, ...rest }) {
     isTransforming("node_modules/@tanstack/react-query/src/index.ts") ||
     isTransforming("node_modules/@tanstack/react-query/build/lib/index.js") ||
     isTransforming("node_modules/@tanstack/react-query/build/legacy/index.js") ||
-    isTransforming("node_modules/@tanstack/react-query/build/modern/index.js")
+    isTransforming("node_modules/@tanstack/react-query/build/modern/index.js") ||
+    isTransforming("node_modules/@tanstack/react-query/build/lib/index.mjs") ||
+    isTransforming("node_modules/@tanstack/react-query/build/legacy/index.mjs") ||
+    isTransforming("node_modules/@tanstack/react-query/build/modern/index.mjs")
   ) {
-    src = `require("__RNIDE_lib__/plugins/react-query-devtools.js");${src}`;
+    // We need to inject the devtools code at the top of React Query index file
+    // in order to be able to import @tanstack/query-core and patch QueryClient
+    // unfortunately we cannot use module re-exports here because @tanstack/query-core
+    // is not a dependency of the application and is only importable from within
+    // @tanstack/react-query package.
+    const reactQueryDevtoolsFilePath = path.join(
+      process.env.RADON_IDE_LIB_PATH,
+      "plugins",
+      "react-query-devtools.js"
+    );
+    const reactQueryDevtoolsAsString = fs.readFileSync(reactQueryDevtoolsFilePath, "utf-8");
+    src = `${reactQueryDevtoolsAsString}${src}`;
   } else if (isTransforming("/lib/rn-internals/rn-internals.js")) {
     const { version } = requireFromAppDir("react-native/package.json");
     const majorMinorVersion = version.split(".").slice(0, 2).join(".");

@@ -1,10 +1,13 @@
-import { QueryClient } from "@tanstack/query-core";
-import { register } from "./expo_dev_plugins";
-import { PluginMessageBridge } from "./PluginMessageBridge";
+// IMPORTANT: this file is injected at the beginning of React Query index file 
+// so we need to use variable names that won't conflict with React Query's own variables
+// hence the "RadonIDE" suffixes on everything.
+import { QueryClient as QueryClientRadonIDE } from "@tanstack/query-core";
+const { register: registerRadonIDE } = require("__RNIDE_lib__/plugins/expo_dev_plugins");
+const { PluginMessageBridge: PluginMessageBridgeRadonIDE } = require("__RNIDE_lib__/plugins/PluginMessageBridge");
 
-function broadcastQueryClient(queryClient) {
-  register("react-query");
-  const proxy = new PluginMessageBridge("react-query");
+function broadcastQueryClientRadonIDE(queryClient) {
+  registerRadonIDE("react-query");
+  const proxy = new PluginMessageBridgeRadonIDE("react-query");
 
   let transaction = false;
 
@@ -90,9 +93,14 @@ function broadcastQueryClient(queryClient) {
   });
 }
 
-const origMount = QueryClient.prototype.mount;
+const origMountRadonIDE = QueryClientRadonIDE.prototype.mount;
 
-QueryClient.prototype.mount = function (...args) {
-  broadcastQueryClient(this);
-  return origMount.apply(this, args);
+QueryClientRadonIDE.prototype.mount = function (...args) {
+  console.log("Mounting QueryClientRadonIDE");
+  broadcastQueryClientRadonIDE(this);
+  return origMountRadonIDE.apply(this, args);
 };
+
+// We try to register the plugin here, but if registration fails here,
+// it will be registered when the first QueryClient is mounted.
+registerRadonIDE("react-query");
