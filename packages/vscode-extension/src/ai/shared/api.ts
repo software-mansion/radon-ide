@@ -6,7 +6,7 @@ import { CHAT_LOG } from "../chat";
 import { ToolResponse, ToolResult, ToolsInfo } from "../mcp/models";
 import { textToToolResponse } from "../mcp/utils";
 
-const BACKEND_URL = "https://radon-ai-backend.swmansion.com/api/";
+const BACKEND_URL = "https://radon-ai-backend.swmansion.com/";
 
 const PLACEHOLDER_ID = "3241"; // This placeholder is needed by the API, but the value doesn't matter
 
@@ -30,7 +30,7 @@ export async function invokeToolCall(
   callId: string = PLACEHOLDER_ID
 ): Promise<ToolResponse> {
   getTelemetryReporter().sendTelemetryEvent("radon-ai:tool-called", { toolName });
-  const url = new URL("/tool_calls/", BACKEND_URL);
+  const url = new URL("/api/tool_calls/", BACKEND_URL);
   const token = await getLicenseToken();
   let response: Response | null = null;
   try {
@@ -87,7 +87,7 @@ export async function invokeToolCall(
 }
 
 export async function fetchRemoteToolSchema(): Promise<ToolsInfo> {
-  const url = new URL("/get_tool_schema/", BACKEND_URL);
+  const url = new URL("/api/get_tool_schema/", BACKEND_URL);
   const token = await getLicenseToken();
   let response: Response | null = null;
   try {
@@ -128,7 +128,7 @@ interface SystemResponse {
 }
 
 export async function getSystemPrompt(userPrompt: string): Promise<SystemResponse> {
-  const url = new URL("/system_prompt/", BACKEND_URL);
+  const url = new URL("/api/system_prompt/", BACKEND_URL);
   const token = await getLicenseToken();
   const response = await fetch(url, {
     method: "POST",

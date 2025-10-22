@@ -15,7 +15,6 @@ import { watchLicenseTokenChange } from "../../utilities/license";
 import { getAppCachesDir } from "../../utilities/common";
 import { AuthenticationError, fetchRemoteToolSchema, ServerUnreachableError } from "../shared/api";
 import { throttleAsync } from "../../utilities/throttle";
-import { ENTRY_KEY } from "./configCreator";
 
 const NETWORK_RETRY_INTERVAL_MS = 15 * 1000; // 15 seconds
 
@@ -33,10 +32,11 @@ export class LocalMcpServer implements Disposable {
   private licenseTokenSubscription: Disposable;
 
   protected onToolListChangedEmitter = new EventEmitter<void>();
+  protected onDisposeEmitter = new EventEmitter<void>();
 
   constructor() {
     this.mcpServer = new McpServer({
-      name: ENTRY_KEY,
+      name: "RadonAI",
       version: extensionContext.extension.packageJSON.version,
     });
     registerLocalMcpTools(this.mcpServer);
@@ -57,6 +57,9 @@ export class LocalMcpServer implements Disposable {
   }
 
   public dispose() {
+    this.onDisposeEmitter.fire();
+    this.onDisposeEmitter.dispose();
+    this.onToolListChangedEmitter.dispose();
     this.cancelRetryReloadTools();
     this.licenseTokenSubscription.dispose();
     this.mcpServer.close();
@@ -70,6 +73,10 @@ export class LocalMcpServer implements Disposable {
 
   public onToolListChanged(listener: () => void) {
     return this.onToolListChangedEmitter.event(listener);
+  }
+
+  public onDispose(listener: () => void) {
+    return this.onDisposeEmitter.event(listener);
   }
 
   private async handleSessionRequest(req: express.Request, res: express.Response) {
