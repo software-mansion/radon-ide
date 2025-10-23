@@ -24,6 +24,7 @@ enum ActivationState {
   Inactive = "inactive",
   Pending = "pending",
   Active = "active",
+  JsDebuggerDisconnected = "jsDebuggerDisconnected",
 }
 
 // Truncation constants
@@ -146,15 +147,34 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     this.disposables.push(...subscriptions, ...knownEventsSubscriptions);
   }
 
-  private setupBridgeAvailableListener(): void {
-    const bridgeAvailableSubscription = this.networkBridge.onEvent("bridgeAvailable", () => {
-      if (this.activationState === ActivationState.Pending) {
-        this.completeActivation();
-      }
-      bridgeAvailableSubscription.dispose();
-    });
+  private handleJsDebuggerConnected(): void {
+    if (this.activationState === ActivationState.Pending) {
+      this.completeActivation();
+    }
 
-    this.disposables.push(bridgeAvailableSubscription);
+    if (this.activationState === ActivationState.JsDebuggerDisconnected) {
+      // send Network.Enable method again to re-enable
+      // network-events reporting through js debugger
+      this.networkBridge.enableNetworkInspector();
+      this.activationState = ActivationState.Active;
+    }
+  }
+
+  private handleJsDebuggerDisconnected(): void {
+    if (this.activationState === ActivationState.Active) {
+      this.activationState = ActivationState.JsDebuggerDisconnected;
+    }
+  }
+
+  private setupDebuggerConnectionListeners(): void {
+    const debuggerConnectionSubscriptions: Disposable[] = [
+      this.networkBridge.onEvent("jsDebuggerConnected", () => this.handleJsDebuggerConnected()),
+      this.networkBridge.onEvent("jsDebuggerDisconnected", () =>
+        this.handleJsDebuggerDisconnected()
+      ),
+    ];
+
+    this.disposables.push(...debuggerConnectionSubscriptions);
   }
 
   protected async handleGetResponseBodyData(payload: IDEMessage) {
@@ -230,9 +250,10 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
       return; // activated or activation in progress
     }
 
+    this.setupDebuggerConnectionListeners();
+
     if (!this.pluginAvailable) {
       this.activationState = ActivationState.Pending;
-      this.setupBridgeAvailableListener();
       return;
     }
 
