@@ -84,9 +84,10 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
     // Elliminate lines that contain double slashes indicating a comment.
     const previewRegex = /^(?:(?!\/\/) )*preview\(\s*<\s*/gm;
     for (const match of text.matchAll(previewRegex)) {
-      // get the line number where the last character (<) of the matched regex is located
-      const jsxOpeningTagPosition = document.positionAt(match.index + match[0].length - 1);
-      const jsxOpeningTagLine0Based = jsxOpeningTagPosition.line;
+      // get the line number where the opening parenthesis "(" in "preview(" is located
+      const openingParenIndex = match.index + match[0].indexOf("(");
+      const previewOpeningParenPosition = document.positionAt(openingParenIndex);
+      const previewOpeningParenLine0Based = previewOpeningParenPosition.line;
       // for the code lens range, we use the first character as we want it to appear over the line where preview is called
       const previewCallRange = this.createRange(document, match.index);
       const command: Command = {
@@ -94,7 +95,7 @@ export class PreviewCodeLensProvider implements CodeLensProvider {
         command: "RNIDE.showInlinePreview",
         arguments: [
           document.fileName,
-          jsxOpeningTagLine0Based + 1 /* RNIDE expects 1-based line number */,
+          previewOpeningParenLine0Based + 1 /* RNIDE expects 1-based line number */,
         ],
       };
       codeLenses.push(new CodeLens(previewCallRange, command));
