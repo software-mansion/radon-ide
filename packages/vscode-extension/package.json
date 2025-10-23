@@ -742,7 +742,7 @@
               },
               "usePrebuild": {
                 "type": "boolean",
-                "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
+                "description": "When set to true, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
               },
               "useOldDevtools": {
                 "type": "boolean",
@@ -755,6 +755,10 @@
               "metroPort": {
                 "type": "number",
                 "description": "Port number that will be used by Metro bundler. If not specified, a free port will be automatically chosen."
+              },
+              "disableNativeBuildStaleChecks": {
+                "type": "boolean",
+                "description": "When set to true, Radon will not run fingerprint checks on reloads and after file changes that would detect whether the native code needs to be rebuilt."
               }
             }
           }
@@ -976,7 +980,7 @@
               },
               "usePrebuild": {
                 "type": "boolean",
-                "description": "When set, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
+                "description": "When set to true, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
               },
               "useOldDevtools": {
                 "type": "boolean",
@@ -989,6 +993,10 @@
               "metroPort": {
                 "type": "number",
                 "description": "Port number that will be used by Metro bundler. If not specified, a free port will be automatically chosen."
+              },
+              "disableNativeBuildStaleChecks": {
+                "type": "boolean",
+                "description": "When set to true, Radon will not run fingerprint checks on reloads and after file changes that would detect whether the native code needs to be rebuilt."
               }
             }
           }
@@ -1201,10 +1209,10 @@
     "react-hook-form": "^7.55.0",
     "react-is": "^19.1.0",
     "react-scan": "https://github.com/software-mansion-labs/react-scan/releases/download/0.1.3-radon-2/react-scan-0.1.3-radon-2.tgz",
-    "react-shiki": "^0.8.0",
     "rollup": "^4.40.0",
     "rollup-plugin-license": "^3.6.0",
     "semver": "^7.7.1",
+    "shiki": "^3.13.0",
     "sinon": "^20.0.0",
     "source-map": "^0.7.6",
     "tar": "^7.4.3",

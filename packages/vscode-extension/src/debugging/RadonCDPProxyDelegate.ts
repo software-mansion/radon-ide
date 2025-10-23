@@ -25,7 +25,8 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerResumedEmitter = new EventEmitter();
   private consoleAPICalledEmitter = new EventEmitter();
   private bindingCalledEmitter = new EventEmitter<Cdp.Runtime.BindingCalledEvent>();
-  private bundleParsedEmitter = new EventEmitter<{ isMainBundle: boolean }>();
+  private bundleParsedEmitter = new EventEmitter<{ isMainBundle: boolean; sourceUrl: string }>();
+  private networkEventEmitter = new EventEmitter();
 
   private justCalledStepOver = false;
   private resumeEventTimeout: NodeJS.Timeout | undefined;
@@ -36,12 +37,19 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   public onConsoleAPICalled = this.consoleAPICalledEmitter.event;
   public onBindingCalled = this.bindingCalledEmitter.event;
   public onBundleParsed = this.bundleParsedEmitter.event;
+  public onNetworkEvent = this.networkEventEmitter.event;
 
   public async handleApplicationCommand(
     applicationCommand: IProtocolCommand,
     tunnel: ProxyTunnel
   ): Promise<IProtocolCommand | IProtocolSuccess | IProtocolError | undefined> {
-    switch (applicationCommand.method) {
+    const commandMethod = applicationCommand.method;
+
+    if (commandMethod.startsWith("Network.")) {
+      return this.handleNetworkEvent(applicationCommand);
+    }
+
+    switch (commandMethod) {
       case "Runtime.consoleAPICalled": {
         return this.handleConsoleAPICalled(applicationCommand);
       }
@@ -128,6 +136,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     this.debuggerPausedEmitter.fire({ reason: "breakpoint" });
     return command;
   }
+
   private setBreakpointCommands = new Map<number, Cdp.Debugger.SetBreakpointByUrlParams>();
 
   public async handleDebuggerCommand(
@@ -174,6 +183,11 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         return command;
       }
     }
+    return command;
+  }
+
+  private handleNetworkEvent(command: IProtocolCommand) {
+    this.networkEventEmitter.fire(command);
     return command;
   }
 
@@ -273,7 +287,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
 
   private async handleScriptParsed(command: IProtocolCommand): Promise<IProtocolCommand> {
     const params = command.params as Cdp.Debugger.ScriptParsedEvent;
-    const { sourceMapURL } = params;
+    const { sourceMapURL, url } = params;
     if (!sourceMapURL) {
       return command;
     }
@@ -291,7 +305,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         this.mainScriptId = params.scriptId;
       }
 
-      this.bundleParsedEmitter.fire({ isMainBundle });
+      this.bundleParsedEmitter.fire({ isMainBundle, sourceUrl: url });
     } catch (e) {
       Logger.error("Could not process the source map", e);
     }

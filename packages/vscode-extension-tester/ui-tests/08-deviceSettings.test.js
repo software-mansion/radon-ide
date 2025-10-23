@@ -28,11 +28,7 @@ describe("8 - Device Settings", () => {
       radonSettingsService,
     } = initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
+    await managingDevicesService.prepareDevices();
 
     await appManipulationService.waitForAppToLoad();
 
