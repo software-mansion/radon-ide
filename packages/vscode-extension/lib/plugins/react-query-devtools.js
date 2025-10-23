@@ -2,8 +2,6 @@ import { QueryClient } from "@tanstack/react-query";
 import { register } from "./expo_dev_plugins";
 import { PluginMessageBridge } from "./PluginMessageBridge";
 
-console.log("Frytki React Query Devtools plugin loaded");
-
 function broadcastQueryClient(queryClient) {
   register("react-query");
   const proxy = new PluginMessageBridge("react-query");

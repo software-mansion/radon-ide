@@ -180,10 +180,9 @@ function transformWrapper({ filename, src, ...rest }) {
     isTransforming("node_modules/@tanstack/react-query/build/modern/index.mjs")
   ) {
     // note: react-query-devtools integration has to be done after the QueryClient class is required
-    // which is why the src needs to come before it.
-
-    console.log("frytki transform react-query", filename);
-    src = `${src};require("__RNIDE_lib__/plugins/react-query-devtools.js");`;
+    // which is why the src needs to come before it. Also we need to ensure that we don't
+    // attach our code in the line containing a comment so we need to add a new line beforehand.
+    src = `${src};\nrequire("__RNIDE_lib__/plugins/react-query-devtools.js");`;
   } else if (isTransforming("/lib/rn-internals/rn-internals.js")) {
     const { version } = requireFromAppDir("react-native/package.json");
     const majorMinorVersion = version.split(".").slice(0, 2).join(".");
