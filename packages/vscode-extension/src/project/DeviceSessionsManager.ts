@@ -315,6 +315,15 @@ export class DeviceSessionsManager implements Disposable {
     }
   };
 
+  private saveLastSelectedDeviceId(deviceId: DeviceId | undefined) {
+    const device = this.devices.find((d) => d.id === this.activeSessionId);
+    const isPhysicalDevice = device?.platform === DevicePlatform.Android && !device.emulator;
+    extensionContext.workspaceState.update(
+      LAST_SELECTED_DEVICE_KEY,
+      isPhysicalDevice ? undefined : this.activeSessionId
+    );
+  }
+
   private async updateSelectedSession(session: DeviceSession | undefined) {
     const previousSession = this.selectedDeviceSession;
     const previousSessionId = this.activeSessionId;
@@ -326,7 +335,7 @@ export class DeviceSessionsManager implements Disposable {
       this.projectStateManager.updateState({ selectedDeviceSessionId: null });
       return;
     }
-    extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, this.activeSessionId);
+    this.saveLastSelectedDeviceId(this.activeSessionId);
     this.projectStateManager.updateState({ selectedDeviceSessionId: this.activeSessionId });
 
     const wasPreviousDeviceDisconnected = !this.devices.find((d) => d.id === previousSessionId)
