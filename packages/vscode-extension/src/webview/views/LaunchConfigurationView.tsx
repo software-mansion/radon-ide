@@ -614,7 +614,7 @@ function EasBuildConfiguration({
           name={`eas.${platform}.profile`}>
           {availableEasBuildProfiles.map((profile) => (
             <Option key={profile.value} value={profile.value} disabled={profile.disabled}>
-              {profile.label}
+              {profile.label} {profile.disabled ? "(not a simulator profile)" : ""}
             </Option>
           ))}
         </SingleSelect>
