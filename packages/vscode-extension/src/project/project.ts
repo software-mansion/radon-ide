@@ -388,7 +388,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public async resetAppPermissions(permissionType: AppPermissionType) {
     const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);
     if (needsRestart) {
-      await this.deviceSessionsManager.reloadCurrentSession("restartProcess");
+      await this.reloadCurrentSession("restartProcess");
     }
   }
 
@@ -591,6 +591,25 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region Reloading
 
   public reloadCurrentSession(type: ReloadAction): Promise<void> {
+    // upon reload, we verify the selected launch configuration is still present:
+    // 1) if it is, we proceed to reloading the session.
+    // 2) if the launch configuration was modified, we update the launch configuration as
+    // part of the reload process.
+    // 3) if the launch configuration was deleted, we show an error message and throw an error.
+    const matchingLaunchConfig = this.launchConfigsManager.launchConfigurations.find(
+      (config) => config.name === this.selectedLaunchConfiguration.name
+    );
+    if (!_.isEqual(matchingLaunchConfig, this.selectedLaunchConfiguration)) {
+      if (matchingLaunchConfig) {
+        return this.selectLaunchConfiguration(matchingLaunchConfig);
+      } else {
+        window.showErrorMessage(
+          "The selected launch configuration was deleted or changed. Please select a new launch configuration from the list of available ones.",
+          "Dismiss"
+        );
+        throw new Error("Selected launch configuration is stale");
+      }
+    }
     return this.deviceSessionsManager.reloadCurrentSession(type);
   }
 
