@@ -71,8 +71,6 @@
   text-align: center;
   align-items: center;
 
-  color: var(--radon-button-secondary);
-
   cursor: pointer;
 }
 
@@ -89,6 +87,7 @@
 
 .btnBorder {
   border: 1px solid var(--radon-button-secondary);
+  color: var(--radon-button-secondary);
 }
 
 .btnBorder:hover {
