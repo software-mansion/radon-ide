@@ -35,14 +35,11 @@ export class AndroidPhysicalDevice extends AndroidDevice {
   async bootDevice(): Promise<void> {
     // NOOP
   }
-  // TODO:
   protected changeSettings(_settings: DeviceSettings): Promise<boolean> {
-    // throw new Error("Method not implemented.");
     return Promise.resolve(false);
   }
-  // TODO:
   public getClipboard(): Promise<string | void> {
-    // throw new Error("Method not implemented.");
+    // TODO:
     return Promise.resolve("");
   }
   protected makePreview(): Preview {
