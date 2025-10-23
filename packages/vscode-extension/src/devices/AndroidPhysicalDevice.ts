@@ -7,6 +7,7 @@ import {
   DevicePlatform,
   DeviceType,
   DevicesByType,
+  DeviceRotation,
 } from "../common/State";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { exec } from "../utilities/subprocess";
@@ -16,6 +17,7 @@ import { extensionContext } from "../utilities/extensionContext";
 import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
 import { DevicesProvider } from "./DevicesProvider";
 import { StateManager } from "../project/StateManager";
+import { Logger } from "../Logger";
 
 export class AndroidPhysicalDevice extends AndroidDevice {
   constructor(
@@ -45,6 +47,18 @@ export class AndroidPhysicalDevice extends AndroidDevice {
   }
   protected makePreview(): Preview {
     return new Preview(["android_device", "--id", this.serial!]);
+  }
+
+  public override sendRotate(rotation: DeviceRotation): void {
+    if (rotation === DeviceRotation.PortraitUpsideDown) {
+      // NOTE: the issue here is that the screen sharing agent does not seem to distinguish between
+      // an application running in PortraitUpsideDown and one running in Portrait mode while the device
+      // orientation is set to PortraitUpsideDown. We rotate the stream incorrectly in one of these cases,
+      // which _also_ breaks touch input.
+      Logger.warn("PortraitUpsideDown rotation is not supported on physical Android devices.");
+      return;
+    }
+    super.sendRotate(rotation);
   }
 }
 
