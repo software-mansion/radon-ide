@@ -1,6 +1,8 @@
-import { QueryClient } from "@tanstack/query-core";
+import { QueryClient } from "@tanstack/react-query";
 import { register } from "./expo_dev_plugins";
 import { PluginMessageBridge } from "./PluginMessageBridge";
+
+console.log("Frytki React Query Devtools plugin loaded");
 
 function broadcastQueryClient(queryClient) {
   register("react-query");
@@ -96,3 +98,7 @@ QueryClient.prototype.mount = function (...args) {
   broadcastQueryClient(this);
   return origMount.apply(this, args);
 };
+
+// We try to register the plugin here, but if registration fails here,
+// it will be registered when the first QueryClient is mounted.
+register("react-query");
