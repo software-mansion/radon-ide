@@ -578,7 +578,12 @@ function EasBuildConfiguration({
       const canRunInSimulator =
         buildProfileConfig.distribution === "internal" &&
         (platform !== "ios" || buildProfileConfig.ios?.simulator === true);
-      return { value: buildProfile, label: buildProfile, disabled: !canRunInSimulator };
+      return {
+        value: buildProfile,
+        label: buildProfile,
+        disabled: !canRunInSimulator,
+        reason: canRunInSimulator ? undefined : "not a simulator profile",
+      };
     }
   );
   const initialBuildProfile = config?.eas?.[platform]?.profile ?? "";
@@ -589,6 +594,7 @@ function EasBuildConfiguration({
       value: initialBuildProfile,
       label: initialBuildProfile,
       disabled: true,
+      reason: undefined,
     });
   }
 
@@ -614,7 +620,8 @@ function EasBuildConfiguration({
           name={`eas.${platform}.profile`}>
           {availableEasBuildProfiles.map((profile) => (
             <Option key={profile.value} value={profile.value} disabled={profile.disabled}>
-              {profile.label}{profile.disabled ? " (not a simulator profile)" : ""}
+              {profile.label}
+              {profile.reason ? ` (${profile.reason})` : ""}
             </Option>
           ))}
         </SingleSelect>
