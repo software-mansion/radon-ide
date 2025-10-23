@@ -214,7 +214,7 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
     await driver.switchTo().frame(reduxIFrame2);
 
     let element = await elementHelperService.safeFind(
-      By.xpath("//*[contains(text(), 'INCREMENT')]")
+      By.xpath("//label[contains(text(), 'INCREMENT')]")
     );
 
     // before any action is made, we expect no INCREMENT action to be present
@@ -227,7 +227,7 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
     );
 
     element = await elementHelperService.findAndWaitForElement(
-      By.xpath("//*[contains(text(), 'INCREMENT')]"),
+      By.xpath("//label[contains(text(), 'INCREMENT')]"),
       "Timed out waiting for INCREMENT action to appear in Redux DevTools"
     );
   });
