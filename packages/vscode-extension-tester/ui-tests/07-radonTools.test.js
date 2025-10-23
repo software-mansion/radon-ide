@@ -160,7 +160,7 @@ describe("7 - Radon tools tests", () => {
           assert.approximately(
             originalPosition[key],
             relativeRect[key],
-            // 2% of the screen width/height I belive its acceptable margin of error
+            // NOTE: allow a 2% of the screen width/height margin of error
             0.02,
             `Inspect area ${key} is incorrect`
           );
