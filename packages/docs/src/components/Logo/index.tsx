@@ -1,5 +1,5 @@
 import { useColorMode, useThemeConfig } from "@docusaurus/theme-common";
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 interface LogoProps {
   className?: string;
@@ -10,6 +10,11 @@ export default function Logo({ className }: LogoProps) {
     navbar: { logo },
   } = useThemeConfig();
   const { colorMode } = useColorMode();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+
   return (
     <img
       src={colorMode === "dark" ? `/${logo.srcDark}` : `/${logo.src}`}

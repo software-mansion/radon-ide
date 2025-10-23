@@ -1,6 +1,4 @@
-import React from "react";
-
-export const getFeaturesList = (colorMode) => [
+export const getFeaturesList = (colorMode: string) => [
   {
     label: "Debugger",
     title: "Use breakpoints right in VSCode",

@@ -10,7 +10,8 @@ import { getFeaturesList } from "./getFeaturesList";
 
 export default function FeaturesGrid() {
   const { colorMode } = useColorMode();
-  const featuresList = getFeaturesList(colorMode);
+
+  const [featuresList, setFeaturesList] = useState(() => getFeaturesList("light"));
   const { isFeatures } = usePageType();
 
   const [firstLeftCardIdx, setFirstLeftCardIdx] = useState(0);
@@ -51,6 +52,10 @@ export default function FeaturesGrid() {
       right: 0,
     };
   };
+
+  useEffect(() => {
+    setFeaturesList(getFeaturesList(colorMode));
+  }, [colorMode]);
 
   useEffect(() => {
     if (!cardRefs.current[0]) return;
