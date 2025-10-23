@@ -3,7 +3,7 @@ import path from "path";
 import * as tar from "tar";
 import { Logger } from "../Logger";
 import { DevicePlatform } from "../common/State";
-import { CancelError, CancelToken } from "../utilities/cancelToken";
+import { CancelToken } from "../utilities/cancelToken";
 
 export function isAppFile(name: string) {
   return name.endsWith(".app");
