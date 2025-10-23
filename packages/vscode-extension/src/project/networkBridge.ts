@@ -21,7 +21,8 @@ export interface RadonNetworkBridgeEvents {
   getResponseBody: [CDPMessage];
   dataReceived: [CDPMessage];
   storeResponseBody: [CDPMessage];
-  bridgeAvailable: [];
+  jsDebuggerConnected: [];
+  jsDebuggerDisconnected: [];
   unknownEvent: [any];
 }
 
@@ -64,9 +65,15 @@ export class NetworkBridge
 
   public setDebugSession(debugSession: DebugSession & Disposable) {
     this.debugSession = debugSession;
+
     this.debugSession.onJSDebugSessionStarted(() => {
       this.jsDebugSessionAvailable = true;
-      this.emitEvent("bridgeAvailable", []);
+      this.emitEvent("jsDebuggerConnected", []);
+    });
+
+    this.debugSession.onDebugSessionTerminated(() => {
+      this.jsDebugSessionAvailable = false;
+      this.emitEvent("jsDebuggerDisconnected", []);
     });
   }
 
