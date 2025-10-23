@@ -16,11 +16,7 @@ describe("9 - Radon Settings", () => {
     ({ elementHelperService, radonViewsService, managingDevicesService } =
       initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
+    await managingDevicesService.prepareDevices();
 
     view = new WebView();
     await view.switchBack();

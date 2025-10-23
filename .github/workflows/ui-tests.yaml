@@ -1,4 +1,6 @@
 name: Build VSIX and Run Tests (macOS)
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:

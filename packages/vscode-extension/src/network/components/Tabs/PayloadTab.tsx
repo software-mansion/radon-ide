@@ -8,9 +8,10 @@ import { ThemeData } from "../../../common/theme";
 interface PayloadTabProps {
   networkLog: NetworkLog;
   editorThemeData?: ThemeData;
+  isActive?: boolean;
 }
 
-const PayloadTab = ({ networkLog, editorThemeData }: PayloadTabProps) => {
+const PayloadTab = ({ networkLog, editorThemeData, isActive }: PayloadTabProps) => {
   if (!networkLog.request) {
     return null;
   }
@@ -26,6 +27,7 @@ const PayloadTab = ({ networkLog, editorThemeData }: PayloadTabProps) => {
           language="json"
           theme={editorThemeData}
           placeholder="No request body"
+          isActive={isActive}
         />
       </div>
     </>

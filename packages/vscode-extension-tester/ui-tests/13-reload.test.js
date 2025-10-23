@@ -19,11 +19,7 @@ describe("13 - Reload app tests", () => {
       managingDevicesService,
     } = initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
+    await managingDevicesService.prepareDevices();
 
     const view = new WebView();
     await view.switchBack();
@@ -41,9 +37,12 @@ describe("13 - Reload app tests", () => {
     await elementHelperService.findAndClickElementByTag(
       "top-bar-reload-button-option-reload-js"
     );
+
     const messageElement =
       await elementHelperService.findAndWaitForElementByTag("startup-message");
     assert.include(await messageElement.getText(), "Waiting for app to load");
+
+    await appManipulationService.waitForAppToLoad();
   });
 
   it("should show 'Launching' start up message", async function () {
@@ -53,9 +52,12 @@ describe("13 - Reload app tests", () => {
     await elementHelperService.findAndClickElementByTag(
       "top-bar-reload-button-option-restart-app-process"
     );
+
     const messageElement =
       await elementHelperService.findAndWaitForElementByTag("startup-message");
     assert.include(await messageElement.getText(), "Launching");
+
+    await appManipulationService.waitForAppToLoad();
   });
 
   it("should show 'Installing' start up message", async function () {
@@ -65,9 +67,12 @@ describe("13 - Reload app tests", () => {
     await elementHelperService.findAndClickElementByTag(
       "top-bar-reload-button-option-reinstall-app"
     );
+
     const messageElement =
       await elementHelperService.findAndWaitForElementByTag("startup-message");
     assert.include(await messageElement.getText(), "Installing");
+
+    await appManipulationService.waitForAppToLoad();
   });
 
   it("should show 'Booting device' start up message", async function () {
@@ -77,8 +82,11 @@ describe("13 - Reload app tests", () => {
     await elementHelperService.findAndClickElementByTag(
       "top-bar-reload-button-option-reboot-device"
     );
+
     const messageElement =
       await elementHelperService.findAndWaitForElementByTag("startup-message");
     assert.include(await messageElement.getText(), "Booting device");
+
+    await appManipulationService.waitForAppToLoad();
   });
 });

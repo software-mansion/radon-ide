@@ -1,3 +1,4 @@
+import { ContentTypeHeader, ResponseBodyDataType, ResponseData } from "../types/network";
 import { NetworkLog } from "../types/networkLog";
 
 function prettyStringify(obj: unknown): string {
@@ -265,6 +266,47 @@ const LANGUAGE_BY_CONTENT_TYPE = {
   "text/yaml": "yaml",
 };
 
+/**
+ * Image and graphics MIME types that can be displayed in a preview
+ */
+const PREVIEWABLE_IMAGE_TYPES = [
+  // image
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+  "image/bmp",
+  "image/tiff",
+  "image/x-icon",
+  "image/vnd.microsoft.icon",
+  "image/avif",
+  "image/apng",
+
+  // SVG
+  "image/svg+xml",
+];
+
+/**
+ * Checks if the content type represents a previewable image format
+ */
+export function canPreviewImage(
+  networkLogContentType: string,
+  responseBodyType: ResponseBodyDataType
+): boolean {
+  if (!networkLogContentType) {
+    return false;
+  }
+
+  const contentTypeLowerCase = networkLogContentType.toLowerCase();
+  const isImageResponseType = responseBodyType === ResponseBodyDataType.Image;
+  const isContentTypePreviewable = PREVIEWABLE_IMAGE_TYPES.some((imageType) =>
+    contentTypeLowerCase.includes(imageType)
+  );
+
+  return isContentTypePreviewable && isImageResponseType;
+}
+
 export function determineLanguage(contentType: string, body: string): string {
   const contentTypeLowerCase = contentType.toLowerCase();
 
@@ -284,4 +326,11 @@ export function determineLanguage(contentType: string, body: string): string {
   }
 
   return "plaintext";
+}
+
+export function getNetworkResponseContentType(
+  response: ResponseData | Response | undefined
+): string {
+  const headers = (response?.headers || {}) as Record<string, string>;
+  return headers[ContentTypeHeader.Default] || headers[ContentTypeHeader.LowerCase] || "";
 }

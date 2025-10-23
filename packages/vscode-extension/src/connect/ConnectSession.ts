@@ -3,7 +3,7 @@ import fs from "fs";
 import { Disposable } from "vscode";
 import { DebugSession, DebugSessionImpl } from "../debugging/DebugSession";
 import { MetroSession } from "../project/metro";
-import { BaseInspectorBridge } from "../project/bridge";
+import { InspectorBridge } from "../project/inspectorBridge";
 import { disposeAll } from "../utilities/disposables";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
@@ -13,7 +13,7 @@ export interface ConnectSessionDelegate {
   onSessionTerminated: () => void;
 }
 
-class DebugSessionInspectorBridge extends BaseInspectorBridge {
+class DebugSessionInspectorBridge extends InspectorBridge {
   constructor(private readonly debugSession: DebugSession) {
     super();
   }
