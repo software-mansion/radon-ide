@@ -40,11 +40,7 @@ describe("7 - Radon tools tests", () => {
       vscodeHelperService,
     } = initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
+    await managingDevicesService.prepareDevices();
 
     await appManipulationService.waitForAppToLoad();
 

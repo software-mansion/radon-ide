@@ -19,11 +19,7 @@ describe("13 - Reload app tests", () => {
       managingDevicesService,
     } = initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
+    await managingDevicesService.prepareDevices();
 
     const view = new WebView();
     await view.switchBack();
