@@ -18,6 +18,7 @@ import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
 import { DevicesProvider } from "./DevicesProvider";
 import { StateManager } from "../project/StateManager";
 import { Logger } from "../Logger";
+import { AndroidBuildResult } from "../builders/buildAndroid";
 
 export class AndroidPhysicalDevice extends AndroidDevice {
   constructor(
@@ -56,6 +57,11 @@ export class AndroidPhysicalDevice extends AndroidDevice {
       return;
     }
     super.sendRotate(rotation);
+  }
+
+  protected override mirrorNativeLogs(_build: AndroidBuildResult): void {
+    // TODO:
+    return;
   }
 }
 
