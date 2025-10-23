@@ -73,7 +73,7 @@ export abstract class DeviceBase implements Disposable {
       } else {
         preview.hideTouches();
       }
-      preview.rotateDevice(this._rotation);
+      this.sendRotate(this._rotation);
     }
   }
 
