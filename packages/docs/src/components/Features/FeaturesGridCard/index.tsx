@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useEffect, useState } from "react";
 import styles from "./styles.module.css";
 import usePageType from "@site/src/hooks/usePageType";
 import clsx from "clsx";
@@ -13,6 +13,9 @@ interface FeatureGridCardProps {
 const FeaturesGridCard = forwardRef<HTMLDivElement, FeatureGridCardProps>(
   ({ label, title, content, imageSrc }, ref) => {
     const { isFeatures } = usePageType();
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+    if (!mounted) return null;
 
     return (
       <div ref={ref} className={!isFeatures ? styles.reverseContainer : styles.container}>

@@ -16,6 +16,8 @@
   backdrop-filter: blur(2px);
 
   z-index: 999;
+  overflow-y: scroll;
+  padding-bottom: 100px;
 }
 
 .open {
@@ -26,10 +28,10 @@
   list-style: none;
   padding: 0;
   margin: 0;
-  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 24px;
+  line-height: normal;
 }
 
 .mobileNavLinks a {

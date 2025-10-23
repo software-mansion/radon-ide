@@ -12,8 +12,10 @@ function ColorModeToggle() {
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
-    if (saved === "light" || saved === "dark" || saved === "system") {
+    if (saved === "light" || saved === "dark") {
       setTheme(saved);
+    } else if (!saved) {
+      setTheme("system");
     }
   }, []);
 
@@ -26,6 +28,7 @@ function ColorModeToggle() {
       setTheme(mode);
     }
   };
+
   return (
     <div className={styles.toggle}>
       <button

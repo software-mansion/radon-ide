@@ -11,7 +11,7 @@ import { getFeaturesList } from "./getFeaturesList";
 export default function FeaturesGrid() {
   const { colorMode } = useColorMode();
 
-  const [featuresList, setFeaturesList] = useState(() => getFeaturesList("light"));
+  const [featuresList, setFeaturesList] = useState(() => getFeaturesList("dark"));
   const { isFeatures } = usePageType();
 
   const [firstLeftCardIdx, setFirstLeftCardIdx] = useState(0);
