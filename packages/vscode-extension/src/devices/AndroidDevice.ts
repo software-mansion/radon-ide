@@ -1,7 +1,7 @@
 import path from "path";
 import xml2js from "xml2js";
 import { Disposable } from "vscode";
-import { exec, lineReader } from "../utilities/subprocess";
+import { exec } from "../utilities/subprocess";
 import {
   DevicePlatform,
   DeviceSettings,
@@ -9,7 +9,6 @@ import {
   InstallationErrorReason,
 } from "../common/State";
 import { DeviceBase } from "./DeviceBase";
-import { CancelToken } from "../utilities/cancelToken";
 import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType } from "../common/Project";
 import { Logger } from "../Logger";
@@ -32,7 +31,6 @@ export const ADB_PATH = path.join(
 );
 
 export abstract class AndroidDevice extends DeviceBase implements Disposable {
-  private nativeLogsCancelToken: CancelToken | undefined;
   protected serial: string | undefined;
 
   constructor(
@@ -338,60 +336,9 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     ]);
   }
 
-  private async mirrorNativeLogs(build: AndroidBuildResult) {
-    if (this.nativeLogsCancelToken) {
-      this.nativeLogsCancelToken.cancel();
-    }
-
-    this.nativeLogsCancelToken = new CancelToken();
-
-    const extractPidFromLogcat = async (cancelToken: CancelToken) =>
-      new Promise<string>((resolve, reject) => {
-        const regexString = `Start proc ([0-9]{4}):${build.packageName}`;
-        const process = exec(ADB_PATH, [
-          "-s",
-          this.serial!,
-          "logcat",
-          "-e",
-          regexString,
-          "-T",
-          "1",
-        ]);
-        cancelToken.adapt(process);
-
-        lineReader(process).onLineRead((line) => {
-          const regex = new RegExp(regexString);
-
-          if (regex.test(line)) {
-            const groups = regex.exec(line);
-            const pid = groups?.[1];
-            process.kill();
-
-            if (pid) {
-              resolve(pid);
-            } else {
-              reject(new Error("PID not found"));
-            }
-          }
-        });
-
-        // We should be able to get pid immediately, if we're not getting it in 10s, then we reject to not run this process indefinitely.
-        setTimeout(() => {
-          process.kill();
-          reject(new Error("Timeout while waiting for app to start to get the process PID."));
-        }, 10000);
-      });
-
-    this.nativeLogsOutputChannel.clear();
-    const pid = await extractPidFromLogcat(this.nativeLogsCancelToken);
-    const process = exec(ADB_PATH, ["-s", this.serial!, "logcat", "--pid", pid]);
-    this.nativeLogsCancelToken.adapt(process);
-
-    lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
-  }
+  protected abstract mirrorNativeLogs(build: AndroidBuildResult): void;
 
   public dispose() {
     super.dispose();
-    this.nativeLogsCancelToken?.cancel();
   }
 }

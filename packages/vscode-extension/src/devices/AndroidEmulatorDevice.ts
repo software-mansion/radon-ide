@@ -30,6 +30,7 @@ import { ADB_PATH, AndroidDevice } from "./AndroidDevice";
 import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
 import { DevicesProvider } from "./DevicesProvider";
 import { StateManager } from "../project/StateManager";
+import { AndroidBuildResult } from "../builders/buildAndroid";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -77,6 +78,7 @@ export class AndroidEmulatorDevice extends AndroidDevice {
 
   public dispose(): void {
     super.dispose();
+    this.nativeLogsCancelToken?.cancel();
     this.emulatorProcess?.kill();
     // If the emulator process does not shut down initially due to ongoing activities or processes,
     // a forced termination (kill signal) is sent after a certain timeout period.
@@ -402,6 +404,59 @@ export class AndroidEmulatorDevice extends AndroidDevice {
 
   async getClipboard() {
     // No need to copy clipboard, Android Emulator syncs it for us whenever a user clicks on 'Copy'
+  }
+
+  private nativeLogsCancelToken: CancelToken | undefined;
+  protected override async mirrorNativeLogs(build: AndroidBuildResult) {
+    if (this.nativeLogsCancelToken) {
+      this.nativeLogsCancelToken.cancel();
+    }
+
+    this.nativeLogsCancelToken = new CancelToken();
+
+    const extractPidFromLogcat = async (cancelToken: CancelToken) =>
+      new Promise<string>((resolve, reject) => {
+        const regexString = `Start proc ([0-9]{4}):${build.packageName}`;
+        const process = exec(ADB_PATH, [
+          "-s",
+          this.serial!,
+          "logcat",
+          "-e",
+          regexString,
+          "-T",
+          "1",
+        ]);
+        cancelToken.adapt(process);
+
+        lineReader(process).onLineRead((line) => {
+          const regex = new RegExp(regexString);
+
+          if (regex.test(line)) {
+            const groups = regex.exec(line);
+            const pid = groups?.[1];
+            process.kill();
+
+            if (pid) {
+              resolve(pid);
+            } else {
+              reject(new Error("PID not found"));
+            }
+          }
+        });
+
+        // We should be able to get pid immediately, if we're not getting it in 10s, then we reject to not run this process indefinitely.
+        setTimeout(() => {
+          process.kill();
+          reject(new Error("Timeout while waiting for app to start to get the process PID."));
+        }, 10000);
+      });
+
+    this.nativeLogsOutputChannel.clear();
+    const pid = await extractPidFromLogcat(this.nativeLogsCancelToken);
+    const process = exec(ADB_PATH, ["-s", this.serial!, "logcat", "--pid", pid]);
+    this.nativeLogsCancelToken.adapt(process);
+
+    lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
   }
 }
 
