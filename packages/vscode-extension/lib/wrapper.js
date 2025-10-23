@@ -454,7 +454,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
         // 2. when the fullscreen LogBox is minimized, new errors won't bring it up unless we clear the old ones
         RNInternals.LogBoxData.clear();
         originalErrorHandler(error, isFatal);
-      } catch { }
+      } catch {}
     }
 
     global.ErrorUtils.setGlobalHandler(wrappedGlobalErrorHandler);
