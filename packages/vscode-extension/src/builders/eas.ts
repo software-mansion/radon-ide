@@ -107,6 +107,11 @@ export async function performLocalEasBuild(
   outputChannel: OutputChannel,
   cancelToken: CancelToken
 ) {
+  if (!(await isEasCliInstalled(appRoot))) {
+    throw new Error(
+      "Your project is configured to use EAS local build, but eas-cli could not be found. Install eas-cli and make sure it's available in your PATH."
+    );
+  }
   const tmpDirectory = await mkdtemp(path.join(os.tmpdir(), "rn-ide-eas-build-"));
   const outputBase = `eas-${profile}`;
   const outputPath =
