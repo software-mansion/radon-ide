@@ -27,6 +27,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   public abstract deactivate(): void;
   public abstract dispose(): void;
   protected abstract handleGetResponseBodyData(payload: IDEMessage): Promise<void>;
+  protected abstract handleChangeNetworkTracking(isTracking: boolean): void;
   protected abstract handleCDPMessage(
     message: WebviewMessage & { command: WebviewCommand.CDPCall }
   ): void;
@@ -193,6 +194,10 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     this.broadcastStoredMessages();
   }
 
+  private handleClearStoredLogs(): void {
+    this.networkMessages = [];
+  }
+
   /**
    * Handle IDE messages from webview
    */
@@ -212,6 +217,15 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
         break;
       case IDEMethod.GetLogHistory:
         this.handleGetLogHistory();
+        break;
+      case IDEMethod.StartNetworkTracking:
+        this.handleChangeNetworkTracking(true);
+        break;
+      case IDEMethod.StopNetworkTracking:
+        this.handleChangeNetworkTracking(false);
+        break;
+      case IDEMethod.ClearStoredLogs:
+        this.handleClearStoredLogs();
         break;
       default:
         Logger.warn("Unknown IDE method received");

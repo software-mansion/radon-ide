@@ -9,7 +9,6 @@ import {
   NetworkEvent,
   NETWORK_EVENTS,
   WebviewCommand,
-  NetworkMethod,
   NetworkType,
   IDEMethod,
 } from "../types/panelMessageProtocol";
@@ -228,6 +227,11 @@ const useNetworkTracker = (): NetworkTracker => {
   const clearLogs = () => {
     setNetworkLogs([]);
     setCdpMessages([]);
+
+    sendWebviewIDEMessage({
+      messageId: "clearLogs",
+      method: IDEMethod.ClearStoredLogs,
+    });
   };
 
   const sendWebviewCDPMessage = (messageData: CDPMessage) => {
@@ -245,9 +249,9 @@ const useNetworkTracker = (): NetworkTracker => {
   };
 
   const toggleNetwork = (isRunning: boolean) => {
-    sendWebviewCDPMessage({
-      messageId: "enable",
-      method: isRunning ? NetworkMethod.Disable : NetworkMethod.Enable,
+    sendWebviewIDEMessage({
+      messageId: "toggleTracking",
+      method: isRunning ? IDEMethod.StopNetworkTracking : IDEMethod.StartNetworkTracking,
     });
   };
 

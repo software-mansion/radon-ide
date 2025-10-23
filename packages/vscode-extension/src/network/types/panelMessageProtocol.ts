@@ -40,6 +40,9 @@ export enum IDEMethod {
   GetTheme = "IDE.getTheme",
   Theme = "IDE.Theme",
   GetLogHistory = "IDE.getLogHistory",
+  StartNetworkTracking = "IDE.startNetworkTracking",
+  StopNetworkTracking = "IDE.stopNetworkTracking",
+  ClearStoredLogs = "IDE.clearStoredLogs",
 }
 
 export function isCDPMethod(method: string): method is CDPMethod {

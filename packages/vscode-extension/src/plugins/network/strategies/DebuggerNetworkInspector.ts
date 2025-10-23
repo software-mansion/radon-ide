@@ -42,6 +42,7 @@ const DEFAULT_RESPONSE_BODY_DATA: ResponseBodyData = {
 export default class DebuggerNetworkInspector extends BaseNetworkInspector {
   private disposables: Disposable[] = [];
   private activationState = ActivationState.Inactive;
+  private trackingEnabled: boolean = true;
 
   constructor(
     private readonly inspectorBridge: RadonInspectorBridge,
@@ -103,6 +104,10 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     message: IDEMessage | CDPMessage,
     command: WebviewCommand.IDECall | WebviewCommand.CDPCall
   ): void {
+    if (!this.trackingEnabled) {
+      return;
+    }
+
     const webviewMessage: WebviewMessage = {
       command: command,
       payload: message,
@@ -201,6 +206,10 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     };
 
     this.storeAndBroadcastWebviewMessage(message, WebviewCommand.IDECall);
+  }
+
+  protected handleChangeNetworkTracking(isTracking: boolean): void {
+    this.trackingEnabled = isTracking;
   }
 
   protected handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
