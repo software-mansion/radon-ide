@@ -16,11 +16,7 @@ describe("9 - Radon Settings", () => {
     ({ elementHelperService, radonViewsService, managingDevicesService } =
       initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
+    await managingDevicesService.prepareDevices();
 
     view = new WebView();
     await view.switchBack();
@@ -29,11 +25,7 @@ describe("9 - Radon Settings", () => {
   beforeEach(async () => {
     radonViewsService.openRadonIDEPanel();
     // it may take some time to load this element especially on GitHub CI
-    await elementHelperService.findAndWaitForElementByTag(
-      "phone-wrapper",
-      "timedout waiting for phone wrapper element",
-      15000
-    );
+    await elementHelperService.findAndWaitForElementByTag("phone-wrapper");
   });
 
   it("should zoom in and out", async () => {

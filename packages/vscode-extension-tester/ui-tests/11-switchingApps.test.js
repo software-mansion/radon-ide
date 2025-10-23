@@ -21,11 +21,7 @@ describe("11 - App switching tests", () => {
       appManipulationService,
     } = initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
+    await managingDevicesService.prepareDevices();
   });
 
   function execAsync(command) {

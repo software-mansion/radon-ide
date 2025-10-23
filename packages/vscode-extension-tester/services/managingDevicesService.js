@@ -164,4 +164,14 @@ export default class ManagingDevicesService {
       `renaming-device-view-save-button`
     );
   }
+
+  async prepareDevices(deviceName = "newDevice") {
+    await this.deleteAllDevices();
+    await this.addNewDevice(deviceName);
+    try {
+      await this.elementHelperService.findAndClickElementByTag(
+        `modal-close-button`
+      );
+    } catch {}
+  }
 }

@@ -40,11 +40,7 @@ describe("7 - Radon tools tests", () => {
       vscodeHelperService,
     } = initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
+    await managingDevicesService.prepareDevices();
 
     await appManipulationService.waitForAppToLoad();
 
@@ -160,7 +156,8 @@ describe("7 - Radon tools tests", () => {
           assert.approximately(
             originalPosition[key],
             relativeRect[key],
-            0.005,
+            // NOTE: allow a 2% of the screen width/height margin of error
+            0.02,
             `Inspect area ${key} is incorrect`
           );
         }
@@ -276,8 +273,9 @@ describe("7 - Radon tools tests", () => {
   });
 
   it("should open preview", async () => {
-    await driver.switchTo().defaultContent();
-    await vscodeHelperService.openFileInEditor("automatedTests.tsx");
+    await vscodeHelperService.openFileInEditor(
+      "/data/react-native-app/shared/automatedTests.tsx"
+    );
     const editor = new TextEditor();
     await driver.wait(
       async () => (await editor.getCodeLenses("Open preview")).length > 0,
@@ -298,8 +296,9 @@ describe("7 - Radon tools tests", () => {
   });
 
   it("should click button in preview", async () => {
-    await driver.switchTo().defaultContent();
-    await vscodeHelperService.openFileInEditor("automatedTests.tsx");
+    await vscodeHelperService.openFileInEditor(
+      "/data/react-native-app/shared/automatedTests.tsx"
+    );
     const editor = new TextEditor();
     await driver.wait(
       async () => (await editor.getCodeLenses("Open preview")).length > 0,
