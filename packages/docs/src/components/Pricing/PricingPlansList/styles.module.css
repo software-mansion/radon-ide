@@ -23,13 +23,16 @@
 .plan_pay_individual {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 10px;
   font-weight: 500;
 }
 
-.btnCenter {
+.btnEnterprise {
   justify-content: center;
+}
+
+.btnPricing {
+  justify-content: space-between;
 }
 
 .btn {
