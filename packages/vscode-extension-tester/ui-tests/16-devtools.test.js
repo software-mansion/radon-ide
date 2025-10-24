@@ -8,7 +8,8 @@ import { get } from "./setupTest.js";
 const raw = fs.readFileSync("./data/react-native-app/package.json");
 const data = JSON.parse(raw);
 // the tests are designed to work on a specific app only
-const IS_CORRECT_APP = data.name.includes("expo52PrebuildWithPlugins");
+const IS_CORRECT_APP = data.name.toLowerCase().includes("plugins");
+console.log(data.name);
 
 describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
   let driver, view, appWebsocket;
