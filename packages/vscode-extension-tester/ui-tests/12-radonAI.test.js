@@ -9,14 +9,13 @@ const isLatestCode =
 // on older versions vscode requires logging to github to use AI chat
 describeIf(isLatestCode, "12 - Radon AI tests", () => {
   let driver,
-    workbench,
     elementHelperService,
     radonViewsService,
     managingDevicesService,
     vscodeHelperService;
 
   before(async () => {
-    ({ driver, workbench } = get());
+    ({ driver } = get());
 
     ({
       elementHelperService,
@@ -54,11 +53,8 @@ describeIf(isLatestCode, "12 - Radon AI tests", () => {
     );
   });
 
-  after(async function () {
-    await workbench.executeCommand("Chat: Open Chat");
-    await workbench.executeCommand(
-      "View: Toggle Secondary Side Bar Visibility"
-    );
+  after(async () => {
+    await vscodeHelperService.hideSecondarySideBar();
   });
 
   it("Radon AI should show in suggestions after typing @ in chat", async function () {
