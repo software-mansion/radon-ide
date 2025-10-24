@@ -5,8 +5,7 @@ import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils
 import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
-import { Logger } from "../../Logger";
-import { printStore } from "../../../third-party/react-devtools/headless";
+import { printStore, Store, Element } from "../../../third-party/react-devtools/headless";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -28,6 +27,42 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
   };
 }
 
+function printElement(element: Element) {
+  return "\t".repeat(element.depth) + "X" + "\n";
+}
+
+function printComponentTree(store: Store) {
+  const rootID = store.roots[0];
+  const root = store.getElementByID(rootID);
+
+  if (!root) {
+    // TODO: More actionable
+    return "Component tree is corrupted. Code: 0x01";
+  }
+
+  const weight = (root as unknown as { weight: number }).weight;
+  let output = "";
+
+  // TODO: Form a tree such that it's easier to cut out parts of it while preserving indentation
+  for (let i = 0; i < weight; i++) {
+    const element = store.getElementAtIndex(i) as Element;
+
+    if (!element) {
+      console.log(`Component tree is corrupted. Element at index ${i} not found`);
+      continue;
+    }
+
+    if (!element.isCollapsed) {
+      console.log(`Component tree is corrupted. Element at index ${i} is collapsed`);
+      continue;
+    }
+
+    output += printElement(element);
+  }
+
+  return output;
+}
+
 export async function viewComponentTreeExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
 
@@ -41,9 +76,6 @@ export async function viewComponentTreeExec(): Promise<ToolResponse> {
 
   const store = project.deviceSession.devtoolsStore;
 
-  Logger.log(`Entire store:`, store);
-  console.log(`Entire store:`, store);
-
   if (!store) {
     return textToToolResponse(
       "Could not extract a component tree from the app, the devtools are not accessible!\n"
@@ -51,9 +83,10 @@ export async function viewComponentTreeExec(): Promise<ToolResponse> {
     );
   }
 
-  const repr = printStore(store);
+  const _repr = printStore(store);
+  const _repr2 = printComponentTree(store);
 
-  return textToToolResponse(repr);
+  return textToToolResponse(_repr2);
 }
 
 export async function readLogsToolExec(): Promise<ToolResponse> {
