@@ -21,17 +21,11 @@ const REQUEST_BUFFER_MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100MB
  * Inspired by the C++ BoundedRequestBuffer implementation from React Native.
  */
 export class AsyncBoundedResponseBuffer {
-  private responseMap: Map<string, Promise<ResponseBodyData | undefined>>;
-  private dataSizeMap: Map<string, number>;
-  private order: string[];
-  private currentSize: number;
-
-  constructor() {
-    this.responseMap = new Map();
-    this.dataSizeMap = new Map();
-    this.order = [];
-    this.currentSize = 0;
-  }
+  private responseMap = new Map<string, Promise<ResponseBodyData | undefined>>();
+  private dataSizeMap = new Map<string, number>();
+  private order: string[] = [];
+  private currentSize = 0;
+  private enabled = true;
 
   /**
    * Remove a request from the buffer and update memory usage.
@@ -62,14 +56,21 @@ export class AsyncBoundedResponseBuffer {
    * If adding the data exceeds the memory limit, remove oldest requests until
    * there is enough space or the buffer is empty.
    *
+   * If buffering is disabled, this method returns false immediately without storing the response.
+   *
    * @param requestId Unique identifier for the request
    * @param responseBodyDataPromise The response body data promise object, with parsed data from xhr response
-   * @returns Promise<boolean> True if the response body processing was initiated successfully
+   * @returns Promise<boolean> True if the response body processing was initiated successfully, false if buffering is disabled
    */
   public async put(
     requestId: string,
     responseBodyDataPromise: Promise<InternalResponseBodyData | undefined>
   ): Promise<boolean> {
+    // If buffering is disabled, don't store responses
+    if (!this.enabled) {
+      return false;
+    }
+
     try {
       // Remove existing request with the same ID, if any
       // Done to rearrange the order when re-adding the same requestId
@@ -163,6 +164,31 @@ export class AsyncBoundedResponseBuffer {
       maxSizeBytes: REQUEST_BUFFER_MAX_SIZE_BYTES,
       utilization: ((this.currentSize / REQUEST_BUFFER_MAX_SIZE_BYTES) * 100).toFixed(2) + "%",
     };
+  }
+
+  /**
+   * Clear all buffered responses and reset the buffer state.
+   */
+  public clear(): void {
+    this.responseMap.clear();
+    this.dataSizeMap.clear();
+    this.order = [];
+    this.currentSize = 0;
+  }
+
+  /**
+   * Enable response buffering. When enabled, new responses will be stored in the buffer.
+   */
+  public enableBuffering(): void {
+    this.enabled = true;
+  }
+
+  /**
+   * Disable response buffering. When disabled, new responses will not be stored in the buffer.
+   * Existing buffered responses remain accessible until retrieved or cleared.
+   */
+  public disableBuffering(): void {
+    this.enabled = false;
   }
 }
 

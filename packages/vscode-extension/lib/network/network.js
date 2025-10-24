@@ -17,30 +17,31 @@ export function setup() {
   setupCompleted = true;
 
   const messageBridge = new PluginMessageBridge("network");
+  const responseBuffer = new AsyncBoundedResponseBuffer();
 
   let enabled = false;
   messageBridge.addMessageListener("cdp-message", (message) => {
     try {
       if (message.method === "Network.enable" && !enabled) {
         enabled = true;
-        enableNetworkInspect(messageBridge);
+        enableNetworkInspect(messageBridge, responseBuffer);
       } else if (message.method === "Network.disable" && enabled) {
         enabled = false;
-        disableNetworkInspect();
+        disableNetworkInspect(responseBuffer);
       }
     } catch (error) {}
   });
 }
 
-function disableNetworkInspect() {
+function disableNetworkInspect(responseBuffer) {
   RNInternals.XHRInterceptor.disableInterception();
+  responseBuffer.clear();
 }
 
-function enableNetworkInspect(networkProxy) {
+function enableNetworkInspect(networkProxy, responseBuffer) {
   const XHRInterceptor = RNInternals.XHRInterceptor;
 
   const loaderId = "xhr-interceptor";
-  const responseBuffer = new AsyncBoundedResponseBuffer();
 
   const requestIdPrefix = Math.random().toString(36).slice(2);
   let requestIdCounter = 0;
@@ -58,24 +59,46 @@ function enableNetworkInspect(networkProxy) {
     networkProxy.sendMessage("ide-message", JSON.stringify(responseObject));
   }
 
-  function listener(message) {
+  function cdpListener(message) {
     try {
-      if (message.method === "Network.disable") {
-        networkProxy.removeMessageListener("cdp-message", listener);
-      } else if (
-        message.method === "Network.getResponseBody" &&
-        message.params.requestId.startsWith(requestIdPrefix)
-      ) {
-        const requestId = message.params.requestId;
-        const responsePromise = responseBuffer.get(requestId);
+      switch (message.method) {
+        case "Network.disable":
+          networkProxy.removeMessageListener("cdp-message", cdpListener);
+          networkProxy.removeMessageListener("ide-message", ideListener);
+          break;
+        case "Network.getResponseBody":
+          if (!message.params?.requestId?.startsWith(requestIdPrefix)) {
+            return;
+          }
 
-        // Upon initial launch, the message gets send twice in dev, because of
-        // react Strict Mode and dependency on useEffect. To be fixed in next PR's.
-        sendResponseBody(responsePromise, message);
+          const requestId = message.params.requestId;
+          const responsePromise = responseBuffer.get(requestId);
+
+          // Upon initial launch, the message gets send twice in dev, because of
+          // react Strict Mode and dependency on useEffect. To be fixed in next PR's.
+          sendResponseBody(responsePromise, message);
+          break;
+        default:
+          break;
       }
     } catch (error) {}
   }
-  networkProxy.addMessageListener("cdp-message", listener);
+
+  function ideListener(message) {
+    try {
+      switch (message.method) {
+        case "IDE.stopNetworkTracking":
+          responseBuffer.disableBuffering();
+          break;
+        case "IDE.startNetworkTracking":
+          responseBuffer.enableBuffering();
+          break;
+      }
+    } catch (error) {}
+  }
+
+  networkProxy.addMessageListener("cdp-message", cdpListener);
+  networkProxy.addMessageListener("ide-message", ideListener);
 
   const HEADERS_RECEIVED = 2; // readyState value when headers are received
 

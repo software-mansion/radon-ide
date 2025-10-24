@@ -9,6 +9,7 @@ import {
   NetworkMethod,
   IDEMessage,
   WebviewMessageDescriptor,
+  IDEMethod,
 } from "../../../network/types/panelMessageProtocol";
 import { BaseNetworkInspector } from "./BaseNetworkInspector";
 
@@ -38,6 +39,20 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
       WebviewMessageDescriptor.CDPMessage,
       messageData
     );
+  }
+
+  /**
+   * Method overload for InspectorBridgeNetworkInspector implementation.
+   * Apart from changing the tracking state, send message to application (network.js)
+   * with appropriate IDEMethod, to start/stop network response buffering.
+   */
+  protected changeNetworkTracking(shouldTrack: boolean): void {
+    super.changeNetworkTracking(shouldTrack);
+
+    const method = shouldTrack ? IDEMethod.StartNetworkTracking : IDEMethod.StopNetworkTracking;
+    this.inspectorBridge.sendPluginMessage("network", WebviewMessageDescriptor.IDEMessage, {
+      method,
+    });
   }
 
   /**
@@ -109,9 +124,9 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
 
   private cleanup(shouldDisableNetworkInspector: boolean) {
     disposeAll(this.devtoolsListeners);
-    this.sendCDPMessage({ method: NetworkMethod.Disable, params: {} });
+    commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
     if (shouldDisableNetworkInspector) {
-      commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
+      this.sendCDPMessage({ method: NetworkMethod.Disable, params: {} });
       this.clearNetworkMessages();
     }
   }

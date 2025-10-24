@@ -67,12 +67,16 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     }
   }
 
-  private changeNetworkTracking(shouldTrack: boolean): void {
+  private shouldTrackMessage(message: WebviewMessage): boolean {
+    return this.trackingEnabled || message.command === WebviewCommand.IDECall;
+  }
+
+  protected changeNetworkTracking(shouldTrack: boolean): void {
     this.trackingEnabled = shouldTrack;
   }
 
   protected storeMessage(message: WebviewMessage): void {
-    if (this.trackingEnabled) {
+    if (this.shouldTrackMessage(message)) {
       this.networkMessages.push(message);
     }
   }
@@ -82,7 +86,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   }
 
   protected broadcastMessage(message: Parameters<BroadcastListener>[0]): void {
-    if (!this.trackingEnabled) {
+    if (!this.shouldTrackMessage(message)) {
       return;
     }
     if (this.isInternalRequest(message)) {
