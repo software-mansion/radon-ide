@@ -28,6 +28,7 @@ on:
           - "expo-52-prebuild-with-plugins"
           - "expo-53"
           - "expo-54"
+          - "expo-54-prebuild-with-plugins"
           # - "expo-52-eas"
           # - "expo-50-dev-client"
           # - "expo-51-dev-client"

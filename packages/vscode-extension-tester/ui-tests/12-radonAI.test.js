@@ -15,7 +15,7 @@ describeIf(isLatestCode, "12 - Radon AI tests", () => {
     vscodeHelperService;
 
   before(async () => {
-    driver = get().driver;
+    ({ driver } = get());
 
     ({
       elementHelperService,
@@ -53,6 +53,10 @@ describeIf(isLatestCode, "12 - Radon AI tests", () => {
     );
   });
 
+  after(async () => {
+    await vscodeHelperService.hideSecondarySideBar();
+  });
+
   it("Radon AI should show in suggestions after typing @ in chat", async function () {
     await driver.actions().sendKeys("@").perform();
     await driver.switchTo().defaultContent();
@@ -66,7 +70,7 @@ describeIf(isLatestCode, "12 - Radon AI tests", () => {
     );
   });
 
-  it("Radon AI user should appear in chat", async function () {
+  it("Radon AI user should start responding", async function () {
     await driver.actions().sendKeys("@radon test").perform();
     await driver.actions().sendKeys(Key.ENTER).perform();
 
@@ -74,8 +78,14 @@ describeIf(isLatestCode, "12 - Radon AI tests", () => {
       By.css(".auxiliarybar")
     );
 
-    const usernameElements = await auxiliaryBar.findElements(
-      By.css(".username")
+    const usernameElements = await driver.wait(
+      async () => {
+        return (await auxiliaryBar.findElements(By.css(".username"))).length > 1
+          ? await auxiliaryBar.findElements(By.css(".username"))
+          : null;
+      },
+      10000,
+      "Timed out waiting for response elements"
     );
 
     for (const usernameElement of usernameElements) {

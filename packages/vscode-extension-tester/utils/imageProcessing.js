@@ -1,4 +1,9 @@
-import { createCanvas } from "canvas";
+import fs from "fs";
+import path from "path";
+import { createCanvas, loadImage } from "canvas";
+import ffmpeg from "fluent-ffmpeg";
+import ffprobeStatic from "ffprobe-static";
+import { assert } from "chai";
 
 export function cropCanvas(canvas, position) {
   const x = Math.floor(position.x * canvas.width);
@@ -24,4 +29,86 @@ export function compareImages(canvas1, canvas2) {
     if (data1[i] !== data2[i]) return false;
   }
   return true;
+}
+
+// Instead of comparing with a reference image (screenshots can vary by device, OS etc.),
+// I validate the screenshot by checking its dimensions and ensuring it contains multiple colors.
+export async function validateImage(filePath) {
+  const img = await loadImage(filePath);
+  const canvas = createCanvas(img.width, img.height);
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+
+  const imageData = ctx.getImageData(0, 0, img.width, img.height);
+  const data = imageData.data;
+
+  assert.ok(img.width > 1 && img.height > 1, "Invalid dimensions");
+
+  let sum = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
+  }
+  const mean = sum / (img.width * img.height);
+  const uniqueColors = new Set();
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    uniqueColors.add(`${r},${g},${b}`);
+  }
+
+  assert.isAbove(mean, 5, "Screenshot seems empty or nearly black");
+  assert.isAbove(
+    uniqueColors.size,
+    10,
+    "Screenshot has too few unique colors; it may be invalid"
+  );
+}
+
+export async function validateVideo(filePath, expectedDuration = null) {
+  ffmpeg.setFfprobePath(ffprobeStatic.path);
+
+  async function getVideoInfo(filePath) {
+    return new Promise((resolve, reject) => {
+      ffmpeg.ffprobe(filePath, (err, metadata) => {
+        if (err) reject(err);
+        else resolve(metadata);
+      });
+    });
+  }
+
+  assert.ok(fs.existsSync(filePath), "Video file does not exist");
+
+  const info = await getVideoInfo(filePath);
+  const videoStream = info.streams.find((s) => s.codec_type === "video");
+
+  assert.ok(videoStream, "No video stream found");
+  assert.ok(
+    videoStream.width > 0 && videoStream.height > 0,
+    "Invalid resolution"
+  );
+
+  if (expectedDuration)
+    assert.approximately(
+      info.format.duration,
+      expectedDuration,
+      0.5,
+      "Video duration is not as expected"
+    );
+
+  const framePath = path.join(path.dirname(filePath), "tmp_video_frame.png");
+
+  await new Promise((resolve, reject) => {
+    ffmpeg(filePath)
+      .screenshots({
+        count: 1,
+        folder: path.dirname(framePath),
+        filename: path.basename(framePath),
+        timemarks: ["1"], /// frame at 1s
+      })
+      .on("end", resolve)
+      .on("error", reject);
+  });
+
+  await validateImage(framePath);
 }
