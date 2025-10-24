@@ -6,7 +6,6 @@ import {
   WebView,
   ActivityBar,
   Key,
-  InputBox,
 } from "vscode-extension-tester";
 
 export class ElementHelperService {
@@ -86,18 +85,18 @@ export class VSCodeHelperService {
     this.driver = driver;
   }
 
-  async openFileInEditor(fileName) {
+  async openFileInEditor(path) {
     await this.driver.switchTo().defaultContent();
-    await this.driver
+    await this.openCommandLineAndExecute("workbench.action.files.openFile");
+    console.log("Opening file: " + process.cwd() + path);
+    this.driver
       .actions()
       .keyDown(Key.COMMAND)
-      .sendKeys("p")
+      .sendKeys("a")
       .keyUp(Key.COMMAND)
+      .sendKeys(process.cwd() + path)
+      .sendKeys(Key.ENTER)
       .perform();
-
-    const quickOpen = await InputBox.create();
-    await quickOpen.setText(fileName);
-    await quickOpen.confirm();
   }
 
   async getCursorLineInEditor() {

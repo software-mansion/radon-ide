@@ -30,11 +30,7 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
       radonSettingsService,
     } = initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
+    await managingDevicesService.prepareDevices();
 
     await appManipulationService.waitForAppToLoad();
     await radonSettingsService.setShowTouches(true);

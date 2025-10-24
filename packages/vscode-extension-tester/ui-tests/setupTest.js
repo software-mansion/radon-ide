@@ -16,6 +16,7 @@ import {
 import initServices from "../services/index.js";
 import startRecording from "../utils/screenRecording.js";
 import getConfiguration from "../configuration.js";
+import { texts } from "../utils/constants.js";
 
 const { IS_RECORDING } = getConfiguration();
 
@@ -107,6 +108,11 @@ after(async function () {
     await recorder.stop();
   }
   closeServer();
+  console.log(
+    `==== Summary app: ${texts.expectedProjectName} | code version: ${
+      process.env["CODE_VERSION"] || "latest"
+    } ====`
+  );
   // console log additional informations after standard mocha report
   setTimeout(() => {
     if (failedTests.length > 0) {
@@ -127,6 +133,7 @@ after(async function () {
         `npm run run-tests-on-VM -- <test-app> ${failingTestNumbers.join(" ")}`
       );
     }
+    console.log("============");
   }, 0);
 });
 
