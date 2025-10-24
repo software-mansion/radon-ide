@@ -55,7 +55,11 @@ const PricingPlansList = ({
 
   return (
     <div className={styles.planContainer}>
-      <div className={clsx(styles.plan_pay_individual, isEnterprise ? styles.btnCenter : "")}>
+      <div
+        className={clsx(
+          styles.plan_pay_individual,
+          isEnterprise ? styles.btnEnterprise : styles.btnPricing
+        )}>
         {!isEnterprise && (
           <div className={styles.planBtnContainer}>
             <button

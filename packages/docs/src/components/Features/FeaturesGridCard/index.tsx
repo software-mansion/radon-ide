@@ -1,17 +1,21 @@
 import React, { forwardRef } from "react";
 import styles from "./styles.module.css";
 import usePageType from "@site/src/hooks/usePageType";
+import ThemedImage from "@theme/ThemedImage";
 import clsx from "clsx";
 
 interface FeatureGridCardProps {
   label: string;
   title: string;
   content: string;
-  imageSrc: string;
+  sources: {
+    light: string;
+    dark: string;
+  };
 }
 
 const FeaturesGridCard = forwardRef<HTMLDivElement, FeatureGridCardProps>(
-  ({ label, title, content, imageSrc }, ref) => {
+  ({ label, title, content, sources }, ref) => {
     const { isFeatures } = usePageType();
 
     return (
@@ -23,7 +27,11 @@ const FeaturesGridCard = forwardRef<HTMLDivElement, FeatureGridCardProps>(
           </div>
           {isFeatures && <p className={styles.textContent}>{content}</p>}
         </div>
-        <img className={clsx(styles.gridSvg, isFeatures && styles.widthSvg)} src={imageSrc}></img>
+        <ThemedImage
+          sources={sources}
+          className={clsx(styles.gridSvg, isFeatures && styles.widthSvg)}
+          alt={title}
+        />
       </div>
     );
   }

@@ -5,12 +5,9 @@ import useBaseUrl from "@docusaurus/useBaseUrl";
 import usePageType from "@site/src/hooks/usePageType";
 import ArrowRightSmallIcon from "../../ArrowRightSmallIcon";
 import { motion } from "motion/react";
-import { useColorMode } from "@docusaurus/theme-common";
-import { getFeaturesList } from "./getFeaturesList";
+import { featuresList } from "./featuresList";
 
 export default function FeaturesGrid() {
-  const { colorMode } = useColorMode();
-  const featuresList = getFeaturesList(colorMode);
   const { isFeatures } = usePageType();
 
   const [firstLeftCardIdx, setFirstLeftCardIdx] = useState(0);
@@ -134,7 +131,10 @@ export default function FeaturesGrid() {
               ref={(el) => (cardRefs.current[index] = el)}
               title={feature.title}
               content={feature.content}
-              imageSrc={useBaseUrl(feature.imageSrc)}
+              sources={{
+                light: useBaseUrl(feature.imageSrc),
+                dark: useBaseUrl(feature.imageDarkSrc),
+              }}
             />
           ))}
         </motion.div>
