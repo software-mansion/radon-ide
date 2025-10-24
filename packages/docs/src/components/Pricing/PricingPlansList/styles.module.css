@@ -3,7 +3,6 @@
   grid-template-columns: repeat(2, minmax(275px, 480px));
   gap: 40px;
   list-style: none;
-  overflow: hidden;
   justify-content: center;
 }
 

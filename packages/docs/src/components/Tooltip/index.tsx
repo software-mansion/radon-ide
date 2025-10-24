@@ -8,10 +8,12 @@ interface TooltipProps {
 
 export default function Tooltip({ info }: TooltipProps) {
   return (
-    <div className={styles.tooltip}>
-      <InfoIcon />
-      <div className={styles.tooltiptextContainer}>
-        <p className={styles.tooltiptext}>{info}</p>
+    <div className={styles.tooltipBox}>
+      <div className={styles.tooltip}>
+        <InfoIcon />
+        <div className={styles.tooltiptextContainer}>
+          <p className={styles.tooltiptext}>{info}</p>
+        </div>
       </div>
     </div>
   );

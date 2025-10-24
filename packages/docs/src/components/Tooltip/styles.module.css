@@ -1,3 +1,7 @@
+.tooltipBox {
+  display: inline-flex;
+  align-items: center;
+}
 .tooltip {
   position: relative;
   display: inline-flex;
@@ -6,7 +10,7 @@
 }
 
 .tooltiptextContainer {
-  visibility: hidden;
+  display: none;
   position: absolute;
   z-index: 1;
 
@@ -21,7 +25,6 @@
   transform: translateX(-50%);
 
   background-color: var(--radon-border);
-  opacity: 0;
 }
 
 .tooltiptextContainer::after {
@@ -43,7 +46,17 @@ p.tooltiptext {
 }
 
 .tooltip:hover .tooltiptextContainer {
-  visibility: visible;
-  opacity: 1;
-  transition: opacity 0.3s ease;
+  display: initial;
+}
+
+@media (max-width: 800px) {
+  .tooltiptextContainer {
+    max-width: 20vw;
+  }
+}
+
+@media (max-width: 640px) {
+  .tooltiptextContainer {
+    max-width: 30vw;
+  }
 }
