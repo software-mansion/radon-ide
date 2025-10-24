@@ -52,7 +52,7 @@ export class DeviceManager implements Disposable {
 
   private loadDevicesPromise: Promise<void> | undefined;
 
-  private async loadDevices(forceReload = false) {
+  public async loadDevices(forceReload = false) {
     if (forceReload) {
       // Clear the cache when force reload is requested
       extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, undefined);
@@ -63,8 +63,7 @@ export class DeviceManager implements Disposable {
         this.loadDevicesPromise = undefined;
         // NOTE: only remember virtual devices,
         // since available physical devices are likely to change
-        const { androidPhysicalDevices: _physical, ...emulators } = devices;
-        extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, emulators);
+        extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, devices);
       });
     }
     await this.loadDevicesPromise;
@@ -86,10 +85,15 @@ export class DeviceManager implements Disposable {
     const devicesByType = extensionContext.globalState.get<DevicesByType>(DEVICE_LIST_CACHE_KEY);
     if (devicesByType) {
       // we still want to perform load here in case anything changes, just won't wait for it
+      this.stateManager.updateState({ devicesByType });
       this.loadDevices();
     } else {
       await this.loadDevices();
     }
+    // after the initial load, we want to keep the cache updated
+    this.stateManager.onSetState((newState) => {
+      extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, newState.devicesByType);
+    });
   }
 
   public async createAndroidDevice(

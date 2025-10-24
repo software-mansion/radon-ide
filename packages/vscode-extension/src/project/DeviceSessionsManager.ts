@@ -263,8 +263,10 @@ export class DeviceSessionsManager implements Disposable {
       const defaultDevice =
         devices.find((device) => device.platform === DevicePlatform.IOS) ?? devices.at(0);
       const initialDevice = devices.find((device) => device.id === lastDeviceId) ?? defaultDevice;
+      const isPhysicalDevice =
+        initialDevice?.platform === DevicePlatform.Android && !initialDevice.emulator;
 
-      if (initialDevice) {
+      if (initialDevice && !isPhysicalDevice) {
         // if we found a device on the devices list, we try to select it
         await this.startOrActivateSessionForDevice(initialDevice);
       }
@@ -315,15 +317,6 @@ export class DeviceSessionsManager implements Disposable {
     }
   };
 
-  private saveLastSelectedDeviceId(deviceId: DeviceId | undefined) {
-    const device = this.devices.find((d) => d.id === this.activeSessionId);
-    const isPhysicalDevice = device?.platform === DevicePlatform.Android && !device.emulator;
-    extensionContext.workspaceState.update(
-      LAST_SELECTED_DEVICE_KEY,
-      isPhysicalDevice ? undefined : this.activeSessionId
-    );
-  }
-
   private async updateSelectedSession(session: DeviceSession | undefined) {
     const previousSession = this.selectedDeviceSession;
     const previousSessionId = this.activeSessionId;
@@ -335,7 +328,7 @@ export class DeviceSessionsManager implements Disposable {
       this.projectStateManager.updateState({ selectedDeviceSessionId: null });
       return;
     }
-    this.saveLastSelectedDeviceId(this.activeSessionId);
+    extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, this.activeSessionId);
     this.projectStateManager.updateState({ selectedDeviceSessionId: this.activeSessionId });
 
     const wasPreviousDeviceDisconnected = !this.devices.find((d) => d.id === previousSessionId)
