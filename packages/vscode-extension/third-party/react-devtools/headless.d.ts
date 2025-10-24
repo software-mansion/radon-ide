@@ -7,6 +7,7 @@
 
 // Directly re-export the necessary types from the source package
 export type { Wall, FrontendBridge, Store, Config } from "react-devtools-inline/frontend";
+export type { Element } from "react-devtools-shared/src/frontend/types";
 
 // Import the types locally to use them in function signatures within this file
 import type {
