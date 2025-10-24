@@ -1,26 +1,22 @@
-import React, { forwardRef, useEffect, useState } from "react";
+import React, { forwardRef } from "react";
 import styles from "./styles.module.css";
 import usePageType from "@site/src/hooks/usePageType";
+import ThemedImage from "@theme/ThemedImage";
 import clsx from "clsx";
 
 interface FeatureGridCardProps {
   label: string;
   title: string;
   content: string;
-  imageSrc: string;
+  sources: {
+    light: string;
+    dark: string;
+  };
 }
 
 const FeaturesGridCard = forwardRef<HTMLDivElement, FeatureGridCardProps>(
-  ({ label, title, content, imageSrc }, ref) => {
+  ({ label, title, content, sources }, ref) => {
     const { isFeatures } = usePageType();
-    const [imageLoaded, setImageLoaded] = useState(false);
-
-    useEffect(() => {
-      if (!imageSrc) return;
-      const img = new Image();
-      img.src = imageSrc;
-      img.onload = () => setImageLoaded(true);
-    }, [imageSrc]);
 
     return (
       <div ref={ref} className={!isFeatures ? styles.reverseContainer : styles.container}>
@@ -31,9 +27,11 @@ const FeaturesGridCard = forwardRef<HTMLDivElement, FeatureGridCardProps>(
           </div>
           {isFeatures && <p className={styles.textContent}>{content}</p>}
         </div>
-        {imageLoaded && (
-          <img className={clsx(styles.gridSvg, isFeatures && styles.widthSvg)} src={imageSrc}></img>
-        )}
+        <ThemedImage
+          sources={sources}
+          className={clsx(styles.gridSvg, isFeatures && styles.widthSvg)}
+          alt={title}
+        />
       </div>
     );
   }
