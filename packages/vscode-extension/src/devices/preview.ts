@@ -55,12 +55,18 @@ export class Preview implements Disposable {
     disposeAll(this.disposables);
   }
 
-  private sendCommandOrThrow(command: string) {
+  private sendCommand(command: string, cb?: (error: Error | null | undefined) => void) {
+    try {
+      this.sendCommandOrThrow(command, cb);
+    } catch {}
+  }
+
+  private sendCommandOrThrow(command: string, cb?: (error: Error | null | undefined) => void) {
     const stdin = this.subprocess?.stdin;
-    if (!stdin) {
+    if (!stdin || stdin.writableEnded) {
       throw new Error("sim-server process not available");
     }
-    stdin.write(command);
+    stdin.write(command, cb);
   }
 
   private saveMultimediaWithID(
@@ -238,29 +244,29 @@ export class Preview implements Disposable {
   }
 
   public startReportingFrameRate(onFpsReport: (report: FrameRateReport) => void) {
-    this.subprocess?.stdin?.write("fps true\n");
+    this.sendCommand("fps true\n");
     this.fpsReportListener = onFpsReport;
   }
 
   public stopReportingFrameRate() {
-    this.subprocess?.stdin?.write("fps false\n");
+    this.sendCommand("fps false\n");
     this.fpsReportListener = undefined;
   }
 
   public setUpKeyboard() {
-    this.subprocess?.stdin?.write("setUpKeyboard\n");
+    this.sendCommand("setUpKeyboard\n");
   }
 
   public showTouches() {
-    this.subprocess?.stdin?.write("pointer show true\n");
+    this.sendCommand("pointer show true\n");
   }
 
   public hideTouches() {
-    this.subprocess?.stdin?.write("pointer show false\n");
+    this.sendCommand("pointer show false\n");
   }
 
   public rotateDevice(rotation: DeviceRotation) {
-    this.subprocess?.stdin?.write(`rotate ${rotation}\n`, (err) => {
+    this.sendCommand(`rotate ${rotation}\n`, (err) => {
       if (err) {
         Logger.error("sim-server: Error rotating device:", err);
         throw new Error(`Failed to rotate device: ${err.message}`);
@@ -332,24 +338,24 @@ export class Preview implements Disposable {
     });
 
     const touchesCoords = transformedTouches.map((pt) => `${pt.xRatio},${pt.yRatio}`).join(" ");
-    this.subprocess?.stdin?.write(`touch ${type} ${touchesCoords}\n`);
+    this.sendCommand(`touch ${type} ${touchesCoords}\n`);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
-    this.subprocess?.stdin?.write(`key ${direction} ${keyCode}\n`);
+    this.sendCommand(`key ${direction} ${keyCode}\n`);
   }
 
   public sendButton(button: DeviceButtonType, direction: "Up" | "Down") {
-    this.subprocess?.stdin?.write(`button ${direction} ${button}\n`);
+    this.sendCommand(`button ${direction} ${button}\n`);
   }
 
   public sendClipboard(text: string) {
     // We use markers for start and end of the paste to handle multi-line pastes
-    this.subprocess?.stdin?.write(`paste START-SIMSERVER-PASTE>>>${text}<<<END-SIMSERVER-PASTE\n`);
+    this.sendCommand(`paste START-SIMSERVER-PASTE>>>${text}<<<END-SIMSERVER-PASTE\n`);
   }
 
   public sendWheel(point: TouchPoint, deltaX: number, deltaY: number) {
-    this.subprocess?.stdin?.write(
+    this.sendCommand(
       `wheel ${point.xRatio},${point.yRatio} --dx ${this.normalizeWheel(
         deltaX
       )} --dy ${this.normalizeWheel(deltaY)}\n`
