@@ -24,6 +24,12 @@ describe("11 - App switching tests", () => {
     await managingDevicesService.prepareDevices();
   });
 
+  after(async () => {
+    await execAsync("rm -rf ./data/react-native-app2");
+    const browser = VSBrowser.instance;
+    browser.openResources(`./data/react-native-app`);
+  });
+
   function execAsync(command) {
     return new Promise((resolve, reject) => {
       exec(command, (err, stdout, stderr) => {
