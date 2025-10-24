@@ -5,7 +5,7 @@ import initServices from "../services/index.js";
 import { validateImage, validateVideo } from "../utils/imageProcessing.js";
 import { get } from "./setupTest.js";
 
-const defaultVideoDuration = 4; // seconds
+const DEFAULT_VIDEO_DURATION_SECS = 4;
 
 describe("6 - screenshots tests", () => {
   let driver,
@@ -110,7 +110,7 @@ describe("6 - screenshots tests", () => {
       "toggle-recording-button"
     );
     // recording for 4 sec
-    await driver.sleep(defaultVideoDuration * 1000);
+    await driver.sleep(DEFAULT_VIDEO_DURATION_SECS * 1000);
     await elementHelperService.findAndClickElementByTag(
       "toggle-recording-button"
     );
@@ -126,7 +126,7 @@ describe("6 - screenshots tests", () => {
       "Timed out waiting for recording to be saved"
     );
 
-    await validateVideo(filePath, defaultVideoDuration);
+    await validateVideo(filePath, DEFAULT_VIDEO_DURATION_SECS);
   });
 
   it("Should record screen using shortcut", async () => {
@@ -143,7 +143,7 @@ describe("6 - screenshots tests", () => {
       .keyUp(Key.COMMAND)
       .perform();
 
-    await driver.sleep(defaultVideoDuration * 1000);
+    await driver.sleep(DEFAULT_VIDEO_DURATION_SECS * 1000);
 
     await driver
       .actions()
@@ -164,7 +164,7 @@ describe("6 - screenshots tests", () => {
       "Timed out waiting for recording to be saved"
     );
 
-    await validateVideo(filePath, defaultVideoDuration);
+    await validateVideo(filePath, DEFAULT_VIDEO_DURATION_SECS);
   });
 
   it("Should open replay overlay", async () => {
