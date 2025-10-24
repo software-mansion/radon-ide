@@ -118,9 +118,9 @@ export async function performLocalEasBuild(
     platform === DevicePlatform.Android
       ? path.join(tmpDirectory, `${outputBase}.apk`)
       : path.join(tmpDirectory, `${outputBase}.tar.gz`);
-  await buildLocal({ platform, profile, outputPath }, appRoot, outputChannel);
+  await buildLocal({ platform, profile, outputPath }, appRoot, outputChannel, cancelToken);
 
-  return maybeExtractBinary(platform, outputPath, tmpDirectory);
+  return maybeExtractBinary(platform, outputPath, tmpDirectory, cancelToken);
 }
 
 async function downloadAppFromEas(
@@ -136,19 +136,20 @@ async function downloadAppFromEas(
       ? path.join(tmpDirectory, `${id}.apk`)
       : path.join(tmpDirectory, id);
 
-  const success = await downloadBinary(binaryUrl, binaryPath);
+  const success = await downloadBinary(binaryUrl, binaryPath, cancelToken);
   if (!success) {
     throw new Error(
       `EAS build was found at '${binaryUrl}' but could not be downloaded. Verify your Internet connection is stable and try again.`
     );
   }
-  return maybeExtractBinary(platform, binaryPath, tmpDirectory);
+  return maybeExtractBinary(platform, binaryPath, tmpDirectory, cancelToken);
 }
 
 async function maybeExtractBinary(
   platform: DevicePlatform,
   binaryPath: string,
-  tmpDirectory: string
+  tmpDirectory: string,
+  cancelToken: CancelToken
 ) {
   // on iOS we need to extract the .tar.gz archive to get the .app file
   const shouldExtractArchive = platform === DevicePlatform.IOS;
@@ -156,7 +157,7 @@ async function maybeExtractBinary(
     return binaryPath;
   }
 
-  const extracted = await extractTarApp(binaryPath, tmpDirectory, DevicePlatform.IOS);
+  const extracted = await extractTarApp(binaryPath, tmpDirectory, DevicePlatform.IOS, cancelToken);
   if (!extracted) {
     throw new Error(
       "EAS build was downloaded successfully, but could not be extracted. Verify you have enough disk space and try again."
