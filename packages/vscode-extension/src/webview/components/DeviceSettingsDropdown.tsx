@@ -313,7 +313,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           data-testid="device-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
-          <DeviceAppearanceSettings />
+          {!isPhysicalAndroid && <DeviceAppearanceSettings />}
           <CommandItem
             onSelect={() => project.dispatchHomeButtonPress()}
             commandName="RNIDE.deviceHomeButtonPress"
