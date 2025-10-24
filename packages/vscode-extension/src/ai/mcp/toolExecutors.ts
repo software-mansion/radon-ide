@@ -6,6 +6,7 @@ import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
 import { printStore, Store, Element } from "../../../third-party/react-devtools/headless";
+import prettyPrintComponentTree from "./printComponentTree";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -43,12 +44,12 @@ function printComponentTree(store: Store) {
   let output = "";
 
   // TODO: Form a tree such that it's easier to cut out parts of it while preserving indentation
+  //       ^ Alternatively seek "displayRoot" and adjust depth to it
   for (let i = 0; i < weight; i++) {
     const element = store.getElementAtIndex(i) as unknown as Element;
 
     if (!element) {
-      console.log(`Component tree is corrupted. Element at index ${i} not found`);
-      continue;
+      return `Component tree is corrupted. Element at index ${i} not found.`;
     }
 
     if (element.isCollapsed) {
@@ -83,8 +84,11 @@ export async function viewComponentTreeExec(): Promise<ToolResponse> {
 
   const _repr = printStore(store);
   const _repr2 = printComponentTree(store);
+  const _repr3 = prettyPrintComponentTree(store);
 
-  return textToToolResponse(_repr2);
+  return {
+    content: [textToToolContent(_repr), textToToolContent(_repr2), textToToolContent(_repr3)],
+  };
 }
 
 export async function readLogsToolExec(): Promise<ToolResponse> {
