@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { readLogsToolExec, screenshotToolExec } from "./toolExecutors";
-import { ToolSchema } from "./models";
 import { invokeToolCall } from "../shared/api";
+import { ToolSchema } from "./models";
+import { readLogsToolExec, screenshotToolExec, viewComponentTreeExec } from "./toolExecutors";
 
 export function registerLocalMcpTools(server: McpServer) {
   server.registerTool(
@@ -13,6 +13,16 @@ export function registerLocalMcpTools(server: McpServer) {
       inputSchema: {},
     },
     screenshotToolExec
+  );
+
+  server.registerTool(
+    "view_component_tree",
+    {
+      description:
+        "View the component tree (view hierarchy) of the running app. Use this tool to learn see the general structure of this project.",
+      inputSchema: {},
+    },
+    viewComponentTreeExec
   );
 
   server.registerTool(
