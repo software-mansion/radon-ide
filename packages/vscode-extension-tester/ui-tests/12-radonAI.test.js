@@ -9,14 +9,13 @@ const isLatestCode =
 // on older versions vscode requires logging to github to use AI chat
 describeIf(isLatestCode, "12 - Radon AI tests", () => {
   let driver,
-    workbench,
     elementHelperService,
     radonViewsService,
     managingDevicesService,
     vscodeHelperService;
 
   before(async () => {
-    ({ driver, workbench } = get());
+    ({ driver } = get());
 
     ({
       elementHelperService,
@@ -55,10 +54,7 @@ describeIf(isLatestCode, "12 - Radon AI tests", () => {
   });
 
   after(async () => {
-    await workbench.executeCommand("Chat: Open Chat");
-    await workbench.executeCommand(
-      "View: Toggle Secondary Side Bar Visibility"
-    );
+    await vscodeHelperService.hideSecondarySideBar();
   });
 
   it("Radon AI should show in suggestions after typing @ in chat", async function () {
@@ -74,7 +70,7 @@ describeIf(isLatestCode, "12 - Radon AI tests", () => {
     );
   });
 
-  it("Radon AI user should appear in chat", async function () {
+  it("Radon AI user should start responding", async function () {
     await driver.actions().sendKeys("@radon test").perform();
     await driver.actions().sendKeys(Key.ENTER).perform();
 
@@ -82,8 +78,14 @@ describeIf(isLatestCode, "12 - Radon AI tests", () => {
       By.css(".auxiliarybar")
     );
 
-    const usernameElements = await auxiliaryBar.findElements(
-      By.css(".username")
+    const usernameElements = await driver.wait(
+      async () => {
+        return (await auxiliaryBar.findElements(By.css(".username"))).length > 1
+          ? await auxiliaryBar.findElements(By.css(".username"))
+          : null;
+      },
+      10000,
+      "Timed out waiting for response elements"
     );
 
     for (const usernameElement of usernameElements) {

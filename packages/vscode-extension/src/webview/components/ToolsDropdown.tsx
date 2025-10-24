@@ -43,14 +43,16 @@ function DevToolCheckbox({
         style={{ color: enabled ? "inherit" : "var(--swm-disabled-text)" }}>
         {label}
         {checked && isPanelTool && (
-          <IconButton onClick={onSelect} dataTest={`dev-tool-${label}-open-button`}>
+          <IconButton
+            onClick={onSelect}
+            dataTest={`dev-tool-${label.toLowerCase().replaceAll(" ", "-")}-open-button`}>
             <span className="codicon codicon-link-external" />
           </IconButton>
         )}
         <Switch.Root
           disabled={!enabled}
           className="switch-root small-switch"
-          data-testid={`dev-tool-${label.replace(" ", "-")}`}
+          data-testid={`dev-tool-${label.toLowerCase().replaceAll(" ", "-")}`}
           onCheckedChange={onCheckedChange}
           defaultChecked={checked}
           style={{ marginLeft: "auto" }}>
