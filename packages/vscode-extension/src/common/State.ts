@@ -8,7 +8,7 @@ export const REMOVE = Symbol("remove");
 
 export type RecursivePartial<T> = {
   [P in keyof T]?: NonNullable<T[P]> extends Array<infer U>
-    ? Array<U> | undefined | typeof REMOVE
+    ? Array<U> | (null extends T[P] ? null : never) | undefined | typeof REMOVE
     : RecursivePartial<T[P]> | typeof REMOVE;
 };
 
