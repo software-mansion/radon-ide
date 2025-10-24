@@ -52,9 +52,7 @@ function prettyPrintComponentTree(store: Store, root?: Element, depth: number = 
   const isContextProvider = element.type === 2;
 
   const childDepth = isContextProvider ? depth : depth + 1;
-  let found: string = isContextProvider
-    ? ""
-    : "  ".repeat(depth) + `<${element.displayName} type=${element.type}>\n`;
+  let found: string = isContextProvider ? "" : "  ".repeat(depth) + `<${element.displayName}>\n`;
 
   for (const childId of childrenIds) {
     const child = store.getElementByID(childId) as unknown as Element;
