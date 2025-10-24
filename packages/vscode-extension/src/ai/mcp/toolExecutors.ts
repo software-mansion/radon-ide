@@ -28,19 +28,18 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
 }
 
 function printElement(element: Element) {
-  return "\t".repeat(element.depth) + "X" + "\n";
+  return "  ".repeat(element.depth) + `<${element.displayName}>\n`;
 }
 
 function printComponentTree(store: Store) {
   const rootID = store.roots[0];
-  const root = store.getElementByID(rootID);
+  const root = store.getElementByID(rootID) as unknown as Element;
 
   if (!root) {
-    // TODO: More actionable
-    return "Component tree is corrupted. Code: 0x01";
+    return "Component tree is corrupted. The component tree doesn't contain any tree roots.";
   }
 
-  const weight = (root as unknown as { weight: number }).weight;
+  const weight = root.weight;
   let output = "";
 
   // TODO: Form a tree such that it's easier to cut out parts of it while preserving indentation
@@ -52,9 +51,8 @@ function printComponentTree(store: Store) {
       continue;
     }
 
-    if (!element.isCollapsed) {
-      console.log(`Component tree is corrupted. Element at index ${i} is collapsed`);
-      continue;
+    if (element.isCollapsed) {
+      store.toggleIsCollapsed(element.id, false);
     }
 
     output += printElement(element);
