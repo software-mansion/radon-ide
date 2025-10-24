@@ -593,15 +593,20 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public reloadCurrentSession(type: ReloadAction): Promise<void> {
     // upon reload, we verify the selected launch configuration is still present:
     // 1) if it is, we proceed to reloading the session.
-    // 2) if the launch configuration was modified, we update the launch configuration as
-    // part of the reload process.
-    // 3) if the launch configuration was deleted, we show an error message and throw an error.
-    const matchingLaunchConfig = this.launchConfigsManager.launchConfigurations.find(
-      (config) => config.name === this.selectedLaunchConfiguration.name
+    // 2) if the launch configuration was modified, we search for a matching launch configuration and select it.
+    // 3) if no matching launch configuration is found, we show an error message and throw an error.
+    const exactConfigExists = this.launchConfigsManager.launchConfigurations.some((config) =>
+      _.isEqual(config, this.selectedLaunchConfiguration)
     );
-    if (!_.isEqual(matchingLaunchConfig, this.selectedLaunchConfiguration)) {
-      if (matchingLaunchConfig) {
-        return this.selectLaunchConfiguration(matchingLaunchConfig);
+    if (!exactConfigExists) {
+      // find config with the same name and app root as the best candidate
+      const matchingConfigCandidate = this.launchConfigsManager.launchConfigurations.find(
+        (config) =>
+          config.name === this.selectedLaunchConfiguration.name &&
+          config.appRoot === this.selectedLaunchConfiguration.appRoot
+      );
+      if (matchingConfigCandidate) {
+        return this.selectLaunchConfiguration(matchingConfigCandidate);
       } else {
         window.showErrorMessage(
           "The selected launch configuration was deleted or changed. Please select a new launch configuration from the list of available ones.",
