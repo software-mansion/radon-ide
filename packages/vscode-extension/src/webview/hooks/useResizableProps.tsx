@@ -24,7 +24,7 @@ export function useResizableProps({
   setZoomLevel,
   device,
 }: UseResizableProps) {
-  const frame = useDeviceFrame(device);
+  const frame = useDeviceFrame(device) ?? { height: 800, width: 400 };
   const [phoneHeight, setPhoneHeight] = useState<PhoneHeight>(0);
 
   const [maxWidth, setMaxWidth] = useState<"100%" | undefined>(undefined);

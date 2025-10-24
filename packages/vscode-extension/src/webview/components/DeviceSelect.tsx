@@ -12,6 +12,7 @@ import RichSelectItem from "./shared/RichSelectItem";
 import { useStore } from "../providers/storeProvider";
 import { DeviceInfo, DevicePlatform } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { useDevices } from "../hooks/useDevices";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -76,26 +77,15 @@ function renderDevices(
   );
 }
 
-function partitionDevices(devices: DeviceInfo[]): Record<string, DeviceInfo[]> {
-  const validDevices = devices.filter(({ modelId }) => modelId.length > 0);
-
-  const [iosDevices, androidDevices] = _.partition(
-    validDevices,
-    ({ platform }) => platform === DevicePlatform.IOS
-  );
-  return {
-    iOS: iosDevices,
-    Android: androidDevices,
-  };
-}
-
 function DeviceSelect() {
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
 
   const { projectState, project } = useProject();
 
-  const devices = use$(store$.devicesState.devices) ?? [];
+  const devicesByType = use$(store$.devicesState.devicesByType);
+  const devices = useDevices(store$);
+
   const { openModal } = useModal();
 
   const hasNoDevices = devices.length === 0;
@@ -106,7 +96,21 @@ function DeviceSelect() {
 
   const runningSessionIds = Object.keys(deviceSessions);
 
-  const deviceSections = partitionDevices(devices ?? []);
+  function shouldShowDevice(device: DeviceInfo) {
+    // NOTE: we hide disconnected physical devices in the dropdown, since they're not selectable anyway
+    if (device.platform === DevicePlatform.Android && !device.emulator) {
+      return device.available;
+    }
+
+    return true;
+  }
+
+  const deviceSections = {
+    "iOS": devicesByType.iosSimulators ?? [],
+    "Android Emulators": devicesByType.androidEmulators ?? [],
+    "Connected Android Devices":
+      devicesByType.androidPhysicalDevices?.filter(shouldShowDevice) ?? [],
+  };
 
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {

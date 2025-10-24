@@ -23,7 +23,7 @@ export const progressiveRetryTimeout = (retryNumber: number) =>
   Math.min(100 * Math.max(retryNumber, 1), 1000);
 
 export function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
 }
 
 type Cancellable = Parameters<CancelToken["adapt"]>[0];
