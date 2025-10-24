@@ -1,23 +1,5 @@
 import { Store, Element } from "../../../third-party/react-devtools/headless";
 
-const _isExpoRouterInTree = (store: Store, root?: Element): boolean => {
-  const element = root ?? (store.getElementByID(store.roots[0]) as unknown as Element);
-
-  if (element.displayName === "ExpoRoot") {
-    return true;
-  }
-
-  return element.children.some((childId) => {
-    const child = store.getElementByID(childId) as unknown as Element | null;
-
-    if (!child) {
-      return false;
-    }
-
-    return _isExpoRouterInTree(store, child);
-  });
-};
-
 const findTreeEntryPoint = (store: Store, root?: Element): Element | null => {
   const element = root ?? (store.getElementByID(store.roots[0]) as unknown as Element);
 
