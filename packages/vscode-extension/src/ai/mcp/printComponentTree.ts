@@ -48,7 +48,7 @@ function prettyPrintComponentTree(store: Store, root?: Element, depth: number = 
   const childrenIds = element.children;
 
   // `type = 2` means element is `Context.Provider`.
-  // These are always wrapped with a more descriptive name when user-made.
+  // These are always wrapped by a component with a more descriptive name when user-made.
   const isContextProvider = element.type === 2;
 
   const childDepth = isContextProvider ? depth : depth + 1;
