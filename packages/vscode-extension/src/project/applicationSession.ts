@@ -458,6 +458,7 @@ export class ApplicationSession implements Disposable {
     const debugSession = this.debugSession;
     this.debugSession = undefined;
     await debugSession?.dispose();
+    this.networkBridge.clearDebugSession();
     this.cdpDevtoolsServer?.dispose();
     this.cdpDevtoolsServer = undefined;
   }
