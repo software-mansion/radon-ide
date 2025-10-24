@@ -1,17 +1,35 @@
 import { Store, Element } from "../../../third-party/react-devtools/headless";
 
+const _isExpoRouterInTree = (store: Store, root?: Element): boolean => {
+  const element = root ?? (store.getElementByID(store.roots[0]) as unknown as Element);
+
+  if (element.displayName === "ExpoRoot") {
+    return true;
+  }
+
+  return element.children.some((childId) => {
+    const child = store.getElementByID(childId) as unknown as Element | null;
+
+    if (!child) {
+      return false;
+    }
+
+    return _isExpoRouterInTree(store, child);
+  });
+};
+
 const prettyPrintComponentTree = (store: Store, root?: Element, depth: number = 0): string => {
   const element = root ?? (store.getElementByID(store.roots[0]) as unknown as Element);
 
   const childrenIds = element.children;
 
-  let found: string = "  ".repeat(depth) + `<${element.displayName}>\n`;
+  let found: string = "  ".repeat(depth) + `<${element.displayName} type=${element.type}>\n`;
 
   for (const childId of childrenIds) {
     const child = store.getElementByID(childId) as unknown as Element;
 
     if (!child) {
-      return "NOT FOUND";
+      return `Component tree is corrupted. Element with ID ${childId} not found.`;
     }
 
     found += prettyPrintComponentTree(store, child, depth + 1);
