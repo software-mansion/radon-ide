@@ -13,9 +13,14 @@ interface FeatureGridCardProps {
 const FeaturesGridCard = forwardRef<HTMLDivElement, FeatureGridCardProps>(
   ({ label, title, content, imageSrc }, ref) => {
     const { isFeatures } = usePageType();
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => setMounted(true), []);
-    if (!mounted) return null;
+    const [imageLoaded, setImageLoaded] = useState(false);
+
+    useEffect(() => {
+      if (!imageSrc) return;
+      const img = new Image();
+      img.src = imageSrc;
+      img.onload = () => setImageLoaded(true);
+    }, [imageSrc]);
 
     return (
       <div ref={ref} className={!isFeatures ? styles.reverseContainer : styles.container}>
@@ -26,7 +31,9 @@ const FeaturesGridCard = forwardRef<HTMLDivElement, FeatureGridCardProps>(
           </div>
           {isFeatures && <p className={styles.textContent}>{content}</p>}
         </div>
-        <img className={clsx(styles.gridSvg, isFeatures && styles.widthSvg)} src={imageSrc}></img>
+        {imageLoaded && (
+          <img className={clsx(styles.gridSvg, isFeatures && styles.widthSvg)} src={imageSrc}></img>
+        )}
       </div>
     );
   }
