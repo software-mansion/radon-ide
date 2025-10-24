@@ -1,60 +1,81 @@
 const ORIGINAL_TRANSFORMER_PATH = process.env.RADON_IDE_ORIG_BABEL_TRANSFORMER_PATH;
 const path = require("path");
 const fs = require("fs");
-const { requireFromAppDir, requireFromAppDependency, overrideModuleFromAppDependency } = require("./metro_helpers");
-const buildPluginWarnOnDeeImports = require("./babel_plugins/build-plugin-warn-on-deep-imports");
+const {
+  requireFromAppDir,
+  requireFromAppDependency,
+  overrideModuleFromAppDependency,
+} = require("./metro_helpers");
 
-// In some configurations, React Native may pull several different version of JSX transform plugins:
-// plugin-transform-react-jsx-self, plugin-transform-react-jsx-source, plugin-transform-react-jsx and
-// plugin-transform-react-jsx-development. For line and column numbers to be added to components, we
-// need the development version of the plugin. Apparently, it is up to the order of plugins being added
-// whether the development version would actually be allowed to produce the JSXElement node output.
-//
-// Since babel doesn't have good extension points, as the plugin system relies on directly requiring plugin
-// modules, the only option to intercept that process is by overriding require. This, however isn't ideal
-// as we don't know which plugins are loaded and in what order.
-//
-// In addition to that, there are some extra constraints that make this even harder. Specifically, the development
-// version of JSX transform plugin (plugin-transform-react-jsx-development) has a check that throws an error
-// when plugin-transform-jsx-source or plugin-transform-jsx-self run on the same source files, or in case it is registered
-// more than once. Also, some libraries, like nativewind, rely on specific order of JSX transform to happen. Because of
-// that we take the following approach:
-// 1) we disable plugin-transform-jsx-source and plugin-transform-jsx-self plugins entirely as they are deprecated and
-// don't provide any value except from interfering with JSX dev plugin
-// 2) we replace non-dev version (plugin-transform-jsx) with dev version (plugin-transform-jsx-development) to ensure that
-// the JSX transformation runs at the right time.
-// 3) we keep a flag to know if the non-dev version was used (and replaced by dev version), and if it was, we disable
-// further requires of the dev version to avoid it being installed the second time.
-//
-// The downside of the current approach is if the dev version is used first and the non-dev version is listed later,
-// we will end up replacing the non-dev version and as a result we will run the dev version twice which will result in
-// an error. In practice we haven't yet encountered such a setup.
-const jsxDevTransformer = requireFromAppDependency("react-native", "@babel/plugin-transform-react-jsx/lib/development");
-let nonJSXDevTransformUsed = false;
-overrideModuleFromAppDependency("react-native", "@babel/plugin-transform-react-jsx", (...args) => {
-  nonJSXDevTransformUsed = true;
-  return jsxDevTransformer.default(...args);
-});
-overrideModuleFromAppDependency("react-native", "@babel/plugin-transform-react-jsx-development", (...args) => {
-  if (nonJSXDevTransformUsed) {
-    return {
-      name: "rnide-disabled-jsx-dev-transform",
-      visitor: {},
-    };
-  } else {
-    return jsxDevTransformer.default(...args);
-  }
-});
-overrideModuleFromAppDependency("react-native", "@babel/plugin-transform-react-jsx-source", {
-  name: "rnide-disabled-jsx-source-transform",
-  visitor: {},
-});
-overrideModuleFromAppDependency("react-native", "@babel/plugin-transform-react-jsx-self", {
-  name: "rnide-disabled-jsx-self-transform",
-  visitor: {},
-});
+const RN_VERSION = requireFromAppDir("react-native/package.json").version;
 
-overrideModuleFromAppDependency("react-native", "@react-native/babel-preset/src/plugin-warn-on-deep-imports.js", buildPluginWarnOnDeeImports(process.env.RADON_IDE_LIB_PATH))
+// The access to component stack in versions prior to 0.80 we rely on the JSX transform plugin. Apparently
+// in many setup the transform is misconfigured and does not produce the desirable output that we can later access.
+// In addition, on versions between 0.74 and 0.79 we patch the React renderer in order to make the source information
+// being added and passed down to the fiber nodes (more on that below).
+// Radon IDE only supports RN 0.74+ so it is ok to only check for 0.7 prefix (hopefully we will never reach 0.700)
+if (RN_VERSION.startsWith("0.7")) {
+  // In some configurations, React Native may pull several different version of JSX transform plugins:
+  // plugin-transform-react-jsx-self, plugin-transform-react-jsx-source, plugin-transform-react-jsx and
+  // plugin-transform-react-jsx-development. For line and column numbers to be added to components, we
+  // need the development version of the plugin. Apparently, it is up to the order of plugins being added
+  // whether the development version would actually be allowed to produce the JSXElement node output.
+  //
+  // Since babel doesn't have good extension points, as the plugin system relies on directly requiring plugin
+  // modules, the only option to intercept that process is by overriding require. This, however isn't ideal
+  // as we don't know which plugins are loaded and in what order.
+  //
+  // In addition to that, there are some extra constraints that make this even harder. Specifically, the development
+  // version of JSX transform plugin (plugin-transform-react-jsx-development) has a check that throws an error
+  // when plugin-transform-jsx-source or plugin-transform-jsx-self run on the same source files, or in case it is registered
+  // more than once. Also, some libraries, like nativewind, rely on specific order of JSX transform to happen. Because of
+  // that we take the following approach:
+  // 1) we disable plugin-transform-jsx-source and plugin-transform-jsx-self plugins entirely as they are deprecated and
+  // don't provide any value except from interfering with JSX dev plugin
+  // 2) we replace non-dev version (plugin-transform-jsx) with dev version (plugin-transform-jsx-development) to ensure that
+  // the JSX transformation runs at the right time.
+  // 3) we keep a flag to know if the non-dev version was used (and replaced by dev version), and if it was, we disable
+  // further requires of the dev version to avoid it being installed the second time.
+  //
+  // The downside of the current approach is if the dev version is used first and the non-dev version is listed later,
+  // we will end up replacing the non-dev version and as a result we will run the dev version twice which will result in
+  // an error. In practice we haven't yet encountered such a setup.
+  const jsxDevTransformer = requireFromAppDependency(
+    "react-native",
+    "@babel/plugin-transform-react-jsx/lib/development"
+  );
+  let nonJSXDevTransformUsed = false;
+  overrideModuleFromAppDependency(
+    "react-native",
+    "@babel/plugin-transform-react-jsx",
+    (...args) => {
+      nonJSXDevTransformUsed = true;
+      return jsxDevTransformer.default(...args);
+    }
+  );
+  overrideModuleFromAppDependency(
+    "react-native",
+    "@babel/plugin-transform-react-jsx-development",
+    (...args) => {
+      if (nonJSXDevTransformUsed) {
+        return {
+          name: "rnide-disabled-jsx-dev-transform",
+          visitor: {},
+        };
+      } else {
+        return jsxDevTransformer.default(...args);
+      }
+    }
+  );
+  overrideModuleFromAppDependency("react-native", "@babel/plugin-transform-react-jsx-source", {
+    name: "rnide-disabled-jsx-source-transform",
+    visitor: {},
+  });
+  overrideModuleFromAppDependency("react-native", "@babel/plugin-transform-react-jsx-self", {
+    name: "rnide-disabled-jsx-self-transform",
+    visitor: {},
+  });
+}
 
 function transformWrapper({ filename, src, ...rest }) {
   function isTransforming(unixPath) {
@@ -86,12 +107,8 @@ function transformWrapper({ filename, src, ...rest }) {
   } else if (isTransforming("node_modules/redux-devtools-expo-dev-plugin/build/index.js")) {
     src = `require("__RNIDE_lib__/plugins/expo_dev_plugins.js").register("redux-devtools-expo-dev-plugin");${src}`;
   } else if (
-    isTransforming(
-      "node_modules/react-native/Libraries/Renderer/implementations/ReactFabric-dev.js"
-    ) ||
-    isTransforming(
-      "node_modules/react-native/Libraries/Renderer/implementations/ReactNativeRenderer-dev.js"
-    )
+    isTransforming("react-native/Libraries/Renderer/implementations/ReactFabric-dev.js") ||
+    isTransforming("react-native/Libraries/Renderer/implementations/ReactNativeRenderer-dev.js")
   ) {
     // This is a temporary workaround for inspector in React Native 0.74 & 0.75 & 0.76
     // The inspector broke in those versions because of this commit that's been included
@@ -116,50 +133,58 @@ function transformWrapper({ filename, src, ...rest }) {
     // from the application's own node_modules and not from the application's dependencies.
     // This breaks module resolution inside the renderer, so we must replace the entire
     // renderer source code in-place instead of using module re-exports.
-    const { version } = requireFromAppDir("react-native/package.json");
+    //
+    // Thankfully, in RN 0.80 the new owner stack-based approach made it possible to
+    // retrieve the actual call-site stack for components. Therefore the below logic
+    // only covers versions on or after 0.74 but before 0.80.
+    const { version: reactNativeVersion } = requireFromAppDir("react-native/package.json");
     const rendererFileName = filename.split(path.sep).pop();
     if (
-      version.startsWith("0.74") ||
-      version.startsWith("0.75") ||
-      version.startsWith("0.76") ||
-      version.startsWith("0.77")
+      reactNativeVersion.startsWith("0.74") ||
+      reactNativeVersion.startsWith("0.75") ||
+      reactNativeVersion.startsWith("0.76") ||
+      reactNativeVersion.startsWith("0.77")
     ) {
-      const rendererFilePath = path.join(process.env.RADON_IDE_LIB_PATH, "rn-renderer", "react-native-74-77", rendererFileName);
+      const rendererFilePath = path.join(
+        process.env.RADON_IDE_LIB_PATH,
+        "rn-renderer",
+        "react-native-74-77",
+        rendererFileName
+      );
       const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
       src = rendererAsString;
     }
-    if (version.startsWith("0.78") || version.startsWith("0.79")) {
-      const rendererFilePath = path.join(process.env.RADON_IDE_LIB_PATH, "rn-renderer", "react-native-78-79", rendererFileName);
-      const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
-      src = rendererAsString;
-    }
-    if (version.startsWith("0.80") || version.startsWith("0.81")) {
-      const rendererFilePath = path.join(process.env.RADON_IDE_LIB_PATH, "rn-renderer", "react-native-80-81", rendererFileName);
-      const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
-      src = rendererAsString;
-    }
-    if (version.startsWith("0.82")) {
-      const rendererFilePath = path.join(process.env.RADON_IDE_LIB_PATH, "rn-renderer", "react-native-82", rendererFileName);
+    const { version: reactVersion } = requireFromAppDir("react/package.json");
+    if ((reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) && reactVersion.startsWith("19.0")) {
+      const rendererFilePath = path.join(
+        process.env.RADON_IDE_LIB_PATH,
+        "rn-renderer",
+        "react-native-78-79",
+        rendererFileName
+      );
       const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
       src = rendererAsString;
     }
   } else if (isTransforming("node_modules/react/cjs/react-jsx-dev-runtime.development.js")) {
-    const { version } = requireFromAppDir("react-native/package.json");
+    const { version: reactNativeVersion } = requireFromAppDir("react-native/package.json");
     const jsxRuntimeFileName = filename.split(path.sep).pop();
-    if (version.startsWith("0.78") || version.startsWith("0.79")) {
+    const reactVersion = requireFromAppDir("react/package.json").version;
+    if ((reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) && reactVersion.startsWith("19.0")) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}");`;
-    }
-    if (version.startsWith("0.80") || version.startsWith("0.81")) {
-      src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-80-81/${jsxRuntimeFileName}");`;
-    }
-    if (version.startsWith("0.82")) {
-      src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-82/${jsxRuntimeFileName}");`;
     }
   } else if (
     isTransforming("node_modules/@tanstack/react-query/src/index.ts") ||
-    isTransforming("node_modules/@tanstack/react-query/build/lib/index.js")
+    isTransforming("node_modules/@tanstack/react-query/build/lib/index.js") ||
+    isTransforming("node_modules/@tanstack/react-query/build/legacy/index.js") ||
+    isTransforming("node_modules/@tanstack/react-query/build/modern/index.js") ||
+    isTransforming("node_modules/@tanstack/react-query/build/lib/index.mjs") ||
+    isTransforming("node_modules/@tanstack/react-query/build/legacy/index.mjs") ||
+    isTransforming("node_modules/@tanstack/react-query/build/modern/index.mjs")
   ) {
-    src = `require("__RNIDE_lib__/plugins/react-query-devtools.js");${src}`;
+    // note: react-query-devtools integration has to be done after the QueryClient class is required
+    // which is why the src needs to come before it. Also we need to ensure that we don't
+    // attach our code in the line containing a comment so we need to add a new line beforehand.
+    src = `${src};\nrequire("__RNIDE_lib__/plugins/react-query-devtools.js");`;
   } else if (isTransforming("/lib/rn-internals/rn-internals.js")) {
     const { version } = requireFromAppDir("react-native/package.json");
     const majorMinorVersion = version.split(".").slice(0, 2).join(".");

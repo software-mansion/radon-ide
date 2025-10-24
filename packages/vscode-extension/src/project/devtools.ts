@@ -14,7 +14,7 @@ import {
   Wall,
   FrontendBridge,
 } from "../../third-party/react-devtools/headless";
-import { BaseInspectorBridge, RadonInspectorBridgeEvents } from "./bridge";
+import { InspectorBridge, RadonInspectorBridgeEvents } from "./inspectorBridge";
 import { DebugSession } from "../debugging/DebugSession";
 import { disposeAll } from "../utilities/disposables";
 
@@ -34,7 +34,7 @@ type IdeMessage = Parameters<IdeMessageListener>[0];
 /**
  * InspectorBridge implementation that uses the React DevTools frontend to receive messages from the application.
  */
-export class DevtoolsInspectorBridge extends BaseInspectorBridge implements Disposable {
+export class DevtoolsInspectorBridge extends InspectorBridge implements Disposable {
   private devtoolsConnection: DevtoolsConnection | undefined;
   private devtoolsServerListener?: Disposable;
   private devtoolsConnectionListeners: Disposable[] = [];

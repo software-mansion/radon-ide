@@ -43,6 +43,13 @@
   font-family: var(--vscode-font-family);
   font-size: var(--vscode-font-size);
   font-weight: var(--vscode-font-weight);
+  height: auto;
+  font-size: var(--vscode-font-size);
+  box-shadow: unset;
+  gap: 0;
+  padding: 0;
+  display: inline-block;
+  border-radius: 0;
   line-height: normal;
   padding: 0;
   margin: 0;

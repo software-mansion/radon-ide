@@ -5,6 +5,7 @@ import path, { join } from "path";
 import { finished } from "stream/promises";
 import { Server } from "net";
 import fetch from "node-fetch";
+import { CancelToken } from "./cancelToken";
 
 export const ANDROID_FAIL_ERROR_MESSAGE = "Android failed.";
 export const IOS_FAIL_ERROR_MESSAGE = "IOS failed.";
@@ -170,17 +171,18 @@ function isPidRunning(pid: number) {
   }
 }
 
-export async function downloadBinary(url: string, destination: string) {
+export async function downloadBinary(url: string, destination: string, cancelToken: CancelToken) {
   let body: NodeJS.ReadableStream;
   let ok: boolean;
   try {
-    const result = await fetch(url);
+    const result = await fetch(url, { signal: cancelToken.signal });
     if (!result.body) {
       return false;
     }
     body = result.body;
     ok = result.ok;
   } catch (_e) {
+    cancelToken.throwIfCancelled();
     // Network error
     return false;
   }

@@ -42,9 +42,11 @@ import {
   DevtoolsServer,
   CDPDevtoolsServer,
 } from "./devtools";
-import { RadonInspectorBridge } from "./bridge";
+import { RadonInspectorBridge } from "./inspectorBridge";
+import { NETWORK_EVENT_MAP, NetworkBridge } from "./networkBridge";
 import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
+import { isCDPMethod } from "../network/types/panelMessageProtocol";
 
 const MAX_URL_HISTORY_SIZE = 20;
 
@@ -78,6 +80,7 @@ export class ApplicationSession implements Disposable {
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
   private debugSessionEventSubscription?: Disposable;
+  private networkBridge: NetworkBridge;
   private isActive = false;
   private inspectCallID = 7621;
   private devtools: DevtoolsConnection | undefined;
@@ -144,7 +147,13 @@ export class ApplicationSession implements Disposable {
     try {
       onLaunchStage(StartupMessage.Launching);
       await cancelToken.adapt(
-        device.launchApp(buildResult, metro.port, devtoolsPort, launchArguments)
+        device.launchApp(
+          buildResult,
+          metro.port,
+          devtoolsPort,
+          launchArguments,
+          applicationContext.appRootFolder
+        )
       );
 
       const appReadyPromise = waitForAppReady(session.inspectorBridge, cancelToken);
@@ -183,6 +192,7 @@ export class ApplicationSession implements Disposable {
     private readonly supportedOrientations: DeviceRotation[]
   ) {
     this.registerMetroListeners();
+    this.networkBridge = new NetworkBridge();
 
     const devtoolsInspectorBridge = new DevtoolsInspectorBridge();
     this._inspectorBridge = devtoolsInspectorBridge;
@@ -202,8 +212,11 @@ export class ApplicationSession implements Disposable {
     this.toolsManager = new ToolsManager(
       this.stateManager.getDerived("toolsState"),
       devtoolsInspectorBridge,
-      this.applicationContext.workspaceConfigState
+      this.networkBridge,
+      this.applicationContext.workspaceConfigState,
+      this.metro.port
     );
+
     this.disposables.push(this.toolsManager);
     this.disposables.push(this.stateManager);
   }
@@ -245,6 +258,7 @@ export class ApplicationSession implements Disposable {
   private async setupDebugSession(): Promise<void> {
     this.debugSession = await this.createDebugSession();
     this.debugSessionEventSubscription = this.registerDebugSessionListeners(this.debugSession);
+    this.networkBridge.setDebugSession(this.debugSession);
     if (this.cdpDevtoolsServer) {
       this.cdpDevtoolsServer.dispose();
       this.cdpDevtoolsServer = undefined;
@@ -318,6 +332,17 @@ export class ApplicationSession implements Disposable {
     }
   };
 
+  private onNetworkEvent = (event: DebugSessionCustomEvent): void => {
+    const method = event.body?.method;
+    if (!method || !isCDPMethod(method)) {
+      Logger.error("Unknown network event method:", method);
+      this.networkBridge.emitEvent("unknownEvent", event.body);
+      return;
+    }
+
+    this.networkBridge.emitEvent(NETWORK_EVENT_MAP[method], event.body);
+  };
+
   private registerDebugSessionListeners(debugSession: DebugSession): Disposable {
     const subscriptions: Disposable[] = [
       debugSession.onConsoleLog(this.onConsoleLog),
@@ -325,6 +350,7 @@ export class ApplicationSession implements Disposable {
       debugSession.onDebuggerResumed(this.onDebuggerResumed),
       debugSession.onProfilingCPUStarted(this.onProfilingCPUStarted),
       debugSession.onProfilingCPUStopped(this.onProfilingCPUStopped),
+      debugSession.onNetworkEvent(this.onNetworkEvent),
     ];
     return new Disposable(() => {
       disposeAll(subscriptions);
@@ -436,6 +462,7 @@ export class ApplicationSession implements Disposable {
     const debugSession = this.debugSession;
     this.debugSession = undefined;
     await debugSession?.dispose();
+    this.networkBridge.clearDebugSession();
     this.cdpDevtoolsServer?.dispose();
     this.cdpDevtoolsServer = undefined;
   }
@@ -676,6 +703,20 @@ export class ApplicationSession implements Disposable {
     let stack = undefined;
     if (requestStack && inspectData?.stack) {
       stack = inspectData.stack;
+      // for stack entries with source names that start with http, we need to decipher original source positions
+      // using source maps via the debugger
+      await Promise.all(
+        stack.map(async (item) => {
+          if (item.source?.fileName.startsWith("http") && this.debugSession) {
+            try {
+              item.source = await this.debugSession.findOriginalPosition(item.source);
+            } catch (e) {
+              Logger.error("Error finding original source position for stack item", item, e);
+            }
+          }
+        })
+      );
+
       const inspectorExcludePattern =
         this.applicationContext.workspaceConfiguration.general.inspectorExcludePattern;
       const patterns = inspectorExcludePattern?.split(",").map((pattern) => pattern.trim());

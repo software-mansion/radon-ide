@@ -16,11 +16,7 @@ describe("9 - Radon Settings", () => {
     ({ elementHelperService, radonViewsService, managingDevicesService } =
       initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
+    await managingDevicesService.prepareDevices();
 
     view = new WebView();
     await view.switchBack();
@@ -28,14 +24,14 @@ describe("9 - Radon Settings", () => {
 
   beforeEach(async () => {
     radonViewsService.openRadonIDEPanel();
+    // it may take some time to load this element especially on GitHub CI
+    await elementHelperService.findAndWaitForElementByTag("phone-wrapper");
   });
 
   it("should zoom in and out", async () => {
     // it may take some time to load this element especially on GitHub CI
     const phoneWrapper = await elementHelperService.findAndWaitForElementByTag(
-      "phone-wrapper",
-      "timedout waiting for phone wrapper element",
-      15000
+      "phone-wrapper"
     );
     let height = (await phoneWrapper.getRect()).height;
     let newHeight = height;
@@ -53,9 +49,7 @@ describe("9 - Radon Settings", () => {
   it("should zoom in and out to preset levels", async () => {
     const zoomLevels = [0.5, 0.6, 0.7, 0.8, 0.9, 1];
     const phoneWrapper = await elementHelperService.findAndWaitForElementByTag(
-      "phone-wrapper",
-      "timedout waiting for phone wrapper element",
-      15000
+      "phone-wrapper"
     );
     let height = 0;
 
@@ -82,9 +76,7 @@ describe("9 - Radon Settings", () => {
       );
 
     const phoneWrapper = await elementHelperService.findAndWaitForElementByTag(
-      "phone-wrapper",
-      "timedout waiting for phone wrapper element",
-      15000
+      "phone-wrapper"
     );
 
     const screenHeight = (await phoneDisplayContainer.getRect()).height;
@@ -100,6 +92,67 @@ describe("9 - Radon Settings", () => {
     const phoneHeight = (await phoneWrapper.getRect()).height;
 
     assert.equal(screenHeight, phoneHeight);
+  });
+
+  it("should fit device width to screen for device in landscape orientation", async () => {
+    try {
+      await driver.executeScript(`
+        const evt = new KeyboardEvent('keydown', {
+          key: '0',
+          code: 'Digit0',
+          altKey: true,
+          ctrlKey: true,
+          bubbles: true
+        });
+        document.dispatchEvent(evt);
+        `);
+
+      const phoneDisplayContainer =
+        await elementHelperService.findAndWaitForElementByTag(
+          "phone-display-container"
+        );
+
+      const phoneWrapper =
+        await elementHelperService.findAndWaitForElementByTag("phone-wrapper");
+
+      const screenWidth = (await phoneDisplayContainer.getRect()).width;
+
+      await radonViewsService.showZoomControls();
+      await elementHelperService.findAndClickElementByTag(
+        "zoom-select-trigger"
+      );
+      await elementHelperService.findAndClickElementByTag(
+        `zoom-select-item-0.5`
+      );
+
+      await radonViewsService.showZoomControls();
+      await elementHelperService.findAndClickElementByTag(
+        "zoom-select-trigger"
+      );
+      await elementHelperService.findAndClickElementByTag(
+        `zoom-select-item-fit`
+      );
+
+      const phoneWidth = (await phoneWrapper.getRect()).width;
+
+      assert.equal(screenWidth, phoneWidth);
+    } finally {
+      const phoneWrapper =
+        await elementHelperService.findAndWaitForElementByTag("phone-wrapper");
+      const phoneRect = await phoneWrapper.getRect();
+      if (phoneRect.width > phoneRect.height) {
+        await driver.executeScript(`
+        const evt = new KeyboardEvent('keydown', {
+          key: '9',
+          code: 'Digit9',
+          altKey: true,
+          ctrlKey: true,
+          bubbles: true
+        });
+        document.dispatchEvent(evt);
+        `);
+      }
+    }
   });
 
   it("should move Radon IDE between side bar and editor area", async () => {

@@ -97,4 +97,18 @@ describe("2 - Main interface buttons tests", () => {
       "approot-select-dropdown-content"
     );
   });
+
+  it("Should open add launch configuration modal", async function () {
+    await elementHelperService.findAndClickElementByTag(
+      "radon-bottom-bar-approot-select-dropdown-trigger"
+    );
+
+    await elementHelperService.findAndClickElementByTag(
+      "add-launch-config-button"
+    );
+
+    await elementHelperService.findAndWaitForElementByTag(
+      "launch-configuration-modal"
+    );
+  });
 });

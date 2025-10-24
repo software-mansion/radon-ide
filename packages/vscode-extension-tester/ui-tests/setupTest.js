@@ -13,8 +13,10 @@ import {
   getAppWebsocket,
   closeServer,
 } from "../server/webSocketServer.js";
+import initServices from "../services/index.js";
 import startRecording from "../utils/screenRecording.js";
 import getConfiguration from "../configuration.js";
+import { texts } from "../utils/constants.js";
 
 const { IS_RECORDING } = getConfiguration();
 
@@ -51,12 +53,19 @@ before(async function () {
 });
 
 afterEach(async function () {
+  // in case some modal stayed opened after tests
+  await driver.actions().sendKeys(Key.ESCAPE).perform();
+
+  const { vscodeHelperService } = initServices(driver);
   if (this.currentTest.state === "failed") {
     driver = VSBrowser.instance.driver;
     const image = await driver.takeScreenshot();
 
     const screenshotDir = path.join(process.cwd(), "screenshots");
-    const filePath = path.join(screenshotDir, `${this.currentTest.title}.png`);
+    const filePath = path.join(
+      screenshotDir,
+      `${this.currentTest.title}-${Date.now()}.png`
+    );
 
     fs.mkdirSync(screenshotDir, { recursive: true });
     fs.writeFileSync(filePath, image, "base64");
@@ -70,17 +79,9 @@ afterEach(async function () {
   await new EditorView().closeAllEditors();
   await driver.switchTo().defaultContent();
 
-  // this method of reloading window seems to be more reliable than workbench.executeCommand("Developer: Reload Window")
-  await driver
-    .actions()
-    .keyDown(Key.SHIFT)
-    .keyDown(Key.COMMAND)
-    .sendKeys("p")
-    .keyUp(Key.COMMAND)
-    .keyUp(Key.SHIFT)
-    .perform();
-  await driver.actions().sendKeys("Developer: Reload Window").perform();
-  await driver.actions().sendKeys(Key.ENTER).perform();
+  await vscodeHelperService.openCommandLineAndExecute(
+    "Developer: Reload Window"
+  );
 
   driver.wait(async () => {
     try {
@@ -107,6 +108,11 @@ after(async function () {
     await recorder.stop();
   }
   closeServer();
+  console.log(
+    `==== Summary app: ${texts.expectedProjectName} | code version: ${
+      process.env["CODE_VERSION"] || "latest"
+    } ====`
+  );
   // console log additional informations after standard mocha report
   setTimeout(() => {
     if (failedTests.length > 0) {
@@ -127,6 +133,7 @@ after(async function () {
         `npm run run-tests-on-VM -- <test-app> ${failingTestNumbers.join(" ")}`
       );
     }
+    console.log("============");
   }, 0);
 });
 

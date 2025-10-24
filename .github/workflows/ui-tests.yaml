@@ -1,4 +1,6 @@
 name: Build VSIX and Run Tests (macOS)
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:
@@ -26,6 +28,7 @@ on:
           - "expo-52-prebuild-with-plugins"
           - "expo-53"
           - "expo-54"
+          - "expo-54-prebuild-with-plugins"
           # - "expo-52-eas"
           # - "expo-50-dev-client"
           # - "expo-51-dev-client"
@@ -59,18 +62,18 @@ jobs:
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - id: set-matrix
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "matrix={\"include\":[{\"testApp\":\"${{ github.event.inputs.testApp }}\",\"node\":\"${{ github.event.inputs.node || '22' }}\",\"isRecording\":\"${{ github.event.inputs.isRecording }}\",\"testsToRun\":\"${{ github.event.inputs.testsToRun }}\",\"testsToExclude\":\"${{ github.event.inputs.testsToExclude }}\",\"codeVersion\":\"${{ github.event.inputs.VSCodeVersion || 'latest' }}\"}]}" >> $GITHUB_OUTPUT
           else
-            echo "matrix={\"include\":[ \
-              {\"testApp\":\"react-native-81\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"latest\"}, \
-              {\"testApp\":\"expo-53\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"latest\"}, \
-              {\"testApp\":\"expo-54\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"latest\"}, \
-              {\"testApp\":\"react-native-81\",\"node\":\"22\",\"isRecording\":\"true\",\"testsToRun\":\"\",\"testsToExclude\":\"\",\"codeVersion\":\"1.99.1\"} \
-            ]}" >> $GITHUB_OUTPUT
+            MATRIX=$(jq -c . autorun_test_params.json)
+            echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
           fi
+        working-directory: .github/matrices
 
   build-and-test:
     needs: set-matrix
@@ -146,14 +149,27 @@ jobs:
         if: ${{ matrix.isRecording == 'true' }}
         run: brew install ffmpeg
 
-      - name: Run setup-run-tests
-        run: npm run setup-run-tests -- ${{ matrix.testsToRun }} --exclude ${{ matrix.testsToExclude }}
+      - name: Run setup-run-tests and save output
+        run: |
+          set -o pipefail
+          mkdir -p artifacts
+          npm run setup-run-tests -- ${{ matrix.testsToRun }} --exclude ${{ matrix.testsToExclude }} \
+            | tee artifacts/test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}.txt
         working-directory: packages/vscode-extension-tester
         env:
           PROJECT_NAME: ${{ matrix.testApp }}
           IS_RECORDING: ${{ matrix.isRecording }}
           CODE_VERSION: ${{ matrix.codeVersion }}
           IS_GITHUB_ACTIONS: "true"
+
+      - name: Upload test output artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}
+          path: packages/vscode-extension-tester/artifacts/test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}.txt
+          retention-days: 7
 
       - name: make video
         if: ${{ always() && matrix.isRecording == 'true' }}
@@ -165,7 +181,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: vscode-ui-screenshots
+          name: vscode-ui-screenshots-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}
           path: packages/vscode-extension-tester/screenshots/
           retention-days: 7
 
@@ -174,7 +190,7 @@ jobs:
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
-          name: output
+          name: output-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}
           path: packages/vscode-extension-tester/output.txt
           retention-days: 7
 
@@ -183,7 +199,7 @@ jobs:
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
-          name: vscode-ui-recording
+          name: vscode-ui-recording-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}
           path: packages/vscode-extension-tester/videos/vscode-ui-recording.mp4
           retention-days: 7
 
@@ -192,8 +208,17 @@ jobs:
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
-          name: radon-screenshot
+          name: radon-screenshot-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}
           path: packages/vscode-extension-tester/data/screenshotTest..png
+          retention-days: 7
+
+      - name: Upload automatedTests.tsx
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: automatedTests.tsx
+          path: packages/vscode-extension-tester/data/react-native-app/shared/automatedTests.tsx
           retention-days: 7
 
       - name: Upload recording made by radon
@@ -201,6 +226,33 @@ jobs:
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
-          name: radon-recording
+          name: radon-recording-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}
           path: packages/vscode-extension-tester/data/recordingTest..mp4
+          retention-days: 7
+
+  summarize:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: always()
+    timeout-minutes: 2
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all test output artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./all_results
+
+      - name: Summary
+        run: |
+          mkdir -p packages/vscode-extension-tester/combined
+          find ./all_results -type f -name "test-output-*.txt" -exec cat {} + > packages/vscode-extension-tester/combined/all_results.txt
+          python3 packages/vscode-extension-tester/scripts/make_summary.py packages/vscode-extension-tester/combined/all_results.txt
+
+      - name: Upload combined results
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-test-results
+          path: packages/vscode-extension-tester/combined/all_results.txt
           retention-days: 7
