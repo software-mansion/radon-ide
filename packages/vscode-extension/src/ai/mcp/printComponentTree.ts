@@ -1,18 +1,23 @@
 import { Store, Element } from "../../../third-party/react-devtools/headless";
 
-const findTreeEntryPoint = (store: Store, root?: Element): Element | null => {
-  const element = root ?? (store.getElementByID(store.roots[0]) as unknown as Element);
+// removes the need for casting types, which is prone to mistakes
+function getElementByID(id: number, store: Store): Element | null {
+  return store.getElementByID(id) as unknown as Element | null;
+}
 
-  const name = element.displayName;
+function findTreeEntryPoint(store: Store, root?: Element): Element | null {
+  const element = root ?? getElementByID(store.roots[0], store);
+
+  const name = element?.displayName;
 
   if (name && (name.startsWith("./") || name.startsWith("/"))) {
     return element;
   }
 
-  const childrenIds = element.children;
+  const childrenIds = element?.children ?? [];
 
   for (const childId of childrenIds) {
-    const child = store.getElementByID(childId) as unknown as Element | null;
+    const child = getElementByID(childId, store);
 
     if (!child) {
       throw new Error("Component tree is corrupted. Element with ID ${childId} not found.");
@@ -31,10 +36,14 @@ const findTreeEntryPoint = (store: Store, root?: Element): Element | null => {
   }
 
   return null;
-};
+}
 
-const prettyPrintComponentTree = (store: Store, root?: Element, depth: number = 0): string => {
-  const element = root ?? (findTreeEntryPoint(store) as Element);
+function prettyPrintComponentTree(store: Store, root?: Element, depth: number = 0): string {
+  const element = root ?? findTreeEntryPoint(store);
+
+  if (!element) {
+    return `Component tree corrupt. Could not find root of the component tree!`;
+  }
 
   const childrenIds = element.children;
 
@@ -58,6 +67,6 @@ const prettyPrintComponentTree = (store: Store, root?: Element, depth: number = 
   }
 
   return found;
-};
+}
 
 export default prettyPrintComponentTree;
