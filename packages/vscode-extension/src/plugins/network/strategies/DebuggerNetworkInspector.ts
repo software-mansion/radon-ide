@@ -43,7 +43,6 @@ const DEFAULT_RESPONSE_BODY_DATA: ResponseBodyData = {
 export default class DebuggerNetworkInspector extends BaseNetworkInspector {
   private disposables: Disposable[] = [];
   private activationState = ActivationState.Inactive;
-  private trackingEnabled: boolean = true;
 
   constructor(
     private readonly inspectorBridge: RadonInspectorBridge,
@@ -228,10 +227,6 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     this.storeAndBroadcastWebviewMessage(message, WebviewCommand.IDECall);
   }
 
-  protected handleChangeNetworkTracking(isTracking: boolean): void {
-    this.trackingEnabled = isTracking;
-  }
-
   protected handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
     const { payload } = message;
 
@@ -260,7 +255,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     this.completeActivation();
   }
 
-  public deactivate(): void {
+  private cleanup(shouldDisableNetworkInspector: boolean): void {
     if (this.activationState === ActivationState.Inactive) {
       return;
     }
@@ -269,11 +264,25 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     this.disposables = [];
 
     if (this.pluginAvailable) {
-      this.networkBridge.disableNetworkInspector();
       commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
+      if (shouldDisableNetworkInspector) {
+        this.networkBridge.disableNetworkInspector();
+        this.clearNetworkMessages();
+      }
     }
 
     this.activationState = ActivationState.Inactive;
+  }
+
+  public deactivate(): void {
+    this.cleanup(true);
+  }
+
+  /**
+   * Suspends without clearing messages to preserve state across reactivation
+   */
+  public suspend(): void {
+    this.cleanup(false);
   }
 
   public dispose(): void {

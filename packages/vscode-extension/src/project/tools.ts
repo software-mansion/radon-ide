@@ -42,6 +42,7 @@ export interface ToolPlugin extends Disposable {
   pluginUnavailableTooltip?: string;
   activate(): void;
   deactivate(): void;
+  suspend(): void;
   openTool?(): void;
 }
 
@@ -131,8 +132,8 @@ export class ToolsManager implements Disposable {
     disposeAll(this.disposables);
   }
 
-  public deactivate() {
-    this.activePlugins.forEach((plugin) => plugin.deactivate());
+  public suspend() {
+    this.activePlugins.forEach((plugin) => plugin.suspend());
   }
 
   public activate() {

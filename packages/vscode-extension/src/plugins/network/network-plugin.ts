@@ -16,7 +16,7 @@ export const NETWORK_PLUGIN_ID = "network";
  * Disabled by default until new network inspector is integradated into react native.
  * The instructions to enable the features are in plugins/network/README.md
  */
-const ENABLE_DEBUGGER_INSPECTOR = true;
+const ENABLE_DEBUGGER_INSPECTOR = false;
 
 export type BroadcastListener = (message: WebviewMessage) => void;
 
@@ -24,9 +24,9 @@ export interface NetworkInspector {
   activate(): void;
   deactivate(): void;
   dispose(): void;
+  suspend(): void;
   onMessageBroadcast(cb: BroadcastListener): Disposable;
   handleWebviewMessage(message: WebviewMessage): void;
-  broadcastStoredMessages(): void;
   readonly pluginAvailable: boolean;
 }
 
@@ -71,18 +71,21 @@ export class NetworkPlugin implements ToolPlugin {
     return this.networkInspector.pluginAvailable;
   }
 
-  activate(): void {
+  public activate(): void {
     this.networkInspector.activate();
   }
 
-  deactivate(): void {
+  public deactivate(): void {
     this.networkInspector.deactivate();
   }
 
-  dispose() {
+  public dispose(): void {
     this.networkInspector.dispose();
   }
 
+  public suspend(): void {
+    this.networkInspector.suspend();
+  }
   public openTool(): void {
     commands.executeCommand(`RNIDE.Tool.Network.view.focus`);
   }
@@ -90,7 +93,7 @@ export class NetworkPlugin implements ToolPlugin {
     return this.networkInspector.onMessageBroadcast(cb);
   }
 
-  handleWebviewMessage(message: WebviewMessage) {
+  public handleWebviewMessage(message: WebviewMessage) {
     this.networkInspector.handleWebviewMessage(message);
   }
 }

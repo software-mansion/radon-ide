@@ -19,6 +19,8 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   protected broadcastListeners: BroadcastListener[] = [];
   private networkMessages: WebviewMessage[] = [];
 
+  protected trackingEnabled: boolean = true;
+
   constructor(private readonly metroPort: number) {}
 
   // #region abstract
@@ -26,8 +28,8 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   public abstract activate(): void;
   public abstract deactivate(): void;
   public abstract dispose(): void;
+  public abstract suspend(): void;
   protected abstract handleGetResponseBodyData(payload: IDEMessage): Promise<void>;
-  protected abstract handleChangeNetworkTracking(isTracking: boolean): void;
   protected abstract handleCDPMessage(
     message: WebviewMessage & { command: WebviewCommand.CDPCall }
   ): void;
@@ -64,12 +66,6 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     } catch (error) {
       return false;
     }
-  }
-
-  public broadcastStoredMessages(): void {
-    this.networkMessages.forEach((message) => {
-      this.broadcastMessage(message);
-    });
   }
 
   protected storeMessage(message: WebviewMessage): void {
@@ -190,12 +186,24 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     this.sendIDEMessage({ method: IDEMethod.Theme, messageId: id, result: theme });
   }
 
-  private async handleGetLogHistory(): Promise<void> {
-    this.broadcastStoredMessages();
+  private async handleGetSessionData(message: IDEMessage): Promise<void> {
+    const { messageId } = message;
+    this.sendIDEMessage({
+      method: IDEMethod.SessionData,
+      messageId,
+      result: {
+        networkMessages: this.networkMessages,
+        shouldTrackNetwork: this.trackingEnabled,
+      },
+    });
   }
 
-  private handleClearStoredLogs(): void {
+  protected clearNetworkMessages(): void {
     this.networkMessages = [];
+  }
+
+  private handleChangeNetworkTracking(isTracking: boolean): void {
+    this.trackingEnabled = isTracking;
   }
 
   /**
@@ -215,8 +223,8 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
       case IDEMethod.GetTheme:
         this.handleGetTheme(payload);
         break;
-      case IDEMethod.GetLogHistory:
-        this.handleGetLogHistory();
+      case IDEMethod.GetSessionData:
+        this.handleGetSessionData(payload);
         break;
       case IDEMethod.StartNetworkTracking:
         this.handleChangeNetworkTracking(true);
@@ -224,8 +232,8 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
       case IDEMethod.StopNetworkTracking:
         this.handleChangeNetworkTracking(false);
         break;
-      case IDEMethod.ClearStoredLogs:
-        this.handleClearStoredLogs();
+      case IDEMethod.ClearStoredMessages:
+        this.clearNetworkMessages();
         break;
       default:
         Logger.warn("Unknown IDE method received");

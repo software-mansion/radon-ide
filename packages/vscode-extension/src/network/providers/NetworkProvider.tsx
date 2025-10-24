@@ -1,26 +1,19 @@
-import {
-  createContext,
-  PropsWithChildren,
-  useContext,
-  useMemo,
-  useReducer,
-  useRef,
-  useState,
-} from "react";
+import { createContext, PropsWithChildren, useContext, useMemo, useReducer, useRef } from "react";
 import useNetworkTracker, {
   NetworkTracker,
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
+import { generateId } from "../utils/panelMessages";
 import { NetworkLog } from "../types/networkLog";
 import { WebviewMessage, IDEMethod, WebviewCommand } from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
 import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
 interface NetworkProviderProps extends NetworkTracker {
-  isRecording: boolean;
+  isTracking: boolean;
   isScrolling: boolean;
-  toggleRecording: () => void;
+  toggleTracking: () => void;
   clearActivity: () => void;
   toggleScrolling: () => void;
   isTimelineVisible: boolean;
@@ -94,9 +87,9 @@ function createThemeResponsePromise(messageId: string) {
 
 const NetworkContext = createContext<NetworkProviderProps>({
   ...networkTrackerInitialState,
-  isRecording: true,
+  isTracking: true,
   isScrolling: false,
-  toggleRecording: () => {},
+  toggleTracking: () => {},
   clearActivity: () => {},
   toggleScrolling: () => {},
   isTimelineVisible: true,
@@ -108,23 +101,16 @@ const NetworkContext = createContext<NetworkProviderProps>({
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
-  const { clearLogs, toggleNetwork, sendWebviewIDEMessage, networkLogs } = networkTracker;
+  const { clearLogs, isTracking, toggleTracking, sendWebviewIDEMessage, networkLogs } =
+    networkTracker;
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
-  const [isRecording, setIsRecording] = useState(true);
   const responseBodiesRef = useRef<Record<string, ResponseBodyData | undefined>>({});
 
   const clearActivity = () => {
     clearLogs();
     responseBodiesRef.current = {};
-  };
-
-  const toggleRecording = () => {
-    setIsRecording((prev) => {
-      toggleNetwork(prev);
-      return !prev;
-    });
   };
 
   const getResponseBody = (networkLog: NetworkLog): Promise<ResponseBodyData | undefined> => {
@@ -138,7 +124,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       return Promise.resolve(responseBodiesRef.current[requestId]);
     }
 
-    const messageId = Math.random().toString(36).substring(7);
+    const messageId = generateId();
     const promise = createBodyResponsePromise(messageId, requestId, responseBodiesRef);
 
     // Send the message to the network-plugin backend
@@ -154,7 +140,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     return promise;
   };
   const getThemeData = (themeDescriptor: ThemeDescriptor): Promise<ThemeData> => {
-    const messageId = Math.random().toString(36).substring(7);
+    const messageId = generateId();
     const promise = createThemeResponsePromise(messageId);
 
     // Send the message to the network-plugin backend
@@ -177,7 +163,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       return Promise.resolve(undefined);
     }
 
-    const id = Math.random().toString(36).substring(7);
+    const id = generateId();
 
     sendWebviewIDEMessage({
       messageId: id,
@@ -193,8 +179,8 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     return {
       ...networkTracker,
       networkLogs: networkLogs,
-      isRecording,
-      toggleRecording,
+      isTracking,
+      toggleTracking,
       isScrolling,
       clearActivity,
       toggleScrolling,
@@ -204,7 +190,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       fetchAndOpenResponseInEditor,
       getThemeData,
     };
-  }, [isRecording, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
+  }, [isTracking, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
 
   return (
     <NetworkContext.Provider value={contextValue}>

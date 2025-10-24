@@ -11,24 +11,28 @@ import {
   WebviewCommand,
   NetworkType,
   IDEMethod,
+  SessionData,
 } from "../types/panelMessageProtocol";
+import { generateId } from "../utils/panelMessages";
 
 export interface NetworkTracker {
   networkLogs: NetworkLog[];
+  isTracking: boolean;
   clearLogs: () => void;
-  toggleNetwork: (isRunning: boolean) => void;
   getSource: (networkLog: NetworkLog) => void;
   sendWebviewCDPMessage: (messageData: CDPMessage) => void;
   sendWebviewIDEMessage: (messageData: IDEMessage) => void;
+  toggleTracking: () => void;
 }
 
 export const networkTrackerInitialState: NetworkTracker = {
   networkLogs: [],
+  isTracking: true,
   clearLogs: () => {},
-  toggleNetwork: () => {},
   getSource: () => {},
   sendWebviewCDPMessage: () => {},
   sendWebviewIDEMessage: () => {},
+  toggleTracking: () => {},
 };
 
 interface NetworkEventTimestampMap {
@@ -115,11 +119,38 @@ class RequestTimingTracker {
   }
 }
 
+function createSessionDataResponsePromise(messageId: string) {
+  const { promise, resolve } = Promise.withResolvers<SessionData>();
+
+  const listener = (message: MessageEvent) => {
+    try {
+      const { payload }: WebviewMessage = message.data;
+      if (payload.method !== IDEMethod.SessionData || payload.messageId !== messageId) {
+        return;
+      }
+
+      const sessionData = payload.result as SessionData;
+
+      resolve(sessionData);
+      window.removeEventListener("message", listener);
+    } catch (error) {
+      console.error("Error parsing Window message:", error);
+    }
+  };
+
+  // Setup listener to capture the response
+  window.addEventListener("message", listener);
+
+  return promise;
+}
+
 const useNetworkTracker = (): NetworkTracker => {
   const [networkLogs, setNetworkLogs] = useState<NetworkLog[]>([]);
   const [cdpMessages, setCdpMessages] = useState<CDPMessage[]>([]);
-  const requestTimtingTrakcerRef = useRef(new RequestTimingTracker());
-  const requestTimingTracker = requestTimtingTrakcerRef.current;
+  const [isTracking, setIsTracking] = useState(true);
+
+  const requestTimingTrackerRef = useRef(new RequestTimingTracker());
+  const requestTimingTracker = requestTimingTrackerRef.current;
 
   const validateCDPMessage = (message: WebviewMessage): CDPMessage | null => {
     try {
@@ -198,15 +229,42 @@ const useNetworkTracker = (): NetworkTracker => {
     }
   };
 
+  const getSessionData = (): Promise<SessionData> => {
+    const messageId = generateId();
+    const promise = createSessionDataResponsePromise(messageId);
+
+    // Send the message to the network-plugin backend
+    sendWebviewIDEMessage({
+      method: IDEMethod.GetSessionData,
+      messageId: messageId,
+    });
+
+    return promise;
+  };
+
+  const updateCDPMessages = (message: WebviewMessage) => {
+    const cdpMessage = validateCDPMessage(message);
+    if (cdpMessage) {
+      setCdpMessages((prev) => [...prev, cdpMessage]);
+    }
+  };
+
+  const synchronizeSessionData = async () => {
+    const sessionData = await getSessionData();
+    const { networkMessages, shouldTrackNetwork } = sessionData || {};
+
+    networkMessages.forEach(updateCDPMessages);
+
+    setTracking(shouldTrackNetwork);
+  };
+
   useEffect(() => {
     const listener = (message: MessageEvent) => {
-      const cdpMessage = validateCDPMessage(message.data);
-      if (cdpMessage) {
-        setCdpMessages((prev) => [...prev, cdpMessage]);
-      }
+      updateCDPMessages(message.data);
     };
+
     window.addEventListener("message", listener);
-    getLogHistory();
+    synchronizeSessionData();
 
     return () => {
       window.removeEventListener("message", listener);
@@ -230,7 +288,7 @@ const useNetworkTracker = (): NetworkTracker => {
 
     sendWebviewIDEMessage({
       messageId: "clearLogs",
-      method: IDEMethod.ClearStoredLogs,
+      method: IDEMethod.ClearStoredMessages,
     });
   };
 
@@ -248,18 +306,23 @@ const useNetworkTracker = (): NetworkTracker => {
     });
   };
 
-  const toggleNetwork = (isRunning: boolean) => {
+  const sendNetworkTrackingUpdate = (shouldTrack: boolean) => {
     sendWebviewIDEMessage({
       messageId: "toggleTracking",
-      method: isRunning ? IDEMethod.StopNetworkTracking : IDEMethod.StartNetworkTracking,
+      method: shouldTrack ? IDEMethod.StartNetworkTracking : IDEMethod.StopNetworkTracking,
     });
   };
 
-  const getLogHistory = () => {
-    sendWebviewIDEMessage({
-      messageId: "loghistory",
-      method: IDEMethod.GetLogHistory,
+  const toggleTracking = () => {
+    setIsTracking((prev) => {
+      sendNetworkTrackingUpdate(!prev);
+      return !prev;
     });
+  };
+
+  const setTracking = (shouldTrack: boolean) => {
+    setIsTracking(shouldTrack);
+    sendNetworkTrackingUpdate(shouldTrack);
   };
 
   const getSource = (networkLog: NetworkLog) => {
@@ -275,11 +338,12 @@ const useNetworkTracker = (): NetworkTracker => {
 
   return {
     networkLogs: networkLogs.filter((log) => log?.request?.url !== undefined),
+    isTracking,
     clearLogs,
-    toggleNetwork,
     getSource,
     sendWebviewCDPMessage,
     sendWebviewIDEMessage,
+    toggleTracking,
   };
 };
 

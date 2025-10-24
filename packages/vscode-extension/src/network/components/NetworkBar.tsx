@@ -7,21 +7,21 @@ import { useNetwork } from "../providers/NetworkProvider";
 import { useNetworkFilter } from "../providers/NetworkFilterProvider";
 
 function NetworkBar() {
-  const { isRecording, toggleRecording, clearActivity } = useNetwork();
+  const { isTracking, toggleTracking, clearActivity } = useNetwork();
 
   const { filterInvert, isFilterVisible, toggleInvert, toggleFilterVisible } = useNetworkFilter();
 
   return (
     <div className="network-bar">
       <IconButton
-        onClick={toggleRecording}
+        onClick={toggleTracking}
         tooltip={{
-          label: `${isRecording ? "Stop" : "Start"} recording network activity`,
+          label: `${isTracking ? "Stop" : "Start"} recording network activity`,
           side: "bottom",
         }}>
         <span
-          style={{ color: isRecording ? "var(--vscode-charts-red)" : "var(--swm-default-text)" }}
-          className={classNames("codicon", isRecording ? "codicon-record" : "codicon-stop-circle")}
+          style={{ color: isTracking ? "var(--vscode-charts-red)" : "var(--swm-default-text)" }}
+          className={classNames("codicon", isTracking ? "codicon-record" : "codicon-stop-circle")}
         />
       </IconButton>
       <IconButton

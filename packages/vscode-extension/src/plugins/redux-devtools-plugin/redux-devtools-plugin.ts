@@ -92,7 +92,11 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     disposeAll(this.devtoolsListeners);
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, false);
   }
-
+  
+  suspend() {
+    this.deactivate();
+  }
+  
   openTool() {
     commands.executeCommand(`${REDUX_PLUGIN_PREFIX}.view.focus`);
   }

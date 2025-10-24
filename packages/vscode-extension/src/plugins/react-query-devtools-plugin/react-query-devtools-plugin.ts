@@ -44,6 +44,9 @@ export const createReactQueryDevtools = (): ToolPlugin => {
       commands.executeCommand(`${REACT_QUERY_PLUGIN_PREFIX}.view.focus`);
     },
     dispose() {},
+    suspend() {
+      this.deactivate();
+    },
   };
 
   return plugin;

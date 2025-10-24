@@ -64,6 +64,9 @@ export function createExpoDevPluginTools(): ToolPlugin[] {
         commands.executeCommand(`${pluginInfo.viewIdPrefix}.view.focus`);
       },
       dispose() {},
+      suspend() {
+        this.deactivate();
+      },
     });
   }
 
