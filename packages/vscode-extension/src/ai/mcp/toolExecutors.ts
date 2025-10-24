@@ -5,7 +5,6 @@ import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils
 import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
-import { printStore, Store, Element } from "../../../third-party/react-devtools/headless";
 import prettyPrintComponentTree from "./printComponentTree";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
@@ -28,40 +27,6 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
   };
 }
 
-function printElement(element: Element) {
-  return "  ".repeat(element.depth) + `<${element.displayName}>\n`;
-}
-
-function printComponentTree(store: Store) {
-  const rootID = store.roots[0];
-  const root = store.getElementByID(rootID) as unknown as Element;
-
-  if (!root) {
-    return "Component tree is corrupted. The component tree doesn't contain any tree roots.";
-  }
-
-  const weight = root.weight;
-  let output = "";
-
-  // TODO: Form a tree such that it's easier to cut out parts of it while preserving indentation
-  //       ^ Alternatively seek "displayRoot" and adjust depth to it
-  for (let i = 0; i < weight; i++) {
-    const element = store.getElementAtIndex(i) as unknown as Element;
-
-    if (!element) {
-      return `Component tree is corrupted. Element at index ${i} not found.`;
-    }
-
-    if (element.isCollapsed) {
-      store.toggleIsCollapsed(element.id, false);
-    }
-
-    output += printElement(element);
-  }
-
-  return output;
-}
-
 export async function viewComponentTreeExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
 
@@ -82,13 +47,9 @@ export async function viewComponentTreeExec(): Promise<ToolResponse> {
     );
   }
 
-  const _repr = printStore(store);
-  const _repr2 = printComponentTree(store);
-  const _repr3 = prettyPrintComponentTree(store);
+  const repr = prettyPrintComponentTree(store);
 
-  return {
-    content: [textToToolContent(_repr), textToToolContent(_repr2), textToToolContent(_repr3)],
-  };
+  return textToToolResponse(repr);
 }
 
 export async function readLogsToolExec(): Promise<ToolResponse> {
