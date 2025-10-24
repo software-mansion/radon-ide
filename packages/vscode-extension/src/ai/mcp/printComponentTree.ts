@@ -56,7 +56,14 @@ const prettyPrintComponentTree = (store: Store, root?: Element, depth: number = 
 
   const childrenIds = element.children;
 
-  let found: string = "  ".repeat(depth) + `<${element.displayName} type=${element.type}>\n`;
+  // `type = 2` means element is `Context.Provider`.
+  // These are always wrapped with a more descriptive name when user-made.
+  const isContextProvider = element.type === 2;
+
+  const childDepth = isContextProvider ? depth : depth + 1;
+  let found: string = isContextProvider
+    ? ""
+    : "  ".repeat(depth) + `<${element.displayName} type=${element.type}>\n`;
 
   for (const childId of childrenIds) {
     const child = store.getElementByID(childId) as unknown as Element;
@@ -65,7 +72,7 @@ const prettyPrintComponentTree = (store: Store, root?: Element, depth: number = 
       return `Component tree is corrupted. Element with ID ${childId} not found.`;
     }
 
-    found += prettyPrintComponentTree(store, child, depth + 1);
+    found += prettyPrintComponentTree(store, child, childDepth);
   }
 
   return found;
