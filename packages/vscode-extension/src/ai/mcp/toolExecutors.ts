@@ -45,7 +45,7 @@ function printComponentTree(store: Store) {
 
   // TODO: Form a tree such that it's easier to cut out parts of it while preserving indentation
   for (let i = 0; i < weight; i++) {
-    const element = store.getElementAtIndex(i) as Element;
+    const element = store.getElementAtIndex(i) as unknown as Element;
 
     if (!element) {
       console.log(`Component tree is corrupted. Element at index ${i} not found`);
