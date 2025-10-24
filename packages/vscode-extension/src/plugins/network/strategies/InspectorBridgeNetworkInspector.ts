@@ -47,10 +47,6 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
     message: string,
     command: WebviewCommand = WebviewCommand.CDPCall
   ): void {
-    if (!this.trackingEnabled) {
-      return;
-    }
-
     try {
       const webviewMessage: WebviewMessage = {
         command: command,
@@ -111,19 +107,24 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
     this.sendCDPMessage({ method: NetworkMethod.Enable, params: {} });
   }
 
-  public deactivate(): void {
+  private cleanup(shouldDisableNetworkInspector: boolean) {
     disposeAll(this.devtoolsListeners);
     this.sendCDPMessage({ method: NetworkMethod.Disable, params: {} });
-    commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
-    this.clearNetworkMessages();
+    if (shouldDisableNetworkInspector) {
+      commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
+      this.clearNetworkMessages();
+    }
+  }
+
+  public deactivate(): void {
+    this.cleanup(true);
   }
 
   /**
    * Suspends without clearing messages to preserve state across reactivation
    */
   public suspend(): void {
-    disposeAll(this.devtoolsListeners);
-    commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
+    this.cleanup(false);
   }
 
   public dispose(): void {

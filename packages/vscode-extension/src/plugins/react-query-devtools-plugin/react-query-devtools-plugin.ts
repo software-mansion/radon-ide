@@ -40,13 +40,13 @@ export const createReactQueryDevtools = (): ToolPlugin => {
     deactivate() {
       commands.executeCommand("setContext", `${REACT_QUERY_PLUGIN_PREFIX}.available`, false);
     },
+    suspend() {
+      this.deactivate();
+    },
     openTool() {
       commands.executeCommand(`${REACT_QUERY_PLUGIN_PREFIX}.view.focus`);
     },
     dispose() {},
-    suspend() {
-      this.deactivate();
-    },
   };
 
   return plugin;

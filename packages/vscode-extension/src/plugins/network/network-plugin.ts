@@ -86,6 +86,7 @@ export class NetworkPlugin implements ToolPlugin {
   public suspend(): void {
     this.networkInspector.suspend();
   }
+
   public openTool(): void {
     commands.executeCommand(`RNIDE.Tool.Network.view.focus`);
   }

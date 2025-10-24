@@ -18,8 +18,7 @@ import { extractTheme } from "../../../utilities/themeExtractor";
 export abstract class BaseNetworkInspector implements NetworkInspector {
   protected broadcastListeners: BroadcastListener[] = [];
   private networkMessages: WebviewMessage[] = [];
-
-  protected trackingEnabled: boolean = true;
+  private trackingEnabled: boolean = true;
 
   constructor(private readonly metroPort: number) {}
 
@@ -68,11 +67,24 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     }
   }
 
+  private changeNetworkTracking(shouldTrack: boolean): void {
+    this.trackingEnabled = shouldTrack;
+  }
+
   protected storeMessage(message: WebviewMessage): void {
-    this.networkMessages.push(message);
+    if (this.trackingEnabled) {
+      this.networkMessages.push(message);
+    }
+  }
+
+  protected clearNetworkMessages(): void {
+    this.networkMessages = [];
   }
 
   protected broadcastMessage(message: Parameters<BroadcastListener>[0]): void {
+    if (!this.trackingEnabled) {
+      return;
+    }
     if (this.isInternalRequest(message)) {
       Logger.info(`Http request to metro filtered out: ${message.payload.params?.request?.url}`);
       return;
@@ -186,6 +198,10 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     this.sendIDEMessage({ method: IDEMethod.Theme, messageId: id, result: theme });
   }
 
+  /**
+   * Handle get session data request from webview
+   * (network messages history and tracking status synchronisation)
+   */
   private async handleGetSessionData(message: IDEMessage): Promise<void> {
     const { messageId } = message;
     this.sendIDEMessage({
@@ -197,15 +213,6 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
       },
     });
   }
-
-  protected clearNetworkMessages(): void {
-    this.networkMessages = [];
-  }
-
-  private handleChangeNetworkTracking(isTracking: boolean): void {
-    this.trackingEnabled = isTracking;
-  }
-
   /**
    * Handle IDE messages from webview
    */
@@ -227,10 +234,10 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
         this.handleGetSessionData(payload);
         break;
       case IDEMethod.StartNetworkTracking:
-        this.handleChangeNetworkTracking(true);
+        this.changeNetworkTracking(true);
         break;
       case IDEMethod.StopNetworkTracking:
-        this.handleChangeNetworkTracking(false);
+        this.changeNetworkTracking(false);
         break;
       case IDEMethod.ClearStoredMessages:
         this.clearNetworkMessages();

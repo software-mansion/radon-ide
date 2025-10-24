@@ -233,7 +233,6 @@ const useNetworkTracker = (): NetworkTracker => {
     const messageId = generateId();
     const promise = createSessionDataResponsePromise(messageId);
 
-    // Send the message to the network-plugin backend
     sendWebviewIDEMessage({
       method: IDEMethod.GetSessionData,
       messageId: messageId,

@@ -104,10 +104,6 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     message: IDEMessage | CDPMessage,
     command: WebviewCommand.IDECall | WebviewCommand.CDPCall
   ): void {
-    if (!this.trackingEnabled) {
-      return;
-    }
-
     const webviewMessage: WebviewMessage = {
       command: command,
       payload: message,
