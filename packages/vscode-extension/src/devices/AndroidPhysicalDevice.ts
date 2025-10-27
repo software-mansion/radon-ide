@@ -13,12 +13,12 @@ import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { exec } from "../utilities/subprocess";
 import { ADB_PATH, AndroidDevice } from "./AndroidDevice";
 import { Preview } from "./preview";
-import { extensionContext } from "../utilities/extensionContext";
 import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
 import { DevicesProvider } from "./DevicesProvider";
 import { StateManager } from "../project/StateManager";
 import { Logger } from "../Logger";
 import { AndroidBuildResult } from "../builders/buildAndroid";
+import { getAppCachesDir } from "../utilities/common";
 
 export class AndroidPhysicalDevice extends AndroidDevice {
   constructor(
@@ -31,7 +31,7 @@ export class AndroidPhysicalDevice extends AndroidDevice {
   }
 
   get lockFilePath(): string {
-    return path.join(extensionContext.extensionPath, `android_device_${this.serial}.lock`);
+    return path.join(getAppCachesDir(), `android_device_${this.serial}.lock`);
   }
   async bootDevice(): Promise<void> {
     // NOOP
@@ -67,7 +67,7 @@ export class AndroidPhysicalDevice extends AndroidDevice {
 
 const ADB_ENTRY_REGEX = /^([a-zA-Z0-9\-]+)\s+device\s+((\w+:[\w\-]+\s?)*)$/;
 
-async function getPhysicalSize(
+async function getPhysicalScreenDimensions(
   serial: string
 ): Promise<{ width: number; height: number } | undefined> {
   const { stdout } = await exec(ADB_PATH, ["-s", serial, "shell", "wm", "size"]);
@@ -102,12 +102,13 @@ export async function listConnectedDevices(): Promise<AndroidPhysicalDeviceInfo[
             },
             {} as Record<string, string>
           );
-          const physicalSize = await getPhysicalSize(result[1]);
-          if (!physicalSize) {
+          const serial = result[1];
+          const screenDimensions = await getPhysicalScreenDimensions(serial);
+          if (!screenDimensions) {
             return undefined;
           }
           return {
-            id: result[1],
+            id: serial,
             platform: DevicePlatform.Android,
             modelId: props["model"],
             systemName: "Unknown",
@@ -116,8 +117,8 @@ export async function listConnectedDevices(): Promise<AndroidPhysicalDeviceInfo[
             available: true,
             emulator: false,
             properties: {
-              screenHeight: physicalSize.height,
-              screenWidth: physicalSize.width,
+              screenHeight: screenDimensions.height,
+              screenWidth: screenDimensions.width,
             },
           };
         })
@@ -129,15 +130,16 @@ export async function listConnectedDevices(): Promise<AndroidPhysicalDeviceInfo[
 export class PhysicalAndroidDeviceProvider
   implements DevicesProvider<AndroidPhysicalDeviceInfo>, Disposable
 {
-  private intervalId: NodeJS.Timeout;
+  private disposables: Disposable[];
 
   constructor(
     private stateManager: StateManager<DevicesByType>,
     private outputChannelRegistry: OutputChannelRegistry
   ) {
-    this.intervalId = setInterval(() => {
+    const intervalId = setInterval(() => {
       this.listDevices().catch(() => {});
     }, 1000);
+    this.disposables = [this.stateManager, new Disposable(() => clearInterval(intervalId))];
   }
 
   public async acquireDevice(
@@ -179,7 +181,6 @@ export class PhysicalAndroidDeviceProvider
   }
 
   public dispose() {
-    clearInterval(this.intervalId);
-    this.stateManager.dispose();
+    this.disposables.forEach((d) => d.dispose());
   }
 }

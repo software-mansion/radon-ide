@@ -66,11 +66,11 @@ export class AndroidEmulatorDevice extends AndroidDevice {
     super(deviceSettings, outputChannelRegistry);
   }
 
-  get deviceInfo(): DeviceInfo {
+  public get deviceInfo(): DeviceInfo {
     return this.info;
   }
 
-  get lockFilePath(): string {
+  public get lockFilePath(): string {
     const avdDirectory = getAvdDirectoryLocation(this.avdId);
     const pidFile = path.join(avdDirectory, `${this.avdId}.avd`, "lock.pid");
     return pidFile;
@@ -87,7 +87,7 @@ export class AndroidEmulatorDevice extends AndroidDevice {
     }, DISPOSE_TIMEOUT);
   }
 
-  async changeSettings(settings: DeviceSettings): Promise<boolean> {
+  public async changeSettings(settings: DeviceSettings): Promise<boolean> {
     assert(this.serial, "Device serial is not set. Cannot change settings.");
     // Apply runtime settings that don't require boot
     await exec(ADB_PATH, [
@@ -335,7 +335,7 @@ export class AndroidEmulatorDevice extends AndroidDevice {
     return promise;
   }
 
-  async bootDevice(): Promise<void> {
+  public async bootDevice(): Promise<void> {
     await this.internalBootDevice();
 
     let shouldRestart = await this.changeSettings(this.deviceSettings);
@@ -344,7 +344,7 @@ export class AndroidEmulatorDevice extends AndroidDevice {
     }
   }
 
-  async internalBootDevice() {
+  public async internalBootDevice() {
     // this prevents booting device with the same AVD twice
     await ensureOldEmulatorProcessExited(this.avdId);
 
@@ -394,15 +394,11 @@ export class AndroidEmulatorDevice extends AndroidDevice {
     this.serial = await initPromise;
   }
 
-  makePreview(): Preview {
+  public makePreview(): Preview {
     return new Preview(["android", "--id", this.serial!]);
   }
 
-  async sendBiometricAuthorization(_isMatch: boolean) {
-    // TODO: implement android biometric authorization
-  }
-
-  async getClipboard() {
+  public async getClipboard() {
     // No need to copy clipboard, Android Emulator syncs it for us whenever a user clicks on 'Copy'
   }
 

@@ -171,10 +171,10 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
   }
 
   public setUpKeyboard() {
-    // Keyboard setup is not required on Android Emulator devices.
+    // Keyboard setup is not required on Android devices.
   }
 
-  public async sendBiometricAuthorization(isMatch: boolean) {
+  public async sendBiometricAuthorization(_isMatch: boolean) {
     // TODO: implement android biometric authorization
   }
 
