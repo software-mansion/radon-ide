@@ -14,13 +14,12 @@ function findTreeEntryPoint(store: Store, root?: Element): Element | null {
 
   const name = element.displayName;
 
+  // User-defined `expo-router` paths start with `./` or `/`. First one found serves as our entry-point if present.
   if (name && (name.startsWith("./") || name.startsWith("/"))) {
     return element;
   }
 
-  const childrenIds = element.children ?? [];
-
-  for (const childId of childrenIds) {
+  for (const childId of element.children) {
     const child = getElementByID(childId, store);
 
     if (!child) {
@@ -42,6 +41,12 @@ function findTreeEntryPoint(store: Store, root?: Element): Element | null {
   return null;
 }
 
+function hasHocDescriptors(
+  element: Element
+): element is Element & { hocDisplayNames: NonNullable<Element["hocDisplayNames"]> } {
+  return (element?.hocDisplayNames?.length ?? 0) > 0;
+}
+
 function prettyPrintComponentTree(store: Store, root?: Element, depth: number = 0): string {
   const element = root ?? findTreeEntryPoint(store);
 
@@ -56,7 +61,14 @@ function prettyPrintComponentTree(store: Store, root?: Element, depth: number = 
   const isContextProvider = element.type === 2;
 
   const childDepth = isContextProvider ? depth : depth + 1;
-  let found: string = isContextProvider ? "" : "  ".repeat(depth) + `<${element.displayName}>\n`;
+
+  const hocDescriptors = hasHocDescriptors(element)
+    ? ` [${element.hocDisplayNames.join(", ")}]`
+    : "";
+
+  let componentRepr: string = isContextProvider
+    ? ""
+    : "  ".repeat(depth) + `<${element.displayName}>${hocDescriptors}\n`;
 
   for (const childId of childrenIds) {
     const child = getElementByID(childId, store);
@@ -65,10 +77,10 @@ function prettyPrintComponentTree(store: Store, root?: Element, depth: number = 
       return `Component tree is corrupted. Element with ID ${childId} not found.`;
     }
 
-    found += prettyPrintComponentTree(store, child, childDepth);
+    componentRepr += prettyPrintComponentTree(store, child, childDepth);
   }
 
-  return found;
+  return componentRepr;
 }
 
 export default prettyPrintComponentTree;
