@@ -6,6 +6,7 @@ import { get } from "./setupTest.js";
 
 safeDescribe("13 - Reload app tests", () => {
   let driver,
+    appWebsocket,
     radonViewsService,
     appManipulationService,
     elementHelperService,
@@ -29,6 +30,12 @@ safeDescribe("13 - Reload app tests", () => {
   beforeEach(async function () {
     await radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
+    await driver.wait(async () => {
+      appWebsocket = get().appWebsocket;
+      return appWebsocket != null;
+    }, 5000);
+
+    await appManipulationService.hideExpoOverlay(appWebsocket);
   });
 
   it("should show 'Waiting for app to load' start up message", async function () {
