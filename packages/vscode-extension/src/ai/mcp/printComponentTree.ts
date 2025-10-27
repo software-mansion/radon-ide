@@ -20,7 +20,7 @@ function findTreeEntryPoint(store: Store, root?: Element): Element | null {
     const child = getElementByID(childId, store);
 
     if (!child) {
-      throw new Error("Component tree is corrupted. Element with ID ${childId} not found.");
+      throw new Error(`Component tree is corrupted. Element with ID ${childId} not found.`);
     }
 
     const entryPoint = findTreeEntryPoint(store, child);
@@ -42,7 +42,7 @@ function prettyPrintComponentTree(store: Store, root?: Element, depth: number = 
   const element = root ?? findTreeEntryPoint(store);
 
   if (!element) {
-    return `Component tree corrupt. Could not find root of the component tree!`;
+    return `Component tree is corrupted. Could not find root of the component tree! Are you sure an application is running in the emulator?`;
   }
 
   const childrenIds = element.children;
