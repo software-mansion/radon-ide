@@ -1,3 +1,4 @@
+import { ErrorTypeGetter } from "../../common/Errors";
 import { vscode } from "./vscode";
 
 let globalCallCounter = 1;
@@ -23,7 +24,8 @@ function callResultListener(event: MessageEvent) {
       }
       if (event.data.error) {
         const errorData = event.data.error;
-        const error = new Error(errorData.message);
+        const ErrorConstructor = ErrorTypeGetter(errorData.className);
+        const error = new ErrorConstructor(errorData.message);
         error.name = errorData.name;
         promise.reject(error);
       } else {
