@@ -6,7 +6,7 @@ import useNetworkTracker, {
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { generateId } from "../utils/panelMessages";
 import { NetworkLog } from "../types/networkLog";
-import { WebviewMessage, IDEMethod, WebviewCommand } from "../types/panelMessageProtocol";
+import { WebviewMessage, IDEMethod } from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
 import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
@@ -32,8 +32,8 @@ function createBodyResponsePromise(
 
   const listener = (message: MessageEvent) => {
     try {
-      const { payload, command }: WebviewMessage = message.data;
-      if (payload.messageId !== messageId || command !== WebviewCommand.IDECall) {
+      const { payload }: WebviewMessage = message.data;
+      if (payload.messageId !== messageId || payload.method !== IDEMethod.ResponseBodyData) {
         return;
       }
 

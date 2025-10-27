@@ -39,6 +39,7 @@ export enum IDEMethod {
   GetResponseBodyData = "IDE.getResponseBodyData",
   GetTheme = "IDE.getTheme",
   GetSessionData = "IDE.getSessionData",
+  ResponseBodyData = "IDE.ResponseBodyData",
   Theme = "IDE.Theme",
   SessionData = "IDE.SessionData",
   StartNetworkTracking = "IDE.startNetworkTracking",

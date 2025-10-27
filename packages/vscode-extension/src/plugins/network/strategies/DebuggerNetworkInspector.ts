@@ -165,7 +165,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     const sendEmptyResponse = () => {
       const emptyMessage: IDEMessage = {
         messageId,
-        method: IDEMethod.GetResponseBodyData,
+        method: IDEMethod.ResponseBodyData,
         result: DEFAULT_RESPONSE_BODY_DATA,
       };
       this.broadcastMessage(emptyMessage, WebviewCommand.IDECall);
@@ -195,7 +195,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
 
     const message: IDEMessage = {
       messageId,
-      method: IDEMethod.GetResponseBodyData,
+      method: IDEMethod.ResponseBodyData,
       result: responseBodyData,
     };
 
