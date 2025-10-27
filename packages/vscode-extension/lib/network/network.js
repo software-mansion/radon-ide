@@ -53,7 +53,9 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
   async function sendResponseBody(responsePromise, message) {
     const responseBodyData = responsePromise ? await responsePromise : undefined;
     const responseObject = {
+      method: "IDE.getResponseBodyData",
       messageId: message.messageId,
+      params: { requestId: message.params.requestId },
       result: responseBodyData,
     };
     networkProxy.sendMessage("ide-message", JSON.stringify(responseObject));

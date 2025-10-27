@@ -14,10 +14,6 @@ const REQUEST_BUFFER_MAX_SIZE_BYTES = 100 * 1024 * 1024; // 100MB
  * All operations are asynchronous as response body reading requires async
  * operations (e.g., reading blob content as text).
  *
- * The Buffer is One-Time-Access - once a response is retrieved with `get`,
- * it is removed from the buffer to free up space. The frontend needs to fetch
- * response body only once per request.
- *
  * Inspired by the C++ BoundedRequestBuffer implementation from React Native.
  */
 export class AsyncBoundedResponseBuffer {
@@ -141,10 +137,6 @@ export class AsyncBoundedResponseBuffer {
    */
   public get(requestId: string): Promise<ResponseBodyData | undefined> | undefined {
     const responsePromise = this.responseMap.get(requestId);
-    // One-Time_Access - Remove the entry once accessed to free up space
-    if (responsePromise) {
-      this.remove(requestId);
-    }
     return responsePromise;
   }
 
