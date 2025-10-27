@@ -3,37 +3,40 @@ import usePaddle from "@site/src/hooks/usePaddle";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-const INDIVIDUAL_MONTHLY_PRICE_ID = isProduction
-  ? "pri_01hx944ht3wnpvgktatj6v5k4b"
-  : "pri_01j0tjqzqhv6vezhf14pwtxfm0";
-const INDIVIDUAL_YEARLY_PRICE_ID = isProduction
-  ? "pri_01hzf02s579nwrwb756enh8r7g"
-  : "pri_01jb1ajv7btj3cbnshrdq4ncjf";
-const BUSINESS_MONTHLY_PRICE_ID = isProduction
-  ? "pri_01jdyc0j8wkfqx3a7nbf6tsaxy"
-  : "pri_01jdyap7jcydxvewmek2r0e35q";
-const BUSINESS_YEARLY_PRICE_ID = isProduction
-  ? "pri_01jdyc1z1nh3pgp01ya4h8g075"
-  : "pri_01jdyaqnwf3w4pm6hsgwehm1by";
+const RADON_PRO_MONTHLY_PRICE_ID = isProduction
+  ? "pri_01k8aqbvbzyz1stf8wbaf9z04y"
+  : "pri_01k1g12g3y3tqvpzw8tcyrsd1y";
+const RADON_PRO_YEARLY_PRICE_ID = isProduction
+  ? "pri_01k8aqd6hs0fsj84vdk9y512tm"
+  : "pri_01k1g8d3h0mhbtr5hfd9e4n8yg";
+const RADON_TEAM_MONTHLY_PRICE_ID = isProduction
+  ? "pri_01k8aqe9fxteqjn4ak2geqgyr4"
+  : "pri_01k7s70594cg2nwgczecz1r6qv";
+const RADON_TEAM_YEARLY_PRICE_ID = isProduction
+  ? "pri_01k8aqfv007g6c1y6z353rb3jk"
+  : "pri_01k7s7s2syga55fjkx8f0wcszr";
 
 export const usePricingLogic = () => {
   const paddle = usePaddle();
 
   const [isMonthly, setIsMonthly] = useState(true);
-  const openIndividualCheckout = () => {
+  const openRadonProCheckout = () => {
     paddle?.Checkout.open({
       items: [
         {
-          priceId: isMonthly ? INDIVIDUAL_MONTHLY_PRICE_ID : INDIVIDUAL_YEARLY_PRICE_ID,
+          priceId: isMonthly ? RADON_PRO_MONTHLY_PRICE_ID : RADON_PRO_YEARLY_PRICE_ID,
           quantity: 1,
         },
       ],
     });
   };
-  const openBusinessCheckout = () => {
+  const openRadonTeamCheckout = () => {
     paddle?.Checkout.open({
       items: [
-        { priceId: isMonthly ? BUSINESS_MONTHLY_PRICE_ID : BUSINESS_YEARLY_PRICE_ID, quantity: 1 },
+        {
+          priceId: isMonthly ? RADON_TEAM_MONTHLY_PRICE_ID : RADON_TEAM_YEARLY_PRICE_ID,
+          quantity: 1,
+        },
       ],
     });
   };
@@ -41,7 +44,7 @@ export const usePricingLogic = () => {
   return {
     isMonthly,
     setIsMonthly,
-    openIndividualCheckout,
-    openBusinessCheckout,
+    openRadonProCheckout,
+    openRadonTeamCheckout,
   };
 };

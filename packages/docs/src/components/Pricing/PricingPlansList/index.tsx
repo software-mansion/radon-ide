@@ -4,7 +4,7 @@ import { PricingProps } from "..";
 import PricingPeriodButton from "./PricingPeriodButton";
 import usePageType from "@site/src/hooks/usePageType";
 import { pricingIndividualData } from "../pricingIndividualData";
-import { pricingBusinessData } from "../pricingBusinessData";
+import { pricingOrganizationsData } from "../pricingOrganizationsData";
 import clsx from "clsx";
 import PricingCard from "../PricingCard";
 
@@ -42,8 +42,8 @@ const PricingPlansList = ({
   const [isIndividual, setIsIndividual] = useState(true);
 
   const currentPlans = useMemo(() => {
-    if (isEnterprise) return pricingBusinessData;
-    return isIndividual ? pricingIndividualData : pricingBusinessData;
+    if (isEnterprise) return pricingOrganizationsData;
+    return isIndividual ? pricingIndividualData : pricingOrganizationsData;
   }, [isIndividual, isEnterprise]);
 
   const actions: Record<PlanType, () => void> = {

@@ -20,7 +20,7 @@ export interface PricingProps {
 }
 
 const Pricing = () => {
-  const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout } =
+  const { isMonthly, setIsMonthly, openRadonProCheckout, openRadonTeamCheckout } =
     usePricingLogic();
   const { scrollToForm } = useScrollToForm();
   const { onOpen } = useModal();
@@ -49,8 +49,8 @@ const Pricing = () => {
       <div className={styles.wrapper}>
         <PricingPlansList
           handleFree={handlePricingCardInstall}
-          handleTeam={openBusinessCheckout}
-          handlePro={openIndividualCheckout}
+          handlePro={openRadonProCheckout}
+          handleTeam={openRadonTeamCheckout}
           handleEnterprise={() => scrollToForm(formRef)}
           isMonthly={isMonthly}
           setIsMonthly={setIsMonthly}
@@ -58,8 +58,8 @@ const Pricing = () => {
       </div>
       <ComparePricingPlans
         handleFree={handlePricingTableInstall}
-        handlePro={openIndividualCheckout}
-        handleTeam={openBusinessCheckout}
+        handlePro={openRadonProCheckout}
+        handleTeam={openRadonTeamCheckout}
         handleEnterprise={() => scrollToForm(formRef)}
       />
       <FAQ />

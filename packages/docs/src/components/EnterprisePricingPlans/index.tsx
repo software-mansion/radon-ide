@@ -10,7 +10,7 @@ interface EnterprisePricingPlansProps {
 
 const EnterprisePricingPlans = forwardRef<HTMLDivElement, EnterprisePricingPlansProps>(
   (props, ref) => {
-    const { isMonthly, setIsMonthly, openBusinessCheckout, openIndividualCheckout } =
+    const { isMonthly, setIsMonthly, openRadonProCheckout, openRadonTeamCheckout } =
       usePricingLogic();
     const { onOpen } = useModal();
 
@@ -20,8 +20,8 @@ const EnterprisePricingPlans = forwardRef<HTMLDivElement, EnterprisePricingPlans
         <p className={styles.subheading}>Choose the subscription plan tailored to your needs</p>
         <PricingPlansList
           handleFree={onOpen}
-          handleTeam={openBusinessCheckout}
-          handlePro={openIndividualCheckout}
+          handlePro={openRadonProCheckout}
+          handleTeam={openRadonTeamCheckout}
           handleEnterprise={props.onFormScrollButtonClick}
           isMonthly={isMonthly}
           setIsMonthly={setIsMonthly}
