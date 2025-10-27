@@ -13,7 +13,7 @@ import {
   IDEMethod,
   SessionData,
 } from "../types/panelMessageProtocol";
-import { generateId } from "../utils/panelMessages";
+import { generateId, createIDEResponsePromise } from "../utils/panelMessages";
 
 export interface NetworkTracker {
   networkLogs: NetworkLog[];
@@ -119,31 +119,6 @@ class RequestTimingTracker {
   }
 }
 
-function createSessionDataResponsePromise(messageId: string) {
-  const { promise, resolve } = Promise.withResolvers<SessionData>();
-
-  const listener = (message: MessageEvent) => {
-    try {
-      const { payload }: WebviewMessage = message.data;
-      if (payload.method !== IDEMethod.SessionData || payload.messageId !== messageId) {
-        return;
-      }
-
-      const sessionData = payload.result as SessionData;
-
-      resolve(sessionData);
-      window.removeEventListener("message", listener);
-    } catch (error) {
-      console.error("Error parsing Window message:", error);
-    }
-  };
-
-  // Setup listener to capture the response
-  window.addEventListener("message", listener);
-
-  return promise;
-}
-
 const useNetworkTracker = (): NetworkTracker => {
   const [networkLogs, setNetworkLogs] = useState<NetworkLog[]>([]);
   const [cdpMessages, setCdpMessages] = useState<CDPMessage[]>([]);
@@ -231,7 +206,7 @@ const useNetworkTracker = (): NetworkTracker => {
 
   const getSessionData = (): Promise<SessionData> => {
     const messageId = generateId();
-    const promise = createSessionDataResponsePromise(messageId);
+    const promise = createIDEResponsePromise<SessionData>(messageId, IDEMethod.SessionData);
 
     sendWebviewIDEMessage({
       method: IDEMethod.GetSessionData,

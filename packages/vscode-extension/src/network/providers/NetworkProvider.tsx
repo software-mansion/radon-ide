@@ -4,9 +4,9 @@ import useNetworkTracker, {
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
-import { generateId } from "../utils/panelMessages";
+import { generateId, createIDEResponsePromise } from "../utils/panelMessages";
 import { NetworkLog } from "../types/networkLog";
-import { WebviewMessage, IDEMethod } from "../types/panelMessageProtocol";
+import { IDEMethod } from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
 import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
@@ -23,66 +23,23 @@ interface NetworkProviderProps extends NetworkTracker {
   getThemeData: (themeDescriptor: ThemeDescriptor) => Promise<ThemeData>;
 }
 
-function createBodyResponsePromise(
-  messageId: string,
+function createBodyDataResponseTransformer(
   requestId: string,
   responseBodiesRef: React.RefObject<Record<string, ResponseBodyData | undefined>>
 ) {
-  const { promise, resolve } = Promise.withResolvers<ResponseBodyData | undefined>();
+  return (result: unknown): ResponseBodyData | undefined => {
+    const bodyData = result as ResponseBodyData | undefined;
 
-  const listener = (message: MessageEvent) => {
-    try {
-      const { payload }: WebviewMessage = message.data;
-      if (payload.messageId !== messageId || payload.method !== IDEMethod.ResponseBodyData) {
-        return;
-      }
+    if (bodyData === undefined) {
+      return responseBodiesRef.current?.[requestId];
+    }
 
-      const bodyData = payload.result as ResponseBodyData | undefined;
-
-      if (bodyData === undefined) {
-        resolve(responseBodiesRef.current[requestId]);
-        window.removeEventListener("message", listener);
-        return;
-      }
-
+    if (responseBodiesRef.current) {
       responseBodiesRef.current[requestId] = bodyData;
-
-      resolve(bodyData);
-      window.removeEventListener("message", listener);
-    } catch (error) {
-      console.error("Error parsing Window message:", error);
     }
+
+    return bodyData;
   };
-
-  // Setup listener to capture the response
-  window.addEventListener("message", listener);
-
-  return promise;
-}
-
-function createThemeResponsePromise(messageId: string) {
-  const { promise, resolve } = Promise.withResolvers<ThemeData>();
-
-  const listener = (message: MessageEvent) => {
-    try {
-      const { payload }: WebviewMessage = message.data;
-      if (payload.method !== IDEMethod.Theme || payload.messageId !== messageId) {
-        return;
-      }
-
-      const themeData = payload.result as ThemeData;
-
-      resolve(themeData);
-      window.removeEventListener("message", listener);
-    } catch (error) {
-      console.error("Error parsing Window message:", error);
-    }
-  };
-
-  // Setup listener to capture the response
-  window.addEventListener("message", listener);
-
-  return promise;
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
@@ -125,7 +82,12 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     }
 
     const messageId = generateId();
-    const promise = createBodyResponsePromise(messageId, requestId, responseBodiesRef);
+    const transformer = createBodyDataResponseTransformer(requestId, responseBodiesRef);
+    const promise = createIDEResponsePromise<ResponseBodyData | undefined>(
+      messageId,
+      IDEMethod.ResponseBodyData,
+      transformer
+    );
 
     // Send the message to the network-plugin backend
     sendWebviewIDEMessage({
@@ -141,7 +103,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   };
   const getThemeData = (themeDescriptor: ThemeDescriptor): Promise<ThemeData> => {
     const messageId = generateId();
-    const promise = createThemeResponsePromise(messageId);
+    const promise = createIDEResponsePromise<ThemeData>(messageId, IDEMethod.Theme);
 
     // Send the message to the network-plugin backend
     sendWebviewIDEMessage({
