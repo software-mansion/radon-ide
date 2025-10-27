@@ -1,6 +1,6 @@
 import { PricingPlanCardProps } from "./PricingPlansList";
 
-export const pricingBusinessData: PricingPlanCardProps[] = [
+export const pricingOrganizationsData: PricingPlanCardProps[] = [
   {
     plan: "TEAM",
     price: { monthly: 75, yearly: 750 },
