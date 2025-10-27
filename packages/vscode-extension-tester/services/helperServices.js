@@ -6,7 +6,7 @@ import {
   WebView,
   ActivityBar,
   Key,
-  InputBox,
+  Workbench,
 } from "vscode-extension-tester";
 
 export class ElementHelperService {
@@ -28,6 +28,7 @@ export class ElementHelperService {
       timeout,
       timeoutMessage
     );
+    await this.driver.executeScript("arguments[0].scrollIntoView()", element);
     await this.waitForElement(element);
     return element;
   }
@@ -86,18 +87,18 @@ export class VSCodeHelperService {
     this.driver = driver;
   }
 
-  async openFileInEditor(fileName) {
+  async openFileInEditor(path) {
     await this.driver.switchTo().defaultContent();
-    await this.driver
+    await this.openCommandLineAndExecute("workbench.action.files.openFile");
+    console.log("Opening file: " + process.cwd() + path);
+    this.driver
       .actions()
       .keyDown(Key.COMMAND)
-      .sendKeys("p")
+      .sendKeys("a")
       .keyUp(Key.COMMAND)
+      .sendKeys(process.cwd() + path)
+      .sendKeys(Key.ENTER)
       .perform();
-
-    const quickOpen = await InputBox.create();
-    await quickOpen.setText(fileName);
-    await quickOpen.confirm();
   }
 
   async getCursorLineInEditor() {
@@ -149,5 +150,14 @@ export class VSCodeHelperService {
       .perform();
     await this.driver.actions().sendKeys(command).perform();
     await this.driver.actions().sendKeys(Key.ENTER).perform();
+  }
+
+  async hideSecondarySideBar() {
+    await this.driver.switchTo().defaultContent();
+    const workbench = new Workbench();
+    await workbench.executeCommand("Chat: Open Chat");
+    await workbench.executeCommand(
+      "View: Toggle Secondary Side Bar Visibility"
+    );
   }
 }

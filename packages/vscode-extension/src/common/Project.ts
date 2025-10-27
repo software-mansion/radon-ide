@@ -51,14 +51,16 @@ export type Frame = {
   height: number;
 };
 
+export type SourceInfo = {
+  fileName: string;
+  line0Based: number;
+  column0Based: number;
+};
+
 export type InspectDataStackItem = {
   componentName: string;
   hide: boolean;
-  source: {
-    fileName: string;
-    line0Based: number;
-    column0Based: number;
-  };
+  source: SourceInfo;
   frame: Frame;
 };
 

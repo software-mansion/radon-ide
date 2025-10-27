@@ -8,19 +8,24 @@ import {
 } from "../../../network/types/panelMessageProtocol";
 import { RequestData, RequestOptions } from "../../../network/types/network";
 import { Logger } from "../../../Logger";
-import { determineLanguage } from "../../../network/utils/requestFormatters";
+import {
+  determineLanguage,
+  getNetworkResponseContentType,
+} from "../../../network/utils/requestFormatters";
 import { openContentInEditor, showDismissableError } from "../../../utilities/editorOpeners";
 import { extractTheme } from "../../../utilities/themeExtractor";
-import { ContentTypeHeader } from "../../../network/types/network";
 
 export abstract class BaseNetworkInspector implements NetworkInspector {
   protected broadcastListeners: BroadcastListener[] = [];
+
+  constructor(private readonly metroPort: number) {}
 
   // #region abstract
 
   public abstract activate(): void;
   public abstract deactivate(): void;
   public abstract dispose(): void;
+  protected abstract handleGetResponseBodyData(payload: IDEMessage): Promise<void>;
   protected abstract handleCDPMessage(
     message: WebviewMessage & { command: WebviewCommand.CDPCall }
   ): void;
@@ -40,7 +45,31 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     });
   }
 
+  private isInternalRequest(message: WebviewMessage): boolean {
+    if (message.command !== WebviewCommand.CDPCall) {
+      return false;
+    }
+
+    const url = message?.payload.params?.request?.url ?? "";
+
+    try {
+      const parsedUrl = new URL(url);
+      const isLocalhost = parsedUrl.hostname === "localhost" || parsedUrl.hostname === "127.0.0.1";
+      const isAndroidHost = parsedUrl.hostname === "10.0.2.2";
+      const isPortMatch = parsedUrl.port === this.metroPort.toString();
+
+      return (isLocalhost || isAndroidHost) && isPortMatch;
+    } catch (error) {
+      return false;
+    }
+  }
+
   protected broadcastMessage(message: Parameters<BroadcastListener>[0]): void {
+    if (this.isInternalRequest(message)) {
+      Logger.info(`Http request to metro filtered out: ${message.payload.params?.request?.url}`);
+      return;
+    }
+
     this.broadcastListeners.forEach((cb) => cb(message));
   }
 
@@ -64,7 +93,6 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   //#endregion
 
   // #region IDE messages
-
   private formatDataBasedOnLanguage(body: string, language: string): string {
     if (language === "json") {
       try {
@@ -101,23 +129,35 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     return fetch(requestData.url, fetchOptions);
   }
 
+  private async responseToBase64(response: Response): Promise<string> {
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    return buffer.toString("base64");
+  }
+
   /**
    * Handle fetching full response body and opening it in editor
    */
-  private async handleFetchFullResponseBody(requestData: RequestData | undefined): Promise<void> {
+  private async handleFetchFullResponseBody(
+    requestData: RequestData | undefined,
+    base64Encoded: boolean = false
+  ): Promise<void> {
     if (!requestData) {
-      Logger.warn("fetchFullResponseBody called without request data");
+      Logger.warn("fetchFullResponseBody called without proper parameters");
       return;
     }
 
     try {
       const response = await this.fetchResponse(requestData);
-      const contentType =
-        response.headers.get(ContentTypeHeader.IOS) ||
-        response.headers.get(ContentTypeHeader.ANDROID) ||
-        "";
-      const responseBody = await response.text();
+      const contentType = getNetworkResponseContentType(response);
 
+      if (base64Encoded) {
+        const responseBody = await this.responseToBase64(response);
+        openContentInEditor(responseBody, "plaintext");
+        return;
+      }
+
+      const responseBody = await response.text();
       const language = determineLanguage(contentType, responseBody);
       const formattedData = this.formatDataBasedOnLanguage(responseBody, language);
 
@@ -146,7 +186,11 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
 
     switch (payload.method) {
       case IDEMethod.FetchFullResponseBody:
-        this.handleFetchFullResponseBody(payload.params?.request);
+        const { request, base64Encoded } = payload.params || {};
+        this.handleFetchFullResponseBody(request, base64Encoded);
+        break;
+      case IDEMethod.GetResponseBodyData:
+        this.handleGetResponseBodyData(payload);
         break;
       case IDEMethod.GetTheme:
         this.handleGetTheme(payload);

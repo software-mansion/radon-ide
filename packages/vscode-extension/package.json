@@ -408,22 +408,11 @@
     {
       "title": "Radon AI",
       "properties": {
-        "RadonIDE.radonAI.enabled": {
-          "type": "string",
-          "enum": ["enabled", "disabled", "default"],
-          "default": "default",
+        "RadonIDE.radonAI.enabledBoolean": {
+          "type": "boolean",
+          "default": true,
           "scope": "window",
           "description": "Enables the Radon AI functionality in the extension."
-        },
-        "RadonIDE.radonAI.MCPConfigLocation": {
-          "type": "string",
-          "scope": "window",
-          "default": "Project",
-          "enum": [
-            "Project",
-            "Global"
-          ],
-          "markdownDescription": "Sets the write location for `mcp.json` when using Cursor or a legacy VSCode version (`<1.101.0`)."
         }
       }
     }],
@@ -484,7 +473,7 @@
         {
           "type": "webview",
           "id": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.view",
-          "name": "",
+          "name": "Radon Redux DevTools",
           "when": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
       ],
@@ -500,7 +489,7 @@
         {
           "type": "webview",
           "id": "RNIDE.Tool.ReduxDevTools.view",
-          "name": "",
+          "name": "Radon Redux DevTools",
           "when": "RNIDE.Tool.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
       ],
@@ -508,7 +497,7 @@
         {
           "type": "webview",
           "id": "RNIDE.Tool.ReactQueryDevTools.view",
-          "name": "",
+          "name": "Radon React Query DevTools",
           "when": "RNIDE.Tool.ReactQueryDevTools.available && RNIDE.panelIsOpen"
         }
       ]
@@ -750,6 +739,10 @@
               "metroPort": {
                 "type": "number",
                 "description": "Port number that will be used by Metro bundler. If not specified, a free port will be automatically chosen."
+              },
+              "disableNativeBuildStaleChecks": {
+                "type": "boolean",
+                "description": "When set to true, Radon will not run fingerprint checks on reloads and after file changes that would detect whether the native code needs to be rebuilt."
               }
             }
           }
@@ -984,6 +977,10 @@
               "metroPort": {
                 "type": "number",
                 "description": "Port number that will be used by Metro bundler. If not specified, a free port will be automatically chosen."
+              },
+              "disableNativeBuildStaleChecks": {
+                "type": "boolean",
+                "description": "When set to true, Radon will not run fingerprint checks on reloads and after file changes that would detect whether the native code needs to be rebuilt."
               }
             }
           }
@@ -1196,10 +1193,10 @@
     "react-hook-form": "^7.55.0",
     "react-is": "^19.1.0",
     "react-scan": "https://github.com/software-mansion-labs/react-scan/releases/download/0.1.3-radon-2/react-scan-0.1.3-radon-2.tgz",
-    "react-shiki": "^0.8.0",
     "rollup": "^4.40.0",
     "rollup-plugin-license": "^3.6.0",
     "semver": "^7.7.1",
+    "shiki": "^3.13.0",
     "sinon": "^20.0.0",
     "source-map": "^0.7.6",
     "tar": "^7.4.3",

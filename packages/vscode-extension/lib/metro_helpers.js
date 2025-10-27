@@ -127,11 +127,14 @@ function adaptMetroConfig(config) {
   // so it is safe to ignore changes to them from triggering hot reload
   config.resolver.blockList = [/\.d\.tsx?$/].concat(config.resolver?.blockList ?? []);
 
+  const reactNativePath = path.dirname(resolveFromAppDir("react-native/package.json"));
+
   // This code allows us to host some files from the extension's lib folder
   // Currently used for runtime and wrapper functionalities
   config.resolver.extraNodeModules = {
     ...config.resolver.extraNodeModules,
     __RNIDE_lib__: extensionLib,
+    __REACT_NATIVE_INTERNALS__: reactNativePath,
     __APPDIR__: appRoot,
   };
 

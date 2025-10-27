@@ -32,6 +32,7 @@ export interface LaunchOptions {
   useOldDevtools?: boolean;
   useCustomJSDebugger?: boolean;
   metroPort?: number;
+  disableNativeBuildStaleChecks?: boolean;
 }
 
 export const LAUNCH_OPTIONS_KEYS = [
@@ -51,6 +52,7 @@ export const LAUNCH_OPTIONS_KEYS = [
   "useOldDevtools",
   "useCustomJSDebugger",
   "metroPort",
+  "disableNativeBuildStaleChecks",
 ] as const;
 
 type IsSuperTypeOf<Base, T extends Base> = T;

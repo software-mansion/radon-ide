@@ -29,7 +29,6 @@ import {
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
-import { registerRadonAi } from "./ai";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
@@ -38,6 +37,7 @@ import { isIdeConfig } from "./utilities/launchConfiguration";
 import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
 import { RestrictedFunctionalityError } from "./common/Errors";
+import { registerRadonAI } from "./ai/mcp/RadonMcpController";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -348,7 +348,7 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
-  context.subscriptions.push(registerRadonAi(context));
+  context.subscriptions.push(registerRadonAI(context));
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 

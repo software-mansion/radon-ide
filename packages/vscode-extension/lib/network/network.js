@@ -5,7 +5,7 @@ const {
   deserializeRequestData,
   mimeTypeFromResponseType,
   readResponseText,
-  ContentTypeHeader,
+  getContentTypeHeader,
 } = require("./networkRequestParsers");
 
 let setupCompleted = false;
@@ -55,7 +55,7 @@ function enableNetworkInspect(networkProxy) {
       messageId: message.messageId,
       result: responseBodyData,
     };
-    networkProxy.sendMessage("cdp-message", JSON.stringify(responseObject));
+    networkProxy.sendMessage("ide-message", JSON.stringify(responseObject));
   }
 
   function listener(message) {
@@ -94,10 +94,7 @@ function enableNetworkInspect(networkProxy) {
           url: xhr._url,
           method: xhr._method,
           headers: xhr._headers,
-          postData: deserializeRequestData(
-            data,
-            xhr._headers[ContentTypeHeader.ANDROID] || xhr._headers[ContentTypeHeader.IOS]
-          ),
+          postData: deserializeRequestData(data, getContentTypeHeader(xhr)),
         },
         type: "XHR",
         initiator: {
@@ -140,7 +137,7 @@ function enableNetworkInspect(networkProxy) {
       });
 
       xhr.addEventListener("load", (event) => {
-        if(xhr._error || xhr._aborted) {
+        if (xhr._error || xhr._aborted) {
           return;
         }
 
@@ -166,7 +163,7 @@ function enableNetworkInspect(networkProxy) {
       });
 
       xhr.addEventListener("loadend", (event) => {
-        if(xhr._error || xhr._aborted) {
+        if (xhr._error || xhr._aborted) {
           return;
         }
         // We only store the xhr response body object, so we only put on
@@ -179,7 +176,7 @@ function enableNetworkInspect(networkProxy) {
             requestId: requestId,
             timestamp: Date.now() / 1000,
             duration: Date.now() - sendTime,
-            encodedDataLength: xhr._response.size || xhr._response.length, // when response is blob, we use size, and length otherwise
+            encodedDataLength: xhr._response?.size || xhr._response?.length, // when response is blob, we use size, and length otherwise
           });
         } catch (error) {}
       });

@@ -46,14 +46,14 @@ describe("5 - Network panel tests", () => {
       "radon-tools-dropdown-menu"
     );
     const networkSwitch = await elementHelperService.findAndWaitForElementByTag(
-      "dev-tool-Network"
+      "dev-tool-network"
     );
 
     if ((await networkSwitch.getAttribute("data-state")) !== "checked") {
       await networkSwitch.click();
     } else {
       await elementHelperService.findAndClickElementByTag(
-        "dev-tool-Network-open-button"
+        "dev-tool-network-open-button"
       );
     }
 
@@ -79,7 +79,7 @@ describe("5 - Network panel tests", () => {
       "radon-tools-dropdown-menu"
     );
     await elementHelperService.findAndClickElementByTag(
-      "dev-tool-Network-open-button"
+      "dev-tool-network-open-button"
     );
     await driver.sleep(1000);
     const networkIFrame = await radonViewsService.findWebViewIFrame(
@@ -96,7 +96,7 @@ describe("5 - Network panel tests", () => {
       "radon-tools-dropdown-menu"
     );
     await elementHelperService.findAndClickElementByTag(
-      "dev-tool-Network-open-button"
+      "dev-tool-network-open-button"
     );
     await driver.sleep(1000);
 
