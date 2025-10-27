@@ -55,7 +55,7 @@ function prettyPrintComponentTree(store: Store, root?: Element, depth: number = 
   let found: string = isContextProvider ? "" : "  ".repeat(depth) + `<${element.displayName}>\n`;
 
   for (const childId of childrenIds) {
-    const child = store.getElementByID(childId) as unknown as Element;
+    const child = getElementByID(childId, store);
 
     if (!child) {
       return `Component tree is corrupted. Element with ID ${childId} not found.`;
