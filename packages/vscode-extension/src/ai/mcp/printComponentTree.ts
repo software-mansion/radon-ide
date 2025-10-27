@@ -1,11 +1,12 @@
-import { Store, Element } from "../../../third-party/react-devtools/headless";
+import { Store } from "../../../third-party/react-devtools/headless";
+import { DevtoolsElement } from "./models";
 
 // removes the need for casting types, which is prone to mistakes
-function getElementByID(id: number, store: Store): Element | null {
-  return store.getElementByID(id) as unknown as Element | null;
+function getElementByID(id: number, store: Store): DevtoolsElement | null {
+  return store.getElementByID(id) as unknown as DevtoolsElement | null;
 }
 
-function findTreeEntryPoint(store: Store, root?: Element): Element | null {
+function findTreeEntryPoint(store: Store, root?: DevtoolsElement): DevtoolsElement | null {
   const element = root ?? getElementByID(store.roots[0], store);
 
   if (!element) {
@@ -41,13 +42,13 @@ function findTreeEntryPoint(store: Store, root?: Element): Element | null {
   return null;
 }
 
-function hasHocDescriptors(
-  element: Element
-): element is Element & { hocDisplayNames: NonNullable<Element["hocDisplayNames"]> } {
+function hasHocDescriptors(element: DevtoolsElement): element is DevtoolsElement & {
+  hocDisplayNames: NonNullable<DevtoolsElement["hocDisplayNames"]>;
+} {
   return (element?.hocDisplayNames?.length ?? 0) > 0;
 }
 
-function prettyPrintComponentTree(store: Store, root?: Element, depth: number = 0): string {
+function printComponentTree(store: Store, root?: DevtoolsElement, depth: number = 0): string {
   const element = root ?? findTreeEntryPoint(store);
 
   if (!element) {
@@ -75,10 +76,10 @@ function prettyPrintComponentTree(store: Store, root?: Element, depth: number = 
       return `Component tree is corrupted. Element with ID ${childId} not found.`;
     }
 
-    return prettyPrintComponentTree(store, child, childDepth);
+    return printComponentTree(store, child, childDepth);
   });
 
   return componentRepr + childrenRepr;
 }
 
-export default prettyPrintComponentTree;
+export default printComponentTree;

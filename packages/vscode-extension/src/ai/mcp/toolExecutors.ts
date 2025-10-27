@@ -5,7 +5,7 @@ import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils
 import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
-import prettyPrintComponentTree from "./printComponentTree";
+import printComponentTree from "./printComponentTree";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -48,7 +48,7 @@ export async function viewComponentTreeExec(): Promise<ToolResponse> {
     );
   }
 
-  const repr = prettyPrintComponentTree(store);
+  const repr = printComponentTree(store);
 
   return textToToolResponse(repr);
 }
