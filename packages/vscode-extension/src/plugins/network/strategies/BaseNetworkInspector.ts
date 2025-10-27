@@ -5,6 +5,7 @@ import {
   IDEMessage,
   WebviewCommand,
   IDEMethod,
+  CDPMessage,
 } from "../../../network/types/panelMessageProtocol";
 import { RequestData, RequestOptions } from "../../../network/types/network";
 import { Logger } from "../../../Logger";
@@ -75,17 +76,16 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     this.trackingEnabled = shouldTrack;
   }
 
-  protected storeMessage(message: WebviewMessage): void {
-    if (this.shouldTrackMessage(message)) {
-      this.networkMessages.push(message);
-    }
-  }
-
   protected clearNetworkMessages(): void {
     this.networkMessages = [];
   }
 
-  protected broadcastMessage(message: Parameters<BroadcastListener>[0]): void {
+  protected broadcastMessage(payload: CDPMessage | IDEMessage, command: WebviewCommand): void {
+    const message: WebviewMessage = {
+      command: command,
+      payload: payload,
+    } as WebviewMessage;
+
     if (!this.shouldTrackMessage(message)) {
       return;
     }
@@ -94,8 +94,39 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
       return;
     }
 
+    if (command !== WebviewCommand.IDECall) {
+      this.networkMessages.push(message);
+    }
+
     this.broadcastListeners.forEach((cb) => cb(message));
   }
+
+  // protected storeAndBroadcastWebviewMessage(
+  //   message: IDEMessage,
+  //   command: WebviewCommand.IDECall
+  // ): void;
+  // protected storeAndBroadcastWebviewMessage(
+  //   message: CDPMessage,
+  //   command: WebviewCommand.CDPCall
+  // ): void;
+  // protected storeAndBroadcastWebviewMessage(
+  //   message: IDEMessage | CDPMessage,
+  //   command: WebviewCommand.IDECall | WebviewCommand.CDPCall
+  // ): void {
+  //   const webviewMessage: WebviewMessage = {
+  //     command: command,
+  //     payload: message,
+  //   } as WebviewMessage;
+
+  //   const shouldSaveMessage =
+  //     this.shouldTrackMessage(webviewMessage) && !this.isInternalRequest(webviewMessage);
+
+  //   if (shouldSaveMessage) {
+  //     this.networkMessages.push(webviewMessage);
+  //   }
+
+  //   this.broadcastMessage(webviewMessage);
+  // }
 
   public handleWebviewMessage(message: WebviewMessage): void {
     try {
@@ -130,11 +161,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   }
 
   private sendIDEMessage(payload: IDEMessage): void {
-    const message: WebviewMessage = {
-      command: WebviewCommand.IDECall,
-      payload,
-    };
-    this.broadcastMessage(message);
+    this.broadcastMessage(payload, WebviewCommand.IDECall);
   }
 
   /**

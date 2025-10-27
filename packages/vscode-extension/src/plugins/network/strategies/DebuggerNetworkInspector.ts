@@ -2,7 +2,6 @@ import { commands, Disposable } from "vscode";
 import { disposeAll } from "../../../utilities/disposables";
 import { Logger } from "../../../Logger";
 import {
-  CDPMessage,
   IDEMessage,
   IDEMethod,
   NetworkMethod,
@@ -92,26 +91,6 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     };
   }
 
-  private storeAndBroadcastWebviewMessage(
-    message: IDEMessage,
-    command: WebviewCommand.IDECall
-  ): void;
-  private storeAndBroadcastWebviewMessage(
-    message: CDPMessage,
-    command: WebviewCommand.CDPCall
-  ): void;
-  private storeAndBroadcastWebviewMessage(
-    message: IDEMessage | CDPMessage,
-    command: WebviewCommand.IDECall | WebviewCommand.CDPCall
-  ): void {
-    const webviewMessage: WebviewMessage = {
-      command: command,
-      payload: message,
-    } as WebviewMessage;
-    this.storeMessage(webviewMessage);
-    this.broadcastMessage(webviewMessage);
-  }
-
   private completeActivation(): void {
     if (this.activationState === ActivationState.Active) {
       return; // activated
@@ -126,13 +105,13 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
   private setupNetworkListeners(): void {
     const knownEventsSubscriptions: Disposable[] = NETWORK_EVENTS.map((event) =>
       this.networkBridge.onEvent(NETWORK_EVENT_MAP[event], (message) => {
-        this.storeAndBroadcastWebviewMessage(message, WebviewCommand.CDPCall);
+        this.broadcastMessage(message, WebviewCommand.CDPCall);
       })
     );
 
     const subscriptions: Disposable[] = [
       this.networkBridge.onEvent("unknownEvent", (e) =>
-        this.storeAndBroadcastWebviewMessage(e, WebviewCommand.CDPCall)
+        this.broadcastMessage(e, WebviewCommand.CDPCall)
       ),
       this.inspectorBridge.onEvent("appReady", () => {
         this.networkBridge.enableNetworkInspector();
@@ -189,7 +168,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
         method: IDEMethod.GetResponseBodyData,
         result: DEFAULT_RESPONSE_BODY_DATA,
       };
-      this.storeAndBroadcastWebviewMessage(emptyMessage, WebviewCommand.IDECall);
+      this.broadcastMessage(emptyMessage, WebviewCommand.IDECall);
     };
 
     const { requestId } = payload?.params || {};
@@ -220,7 +199,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
       result: responseBodyData,
     };
 
-    this.storeAndBroadcastWebviewMessage(message, WebviewCommand.IDECall);
+    this.broadcastMessage(message, WebviewCommand.IDECall);
   }
 
   protected handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {

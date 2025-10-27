@@ -55,25 +55,6 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
     });
   }
 
-  /**
-   * Parse CDPMessage into WebviewMessage format and broadcast to all listeners
-   */
-  private storeAndBroadcastWebviewMessage(
-    message: string,
-    command: WebviewCommand = WebviewCommand.CDPCall
-  ): void {
-    try {
-      const webviewMessage: WebviewMessage = {
-        command: command,
-        payload: JSON.parse(message),
-      };
-      this.storeMessage(webviewMessage);
-      this.broadcastMessage(webviewMessage);
-    } catch {
-      console.error("Failed to parse Webview message:", message);
-    }
-  }
-
   protected async handleGetResponseBodyData(message: IDEMessage): Promise<void> {
     const { messageId, params } = message;
     this.sendCDPMessage({
@@ -99,10 +80,16 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("pluginMessage", (payload) => {
         if (payload.pluginId === "network") {
-          if (payload.type === WebviewMessageDescriptor.IDEMessage) {
-            this.storeAndBroadcastWebviewMessage(payload.data, WebviewCommand.IDECall);
-          } else {
-            this.storeAndBroadcastWebviewMessage(payload.data, WebviewCommand.CDPCall);
+          try {
+            const payloadData = JSON.parse(payload.data);
+
+            if (payload.type === WebviewMessageDescriptor.IDEMessage) {
+              this.broadcastMessage(payloadData, WebviewCommand.IDECall);
+            } else {
+              this.broadcastMessage(payloadData, WebviewCommand.CDPCall);
+            }
+          } catch (error) {
+            console.error("Failed to parse Webview message:", payload.data);
           }
         }
       })
