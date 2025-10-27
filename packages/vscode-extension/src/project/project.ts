@@ -39,7 +39,7 @@ import {
 import { FingerprintProvider } from "./FingerprintProvider";
 import { Connector } from "../connect/Connector";
 import { LaunchConfigurationsManager } from "./launchConfigurationsManager";
-import { LaunchConfiguration } from "../common/LaunchConfig";
+import { LaunchConfiguration, LaunchConfigurationKind } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { StateManager } from "./StateManager";
@@ -591,28 +591,30 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region Reloading
 
   public reloadCurrentSession(type: ReloadAction): Promise<void> {
-    // upon reload, we verify the selected launch configuration is still present:
-    // 1) if it is, we proceed to reloading the session.
-    // 2) if the launch configuration was modified, we search for a matching launch configuration and select it.
-    // 3) if no matching launch configuration is found, we show an error message and throw an error.
-    const exactConfigExists = this.launchConfigsManager.launchConfigurations.some((config) =>
-      _.isEqual(config, this.selectedLaunchConfiguration)
-    );
-    if (!exactConfigExists) {
-      // find config with the same name and app root as the best candidate
-      const matchingConfigCandidate = this.launchConfigsManager.launchConfigurations.find(
-        (config) =>
-          config.name === this.selectedLaunchConfiguration.name &&
-          config.appRoot === this.selectedLaunchConfiguration.appRoot
+    if (this.selectedLaunchConfiguration.kind === LaunchConfigurationKind.Custom) {
+      // upon reload, we verify the selected launch configuration is still present:
+      // 1) if it is, we proceed to reloading the session.
+      // 2) if the launch configuration was modified, we search for a matching launch configuration and select it.
+      // 3) if no matching launch configuration is found, we show an error message and throw an error.
+      const exactConfigExists = this.launchConfigsManager.launchConfigurations.some((config) =>
+        _.isEqual(config, this.selectedLaunchConfiguration)
       );
-      if (matchingConfigCandidate) {
-        return this.selectLaunchConfiguration(matchingConfigCandidate);
-      } else {
-        window.showErrorMessage(
-          "The selected launch configuration was deleted or changed. Please select a new launch configuration from the list of available ones.",
-          "Dismiss"
+      if (!exactConfigExists) {
+        // find config with the same name and app root as the best candidate
+        const matchingConfigCandidate = this.launchConfigsManager.launchConfigurations.find(
+          (config) =>
+            config.name === this.selectedLaunchConfiguration.name &&
+            config.appRoot === this.selectedLaunchConfiguration.appRoot
         );
-        throw new Error("Selected launch configuration is stale");
+        if (matchingConfigCandidate) {
+          return this.selectLaunchConfiguration(matchingConfigCandidate);
+        } else {
+          window.showErrorMessage(
+            "The selected launch configuration was deleted or changed. Please select a new launch configuration from the list of available ones.",
+            "Dismiss"
+          );
+          throw new Error("Selected launch configuration is stale");
+        }
       }
     }
     return this.deviceSessionsManager.reloadCurrentSession(type);
