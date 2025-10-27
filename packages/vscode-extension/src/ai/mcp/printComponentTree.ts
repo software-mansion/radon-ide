@@ -54,8 +54,6 @@ function prettyPrintComponentTree(store: Store, root?: Element, depth: number = 
     return `Component tree is corrupted. Could not find root of the component tree! Are you sure an application is running in the emulator?`;
   }
 
-  const childrenIds = element.children;
-
   // `type = 2` means element is `Context.Provider`.
   // These are always wrapped by a component with a more descriptive name when user-made.
   const isContextProvider = element.type === 2;
@@ -66,21 +64,21 @@ function prettyPrintComponentTree(store: Store, root?: Element, depth: number = 
     ? ` [${element.hocDisplayNames.join(", ")}]`
     : "";
 
-  let componentRepr: string = isContextProvider
-    ? ""
-    : "  ".repeat(depth) + `<${element.displayName}>${hocDescriptors}\n`;
+  const componentRepr: string = !isContextProvider
+    ? "  ".repeat(depth) + `<${element.displayName}>${hocDescriptors}\n`
+    : "";
 
-  for (const childId of childrenIds) {
+  const childrenRepr = element.children.map((childId) => {
     const child = getElementByID(childId, store);
 
     if (!child) {
       return `Component tree is corrupted. Element with ID ${childId} not found.`;
     }
 
-    componentRepr += prettyPrintComponentTree(store, child, childDepth);
-  }
+    return prettyPrintComponentTree(store, child, childDepth);
+  });
 
-  return componentRepr;
+  return componentRepr + childrenRepr;
 }
 
 export default prettyPrintComponentTree;
