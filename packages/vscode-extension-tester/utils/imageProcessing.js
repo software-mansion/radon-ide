@@ -98,13 +98,15 @@ export async function validateVideo(filePath, expectedDuration = null) {
 
   const framePath = path.join(path.dirname(filePath), "tmp_video_frame.png");
 
+  if (fs.existsSync(framePath)) fs.unlinkSync(framePath);
+
   await new Promise((resolve, reject) => {
     ffmpeg(filePath)
       .screenshots({
         count: 1,
         folder: path.dirname(framePath),
         filename: path.basename(framePath),
-        timemarks: ["1"], /// frame at 1s
+        timemarks: [info.format.duration - 1], /// frame at last second
       })
       .on("end", resolve)
       .on("error", reject);

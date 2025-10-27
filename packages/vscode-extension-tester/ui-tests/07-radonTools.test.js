@@ -170,30 +170,6 @@ safeDescribe("7 - Radon tools tests", () => {
     });
   });
 
-  // test scenario:
-  // - creates two devices
-  // - rotates one of them
-  // - the element inspector should work correctly after switching to second device
-  it(`should show inspect overlay in correct place after rotating and changing device`, async function () {
-    try {
-      const deviceName1 = "newDevice";
-      const deviceName2 = "newDevice2";
-
-      await managingDevicesService.addNewDevice(deviceName2);
-      await elementHelperService.findAndClickElementByTag(`close-modal-button`);
-      await managingDevicesService.switchToDevice(deviceName2);
-      await appManipulationService.waitForAppToLoad();
-
-      await radonSettingsService.rotateDevice("landscape-left");
-
-      await managingDevicesService.switchToDevice(deviceName1);
-
-      await testIfInspectElementAppearsInCorrectPlace();
-    } finally {
-      await radonSettingsService.rotateDevice("portrait");
-    }
-  });
-
   it("Right Click on App element: Should open component source file", async () => {
     const position = await appManipulationService.getButtonCoordinates(
       appWebsocket,
@@ -412,5 +388,29 @@ safeDescribe("7 - Radon tools tests", () => {
     }, 0);
 
     assert.isAbove(nonZeroCount, 1000);
+  });
+
+  // test scenario:
+  // - creates two devices
+  // - rotates one of them
+  // - the element inspector should work correctly after switching to second device
+  it(`should show inspect overlay in correct place after rotating and changing device`, async function () {
+    try {
+      const deviceName1 = "newDevice";
+      const deviceName2 = "newDevice2";
+
+      await managingDevicesService.addNewDevice(deviceName2);
+      await elementHelperService.findAndClickElementByTag(`close-modal-button`);
+      await managingDevicesService.switchToDevice(deviceName2);
+      await appManipulationService.waitForAppToLoad();
+
+      await radonSettingsService.rotateDevice("landscape-left");
+
+      await managingDevicesService.switchToDevice(deviceName1);
+
+      await testIfInspectElementAppearsInCorrectPlace();
+    } finally {
+      await radonSettingsService.rotateDevice("portrait");
+    }
   });
 });

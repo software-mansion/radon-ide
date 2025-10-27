@@ -59,6 +59,10 @@ safeDescribe("15 - Launch Configuration Tests", () => {
     deleteLaunchConfigs();
   });
 
+  after(() => {
+    deleteLaunchConfigs();
+  });
+
   it("Should add launch configuration", async function () {
     await elementHelperService.findAndClickElementByTag(
       "radon-bottom-bar-approot-select-dropdown-trigger"
