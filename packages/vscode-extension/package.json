@@ -473,7 +473,7 @@
         {
           "type": "webview",
           "id": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.view",
-          "name": "",
+          "name": "Radon Redux DevTools",
           "when": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
       ],
@@ -489,7 +489,7 @@
         {
           "type": "webview",
           "id": "RNIDE.Tool.ReduxDevTools.view",
-          "name": "",
+          "name": "Radon Redux DevTools",
           "when": "RNIDE.Tool.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
       ],
@@ -497,7 +497,7 @@
         {
           "type": "webview",
           "id": "RNIDE.Tool.ReactQueryDevTools.view",
-          "name": "",
+          "name": "Radon React Query DevTools",
           "when": "RNIDE.Tool.ReactQueryDevTools.available && RNIDE.panelIsOpen"
         }
       ]

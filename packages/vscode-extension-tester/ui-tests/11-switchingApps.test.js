@@ -10,6 +10,7 @@ describe("11 - App switching tests", () => {
     elementHelperService,
     radonViewsService,
     managingDevicesService,
+    vscodeHelperService,
     appManipulationService;
 
   before(async () => {
@@ -19,9 +20,17 @@ describe("11 - App switching tests", () => {
       radonViewsService,
       managingDevicesService,
       appManipulationService,
+      vscodeHelperService,
     } = initServices(driver));
 
     await managingDevicesService.prepareDevices();
+  });
+
+  after(async () => {
+    await execAsync("rm -rf ./data/react-native-app2");
+    const browser = VSBrowser.instance;
+    browser.openResources(`./data/react-native-app`);
+    await vscodeHelperService.hideSecondarySideBar();
   });
 
   function execAsync(command) {
@@ -37,7 +46,7 @@ describe("11 - App switching tests", () => {
     await execAsync("./scripts/downloadRepo.sh test-app react-native-app2");
     const browser = VSBrowser.instance;
     browser.openResources(`./data`);
-    await driver.switchTo().defaultContent();
+    await vscodeHelperService.hideSecondarySideBar();
     await driver.wait(async () => {
       try {
         await radonViewsService.openRadonIDEPanel();

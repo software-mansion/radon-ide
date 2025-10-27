@@ -6,6 +6,7 @@ import {
   WebView,
   ActivityBar,
   Key,
+  Workbench,
 } from "vscode-extension-tester";
 
 export class ElementHelperService {
@@ -27,6 +28,7 @@ export class ElementHelperService {
       timeout,
       timeoutMessage
     );
+    await this.driver.executeScript("arguments[0].scrollIntoView()", element);
     await this.waitForElement(element);
     return element;
   }
@@ -148,5 +150,14 @@ export class VSCodeHelperService {
       .perform();
     await this.driver.actions().sendKeys(command).perform();
     await this.driver.actions().sendKeys(Key.ENTER).perform();
+  }
+
+  async hideSecondarySideBar() {
+    await this.driver.switchTo().defaultContent();
+    const workbench = new Workbench();
+    await workbench.executeCommand("Chat: Open Chat");
+    await workbench.executeCommand(
+      "View: Toggle Secondary Side Bar Visibility"
+    );
   }
 }
