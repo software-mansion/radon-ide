@@ -5,7 +5,7 @@ import { WorkspaceConfigController } from "../panels/WorkspaceConfigController";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
-import { initialState, RecursivePartial, State } from "../common/State";
+import { DevicesState, initialState, RecursivePartial, State } from "../common/State";
 import { LaunchConfiguration } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { StateManager } from "./StateManager";
@@ -15,6 +15,20 @@ import { EditorBindings } from "./EditorBindings";
 import { PhysicalAndroidDeviceProvider } from "../devices/AndroidPhysicalDevice";
 import { AndroidEmulatorProvider } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorProvider } from "../devices/IosSimulatorDevice";
+
+function createDeviceProviders(
+  stateManager: StateManager<DevicesState>,
+  outputChannelRegistry: OutputChannelRegistry
+) {
+  return [
+    new IosSimulatorProvider(stateManager.getDerived("devicesByType"), outputChannelRegistry),
+    new AndroidEmulatorProvider(stateManager.getDerived("devicesByType"), outputChannelRegistry),
+    new PhysicalAndroidDeviceProvider(
+      stateManager.getDerived("devicesByType"),
+      outputChannelRegistry
+    ),
+  ];
+}
 
 interface InitialOptions {
   initialLaunchConfig?: LaunchConfiguration;
@@ -50,20 +64,7 @@ export class IDE implements Disposable {
     this.telemetry = new Telemetry(this.stateManager.getDerived("telemetry"));
 
     const devicesStateManager = this.stateManager.getDerived("devicesState");
-    const deviceProviders = [
-      new IosSimulatorProvider(
-        devicesStateManager.getDerived("devicesByType"),
-        this.outputChannelRegistry
-      ),
-      new AndroidEmulatorProvider(
-        devicesStateManager.getDerived("devicesByType"),
-        this.outputChannelRegistry
-      ),
-      new PhysicalAndroidDeviceProvider(
-        devicesStateManager.getDerived("devicesByType"),
-        this.outputChannelRegistry
-      ),
-    ];
+    const deviceProviders = createDeviceProviders(devicesStateManager, this.outputChannelRegistry);
 
     this.deviceManager = new DeviceManager(
       this.stateManager.getDerived("devicesState"),
