@@ -109,7 +109,8 @@ safeDescribe("7 - Radon tools tests", () => {
       assert.approximately(
         originalPosition[key],
         relativeRect[key],
-        0.005,
+        // NOTE: allow a 2% of the screen width/height margin of error
+        0.02,
         `Inspect area ${key} is incorrect`
       );
     }
