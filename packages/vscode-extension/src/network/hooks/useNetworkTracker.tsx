@@ -233,12 +233,12 @@ const useNetworkTracker = (): NetworkTracker => {
   };
 
   useEffect(() => {
+    synchronizeSessionData();
+
     const listener = (message: MessageEvent) => {
       updateCDPMessages(message.data);
     };
-
     window.addEventListener("message", listener);
-    synchronizeSessionData();
 
     return () => {
       window.removeEventListener("message", listener);
@@ -261,7 +261,7 @@ const useNetworkTracker = (): NetworkTracker => {
     setCdpMessages([]);
 
     sendWebviewIDEMessage({
-      messageId: "clearLogs",
+      messageId: "clearStoredMessages",
       method: IDEMethod.ClearStoredMessages,
     });
   };

@@ -46,8 +46,8 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
    * Apart from changing the tracking state, send message to application (network.js)
    * with appropriate IDEMethod, to start/stop network response buffering.
    */
-  protected changeNetworkTracking(shouldTrack: boolean): void {
-    super.changeNetworkTracking(shouldTrack);
+  protected setNetworkTracking(shouldTrack: boolean): void {
+    super.setNetworkTracking(shouldTrack);
 
     const method = shouldTrack ? IDEMethod.StartNetworkTracking : IDEMethod.StopNetworkTracking;
     this.inspectorBridge.sendPluginMessage("network", WebviewMessageDescriptor.IDEMessage, {

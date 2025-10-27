@@ -72,7 +72,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     return this.trackingEnabled || message.command === WebviewCommand.IDECall;
   }
 
-  protected changeNetworkTracking(shouldTrack: boolean): void {
+  protected setNetworkTracking(shouldTrack: boolean): void {
     this.trackingEnabled = shouldTrack;
   }
 
@@ -80,6 +80,8 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     this.networkMessages = [];
   }
 
+  protected broadcastMessage(message: IDEMessage, command: WebviewCommand.IDECall): void;
+  protected broadcastMessage(message: CDPMessage, command: WebviewCommand.CDPCall): void;
   protected broadcastMessage(payload: CDPMessage | IDEMessage, command: WebviewCommand): void {
     const message: WebviewMessage = {
       command: command,
@@ -100,33 +102,6 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
 
     this.broadcastListeners.forEach((cb) => cb(message));
   }
-
-  // protected storeAndBroadcastWebviewMessage(
-  //   message: IDEMessage,
-  //   command: WebviewCommand.IDECall
-  // ): void;
-  // protected storeAndBroadcastWebviewMessage(
-  //   message: CDPMessage,
-  //   command: WebviewCommand.CDPCall
-  // ): void;
-  // protected storeAndBroadcastWebviewMessage(
-  //   message: IDEMessage | CDPMessage,
-  //   command: WebviewCommand.IDECall | WebviewCommand.CDPCall
-  // ): void {
-  //   const webviewMessage: WebviewMessage = {
-  //     command: command,
-  //     payload: message,
-  //   } as WebviewMessage;
-
-  //   const shouldSaveMessage =
-  //     this.shouldTrackMessage(webviewMessage) && !this.isInternalRequest(webviewMessage);
-
-  //   if (shouldSaveMessage) {
-  //     this.networkMessages.push(webviewMessage);
-  //   }
-
-  //   this.broadcastMessage(webviewMessage);
-  // }
 
   public handleWebviewMessage(message: WebviewMessage): void {
     try {
@@ -265,10 +240,10 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
         this.handleGetSessionData(payload);
         break;
       case IDEMethod.StartNetworkTracking:
-        this.changeNetworkTracking(true);
+        this.setNetworkTracking(true);
         break;
       case IDEMethod.StopNetworkTracking:
-        this.changeNetworkTracking(false);
+        this.setNetworkTracking(false);
         break;
       case IDEMethod.ClearStoredMessages:
         this.clearNetworkMessages();
