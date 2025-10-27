@@ -8,13 +8,17 @@ function getElementByID(id: number, store: Store): Element | null {
 function findTreeEntryPoint(store: Store, root?: Element): Element | null {
   const element = root ?? getElementByID(store.roots[0], store);
 
-  const name = element?.displayName;
+  if (!element) {
+    return null;
+  }
+
+  const name = element.displayName;
 
   if (name && (name.startsWith("./") || name.startsWith("/"))) {
     return element;
   }
 
-  const childrenIds = element?.children ?? [];
+  const childrenIds = element.children ?? [];
 
   for (const childId of childrenIds) {
     const child = getElementByID(childId, store);
