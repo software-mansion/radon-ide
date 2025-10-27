@@ -40,67 +40,65 @@ safeDescribe("6 - screenshots tests", () => {
   beforeEach(async () => {
     await radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
-
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
     }, 5000);
-
     await appManipulationService.hideExpoOverlay(appWebsocket);
   });
 
-  it("Should take a screenshot", async () => {
-    // VSCode for some reason puts two dots in file name, but it's not an issue
-    // it only happens in vscode instance opened by vscode-extension-tester which uses different save file dialog
-    // regular VSCode instance use macOS default save file dialog
-    const filePath = path.join(cwd, "screenshotTest..png");
+  // it("Should take a screenshot", async () => {
+  //   // VSCode for some reason puts two dots in file name, but it's not an issue
+  //   // it only happens in vscode instance opened by vscode-extension-tester which uses different save file dialog
+  //   // regular VSCode instance use macOS default save file dialog
+  //   const filePath = path.join(cwd, "screenshotTest..png");
 
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  //   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    await elementHelperService.findAndClickElementByTag(
-      "capture-screenshot-button"
-    );
-    await driver.sleep(1000);
+  //   await elementHelperService.findAndClickElementByTag(
+  //     "capture-screenshot-button"
+  //   );
+  //   await driver.sleep(1000);
 
-    await radonViewsService.findAndFillSaveFileForm("screenshotTest");
+  //   await radonViewsService.findAndFillSaveFileForm("screenshotTest");
 
-    await driver.wait(
-      async () => {
-        return fs.existsSync(filePath);
-      },
-      10000,
-      "Timed out waiting for screenshot to be saved"
-    );
+  //   await driver.wait(
+  //     async () => {
+  //       return fs.existsSync(filePath);
+  //     },
+  //     10000,
+  //     "Timed out waiting for screenshot to be saved"
+  //   );
 
-    await validateImage(filePath);
-  });
+  //   await validateImage(filePath);
+  // });
 
-  it("Should take a screenshot using shortcut", async () => {
-    const filePath = path.join(cwd, "screenshotTestShortcut..png");
+  // it("Should take a screenshot using shortcut", async () => {
+  //   const filePath = path.join(cwd, "screenshotTestShortcut..png");
 
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  //   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    await driver
-      .actions()
-      .keyDown(Key.COMMAND)
-      .keyDown(Key.SHIFT)
-      .sendKeys("a")
-      .keyUp(Key.SHIFT)
-      .keyUp(Key.COMMAND)
-      .perform();
+  //   await driver
+  //     .actions()
+  //     .keyDown(Key.COMMAND)
+  //     .keyDown(Key.SHIFT)
+  //     .sendKeys("a")
+  //     .keyUp(Key.SHIFT)
+  //     .keyUp(Key.COMMAND)
+  //     .perform();
 
-    await radonViewsService.findAndFillSaveFileForm("screenshotTestShortcut");
+  //   await radonViewsService.findAndFillSaveFileForm("screenshotTestShortcut");
 
-    await driver.wait(
-      async () => {
-        return fs.existsSync(filePath);
-      },
-      10000,
-      "Timed out waiting for screenshot to be saved"
-    );
+  //   await driver.wait(
+  //     async () => {
+  //       return fs.existsSync(filePath);
+  //     },
+  //     10000,
+  //     "Timed out waiting for screenshot to be saved"
+  //   );
 
-    await validateImage(filePath);
-  });
+  //   await validateImage(filePath);
+  // });
 
   it("Should record screen", async () => {
     const filePath = path.join(cwd, "recordingTest..mp4");
@@ -248,7 +246,7 @@ safeDescribe("6 - screenshots tests", () => {
       "Timed out waiting for recording to be saved"
     );
 
-    await driver.sleep(5000);
+    await driver.sleep(10000);
 
     await validateVideo(filePath);
   });

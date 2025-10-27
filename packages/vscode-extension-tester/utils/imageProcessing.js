@@ -98,7 +98,8 @@ export async function validateVideo(filePath, expectedDuration = null) {
 
   const framePath = path.join(path.dirname(filePath), "tmp_video_frame.png");
 
-  if (fs.existsSync(framePath)) fs.unlinkSync(framePath);
+  // if (fs.existsSync(framePath)) fs.unlinkSync(framePath);
+  console.log("Duration:", info.format.duration);
 
   await new Promise((resolve, reject) => {
     ffmpeg(filePath)
@@ -106,11 +107,15 @@ export async function validateVideo(filePath, expectedDuration = null) {
         count: 1,
         folder: path.dirname(framePath),
         filename: path.basename(framePath),
-        timemarks: [info.format.duration - 1], /// frame at last second
+        timemarks: [Math.ceil(info.format.duration - 1)], // frame at last second
       })
       .on("end", resolve)
       .on("error", reject);
   });
+
+  await new Promise((res) => setTimeout(res, 3000));
+
+  console.log(fs.existsSync(framePath));
 
   await validateImage(framePath);
 }
