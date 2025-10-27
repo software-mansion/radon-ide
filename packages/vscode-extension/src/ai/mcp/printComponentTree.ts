@@ -79,7 +79,7 @@ function printComponentTree(store: Store, root?: DevtoolsElement, depth: number 
     return printComponentTree(store, child, childDepth);
   });
 
-  return componentRepr + childrenRepr;
+  return componentRepr + childrenRepr.join("");
 }
 
 export default printComponentTree;
