@@ -1,8 +1,9 @@
 import { WebView, EditorView } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
+import { safeDescribe } from "../utils/helpers.js";
 
-describe("2 - Main interface buttons tests", () => {
+safeDescribe("2 - Main interface buttons tests", () => {
   let driver, elementHelperService, radonViewsService, managingDevicesService;
 
   before(async () => {

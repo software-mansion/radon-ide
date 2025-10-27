@@ -52,26 +52,11 @@ before(async function () {
   await workbench.executeCommand("View: Toggle Secondary Side Bar Visibility");
 });
 
-afterEach(async function () {
+export const cleanUpAfterTest = async () => {
   // in case some modal stayed opened after tests
   await driver.actions().sendKeys(Key.ESCAPE).perform();
 
   const { vscodeHelperService } = initServices(driver);
-  if (this.currentTest.state === "failed") {
-    driver = VSBrowser.instance.driver;
-    const image = await driver.takeScreenshot();
-
-    const screenshotDir = path.join(process.cwd(), "screenshots");
-    const filePath = path.join(
-      screenshotDir,
-      `${this.currentTest.title}-${Date.now()}.png`
-    );
-
-    fs.mkdirSync(screenshotDir, { recursive: true });
-    fs.writeFileSync(filePath, image, "base64");
-    console.log(`Saved screenshot: ${filePath}`);
-    failedTests.push(this.currentTest.fullTitle());
-  }
   view = new WebView();
   await view.switchBack();
   let bottomBar = new BottomBarPanel();
@@ -101,6 +86,26 @@ afterEach(async function () {
       return false;
     }
   }, 10000);
+};
+
+afterEach(async function () {
+  if (this.currentTest.state === "failed") {
+    driver = VSBrowser.instance.driver;
+    const image = await driver.takeScreenshot();
+
+    const screenshotDir = path.join(process.cwd(), "screenshots");
+    const filePath = path.join(
+      screenshotDir,
+      `${this.currentTest.title}-${Date.now()}.png`
+    );
+
+    fs.mkdirSync(screenshotDir, { recursive: true });
+    fs.writeFileSync(filePath, image, "base64");
+    console.log(`Saved screenshot: ${filePath}`);
+    failedTests.push(this.currentTest.fullTitle());
+  }
+
+  await cleanUpAfterTest();
 });
 
 after(async function () {

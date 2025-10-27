@@ -3,11 +3,12 @@ import * as path from "path";
 import { WebView, Key, By } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { validateImage, validateVideo } from "../utils/imageProcessing.js";
+import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
 const DEFAULT_VIDEO_DURATION_SECS = 4;
 
-describe("6 - screenshots tests", () => {
+safeDescribe("6 - screenshots tests", () => {
   let driver,
     view,
     appWebsocket,

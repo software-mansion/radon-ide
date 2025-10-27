@@ -2,6 +2,7 @@ import * as fs from "fs";
 import { assert } from "chai";
 import { WebView, EditorView, Key, By } from "vscode-extension-tester";
 import initServices from "../services/index.js";
+import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
 function stringifySorted(obj) {
@@ -32,7 +33,7 @@ const copyLaunchConfigs = () => {
   );
 };
 
-describe("15 - Launch Configuration Tests", () => {
+safeDescribe("15 - Launch Configuration Tests", () => {
   let driver;
   let { elementHelperService, radonViewsService, managingDevicesService } =
     initServices(driver);
