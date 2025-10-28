@@ -408,13 +408,18 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
 const LocationItem = () => {
   const { openModal } = useModal();
+  const handleOpenLocationView = usePaywalledCallback(
+    () => {
+      openModal(<DeviceLocationView />, { title: "Location" });
+    },
+    Feature.LocationSimulation,
+    []
+  );
   return (
     <DropdownMenu.Item
       className="dropdown-menu-item"
       data-testid="device-settings-location"
-      onSelect={() => {
-        openModal(<DeviceLocationView />, { title: "Location" });
-      }}>
+      onSelect={handleOpenLocationView}>
       <span className="codicon codicon-location" />
       Location
     </DropdownMenu.Item>
@@ -424,7 +429,7 @@ const LocationItem = () => {
 const LocalizationItem = () => {
   const { openModal } = useModal();
 
-  const handleOpenLocationView = usePaywalledCallback(
+  const handleOpenLocalizationView = usePaywalledCallback(
     () => {
       openModal(<DeviceLocalizationView />, { title: "Localization" });
     },
@@ -433,7 +438,7 @@ const LocalizationItem = () => {
   );
 
   return (
-    <DropdownMenu.Item className="dropdown-menu-item" onSelect={handleOpenLocationView}>
+    <DropdownMenu.Item className="dropdown-menu-item" onSelect={handleOpenLocalizationView}>
       <span className="codicon codicon-globe" />
       Localization
     </DropdownMenu.Item>
