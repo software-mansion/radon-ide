@@ -1,7 +1,7 @@
 import { Store } from "../../../third-party/react-devtools/headless";
 import { DevtoolsElement } from "./models";
 
-// removes the need for casting types, which is prone to mistakes
+// This util removes the need for type-casting on every `store.getElementByID` call
 function getElementByID(id: number, store: Store): DevtoolsElement | null {
   return store.getElementByID(id) as unknown as DevtoolsElement | null;
 }
