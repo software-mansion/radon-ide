@@ -4,6 +4,7 @@ import FeatureCardLanding, { ActiveItem } from "./FeatureCardLanding";
 import { motion, AnimatePresence } from "motion/react";
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import { useInView } from "react-intersection-observer";
+import clsx from "clsx";
 
 const PROGRESS_BAR_DURATION = 6000;
 
@@ -96,32 +97,19 @@ export default function FeatureSliderLanding() {
       <div className={styles.imageBackground}>
         <div className={styles.imageContainer}>
           <AnimatePresence>
-            <motion.video
-              key={`${activeItem.index}-light`}
-              autoPlay
-              className={styles.videoLight}
-              style={{ width: "100%" }}
-              loop
-              muted
+            <motion.div
+              key={activeItem.index}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 1 }}>
-              <source src={features[activeItem.index].videoSrc.light} type="video/mp4" />
-            </motion.video>
-            <motion.video
-              key={`${activeItem.index}-dark`}
-              autoPlay
-              className={styles.videoDark}
-              style={{ width: "100%" }}
-              loop
-              muted
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1 }}>
-              <source src={features[activeItem.index].videoSrc.dark} type="video/mp4" />
-            </motion.video>
+              <video autoPlay className={clsx(styles.video, styles.videoLight)} loop muted>
+                <source src={features[activeItem.index].videoSrc.light} type="video/mp4" />
+              </video>
+              <video autoPlay className={clsx(styles.video, styles.videoDark)} loop muted>
+                <source src={features[activeItem.index].videoSrc.dark} type="video/mp4" />
+              </video>
+            </motion.div>
           </AnimatePresence>
         </div>
       </div>

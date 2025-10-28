@@ -44,6 +44,10 @@
   aspect-ratio: 1150/647;
 }
 
+.video {
+  width: 100%;
+}
+
 .videoLight {
   display: none;
 }
