@@ -9,8 +9,8 @@ const KEEP_FIRST_N = 50;
 const KEEP_LAST_N = 150;
 
 const hiddenOutputChannels = [
-  Output.MetroBundler, // Radon AI only
-  Output.JSApplication, // Radon AI only - User may access these logs via the Debug console
+  Output.MetroBundler, // Radon AI internal
+  Output.JSApplication, // Radon AI internal, already exposed to the user via the debug console
 ];
 
 export interface ReadableLogOutputChannel extends LogOutputChannel {
