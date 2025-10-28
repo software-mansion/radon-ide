@@ -19,7 +19,8 @@ export function registerLocalMcpTools(server: McpServer) {
     "view_component_tree",
     {
       description:
-        "View the component tree (view hierarchy) of the running app. Use this tool to learn about the structure of this project.",
+        "View the component tree (view hierarchy) of the running app. Use this tool to learn about the structure of this project.\n" +
+        "This tool only displays mounted components, so some parts of the project might not be visible.",
       inputSchema: {},
     },
     viewComponentTreeExec
