@@ -8,10 +8,10 @@ const {
   isCompositeFiber,
   traverseRenderedFibers,
 } = require("__RNIDE_lib__/bippy");
-const { getFabricUIManager } = require("react-native/Libraries/ReactNative/FabricUIManager.js");
+const RNInternals = require("./rn-internals/rn-internals");
 const { StatusBar, UIManager, Platform } = require("react-native");
 const DimensionsObserver = require("./dimensions_observer");
-const FabricUIManager = getFabricUIManager();
+const FabricUIManager = RNInternals.FabricUIManager.getFabricUIManager();
 
 const CORE_COMPONENT_NAMES = new Set([
   "ActivityIndicator",
@@ -79,8 +79,7 @@ function shouldHideComponent(name) {
 }
 
 function getWindowRect() {
-  const { width: screenWidth, height: screenHeight } =
-    DimensionsObserver.getScreenDimensions();
+  const { width: screenWidth, height: screenHeight } = DimensionsObserver.getScreenDimensions();
   if (Platform.OS === "android") {
     const statusBarHeight = StatusBar.currentHeight || 0;
     return {

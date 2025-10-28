@@ -11,10 +11,15 @@ import {
   DEBUG_PAUSED,
   DEBUG_RESUMED,
   SCRIPT_PARSED,
+  RNIDE_NETWORK_EVENT,
+  RNIDE_NetworkMethod,
 } from "./DebugSession";
 import { startDebugging } from "./startDebugging";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
+import { SourceInfo } from "../common/Project";
+import { NetworkMethod } from "../network/types/panelMessageProtocol";
+import { NetworkBridgeGetResponseBodyArgs } from "../project/networkBridge";
 
 export class ProxyDebugSessionAdapterDescriptorFactory
   implements vscode.DebugAdapterDescriptorFactory
@@ -24,6 +29,12 @@ export class ProxyDebugSessionAdapterDescriptorFactory
   ): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
     return new vscode.DebugAdapterInlineImplementation(new ProxyDebugAdapter(session));
   }
+}
+
+// extract address independent part of the URL (no address or port included)
+function sourceUrlKey(sourceUrl: string) {
+  const url = new URL(sourceUrl);
+  return url.pathname + url.search;
 }
 
 const CHILD_SESSION_TYPE = "radon-pwa-node";
@@ -37,6 +48,7 @@ export class ProxyDebugAdapter extends DebugSession {
   private attached: boolean = false;
   private eventsQueue: Event[] = [];
   private cpuProfileFilePath: string | undefined;
+  private sourceUrlKeyToServerRelativeUrl: Map<string, string> = new Map();
 
   constructor(private session: vscode.DebugSession) {
     super();
@@ -49,7 +61,11 @@ export class ProxyDebugAdapter extends DebugSession {
       proxyDelegate
     );
 
-    this.disposables.push(
+    this.setupListeners(proxyDelegate);
+  }
+
+  private setupListeners(proxyDelegate: RadonCDPProxyDelegate) {
+    const subscriptions = [
       proxyDelegate.onDebuggerPaused(({ reason }) => {
         this.sendEvent(new Event(DEBUG_PAUSED, { reason }));
         if (this.session.configuration.displayDebuggerOverlay) {
@@ -60,9 +76,7 @@ export class ProxyDebugAdapter extends DebugSession {
             },
           });
         }
-      })
-    );
-    this.disposables.push(
+      }),
       proxyDelegate.onDebuggerResumed(() => {
         this.sendEvent(new Event(DEBUG_RESUMED));
         if (this.session.configuration.displayDebuggerOverlay) {
@@ -71,35 +85,25 @@ export class ProxyDebugAdapter extends DebugSession {
             params: {},
           });
         }
-      })
-    );
-    this.disposables.push(
+      }),
       proxyDelegate.onConsoleAPICalled(() => {
         this.sendEvent(new Event(DEBUG_CONSOLE_LOG));
-      })
-    );
-
-    this.disposables.push(
+      }),
       vscode.debug.onDidTerminateDebugSession((terminatedSession) => {
         if (terminatedSession.parentSession?.id === this.session.id) {
           this.terminate();
         }
-      })
-    );
-
-    this.disposables.push(
+      }),
       proxyDelegate.onBindingCalled(({ name, payload }) => {
         this.sendEvent(new Event(BINDING_CALLED, { name, payload }));
-      })
-    );
-
-    this.disposables.push(
-      proxyDelegate.onBundleParsed(({ isMainBundle }) => {
+      }),
+      proxyDelegate.onBundleParsed(({ isMainBundle, sourceUrl }) => {
+        // we store a mapping to the sourceUrl using the sourceUrlKey method that extracts
+        // the bits of the URL that are address independent. This is needed later in the
+        // findOriginalPosition method where more in-depth details are provided in a comment.
+        this.sourceUrlKeyToServerRelativeUrl.set(sourceUrlKey(sourceUrl), sourceUrl);
         this.sendEvent(new Event(SCRIPT_PARSED, { isMainBundle }));
-      })
-    );
-
-    this.disposables.push(
+      }),
       debug.onDidReceiveDebugSessionCustomEvent((event) => {
         if (event.session.id !== this.childDebugSession?.id) {
           return;
@@ -118,8 +122,13 @@ export class ProxyDebugAdapter extends DebugSession {
             }
             break;
         }
-      })
-    );
+      }),
+      proxyDelegate.onNetworkEvent((e) => {
+        this.sendEvent(new Event(RNIDE_NETWORK_EVENT, e));
+      }),
+    ];
+
+    this.disposables.push(...subscriptions);
   }
 
   public sendEvent(event: Event) {
@@ -281,6 +290,25 @@ export class ProxyDebugAdapter extends DebugSession {
     await this.childDebugSession?.customRequest("stopProfile");
   }
 
+  private async enableNetworkInspector() {
+    await this.cdpProxy.injectDebuggerCommand({ method: NetworkMethod.Enable, params: {} });
+  }
+  private async disableNetworkInspector() {
+    await this.cdpProxy.injectDebuggerCommand({ method: NetworkMethod.Disable, params: {} });
+  }
+  private async getResponseBody(args: NetworkBridgeGetResponseBodyArgs) {
+    try {
+      const result = await this.cdpProxy.injectDebuggerCommand({
+        method: NetworkMethod.GetResponseBody,
+        params: args,
+      });
+      return result;
+    } catch (e) {
+      Logger.error("Error fetching response body", e);
+      return undefined;
+    }
+  }
+
   private async dispatchRadonAgentMessage(args: any) {
     this.cdpProxy.injectDebuggerCommand({
       method: "Runtime.evaluate",
@@ -314,6 +342,29 @@ export class ProxyDebugAdapter extends DebugSession {
     });
   }
 
+  private async findOriginalPosition(sourceInfo: SourceInfo) {
+    // Stack trace source URLs always point to the device-relative paths (how hermes sees the bundle URL).
+    // In some setups (i.e. Expo with prebuild) the default path used by the app to fetch the bundle includes
+    // the main network interface IP address, see the below code for reference:
+    // https://github.com/expo/expo/blob/703382eff76b42e0e8908deebcfab47dab3c866d/packages/%40expo/cli/src/start/server/UrlCreator.ts#L157
+    // Metro translates URLs in certain CDP commands from the device-relative (what hermes sees) to the server-relative paths (what
+    // the debugger sees), however, stringified stack traces are not translated (because they are just part of the message being sent).
+    // As a consequence, we may receive a device-relative path, while the debugger can only handle server-relative paths.
+    // When the source is parsed, we extract the sourceUrl that has already been translated and store it using an address
+    // independent key. This allows us to lookup the source Url address as provided to the debugger and use it here to reliably
+    // symbolicate the source location.
+    const serverRelativeUrl = this.sourceUrlKeyToServerRelativeUrl.get(
+      sourceUrlKey(sourceInfo.fileName)
+    );
+
+    const res = await this.childDebugSession?.customRequest("getPreferredUILocation", {
+      originalUrl: serverRelativeUrl ?? sourceInfo.fileName, // fallback to the original URL is we couldn't find the registered source URL
+      line: sourceInfo.line0Based,
+      column: sourceInfo.column0Based,
+    });
+    return { fileName: res.source.path, line0Based: res.line, column0Based: res.column };
+  }
+
   protected async customRequest(
     command: string,
     response: DebugProtocol.Response,
@@ -321,23 +372,49 @@ export class ProxyDebugAdapter extends DebugSession {
     request?: DebugProtocol.Request | undefined
   ) {
     response.body = response.body || {};
-    switch (command) {
-      case "RNIDE_startProfiling":
-        await this.startProfiling();
-        break;
-      case "RNIDE_stopProfiling":
-        await this.stopProfiling();
-        break;
-      case "RNIDE_dispatchRadonAgentMessage":
-        await this.dispatchRadonAgentMessage(args);
-        break;
-      case "RNIDE_evaluate":
-        response.body.result = await this.evaluateExpression(args);
-        break;
-      case "RNIDE_addBinding":
-        await this.addBinding(args.name);
-        break;
+    try {
+      switch (command) {
+        case "RNIDE_findOriginalPosition":
+          response.body = await this.findOriginalPosition(args);
+          break;
+        case "RNIDE_startProfiling":
+          await this.startProfiling();
+          break;
+        case "RNIDE_stopProfiling":
+          await this.stopProfiling();
+          break;
+        case "RNIDE_dispatchRadonAgentMessage":
+          await this.dispatchRadonAgentMessage(args);
+          break;
+        case "RNIDE_evaluate":
+          response.body.result = await this.evaluateExpression(args);
+          break;
+        case "RNIDE_addBinding":
+          await this.addBinding(args.name);
+          break;
+        case RNIDE_NetworkMethod.Enable:
+          await this.enableNetworkInspector();
+          break;
+        case RNIDE_NetworkMethod.Disable:
+          await this.disableNetworkInspector();
+          break;
+        case RNIDE_NetworkMethod.GetResponseBody:
+          response.body.result = await this.getResponseBody(args);
+          break;
+      }
+      this.sendResponse(response);
+    } catch (e) {
+      Logger.error("Error executing custom debugger request command:", command, e);
+      this.sendErrorResponse(
+        response,
+        {
+          format: (e as Error).message,
+          id: 1,
+        },
+        undefined,
+        undefined,
+        ErrorDestination.User
+      );
     }
-    this.sendResponse(response);
   }
 }

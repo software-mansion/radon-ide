@@ -58,6 +58,11 @@ There you can adjust which tools are enabled or disable the Radon AI MCP server 
 
 ## Usage in Cursor
 
+:::tip
+**Radon AI is disabled in Cursor by default.**  
+To enable it, go to the `Settings -> VS Code Settings` tab (`Cmd + ,` or `Ctrl + ,`), type `Radon AI: Enabled` into the search bar, press the first result and select `Enabled`.
+:::
+
 Radon AI assistant integrates with Cursor's `agent mode` via Model Context Protocol (MCP) server.
 
 <img width="550" src="/img/docs/ai_cursor_chat_response.png" className="shadow-image"/>
@@ -83,7 +88,8 @@ The AI models automatically discover and invoke tools when they decide it will b
 
 - `get_library_description` Provides a detailed description of a library and its use cases.
 - `query_documentation` Retrieves documentation snippets relevant to a provided query.
-- `view_screenshot` Captures a device preview screenshot. Can help the agent to debug issues or make UI adjustements. Currenlty only supported in Gemini and Claude models.
+- `view_application_logs` Returns all the build, bundling and runtime logs available to Radon IDE. If the app builds and launches successfully, this tool will also attach a screenshot of the app.
+- `view_screenshot` Captures a device preview screenshot. Can help the agent with debugging issues and making UI adjustments. Currently only supported in GPT, Gemini and Claude models.
 
 ## Limitations
 
@@ -109,7 +115,7 @@ To disable Radon AI assistant navigate to the editor settings.
 
 You can type "Preferences: Open User Settings" in the command palette (Ctrl+Shift+P or Cmd+Shift+P).
 
-Within editor settings, type "Radon IDE: Enable Radon AI" and uncheck the checkbox.
+Within editor settings, type "Radon AI: Enabled", press the first result and select `Disabled`.
 
 ## Privacy
 

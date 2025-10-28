@@ -29,7 +29,6 @@ import {
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
-import { registerRadonAi } from "./ai";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
@@ -37,8 +36,27 @@ import { launchConfigurationFromOptions } from "./project/launchConfigurationsMa
 import { isIdeConfig } from "./utilities/launchConfiguration";
 import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
+import { RestrictedFunctionalityError } from "./common/Errors";
+import { registerRadonAI } from "./ai/mcp/RadonMcpController";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
+
+function wrapPaywalledFunction<F extends (...args: any[]) => Promise<void> | void>(
+  fn: F,
+  messageOnRestricted: string
+) {
+  return async (...args: Parameters<F>) => {
+    try {
+      await fn(...args);
+    } catch (e) {
+      if (e instanceof RestrictedFunctionalityError) {
+        window.showInformationMessage(messageOnRestricted);
+        return;
+      }
+      throw e;
+    }
+  };
+}
 
 function handleUncaughtErrors(context: ExtensionContext) {
   process.on("unhandledRejection", (error) => {
@@ -156,7 +174,10 @@ export async function activate(context: ExtensionContext) {
       });
   }
 
-  async function showStorybookStory(componentTitle: string, storyName: string) {
+  const showStorybookStory = wrapPaywalledFunction(async function (
+    componentTitle: string,
+    storyName: string
+  ) {
     commands.executeCommand("RNIDE.openPanel");
     const ide = IDE.getInstanceIfExists();
     if (ide) {
@@ -164,7 +185,7 @@ export async function activate(context: ExtensionContext) {
     } else {
       window.showWarningMessage("Wait for the app to load before launching storybook.", "Dismiss");
     }
-  }
+  }, "Storybook integration is a Pro feature. Please upgrade your plan to access it.");
 
   async function showInlinePreview(fileName: string, lineNumber: number) {
     commands.executeCommand("RNIDE.openPanel");
@@ -327,7 +348,7 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
-  context.subscriptions.push(registerRadonAi(context));
+  context.subscriptions.push(registerRadonAI(context));
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
@@ -381,13 +402,13 @@ async function openDevMenu() {
   IDE.getInstanceIfExists()?.project.openDevMenu();
 }
 
-async function performBiometricAuthorization() {
-  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
-}
+const performBiometricAuthorization = wrapPaywalledFunction(async function () {
+  await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
+}, "Biometric authentication is a Pro feature. Please upgrade your plan to access it.");
 
-async function performFailedBiometricAuthorization() {
-  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
-}
+const performFailedBiometricAuthorization = wrapPaywalledFunction(async function () {
+  await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
+}, "Biometric authentication is a Pro feature. Please upgrade your plan to access it.");
 
 async function deviceHomeButtonPress() {
   const project = IDE.getInstanceIfExists()?.project;
@@ -423,14 +444,13 @@ async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
 }
 
-async function rotateDevice(direction: DeviceRotationDirection) {
+const rotateDevice = wrapPaywalledFunction(async function (direction: DeviceRotationDirection) {
   const project = IDE.getInstanceIfExists()?.project;
   if (!project) {
     throw new Error("Radon IDE is not initialized yet.");
   }
-
-  project.rotateDevices(direction);
-}
+  await project.rotateDevices(direction);
+}, "Device rotation is a Pro feature. Please upgrade your plan to access it.");
 
 async function rotateDeviceAnticlockwise() {
   await rotateDevice(DeviceRotationDirection.Anticlockwise);

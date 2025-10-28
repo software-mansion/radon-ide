@@ -25,7 +25,6 @@ const project = makeProxy<ProjectInterface>("Project");
 interface ProjectContextProps {
   projectState: ProjectState;
   project: ProjectInterface;
-  hasActiveLicense: boolean;
 }
 
 const defaultProjectState: ProjectState = {
@@ -45,23 +44,17 @@ const defaultProjectState: ProjectState = {
 const ProjectContext = createContext<ProjectContextProps>({
   projectState: defaultProjectState,
   project,
-  hasActiveLicense: false,
 });
 
 export default function ProjectProvider({ children }: PropsWithChildren) {
   const [projectState, setProjectState] = useState<ProjectState>(defaultProjectState);
-  const [hasActiveLicense, setHasActiveLicense] = useState(true);
 
   useEffect(() => {
     project.getProjectState().then(setProjectState);
     project.addListener("projectStateChanged", setProjectState);
 
-    project.hasActiveLicense().then(setHasActiveLicense);
-    project.addListener("licenseActivationChanged", setHasActiveLicense);
-
     return () => {
       project.removeListener("projectStateChanged", setProjectState);
-      project.removeListener("licenseActivationChanged", setHasActiveLicense);
     };
   }, []);
 
@@ -69,9 +62,8 @@ export default function ProjectProvider({ children }: PropsWithChildren) {
     return {
       projectState,
       project,
-      hasActiveLicense,
     };
-  }, [projectState, project, hasActiveLicense]);
+  }, [projectState, project]);
 
   return <ProjectContext.Provider value={contextValue}>{children}</ProjectContext.Provider>;
 }

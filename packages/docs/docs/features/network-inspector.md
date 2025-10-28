@@ -30,7 +30,7 @@ You can customize the Network Inspector behaviour using the following buttons:
 
 1. **Toggle network activity recording** - starts or stops the capture of network requests made by your application.
 2. **Clear network log** - erases all currently displayed network requests displayed in a list.
-3. **Filter domains** - opens input field allowing for filtering the displayed logs. Read more about filters here.
+3. **Filter domains** - opens input field allowing for filtering the displayed logs.
  
 
 ## Filtering and sorting
@@ -63,3 +63,6 @@ The Network Inspector displays a log of all network requests made by your applic
 - **Time** - the total duration of the request.
 
 Clicking on the network log shows more details about the contents of the request. The details of the request are grouped into into Headers, Payload, Response, and Timing tabs.
+
+Right clicking on the network log opens **Context Menu**, allowing for sorting and filtering the logs, copying the request details, refetching and opening responses in the editor's tab.
+

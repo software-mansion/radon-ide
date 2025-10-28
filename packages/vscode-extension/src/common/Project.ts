@@ -51,14 +51,16 @@ export type Frame = {
   height: number;
 };
 
+export type SourceInfo = {
+  fileName: string;
+  line0Based: number;
+  column0Based: number;
+};
+
 export type InspectDataStackItem = {
   componentName: string;
   hide: boolean;
-  source: {
-    fileName: string;
-    line0Based: number;
-    column0Based: number;
-  };
+  source: SourceInfo;
   frame: Frame;
 };
 
@@ -139,7 +141,6 @@ export interface ProjectInterface {
   openDevMenu(): Promise<void>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
-  hasActiveLicense(): Promise<boolean>;
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
