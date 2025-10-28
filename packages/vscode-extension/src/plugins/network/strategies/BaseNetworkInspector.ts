@@ -96,7 +96,8 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
       return;
     }
 
-    if (command !== WebviewCommand.IDECall) {
+    // Store CDP messages (network requests/responses)
+    if (command === WebviewCommand.CDPCall) {
       this.networkMessages.push(message);
     }
 
