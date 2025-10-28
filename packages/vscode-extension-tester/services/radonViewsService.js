@@ -90,12 +90,8 @@ export default class RadonViewsService {
     );
     await this.driver.switchTo().defaultContent();
     const bottomBar = await new BottomBarPanel().openOutputView();
-    await bottomBar.selectChannel("Radon IDE");
     await this.driver.sleep(5000);
-    const text = await bottomBar.getText();
-    console.log("build error saved to output.txt");
-    await this.driver.sleep(1000);
-    fs.writeFileSync("output.txt", text);
+    await bottomBar.selectChannel("Radon IDE");
     await this.driver.sleep(10000);
     await this.elementHelperService.findAndClickElementByTag(
       "activate-license-confirm-button"
