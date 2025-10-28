@@ -42,6 +42,10 @@ export default function FeatureSliderLanding() {
       content:
         "Radon IDE can highlight components that re-render too frequently. See for yourself what parts of your application need optimization.",
       imageSrc: useBaseUrl("/img/hero.webp"),
+      videoSources: {
+        light: useBaseUrl("/video/landing/outline-renders-light.mp4"),
+        dark: useBaseUrl("/video/landing/outline-renders-dark.mp4"),
+      },
     },
   ];
 
@@ -84,14 +88,45 @@ export default function FeatureSliderLanding() {
       <div className={styles.imageBackground}>
         <div className={styles.imageContainer}>
           <AnimatePresence>
-            <motion.img
-              key={activeItem.index}
-              src={features[activeItem.index].imageSrc}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 1 }}
-            />
+            {features[activeItem.index].videoSources ? (
+              <>
+                <motion.video
+                  key={`${activeItem.index}-light`}
+                  autoPlay
+                  className={styles.videoLight}
+                  style={{ width: "100%" }}
+                  loop
+                  muted
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1 }}>
+                  <source src={features[activeItem.index].videoSources.light} type="video/mp4" />
+                </motion.video>
+                <motion.video
+                  key={`${activeItem.index}-dark`}
+                  autoPlay
+                  className={styles.videoDark}
+                  style={{ width: "100%" }}
+                  loop
+                  muted
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 1 }}>
+                  <source src={features[activeItem.index].videoSources.dark} type="video/mp4" />
+                </motion.video>
+              </>
+            ) : (
+              <motion.img
+                key={activeItem.index}
+                src={features[activeItem.index].imageSrc}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1 }}
+              />
+            )}
           </AnimatePresence>
         </div>
       </div>
