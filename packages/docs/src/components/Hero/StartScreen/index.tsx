@@ -35,8 +35,8 @@ const StartScreen = () => {
   };
 
   const sources = {
-    light: useBaseUrl("/img/hero-light.png"),
-    dark: useBaseUrl("/img/hero-dark.png"),
+    light: useBaseUrl("/img/hero-light.webp"),
+    dark: useBaseUrl("/img/hero-dark.webp"),
   };
 
   return (
