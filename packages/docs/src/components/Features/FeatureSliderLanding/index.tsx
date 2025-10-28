@@ -96,7 +96,7 @@ export default function FeatureSliderLanding() {
       </div>
       <div className={styles.imageBackground}>
         <div className={styles.imageContainer}>
-          <AnimatePresence>
+          <AnimatePresence mode="popLayout">
             <motion.div
               key={activeItem.index}
               initial={{ opacity: 0 }}
