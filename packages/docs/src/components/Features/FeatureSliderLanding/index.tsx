@@ -20,29 +20,37 @@ export default function FeatureSliderLanding() {
       title: "Integrated Experience",
       content:
         "See the preview of your application right where you need it the most – close to your codebase. Radon IDE runs iOS Simulator and Android emulator directly in your Visual Studio Code and Cursor project.",
-      imageSrc: useBaseUrl("/img/screenshot_hero.png"),
+      videoSrc: {
+        light: useBaseUrl("/video/landing/integrated-experience-light.mp4"),
+        dark: useBaseUrl("/video/landing/integrated-experience-dark.mp4"),
+      },
     },
     {
       badge: "Element Inspector",
       title: "Click to Inspect",
       content:
         "Jump directly from preview to a file where your React Native component is defined. It can't really get simpler than that.",
-      imageSrc: useBaseUrl("/img/hero.webp"),
+      videoSrc: {
+        light: useBaseUrl("/video/landing/element-inspector-light.mp4"),
+        dark: useBaseUrl("/video/landing/element-inspector-dark.mp4"),
+      },
     },
     {
       badge: "Network Inspector",
       title: "Inspect Network Requests",
       content:
         "Use the built-in network panel to inspect your application network activity right in the editor.",
-      imageSrc: useBaseUrl("/img/screenshot_hero.png"),
+      videoSrc: {
+        light: useBaseUrl("/video/landing/network-inspector-light.mp4"),
+        dark: useBaseUrl("/video/landing/network-inspector-dark.mp4"),
+      },
     },
     {
       badge: "React Scan Integration",
       title: "Outline Renders",
       content:
         "Radon IDE can highlight components that re-render too frequently. See for yourself what parts of your application need optimization.",
-      imageSrc: useBaseUrl("/img/hero.webp"),
-      videoSources: {
+      videoSrc: {
         light: useBaseUrl("/video/landing/outline-renders-light.mp4"),
         dark: useBaseUrl("/video/landing/outline-renders-dark.mp4"),
       },
@@ -88,45 +96,32 @@ export default function FeatureSliderLanding() {
       <div className={styles.imageBackground}>
         <div className={styles.imageContainer}>
           <AnimatePresence>
-            {features[activeItem.index].videoSources ? (
-              <>
-                <motion.video
-                  key={`${activeItem.index}-light`}
-                  autoPlay
-                  className={styles.videoLight}
-                  style={{ width: "100%" }}
-                  loop
-                  muted
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 1 }}>
-                  <source src={features[activeItem.index].videoSources.light} type="video/mp4" />
-                </motion.video>
-                <motion.video
-                  key={`${activeItem.index}-dark`}
-                  autoPlay
-                  className={styles.videoDark}
-                  style={{ width: "100%" }}
-                  loop
-                  muted
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 1 }}>
-                  <source src={features[activeItem.index].videoSources.dark} type="video/mp4" />
-                </motion.video>
-              </>
-            ) : (
-              <motion.img
-                key={activeItem.index}
-                src={features[activeItem.index].imageSrc}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1 }}
-              />
-            )}
+            <motion.video
+              key={`${activeItem.index}-light`}
+              autoPlay
+              className={styles.videoLight}
+              style={{ width: "100%" }}
+              loop
+              muted
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1 }}>
+              <source src={features[activeItem.index].videoSrc.light} type="video/mp4" />
+            </motion.video>
+            <motion.video
+              key={`${activeItem.index}-dark`}
+              autoPlay
+              className={styles.videoDark}
+              style={{ width: "100%" }}
+              loop
+              muted
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1 }}>
+              <source src={features[activeItem.index].videoSrc.dark} type="video/mp4" />
+            </motion.video>
           </AnimatePresence>
         </div>
       </div>
