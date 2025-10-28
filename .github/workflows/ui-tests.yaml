@@ -160,6 +160,7 @@ jobs:
           PROJECT_NAME: ${{ matrix.testApp }}
           IS_RECORDING: ${{ matrix.isRecording }}
           CODE_VERSION: ${{ matrix.codeVersion }}
+          RADON_IDE_LICENSE_KEY: ${{ secrets.RADON_IDE_LICENSE_KEY }}
           IS_GITHUB_ACTIONS: "true"
 
       - name: Upload test output artifact

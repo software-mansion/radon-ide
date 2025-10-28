@@ -118,6 +118,7 @@ export function ActivateLicenseView() {
           {...register("licenseKey")}
           ref={inputRef}
           className="license-input"
+          data-testid="license-key-input"
           type="text"
           onChange={onChange}
           placeholder="XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX"
@@ -125,11 +126,14 @@ export function ActivateLicenseView() {
       )}
       <div className="submit-row">
         {activateDeviceResult !== ActivateDeviceResult.succeeded ? (
-          <Button type="secondary" disabled={disableSubmit || isLoading}>
+          <Button
+            type="secondary"
+            dataTest="activate-license-button"
+            disabled={disableSubmit || isLoading}>
             Activate
           </Button>
         ) : (
-          <Button type="secondary" onClick={closeModal}>
+          <Button type="secondary" dataTest="activate-license-confirm-button" onClick={closeModal}>
             Ok
           </Button>
         )}

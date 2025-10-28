@@ -41,6 +41,7 @@ function ActivateLicenseButton() {
   return (
     <Button
       className="activate-license-button"
+      dataTest="open-activate-license-modal-button"
       onClick={() => {
         project.sendTelemetry("activateLicenseButtonClicked");
         openModal(<ActivateLicenseView />, { title: "Activate License" });
