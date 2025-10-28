@@ -99,6 +99,10 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("appReady", () => {
         this.sendCDPMessage({ method: NetworkMethod.Enable, params: {} });
+
+        // Clear any stored messages in the panel and plugin state
+        this.broadcastMessage({ method: IDEMethod.ClearStoredMessages }, WebviewCommand.IDECall);
+        this.clearNetworkMessages();
       })
     );
   }

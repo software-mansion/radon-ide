@@ -232,16 +232,24 @@ const useNetworkTracker = (): NetworkTracker => {
     setTracking(shouldTrackNetwork);
   };
 
+  const handleWindowMessage = (message: MessageEvent) => {
+    const webviewMessage: WebviewMessage = message.data;
+
+    if (webviewMessage.payload.method === IDEMethod.ClearStoredMessages) {
+      setNetworkLogs([]);
+      setCdpMessages([]);
+      return;
+    }
+
+    updateCDPMessages(webviewMessage);
+  };
+
   useEffect(() => {
     synchronizeSessionData();
-
-    const listener = (message: MessageEvent) => {
-      updateCDPMessages(message.data);
-    };
-    window.addEventListener("message", listener);
+    window.addEventListener("message", handleWindowMessage);
 
     return () => {
-      window.removeEventListener("message", listener);
+      window.removeEventListener("message", handleWindowMessage);
     };
   }, []);
 
