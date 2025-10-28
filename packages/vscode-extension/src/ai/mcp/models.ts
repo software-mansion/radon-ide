@@ -38,7 +38,7 @@ export interface ToolResult {
   }[];
 }
 
-// Extracted from `facebook/react/packages/react-devtools-shared/src/frontend/types`
+// Extracted from `react-devtools-shared/src/frontend/types`
 export type DevtoolsElement = {
   id: number;
   parentID: number;
