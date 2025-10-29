@@ -44,6 +44,46 @@
   aspect-ratio: 1150/647;
 }
 
+.video {
+  width: 100%;
+}
+
+.videoLight {
+  display: none;
+}
+
+.videoDark {
+  display: none;
+}
+
+@media (prefers-color-scheme: light) {
+  .videoLight {
+    display: block;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .videoDark {
+    display: block;
+  }
+}
+
+[data-theme="light"] .videoLight {
+  display: block;
+}
+
+[data-theme="light"] .videoDark {
+  display: none;
+}
+
+[data-theme="dark"] .videoLight {
+  display: none;
+}
+
+[data-theme="dark"] .videoDark {
+  display: block;
+}
+
 .rightWindow img {
   right: 0;
 }

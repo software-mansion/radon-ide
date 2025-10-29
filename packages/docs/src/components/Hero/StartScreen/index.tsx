@@ -4,6 +4,8 @@ import { track } from "@vercel/analytics";
 import SecondaryButton from "../../SecondaryButton";
 import CloseIcon from "../../CloseIcon";
 import DownloadButtons from "@site/src/components/DownloadButtons";
+import ThemedImage from "@theme/ThemedImage";
+import useBaseUrl from "@docusaurus/useBaseUrl";
 
 const StartScreen = () => {
   const dialogRef = React.useRef<HTMLDialogElement>(null);
@@ -32,6 +34,11 @@ const StartScreen = () => {
     setOpen(false);
   };
 
+  const sources = {
+    light: useBaseUrl("/img/hero-light.webp"),
+    dark: useBaseUrl("/img/hero-dark.webp"),
+  };
+
   return (
     <>
       <section className={styles.hero}>
@@ -57,7 +64,7 @@ const StartScreen = () => {
         </div>
         <div className={styles.gradientContainer}>
           <div className={styles.imageContainer}>
-            <img src="../img/screenshot_hero.png" className={styles.heroImage} />
+            <ThemedImage sources={sources} className={styles.heroImage} />
             <SecondaryButton title="Watch the Demo" onClick={handleDialogOpen} />
           </div>
           <div className={styles.gradient}></div>
