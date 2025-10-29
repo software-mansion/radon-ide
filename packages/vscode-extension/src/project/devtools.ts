@@ -28,44 +28,6 @@ function filePathForProfile() {
   return filePath;
 }
 
-// TODO: Move this to some kind of devtools bridge utils
-function getPromiseForRequestID<T extends { responseID: number }>(
-  requestID: number,
-  eventType: keyof BackendEvents,
-  bridge: FrontendBridge
-): Promise<T> {
-  return new Promise((resolve, reject) => {
-    const cleanup = () => {
-      bridge.removeListener(eventType, onInspectedElement);
-      bridge.removeListener("shutdown", onShutdown);
-      clearTimeout(timeoutID);
-    };
-
-    const onShutdown = () => {
-      cleanup();
-      reject(new Error("Failed to inspect element. Try again or restart React DevTools."));
-    };
-
-    const onInspectedElement = (...args: unknown[]) => {
-      const data = args[0] as T;
-      if (data.responseID === requestID) {
-        cleanup();
-        resolve(data);
-      }
-    };
-
-    const onTimeout = () => {
-      cleanup();
-      reject(new TimeoutError(`Timed out while inspecting element.`));
-    };
-
-    bridge.addListener(eventType, onInspectedElement);
-    bridge.addListener("shutdown", onShutdown);
-
-    const timeoutID = setTimeout(onTimeout, TIMEOUT_DELAY);
-  });
-}
-
 type IdeMessageListener = <K extends keyof RadonInspectorBridgeEvents>(event: {
   id: number;
   type: K;
@@ -167,16 +129,48 @@ export class DevtoolsConnection implements Disposable {
     return this._store;
   }
 
+  private getPromiseForRequestID(
+    requestID: number,
+    eventType: keyof BackendEvents
+  ): Promise<InspectedElementPayload> {
+    return new Promise((resolve, reject) => {
+      const cleanup = () => {
+        this.bridge.removeListener(eventType, onInspectedElement);
+        this.bridge.removeListener("shutdown", onShutdown);
+        clearTimeout(timeoutID);
+      };
+
+      const onShutdown = () => {
+        cleanup();
+        reject(new Error("Failed to inspect element. Try again or restart React DevTools."));
+      };
+
+      const onInspectedElement = (...args: unknown[]) => {
+        const data = args[0] as InspectedElementPayload;
+        if (data.responseID === requestID) {
+          cleanup();
+          resolve(data);
+        }
+      };
+
+      const onTimeout = () => {
+        cleanup();
+        reject(new TimeoutError(`Timed out while inspecting element.`));
+      };
+
+      this.bridge.addListener(eventType, onInspectedElement);
+      this.bridge.addListener("shutdown", onShutdown);
+
+      const timeoutID = setTimeout(onTimeout, TIMEOUT_DELAY);
+    });
+  }
+
   public async inspectElement(elementID: number) {
     const requestID = this.bridgeRequestCounter++;
     const forceFullData = true;
     const rendererID = this._store.getRendererIDForElement(elementID) as number;
 
-    const promise = getPromiseForRequestID<InspectedElementPayload>(
-      requestID,
-      "inspectedElement",
-      this.bridge
-    );
+    const promise = this.getPromiseForRequestID(requestID, "inspectedElement");
 
     this.bridge.send("inspectElement", {
       forceFullData,
