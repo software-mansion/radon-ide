@@ -97,6 +97,10 @@ export class ApplicationSession implements Disposable {
     return this.devtools?.store;
   }
 
+  public async devtoolsInspectElement(elementID: number) {
+    return this.devtools?.inspectElement(elementID);
+  }
+
   public static async launch(
     stateManager: StateManager<ApplicationSessionState>,
     navigationStateManager: StateManager<NavigationState>,

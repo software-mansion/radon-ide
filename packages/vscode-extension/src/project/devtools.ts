@@ -5,6 +5,7 @@ import os from "os";
 import assert from "assert";
 import { Disposable, EventEmitter, Uri } from "vscode";
 import { WebSocketServer } from "ws";
+import { BackendEvents, InspectedElementPayload } from "react-devtools-inline";
 import { Logger } from "../Logger";
 import {
   createBridge,
@@ -18,10 +19,67 @@ import { InspectorBridge, RadonInspectorBridgeEvents } from "./inspectorBridge";
 import { DebugSession } from "../debugging/DebugSession";
 import { disposeAll } from "../utilities/disposables";
 
+const TIMEOUT_DELAY = 10_000;
+
 function filePathForProfile() {
   const fileName = `profile-${Date.now()}.reactprofile`;
   const filePath = path.join(os.tmpdir(), fileName);
   return filePath;
+}
+
+// TODO: Move this to some kind of devtools bridge utils
+function getPromiseForRequestID<T>(
+  requestID: number,
+  eventType: keyof BackendEvents,
+  bridge: FrontendBridge,
+  timeoutMessage: string,
+  shouldListenToPauseEvents: boolean = false
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      bridge.removeListener(eventType, onInspectedElement);
+      bridge.removeListener("shutdown", onShutdown);
+
+      if (shouldListenToPauseEvents) {
+        bridge.removeListener("pauseElementPolling", onDisconnect);
+      }
+
+      clearTimeout(timeoutID);
+    };
+
+    const onShutdown = () => {
+      cleanup();
+      reject(new Error("Failed to inspect element. Try again or restart React DevTools."));
+    };
+
+    const onDisconnect = () => {
+      cleanup();
+      // TODO: ElementPollingCancellationError
+      reject(new Error());
+    };
+
+    const onInspectedElement = (data: any) => {
+      if (data.responseID === requestID) {
+        cleanup();
+        resolve(data as T);
+      }
+    };
+
+    const onTimeout = () => {
+      cleanup();
+      // TODO: TimeoutError
+      reject(new Error(timeoutMessage));
+    };
+
+    bridge.addListener(eventType, onInspectedElement);
+    bridge.addListener("shutdown", onShutdown);
+
+    if (shouldListenToPauseEvents) {
+      bridge.addListener("pauseElementPolling", onDisconnect);
+    }
+
+    const timeoutID = setTimeout(onTimeout, TIMEOUT_DELAY);
+  });
 }
 
 type IdeMessageListener = <K extends keyof RadonInspectorBridgeEvents>(event: {
@@ -102,6 +160,8 @@ export class DevtoolsConnection implements Disposable {
   public readonly onDisconnected = this.disconnectedEventEmitter.event;
   public readonly onProfilingChange = this.profilingEventEmitter.event;
 
+  private bridgeRequestCounter = 0;
+
   constructor(private readonly wall: Wall) {
     // create the DevTools frontend for the connection
     this.bridge = createBridge(wall);
@@ -121,6 +181,29 @@ export class DevtoolsConnection implements Disposable {
 
   public get store() {
     return this._store;
+  }
+
+  public async inspectElement(elementID: number) {
+    const requestID = this.bridgeRequestCounter++;
+    const forceFullData = true;
+    const rendererID = this._store.getRendererIDForElement(elementID) as number;
+
+    const promise = getPromiseForRequestID<InspectedElementPayload>(
+      requestID,
+      "inspectedElement",
+      this.bridge,
+      `Timed out while inspecting element ${elementID}.`
+    );
+
+    this.bridge.send("inspectElement", {
+      forceFullData,
+      id: elementID,
+      path: null,
+      rendererID,
+      requestID,
+    });
+
+    return promise;
   }
 
   public async startProfilingReact() {
