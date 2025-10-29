@@ -18,6 +18,7 @@ import {
 import { InspectorBridge, RadonInspectorBridgeEvents } from "./inspectorBridge";
 import { DebugSession } from "../debugging/DebugSession";
 import { disposeAll } from "../utilities/disposables";
+import { TimeoutError } from "../common/Errors";
 
 const TIMEOUT_DELAY = 10_000;
 
@@ -28,7 +29,7 @@ function filePathForProfile() {
 }
 
 // TODO: Move this to some kind of devtools bridge utils
-function getPromiseForRequestID<T>(
+function getPromiseForRequestID<T extends { responseID: number }>(
   requestID: number,
   eventType: keyof BackendEvents,
   bridge: FrontendBridge
@@ -45,17 +46,17 @@ function getPromiseForRequestID<T>(
       reject(new Error("Failed to inspect element. Try again or restart React DevTools."));
     };
 
-    const onInspectedElement = (data: any) => {
+    const onInspectedElement = (...args: unknown[]) => {
+      const data = args[0] as T;
       if (data.responseID === requestID) {
         cleanup();
-        resolve(data as T);
+        resolve(data);
       }
     };
 
     const onTimeout = () => {
       cleanup();
-      // TODO: TimeoutError
-      reject(new Error(`Timed out while inspecting element.`));
+      reject(new TimeoutError(`Timed out while inspecting element.`));
     };
 
     bridge.addListener(eventType, onInspectedElement);
