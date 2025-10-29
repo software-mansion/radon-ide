@@ -1,3 +1,4 @@
+import { InspectedElementPayload, InspectElementFullData } from "react-devtools-inline";
 import { Store } from "../../../third-party/react-devtools/headless";
 import { DeviceSession } from "../../project/deviceSession";
 import { DevtoolsElement } from "./models";
@@ -49,6 +50,18 @@ function hasHocDescriptors(element: DevtoolsElement): element is DevtoolsElement
   return (element?.hocDisplayNames?.length ?? 0) > 0;
 }
 
+function isFullData(payload?: InspectedElementPayload): payload is InspectElementFullData {
+  return payload?.type === "full-data";
+}
+
+function findTextContent(payload?: InspectedElementPayload): string | null {
+  if (isFullData(payload)) {
+    const children = (payload.value?.props?.data as { children?: unknown })?.children;
+    return typeof children === "string" ? children : null;
+  }
+  return null;
+}
+
 async function printComponentTree(
   session: DeviceSession,
   root?: DevtoolsElement,
@@ -70,6 +83,8 @@ async function printComponentTree(
     return `Component tree is corrupted. Could not find root of the component tree! Are you sure an application is running in the emulator?`;
   }
 
+  const elementDetails = await session.devtoolsInspectElement(element.id);
+
   // `type = 2` means element is `Context.Provider`.
   // These are always wrapped by a component with a more descriptive name when user-made.
   const isContextProvider = element.type === 2;
@@ -80,19 +95,26 @@ async function printComponentTree(
     ? ` [${element.hocDisplayNames.join(", ")}]`
     : "";
 
-  const componentRepr: string = !isContextProvider
-    ? "  ".repeat(depth) + `<${element.displayName}>${hocDescriptors}\n`
+  const indent = "  ".repeat(depth);
+
+  const rawTextContent = findTextContent(elementDetails);
+  const textContent = rawTextContent ? indent + `  ${rawTextContent}\n` : "";
+
+  const componentRepr = !isContextProvider
+    ? indent + `<${element.displayName}>${hocDescriptors}\n${textContent}`
     : "";
 
-  const childrenRepr = element.children.map((childId) => {
-    const child = getElementByID(childId, store);
+  const childrenRepr = await Promise.all(
+    element.children.map((childId) => {
+      const child = getElementByID(childId, store);
 
-    if (!child) {
-      return `Component tree is corrupted. Element with ID ${childId} not found.`;
-    }
+      if (!child) {
+        return `Component tree is corrupted. Element with ID ${childId} not found.`;
+      }
 
-    return printComponentTree(session, child, childDepth);
-  });
+      return printComponentTree(session, child, childDepth);
+    })
+  );
 
   return componentRepr + childrenRepr.join("");
 }
