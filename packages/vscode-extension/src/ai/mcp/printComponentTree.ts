@@ -1,4 +1,5 @@
 import { Store } from "../../../third-party/react-devtools/headless";
+import { DeviceSession } from "../../project/deviceSession";
 import { DevtoolsElement } from "./models";
 
 // This util removes the need for type-casting on every `store.getElementByID` call
@@ -48,7 +49,21 @@ function hasHocDescriptors(element: DevtoolsElement): element is DevtoolsElement
   return (element?.hocDisplayNames?.length ?? 0) > 0;
 }
 
-function printComponentTree(store: Store, root?: DevtoolsElement, depth: number = 0): string {
+async function printComponentTree(
+  session: DeviceSession,
+  root?: DevtoolsElement,
+  depth: number = 0
+): Promise<string> {
+  const store = session.devtoolsStore;
+
+  if (!store) {
+    return (
+      "Could not extract a component tree from the app, the devtools are not accessible!\n" +
+      "Ensure an application is running on the development device!\n" +
+      "Please launch the app on the Radon IDE emulator before proceeding."
+    );
+  }
+
   const element = root ?? findTreeEntryPoint(store);
 
   if (!element) {
@@ -76,7 +91,7 @@ function printComponentTree(store: Store, root?: DevtoolsElement, depth: number 
       return `Component tree is corrupted. Element with ID ${childId} not found.`;
     }
 
-    return printComponentTree(store, child, childDepth);
+    return printComponentTree(session, child, childDepth);
   });
 
   return componentRepr + childrenRepr.join("");

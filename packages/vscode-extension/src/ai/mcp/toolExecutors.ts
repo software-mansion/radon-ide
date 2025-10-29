@@ -38,17 +38,7 @@ export async function viewComponentTreeExec(): Promise<ToolResponse> {
     );
   }
 
-  const store = project.deviceSession.devtoolsStore;
-
-  if (!store) {
-    return textToToolResponse(
-      "Could not extract a component tree from the app, the devtools are not accessible!\n" +
-        "Ensure an application is running on the development device!\n" +
-        "Please launch the app on the Radon IDE emulator before proceeding."
-    );
-  }
-
-  const repr = printComponentTree(store);
+  const repr = await printComponentTree(project.deviceSession);
 
   return textToToolResponse(repr);
 }
