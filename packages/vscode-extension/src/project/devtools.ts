@@ -31,31 +31,18 @@ function filePathForProfile() {
 function getPromiseForRequestID<T>(
   requestID: number,
   eventType: keyof BackendEvents,
-  bridge: FrontendBridge,
-  timeoutMessage: string,
-  shouldListenToPauseEvents: boolean = false
+  bridge: FrontendBridge
 ): Promise<T> {
   return new Promise((resolve, reject) => {
     const cleanup = () => {
       bridge.removeListener(eventType, onInspectedElement);
       bridge.removeListener("shutdown", onShutdown);
-
-      if (shouldListenToPauseEvents) {
-        bridge.removeListener("pauseElementPolling", onDisconnect);
-      }
-
       clearTimeout(timeoutID);
     };
 
     const onShutdown = () => {
       cleanup();
       reject(new Error("Failed to inspect element. Try again or restart React DevTools."));
-    };
-
-    const onDisconnect = () => {
-      cleanup();
-      // TODO: ElementPollingCancellationError
-      reject(new Error());
     };
 
     const onInspectedElement = (data: any) => {
@@ -68,15 +55,11 @@ function getPromiseForRequestID<T>(
     const onTimeout = () => {
       cleanup();
       // TODO: TimeoutError
-      reject(new Error(timeoutMessage));
+      reject(new Error(`Timed out while inspecting element.`));
     };
 
     bridge.addListener(eventType, onInspectedElement);
     bridge.addListener("shutdown", onShutdown);
-
-    if (shouldListenToPauseEvents) {
-      bridge.addListener("pauseElementPolling", onDisconnect);
-    }
 
     const timeoutID = setTimeout(onTimeout, TIMEOUT_DELAY);
   });
@@ -191,8 +174,7 @@ export class DevtoolsConnection implements Disposable {
     const promise = getPromiseForRequestID<InspectedElementPayload>(
       requestID,
       "inspectedElement",
-      this.bridge,
-      `Timed out while inspecting element ${elementID}.`
+      this.bridge
     );
 
     this.bridge.send("inspectElement", {
