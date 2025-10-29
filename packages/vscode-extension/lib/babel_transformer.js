@@ -104,8 +104,6 @@ function transformWrapper({ filename, src, ...rest }) {
     src = `module.exports = require("__RNIDE_lib__/preview.js");`;
   } else if (isTransforming("node_modules/@dev-plugins/react-native-mmkv/build/index.js")) {
     src = `require("__RNIDE_lib__/plugins/expo_dev_plugins.js").register("@dev-plugins/react-native-mmkv");${src}`;
-  } else if (isTransforming("node_modules/redux-devtools-expo-dev-plugin/build/index.js")) {
-    src = `require("__RNIDE_lib__/plugins/expo_dev_plugins.js").register("redux-devtools-expo-dev-plugin");${src}`;
   } else if (
     isTransforming("react-native/Libraries/Renderer/implementations/ReactFabric-dev.js") ||
     isTransforming("react-native/Libraries/Renderer/implementations/ReactNativeRenderer-dev.js")
@@ -155,7 +153,10 @@ function transformWrapper({ filename, src, ...rest }) {
       src = rendererAsString;
     }
     const { version: reactVersion } = requireFromAppDir("react/package.json");
-    if ((reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) && reactVersion.startsWith("19.0")) {
+    if (
+      (reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) &&
+      reactVersion.startsWith("19.0")
+    ) {
       const rendererFilePath = path.join(
         process.env.RADON_IDE_LIB_PATH,
         "rn-renderer",
@@ -169,7 +170,10 @@ function transformWrapper({ filename, src, ...rest }) {
     const { version: reactNativeVersion } = requireFromAppDir("react-native/package.json");
     const jsxRuntimeFileName = filename.split(path.sep).pop();
     const reactVersion = requireFromAppDir("react/package.json").version;
-    if ((reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) && reactVersion.startsWith("19.0")) {
+    if (
+      (reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) &&
+      reactVersion.startsWith("19.0")
+    ) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}");`;
     }
   } else if (

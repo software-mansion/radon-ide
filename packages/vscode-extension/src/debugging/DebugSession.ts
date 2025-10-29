@@ -288,7 +288,7 @@ export class DebugSessionImpl implements DebugSession, Disposable {
         displayDebuggerOverlay: configuration.displayDebuggerOverlay,
         skipFiles: [
           "__source__",
-          `${extensionPath}/**/*`,
+          // `${extensionPath}/**/*`,
           "**/node_modules/**/*",
           "!**/node_modules/expo-router/**/*",
         ],

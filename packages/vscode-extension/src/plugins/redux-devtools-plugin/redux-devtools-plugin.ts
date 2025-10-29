@@ -44,7 +44,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     this.connectedWebviewListener?.dispose();
     this.connectedWebview = webview;
     this.connectedWebviewListener = webview.onDidReceiveMessage((message) => {
-      this.inspectorBridge.sendPluginMessage(REDUX_PLUGIN_ID, message.type, message.data);
+      this.inspectorBridge.sendPluginMessage(REDUX_PLUGIN_ID, "respond", message);
     });
   }
 
@@ -62,10 +62,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
         if (pluginId === REDUX_PLUGIN_ID) {
           this.connectedWebview?.postMessage({
             scope: "RNIDE-redux-devtools",
-            data: {
-              type,
-              data,
-            },
+            data,
           });
         }
       })
