@@ -18,8 +18,9 @@ function findTreeEntryPoint(store: Store, root?: DevtoolsElement): DevtoolsEleme
 
   const name = element.displayName;
 
-  // User-defined `expo-router` paths start with `./` or `/`. First one found serves as our entry-point if present.
-  if (name && (name.startsWith("./") || name.startsWith("/"))) {
+  // User-defined `expo-router` paths contain `/`.
+  // If one is found, we use it as the tree root.
+  if (name?.includes("/")) {
     return element;
   }
 
