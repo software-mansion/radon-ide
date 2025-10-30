@@ -62,6 +62,31 @@ function findTextContent(payload?: InspectedElementPayload): string | null {
   return null;
 }
 
+async function representElement(
+  element: DevtoolsElement,
+  indentation: number,
+  session: DeviceSession
+) {
+  const elementDetails = await session.inspectElementById(element.id);
+
+  // `type = 2` means element is `Context.Provider`.
+  // These are always wrapped by a component with a more descriptive name when user-made.
+  const isContextProvider = element.type === 2;
+
+  const hocDescriptors = hasHocDescriptors(element)
+    ? ` [${element.hocDisplayNames.join(", ")}]`
+    : "";
+
+  const indent = "  ".repeat(indentation);
+
+  const rawTextContent = findTextContent(elementDetails);
+  const textContent = rawTextContent ? indent + `  ${rawTextContent}\n` : "";
+
+  return !isContextProvider
+    ? indent + `<${element.displayName}>${hocDescriptors}\n${textContent}`
+    : "";
+}
+
 async function printComponentTree(
   session: DeviceSession,
   root?: DevtoolsElement,
@@ -83,26 +108,13 @@ async function printComponentTree(
     return `Component tree is corrupted. Could not find root of the component tree! Are you sure an application is running in the emulator?`;
   }
 
-  const elementDetails = await session.inspectElementById(element.id);
-
   // `type = 2` means element is `Context.Provider`.
   // These are always wrapped by a component with a more descriptive name when user-made.
   const isContextProvider = element.type === 2;
 
   const childDepth = isContextProvider ? depth : depth + 1;
 
-  const hocDescriptors = hasHocDescriptors(element)
-    ? ` [${element.hocDisplayNames.join(", ")}]`
-    : "";
-
-  const indent = "  ".repeat(depth);
-
-  const rawTextContent = findTextContent(elementDetails);
-  const textContent = rawTextContent ? indent + `  ${rawTextContent}\n` : "";
-
-  const componentRepr = !isContextProvider
-    ? indent + `<${element.displayName}>${hocDescriptors}\n${textContent}`
-    : "";
+  const componentRepr = representElement(element, depth, session);
 
   const childrenRepr = await Promise.all(
     element.children.map((childId) => {
