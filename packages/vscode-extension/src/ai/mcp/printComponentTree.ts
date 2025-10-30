@@ -9,6 +9,7 @@ function getElementByID(id: number, store: Store): DevtoolsElement | null {
 }
 
 function findTreeEntryPoint(store: Store, root?: DevtoolsElement): DevtoolsElement | null {
+  const isTreeRoot = root === undefined;
   const element = root ?? getElementByID(store.roots[0], store);
 
   if (!element) {
@@ -36,8 +37,7 @@ function findTreeEntryPoint(store: Store, root?: DevtoolsElement): DevtoolsEleme
     }
   }
 
-  if (!root) {
-    // Return self if self is HOC and no other entry points found.
+  if (isTreeRoot) {
     return element;
   }
 
