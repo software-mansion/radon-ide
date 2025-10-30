@@ -108,9 +108,9 @@ async function printComponentTree(
   // These are always wrapped by a component with a more descriptive name when user-made.
   const skipRendering = element.type === 2 || element.displayName === null;
 
-  const componentRepr = !skipRendering ? representElement(element, depth, session) : "";
+  const componentRepr = !skipRendering ? await representElement(element, depth, session) : "";
 
-  const childDepth = skipRendering ? depth : depth + 1;
+  const childDepth = depth + (skipRendering ? 0 : 1);
 
   const childrenRepr = await Promise.all(
     element.children.map((childId) => {
