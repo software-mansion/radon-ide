@@ -65,13 +65,10 @@ function findTextContent(payload?: InspectedElementPayload): string | null {
 async function representElement(
   element: DevtoolsElement,
   indentation: number,
-  session: DeviceSession
+  session: DeviceSession,
+  skipRendering: boolean
 ) {
   const elementDetails = await session.inspectElementById(element.id);
-
-  // `type = 2` means element is `Context.Provider`.
-  // These are always wrapped by a component with a more descriptive name when user-made.
-  const isContextProvider = element.type === 2;
 
   const hocDescriptors = hasHocDescriptors(element)
     ? ` [${element.hocDisplayNames.join(", ")}]`
@@ -82,9 +79,7 @@ async function representElement(
   const rawTextContent = findTextContent(elementDetails);
   const textContent = rawTextContent ? indent + `  ${rawTextContent}\n` : "";
 
-  return !isContextProvider
-    ? indent + `<${element.displayName}>${hocDescriptors}\n${textContent}`
-    : "";
+  return !skipRendering ? indent + `<${element.displayName}>${hocDescriptors}\n${textContent}` : "";
 }
 
 async function printComponentTree(
@@ -112,11 +107,11 @@ async function printComponentTree(
 
   // `type = 2` means element is `Context.Provider`.
   // These are always wrapped by a component with a more descriptive name when user-made.
-  const isContextProvider = element.type === 2;
+  const skipRendering = element.type === 2 || element.displayName === null;
 
-  const childDepth = isContextProvider ? depth : depth + 1;
+  const childDepth = skipRendering ? depth : depth + 1;
 
-  const componentRepr = representElement(element, depth, session);
+  const componentRepr = representElement(element, depth, session, skipRendering);
 
   const childrenRepr = await Promise.all(
     element.children.map((childId) => {
