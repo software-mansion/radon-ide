@@ -65,23 +65,18 @@ function findTextContent(payload?: InspectedElementPayload): string | null {
 async function representElement(
   element: DevtoolsElement,
   indentation: number,
-  session: DeviceSession,
-  skipRendering: boolean
+  session: DeviceSession
 ): Promise<string> {
-  if (skipRendering) {
-    return "";
-  }
-
-  const elementDetails = await session.inspectElementById(element.id);
+  const details = await session.inspectElementById(element.id);
 
   const hocDescriptors = hasHocDescriptors(element)
-    ? ` [${element.hocDisplayNames.join(", ")}]`
+    ? `\u0020[${element.hocDisplayNames.join(", ")}]`
     : "";
 
-  const indent = "  ".repeat(indentation);
+  const indent = "\u0020".repeat(indentation * 2);
 
-  const rawTextContent = findTextContent(elementDetails);
-  const textContent = rawTextContent ? indent + `  ${rawTextContent}\n` : "";
+  const rawTextContent = findTextContent(details);
+  const textContent = rawTextContent ? `${indent}\u0020\u0020${rawTextContent}\n` : "";
 
   return indent + `<${element.displayName}>${hocDescriptors}\n${textContent}`;
 }
@@ -113,9 +108,9 @@ async function printComponentTree(
   // These are always wrapped by a component with a more descriptive name when user-made.
   const skipRendering = element.type === 2 || element.displayName === null;
 
-  const childDepth = skipRendering ? depth : depth + 1;
+  const componentRepr = !skipRendering ? representElement(element, depth, session) : "";
 
-  const componentRepr = representElement(element, depth, session, skipRendering);
+  const childDepth = skipRendering ? depth : depth + 1;
 
   const childrenRepr = await Promise.all(
     element.children.map((childId) => {
