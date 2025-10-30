@@ -54,33 +54,32 @@ function isFullData(payload?: InspectedElementPayload): payload is InspectElemen
   return payload?.type === "full-data";
 }
 
-function findHocDescriptors(element: DevtoolsElement): string | null {
+function printHocDescriptors(element: DevtoolsElement): string | null {
   return hasHocDescriptors(element) ? `\u0020[${element.hocDisplayNames.join(", ")}]` : "";
 }
 
-function findTextContent(payload?: InspectedElementPayload): string | null {
+function printTextContent(indent: string, payload?: InspectedElementPayload): string {
   if (isFullData(payload)) {
-    const children = (payload.value?.props?.data as { children?: unknown })?.children;
-    return typeof children === "string" ? children : null;
+    const text = (payload.value?.props?.data as { children?: unknown })?.children;
+    return typeof text === "string" ? `${indent}\u0020\u0020${text}\n` : "";
   }
-  return null;
+  return "";
 }
 
 async function representElement(
   element: DevtoolsElement,
-  indentation: number,
+  depth: number,
   session: DeviceSession
 ): Promise<string> {
   const details = await session.inspectElementById(element.id);
 
-  const hocDescriptors = findHocDescriptors(element);
+  const hocDescriptors = printHocDescriptors(element);
 
-  const indent = "\u0020".repeat(indentation * 2);
+  const indent = "\u0020".repeat(depth * 2);
 
-  const textContent = findTextContent(details);
-  const indentedTextContent = textContent ? `${indent}\u0020\u0020${textContent}\n` : "";
+  const textContent = printTextContent(indent, details);
 
-  return `${indent}<${element.displayName}>${hocDescriptors}\n${indentedTextContent}`;
+  return `${indent}<${element.displayName}>${hocDescriptors}\n${textContent}`;
 }
 
 async function printComponentTree(
