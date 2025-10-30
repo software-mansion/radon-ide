@@ -59,7 +59,7 @@ const config = {
           alt: "Radon IDE logo",
           src: "img/logo.svg",
           srcDark: "img/logo-dark.svg",
-          width: 156,
+          width: 116,
           height: 40,
         },
         items: [

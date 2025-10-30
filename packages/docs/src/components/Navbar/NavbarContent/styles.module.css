@@ -22,11 +22,10 @@
   gap: 8px;
   align-self: stretch;
   border-right: 1px solid var(--radon-border);
-  width: 250px;
 }
 
 .navbarLeft a {
-  width: 156px;
+  width: 116px;
   height: 40px;
 }
 
@@ -120,12 +119,12 @@ a:hover {
     width: 100%;
   }
   .navbarLeft a {
-    width: 140px;
-    height: 36px;
+    width: 116px;
+    height: 40px;
   }
 
   .logo {
-    width: 140px;
-    height: 36px;
+    width: 116px;
+    height: 40px;
   }
 }
