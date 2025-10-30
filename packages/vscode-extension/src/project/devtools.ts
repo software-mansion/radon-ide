@@ -5,7 +5,7 @@ import os from "os";
 import assert from "assert";
 import { Disposable, EventEmitter, Uri } from "vscode";
 import { WebSocketServer } from "ws";
-import { BackendEvents, InspectedElementPayload } from "react-devtools-inline";
+import { InspectedElementPayload } from "react-devtools-inline";
 import { Logger } from "../Logger";
 import {
   createBridge,
@@ -129,55 +129,44 @@ export class DevtoolsConnection implements Disposable {
     return this._store;
   }
 
-  private getPromiseForRequestID(
-    requestID: number,
-    eventType: keyof BackendEvents
-  ): Promise<InspectedElementPayload> {
-    return new Promise((resolve, reject) => {
-      const cleanup = () => {
-        this.bridge.removeListener(eventType, onInspectedElement);
-        this.bridge.removeListener("shutdown", onShutdown);
-        clearTimeout(timeoutID);
-      };
+  private resolveInspectElementResult(requestID: number): Promise<InspectedElementPayload> {
+    const { promise, resolve, reject } = Promise.withResolvers<InspectedElementPayload>();
 
-      const onShutdown = () => {
+    const cleanup = () => {
+      this.bridge.removeListener("inspectedElement", onInspectedElement);
+      clearTimeout(timeoutID);
+    };
+
+    const onInspectedElement = (...args: unknown[]) => {
+      const data = args[0] as InspectedElementPayload;
+      if (data.responseID === requestID) {
         cleanup();
-        reject(new Error("Failed to inspect element. Try again or restart React DevTools."));
-      };
+        resolve(data);
+      }
+    };
 
-      const onInspectedElement = (...args: unknown[]) => {
-        const data = args[0] as InspectedElementPayload;
-        if (data.responseID === requestID) {
-          cleanup();
-          resolve(data);
-        }
-      };
+    this.bridge.addListener("inspectedElement", onInspectedElement);
 
-      const onTimeout = () => {
-        cleanup();
-        reject(new TimeoutError(`Timed out while inspecting element.`));
-      };
+    const timeoutID = setTimeout(() => {
+      cleanup();
+      reject(new TimeoutError(`Timed out while inspecting element.`));
+    }, TIMEOUT_DELAY);
 
-      this.bridge.addListener(eventType, onInspectedElement);
-      this.bridge.addListener("shutdown", onShutdown);
-
-      const timeoutID = setTimeout(onTimeout, TIMEOUT_DELAY);
-    });
+    return promise;
   }
 
-  public async inspectElement(elementID: number) {
+  public async inspectElementById(id: number) {
     const requestID = this.bridgeRequestCounter++;
-    const forceFullData = true;
-    const rendererID = this._store.getRendererIDForElement(elementID) as number;
+    const rendererID = this._store.getRendererIDForElement(id) as number;
 
-    const promise = this.getPromiseForRequestID(requestID, "inspectedElement");
+    const promise = this.resolveInspectElementResult(requestID);
 
     this.bridge.send("inspectElement", {
-      forceFullData,
-      id: elementID,
-      path: null,
+      id,
       rendererID,
       requestID,
+      path: null,
+      forceFullData: true,
     });
 
     return promise;

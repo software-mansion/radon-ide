@@ -83,7 +83,7 @@ async function printComponentTree(
     return `Component tree is corrupted. Could not find root of the component tree! Are you sure an application is running in the emulator?`;
   }
 
-  const elementDetails = await session.devtoolsInspectElement(element.id);
+  const elementDetails = await session.inspectElementById(element.id);
 
   // `type = 2` means element is `Context.Provider`.
   // These are always wrapped by a component with a more descriptive name when user-made.

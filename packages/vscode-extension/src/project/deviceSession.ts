@@ -95,8 +95,8 @@ export class DeviceSession implements Disposable {
     return this.applicationSession?.devtoolsStore;
   }
 
-  public async devtoolsInspectElement(elementID: number) {
-    return this.applicationSession?.devtoolsInspectElement(elementID);
+  public async inspectElementById(id: number) {
+    return this.applicationSession?.inspectElementById(id);
   }
 
   public get platform(): DevicePlatform {
