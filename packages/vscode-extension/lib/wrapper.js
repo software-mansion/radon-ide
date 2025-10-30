@@ -17,9 +17,6 @@ require("./react_devtools_agent"); // needs to be loaded before inspector_bridge
 const inspectorBridge = require("./inspector_bridge");
 const DimensionsObserver = require("./dimensions_observer");
 
-// setup redux devtools
-require("./plugins/redux-devtools");
-
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
 const OffscreenComponentReactTag = 22;
 
