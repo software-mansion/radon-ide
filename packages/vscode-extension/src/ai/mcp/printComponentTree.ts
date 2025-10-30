@@ -95,17 +95,19 @@ async function printComponentTree(
   const store = session.devtoolsStore;
 
   if (!store) {
-    return (
+    throw Error(
       "Could not extract a component tree from the app, the devtools are not accessible!\n" +
-      "Ensure an application is running on the development device!\n" +
-      "Please launch the app on the Radon IDE emulator before proceeding."
+        "Ensure an application is running on the development device!\n" +
+        "Please launch the app on the Radon IDE emulator before proceeding."
     );
   }
 
   const element = root ?? findTreeEntryPoint(store);
 
   if (!element) {
-    return `Component tree is corrupted. Could not find root of the component tree! Are you sure an application is running in the emulator?`;
+    throw Error(
+      `Component tree is corrupted. Could not find root of the component tree! Are you sure an application is running in the emulator?`
+    );
   }
 
   // `type = 2` means element is `Context.Provider`.

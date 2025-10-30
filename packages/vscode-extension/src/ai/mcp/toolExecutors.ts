@@ -38,9 +38,12 @@ export async function viewComponentTreeExec(): Promise<ToolResponse> {
     );
   }
 
-  const repr = await printComponentTree(project.deviceSession);
-
-  return textToToolResponse(repr);
+  try {
+    const repr = await printComponentTree(project.deviceSession);
+    return textToToolResponse(repr);
+  } catch (error) {
+    return textToToolResponse((error as Error).message);
+  }
 }
 
 export async function readLogsToolExec(): Promise<ToolResponse> {
