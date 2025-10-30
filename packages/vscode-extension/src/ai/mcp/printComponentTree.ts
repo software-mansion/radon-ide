@@ -67,7 +67,11 @@ async function representElement(
   indentation: number,
   session: DeviceSession,
   skipRendering: boolean
-) {
+): Promise<string> {
+  if (skipRendering) {
+    return "";
+  }
+
   const elementDetails = await session.inspectElementById(element.id);
 
   const hocDescriptors = hasHocDescriptors(element)
@@ -79,7 +83,7 @@ async function representElement(
   const rawTextContent = findTextContent(elementDetails);
   const textContent = rawTextContent ? indent + `  ${rawTextContent}\n` : "";
 
-  return !skipRendering ? indent + `<${element.displayName}>${hocDescriptors}\n${textContent}` : "";
+  return indent + `<${element.displayName}>${hocDescriptors}\n${textContent}`;
 }
 
 async function printComponentTree(
