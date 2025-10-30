@@ -54,6 +54,10 @@ function isFullData(payload?: InspectedElementPayload): payload is InspectElemen
   return payload?.type === "full-data";
 }
 
+function findHocDescriptors(element: DevtoolsElement): string | null {
+  return hasHocDescriptors(element) ? `\u0020[${element.hocDisplayNames.join(", ")}]` : "";
+}
+
 function findTextContent(payload?: InspectedElementPayload): string | null {
   if (isFullData(payload)) {
     const children = (payload.value?.props?.data as { children?: unknown })?.children;
@@ -69,16 +73,14 @@ async function representElement(
 ): Promise<string> {
   const details = await session.inspectElementById(element.id);
 
-  const hocDescriptors = hasHocDescriptors(element)
-    ? `\u0020[${element.hocDisplayNames.join(", ")}]`
-    : "";
+  const hocDescriptors = findHocDescriptors(element);
 
   const indent = "\u0020".repeat(indentation * 2);
 
-  const rawTextContent = findTextContent(details);
-  const textContent = rawTextContent ? `${indent}\u0020\u0020${rawTextContent}\n` : "";
+  const textContent = findTextContent(details);
+  const indentedTextContent = textContent ? `${indent}\u0020\u0020${textContent}\n` : "";
 
-  return indent + `<${element.displayName}>${hocDescriptors}\n${textContent}`;
+  return `${indent}<${element.displayName}>${hocDescriptors}\n${indentedTextContent}`;
 }
 
 async function printComponentTree(
