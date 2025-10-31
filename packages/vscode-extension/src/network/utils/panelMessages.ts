@@ -1,7 +1,9 @@
 import { IDEMethod, WebviewMessage } from "../types/panelMessageProtocol";
 
+let nextId = 0;
+
 export function generateId(): string {
-  return Math.random().toString(36).substring(7);
+  return `${nextId++}`;
 }
 
 /**
