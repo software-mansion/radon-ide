@@ -120,6 +120,9 @@ jobs:
         run: npm ci
         working-directory: packages/vscode-extension
 
+      - name: install brew
+        run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
       - name: install gh
         run: brew install gh
 
