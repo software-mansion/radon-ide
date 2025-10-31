@@ -92,29 +92,90 @@ const setOrientationOptions: Array<{
   },
 ];
 
-function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
+function DeviceAppearanceSettings() {
   const store$ = useStore();
-  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+  const appearance = use$(store$.workspaceConfiguration.deviceSettings.appearance);
+  const contentSize = use$(store$.workspaceConfiguration.deviceSettings.contentSize);
 
-  const showDeviceFrame = use$(store$.workspaceConfiguration.userInterface.showDeviceFrame);
-  const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
+  return (
+    <form>
+      <Label>Device appearance</Label>
+      <RadioGroup.Root
+        className="radio-group-root"
+        defaultValue={appearance}
+        onValueChange={(value) => {
+          store$.workspaceConfiguration.deviceSettings.appearance.set(
+            value as DeviceSettings["appearance"]
+          );
+        }}>
+        <div className="radio-group-center">
+          <RadioGroup.Item
+            className="radio-group-item"
+            value="light"
+            id="r1"
+            data-testid="device-appearance-light">
+            <RadioGroup.Indicator className="radio-group-indicator" />
+          </RadioGroup.Item>
+          <label className="radio-group-label" htmlFor="r1">
+            Light
+          </label>
+        </div>
+        <div className="radio-group-center">
+          <RadioGroup.Item
+            className="radio-group-item"
+            value="dark"
+            id="r2"
+            data-testid="device-appearance-dark">
+            <RadioGroup.Indicator className="radio-group-indicator" />
+          </RadioGroup.Item>
+          <label className="radio-group-label" htmlFor="r2">
+            Dark
+          </label>
+        </div>
+      </RadioGroup.Root>
+      <div className="device-settings-margin" />
+      <Label>Text size</Label>
+      <div className="device-settings-center">
+        <span className="device-settings-small-text-indicator" />
+        <Slider.Root
+          className="slider-root"
+          defaultValue={[contentSizes.indexOf(contentSize)]}
+          max={6}
+          step={1}
+          onValueCommit={([value]) => {
+            store$.workspaceConfiguration.deviceSettings.contentSize.set(contentSizes[value]);
+          }}>
+          <Slider.Track className="slider-track">
+            <Slider.Range className="slider-range" />
+          </Slider.Track>
+          <Slider.Thumb className="slider-thumb" aria-label="Text Size" />
+          <div className="slider-track-dent-container">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div
+                key={i}
+                className="slider-track-dent"
+                data-testid={`device-settings-font-size-slider-track-dent-${i}`}
+              />
+            ))}
+          </div>
+        </Slider.Root>
+        <span className="device-settings-large-text-indicator" />
+      </div>
+      <div className="device-settings-margin" />
+    </form>
+  );
+}
 
-  const platform = use$(selectedDeviceSessionState.deviceInfo.platform);
-
-  const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
-
+function RotateSettingsSubmenu() {
+  const store$ = useStore();
   const licenseStatus = use$(store$.license.status);
 
+  const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
   const isDeviceRotationAvailable =
     getFeatureAvailabilityStatus(licenseStatus, Feature.DeviceRotation) ===
     FeatureAvailabilityStatus.Available;
 
   const { project } = useProject();
-
-  const { openModal } = useModal();
-
-  const resetOptions = platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
-
   const handleRotateDevice = usePaywalledCallback(
     (direction: DeviceRotationDirection) => {
       project.rotateDevices(direction);
@@ -131,13 +192,108 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
     []
   );
 
-  const handleOpenLocationView = usePaywalledCallback(
-    () => {
-      openModal(<DeviceLocationView />, { title: "Location" });
-    },
-    Feature.LocationSimulation,
-    []
+  return (
+    <DropdownMenu.Sub>
+      <DropdownMenu.SubTrigger
+        className="dropdown-menu-item"
+        data-testid="device-settings-rotate-device-menu-trigger">
+        <span className="codicon codicon-sync" />
+        Rotate Device
+        <span className="codicon codicon-chevron-right right-slot" />
+      </DropdownMenu.SubTrigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.SubContent
+          className="dropdown-menu-subcontent"
+          data-testid="rotate-device-submenu"
+          sideOffset={2}
+          alignOffset={-5}>
+          <Label>Rotate</Label>
+          <CommandItem
+            onSelect={() => handleRotateDevice(DeviceRotationDirection.Clockwise)}
+            commandName={"RNIDE.rotateDeviceClockwise"}
+            label={"Clockwise"}
+            dataTest={`device-settings-set-orientation-clockwise`}
+            icon={"refresh"}
+          />
+          <CommandItem
+            onSelect={() => handleRotateDevice(DeviceRotationDirection.Anticlockwise)}
+            commandName={"RNIDE.rotateDeviceAnticlockwise"}
+            label={"Anticlockwise"}
+            dataTest={`device-settings-set-orientation-anticlockwise`}
+            icon={"refresh mirror"}
+          />
+
+          <div className="device-settings-margin" />
+          <Label>Set Orientation</Label>
+
+          {setOrientationOptions.map((option, index) => (
+            <DropdownMenu.Item
+              className="dropdown-menu-item"
+              data-testid={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
+              key={index}
+              disabled={!isDeviceRotationAvailable && option.value !== DeviceRotation.Portrait}
+              onSelect={() => handleSetRotateDevice(option.value)}>
+              <span
+                className={`codicon codicon-${option.icon}`}
+                style={{ rotate: option.rotation }}
+              />
+              {option.label}
+              {rotation === option.value && <span className="codicon codicon-check right-slot" />}
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.SubContent>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Sub>
   );
+}
+
+function PermissionsSubmenu({ platform }: { platform: DevicePlatform | undefined }) {
+  const resetOptions = platform === DevicePlatform.IOS ? resetOptionsIOS : resetOptionsAndroid;
+  const { project } = useProject();
+  return (
+    <DropdownMenu.Sub>
+      <DropdownMenu.SubTrigger className="dropdown-menu-item">
+        <span className="codicon codicon-redo" />
+        Reset Permissions
+        <span className="codicon codicon-chevron-right right-slot" />
+      </DropdownMenu.SubTrigger>
+      <DropdownMenu.Portal>
+        <DropdownMenu.SubContent
+          className="dropdown-menu-subcontent"
+          sideOffset={2}
+          alignOffset={-5}>
+          {resetOptions.map((option, index) => (
+            <DropdownMenu.Item
+              className="dropdown-menu-item"
+              key={index}
+              onSelect={() => project.resetAppPermissions(option.value)}>
+              <span className={`codicon codicon-${option.icon}`} />
+              {option.label}
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.SubContent>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Sub>
+  );
+}
+
+function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
+  const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
+  const showDeviceFrame = use$(store$.workspaceConfiguration.userInterface.showDeviceFrame);
+
+  const deviceInfo = use$(selectedDeviceSessionState.deviceInfo);
+
+  const platform = deviceInfo?.platform;
+
+  const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
+
+  const { project } = useProject();
+
+  const { openModal } = useModal();
+
+  const isPhysicalAndroid = platform === DevicePlatform.Android && !deviceInfo?.emulator;
 
   const openSendFileDialog = usePaywalledCallback(
     () => project.openSendFileDialog(),
@@ -157,71 +313,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           data-testid="device-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
-          <form>
-            <Label>Device appearance</Label>
-            <RadioGroup.Root
-              className="radio-group-root"
-              defaultValue={deviceSettings.appearance}
-              onValueChange={(value) => {
-                store$.workspaceConfiguration.deviceSettings.appearance.set(
-                  value as DeviceSettings["appearance"]
-                );
-              }}>
-              <div className="radio-group-center">
-                <RadioGroup.Item
-                  className="radio-group-item"
-                  value="light"
-                  id="r1"
-                  data-testid="device-appearance-light">
-                  <RadioGroup.Indicator className="radio-group-indicator" />
-                </RadioGroup.Item>
-                <label className="radio-group-label" htmlFor="r1">
-                  Light
-                </label>
-              </div>
-              <div className="radio-group-center">
-                <RadioGroup.Item
-                  className="radio-group-item"
-                  value="dark"
-                  id="r2"
-                  data-testid="device-appearance-dark">
-                  <RadioGroup.Indicator className="radio-group-indicator" />
-                </RadioGroup.Item>
-                <label className="radio-group-label" htmlFor="r2">
-                  Dark
-                </label>
-              </div>
-            </RadioGroup.Root>
-            <div className="device-settings-margin" />
-            <Label>Text size</Label>
-            <div className="device-settings-center">
-              <span className="device-settings-small-text-indicator" />
-              <Slider.Root
-                className="slider-root"
-                defaultValue={[contentSizes.indexOf(deviceSettings.contentSize)]}
-                max={6}
-                step={1}
-                onValueCommit={([value]) => {
-                  store$.workspaceConfiguration.deviceSettings.contentSize.set(contentSizes[value]);
-                }}>
-                <Slider.Track className="slider-track">
-                  <Slider.Range className="slider-range" />
-                </Slider.Track>
-                <Slider.Thumb className="slider-thumb" aria-label="Text Size" />
-                <div className="slider-track-dent-container">
-                  {Array.from({ length: 7 }).map((_, i) => (
-                    <div
-                      key={i}
-                      className="slider-track-dent"
-                      data-testid={`device-settings-font-size-slider-track-dent-${i}`}
-                    />
-                  ))}
-                </div>
-              </Slider.Root>
-              <span className="device-settings-large-text-indicator" />
-            </div>
-            <div className="device-settings-margin" />
-          </form>
+          {!isPhysicalAndroid && <DeviceAppearanceSettings />}
           <CommandItem
             onSelect={() => project.dispatchHomeButtonPress()}
             commandName="RNIDE.deviceHomeButtonPress"
@@ -236,61 +328,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             icon="chrome-restore"
             dataTest="open-app-switcher-button"
           />
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger
-              className="dropdown-menu-item"
-              data-testid="device-settings-rotate-device-menu-trigger">
-              <span className="codicon codicon-sync" />
-              Rotate Device
-              <span className="codicon codicon-chevron-right right-slot" />
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent
-                className="dropdown-menu-subcontent"
-                data-testid="rotate-device-submenu"
-                sideOffset={2}
-                alignOffset={-5}>
-                <Label>Rotate</Label>
-                <CommandItem
-                  onSelect={() => handleRotateDevice(DeviceRotationDirection.Clockwise)}
-                  commandName={"RNIDE.rotateDeviceClockwise"}
-                  label={"Clockwise"}
-                  dataTest={`device-settings-set-orientation-clockwise`}
-                  icon={"refresh"}
-                />
-                <CommandItem
-                  onSelect={() => handleRotateDevice(DeviceRotationDirection.Anticlockwise)}
-                  commandName={"RNIDE.rotateDeviceAnticlockwise"}
-                  label={"Anticlockwise"}
-                  dataTest={`device-settings-set-orientation-anticlockwise`}
-                  icon={"refresh mirror"}
-                />
-
-                <div className="device-settings-margin" />
-                <Label>Set Orientation</Label>
-
-                {setOrientationOptions.map((option, index) => (
-                  <DropdownMenu.Item
-                    className="dropdown-menu-item"
-                    data-testid={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
-                    key={index}
-                    disabled={
-                      !isDeviceRotationAvailable && option.value !== DeviceRotation.Portrait
-                    }
-                    onSelect={() => handleSetRotateDevice(option.value)}>
-                    <span
-                      className={`codicon codicon-${option.icon}`}
-                      style={{ rotate: option.rotation }}
-                    />
-                    {option.label}
-                    {rotation === option.value && (
-                      <span className="codicon codicon-check right-slot" />
-                    )}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
+          <RotateSettingsSubmenu />
           {platform === DevicePlatform.IOS && <BiometricsItem />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
@@ -299,40 +337,15 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <span className="codicon codicon-share" />
             Send File
           </DropdownMenu.Item>
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            data-testid="device-settings-location"
-            onSelect={handleOpenLocationView}>
-            <span className="codicon codicon-location" />
-            Location
-          </DropdownMenu.Item>
-          <LocalizationItem />
-          <VolumeItem />
-          {platform === DevicePlatform.Android && <CameraItem />}
-          <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
-              <span className="codicon codicon-redo" />
-              Reset Permissions
-              <span className="codicon codicon-chevron-right right-slot" />
-            </DropdownMenu.SubTrigger>
-            <DropdownMenu.Portal>
-              <DropdownMenu.SubContent
-                className="dropdown-menu-subcontent"
-                sideOffset={2}
-                alignOffset={-5}>
-                {resetOptions.map((option, index) => (
-                  <DropdownMenu.Item
-                    className="dropdown-menu-item"
-                    key={index}
-                    onSelect={() => project.resetAppPermissions(option.value)}>
-                    <span className={`codicon codicon-${option.icon}`} />
-                    {option.label}
-                  </DropdownMenu.Item>
-                ))}
-              </DropdownMenu.SubContent>
-            </DropdownMenu.Portal>
-          </DropdownMenu.Sub>
-
+          {!isPhysicalAndroid && (
+            <>
+              <LocationItem />
+              <LocalizationItem />
+              <VolumeItem />
+            </>
+          )}
+          {platform === DevicePlatform.Android && deviceInfo?.emulator && <CameraItem />}
+          {!isPhysicalAndroid && <PermissionsSubmenu platform={platform} />}
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => openModal(<OpenDeepLinkView />, { title: "Open Deep Link" })}>
@@ -369,21 +382,23 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
-          <div className="dropdown-menu-item">
-            <span className="codicon codicon-device-mobile" />
-            Show Device Frame
-            <Switch.Root
-              className="switch-root small-switch"
-              id="show-device-frame"
-              data-testid="device-settings-show-device-frame-switch"
-              onCheckedChange={(checked) =>
-                store$.workspaceConfiguration.userInterface.showDeviceFrame.set(checked)
-              }
-              defaultChecked={showDeviceFrame}
-              style={{ marginLeft: "auto" }}>
-              <Switch.Thumb className="switch-thumb" />
-            </Switch.Root>
-          </div>
+          {!isPhysicalAndroid && (
+            <div className="dropdown-menu-item">
+              <span className="codicon codicon-device-mobile" />
+              Show Device Frame
+              <Switch.Root
+                className="switch-root small-switch"
+                id="show-device-frame"
+                data-testid="device-settings-show-device-frame-switch"
+                onCheckedChange={(checked) =>
+                  store$.workspaceConfiguration.userInterface.showDeviceFrame.set(checked)
+                }
+                defaultChecked={showDeviceFrame}
+                style={{ marginLeft: "auto" }}>
+                <Switch.Thumb className="switch-thumb" />
+              </Switch.Root>
+            </div>
+          )}
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -391,10 +406,30 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
   );
 }
 
+const LocationItem = () => {
+  const { openModal } = useModal();
+  const handleOpenLocationView = usePaywalledCallback(
+    () => {
+      openModal(<DeviceLocationView />, { title: "Location" });
+    },
+    Feature.LocationSimulation,
+    []
+  );
+  return (
+    <DropdownMenu.Item
+      className="dropdown-menu-item"
+      data-testid="device-settings-location"
+      onSelect={handleOpenLocationView}>
+      <span className="codicon codicon-location" />
+      Location
+    </DropdownMenu.Item>
+  );
+};
+
 const LocalizationItem = () => {
   const { openModal } = useModal();
 
-  const handleOpenLocationView = usePaywalledCallback(
+  const handleOpenLocalizationView = usePaywalledCallback(
     () => {
       openModal(<DeviceLocalizationView />, { title: "Localization" });
     },
@@ -403,12 +438,10 @@ const LocalizationItem = () => {
   );
 
   return (
-    <>
-      <DropdownMenu.Item className="dropdown-menu-item" onSelect={handleOpenLocationView}>
-        <span className="codicon codicon-globe" />
-        Localization
-      </DropdownMenu.Item>
-    </>
+    <DropdownMenu.Item className="dropdown-menu-item" onSelect={handleOpenLocalizationView}>
+      <span className="codicon codicon-globe" />
+      Localization
+    </DropdownMenu.Item>
   );
 };
 

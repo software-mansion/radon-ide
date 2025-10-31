@@ -8,7 +8,7 @@ export const REMOVE = Symbol("remove");
 
 export type RecursivePartial<T> = {
   [P in keyof T]?: NonNullable<T[P]> extends Array<infer U>
-    ? Array<U> | undefined | typeof REMOVE
+    ? Array<U> | (null extends T[P] ? null : never) | undefined | typeof REMOVE
     : RecursivePartial<T[P]> | typeof REMOVE;
 };
 
@@ -253,11 +253,24 @@ export type InstallationErrorDescriptor = {
   reason: InstallationErrorReason;
 };
 
+export enum PreviewErrorReason {
+  DeviceNotConnected = "device-not-connected",
+  EarlyExit = "early-exit",
+  StreamClosed = "stream-closed",
+}
+
+export type PreviewErrorDescriptor = {
+  kind: "preview";
+  message: string;
+  reason: PreviewErrorReason | null;
+};
+
 export type FatalErrorDescriptor =
   | MetroErrorDescriptor
   | BuildErrorDescriptor
   | DeviceErrorDescriptor
-  | InstallationErrorDescriptor;
+  | InstallationErrorDescriptor
+  | PreviewErrorDescriptor;
 
 export type DeviceSessionStatus = "starting" | "running" | "fatalError";
 
@@ -430,12 +443,24 @@ export enum DeviceType {
   Tablet = "Tablet",
 }
 
-export type DeviceInfo = AndroidDeviceInfo | IOSDeviceInfo;
+export type DeviceInfo = AndroidEmulatorInfo | AndroidPhysicalDeviceInfo | IOSDeviceInfo;
+
+export type AndroidEmulatorInfo = AndroidDeviceInfo & {
+  avdId: string;
+  emulator: true;
+};
+
+export type AndroidPhysicalDeviceInfo = AndroidDeviceInfo & {
+  emulator: false;
+  properties: {
+    screenWidth: number;
+    screenHeight: number;
+  };
+};
 
 export type AndroidDeviceInfo = {
   id: string;
   platform: DevicePlatform.Android;
-  avdId: string;
   modelId: string;
   systemName: string;
   displayName: string;
@@ -476,8 +501,14 @@ export type IOSRuntimeInfo = {
   available: boolean;
 };
 
+export type DevicesByType = {
+  androidEmulators: AndroidEmulatorInfo[] | null;
+  androidPhysicalDevices: AndroidPhysicalDeviceInfo[] | null;
+  iosSimulators: IOSDeviceInfo[] | null;
+};
+
 export type DevicesState = {
-  devices: DeviceInfo[] | null;
+  devicesByType: DevicesByType;
   androidImages: AndroidSystemImageInfo[] | null;
   iOSRuntimes: IOSRuntimeInfo[] | null;
 };
@@ -548,7 +579,11 @@ const initialDeviceSessionStore: DeviceSessionStore = {
 export const initialState: State = {
   applicationRoots: [],
   devicesState: {
-    devices: null,
+    devicesByType: {
+      iosSimulators: null,
+      androidEmulators: null,
+      androidPhysicalDevices: null,
+    },
     androidImages: null,
     iOSRuntimes: null,
   },

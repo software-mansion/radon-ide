@@ -94,8 +94,8 @@ function getPortraitDimensions(
     phoneScreenWidth: `${(device.screenWidth / frame.width) * 100}%`,
     phoneTop: `${(frame.offsetY / frame.height) * 100}%`,
     phoneLeft: `${(frame.offsetX / frame.width) * 100}%`,
-    phoneMaskImage: `url(${device.screenMaskImage})`,
-    phoneFrameImage: `url(${frame.image})`,
+    phoneMaskImage: device.screenMaskImage && `url(${device.screenMaskImage})`,
+    phoneFrameImage: frame.image && `url(${frame.image})`,
     phoneAspectRatio: `${config.aspectRatio}`,
   };
 }
@@ -123,8 +123,8 @@ function getLandscapeDimensions(
     phoneScreenWidth: `${(device.screenHeight / frame.height) * 100}%`, // Swapped for landscape
     phoneTop: `${(frame.offsetX / frame.width) * 100}%`, // Swapped for landscape
     phoneLeft: `${(frame.offsetY / frame.height) * 100}%`, // Swapped for landscape
-    phoneMaskImage: `url(${device.landscapeScreenMaskImage})`,
-    phoneFrameImage: `url(${frame.imageLandscape})`,
+    phoneMaskImage: device.landscapeScreenMaskImage && `url(${device.landscapeScreenMaskImage})`,
+    phoneFrameImage: frame.imageLandscape && `url(${frame.imageLandscape})`,
     phoneAspectRatio: `${1 / aspectRatio}`,
   };
 }
@@ -150,7 +150,15 @@ export default function Device({ device, zoomLevel, children, wrapperDivRef }: D
   const store$ = useStore();
   const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
 
-  const frame = useDeviceFrame(device);
+  const frame = useDeviceFrame(device) ?? {
+    type: "skin",
+    height: device.screenHeight,
+    width: device.screenWidth,
+    offsetX: 0,
+    offsetY: 0,
+    image: "",
+    imageLandscape: "",
+  };
 
   const phoneContentRef = useRef<HTMLDivElement>(null);
 

@@ -121,6 +121,7 @@
   mask-size: cover;
   background-color: var(--swm-separator);
   aspect-ratio: var(--phone-aspect-ratio);
+  box-shadow: 0 0 8px 2px var(--vscode-widget-shadow);
 }
 
 .phone-frame {

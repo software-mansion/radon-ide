@@ -80,14 +80,14 @@ const ZoomLevelSelect = ({ zoomLevel, onZoomChanged, setIsSelectOpen }: ZoomCont
 };
 
 function ZoomControls({ zoomLevel, onZoomChanged, device, wrapperDivRef }: ZoomControlsProps) {
-  const frame = useDeviceFrame(device!);
+  const deviceHeight = useDeviceFrame(device!)?.height ?? device!.screenHeight;
   const [isSelectOpen, setIsSelectOpen] = useState(false);
 
   function handleZoom(shouldIncrease: boolean) {
     let currentZoomLevel;
     if (zoomLevel === "Fit") {
       currentZoomLevel =
-        ((wrapperDivRef!.current!.offsetHeight / frame.height) * 1) / DEVICE_DEFAULT_SCALE;
+        ((wrapperDivRef!.current!.offsetHeight / deviceHeight) * 1) / DEVICE_DEFAULT_SCALE;
     } else {
       currentZoomLevel = zoomLevel;
     }

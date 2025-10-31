@@ -6,3 +6,6 @@ node_modules/
 
 # ThirdPartyNotices are only needed in distribution package (vsix file)
 ThirdPartyNotices.json
+
+# physical android device lock files
+android_device_*.lock
