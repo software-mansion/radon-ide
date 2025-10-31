@@ -135,6 +135,12 @@ jobs:
       - name: Install vsce CLI
         run: npm i -g @vscode/vsce
 
+      - name: test
+        run: cat packages/simulator-server/scripts/build-extension-dev.sh
+
+      - name: test 2
+        run: ./packages/simulator-server/scripts/build-extension-dev.sh
+
       - name: Get test app
         run: npm run get-test-app -- ${{ matrix.testApp }}
         working-directory: packages/vscode-extension-tester
