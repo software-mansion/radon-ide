@@ -91,6 +91,14 @@ export class DeviceSession implements Disposable {
     return this.applicationSession?.inspectorBridge;
   }
 
+  public get devtoolsStore() {
+    return this.applicationSession?.devtoolsStore;
+  }
+
+  public async inspectElementById(id: number) {
+    return this.applicationSession?.inspectElementById(id);
+  }
+
   public get platform(): DevicePlatform {
     return this.stateManager.getState().deviceInfo.platform;
   }

@@ -9,9 +9,16 @@ export class RestrictedFunctionalityError extends Error {
   }
 }
 
+export class TimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+  }
+}
+
 export const ErrorTypeGetters = {
   Error: Error,
   RestrictedFunctionalityError: RestrictedFunctionalityError,
+  TimeoutError: TimeoutError,
 } as const;
 
 export type ErrorTypeName = keyof typeof ErrorTypeGetters;

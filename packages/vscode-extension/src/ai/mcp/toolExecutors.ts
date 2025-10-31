@@ -5,6 +5,7 @@ import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils
 import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
+import printComponentTree from "./printComponentTree";
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -24,6 +25,25 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
   return {
     content: [pngToToolContent(contents)],
   };
+}
+
+export async function viewComponentTreeExec(): Promise<ToolResponse> {
+  const project = IDE.getInstanceIfExists()?.project;
+
+  if (!project?.deviceSession) {
+    return textToToolResponse(
+      "Could not extract a component tree from the app, the app is not running!\n" +
+        "The development device is likely turned off.\n" +
+        "Please turn on the Radon IDE emulator before proceeding."
+    );
+  }
+
+  try {
+    const repr = await printComponentTree(project.deviceSession);
+    return textToToolResponse(repr);
+  } catch (error) {
+    return textToToolResponse((error as Error).message);
+  }
 }
 
 export async function readLogsToolExec(): Promise<ToolResponse> {
