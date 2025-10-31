@@ -10,12 +10,13 @@ import {
   workspace,
 } from "vscode";
 import { minimatch } from "minimatch";
+import { InspectedElementPayload, InspectElementFullData } from "react-devtools-inline";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { ApplicationContext } from "./ApplicationContext";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
-import { AppOrientation, InspectData } from "../common/Project";
+import { AppOrientation, InspectData, SourceInfo } from "../common/Project";
 import { disposeAll } from "../utilities/disposables";
 import { ToolKey, ToolPlugin, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
@@ -59,6 +60,13 @@ interface LaunchApplicationSessionDeps {
   devtoolsPort?: number;
 }
 
+// TODO: Move to types
+type SourceData = {
+  sourceURL: string;
+  line: number;
+  column: number;
+};
+
 function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: CancelToken) {
   // set up `appReady` promise
   const { promise, resolve, reject } = Promise.withResolvers<void>();
@@ -95,10 +103,6 @@ export class ApplicationSession implements Disposable {
 
   public get devtoolsStore() {
     return this.devtools?.store;
-  }
-
-  public async inspectElementById(id: number) {
-    return this.devtools?.inspectElementById(id);
   }
 
   public static async launch(
@@ -737,6 +741,44 @@ export class ApplicationSession implements Disposable {
       });
     }
     return { frame: inspectData.frame, stack };
+  }
+
+  // TODO: Move to utils
+  private isFullData(payload?: InspectedElementPayload): payload is InspectElementFullData {
+    return payload?.type === "full-data";
+  }
+
+  public async inspectElementById(id: number) {
+    const payload = await this.devtools?.inspectElementById(id);
+
+    if (!this.isFullData(payload)) {
+      return undefined;
+    }
+
+    // TODO: Move request promise etc handling here, instead of keeping it in `inspectElementById`
+
+    // Casting, as `source` is typed incorrectly when `payload.type === 'full-data'`
+    const source = payload.value.source as SourceData | null;
+
+    if (source?.sourceURL.startsWith("http") && this.debugSession) {
+      const sourceInfo: SourceInfo = {
+        fileName: source.sourceURL,
+        column0Based: source.column,
+        line0Based: source.line,
+      };
+
+      try {
+        const mappedSource = await this.debugSession.findOriginalPosition(sourceInfo);
+        payload.value.source = {
+          fileName: mappedSource.fileName,
+          lineNumber: mappedSource.line0Based,
+        };
+      } catch (e) {
+        Logger.error("Error finding original source position for element", payload, e);
+      }
+    }
+
+    return payload;
   }
   //#endregion
 
