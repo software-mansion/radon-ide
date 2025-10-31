@@ -135,7 +135,10 @@ jobs:
       - name: Install vsce CLI
         run: npm i -g @vscode/vsce
 
-      - name: test
+      - name: test0
+        run: git submodule update --init --recursive
+
+      - name: test1
         run: cat packages/simulator-server/scripts/build-extension-dev.sh
 
       - name: test 2
