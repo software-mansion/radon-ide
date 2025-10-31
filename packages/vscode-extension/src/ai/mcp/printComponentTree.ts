@@ -1,7 +1,9 @@
 import { InspectedElementPayload, InspectElementFullData } from "react-devtools-inline";
+import { workspace } from "vscode";
 import { Store } from "../../../third-party/react-devtools/headless";
 import { DeviceSession } from "../../project/deviceSession";
 import { DevtoolsElement } from "./models";
+import { isAppSourceFile } from "../../utilities/isAppSourceFile";
 
 // This util removes the need for type-casting on every `store.getElementByID` call
 function getElementByID(id: number, store: Store): DevtoolsElement | null {
@@ -66,25 +68,15 @@ function printTextContent(indent: string, payload: InspectElementFullData): stri
 
 async function representElement(
   element: DevtoolsElement,
-  depth: number,
-  session: DeviceSession
+  details: InspectElementFullData,
+  depth: number
 ): Promise<string> {
-  const details = await session.inspectElementById(element.id);
-
-  if (!isFullData(details)) {
-    // Full data retrieval failed, this shouldn't ever happen.
-    return "";
-  }
-
-  const hocDescriptors = printHocDescriptors(element);
-
-  const indent = "\u0020".repeat(depth * 2);
-
-  const textContent = printTextContent(indent, details);
-
   const source = details.value.source;
-  const sourceDescription = source ? `\u0020{${source.fileName}:${source.lineNumber}}` : "";
-
+  const indent = "\u0020".repeat(depth * 2);
+  const hocDescriptors = printHocDescriptors(element);
+  const textContent = printTextContent(indent, details);
+  const relativePath = source ? workspace.asRelativePath(source.fileName, false) : "";
+  const sourceDescription = source ? `\u0020(${relativePath}:${source.lineNumber})` : "";
   return `${indent}<${element.displayName}>${hocDescriptors}${sourceDescription}\n${textContent}`;
 }
 
@@ -111,11 +103,17 @@ async function printComponentTree(
     );
   }
 
+  const details = await session.inspectElementById(element.id);
+
   // `type = 2` means element is `Context.Provider`.
   // These are always wrapped by a component with a more descriptive name when user-made.
-  const skipRendering = element.type === 2 || element.displayName === null;
+  const skipRendering =
+    element.type === 2 ||
+    element.displayName === null ||
+    !isFullData(details) ||
+    !isAppSourceFile(details.value.source?.fileName ?? "");
 
-  const componentRepr = !skipRendering ? await representElement(element, depth, session) : "";
+  const componentRepr = !skipRendering ? await representElement(element, details, depth) : "";
 
   const childDepth = depth + (skipRendering ? 0 : 1);
 
