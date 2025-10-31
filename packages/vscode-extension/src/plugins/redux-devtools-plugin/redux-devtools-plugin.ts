@@ -55,7 +55,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     }
   }
 
-  activate() {
+  enable() {
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("pluginMessage", ({ pluginId, type, data }) => {
@@ -88,13 +88,13 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     );
   }
 
-  deactivate() {
+  disable() {
     disposeAll(this.devtoolsListeners);
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, false);
   }
 
-  suspend() {
-    this.deactivate();
+  deactivate() {
+    this.disable();
   }
 
   openTool() {

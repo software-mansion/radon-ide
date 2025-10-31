@@ -40,9 +40,9 @@ export interface ToolPlugin extends Disposable {
   persist: boolean;
   pluginAvailable: boolean;
   pluginUnavailableTooltip?: string;
-  activate(): void;
+  enable(): void;
+  disable(): void;
   deactivate(): void;
-  suspend(): void;
   openTool?(): void;
 }
 
@@ -126,18 +126,18 @@ export class ToolsManager implements Disposable {
   }
 
   dispose() {
-    this.activePlugins.forEach((plugin) => plugin.deactivate());
+    this.activePlugins.forEach((plugin) => plugin.disable());
     this.activePlugins.clear();
     this.plugins.forEach((plugin) => plugin.dispose());
     disposeAll(this.disposables);
   }
 
-  public suspend() {
-    this.activePlugins.forEach((plugin) => plugin.suspend());
+  public deactivate() {
+    this.activePlugins.forEach((plugin) => plugin.deactivate());
   }
 
   public activate() {
-    this.activePlugins.forEach((plugin) => plugin.activate());
+    this.activePlugins.forEach((plugin) => plugin.enable());
   }
 
   public handleStateChange() {
@@ -147,10 +147,10 @@ export class ToolsManager implements Disposable {
         const active = this.activePlugins.has(plugin);
         if (active !== enabled) {
           if (enabled) {
-            plugin.activate();
+            plugin.enable();
             this.activePlugins.add(plugin);
           } else {
-            plugin.deactivate();
+            plugin.disable();
             this.activePlugins.delete(plugin);
           }
         }

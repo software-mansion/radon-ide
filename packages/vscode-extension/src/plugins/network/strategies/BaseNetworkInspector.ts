@@ -25,10 +25,10 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
 
   // #region abstract
 
-  public abstract activate(): void;
-  public abstract deactivate(): void;
+  public abstract enable(): void;
+  public abstract disable(): void;
   public abstract dispose(): void;
-  public abstract suspend(): void;
+  public abstract deactivate(): void;
   protected abstract handleGetResponseBodyData(payload: IDEMessage): Promise<void>;
   protected abstract handleCDPMessage(
     message: WebviewMessage & { command: WebviewCommand.CDPCall }

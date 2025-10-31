@@ -107,13 +107,16 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
     );
   }
 
-  public activate(): void {
+  public enable(): void {
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
     this.setupListeners();
     this.sendCDPMessage({ method: NetworkMethod.Enable, params: {} });
   }
 
-  private cleanup(shouldDisableNetworkInspector: boolean) {
+  /**
+   * "Soft" disable by default, deactivates without clearing messages to preserve state across reactivation
+   */
+  public deactivate(shouldDisableNetworkInspector: boolean = false): void {
     disposeAll(this.devtoolsListeners);
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
     if (shouldDisableNetworkInspector) {
@@ -122,15 +125,8 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
     }
   }
 
-  public deactivate(): void {
-    this.cleanup(true);
-  }
-
-  /**
-   * Suspends without clearing messages to preserve state across reactivation
-   */
-  public suspend(): void {
-    this.cleanup(false);
+  public disable(): void {
+    this.deactivate(true);
   }
 
   public dispose(): void {

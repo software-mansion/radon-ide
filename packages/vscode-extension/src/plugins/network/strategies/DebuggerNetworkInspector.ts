@@ -215,9 +215,9 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     }
   }
 
-  public activate(): void {
+  public enable(): void {
     if (this.activationState !== ActivationState.Inactive) {
-      return; // activated or activation in progress
+      return; // enabled or activation in progress
     }
 
     this.setupDebuggerConnectionListeners();
@@ -230,7 +230,10 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     this.completeActivation();
   }
 
-  private cleanup(shouldDisableNetworkInspector: boolean): void {
+  /**
+   * "Soft" disable by default, deactivates without clearing messages to preserve state across reactivation
+   */
+  public deactivate(shouldDisableNetworkInspector: boolean = false): void {
     if (this.activationState === ActivationState.Inactive) {
       return;
     }
@@ -249,15 +252,8 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     this.activationState = ActivationState.Inactive;
   }
 
-  public deactivate(): void {
-    this.cleanup(true);
-  }
-
-  /**
-   * Suspends without clearing messages to preserve state across reactivation
-   */
-  public suspend(): void {
-    this.cleanup(false);
+  public disable(): void {
+    this.deactivate(true);
   }
 
   public dispose(): void {

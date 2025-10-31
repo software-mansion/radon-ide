@@ -452,7 +452,7 @@ export class ApplicationSession implements Disposable {
       // the debugger connecting and fetching the source will cause it to appear again.
       bundleError: REMOVE,
     });
-    this.toolsManager.suspend();
+    this.toolsManager.deactivate();
     this.debugSessionEventSubscription?.dispose();
     this.debugSessionEventSubscription = undefined;
     const debugSession = this.debugSession;
