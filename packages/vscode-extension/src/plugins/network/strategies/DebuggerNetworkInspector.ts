@@ -233,7 +233,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
   /**
    * "Soft" disable by default, deactivates without clearing messages to preserve state across reactivation
    */
-  public deactivate(shouldDisableNetworkInspector: boolean = false): void {
+  public deactivate(): void {
     if (this.activationState === ActivationState.Inactive) {
       return;
     }
@@ -243,17 +243,15 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
 
     if (this.pluginAvailable) {
       commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
-      if (shouldDisableNetworkInspector) {
-        this.networkBridge.disableNetworkInspector();
-        this.clearNetworkMessages();
-      }
     }
 
     this.activationState = ActivationState.Inactive;
   }
 
   public disable(): void {
-    this.deactivate(true);
+    this.deactivate();
+    this.networkBridge.disableNetworkInspector();
+    this.clearNetworkMessages();
   }
 
   public dispose(): void {

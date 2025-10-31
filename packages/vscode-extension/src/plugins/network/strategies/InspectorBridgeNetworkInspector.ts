@@ -119,14 +119,12 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
   public deactivate(shouldDisableNetworkInspector: boolean = false): void {
     disposeAll(this.devtoolsListeners);
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
-    if (shouldDisableNetworkInspector) {
-      this.sendCDPMessage({ method: NetworkMethod.Disable, params: {} });
-      this.clearNetworkMessages();
-    }
   }
 
   public disable(): void {
     this.deactivate(true);
+    this.sendCDPMessage({ method: NetworkMethod.Disable, params: {} });
+    this.clearNetworkMessages();
   }
 
   public dispose(): void {
