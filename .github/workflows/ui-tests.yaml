@@ -77,7 +77,7 @@ jobs:
 
   build-and-test:
     needs: set-matrix
-    runs-on: macos-latest-xlarge
+    runs-on: self-hosted
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
