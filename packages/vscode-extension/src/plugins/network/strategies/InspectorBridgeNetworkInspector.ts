@@ -9,6 +9,7 @@ import {
   NetworkMethod,
   IDEMessage,
   WebviewMessageDescriptor,
+  IDEMethod,
 } from "../../../network/types/panelMessageProtocol";
 import { BaseNetworkInspector } from "./BaseNetworkInspector";
 
@@ -41,21 +42,17 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
   }
 
   /**
-   * Parse CDPMessage into WebviewMessage format and broadcast to all listeners
+   * Method overload for InspectorBridgeNetworkInspector implementation.
+   * Apart from changing the tracking state, send message to application (network.js)
+   * with appropriate IDEMethod, to start/stop network response buffering.
    */
-  private broadcastWebviewMessage(
-    message: string,
-    command: WebviewCommand = WebviewCommand.CDPCall
-  ): void {
-    try {
-      const webviewMessage: WebviewMessage = {
-        command: command,
-        payload: JSON.parse(message),
-      };
-      this.broadcastMessage(webviewMessage);
-    } catch {
-      console.error("Failed to parse Webview message:", message);
-    }
+  protected setNetworkTracking(shouldTrack: boolean): void {
+    super.setNetworkTracking(shouldTrack);
+
+    const method = shouldTrack ? IDEMethod.StartNetworkTracking : IDEMethod.StopNetworkTracking;
+    this.inspectorBridge.sendPluginMessage("network", WebviewMessageDescriptor.IDEMessage, {
+      method,
+    });
   }
 
   protected async handleGetResponseBodyData(message: IDEMessage): Promise<void> {
@@ -83,10 +80,16 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("pluginMessage", (payload) => {
         if (payload.pluginId === "network") {
-          if (payload.type === WebviewMessageDescriptor.IDEMessage) {
-            this.broadcastWebviewMessage(payload.data, WebviewCommand.IDECall);
-          } else {
-            this.broadcastWebviewMessage(payload.data, WebviewCommand.CDPCall);
+          try {
+            const payloadData = JSON.parse(payload.data);
+
+            if (payload.type === WebviewMessageDescriptor.IDEMessage) {
+              this.broadcastMessage(payloadData, WebviewCommand.IDECall);
+            } else {
+              this.broadcastMessage(payloadData, WebviewCommand.CDPCall);
+            }
+          } catch (error) {
+            console.error("Failed to parse Webview message:", payload.data);
           }
         }
       })
@@ -96,20 +99,32 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("appReady", () => {
         this.sendCDPMessage({ method: NetworkMethod.Enable, params: {} });
+
+        // Clear any stored messages in the panel and plugin state
+        this.broadcastMessage({ method: IDEMethod.ClearStoredMessages }, WebviewCommand.IDECall);
+        this.clearNetworkMessages();
       })
     );
   }
 
-  public activate(): void {
+  public enable(): void {
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
     this.setupListeners();
     this.sendCDPMessage({ method: NetworkMethod.Enable, params: {} });
   }
 
-  public deactivate(): void {
+  /**
+   * "Soft" disable by default, deactivates without clearing messages to preserve state across reactivation
+   */
+  public deactivate(shouldDisableNetworkInspector: boolean = false): void {
     disposeAll(this.devtoolsListeners);
-    this.sendCDPMessage({ method: NetworkMethod.Disable, params: {} });
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
+  }
+
+  public disable(): void {
+    this.deactivate(true);
+    this.sendCDPMessage({ method: NetworkMethod.Disable, params: {} });
+    this.clearNetworkMessages();
   }
 
   public dispose(): void {
