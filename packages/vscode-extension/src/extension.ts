@@ -198,10 +198,10 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
-  async function runMaestroTest() {
+  async function runMaestroTest(fileName: string) {
     const ide = IDE.getInstanceIfExists();
     if (ide) {
-      ide.project.runMaestroTest();
+      ide.project.runMaestroTest(fileName);
     } else {
       window.showWarningMessage("Wait for the app to load before running Maestro tests.", "Dismiss");
     }

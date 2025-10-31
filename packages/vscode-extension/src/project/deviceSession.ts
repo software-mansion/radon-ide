@@ -876,15 +876,78 @@ export class DeviceSession implements Disposable {
     this.inspectorBridge?.sendShowStorybookStoryRequest(componentTitle, storyName);
   }
 
-  public async runMaestroTest() {
+  public async runMaestroTest(fileName: string) {
+    const { spawn, execSync } = await import("child_process");
+    const deviceInfo = this.stateManager.getState().deviceInfo;
+    let xcrunDeviceId: string;
+
+    if (deviceInfo.platform === DevicePlatform.IOS) {
+      // TODO figure out how to test on sims in custom sets
+      xcrunDeviceId = deviceInfo.UDID;
+    } else {
+      const avdId = deviceInfo.avdId;
+      try {
+        const out = execSync("adb devices").toString();
+        const lines = out.split(/\r?\n/);
+        const emulatorSerials = lines.find((l) => l.startsWith("emulator-"));
+
+        // find a serial for which `adb -s <serial> emu avd name` matches the avdId
+        if (emulatorSerials) {
+          const matchingSerials = lines.filter((l) => {
+            const serial = l.split("\t")[0];
+            try {
+              const avdName = execSync(`adb -s ${serial} emu avd name`).toString().trim();
+              return avdName === avdId;
+            } catch {
+              return false;
+            }
+          });
+          if (matchingSerials.length > 0) {
+            xcrunDeviceId = matchingSerials[0].split("\t")[0];
+            return;
+          }
+        }
+
+        xcrunDeviceId = emulatorSerials ? emulatorSerials.split(/\s+/)[0] : avdId;
+      } catch {
+        xcrunDeviceId = avdId;
+      }
+    }
+
     const outputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(Output.MaestroTest);
+    outputChannel.clear();
     outputChannel.show(true);
-    outputChannel.appendLine("Running Maestro test...");
-    outputChannel.appendLine("=======================");
-    outputChannel.appendLine("✅ This is a placeholder for Maestro test execution.");
-    outputChannel.appendLine("❌ In a real implementation, this would run the Maestro CLI.");
-    outputChannel.appendLine("========================");
-    outputChannel.appendLine("Maestro test completed.");
+
+    outputChannel.appendLine(`Running Maestro test: ${fileName} on device: ${deviceInfo.displayName}`);
+
+    const args = ["--device", xcrunDeviceId, "test", fileName];
+
+    const child = spawn("maestro", args);
+
+    child.stdout?.on("data", (chunk: Buffer | string) => {
+      outputChannel.append(chunk.toString());
+    });
+
+    child.stderr?.on("data", (chunk: Buffer | string) => {
+      outputChannel.append(chunk.toString());
+    });
+
+    await new Promise<void>((resolve, reject) => {
+      child.on("error", (err: Error) => {
+        outputChannel.info(`Failed to start maestro: ${err.message}`);
+        reject(err);
+      });
+
+      child.on("close", (code: number | null) => {
+        if (code === 0) {
+          outputChannel.info("Maestro test completed successfully.");
+          resolve();
+        } else {
+          outputChannel.info(`Maestro test failed with exit code ${code}.`);
+          resolve();
+        }
+      });
+    });
   }
 
   //#region Application Session

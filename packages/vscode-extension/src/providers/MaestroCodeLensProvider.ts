@@ -18,11 +18,10 @@ export class MaestroCodeLensProvider implements CodeLensProvider {
     }
     
     const command: Command = {
-      title: "Run Maestro Test",
+      title: "Run Maestro test",
       command: "RNIDE.runMaestroTest",
       arguments: [
-        document.fileName,
-        1
+        document.fileName
       ],
     };
     
