@@ -141,7 +141,7 @@ jobs:
 
       - name: Checkout simulator-server branch
         run: git fetch && git checkout @KeyJayY/debugTokenKey
-        working-directory: simulator-server
+        working-directory: packages/simulator-server
 
       - name: Build VSIX package
         run: npm run build-vsix-package
