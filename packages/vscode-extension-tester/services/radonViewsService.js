@@ -1,10 +1,9 @@
-import * as fs from "fs";
 import { By, BottomBarPanel, Key } from "vscode-extension-tester";
 import { createCanvas } from "canvas";
 import { ElementHelperService } from "./helperServices.js";
 import AppManipulationService from "./appManipulationService.js";
 
-const licenseKey = process.env.RADON_IDE_LICENSE_KEY || "";
+const licenseKey = "1111-1111-1111-1111-1111-1111-1111-1111";
 
 export default class RadonViewsService {
   constructor(driver) {
@@ -77,6 +76,8 @@ export default class RadonViewsService {
       return;
     }
 
+    await this.driver.switchTo().defaultContent();
+
     await this.openRadonIDEPanel();
     await this.elementHelperService.findAndClickElementByTag(
       "open-activate-license-modal-button"
@@ -88,11 +89,6 @@ export default class RadonViewsService {
     await this.elementHelperService.findAndClickElementByTag(
       "activate-license-button"
     );
-    await this.driver.switchTo().defaultContent();
-    const bottomBar = await new BottomBarPanel().openOutputView();
-    await this.driver.sleep(5000);
-    await bottomBar.selectChannel("Radon IDE");
-    await this.driver.sleep(10000);
     await this.elementHelperService.findAndClickElementByTag(
       "activate-license-confirm-button"
     );

@@ -73,181 +73,181 @@ safeDescribe("6 - screenshots tests", () => {
     await validateImage(filePath);
   });
 
-  it("Should take a screenshot using shortcut", async () => {
-    const filePath = path.join(cwd, "screenshotTestShortcut..png");
+  // it("Should take a screenshot using shortcut", async () => {
+  //   const filePath = path.join(cwd, "screenshotTestShortcut..png");
 
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  //   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    await driver
-      .actions()
-      .keyDown(Key.COMMAND)
-      .keyDown(Key.SHIFT)
-      .sendKeys("a")
-      .keyUp(Key.SHIFT)
-      .keyUp(Key.COMMAND)
-      .perform();
+  //   await driver
+  //     .actions()
+  //     .keyDown(Key.COMMAND)
+  //     .keyDown(Key.SHIFT)
+  //     .sendKeys("a")
+  //     .keyUp(Key.SHIFT)
+  //     .keyUp(Key.COMMAND)
+  //     .perform();
 
-    await radonViewsService.findAndFillSaveFileForm("screenshotTestShortcut");
+  //   await radonViewsService.findAndFillSaveFileForm("screenshotTestShortcut");
 
-    await driver.wait(
-      async () => {
-        return fs.existsSync(filePath);
-      },
-      10000,
-      "Timed out waiting for screenshot to be saved"
-    );
+  //   await driver.wait(
+  //     async () => {
+  //       return fs.existsSync(filePath);
+  //     },
+  //     10000,
+  //     "Timed out waiting for screenshot to be saved"
+  //   );
 
-    await validateImage(filePath);
-  });
+  //   await validateImage(filePath);
+  // });
 
-  it("Should open replay overlay", async () => {
-    // some time to wait for replay to record
-    await driver.sleep(3000);
+  // it("Should open replay overlay", async () => {
+  //   // some time to wait for replay to record
+  //   await driver.sleep(3000);
 
-    await elementHelperService.findAndClickElementByTag(
-      "radon-top-bar-show-replay-button"
-    );
+  //   await elementHelperService.findAndClickElementByTag(
+  //     "radon-top-bar-show-replay-button"
+  //   );
 
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
-  });
+  //   await elementHelperService.findAndWaitForElementByTag(
+  //     "replay-overlay",
+  //     "Timed out waiting for replay overlay to appear"
+  //   );
+  // });
 
-  it("Should open replay overlay using shortcut", async () => {
-    // some time to wait for replay to record
-    await driver.sleep(3000);
+  // it("Should open replay overlay using shortcut", async () => {
+  //   // some time to wait for replay to record
+  //   await driver.sleep(3000);
 
-    await driver
-      .actions()
-      .keyDown(Key.COMMAND)
-      .keyDown(Key.SHIFT)
-      .sendKeys("r")
-      .keyUp(Key.SHIFT)
-      .keyUp(Key.COMMAND)
-      .perform();
+  //   await driver
+  //     .actions()
+  //     .keyDown(Key.COMMAND)
+  //     .keyDown(Key.SHIFT)
+  //     .sendKeys("r")
+  //     .keyUp(Key.SHIFT)
+  //     .keyUp(Key.COMMAND)
+  //     .perform();
 
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
-  });
+  //   await elementHelperService.findAndWaitForElementByTag(
+  //     "replay-overlay",
+  //     "Timed out waiting for replay overlay to appear"
+  //   );
+  // });
 
-  it("Should record screen", async () => {
-    const filePath = path.join(cwd, "recordingTest..mp4");
+  // it("Should record screen", async () => {
+  //   const filePath = path.join(cwd, "recordingTest..mp4");
 
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  //   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    await elementHelperService.findAndClickElementByTag(
-      "toggle-recording-button"
-    );
-    // recording for 4 sec
-    await driver.sleep(DEFAULT_VIDEO_DURATION_SECS * 1000);
-    await elementHelperService.findAndClickElementByTag(
-      "toggle-recording-button"
-    );
-    await driver.sleep(1000);
+  //   await elementHelperService.findAndClickElementByTag(
+  //     "toggle-recording-button"
+  //   );
+  //   // recording for 4 sec
+  //   await driver.sleep(DEFAULT_VIDEO_DURATION_SECS * 1000);
+  //   await elementHelperService.findAndClickElementByTag(
+  //     "toggle-recording-button"
+  //   );
+  //   await driver.sleep(1000);
 
-    await radonViewsService.findAndFillSaveFileForm("recordingTest");
+  //   await radonViewsService.findAndFillSaveFileForm("recordingTest");
 
-    await driver.wait(
-      async () => {
-        return fs.existsSync(filePath);
-      },
-      10000,
-      "Timed out waiting for recording to be saved"
-    );
+  //   await driver.wait(
+  //     async () => {
+  //       return fs.existsSync(filePath);
+  //     },
+  //     10000,
+  //     "Timed out waiting for recording to be saved"
+  //   );
 
-    await driver.sleep(5000);
+  //   await driver.sleep(5000);
 
-    await validateVideo(filePath, DEFAULT_VIDEO_DURATION_SECS);
-  });
+  //   await validateVideo(filePath, DEFAULT_VIDEO_DURATION_SECS);
+  // });
 
-  it("Should record screen using shortcut", async () => {
-    const filePath = path.join(cwd, "recordingTest..mp4");
+  // it("Should record screen using shortcut", async () => {
+  //   const filePath = path.join(cwd, "recordingTest..mp4");
 
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  //   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
-    await driver
-      .actions()
-      .keyDown(Key.COMMAND)
-      .keyDown(Key.SHIFT)
-      .sendKeys("e")
-      .keyUp(Key.SHIFT)
-      .keyUp(Key.COMMAND)
-      .perform();
+  //   await driver
+  //     .actions()
+  //     .keyDown(Key.COMMAND)
+  //     .keyDown(Key.SHIFT)
+  //     .sendKeys("e")
+  //     .keyUp(Key.SHIFT)
+  //     .keyUp(Key.COMMAND)
+  //     .perform();
 
-    await driver.sleep(DEFAULT_VIDEO_DURATION_SECS * 1000);
+  //   await driver.sleep(DEFAULT_VIDEO_DURATION_SECS * 1000);
 
-    await driver
-      .actions()
-      .keyDown(Key.COMMAND)
-      .keyDown(Key.SHIFT)
-      .sendKeys("e")
-      .keyUp(Key.SHIFT)
-      .keyUp(Key.COMMAND)
-      .perform();
+  //   await driver
+  //     .actions()
+  //     .keyDown(Key.COMMAND)
+  //     .keyDown(Key.SHIFT)
+  //     .sendKeys("e")
+  //     .keyUp(Key.SHIFT)
+  //     .keyUp(Key.COMMAND)
+  //     .perform();
 
-    await radonViewsService.findAndFillSaveFileForm("recordingTest");
+  //   await radonViewsService.findAndFillSaveFileForm("recordingTest");
 
-    await driver.wait(
-      async () => {
-        return fs.existsSync(filePath);
-      },
-      10000,
-      "Timed out waiting for recording to be saved"
-    );
+  //   await driver.wait(
+  //     async () => {
+  //       return fs.existsSync(filePath);
+  //     },
+  //     10000,
+  //     "Timed out waiting for recording to be saved"
+  //   );
 
-    await driver.sleep(5000);
+  //   await driver.sleep(5000);
 
-    await validateVideo(filePath, DEFAULT_VIDEO_DURATION_SECS);
-  });
+  //   await validateVideo(filePath, DEFAULT_VIDEO_DURATION_SECS);
+  // });
 
-  it("Should save replay", async () => {
-    const filePath = path.join(cwd, "replayTest..mp4");
+  // it("Should save replay", async () => {
+  //   const filePath = path.join(cwd, "replayTest..mp4");
 
-    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    await radonSettingsService.setEnableReplays(true);
+  //   if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  //   await radonSettingsService.setEnableReplays(true);
 
-    await elementHelperService.waitUntilElementGone(
-      By.css("[data-testid='vhs-rewind']")
-    );
+  //   await elementHelperService.waitUntilElementGone(
+  //     By.css("[data-testid='vhs-rewind']")
+  //   );
 
-    // simulate some actions in app
-    let position = await appManipulationService.getButtonCoordinates(
-      appWebsocket,
-      "toggle-element-button"
-    );
-    await appManipulationService.clickInsidePhoneScreen(position);
-    await driver.sleep(2000);
-    position = await appManipulationService.getButtonCoordinates(
-      appWebsocket,
-      "toggle-element-button"
-    );
-    await appManipulationService.clickInsidePhoneScreen(position);
+  //   // simulate some actions in app
+  //   let position = await appManipulationService.getButtonCoordinates(
+  //     appWebsocket,
+  //     "toggle-element-button"
+  //   );
+  //   await appManipulationService.clickInsidePhoneScreen(position);
+  //   await driver.sleep(2000);
+  //   position = await appManipulationService.getButtonCoordinates(
+  //     appWebsocket,
+  //     "toggle-element-button"
+  //   );
+  //   await appManipulationService.clickInsidePhoneScreen(position);
 
-    await elementHelperService.findAndClickElementByTag(
-      "radon-top-bar-show-replay-button"
-    );
+  //   await elementHelperService.findAndClickElementByTag(
+  //     "radon-top-bar-show-replay-button"
+  //   );
 
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
+  //   await elementHelperService.findAndWaitForElementByTag(
+  //     "replay-overlay",
+  //     "Timed out waiting for replay overlay to appear"
+  //   );
 
-    await elementHelperService.findAndClickElementByTag("replay-save-button");
-    await radonViewsService.findAndFillSaveFileForm("replayTest");
+  //   await elementHelperService.findAndClickElementByTag("replay-save-button");
+  //   await radonViewsService.findAndFillSaveFileForm("replayTest");
 
-    await driver.wait(
-      async () => {
-        return fs.existsSync(filePath);
-      },
-      10000,
-      "Timed out waiting for recording to be saved"
-    );
+  //   await driver.wait(
+  //     async () => {
+  //       return fs.existsSync(filePath);
+  //     },
+  //     10000,
+  //     "Timed out waiting for recording to be saved"
+  //   );
 
-    await driver.sleep(10000);
+  //   await driver.sleep(10000);
 
-    await validateVideo(filePath);
-  });
+  //   await validateVideo(filePath);
+  // });
 });

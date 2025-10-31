@@ -8,6 +8,7 @@ import {
   BottomBarPanel,
   Key,
 } from "vscode-extension-tester";
+import { getLocal } from "mockttp";
 import {
   initServer,
   getAppWebsocket,
@@ -17,14 +18,96 @@ import initServices from "../services/index.js";
 import startRecording from "../utils/screenRecording.js";
 import getConfiguration from "../configuration.js";
 import { texts } from "../utils/constants.js";
+import jwt from "jsonwebtoken";
+import { execSync } from "child_process";
 
 const { IS_RECORDING } = getConfiguration();
 
 let driver, workbench, view, browser;
 let recorder;
 const failedTests = [];
+let mockServer;
+
+const CA_CERT = ".proxy-ca-cert.pem";
+const CA_KEY = ".proxy-key.pem";
+const CA_NAME = "Local Proxy CA Tests Radon IDE";
+
+function generateCerts() {
+  if (!fs.existsSync(CA_CERT) || !fs.existsSync(CA_KEY)) {
+    console.log("Generating new CA certificate and key...");
+    execSync(`
+      openssl req -x509 -newkey rsa:2048 -sha256 -days 1 \
+        -nodes -keyout ${CA_KEY} -out ${CA_CERT} \
+        -subj "/CN=${CA_NAME}"
+    `);
+    console.log("Generated .proxy-key.pem and .proxy-ca-cert.pem");
+  }
+}
+
+function addToCertificateToStore() {
+  try {
+    execSync(
+      `security add-certificates -k ~/Library/Keychains/login.keychain-db ${CA_CERT}`
+    );
+    console.log("CA certificate added to macOS trust store");
+  } catch {
+    console.warn("Could not add CA to trust store automatically.");
+  }
+}
+
+function removeFromCertificateStore() {
+  try {
+    execSync(
+      `security delete-certificate -c "${CA_NAME}" ~/Library/Keychains/login.keychain-db`
+    );
+    console.log("CA certificate removed from macOS certificate store");
+  } catch {
+    console.warn("Could not remove CA from certificate store automatically.");
+  }
+}
 
 before(async function () {
+  const PRIVATE_KEY =
+    process.env.RADON_TESTS_SIM_SERVER_DEBUG_KEY ||
+    fs.readFileSync("ec_private_key.pem", "utf8");
+  generateCerts();
+  addToCertificateToStore();
+
+  mockServer = getLocal({
+    https: {
+      key: fs.readFileSync(CA_KEY),
+      cert: fs.readFileSync(CA_CERT),
+      tlsInterceptOnly: [{ hostname: "portal.ide.swmansion.com" }],
+    },
+  });
+
+  mockServer
+    .forPost("https://portal.ide.swmansion.com/api/create-token")
+    .thenCallback(async (request) => {
+      const bodyText = await request.body.getText();
+      let fingerprint = null;
+
+      const body = JSON.parse(bodyText);
+      fingerprint = body.fingerprint || null;
+
+      const now = Math.floor(Date.now() / 1000);
+      const payload = {
+        cp_fpr: fingerprint,
+        iat: now,
+        exp: now + 60 * 60 * 2,
+      };
+
+      const token = jwt.sign(payload, PRIVATE_KEY, { algorithm: "ES256" });
+
+      return {
+        statusCode: 200,
+        json: { token, fingerprint },
+      };
+    });
+
+  await mockServer.forAnyRequest().thenPassThrough();
+  await mockServer.start(8081);
+
   initServer(8080);
   console.log("Initializing VSBrowser...");
 
@@ -112,9 +195,11 @@ afterEach(async function () {
 });
 
 after(async function () {
+  removeFromCertificateStore();
   if (IS_RECORDING && recorder) {
     await recorder.stop();
   }
+  mockServer.stop();
   closeServer();
   console.log(
     `==== Summary app: ${texts.expectedProjectName} | code version: ${
