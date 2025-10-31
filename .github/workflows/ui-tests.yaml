@@ -139,10 +139,6 @@ jobs:
         run: npm run get-test-app -- ${{ matrix.testApp }}
         working-directory: packages/vscode-extension-tester
 
-      - name: Checkout simulator-server branch
-        run: git fetch && git checkout @KeyJayY/debugTokenKey
-        working-directory: packages/simulator-server
-
       - name: Build VSIX package
         run: npm run build-vsix-package
         working-directory: packages/vscode-extension-tester
@@ -166,6 +162,7 @@ jobs:
           CODE_VERSION: ${{ matrix.codeVersion }}
           RADON_IDE_LICENSE_KEY: ${{ secrets.RADON_IDE_LICENSE_KEY }}
           IS_GITHUB_ACTIONS: "true"
+          RADON_TESTS_SIM_SERVER_DEBUG_KEY: ${{ secrets.RADON_TESTS_SIM_SERVER_DEBUG_KEY }}
 
       - name: Upload test output artifact
         if: always()
