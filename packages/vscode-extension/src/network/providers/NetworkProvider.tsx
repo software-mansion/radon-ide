@@ -13,7 +13,7 @@ import { ThemeDescriptor, ThemeData } from "../../common/theme";
 interface NetworkProviderProps extends NetworkTracker {
   isTracking: boolean;
   isScrolling: boolean;
-  toggleTracking: () => void;
+  setIsTracking: React.Dispatch<React.SetStateAction<boolean>>;
   clearActivity: () => void;
   toggleScrolling: () => void;
   isTimelineVisible: boolean;
@@ -46,7 +46,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
   ...networkTrackerInitialState,
   isTracking: true,
   isScrolling: false,
-  toggleTracking: () => {},
+  setIsTracking: () => {},
   clearActivity: () => {},
   toggleScrolling: () => {},
   isTimelineVisible: true,
@@ -58,7 +58,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
-  const { clearLogs, isTracking, toggleTracking, sendWebviewIDEMessage, networkLogs } =
+  const { clearLogs, isTracking, setIsTracking, sendWebviewIDEMessage, networkLogs } =
     networkTracker;
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
@@ -142,7 +142,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       ...networkTracker,
       networkLogs: networkLogs,
       isTracking,
-      toggleTracking,
+      setIsTracking,
       isScrolling,
       clearActivity,
       toggleScrolling,

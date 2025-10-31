@@ -7,14 +7,14 @@ import { useNetwork } from "../providers/NetworkProvider";
 import { useNetworkFilter } from "../providers/NetworkFilterProvider";
 
 function NetworkBar() {
-  const { isTracking, toggleTracking, clearActivity } = useNetwork();
+  const { isTracking, setIsTracking, clearActivity } = useNetwork();
 
   const { filterInvert, isFilterVisible, toggleInvert, toggleFilterVisible } = useNetworkFilter();
 
   return (
     <div className="network-bar">
       <IconButton
-        onClick={toggleTracking}
+        onClick={() => setIsTracking((prev) => !prev)}
         tooltip={{
           label: `${isTracking ? "Stop" : "Start"} recording network activity`,
           side: "bottom",

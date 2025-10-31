@@ -22,7 +22,7 @@ export interface NetworkTracker {
   getSource: (networkLog: NetworkLog) => void;
   sendWebviewCDPMessage: (messageData: CDPMessage) => void;
   sendWebviewIDEMessage: (messageData: IDEMessage) => void;
-  toggleTracking: () => void;
+  setIsTracking: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const networkTrackerInitialState: NetworkTracker = {
@@ -32,7 +32,7 @@ export const networkTrackerInitialState: NetworkTracker = {
   getSource: () => {},
   sendWebviewCDPMessage: () => {},
   sendWebviewIDEMessage: () => {},
-  toggleTracking: () => {},
+  setIsTracking: () => {},
 };
 
 interface NetworkEventTimestampMap {
@@ -123,6 +123,8 @@ const useNetworkTracker = (): NetworkTracker => {
   const [networkLogs, setNetworkLogs] = useState<NetworkLog[]>([]);
   const [cdpMessages, setCdpMessages] = useState<CDPMessage[]>([]);
   const [isTracking, setIsTracking] = useState(true);
+
+  const isSynchronisedRef = useRef(false);
 
   const requestTimingTrackerRef = useRef(new RequestTimingTracker());
   const requestTimingTracker = requestTimingTrackerRef.current;
@@ -229,7 +231,8 @@ const useNetworkTracker = (): NetworkTracker => {
 
     networkMessages.forEach(updateCDPMessages);
 
-    setTracking(shouldTrackNetwork);
+    setIsTracking(shouldTrackNetwork);
+    isSynchronisedRef.current = true;
   };
 
   const handleWindowMessage = (message: MessageEvent) => {
@@ -243,6 +246,13 @@ const useNetworkTracker = (): NetworkTracker => {
 
     updateCDPMessages(webviewMessage);
   };
+
+  useEffect(() => {
+    if (!isSynchronisedRef.current) {
+      return;
+    }
+    sendNetworkTrackingUpdate(isTracking);
+  }, [isTracking]);
 
   useEffect(() => {
     synchronizeSessionData();
@@ -295,18 +305,6 @@ const useNetworkTracker = (): NetworkTracker => {
     });
   };
 
-  const toggleTracking = () => {
-    setIsTracking((prev) => {
-      sendNetworkTrackingUpdate(!prev);
-      return !prev;
-    });
-  };
-
-  const setTracking = (shouldTrack: boolean) => {
-    setIsTracking(shouldTrack);
-    sendNetworkTrackingUpdate(shouldTrack);
-  };
-
   const getSource = (networkLog: NetworkLog) => {
     sendWebviewCDPMessage({
       messageId: "initiator",
@@ -325,7 +323,7 @@ const useNetworkTracker = (): NetworkTracker => {
     getSource,
     sendWebviewCDPMessage,
     sendWebviewIDEMessage,
-    toggleTracking,
+    setIsTracking,
   };
 };
 
