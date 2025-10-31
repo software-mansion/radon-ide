@@ -294,9 +294,10 @@ export class CDPDevtoolsServer extends DevtoolsServer implements Disposable {
       },
       send(event, payload, _transferable) {
         const serializedMessage = JSON.stringify({ event, payload });
+        const escapedMessage = serializedMessage.replaceAll("\\", "\\\\");
         debugSession
           .evaluateExpression({
-            expression: `void ${DISPATCHER_GLOBAL}.sendMessage("${DEVTOOLS_DOMAIN_NAME}", '${serializedMessage}')`,
+            expression: `void ${DISPATCHER_GLOBAL}.sendMessage("${DEVTOOLS_DOMAIN_NAME}", '${escapedMessage}')`,
           })
           .catch(() => {
             // this method might be used by the devtools bridge implementation while JS Debugger
