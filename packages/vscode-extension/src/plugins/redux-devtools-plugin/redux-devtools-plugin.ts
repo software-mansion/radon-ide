@@ -116,22 +116,6 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
       })
     );
     addConnection(connection);
-    this.devtoolsListeners.push(
-      this.inspectorBridge.onEvent("appReady", () => {
-        // Sometimes, the messaging channel (devtools) is established only after
-        // the Redux store is created and after it sends the first message. In that
-        // case, the "start" event never makes it to the webview.
-        // To workaround this, we use "appReady" event which is sent after the messaging
-        // channel is established. We then force reload the webview with redux devtools
-        // which causes the devtools to initialize a new session and, as a consequence force the store
-        // to reconnect.
-        if (this.connectedWebview) {
-          const html = this.connectedWebview.html;
-          this.connectedWebview.html = "";
-          this.connectedWebview.html = html;
-        }
-      })
-    );
   }
 
   deactivate() {
