@@ -28,6 +28,9 @@ export function registerNavigationPlugin(name, plugin) {
 const devtoolPlugins = new Set(["network"]);
 const devtoolPluginsChangedListeners = new Set();
 export function registerDevtoolPlugin(name) {
+  if (devtoolPlugins.has(name)) {
+    return;
+  }
   devtoolPlugins.add(name);
   devtoolPluginsChangedListeners.forEach((listener) => listener());
 }

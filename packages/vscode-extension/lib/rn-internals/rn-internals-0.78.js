@@ -1,5 +1,6 @@
 module.exports = {
   parseErrorStack: require("__REACT_NATIVE_INTERNALS__/Libraries/Core/Devtools/parseErrorStack"),
+  symbolicateStackTrace: require("__REACT_NATIVE_INTERNALS__/Libraries/Core/Devtools/symbolicateStackTrace"),
   get LogBoxData() {
     return require("__REACT_NATIVE_INTERNALS__/Libraries/LogBox/Data/LogBoxData");
   },

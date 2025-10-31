@@ -26,6 +26,12 @@ import { useStore } from "../providers/storeProvider";
 import { DevicePlatform, DeviceRotation, DeviceSettings } from "../../common/State";
 import { PropsWithDataTest } from "../../common/types";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import {
+  Feature,
+  FeatureAvailabilityStatus,
+  getFeatureAvailabilityStatus,
+} from "../../common/License";
 
 const contentSizes = [
   "xsmall",
@@ -97,11 +103,47 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
   const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
 
+  const licenseStatus = use$(store$.license.status);
+
+  const isDeviceRotationAvailable =
+    getFeatureAvailabilityStatus(licenseStatus, Feature.DeviceRotation) ===
+    FeatureAvailabilityStatus.Available;
+
   const { project } = useProject();
 
   const { openModal } = useModal();
 
   const resetOptions = platform === "iOS" ? resetOptionsIOS : resetOptionsAndroid;
+
+  const handleRotateDevice = usePaywalledCallback(
+    (direction: DeviceRotationDirection) => {
+      project.rotateDevices(direction);
+    },
+    Feature.DeviceRotation,
+    []
+  );
+
+  const handleSetRotateDevice = usePaywalledCallback(
+    (deviceRotation: DeviceRotation) => {
+      store$.workspaceConfiguration.deviceSettings.deviceRotation.set(deviceRotation);
+    },
+    Feature.DeviceRotation,
+    []
+  );
+
+  const handleOpenLocationView = usePaywalledCallback(
+    () => {
+      openModal(<DeviceLocationView />, { title: "Location" });
+    },
+    Feature.LocationSimulation,
+    []
+  );
+
+  const openSendFileDialog = usePaywalledCallback(
+    () => project.openSendFileDialog(),
+    Feature.SendFile,
+    []
+  );
 
   return (
     <DropdownMenuRoot>
@@ -210,14 +252,14 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                 alignOffset={-5}>
                 <Label>Rotate</Label>
                 <CommandItem
-                  onSelect={() => project.rotateDevices(DeviceRotationDirection.Clockwise)}
+                  onSelect={() => handleRotateDevice(DeviceRotationDirection.Clockwise)}
                   commandName={"RNIDE.rotateDeviceClockwise"}
                   label={"Clockwise"}
                   dataTest={`device-settings-set-orientation-clockwise`}
                   icon={"refresh"}
                 />
                 <CommandItem
-                  onSelect={() => project.rotateDevices(DeviceRotationDirection.Anticlockwise)}
+                  onSelect={() => handleRotateDevice(DeviceRotationDirection.Anticlockwise)}
                   commandName={"RNIDE.rotateDeviceAnticlockwise"}
                   label={"Anticlockwise"}
                   dataTest={`device-settings-set-orientation-anticlockwise`}
@@ -232,9 +274,10 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
                     className="dropdown-menu-item"
                     data-testid={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
                     key={index}
-                    onSelect={() =>
-                      store$.workspaceConfiguration.deviceSettings.deviceRotation.set(option.value)
-                    }>
+                    disabled={
+                      !isDeviceRotationAvailable && option.value !== DeviceRotation.Portrait
+                    }
+                    onSelect={() => handleSetRotateDevice(option.value)}>
                     <span
                       className={`codicon codicon-${option.icon}`}
                       style={{ rotate: option.rotation }}
@@ -252,16 +295,14 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           <DropdownMenu.Item
             className="dropdown-menu-item"
             data-testid="device-settings-send-file"
-            onSelect={() => project.openSendFileDialog()}>
+            onSelect={openSendFileDialog}>
             <span className="codicon codicon-share" />
             Send File
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
             data-testid="device-settings-location"
-            onSelect={() => {
-              openModal(<DeviceLocationView />, { title: "Location" });
-            }}>
+            onSelect={handleOpenLocationView}>
             <span className="codicon codicon-location" />
             Location
           </DropdownMenu.Item>
@@ -352,13 +393,18 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
 const LocalizationItem = () => {
   const { openModal } = useModal();
+
+  const handleOpenLocationView = usePaywalledCallback(
+    () => {
+      openModal(<DeviceLocalizationView />, { title: "Localization" });
+    },
+    Feature.DeviceLocalizationSettings,
+    []
+  );
+
   return (
     <>
-      <DropdownMenu.Item
-        className="dropdown-menu-item"
-        onSelect={() => {
-          openModal(<DeviceLocalizationView />, { title: "Localization" });
-        }}>
+      <DropdownMenu.Item className="dropdown-menu-item" onSelect={handleOpenLocationView}>
         <span className="codicon codicon-globe" />
         Localization
       </DropdownMenu.Item>
@@ -403,6 +449,24 @@ const BiometricsItem = () => {
 
   const { project } = useProject();
 
+  const handleToggleBiometricsEnrolment = usePaywalledCallback(
+    () => {
+      store$.workspaceConfiguration.deviceSettings.hasEnrolledBiometrics.set(
+        !deviceSettings.hasEnrolledBiometrics
+      );
+    },
+    Feature.Biometrics,
+    []
+  );
+
+  const handleSendBiometricAuthorization = usePaywalledCallback(
+    async (isMatching: boolean) => {
+      await project.sendBiometricAuthorization(isMatching);
+    },
+    Feature.Biometrics,
+    []
+  );
+
   return (
     <DropdownMenu.Sub>
       <DropdownMenu.SubTrigger className="dropdown-menu-item">
@@ -415,11 +479,7 @@ const BiometricsItem = () => {
         <DropdownMenu.SubContent className="dropdown-menu-subcontent">
           <DropdownMenu.Item
             className="dropdown-menu-item"
-            onSelect={() => {
-              store$.workspaceConfiguration.deviceSettings.hasEnrolledBiometrics.set(
-                !deviceSettings.hasEnrolledBiometrics
-              );
-            }}>
+            onSelect={handleToggleBiometricsEnrolment}>
             <span className="codicon codicon-layout-sidebar-left" />
             Enrolled
             {deviceSettings.hasEnrolledBiometrics && (
@@ -428,7 +488,7 @@ const BiometricsItem = () => {
           </DropdownMenu.Item>
           <CommandItem
             onSelect={() => {
-              project.sendBiometricAuthorization(true);
+              handleSendBiometricAuthorization(true);
             }}
             commandName="RNIDE.performBiometricAuthorization"
             label="Matching ID"
@@ -437,7 +497,7 @@ const BiometricsItem = () => {
           />
           <CommandItem
             onSelect={() => {
-              project.sendBiometricAuthorization(false);
+              handleSendBiometricAuthorization(false);
             }}
             commandName="RNIDE.performFailedBiometricAuthorization"
             label="Non-Matching ID"

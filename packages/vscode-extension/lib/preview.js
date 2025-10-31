@@ -1,5 +1,6 @@
 const { useEffect, useState } = require("react");
 const { AppRegistry, View } = require("react-native");
+const RNInternals = require("./rn-internals/rn-internals");
 
 export const PREVIEW_APP_KEY = "RNIDE_preview";
 
@@ -44,25 +45,39 @@ function getComponentName({ type }) {
   return "(unnamed)";
 }
 
+async function getCallSourceFromStack(stack) {
+  const parsedStack = RNInternals.parseErrorStack(stack);
+  const callerFrame = parsedStack[1];
+  const symbolicatedCallerFrame = (await RNInternals.symbolicateStackTrace([callerFrame])).stack[0];
+
+  return {
+    fileName: symbolicatedCallerFrame.file,
+    lineNumber: symbolicatedCallerFrame.lineNumber,
+    columnNumber: symbolicatedCallerFrame.column,
+  }
+}
+
 export function preview(component) {
   // eslint-disable-next-line eqeqeq
-  if (!component || component._source == null) {
+  if (!component) {
     return;
   }
 
-  const key = `preview:/${component._source.fileName}:${component._source.lineNumber}`;
+  getCallSourceFromStack(new Error().stack).then((callSource) => {
+    const key = `preview:/${callSource.fileName}:${callSource.lineNumber}`;
 
-  const lastPreview = global.__RNIDE_previews.get(key);
+    const lastPreview = global.__RNIDE_previews.get(key);
 
-  global.__RNIDE_previews.set(key, {
-    component,
-    name: getComponentName(component),
+    global.__RNIDE_previews.set(key, {
+      component,
+      name: getComponentName(component),
+    });
+
+    // send update request to the last preview instance if it existed
+    if (lastPreview && lastPreview.renderTrigger) {
+      setTimeout(lastPreview.renderTrigger, 0);
+    }
   });
-
-  // send update request to the last preview instance if it existed
-  if (lastPreview && lastPreview.renderTrigger) {
-    setTimeout(lastPreview.renderTrigger, 0);
-  }
 }
 
 AppRegistry.registerComponent(PREVIEW_APP_KEY, () => Preview);

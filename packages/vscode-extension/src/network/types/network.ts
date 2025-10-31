@@ -34,13 +34,29 @@ export interface NetworkRequestInitiator {
 
 export interface GetResponseBodyResponse {
   result: {
-    body: string;
+    body: string | undefined;
     base64Encoded: boolean;
   };
 }
 
-export interface ResponseBodyData {
+// Redeclared in lib/network/networkRequestParsers.ts due to import problems
+// Based on resourceTypeFromMimeType method in React-Native's resourceTypyFromMimeType
+export enum ResponseBodyDataType {
+  Media = "Media",
+  Image = "Image",
+  Script = "Script",
+  XHR = "XHR",
+  Other = "Other",
+}
+
+export interface ResponseBody {
   body: string | undefined;
+  base64Encoded: boolean;
+}
+
+export interface ResponseBodyData extends ResponseBody {
+  type: ResponseBodyDataType;
+  fullBody?: string;
   wasTruncated?: boolean;
 }
 
@@ -56,6 +72,6 @@ export interface TimelineEvent {
 // `lib/network/networkRequestParsers.ts` due to import conflicts
 // inside `lib` from "src" directory
 export enum ContentTypeHeader {
-  IOS = "Content-Type",
-  ANDROID = "content-type",
+  Default = "Content-Type",
+  LowerCase = "content-type",
 }

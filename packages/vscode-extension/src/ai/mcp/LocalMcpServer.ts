@@ -4,91 +4,93 @@ import http from "node:http";
 import express from "express";
 import * as path from "path";
 import * as fs from "fs/promises";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { McpServer, RegisteredTool } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
 import { Disposable, EventEmitter, workspace } from "vscode";
 import { Logger } from "../../Logger";
-import { registerMcpTools } from "./toolRegistration";
-import { Session } from "./models";
+import { registerLocalMcpTools, registerRemoteMcpTool } from "./toolRegistration";
 import { extensionContext } from "../../utilities/extensionContext";
-import { ConnectionListener } from "../shared/ConnectionListener";
 import { watchLicenseTokenChange } from "../../utilities/license";
 import { getAppCachesDir } from "../../utilities/common";
+import { AuthenticationError, fetchRemoteToolSchema, ServerUnreachableError } from "../shared/api";
+import { throttleAsync } from "../../utilities/throttle";
+
+const NETWORK_RETRY_INTERVAL_MS = 15 * 1000; // 15 seconds
 
 export class LocalMcpServer implements Disposable {
-  private session: Session | null = null;
-  private versionSuffix: number = 0;
+  private transports: Map<string, StreamableHTTPServerTransport> = new Map();
 
   private expressServer: http.Server;
-  private mcpServer: McpServer | null = null;
+  private mcpServer: McpServer;
   private serverPort: Promise<number>;
   private resolveServerPort: (port: number) => void;
-  private serverReloadEmitter: EventEmitter<void>;
 
-  private connectionListener: ConnectionListener;
-  private reconnectionSubscription: Disposable;
+  private remoteTools: Map<string, RegisteredTool> = new Map();
+  private retryReloadToolsTimeout: NodeJS.Timeout | null = null;
+
   private licenseTokenSubscription: Disposable;
 
-  constructor(connectionListener: ConnectionListener) {
-    const { promise, resolve } = Promise.withResolvers<number>();
+  protected onToolListChangedEmitter = new EventEmitter<void>();
+  protected onDisposeEmitter = new EventEmitter<void>();
 
+  constructor() {
+    this.mcpServer = new McpServer({
+      name: "RadonAI",
+      version: extensionContext.extension.packageJSON.version,
+    });
+    registerLocalMcpTools(this.mcpServer);
+
+    const { promise, resolve } = Promise.withResolvers<number>();
     this.serverPort = promise;
     this.resolveServerPort = resolve;
 
-    this.connectionListener = connectionListener;
-
-    this.serverReloadEmitter = new EventEmitter<void>();
-
-    this.reconnectionSubscription = this.connectionListener.onConnectionRestored(() => {
-      this.reloadToolSchema();
-    });
-
+    // the callback is called immediately and then with future changes of the token
+    // therefore we don't need to trigger reloadRemoteTools here separately
     this.licenseTokenSubscription = watchLicenseTokenChange(() => {
-      this.reloadToolSchema();
+      // cancel any pending retries and reload immediately
+      this.cancelRetryReloadTools();
+      this.reloadRemoteTools();
     });
 
     this.expressServer = this.initializeHttpServer();
   }
 
-  public async dispose(): Promise<void> {
-    this.reconnectionSubscription.dispose();
+  public dispose() {
+    this.onDisposeEmitter.fire();
+    this.onDisposeEmitter.dispose();
+    this.onToolListChangedEmitter.dispose();
+    this.cancelRetryReloadTools();
     this.licenseTokenSubscription.dispose();
-    this.serverReloadEmitter.dispose();
-    this.mcpServer?.close();
-    this.expressServer?.closeAllConnections();
-    this.expressServer?.close();
-    this.session = null;
+    this.mcpServer.close();
+    this.expressServer.closeAllConnections();
+    this.expressServer.close();
   }
 
   public async getPort() {
     return this.serverPort;
   }
 
-  private reloadToolSchema() {
-    this.versionSuffix += 1;
-    this.session?.transport.close();
-    this.session = null;
-    this.serverReloadEmitter.fire();
+  public onToolListChanged(listener: () => void) {
+    return this.onToolListChangedEmitter.event(listener);
   }
 
-  public onReload(cb: () => void): Disposable {
-    return this.serverReloadEmitter.event(cb);
-  }
-
-  public getVersion(): string {
-    const baseVersion = extensionContext.extension.packageJSON.version;
-    return `${baseVersion}.${this.versionSuffix}`;
+  public onDispose(listener: () => void) {
+    return this.onDisposeEmitter.event(listener);
   }
 
   private async handleSessionRequest(req: express.Request, res: express.Response) {
     const sessionId = req.headers["mcp-session-id"] as string | undefined;
-    if (!sessionId || !this.session || sessionId !== this.session.sessionId) {
-      res.status(400).send("Invalid or missing session ID");
+    if (!sessionId) {
+      res.status(400).send("Session ID is missing");
       return;
     }
-
-    await this.session.transport.handleRequest(req, res);
+    const transport = this.transports.get(sessionId);
+    if (!transport) {
+      res.status(404).send("Invalid session ID");
+      return;
+    }
+    await transport.handleRequest(req, res);
   }
 
   private async updateMcpServerRecord() {
@@ -125,44 +127,128 @@ export class LocalMcpServer implements Disposable {
     }
   }
 
+  private unloadAllRemoteTools() {
+    for (const tool of this.remoteTools.values()) {
+      tool.remove();
+    }
+    this.remoteTools.clear();
+  }
+
+  private retryReloadRemoteTools() {
+    if (this.retryReloadToolsTimeout) {
+      return;
+    }
+    this.retryReloadToolsTimeout = setTimeout(() => {
+      this.retryReloadToolsTimeout = null;
+      this.reloadRemoteTools();
+    }, NETWORK_RETRY_INTERVAL_MS);
+  }
+
+  private cancelRetryReloadTools() {
+    if (this.retryReloadToolsTimeout) {
+      clearTimeout(this.retryReloadToolsTimeout);
+      this.retryReloadToolsTimeout = null;
+    }
+  }
+
+  /**
+   * Implements a logic for handling remote tool errors, whether they're coming
+   * from the tool fetch request or from the tool invocation.
+   */
+  private handleRemoteToolsError(error: Error) {
+    if (error instanceof ServerUnreachableError) {
+      // delete all remote tools as they are not available and retry later
+      this.unloadAllRemoteTools();
+      this.retryReloadRemoteTools();
+    } else if (error instanceof AuthenticationError) {
+      // delete all toos and don't retry, we will wait for authentication event to reload the tools
+      this.unloadAllRemoteTools();
+    } else {
+      // there was some other error (possibly on the server side)
+      // we do nothing here as the tools may still be functioning
+    }
+  }
+
+  private async reloadRemoteToolsInternal() {
+    try {
+      const toolsInfo = await fetchRemoteToolSchema();
+      const fetchedTools = toolsInfo.tools;
+
+      // remove all tools that were registered before but are no longer on the server
+      const remoteToolsToRemove = new Set<string>(this.remoteTools.keys());
+      const toolsToRegister = [];
+      let toolsChanged = false;
+      for (const tool of fetchedTools) {
+        remoteToolsToRemove.delete(tool.name);
+        if (!this.remoteTools.has(tool.name)) {
+          toolsToRegister.push(tool);
+        }
+      }
+      for (const toolName of remoteToolsToRemove) {
+        const toolToRemove = this.remoteTools.get(toolName);
+        if (toolToRemove) {
+          toolToRemove.remove();
+          this.remoteTools.delete(toolName);
+          toolsChanged = true;
+        }
+      }
+      for (const tool of toolsToRegister) {
+        this.remoteTools.set(
+          tool.name,
+          registerRemoteMcpTool(this.mcpServer, tool, this.handleRemoteToolsError.bind(this))
+        );
+        toolsChanged = true;
+      }
+      if (toolsChanged) {
+        this.mcpServer.sendToolListChanged();
+        this.onToolListChangedEmitter.fire();
+      }
+    } catch (error) {
+      Logger.error("[RADON-MCP] Failed to fetch remote tool schema:", error);
+      this.handleRemoteToolsError(error as Error);
+    }
+  }
+
+  private reloadRemoteTools = throttleAsync(async () => this.reloadRemoteToolsInternal(), 1000);
   private initializeHttpServer(): http.Server {
     const app = express();
     app.use(express.json());
 
     app.post("/mcp", async (req, res) => {
       const sessionId = req.headers["mcp-session-id"] as string | undefined;
+      let transport: StreamableHTTPServerTransport;
 
-      if (!sessionId && isInitializeRequest(req.body)) {
-        const newSessionId = randomUUID();
-
-        // Clean up old session
-        this.session?.transport.close();
-
-        this.session = {
-          sessionId: newSessionId,
-          transport: new StreamableHTTPServerTransport({
-            sessionIdGenerator: () => newSessionId,
-          }),
-        };
-
-        this.session.transport.onclose = () => {
-          this.session = null;
-        };
-
-        // Clean up old mcp server
-        await this.mcpServer?.close();
-
-        this.mcpServer = new McpServer({
-          name: "RadonAI",
-          version: this.getVersion(),
+      if (sessionId && this.transports.has(sessionId)) {
+        // reuse existing transport
+        transport = this.transports.get(sessionId)!;
+      } else if (!sessionId && isInitializeRequest(req.body)) {
+        transport = new StreamableHTTPServerTransport({
+          sessionIdGenerator: () => randomUUID(),
+          onsessioninitialized: (newSessionId: string) => {
+            this.transports.set(newSessionId, transport);
+          },
         });
+        transport.onclose = () => {
+          if (transport.sessionId) {
+            this.transports.delete(transport.sessionId);
+          }
+        };
 
-        await registerMcpTools(this.mcpServer, this.connectionListener);
-
-        await this.mcpServer.connect(this.session.transport);
+        await this.mcpServer.connect(transport);
+      } else {
+        // Invalid request
+        res.status(400).json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32000,
+            message: "Bad Request: No valid session ID provided",
+          },
+          id: null,
+        });
+        return;
       }
 
-      await this.session?.transport.handleRequest(req, res, req.body);
+      await transport.handleRequest(req, res, req.body);
     });
 
     app.get("/mcp", this.handleSessionRequest.bind(this));

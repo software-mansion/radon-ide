@@ -13,12 +13,7 @@ import useNetworkTracker, {
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { NetworkLog } from "../types/networkLog";
-import {
-  WebviewMessage,
-  WebviewCommand,
-  NetworkMethod,
-  IDEMethod,
-} from "../types/panelMessageProtocol";
+import { WebviewMessage, IDEMethod, WebviewCommand } from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
 import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
@@ -30,7 +25,7 @@ interface NetworkProviderProps extends NetworkTracker {
   toggleScrolling: () => void;
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
-  fetchAndOpenResponseInEditor: (networkLog: NetworkLog) => Promise<void>;
+  fetchAndOpenResponseInEditor: (networkLog: NetworkLog, base64encoded: boolean) => Promise<void>;
   getResponseBody: (networkLog: NetworkLog) => Promise<ResponseBodyData | undefined>;
   getThemeData: (themeDescriptor: ThemeDescriptor) => Promise<ThemeData>;
 }
@@ -44,8 +39,8 @@ function createBodyResponsePromise(
 
   const listener = (message: MessageEvent) => {
     try {
-      const { command, payload }: WebviewMessage = message.data;
-      if (command !== WebviewCommand.CDPCall || payload.messageId !== messageId) {
+      const { payload, command }: WebviewMessage = message.data;
+      if (payload.messageId !== messageId || command !== WebviewCommand.IDECall) {
         return;
       }
 
@@ -113,8 +108,7 @@ const NetworkContext = createContext<NetworkProviderProps>({
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
-  const { clearLogs, toggleNetwork, sendWebviewIDEMessage, sendWebviewCDPMessage, networkLogs } =
-    networkTracker;
+  const { clearLogs, toggleNetwork, sendWebviewIDEMessage, networkLogs } = networkTracker;
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
@@ -134,7 +128,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   };
 
   const getResponseBody = (networkLog: NetworkLog): Promise<ResponseBodyData | undefined> => {
-    const requestId = networkLog.requestId;
+    const { requestId, type } = networkLog;
 
     if (!requestId) {
       return Promise.resolve(undefined);
@@ -148,11 +142,12 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     const promise = createBodyResponsePromise(messageId, requestId, responseBodiesRef);
 
     // Send the message to the network-plugin backend
-    sendWebviewCDPMessage({
+    sendWebviewIDEMessage({
       messageId: messageId,
-      method: NetworkMethod.GetResponseBody,
+      method: IDEMethod.GetResponseBodyData,
       params: {
-        requestId: requestId,
+        requestId,
+        type,
       },
     });
 
@@ -174,7 +169,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     return promise;
   };
 
-  const fetchAndOpenResponseInEditor = async (networkLog: NetworkLog) => {
+  const fetchAndOpenResponseInEditor = async (networkLog: NetworkLog, base64Encoded: boolean) => {
     const requestId = networkLog.requestId;
     const request = networkLog.request;
 
@@ -189,6 +184,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
       method: IDEMethod.FetchFullResponseBody,
       params: {
         request: request,
+        base64Encoded: base64Encoded,
       },
     });
   };
