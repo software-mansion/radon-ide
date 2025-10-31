@@ -139,6 +139,10 @@ jobs:
         run: npm run get-test-app -- ${{ matrix.testApp }}
         working-directory: packages/vscode-extension-tester
 
+      - name: Checkout simulator-server branch
+        run: git fetch && git checkout @KeyJayY/debugTokenKey
+        working-directory: simulator-server
+
       - name: Build VSIX package
         run: npm run build-vsix-package
         working-directory: packages/vscode-extension-tester
