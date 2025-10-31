@@ -177,7 +177,7 @@ export class AsyncBoundedResponseBuffer {
 
   /**
    * Disable response buffering. When disabled, new responses will not be stored in the buffer.
-   * Existing buffered responses remain accessible until retrieved or cleared.
+   * Existing buffered responses remain accessible until cleared.
    */
   public disableBuffering(): void {
     this.enabled = false;
