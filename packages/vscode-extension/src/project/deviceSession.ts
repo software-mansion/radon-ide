@@ -876,6 +876,17 @@ export class DeviceSession implements Disposable {
     this.inspectorBridge?.sendShowStorybookStoryRequest(componentTitle, storyName);
   }
 
+  public async runMaestroTest() {
+    const outputChannel = this.outputChannelRegistry.getOrCreateOutputChannel(Output.MaestroTest);
+    outputChannel.show(true);
+    outputChannel.appendLine("Running Maestro test...");
+    outputChannel.appendLine("=======================");
+    outputChannel.appendLine("✅ This is a placeholder for Maestro test execution.");
+    outputChannel.appendLine("❌ In a real implementation, this would run the Maestro CLI.");
+    outputChannel.appendLine("========================");
+    outputChannel.appendLine("Maestro test completed.");
+  }
+
   //#region Application Session
 
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {

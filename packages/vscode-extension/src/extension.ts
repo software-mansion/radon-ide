@@ -198,12 +198,12 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
-  function runMaestroTest() {
+  async function runMaestroTest() {
     const ide = IDE.getInstanceIfExists();
     if (ide) {
-      window.showInformationMessage("Maestro Test feature, in works...", "Dismiss");
+      ide.project.runMaestroTest();
     } else {
-      window.showWarningMessage("Wait for the app to load before running Maestro test.", "Dismiss");
+      window.showWarningMessage("Wait for the app to load before running Maestro tests.", "Dismiss");
     }
   }
 
@@ -361,7 +361,7 @@ export async function activate(context: ExtensionContext) {
       new MaestroCodeLensProvider()
     )
   );
-  
+
   context.subscriptions.push(
     workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
       if (event.affectsConfiguration("RadonIDE.userInterface.panelLocation")) {

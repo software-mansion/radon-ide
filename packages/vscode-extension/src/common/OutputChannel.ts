@@ -6,4 +6,5 @@ export enum Output {
   IosDevice = "Radon IDE (iOS Simulator Logs)",
   PackageManager = "Radon IDE (JS Package Manager)",
   MetroBundler = "Radon IDE (Metro bundler)",
+  MaestroTest = "Radon IDE (Maestro Test)",
 }
