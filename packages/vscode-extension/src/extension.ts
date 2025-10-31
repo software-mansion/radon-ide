@@ -38,6 +38,7 @@ import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
 import { RestrictedFunctionalityError } from "./common/Errors";
 import { registerRadonAI } from "./ai/mcp/RadonMcpController";
+import { MaestroCodeLensProvider } from "./providers/MaestroCodeLensProvider";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -197,6 +198,15 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
+  function runMaestroTest() {
+    const ide = IDE.getInstanceIfExists();
+    if (ide) {
+      window.showInformationMessage("Maestro Test feature, in works...", "Dismiss");
+    } else {
+      window.showWarningMessage("Wait for the app to load before running Maestro test.", "Dismiss");
+    }
+  }
+
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       SidePanelViewProvider.viewType,
@@ -241,6 +251,9 @@ export async function activate(context: ExtensionContext) {
   );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.showInlinePreview", showInlinePreview)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.runMaestroTest", runMaestroTest)
   );
 
   context.subscriptions.push(commands.registerCommand("RNIDE.captureReplay", captureReplay));
@@ -340,6 +353,15 @@ export async function activate(context: ExtensionContext) {
     )
   );
 
+  context.subscriptions.push(
+    languages.registerCodeLensProvider(
+      [
+        { scheme: "file", language: "yaml" },
+      ],
+      new MaestroCodeLensProvider()
+    )
+  );
+  
   context.subscriptions.push(
     workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
       if (event.affectsConfiguration("RadonIDE.userInterface.panelLocation")) {
