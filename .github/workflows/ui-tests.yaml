@@ -120,6 +120,9 @@ jobs:
         run: npm ci
         working-directory: packages/vscode-extension
 
+      - name: install gh
+        run: brew install gh
+
       # - name: Cache npm (tester)
       #   uses: actions/cache@v4
       #   with:
