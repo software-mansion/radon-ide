@@ -21,6 +21,8 @@ import { disposeAll } from "../utilities/disposables";
 import { TimeoutError } from "../common/Errors";
 
 const TIMEOUT_DELAY = 10_000;
+const INSPECT_RESULT_EVENT = "inspectedElement";
+const INSPECT_REQUEST_EVENT = "inspectElement";
 
 function filePathForProfile() {
   const fileName = `profile-${Date.now()}.reactprofile`;
@@ -133,7 +135,7 @@ export class DevtoolsConnection implements Disposable {
     const { promise, resolve, reject } = Promise.withResolvers<InspectedElementPayload>();
 
     const cleanup = () => {
-      this.bridge.removeListener("inspectedElement", onInspectedElement);
+      this.bridge.removeListener(INSPECT_RESULT_EVENT, onInspectedElement);
       clearTimeout(timeoutID);
     };
 
@@ -145,7 +147,7 @@ export class DevtoolsConnection implements Disposable {
       }
     };
 
-    this.bridge.addListener("inspectedElement", onInspectedElement);
+    this.bridge.addListener(INSPECT_RESULT_EVENT, onInspectedElement);
 
     const timeoutID = setTimeout(() => {
       cleanup();
@@ -161,7 +163,7 @@ export class DevtoolsConnection implements Disposable {
 
     const promise = this.resolveInspectElementResult(requestID);
 
-    this.bridge.send("inspectElement", {
+    this.bridge.send(INSPECT_REQUEST_EVENT, {
       id,
       rendererID,
       requestID,
