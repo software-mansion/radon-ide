@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* chrome-api-stub.extension.ts */
 const eventsStub = {
   addListener() {},
