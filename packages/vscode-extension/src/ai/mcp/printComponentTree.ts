@@ -59,12 +59,9 @@ function printHocDescriptors(element: DevtoolsElement): string | null {
   return hasHocDescriptors(element) ? `\u0020[${element.hocDisplayNames.join(", ")}]` : "";
 }
 
-function printTextContent(indent: string, payload?: InspectedElementPayload): string {
-  if (isFullData(payload)) {
-    const text = (payload.value?.props?.data as { children?: unknown })?.children;
-    return typeof text === "string" ? `${indent}\u0020\u0020${text}\n` : "";
-  }
-  return "";
+function printTextContent(indent: string, payload: InspectElementFullData): string {
+  const text = (payload.value?.props?.data as { children?: unknown })?.children;
+  return typeof text === "string" ? `${indent}\u0020\u0020${text}\n` : "";
 }
 
 async function representElement(
@@ -74,13 +71,21 @@ async function representElement(
 ): Promise<string> {
   const details = await session.inspectElementById(element.id);
 
+  if (!isFullData(details)) {
+    // Full data retrieval failed, this shouldn't ever happen.
+    return "";
+  }
+
   const hocDescriptors = printHocDescriptors(element);
 
   const indent = "\u0020".repeat(depth * 2);
 
   const textContent = printTextContent(indent, details);
 
-  return `${indent}<${element.displayName}>${hocDescriptors}\n${textContent}`;
+  const source = details.value.source;
+  const sourceDescription = source ? `\u0020{${source.fileName}:${source.lineNumber}}` : "";
+
+  return `${indent}<${element.displayName}>${hocDescriptors}${sourceDescription}\n${textContent}`;
 }
 
 async function printComponentTree(
