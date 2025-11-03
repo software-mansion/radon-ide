@@ -10,7 +10,6 @@ import {
   workspace,
 } from "vscode";
 import { minimatch } from "minimatch";
-import { Source } from "react-devtools-inline";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { ApplicationContext } from "./ApplicationContext";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
@@ -690,7 +689,29 @@ export class ApplicationSession implements Disposable {
   //#endregion
 
   //#region Element Inspector
-  private async trySymbolicateSourceData(source: SourceData | null): Promise<Source | null> {
+  private isSourceData(source: unknown): source is SourceData {
+    return (
+      source !== null &&
+      typeof source === "object" &&
+      "sourceURL" in source &&
+      "column" in source &&
+      "line" in source
+    );
+  }
+
+  private toSourceData(source: SourceInfo | SourceData): SourceData {
+    if (this.isSourceData(source)) {
+      return source;
+    } else {
+      return {
+        sourceURL: source.fileName,
+        line: source.line0Based,
+        column: source.column0Based,
+      };
+    }
+  }
+
+  private async trySymbolicateSourceData(source: SourceData | null): Promise<SourceInfo | null> {
     if (source?.sourceURL.startsWith("http") && this.debugSession) {
       const sourceInfo: SourceInfo = {
         fileName: source.sourceURL,
@@ -701,8 +722,7 @@ export class ApplicationSession implements Disposable {
       try {
         const mappedSource = await this.debugSession.findOriginalPosition(sourceInfo);
         return {
-          fileName: mappedSource.fileName,
-          lineNumber: mappedSource.line0Based,
+          ...mappedSource,
         };
       } catch (e) {
         Logger.error("Error finding original source position for element", source, e);
@@ -738,12 +758,13 @@ export class ApplicationSession implements Disposable {
       // using source maps via the debugger
       await Promise.all(
         stack.map(async (item) => {
-          if (item.source?.fileName.startsWith("http") && this.debugSession) {
-            try {
-              item.source = await this.debugSession.findOriginalPosition(item.source);
-            } catch (e) {
-              Logger.error("Error finding original source position for stack item", item, e);
-            }
+          const sourceData = this.toSourceData(item.source);
+          const symbolicated = await this.trySymbolicateSourceData(sourceData);
+
+          if (symbolicated) {
+            item.source = symbolicated;
+          } else {
+            Logger.error("Error finding original source position for stack item", item);
           }
         })
       );
@@ -779,7 +800,8 @@ export class ApplicationSession implements Disposable {
 
     if (symbolicated) {
       payload.value.source = {
-        ...symbolicated,
+        fileName: symbolicated.fileName,
+        lineNumber: symbolicated.line0Based,
       };
     }
 
