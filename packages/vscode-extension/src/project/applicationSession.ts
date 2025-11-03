@@ -10,7 +10,6 @@ import {
   workspace,
 } from "vscode";
 import { minimatch } from "minimatch";
-import { InspectedElementPayload, InspectElementFullData } from "react-devtools-inline";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { ApplicationContext } from "./ApplicationContext";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
@@ -48,6 +47,7 @@ import { NETWORK_EVENT_MAP, NetworkBridge } from "./networkBridge";
 import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
 import { isCDPMethod } from "../network/types/panelMessageProtocol";
+import { isFullInspectionData } from "../utilities/isFullInspectionData";
 
 const MAX_URL_HISTORY_SIZE = 20;
 
@@ -743,15 +743,10 @@ export class ApplicationSession implements Disposable {
     return { frame: inspectData.frame, stack };
   }
 
-  // TODO: Move to utils
-  private isFullData(payload?: InspectedElementPayload): payload is InspectElementFullData {
-    return payload?.type === "full-data";
-  }
-
   public async inspectElementById(id: number) {
     const payload = await this.devtools?.inspectElementById(id);
 
-    if (!this.isFullData(payload)) {
+    if (!isFullInspectionData(payload)) {
       return undefined;
     }
 
