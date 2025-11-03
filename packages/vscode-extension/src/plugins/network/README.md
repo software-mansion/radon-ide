@@ -74,7 +74,7 @@ The network request are all also sent through the debugger web socket connection
 ENABLE_NEW_INSPECTOR = true;
 ```
 
---- 
+---
 
 ## Supported CDP Methods, Types and Events in the fusebox network inspector in React Native 82 implementation:
 
@@ -83,17 +83,23 @@ ENABLE_NEW_INSPECTOR = true;
 ### Methods
 
 #### `Network.enable`
+
 Enables network tracking.
+
 - **Parameters**: None
 - **Returns**: `{}`
 
 #### `Network.disable`
+
 Disables network tracking.
+
 - **Parameters**: None
 - **Returns**: `{}`
 
 #### `Network.getResponseBody`
+
 Returns content served for the given request.
+
 - **Parameters**:
   - `requestId` (string): Identifier of the network request to get content for
 - **Returns**:
@@ -101,7 +107,9 @@ Returns content served for the given request.
   - `base64Encoded` (boolean): True if content was sent as base64
 
 #### `Network.loadNetworkResource`
+
 Fetches the resource and returns content served for the given URL.
+
 - **Parameters**:
   - `url` (string): URL of the resource to load
 - **Returns**:
@@ -114,7 +122,9 @@ Fetches the resource and returns content served for the given URL.
 ### Events
 
 #### `Network.requestWillBeSent`
+
 Fired when page is about to send HTTP request.
+
 - **Parameters**:
   - `requestId` (string): Request identifier
   - `loaderId` (string): Loader identifier
@@ -127,7 +137,9 @@ Fired when page is about to send HTTP request.
   - `redirectResponse` (Response, optional): Redirect response data
 
 #### `Network.requestWillBeSentExtraInfo`
+
 Fired when additional information about request is available.
+
 - **Parameters**:
   - `requestId` (string): Request identifier
   - `associatedCookies` (array): Associated cookies (always empty in RN)
@@ -135,7 +147,9 @@ Fired when additional information about request is available.
   - `connectTiming` (ConnectTiming): Connection timing information
 
 #### `Network.responseReceived`
+
 Fired when HTTP response is available.
+
 - **Parameters**:
   - `requestId` (string): Request identifier
   - `loaderId` (string): Loader identifier
@@ -145,7 +159,9 @@ Fired when HTTP response is available.
   - `hasExtraInfo` (boolean): Whether response has extra info (always false in RN)
 
 #### `Network.dataReceived`
+
 Fired when data chunk was received over the network.
+
 - **Parameters**:
   - `requestId` (string): Request identifier
   - `timestamp` (number): Timestamp (Unix epoch with µs precision)
@@ -153,14 +169,18 @@ Fired when data chunk was received over the network.
   - `encodedDataLength` (number): Actual bytes received (compressed)
 
 #### `Network.loadingFinished`
+
 Fired when HTTP request has finished loading.
+
 - **Parameters**:
   - `requestId` (string): Request identifier
   - `timestamp` (number): Timestamp (Unix epoch with milisec precision)
   - `encodedDataLength` (number): Total encoded data length
 
 #### `Network.loadingFailed`
+
 Fired when HTTP request has failed to load.
+
 - **Parameters**:
   - `requestId` (string): Request identifier
   - `timestamp` (number): Timestamp (Unix epoch with µs precision)
@@ -171,14 +191,18 @@ Fired when HTTP request has failed to load.
 ### Types
 
 #### `Request`
+
 HTTP request data.
+
 - `url` (string): Request URL
 - `method` (string): HTTP method
 - `headers` (Headers): Request headers
 - `postData` (string, optional): POST data
 
 #### `Response`
+
 HTTP response data.
+
 - `url` (string): Response URL
 - `status` (number): HTTP status code
 - `statusText` (string): HTTP status text
@@ -187,15 +211,21 @@ HTTP response data.
 - `encodedDataLength` (number): Total encoded data length
 
 #### `Headers`
+
 Request/response headers as key-value pairs.
+
 - Type: `object` (map of string to string)
 
 #### `ConnectTiming`
+
 Connection timing information.
+
 - `requestTime` (number): Timing relative to request start
 
 #### `ResourceType`
+
 Resource type as detected by MIME type.
+
 - Supported values:
   - `"Image"` - for `image/*` MIME types
   - `"Media"` - for `audio/*` and `video/*` MIME types
@@ -210,7 +240,9 @@ Resource type as detected by MIME type.
 ### Methods (Commands)
 
 #### `IO.read`
+
 Read a chunk of the stream.
+
 - **Parameters**:
   - `handle` (string): Handle of the stream to read
   - `size` (number, optional): Number of bytes to read (max: 10MB, default: configurable)
@@ -220,7 +252,9 @@ Read a chunk of the stream.
   - `base64Encoded` (boolean): True if data is base64-encoded
 
 #### `IO.close`
+
 Close the stream, discard any temporary backing storage.
+
 - **Parameters**:
   - `handle` (string): Handle of the stream to close
 - **Returns**: `{}`
