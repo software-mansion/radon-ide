@@ -137,6 +137,14 @@ jobs:
       - name: Install vsce CLI
         run: npm i -g @vscode/vsce
 
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+
+      - name: Install dependencies (macOS)
+        run: brew install protobuf nasm
+
       - name: test1
         run: cat packages/simulator-server/scripts/build-extension-dev.sh
 

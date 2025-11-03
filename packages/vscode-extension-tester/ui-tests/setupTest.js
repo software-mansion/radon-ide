@@ -60,6 +60,8 @@ function removeFromCertificateStore() {
     execSync(
       `security delete-certificate -c "${CA_NAME}" ~/Library/Keychains/login.keychain-db`
     );
+    if (fs.existsSync(CA_CERT)) fs.unlinkSync(CA_CERT);
+    if (fs.existsSync(CA_KEY)) fs.unlinkSync(CA_KEY);
     console.log("CA certificate removed from macOS certificate store");
   } catch {
     console.warn("Could not remove CA from certificate store automatically.");
@@ -199,7 +201,7 @@ after(async function () {
   if (IS_RECORDING && recorder) {
     await recorder.stop();
   }
-  mockServer.stop();
+  await mockServer.stop();
   closeServer();
   console.log(
     `==== Summary app: ${texts.expectedProjectName} | code version: ${
