@@ -10,6 +10,7 @@ import {
   workspace,
 } from "vscode";
 import { minimatch } from "minimatch";
+import { Source } from "react-devtools-inline";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { ApplicationContext } from "./ApplicationContext";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
@@ -689,6 +690,28 @@ export class ApplicationSession implements Disposable {
   //#endregion
 
   //#region Element Inspector
+  private async trySymbolicateSourceData(source: SourceData | null): Promise<Source | null> {
+    if (source?.sourceURL.startsWith("http") && this.debugSession) {
+      const sourceInfo: SourceInfo = {
+        fileName: source.sourceURL,
+        column0Based: source.column,
+        line0Based: source.line,
+      };
+
+      try {
+        const mappedSource = await this.debugSession.findOriginalPosition(sourceInfo);
+        return {
+          fileName: mappedSource.fileName,
+          lineNumber: mappedSource.line0Based,
+        };
+      } catch (e) {
+        Logger.error("Error finding original source position for element", source, e);
+      }
+    }
+
+    return null;
+  }
+
   public async inspectElementAt(
     xRatio: number,
     yRatio: number,
@@ -750,27 +773,14 @@ export class ApplicationSession implements Disposable {
       return undefined;
     }
 
-    // TODO: Move request promise etc handling here, instead of keeping it in `inspectElementById`
-
-    // Casting, as `source` is typed incorrectly when `payload.type === 'full-data'`
+    // `source` is incorrectly typed as `Source` and not `SourceData` when `payload.type === 'full-data'`
     const source = payload.value.source as SourceData | null;
+    const symbolicated = await this.trySymbolicateSourceData(source);
 
-    if (source?.sourceURL.startsWith("http") && this.debugSession) {
-      const sourceInfo: SourceInfo = {
-        fileName: source.sourceURL,
-        column0Based: source.column,
-        line0Based: source.line,
+    if (symbolicated) {
+      payload.value.source = {
+        ...symbolicated,
       };
-
-      try {
-        const mappedSource = await this.debugSession.findOriginalPosition(sourceInfo);
-        payload.value.source = {
-          fileName: mappedSource.fileName,
-          lineNumber: mappedSource.line0Based,
-        };
-      } catch (e) {
-        Logger.error("Error finding original source position for element", payload, e);
-      }
     }
 
     return payload;
