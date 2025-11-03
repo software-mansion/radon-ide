@@ -34,7 +34,8 @@ export class DeviceManager implements Disposable {
     private readonly stateManager: StateManager<DevicesState>,
     private readonly devicesProviders: DevicesProvider[]
   ) {
-    this.loadDevicesIntoState();
+    this.syncDeviceCacheWithState();
+    this.loadDevices();
     this.loadInstalledImages();
 
     this.disposables.push(this.stateManager);
@@ -52,25 +53,19 @@ export class DeviceManager implements Disposable {
 
   private loadDevicesPromise: Promise<void> | undefined;
 
-  public async loadDevices(forceReload = false) {
+  private async loadDevices(forceReload = false) {
     if (forceReload) {
       // Clear the cache when force reload is requested
       extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, undefined);
     }
     if (!this.loadDevicesPromise || forceReload) {
-      this.loadDevicesPromise = this.loadDevicesInternal().then(() => {
-        const devices = this.stateManager.getState().devicesByType;
-        this.loadDevicesPromise = undefined;
-        // NOTE: only remember virtual devices,
-        // since available physical devices are likely to change
-        extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, devices);
-      });
+      this.loadDevicesPromise = Promise.all(this.devicesProviders.map((p) => p.listDevices())).then(
+        () => {
+          this.loadDevicesPromise = undefined;
+        }
+      );
     }
     await this.loadDevicesPromise;
-  }
-
-  private async loadDevicesInternal() {
-    await Promise.all(this.devicesProviders.map((p) => p.listDevices()));
   }
 
   private async listInstalledAndroidImages() {
@@ -81,18 +76,21 @@ export class DeviceManager implements Disposable {
     return getAvailableIosRuntimes();
   }
 
-  private async loadDevicesIntoState() {
+  private async syncDeviceCacheWithState() {
     const devicesByType = extensionContext.globalState.get<DevicesByType>(DEVICE_LIST_CACHE_KEY);
     if (devicesByType) {
-      // we still want to perform load here in case anything changes, just won't wait for it
+      // initially store the cached devices into the state manager
       this.stateManager.updateState({ devicesByType });
-      this.loadDevices();
-    } else {
-      await this.loadDevices();
     }
-    // after the initial load, we want to keep the cache updated
-    this.stateManager.onSetState((newState) => {
-      extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, newState.devicesByType);
+    // subscribe to state changes and update the cache accordingly
+    this.stateManager.onSetState(() => {
+      const { iosSimulators, androidEmulators } = this.stateManager.getState().devicesByType;
+      // NOTE: we only cache the emulated devices, since we expect the physical devices to change more frequently
+      // between session launches
+      extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, {
+        iosSimulators,
+        androidEmulators,
+      });
     });
   }
 
