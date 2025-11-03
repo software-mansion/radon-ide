@@ -88,6 +88,7 @@ export abstract class DeviceBase implements Disposable {
   ): Promise<void>;
   abstract terminateApp(packageNameOrBundleID: string): Promise<void>;
   protected abstract makePreview(): Preview;
+  protected abstract runMaestroTest(fileName: string): Promise<void>;
 
   /**
    * @returns whether the file can be safely removed after the operation finished.
@@ -230,5 +231,9 @@ export abstract class DeviceBase implements Disposable {
       });
     }
     return this.previewStartPromise;
+  }
+
+  public async startMaestroTest(fileName: string) {
+    await this.runMaestroTest(fileName);
   }
 }

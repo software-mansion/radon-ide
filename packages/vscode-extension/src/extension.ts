@@ -198,10 +198,10 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
-  async function runMaestroTest(fileName: string) {
+  async function startMaestroTest(fileName: string) {
     const ide = IDE.getInstanceIfExists();
     if (ide) {
-      ide.project.runMaestroTest(fileName);
+      ide.project.startMaestroTest(fileName);
     } else {
       window.showWarningMessage("Wait for the app to load before running Maestro tests.", "Dismiss");
     }
@@ -253,7 +253,7 @@ export async function activate(context: ExtensionContext) {
     commands.registerCommand("RNIDE.showInlinePreview", showInlinePreview)
   );
   context.subscriptions.push(
-    commands.registerCommand("RNIDE.runMaestroTest", runMaestroTest)
+    commands.registerCommand("RNIDE.startMaestroTest", startMaestroTest)
   );
 
   context.subscriptions.push(commands.registerCommand("RNIDE.captureReplay", captureReplay));

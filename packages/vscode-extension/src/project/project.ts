@@ -802,13 +802,13 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
-  public async runMaestroTest(fileName: string) {
+  public async startMaestroTest(fileName: string) {
     const deviceSession = this.deviceSession;
     if (!deviceSession) {
       window.showWarningMessage("Wait for the app to load before running Maestro tests.", "Dismiss");
       return;
     }
-    await deviceSession.runMaestroTest(fileName);
+    await deviceSession.startMaestroTest(fileName);
   }
 
   // #endregion Extension Interface

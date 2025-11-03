@@ -19,7 +19,7 @@ export class MaestroCodeLensProvider implements CodeLensProvider {
     
     const command: Command = {
       title: "Run Maestro test",
-      command: "RNIDE.runMaestroTest",
+      command: "RNIDE.startMaestroTest",
       arguments: [
         document.fileName
       ],

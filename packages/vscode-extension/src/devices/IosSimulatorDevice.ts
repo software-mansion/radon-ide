@@ -16,7 +16,6 @@ import { IOSBuildResult } from "../builders/buildIOS";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import {
-  DeviceInfo,
   DevicePlatform,
   DeviceSettings,
   DeviceType,
@@ -68,7 +67,7 @@ export class IosSimulatorDevice extends DeviceBase {
   constructor(
     deviceSettings: DeviceSettings,
     private readonly deviceUDID: string,
-    private readonly _deviceInfo: DeviceInfo,
+    private readonly _deviceInfo: IOSDeviceInfo,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     super(deviceSettings);
@@ -78,7 +77,7 @@ export class IosSimulatorDevice extends DeviceBase {
     return DevicePlatform.IOS;
   }
 
-  public get deviceInfo() {
+  public get deviceInfo(): IOSDeviceInfo {
     return this._deviceInfo;
   }
 
@@ -90,6 +89,9 @@ export class IosSimulatorDevice extends DeviceBase {
 
   private get nativeLogsOutputChannel() {
     return this.outputChannelRegistry.getOrCreateOutputChannel(Output.IosDevice);
+  }
+  private get maestroLogsOutputChannel() {
+    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.MaestroIos);
   }
 
   public dispose() {
@@ -694,6 +696,26 @@ export class IosSimulatorDevice extends DeviceBase {
     ];
     await exec("xcrun", args);
     return { canSafelyRemove: true };
+  }
+
+  protected async runMaestroTest(fileName: string) {
+    this.maestroLogsOutputChannel.show(true);
+
+    this.maestroLogsOutputChannel.appendLine("");
+    this.maestroLogsOutputChannel.appendLine(`Starting Maestro flow at ${fileName}`);
+
+    const process = exec("maestro", ["--device", this.deviceUDID, "test", fileName]);
+
+    lineReader(process).onLineRead(this.maestroLogsOutputChannel.appendLine);
+
+    const { exitCode } = await process;
+    if (exitCode !== 0) {
+      this.maestroLogsOutputChannel.appendLine(`Maestro test failed with exit code ${exitCode}`);
+    }
+    else {
+      this.maestroLogsOutputChannel.appendLine("");
+      this.maestroLogsOutputChannel.appendLine("Maestro test completed successfully!");
+    }
   }
 }
 

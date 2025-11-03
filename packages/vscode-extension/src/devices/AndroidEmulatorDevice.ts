@@ -21,6 +21,7 @@ import { CancelError, CancelToken } from "../utilities/cancelToken";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import {
+  AndroidDeviceInfo,
   AndroidSystemImageInfo,
   CameraSettings,
   DeviceInfo,
@@ -71,7 +72,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
   constructor(
     deviceSettings: DeviceSettings,
     private readonly avdId: string,
-    private readonly info: DeviceInfo,
+    private readonly info: AndroidDeviceInfo,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     super(deviceSettings);
@@ -81,7 +82,7 @@ export class AndroidEmulatorDevice extends DeviceBase {
     return DevicePlatform.Android;
   }
 
-  get deviceInfo(): DeviceInfo {
+  get deviceInfo(): AndroidDeviceInfo {
     return this.info;
   }
 
@@ -93,6 +94,9 @@ export class AndroidEmulatorDevice extends DeviceBase {
 
   private get nativeLogsOutputChannel() {
     return this.outputChannelRegistry.getOrCreateOutputChannel(Output.AndroidDevice);
+  }
+  private get maestroLogsOutputChannel() {
+    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.MaestroAndroid);
   }
 
   public dispose(): void {
@@ -758,6 +762,26 @@ export class AndroidEmulatorDevice extends DeviceBase {
       `file:///sdcard/Download`,
     ]);
     return { canSafelyRemove: true };
+  }
+
+  protected async runMaestroTest(fileName: string) {
+    this.maestroLogsOutputChannel.show(true);
+
+    this.maestroLogsOutputChannel.appendLine("");
+    this.maestroLogsOutputChannel.appendLine(`Starting Maestro flow at ${fileName}`);
+
+    const process = exec("maestro", ["--device", this.serial || "", "test", fileName]);
+
+    lineReader(process).onLineRead(this.maestroLogsOutputChannel.appendLine);
+
+    const { exitCode } = await process;
+    if (exitCode !== 0) {
+      this.maestroLogsOutputChannel.appendLine(`Maestro test failed with exit code ${exitCode}`);
+    }
+    else {
+      this.maestroLogsOutputChannel.appendLine("");
+      this.maestroLogsOutputChannel.appendLine("Maestro test completed successfully!");
+    }
   }
 }
 
