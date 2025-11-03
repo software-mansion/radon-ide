@@ -702,7 +702,7 @@ export class IosSimulatorDevice extends DeviceBase {
     this.maestroLogsOutputChannel.show(true);
 
     this.maestroLogsOutputChannel.appendLine("");
-    this.maestroLogsOutputChannel.appendLine(`Starting Maestro flow at ${fileName}`);
+    this.maestroLogsOutputChannel.appendLine(`Starting a Maestro flow from ${fileName} on ${this.deviceInfo.displayName}`);
 
     const process = exec("maestro", ["--device", this.deviceUDID, "test", fileName]);
 
@@ -713,7 +713,6 @@ export class IosSimulatorDevice extends DeviceBase {
       this.maestroLogsOutputChannel.appendLine(`Maestro test failed with exit code ${exitCode}`);
     }
     else {
-      this.maestroLogsOutputChannel.appendLine("");
       this.maestroLogsOutputChannel.appendLine("Maestro test completed successfully!");
     }
   }
