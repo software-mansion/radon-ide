@@ -69,19 +69,22 @@ function printTextContent(indent: string, payload: InspectElementFullData): stri
 async function representElement(
   element: DevtoolsElement,
   details: InspectElementFullData,
-  depth: number
+  depth: number,
+  isUserMade: boolean
 ): Promise<string> {
-  const source = details.value.source;
   const indent = "\u0020".repeat(depth * 2);
   const hocDescriptors = printHocDescriptors(element);
-  const textContent = printTextContent(indent, details);
-  const relativePath = source ? workspace.asRelativePath(source.fileName, false) : "";
-  const sourceDescription = source ? `\u0020(${relativePath}:${source.lineNumber})` : "";
+  const textContent = !isUserMade ? printTextContent(indent, details) : "";
+  const source = details.value.source;
+  const shouldPrintSource = source && isAppSourceFile(source.fileName);
+  const relativePath = shouldPrintSource ? workspace.asRelativePath(source.fileName, false) : "";
+  const sourceDescription = shouldPrintSource ? `\u0020(${relativePath}:${source.lineNumber})` : "";
   return `${indent}<${element.displayName}>${hocDescriptors}${sourceDescription}\n${textContent}`;
 }
 
 async function printComponentTree(
   session: DeviceSession,
+  userLogicalComponentIDs: number[] = [],
   root?: DevtoolsElement,
   depth: number = 0
 ): Promise<string> {
@@ -105,15 +108,30 @@ async function printComponentTree(
 
   const details = await session.inspectElementById(element.id);
 
+  const areDetailsFull = isFullData(details);
+
+  const isComponentUserMade =
+    areDetailsFull && isAppSourceFile(details.value.source?.fileName ?? "");
+
+  if (isComponentUserMade) {
+    userLogicalComponentIDs.push(element.id);
+  }
+
+  const isComponentUserOwned = userLogicalComponentIDs.includes(element.ownerID);
+
+  const isComponentUserRelated = isComponentUserMade || isComponentUserOwned;
+
   // `type = 2` means element is `Context.Provider`.
   // These are always wrapped by a component with a more descriptive name when user-made.
   const skipRendering =
     element.type === 2 ||
     element.displayName === null ||
-    !isFullData(details) ||
-    !isAppSourceFile(details.value.source?.fileName ?? "");
+    !isComponentUserRelated ||
+    !areDetailsFull;
 
-  const componentRepr = !skipRendering ? await representElement(element, details, depth) : "";
+  const componentRepr = !skipRendering
+    ? await representElement(element, details, depth, isComponentUserMade)
+    : "";
 
   const childDepth = depth + (skipRendering ? 0 : 1);
 
@@ -125,7 +143,7 @@ async function printComponentTree(
         return `Component tree is corrupted. Element with ID ${childId} not found.`;
       }
 
-      return printComponentTree(session, child, childDepth);
+      return printComponentTree(session, userLogicalComponentIDs, child, childDepth);
     })
   );
 
