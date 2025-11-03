@@ -21,8 +21,10 @@ const ENABLE_DEBUGGER_INSPECTOR = false;
 export type BroadcastListener = (message: WebviewMessage) => void;
 
 export interface NetworkInspector {
-  activate(): void;
+  enable(): void;
+  disable(): void;
   deactivate(): void;
+  activate(): void;
   dispose(): void;
   onMessageBroadcast(cb: BroadcastListener): Disposable;
   handleWebviewMessage(message: WebviewMessage): void;
@@ -70,16 +72,24 @@ export class NetworkPlugin implements ToolPlugin {
     return this.networkInspector.pluginAvailable;
   }
 
-  activate(): void {
-    this.networkInspector.activate();
+  public enable(): void {
+    this.networkInspector.enable();
   }
 
-  deactivate(): void {
+  public disable(): void {
+    this.networkInspector.disable();
+  }
+
+  public dispose(): void {
+    this.networkInspector.dispose();
+  }
+
+  public deactivate(): void {
     this.networkInspector.deactivate();
   }
 
-  dispose() {
-    this.networkInspector.dispose();
+  public activate(): void {
+    this.networkInspector.activate();
   }
 
   public openTool(): void {
@@ -89,7 +99,7 @@ export class NetworkPlugin implements ToolPlugin {
     return this.networkInspector.onMessageBroadcast(cb);
   }
 
-  handleWebviewMessage(message: WebviewMessage) {
+  public handleWebviewMessage(message: WebviewMessage) {
     this.networkInspector.handleWebviewMessage(message);
   }
 }

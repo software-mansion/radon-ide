@@ -39,6 +39,7 @@ import { disposeAll } from "../utilities/disposables";
 import { FileTransfer } from "./FileTransfer";
 import { DevtoolsServer } from "./devtools";
 import { MetroError, MetroProvider, MetroSession } from "./metro";
+import { PreviewError } from "../devices/preview";
 
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
@@ -84,7 +85,7 @@ export class DeviceSession implements Disposable {
   }
 
   public get id(): string {
-    return this.stateManager.getState().deviceInfo.id;
+    return this.state.deviceInfo.id;
   }
 
   public get inspectorBridge(): RadonInspectorBridge | undefined {
@@ -100,7 +101,7 @@ export class DeviceSession implements Disposable {
   }
 
   public get platform(): DevicePlatform {
-    return this.stateManager.getState().deviceInfo.platform;
+    return this.state.deviceInfo.platform;
   }
 
   constructor(
@@ -115,6 +116,17 @@ export class DeviceSession implements Disposable {
     this.deviceSettingsStateManager =
       applicationContext.workspaceConfigState.getDerived("deviceSettings");
     this.disposables.push(this.deviceSettingsStateManager);
+
+    this.disposables.push(
+      this.device.onPreviewClosed((error: void | PreviewError) => {
+        this.stateManager.updateState({
+          previewURL: REMOVE,
+        });
+        if (this.state.status === "running" && error) {
+          this.setFatalError(error);
+        }
+      })
+    );
 
     this.disposables.push(
       this.deviceSettingsStateManager.onSetState(async (partialState) => {
@@ -181,6 +193,10 @@ export class DeviceSession implements Disposable {
     this.disposables.push(this.fileTransfer);
   }
 
+  private get state(): DeviceSessionStore {
+    return this.stateManager.getState();
+  }
+
   private resetStartingState(startupMessage: StartupMessage = StartupMessage.Restarting) {
     this.stateManager.updateState({
       status: "starting",
@@ -200,7 +216,7 @@ export class DeviceSession implements Disposable {
 
   private async isBuildStale(build: BuildResult) {
     const buildType = await inferBuildType(
-      this.stateManager.getState().deviceInfo.platform,
+      this.state.deviceInfo.platform,
       this.applicationContext.launchConfig
     );
     const currentBuildConfig = createBuildConfig(
@@ -215,7 +231,7 @@ export class DeviceSession implements Disposable {
 
   private checkIsUsingStaleBuild = throttleAsync(async () => {
     const lastSuccessfulBuild = this.maybeBuildResult;
-    if (!lastSuccessfulBuild || this.stateManager.getState().status !== "running") {
+    if (!lastSuccessfulBuild || this.state.status !== "running") {
       // we only monitor for stale builds when the session is in 'running' state
       return;
     }
@@ -227,7 +243,7 @@ export class DeviceSession implements Disposable {
   //#region Metro delegate methods
 
   private onBundleProgress = throttle((stageProgress: number) => {
-    const store = this.stateManager.getState();
+    const store = this.state;
     if (store.status !== "starting") {
       return;
     }
@@ -290,7 +306,7 @@ export class DeviceSession implements Disposable {
       this.resetStartingState();
 
       getTelemetryReporter().sendTelemetryEvent("url-bar:reload-requested", {
-        platform: this.stateManager.getState().deviceInfo.platform,
+        platform: this.state.deviceInfo.platform,
         method: type,
       });
       await this.performReloadActionInternal(type);
@@ -436,10 +452,10 @@ export class DeviceSession implements Disposable {
 
   private async autoReload() {
     getTelemetryReporter().sendTelemetryEvent("url-bar:restart-requested", {
-      platform: this.stateManager.getState().deviceInfo.platform,
+      platform: this.state.deviceInfo.platform,
     });
 
-    const { isUsingStaleBuild } = this.stateManager.getState();
+    const { previewURL, isUsingStaleBuild } = this.state;
 
     if (this.maybeBuildResult && isUsingStaleBuild) {
       await this.restartDevice({ forceClean: false });
@@ -449,6 +465,12 @@ export class DeviceSession implements Disposable {
     if (!this.applicationContext.launchConfig.disableNativeBuildStaleChecks) {
       this.checkIsUsingStaleBuild();
       this.checkIsUsingStaleBuild.flush();
+    }
+
+    if (!previewURL) {
+      // NOTE: sim-server could have stopped, due to an error or because the device was disconnected.
+      // We try to restart it here in that case.
+      await this.startPreview();
     }
 
     // if reloading JS is possible, we try to do it first and exit in case of success
@@ -490,7 +512,7 @@ export class DeviceSession implements Disposable {
   private async launchApp(cancelToken: CancelToken) {
     const launchRequestTime = Date.now();
     getTelemetryReporter().sendTelemetryEvent("app:launch:requested", {
-      platform: this.stateManager.getState().deviceInfo.platform,
+      platform: this.state.deviceInfo.platform,
     });
 
     const metro = await this.getOrStartMetro({ resetCache: false });
@@ -528,7 +550,7 @@ export class DeviceSession implements Disposable {
       Logger.info("App launched in", launchDurationSec.toFixed(2), "sec.");
       getTelemetryReporter().sendTelemetryEvent(
         "app:launch:completed",
-        { platform: this.stateManager.getState().deviceInfo.platform },
+        { platform: this.state.deviceInfo.platform },
         { durationSec: launchDurationSec }
       );
     });
@@ -544,7 +566,7 @@ export class DeviceSession implements Disposable {
           this.device.previewURL
         );
         getTelemetryReporter().sendTelemetryEvent("app:launch:waiting-stuck", {
-          platform: this.stateManager.getState().deviceInfo.platform,
+          platform: this.state.deviceInfo.platform,
         });
       }, 30000);
       waitForAppReady
@@ -589,11 +611,11 @@ export class DeviceSession implements Disposable {
   }
 
   private buildProgressListener = throttle((stageProgress: number) => {
-    const store = this.stateManager.getState();
-    if (store.status !== "starting") {
+    const state = this.state;
+    if (state.status !== "starting") {
       return;
     }
-    if (store.startupMessage === StartupMessage.Building) {
+    if (state.startupMessage === StartupMessage.Building) {
       this.stateManager.updateState({ stageProgress });
     }
   }, 100);
@@ -604,7 +626,7 @@ export class DeviceSession implements Disposable {
     this.maybeBuildResult = undefined;
     const launchConfiguration = this.applicationContext.launchConfig;
 
-    const platform = this.stateManager.getState().deviceInfo.platform;
+    const platform = this.state.deviceInfo.platform;
 
     const buildType = await inferBuildType(platform, launchConfiguration);
 
@@ -671,7 +693,7 @@ export class DeviceSession implements Disposable {
           kind: "build",
           message: e.message,
           buildType: e.buildType,
-          platform: this.stateManager.getState().deviceInfo.platform,
+          platform: this.state.deviceInfo.platform,
         },
       });
       return;
@@ -681,11 +703,20 @@ export class DeviceSession implements Disposable {
         error: {
           kind: "installation",
           message: e.message,
-          platform: this.stateManager.getState().deviceInfo.platform,
+          platform: this.state.deviceInfo.platform,
           reason: e.reason,
         },
       });
       return;
+    } else if (e instanceof PreviewError) {
+      this.stateManager.updateState({
+        status: "fatalError",
+        error: {
+          kind: "preview",
+          message: e.message,
+          reason: e.reason,
+        },
+      });
     } else {
       this.stateManager.updateState({
         status: "fatalError",
@@ -693,7 +724,7 @@ export class DeviceSession implements Disposable {
           kind: "build",
           message: (e as Error).message,
           buildType: null,
-          platform: this.stateManager.getState().deviceInfo.platform,
+          platform: this.state.deviceInfo.platform,
         },
       });
       return;

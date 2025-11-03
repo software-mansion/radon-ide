@@ -38,7 +38,13 @@ export enum IDEMethod {
   FetchFullResponseBody = "IDE.fetchFullResponseBody",
   GetResponseBodyData = "IDE.getResponseBodyData",
   GetTheme = "IDE.getTheme",
+  GetSessionData = "IDE.getSessionData",
+  ResponseBodyData = "IDE.ResponseBodyData",
   Theme = "IDE.Theme",
+  SessionData = "IDE.SessionData",
+  StartNetworkTracking = "IDE.startNetworkTracking",
+  StopNetworkTracking = "IDE.stopNetworkTracking",
+  ClearStoredMessages = "IDE.clearStoredMessages",
 }
 
 export function isCDPMethod(method: string): method is CDPMethod {
@@ -117,3 +123,8 @@ export enum WebviewMessageDescriptor {
 export type WebviewMessage =
   | { command: WebviewCommand.CDPCall; payload: CDPMessage }
   | { command: WebviewCommand.IDECall; payload: IDEMessage };
+
+export interface SessionData {
+  networkMessages: WebviewMessage[];
+  shouldTrackNetwork: boolean;
+}
