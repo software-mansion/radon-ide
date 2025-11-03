@@ -103,7 +103,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   };
   const getThemeData = (themeDescriptor: ThemeDescriptor): Promise<ThemeData> => {
     const messageId = generateId();
-    const promise = createIDEResponsePromise<ThemeData>(messageId, IDEMethod.Theme);
+    const promise = createIDEResponsePromise<ThemeData>(messageId, IDEType.Theme);
 
     // Send the message to the network-plugin backend
     sendWebviewIDEMessage({

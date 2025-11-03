@@ -6,7 +6,7 @@ import {
   NetworkMethod,
   WebviewCommand,
   WebviewMessage,
-  IDEMethod,
+  IDEType,
 } from "../../../network/types/panelMessageProtocol";
 import { BaseNetworkInspector } from "./BaseNetworkInspector";
 
@@ -167,7 +167,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     const sendEmptyResponse = () => {
       const emptyMessage: IDEMessage = {
         messageId,
-        method: IDEMethod.ResponseBodyData,
+        method: IDEType.ResponseBodyData,
         result: DEFAULT_RESPONSE_BODY_DATA,
       };
       this.broadcastMessage(emptyMessage, WebviewCommand.IDECall);
@@ -197,7 +197,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
 
     const message: IDEMessage = {
       messageId,
-      method: IDEMethod.ResponseBodyData,
+      method: IDEType.ResponseBodyData,
       result: responseBodyData,
     };
 

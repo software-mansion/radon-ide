@@ -214,7 +214,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   private async handleGetSessionData(message: IDEMessage): Promise<void> {
     const { messageId } = message;
     this.sendIDEMessage({
-      method: IDEMethod.SessionData,
+      method: IDEType.SessionData,
       messageId,
       result: {
         networkMessages: this.networkMessages,
