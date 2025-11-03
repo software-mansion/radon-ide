@@ -240,182 +240,183 @@
             "description": "Controls the default saving location for multimedia files."
           },
           "RadonIDE.general.enableExperimentalElementInspector": {
-          "type": "boolean",
-          "scope": "window",
-          "default": false,
-          "description": "Enables experimental support for element inspector in non-Edge-to-Edge applications, which may cause visual issues."
-        }
+            "type": "boolean",
+            "scope": "window",
+            "default": false,
+            "description": "Enables experimental support for element inspector in non-Edge-to-Edge applications, which may cause visual issues."
+          }
         }
       },
-    {
-      "title": "User Interface",
-      "properties": {
-         "RadonIDE.userInterface.panelLocation": {
-          "type": "string",
-          "scope": "window",
-          "default": "tab",
-          "enum": [
-            "tab",
-            "side-panel"
-          ],
-          "description": "Controls the location of the Radon IDE panel. When side-panel is selected, you can use right-click menu on the panel to move it to the secondary side panel if you wish."
-        },
-        "RadonIDE.userInterface.themeType": {
-          "type": "string",
-          "scope": "window",
-          "default": "vscode",
-          "deprecationMessage": "This setting is deprecated and Radon IDE panel will always use the vscode theme.",
-          "enum": [
-            "vscode",
-            "built-in"
-          ],
-          "description": "Controls the theme of the IDE panel. If you encounter any issues, please report them. And set this to 'built-in' to use the built-in theme."
-        },
-        "RadonIDE.userInterface.showDeviceFrame": {
-          "type": "boolean",
-          "scope": "window",
-          "default": true,
-          "description": "Shows device frame in the IDE panel."
-        }
-      }
-    },
       {
-      "title": "Device Control",
-      "properties": {
-        "RadonIDE.deviceControl.startDeviceOnLaunch": {
-          "type": "boolean",
-          "scope": "window",
-          "default": true,
-          "description": "Automatically starts the last used device when opening the IDE Panel."
-        },
-        "RadonIDE.deviceControl.stopPreviousDevices": {
-          "type": "string",
-          "scope": "window",
-          "default": false,
-          "description": "When set, switching between devices will shut down the previous device instead of leaving it running in the background."
+        "title": "User Interface",
+        "properties": {
+          "RadonIDE.userInterface.panelLocation": {
+            "type": "string",
+            "scope": "window",
+            "default": "tab",
+            "enum": [
+              "tab",
+              "side-panel"
+            ],
+            "description": "Controls the location of the Radon IDE panel. When side-panel is selected, you can use right-click menu on the panel to move it to the secondary side panel if you wish."
+          },
+          "RadonIDE.userInterface.themeType": {
+            "type": "string",
+            "scope": "window",
+            "default": "vscode",
+            "deprecationMessage": "This setting is deprecated and Radon IDE panel will always use the vscode theme.",
+            "enum": [
+              "vscode",
+              "built-in"
+            ],
+            "description": "Controls the theme of the IDE panel. If you encounter any issues, please report them. And set this to 'built-in' to use the built-in theme."
+          },
+          "RadonIDE.userInterface.showDeviceFrame": {
+            "type": "boolean",
+            "scope": "window",
+            "default": true,
+            "description": "Shows device frame in the IDE panel."
+          }
         }
-      }
-    },
-  {
-    "title": "Device Settings",
-    "properties": {
-       "RadonIDE.deviceSettings.appearance": {
-          "type": "string",
-          "scope": "window",
-          "enum": [
-            "light",
-            "dark"
-          ],
-          "default": "light",
-          "description": "Controls the appearance on the simulated device."
-        },
-        "RadonIDE.deviceSettings.contentSize": {
-          "type": "string",
-          "scope": "window",
-          "enum": [
-            "xsmall",
-            "small",
-            "normal",
-            "large",
-            "xlarge",
-            "xxlarge",
-            "xxxlarge"
-          ],
-          "default": "normal",
-          "description": "Controls the content size on the simulated device."
-        },
-        "RadonIDE.deviceSettings.deviceRotation": {
-          "type": "string",
-          "scope": "window",
-          "default": "Portrait",
-          "enum": [
-            "Portrait",
-            "LandscapeLeft",
-            "LandscapeRight",
-            "PortraitUpsideDown"
-          ],
-          "description": "Controls the default device rotation for simulators and emulators when they are created or launched."
-        },
-        "RadonIDE.deviceSettings.location": {
-          "type": "object",
-          "scope": "window",
-          "properties": {
-            "latitude": "number",
-            "longitude": "number",
-            "isDisabled": "boolean"
+      },
+      {
+        "title": "Device Control",
+        "properties": {
+          "RadonIDE.deviceControl.startDeviceOnLaunch": {
+            "type": "boolean",
+            "scope": "window",
+            "default": true,
+            "description": "Automatically starts the last used device when opening the IDE Panel."
           },
-          "default": {
-            "latitude": 50.048653,
-            "longitude": 19.965474,
-            "isDisabled": false
+          "RadonIDE.deviceControl.stopPreviousDevices": {
+            "type": "string",
+            "scope": "window",
+            "default": false,
+            "description": "When set, switching between devices will shut down the previous device instead of leaving it running in the background."
+          }
+        }
+      },
+      {
+        "title": "Device Settings",
+        "properties": {
+          "RadonIDE.deviceSettings.appearance": {
+            "type": "string",
+            "scope": "window",
+            "enum": [
+              "light",
+              "dark"
+            ],
+            "default": "light",
+            "description": "Controls the appearance on the simulated device."
           },
-          "description": "Controls the emulators/simulator location."
-        },
-        "RadonIDE.deviceSettings.hasEnrolledBiometrics": {
-          "type": "boolean",
-          "scope": "window",
-          "default": false,
-          "description": "Controls whether the device has enrolled biometrics. Note: this setting affects only iOS simulators."
-        },
-        "RadonIDE.deviceSettings.locale": {
-          "type": "string",
-          "scope": "window",
-          "default": "en_US",
-          "description": "Controls the localization of the simulated device."
-        },
-        "RadonIDE.deviceSettings.replaysEnabled": {
-          "type": "boolean",
-          "scope": "window",
-          "default": false,
-          "description": "Controls whether the device has replay functionality enabled."
-        },
-        "RadonIDE.deviceSettings.showTouches": {
-          "type": "boolean",
-          "scope": "window",
-          "default": false,
-          "description": "Controls whether the device shows touch interactions."
-        },
-        "RadonIDE.deviceSettings.camera": {
-          "type": "object",
-          "scope": "window",
-          "properties": {
-            "back": {
-              "type": "string",
-              "enum": [
-                "emulated",
-                "none",
-                "virtualscene",
-                "webcam0"
-              ]
+          "RadonIDE.deviceSettings.contentSize": {
+            "type": "string",
+            "scope": "window",
+            "enum": [
+              "xsmall",
+              "small",
+              "normal",
+              "large",
+              "xlarge",
+              "xxlarge",
+              "xxxlarge"
+            ],
+            "default": "normal",
+            "description": "Controls the content size on the simulated device."
+          },
+          "RadonIDE.deviceSettings.deviceRotation": {
+            "type": "string",
+            "scope": "window",
+            "default": "Portrait",
+            "enum": [
+              "Portrait",
+              "LandscapeLeft",
+              "LandscapeRight",
+              "PortraitUpsideDown"
+            ],
+            "description": "Controls the default device rotation for simulators and emulators when they are created or launched."
+          },
+          "RadonIDE.deviceSettings.location": {
+            "type": "object",
+            "scope": "window",
+            "properties": {
+              "latitude": "number",
+              "longitude": "number",
+              "isDisabled": "boolean"
             },
-            "front": {
-              "type": "string",
-              "enum": [
-                "emulated",
-                "none",
-                "webcam0"
-              ]
-            }
+            "default": {
+              "latitude": 50.048653,
+              "longitude": 19.965474,
+              "isDisabled": false
+            },
+            "description": "Controls the emulators/simulator location."
           },
-          "default": {
-            "back": "emulated",
-            "front": "none"
+          "RadonIDE.deviceSettings.hasEnrolledBiometrics": {
+            "type": "boolean",
+            "scope": "window",
+            "default": false,
+            "description": "Controls whether the device has enrolled biometrics. Note: this setting affects only iOS simulators."
           },
-          "description": "Controls the camera settings for the device. Note: this setting affects only Android emulators."
+          "RadonIDE.deviceSettings.locale": {
+            "type": "string",
+            "scope": "window",
+            "default": "en_US",
+            "description": "Controls the localization of the simulated device."
+          },
+          "RadonIDE.deviceSettings.replaysEnabled": {
+            "type": "boolean",
+            "scope": "window",
+            "default": false,
+            "description": "Controls whether the device has replay functionality enabled."
+          },
+          "RadonIDE.deviceSettings.showTouches": {
+            "type": "boolean",
+            "scope": "window",
+            "default": false,
+            "description": "Controls whether the device shows touch interactions."
+          },
+          "RadonIDE.deviceSettings.camera": {
+            "type": "object",
+            "scope": "window",
+            "properties": {
+              "back": {
+                "type": "string",
+                "enum": [
+                  "emulated",
+                  "none",
+                  "virtualscene",
+                  "webcam0"
+                ]
+              },
+              "front": {
+                "type": "string",
+                "enum": [
+                  "emulated",
+                  "none",
+                  "webcam0"
+                ]
+              }
+            },
+            "default": {
+              "back": "emulated",
+              "front": "none"
+            },
+            "description": "Controls the camera settings for the device. Note: this setting affects only Android emulators."
+          }
+        }
+      },
+      {
+        "title": "Radon AI",
+        "properties": {
+          "RadonIDE.radonAI.enabledBoolean": {
+            "type": "boolean",
+            "default": true,
+            "scope": "window",
+            "description": "Enables the Radon AI functionality in the extension."
+          }
         }
       }
-    },
-    {
-      "title": "Radon AI",
-      "properties": {
-        "RadonIDE.radonAI.enabledBoolean": {
-          "type": "boolean",
-          "default": true,
-          "scope": "window",
-          "description": "Enables the Radon AI functionality in the extension."
-        }
-      }
-    }],
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -1073,8 +1074,7 @@
     "vscode:prepublish": "npm run package",
     "vscode:publish": "vsce publish",
     "open-vsx:publish": "ovsx publish",
-    "copy:redux-devtools-plugin": "rm -rf lib/plugins/third-party/redux-devtools-expo-dev-plugin.js && cp ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools-expo-dev-plugin.js lib/plugins/third-party/redux-devtools-expo-dev-plugin.js",
-    "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
+    "build:redux-devtools-ui": "rm -rf dist/redux-devtools && mkdir -p dist/redux-devtools && cp src/plugins/chrome-api-stub.webview.js dist/redux-devtools && cp -R third-party/redux-devtools/{devpanel.bundle.css,devpanel.bundle.js,img,*.woff2} dist/redux-devtools",
     "build:react-query-devtools-ui": "rm -rf dist/react-query-devtools && cp -R ../radon-ide-react-query-webui/artifacts dist/react-query-devtools",
     "build:third-party": "npm run build:redux-devtools-ui && npm run build:react-query-devtools-ui",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
@@ -1092,7 +1092,6 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
-    "build:plugins": "bash ./scripts/install-dev-plugins.sh",
     "build:icons": "fantasticon -c ./font-icons/fantasticon.config.json",
     "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
     "preinstall": "mkdir -p dist && bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && npm run build:vscode-js-debug",
