@@ -139,8 +139,7 @@ export class DevtoolsConnection implements Disposable {
       clearTimeout(timeoutID);
     };
 
-    const onInspectedElement = (...args: unknown[]) => {
-      const data = args[0] as InspectedElementPayload;
+    const onInspectedElement = (data: InspectedElementPayload) => {
       if (data.responseID === requestID) {
         cleanup();
         resolve(data);
