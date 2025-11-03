@@ -22,7 +22,6 @@ export function hasUrlParams(log: NetworkLog | null): boolean {
   } catch {
     return false;
   }
-  
 }
 
 function formatUrlParams(url: string): string {

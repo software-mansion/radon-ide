@@ -11,7 +11,7 @@ import {
   ResponseLoadingInfo,
   PreviewImageError,
   ResponseDataFetchFailedInfo,
-  NoPreviewAvailableInfo
+  NoPreviewAvailableInfo,
 } from "./ResponseStatusMessages";
 
 interface PreviewTabProps {
@@ -142,7 +142,7 @@ function PreviewTab({ networkLog, responseBodyData, isActive }: PreviewTabProps)
     return (
       <div className="tab-padding">
         <div className="preview-tab-container">
-          <ResponseDataFetchFailedInfo/>
+          <ResponseDataFetchFailedInfo />
         </div>
       </div>
     );
