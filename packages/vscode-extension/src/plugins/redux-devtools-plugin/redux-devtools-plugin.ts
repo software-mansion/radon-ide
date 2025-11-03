@@ -93,6 +93,10 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, false);
   }
 
+  activate() {
+    this.enable();
+  }
+
   deactivate() {
     this.disable();
   }

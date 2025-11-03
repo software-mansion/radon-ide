@@ -114,6 +114,10 @@ export class RenderOutlinesPlugin implements ToolPlugin, RenderOutlinesInterface
     this.updatePluginState();
   }
 
+  activate(): void {
+    this.enable();
+  }
+
   deactivate(): void {
     this.disable();
   }

@@ -40,6 +40,9 @@ export const createReactQueryDevtools = (): ToolPlugin => {
     disable() {
       commands.executeCommand("setContext", `${REACT_QUERY_PLUGIN_PREFIX}.available`, false);
     },
+    activate() {
+      this.enable();
+    },
     deactivate() {
       this.disable();
     },

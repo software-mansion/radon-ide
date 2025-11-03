@@ -98,6 +98,8 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
 
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
     this.setupNetworkListeners();
+    // we may safely send Network.enable multiple times without side effects
+    // even if the inspector was already activated
     this.networkBridge.enableNetworkInspector();
     this.activationState = ActivationState.Active;
   }
@@ -215,7 +217,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     }
   }
 
-  public enable(): void {
+  public activate(): void {
     if (this.activationState !== ActivationState.Inactive) {
       return; // enabled or activation in progress
     }
@@ -228,6 +230,10 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     }
 
     this.completeActivation();
+  }
+
+  public enable() {
+    this.activate();
   }
 
   /**

@@ -28,6 +28,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   public abstract enable(): void;
   public abstract disable(): void;
   public abstract dispose(): void;
+  public abstract activate(): void;
   public abstract deactivate(): void;
   protected abstract handleGetResponseBodyData(payload: IDEMessage): Promise<void>;
   protected abstract handleCDPMessage(
