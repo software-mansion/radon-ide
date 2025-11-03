@@ -38,10 +38,16 @@ export enum IDEMethod {
   FetchFullResponseBody = "IDE.fetchFullResponseBody",
   GetResponseBodyData = "IDE.getResponseBodyData",
   GetTheme = "IDE.getTheme",
+  GetSessionData = "IDE.getSessionData",
+  StartNetworkTracking = "IDE.startNetworkTracking",
+  StopNetworkTracking = "IDE.stopNetworkTracking",
+  ClearStoredMessages = "IDE.clearStoredMessages",
 }
 
 export enum IDEType {
   Theme = "IDE.Theme",
+  SessionData = "IDE.SessionData",
+  ResponseBodyData = "IDE.ResponseBodyData",
 }
 
 export type IDEDomainCall = IDEMethod | IDEType;
@@ -122,3 +128,8 @@ export enum WebviewMessageDescriptor {
 export type WebviewMessage =
   | { command: WebviewCommand.CDPCall; payload: CDPMessage }
   | { command: WebviewCommand.IDECall; payload: IDEMessage };
+
+export interface SessionData {
+  networkMessages: WebviewMessage[];
+  shouldTrackNetwork: boolean;
+}

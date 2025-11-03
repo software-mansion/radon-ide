@@ -101,7 +101,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     }
   }
 
-  activate() {
+  enable() {
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
     const { connection, postMessage, disconnect } = createChromePort("tab", (message) => {
       this.inspectorBridge.sendPluginMessage(REDUX_PLUGIN_ID, "chrome", message);
@@ -118,9 +118,17 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     addConnection(connection);
   }
 
-  deactivate() {
+  disable() {
     disposeAll(this.devtoolsListeners);
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, false);
+  }
+
+  activate() {
+    this.enable();
+  }
+
+  deactivate() {
+    this.disable();
   }
 
   openTool() {

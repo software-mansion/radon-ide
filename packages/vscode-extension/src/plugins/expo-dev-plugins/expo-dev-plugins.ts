@@ -48,16 +48,22 @@ export function createExpoDevPluginTools(): ToolPlugin[] {
       pluginAvailable: true,
       toolInstalled: false,
       persist: true,
-      activate() {
+      enable() {
         commands.executeCommand("setContext", `${pluginInfo.viewIdPrefix}.available`, true);
       },
-      deactivate() {
+      disable() {
         commands.executeCommand("setContext", `${pluginInfo.viewIdPrefix}.available`, false);
       },
       openTool() {
         commands.executeCommand(`${pluginInfo.viewIdPrefix}.view.focus`);
       },
       dispose() {},
+      activate() {
+        this.enable();
+      },
+      deactivate() {
+        this.disable();
+      },
     });
   }
 
