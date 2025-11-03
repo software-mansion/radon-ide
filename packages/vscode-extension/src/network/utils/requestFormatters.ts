@@ -16,8 +16,13 @@ export function hasUrlParams(log: NetworkLog | null): boolean {
     return false;
   }
 
-  const urlObj = new URL(request.url);
-  return urlObj.searchParams.size > 0;
+  try {
+    const urlObj = new URL(request.url);
+    return urlObj.searchParams.size > 0;
+  } catch {
+    return false;
+  }
+  
 }
 
 function formatUrlParams(url: string): string {
