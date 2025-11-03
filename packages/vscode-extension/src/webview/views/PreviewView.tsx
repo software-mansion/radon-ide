@@ -28,6 +28,7 @@ import Button from "../components/shared/Button";
 import { ActivateLicenseView } from "./ActivateLicenseView";
 import { Feature, LicenseStatus } from "../../common/License";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import { useDevices } from "../hooks/useDevices";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -105,7 +106,7 @@ function PreviewView() {
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
 
-  const devices = use$(store$.devicesState.devices) ?? [];
+  const devices = useDevices(store$);
   const fps = use$(useSelectedDeviceSessionState().frameReporting.frameReport.fps);
   const frameReportingEnabled = use$(useSelectedDeviceSessionState().frameReporting.enabled);
   const initialized = use$(store$.projectState.initialized);

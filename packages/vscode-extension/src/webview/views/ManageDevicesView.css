@@ -32,7 +32,10 @@
   cursor: default;
 }
 
-.device-row:hover {
+.device-row:disabled {
+  cursor: default;
+}
+.device-row:hover:not(:disabled) {
   outline: none;
   background-color: var(--swm-device-select-highlighted);
 }
