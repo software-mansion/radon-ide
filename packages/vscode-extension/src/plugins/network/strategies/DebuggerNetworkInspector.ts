@@ -4,10 +4,10 @@ import { Logger } from "../../../Logger";
 import {
   CDPMessage,
   IDEMessage,
-  IDEMethod,
   NetworkMethod,
   WebviewCommand,
   WebviewMessage,
+  IDEMethod,
 } from "../../../network/types/panelMessageProtocol";
 import { BaseNetworkInspector } from "./BaseNetworkInspector";
 

@@ -4,6 +4,7 @@ import {
   WebviewMessage,
   IDEMessage,
   WebviewCommand,
+  IDEType,
   IDEMethod,
 } from "../../../network/types/panelMessageProtocol";
 import { RequestData, RequestOptions } from "../../../network/types/network";
@@ -175,7 +176,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     const { messageId: id, params } = message;
     const { themeDescriptor } = params || {};
     const theme = extractTheme(themeDescriptor);
-    this.sendIDEMessage({ method: IDEMethod.Theme, messageId: id, result: theme });
+    this.sendIDEMessage({ method: IDEType.Theme, messageId: id, result: theme });
   }
 
   /**

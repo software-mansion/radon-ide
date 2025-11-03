@@ -13,7 +13,7 @@ import useNetworkTracker, {
 } from "../hooks/useNetworkTracker";
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { NetworkLog } from "../types/networkLog";
-import { WebviewMessage, IDEMethod, WebviewCommand } from "../types/panelMessageProtocol";
+import { WebviewMessage, WebviewCommand, IDEMethod, IDEType } from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
 import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
@@ -73,7 +73,7 @@ function createThemeResponsePromise(messageId: string) {
   const listener = (message: MessageEvent) => {
     try {
       const { payload }: WebviewMessage = message.data;
-      if (payload.method !== IDEMethod.Theme || payload.messageId !== messageId) {
+      if (payload.method !== IDEType.Theme || payload.messageId !== messageId) {
         return;
       }
 
