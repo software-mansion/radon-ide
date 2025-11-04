@@ -2,6 +2,9 @@ const RNInternals = require("./rn-internals/rn-internals");
 const { AppRegistry } = require("react-native");
 const parseErrorStack = RNInternals.parseErrorStack;
 
+// setup redux devtools
+require("./plugins/redux-devtools");
+
 // We add log this trace to diagnose issues with loading runtime in the IDE
 // The first argument is "__RNIDE_INTERNAL" so we can filter it out in
 // debug adapter and avoid exposing as part of application logs

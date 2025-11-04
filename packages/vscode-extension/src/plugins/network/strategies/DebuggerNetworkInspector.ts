@@ -2,7 +2,6 @@ import { commands, Disposable } from "vscode";
 import { disposeAll } from "../../../utilities/disposables";
 import { Logger } from "../../../Logger";
 import {
-  CDPMessage,
   IDEMessage,
   IDEMethod,
   NetworkMethod,
@@ -92,19 +91,6 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     };
   }
 
-  private broadcastWebviewMessage(message: IDEMessage, command: WebviewCommand.IDECall): void;
-  private broadcastWebviewMessage(message: CDPMessage, command: WebviewCommand.CDPCall): void;
-  private broadcastWebviewMessage(
-    message: IDEMessage | CDPMessage,
-    command: WebviewCommand.IDECall | WebviewCommand.CDPCall
-  ): void {
-    const webviewMessage: WebviewMessage = {
-      command: command,
-      payload: message,
-    } as WebviewMessage;
-    this.broadcastMessage(webviewMessage);
-  }
-
   private completeActivation(): void {
     if (this.activationState === ActivationState.Active) {
       return; // activated
@@ -112,20 +98,22 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
 
     commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, true);
     this.setupNetworkListeners();
+    // we may safely send Network.enable multiple times without side effects
+    // even if the inspector was already activated
     this.networkBridge.enableNetworkInspector();
     this.activationState = ActivationState.Active;
   }
 
   private setupNetworkListeners(): void {
     const knownEventsSubscriptions: Disposable[] = NETWORK_EVENTS.map((event) =>
-      this.networkBridge.onEvent(NETWORK_EVENT_MAP[event], (message) =>
-        this.broadcastWebviewMessage(message, WebviewCommand.CDPCall)
-      )
+      this.networkBridge.onEvent(NETWORK_EVENT_MAP[event], (message) => {
+        this.broadcastMessage(message, WebviewCommand.CDPCall);
+      })
     );
 
     const subscriptions: Disposable[] = [
       this.networkBridge.onEvent("unknownEvent", (e) =>
-        this.broadcastWebviewMessage(e, WebviewCommand.CDPCall)
+        this.broadcastMessage(e, WebviewCommand.CDPCall)
       ),
       this.inspectorBridge.onEvent("appReady", () => {
         this.networkBridge.enableNetworkInspector();
@@ -179,10 +167,10 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     const sendEmptyResponse = () => {
       const emptyMessage: IDEMessage = {
         messageId,
-        method: IDEMethod.GetResponseBodyData,
+        method: IDEMethod.ResponseBodyData,
         result: DEFAULT_RESPONSE_BODY_DATA,
       };
-      this.broadcastWebviewMessage(emptyMessage, WebviewCommand.IDECall);
+      this.broadcastMessage(emptyMessage, WebviewCommand.IDECall);
     };
 
     const { requestId } = payload?.params || {};
@@ -209,11 +197,11 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
 
     const message: IDEMessage = {
       messageId,
-      method: IDEMethod.GetResponseBodyData,
+      method: IDEMethod.ResponseBodyData,
       result: responseBodyData,
     };
 
-    this.broadcastWebviewMessage(message, WebviewCommand.IDECall);
+    this.broadcastMessage(message, WebviewCommand.IDECall);
   }
 
   protected handleCDPMessage(message: WebviewMessage & { command: WebviewCommand.CDPCall }): void {
@@ -231,7 +219,7 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
 
   public activate(): void {
     if (this.activationState !== ActivationState.Inactive) {
-      return; // activated or activation in progress
+      return; // enabled or activation in progress
     }
 
     this.setupDebuggerConnectionListeners();
@@ -244,6 +232,13 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     this.completeActivation();
   }
 
+  public enable() {
+    this.activate();
+  }
+
+  /**
+   * "Soft" disable by default, deactivates without clearing messages to preserve state across reactivation
+   */
   public deactivate(): void {
     if (this.activationState === ActivationState.Inactive) {
       return;
@@ -253,11 +248,16 @@ export default class DebuggerNetworkInspector extends BaseNetworkInspector {
     this.disposables = [];
 
     if (this.pluginAvailable) {
-      this.networkBridge.disableNetworkInspector();
       commands.executeCommand("setContext", `RNIDE.Tool.Network.available`, false);
     }
 
     this.activationState = ActivationState.Inactive;
+  }
+
+  public disable(): void {
+    this.deactivate();
+    this.networkBridge.disableNetworkInspector();
+    this.clearNetworkMessages();
   }
 
   public dispose(): void {

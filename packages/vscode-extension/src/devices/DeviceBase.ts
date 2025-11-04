@@ -1,6 +1,6 @@
 import fs from "fs";
-import { Disposable } from "vscode";
-import { Preview } from "./preview";
+import { Disposable, EventEmitter } from "vscode";
+import { Preview, PreviewError } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
 import { AppPermissionType, TouchPoint, DeviceButtonType } from "../common/Project";
 import { tryAcquiringLock } from "../utilities/common";
@@ -28,6 +28,10 @@ export abstract class DeviceBase implements Disposable {
   private pressingLeftMetaKey = false;
   private pressingRightMetaKey = false;
   private _rotation: DeviceRotation = DeviceRotation.Portrait;
+
+  private previewClosedEventEmitter = new EventEmitter<PreviewError | void>();
+
+  public readonly onPreviewClosed = this.previewClosedEventEmitter.event;
 
   constructor(protected deviceSettings: DeviceSettings) {}
 
@@ -71,7 +75,7 @@ export abstract class DeviceBase implements Disposable {
       } else {
         preview.hideTouches();
       }
-      preview.rotateDevice(this._rotation);
+      this.sendRotate(this._rotation);
     }
   }
 
@@ -124,6 +128,7 @@ export abstract class DeviceBase implements Disposable {
       }
     }
     this.preview?.dispose();
+    this.previewClosedEventEmitter.dispose();
   }
 
   public startReportingFrameRate(onFpsReport: (report: FrameRateReport) => void) {
@@ -225,9 +230,17 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.rotateDevice(rotation);
   }
 
+  private previewClosedListener = (error: PreviewError | void) => {
+    this.previewStartPromise = undefined;
+    this.preview?.dispose();
+    this.preview = undefined;
+    this.previewClosedEventEmitter.fire(error);
+  };
+
   public async startPreview() {
     if (!this.previewStartPromise) {
       this.preview = this.makePreview();
+      this.preview.onClosed(this.previewClosedListener);
       this.previewStartPromise = this.preview.start();
       this.previewStartPromise.then(() => {
         this.applyPreviewSettings();

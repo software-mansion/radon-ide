@@ -14,6 +14,8 @@ import {
   InstallationErrorDescriptor,
   InstallationErrorReason,
   MetroErrorDescriptor,
+  PreviewErrorDescriptor,
+  PreviewErrorReason,
 } from "../../common/State";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
@@ -177,6 +179,25 @@ function createMetroErrorAlert(metroErrorDescriptor: MetroErrorDescriptor) {
   };
 }
 
+function createPreviewErrorAlert(previewErrorDescriptor: PreviewErrorDescriptor) {
+  let description = previewErrorDescriptor.message;
+
+  switch (previewErrorDescriptor.reason) {
+    case PreviewErrorReason.StreamClosed: {
+      description =
+        "Device screen mirroring ended while the application was running. " +
+        "Make sure the device is connected and try again.";
+    }
+  }
+
+  return {
+    id: FATAL_ERROR_ALERT_ID,
+    title: "The device was disconnected from Radon",
+    description,
+    actions: <ErrorActionsWithReload />,
+  };
+}
+
 export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undefined) {
   let errorAlert = noErrorAlert;
   const { project, projectState } = useProject();
@@ -196,6 +217,8 @@ export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undef
     errorAlert = createInstallationErrorAlert(errorDescriptor);
   } else if (errorDescriptor?.kind === "metro") {
     errorAlert = createMetroErrorAlert(errorDescriptor);
+  } else if (errorDescriptor?.kind === "preview") {
+    errorAlert = createPreviewErrorAlert(errorDescriptor);
   }
 
   useToggleableAlert(errorDescriptor !== undefined, errorAlert);

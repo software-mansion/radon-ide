@@ -101,6 +101,7 @@ export class FingerprintProvider implements Disposable {
       fingerprintPromise = calculateCustomFingerprint(options as CustomFingerprintOptions);
     } else {
       fingerprintPromise = createFingerprintAsync(appRoot, {
+        platforms: [options.platform === DevicePlatform.IOS ? "ios" : "android"],
         ignorePaths: resolveIgnoredPaths(options.platform),
       }).then((fingerprint) => fingerprint.hash);
     }

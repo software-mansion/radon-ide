@@ -3,7 +3,11 @@ import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
 import { clamp, debounce, throttle } from "lodash";
 import { Platform, useProject } from "../providers/ProjectProvider";
-import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
+import {
+  AndroidSupportedDevices,
+  DeviceProperties,
+  iOSSupportedDevices,
+} from "../utilities/deviceConstants";
 import PreviewLoader from "./PreviewLoader";
 import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
 import { useBundleErrorAlert } from "../hooks/useBundleErrorAlert";
@@ -24,6 +28,7 @@ import InspectorUnavailableBox from "./InspectorUnavailableBox";
 import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
 import { SendFilesOverlay } from "./SendFilesOverlay";
 import {
+  DevicePlatform,
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
   MultimediaData,
@@ -88,7 +93,7 @@ function Preview({
   const inspectorBridgeStatus = use$(
     selectedDeviceSessionState.applicationSession.inspectorBridgeStatus
   );
-  const modelId = use$(selectedDeviceSessionState.deviceInfo.modelId);
+  const deviceInfo = use$(selectedDeviceSessionState.deviceInfo);
   const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
   const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>(null);
@@ -546,9 +551,33 @@ function Preview({
     };
   }, [project, shouldPreventInputEvents]);
 
-  const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === modelId;
-  });
+  const isExternalDevice = deviceInfo?.platform === DevicePlatform.Android && !deviceInfo.emulator;
+
+  const device: DeviceProperties | undefined = isExternalDevice
+    ? ({
+        modelName: deviceInfo.modelId,
+        modelId: deviceInfo.modelId,
+        platform: deviceInfo.platform,
+        screenWidth: deviceInfo.properties.screenWidth,
+        screenHeight: deviceInfo.properties.screenHeight,
+        bezel: {
+          type: "mask" as const,
+          width: deviceInfo.properties.screenWidth,
+          height: deviceInfo.properties.screenHeight,
+          offsetX: 0,
+          offsetY: 0,
+        },
+        skin: {
+          type: "skin" as const,
+          width: deviceInfo.properties.screenWidth,
+          height: deviceInfo.properties.screenHeight,
+          offsetX: 0,
+          offsetY: 0,
+        },
+      } as const)
+    : iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
+        return sd.modelId === deviceInfo?.modelId;
+      });
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;
