@@ -704,11 +704,29 @@ export class IosSimulatorDevice extends DeviceBase {
     this.maestroLogsOutputChannel.appendLine("");
     this.maestroLogsOutputChannel.appendLine(`Starting a Maestro flow from ${fileName} on ${this.deviceInfo.displayName}`);
 
-    const process = exec("maestro", ["--device", this.deviceUDID, "test", fileName]);
+    // Right now Maestro uses xcodebuild test-without-building for running iOS tests,
+    // which does not support simulators located outside the default device set.
+    // The creators provide a prebuilt test runner that can be ran through simctl,
+    // and even have have written working code that uses it, but as for now
+    // there's no built-in way to call these methods with Maestro CLI.
+    // As a workaround, we replace the xcodebuild command with instructions
+    // similar to what Maestro would do in prebuilt mode, and wrap the xcrun
+    // command to provide our own device set with the --set flag.
+    const shimPath = path.resolve(__dirname, "..", "scripts", "shims");
+    
+    const maestroProcess = exec(
+      "maestro",
+      ["--device", this.deviceUDID, "test", fileName],
+      {
+        env: {
+          PATH: `${shimPath}:${process.env.PATH}`,
+        },
+      }
+    );
 
-    lineReader(process).onLineRead(this.maestroLogsOutputChannel.appendLine);
+    lineReader(maestroProcess).onLineRead(this.maestroLogsOutputChannel.appendLine);
 
-    const { exitCode } = await process;
+    const { exitCode } = await maestroProcess;
     if (exitCode !== 0) {
       this.maestroLogsOutputChannel.appendLine(`Maestro test failed with exit code ${exitCode}`);
     }

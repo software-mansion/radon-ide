@@ -770,11 +770,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
     this.maestroLogsOutputChannel.appendLine("");
     this.maestroLogsOutputChannel.appendLine(`Starting a Maestro flow from ${fileName} on ${this.deviceInfo.displayName}`);
 
-    const process = exec("maestro", ["--device", this.serial || "", "test", fileName]);
+    const maestroProcess = exec("maestro", ["--device", this.serial || "emulator", "test", fileName]);
 
-    lineReader(process).onLineRead(this.maestroLogsOutputChannel.appendLine);
+    lineReader(maestroProcess).onLineRead(this.maestroLogsOutputChannel.appendLine);
 
-    const { exitCode } = await process;
+    const { exitCode } = await maestroProcess;
     if (exitCode !== 0) {
       this.maestroLogsOutputChannel.appendLine(`Maestro test failed with exit code ${exitCode}`);
     }
