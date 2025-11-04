@@ -135,8 +135,13 @@ function Preview({
 
   const showDevicePreview = previewURL && (showPreviewRequested || isRunning);
 
+  // Maestro usually closes and opens the app during a test, so we prevent
+  // the disconnected alert when testing not to confuse the user
+  const maestroTestStatus = use$(selectedDeviceSessionState.maestroTestState);
   const isAppDisconnected =
-    isRunning && inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
+    isRunning &&
+    maestroTestStatus === "stopped" &&
+    inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
   useApplicationDisconnectedAlert(isAppDisconnected);
 
   useFatalErrorAlert(fatalErrorDescriptor);
@@ -412,14 +417,14 @@ function Preview({
   const touchHandlers = shouldPreventInputEvents
     ? {}
     : {
-        onMouseDown,
-        onMouseMove,
-        onMouseUp,
-        onMouseEnter,
-        onMouseLeave,
-        // one wheel scrub can generate multiple events, so we debounce it better experience
-        onWheel: debounce(onWheel, 100),
-      };
+      onMouseDown,
+      onMouseMove,
+      onMouseUp,
+      onMouseEnter,
+      onMouseLeave,
+      // one wheel scrub can generate multiple events, so we debounce it better experience
+      onWheel: debounce(onWheel, 100),
+    };
 
   function onWrapperMouseDown(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -446,11 +451,11 @@ function Preview({
   const wrapperTouchHandlers = shouldPreventInputEvents
     ? {}
     : {
-        onMouseDown: onWrapperMouseDown,
-        onMouseUp: onWrapperMouseUp,
-        onWheel: onWrapperMouseWheel,
-        onMouseLeave: onWrapperMouseLeave,
-      };
+      onMouseDown: onWrapperMouseDown,
+      onMouseUp: onWrapperMouseUp,
+      onWheel: onWrapperMouseWheel,
+      onMouseLeave: onWrapperMouseLeave,
+    };
 
   useEffect(() => {
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
