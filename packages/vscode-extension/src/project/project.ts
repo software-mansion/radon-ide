@@ -623,6 +623,28 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #endregion Profiling
 
+  // #region Testing
+
+    public async startMaestroTest(fileName: string) {
+    const deviceSession = this.deviceSession;
+    if (!deviceSession) {
+      window.showWarningMessage("Wait for the app to load before running Maestro tests.", "Dismiss");
+      return;
+    }
+    await deviceSession.startMaestroTest(fileName);
+  }
+
+  public async stopMaestroTest() {
+    const deviceSession = this.deviceSession;
+    if (!deviceSession) {
+      window.showWarningMessage("Wait for the app to load before stopping Maestro tests.", "Dismiss");
+      return;
+    }
+    await deviceSession.stopMaestroTest();
+  }
+
+  // #endregion Testing
+
   // #region Device Input
 
   public dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
@@ -800,15 +822,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     } else {
       window.showErrorMessage("Storybook is not installed.", "Dismiss");
     }
-  }
-
-  public async startMaestroTest(fileName: string) {
-    const deviceSession = this.deviceSession;
-    if (!deviceSession) {
-      window.showWarningMessage("Wait for the app to load before running Maestro tests.", "Dismiss");
-      return;
-    }
-    await deviceSession.startMaestroTest(fileName);
   }
 
   // #endregion Extension Interface

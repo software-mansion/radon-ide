@@ -11,6 +11,7 @@ import {
   DeviceSettings,
   FrameRateReport,
 } from "../common/State";
+import { ChildProcess } from "../utilities/subprocess";
 
 const LEFT_META_HID_CODE = 0xe3;
 const RIGHT_META_HID_CODE = 0xe7;
@@ -21,6 +22,7 @@ export const REBOOT_TIMEOUT = 3000;
 
 export abstract class DeviceBase implements Disposable {
   protected preview: Preview | undefined;
+  protected maestroProcess: ChildProcess | undefined;
   private previewStartPromise: Promise<string> | undefined;
   private acquired = false;
   private pressingLeftMetaKey = false;
@@ -89,6 +91,7 @@ export abstract class DeviceBase implements Disposable {
   abstract terminateApp(packageNameOrBundleID: string): Promise<void>;
   protected abstract makePreview(): Preview;
   protected abstract runMaestroTest(fileName: string): Promise<void>;
+  protected abstract abortMaestroTest(): Promise<void>;
 
   /**
    * @returns whether the file can be safely removed after the operation finished.
@@ -235,5 +238,9 @@ export abstract class DeviceBase implements Disposable {
 
   public async startMaestroTest(fileName: string) {
     await this.runMaestroTest(fileName);
+  }
+
+  public async stopMaestroTest() {
+    await this.abortMaestroTest();
   }
 }

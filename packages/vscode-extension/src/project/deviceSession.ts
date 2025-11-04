@@ -877,7 +877,21 @@ export class DeviceSession implements Disposable {
   }
 
   public async startMaestroTest(fileName: string) {
-    await this.device.startMaestroTest(fileName);
+    try {
+      this.stateManager.updateState({ maestroTestState: "running" });
+      await this.device.startMaestroTest(fileName);
+    } finally {
+      this.stateManager.updateState({ maestroTestState: "stopped" });
+    }
+  }
+
+  public async stopMaestroTest() {
+    this.stateManager.updateState({ maestroTestState: "aborting" });
+    try {
+      await this.device.stopMaestroTest();
+    } finally {
+      this.stateManager.updateState({ maestroTestState: "stopped" });
+    }
   }
 
   //#region Application Session

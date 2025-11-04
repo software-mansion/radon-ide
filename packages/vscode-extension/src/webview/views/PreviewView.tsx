@@ -22,7 +22,7 @@ import AppRootSelect from "../components/AppRootSelect";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
-import { InspectorAvailabilityStatus, ProfilingState, ZoomLevelType } from "../../common/State";
+import { InspectorAvailabilityStatus, MaestroTestState, ProfilingState, ZoomLevelType } from "../../common/State";
 import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
 import { ActivateLicenseView } from "./ActivateLicenseView";
@@ -90,6 +90,44 @@ function ActiveToolButton({
     </IconButton>
   );
 }
+
+function ActiveTestButton({
+  testState,
+  title,
+  onClick,
+  dataTest,
+}: {
+  testState: MaestroTestState;
+  title: string;
+  onClick: () => void;
+  dataTest?: string;
+}) {
+  const showButton = testState !== "stopped";
+  return (
+    <IconButton
+      className={showButton ? "button-recording-on" : "button-recording-off"}
+      data-testid={dataTest}
+      tooltip={{
+        label: title,
+      }}
+      disabled={testState !== "running"}
+      onClick={onClick}>
+      {showButton && (
+        <>
+          <span
+            className={
+              testState === "aborting"
+                ? "codicon codicon-loading codicon-modifier-spin"
+                : "stop-square"
+            }
+          />
+          <span>{title}</span>
+        </>
+      )}
+    </IconButton>
+  );
+}
+
 
 function PreviewView() {
   const store$ = useStore();
@@ -202,6 +240,10 @@ function PreviewView() {
     project.stopReportingFrameRate();
   }
 
+  function stopMaestroTest() {
+    project.stopMaestroTest();
+  }
+
   const paywalledCaptureReplay = usePaywalledCallback(
     async () => {
       await project.captureReplay();
@@ -290,6 +332,12 @@ function PreviewView() {
       : "stopped"
   );
 
+  const maestroTestState = use$(() =>
+    isRunning
+      ? (selectedDeviceSessionState.maestroTestState.get() ?? "stopped")
+      : "stopped"
+  );
+
   return (
     <div className="panel-view" data-testid="radon-panel-view">
       <div className="button-group-top">
@@ -313,6 +361,12 @@ function PreviewView() {
             toolState={frameReportingEnabled ? "profiling" : "stopped"}
             title={"FPS: " + (fps ?? 0)}
             onClick={stopReportingFrameRate}
+          />
+          <ActiveTestButton
+            testState={maestroTestState}
+            title="Abort Maestro test"
+            onClick={stopMaestroTest}
+            dataTest="radon-top-bar-maestro-test-button"
           />
           <ToolsDropdown disabled={!debuggerToolsButtonsActive}>
             <IconButton

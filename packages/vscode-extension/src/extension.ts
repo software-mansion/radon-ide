@@ -207,6 +207,13 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
+  async function stopMaestroTest() {
+    const ide = IDE.getInstanceIfExists();
+    if (ide) {
+      ide.project.stopMaestroTest();
+    }
+  }
+
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       SidePanelViewProvider.viewType,
@@ -254,6 +261,9 @@ export async function activate(context: ExtensionContext) {
   );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.startMaestroTest", startMaestroTest)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.stopMaestroTest", stopMaestroTest)
   );
 
   context.subscriptions.push(commands.registerCommand("RNIDE.captureReplay", captureReplay));

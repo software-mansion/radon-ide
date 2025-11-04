@@ -704,8 +704,15 @@ export class IosSimulatorDevice extends DeviceBase {
     if (document.isDirty) {
       await document.save();
     }
-    
+
     this.maestroLogsOutputChannel.show(true);
+
+    if (this.maestroProcess) {
+      this.maestroLogsOutputChannel.appendLine(
+        "A Maestro test is already running on this device. Abort it before starting a new one."
+      );
+      return;
+    }
 
     this.maestroLogsOutputChannel.appendLine("");
     this.maestroLogsOutputChannel.appendLine(`Starting a Maestro flow from ${fileName} on ${this.deviceInfo.displayName}`);
@@ -729,16 +736,45 @@ export class IosSimulatorDevice extends DeviceBase {
         },
       }
     );
+    this.maestroProcess = maestroProcess;
 
     lineReader(maestroProcess).onLineRead(this.maestroLogsOutputChannel.appendLine);
 
     const { exitCode } = await maestroProcess;
+    this.maestroProcess = undefined;
+
     if (exitCode !== 0) {
       this.maestroLogsOutputChannel.appendLine(`Maestro test failed with exit code ${exitCode}`);
-    }
-    else {
+    } else {
       this.maestroLogsOutputChannel.appendLine("Maestro test completed successfully!");
     }
+  }
+
+  protected async abortMaestroTest(): Promise<void> {
+    if (!this.maestroProcess) {
+      return;
+    }
+
+    this.maestroLogsOutputChannel.appendLine("Aborting Maestro test...");
+
+    const proc = this.maestroProcess;
+    try {
+      proc.kill();
+    } catch (e) {}
+
+    const killer = setTimeout(() => {
+      try {
+        proc.kill(9);
+      } catch (e) {}
+    }, 3000);
+
+    try {
+      await proc;
+    } catch (_e) {}
+
+    clearTimeout(killer);
+    this.maestroProcess = undefined;
+    this.maestroLogsOutputChannel.appendLine("Maestro test aborted.");
   }
 }
 
