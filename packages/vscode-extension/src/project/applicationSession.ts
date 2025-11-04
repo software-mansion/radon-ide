@@ -48,6 +48,7 @@ import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
 import { isCDPMethod } from "../network/types/panelMessageProtocol";
 import { isFullInspectionData } from "../utilities/isFullInspectionData";
+import { SourceData } from "../common/types";
 
 const MAX_URL_HISTORY_SIZE = 20;
 
@@ -59,13 +60,6 @@ interface LaunchApplicationSessionDeps {
   devtoolsServer?: DevtoolsServer;
   devtoolsPort?: number;
 }
-
-// TODO: Move to types
-type SourceData = {
-  sourceURL: string;
-  line: number;
-  column: number;
-};
 
 function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: CancelToken) {
   // set up `appReady` promise
