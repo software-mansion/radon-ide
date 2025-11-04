@@ -706,14 +706,6 @@ export class IosSimulatorDevice extends DeviceBase {
     }
 
     this.maestroLogsOutputChannel.show(true);
-
-    if (this.maestroProcess) {
-      this.maestroLogsOutputChannel.appendLine(
-        "A Maestro test is already running on this device. Abort it before starting a new one."
-      );
-      return;
-    }
-
     this.maestroLogsOutputChannel.appendLine("");
     this.maestroLogsOutputChannel.appendLine(`Starting a Maestro flow from ${fileName} on ${this.deviceInfo.displayName}`);
 
@@ -731,6 +723,8 @@ export class IosSimulatorDevice extends DeviceBase {
       "maestro",
       ["--device", this.deviceUDID, "test", fileName],
       {
+        buffer: false,
+        stdin: "ignore",
         env: {
           PATH: `${shimPath}:${process.env.PATH}`,
         },
@@ -740,9 +734,10 @@ export class IosSimulatorDevice extends DeviceBase {
 
     lineReader(maestroProcess).onLineRead(this.maestroLogsOutputChannel.appendLine);
 
-    const { exitCode } = await maestroProcess;
-    this.maestroProcess = undefined;
+    const resultOrError = await maestroProcess.catch((e) => e);
+    const exitCode = resultOrError.exitCode ?? 1;
 
+    this.maestroProcess = undefined;
     if (exitCode !== 0) {
       this.maestroLogsOutputChannel.appendLine(`Maestro test failed with exit code ${exitCode}`);
     } else {
@@ -774,7 +769,7 @@ export class IosSimulatorDevice extends DeviceBase {
 
     clearTimeout(killer);
     this.maestroProcess = undefined;
-    this.maestroLogsOutputChannel.appendLine("Maestro test aborted.");
+    this.maestroLogsOutputChannel.appendLine("Maestro test aborted");
   }
 }
 

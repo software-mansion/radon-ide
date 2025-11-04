@@ -126,6 +126,22 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
           data-testid="radon-tools-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Tools</h4>
+          <Label>Testing</Label>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            data-testid="tools-dropdown-menu-maestro-test-button"
+            onSelect={() => {
+              const fileDialogPromise = project.openSelectMaestroFileDialog();
+              fileDialogPromise.then((fileName) => {
+                if (fileName) {
+                  project.startMaestroTest(fileName);
+                }
+              });
+            }}>
+            <span className="codicon codicon-github-action" />
+            Start Maestro test...
+          </DropdownMenu.Item>
+
           <Label>Utilities</Label>
           <DropdownMenu.Item
             className="dropdown-menu-item"
@@ -143,7 +159,6 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
               isProfilingReact ? project.stopProfilingReact() : project.startProfilingReact()
             }>
             <span className="codicon codicon-react" />
-
             {isProfilingReact ? "Stop React Profiler" : "Start React Profiler"}
           </DropdownMenu.Item>
           <ToolsList project={project} tools={nonPanelTools} />

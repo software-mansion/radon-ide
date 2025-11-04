@@ -625,7 +625,22 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Testing
 
-    public async startMaestroTest(fileName: string) {
+  public async openSelectMaestroFileDialog(): Promise<string | undefined> {
+    const pickerResult = await window.showOpenDialog({
+      canSelectMany: false,
+      canSelectFolders: false,
+      title: "Select Maestro test file",
+      filters: {
+        "Maestro Test Files": ["yaml", "yml"],
+      },
+    });
+    if (!pickerResult || pickerResult.length === 0) {
+      return undefined;
+    }
+    return pickerResult[0].fsPath;
+  }
+
+  public async startMaestroTest(fileName: string) {
     const deviceSession = this.deviceSession;
     if (!deviceSession) {
       window.showWarningMessage("Wait for the app to load before running Maestro tests.", "Dismiss");

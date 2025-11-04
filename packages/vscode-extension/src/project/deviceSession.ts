@@ -1,4 +1,4 @@
-import { Disposable } from "vscode";
+import { Disposable, window } from "vscode";
 import { throttle } from "lodash";
 import { RadonInspectorBridge } from "./inspectorBridge";
 import { DeviceBase } from "../devices/DeviceBase";
@@ -877,6 +877,10 @@ export class DeviceSession implements Disposable {
   }
 
   public async startMaestroTest(fileName: string) {
+    if (this.stateManager.getState().maestroTestState !== "stopped") {
+      window.showWarningMessage("A Maestro test is already running on this device. Abort it before starting a new one.");
+      return;
+    }
     try {
       this.stateManager.updateState({ maestroTestState: "running" });
       await this.device.startMaestroTest(fileName);

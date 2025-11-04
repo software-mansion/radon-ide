@@ -163,6 +163,7 @@ export interface ProjectInterface {
   startProfilingReact(): void;
   stopProfilingReact(): void;
 
+  openSelectMaestroFileDialog(): Promise<string | undefined>;
   startMaestroTest(fileName: string): Promise<void>;
   stopMaestroTest(): Promise<void>;
 
