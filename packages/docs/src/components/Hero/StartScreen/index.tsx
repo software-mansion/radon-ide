@@ -48,12 +48,12 @@ const StartScreen = () => {
             <span className={styles.center}>34,000+ engineers</span> worldwide
           </p>
           <h1 className={styles.headingLabel}>
-            The Best <span className={styles.headingIde}>IDE</span> <br /> for&nbsp;
-            <span className={styles.headingRN}>React Native</span> & Expo
+            Build better <span className={styles.headingRN}>React Native & Expo</span> apps with
+            Radon
           </h1>
           <h2 className={styles.subheadingLabel}>
-            Radon IDE extension turns your VSCode or Cursor editor <br /> into fully-featured IDE
-            for faster and more efficient development<span className={styles.dot}>.</span>{" "}
+            The VSCode & Cursor extension that turns your editor into a complete IDE (you'll
+            actually enjoy using)<span className={styles.dot}>.</span>{" "}
             <p>
               Trusted by <span>34,000+ engineers worldwide</span>.
             </p>
