@@ -1,11 +1,25 @@
 import { readFileSync } from "fs";
 
+import { Store } from "react-devtools-inline";
 import { IDE } from "../../project/ide";
 import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils";
-import { TextContent, ToolResponse } from "./models";
+import { DevtoolsElement, TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
 import printComponentTree from "./printComponentTree";
+
+// This util removes the need for type-casting on every `store.getElementByID` call
+function getElementByID(id: number, store: Store): DevtoolsElement | null {
+  return store.getElementByID(id) as unknown as DevtoolsElement | null;
+}
+
+export function tryGetTreeRoot(store: Store) {
+  const treeRoot = getElementByID(store.roots[0], store);
+  if (treeRoot) {
+    return treeRoot;
+  }
+  throw new Error(`Component tree is corrupted. Tree root could not be found.`);
+}
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -30,16 +44,17 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
 export async function viewComponentTreeExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
 
-  if (!project?.deviceSession) {
+  if (!project?.deviceSession?.devtoolsStore) {
     return textToToolResponse(
-      "Could not extract a component tree from the app, the app is not running!\n" +
+      "Could not extract the component tree from the app, the app is not running!\n" +
         "The development device is likely turned off.\n" +
         "Please turn on the Radon IDE emulator before proceeding."
     );
   }
 
   try {
-    const repr = await printComponentTree(project.deviceSession);
+    const root = tryGetTreeRoot(project.deviceSession.devtoolsStore);
+    const repr = await printComponentTree(project.deviceSession, root);
     return textToToolResponse(repr);
   } catch (error) {
     return textToToolResponse((error as Error).message);

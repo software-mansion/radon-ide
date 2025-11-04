@@ -10,19 +10,12 @@ function getElementByID(id: number, store: Store): DevtoolsElement | null {
   return store.getElementByID(id) as unknown as DevtoolsElement | null;
 }
 
-function findTreeEntryPoint(store: Store, root?: DevtoolsElement): DevtoolsElement | null {
-  const isTreeRoot = root === undefined;
-  const element = root ?? getElementByID(store.roots[0], store);
+function isRadonWrapper(element: DevtoolsElement): boolean {
+  return element.key === "__RNIDE_APP_WRAPPER";
+}
 
-  if (!element) {
-    return null;
-  }
-
-  const name = element.displayName;
-
-  // User-defined `expo-router` paths contain `/`.
-  // If one is found, we use it as the tree root.
-  if (name?.includes("/")) {
+function findTreeEntryPoint(store: Store, element: DevtoolsElement): DevtoolsElement | null {
+  if (isRadonWrapper(element)) {
     return element;
   }
 
@@ -40,24 +33,20 @@ function findTreeEntryPoint(store: Store, root?: DevtoolsElement): DevtoolsEleme
     }
   }
 
-  if (isTreeRoot) {
-    return element;
-  }
-
   return null;
 }
 
 function hasHocDescriptors(element: DevtoolsElement): element is DevtoolsElement & {
   hocDisplayNames: NonNullable<DevtoolsElement["hocDisplayNames"]>;
 } {
-  return (element?.hocDisplayNames?.length ?? 0) > 0;
+  return !!element?.hocDisplayNames?.length;
 }
 
 function isFullData(payload?: InspectedElementPayload): payload is InspectElementFullData {
   return payload?.type === "full-data";
 }
 
-function printHocDescriptors(element: DevtoolsElement): string | null {
+function printHocDescriptors(element: DevtoolsElement): string {
   return hasHocDescriptors(element) ? `\u0020[${element.hocDisplayNames.join(", ")}]` : "";
 }
 
@@ -84,8 +73,8 @@ async function representElement(
 
 async function printComponentTree(
   session: DeviceSession,
+  root: DevtoolsElement,
   userLogicalComponentIDs: number[] = [],
-  root?: DevtoolsElement,
   depth: number = 0
 ): Promise<string> {
   const store = session.devtoolsStore;
@@ -98,18 +87,9 @@ async function printComponentTree(
     );
   }
 
-  const element = root ?? findTreeEntryPoint(store);
-
-  if (!element) {
-    throw Error(
-      `Component tree is corrupted. Could not find root of the component tree! Are you sure an application is running in the emulator?`
-    );
-  }
-
+  const element = findTreeEntryPoint(store, root) ?? root;
   const details = await session.inspectElementById(element.id);
-
   const areDetailsFull = isFullData(details);
-
   const isComponentUserMade =
     areDetailsFull && isAppSourceFile(details.value.source?.fileName ?? "");
 
@@ -118,7 +98,6 @@ async function printComponentTree(
   }
 
   const isComponentUserOwned = userLogicalComponentIDs.includes(element.ownerID);
-
   const isComponentUserRelated = isComponentUserMade || isComponentUserOwned;
 
   // `type = 2` means element is `Context.Provider`.
@@ -143,7 +122,7 @@ async function printComponentTree(
         return `Component tree is corrupted. Element with ID ${childId} not found.`;
       }
 
-      return printComponentTree(session, userLogicalComponentIDs, child, childDepth);
+      return printComponentTree(session, child, userLogicalComponentIDs, childDepth);
     })
   );
 
