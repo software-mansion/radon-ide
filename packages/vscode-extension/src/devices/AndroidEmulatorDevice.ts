@@ -4,6 +4,7 @@ import { EOL } from "node:os";
 import assert from "assert";
 import xml2js from "xml2js";
 import { v4 as uuidv4 } from "uuid";
+import * as vscode from "vscode";
 import { Preview } from "./preview";
 import { DeviceBase, REBOOT_TIMEOUT } from "./DeviceBase";
 import { retry, cancellableRetry } from "../utilities/retry";
@@ -765,6 +766,11 @@ export class AndroidEmulatorDevice extends DeviceBase {
   }
 
   protected async runMaestroTest(fileName: string) {
+    const document = await vscode.workspace.openTextDocument(fileName);
+    if (document.isDirty) {
+      await document.save();
+    }
+    
     this.maestroLogsOutputChannel.show(true);
 
     this.maestroLogsOutputChannel.appendLine("");

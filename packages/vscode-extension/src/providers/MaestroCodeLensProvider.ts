@@ -34,9 +34,9 @@ export class MaestroCodeLensProvider implements CodeLensProvider {
   checkMaestroFile(document: TextDocument): boolean {
     // To fairly certainly identify a Maestro test file that we can run, it must:
     // not be named config.yaml or .yml
-    // include appId (url on web, but we only do mobile)
-    // include --- splitting configuration and steps
-    // include valid, steps listed with - that are not comments
+    // include "appId" (url on web, but we only do mobile)
+    // include "---" splitting configuration and steps
+    // include valid steps beginning with "-" that are not comments
     const text = document.getText();
     if (
       document.fileName.endsWith("config.yaml") || 

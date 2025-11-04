@@ -1,8 +1,10 @@
 import path from "path";
 import fs from "fs";
+import assert from "assert";
 import { ExecaChildProcess, ExecaError } from "execa";
 import mime from "mime";
 import _ from "lodash";
+import * as vscode from "vscode";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
@@ -25,7 +27,6 @@ import {
   IOSRuntimeInfo,
   Locale,
 } from "../common/State";
-import assert from "assert";
 
 interface SimulatorInfo {
   availability?: string;
@@ -699,6 +700,11 @@ export class IosSimulatorDevice extends DeviceBase {
   }
 
   protected async runMaestroTest(fileName: string) {
+    const document = await vscode.workspace.openTextDocument(fileName);
+    if (document.isDirty) {
+      await document.save();
+    }
+    
     this.maestroLogsOutputChannel.show(true);
 
     this.maestroLogsOutputChannel.appendLine("");
