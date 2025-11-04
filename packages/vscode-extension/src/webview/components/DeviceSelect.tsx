@@ -122,7 +122,7 @@ function DeviceSelect() {
     []
   );
 
-  const handleStartOrActivateSessionForAndroidTabletDevice = usePaywalledCallback(
+  const handleStartOrActivateSessionForAndroidTabletEmulator = usePaywalledCallback(
     async (deviceInfo: DeviceInfo) => {
       await project.startOrActivateSessionForDevice(deviceInfo);
     },
@@ -138,11 +138,19 @@ function DeviceSelect() {
     []
   );
 
-  const handleStartOrActivateSessionForAndroidSmartphoneDevice = usePaywalledCallback(
+  const handleStartOrActivateSessionForAndroidSmartphoneEmulator = usePaywalledCallback(
     async (deviceInfo: DeviceInfo) => {
       await project.startOrActivateSessionForDevice(deviceInfo);
     },
     Feature.AndroidSmartphoneEmulators,
+    []
+  );
+
+  const handleStartOrActivateSessionForAndroidRemoteDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.AndroidRemoteDevice,
     []
   );
 
@@ -169,10 +177,13 @@ function DeviceSelect() {
             }
           case DevicePlatform.Android:
             if (deviceInfo.deviceType === DeviceType.Tablet) {
-              await handleStartOrActivateSessionForAndroidTabletDevice(deviceInfo);
+              await handleStartOrActivateSessionForAndroidTabletEmulator(deviceInfo);
+              return;
+            } else if (deviceInfo.emulator === false) {
+              handleStartOrActivateSessionForAndroidRemoteDevice(deviceInfo);
               return;
             } else {
-              await handleStartOrActivateSessionForAndroidSmartphoneDevice(deviceInfo);
+              await handleStartOrActivateSessionForAndroidSmartphoneEmulator(deviceInfo);
               return;
             }
         }

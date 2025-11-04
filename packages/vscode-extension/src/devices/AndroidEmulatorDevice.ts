@@ -4,7 +4,6 @@ import { EOL } from "node:os";
 import assert from "assert";
 import { v4 as uuidv4 } from "uuid";
 import { Disposable } from "vscode";
-import { Preview } from "./preview";
 import { REBOOT_TIMEOUT } from "./DeviceBase";
 import { cancellableRetry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
@@ -392,10 +391,6 @@ export class AndroidEmulatorDevice extends AndroidDevice {
     });
 
     this.serial = await initPromise;
-  }
-
-  public makePreview(): Preview {
-    return new Preview(["android", "--id", this.serial!]);
   }
 
   public async getClipboard() {

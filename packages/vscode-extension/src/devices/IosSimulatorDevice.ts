@@ -662,14 +662,18 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  makePreview(): Preview {
-    return new Preview([
+  makePreview(licenseToken?: string): Preview {
+    const args = [
       "ios",
       "--id",
       this.deviceUDID,
       "--device-set",
       getOrCreateDeviceSet(this.deviceUDID),
-    ]);
+    ];
+    if (licenseToken !== undefined) {
+      args.push("-t", licenseToken);
+    }
+    return new Preview(args);
   }
 
   public async sendFile(filePath: string) {

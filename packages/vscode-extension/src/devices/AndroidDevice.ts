@@ -19,6 +19,7 @@ import { AndroidBuildResult } from "../builders/buildAndroid";
 import { EXPO_GO_PACKAGE_NAME, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 import { Output } from "../common/OutputChannel";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
+import { Preview } from "./preview";
 
 export const ADB_PATH = path.join(
   ANDROID_HOME,
@@ -148,6 +149,14 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
 
   public async terminateApp(packageName: string) {
     await exec(ADB_PATH, ["-s", this.serial!, "shell", "am", "force-stop", packageName]);
+  }
+
+  protected makePreview(licenseToken?: string): Preview {
+    const args = ["android_device", "--id", this.serial!];
+    if (licenseToken !== undefined) {
+      args.push("-t", licenseToken);
+    }
+    return new Preview(args);
   }
 
   public async sendDeepLink(link: string, build: BuildResult) {

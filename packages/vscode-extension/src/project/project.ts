@@ -26,6 +26,8 @@ import {
   watchLicenseTokenChange,
   getLicenseToken,
   refreshTokenPeriodically,
+  checkLicenseToken,
+  SimServerLicenseValidationStatus,
 } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey } from "./tools";
@@ -46,6 +48,7 @@ import { StateManager } from "./StateManager";
 import {
   AndroidSystemImageInfo,
   DeviceInfo,
+  DevicePlatform,
   DeviceRotation,
   DevicesState,
   DeviceType,
@@ -213,11 +216,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       },
     };
 
-    getLicenseToken().then((token) => {
-      this.licenseStateManager.updateState({
-        status: token ? LicenseStatus.Pro : LicenseStatus.Inactive,
-      });
-    });
+    this.updateLicenseStatus();
 
     this.maybeStartInitialDeviceSession();
 
@@ -232,14 +231,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
     this.disposables.push(fingerprintProvider);
     this.disposables.push(refreshTokenPeriodically());
-    this.disposables.push(
-      watchLicenseTokenChange(async () => {
-        const hasActiveLicense = !!(await getLicenseToken());
-        this.licenseStateManager.updateState({
-          status: hasActiveLicense ? LicenseStatus.Pro : LicenseStatus.Inactive,
-        });
-      })
-    );
+    this.disposables.push(watchLicenseTokenChange(this.updateLicenseStatus));
     this.disposables.push(
       this.launchConfigsManager.onLaunchConfigurationsChanged((launchConfigs) => {
         this.updateProjectState({
@@ -278,6 +270,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   @guardFeatureAccess(Feature.IOSSmartphoneSimulators)
   @guardFeatureAccess(Feature.IOSTabletSimulators, (deviceInfo: DeviceInfo) => {
     return deviceInfo.deviceType !== DeviceType.Tablet;
+  })
+  @guardFeatureAccess(Feature.AndroidRemoteDevice, (deviceInfo: DeviceInfo) => {
+    if (deviceInfo.platform === DevicePlatform.IOS) {
+      return true;
+    }
+    return deviceInfo.emulator !== false;
   })
   public startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void> {
     return this.deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
@@ -458,6 +456,23 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public get licenseState() {
     return this.licenseStateManager.getState();
   }
+
+  // needs to be an arrow function (used in callbacks)
+  private updateLicenseStatus = async () => {
+    const token = await getLicenseToken();
+    if (!token) {
+      this.licenseStateManager.updateState({ status: LicenseStatus.Inactive });
+      return;
+    }
+
+    const validationResult = await checkLicenseToken(token);
+    const status =
+      validationResult.status === SimServerLicenseValidationStatus.Success
+        ? validationResult.licensePlan
+        : LicenseStatus.Inactive;
+
+    this.licenseStateManager.updateState({ status });
+  };
 
   // #endregion License
 

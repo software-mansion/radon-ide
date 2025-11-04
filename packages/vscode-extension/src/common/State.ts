@@ -256,6 +256,7 @@ export type InstallationErrorDescriptor = {
 export enum PreviewErrorReason {
   DeviceNotConnected = "device-not-connected",
   EarlyExit = "early-exit",
+  NoAccess = "no-access",
   StreamClosed = "stream-closed",
 }
 

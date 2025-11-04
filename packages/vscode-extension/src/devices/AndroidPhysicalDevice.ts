@@ -12,7 +12,6 @@ import {
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { exec } from "../utilities/subprocess";
 import { ADB_PATH, AndroidDevice } from "./AndroidDevice";
-import { Preview } from "./preview";
 import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
 import { DevicesProvider } from "./DevicesProvider";
 import { StateManager } from "../project/StateManager";
@@ -33,18 +32,18 @@ export class AndroidPhysicalDevice extends AndroidDevice {
   get lockFilePath(): string {
     return path.join(getAppCachesDir(), `android_device_${this.serial}.lock`);
   }
+
   async bootDevice(): Promise<void> {
     // NOOP
   }
+
   protected changeSettings(_settings: DeviceSettings): Promise<boolean> {
     return Promise.resolve(false);
   }
+
   public getClipboard(): Promise<string | void> {
     // TODO:
     return Promise.resolve("");
-  }
-  protected makePreview(): Preview {
-    return new Preview(["android_device", "--id", this.serial!]);
   }
 
   public override sendRotate(rotation: DeviceRotation): void {

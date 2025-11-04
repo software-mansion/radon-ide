@@ -59,6 +59,16 @@ export enum LicenseStatus {
   Enterprise = "enterprise",
 }
 
+export function getLicenseStatusFromString(str: string): LicenseStatus {
+  const normalizedStr = str.toLowerCase() as LicenseStatus;
+
+  if (Object.values(LicenseStatus).includes(normalizedStr)) {
+    return normalizedStr;
+  }
+
+  return LicenseStatus.Inactive;
+}
+
 // #endregion License State
 
 // #region Features
@@ -66,6 +76,7 @@ export enum LicenseStatus {
 export enum Feature {
   AndroidSmartphoneEmulators = "AndroidSmartphoneEmulators",
   AndroidTabletEmulators = "AndroidTabletEmulators",
+  AndroidRemoteDevice = "AndroidRemoteDevice",
   AppSwitcherButton = "AppSwitcherButton",
   Biometrics = "Biometrics",
   ComponentPreview = "ComponentPreview",
@@ -128,6 +139,7 @@ export const FreeFeatures: Set<Feature> = new Set<Feature>([
 
 export const ProFeatures: Set<Feature> = new Set<Feature>([
   Feature.AndroidTabletEmulators,
+  Feature.AndroidRemoteDevice,
   Feature.Biometrics,
   Feature.DeviceLocalizationSettings,
   Feature.DeviceRotation,

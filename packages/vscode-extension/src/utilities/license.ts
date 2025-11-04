@@ -5,6 +5,7 @@ import { Logger } from "../Logger";
 import { simulatorServerBinary } from "./simulatorServerBinary";
 import { ActivateDeviceResult } from "../common/Project";
 import { throttleAsync } from "./throttle";
+import { getLicenseStatusFromString, LicenseStatus } from "../common/License";
 
 const TOKEN_KEY = "RNIDE_license_token_key";
 const TOKEN_KEY_TIMESTAMP = "RNIDE_license_token_key_timestamp";
@@ -25,12 +26,22 @@ export enum ServerResponseStatusCode {
   internalError = "E101",
 }
 
-export enum SimServerLicenseValidationResult {
+export enum SimServerLicenseValidationStatus {
   Success,
   Corrupted,
   Expired,
   FingerprintMismatch,
 }
+
+export type SimServerLicenseValidationResult =
+  | {
+      status: SimServerLicenseValidationStatus.Success;
+      licensePlan: LicenseStatus;
+    }
+  | {
+      status: Exclude<SimServerLicenseValidationStatus, SimServerLicenseValidationStatus.Success>;
+      licensePlan?: LicenseStatus;
+    };
 
 async function saveTokenIfValid(response: Response) {
   const responseBody = (await response.json()) as {
@@ -40,7 +51,7 @@ async function saveTokenIfValid(response: Response) {
   if (response.ok) {
     const newToken = responseBody.token as string;
     const checkResult = await checkLicenseToken(newToken);
-    if (checkResult === SimServerLicenseValidationResult.Success && newToken) {
+    if (checkResult.status === SimServerLicenseValidationStatus.Success && newToken) {
       await extensionContext.secrets.store(TOKEN_KEY, newToken);
       await extensionContext.globalState.update(TOKEN_KEY_TIMESTAMP, Date.now());
       return ServerResponseStatusCode.success;
@@ -170,24 +181,35 @@ export function watchLicenseTokenChange(callback: (token: string | undefined) =>
   });
 }
 
-export async function checkLicenseToken(token: string) {
+export async function checkLicenseToken(token: string): Promise<SimServerLicenseValidationResult> {
   const simControllerBinary = simulatorServerBinary();
   const { stdout } = await exec(simControllerBinary, ["verify_token", token]);
-  if (stdout === "token_valid") {
-    return SimServerLicenseValidationResult.Success;
+
+  if (stdout.startsWith("token_valid")) {
+    const licensePlan = stdout.split(" ", 2)[1];
+    return {
+      status: SimServerLicenseValidationStatus.Success,
+      licensePlan: getLicenseStatusFromString(licensePlan),
+    };
   } else {
     try {
       const reason = stdout.split(" ", 2)[1];
       switch (reason) {
         case "expired":
-          return SimServerLicenseValidationResult.Expired;
+          return {
+            status: SimServerLicenseValidationStatus.Expired,
+          };
         case "fingerprint_mismatch":
-          return SimServerLicenseValidationResult.FingerprintMismatch;
+          return {
+            status: SimServerLicenseValidationStatus.FingerprintMismatch,
+          };
       }
     } catch (e) {
       Logger.error("Error parsing license token verification result", e);
     }
-    return SimServerLicenseValidationResult.Corrupted;
+    return {
+      status: SimServerLicenseValidationStatus.Corrupted,
+    };
   }
 }
 
