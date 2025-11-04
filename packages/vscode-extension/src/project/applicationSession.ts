@@ -689,41 +689,18 @@ export class ApplicationSession implements Disposable {
   //#endregion
 
   //#region Element Inspector
-  private isSourceData(source: unknown): source is SourceData {
-    return (
-      source !== null &&
-      typeof source === "object" &&
-      "sourceURL" in source &&
-      "column" in source &&
-      "line" in source
-    );
+  private toSourceInfo(source: SourceData): SourceInfo {
+    return {
+      fileName: source.sourceURL,
+      column0Based: source.column,
+      line0Based: source.line,
+    };
   }
 
-  private toSourceData(source: SourceInfo | SourceData): SourceData {
-    if (this.isSourceData(source)) {
-      return source;
-    } else {
-      return {
-        sourceURL: source.fileName,
-        line: source.line0Based,
-        column: source.column0Based,
-      };
-    }
-  }
-
-  private async trySymbolicateSourceData(source: SourceData | null): Promise<SourceInfo | null> {
-    if (source?.sourceURL.startsWith("http") && this.debugSession) {
-      const sourceInfo: SourceInfo = {
-        fileName: source.sourceURL,
-        column0Based: source.column,
-        line0Based: source.line,
-      };
-
+  private async trySymbolicateSource(source: SourceInfo | null): Promise<SourceInfo | null> {
+    if (source?.fileName.startsWith("http") && this.debugSession) {
       try {
-        const mappedSource = await this.debugSession.findOriginalPosition(sourceInfo);
-        return {
-          ...mappedSource,
-        };
+        return await this.debugSession.findOriginalPosition(source);
       } catch (e) {
         Logger.error("Error finding original source position for element", source, e);
       }
@@ -758,8 +735,7 @@ export class ApplicationSession implements Disposable {
       // using source maps via the debugger
       await Promise.all(
         stack.map(async (item) => {
-          const sourceData = this.toSourceData(item.source);
-          const symbolicated = await this.trySymbolicateSourceData(sourceData);
+          const symbolicated = await this.trySymbolicateSource(item.source);
 
           if (symbolicated) {
             item.source = symbolicated;
@@ -794,15 +770,19 @@ export class ApplicationSession implements Disposable {
       return undefined;
     }
 
-    // `source` is incorrectly typed as `Source` and not `SourceData` when `payload.type === 'full-data'`
+    // `source` is incorrectly typed as `Source`, it's actually `SourceData` when `payload.type === 'full-data'`
     const source = payload.value.source as SourceData | null;
-    const symbolicated = await this.trySymbolicateSourceData(source);
 
-    if (symbolicated) {
-      payload.value.source = {
-        fileName: symbolicated.fileName,
-        lineNumber: symbolicated.line0Based,
-      };
+    if (source) {
+      const sourceInfo = this.toSourceInfo(source);
+      const symbolicated = await this.trySymbolicateSource(sourceInfo);
+
+      if (symbolicated) {
+        payload.value.source = {
+          fileName: symbolicated.fileName,
+          lineNumber: symbolicated.line0Based,
+        };
+      }
     }
 
     return payload;
