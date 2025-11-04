@@ -215,7 +215,6 @@ async function readResponseText(
   xhr: XMLHttpRequest
 ): Promise<InternalResponseBodyData | undefined> {
   try {
-    // @ts-ignore - RN-specific property
     if (!xhr) {
       // if response was not accessed, it's not cached and we don't want to read it
       // here to avoid potential side effects
@@ -223,6 +222,8 @@ async function readResponseText(
     }
 
     const responseType = xhr.responseType;
+
+    console.log("REPONSETYPE", responseType);
 
     if (responseType === "" || responseType === "text") {
       return await parseResponseBodyData(xhr.responseText);
