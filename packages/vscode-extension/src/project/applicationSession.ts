@@ -49,6 +49,7 @@ import { getDebuggerTargetForDevice } from "./DebuggerTarget";
 import { isCDPMethod } from "../network/types/panelMessageProtocol";
 import { isFullInspectionData } from "../utilities/isFullInspectionData";
 import { SourceData } from "../common/types";
+import { toSourceInfo } from "../utilities/toSourceInfo";
 
 const MAX_URL_HISTORY_SIZE = 20;
 
@@ -683,14 +684,6 @@ export class ApplicationSession implements Disposable {
   //#endregion
 
   //#region Element Inspector
-  private toSourceInfo(source: SourceData): SourceInfo {
-    return {
-      fileName: source.sourceURL,
-      column0Based: source.column,
-      line0Based: source.line,
-    };
-  }
-
   private async trySymbolicateSource(source: SourceInfo | null): Promise<SourceInfo | null> {
     if (source?.fileName.startsWith("http") && this.debugSession) {
       try {
@@ -768,7 +761,7 @@ export class ApplicationSession implements Disposable {
     const source = payload.value.source as SourceData | null;
 
     if (source) {
-      const sourceInfo = this.toSourceInfo(source);
+      const sourceInfo = toSourceInfo(source);
       const symbolicated = await this.trySymbolicateSource(sourceInfo);
 
       if (symbolicated) {
