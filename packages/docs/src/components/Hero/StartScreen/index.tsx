@@ -52,8 +52,9 @@ const StartScreen = () => {
             Radon
           </h1>
           <h2 className={styles.subheadingLabel}>
-            The VSCode & Cursor extension that turns your editor into a complete IDE (you'll
-            actually enjoy using)<span className={styles.dot}>.</span>{" "}
+            The VSCode & Cursor extension that turns your editor into a complete IDE you'll actually
+            enjoy using
+            <span className={styles.dot}>.</span>{" "}
             <p>
               Trusted by <span>34,000+ engineers worldwide</span>.
             </p>
