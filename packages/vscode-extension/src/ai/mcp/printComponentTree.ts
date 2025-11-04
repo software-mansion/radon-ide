@@ -1,4 +1,4 @@
-import { InspectedElementPayload, InspectElementFullData } from "react-devtools-inline";
+import { InspectElementFullData } from "react-devtools-inline";
 import { workspace } from "vscode";
 import { Store } from "../../../third-party/react-devtools/headless";
 import { DeviceSession } from "../../project/deviceSession";
@@ -10,12 +10,9 @@ function getElementByID(id: number, store: Store): DevtoolsElement | null {
   return store.getElementByID(id) as unknown as DevtoolsElement | null;
 }
 
-function isRadonWrapper(element: DevtoolsElement): boolean {
-  return element.key === "__RNIDE_APP_WRAPPER";
-}
-
+// This methods finds and returns the `AppWrapper` if said component exists
 function findTreeEntryPoint(store: Store, element: DevtoolsElement): DevtoolsElement | null {
-  if (isRadonWrapper(element)) {
+  if (element.key === "__RNIDE_APP_WRAPPER") {
     return element;
   }
 
@@ -40,10 +37,6 @@ function hasHocDescriptors(element: DevtoolsElement): element is DevtoolsElement
   hocDisplayNames: NonNullable<DevtoolsElement["hocDisplayNames"]>;
 } {
   return !!element?.hocDisplayNames?.length;
-}
-
-function isFullData(payload?: InspectedElementPayload): payload is InspectElementFullData {
-  return payload?.type === "full-data";
 }
 
 function printHocDescriptors(element: DevtoolsElement): string {
@@ -89,24 +82,16 @@ async function printComponentTree(
 
   const element = findTreeEntryPoint(store, root) ?? root;
   const details = await session.inspectElementById(element.id);
-  const areDetailsFull = isFullData(details);
-  const isComponentUserMade =
-    areDetailsFull && isAppSourceFile(details.value.source?.fileName ?? "");
+
+  const isComponentUserMade = isAppSourceFile(details?.value.source?.fileName ?? "");
+  const isComponentUserOwned = userLogicalComponentIDs.includes(element.ownerID);
+  const isComponentUserRelated = isComponentUserMade || isComponentUserOwned;
 
   if (isComponentUserMade) {
     userLogicalComponentIDs.push(element.id);
   }
 
-  const isComponentUserOwned = userLogicalComponentIDs.includes(element.ownerID);
-  const isComponentUserRelated = isComponentUserMade || isComponentUserOwned;
-
-  // `type = 2` means element is `Context.Provider`.
-  // These are always wrapped by a component with a more descriptive name when user-made.
-  const skipRendering =
-    element.type === 2 ||
-    element.displayName === null ||
-    !isComponentUserRelated ||
-    !areDetailsFull;
+  const skipRendering = !details || element.displayName === null || !isComponentUserRelated;
 
   const componentRepr = !skipRendering
     ? await representElement(element, details, depth, isComponentUserMade)
