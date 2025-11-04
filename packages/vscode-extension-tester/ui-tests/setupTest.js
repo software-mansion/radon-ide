@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import dotenv from "dotenv";
 import {
   VSBrowser,
   WebView,
@@ -18,6 +19,7 @@ import startRecording from "../utils/screenRecording.js";
 import getConfiguration from "../configuration.js";
 import { texts } from "../utils/constants.js";
 
+dotenv.config();
 const { IS_RECORDING } = getConfiguration();
 
 let driver, workbench, view, browser;
@@ -50,6 +52,9 @@ before(async function () {
   }
   await workbench.executeCommand("Chat: Open Chat");
   await workbench.executeCommand("View: Toggle Secondary Side Bar Visibility");
+
+  const radonViewsService = initServices(driver).radonViewsService;
+  await radonViewsService.activateRadonIDELicense();
 });
 
 afterEach(async function () {
