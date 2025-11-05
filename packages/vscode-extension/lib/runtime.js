@@ -101,4 +101,3 @@ AppRegistry.setWrapperComponentProvider = (provider) => {
 
 // setup devtool plugins
 require("./plugins/redux-devtools");
-require("./plugins/apollo-client-devtools");
