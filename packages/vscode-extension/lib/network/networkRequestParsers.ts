@@ -288,7 +288,7 @@ async function readResponseText(
       }
     }
 
-    // don't read binary data
+    // fallback
     return undefined;
   } catch (error) {
     return handleReadResponseError(error);
