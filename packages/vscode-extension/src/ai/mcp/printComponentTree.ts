@@ -100,7 +100,7 @@ async function printComponentTree(
   const skipRendering = !details || element.displayName === null || !isComponentUserRelated;
   const childDepth = depth + (skipRendering ? 0 : 1);
 
-  const childrenRepr = await Promise.all(
+  const childrenStrings = await Promise.all(
     element.children.map((childId) => {
       const child = getElementByID(childId, store);
 
@@ -112,14 +112,14 @@ async function printComponentTree(
     })
   );
 
-  const childrenString = childrenRepr.join("");
+  const childrenRepr = childrenStrings.join("");
 
   const componentRepr = !skipRendering
-    ? await representElement(element, details, depth, isComponentUserMade, childrenString !== "")
+    ? await representElement(element, details, depth, isComponentUserMade, childrenRepr !== "")
     : { open: "", close: "" };
 
   // `skipRendering` affects the current component, but doesn't affect children
-  return componentRepr.open + childrenString + componentRepr.close;
+  return componentRepr.open + childrenRepr + componentRepr.close;
 }
 
 export default printComponentTree;
