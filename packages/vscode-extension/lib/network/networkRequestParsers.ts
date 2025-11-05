@@ -223,8 +223,6 @@ async function readResponseText(
 
     const responseType = xhr.responseType;
 
-    console.log("REPONSETYPE", responseType);
-
     if (responseType === "" || responseType === "text") {
       return await parseResponseBodyData(xhr.responseText);
     }
