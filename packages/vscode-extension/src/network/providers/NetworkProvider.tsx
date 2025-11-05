@@ -1,111 +1,164 @@
-import { createContext, PropsWithChildren, useContext, useMemo, useReducer, useState } from "react";
+import { createContext, PropsWithChildren, useContext, useMemo, useReducer, useRef } from "react";
 import useNetworkTracker, {
   NetworkTracker,
   networkTrackerInitialState,
 } from "../hooks/useNetworkTracker";
-
-type TimestampRange = {
-  start: number;
-  end: number;
-};
-
-interface Filters {
-  timestampRange?: TimestampRange;
-  url?: string;
-}
+import { NetworkFilterProvider } from "./NetworkFilterProvider";
+import { generateId, createIDEResponsePromise } from "../utils/panelMessages";
+import { NetworkLog } from "../types/networkLog";
+import { IDEMethod } from "../types/panelMessageProtocol";
+import { ResponseBodyData } from "../types/network";
+import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
 interface NetworkProviderProps extends NetworkTracker {
-  unfilteredNetworkLogs: NetworkTracker["networkLogs"];
-  isRecording: boolean;
-  filters: Filters;
+  isTracking: boolean;
   isScrolling: boolean;
-  toggleRecording: () => void;
-  setFilters: (filters: Filters) => void;
+  setIsTracking: React.Dispatch<React.SetStateAction<boolean>>;
   clearActivity: () => void;
   toggleScrolling: () => void;
-  isFilterVisible: boolean;
-  toggleFilterVisible: () => void;
   isTimelineVisible: boolean;
   toggleTimelineVisible: () => void;
+  fetchAndOpenResponseInEditor: (networkLog: NetworkLog, base64encoded: boolean) => Promise<void>;
+  getResponseBody: (networkLog: NetworkLog) => Promise<ResponseBodyData | undefined>;
+  getThemeData: (themeDescriptor: ThemeDescriptor) => Promise<ThemeData>;
+}
+
+function createBodyDataResponseTransformer(
+  requestId: string,
+  responseBodiesRef: React.RefObject<Record<string, ResponseBodyData | undefined>>
+) {
+  return (result: unknown): ResponseBodyData | undefined => {
+    const bodyData = result as ResponseBodyData | undefined;
+
+    if (bodyData === undefined) {
+      return responseBodiesRef.current?.[requestId];
+    }
+
+    if (responseBodiesRef.current) {
+      responseBodiesRef.current[requestId] = bodyData;
+    }
+
+    return bodyData;
+  };
 }
 
 const NetworkContext = createContext<NetworkProviderProps>({
   ...networkTrackerInitialState,
-  unfilteredNetworkLogs: [],
-  isRecording: true,
-  isFilterVisible: false,
-  filters: {
-    url: undefined,
-    timestampRange: undefined,
-  },
+  isTracking: true,
   isScrolling: false,
-  toggleRecording: () => {},
-  toggleFilterVisible: () => {},
-  setFilters: () => {},
+  setIsTracking: () => {},
   clearActivity: () => {},
   toggleScrolling: () => {},
   isTimelineVisible: true,
   toggleTimelineVisible: () => {},
+  getResponseBody: async () => undefined,
+  fetchAndOpenResponseInEditor: async () => {},
+  getThemeData: async () => ({}),
 });
 
 export default function NetworkProvider({ children }: PropsWithChildren) {
   const networkTracker = useNetworkTracker();
+  const { clearLogs, isTracking, setIsTracking, sendWebviewIDEMessage, networkLogs } =
+    networkTracker;
 
   const [isTimelineVisible, toggleTimelineVisible] = useReducer((state) => !state, true);
-  const [isFilterVisible, toggleFilterVisible] = useReducer((state) => !state, false);
   const [isScrolling, toggleScrolling] = useReducer((state) => !state, false);
-
-  const [isRecording, setIsRecording] = useState(true);
-  const [filters, setFilters] = useState<Filters>({
-    timestampRange: undefined,
-    url: undefined,
-  });
+  const responseBodiesRef = useRef<Record<string, ResponseBodyData | undefined>>({});
 
   const clearActivity = () => {
-    networkTracker.clearLogs();
+    clearLogs();
+    responseBodiesRef.current = {};
   };
 
-  const toggleRecording = () => {
-    setIsRecording((prev) => {
-      networkTracker.toggleNetwork(prev);
-      return !prev;
+  const getResponseBody = (networkLog: NetworkLog): Promise<ResponseBodyData | undefined> => {
+    const { requestId, type } = networkLog;
+
+    if (!requestId) {
+      return Promise.resolve(undefined);
+    }
+
+    if (responseBodiesRef.current[requestId]) {
+      return Promise.resolve(responseBodiesRef.current[requestId]);
+    }
+
+    const messageId = generateId();
+    const transformer = createBodyDataResponseTransformer(requestId, responseBodiesRef);
+    const promise = createIDEResponsePromise<ResponseBodyData | undefined>(
+      messageId,
+      IDEMethod.ResponseBodyData,
+      transformer
+    );
+
+    // Send the message to the network-plugin backend
+    sendWebviewIDEMessage({
+      messageId: messageId,
+      method: IDEMethod.GetResponseBodyData,
+      params: {
+        requestId,
+        type,
+      },
     });
+
+    return promise;
+  };
+  const getThemeData = (themeDescriptor: ThemeDescriptor): Promise<ThemeData> => {
+    const messageId = generateId();
+    const promise = createIDEResponsePromise<ThemeData>(messageId, IDEMethod.Theme);
+
+    // Send the message to the network-plugin backend
+    sendWebviewIDEMessage({
+      method: IDEMethod.GetTheme,
+      messageId: messageId,
+      params: {
+        themeDescriptor,
+      },
+    });
+
+    return promise;
   };
 
-  const networkLogs = useMemo(() => {
-    return networkTracker.networkLogs.filter((log) => {
-      const { url, timestampRange } = filters;
+  const fetchAndOpenResponseInEditor = async (networkLog: NetworkLog, base64Encoded: boolean) => {
+    const requestId = networkLog.requestId;
+    const request = networkLog.request;
 
-      const matchesUrl = !url || log.request?.url.includes(url);
-      const matchesTimestampRange =
-        !timestampRange ||
-        (log.timeline.timestamp >= timestampRange.start &&
-          log.timeline.timestamp <= timestampRange.end);
+    if (!requestId || !request) {
+      return Promise.resolve(undefined);
+    }
 
-      return matchesUrl && matchesTimestampRange;
+    const id = generateId();
+
+    sendWebviewIDEMessage({
+      messageId: id,
+      method: IDEMethod.FetchFullResponseBody,
+      params: {
+        request: request,
+        base64Encoded: base64Encoded,
+      },
     });
-  }, [networkTracker.networkLogs, filters]);
+  };
 
   const contextValue = useMemo(() => {
     return {
       ...networkTracker,
-      unfilteredNetworkLogs: networkTracker.networkLogs,
-      networkLogs,
-      isRecording,
-      toggleRecording,
-      filters,
-      setFilters,
+      networkLogs: networkLogs,
+      isTracking,
+      setIsTracking,
       isScrolling,
       clearActivity,
       toggleScrolling,
-      isFilterVisible,
-      toggleFilterVisible,
       isTimelineVisible,
       toggleTimelineVisible,
+      getResponseBody,
+      fetchAndOpenResponseInEditor,
+      getThemeData,
     };
-  }, [isRecording, filters, isFilterVisible, isScrolling, isTimelineVisible, networkLogs]);
+  }, [isTracking, isScrolling, isTimelineVisible, networkTracker.networkLogs]);
 
-  return <NetworkContext.Provider value={contextValue}>{children}</NetworkContext.Provider>;
+  return (
+    <NetworkContext.Provider value={contextValue}>
+      <NetworkFilterProvider>{children}</NetworkFilterProvider>
+    </NetworkContext.Provider>
+  );
 }
 
 export function useNetwork() {

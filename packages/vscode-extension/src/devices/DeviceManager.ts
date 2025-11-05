@@ -1,171 +1,97 @@
-import { EventEmitter } from "stream";
 import _ from "lodash";
+import { Disposable } from "vscode";
 import { getAndroidSystemImages } from "../utilities/sdkmanager";
 import {
-  IosSimulatorDevice,
   SimulatorDeviceSet,
   createSimulator,
-  listSimulators,
   renameIosSimulator,
   removeIosSimulator,
 } from "./IosSimulatorDevice";
 import { getAvailableIosRuntimes } from "../utilities/iosRuntimes";
+import { createEmulator, renameEmulator, removeEmulator } from "./AndroidEmulatorDevice";
+import { extensionContext } from "../utilities/extensionContext";
+import { getTelemetryReporter } from "../utilities/telemetry";
 import {
-  AndroidEmulatorDevice,
-  createEmulator,
-  listEmulators,
-  renameEmulator,
-  removeEmulator,
-} from "./AndroidEmulatorDevice";
-import {
+  AndroidSystemImageInfo,
   DeviceInfo,
   DevicePlatform,
-  DeviceManagerInterface,
-  IOSRuntimeInfo,
-  DeviceManagerEventMap,
-  DeviceManagerEventListener,
+  DevicesByType,
+  DeviceSettings,
+  DevicesState,
   IOSDeviceTypeInfo,
-  AndroidSystemImageInfo,
-} from "../common/DeviceManager";
-import { Logger } from "../Logger";
-import { extensionContext } from "../utilities/extensionContext";
-import { Platform } from "../utilities/platform";
-import { checkXcodeExists } from "../dependency/DependencyManager";
-import { getTelemetryReporter } from "../utilities/telemetry";
-import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
+  IOSRuntimeInfo,
+} from "../common/State";
+import { StateManager } from "../project/StateManager";
+import { disposeAll } from "../utilities/disposables";
+import { DevicesProvider } from "./DevicesProvider";
 
-const DEVICE_LIST_CACHE_KEY = "device_list_cache";
+const DEVICE_LIST_CACHE_KEY = "device_by_type_list_cache";
 
-export class DeviceAlreadyUsedError extends Error {}
-export class DeviceManager implements DeviceManagerInterface {
-  private eventEmitter = new EventEmitter();
+export class DeviceManager implements Disposable {
+  private disposables: Disposable[] = [];
 
-  constructor(private readonly outputChannelRegistry: OutputChannelRegistry) {}
-
-  public async addListener<K extends keyof DeviceManagerEventMap>(
-    eventType: K,
-    listener: DeviceManagerEventListener<K>
+  constructor(
+    private readonly stateManager: StateManager<DevicesState>,
+    private readonly devicesProviders: DevicesProvider[]
   ) {
-    this.eventEmitter.addListener(eventType, listener);
+    this.syncDeviceCacheWithState();
+    this.loadDevices();
+    this.loadInstalledImages();
+
+    this.disposables.push(this.stateManager);
   }
 
-  public async removeListener<K extends keyof DeviceManagerEventMap>(
-    eventType: K,
-    listener: DeviceManagerEventListener<K>
-  ) {
-    this.eventEmitter.removeListener(eventType, listener);
-  }
-
-  public async acquireDevice(deviceInfo: DeviceInfo) {
-    if (deviceInfo.platform === DevicePlatform.IOS) {
-      if (Platform.OS !== "macos") {
-        throw new Error("Invalid platform. Expected macos.");
-      }
-
-      const simulators = await listSimulators();
-      const simulatorInfo = simulators.find((device) => device.id === deviceInfo.id);
-      if (!simulatorInfo || simulatorInfo.platform !== DevicePlatform.IOS) {
-        throw new Error(`Simulator ${deviceInfo.id} not found`);
-      }
-      const device = new IosSimulatorDevice(
-        simulatorInfo.UDID,
-        simulatorInfo,
-        this.outputChannelRegistry
-      );
-      if (await device.acquire()) {
-        return device;
-      } else {
-        device.dispose();
-      }
-    } else {
-      const emulators = await listEmulators();
-      const emulatorInfo = emulators.find((device) => device.id === deviceInfo.id);
-      if (!emulatorInfo || emulatorInfo.platform !== DevicePlatform.Android) {
-        throw new Error(`Emulator ${deviceInfo.id} not found`);
-      }
-      const device = new AndroidEmulatorDevice(
-        emulatorInfo.avdId,
-        emulatorInfo,
-        this.outputChannelRegistry
-      );
-      if (await device.acquire()) {
-        return device;
-      } else {
-        device.dispose();
+  public async acquireDevice(deviceInfo: DeviceInfo, deviceSettings: DeviceSettings) {
+    for (const provider of this.devicesProviders) {
+      const maybeDevice = await provider.acquireDevice(deviceInfo, deviceSettings);
+      if (maybeDevice !== undefined) {
+        return maybeDevice;
       }
     }
-
-    throw new DeviceAlreadyUsedError();
+    throw new Error(`Device ${deviceInfo.displayName} is not available`);
   }
 
-  private loadDevicesPromise: Promise<DeviceInfo[]> | undefined;
+  private loadDevicesPromise: Promise<void> | undefined;
 
   private async loadDevices(forceReload = false) {
-    const previousDevices = extensionContext.globalState.get(DEVICE_LIST_CACHE_KEY) as
-      | DeviceInfo[]
-      | undefined;
     if (forceReload) {
       // Clear the cache when force reload is requested
       extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, undefined);
     }
     if (!this.loadDevicesPromise || forceReload) {
-      this.loadDevicesPromise = this.loadDevicesInternal().then((devices) => {
-        this.loadDevicesPromise = undefined;
-        extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, devices);
-        return devices;
-      });
+      this.loadDevicesPromise = Promise.all(this.devicesProviders.map((p) => p.listDevices())).then(
+        () => {
+          this.loadDevicesPromise = undefined;
+        }
+      );
     }
-    const devices = await this.loadDevicesPromise;
-    if (!_.isEqual(previousDevices, devices)) {
-      // Emit event only if the devices list has changed
-      this.eventEmitter.emit("devicesChanged", devices);
-    }
-    return devices;
+    await this.loadDevicesPromise;
   }
 
-  private async loadDevicesInternal() {
-    const emulators = listEmulators().catch((e) => {
-      Logger.error("Error fetching emulators", e);
-      return [];
-    });
-
-    let shouldLoadSimulators = Platform.OS === "macos";
-
-    if (shouldLoadSimulators && !(await checkXcodeExists())) {
-      shouldLoadSimulators = false;
-      Logger.debug("Couldn't list iOS simulators as XCode installation wasn't found");
-    }
-
-    const simulators = shouldLoadSimulators
-      ? listSimulators().catch((e) => {
-          Logger.error("Error fetching simulators", e);
-          return [];
-        })
-      : Promise.resolve([]);
-    const [androidDevices, iosDevices] = await Promise.all([emulators, simulators]);
-    const devices = [...androidDevices, ...iosDevices];
-    return devices;
-  }
-
-  public async listInstalledAndroidImages() {
+  private async listInstalledAndroidImages() {
     return getAndroidSystemImages();
   }
 
-  public listInstalledIOSRuntimes() {
+  private listInstalledIOSRuntimes() {
     return getAvailableIosRuntimes();
   }
 
-  public async listAllDevices() {
-    const devices = extensionContext.globalState.get(DEVICE_LIST_CACHE_KEY) as
-      | DeviceInfo[]
-      | undefined;
-    if (devices) {
-      // we still want to perform load here in case anything changes, just won't wait for it
-      this.loadDevices();
-      return devices;
-    } else {
-      return await this.loadDevices();
+  private async syncDeviceCacheWithState() {
+    const devicesByType = extensionContext.globalState.get<DevicesByType>(DEVICE_LIST_CACHE_KEY);
+    if (devicesByType) {
+      // initially store the cached devices into the state manager
+      this.stateManager.updateState({ devicesByType });
     }
+    // subscribe to state changes and update the cache accordingly
+    this.stateManager.onSetState(() => {
+      const { iosSimulators, androidEmulators } = this.stateManager.getState().devicesByType;
+      // NOTE: we only cache the emulated devices, since we expect the physical devices to change more frequently
+      // between session launches
+      extensionContext.globalState.update(DEVICE_LIST_CACHE_KEY, {
+        iosSimulators,
+        androidEmulators,
+      });
+    });
   }
 
   public async createAndroidDevice(
@@ -203,11 +129,24 @@ export class DeviceManager implements DeviceManagerInterface {
     return simulator;
   }
 
+  public loadInstalledImages() {
+    this.listInstalledIOSRuntimes().then((runtimes) => {
+      this.stateManager.updateState({
+        iOSRuntimes: runtimes,
+      });
+    });
+    this.listInstalledAndroidImages().then((images) => {
+      this.stateManager.updateState({
+        androidImages: images,
+      });
+    });
+  }
+
   public async renameDevice(device: DeviceInfo, newDisplayName: string) {
     if (device.platform === DevicePlatform.IOS) {
       await renameIosSimulator(device.UDID, newDisplayName);
     }
-    if (device.platform === DevicePlatform.Android) {
+    if (device.platform === DevicePlatform.Android && device.emulator) {
       await renameEmulator(device.avdId, newDisplayName);
     }
     await this.loadDevices();
@@ -219,13 +158,26 @@ export class DeviceManager implements DeviceManagerInterface {
       systemName: String(device.systemName),
     });
 
+    const devicesKey =
+      device.platform === DevicePlatform.IOS ? "iosSimulators" : "androidEmulators";
+
+    // This is an optimization to update before costly operations
+    const previousDevices = this.stateManager.getState().devicesByType?.[devicesKey] ?? [];
+    const devices = previousDevices.filter((d) => d.id !== device.id);
+    this.stateManager.updateState({ devicesByType: { [devicesKey]: devices } });
+
     if (device.platform === DevicePlatform.IOS) {
       await removeIosSimulator(device.UDID, SimulatorDeviceSet.RN_IDE);
     }
-    if (device.platform === DevicePlatform.Android) {
+    if (device.platform === DevicePlatform.Android && device.emulator) {
       await removeEmulator(device.avdId);
     }
+
+    // Load devices anyway to ensure the state is up-to-date
     await this.loadDevices();
-    this.eventEmitter.emit("deviceRemoved", device);
+  }
+
+  dispose() {
+    disposeAll(this.disposables);
   }
 }

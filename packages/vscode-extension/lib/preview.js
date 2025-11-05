@@ -1,12 +1,13 @@
 const { useEffect, useState } = require("react");
-const { AppRegistry, SafeAreaView, View } = require("react-native");
+const { AppRegistry, View } = require("react-native");
+const RNInternals = require("./rn-internals/rn-internals");
 
 export const PREVIEW_APP_KEY = "RNIDE_preview";
 
 global.__RNIDE_previews ||= new Map();
 
-export function Preview({ previewKey }) {
-  const previewData = global.__RNIDE_previews.get(previewKey);
+export function Preview({ __radon_previewKey }) {
+  const previewData = global.__RNIDE_previews.get(__radon_previewKey);
   if (!previewData || !previewData.component) {
     return null;
   }
@@ -23,9 +24,9 @@ export function Preview({ previewKey }) {
   }, [previewData]);
 
   return (
-    <SafeAreaView style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
       {previewData.component}
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -44,25 +45,39 @@ function getComponentName({ type }) {
   return "(unnamed)";
 }
 
+async function getCallSourceFromStack(stack) {
+  const parsedStack = RNInternals.parseErrorStack(stack);
+  const callerFrame = parsedStack[1];
+  const symbolicatedCallerFrame = (await RNInternals.symbolicateStackTrace([callerFrame])).stack[0];
+
+  return {
+    fileName: symbolicatedCallerFrame.file,
+    lineNumber: symbolicatedCallerFrame.lineNumber,
+    columnNumber: symbolicatedCallerFrame.column,
+  }
+}
+
 export function preview(component) {
   // eslint-disable-next-line eqeqeq
-  if (!component || component._source == null) {
+  if (!component) {
     return;
   }
 
-  const key = `preview:/${component._source.fileName}:${component._source.lineNumber}`;
+  getCallSourceFromStack(new Error().stack).then((callSource) => {
+    const key = `preview:/${callSource.fileName}:${callSource.lineNumber}`;
 
-  const lastPreview = global.__RNIDE_previews.get(key);
+    const lastPreview = global.__RNIDE_previews.get(key);
 
-  global.__RNIDE_previews.set(key, {
-    component,
-    name: getComponentName(component),
+    global.__RNIDE_previews.set(key, {
+      component,
+      name: getComponentName(component),
+    });
+
+    // send update request to the last preview instance if it existed
+    if (lastPreview && lastPreview.renderTrigger) {
+      setTimeout(lastPreview.renderTrigger, 0);
+    }
   });
-
-  // send update request to the last preview instance if it existed
-  if (lastPreview && lastPreview.renderTrigger) {
-    setTimeout(lastPreview.renderTrigger, 0);
-  }
 }
 
 AppRegistry.registerComponent(PREVIEW_APP_KEY, () => Preview);

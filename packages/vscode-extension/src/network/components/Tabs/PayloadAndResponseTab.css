@@ -1,0 +1,94 @@
+.response-tab-copy-button {
+  background-color: var(--vscode-diffEditor-unchangedRegionBackground);
+}
+
+.response-tab-warning-icon {
+  right: 52px;
+  padding: 6px;
+  background-color: var(--vscode-diffEditor-unchangedRegionBackground);
+  border: 1px solid var(--vscode-button-border);
+  border-radius: 2px;
+  color: var(--vscode-notificationsWarningIcon-foreground);
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  box-sizing: border-box;
+}
+
+.response-tab-truncated-warning {
+  display: flex;
+  align-items: center;
+  color: var(--vscode-problemsWarningIcon-foreground);
+  margin: 0 0 14px 0;
+}
+
+.response-tab-failed-fetch-information {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+
+  p {
+    margin: 0px;
+  }
+
+  .codicon {
+    opacity: 0.6;
+    font-size: 48px;
+  }
+}
+
+.response-tab-button-wrapper {
+  position: sticky;
+  top: 8px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  float: right;
+  z-index: 1;
+}
+
+.response-tab-pre,
+.response-tab-pre > pre {
+  margin: 0 14px 14px 0;
+  font-size: var(--vscode-editor-font-size);
+}
+
+.response-tab-base64-wrap,
+.response-tab-base64-wrap > pre {
+  margin: 0 14px 14px 0;
+  font-size: var(--vscode-editor-font-size);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: break-word;
+}
+
+.shiki {
+  background-color: transparent !important;
+
+  & code {
+    background-color: transparent !important;
+  }
+}
+
+.no-highlight-info {
+  display: flex;
+  align-items: center;
+  margin: 0 0 14px 0;
+  color: var(--vscode-notificationsInfoIcon-foreground);
+}
+
+.base64-code {
+  margin-top: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}

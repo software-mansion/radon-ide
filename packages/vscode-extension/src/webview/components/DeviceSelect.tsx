@@ -1,16 +1,20 @@
 import _ from "lodash";
 import React, { PropsWithChildren } from "react";
 import * as Select from "@radix-ui/react-select";
-import { DeviceInfo, DevicePlatform } from "../../common/DeviceManager";
+import { use$ } from "@legendapp/state/react";
+import { VscodeBadge as Badge } from "@vscode-elements/react-elements";
 import "./DeviceSelect.css";
 import "./shared/Dropdown.css";
 import { useProject } from "../providers/ProjectProvider";
-import { useDevices } from "../providers/DevicesProvider";
 import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
-import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
-import { VscodeBadge as Badge } from "@vscode-elements/react-elements";
+import { useStore } from "../providers/storeProvider";
+import { DeviceInfo, DevicePlatform, DeviceType } from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import { Feature } from "../../common/License";
+import { useDevices } from "../hooks/useDevices";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -28,7 +32,10 @@ function RunningBadgeButton({ onStopClick }: { onStopClick?: (e: React.MouseEven
         e.stopPropagation();
       }}
       onClick={onStopClick}>
-      <Badge variant="activity-bar-counter" className="running-badge-button">
+      <Badge
+        variant="activity-bar-counter"
+        className="running-badge-button"
+        data-testid="device-running-badge">
         <span />
       </Badge>
     </div>
@@ -59,6 +66,7 @@ function renderDevices(
           key={device.id}
           icon={<span className="codicon codicon-device-mobile" />}
           title={device.displayName}
+          data-testid={`device-${device.displayName}`}
           subtitle={device.systemName}
           disabled={!device.available}
           isSelected={device.id === selectedProjectDevice?.id}>
@@ -71,39 +79,84 @@ function renderDevices(
   );
 }
 
-function partitionDevices(devices: DeviceInfo[]): Record<string, DeviceInfo[]> {
-  const validDevices = devices.filter(({ modelId }) => modelId.length > 0);
-
-  const [iosDevices, androidDevices] = _.partition(
-    validDevices,
-    ({ platform }) => platform === DevicePlatform.IOS
-  );
-  return {
-    iOS: iosDevices,
-    Android: androidDevices,
-  };
-}
-
 function DeviceSelect() {
-  const { selectedDeviceSession, projectState, project } = useProject();
-  const { devices, deviceSessionsManager } = useDevices();
+  const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
+  const { projectState, project } = useProject();
+
+  const devicesByType = use$(store$.devicesState.devicesByType);
+  const devices = useDevices(store$);
+
   const { openModal } = useModal();
-  const { stopPreviousDevices } = useWorkspaceConfig();
-  const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
 
   const hasNoDevices = devices.length === 0;
-  const selectedDevice = selectedDeviceSession?.deviceInfo;
+  const selectedDevice = use$(selectedDeviceSessionState.deviceInfo);
+  const deviceSessions = use$(store$.projectState.deviceSessions);
 
   const radonConnectEnabled = projectState.connectState.enabled;
 
-  const { deviceSessions } = projectState;
   const runningSessionIds = Object.keys(deviceSessions);
 
-  const deviceSections = partitionDevices(devices);
+  function shouldShowDevice(device: DeviceInfo) {
+    // NOTE: we hide disconnected physical devices in the dropdown, since they're not selectable anyway
+    if (device.platform === DevicePlatform.Android && !device.emulator) {
+      return device.available;
+    }
+
+    return true;
+  }
+
+  const deviceSections = {
+    "iOS": devicesByType.iosSimulators ?? [],
+    "Android Emulators": devicesByType.androidEmulators ?? [],
+    "Connected Android Devices":
+      devicesByType.androidPhysicalDevices?.filter(shouldShowDevice) ?? [],
+  };
+
+  const handleStartOrActivateSessionForIOSTabletDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.IOSTabletSimulators,
+    []
+  );
+
+  const handleStartOrActivateSessionForAndroidTabletEmulator = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.AndroidTabletEmulators,
+    []
+  );
+
+  const handleStartOrActivateSessionForIOSSmartphoneDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.IOSSmartphoneSimulators,
+    []
+  );
+
+  const handleStartOrActivateSessionForAndroidSmartphoneEmulator = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.AndroidSmartphoneEmulators,
+    []
+  );
+
+  const handleStartOrActivateSessionForAndroidPhysicalDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.AndroidPhysicalDevice,
+    []
+  );
 
   const handleDeviceDropdownChange = async (value: string) => {
     if (value === "manage") {
-      openModal("Manage Devices", <ManageDevicesView />);
+      openModal(<ManageDevicesView />, { title: "Manage Devices" });
       return;
     }
     if (value === "connect") {
@@ -111,17 +164,35 @@ function DeviceSelect() {
       return;
     }
     if (selectedDevice?.id !== value) {
-      const deviceInfo = devices.find((d) => d.id === value);
+      const deviceInfo = (devices ?? []).find((d) => d.id === value);
       if (deviceInfo) {
-        deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
-          stopPreviousDevices,
-        });
+        switch (deviceInfo.platform) {
+          case DevicePlatform.IOS:
+            if (deviceInfo.deviceType === DeviceType.Tablet) {
+              await handleStartOrActivateSessionForIOSTabletDevice(deviceInfo);
+              return;
+            } else {
+              await handleStartOrActivateSessionForIOSSmartphoneDevice(deviceInfo);
+              return;
+            }
+          case DevicePlatform.Android:
+            if (deviceInfo.deviceType === DeviceType.Tablet) {
+              await handleStartOrActivateSessionForAndroidTabletEmulator(deviceInfo);
+              return;
+            } else if (deviceInfo.emulator === false) {
+              handleStartOrActivateSessionForAndroidPhysicalDevice(deviceInfo);
+              return;
+            } else {
+              await handleStartOrActivateSessionForAndroidSmartphoneEmulator(deviceInfo);
+              return;
+            }
+        }
       }
     }
   };
 
   const handleDeviceStop = (deviceId: string) => {
-    deviceSessionsManager.terminateSession(deviceId);
+    project.terminateSession(deviceId);
   };
 
   const placeholderText = hasNoDevices ? "No devices found" : "Select device";
@@ -135,11 +206,15 @@ function DeviceSelect() {
 
   return (
     <Select.Root onValueChange={handleDeviceDropdownChange} value={value}>
-      <Select.Trigger className="device-select-trigger">
+      <Select.Trigger
+        className="device-select-trigger"
+        data-testid="radon-bottom-bar-device-select-dropdown-trigger">
         <Select.Value>
           <div className="device-select-value">
             <span className={`codicon codicon-${iconClass}`} />
-            <span className="device-select-value-text">{displayName}</span>
+            <span className="device-select-value-text" data-testid="device-select-value-text">
+              {displayName}
+            </span>
             {backgroundDeviceCounter > 0 && (
               <span className="device-select-counter">+{backgroundDeviceCounter}</span>
             )}
@@ -150,6 +225,7 @@ function DeviceSelect() {
       <Select.Portal>
         <Select.Content
           className="device-select-content"
+          data-testid="device-select-menu"
           position="popper"
           align="center"
           onCloseAutoFocus={(e) => e.preventDefault()}>
@@ -161,7 +237,7 @@ function DeviceSelect() {
               renderDevices(
                 label,
                 sectionDevices,
-                selectedProjectDevice,
+                selectedDevice,
                 runningSessionIds,
                 handleDeviceStop
               )
@@ -177,7 +253,9 @@ function DeviceSelect() {
               />
             </Select.Group>
             <Select.Separator className="device-select-separator" />
-            <SelectItem value="manage">Manage devices...</SelectItem>
+            <SelectItem value="manage" data-testid="device-select-menu-manage-devices-button">
+              Manage devices...
+            </SelectItem>
           </Select.Viewport>
           <Select.ScrollDownButton className="device-select-scroll">
             <span className="codicon codicon-chevron-down" />

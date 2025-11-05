@@ -1,45 +1,55 @@
 import { IProtocolCommand, IProtocolSuccess, IProtocolError, Cdp } from "vscode-cdp-proxy";
 import { EventEmitter } from "vscode";
-import { Minimatch } from "minimatch";
 import _ from "lodash";
-import path from "path";
-import fs from "fs/promises";
 import { CDPProxyDelegate, ProxyTunnel } from "./CDPProxy";
-import { SourceMapsRegistry } from "./SourceMapsRegistry";
 import { Logger } from "../Logger";
-import { extensionContext } from "../utilities/extensionContext";
-import { getTelemetryReporter } from "../utilities/telemetry";
+
+function isProfilerStopResult(result: object): result is Cdp.Profiler.StopResult {
+  // StopResult has a "profile" property
+  if (!("profile" in result) || typeof result.profile !== "object") {
+    return false;
+  }
+
+  // The "profile" property has a list of "nodes"
+  if (!result.profile || !("nodes" in result.profile)) {
+    return false;
+  }
+
+  // if we're here, then either the result has the required type,
+  // or the result is malformed (which we don't care to handle)
+  return true;
+}
 
 export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   private debuggerPausedEmitter = new EventEmitter<{ reason: "breakpoint" | "exception" }>();
   private debuggerResumedEmitter = new EventEmitter();
   private consoleAPICalledEmitter = new EventEmitter();
-  private bindingCalledEmitter = new EventEmitter<{ name: string; payload: any }>();
-  private ignoredPatterns: Minimatch[] = [];
+  private bindingCalledEmitter = new EventEmitter<Cdp.Runtime.BindingCalledEvent>();
+  private bundleParsedEmitter = new EventEmitter<{ isMainBundle: boolean; sourceUrl: string }>();
+  private networkEventEmitter = new EventEmitter();
 
   private justCalledStepOver = false;
   private resumeEventTimeout: NodeJS.Timeout | undefined;
+  private mainScriptId: string | undefined;
 
   public onDebuggerPaused = this.debuggerPausedEmitter.event;
   public onDebuggerResumed = this.debuggerResumedEmitter.event;
   public onConsoleAPICalled = this.consoleAPICalledEmitter.event;
   public onBindingCalled = this.bindingCalledEmitter.event;
-
-  constructor(
-    private sourceMapRegistry: SourceMapsRegistry,
-    skipFiles: string[],
-    private installConnectRuntime: boolean
-  ) {
-    this.ignoredPatterns = skipFiles.map(
-      (pattern) => new Minimatch(pattern, { flipNegate: true, dot: true })
-    );
-  }
+  public onBundleParsed = this.bundleParsedEmitter.event;
+  public onNetworkEvent = this.networkEventEmitter.event;
 
   public async handleApplicationCommand(
     applicationCommand: IProtocolCommand,
     tunnel: ProxyTunnel
   ): Promise<IProtocolCommand | IProtocolSuccess | IProtocolError | undefined> {
-    switch (applicationCommand.method) {
+    const commandMethod = applicationCommand.method;
+
+    if (commandMethod.startsWith("Network.")) {
+      return this.handleNetworkEvent(applicationCommand);
+    }
+
+    switch (commandMethod) {
       case "Runtime.consoleAPICalled": {
         return this.handleConsoleAPICalled(applicationCommand);
       }
@@ -53,25 +63,10 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
         return this.handleDebuggerResumed(applicationCommand, tunnel);
       }
       case "Debugger.scriptParsed": {
-        return this.handleScriptParsed(applicationCommand, tunnel);
-      }
-      case "Runtime.executionContextsCleared": {
-        this.sourceMapRegistry.clearSourceMaps();
-        return applicationCommand;
+        return this.handleScriptParsed(applicationCommand);
       }
     }
     return applicationCommand;
-  }
-
-  private shouldSkipFile(sourceURL: string): boolean {
-    return this.ignoredPatterns.reduce((shouldSkip, p) => {
-      if (p.negate) {
-        // don't skip the file if some negated pattern matches it
-        return shouldSkip && !p.match(sourceURL);
-      } else {
-        return shouldSkip || p.match(sourceURL);
-      }
-    }, false);
   }
 
   private shouldResumeImmediately(params: Cdp.Debugger.PausedEvent): boolean {
@@ -92,13 +87,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       return true;
     }
 
-    const { scriptId, lineNumber, columnNumber } = params.callFrames[0].location;
-    const { sourceURL } = this.sourceMapRegistry.findOriginalPosition(
-      scriptId,
-      lineNumber + 1,
-      columnNumber ?? 0
-    );
-    return this.shouldSkipFile(sourceURL);
+    return false;
   }
 
   private handleDebuggerResumed(command: IProtocolCommand, tunnel: ProxyTunnel) {
@@ -147,6 +136,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     this.debuggerPausedEmitter.fire({ reason: "breakpoint" });
     return command;
   }
+
   private setBreakpointCommands = new Map<number, Cdp.Debugger.SetBreakpointByUrlParams>();
 
   public async handleDebuggerCommand(
@@ -155,7 +145,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   ): Promise<IProtocolCommand> {
     const { method } = command;
     switch (method) {
-      case "Debugger.stepOver": {
+      case "Debugger.stepOver":
+      case "Debugger.stepOut":
+      case "Debugger.stepInto": {
         // setting this will cause the "resume" event from being slightly delayed as we
         // expect the "paused" event to be fired almost immediately.
         this.justCalledStepOver = true;
@@ -194,6 +186,11 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     return command;
   }
 
+  private handleNetworkEvent(command: IProtocolCommand) {
+    this.networkEventEmitter.fire(command);
+    return command;
+  }
+
   // NOTE: sometimes on Fast Refresh, when we try to set a new breakpoint with the new location,
   // the breakpoint is not set correctly by the application.
   // To mitigate this, we retry setting the breakpoint one time.
@@ -229,6 +226,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       const finalReply = await this.maybeRetrySetBreakpointByUrl(reply, tunnel);
       return finalReply;
     }
+    if ("result" in reply && isProfilerStopResult(reply.result)) {
+      this.fixProfileResults(reply.result);
+    }
     return reply;
   }
 
@@ -236,6 +236,15 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     reply: IProtocolSuccess | IProtocolError
   ): Promise<IProtocolSuccess | IProtocolError | undefined> {
     return reply;
+  }
+
+  private fixProfileResults(result: Cdp.Profiler.StopResult) {
+    if (!this.mainScriptId) {
+      return;
+    }
+    for (const node of result.profile.nodes) {
+      node.callFrame.scriptId = this.mainScriptId;
+    }
   }
 
   private async onRuntimeEnable(tunnel: ProxyTunnel) {
@@ -270,62 +279,33 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
     throw new Error("Source map URL schemas other than `data` and `http` are not supported");
   }
 
-  private async setupRadonConnectRuntime(tunnel: ProxyTunnel) {
-    // load script from lib/connect_runtime.js and evaluate it
-    const runtimeScriptPath = path.join(
-      extensionContext.extensionPath,
-      "dist",
-      "connect_runtime.js"
-    );
-    const runtimeScript = await fs.readFile(runtimeScriptPath, "utf8");
-
-    await tunnel.injectDebuggerCommand({
-      method: "Runtime.addBinding",
-      params: {
-        name: "__radon_binding",
-      },
-    });
-
-    const result = (await tunnel.injectDebuggerCommand({
-      method: "Runtime.evaluate",
-      params: {
-        expression: runtimeScript,
-      },
-    })) as Cdp.Runtime.EvaluateResult;
-    if (result.exceptionDetails) {
-      Logger.error("Failed to setup Radon Connect runtime", result.exceptionDetails);
-      getTelemetryReporter().sendTelemetryEvent("radon-connect:setup-runtime-error", {
-        error: result.exceptionDetails.exception?.description ?? "Unknown error",
-      });
-    }
-  }
-
   private handleBindingCalled(command: IProtocolCommand) {
     const params = command.params as Cdp.Runtime.BindingCalledEvent;
     this.bindingCalledEmitter.fire(params);
     return command;
   }
 
-  private async handleScriptParsed(
-    command: IProtocolCommand,
-    tunnel: ProxyTunnel
-  ): Promise<IProtocolCommand> {
-    const { sourceMapURL, url, scriptId } = command.params as Cdp.Debugger.ScriptParsedEvent;
+  private async handleScriptParsed(command: IProtocolCommand): Promise<IProtocolCommand> {
+    const params = command.params as Cdp.Debugger.ScriptParsedEvent;
+    const { sourceMapURL, url } = params;
     if (!sourceMapURL) {
       return command;
     }
 
     try {
       const sourceMapData = await this.getSourceMapData(sourceMapURL);
+      if (sourceMapData.sources === undefined) {
+        return command;
+      }
       const isMainBundle = sourceMapData.sources.some((source: string) =>
         source.includes("__prelude__")
       );
 
-      this.sourceMapRegistry.registerSourceMap(sourceMapData, url, scriptId, isMainBundle);
-
-      if (isMainBundle && this.installConnectRuntime) {
-        await this.setupRadonConnectRuntime(tunnel);
+      if (isMainBundle) {
+        this.mainScriptId = params.scriptId;
       }
+
+      this.bundleParsedEmitter.fire({ isMainBundle, sourceUrl: url });
     } catch (e) {
       Logger.error("Could not process the source map", e);
     }
@@ -366,23 +346,6 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       });
 
       stackTrace?.callFrames.splice(0, originalCallFrameIndex);
-    }
-
-    if (stackTrace) {
-      const filteredCallFrames = stackTrace?.callFrames.filter((frame) => {
-        const { scriptId, lineNumber, columnNumber } = frame;
-        const { sourceURL } = this.sourceMapRegistry.findOriginalPosition(
-          scriptId,
-          lineNumber + 1,
-          columnNumber ?? 0
-        );
-        return !this.shouldSkipFile(sourceURL);
-      });
-      if (filteredCallFrames.length > 0) {
-        // we only filter frames if there's at least one frame left, otherwise we would still
-        // want some location information to be available so we keep the original one.
-        stackTrace.callFrames = filteredCallFrames;
-      }
     }
 
     this.consoleAPICalledEmitter.fire({});

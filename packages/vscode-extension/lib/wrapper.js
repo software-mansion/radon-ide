@@ -4,16 +4,18 @@ const { useContext, useState, useEffect, useRef, useCallback } = require("react"
 const {
   LogBox,
   AppRegistry,
-  Dimensions,
   RootTagContext,
   View,
   Linking,
   findNodeHandle,
+  Platform,
+  Dimensions,
+  DevSettings,
 } = require("react-native");
 const { storybookPreview } = require("./storybook_helper");
-
 require("./react_devtools_agent"); // needs to be loaded before inspector_bridge is used
 const inspectorBridge = require("./inspector_bridge");
+const DimensionsObserver = require("./dimensions_observer");
 
 // https://github.com/facebook/react/blob/c3570b158d087eb4e3ee5748c4bd9360045c8a26/packages/react-reconciler/src/ReactWorkTags.js#L62
 const OffscreenComponentReactTag = 22;
@@ -24,31 +26,43 @@ export function registerNavigationPlugin(name, plugin) {
 }
 
 const devtoolPlugins = new Set(["network"]);
-let devtoolPluginsChanged = undefined;
+const devtoolPluginsChangedListeners = new Set();
 export function registerDevtoolPlugin(name) {
+  if (devtoolPlugins.has(name)) {
+    return;
+  }
   devtoolPlugins.add(name);
-  devtoolPluginsChanged?.();
+  devtoolPluginsChangedListeners.forEach((listener) => listener());
 }
 
+globalThis.__RADON_reloadJS = function () {
+  DevSettings.reload("Radon IDE");
+};
+
 let navigationHistory = new Map();
+let mainApplicationKey = undefined;
+
+// we register this component as a way of forcing the main app to be re-mounted
+// AppRegistry doesn't have a method to foce a re-mount hence we call runApplication
+// for this dummy component and then runApplication for the main app
+AppRegistry.registerComponent("__radon_dummy_component", () => View);
 
 const InternalImports = {
   get PREVIEW_APP_KEY() {
     return require("./preview").PREVIEW_APP_KEY;
   },
   get setupNetworkPlugin() {
-    return require("./network").setup;
-  },
-  get reduxDevtoolsExtensionCompose() {
-    return require("./plugins/redux-devtools").compose;
+    return require("./network/network").setup;
   },
   get setupRenderOutlinesPlugin() {
     return require("./render_outlines").setup;
   },
-};
-
-window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
-  return InternalImports.reduxDevtoolsExtensionCompose(...args);
+  get setupOrientationListeners() {
+    return require("./orientation/orientation").setup;
+  },
+  get setupInspectorAvailabilityListeners() {
+    return require("./inspector_availability").setup;
+  },
 };
 
 const RNInternals = require("./rn-internals/rn-internals");
@@ -57,10 +71,19 @@ function getCurrentScene() {
   return RNInternals.SceneTracker.getActiveScene().name;
 }
 
-function emptyNavigationHook() {
+function defaultNavigationHook({ onNavigationChange }) {
   return {
     getCurrentNavigationDescriptor: () => undefined,
-    requestNavigationChange: () => {},
+    requestNavigationChange: (navigationDescriptor) => {
+      if (navigationDescriptor.id === "__BACK__" || navigationDescriptor.id === "__HOME__") {
+        // default navigator doesn't support back, for back/home navigation we send empty navigation
+        // descriptor which is interpreted as initial navigation state. Using undefined for the
+        // name will result in the Url bar showing the default starting label ("/")
+        onNavigationChange({ id: "__HOME__", name: undefined, canGoBack: false });
+      } else {
+        onNavigationChange(navigationDescriptor);
+      }
+    },
   };
 }
 
@@ -77,6 +100,18 @@ function getRendererConfig() {
   return undefined;
 }
 
+function sourceInfoFromInspectorData(inspectorData) {
+  const source = inspectorData.source;
+  if (source) {
+    return {
+      fileName: source.fileName,
+      line0Based: source.lineNumber - 1,
+      column0Based: source.columnNumber - 1,
+    };
+  }
+  return undefined;
+}
+
 /**
  * Return an array of component data representing a stack of components by traversing
  * the component hierarchy up from the startNode.
@@ -88,7 +123,7 @@ function getRendererConfig() {
 function extractComponentStack(startNode, viewDataHierarchy) {
   const rendererConfig = getRendererConfig();
 
-  let stackItems = [];
+  const componentStack = [];
   if (rendererConfig) {
     // when we find renderer config with getInspectorDataForInstance we use fiber node
     // "return" property to traverse the component hierarchy
@@ -96,32 +131,67 @@ function extractComponentStack(startNode, viewDataHierarchy) {
 
     // Optimization: we break after reaching fiber node corresponding to OffscreenComponent
     while (node && node.tag !== OffscreenComponentReactTag) {
-      const data = rendererConfig.getInspectorDataForInstance(node);
-      const item = data.hierarchy[data.hierarchy.length - 1];
-      stackItems.push(item);
-      node = node.return;
+      try {
+        const data = rendererConfig.getInspectorDataForInstance(node);
+        const item = data.hierarchy[data.hierarchy.length - 1];
+
+        const inspectorData = item.getInspectorData(findNodeHandle);
+        let source = sourceInfoFromInspectorData(inspectorData);
+
+        const debugStack = node._debugStack;
+        if (debugStack && debugStack.stack) {
+          // the place where the component is "rendered" is indicated by the second frame
+          // on the debug stack (at index 1):
+          const parsedStack = RNInternals.parseErrorStack(debugStack.stack);
+          if (parsedStack.length > 1) {
+            const { file, lineNumber, column } = parsedStack[1];
+            source = {
+              fileName: file,
+              line0Based: lineNumber - 1,
+              column0Based: column - 1,
+            };
+          }
+        }
+
+        if (source) {
+          componentStack.push({
+            name: item.name,
+            source,
+            measure: inspectorData.measure,
+          });
+        }
+
+        node = node.return;
+      } catch (e) {
+        // In the preview mode getInspectorDataForInstance may throw an error
+        // in the root node, because it is unmounted. We break the loop in this case,
+        // as there is no more information to extract.
+        break;
+      }
     }
   } else if (viewDataHierarchy && viewDataHierarchy.length > 0) {
     // fallback to using viewDataHierarchy
-    stackItems = viewDataHierarchy.reverse();
+    viewDataHierarchy.reverse().forEach((item) => {
+      let inspectorData = {};
+      if (item.getInspectorData) {
+        inspectorData = item.getInspectorData(findNodeHandle);
+      }
+      const source = sourceInfoFromInspectorData(inspectorData);
+      if (source) {
+        componentStack.push({
+          name: item.name,
+          source,
+          measure: inspectorData.measure,
+        });
+      }
+    });
   }
 
-  const componentStack = [];
-  stackItems.forEach((item) => {
-    const inspectorData = item.getInspectorData(findNodeHandle);
-    if (inspectorData.source) {
-      componentStack.push({
-        name: item.name,
-        source: inspectorData.source,
-        measure: inspectorData.measure,
-      });
-    }
-  });
   return componentStack;
 }
 
 function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, callback) {
-  const { width: screenWidth, height: screenHeight } = Dimensions.get("screen");
+  const { width: screenWidth, height: screenHeight } = DimensionsObserver.getScreenDimensions();
 
   RNInternals.getInspectorDataForViewAtPoint(
     mainContainerRef.current,
@@ -151,14 +221,9 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
             new Promise((res, rej) => {
               try {
                 inspectorData.measure((_x, _y, viewWidth, viewHeight, pageX, pageY) => {
-                  const source = inspectorData.source;
                   res({
                     componentName: inspectorData.name,
-                    source: {
-                      fileName: source.fileName,
-                      line0Based: source.lineNumber - 1,
-                      column0Based: source.columnNumber - 1,
-                    },
+                    source: inspectorData.source,
                     frame: {
                       x: pageX / screenWidth,
                       y: pageY / screenHeight,
@@ -168,7 +233,7 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
                   });
                 });
               } catch (e) {
-                rej(e);
+                res({ componentName: inspectorData.name, source: inspectorData.source });
               }
             })
         )
@@ -183,17 +248,12 @@ function getInspectorDataForCoordinates(mainContainerRef, x, y, requestStack, ca
 }
 
 export function AppWrapper({ children, initialProps, fabric }) {
+  if (!mainApplicationKey) {
+    mainApplicationKey = getCurrentScene();
+  }
   const rootTag = useContext(RootTagContext);
   const [hasLayout, setHasLayout] = useState(false);
   const mainContainerRef = useRef();
-  const latestRouteListRef = useRef();
-
-  const mountCallback = initialProps?.__RNIDE_onMount;
-  useEffect(() => {
-    mountCallback?.();
-  }, [mountCallback]);
-
-  const layoutCallback = initialProps?.__RNIDE_onLayout;
 
   const handleNavigationChange = useCallback((navigationDescriptor) => {
     navigationHistory.set(navigationDescriptor.id, navigationDescriptor);
@@ -202,6 +262,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
       data: {
         displayName: navigationDescriptor.name,
         id: navigationDescriptor.id,
+        canGoBack: navigationDescriptor.canGoBack,
       },
     });
   });
@@ -213,7 +274,12 @@ export function AppWrapper({ children, initialProps, fabric }) {
     });
   }, []);
 
-  const useNavigationMainHook = navigationPlugins[0]?.plugin.mainHook || emptyNavigationHook;
+  const navigationPluginHook = navigationPlugins[0]?.plugin.mainHook;
+  const usesDefaultNavigationHook =
+    initialProps?.__radon_previewKey !== undefined || !navigationPluginHook;
+  const useNavigationMainHook = usesDefaultNavigationHook
+    ? defaultNavigationHook
+    : navigationPluginHook;
   const { requestNavigationChange } = useNavigationMainHook({
     onNavigationChange: handleNavigationChange,
     onRouteListChange: handleRouteListChange,
@@ -228,35 +294,59 @@ export function AppWrapper({ children, initialProps, fabric }) {
         );
         throw new Error("Preview not found");
       }
+      const urlPrefix = previewKey.startsWith("sb://") ? "sb:" : "preview:";
       AppRegistry.runApplication(InternalImports.PREVIEW_APP_KEY, {
         rootTag,
-        initialProps: { ...initialProps, previewKey },
+        initialProps: {
+          ...initialProps,
+          __radon_onLayout: undefined,
+          __radon_nextNavigationDescriptor: {
+            id: previewKey,
+            name: urlPrefix + preview.name,
+            canGoBack: true,
+          },
+          __radon_previewKey: previewKey,
+        },
         fabric,
       });
-      const urlPrefix = previewKey.startsWith("sb://") ? "sb:" : "preview:";
-      handleNavigationChange({ id: previewKey, name: urlPrefix + preview.name });
     },
     [rootTag, handleNavigationChange, initialProps, fabric]
   );
 
-  const closePreview = useCallback(() => {
-    let closePromiseResolve;
-    const closePreviewPromise = new Promise((resolve) => {
-      closePromiseResolve = resolve;
-    });
-    if (getCurrentScene() === InternalImports.PREVIEW_APP_KEY) {
-      AppRegistry.runApplication("main", {
-        rootTag,
-        initialProps: {
-          __RNIDE_onLayout: closePromiseResolve,
-        },
-        fabric,
+  const openMainApp = useCallback(
+    (nextNavigationDescriptor, forceRerender) => {
+      let appOpenPromiseResolve;
+      const appOpenPromise = new Promise((resolve) => {
+        appOpenPromiseResolve = resolve;
       });
-    } else {
-      closePromiseResolve();
-    }
-    return closePreviewPromise;
-  }, [rootTag, fabric]);
+
+      const mainAppKey = mainApplicationKey ?? "main";
+      if (getCurrentScene() !== mainAppKey || forceRerender) {
+        const runApplication = () =>
+          AppRegistry.runApplication(mainAppKey, {
+            rootTag,
+            initialProps: {
+              ...initialProps,
+              __radon_onLayout: appOpenPromiseResolve,
+              __radon_nextNavigationDescriptor: nextNavigationDescriptor,
+              __radon_previewKey: undefined,
+            },
+            fabric,
+          });
+        if (forceRerender) {
+          AppRegistry.runApplication("__radon_dummy_component", { rootTag, fabric });
+          setTimeout(runApplication, 0);
+        } else {
+          runApplication();
+        }
+      } else {
+        nextNavigationDescriptor && requestNavigationChange(nextNavigationDescriptor);
+        appOpenPromiseResolve();
+      }
+      return appOpenPromise;
+    },
+    [rootTag, fabric]
+  );
 
   const showStorybookStory = useCallback(
     async (componentTitle, storyName) => {
@@ -281,11 +371,11 @@ export function AppWrapper({ children, initialProps, fabric }) {
         params: message.params || {},
       };
 
-      closePreview().then(() => {
-        navigationDescriptor && requestNavigationChange(navigationDescriptor);
-      });
+      const forceRerenderMainApp =
+        navigationDescriptor.id === "__HOME__" && usesDefaultNavigationHook;
+      openMainApp(navigationDescriptor, forceRerenderMainApp);
     },
-    [openPreview, closePreview, requestNavigationChange]
+    [openPreview, openMainApp, requestNavigationChange]
   );
 
   useEffect(() => {
@@ -296,7 +386,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
           openPreview(data.previewId);
           break;
         case "openUrl":
-          closePreview().then(() => {
+          openMainApp(undefined, false).then(() => {
             const url = data.url;
             Linking.openURL(url);
           });
@@ -323,7 +413,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
     };
     inspectorBridge.addMessageListener(listener);
     return () => inspectorBridge.removeMessageListener(listener);
-  }, [openPreview, closePreview, openNavigation, showStorybookStory]);
+  }, [openPreview, openMainApp, openNavigation, showStorybookStory]);
 
   useEffect(() => {
     const LoadingView = RNInternals.LoadingView;
@@ -342,6 +432,9 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
     InternalImports.setupRenderOutlinesPlugin();
     InternalImports.setupNetworkPlugin();
+    const orientationListenersCleanup = InternalImports.setupOrientationListeners();
+    const inspectorAvailabilityListenersCleanup =
+      InternalImports.setupInspectorAvailabilityListeners();
 
     const originalErrorHandler = global.ErrorUtils.getGlobalHandler();
     LogBox.ignoreAllLogs(true);
@@ -360,6 +453,8 @@ export function AppWrapper({ children, initialProps, fabric }) {
     global.ErrorUtils.setGlobalHandler(wrappedGlobalErrorHandler);
     return () => {
       global.ErrorUtils.setGlobalHandler(originalErrorHandler);
+      orientationListenersCleanup();
+      inspectorAvailabilityListenersCleanup();
     };
   }, []);
 
@@ -373,7 +468,11 @@ export function AppWrapper({ children, initialProps, fabric }) {
           navigationPlugins: navigationPlugins.map((plugin) => plugin.name),
         },
       });
-      devtoolPluginsChanged = () => {
+
+      const nextNavigationDescriptor = initialProps?.__radon_nextNavigationDescriptor;
+      nextNavigationDescriptor && requestNavigationChange(nextNavigationDescriptor);
+
+      const pluginsChangedCallback = () => {
         inspectorBridge.sendMessage({
           type: "devtoolPluginsChanged",
           data: {
@@ -381,20 +480,37 @@ export function AppWrapper({ children, initialProps, fabric }) {
           },
         });
       };
-      devtoolPluginsChanged();
+      pluginsChangedCallback();
+
+      devtoolPluginsChangedListeners.add(pluginsChangedCallback);
       return () => {
-        devtoolPluginsChanged = undefined;
+        devtoolPluginsChangedListeners.delete(pluginsChangedCallback);
       };
     }
   }, [hasLayout]);
+
+  const onLayoutCallback = initialProps?.__radon_onLayout;
 
   return (
     <View
       ref={mainContainerRef}
       style={{ flex: 1 }}
-      onLayout={() => {
-        layoutCallback?.();
+      onLayout={(event) => {
+        onLayoutCallback?.();
         setHasLayout(true);
+
+        // iPad has issues with bugged Dimensions API, so we use the onLayout event
+        // {width, height} of the main view wrapper to determine dimension changes
+        // Android, on the other hand, has issues with determining layout {width, height}
+        // after LogBox appears (because LogBox adds StatusBar for some reason),
+        // so we use Dimensions.get("window") to get the current dimensions.
+        if (Platform.OS === "android") {
+          const { width, height } = Dimensions.get("window");
+          DimensionsObserver.emitDimensionsChange({ width, height });
+        } else {
+          const { width, height } = event.nativeEvent.layout;
+          DimensionsObserver.emitDimensionsChange({ width, height });
+        }
       }}>
       {children}
     </View>

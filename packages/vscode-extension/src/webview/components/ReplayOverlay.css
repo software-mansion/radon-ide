@@ -1,4 +1,5 @@
 .replay-overlay {
+  z-index: var(--replay-z-index); /* defined in ReplayUI.css */
   position: fixed;
   top: 0;
   left: 0;
@@ -81,6 +82,35 @@
   flex-direction: row;
   gap: 5px;
   align-items: center;
+  z-index: var(--replay-controls-z-index); /* defined in ReplayUI.css */
+}
+
+.replay-controls-actions {
+  display: flex;
+  flex-direction: row;
+  gap: 5px;
+}
+
+.replay-controls-steps {
+  display: flex;
+  flex-direction: row;
+  gap: 1px;
+}
+
+.replay-controls-left {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.replay-controls-right {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.replay-controls-step-separator {
+  width: 1px;
+  height: 20px;
+  background-color: #aaa;
 }
 
 .replay-controls-pad {
@@ -124,6 +154,7 @@
   background-color: var(--swm-replay-len-select-background);
   border-radius: 18px 18px 18px 18px;
   transform: translateY(4px);
+  z-index: 2; /* must equal --replay-controls-z-index, does not have access to variable because of portal */
 }
 
 .len-select-viewport {

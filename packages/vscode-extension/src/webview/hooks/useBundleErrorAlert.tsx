@@ -1,30 +1,26 @@
-import { BundleErrorDescriptor } from "../../common/Project";
-import IconButton from "../components/shared/IconButton";
+import { BundleErrorDescriptor } from "../../common/State";
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
 import { useToggleableAlert } from "../providers/AlertProvider";
-import { useDevices } from "../providers/DevicesProvider";
 import { useProject } from "../providers/ProjectProvider";
 
 function BundleErrorActions() {
   const { project } = useProject();
-  const { deviceSessionsManager } = useDevices();
   return (
     <>
-      <IconButton
-        type="secondary"
+      <Button
+        secondary
         onClick={() => {
           project.focusDebugConsole();
-        }}
-        tooltip={{ label: "Open debug console", side: "bottom" }}>
-        <span className="codicon codicon-output" />
-      </IconButton>
-      <IconButton
-        type="secondary"
+        }}>
+        Open Debug Console
+      </Button>
+      <Button
         onClick={() => {
-          deviceSessionsManager.reloadCurrentSession("autoReload");
-        }}
-        tooltip={{ label: "Reload Metro", side: "bottom" }}>
+          project.reloadCurrentSession("autoReload");
+        }}>
         <span className="codicon codicon-refresh" />
-      </IconButton>
+        Reload
+      </Button>
     </>
   );
 }
@@ -36,6 +32,6 @@ export const bundleErrorAlert = {
   actions: <BundleErrorActions />,
 };
 
-export function useBundleErrorAlert(errorDescriptor: BundleErrorDescriptor | undefined) {
-  useToggleableAlert(errorDescriptor !== undefined, bundleErrorAlert);
+export function useBundleErrorAlert(errorDescriptor: BundleErrorDescriptor | null | undefined) {
+  useToggleableAlert(errorDescriptor !== null && errorDescriptor !== undefined, bundleErrorAlert);
 }

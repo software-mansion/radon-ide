@@ -1,21 +1,11 @@
 import { z } from "zod";
 
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
-import { getToolSchema, invokeToolCall } from "../shared/api";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { readLogsToolExec, screenshotToolExec } from "./toolExecutors";
 import { ToolSchema } from "./models";
-import { screenshotToolExec } from "./toolExecutors";
-import { ConnectionListener } from "../shared/ConnectionListener";
+import { invokeToolCall } from "../shared/api";
 
-const PLACEHOLDER_ID = "3241"; // This placeholder is needed by the API, but the value doesn't matter
-
-function buildZodSchema(toolSchema: ToolSchema): z.ZodRawShape {
-  const props = Object.values(toolSchema.inputSchema.properties);
-  const entries = props.map((v) => [v.title, z.string()]);
-  const obj = Object.fromEntries(entries);
-  return obj;
-}
-
-export async function registerMcpTools(server: McpServer, connectionListener: ConnectionListener) {
+export function registerLocalMcpTools(server: McpServer) {
   server.registerTool(
     "view_screenshot",
     {
@@ -25,19 +15,44 @@ export async function registerMcpTools(server: McpServer, connectionListener: Co
     screenshotToolExec
   );
 
-  const toolSchema = await getToolSchema(connectionListener);
+  server.registerTool(
+    "view_application_logs",
+    {
+      description:
+        "Returns all the build, bundling and runtime logs. Use this function whenever the user has any issue with the app, " +
+        "if it's builds are failing, or when there are errors in the console. These logs are always a useful debugging aid.",
+      inputSchema: {},
+    },
+    readLogsToolExec
+  );
+}
 
-  for (const tool of toolSchema.tools) {
-    const zodSchema = buildZodSchema(tool);
-    server.registerTool(
-      tool.name,
-      {
-        description: tool.description,
-        inputSchema: zodSchema,
-      },
-      async (args) => {
-        return await invokeToolCall(tool.name, args, PLACEHOLDER_ID, connectionListener);
+function buildZodSchema(toolSchema: ToolSchema): z.ZodRawShape {
+  const props = Object.values(toolSchema.inputSchema.properties);
+  const entries = props.map((v) => [v.title, z.string()]);
+  const obj = Object.fromEntries(entries);
+  return obj;
+}
+
+export function registerRemoteMcpTool(
+  server: McpServer,
+  tool: ToolSchema,
+  invokeToolErrorHandler: (error: Error) => void
+) {
+  const registeredTool = server.registerTool(
+    tool.name,
+    {
+      description: tool.description,
+      inputSchema: buildZodSchema(tool),
+    },
+    async (args) => {
+      try {
+        return await invokeToolCall(tool.name, args);
+      } catch (error) {
+        invokeToolErrorHandler(error as Error);
+        throw error;
       }
-    );
-  }
+    }
+  );
+  return registeredTool;
 }

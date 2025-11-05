@@ -1,90 +1,159 @@
 import assert from "assert";
 import { commands, debug, DebugConsoleMode, DebugSessionCustomEvent, Disposable } from "vscode";
 import * as vscode from "vscode";
+import { Cdp } from "vscode-cdp-proxy";
 import { disposeAll } from "../utilities/disposables";
-import { sleep } from "../utilities/retry";
 import { startDebugging } from "./startDebugging";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { CancelToken } from "../utilities/cancelToken";
-
-const PING_TIMEOUT = 1000;
+import { SourceInfo } from "../common/Project";
+import { NetworkBridgeSendMethodArgs } from "../project/networkBridge";
 
 const MASTER_DEBUGGER_TYPE = "com.swmansion.react-native-debugger";
-const OLD_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
-const PROXY_JS_DEBUGGER_TYPE = "com.swmansion.proxy-debugger";
+const CUSTOM_JS_DEBUGGER_TYPE = "com.swmansion.js-debugger";
+const VSCODE_JS_DEBUGGER_TYPE = "com.swmansion.proxy-debugger";
 
 export const DEBUG_CONSOLE_LOG = "RNIDE_consoleLog";
 export const DEBUG_PAUSED = "RNIDE_paused";
 export const DEBUG_RESUMED = "RNIDE_continued";
+export const SCRIPT_PARSED = "RNIDE_scriptParsed";
+export const BINDING_CALLED = "RNIDE_bindingCalled";
+export const RNIDE_NETWORK_EVENT = "RNIDE_networkEvent";
 
-export type DebugSessionDelegate = {
-  onConsoleLog?(event: DebugSessionCustomEvent): void;
-  onDebuggerPaused?(event: DebugSessionCustomEvent): void;
-  onDebuggerResumed?(event: DebugSessionCustomEvent): void;
-  onProfilingCPUStarted?(event: DebugSessionCustomEvent): void;
-  onProfilingCPUStopped?(event: DebugSessionCustomEvent): void;
-  onBindingCalled?(event: DebugSessionCustomEvent): void;
-  onDebugSessionTerminated?(): void;
-};
+export enum RNIDE_NetworkMethod {
+  Enable = "RNIDE_enableNetworkInspector",
+  Disable = "RNIDE_disableNetworkInspector",
+  GetResponseBody = "RNIDE_getResponseBody",
+  StoreResponseBody = "RNIDE_storeResponseBody",
+}
 
 export interface JSDebugConfiguration {
   websocketAddress: string;
   sourceMapPathOverrides: Record<string, string>;
   displayDebuggerOverlay: boolean;
-  installConnectRuntime?: boolean;
   isUsingNewDebugger: boolean;
   expoPreludeLineCount: number;
 }
 
 export type DebugSource = { filename?: string; line1based?: number; column0based?: number };
 
-type DebugSessionOptions = {
+export type DebugSessionOptions = {
   displayName: string;
   useParentDebugSession?: boolean;
   suppressDebugToolbar?: boolean;
+  useCustomJSDebugger?: boolean;
 };
 
-export class DebugSession implements Disposable {
+type DebugSessionCustomEventListener = (event: DebugSessionCustomEvent) => void;
+
+export interface DebugSession {
+  // debug console conreols -- perhaps this should be moved to a separate interface?
+  appendDebugConsoleEntry(message: string, type: string, source?: DebugSource): Promise<void>;
+
+  // lifecycle methods
+  startParentDebugSession(): Promise<void>;
+  startJSDebugSession(configuration: JSDebugConfiguration): Promise<void>;
+  restart(): Promise<void>;
+
+  // debugger controls
+  resumeDebugger(): void;
+  stepOverDebugger(): void;
+  stepOutDebugger(): void;
+  stepIntoDebugger(): void;
+  evaluateExpression(params: Cdp.Runtime.EvaluateParams): Promise<Cdp.Runtime.EvaluateResult>;
+  addBinding(name: string): Promise<void>;
+  invokeNetworkMethod<T>(
+    method: RNIDE_NetworkMethod,
+    args?: Record<string, unknown>
+  ): Promise<T | undefined>;
+
+  // Profiling controls
+  startProfilingCPU(): Promise<void>;
+  stopProfilingCPU(): Promise<void>;
+
+  // source map related
+  findOriginalPosition(sourceInfo: SourceInfo): Promise<SourceInfo>;
+
+  // events
+  onConsoleLog(listener: DebugSessionCustomEventListener): Disposable;
+  onDebuggerPaused(listener: DebugSessionCustomEventListener): Disposable;
+  onDebuggerResumed(listener: DebugSessionCustomEventListener): Disposable;
+  onProfilingCPUStarted(listener: DebugSessionCustomEventListener): Disposable;
+  onProfilingCPUStopped(listener: DebugSessionCustomEventListener): Disposable;
+  onBindingCalled(listener: (event: Cdp.Runtime.BindingCalledEvent) => void): Disposable;
+  onScriptParsed(listener: (event: { isMainBundle: boolean }) => void): Disposable;
+  onDebugSessionTerminated(listener: () => void): Disposable;
+  onJSDebugSessionStarted(listener: () => void): Disposable;
+  onNetworkEvent(listener: DebugSessionCustomEventListener): Disposable;
+}
+
+export class DebugSessionImpl implements DebugSession, Disposable {
   private parentDebugSession: vscode.DebugSession | undefined;
   private jsDebugSession: vscode.DebugSession | undefined;
   private cancelStartDebuggingToken: CancelToken = new CancelToken();
 
   private disposables: Disposable[] = [];
 
-  private currentWsTarget: string | undefined;
+  private consoleLogEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
+  private debuggerPausedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
+  private debuggerResumedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
+  private profilingCPUStartedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
+  private profilingCPUStoppedEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
+  private bindingCalledEventEmitter = new vscode.EventEmitter<Cdp.Runtime.BindingCalledEvent>();
+  private debugSessionTerminatedEventEmitter = new vscode.EventEmitter<void>();
+  private scriptParsedEventEmitter = new vscode.EventEmitter<{ isMainBundle: boolean }>();
+  private jsDebugSessionStartedEmitter = new vscode.EventEmitter<void>();
+  private networkEventEmitter = new vscode.EventEmitter<DebugSessionCustomEvent>();
 
-  constructor(
-    private delegate: DebugSessionDelegate,
-    private options: DebugSessionOptions = { displayName: "Radon IDE Debugger" }
-  ) {
+  public onConsoleLog = this.consoleLogEventEmitter.event;
+  public onDebuggerPaused = this.debuggerPausedEventEmitter.event;
+  public onDebuggerResumed = this.debuggerResumedEventEmitter.event;
+  public onProfilingCPUStarted = this.profilingCPUStartedEventEmitter.event;
+  public onProfilingCPUStopped = this.profilingCPUStoppedEventEmitter.event;
+  public onBindingCalled = this.bindingCalledEventEmitter.event;
+  public onDebugSessionTerminated = this.debugSessionTerminatedEventEmitter.event;
+  public onScriptParsed = this.scriptParsedEventEmitter.event;
+  public onJSDebugSessionStarted = this.jsDebugSessionStartedEmitter.event;
+  public onNetworkEvent = this.networkEventEmitter.event;
+
+  constructor(private options: DebugSessionOptions = { displayName: "Radon IDE Debugger" }) {
     this.disposables.push(
       debug.onDidTerminateDebugSession((session) => {
         if (session.id === this.jsDebugSession?.id) {
-          this.delegate.onDebugSessionTerminated?.();
+          this.debugSessionTerminatedEventEmitter.fire();
         }
       })
     );
     this.disposables.push(
       debug.onDidReceiveDebugSessionCustomEvent((event) => {
+        if (event.session.id !== this.jsDebugSession?.id) {
+          return;
+        }
         switch (event.event) {
           case DEBUG_CONSOLE_LOG:
-            this.delegate.onConsoleLog?.(event);
+            this.consoleLogEventEmitter.fire(event);
             break;
           case DEBUG_PAUSED:
-            this.delegate.onDebuggerPaused?.(event);
+            this.debuggerPausedEventEmitter.fire(event);
             break;
           case DEBUG_RESUMED:
-            this.delegate.onDebuggerResumed?.(event);
+            this.debuggerResumedEventEmitter.fire(event);
             break;
           case "RNIDE_profilingCPUStarted":
-            this.delegate.onProfilingCPUStarted?.(event);
+            this.profilingCPUStartedEventEmitter.fire(event);
             break;
           case "RNIDE_profilingCPUStopped":
-            this.delegate.onProfilingCPUStopped?.(event);
+            this.profilingCPUStoppedEventEmitter.fire(event);
             break;
-          case "RNIDE_bindingCalled":
-            this.delegate.onBindingCalled?.(event);
+          case BINDING_CALLED:
+            this.bindingCalledEventEmitter.fire(event.body);
+            break;
+          case SCRIPT_PARSED:
+            this.scriptParsedEventEmitter.fire(event.body);
+            break;
+          case RNIDE_NETWORK_EVENT:
+            this.networkEventEmitter.fire(event);
             break;
           default:
             // ignore other events
@@ -92,10 +161,33 @@ export class DebugSession implements Disposable {
         }
       })
     );
+    this.disposables.push(
+      this.consoleLogEventEmitter,
+      this.debuggerPausedEventEmitter,
+      this.debuggerResumedEventEmitter,
+      this.profilingCPUStartedEventEmitter,
+      this.profilingCPUStoppedEventEmitter,
+      this.bindingCalledEventEmitter,
+      this.debugSessionTerminatedEventEmitter
+    );
   }
 
-  public get websocketTarget() {
-    return this.currentWsTarget;
+  public async findOriginalPosition(sourceInfo: SourceInfo): Promise<SourceInfo> {
+    try {
+      const jsDebugSession = this.jsDebugSession;
+      if (!jsDebugSession) {
+        throw new Error("Coun't get original source position: JS debugger is not connected");
+      }
+      const response = await jsDebugSession.customRequest("RNIDE_findOriginalPosition", sourceInfo);
+      return {
+        fileName: response.fileName,
+        line0Based: response.line0Based,
+        column0Based: response.column0Based,
+      };
+    } catch (error) {
+      Logger.error("Error getting original source position from the debugger", error);
+      throw error;
+    }
   }
 
   public async startParentDebugSession() {
@@ -137,10 +229,9 @@ export class DebugSession implements Disposable {
       this.jsDebugSession = undefined;
       await debug.stopDebugging(jsDebugSession);
     }
-    this.currentWsTarget = undefined;
   }
 
-  public async stop() {
+  private async stop() {
     this.cancelStartingDebugSession();
     await this.stopJsDebugSession();
     if (this.parentDebugSession) {
@@ -165,8 +256,20 @@ export class DebugSession implements Disposable {
       await this.startParentDebugSession();
     }
 
-    const isUsingNewDebugger = configuration.isUsingNewDebugger;
-    const debuggerType = isUsingNewDebugger ? PROXY_JS_DEBUGGER_TYPE : OLD_JS_DEBUGGER_TYPE;
+    // "debugger backend" refers to the React Native VM, while frontend is what
+    // the extension is using to display logs, control breakpoints, etc.
+    const isBackendUsingNewDebugger = configuration.isUsingNewDebugger;
+
+    // when the "new debugger backend" is enabled (aka fusebox), we can use the
+    // vscode-js-debug backed implementation on the frontend. For older RN versions
+    // we need to use our custom implementation. We also allow for the custom implementation
+    // to be selected in the launch configuration, as while not feature complete, it performs
+    // better in some cases.
+    const shouldUseCustomDebuggerFrontend =
+      !isBackendUsingNewDebugger || this.options.useCustomJSDebugger;
+    const debuggerType = shouldUseCustomDebuggerFrontend
+      ? CUSTOM_JS_DEBUGGER_TYPE
+      : VSCODE_JS_DEBUGGER_TYPE;
 
     const extensionPath = extensionContext.extensionUri.path;
 
@@ -178,7 +281,7 @@ export class DebugSession implements Disposable {
         type: debuggerType,
         name: this.options.displayName,
         request: "attach",
-        breakpointsAreRemovedOnContextCleared: isUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
+        breakpointsAreRemovedOnContextCleared: isBackendUsingNewDebugger ? false : true, // new debugger properly keeps all breakpoints in between JS reloads
         sourceMapPathOverrides: configuration.sourceMapPathOverrides,
         websocketAddress: configuration.websocketAddress,
         expoPreludeLineCount: configuration.expoPreludeLineCount,
@@ -206,9 +309,7 @@ export class DebugSession implements Disposable {
       debug.stopDebugging(this.jsDebugSession);
     }
     this.jsDebugSession = newDebugSession;
-    this.currentWsTarget = configuration.websocketAddress;
-
-    return true;
+    this.jsDebugSessionStartedEmitter.fire();
   }
 
   public resumeDebugger() {
@@ -222,22 +323,15 @@ export class DebugSession implements Disposable {
       sessionId: this.jsDebugSession?.id,
     });
   }
-
-  public async pingJsDebugSessionWithTimeout() {
-    if (!this.jsDebugSession) {
-      return false;
-    }
-    const resultPromise = this.jsDebugSession.customRequest("RNIDE_ping").then((response) => {
-      return !!response.result;
+  public stepOutDebugger() {
+    commands.executeCommand("workbench.action.debug.stepOut", undefined, {
+      sessionId: this.jsDebugSession?.id,
     });
-    const timeout = sleep(PING_TIMEOUT).then(() => {
-      throw new Error("Ping timeout");
-    });
-    return Promise.race([resultPromise, timeout]).catch((_e) => false);
   }
-
-  public dispatchRadonAgentMessage(data: any) {
-    this.jsDebugSession?.customRequest("RNIDE_dispatchRadonAgentMessage", data);
+  public stepIntoDebugger() {
+    commands.executeCommand("workbench.action.debug.stepInto", undefined, {
+      sessionId: this.jsDebugSession?.id,
+    });
   }
 
   public async startProfilingCPU() {
@@ -250,6 +344,35 @@ export class DebugSession implements Disposable {
 
   public async appendDebugConsoleEntry(message: string, type: string, source?: DebugSource) {
     await this.parentDebugSession?.customRequest("RNIDE_log_message", { message, type, source });
+  }
+
+  public async evaluateExpression(
+    params: Cdp.Runtime.EvaluateParams
+  ): Promise<Cdp.Runtime.EvaluateResult> {
+    if (!this.jsDebugSession) {
+      throw new Error("JS Debug session is not running");
+    }
+    const response = await this.jsDebugSession.customRequest("RNIDE_evaluate", params);
+    return response;
+  }
+
+  public async addBinding(name: string) {
+    if (!this.jsDebugSession) {
+      throw new Error("JS Debug session is not running");
+    }
+    await this.jsDebugSession.customRequest("RNIDE_addBinding", { name });
+  }
+
+  public async invokeNetworkMethod<T>(
+    method: RNIDE_NetworkMethod,
+    args?: NetworkBridgeSendMethodArgs
+  ) {
+    if (!this.jsDebugSession) {
+      throw new Error("JS Debug session is not running");
+    }
+
+    const result = await this.jsDebugSession.customRequest(method, args);
+    return result as T;
   }
 
   private cancelStartingDebugSession() {

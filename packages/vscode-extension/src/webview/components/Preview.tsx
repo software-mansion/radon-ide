@@ -1,31 +1,40 @@
-import { useState, useRef, useEffect, MouseEvent, WheelEvent } from "react";
+import { useState, useRef, useEffect, MouseEvent, WheelEvent, useMemo } from "react";
+import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
-import { clamp, debounce } from "lodash";
-import { useProject } from "../providers/ProjectProvider";
-import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceContants";
+import { clamp, debounce, throttle } from "lodash";
+import { Platform, useProject } from "../providers/ProjectProvider";
+import {
+  AndroidSupportedDevices,
+  DeviceProperties,
+  iOSSupportedDevices,
+} from "../utilities/deviceConstants";
 import PreviewLoader from "./PreviewLoader";
 import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
 import { useBundleErrorAlert } from "../hooks/useBundleErrorAlert";
 import Debugger from "./Debugger";
 import { useNativeRebuildAlert } from "../hooks/useNativeRebuildAlert";
-import {
-  Frame,
-  InspectDataStackItem,
-  ZoomLevelType,
-  InspectStackData,
-  MultimediaData,
-} from "../../common/Project";
-import { useResizableProps } from "../hooks/useResizableProps";
+import { Frame, InspectDataStackItem, InspectStackData } from "../../common/Project";
 import ZoomControls from "./ZoomControls";
-import { throttle } from "../../utilities/throttle";
-import { Platform, useUtils } from "../providers/UtilsProvider";
-import DimensionsBox from "./DimensionsBox";
+import InspectOverlay from "./InspectOverlay";
 import ReplayUI from "./ReplayUI";
 import MjpegImg from "../Preview/MjpegImg";
 import { useKeyPresses } from "../Preview/hooks";
 import Device from "../Preview/Device";
 import RenderOutlinesOverlay from "./RenderOutlinesOverlay";
 import DelayedFastRefreshIndicator from "./DelayedFastRefreshIndicator";
+import { previewToAppCoordinates } from "../utilities/transformAppCoordinates";
+import { useStore } from "../providers/storeProvider";
+import InspectorUnavailableBox from "./InspectorUnavailableBox";
+import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
+import { SendFilesOverlay } from "./SendFilesOverlay";
+import {
+  DevicePlatform,
+  InspectorAvailabilityStatus,
+  InspectorBridgeStatus,
+  MultimediaData,
+  ZoomLevelType,
+} from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -40,7 +49,7 @@ type Props = {
   onInspectorItemSelected: (item: InspectDataStackItem) => void;
   zoomLevel: ZoomLevelType;
   onZoomChanged: (zoomLevel: ZoomLevelType) => void;
-  replayData: MultimediaData | undefined;
+  replayData: MultimediaData | null | undefined;
   onReplayClose: () => void;
 };
 
@@ -71,53 +80,97 @@ function Preview({
   replayData,
   onReplayClose,
 }: Props) {
+  const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+
+  const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
+
+  const appOrientation = use$(selectedDeviceSessionState.applicationSession.appOrientation);
+  const bundleError = use$(selectedDeviceSessionState.applicationSession.bundleError);
+  const elementInspectorAvailability = use$(
+    selectedDeviceSessionState.applicationSession.elementInspectorAvailability
+  );
+  const inspectorBridgeStatus = use$(
+    selectedDeviceSessionState.applicationSession.inspectorBridgeStatus
+  );
+  const deviceInfo = use$(selectedDeviceSessionState.deviceInfo);
+  const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
+
   const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>(null);
   const wrapperDivRef = useRef<HTMLDivElement>(null);
   const [isPressing, setIsPressing] = useState(false);
   const [isMultiTouching, setIsMultiTouching] = useState(false);
   const [touchPoint, setTouchPoint] = useState<Point>({ x: 0.5, y: 0.5 });
   const [anchorPoint, setAnchorPoint] = useState<Point>({ x: 0.5, y: 0.5 });
-  const previewRef = useRef<HTMLImageElement>(null);
+  const previewRef = useRef<HTMLCanvasElement>(null);
   const [showPreviewRequested, setShowPreviewRequested] = useState(false);
+
+  const isUsingStaleBuild = use$(selectedDeviceSessionState.isUsingStaleBuild);
+  useNativeRebuildAlert(isUsingStaleBuild);
+
+  useEffect(() => {
+    setShowPreviewRequested(false);
+  }, [selectedDeviceSessionStatus]);
+
+  const [inspectorUnavailableBoxPosition, setInspectorUnavailableBoxPosition] =
+    useState<Point | null>(null);
   const { dispatchKeyPress, clearPressedKeys } = useKeyPresses();
 
-  const { selectedDeviceSession, project } = useProject();
+  const { project } = useProject();
 
-  const { sendTelemetry } = useUtils();
+  const hasFatalError = selectedDeviceSessionStatus === "fatalError";
 
-  const hasFatalError = selectedDeviceSession?.status === "fatalError";
-  const fatalErrorDescriptor = hasFatalError ? selectedDeviceSession.error : undefined;
+  const fatalErrorDescriptor = use$(() => {
+    const store = selectedDeviceSessionState.get();
+    return store && store.status === "fatalError" ? store.error : undefined;
+  });
 
-  const debugPaused = selectedDeviceSession?.isDebuggerPaused;
+  const isRunning = selectedDeviceSessionStatus === "running";
 
-  const isRunning = selectedDeviceSession?.status === "running";
-  const isRefreshing = isRunning && selectedDeviceSession.isRefreshing;
+  const isRefreshing = use$(() =>
+    isRunning ? selectedDeviceSessionState.applicationSession.isRefreshing.get() : false
+  );
+  const debugPaused = use$(() =>
+    isRunning || showPreviewRequested
+      ? selectedDeviceSessionState.applicationSession.isDebuggerPaused.get()
+      : false
+  );
 
-  const previewURL = selectedDeviceSession?.previewURL;
+  const previewURL = use$(selectedDeviceSessionState.previewURL);
 
-  const showDevicePreview =
-    selectedDeviceSession?.previewURL && (showPreviewRequested || isRunning);
+  const showDevicePreview = previewURL && (showPreviewRequested || isRunning);
+
+  const isAppDisconnected =
+    isRunning && inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
+  useApplicationDisconnectedAlert(isAppDisconnected);
 
   useFatalErrorAlert(fatalErrorDescriptor);
 
-  const bundleErrorDescriptor = isRunning ? selectedDeviceSession?.bundleError : undefined;
+  const bundleErrorDescriptor = isRunning ? bundleError : null;
   useBundleErrorAlert(bundleErrorDescriptor);
 
-  const openRebuildAlert = useNativeRebuildAlert();
-
-  function getTouchPosition(event: MouseEvent<HTMLDivElement>) {
+  /**
+   * Converts mouse event coordinates to normalized touch coordinates ([0-1] range)
+   * relative to the device preview image.
+   * Coordinate transformation handling when the device when the device is rotated,
+   * done in the sendTouches method in preview.ts.
+   */
+  function getNormalizedTouchCoordinates(event: MouseEvent<HTMLDivElement>) {
     const imgRect = previewRef.current!.getBoundingClientRect();
+
+    // Normalize coordinates to [0-1] range
     const x = (event.clientX - imgRect.left) / imgRect.width;
     const y = (event.clientY - imgRect.top) / imgRect.height;
-    const clampedX = clamp(x, 0, 1);
-    const clampedY = clamp(y, 0, 1);
+
+    let clampedX = clamp(x, 0, 1);
+    let clampedY = clamp(y, 0, 1);
     return { x: clampedX, y: clampedY };
   }
 
   function moveAnchorPoint(event: MouseEvent<HTMLDivElement>) {
     let { x: anchorX, y: anchorY } = anchorPoint;
     const { x: prevPointX, y: prevPointY } = touchPoint;
-    const { x: newPointX, y: newPointY } = getTouchPosition(event);
+    const { x: newPointX, y: newPointY } = getNormalizedTouchCoordinates(event);
     anchorX += newPointX - prevPointX;
     anchorY += newPointY - prevPointY;
     anchorX = clamp(anchorX, 0, 1);
@@ -134,12 +187,12 @@ function Preview({
       return;
     }
 
-    const { x, y } = getTouchPosition(event);
+    const { x, y } = getNormalizedTouchCoordinates(event);
     project.dispatchTouches([{ xRatio: x, yRatio: y }], type);
   }
 
   function sendMultiTouchForEvent(event: MouseEvent<HTMLDivElement>, type: MouseMove) {
-    const pt = getTouchPosition(event);
+    const pt = getNormalizedTouchCoordinates(event);
     sendMultiTouch(pt, type);
   }
 
@@ -161,45 +214,95 @@ function Preview({
     );
   }
 
-  function sendInspectUnthrottled(
+  const inspectElementAt = useMemo(
+    () =>
+      throttle(
+        (translatedX, translatedY, requestStack, showInspectStackModal, clientX, clientY) => {
+          project
+            .inspectElementAt(translatedX, translatedY, requestStack)
+            .then((inspectData) => {
+              if (requestStack && inspectData?.stack) {
+                if (showInspectStackModal) {
+                  setInspectStackData({
+                    requestLocation: {
+                      x: clientX,
+                      y: clientY,
+                    },
+                    stack: inspectData.stack,
+                  });
+                } else {
+                  // find first item w/o hide flag and open file
+                  const firstItem = inspectData.stack.find((item) => !item.hide);
+                  if (firstItem) {
+                    onInspectorItemSelected(firstItem);
+                  }
+                }
+              }
+              if (inspectData.frame) {
+                setInspectFrame(inspectData.frame);
+              }
+            })
+            .catch(() => {
+              // NOTE: we can safely ignore errors, we'll simply not show the frame in that case
+            });
+        },
+        50,
+        { trailing: true }
+      ),
+    [project, onInspectorItemSelected]
+  );
+
+  function sendInspect(
     event: MouseEvent<HTMLDivElement>,
     type: MouseMove | "Leave" | "RightButtonDown"
   ) {
+    if (selectedDeviceSessionStatus !== "running") {
+      return;
+    }
+    if (elementInspectorAvailability !== InspectorAvailabilityStatus.Available) {
+      return;
+    }
     if (type === "Leave") {
       return;
     }
     if (type === "RightButtonDown") {
-      sendTelemetry("inspector:show-component-stack", {});
+      project.sendTelemetry("inspector:show-component-stack", {});
     }
-    const { x: clampedX, y: clampedY } = getTouchPosition(event);
+
+    console.log("sendInspect", type);
+    const clampedCoordinates = getNormalizedTouchCoordinates(event);
+    const { x: translatedX, y: translatedY } = previewToAppCoordinates(
+      appOrientation,
+      rotation,
+      clampedCoordinates
+    );
+
     const requestStack = type === "Down" || type === "RightButtonDown";
     const showInspectStackModal = type === "RightButtonDown";
-    project.inspectElementAt(clampedX, clampedY, requestStack, (inspectData) => {
-      if (requestStack && inspectData?.stack) {
-        if (showInspectStackModal) {
-          setInspectStackData({
-            requestLocation: {
-              x: event.clientX,
-              y: event.clientY,
-            },
-            stack: inspectData.stack,
-          });
-        } else {
-          // find first item w/o hide flag and open file
-          const firstItem = inspectData.stack.find((item) => !item.hide);
-          if (firstItem) {
-            onInspectorItemSelected(firstItem);
-          }
-        }
-      }
-      setInspectFrame(inspectData.frame);
-    });
+    inspectElementAt(
+      translatedX,
+      translatedY,
+      requestStack,
+      showInspectStackModal,
+      event.clientX,
+      event.clientY
+    );
+    if (type !== "Move") {
+      inspectElementAt.flush();
+    }
   }
 
-  const sendInspect = throttle(sendInspectUnthrottled, 50);
   function resetInspector() {
     setInspectFrame(null);
     setInspectStackData(null);
+  }
+
+  function handleInspectorUnavailable(event: MouseEvent<HTMLDivElement>) {
+    if (inspectorUnavailableBoxPosition) {
+      return;
+    }
+    const clampedCoordinates = getNormalizedTouchCoordinates(event);
+    setInspectorUnavailableBoxPosition(clampedCoordinates);
   }
 
   const shouldPreventInputEvents =
@@ -210,9 +313,9 @@ function Preview({
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isInspecting) {
-      sendInspect(e, "Move", false);
+      sendInspect(e, "Move");
     } else if (isMultiTouching) {
-      setTouchPoint(getTouchPosition(e));
+      setTouchPoint(getNormalizedTouchCoordinates(e));
       if (e.shiftKey) {
         moveAnchorPoint(e);
       }
@@ -230,7 +333,7 @@ function Preview({
       return;
     }
 
-    const { x, y } = getTouchPosition(e);
+    const { x, y } = getNormalizedTouchCoordinates(e);
 
     project.dispatchWheel({ xRatio: x, yRatio: y }, e.deltaX, e.deltaY);
   }
@@ -240,10 +343,17 @@ function Preview({
     wrapperDivRef.current!.focus();
 
     if (isInspecting) {
-      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down", true);
+      sendInspect(e, e.button === 2 ? "RightButtonDown" : "Down");
     } else if (!inspectFrame) {
       if (e.button === 2) {
-        sendInspect(e, "RightButtonDown", true);
+        if (
+          selectedDeviceSessionStatus === "running" &&
+          elementInspectorAvailability !== InspectorAvailabilityStatus.Available
+        ) {
+          handleInspectorUnavailable(e);
+        } else {
+          sendInspect(e, "RightButtonDown");
+        }
       } else if (isMultiTouching) {
         setIsPressing(true);
         sendMultiTouchForEvent(e, "Down");
@@ -300,7 +410,7 @@ function Preview({
     if (isInspecting) {
       // we force inspect event here to make sure no extra events are throttled
       // and will be dispatched later on
-      sendInspect(e, "Leave", true);
+      sendInspect(e, "Leave");
     }
   }
 
@@ -351,7 +461,7 @@ function Preview({
     // this is a fix that disables context menu on windows https://github.com/microsoft/vscode/issues/139824
     // there is an active backlog item that aims to change the behavior of context menu, so it might not be necessary
     // in the future https://github.com/microsoft/vscode/issues/225411
-    function onContextMenu(e: any) {
+    function onContextMenu(e: Event) {
       e.stopImmediatePropagation();
     }
 
@@ -415,7 +525,7 @@ function Preview({
             x: 0.5,
             y: 0.5,
           });
-          setTouchPoint(getTouchPosition(currentMousePosition.current!));
+          setTouchPoint(getNormalizedTouchCoordinates(currentMousePosition.current!));
           setIsMultiTouching(true);
         }
 
@@ -436,22 +546,33 @@ function Preview({
     };
   }, [project, shouldPreventInputEvents]);
 
-  useEffect(() => {
-    if (selectedDeviceSession?.hasStaleBuildCache) {
-      openRebuildAlert();
-    }
-  }, [selectedDeviceSession?.hasStaleBuildCache]);
+  const isExternalDevice = deviceInfo?.platform === DevicePlatform.Android && !deviceInfo.emulator;
 
-  const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === selectedDeviceSession?.deviceInfo.modelId;
-  });
-
-  const resizableProps = useResizableProps({
-    wrapperDivRef,
-    zoomLevel,
-    setZoomLevel: onZoomChanged,
-    device: device!,
-  });
+  const device: DeviceProperties | undefined = isExternalDevice
+    ? ({
+        modelName: deviceInfo.modelId,
+        modelId: deviceInfo.modelId,
+        platform: deviceInfo.platform,
+        screenWidth: deviceInfo.properties.screenWidth,
+        screenHeight: deviceInfo.properties.screenHeight,
+        bezel: {
+          type: "mask" as const,
+          width: deviceInfo.properties.screenWidth,
+          height: deviceInfo.properties.screenHeight,
+          offsetX: 0,
+          offsetY: 0,
+        },
+        skin: {
+          type: "skin" as const,
+          width: deviceInfo.properties.screenWidth,
+          height: deviceInfo.properties.screenHeight,
+          offsetX: 0,
+          offsetY: 0,
+        },
+      } as const)
+    : iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
+        return sd.modelId === deviceInfo?.modelId;
+      });
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;
@@ -460,12 +581,13 @@ function Preview({
   return (
     <>
       <div
-        className="phone-wrapper"
+        className="phone-display-container"
+        data-testid="phone-display-container"
         tabIndex={0} // allows keyboard events to be captured
         ref={wrapperDivRef}
         {...wrapperTouchHandlers}>
         {showDevicePreview && (
-          <Device device={device!} resizableProps={resizableProps}>
+          <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="touch-area" {...touchHandlers}>
               <MjpegImg
                 src={previewURL}
@@ -474,61 +596,65 @@ function Preview({
                   cursor: isInspecting ? "crosshair" : "default",
                 }}
                 className="phone-screen"
+                data-testid="phone-screen"
               />
               <RenderOutlinesOverlay />
+              {isRunning && <SendFilesOverlay />}
               {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
               {isMultiTouching && (
                 <div
-                  style={{
-                    "--x": `${touchPoint.x * 100}%`,
-                    "--y": `${touchPoint.y * 100}%`,
-                    "--size": `${normalTouchIndicatorSize}px`,
-                  }}>
+                  style={
+                    {
+                      "--x": `${touchPoint.x * 100}%`,
+                      "--y": `${touchPoint.y * 100}%`,
+                      "--size": `${normalTouchIndicatorSize}px`,
+                    } as React.CSSProperties
+                  }>
                   <TouchPointIndicator isPressing={isPressing} />
                 </div>
               )}
               {isMultiTouching && (
                 <div
-                  style={{
-                    "--x": `${anchorPoint.x * 100}%`,
-                    "--y": `${anchorPoint.y * 100}%`,
-                    "--size": `${smallTouchIndicatorSize}px`,
-                  }}>
+                  style={
+                    {
+                      "--x": `${anchorPoint.x * 100}%`,
+                      "--y": `${anchorPoint.y * 100}%`,
+                      "--size": `${smallTouchIndicatorSize}px`,
+                    } as React.CSSProperties
+                  }>
                   <TouchPointIndicator isPressing={false} />
                 </div>
               )}
               {isMultiTouching && (
                 <div
-                  style={{
-                    "--x": `${mirroredTouchPosition.x * 100}%`,
-                    "--y": `${mirroredTouchPosition.y * 100}%`,
-                    "--size": `${normalTouchIndicatorSize}px`,
-                  }}>
+                  style={
+                    {
+                      "--x": `${mirroredTouchPosition.x * 100}%`,
+                      "--y": `${mirroredTouchPosition.y * 100}%`,
+                      "--size": `${normalTouchIndicatorSize}px`,
+                    } as React.CSSProperties
+                  }>
                   <TouchPointIndicator isPressing={isPressing} />
                 </div>
               )}
 
               {!replayData && inspectFrame && (
-                <div className="phone-screen phone-inspect-overlay">
-                  <div
-                    className="inspect-area"
-                    style={{
-                      left: `${inspectFrame.x * 100}%`,
-                      top: `${inspectFrame.y * 100}%`,
-                      width: `${inspectFrame.width * 100}%`,
-                      height: `${inspectFrame.height * 100}%`,
-                    }}
-                  />
-                  {isInspecting && (
-                    <DimensionsBox
-                      device={device}
-                      frame={inspectFrame}
-                      wrapperDivRef={wrapperDivRef}
-                    />
-                  )}
-                </div>
+                <InspectOverlay
+                  inspectFrame={inspectFrame}
+                  isInspecting={isInspecting}
+                  device={device!}
+                  wrapperDivRef={wrapperDivRef}
+                />
               )}
+
+              {inspectorUnavailableBoxPosition && (
+                <InspectorUnavailableBox
+                  clickPosition={inspectorUnavailableBoxPosition}
+                  onClose={() => setInspectorUnavailableBoxPosition(null)}
+                />
+              )}
+
               {isRefreshing && (
                 <div className="phone-screen phone-refreshing-overlay">
                   <div>Project is performing Fast Refresh...</div>
@@ -543,19 +669,16 @@ function Preview({
             </div>
           </Device>
         )}
-        {!showDevicePreview && selectedDeviceSession?.status === "starting" && (
-          <Device device={device!} resizableProps={resizableProps}>
+        {!showDevicePreview && selectedDeviceSessionStatus === "starting" && (
+          <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="phone-sized phone-content-loading-background" />
             <div className="phone-sized phone-content-loading ">
-              <PreviewLoader
-                startingSessionState={selectedDeviceSession}
-                onRequestShowPreview={() => setShowPreviewRequested(true)}
-              />
+              <PreviewLoader onRequestShowPreview={() => setShowPreviewRequested(true)} />
             </div>
           </Device>
         )}
         {hasFatalError && (
-          <Device device={device!} resizableProps={resizableProps}>
+          <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="phone-sized extension-error-screen" />
           </Device>
         )}
@@ -563,7 +686,7 @@ function Preview({
 
       {showDevicePreview && <DelayedFastRefreshIndicator isRefreshing={isRefreshing} />}
 
-      <div className="button-group-left-wrapper">
+      <div className="button-group-left-wrapper" data-testid="button-group-left-wrapper">
         <div className="button-group-left">
           <ZoomControls
             zoomLevel={zoomLevel}
@@ -573,6 +696,23 @@ function Preview({
           />
         </div>
       </div>
+
+      {/* Hack needed for css to cache those images. By default, all the images are not cached on the frontend,
+      so without this in place, when the device rotates, the images are re-fetched from the file system
+      which causes the device preview to flicker. */}
+      <span className="phone-preload-masks">
+        <div style={{ maskImage: `url(${device?.landscapeScreenMaskImage})` }} />
+        <div style={{ maskImage: `url(${device?.screenMaskImage})` }} />
+        <div style={{ maskImage: `url(${device?.bezel.imageLandscape})` }} />
+        <div style={{ maskImage: `url(${device?.bezel.image})` }} />
+        <div style={{ maskImage: `url(${device?.skin.imageLandscape})` }} />
+        <div style={{ maskImage: `url(${device?.skin.image})` }} />
+
+        <img src={device?.skin.image} alt="" />
+        <img src={device?.skin.imageLandscape} alt="" />
+        <img src={device?.bezel.image} alt="" />
+        <img src={device?.bezel.imageLandscape} alt="" />
+      </span>
     </>
   );
 }

@@ -117,34 +117,39 @@ export function exec(
   name: string,
   args?: string[],
   options?: execa.Options & { allowNonZeroExit?: boolean; quietErrorsOnExit?: boolean }
-) {
+): ExecaChildProcess<string> {
   const subprocess = execa(
     name,
     args,
     Platform.select({ macos: overrideEnv(options), windows: options, linux: options })
   );
 
-  const allowNonZeroExit = options?.allowNonZeroExit;
-  async function printErrorsOnExit() {
-    try {
-      const result = await subprocess;
-      if (result.stderr) {
-        Logger.debug("Subprocess", name, args?.join(" "), "produced error output:", result.stderr);
-      }
-    } catch (e) {
-      // @ts-ignore idk how to deal with error objects in ts
-      const { exitCode, signal } = e;
-      if (exitCode === undefined && signal !== undefined) {
-        Logger.info("Subprocess", name, "was terminated with", signal);
-      } else {
-        if (!allowNonZeroExit || !exitCode) {
-          Logger.error("Subprocess", name, args?.join(" "), "execution resulted in an error:", e);
-        }
-      }
-    }
-  }
   if (!options?.quietErrorsOnExit) {
-    printErrorsOnExit(); // don't want to await here not to block the outer method
+    // we want to print errors / stderr logs when the process fails
+
+    const allowNonZeroExit = options?.allowNonZeroExit;
+
+    subprocess
+      .catch((e) => {
+        return {
+          stderr: e.stderr,
+          failed: true,
+          exitCode: e.exitCode,
+          signal: e.signal,
+        };
+      })
+      .then((resultOrError) => {
+        const { stderr, failed, exitCode, signal } = resultOrError;
+        if (stderr) {
+          // we print stderr to debug if the process exited normally or failed but
+          // allowNonZeroExit was set. Otherwise we print it to the error channel.
+          const log = failed && !allowNonZeroExit ? Logger.error : Logger.debug;
+          log("Subprocess", name, args?.join(" "), "produced error output:", stderr);
+        }
+        if (exitCode === undefined && signal !== undefined) {
+          Logger.info("Subprocess", name, "was terminated with", signal);
+        }
+      });
   }
 
   return subprocess;

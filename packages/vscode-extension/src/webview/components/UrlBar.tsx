@@ -1,27 +1,30 @@
+import { use$ } from "@legendapp/state/react";
 import { useProject } from "../providers/ProjectProvider";
 import UrlSelect from "./UrlSelect";
 import { IconButtonWithOptions } from "./IconButtonWithOptions";
 import IconButton from "./shared/IconButton";
-import { useDependencies } from "../providers/DependenciesProvider";
-import { useDevices } from "../providers/DevicesProvider";
+import { useStore } from "../providers/storeProvider";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 function ReloadButton({ disabled }: { disabled: boolean }) {
-  const { deviceSessionsManager } = useDevices();
+  const { project } = useProject();
   return (
     <IconButtonWithOptions
-      onClick={() => deviceSessionsManager.reloadCurrentSession("autoReload")}
+      onClick={() => project.reloadCurrentSession("autoReload")}
       tooltip={{
         label: "Reload the app",
         side: "bottom",
       }}
+      dataTest="top-bar-reload-button"
       disabled={disabled}
       options={{
-        "Reload JS": () => deviceSessionsManager.reloadCurrentSession("reloadJs"),
-        "Restart app process": () => deviceSessionsManager.reloadCurrentSession("restartProcess"),
-        "Reinstall app": () => deviceSessionsManager.reloadCurrentSession("reinstall"),
-        "Clear Metro cache": () => deviceSessionsManager.reloadCurrentSession("clearMetro"),
-        "Reboot IDE": () => deviceSessionsManager.reloadCurrentSession("reboot"),
-        "Clean rebuild": () => deviceSessionsManager.reloadCurrentSession("rebuild"),
+        "Reload JS": () => project.reloadCurrentSession("reloadJs"),
+        "Restart app process": () => project.reloadCurrentSession("restartProcess"),
+        "Reinstall app": () => project.reloadCurrentSession("reinstall"),
+        "Restart Metro server": () => project.reloadCurrentSession("restartMetro"),
+        "Clear Metro cache": () => project.reloadCurrentSession("clearMetro"),
+        "Reboot Device": () => project.reloadCurrentSession("reboot"),
+        "Clean rebuild": () => project.reloadCurrentSession("rebuild"),
       }}>
       <span className="codicon codicon-refresh" />
     </IconButtonWithOptions>
@@ -29,14 +32,21 @@ function ReloadButton({ disabled }: { disabled: boolean }) {
 }
 
 function UrlBar({ disabled }: { disabled?: boolean }) {
-  const { project, selectedDeviceSession } = useProject();
-  const { dependencies } = useDependencies();
+  const { project } = useProject();
+  const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+  const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
-  const navigationHistory = selectedDeviceSession?.navigationHistory ?? [];
-  const routeList = selectedDeviceSession?.navigationRouteList ?? [];
+  const expoRouterStatus = use$(
+    store$.projectState.applicationContext.applicationDependencies.expoRouter
+  );
 
-  const disabledAlsoWhenStarting = disabled || selectedDeviceSession?.status === "starting";
-  const isExpoRouterProject = !dependencies.expoRouter?.isOptional;
+  const navigationHistory = use$(selectedDeviceSessionState.navigationState.navigationHistory);
+  const navigationRouteList = use$(selectedDeviceSessionState.navigationState.navigationRouteList);
+
+  const disabledAlsoWhenStarting = disabled || selectedDeviceSessionStatus === "starting";
+  const canGoBack = navigationHistory?.[0]?.canGoBack;
+  const isExpoRouterProject = !expoRouterStatus?.isOptional;
 
   return (
     <>
@@ -45,7 +55,7 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
           label: "Go back",
           side: "bottom",
         }}
-        disabled={disabledAlsoWhenStarting || !isExpoRouterProject || navigationHistory.length < 2}
+        disabled={disabledAlsoWhenStarting || !canGoBack}
         onClick={() => project.navigateBack()}>
         <span className="codicon codicon-arrow-left" />
       </IconButton>
@@ -54,8 +64,8 @@ function UrlBar({ disabled }: { disabled?: boolean }) {
         onValueChange={(value: string) => {
           project.openNavigation(value);
         }}
-        navigationHistory={navigationHistory}
-        routeList={routeList}
+        navigationHistory={navigationHistory ?? []}
+        routeList={navigationRouteList ?? []}
         disabled={disabledAlsoWhenStarting}
         dropdownOnly={!isExpoRouterProject}
       />

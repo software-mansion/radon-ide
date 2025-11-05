@@ -1,21 +1,19 @@
 import path from "path";
 import http from "http";
-import fs from "fs";
 import { extensionContext } from "../utilities/extensionContext";
 import { exec } from "../utilities/subprocess";
-import { DevicePlatform } from "../common/DeviceManager";
 import { CancelToken } from "../utilities/cancelToken";
+import { DevicePlatform } from "../common/State";
+import { checkNativeDirectoryExists } from "../utilities/checkNativeDirectoryExists";
+import { fileExists } from "../utilities/fileExists";
+import { requireNoCache } from "../utilities/requireNoCache";
 
 type ExpoDeeplinkChoice = "expo-go" | "expo-dev-client";
 
 export const EXPO_GO_BUNDLE_ID = "host.exp.Exponent";
 export const EXPO_GO_PACKAGE_NAME = "host.exp.exponent";
 
-function fileExists(filePath: string, ...additionalPaths: string[]) {
-  return fs.existsSync(path.join(filePath, ...additionalPaths));
-}
-
-export async function isExpoGoProject(appRoot: string): Promise<boolean> {
+export async function isExpoGoProject(appRoot: string, platform: DevicePlatform): Promise<boolean> {
   // There is no straightforward way to tell apart different react native project
   // setups. i.e. expo-go, expo-dev-client, bare react native, etc.
   // Here, we are using a heuristic to determine if the project is expo-go based
@@ -30,7 +28,8 @@ export async function isExpoGoProject(appRoot: string): Promise<boolean> {
     return false;
   }
 
-  if (fileExists(appRoot, "android") || fileExists(appRoot, "ios")) {
+  const nativeDirectoryExists = await checkNativeDirectoryExists(appRoot, platform);
+  if (nativeDirectoryExists) {
     // expo-go projects don't have android or ios folders
     return false;
   }
@@ -38,6 +37,7 @@ export async function isExpoGoProject(appRoot: string): Promise<boolean> {
   const expoGoProjectTesterScript = path.join(
     extensionContext.extensionPath,
     "lib",
+    "expo",
     "expo_go_project_tester.js"
   );
   try {
@@ -49,6 +49,13 @@ export async function isExpoGoProject(appRoot: string): Promise<boolean> {
   } catch (e) {
     return false;
   }
+}
+
+export function getExpoVersion(appRoot: string) {
+  const expoPackage = requireNoCache(path.join("expo", "package.json"), {
+    paths: [appRoot],
+  });
+  return expoPackage.version;
 }
 
 export function fetchExpoLaunchDeeplink(
@@ -64,7 +71,16 @@ export function fetchExpoLaunchDeeplink(
       (res) => {
         if (res.statusCode === 307) {
           // we want to retrieve redirect location
-          resolve(res.headers.location);
+          const location = new URL(res.headers.location!);
+          // NOTE: for physical Android devices, the address for the host machine is different
+          // than the one we get in the redirect. However, since we forward the metro port, we can
+          // use `localhost` for the host without issue.
+          if (choice === "expo-go") {
+            location.hostname = "localhost";
+          } else {
+            location.searchParams.set("url", `http://localhost:${metroPort}`);
+          }
+          resolve(location.toString());
         } else {
           resolve();
         }
@@ -93,7 +109,12 @@ export async function downloadExpoGo(
   cancelToken: CancelToken,
   appRoot: string
 ) {
-  const downloadScript = path.join(extensionContext.extensionPath, "lib", "expo_go_download.js");
+  const downloadScript = path.join(
+    extensionContext.extensionPath,
+    "lib",
+    "expo",
+    "expo_go_download.js"
+  );
   const { stdout } = await cancelToken.adapt(
     exec("node", [downloadScript, platform], {
       cwd: appRoot,

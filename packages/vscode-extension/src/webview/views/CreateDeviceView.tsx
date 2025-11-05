@@ -1,18 +1,26 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { use$ } from "@legendapp/state/react";
 import classNames from "classnames";
 import Select from "../components/shared/Select";
 import "./CreateDeviceView.css";
-import { useDevices } from "../providers/DevicesProvider";
 import Button from "../components/shared/Button";
 import Label from "../components/shared/Label";
 import {
   iOSSupportedDevices,
   AndroidSupportedDevices,
   DeviceProperties,
-} from "../utilities/deviceContants";
-import { useDependencies } from "../providers/DependenciesProvider";
-import { Platform } from "../providers/UtilsProvider";
+} from "../utilities/deviceConstants";
 import { Input } from "../components/shared/Input";
+import { useDependencyErrors } from "../hooks/useDependencyErrors";
+import { useStore } from "../providers/storeProvider";
+import { Platform, useProject } from "../providers/ProjectProvider";
+import { RestrictedFunctionalityError } from "../../common/Errors";
+import { usePaywall } from "../hooks/usePaywall";
+import {
+  Feature,
+  FeatureAvailabilityStatus,
+  getFeatureAvailabilityStatus,
+} from "../../common/License";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -20,7 +28,15 @@ interface CreateDeviceViewProps {
 }
 
 function useSupportedDevices() {
-  const { errors } = useDependencies();
+  const store$ = useStore();
+  const iOSRuntimes = use$(store$.devicesState.iOSRuntimes) ?? [];
+
+  const licenseStatus = use$(store$.license.status);
+  const hasAccessToIPads =
+    getFeatureAvailabilityStatus(licenseStatus, Feature.IOSTabletSimulators) ===
+    FeatureAvailabilityStatus.Available;
+
+  const errors = useDependencyErrors();
 
   return [
     Platform.select({
@@ -28,10 +44,17 @@ function useSupportedDevices() {
         ? { label: "iOS – error, check diagnostics", items: [] }
         : {
             label: "iOS",
-            items: iOSSupportedDevices.map((device) => ({
-              value: device.modelId,
-              label: device.modelName,
-            })),
+            items: iOSSupportedDevices
+              .filter((device) => {
+                return iOSRuntimes.some((runtime) =>
+                  runtime.supportedDeviceTypes.some((type) => type.identifier === device.modelId)
+                );
+              })
+              .map((device) => ({
+                value: device.modelId,
+                label: device.modelName,
+                disabled: device.modelName.includes("iPad") && !hasAccessToIPads,
+              })),
           },
       windows: { label: "", items: [] },
       linux: { label: "", items: [] },
@@ -55,6 +78,8 @@ export function formatDisplayName(name: string) {
 }
 
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
+  const { openPaywall } = usePaywall();
+
   const [deviceProperties, setDeviceProperties] = useState<DeviceProperties | undefined>(undefined);
   const [selectedSystemName, selectSystemName] = useState<string>("");
   const [isSystemCompatible, setIsSystemCompatible] = useState(true);
@@ -63,11 +88,12 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const [loading, setLoading] = useState<boolean>(false);
 
   const supportedDevices = useSupportedDevices();
-  const { iOSRuntimes, androidImages, deviceManager, reload } = useDevices();
 
-  useEffect(() => {
-    reload();
-  }, []);
+  const { project } = useProject();
+
+  const store$ = useStore();
+  const iOSRuntimes = use$(store$.devicesState.iOSRuntimes) ?? [];
+  const androidImages = use$(store$.devicesState.androidImages) ?? [];
 
   const createDisabled = loading || !deviceProperties || !selectedSystemName || !isDisplayNameValid;
 
@@ -77,7 +103,9 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
           value: runtime.identifier,
           label: runtime.name,
           disabled: !runtime.available,
-          marked: false,
+          marked: runtime.supportedDeviceTypes.every((device) => {
+            return deviceProperties.modelId !== device.identifier;
+          }),
         }))
       : androidImages.map((systemImage) => ({
           value: systemImage.location,
@@ -88,7 +116,6 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
             deviceProperties.minimumAndroidApiLevel > systemImage.apiLevel
           ),
         }));
-
   async function createDevice() {
     if (!deviceProperties || !selectedSystemName || !displayName) {
       return;
@@ -97,6 +124,9 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
     setLoading(true);
     try {
       if (deviceProperties && deviceProperties.platform === "iOS" && Platform.OS === "macos") {
+        if (!iOSRuntimes) {
+          return;
+        }
         const runtime = iOSRuntimes.find(({ identifier }) => identifier === selectedSystemName);
         if (!runtime) {
           return;
@@ -107,17 +137,25 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         if (!iOSDeviceType) {
           return;
         }
-        await deviceManager.createIOSDevice(iOSDeviceType, displayName.trim(), runtime);
+        await project.createIOSDevice(iOSDeviceType, displayName.trim(), runtime);
       } else {
+        if (!androidImages) {
+          return;
+        }
         const systemImage = androidImages.find((image) => image.location === selectedSystemName);
         if (!systemImage) {
           return;
         }
-        await deviceManager.createAndroidDevice(
+        await project.createAndroidDevice(
           deviceProperties.modelId,
           displayName.trim(),
           systemImage
         );
+      }
+    } catch (e) {
+      if (e instanceof RestrictedFunctionalityError) {
+        openPaywall();
+        return;
       }
     } finally {
       onCreate();
@@ -143,6 +181,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Label className="form-label">Device Type</Label>
         <Select
           className="form-field"
+          dataTest="creating-device-form-device-type-select"
           value={deviceProperties?.modelId ?? ""}
           onChange={(modelId: string) => {
             const deviceProps = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
@@ -167,6 +206,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
               "form-field",
               isSystemCompatible ? undefined : "form-filed-marked"
             )}
+            dataTest="creating-device-form-system-image-select"
             value={selectedSystemName}
             onChange={(newValue) => {
               setIsSystemCompatible(
@@ -200,6 +240,7 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Input
           value={displayName}
           className="device-name-input"
+          data-testid="creating-device-form-name-input"
           data-error={!isDisplayNameValid}
           type="string"
           onChange={handleDisplayNameChange}
@@ -216,7 +257,11 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         <Button onClick={onCancel} type="secondary">
           Cancel
         </Button>
-        <Button disabled={createDisabled} onClick={createDevice} type="ternary">
+        <Button
+          disabled={createDisabled}
+          onClick={createDevice}
+          type="ternary"
+          dataTest="creating-device-form-confirmation-button">
           Create
         </Button>
       </div>

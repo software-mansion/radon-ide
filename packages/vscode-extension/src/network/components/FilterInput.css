@@ -1,0 +1,249 @@
+.filter-input-container {
+  position: relative;
+  flex-grow: 1;
+  min-width: 100px;
+  max-width: 600px; /* Prevent the input from becoming too wide on large screens */
+  width: 100%;
+  cursor: text;
+  outline: none;
+}
+
+.filter-input-wrapper {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+  gap: 6px;
+  padding: 4px 8px;
+  background-color: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, transparent);
+  border-radius: 2px;
+  min-height: 28px;
+  max-height: 28px;
+  box-sizing: border-box;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::webkit-scrollbar {
+    display: none;
+  }
+}
+
+.filter-input-wrapper:focus-within {
+  border-color: var(--vscode-focusBorder);
+}
+
+.filter-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--vscode-input-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  font-weight: var(--vscode-font-weight);
+  height: auto;
+  font-size: var(--vscode-font-size);
+  box-shadow: unset;
+  gap: 0;
+  padding: 0;
+  display: inline-block;
+  border-radius: 0;
+  line-height: normal;
+  padding: 0;
+  margin: 0;
+  position: relative;
+  white-space: nowrap;
+  min-width: 20px;
+  flex-shrink: 0;
+  width: auto;
+}
+
+.filter-input:focus {
+  outline: none;
+}
+
+.filter-input::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+.filter-input-with-suggestion {
+  position: relative;
+  flex-shrink: 0;
+  min-width: 20px;
+  overflow: visible;
+}
+
+.filter-badge {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-family: var(--vscode-font-family);
+  white-space: nowrap;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  max-width: 200px; /* Prevent very long badges from taking up too much space */
+  cursor: pointer;
+}
+
+.filter-badge:hover {
+  background-color: var(--vscode-inputOption-hoverBackground, var(--vscode-badge-background));
+}
+
+.filter-badge--focused {
+  background-color: var(--vscode-inputOption-hoverBackground, var(--vscode-badge-background));
+  box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+}
+
+.filter-badge--highlighted {
+  animation: duplicateHighlight 0.6s ease-out;
+
+  &:not(.filter-badge--focused) {
+    background-color: var(--vscode-focusBorder);
+    box-shadow: 0 0 0 1px var(--vscode-focusBorder);
+  }
+}
+
+.filter-badge__text {
+  transition: padding-right 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.filter-badge__name {
+  text-transform: capitalize;
+  font-weight: 600;
+}
+
+.filter-badge__separator {
+  opacity: 0.4;
+  margin: 0 2px;
+}
+
+.filter-badge__value {
+  opacity: 0.7;
+}
+
+.filter-badge:hover .filter-badge__text {
+  padding-right: 16px; /* Make space for the X button on hover */
+}
+
+.filter-badge__remove {
+  background: none;
+  border: none;
+  color: inherit;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.filter-badge:hover .filter-badge__remove {
+  opacity: 1;
+}
+
+.filter-badge__remove:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.filter-input-suggestion {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  font-weight: var(--vscode-font-weight);
+  line-height: normal;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  z-index: 1;
+  height: 100%;
+  min-width: 100%;
+}
+
+.filter-input-suggestion__existing {
+  color: transparent;
+  white-space: pre;
+}
+
+.filter-input-suggestion__hint {
+  color: var(--vscode-input-placeholderForeground);
+  opacity: 0.7;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 600px) {
+  .filter-input-container {
+    min-width: 80px;
+  }
+
+  .filter-badge {
+    max-width: 150px;
+    padding: 2px 6px;
+    font-size: 11px;
+  }
+
+  .filter-input-wrapper {
+    gap: 5px;
+    padding: 3px 6px;
+  }
+}
+
+@media (max-width: 400px) {
+  .filter-input-container {
+    min-width: 60px;
+  }
+
+  .filter-badge {
+    max-width: 120px;
+    padding: 1px 4px;
+    font-size: 10px;
+  }
+
+  .filter-badge__separator {
+    margin: 0 1px;
+  }
+
+  .filter-input-wrapper {
+    gap: 4px;
+    padding: 2px 4px;
+    min-height: 24px;
+    max-height: 24px;
+  }
+}
+
+@keyframes duplicateHighlight {
+  0% {
+    transform: scale(1.02);
+  }
+  50% {
+    transform: scale(1.02);
+    background-color: var(--vscode-focusBorder);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

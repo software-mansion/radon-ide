@@ -1,18 +1,19 @@
 import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { use$ } from "@legendapp/state/react";
 import "./shared/Dropdown.css";
 import { useModal } from "../providers/ModalProvider";
 import DiagnosticView from "../views/DiagnosticView";
 import ManageDevicesView from "../views/ManageDevicesView";
 import { ProjectInterface } from "../../common/Project";
 import DoctorIcon from "./icons/DoctorIcon";
-import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
-import { useUtils } from "../providers/UtilsProvider";
 import "./shared/SwitchGroup.css";
 import { SendFeedbackItem } from "./SendFeedbackItem";
-import { useTelemetry } from "../providers/TelemetryProvider";
 import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import { useStore } from "../providers/storeProvider";
+import { ActivateLicenseView } from "../views/ActivateLicenseView";
+import { LicenseStatus } from "../../common/License";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -21,11 +22,35 @@ interface SettingsDropdownProps {
   disabled?: boolean;
 }
 
-function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
-  const { panelLocation } = useWorkspaceConfig();
+function ActivateLicenseItem() {
   const { openModal } = useModal();
-  const { movePanelTo, reportIssue } = useUtils();
-  const { telemetryEnabled } = useTelemetry();
+
+  return (
+    <DropdownMenu.Item
+      className="dropdown-menu-item"
+      onSelect={() => {
+        openModal(<ActivateLicenseView />, { title: "Activate License" });
+      }}>
+      <span className="dropdown-menu-item-wraper">
+        <span className="codicon codicon-key" />
+        <div className="dropdown-menu-item-content" data-testid="settings-report-issue">
+          Activate License
+        </div>
+      </span>
+    </DropdownMenu.Item>
+  );
+}
+
+function SettingsDropdown({ project, isDeviceRunning, children, disabled }: SettingsDropdownProps) {
+  const store$ = useStore();
+  const panelLocation = use$(store$.workspaceConfiguration.userInterface.panelLocation);
+  const telemetryEnabled = use$(store$.telemetry.enabled);
+  const licenseStatus = use$(store$.license.status);
+
+  const shouldShowActivateLicenseItem =
+    licenseStatus === LicenseStatus.Inactive || LicenseStatus.Free;
+
+  const { openModal } = useModal();
 
   const extensionVersion = document.querySelector<HTMLMetaElement>(
     "meta[name='radon-ide-version']"
@@ -40,19 +65,22 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
       <DropdownMenu.Portal>
         <DropdownMenu.Content
           className="dropdown-menu-content"
+          data-testid="radon-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="settings-dropdown-run-diagnostics-button"
             onSelect={() => {
-              openModal("Diagnostics", <DiagnosticView />);
+              openModal(<DiagnosticView />, { title: "Diagnostics" });
             }}>
             <DoctorIcon color="var(--swm-default-text)" />
             Run diagnostics...
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            data-testid="settings-dropdown-manage-devices-button"
             onSelect={() => {
-              openModal("Manage Devices", <ManageDevicesView />);
+              openModal(<ManageDevicesView />, { title: "Manage Devices" });
             }}>
             <span className="codicon codicon-device-mobile" />
             Manage devices...
@@ -72,7 +100,9 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             </span>
           </DropdownMenu.Item>
           <DropdownMenu.Sub>
-            <DropdownMenu.SubTrigger className="dropdown-menu-item">
+            <DropdownMenu.SubTrigger
+              className="dropdown-menu-item"
+              data-testid="settings-dropdown-change-ide-location-trigger">
               <span className="codicon codicon-layout" />
               Change IDE location
               <span className="codicon codicon-chevron-right right-slot" />
@@ -85,20 +115,23 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
                 {panelLocation !== "side-panel" && (
                   <DropdownMenu.Item
                     className="dropdown-menu-item"
-                    onSelect={() => movePanelTo("side-panel")}>
+                    data-testid="settings-dropdown-move-to-side-panel-button"
+                    onSelect={() => project.movePanelTo("side-panel")}>
                     <span className="codicon codicon-layout-sidebar-right" />
                     Move to Side Panel
                   </DropdownMenu.Item>
                 )}
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
-                  onSelect={() => movePanelTo("editor-tab")}>
+                  data-testid="settings-dropdown-move-to-editor-tab-button"
+                  onSelect={() => project.movePanelTo("editor-tab")}>
                   <span className="codicon codicon-layout-centered" />
                   Move to Editor Tab
                 </DropdownMenu.Item>
                 <DropdownMenu.Item
                   className="dropdown-menu-item"
-                  onSelect={() => movePanelTo("new-window")}>
+                  data-testid="settings-dropdown-move-to-new-window-button"
+                  onSelect={() => project.movePanelTo("new-window")}>
                   <span className="codicon codicon-multiple-windows" />
                   Move to New Window
                 </DropdownMenu.Item>
@@ -109,14 +142,17 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={() => {
-              reportIssue();
+              project.reportIssue();
             }}>
             <span className="dropdown-menu-item-wraper">
               <span className="codicon codicon-report" />
-              <div className="dropdown-menu-item-content">Report Issue</div>
+              <div className="dropdown-menu-item-content" data-testid="settings-report-issue">
+                Report Issue
+              </div>
             </span>
           </DropdownMenu.Item>
           {telemetryEnabled && <SendFeedbackItem />}
+          {shouldShowActivateLicenseItem && <ActivateLicenseItem />}
           <div className="dropdown-menu-item device-settings-version-text">
             Radon IDE version: {extensionVersion}
           </div>

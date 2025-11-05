@@ -1,31 +1,27 @@
 import classNames from "classnames";
 import "./NetworkBar.css";
-import { VscodeTextfield } from "@vscode-elements/react-elements";
+import { VscodeCheckbox } from "@vscode-elements/react-elements";
 import IconButton from "../../webview/components/shared/IconButton";
+import FilterInput from "./FilterInput";
 import { useNetwork } from "../providers/NetworkProvider";
+import { useNetworkFilter } from "../providers/NetworkFilterProvider";
 
 function NetworkBar() {
-  const {
-    isRecording,
-    toggleRecording,
-    clearActivity,
-    toggleFilterVisible,
-    isFilterVisible,
-    filters,
-    setFilters,
-  } = useNetwork();
+  const { isTracking, setIsTracking, clearActivity } = useNetwork();
+
+  const { filterInvert, isFilterVisible, toggleInvert, toggleFilterVisible } = useNetworkFilter();
 
   return (
     <div className="network-bar">
       <IconButton
-        onClick={toggleRecording}
+        onClick={() => setIsTracking((prev) => !prev)}
         tooltip={{
-          label: `${isRecording ? "Stop" : "Start"} recording network activity`,
+          label: `${isTracking ? "Stop" : "Start"} recording network activity`,
           side: "bottom",
         }}>
         <span
-          style={{ color: isRecording ? "var(--vscode-charts-red)" : "var(--swm-default-text)" }}
-          className={classNames("codicon", isRecording ? "codicon-record" : "codicon-stop-circle")}
+          style={{ color: isTracking ? "var(--vscode-charts-red)" : "var(--swm-default-text)" }}
+          className={classNames("codicon", isTracking ? "codicon-record" : "codicon-stop-circle")}
         />
       </IconButton>
       <IconButton
@@ -47,7 +43,7 @@ function NetworkBar() {
       <IconButton
         onClick={toggleFilterVisible}
         tooltip={{
-          label: "Filter domains",
+          label: "Filter network requests",
           side: "bottom",
         }}>
         <span
@@ -59,13 +55,12 @@ function NetworkBar() {
       </IconButton>
       {isFilterVisible && (
         <div className="network-filter">
-          <VscodeTextfield
-            value={filters.url ?? ""}
-            onInput={(e) => {
-              // @ts-ignore it works, types seem to be incorrect here
-              setFilters({ ...filters, url: e.target.value });
-            }}
-            placeholder="Filter domain"
+          <FilterInput placeholder="Filter: search all columns or <column>:<value>" />
+          <VscodeCheckbox
+            onChange={toggleInvert}
+            className="invert-checkbox"
+            label="Invert"
+            checked={filterInvert}
           />
         </div>
       )}

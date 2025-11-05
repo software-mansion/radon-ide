@@ -1,21 +1,25 @@
 import "./ManageDevicesView.css";
 import { MouseEventHandler, useEffect, useState } from "react";
 import * as Switch from "@radix-ui/react-switch";
+import { use$ } from "@legendapp/state/react";
+import _ from "lodash";
+import classNames from "classnames";
 import IconButton from "../components/shared/IconButton";
 import DeviceRenameDialog from "../components/DeviceRenameDialog";
 import DeviceRemovalConfirmation from "../components/DeviceRemovalConfirmation";
 import CreateDeviceView from "./CreateDeviceView";
-import { DeviceInfo, DevicePlatform } from "../../common/DeviceManager";
-import { useDevices } from "../providers/DevicesProvider";
 import Tooltip from "../components/shared/Tooltip";
 import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
 import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
-import { mapIdToModel } from "../utilities/deviceContants";
-import { useWorkspaceConfig } from "../providers/WorkspaceConfigProvider";
+import { mapIdToModel } from "../utilities/deviceConstants";
 
 import "../components/shared/SwitchGroup.css";
+import { useStore } from "../providers/storeProvider";
+import { PropsWithDataTest } from "../../common/types";
+import { DeviceInfo, DevicePlatform } from "../../common/State";
+import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
 interface DeviceRowProps {
   deviceInfo: DeviceInfo;
@@ -23,6 +27,7 @@ interface DeviceRowProps {
   onDeviceDelete: (device: DeviceInfo) => void;
   isSelected: boolean;
   isRunning: boolean;
+  dataTest?: string;
 }
 
 function DeviceRow({
@@ -31,32 +36,56 @@ function DeviceRow({
   onDeviceDelete,
   isSelected,
   isRunning,
-}: DeviceRowProps) {
-  const { deviceSessionsManager } = useDevices();
-  const { stopPreviousDevices } = useWorkspaceConfig();
+  dataTest,
+}: PropsWithDataTest<DeviceRowProps>) {
+  const { project } = useProject();
+  const { closeModal } = useModal();
 
-  const stopDevice = () => deviceSessionsManager.terminateSession(deviceInfo.id);
+  const stopDevice = () => project.terminateSession(deviceInfo.id);
   const selectDevice: MouseEventHandler = (e) => {
     if (!isSelected) {
       e.stopPropagation();
-      deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo, {
-        stopPreviousDevices,
-      });
+      project.startOrActivateSessionForDevice(deviceInfo);
       closeModal();
     }
   };
+  const isPhysicalDevice = deviceInfo.platform === DevicePlatform.Android && !deviceInfo.emulator;
 
-  const deviceModelName = mapIdToModel(deviceInfo.modelId);
-  const deviceSubtitle =
-    deviceModelName !== deviceInfo.displayName
+  const deviceModelName = mapIdToModel(deviceInfo.modelId) ?? deviceInfo.displayName;
+  const deviceSubtitle = (() => {
+    if (isPhysicalDevice) {
+      return deviceInfo.available ? "Connected" : "Disconnected";
+    }
+
+    return deviceModelName !== deviceInfo.displayName
       ? `${deviceModelName} - ${deviceInfo.systemName}`
       : deviceInfo.systemName;
+  })();
 
-  const { closeModal } = useModal();
+  const renameTooltipLabel = isPhysicalDevice
+    ? "Renaming physical devices is not supported"
+    : "Rename device";
+
+  const removeTooltipLabel =
+    deviceInfo.platform === DevicePlatform.IOS
+      ? "Remove device with its runtime"
+      : !isPhysicalDevice
+        ? "Remove device with its system image"
+        : "Removing physical devices is not supported";
+
+  const disabled = !deviceInfo.available || (isPhysicalDevice && !deviceInfo.available);
+
   return (
-    <button className="device-row" onClick={selectDevice} data-selected={isSelected}>
+    <button
+      className="device-row"
+      disabled={disabled}
+      onClick={selectDevice}
+      data-selected={isSelected}
+      data-testid={dataTest}>
       <div className={isSelected ? "device-icon-selected" : "device-icon"}>
-        {!deviceInfo.available ? (
+        {isPhysicalDevice && !deviceInfo.available ? (
+          <span className="codicon codicon-debug-disconnect" />
+        ) : !deviceInfo.available ? (
           <Tooltip
             label="This device cannot be used. Perhaps the system image or runtime is missing. Try deleting and creating a new device instead."
             instant
@@ -96,17 +125,21 @@ function DeviceRow({
               side: "bottom",
               type: "secondary",
             }}
-            disabled={!deviceInfo.available}
+            disabled={disabled}
+            dataTest={`device-row-start-button-device-${deviceInfo.displayName}`}
             onClick={selectDevice}>
             <span className="codicon codicon-play" />
           </IconButton>
         )}
         <IconButton
           tooltip={{
-            label: "Rename device",
+            label: renameTooltipLabel,
             side: "bottom",
             type: "secondary",
           }}
+          shouldDisplayLabelWhileDisabled
+          disabled={isPhysicalDevice}
+          data-testid={`manage-devices-menu-rename-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceRename(deviceInfo);
@@ -115,17 +148,20 @@ function DeviceRow({
         </IconButton>
         <IconButton
           tooltip={{
-            label: `Remove device with its ${
-              deviceInfo.platform === DevicePlatform.IOS ? "runtime" : "system image"
-            }`,
+            label: removeTooltipLabel,
             side: "bottom",
             type: "secondary",
           }}
+          shouldDisplayLabelWhileDisabled
+          disabled={isPhysicalDevice}
+          data-testid={`manage-devices-menu-delete-button-device-${deviceInfo.displayName}`}
           onClick={(e) => {
             e.stopPropagation();
             onDeviceDelete(deviceInfo);
           }}>
-          <span className="codicon codicon-trash delete-icon" />
+          <span
+            className={classNames("codicon", "codicon-trash", isPhysicalDevice || "delete-icon")}
+          />
         </IconButton>
       </span>
     </button>
@@ -133,28 +169,30 @@ function DeviceRow({
 }
 
 function ManageDevicesView() {
-  const { projectState, selectedDeviceSession } = useProject();
-  const { deviceSessions } = projectState;
-  const selectedProjectDevice = selectedDeviceSession?.deviceInfo;
+  const { project } = useProject();
+
+  const store$ = useStore();
+  const selectedDeviceSessionState = useSelectedDeviceSessionState();
+  const deviceSessions = use$(store$.projectState.deviceSessions);
+
+  const stopPreviousDevices = use$(store$.workspaceConfiguration.deviceControl.stopPreviousDevices);
+
+  const selectedProjectDevice = use$(selectedDeviceSessionState.deviceInfo);
+
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | undefined>(undefined);
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   const [createDeviceViewOpen, setCreateDeviceViewOpen] = useState(false);
 
-  const { stopPreviousDevices, update } = useWorkspaceConfig();
+  const devicesByType = use$(store$.devicesState.devicesByType);
 
-  const { devices, reload } = useDevices();
+  const iosDevices = devicesByType?.iosSimulators ?? [];
+  const androidEmulatorDevices = devicesByType?.androidEmulators ?? [];
+  const androidPhysicalDevices = devicesByType?.androidPhysicalDevices ?? [];
 
   useEffect(() => {
-    reload();
+    project.loadInstalledImages();
   }, []);
-
-  const iosDevices = devices.filter(
-    ({ platform, modelId }) => platform === DevicePlatform.IOS && modelId.length > 0
-  );
-  const androidDevices = devices.filter(
-    ({ platform, modelId }) => platform === DevicePlatform.Android && modelId.length > 0
-  );
 
   const handleDeviceRename = (device: DeviceInfo) => {
     setSelectedDevice(device);
@@ -196,6 +234,7 @@ function ManageDevicesView() {
       <DeviceRow
         key={deviceInfo.id}
         deviceInfo={deviceInfo}
+        dataTest={`manage-devices-menu-row-device-${deviceInfo.displayName}--${deviceInfo.id}`}
         onDeviceRename={handleDeviceRename}
         onDeviceDelete={handleDeviceDelete}
         isSelected={deviceInfo.id === selectedProjectDevice?.id}
@@ -205,20 +244,30 @@ function ManageDevicesView() {
   }
 
   return (
-    <div className="manage-devices-container">
+    <div className="manage-devices-container" data-testid="manage-devices-view">
       {iosDevices.length > 0 && (
         <>
           <Label>iOS Devices</Label>
           {iosDevices.map(renderRow)}
         </>
       )}
-      {androidDevices.length > 0 && (
+      {androidEmulatorDevices.length > 0 && (
         <>
-          <Label>Android Devices</Label>
-          {androidDevices.map(renderRow)}
+          <Label>Android Emulators</Label>
+          {androidEmulatorDevices.map(renderRow)}
         </>
       )}
-      <Button autoFocus className="create-button" onClick={() => setCreateDeviceViewOpen(true)}>
+      {androidPhysicalDevices.length > 0 && (
+        <>
+          <Label>Physical Android Devices</Label>
+          {androidPhysicalDevices.map(renderRow)}
+        </>
+      )}
+      <Button
+        autoFocus
+        className="create-button"
+        dataTest="manage-devices-menu-create-new-device-button"
+        onClick={() => setCreateDeviceViewOpen(true)}>
         <span className="codicon codicon-add" />
         <div className="create-button-text">Create new device</div>
       </Button>
@@ -234,7 +283,9 @@ function ManageDevicesView() {
         <Switch.Root
           className="switch-root small-switch"
           checked={stopPreviousDevices}
-          onCheckedChange={(checked) => update("stopPreviousDevices", checked)}>
+          onCheckedChange={(checked) =>
+            store$.workspaceConfiguration.deviceControl.stopPreviousDevices.set(checked)
+          }>
           <Switch.Thumb className="switch-thumb" />
         </Switch.Root>
       </div>

@@ -41,9 +41,23 @@ export function findAppRootCandidates(maxSearchDepth: number = 3): string[] {
     return [];
   }
 
-  const searchDirectories: SearchItem[] = workspaceFolders.map((workspaceFolder) => {
-    return { path: workspaceFolder.uri.fsPath, searchDepth: 0 };
-  });
+  const searchDirectories: SearchItem[] = workspaceFolders
+    .filter((workspaceFolder) => {
+      try {
+        const workspaceFolderStat = fs.statSync(workspaceFolder.uri.fsPath);
+        return (
+          !workspaceFolderStat.isSymbolicLink() &&
+          workspaceFolderStat.isDirectory() &&
+          !workspaceFolderStat.isFile()
+        );
+      } catch (e) {
+        Logger.error("[AppRoot] Error checking workspace folder:", e);
+        return false;
+      }
+    })
+    .map((workspaceFolder) => {
+      return { path: workspaceFolder.uri.fsPath, searchDepth: 0 };
+    });
 
   const candidates = searchForFilesDirectory(
     searchedFileNames,
@@ -78,7 +92,14 @@ function searchForFilesDirectory(
       break;
     }
 
-    const filesAndDirs = fs.readdirSync(currentDir.path.toString(), { withFileTypes: true });
+    let filesAndDirs: fs.Dirent[];
+
+    try {
+      filesAndDirs = fs.readdirSync(currentDir.path.toString(), { withFileTypes: true });
+    } catch (e) {
+      Logger.error("[AppRoot] Error reading directory:", e);
+      continue;
+    }
 
     const isCandidate = filesAndDirs.some((dirEntry) => {
       return dirEntry.isFile() && searchedFileNames.includes(dirEntry.name);
@@ -91,7 +112,7 @@ function searchForFilesDirectory(
     filesAndDirs
       .filter((dirEntry) => {
         return (
-          !dirEntry.isFile() &&
+          dirEntry.isDirectory() &&
           !excludedDirectoryPatterns.some((pattern) => pattern.test(dirEntry.name))
         );
       })
@@ -141,22 +162,5 @@ export function findAppRootFolder() {
     return appRootCandidates[0];
   }
 
-  const manageLaunchConfigButton = "Manage Launch Configuration";
-  window
-    .showErrorMessage(
-      `
-    Radon IDE couldn't find root application folder in this workspace.\n
-    Please make sure that the opened workspace contains a valid React Native or Expo project.\n
-    The way extension verifies the project is by looking for either: app.json, metro.config.js,
-    or node_modules/react-native folder. If your project structure is different, you can set the
-    app root using launch configuration.`,
-      manageLaunchConfigButton,
-      "Dismiss"
-    )
-    .then((item) => {
-      if (item === manageLaunchConfigButton) {
-        commands.executeCommand("debug.addConfiguration");
-      }
-    });
   return undefined;
 }

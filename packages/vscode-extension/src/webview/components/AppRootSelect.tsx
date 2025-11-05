@@ -2,18 +2,14 @@ import * as Select from "@radix-ui/react-select";
 import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
 import _ from "lodash";
-import React, { PropsWithChildren, useEffect } from "react";
+import React, { PropsWithChildren, useEffect, useMemo } from "react";
+import { use$ } from "@legendapp/state/react";
 import { useProject } from "../providers/ProjectProvider";
-import {
-  LaunchConfiguration,
-  LaunchConfigurationKind,
-  LaunchConfigurationOptions,
-} from "../../common/LaunchConfig";
+import { LaunchConfiguration, LaunchConfigurationKind } from "../../common/LaunchConfig";
 import RichSelectItem from "./shared/RichSelectItem";
+import { useStore } from "../providers/storeProvider";
 import { useModal } from "../providers/ModalProvider";
 import LaunchConfigurationView from "../views/LaunchConfigurationView";
-import { useApplicationRoots } from "../providers/ApplicationRootsProvider";
-import IconButton from "./shared/IconButton";
 import { useAlert } from "../providers/AlertProvider";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
@@ -24,16 +20,17 @@ const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.Sel
   )
 );
 
-function displayNameForConfig(config: LaunchConfigurationOptions) {
+function displayNameForConfig(config: LaunchConfiguration) {
   if (config.name === "Radon IDE panel") {
     return undefined;
   }
   return config.name;
 }
 
-function ConfigureButton({ onClick }: { onClick?: () => void }) {
+function ConfigureButton({ onClick, dataTest }: { onClick?: () => void; dataTest?: string }) {
   return (
     <div
+      data-testid={dataTest || "edit-launch-config-button"}
       onPointerUpCapture={(e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -47,7 +44,7 @@ function ConfigureButton({ onClick }: { onClick?: () => void }) {
 function renderLaunchConfigurations(
   groupLabel: string,
   prefix: string,
-  customLaunchConfigurations: LaunchConfigurationOptions[],
+  customLaunchConfigurations: LaunchConfiguration[],
   selectedValue: string | undefined,
   onEditConfig?: (config: LaunchConfiguration, isSelected: boolean) => void
 ) {
@@ -62,12 +59,14 @@ function renderLaunchConfigurations(
         <RichSelectItem
           value={`${prefix}:${idx}`}
           key={idx}
+          data-testid={`approot-select-item-${config.name || config.appRoot}`}
           icon={<span className="codicon codicon-folder" />}
           title={displayNameForConfig(config) ?? config.appRoot ?? "./"}
           subtitle={displayNameForConfig(config) ? config.appRoot : undefined}
           isSelected={selectedValue === `${prefix}:${idx}`}>
           {onEditConfig && (
             <ConfigureButton
+              dataTest={`edit-launch-config-button-${config.name || idx}`}
               onClick={() =>
                 onEditConfig(config as LaunchConfiguration, selectedValue === `${prefix}:${idx}`)
               }
@@ -80,7 +79,7 @@ function renderLaunchConfigurations(
 }
 
 function renderDetectedLaunchConfigurations(
-  detectedConfigurations: LaunchConfigurationOptions[],
+  detectedConfigurations: LaunchConfiguration[],
   selectedValue: string | undefined
 ) {
   if (detectedConfigurations.length === 0) {
@@ -96,7 +95,7 @@ function renderDetectedLaunchConfigurations(
 }
 
 function renderCustomLaunchConfigurations(
-  customLaunchConfigurations: LaunchConfigurationOptions[],
+  customLaunchConfigurations: LaunchConfiguration[],
   selectedValue: string | undefined,
   onEditConfig: (config: LaunchConfiguration, isSelected: boolean) => void
 ) {
@@ -126,14 +125,7 @@ function useUnknownConfigurationAlert(shouldOpen: boolean) {
         description:
           "The selected launch configration was deleted or modified in the workspace's launch.json file. " +
           "Radon IDE will continue to use the last selected configuration, but you may want to select a different one.",
-        actions: (
-          <IconButton
-            type="secondary"
-            onClick={() => closeAlert(alertId)}
-            tooltip={{ label: "Close notification", side: "bottom" }}>
-            <span className="codicon codicon-close" />
-          </IconButton>
-        ),
+        closeable: true,
       });
     } else if (!shouldOpen && isOpen(alertId)) {
       closeAlert(alertId);
@@ -142,35 +134,43 @@ function useUnknownConfigurationAlert(shouldOpen: boolean) {
 }
 
 function AppRootSelect() {
-  const applicationRoots = useApplicationRoots();
   const { projectState, project } = useProject();
+  const store$ = useStore();
+  const applicationRoots = use$(store$.applicationRoots);
+
+  const projectInitialized = use$(store$.projectState.initialized);
+
   const {
     selectedLaunchConfiguration: selectedConfiguration,
     customLaunchConfigurations: customConfigurations,
   } = projectState;
+
   const selectedAppRootPath = projectState.appRootPath;
   const selectedAppRoot = applicationRoots.find((root) => root.path === selectedAppRootPath);
   const { openModal } = useModal();
 
   function onEditConfig(config: LaunchConfiguration, isSelected: boolean) {
-    openModal(
-      "Launch Configuration",
-      <LaunchConfigurationView launchConfig={config} isCurrentConfig={isSelected} />
-    );
+    openModal(<LaunchConfigurationView launchConfig={config} isCurrentConfig={isSelected} />, {
+      title: "Launch Configuration",
+    });
   }
 
-  const detectedConfigurations: LaunchConfigurationOptions[] = applicationRoots.map(
-    ({ path, displayName, name }) => {
-      return {
-        appRoot: path,
-        name: displayName || name,
-      };
-    }
+  const detectedConfigurations = useMemo(
+    () =>
+      applicationRoots.map(({ path, displayName, name }) => {
+        return {
+          appRoot: path,
+          name: displayName || name,
+          kind: LaunchConfigurationKind.Detected,
+          env: {},
+        };
+      }),
+    [applicationRoots]
   );
 
   const handleAppRootChange = async (value: string) => {
     if (value === "manage") {
-      openModal("Launch Configuration", <LaunchConfigurationView />);
+      openModal(<LaunchConfigurationView />, { title: "Launch Configuration" });
       return;
     }
     const isDetected = value.startsWith("detected:");
@@ -182,10 +182,7 @@ function AppRootSelect() {
       "Index out of bounds for launch configurations %s",
       value
     );
-    project.selectLaunchConfiguration(
-      launchConfiguration,
-      isDetected ? LaunchConfigurationKind.Detected : LaunchConfigurationKind.Custom
-    );
+    project.selectLaunchConfiguration({ ...launchConfiguration });
   };
 
   const selectedValue = (() => {
@@ -202,7 +199,7 @@ function AppRootSelect() {
     }
   })();
 
-  useUnknownConfigurationAlert(projectState.initialized && selectedValue === "unknown");
+  useUnknownConfigurationAlert(projectInitialized && selectedValue === "unknown");
 
   const configurationsCount = detectedConfigurations.length + customConfigurations.length;
   const placeholder = configurationsCount === 0 ? "No applications found" : "Select application";
@@ -213,9 +210,12 @@ function AppRootSelect() {
 
   return (
     <Select.Root onValueChange={handleAppRootChange} value={selectedValue}>
-      <Select.Trigger className="approot-select-trigger" disabled={configurationsCount === 0}>
+      <Select.Trigger
+        className="approot-select-trigger"
+        data-testid="radon-bottom-bar-approot-select-dropdown-trigger"
+        disabled={configurationsCount === 0}>
         <Select.Value placeholder={placeholder}>
-          <div className="approot-select-value">
+          <div className="approot-select-value" data-testid="approot-select-value">
             <span className="codicon codicon-folder-opened" />
             <span className="approot-select-value-text">{value}</span>
           </div>
@@ -225,6 +225,7 @@ function AppRootSelect() {
       <Select.Portal>
         <Select.Content
           className="approot-select-content"
+          data-testid="approot-select-dropdown-content"
           position="popper"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <Select.ScrollUpButton className="approot-select-scroll">
@@ -234,7 +235,7 @@ function AppRootSelect() {
             {renderDetectedLaunchConfigurations(detectedConfigurations, selectedValue)}
             {renderCustomLaunchConfigurations(customConfigurations, selectedValue, onEditConfig)}
             {configurationsCount > 0 && <Select.Separator className="approot-select-separator" />}
-            <SelectItem value="manage">
+            <SelectItem value="manage" data-testid="add-launch-config-button">
               <span className="codicon codicon-add" />
               <span> Add custom launch config</span>
             </SelectItem>

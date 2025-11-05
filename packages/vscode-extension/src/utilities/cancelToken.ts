@@ -9,6 +9,15 @@ export class CancelError extends Error {
 export class CancelToken {
   private isCancelled = false;
   private cancelListeners: (() => void)[] = [];
+  private abortController: AbortController;
+
+  constructor() {
+    this.abortController = new AbortController();
+  }
+
+  public get signal() {
+    return this.abortController.signal;
+  }
 
   public onCancel(cb: () => void) {
     this.cancelListeners.push(cb);
@@ -19,13 +28,21 @@ export class CancelToken {
   public adapt<T>(
     input: Promise<T> | ReturnType<typeof exec>
   ): Promise<T> | ReturnType<typeof exec> {
+    const cancelledError = new CancelError("The process was canceled");
     if (isExecaChildProcess(input)) {
       const { promise, resolve, reject } = Promise.withResolvers();
-
-      this.onCancel(() => {
-        reject(new CancelError("The process was canceled"));
+      const cancelProcess = () => {
+        reject(cancelledError);
         input.kill(9);
-      });
+      };
+
+      // NOTE: if the cancel token is already cancelled,
+      // we want to stop the operation immediately
+      if (this.isCancelled) {
+        cancelProcess();
+      }
+
+      this.onCancel(cancelProcess);
 
       input.then(resolve, reject);
 
@@ -40,12 +57,17 @@ export class CancelToken {
 
       return wrappedInput as ReturnType<typeof exec>;
     } else {
+      // NOTE: if the cancel token is already cancelled,
+      // we want to stop the operation immediately
+      if (this.isCancelled) {
+        return Promise.reject<T>(cancelledError);
+      }
       const { promise, resolve, reject } = Promise.withResolvers<T>();
       this.onCancel(() => {
-        reject(new CancelError("The process was canceled"));
+        reject(cancelledError);
       });
 
-      input.then(resolve).catch(reject);
+      input.then(resolve, reject);
 
       return promise;
     }
@@ -53,6 +75,7 @@ export class CancelToken {
 
   public cancel() {
     this.isCancelled = true;
+    this.abortController.abort();
     for (const listener of this.cancelListeners) {
       listener();
     }
@@ -60,6 +83,12 @@ export class CancelToken {
 
   get cancelled() {
     return this.isCancelled;
+  }
+
+  public throwIfCancelled() {
+    if (this.cancelled) {
+      throw new CancelError("The operation was cancelled");
+    }
   }
 }
 

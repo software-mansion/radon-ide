@@ -1,3 +1,4 @@
+import assert from "assert";
 import {
   commands,
   languages,
@@ -26,16 +27,36 @@ import {
   setExtensionContext,
 } from "./utilities/extensionContext";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
-import { PanelLocation } from "./common/WorkspaceConfig";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
-import { registerRadonChat, registerRadonAi } from "./ai";
 import { ProxyDebugSessionAdapterDescriptorFactory } from "./debugging/ProxyDebugAdapter";
 import { Connector } from "./connect/Connector";
 import { ReactDevtoolsEditorProvider } from "./react-devtools-profiler/ReactDevtoolsEditorProvider";
-import { IDEPanelMoveTarget } from "./common/utils";
+import { launchConfigurationFromOptions } from "./project/launchConfigurationsManager";
+import { isIdeConfig } from "./utilities/launchConfiguration";
+import { PanelLocation } from "./common/State";
+import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
+import { RestrictedFunctionalityError } from "./common/Errors";
+import { registerRadonAI } from "./ai/mcp/RadonMcpController";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
+
+function wrapPaywalledFunction<F extends (...args: any[]) => Promise<void> | void>(
+  fn: F,
+  messageOnRestricted: string
+) {
+  return async (...args: Parameters<F>) => {
+    try {
+      await fn(...args);
+    } catch (e) {
+      if (e instanceof RestrictedFunctionalityError) {
+        window.showInformationMessage(messageOnRestricted);
+        return;
+      }
+      throw e;
+    }
+  };
+}
 
 function handleUncaughtErrors(context: ExtensionContext) {
   process.on("unhandledRejection", (error) => {
@@ -106,14 +127,14 @@ export async function activate(context: ExtensionContext) {
 
     const configuration = workspace.getConfiguration("RadonIDE");
 
-    let panelLocation = configuration.get<PanelLocation>("panelLocation");
+    let panelLocation = configuration.get<PanelLocation>("userInterface.panelLocation");
     if (newLocation) {
       panelLocation = newLocation === "side-panel" ? "side-panel" : "tab";
       updatingConfigProgrammatically = true;
-      if (configuration.inspect("panelLocation")?.workspaceValue) {
-        await configuration.update("panelLocation", panelLocation, false);
+      if (configuration.inspect("userInterface.panelLocation")?.workspaceValue) {
+        await configuration.update("userInterface.panelLocation", panelLocation, false);
       } else {
-        await configuration.update("panelLocation", panelLocation, true);
+        await configuration.update("userInterface.panelLocation", panelLocation, true);
       }
       updatingConfigProgrammatically = false;
     }
@@ -134,7 +155,7 @@ export async function activate(context: ExtensionContext) {
   async function closeIDEPanel(fileName?: string, lineNumber?: number) {
     const panelLocation = workspace
       .getConfiguration("RadonIDE")
-      .get<PanelLocation>("panelLocation");
+      .get<PanelLocation>("userInterface.panelLocation");
 
     if (panelLocation !== "tab") {
       commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", true);
@@ -153,7 +174,10 @@ export async function activate(context: ExtensionContext) {
       });
   }
 
-  async function showStorybookStory(componentTitle: string, storyName: string) {
+  const showStorybookStory = wrapPaywalledFunction(async function (
+    componentTitle: string,
+    storyName: string
+  ) {
     commands.executeCommand("RNIDE.openPanel");
     const ide = IDE.getInstanceIfExists();
     if (ide) {
@@ -161,7 +185,7 @@ export async function activate(context: ExtensionContext) {
     } else {
       window.showWarningMessage("Wait for the app to load before launching storybook.", "Dismiss");
     }
-  }
+  }, "Storybook integration is a Pro feature. Please upgrade your plan to access it.");
 
   async function showInlinePreview(fileName: string, lineNumber: number) {
     commands.executeCommand("RNIDE.openPanel");
@@ -196,6 +220,12 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.deviceAppSwitchButtonPress", deviceAppSwitchButtonPress)
   );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceVolumeIncrease", deviceVolumeIncrease)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.deviceVolumeDecrease", deviceVolumeDecrease)
+  );
   context.subscriptions.push(commands.registerCommand("RNIDE.openDevMenu", openDevMenu));
   context.subscriptions.push(commands.registerCommand("RNIDE.closePanel", closeIDEPanel));
   context.subscriptions.push(commands.registerCommand("RNIDE.openPanel", showIDEPanel));
@@ -229,6 +259,13 @@ export async function activate(context: ExtensionContext) {
     commands.registerCommand("RNIDE.previousRunningDevice", () =>
       IDE.getInstanceIfExists()?.project.deviceSessionsManager.selectNextNthRunningSession(-1)
     )
+  );
+
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.rotateDeviceAnticlockwise", rotateDeviceAnticlockwise)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.rotateDeviceClockwise", rotateDeviceClockwise)
   );
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
@@ -305,22 +342,13 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     workspace.onDidChangeConfiguration((event: ConfigurationChangeEvent) => {
-      if (event.affectsConfiguration("RadonIDE.panelLocation")) {
+      if (event.affectsConfiguration("RadonIDE.userInterface.panelLocation")) {
         showIDEPanel();
       }
     })
   );
 
-  const configuration = workspace.getConfiguration("RadonIDE");
-  const enableRadonAI = configuration.get<boolean>("enableRadonAI");
-
-  if (enableRadonAI) {
-    // Initializes MCP part of Radon AI
-    context.subscriptions.push(registerRadonAi());
-  }
-
-  // You can configure the chat in package.json under the `chatParticipants` key
-  registerRadonChat(context, !!enableRadonAI);
+  context.subscriptions.push(registerRadonAI(context));
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
@@ -333,18 +361,23 @@ class LaunchConfigDebugAdapterDescriptorFactory implements vscode.DebugAdapterDe
   async createDebugAdapterDescriptor(
     session: vscode.DebugSession
   ): Promise<vscode.DebugAdapterDescriptor> {
+    assert(
+      isIdeConfig(session.configuration),
+      "This DebugAdapterDescriptorFactory is only registered for radon-ide launch configurations"
+    );
+    const initialLaunchConfig = launchConfigurationFromOptions(session.configuration);
     let attachedInstance: IDE | undefined = undefined;
 
     const existingIDE = IDE.getInstanceIfExists();
     if (existingIDE) {
-      await existingIDE.project.selectLaunchConfiguration(session.configuration).catch((error) => {
+      await existingIDE.project.selectLaunchConfiguration(initialLaunchConfig).catch((error) => {
         Logger.error("Failed to select initial launch configuration", error);
         Logger.debug(
           "These errors should be caught in the Project instance and handled gracefully. If you see this, there's a bug in the code."
         );
       });
     } else {
-      attachedInstance = IDE.initializeInstance({ initialLaunchConfig: session.configuration });
+      attachedInstance = IDE.initializeInstance({ initialLaunchConfig });
     }
 
     try {
@@ -369,24 +402,34 @@ async function openDevMenu() {
   IDE.getInstanceIfExists()?.project.openDevMenu();
 }
 
-async function performBiometricAuthorization() {
-  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
-}
+const performBiometricAuthorization = wrapPaywalledFunction(async function () {
+  await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
+}, "Biometric authentication is a Pro feature. Please upgrade your plan to access it.");
 
-async function performFailedBiometricAuthorization() {
-  IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
-}
+const performFailedBiometricAuthorization = wrapPaywalledFunction(async function () {
+  await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
+}, "Biometric authentication is a Pro feature. Please upgrade your plan to access it.");
 
 async function deviceHomeButtonPress() {
   const project = IDE.getInstanceIfExists()?.project;
-  project?.dispatchButton("home", "Down");
-  project?.dispatchButton("home", "Up");
+  project?.dispatchHomeButtonPress();
 }
 
 async function deviceAppSwitchButtonPress() {
   const project = IDE.getInstanceIfExists()?.project;
-  project?.dispatchButton("appSwitch", "Down");
-  project?.dispatchButton("appSwitch", "Up");
+  project?.dispatchAppSwitchButtonPress();
+}
+
+async function deviceVolumeIncrease() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("volumeUp", "Down");
+  project?.dispatchButton("volumeUp", "Up");
+}
+
+async function deviceVolumeDecrease() {
+  const project = IDE.getInstanceIfExists()?.project;
+  project?.dispatchButton("volumeDown", "Down");
+  project?.dispatchButton("volumeDown", "Up");
 }
 
 async function captureReplay() {
@@ -399,6 +442,22 @@ async function toggleRecording() {
 
 async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
+}
+
+const rotateDevice = wrapPaywalledFunction(async function (direction: DeviceRotationDirection) {
+  const project = IDE.getInstanceIfExists()?.project;
+  if (!project) {
+    throw new Error("Radon IDE is not initialized yet.");
+  }
+  await project.rotateDevices(direction);
+}, "Device rotation is a Pro feature. Please upgrade your plan to access it.");
+
+async function rotateDeviceAnticlockwise() {
+  await rotateDevice(DeviceRotationDirection.Anticlockwise);
+}
+
+async function rotateDeviceClockwise() {
+  await rotateDevice(DeviceRotationDirection.Clockwise);
 }
 
 async function openChat() {

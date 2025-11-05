@@ -1,22 +1,34 @@
+import { use$ } from "@legendapp/state/react";
 import "./View.css";
 import "./DiagnosticView.css";
 import Anchor from "../components/shared/Anchor";
 import CheckIcon from "../components/icons/CheckIcon";
 import CloseIcon from "../components/icons/CloseIcon";
 import CloseGrayIcon from "../components/icons/CloseGrayIcon";
-import { dependencyDescription, useDependencies } from "../providers/DependenciesProvider";
 import ProgressRing from "../components/shared/ProgressRing";
 import Tooltip from "../components/shared/Tooltip";
 import Label from "../components/shared/Label";
 import Button from "../components/shared/Button";
-import { Platform } from "../providers/UtilsProvider";
-import { Dependency, DependencyStatus } from "../../common/DependencyManager";
+import { Platform, useProject } from "../providers/ProjectProvider";
+import { ApplicationDependency, DependencyStatus, EnvironmentDependency } from "../../common/State";
+import { dependencyDescription } from "../hooks/useDependencyErrors";
+import { useStore } from "../providers/storeProvider";
 
 function DiagnosticView() {
-  const { dependencies, runDiagnostics } = useDependencies();
+  const { project } = useProject();
+  const store$ = useStore();
+  const applicationDependencies = use$(
+    store$.projectState.applicationContext.applicationDependencies
+  );
+  const environmentDependencies = use$(store$.environmentDependencies);
+  const dependencies = { ...applicationDependencies, ...environmentDependencies };
+
+  const reRunChecks = () => {
+    project.runDependencyChecks();
+  };
 
   return (
-    <div className="diagnostic-container">
+    <div className="diagnostic-container" data-testid="diagnostics-view">
       <Label>Common</Label>
       <DiagnosticItem label="Node.js" name="nodejs" info={dependencies.nodejs} />
       <DiagnosticItem
@@ -61,7 +73,7 @@ function DiagnosticView() {
       <div className="diagnostic-section-margin" />
 
       <div className="diagnostic-button-container">
-        <Button onClick={runDiagnostics} type="secondary">
+        <Button onClick={reRunChecks} type="secondary">
           <span slot="start" className="codicon codicon-refresh" />
           Re-run checks
         </Button>
@@ -69,6 +81,8 @@ function DiagnosticView() {
     </div>
   );
 }
+
+type Dependency = ApplicationDependency | EnvironmentDependency;
 
 interface DiagnosticItemProps {
   label: string;

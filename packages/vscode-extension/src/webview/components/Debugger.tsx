@@ -4,9 +4,8 @@ import IconButton from "./shared/IconButton";
 
 function Debugger() {
   const { project } = useProject();
-
   return (
-    <div className="debugger-container">
+    <div className="debugger-container" data-testid="app-debugger-container">
       <p className="debugger-label debugger-shadow">Paused in debugger</p>
       <div className="debugger-button-group">
         <IconButton
@@ -24,6 +23,22 @@ function Debugger() {
             side: "bottom",
           }}>
           <span className="codicon codicon-debug-step-over" />
+        </IconButton>
+        <IconButton
+          onClick={() => project.stepIntoDebugger()}
+          tooltip={{
+            label: "Step into",
+            side: "bottom",
+          }}>
+          <span className="codicon codicon-debug-step-into" />
+        </IconButton>
+        <IconButton
+          onClick={() => project.stepOutDebugger()}
+          tooltip={{
+            label: "Step out",
+            side: "bottom",
+          }}>
+          <span className="codicon codicon-debug-step-out" />
         </IconButton>
         <IconButton
           onClick={() => project.focusDebugConsole()}

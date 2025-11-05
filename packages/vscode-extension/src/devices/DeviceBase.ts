@@ -1,13 +1,16 @@
 import fs from "fs";
-import { Disposable } from "vscode";
-import { Preview } from "./preview";
+import { Disposable, EventEmitter } from "vscode";
+import { Preview, PreviewError } from "./preview";
 import { BuildResult } from "../builders/BuildManager";
-import { AppPermissionType, DeviceSettings, TouchPoint, DeviceButtonType } from "../common/Project";
-import { DeviceInfo, DevicePlatform } from "../common/DeviceManager";
+import { AppPermissionType, TouchPoint, DeviceButtonType } from "../common/Project";
 import { tryAcquiringLock } from "../utilities/common";
-import { extensionContext } from "../utilities/extensionContext";
-import { getTelemetryReporter } from "../utilities/telemetry";
-import { getChanges } from "../utilities/diffing";
+import {
+  DeviceInfo,
+  DevicePlatform,
+  DeviceRotation,
+  DeviceSettings,
+  FrameRateReport,
+} from "../common/State";
 
 const LEFT_META_HID_CODE = 0xe3;
 const RIGHT_META_HID_CODE = 0xe7;
@@ -16,31 +19,19 @@ const C_KEY_HID_CODE = 0x06;
 
 export const REBOOT_TIMEOUT = 3000;
 
-export const DEVICE_SETTINGS_KEY = "device_settings_v4";
-export const DEVICE_SETTINGS_DEFAULT: DeviceSettings = {
-  appearance: "dark",
-  contentSize: "normal",
-  location: {
-    latitude: 50.048653,
-    longitude: 19.965474,
-    isDisabled: false,
-  },
-  hasEnrolledBiometrics: false,
-  locale: "en_US",
-  replaysEnabled: false,
-  showTouches: false,
-};
-
 export abstract class DeviceBase implements Disposable {
   protected preview: Preview | undefined;
   private previewStartPromise: Promise<string> | undefined;
   private acquired = false;
   private pressingLeftMetaKey = false;
   private pressingRightMetaKey = false;
-  protected deviceSettings: DeviceSettings = extensionContext.workspaceState.get(
-    DEVICE_SETTINGS_KEY,
-    DEVICE_SETTINGS_DEFAULT
-  );
+  private _rotation: DeviceRotation = DeviceRotation.Portrait;
+
+  private previewClosedEventEmitter = new EventEmitter<PreviewError | void>();
+
+  public readonly onPreviewClosed = this.previewClosedEventEmitter.event;
+
+  constructor(protected deviceSettings: DeviceSettings) {}
 
   abstract get lockFilePath(): string;
 
@@ -52,6 +43,10 @@ export abstract class DeviceBase implements Disposable {
     return this.preview?.streamURL !== undefined;
   }
 
+  public get rotation() {
+    return this._rotation;
+  }
+
   async reboot(): Promise<void> {
     this.preview?.dispose();
     this.preview = undefined;
@@ -59,14 +54,6 @@ export abstract class DeviceBase implements Disposable {
   }
 
   async updateDeviceSettings(settings: DeviceSettings) {
-    const changes = getChanges(this.deviceSettings, settings);
-
-    getTelemetryReporter().sendTelemetryEvent("device-settings:update-device-settings", {
-      platform: this.platform,
-      changedSetting: JSON.stringify(changes),
-    });
-
-    extensionContext.workspaceState.update(DEVICE_SETTINGS_KEY, settings);
     this.deviceSettings = settings;
     this.applyPreviewSettings();
 
@@ -86,6 +73,7 @@ export abstract class DeviceBase implements Disposable {
       } else {
         preview.hideTouches();
       }
+      this.sendRotate(this._rotation);
     }
   }
 
@@ -98,11 +86,17 @@ export abstract class DeviceBase implements Disposable {
   abstract launchApp(
     build: BuildResult,
     metroPort: number,
-    devtoolsPort: number,
-    launchArguments: string[]
+    devtoolsPort: number | undefined,
+    launchArguments: string[],
+    appRoot: string
   ): Promise<void>;
   abstract terminateApp(packageNameOrBundleID: string): Promise<void>;
-  abstract makePreview(): Preview;
+  protected abstract makePreview(licenseToken?: string): Preview;
+
+  /**
+   * @returns whether the file can be safely removed after the operation finished.
+   */
+  abstract sendFile(filePath: string): Promise<{ canSafelyRemove: boolean }>;
   abstract get platform(): DevicePlatform;
   abstract get deviceInfo(): DeviceInfo;
   abstract resetAppPermissions(
@@ -130,6 +124,15 @@ export abstract class DeviceBase implements Disposable {
       }
     }
     this.preview?.dispose();
+    this.previewClosedEventEmitter.dispose();
+  }
+
+  public startReportingFrameRate(onFpsReport: (report: FrameRateReport) => void) {
+    this.preview?.startReportingFrameRate(onFpsReport);
+  }
+
+  public stopReportingFrameRate() {
+    this.preview?.stopReportingFrameRate();
   }
 
   public showTouches() {
@@ -147,29 +150,33 @@ export abstract class DeviceBase implements Disposable {
     return this.preview.startRecording();
   }
 
-  public async captureAndStopRecording() {
+  public async captureAndStopRecording(rotation: DeviceRotation) {
     if (!this.preview) {
       throw new Error("Preview not started");
     }
-    return this.preview.captureAndStopRecording();
+    return this.preview.captureAndStopRecording(rotation);
   }
 
-  public async captureReplay() {
+  public async captureReplay(rotation: DeviceRotation) {
     if (!this.preview) {
       throw new Error("Preview not started");
     }
-    return this.preview.captureReplay();
+    return this.preview.captureReplay(rotation);
   }
 
-  public async captureScreenshot() {
+  public async captureScreenshot(rotation: DeviceRotation) {
     if (!this.preview) {
       throw new Error("Preview not started");
     }
-    return this.preview.captureScreenShot();
+    return this.preview.captureScreenShot(rotation);
   }
 
-  public sendTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {
-    this.preview?.sendTouches(touches, type);
+  public sendTouches(
+    touches: Array<TouchPoint>,
+    type: "Up" | "Move" | "Down",
+    rotation: DeviceRotation
+  ) {
+    this.preview?.sendTouches(touches, type, rotation);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
@@ -214,9 +221,22 @@ export abstract class DeviceBase implements Disposable {
     this.preview?.sendWheel(point, deltaX, deltaY);
   }
 
-  async startPreview() {
+  public sendRotate(rotation: DeviceRotation) {
+    this._rotation = rotation;
+    this.preview?.rotateDevice(rotation);
+  }
+
+  private previewClosedListener = (error: PreviewError | void) => {
+    this.previewStartPromise = undefined;
+    this.preview?.dispose();
+    this.preview = undefined;
+    this.previewClosedEventEmitter.fire(error);
+  };
+
+  public async startPreview(licenseToken?: string) {
     if (!this.previewStartPromise) {
-      this.preview = this.makePreview();
+      this.preview = this.makePreview(licenseToken);
+      this.preview.onClosed(this.previewClosedListener);
       this.previewStartPromise = this.preview.start();
       this.previewStartPromise.then(() => {
         this.applyPreviewSettings();

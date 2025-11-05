@@ -5,7 +5,127 @@
   background: var(--vscode-editor-background);
 }
 
-.table-row:hover {
+.table-row:hover,
+.table-row[data-state="open"] {
   cursor: pointer;
+  background-color: var(--swm-url-select-highlighted-background);
+}
+
+.table-header-cell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-direction: row;
+  min-width: 0; /* Allow flex items to shrink below their content size */
+  padding-right: 10px;
+}
+
+.table-header-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0; /* Allow this to shrink */
+
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.table-header-cell button {
+  opacity: 0;
+  flex-shrink: 0;
+
+  min-width: 20px;
+  min-height: 20px;
+  padding: 5px;
+  border-radius: 5px;
+
+  .codicon {
+    font-size: 13px;
+  }
+}
+
+/* Hide filter button when header is too small to prevent overflow */
+.table-header-cell {
+  container: header / inline-size;
+
+  @container header (width < 80px) {
+    button {
+      visibility: hidden;
+      width: 0px;
+      min-width: 0px;
+    }
+  }
+}
+
+.table-header-cell .icon-button:focus,
+.table-header-cell .icon-button {
+  box-shadow: none;
+}
+
+.table-header-cell > span {
+  flex-shrink: 0;
+
+  &.codicon {
+    font-weight: bold;
+  }
+
+  .hidden {
+    display: none;
+  }
+}
+
+vscode-table-header-cell {
+  cursor: pointer;
+}
+
+/* make sure the background is not highlit when the user hovers over the button */
+vscode-table-header-cell:hover:not(:has(button:hover)) {
   background-color: var(--vscode-list-hoverBackground);
+}
+
+vscode-table-header-cell:hover .table-header-cell button {
+  opacity: 1;
+}
+
+.selected,
+.selected:hover {
+  background-color: var(--vscode-terminal-selectionBackground);
+
+  vscode-table-cell {
+    color: var(--vscode-menu-selectionForeground);
+  }
+}
+
+.failed {
+  vscode-table-cell {
+    color: var(--vscode-list-errorForeground);
+  }
+
+  &.selected,
+  &.selected:hover {
+    background-color: var(--vscode-mergeEditor-changeBase\.background);
+
+    vscode-table-cell {
+      color: var(--vscode-list-errorForeground);
+    }
+  }
+}
+
+/* Fallback for high-contrast */
+.vscode-high-contrast .selected vscode-table-cell,
+.vscode-high-contrast-light .selected vscode-table-cell {
+  color: var(--vscode-editor-selectionForeground);
+}
+
+.hack-table-row {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.context-menu-row {
+  width: auto;
+  position: absolute;
 }

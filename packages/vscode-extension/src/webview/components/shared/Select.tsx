@@ -2,6 +2,7 @@ import * as RadixSelect from "@radix-ui/react-select";
 import { PropsWithChildren, ReactNode, forwardRef } from "react";
 import classnames from "classnames";
 import "./Select.css";
+import { PropsWithDataTest } from "../../../common/types";
 
 const SelectItem = forwardRef<
   HTMLDivElement,
@@ -42,13 +43,23 @@ interface SelectProps {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  dataTest?: string;
 }
 
-function Select({ value, onChange, items, placeholder, className, disabled }: SelectProps) {
+function Select({
+  value,
+  onChange,
+  items,
+  placeholder,
+  className,
+  disabled,
+  dataTest,
+}: PropsWithDataTest<SelectProps>) {
   return (
     <RadixSelect.Root value={value} onValueChange={onChange} disabled={disabled}>
       <RadixSelect.Trigger
-        className={classnames("select-trigger", className, disabled && "select-trigger-disabled")}>
+        className={classnames("select-trigger", className, disabled && "select-trigger-disabled")}
+        data-testid={dataTest}>
         <RadixSelect.Value placeholder={placeholder} />
         <RadixSelect.Icon className="select-icon">
           <span className="codicon codicon-chevron-down" />
@@ -69,7 +80,8 @@ function Select({ value, onChange, items, placeholder, className, disabled }: Se
                       key={selectItem.value}
                       disabled={selectItem.disabled}
                       marked={selectItem.marked}
-                      value={selectItem.value}>
+                      value={selectItem.value}
+                      data-testid={`${dataTest}-item-${selectItem.value}`}>
                       {selectItem.label}
                     </SelectItem>
                   ))}
@@ -79,6 +91,7 @@ function Select({ value, onChange, items, placeholder, className, disabled }: Se
                   key={item.value}
                   disabled={item.disabled}
                   value={item.value}
+                  data-testid={`${dataTest}-item-${item.value}`}
                   marked={item.marked}>
                   {item.label}
                 </SelectItem>

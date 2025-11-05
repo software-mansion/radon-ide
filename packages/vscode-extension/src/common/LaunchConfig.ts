@@ -1,12 +1,13 @@
-import _ from "lodash";
-
 export type EasConfig = { profile: string; buildUUID?: string; local?: boolean };
 export type CustomBuild = {
   buildCommand?: string;
   fingerprintCommand?: string;
 };
 
-export type LaunchConfigurationOptions = {
+/**
+ * Represents the options for building and launching an application in Radon IDE.
+ */
+export interface LaunchOptions {
   name?: string;
   appRoot?: string;
   metroConfigPath?: string;
@@ -20,16 +21,21 @@ export type LaunchConfigurationOptions = {
     android?: EasConfig;
   };
   env?: Record<string, string>;
-  ios?: IOSLaunchConfiguration;
+  ios?: IOSLaunchOptions;
   isExpo?: boolean;
-  android?: AndroidLaunchConfiguration;
+  android?: AndroidLaunchOptions;
   packageManager?: string;
   preview?: {
     waitForAppLaunch?: boolean;
   };
-};
+  usePrebuild?: boolean;
+  useOldDevtools?: boolean;
+  useCustomJSDebugger?: boolean;
+  metroPort?: number;
+  disableNativeBuildStaleChecks?: boolean;
+}
 
-export const LAUNCH_CONFIG_OPTIONS_KEYS = [
+export const LAUNCH_OPTIONS_KEYS = [
   "name",
   "appRoot",
   "metroConfigPath",
@@ -42,40 +48,30 @@ export const LAUNCH_CONFIG_OPTIONS_KEYS = [
   "android",
   "packageManager",
   "preview",
+  "usePrebuild",
+  "useOldDevtools",
+  "useCustomJSDebugger",
+  "metroPort",
+  "disableNativeBuildStaleChecks",
 ] as const;
 
 type IsSuperTypeOf<Base, T extends Base> = T;
-// Type level proof that the strings in `LAUNCH_CONFIG_OPTIONS_KEYS` cover all keys `LaunchConfigurationOptions`.
+// Type level proof that the strings in `LAUNCH_OPTIONS_KEYS` cover all keys `LaunchConfigurationOptions`.
 type _AssertKeysCover = IsSuperTypeOf<
-  Required<LaunchConfigurationOptions>,
-  Record<(typeof LAUNCH_CONFIG_OPTIONS_KEYS)[number], any>
+  Required<LaunchOptions>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Record<(typeof LAUNCH_OPTIONS_KEYS)[number], any>
 >;
-// Type level proof that the strings in `LAUNCH_CONFIG_OPTIONS_KEYS` are valid keys of `LaunchConfigurationOptions`.
-type _AssertKeysValid = IsSuperTypeOf<
-  keyof LaunchConfigurationOptions,
-  (typeof LAUNCH_CONFIG_OPTIONS_KEYS)[number]
->;
+// Type level proof that the strings in `LAUNCH_OPTIONS_KEYS` are valid keys of `LaunchConfigurationOptions`.
+type _AssertKeysValid = IsSuperTypeOf<keyof LaunchOptions, (typeof LAUNCH_OPTIONS_KEYS)[number]>;
 
-// NOTE: when serializing the LaunchConfiguration, we want to omit the default and computed values.
-// This function is a messy attempt at that, and should be kept in sync with both the type definition
-// and the `launchConfigurationFromOptions` function in `/project/launchConfigurationsManager`.
-export function optionsForLaunchConfiguration(
-  config: LaunchConfiguration
-): LaunchConfigurationOptions {
-  const options: LaunchConfigurationOptions = _.pick(config, LAUNCH_CONFIG_OPTIONS_KEYS);
-  if (options.preview?.waitForAppLaunch) {
-    delete options.preview;
-  }
-  return options;
-}
-
-export interface IOSLaunchConfiguration {
+export interface IOSLaunchOptions {
   scheme?: string;
   configuration?: string;
   launchArguments?: string[];
 }
 
-export interface AndroidLaunchConfiguration {
+export interface AndroidLaunchOptions {
   buildType?: string;
   productFlavor?: string;
 }
@@ -85,12 +81,11 @@ export enum LaunchConfigurationKind {
   Detected = "Detected",
 }
 
-export type LaunchConfiguration = LaunchConfigurationOptions & {
+/**
+ * A serializable representation of a launch configuration.
+ * Includes the options specified in `LaunchOptions` as well as relevant data useful in the presentation layer.
+ */
+export type LaunchConfiguration = LaunchOptions & {
   kind: LaunchConfigurationKind;
-  absoluteAppRoot: string;
   appRoot: string;
-  env: Record<string, string>;
-  preview: {
-    waitForAppLaunch: boolean;
-  };
 };

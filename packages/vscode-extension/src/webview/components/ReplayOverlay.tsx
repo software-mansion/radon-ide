@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import * as Select from "@radix-ui/react-select";
-import { MultimediaData } from "../../common/Project";
-import { useUtils } from "../providers/UtilsProvider";
 import "./ReplayOverlay.css";
 import Button from "./shared/Button";
+import { useProject } from "../providers/ProjectProvider";
+import { MultimediaData } from "../../common/State";
 
 const INITIAL_REPLAY_LENGTH_SEC = 5;
 
@@ -187,26 +187,88 @@ export default function ReplayOverlay({
   onClose,
   replayData,
 }: ReplayOverlayProps) {
-  const utils = useUtils();
+  const { project } = useProject();
   const [isPlaying, setIsPlaying] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
   const [startTime, setStartTime] = useState(0);
   const [time, setCurrentTime] = useState(0);
   const [metadataLoaded, setMetadataLoaded] = useState(false);
 
-  function stepForward() {
+  function stepForward(multiplier = 1) {
     if (videoRef.current) {
       videoRef.current.pause();
-      videoRef.current.currentTime += 1 / 60;
+      videoRef.current.currentTime += (1 * multiplier) / 60;
     }
   }
 
-  function stepBackward() {
+  function stepBackward(multiplier = 1) {
     if (videoRef.current) {
       videoRef.current.pause();
-      videoRef.current.currentTime -= 1 / 60;
+      videoRef.current.currentTime -= (1 * multiplier) / 60;
     }
   }
+
+  function togglePlayback() {
+    if (videoRef.current) {
+      if (isVideoPlaying(videoRef.current)) {
+        videoRef.current.pause();
+      } else if (isEnded) {
+        videoRef.current.currentTime = startTime;
+        videoRef.current.play();
+      } else {
+        videoRef.current.play();
+      }
+    }
+  }
+
+  function saveReplay() {
+    project.saveMultimedia(replayData);
+  }
+
+  function handleKeyboardControls(event: KeyboardEvent) {
+    switch (event.key) {
+      case "Escape":
+        onClose();
+        break;
+
+      case "ArrowLeft":
+        if (event.shiftKey) {
+          stepBackward(10);
+        } else {
+          stepBackward();
+        }
+        break;
+
+      case "ArrowRight":
+        if (event.shiftKey) {
+          stepForward(10);
+        } else {
+          stepForward();
+        }
+        break;
+
+      case " ":
+        event.preventDefault();
+        togglePlayback();
+        break;
+
+      case "s":
+        if (event.ctrlKey || event.metaKey) {
+          event.preventDefault();
+          saveReplay();
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  useEffect(() => {
+    document.addEventListener("keydown", handleKeyboardControls, false);
+    return () => {
+      document.removeEventListener("keydown", handleKeyboardControls, false);
+    };
+  }, [handleKeyboardControls]);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -276,7 +338,7 @@ export default function ReplayOverlay({
   const timeFormat = `${Math.floor(timeSec / 60)}:${(timeSec % 60).toString().padStart(2, "0")}`;
 
   return (
-    <div className="replay-overlay">
+    <div className="replay-overlay" data-testid="replay-overlay">
       <div className="replay-corner replay-top-left" />
       <div className="replay-corner replay-top-right" />
       <div className="replay-corner replay-bottom-left" />
@@ -299,43 +361,36 @@ export default function ReplayOverlay({
             startTime={startTime}
             setStartTime={handleStartTimeChange}
           />
-          <Button
-            className="button-replay"
-            onClick={() => {
-              if (videoRef.current) {
-                if (isVideoPlaying(videoRef.current)) {
-                  videoRef.current.pause();
-                } else if (isEnded) {
-                  videoRef.current.currentTime = startTime;
-                  videoRef.current.play();
-                } else {
-                  videoRef.current.play();
-                }
-              }
-            }}>
+          <Button className="button-replay" onClick={togglePlayback}>
             <span className={`codicon codicon-debug-${actionIcon}`} />
           </Button>
           <Seekbar videoRef={videoRef} startTime={startTime} />
-          <div style={{ display: "flex", flexDirection: "row" }}>
+          <div className="replay-controls-actions">
+            <div className="replay-controls-steps">
+              <Button
+                className="button-replay replay-controls-left"
+                onClick={() => stepBackward()}
+                tooltip={{
+                  label: "Previous frame",
+                  type: "secondary",
+                }}>
+                <span className="codicon codicon-triangle-left" />
+              </Button>
+              <Button
+                className="button-replay replay-controls-right"
+                onClick={() => stepForward()}
+                tooltip={{
+                  label: "Next frame",
+                  type: "secondary",
+                }}>
+                <span className="codicon codicon-triangle-right" />
+              </Button>
+            </div>
             <Button
               className="button-replay"
-              onClick={stepBackward}
-              tooltip={{
-                label: "Previous frame",
-                type: "secondary",
-              }}>
-              <span className="codicon codicon-triangle-left" />
-            </Button>
-            <Button
-              className="button-replay"
-              onClick={stepForward}
-              tooltip={{
-                label: "Next frame",
-                type: "secondary",
-              }}>
-              <span className="codicon codicon-triangle-right" />
-            </Button>
-            <Button className="button-replay" onClick={() => utils.saveMultimedia(replayData)}>
+              dataTest="replay-save-button"
+              onClick={saveReplay}
+              tooltip={{ label: "Save replay" }}>
               <span className="codicon codicon-save-as" /> Save
             </Button>
           </div>

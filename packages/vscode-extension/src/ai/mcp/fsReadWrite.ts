@@ -1,100 +1,65 @@
 import fs from "node:fs/promises";
 import path from "path";
+import * as os from "os";
 import * as vscode from "vscode";
 import { Logger } from "../../Logger";
-import { getTelemetryReporter } from "../../utilities/telemetry";
-import { EditorType } from "./models";
-import { getEditorType, MCP_LOG } from "./utils";
+import { EditorType, getEditorType } from "../../utilities/editorType";
 
 const VSCODE_DIR_PATH = ".vscode";
 const CURSOR_DIR_PATH = ".cursor";
 const MCP_FILE_NAME = "mcp.json";
 
-export async function readMcpConfig(): Promise<string | null> {
-  const folders = vscode.workspace.workspaceFolders;
+export enum ConfigLocation {
+  Project = "Project",
+  Global = "Global",
+}
 
-  if (!folders || folders.length === 0) {
-    // This is an expected warning, don't report via telemetry.
-    throw new Error(`Couldn't read MCP config - no workspace folder available.`);
+function getMcpConfigDirPath(location: ConfigLocation): string {
+  let rootPath = "";
+
+  if (location === ConfigLocation.Global) {
+    rootPath = os.homedir();
+  } else {
+    const folders = vscode.workspace.workspaceFolders;
+
+    if (!folders || folders.length === 0) {
+      // This is an expected warning, don't report via telemetry.
+      throw new Error(`Couldn't access MCP config - no workspace folder available.`);
+    }
+
+    rootPath = folders[0].uri.fsPath;
   }
 
-  const folder = folders[0];
-  const editorType = getEditorType();
   let filePath = "";
+  const editorType = getEditorType();
 
   if (editorType === EditorType.CURSOR) {
-    filePath = path.join(folder.uri.fsPath, CURSOR_DIR_PATH, MCP_FILE_NAME);
+    filePath = path.join(rootPath, CURSOR_DIR_PATH);
   } else if (editorType === EditorType.VSCODE) {
-    filePath = path.join(folder.uri.fsPath, VSCODE_DIR_PATH, MCP_FILE_NAME);
+    filePath = path.join(rootPath, VSCODE_DIR_PATH);
   } else {
     // Unknown editors will not be handled, as mcp.json is not standardized yet.
-    let msg = `Couldn't read MCP config - unknown editor detected.`;
-    Logger.error(MCP_LOG, msg);
-    getTelemetryReporter().sendTelemetryEvent("radon-ai:unknown-editor-error", { error: msg });
-    throw new Error(msg);
+    throw new Error("Couldn't access MCP config - unknown editor detected");
   }
 
-  Logger.info(MCP_LOG, `Reading MCP config at ${filePath}`);
+  return filePath;
+}
 
+export async function readMcpConfig(location: ConfigLocation): Promise<string | null> {
   try {
+    let filePath = path.join(getMcpConfigDirPath(location), MCP_FILE_NAME);
+    Logger.info(`Reading MCP config at ${filePath}`);
     return await fs.readFile(filePath, { encoding: "utf8" }).then((data) => {
-      Logger.info(MCP_LOG, `Found valid MCP config - updating.`);
       return data;
     });
   } catch {
-    // Config file not found - create new one.
     return null;
   }
 }
 
-export async function writeMcpConfig(configText: string) {
-  const editorType = getEditorType();
-  let directoryPath = "";
-
-  if (editorType === EditorType.CURSOR) {
-    directoryPath = path.join(CURSOR_DIR_PATH);
-  } else if (editorType === EditorType.VSCODE) {
-    directoryPath = path.join(VSCODE_DIR_PATH);
-  } else {
-    // Unknown editors will not be handled, as mcp.json is not standardized yet.
-    let msg = `Failed writing MCP config - unknown editor detected`;
-    Logger.error(MCP_LOG, msg);
-    getTelemetryReporter().sendTelemetryEvent("radon-ai:unknown-editor-error", { error: msg });
-    return;
-  }
-
-  if (vscode.workspace.workspaceFolders?.length === 0) {
-    let msg = `Failed writing MCP config - no workspace folder available`;
-    Logger.error(MCP_LOG, msg);
-    getTelemetryReporter().sendTelemetryEvent("radon-ai:no-workspace-available-error", {
-      error: msg,
-    });
-    return;
-  }
-
-  const folder = vscode.workspace.workspaceFolders?.[0];
-
-  if (!folder) {
-    let msg = `Failed writing MCP config - no workspace folder open`;
-    Logger.error(MCP_LOG, msg);
-    getTelemetryReporter().sendTelemetryEvent("radon-ai:no-workspace-open-error", { error: msg });
-    return;
-  }
-
-  const fsDirPath = path.join(folder.uri.fsPath, directoryPath);
-  const fsPath = path.join(fsDirPath, MCP_FILE_NAME);
-
-  await fs.mkdir(fsDirPath, { recursive: true });
-
-  fs.writeFile(fsPath, configText)
-    .then(() => {
-      Logger.info(MCP_LOG, `Wrote updated MCP config successfully.`);
-    })
-    .catch((error) => {
-      if (error) {
-        let msg = `Failed writing MCP config: ${error instanceof Error ? error.message : String(error)}`;
-        Logger.error(MCP_LOG, msg);
-        getTelemetryReporter().sendTelemetryEvent("radon-ai:config-write-error", { error: msg });
-      }
-    });
+export async function writeMcpConfig(configText: string, location: ConfigLocation) {
+  const directoryPath = getMcpConfigDirPath(location);
+  const fsPath = path.join(directoryPath, MCP_FILE_NAME);
+  await fs.mkdir(directoryPath, { recursive: true });
+  await fs.writeFile(fsPath, configText);
 }

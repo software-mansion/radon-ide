@@ -22,7 +22,7 @@
     "workspaceContains:**/app.config.ts",
     "onWebviewPanel:RadonIDETabPanel"
   ],
-  "version": "1.9.0",
+  "version": "1.12.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -100,6 +100,18 @@
         "enablement": "RNIDE.extensionIsActive"
       },
       {
+        "command": "RNIDE.deviceVolumeIncrease",
+        "title": "Increase volume on the current device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
+        "command": "RNIDE.deviceVolumeDecrease",
+        "title": "Decrease volume on the current device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive"
+      },
+      {
         "command": "RNIDE.captureReplay",
         "title": "Capture Replay",
         "category": "Radon IDE",
@@ -132,6 +144,18 @@
       {
         "command": "RNIDE.previousRunningDevice",
         "title": "Switch to previous running device",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.rotateDeviceClockwise",
+        "title": "Rotate device clockwise",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.rotateDeviceAnticlockwise",
+        "title": "Rotate device anticlockwise",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
@@ -187,58 +211,212 @@
         "command": "RNIDE.previousRunningDevice",
         "key": "ctrl+shift+9",
         "mac": "cmd+shift+9"
+      },
+      {
+        "command": "RNIDE.rotateDeviceClockwise",
+        "key": "ctrl+alt+0",
+        "mac": "ctrl+alt+0"
+      },
+      {
+        "command": "RNIDE.rotateDeviceAnticlockwise",
+        "key": "ctrl+alt+9",
+        "mac": "ctrl+alt+9"
       }
     ],
-    "configuration": {
-      "title": "Radon IDE",
-      "properties": {
-        "RadonIDE.panelLocation": {
-          "type": "string",
-          "scope": "window",
-          "default": "tab",
-          "enum": [
-            "tab",
-            "side-panel"
-          ],
-          "description": "Controls the location of the Radon IDE panel. When side-panel is selected, you can use right-click menu on the panel to move it to the secondary side panel if you wish."
-        },
-        "RadonIDE.themeType": {
-          "type": "string",
-          "scope": "window",
-          "default": "vscode",
-          "deprecationMessage": "This setting is deprecated and Radon IDE panel will always use the vscode theme.",
-          "enum": [
-            "vscode",
-            "built-in"
-          ],
-          "description": "Controls the theme of the IDE panel. If you encounter any issues, please report them. And set this to 'built-in' to use the built-in theme."
-        },
-        "RadonIDE.showDeviceFrame": {
-          "type": "boolean",
-          "scope": "window",
-          "default": true,
-          "description": "Shows device frame in the IDE panel."
-        },
-        "RadonIDE.inspectorExcludePattern": {
-          "type": "string",
-          "scope": "window",
-          "default": null,
-          "description": "Files matching this pattern fill be excluded for the inspector jump to file functionality. This can be used if your codebase has some design system primitives that are used everywhere in your codebase and that you don't want to always get opened when using inspect functionality."
-        },
-        "RadonIDE.stopPreviousDevices": {
-          "type": "string",
-          "scope": "window",
-          "default": false,
-          "description": "When set, switching between devices will shut down the previous device instead of leaving it running in the background."
-        },
-        "RadonIDE.enableRadonAI": {
-          "type": "boolean",
-          "scope": "window",
-          "default": true,
-          "description": "Enables the Radon AI functionality in the extension. Note: A full restart of the IDE is required for this setting to take effect."
+    "configuration": [
+      {
+        "title": "General",
+        "properties": {
+          "RadonIDE.general.inspectorExcludePattern": {
+            "type": "string",
+            "scope": "window",
+            "default": null,
+            "description": "Files matching this pattern fill be excluded for the inspector jump to file functionality. This can be used if your codebase has some design system primitives that are used everywhere in your codebase and that you don't want to always get opened when using inspect functionality."
+          },
+          "RadonIDE.general.defaultMultimediaSavingLocation": {
+            "type": "string",
+            "scope": "window",
+            "default": null,
+            "description": "Controls the default saving location for multimedia files."
+          },
+          "RadonIDE.general.enableExperimentalElementInspector": {
+            "type": "boolean",
+            "scope": "window",
+            "default": false,
+            "description": "Enables experimental support for element inspector in non-Edge-to-Edge applications, which may cause visual issues."
+          }
+        }
+      },
+      {
+        "title": "User Interface",
+        "properties": {
+          "RadonIDE.userInterface.panelLocation": {
+            "type": "string",
+            "scope": "window",
+            "default": "tab",
+            "enum": [
+              "tab",
+              "side-panel"
+            ],
+            "description": "Controls the location of the Radon IDE panel. When side-panel is selected, you can use right-click menu on the panel to move it to the secondary side panel if you wish."
+          },
+          "RadonIDE.userInterface.themeType": {
+            "type": "string",
+            "scope": "window",
+            "default": "vscode",
+            "deprecationMessage": "This setting is deprecated and Radon IDE panel will always use the vscode theme.",
+            "enum": [
+              "vscode",
+              "built-in"
+            ],
+            "description": "Controls the theme of the IDE panel. If you encounter any issues, please report them. And set this to 'built-in' to use the built-in theme."
+          },
+          "RadonIDE.userInterface.showDeviceFrame": {
+            "type": "boolean",
+            "scope": "window",
+            "default": true,
+            "description": "Shows device frame in the IDE panel."
+          }
+        }
+      },
+      {
+        "title": "Device Control",
+        "properties": {
+          "RadonIDE.deviceControl.startDeviceOnLaunch": {
+            "type": "boolean",
+            "scope": "window",
+            "default": true,
+            "description": "Automatically starts the last used device when opening the IDE Panel."
+          },
+          "RadonIDE.deviceControl.stopPreviousDevices": {
+            "type": "string",
+            "scope": "window",
+            "default": false,
+            "description": "When set, switching between devices will shut down the previous device instead of leaving it running in the background."
+          }
+        }
+      },
+      {
+        "title": "Device Settings",
+        "properties": {
+          "RadonIDE.deviceSettings.appearance": {
+            "type": "string",
+            "scope": "window",
+            "enum": [
+              "light",
+              "dark"
+            ],
+            "default": "light",
+            "description": "Controls the appearance on the simulated device."
+          },
+          "RadonIDE.deviceSettings.contentSize": {
+            "type": "string",
+            "scope": "window",
+            "enum": [
+              "xsmall",
+              "small",
+              "normal",
+              "large",
+              "xlarge",
+              "xxlarge",
+              "xxxlarge"
+            ],
+            "default": "normal",
+            "description": "Controls the content size on the simulated device."
+          },
+          "RadonIDE.deviceSettings.deviceRotation": {
+            "type": "string",
+            "scope": "window",
+            "default": "Portrait",
+            "enum": [
+              "Portrait",
+              "LandscapeLeft",
+              "LandscapeRight",
+              "PortraitUpsideDown"
+            ],
+            "description": "Controls the default device rotation for simulators and emulators when they are created or launched."
+          },
+          "RadonIDE.deviceSettings.location": {
+            "type": "object",
+            "scope": "window",
+            "properties": {
+              "latitude": "number",
+              "longitude": "number",
+              "isDisabled": "boolean"
+            },
+            "default": {
+              "latitude": 50.048653,
+              "longitude": 19.965474,
+              "isDisabled": false
+            },
+            "description": "Controls the emulators/simulator location."
+          },
+          "RadonIDE.deviceSettings.hasEnrolledBiometrics": {
+            "type": "boolean",
+            "scope": "window",
+            "default": false,
+            "description": "Controls whether the device has enrolled biometrics. Note: this setting affects only iOS simulators."
+          },
+          "RadonIDE.deviceSettings.locale": {
+            "type": "string",
+            "scope": "window",
+            "default": "en_US",
+            "description": "Controls the localization of the simulated device."
+          },
+          "RadonIDE.deviceSettings.replaysEnabled": {
+            "type": "boolean",
+            "scope": "window",
+            "default": false,
+            "description": "Controls whether the device has replay functionality enabled."
+          },
+          "RadonIDE.deviceSettings.showTouches": {
+            "type": "boolean",
+            "scope": "window",
+            "default": false,
+            "description": "Controls whether the device shows touch interactions."
+          },
+          "RadonIDE.deviceSettings.camera": {
+            "type": "object",
+            "scope": "window",
+            "properties": {
+              "back": {
+                "type": "string",
+                "enum": [
+                  "emulated",
+                  "none",
+                  "virtualscene",
+                  "webcam0"
+                ]
+              },
+              "front": {
+                "type": "string",
+                "enum": [
+                  "emulated",
+                  "none",
+                  "webcam0"
+                ]
+              }
+            },
+            "default": {
+              "back": "emulated",
+              "front": "none"
+            },
+            "description": "Controls the camera settings for the device. Note: this setting affects only Android emulators."
+          }
+        }
+      },
+      {
+        "title": "Radon AI",
+        "properties": {
+          "RadonIDE.radonAI.enabledBoolean": {
+            "type": "boolean",
+            "default": true,
+            "scope": "window",
+            "description": "Enables the Radon AI functionality in the extension."
+          }
         }
       }
-    },
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -280,8 +458,8 @@
         {
           "type": "webview",
           "id": "RadonIDE.view",
-          "name": "",
-          "when": "RNIDE.extensionIsActive && config.RadonIDE.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
+          "name": "Radon IDE",
+          "when": "RNIDE.extensionIsActive && config.RadonIDE.userInterface.panelLocation != 'tab' && !RNIDE.sidePanelIsClosed"
         }
       ],
       "RadonIDEToolExpoDevPluginMMKV": [
@@ -296,7 +474,7 @@
         {
           "type": "webview",
           "id": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.view",
-          "name": "",
+          "name": "Radon Redux DevTools",
           "when": "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
       ],
@@ -304,7 +482,7 @@
         {
           "type": "webview",
           "id": "RNIDE.Tool.Network.view",
-          "name": "",
+          "name": "Radon Network Inspector",
           "when": "RNIDE.Tool.Network.available && RNIDE.panelIsOpen"
         }
       ],
@@ -312,7 +490,7 @@
         {
           "type": "webview",
           "id": "RNIDE.Tool.ReduxDevTools.view",
-          "name": "",
+          "name": "Radon Redux DevTools",
           "when": "RNIDE.Tool.ReduxDevTools.available && RNIDE.panelIsOpen"
         }
       ],
@@ -320,7 +498,7 @@
         {
           "type": "webview",
           "id": "RNIDE.Tool.ReactQueryDevTools.view",
-          "name": "",
+          "name": "Radon React Query DevTools",
           "when": "RNIDE.Tool.ReactQueryDevTools.available && RNIDE.panelIsOpen"
         }
       ]
@@ -546,6 +724,26 @@
                     "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
                   }
                 }
+              },
+              "usePrebuild": {
+                "type": "boolean",
+                "description": "When set to true, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
+              },
+              "useOldDevtools": {
+                "type": "boolean",
+                "description": "Defaults to `false` for React Native versions 0.76 and newer. When set to `true`, falls back to the old devtools implementation that may be necessary on some setups."
+              },
+              "useCustomJSDebugger": {
+                "type": "boolean",
+                "description": "When set to true, Radon will use a custom implementation of the JavaScript debugger. This is an experimental feature, use with caution."
+              },
+              "metroPort": {
+                "type": "number",
+                "description": "Port number that will be used by Metro bundler. If not specified, a free port will be automatically chosen."
+              },
+              "disableNativeBuildStaleChecks": {
+                "type": "boolean",
+                "description": "When set to true, Radon will not run fingerprint checks on reloads and after file changes that would detect whether the native code needs to be rebuilt."
               }
             }
           }
@@ -764,6 +962,26 @@
                     "description": "Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches."
                   }
                 }
+              },
+              "usePrebuild": {
+                "type": "boolean",
+                "description": "When set to true, Radon will run Expo Prebuild before building the application. Only applies to applications using Expo CLI."
+              },
+              "useOldDevtools": {
+                "type": "boolean",
+                "description": "Defaults to `false` for React Native versions 0.76 and newer. When set to `true`, falls back to the old devtools implementation that may be necessary on some setups."
+              },
+              "useCustomJSDebugger": {
+                "type": "boolean",
+                "description": "When set to true, Radon will use a custom implementation of the JavaScript debugger. This is an experimental feature, use with caution."
+              },
+              "metroPort": {
+                "type": "number",
+                "description": "Port number that will be used by Metro bundler. If not specified, a free port will be automatically chosen."
+              },
+              "disableNativeBuildStaleChecks": {
+                "type": "boolean",
+                "description": "When set to true, Radon will not run fingerprint checks on reloads and after file changes that would detect whether the native code needs to be rebuilt."
               }
             }
           }
@@ -856,17 +1074,17 @@
     "vscode:prepublish": "npm run package",
     "vscode:publish": "vsce publish",
     "open-vsx:publish": "ovsx publish",
-    "copy:redux-devtools-plugin": "rm -rf lib/plugins/third-party/redux-devtools-expo-dev-plugin.js && cp ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools-expo-dev-plugin.js lib/plugins/third-party/redux-devtools-expo-dev-plugin.js",
-    "build:redux-devtools-ui": "rm -rf dist/redux-devtools && cp -R ../redux-devtools-expo-dev-plugin/artifacts/RadonIDE/redux-devtools dist/redux-devtools",
+    "copy:screen-sharing-agent": "mkdir -p dist/resources/android && cp -r third-party/screen-sharing-agent/* dist/resources/android",
+    "build:redux-devtools-ui": "rm -rf dist/redux-devtools && mkdir -p dist/redux-devtools && cp src/plugins/chrome-api-stub.webview.js dist/redux-devtools && cp -R third-party/redux-devtools/{devpanel.bundle.css,devpanel.bundle.js,img,*.woff2} dist/redux-devtools",
     "build:react-query-devtools-ui": "rm -rf dist/react-query-devtools && cp -R ../radon-ide-react-query-webui/artifacts dist/react-query-devtools",
     "build:third-party": "npm run build:redux-devtools-ui && npm run build:react-query-devtools-ui",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:extension-debug": "npm run prepare:fake_editor && npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
     "build:extension": "npm run prepare:fake_editor && node ./scripts/buildExtensionCode.mjs production && npm run build:third-party",
-    "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist",
+    "build:sim-server-debug": "bash ./scripts/build-sim-server-debug.sh dist && npm run copy:screen-sharing-agent",
     "build:vscode-js-debug": "cd ../vscode-js-debug && npm i && npm exec tsc && npm run compile && cp dist/src/chromehash_bg.wasm ../vscode-extension/dist/",
     "build:debug": "npm run build:extension-debug && npm run build:sim-server-debug",
-    "build:dist": "npm run fetch:third-party && npm run fetch:sim-server-assets && npm run build:extension && npm run build:webview && npm run build:third-party-notice",
+    "build:dist": "npm run fetch:third-party && npm run fetch:sim-server-assets && npm run copy:screen-sharing-agent && npm run build:extension && npm run build:webview && npm run build:third-party-notice",
     "build:third-party-notice": "node ./scripts/mergeThirdPartyNotices.mjs ./submodules-NOTICES.json ./dist/simulator-server-NOTICES.json ./dist/webview-NOTICES.json ./dist/extension-NOTICES.json ./ThirdPartyNotices.json",
     "prepare:fake_editor": "mkdir -p dist && cp react-fake-editor-executable dist/atom",
     "watch:extension": "vite",
@@ -875,7 +1093,6 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write --list-different src",
     "build:tests": "tsc --project tsconfig.test.json",
-    "build:plugins": "bash ./scripts/install-dev-plugins.sh",
     "build:icons": "fantasticon -c ./font-icons/fantasticon.config.json",
     "test": "npm run build:extension && npm run build:webview && npm run build:tests && vscode-test",
     "preinstall": "mkdir -p dist && bash ./scripts/init-submodules-if-not-present.sh ../vscode-js-debug && npm run build:vscode-js-debug",
@@ -888,10 +1105,13 @@
     "@babel/preset-react": "^7.26.3",
     "@babel/preset-typescript": "^7.27.1",
     "@eslint/compat": "^1.2.8",
+    "@expo/env": "^1.0.7",
     "@expo/fingerprint": "^0.11.11",
     "@expo/package-manager": "^1.7.2",
+    "@legendapp/state": "^3.0.0-beta.31",
     "@modelcontextprotocol/sdk": "^1.12.3",
     "@msgpack/msgpack": "^3.1.1",
+    "@paddle/paddle-js": "^1.4.2",
     "@radix-ui/react-alert-dialog": "^1.1.7",
     "@radix-ui/react-context-menu": "^2.2.7",
     "@radix-ui/react-dialog": "^1.1.7",
@@ -904,9 +1124,11 @@
     "@radix-ui/react-slider": "^1.2.4",
     "@radix-ui/react-switch": "^1.1.4",
     "@radix-ui/react-tooltip": "^1.2.0",
+    "@radix-ui/react-visually-hidden": "^1.2.3",
     "@react-native-community/cli-config": "^18.0.0",
     "@react-native-community/cli-config-apple": "^18.0.0",
     "@react-native-community/cli-types": "^18.0.0",
+    "@tanstack/react-virtual": "^3.13.12",
     "@types/d3": "^7.4.3",
     "@types/express": "^5.0.3",
     "@types/kill-port": "^2.0.3",
@@ -928,7 +1150,7 @@
     "@typescript-eslint/parser": "^8.30.1",
     "@vitejs/plugin-react": "^4.2.1",
     "@vscode-elements/react-elements": "^1.15.0",
-    "@vscode/codicons": "^0.0.36",
+    "@vscode/codicons": "^0.0.39",
     "@vscode/debugadapter": "^1.68.0",
     "@vscode/debugprotocol": "^1.68.0",
     "@vscode/extension-telemetry": "github:software-mansion-labs/vscode-extension-telemetry",
@@ -948,6 +1170,7 @@
     "execa": "^5.1.1",
     "express": "^5.1.0",
     "fantasticon": "^3.0.0",
+    "fast-json-stable-stringify": "^2.1.0",
     "file-loader": "^6.2.0",
     "globals": "^16.1.0",
     "jsonc-parser": "^3.3.1",
@@ -956,6 +1179,8 @@
     "minimatch": "^10.0.1",
     "mocha": "^10.2.0",
     "node-fetch": "^2.6.12",
+    "overlayscrollbars": "^2.12.0",
+    "overlayscrollbars-react": "^0.5.6",
     "ovsx": "^0.10.2",
     "patch-package": "^8.0.0",
     "plist": "^3.1.0",
@@ -971,8 +1196,9 @@
     "rollup": "^4.40.0",
     "rollup-plugin-license": "^3.6.0",
     "semver": "^7.7.1",
+    "shiki": "^3.13.0",
     "sinon": "^20.0.0",
-    "source-map": "^0.8.0-beta.0",
+    "source-map": "^0.7.6",
     "tar": "^7.4.3",
     "ts-loader": "^9.5.2",
     "typescript": "^5.8.3",

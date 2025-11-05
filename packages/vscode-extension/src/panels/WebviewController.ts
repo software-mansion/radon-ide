@@ -4,18 +4,39 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
-import { PanelLocation } from "../common/WorkspaceConfig";
+import { PanelLocation, RecursivePartial, State, StateSerializer } from "../common/State";
 
-type CallArgs = {
+type EventBase = Record<string, unknown>;
+
+interface CallCommand extends EventBase {
+  command: "call";
+}
+interface GetStateCommand extends EventBase {
+  command: "RNIDE_get_state";
+}
+interface UpdateStateCommand extends EventBase {
+  command: "RNIDE_update_state";
+}
+
+interface CallArgs {
   callId: string;
   object: string;
   method: string;
   args: unknown[];
-};
+}
+interface GetStateArgs {
+  callId: string;
+}
+interface UpdateStateArgs {
+  callId: string;
+  state: string;
+}
 
-export type WebviewEvent = {
-  command: "call";
-} & CallArgs;
+type CallEvent = CallCommand & CallArgs;
+type GetStateEvent = GetStateCommand & GetStateArgs;
+type UpdateStateEvent = UpdateStateCommand & UpdateStateArgs;
+
+export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent;
 
 export class WebviewController implements Disposable {
   private disposables: Disposable[] = [];
@@ -33,18 +54,14 @@ export class WebviewController implements Disposable {
 
   constructor(private webview: Webview) {
     this.ide = IDE.attach();
+    this.disposables.push(this.ide.onStateChanged(this.onStateUpdated));
 
     // Set an event listener to listen for messages passed from the webview context
     this.setWebviewMessageListener(webview);
 
     this.callableObjectGetters = new Map([
-      ["DeviceManager", () => this.ide.deviceManager as object],
-      ["DependencyManager", () => this.ide.project.dependencyManager as object],
       ["Project", () => this.ide.project as object],
-      ["DeviceSessionsManager", () => this.ide.project.deviceSessionsManager as object],
-      ["WorkspaceConfig", () => this.ide.workspaceConfigController as object],
       ["AppRootConfig", () => this.ide.project.appRootConfigController as object],
-      ["Utils", () => this.ide.utils as object],
       [
         "RenderOutlines",
         () => this.ide.project.deviceSession!.getPlugin(RENDER_OUTLINES_PLUGIN_ID) as object,
@@ -55,12 +72,19 @@ export class WebviewController implements Disposable {
 
     const panelLocation = workspace
       .getConfiguration("RadonIDE")
-      .get<PanelLocation>("panelLocation");
+      .get<PanelLocation>("userInterface.panelLocation");
 
     getTelemetryReporter().sendTelemetryEvent("panelOpened", {
       panelLocation,
     });
   }
+
+  public onStateUpdated = (partialState: RecursivePartial<State>) => {
+    this.webview.postMessage({
+      command: "RNIDE_state_updated",
+      state: StateSerializer.serialize(partialState),
+    });
+  };
 
   public asWebviewUri(uri: Uri) {
     return this.webview.asWebviewUri(uri);
@@ -76,16 +100,15 @@ export class WebviewController implements Disposable {
     webview.onDidReceiveMessage(
       (message: WebviewEvent) => {
         // ignore dispatchTouches and log calls from being logged as "Message from webview"
-        if (message.method !== "dispatchTouches" && message.method !== "log") {
+        if (!message.method || (message.method !== "dispatchTouches" && message.method !== "log")) {
           Logger.log("Message from webview", message);
         }
-
         if (message.command === "call") {
           this.handleRemoteCall(message);
-        } else if (message.command === "focusPreview") {
-          commands.executeCommand("setContext", "RNIDE.isPreviewFocused", true);
-        } else if (message.command === "blurPreview") {
-          commands.executeCommand("setContext", "RNIDE.isPreviewFocused", false);
+        } else if (message.command === "RNIDE_get_state") {
+          this.handleGetState(message);
+        } else if (message.command === "RNIDE_update_state") {
+          this.handleUpdateState(message);
         }
       },
       undefined,
@@ -126,31 +149,45 @@ export class WebviewController implements Disposable {
         }
         return arg;
       });
-      // @ts-ignore
-      const result = callableObject[method](...argsWithCallbacks);
-      if (result instanceof Promise) {
-        result
-          .then((res) => {
+      try {
+        // @ts-ignore
+        const result = callableObject[method](...argsWithCallbacks);
+        if (result instanceof Promise) {
+          result.then((res) => {
             this.webview.postMessage({
               command: "callResult",
               callId,
               result: res,
             });
-          })
-          .catch((error) => {
-            this.webview.postMessage({
-              command: "callResult",
-              callId,
-              error: { name: error.name, message: error.message },
-            });
           });
-      } else {
+        } else {
+          this.webview.postMessage({
+            command: "callResult",
+            callId,
+            result,
+          });
+        }
+      } catch (error: any) {
+        const errorClassName = error?.constructor?.name;
         this.webview.postMessage({
           command: "callResult",
           callId,
-          result,
+          error: { name: error.name, message: error.message, className: errorClassName },
         });
       }
     }
+  }
+
+  private async handleGetState(message: GetStateArgs) {
+    const state = await this.ide.getState();
+    this.webview.postMessage({
+      command: "RNIDE_get_state_result",
+      callId: message.callId,
+      result: state,
+    });
+  }
+
+  private async handleUpdateState(message: UpdateStateArgs) {
+    await this.ide.updateState(StateSerializer.deserialize(message.state));
   }
 }

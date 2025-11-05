@@ -10,7 +10,6 @@ export function generateWebviewContent(
   extensionUri: Uri,
   webviewName: string,
   webviewDevPath: string,
-  wsEndpoint?: string,
   allowUnsafeEval?: boolean
 ) {
   const IS_DEV = context.extensionMode === ExtensionMode.Development;
@@ -53,7 +52,6 @@ export function generateWebviewContent(
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="radon-ide-version" content="${version}" />
-        ${wsEndpoint ? `<meta name='websocketEndpoint' content="${wsEndpoint}" />` : ""}
         <link rel="stylesheet" href="${codiconsCssUri}" />
         ${
           IS_DEV
@@ -66,7 +64,6 @@ export function generateWebviewContent(
                       style-src ${webview.cspSource} 'unsafe-inline';
                       script-src 'nonce-${nonce}' ${allowUnsafeEval ? "'unsafe-eval'" : ""};
                       worker-src 'self' blob:;
-                      ${wsEndpoint ? `connect-src ws://${wsEndpoint} ${webview.cspSource};` : ""}
                       font-src vscode-resource: https:;" />
         <link rel="stylesheet" type="text/css" href="style.css" />
         `

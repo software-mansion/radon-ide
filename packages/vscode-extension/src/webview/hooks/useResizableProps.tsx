@@ -1,9 +1,9 @@
 import { ResizeCallback } from "re-resizable";
 import { CSSProperties, useCallback, useEffect, useState } from "react";
-import { DeviceProperties } from "../utilities/deviceContants";
-import { ZoomLevelType } from "../../common/Project";
+import { DeviceProperties } from "../utilities/deviceConstants";
 import { DEVICE_DEFAULT_SCALE } from "../components/ZoomControls";
 import { useDeviceFrame } from "../Preview/Device/hooks";
+import { ZoomLevelType } from "../../common/State";
 
 type UseResizableProps = {
   wrapperDivRef: React.Ref<HTMLDivElement>;
@@ -37,7 +37,8 @@ export function useResizableProps({
         setMaxWidth("100%");
         return;
       }
-      setPhoneHeight(frame.height * zoomLevel * DEVICE_DEFAULT_SCALE + delta);
+      const height = frame?.height ?? device.screenHeight;
+      setPhoneHeight(height * zoomLevel * DEVICE_DEFAULT_SCALE + delta);
       setMaxWidth(undefined);
     },
     [wrapperDivRef, zoomLevel]

@@ -1,7 +1,6 @@
 import React from "react";
 import UrlSelectItem from "./UrlSelectItem";
 import { RemovableHistoryItem, UrlSelectFocusable } from "./UrlSelect";
-import { NavigationHistoryItem } from "../../common/Project";
 
 interface UrlSelectItemGroupProps {
   items: RemovableHistoryItem[];
@@ -9,7 +8,7 @@ interface UrlSelectItemGroupProps {
   refIndexOffset?: number;
   textfieldRef: React.RefObject<HTMLInputElement>;
   width: number;
-  onConfirm: (item: NavigationHistoryItem) => void;
+  onConfirm: (item: RemovableHistoryItem) => void;
   onArrowPress: (
     e: React.KeyboardEvent,
     prev?: UrlSelectFocusable,

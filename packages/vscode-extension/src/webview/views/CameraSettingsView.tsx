@@ -1,11 +1,12 @@
 import { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { useProject } from "../providers/ProjectProvider";
+import { use$ } from "@legendapp/state/react";
 import { useModal } from "../providers/ModalProvider";
-import { BackCameraSource, FrontCameraSource } from "../../common/Project";
 import Button from "../components/shared/Button";
 import "../components/shared/Dropdown.css";
 import "./CameraSettingsView.css";
+import { useStore } from "../providers/storeProvider";
+import { BackCameraSource, FrontCameraSource } from "../../common/State";
 
 const backCameraOptions: Array<{ label: string; value: BackCameraSource }> = [
   { label: "Emulated", value: "emulated" },
@@ -21,7 +22,8 @@ const frontCameraOptions: Array<{ label: string; value: FrontCameraSource }> = [
 ];
 
 export function CameraSettingsView() {
-  const { deviceSettings } = useProject();
+  const store$ = useStore();
+  const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
   const { openModal } = useModal();
 
   const [selectedBackCamera, setSelectedBackCamera] = useState<BackCameraSource>(
@@ -37,7 +39,6 @@ export function CameraSettingsView() {
       selectedFrontCamera !== deviceSettings.camera?.front
     ) {
       openModal(
-        "",
         <CameraChangeConfirmationView
           backCamera={selectedBackCamera}
           frontCamera={selectedFrontCamera}
@@ -128,11 +129,11 @@ const CameraChangeConfirmationView = ({
   backCamera,
   frontCamera,
 }: CameraChangeConfirmationViewProps) => {
+  const store$ = useStore();
   const { openModal, closeModal } = useModal();
-  const { project, deviceSettings } = useProject();
 
   const onCancel = () => {
-    openModal("Camera Settings", <CameraSettingsView />);
+    openModal(<CameraSettingsView />, { title: "Camera Settings" });
   };
 
   return (
@@ -159,12 +160,9 @@ const CameraChangeConfirmationView = ({
           className="camera-change-button"
           type="ternary"
           onClick={async () => {
-            project.updateDeviceSettings({
-              ...deviceSettings,
-              camera: {
-                back: backCamera,
-                front: frontCamera,
-              },
+            store$.workspaceConfiguration.deviceSettings.camera.set({
+              back: backCamera,
+              front: frontCamera,
             });
             closeModal();
           }}>

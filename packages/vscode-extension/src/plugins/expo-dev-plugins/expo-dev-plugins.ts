@@ -3,9 +3,7 @@ import { ExpoDevPluginWebviewProvider } from "./ExpoDevPluginWebviewProvider";
 import { ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 
-export type ExpoDevPluginToolName =
-  | "@dev-plugins/react-native-mmkv"
-  | "redux-devtools-expo-dev-plugin";
+export type ExpoDevPluginToolName = "@dev-plugins/react-native-mmkv";
 
 type ExpoDevPluginInfo = {
   viewIdPrefix: string;
@@ -17,10 +15,6 @@ const ExpoDevPluginToolMap: Record<ExpoDevPluginToolName, ExpoDevPluginInfo> = {
   "@dev-plugins/react-native-mmkv": {
     label: "MMKV DevPlugin",
     viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.MMKV",
-  },
-  "redux-devtools-expo-dev-plugin": {
-    viewIdPrefix: "RNIDE.Tool.ExpoDevPlugin.ReduxDevTools",
-    label: "Redux DevTools DevPlugin",
   },
 };
 
@@ -51,18 +45,25 @@ export function createExpoDevPluginTools(): ToolPlugin[] {
     plugins.push({
       id: id as ExpoDevPluginToolName,
       label: pluginInfo.label,
-      available: false,
+      pluginAvailable: true,
+      toolInstalled: false,
       persist: true,
-      activate() {
+      enable() {
         commands.executeCommand("setContext", `${pluginInfo.viewIdPrefix}.available`, true);
       },
-      deactivate() {
+      disable() {
         commands.executeCommand("setContext", `${pluginInfo.viewIdPrefix}.available`, false);
       },
       openTool() {
         commands.executeCommand(`${pluginInfo.viewIdPrefix}.view.focus`);
       },
       dispose() {},
+      activate() {
+        this.enable();
+      },
+      deactivate() {
+        this.disable();
+      },
     });
   }
 

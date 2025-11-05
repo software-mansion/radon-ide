@@ -1,48 +1,51 @@
-import { useCallback } from "react";
-import IconButton from "../components/shared/IconButton";
-import { useAlert } from "../providers/AlertProvider";
-import { useDevices } from "../providers/DevicesProvider";
+import { useEffect, useMemo, useState } from "react";
+import { VscodeButton as Button } from "@vscode-elements/react-elements";
+import { useToggleableAlert } from "../providers/AlertProvider";
+import { useProject } from "../providers/ProjectProvider";
 
 type Props = {
   closeAlert: () => void;
 };
 
 function Actions({ closeAlert }: Props) {
-  const { deviceSessionsManager } = useDevices();
+  const { project } = useProject();
   return (
     <>
-      <IconButton
-        type="secondary"
+      <Button secondary onClick={closeAlert}>
+        Cancel
+      </Button>
+      <Button
         onClick={() => {
-          deviceSessionsManager.reloadCurrentSession("rebuild");
+          project.reloadCurrentSession("rebuild");
           closeAlert();
-        }}
-        tooltip={{ label: "Rebuild", side: "bottom" }}>
+        }}>
         <span className="codicon codicon-refresh" />
-      </IconButton>
-      <IconButton
-        type="secondary"
-        onClick={closeAlert}
-        tooltip={{ label: "Close notification", side: "bottom" }}>
-        <span className="codicon codicon-close" />
-      </IconButton>
+        Rebuild
+      </Button>
     </>
   );
 }
 
-export function useNativeRebuildAlert() {
-  const { openAlert, closeAlert, isOpen } = useAlert();
-  const alertId = "native-changed-alert";
+export function useNativeRebuildAlert(needsRebuild: boolean) {
+  const [open, setOpen] = useState(needsRebuild);
 
-  return useCallback(() => {
-    if (!isOpen(alertId)) {
-      openAlert({
-        id: alertId,
+  useEffect(() => {
+    setOpen(needsRebuild);
+  }, [needsRebuild]);
+
+  const alertDescriptor = useMemo(
+    () =>
+      ({
+        id: "native-changed-alert",
         title: "Native dependencies changed",
         description: "Click the button to rebuild the project",
         priority: 1,
-        actions: <Actions closeAlert={() => closeAlert(alertId)} />,
-      });
-    }
-  }, [alertId, openAlert, closeAlert, isOpen]);
+        closeable: true,
+        type: "warning",
+        actions: <Actions closeAlert={() => setOpen(false)} />,
+      }) as const,
+    []
+  );
+
+  return useToggleableAlert(open, alertDescriptor);
 }

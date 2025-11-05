@@ -1,43 +1,110 @@
-import { Disposable } from "vscode";
+import { Disposable, EventEmitter } from "vscode";
 import { Project } from "./project";
 import { DeviceManager } from "../devices/DeviceManager";
 import { WorkspaceConfigController } from "../panels/WorkspaceConfigController";
-import { Utils } from "../utilities/utils";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { disposeAll } from "../utilities/disposables";
-import { LaunchConfigurationOptions } from "../common/LaunchConfig";
+import { DevicesState, initialState, RecursivePartial, State } from "../common/State";
+import { LaunchConfiguration } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
+import { StateManager } from "./StateManager";
+import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependencyManager";
+import { Telemetry } from "./telemetry";
+import { EditorBindings } from "./EditorBindings";
+import { PhysicalAndroidDeviceProvider } from "../devices/AndroidPhysicalDevice";
+import { AndroidEmulatorProvider } from "../devices/AndroidEmulatorDevice";
+import { IosSimulatorProvider } from "../devices/IosSimulatorDevice";
+
+function createDeviceProviders(
+  stateManager: StateManager<DevicesState>,
+  outputChannelRegistry: OutputChannelRegistry
+) {
+  return [
+    new IosSimulatorProvider(stateManager.getDerived("devicesByType"), outputChannelRegistry),
+    new AndroidEmulatorProvider(stateManager.getDerived("devicesByType"), outputChannelRegistry),
+    new PhysicalAndroidDeviceProvider(
+      stateManager.getDerived("devicesByType"),
+      outputChannelRegistry
+    ),
+  ];
+}
 
 interface InitialOptions {
-  initialLaunchConfig?: LaunchConfigurationOptions;
+  initialLaunchConfig?: LaunchConfiguration;
 }
 
 export class IDE implements Disposable {
   private static instance: IDE | null = null;
 
+  private onStateChangedEmitter = new EventEmitter<RecursivePartial<State>>();
+
   public readonly deviceManager: DeviceManager;
+  public readonly editorBindings: EditorBindings;
   public readonly project: Project;
   public readonly workspaceConfigController: WorkspaceConfigController;
-  public readonly utils: Utils;
   public readonly outputChannelRegistry = new OutputChannelRegistry();
+
+  private environmentDependencyManager: EnvironmentDependencyManager;
+
+  private readonly telemetry: Telemetry;
+
+  private stateManager: StateManager<State>;
+
   private disposed = false;
   private disposables: Disposable[] = [];
 
   private attachSemaphore = 0;
 
   constructor({ initialLaunchConfig }: InitialOptions = {}) {
-    this.deviceManager = new DeviceManager(this.outputChannelRegistry);
-    this.utils = new Utils();
+    this.stateManager = StateManager.create(initialState);
+
+    this.disposables.push(this.stateManager.onSetState(this.handleStateChanged));
+
+    this.telemetry = new Telemetry(this.stateManager.getDerived("telemetry"));
+
+    const devicesStateManager = this.stateManager.getDerived("devicesState");
+    const deviceProviders = createDeviceProviders(devicesStateManager, this.outputChannelRegistry);
+
+    this.deviceManager = new DeviceManager(
+      this.stateManager.getDerived("devicesState"),
+      deviceProviders
+    );
+    this.editorBindings = new EditorBindings();
+
+    this.environmentDependencyManager = new EnvironmentDependencyManager(
+      this.stateManager.getDerived("environmentDependencies")
+    );
+
+    this.workspaceConfigController = new WorkspaceConfigController(
+      this.stateManager.getDerived("workspaceConfiguration")
+    );
+
     this.project = new Project(
+      this.stateManager.getDerived("projectState"),
+      this.stateManager.getDerived("workspaceConfiguration"),
+      this.stateManager.getDerived("devicesState"),
+      this.stateManager.getDerived("license"),
       this.deviceManager,
-      this.utils,
+      this.editorBindings,
       this.outputChannelRegistry,
+      this.environmentDependencyManager,
+      this.telemetry,
       initialLaunchConfig
     );
-    this.workspaceConfigController = new WorkspaceConfigController();
 
-    this.disposables.push(this.project, this.workspaceConfigController, this.outputChannelRegistry);
+    this.project.appRootConfigController.getAvailableApplicationRoots().then((applicationRoots) => {
+      this.stateManager.updateState({ applicationRoots });
+    });
+
+    this.disposables.push(
+      this.project,
+      this.workspaceConfigController,
+      this.outputChannelRegistry,
+      this.telemetry,
+      devicesStateManager,
+      ...deviceProviders
+    );
     // register disposable with context
     extensionContext.subscriptions.push(this);
   }
@@ -55,6 +122,22 @@ export class IDE implements Disposable {
       disposeAll(this.disposables);
     }
   }
+
+  public async getState() {
+    return this.stateManager.getState();
+  }
+
+  public async updateState(partialState: RecursivePartial<State>) {
+    this.stateManager.updateState(partialState);
+  }
+
+  public handleStateChanged = (partialState: RecursivePartial<State>) => {
+    this.onStateChangedEmitter.fire(partialState);
+  };
+
+  public onStateChanged = (listener: (partialState: RecursivePartial<State>) => void) => {
+    return this.onStateChangedEmitter.event(listener);
+  };
 
   public detach() {
     this.attachSemaphore -= 1;

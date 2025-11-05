@@ -1,10 +1,12 @@
-import { useWorkspaceConfig } from "../../providers/WorkspaceConfigProvider";
-import { DeviceProperties } from "../../utilities/deviceContants";
+import { use$ } from "@legendapp/state/react";
+import { DeviceProperties } from "../../utilities/deviceConstants";
+import { useStore } from "../../providers/storeProvider";
 
-export function useDeviceFrame(device: DeviceProperties) {
-  const workspace = useWorkspaceConfig();
-  const isFrameDisabled = workspace.showDeviceFrame === false;
-  const frame = isFrameDisabled ? device.bezel : device.skin;
+export function useDeviceFrame(device: DeviceProperties | undefined) {
+  const store$ = useStore();
+  const showDeviceFrame = use$(store$.workspaceConfiguration.userInterface.showDeviceFrame);
+  const isFrameDisabled = showDeviceFrame === false;
+  const frame = isFrameDisabled ? device?.bezel : device?.skin;
 
   return frame;
 }

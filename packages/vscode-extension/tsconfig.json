@@ -1,20 +1,23 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es6",
-    "outDir": "out",
-    "lib": ["es6", "dom", "ESNext"],
-    "sourceMap": true,
-    "rootDir": "src",
-    "strict": true,
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
     "allowJs": true,
+    "emitDecoratorMetadata": true,
+    "esModuleInterop": true,
+    "experimentalDecorators": true,
     "jsx": "react-jsx",
+    "lib": ["es6", "dom", "ESNext"],
+    "module": "es2022",
+    "moduleResolution": "bundler",
+    "outDir": "out",
     "paths": {
       "jsonc-parser": ["./node_modules/jsonc-parser/lib/esm/main.js"]
-    }
+    },
+    "resolveJsonModule": true,
+    "rootDir": "src",
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "target": "es6",
   },
   "exclude": [
     "node_modules/**/*",

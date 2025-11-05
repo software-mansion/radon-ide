@@ -1,14 +1,7 @@
 import "./View.css";
 import "./LaunchConfigurationView.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LaunchConfiguration, LaunchConfigurationOptions } from "../../common/LaunchConfig";
-import { useModal } from "../providers/ModalProvider";
-import { useProject } from "../providers/ProjectProvider";
-import {
-  AppRootConfig,
-  useApplicationRoots,
-  useAppRootConfig,
-} from "../providers/ApplicationRootsProvider";
+import { use$ } from "@legendapp/state/react";
 import {
   VscodeFormGroup as FormGroup,
   VscodeLabel as Label,
@@ -21,6 +14,11 @@ import {
   VscodeTabs as Tabs,
   VscodeTabHeader as TabHeader,
 } from "@vscode-elements/react-elements";
+import { useStore } from "../providers/storeProvider";
+import { LaunchConfiguration, LaunchConfigurationKind } from "../../common/LaunchConfig";
+import { useModal } from "../providers/ModalProvider";
+import { useProject } from "../providers/ProjectProvider";
+import { AppRootConfig, useAppRootConfig } from "../providers/ApplicationRootsProvider";
 import extensionPackageJSON from "../../../package.json";
 import useFormValidity from "../hooks/useFormValidity";
 import EnvEditor from "./EnvEditor";
@@ -76,14 +74,21 @@ function undefinedIfEmpty(value: string) {
   return value === "" ? undefined : value;
 }
 
-function serializeLaunchConfig(formData: FormData) {
+function valueAsBoolean(value: string) {
+  return value === "true" ? true : value === "false" ? false : undefined;
+}
+
+function serializeLaunchConfig(formData: FormData, defaultAppRoot: string) {
   const data = Object.fromEntries(formData as any);
-  const newConfig: LaunchConfigurationOptions = {
+  const appRoot = data.appRoot || defaultAppRoot;
+  const newConfig: LaunchConfiguration = {
+    kind: LaunchConfigurationKind.Custom,
     name: undefinedIfEmpty(data.name),
-    appRoot: undefinedIfEmpty(data.appRoot),
+    appRoot,
     metroConfigPath: undefinedIfEmpty(data.metroConfigPath),
-    isExpo: data.isExpo === "true" ? true : data.isExpo === "false" ? false : undefined,
-    env: data.env ? JSON.parse(data.env) : undefined,
+    isExpo: valueAsBoolean(data.isExpo),
+    env: data.env ? JSON.parse(data.env) : {},
+    usePrebuild: valueAsBoolean(data.usePrebuild),
   };
 
   for (const platform of ["ios", "android"] as const) {
@@ -140,19 +145,20 @@ function LaunchConfigurationView({
   isCurrentConfig?: boolean;
 }) {
   const { openModal, closeModal } = useModal();
-  const applicationRoots = useApplicationRoots();
+
+  const store$ = useStore();
+  const applicationRoots = use$(store$.applicationRoots);
+  const defaultAppRoot = applicationRoots[0]?.path ?? "./";
 
   const { project } = useProject();
 
   const formContainerRef = useRef<HTMLFormElement>(null);
-  const [appRoot, setAppRoot] = useState<string>(
-    launchConfig?.appRoot ?? applicationRoots[0]?.path ?? ""
-  );
+  const [appRoot, setAppRoot] = useState<string>(launchConfig?.appRoot ?? defaultAppRoot);
   const appRootConfig = useAppRootConfig(appRoot);
 
   async function save() {
     const formData = new FormData(formContainerRef?.current ?? undefined);
-    const newLaunchConfig = serializeLaunchConfig(formData);
+    const newLaunchConfig = serializeLaunchConfig(formData, defaultAppRoot);
     await project.createOrUpdateLaunchConfiguration(newLaunchConfig, launchConfig);
     closeModal();
   }
@@ -166,18 +172,20 @@ function LaunchConfigurationView({
         <div className="launch-configuration-button-group">
           <Button
             className="button-secondary"
+            data-testid="cancel-delete-launch-configuration-button"
             onClick={() =>
               openModal(
-                "Launch Configuration",
                 <LaunchConfigurationView
                   launchConfig={launchConfig}
                   isCurrentConfig={isCurrentConfig}
-                />
+                />,
+                { title: "Launch Configuration" }
               )
             }>
             Cancel
           </Button>
           <Button
+            data-testid="confirm-delete-launch-configuration-button"
             onClick={() => {
               project.createOrUpdateLaunchConfiguration(undefined, launchConfig);
               closeModal();
@@ -196,7 +204,7 @@ function LaunchConfigurationView({
   const launchConfigAttrs = useMemo(getLaunchConfigAttrs, []);
 
   return (
-    <div className="launch-configuration-modal">
+    <div className="launch-configuration-modal" data-testid="launch-configuration-modal">
       <form
         ref={formContainerRef}
         className="launch-configuration-container"
@@ -218,6 +226,7 @@ function LaunchConfigurationView({
           </FormHelper>
           <TextField
             name="name"
+            data-testid="launch-configuration-name-input"
             initialValue={launchConfig?.name ?? ""}
             placeholder="Configuration Name"
           />
@@ -246,6 +255,7 @@ function LaunchConfigurationView({
           <FormHelper>{launchConfigAttrs?.properties?.metroConfigPath?.description}</FormHelper>
           <TextField
             placeholder="Detect automatically"
+            data-testid="launch-configuration-metro-config-path-input"
             name="metroConfigPath"
             initialValue={launchConfig?.metroConfigPath ?? ""}
           />
@@ -255,13 +265,38 @@ function LaunchConfigurationView({
           <Label>Use Expo CLI</Label>
           <FormHelper>{launchConfigAttrs?.properties?.isExpo?.description}</FormHelper>
           <SingleSelect
+            data-testid="launch-configuration-use-expo-select"
             name="isExpo"
             initialValue={
               launchConfig?.isExpo === undefined ? "" : launchConfig.isExpo ? "true" : "false"
             }>
-            <Option value="">Detect automatically</Option>
-            <Option value="true">Yes</Option>
-            <Option value="false">No</Option>
+            <Option
+              value=""
+              data-testid="launch-configuration-use-expo-select-detect-automatically">
+              Detect automatically
+            </Option>
+            <Option value="true" data-testid="launch-configuration-use-expo-select-yes">
+              Yes
+            </Option>
+            <Option value="false" data-testid="launch-configuration-use-expo-select-no">
+              No
+            </Option>
+          </SingleSelect>
+        </FormGroup>
+
+        <FormGroup variant="settings-group">
+          <Label>Use Expo Prebuild</Label>
+          <FormHelper>{launchConfigAttrs?.properties?.usePrebuild?.description}</FormHelper>
+          <SingleSelect
+            data-testid="launch-configuration-use-prebuild-select"
+            name="usePrebuild"
+            initialValue={launchConfig?.usePrebuild ? "true" : "false"}>
+            <Option value="true" data-testid="launch-configuration-use-prebuild-yes">
+              Yes
+            </Option>
+            <Option value="false" data-testid="launch-configuration-use-prebuild-no">
+              No
+            </Option>
           </SingleSelect>
         </FormGroup>
 
@@ -272,7 +307,9 @@ function LaunchConfigurationView({
         </FormGroup>
 
         <Tabs panel>
-          <TabHeader>iOS Build Settings</TabHeader>
+          <TabHeader data-testid="launch-configuration-ios-build-settings-tab">
+            iOS Build Settings
+          </TabHeader>
           <TabPanel panel>
             <BuildConfiguration
               appRootConfig={appRootConfig}
@@ -281,7 +318,9 @@ function LaunchConfigurationView({
               launchConfigAttrs={launchConfigAttrs}
             />
           </TabPanel>
-          <TabHeader>Android Build Settings</TabHeader>
+          <TabHeader data-testid="launch-configuration-android-build-settings-tab">
+            Android Build Settings
+          </TabHeader>
           <TabPanel panel>
             <BuildConfiguration
               appRootConfig={appRootConfig}
@@ -296,9 +335,10 @@ function LaunchConfigurationView({
       <div className="launch-configuration-button-group">
         <a
           className="launch-configuration-text-button"
+          data-testid="launch-configuration-edit-in-file-link"
           role="button"
           onClick={() => {
-            project.runCommand("workbench.action.debug.configure");
+            project.openLaunchConfigurationFile();
             closeModal();
           }}>
           Edit in launch.json
@@ -306,14 +346,19 @@ function LaunchConfigurationView({
         {launchConfig && (
           <Button
             secondary
+            data-testid="launch-configuration-delete-button"
             onClick={() => {
-              openModal("", <DeleteConfirmationModal />);
+              openModal(<DeleteConfirmationModal />);
             }}>
             <span className="codicon codicon-trash" />
             Delete
           </Button>
         )}
-        <Button onClick={save} disabled={!useFormValidity(formContainerRef)} type="submit">
+        <Button
+          onClick={save}
+          disabled={!useFormValidity(formContainerRef)}
+          type="submit"
+          data-testid="launch-configuration-modal-save-button">
           Save{isCurrentConfig ? " and restart" : ""}
         </Button>
       </div>
@@ -331,7 +376,7 @@ function BuildConfiguration({
 }: {
   appRootConfig: AppRootConfig;
   platform: "ios" | "android";
-  config?: LaunchConfigurationOptions;
+  config?: LaunchConfiguration;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
   let initialBuildType: BuildType = "standard";
@@ -395,7 +440,7 @@ function StandardBuildConfiguration({
 }: {
   appRootConfig: AppRootConfig;
   platform: "ios" | "android";
-  config?: LaunchConfigurationOptions;
+  config?: LaunchConfiguration;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
   if (platform === "ios") {
@@ -433,6 +478,7 @@ function StandardBuildConfiguration({
             {launchConfigAttrs?.properties?.ios?.properties?.configuration?.description}
           </FormHelper>
           <TextField
+            data-testid="launch-configuration-ios-configuration-input"
             initialValue={config?.ios?.configuration ?? ""}
             placeholder="Debug"
             name="ios.configuration"
@@ -451,6 +497,7 @@ function StandardBuildConfiguration({
             {launchConfigAttrs?.properties?.android?.properties?.buildType?.description}
           </FormHelper>
           <TextField
+            data-testid="launch-configuration-android-configuration-input"
             initialValue={config?.android?.buildType ?? ""}
             placeholder="debug"
             name="android.buildType"
@@ -480,7 +527,7 @@ function CustomBuildConfiguration({
   launchConfigAttrs,
 }: {
   platform: "ios" | "android";
-  config?: LaunchConfigurationOptions;
+  config?: LaunchConfiguration;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
   return (
@@ -529,7 +576,7 @@ function CustomBuildConfiguration({
   );
 }
 
-type EasLaunchConfig = NonNullable<LaunchConfigurationOptions["eas"]>;
+type EasLaunchConfig = NonNullable<LaunchConfiguration["eas"]>;
 type EasPlatform = keyof EasLaunchConfig;
 
 function prettyPlatformName(platform: EasPlatform): string {
@@ -551,17 +598,24 @@ function EasBuildConfiguration({
   appRootConfig: AppRootConfig;
   local: boolean;
   platform: EasPlatform;
-  config?: LaunchConfigurationOptions;
+  config?: LaunchConfiguration;
   launchConfigAttrs: LaunchConfigAttrs;
 }) {
   const { easBuildProfiles } = appRootConfig;
 
   const availableEasBuildProfiles = Object.entries(easBuildProfiles).map(
     ([buildProfile, buildProfileConfig]) => {
-      const canRunInSimulator =
-        buildProfileConfig.distribution === "internal" &&
-        (platform !== "ios" || buildProfileConfig.ios?.simulator === true);
-      return { value: buildProfile, label: buildProfile, disabled: !canRunInSimulator };
+      let disabled = false;
+      let reason = undefined;
+      if (platform === "ios" && buildProfileConfig.ios?.simulator !== true) {
+        disabled = true;
+        reason = "not a simulator profile";
+      }
+      if (buildProfileConfig.distribution !== "internal") {
+        disabled = true;
+        reason = "distribution is not internal";
+      }
+      return { value: buildProfile, label: buildProfile, disabled, reason };
     }
   );
   const initialBuildProfile = config?.eas?.[platform]?.profile ?? "";
@@ -572,6 +626,7 @@ function EasBuildConfiguration({
       value: initialBuildProfile,
       label: initialBuildProfile,
       disabled: true,
+      reason: undefined,
     });
   }
 
@@ -598,6 +653,7 @@ function EasBuildConfiguration({
           {availableEasBuildProfiles.map((profile) => (
             <Option key={profile.value} value={profile.value} disabled={profile.disabled}>
               {profile.label}
+              {profile.reason ? ` (${profile.reason})` : ""}
             </Option>
           ))}
         </SingleSelect>

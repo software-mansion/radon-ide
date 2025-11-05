@@ -2,7 +2,8 @@ import { readdir } from "fs/promises";
 import path from "path";
 import * as tar from "tar";
 import { Logger } from "../Logger";
-import { DevicePlatform } from "../common/DeviceManager";
+import { DevicePlatform } from "../common/State";
+import { CancelToken } from "../utilities/cancelToken";
 
 export function isAppFile(name: string) {
   return name.endsWith(".app");
@@ -15,10 +16,11 @@ export function isApkFile(name: string) {
 export async function extractTarApp(
   binaryPath: string,
   pathToExtract: string,
-  platform: DevicePlatform
+  platform: DevicePlatform,
+  cancelToken: CancelToken
 ) {
   try {
-    await tarCommand(binaryPath, pathToExtract);
+    await cancelToken.adapt(tarCommand(binaryPath, pathToExtract));
 
     // assuming that the archive contains only one app file
     const appName = (await readdir(pathToExtract)).find(
@@ -36,7 +38,8 @@ export async function extractTarApp(
     const appPath = path.join(pathToExtract, appName);
     Logger.debug(`Extracted app archive to '${appPath}'.`);
     return appPath;
-  } catch (_) {
+  } catch (error) {
+    cancelToken.throwIfCancelled();
     Logger.error(`Failed to extract archive '${binaryPath}' to '${pathToExtract}'.`);
     return undefined;
   }

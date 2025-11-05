@@ -1,12 +1,12 @@
 import "./DeviceRenameDialog.css";
 import { useEffect, useState } from "react";
-import { DeviceInfo } from "../../common/DeviceManager";
 import Button from "./shared/Button";
 import { useModal } from "../providers/ModalProvider";
 import { formatDisplayName, MAX_DEVICE_NAME_LENGTH } from "../views/CreateDeviceView";
 import Label from "../components/shared/Label";
 import { useProject } from "../providers/ProjectProvider";
 import { Input } from "./shared/Input";
+import { DeviceInfo } from "../../common/State";
 
 function DeviceRenameDialog({
   deviceInfo,
@@ -25,7 +25,7 @@ function DeviceRenameDialog({
     return () => {
       showHeader(true);
     };
-  });
+  }, [showHeader]);
 
   const handleDisplayNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const text = formatDisplayName(event.target.value);
@@ -43,6 +43,7 @@ function DeviceRenameDialog({
         <Input
           value={displayName}
           className="device-name-input"
+          data-testid="renaming-device-view-input"
           data-error={!isDisplayNameValid}
           type="string"
           onChange={handleDisplayNameChange}
@@ -61,6 +62,7 @@ function DeviceRenameDialog({
         </Button>
         <Button
           className="device-rename-button"
+          dataTest="renaming-device-view-save-button"
           type="ternary"
           disabled={!isDisplayNameValid}
           onClick={async () => {

@@ -1,8 +1,8 @@
 import { Disposable } from "vscode";
 import _ from "lodash";
-import { RadonInspectorBridge } from "./bridge";
+import { RadonInspectorBridge } from "./inspectorBridge";
+import { NetworkBridge } from "./networkBridge";
 import { extensionContext } from "../utilities/extensionContext";
-import { ToolsState } from "../common/Project";
 import {
   createExpoDevPluginTools,
   ExpoDevPluginToolName,
@@ -20,6 +20,10 @@ import { getTelemetryReporter } from "../utilities/telemetry";
 import { RenderOutlinesPlugin } from "../plugins/render-outlines/render-outlines-plugin";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 import { disposeAll } from "../utilities/disposables";
+import { ToolsState } from "../common/State";
+import { StateManager } from "./StateManager";
+import { WorkspaceConfiguration } from "../common/State";
+
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
 export type ToolKey =
@@ -32,10 +36,14 @@ export type ToolKey =
 export interface ToolPlugin extends Disposable {
   id: ToolKey;
   label: string;
-  available: boolean;
+  toolInstalled: boolean;
   persist: boolean;
-  activate(): void;
+  pluginAvailable: boolean;
+  pluginUnavailableTooltip?: string;
+  enable(): void;
+  disable(): void;
   deactivate(): void;
+  activate(): void;
   openTool?(): void;
 }
 
@@ -48,10 +56,6 @@ export function reportToolOpened(toolName: ToolKey) {
   getTelemetryReporter().sendTelemetryEvent(`tools:${toolName}:opened`);
 }
 
-export interface ToolsDelegate {
-  onToolsStateChange(toolsState: ToolsState): void;
-}
-
 export class ToolsManager implements Disposable {
   private toolsSettings: Partial<Record<ToolKey, boolean>> = {};
   private plugins: Map<ToolKey, ToolPlugin> = new Map();
@@ -59,20 +63,45 @@ export class ToolsManager implements Disposable {
   private disposables: Disposable[] = [];
 
   public constructor(
+    private readonly stateManager: StateManager<ToolsState>,
     public readonly inspectorBridge: RadonInspectorBridge,
-    private readonly delegate: ToolsDelegate
+    public readonly networkBridge: NetworkBridge,
+    public readonly workspaceConfigState: StateManager<WorkspaceConfiguration>,
+    public readonly metroPort: number
   ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
-
     for (const plugin of createExpoDevPluginTools()) {
       this.plugins.set(plugin.id, plugin);
     }
     const reactQueryPlugin = createReactQueryDevtools();
     this.plugins.set(reactQueryPlugin.id, reactQueryPlugin);
 
+    const handleRenderOutlinesAvailabilityChange = () => {
+      // Note that this enables and disables the tool internally,
+      // without updating the tool enabled state (calling updateToolEnabledState)
+      // in order to avoid telemetry events spam and allow for storing the previous state
+      // without refactoring the entire ToolsManager logic.
+
+      // On the frontend, to determine whether tool is actually enabled, we have
+      // to check the inspector availability (this.pluginAvailable) in cases where
+      // it is unavailable, because getToolState() will return the active state from before
+      // availability change.
+      this.handleStateChange();
+    };
+
     this.plugins.set(REDUX_PLUGIN_ID, new ReduxDevtoolsPlugin(inspectorBridge));
-    this.plugins.set(NETWORK_PLUGIN_ID, new NetworkPlugin(inspectorBridge));
-    this.plugins.set(RENDER_OUTLINES_PLUGIN_ID, new RenderOutlinesPlugin(inspectorBridge));
+    this.plugins.set(
+      NETWORK_PLUGIN_ID,
+      new NetworkPlugin(inspectorBridge, networkBridge, metroPort)
+    );
+    this.plugins.set(
+      RENDER_OUTLINES_PLUGIN_ID,
+      new RenderOutlinesPlugin(
+        inspectorBridge,
+        handleRenderOutlinesAvailabilityChange,
+        workspaceConfigState
+      )
+    );
 
     this.disposables.push(
       inspectorBridge.onEvent("devtoolPluginsChanged", (payload) => {
@@ -80,9 +109,9 @@ export class ToolsManager implements Disposable {
         const availablePlugins = new Set(payload.plugins);
         let changed = false;
         this.plugins.forEach((plugin) => {
-          if (!plugin.available && availablePlugins.has(plugin.id)) {
+          if (!plugin.toolInstalled && availablePlugins.has(plugin.id)) {
             changed = true;
-            plugin.available = true;
+            plugin.toolInstalled = true;
           }
         });
         // notify tools manager that the state of requested plugins has changed
@@ -98,7 +127,7 @@ export class ToolsManager implements Disposable {
   }
 
   dispose() {
-    this.activePlugins.forEach((plugin) => plugin.deactivate());
+    this.activePlugins.forEach((plugin) => plugin.disable());
     this.activePlugins.clear();
     this.plugins.forEach((plugin) => plugin.dispose());
     disposeAll(this.disposables);
@@ -114,36 +143,40 @@ export class ToolsManager implements Disposable {
 
   public handleStateChange() {
     for (const plugin of this.plugins.values()) {
-      if (plugin.available) {
+      if (plugin.toolInstalled) {
         const enabled = this.toolsSettings[plugin.id] || false;
         const active = this.activePlugins.has(plugin);
         if (active !== enabled) {
           if (enabled) {
-            plugin.activate();
+            plugin.enable();
             this.activePlugins.add(plugin);
           } else {
-            plugin.deactivate();
+            plugin.disable();
             this.activePlugins.delete(plugin);
           }
         }
       }
     }
 
-    this.delegate.onToolsStateChange(this.getToolsState());
+    this.setToolsState();
   }
 
-  public getToolsState(): ToolsState {
+  // TODO: we should consider using a more sophisticated approach to manage tool states
+  private setToolsState() {
     const toolsState: ToolsState = {};
     for (const [id, plugin] of this.plugins) {
-      if (plugin.available) {
+      if (plugin.toolInstalled) {
         toolsState[id] = {
           label: plugin.label,
           enabled: this.toolsSettings[id] || false,
-          panelAvailable: plugin.openTool !== undefined,
+          isPanelTool: plugin.openTool !== undefined,
+          pluginAvailable: plugin.pluginAvailable,
+          pluginUnavailableTooltip: plugin.pluginUnavailableTooltip,
         };
       }
     }
-    return toolsState;
+
+    this.stateManager.updateState(toolsState);
   }
 
   public updateToolEnabledState(toolName: ToolKey, enabled: boolean) {

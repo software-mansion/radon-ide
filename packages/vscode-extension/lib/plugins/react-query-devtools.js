@@ -1,5 +1,5 @@
-import { QueryClient } from "@tanstack/query-core";
-import { register } from "../expo_dev_plugins";
+import { QueryClient } from "@tanstack/react-query";
+import { register } from "./expo_dev_plugins";
 import { PluginMessageBridge } from "./PluginMessageBridge";
 
 function broadcastQueryClient(queryClient) {
@@ -96,3 +96,7 @@ QueryClient.prototype.mount = function (...args) {
   broadcastQueryClient(this);
   return origMount.apply(this, args);
 };
+
+// We try to register the plugin here, but if registration fails here,
+// it will be registered when the first QueryClient is mounted.
+register("react-query");

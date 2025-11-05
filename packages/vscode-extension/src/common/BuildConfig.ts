@@ -1,20 +1,21 @@
-import { DevicePlatform } from "./DeviceManager";
+import { JSONValue } from "../utilities/json";
+import { DevicePlatform } from "./State";
 
 export enum BuildType {
   Local = "local",
   ExpoGo = "expoGo",
+  DevClient = "devClient",
   Eas = "eas",
   EasLocal = "easLocal",
   Custom = "custom",
 }
 
-interface BuildConfigCommon {
+type BuildConfigCommon = {
   appRoot: string;
   platform: DevicePlatform;
   env?: Record<string, string>;
-  forceCleanBuild: boolean;
   fingerprintCommand?: string;
-}
+};
 
 export type CustomBuildConfig = {
   type: BuildType.Custom;
@@ -38,7 +39,7 @@ export type EasLocalBuildConfig = {
 export type AndroidLocalBuildConfig = {
   type: BuildType.Local;
   platform: DevicePlatform.Android;
-  forceCleanBuild: boolean;
+  usePrebuild?: boolean;
   buildType?: string;
   productFlavor?: string;
 } & BuildConfigCommon;
@@ -46,14 +47,34 @@ export type AndroidLocalBuildConfig = {
 export type IOSLocalBuildConfig = {
   type: BuildType.Local;
   platform: DevicePlatform.IOS;
-  forceCleanBuild: boolean;
+  usePrebuild?: boolean;
   scheme?: string;
   configuration?: string;
+  runtimeId: string;
+} & BuildConfigCommon;
+
+export type AndroidDevClientBuildConfig = {
+  type: BuildType.DevClient;
+  platform: DevicePlatform.Android;
+  usePrebuild?: boolean;
+  buildType?: string;
+  productFlavor?: string;
+} & BuildConfigCommon;
+
+export type IOSDevClientBuildConfig = {
+  type: BuildType.DevClient;
+  platform: DevicePlatform.IOS;
+  usePrebuild?: boolean;
+  scheme?: string;
+  configuration?: string;
+  runtimeId: string;
 } & BuildConfigCommon;
 
 export type BuildConfig =
   | CustomBuildConfig
   | ExpoGoBuildConfig
+  | AndroidDevClientBuildConfig
+  | IOSDevClientBuildConfig
   | EasBuildConfig
   | EasLocalBuildConfig
   | AndroidLocalBuildConfig
@@ -70,3 +91,6 @@ type SupportedAndroidBuildType = AndroidBuildConfig["type"];
 type SupportedBuildType = SupportedIOSBuildType & SupportedAndroidBuildType;
 
 type _SupportsAllBuildTypes = IsSuperTypeOf<SupportedBuildType, BuildType>;
+
+// verify that the build config types are json-serializable:
+type _EnsureJSONSerializable = IsSuperTypeOf<JSONValue, BuildConfig>;

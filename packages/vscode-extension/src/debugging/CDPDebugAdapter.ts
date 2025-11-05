@@ -11,6 +11,7 @@ import {
   TerminatedEvent,
   ThreadEvent,
   StackFrame,
+  ErrorDestination,
 } from "@vscode/debugadapter";
 import { DebugProtocol } from "@vscode/debugprotocol";
 import { Logger } from "../Logger";
@@ -22,6 +23,8 @@ import {
 import { CDPSession, CDPSessionDelegate } from "./CDPSession";
 import getArraySlots from "./templates/getArraySlots";
 import { filePathForProfile } from "./cpuProfiler";
+import { BINDING_CALLED, SCRIPT_PARSED } from "./DebugSession";
+import { SourceInfo } from "../common/Project";
 
 export type CDPConfiguration = {
   websocketAddress: string;
@@ -53,6 +56,10 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
 
   private startCDPSession(cdpConfiguration: CDPConfiguration) {
     this.cdpSession = new CDPSession(this, cdpConfiguration);
+    this.cdpSession.onScriptParsed((payload) => this.sendEvent(new Event(SCRIPT_PARSED, payload)));
+    this.cdpSession.onBindingCalled(({ name, payload }) =>
+      this.sendEvent(new Event(BINDING_CALLED, { name, payload }))
+    );
   }
 
   //#region CDPDelegate
@@ -297,6 +304,34 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
     this.sendResponse(response);
   }
 
+  protected override async stepInRequest(
+    response: DebugProtocol.StepInResponse,
+    args: DebugProtocol.StepInArguments
+  ): Promise<void> {
+    if (!this.cdpSession) {
+      Logger.warn("[DebugAdapter] [stepInRequest] The CDPSession was not initialized yet");
+      this.sendResponse(response);
+      return;
+    }
+
+    await this.cdpSession.sendCDPMessage("Debugger.stepInto", {});
+    this.sendResponse(response);
+  }
+
+  protected override async stepOutRequest(
+    response: DebugProtocol.StepOutResponse,
+    args: DebugProtocol.StepOutArguments
+  ): Promise<void> {
+    if (!this.cdpSession) {
+      Logger.warn("[DebugAdapter] [stepOutRequest] The CDPSession was not initialized yet");
+      this.sendResponse(response);
+      return;
+    }
+
+    await this.cdpSession.sendCDPMessage("Debugger.stepOut", {});
+    this.sendResponse(response);
+  }
+
   protected disconnectRequest(
     response: DebugProtocol.DisconnectResponse,
     args: DebugProtocol.DisconnectArguments
@@ -338,22 +373,37 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
     this.sendResponse(response);
   }
 
-  private async ping() {
+  private async evaluateExpression(args: any) {
     if (!this.cdpSession) {
-      Logger.warn("[DebugAdapter] [ping] The CDPSession was not initialized yet");
+      Logger.warn("[DebugAdapter] [injectDebuggerCommand] The CDPSession was not initialized yet");
       return;
     }
-    try {
-      const res = await this.cdpSession.sendCDPMessage("Runtime.evaluate", {
-        expression: "('ping')",
-      });
-      if (res.result.value === "ping") {
-        return true;
-      }
-    } catch (_) {
-      /** debugSession is waiting for an event, if it won't get any it will fail after timeout, so we don't need to do anything here */
+    const res = await this.cdpSession?.sendCDPMessage("Runtime.evaluate", args);
+    return res.result;
+  }
+
+  private async addBinding(name: string) {
+    const res = await this.cdpSession?.sendCDPMessage("Runtime.addBinding", {
+      name,
+    });
+    return res;
+  }
+
+  private findOriginalPosition(sourceInfo: SourceInfo): SourceInfo {
+    const cdpSession = this.cdpSession;
+    if (!cdpSession) {
+      throw new Error("Coun't get original source position: CDP session is not initialized");
     }
-    return false;
+    const res = cdpSession.findOriginalPosition(
+      sourceInfo.fileName,
+      sourceInfo.line0Based + 1,
+      sourceInfo.column0Based
+    );
+    return {
+      fileName: res.sourceURL,
+      line0Based: res.lineNumber1Based - 1,
+      column0Based: res.columnNumber0Based,
+    };
   }
 
   protected async customRequest(
@@ -363,28 +413,48 @@ export class CDPDebugAdapter extends DebugSession implements CDPSessionDelegate 
     request?: DebugProtocol.Request | undefined
   ) {
     response.body = response.body || {};
-    switch (command) {
-      case "RNIDE_startProfiling":
-        if (this.cdpSession) {
-          await this.cdpSession.startProfiling();
-          this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
-        }
-        break;
-      case "RNIDE_stopProfiling":
-        if (this.cdpSession) {
-          const profile = await this.cdpSession.stopProfiling();
-          const filePath = filePathForProfile();
-          await fs.promises.writeFile(filePath, JSON.stringify(profile));
-          this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
-        }
-        break;
-      case "RNIDE_ping":
-        response.body.result = await this.ping();
-        break;
-      default:
-        Logger.debug(`Custom req ${command} ${args}`);
+    try {
+      switch (command) {
+        case "RNIDE_findOriginalPosition":
+          response.body = await this.findOriginalPosition(args);
+          break;
+        case "RNIDE_startProfiling":
+          if (this.cdpSession) {
+            await this.cdpSession.startProfiling();
+            this.sendEvent(new Event("RNIDE_profilingCPUStarted"));
+          }
+          break;
+        case "RNIDE_stopProfiling":
+          if (this.cdpSession) {
+            const profile = await this.cdpSession.stopProfiling();
+            const filePath = filePathForProfile();
+            await fs.promises.writeFile(filePath, JSON.stringify(profile));
+            this.sendEvent(new Event("RNIDE_profilingCPUStopped", { filePath }));
+          }
+          break;
+        case "RNIDE_evaluate":
+          response.body.result = await this.evaluateExpression(args);
+          break;
+        case "RNIDE_addBinding":
+          await this.addBinding(args.name);
+          break;
+        default:
+          Logger.debug(`Custom req ${command} ${args}`);
+      }
+      this.sendResponse(response);
+    } catch (e) {
+      Logger.error("Error executing custom debugger request command:", command, e);
+      this.sendErrorResponse(
+        response,
+        {
+          format: (e as Error).message,
+          id: 1,
+        },
+        undefined,
+        undefined,
+        ErrorDestination.User
+      );
     }
-    this.sendResponse(response);
   }
 
   //#endregion

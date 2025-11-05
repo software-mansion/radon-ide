@@ -1,7 +1,8 @@
 import { OutputChannel } from "vscode";
-import { DevicePlatform } from "../common/DeviceManager";
 import { Logger } from "../Logger";
 import { exec, lineReader } from "../utilities/subprocess";
+import { DevicePlatform } from "../common/State";
+import { CancelToken } from "../utilities/cancelToken";
 
 type UnixTimestamp = number;
 
@@ -180,7 +181,8 @@ interface BuildLocalOptions {
 export async function buildLocal(
   { platform, profile, outputPath }: BuildLocalOptions,
   appRoot: string,
-  outputChannel: OutputChannel
+  outputChannel: OutputChannel,
+  cancelToken: CancelToken
 ): Promise<void> {
   const commandArgs = [
     "build",
@@ -193,7 +195,9 @@ export async function buildLocal(
     "--output",
     outputPath,
   ];
-  const buildProcess = exec("eas", commandArgs, { cwd: appRoot, quietErrorsOnExit: true });
+  const buildProcess = cancelToken.adapt(
+    exec("eas", commandArgs, { cwd: appRoot, quietErrorsOnExit: true })
+  );
   lineReader(buildProcess).onLineRead((line) => {
     outputChannel.appendLine(line);
   });

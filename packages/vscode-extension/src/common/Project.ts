@@ -1,126 +1,18 @@
-import { BuildType } from "./BuildConfig";
-import { DeviceInfo, DevicePlatform } from "./DeviceManager";
-import {
-  LaunchConfiguration,
-  LaunchConfigurationKind,
-  LaunchConfigurationOptions,
-} from "./LaunchConfig";
+import { TelemetryEventProperties } from "@vscode/extension-telemetry";
+import { ReloadAction } from "../project/DeviceSessionsManager";
+import { LaunchConfiguration } from "./LaunchConfig";
 import { Output } from "./OutputChannel";
-
-export type Locale = string;
-
-export type CameraSource = "emulated" | "none" | "webcam0";
-export type FrontCameraSource = CameraSource;
-export type BackCameraSource = CameraSource | "virtualscene";
-
-export interface CameraSettings {
-  back: BackCameraSource;
-  front: FrontCameraSource;
-}
-
-export type DeviceSettings = {
-  appearance: "light" | "dark";
-  contentSize: "xsmall" | "small" | "normal" | "large" | "xlarge" | "xxlarge" | "xxxlarge";
-  location: {
-    latitude: number;
-    longitude: number;
-    isDisabled: boolean;
-  };
-  hasEnrolledBiometrics: boolean;
-  locale: Locale;
-  replaysEnabled: boolean;
-  showTouches: boolean;
-  camera?: CameraSettings;
-};
-
-export type ToolState = {
-  enabled: boolean;
-  panelAvailable: boolean;
-  label: string;
-};
-
-export type ToolsState = {
-  [key: string]: ToolState;
-};
-
-export type BuildErrorDescriptor = {
-  kind: "build";
-  message: string;
-  platform: DevicePlatform;
-  buildType: BuildType | null;
-};
-
-export type DeviceErrorDescriptor = {
-  kind: "device";
-  message: string;
-};
-
-export type FatalErrorDescriptor = BuildErrorDescriptor | DeviceErrorDescriptor;
-
-export type ProfilingState = "stopped" | "profiling" | "saving";
-
-export type NavigationHistoryItem = {
-  displayName: string;
-  id: string;
-};
-
-export type NavigationRoute = {
-  path: string;
-  filePath: string;
-  children: NavigationRoute[];
-  dynamic: { name: string; deep: boolean; notFound?: boolean }[] | null;
-  type: string;
-};
-
-export type DeviceSessionStatus = "starting" | "running" | "fatalError";
-
-type DeviceSessionStateCommon = {
-  deviceInfo: DeviceInfo;
-  previewURL: string | undefined;
-  profilingReactState: ProfilingState;
-  profilingCPUState: ProfilingState;
-  navigationHistory: NavigationHistoryItem[];
-  navigationRouteList: NavigationRoute[];
-  toolsState: ToolsState;
-  isDebuggerPaused: boolean;
-  logCounter: number;
-  hasStaleBuildCache: boolean;
-  isRecordingScreen: boolean;
-};
-
-export type DeviceSessionStateStarting = DeviceSessionStateCommon & {
-  status: "starting";
-  startupMessage: StartupMessage | undefined;
-  stageProgress: number | undefined;
-};
-
-export type BundleErrorDescriptor = {
-  kind: "bundle";
-  message: string;
-};
-
-export type DeviceSessionStateRunning = DeviceSessionStateCommon & {
-  status: "running";
-  isRefreshing: boolean;
-  bundleError: BundleErrorDescriptor | undefined;
-};
-
-export type DeviceSessionStateFatalError = DeviceSessionStateCommon & {
-  status: "fatalError";
-  error: FatalErrorDescriptor;
-};
-
-export type DeviceSessionState =
-  | DeviceSessionStateStarting
-  | DeviceSessionStateRunning
-  | DeviceSessionStateFatalError;
+import {
+  AndroidSystemImageInfo,
+  DeviceInfo,
+  DeviceRotation,
+  IOSDeviceTypeInfo,
+  IOSRuntimeInfo,
+  MultimediaData,
+  ToolsState,
+} from "./State";
 
 export type DeviceId = DeviceInfo["id"];
-
-export interface DeviceSessionsManagerState {
-  selectedSessionId: DeviceId | null;
-  deviceSessions: Record<DeviceId, DeviceSessionState>;
-}
 
 export type ConnectState = {
   enabled: boolean;
@@ -128,43 +20,29 @@ export type ConnectState = {
 };
 
 export type ProjectState = {
-  initialized: boolean;
   appRootPath: string | undefined;
-  previewZoom: ZoomLevelType | undefined; // Preview specific. Consider extracting to different location if we store more preview state
   selectedLaunchConfiguration: LaunchConfiguration;
   customLaunchConfigurations: LaunchConfiguration[];
   connectState: ConnectState;
-} & DeviceSessionsManagerState;
-
-export type ZoomLevelType = number | "Fit";
+};
 
 export type AppPermissionType = "all" | "location" | "photos" | "contacts" | "calendar";
 
-export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown";
+export type DeviceButtonType = "home" | "back" | "appSwitch" | "volumeUp" | "volumeDown" | "power";
 
-// important: order of values in this enum matters
-export enum StartupMessage {
-  InitializingDevice = "Initializing device",
-  StartingPackager = "Starting packager",
-  BootingDevice = "Booting device",
-  Building = "Building",
-  Installing = "Installing",
-  Launching = "Launching",
-  WaitingForAppToLoad = "Waiting for app to load",
-  AttachingDebugger = "Attaching debugger",
-  Restarting = "Restarting",
+export enum DeviceRotationDirection {
+  Clockwise = -1,
+  Anticlockwise = 1,
 }
 
-export const StartupStageWeight = [
-  { StartupMessage: StartupMessage.InitializingDevice, weight: 1 },
-  { StartupMessage: StartupMessage.StartingPackager, weight: 1 },
-  { StartupMessage: StartupMessage.BootingDevice, weight: 2 },
-  { StartupMessage: StartupMessage.Building, weight: 7 },
-  { StartupMessage: StartupMessage.Installing, weight: 1 },
-  { StartupMessage: StartupMessage.Launching, weight: 1 },
-  { StartupMessage: StartupMessage.WaitingForAppToLoad, weight: 6 },
-  { StartupMessage: StartupMessage.AttachingDebugger, weight: 1 },
-];
+export const ROTATIONS: DeviceRotation[] = [
+  DeviceRotation.LandscapeLeft,
+  DeviceRotation.Portrait,
+  DeviceRotation.LandscapeRight,
+  DeviceRotation.PortraitUpsideDown,
+] as const;
+
+export type AppOrientation = DeviceRotation | "Landscape";
 
 export type Frame = {
   x: number;
@@ -173,14 +51,16 @@ export type Frame = {
   height: number;
 };
 
+export type SourceInfo = {
+  fileName: string;
+  line0Based: number;
+  column0Based: number;
+};
+
 export type InspectDataStackItem = {
   componentName: string;
   hide: boolean;
-  source: {
-    fileName: string;
-    line0Based: number;
-    column0Based: number;
-  };
+  source: SourceInfo;
   frame: Frame;
 };
 
@@ -191,7 +71,7 @@ export type InspectStackData = {
 
 export type InspectData = {
   stack: InspectDataStackItem[] | undefined;
-  frame: Frame;
+  frame?: Frame;
 };
 
 export type TouchPoint = {
@@ -209,25 +89,17 @@ export enum ActivateDeviceResult {
 
 export interface ProjectEventMap {
   projectStateChanged: ProjectState;
-  deviceSettingsChanged: DeviceSettings;
   licenseActivationChanged: boolean;
-  replayDataCreated: MultimediaData;
 }
 
 export interface ProjectEventListener<T> {
   (event: T): void;
 }
 
-export type MultimediaData = {
-  url: string;
-  tempFileLocation: string;
-  fileName: string;
-};
+export type IDEPanelMoveTarget = "new-window" | "editor-tab" | "side-panel";
 
 export interface ProjectInterface {
   getProjectState(): Promise<ProjectState>;
-  renameDevice(deviceInfo: DeviceInfo, newDisplayName: string): Promise<void>;
-  updatePreviewZoomLevel(zoom: ZoomLevelType): Promise<void>;
 
   /**
    * Creates a new launch configuration or updates an existing one.
@@ -240,17 +112,14 @@ export interface ProjectInterface {
    * @returns A promise that resolves when the operation is complete.
    */
   createOrUpdateLaunchConfiguration(
-    newLaunchConfiguration: LaunchConfigurationOptions | undefined,
+    newLaunchConfiguration: LaunchConfiguration | undefined,
     oldLaunchConfiguration?: LaunchConfiguration
   ): Promise<void>;
-  selectLaunchConfiguration(
-    launchConfig: LaunchConfigurationOptions,
-    launchConfigurationKind: LaunchConfigurationKind
-  ): Promise<void>;
+  selectLaunchConfiguration(launchConfig: LaunchConfiguration): Promise<void>;
 
-  getDeviceSettings(): Promise<DeviceSettings>;
-  updateDeviceSettings(deviceSettings: DeviceSettings): Promise<void>;
-  runCommand(command: string): Promise<void>;
+  runDependencyChecks(): Promise<void>;
+
+  rotateDevices(direction: DeviceRotationDirection): Promise<void>;
 
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
   openTool(toolName: keyof ToolsState): Promise<void>;
@@ -260,44 +129,84 @@ export interface ProjectInterface {
 
   resumeDebugger(): Promise<void>;
   stepOverDebugger(): Promise<void>;
-  focusOutput(channel: Output): Promise<void>;
+  stepIntoDebugger(): Promise<void>;
+  stepOutDebugger(): Promise<void>;
   focusDebugConsole(): Promise<void>;
+
   openNavigation(navigationItemID: string): Promise<void>;
   navigateBack(): Promise<void>;
   navigateHome(): Promise<void>;
   removeNavigationHistoryEntry(id: string): Promise<void>;
+
   openDevMenu(): Promise<void>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
-  hasActiveLicense(): Promise<boolean>;
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 
   getDeepLinksHistory(): Promise<string[]>;
   openDeepLink(link: string, terminateApp: boolean): Promise<void>;
 
-  startRecording(): void;
-  captureAndStopRecording(): void;
+  openSendFileDialog(): Promise<void>;
+  sendFileToDevice(fileDescription: { fileName: string; data: ArrayBuffer }): Promise<void>;
+
+  toggleRecording(): void;
   captureReplay(): void;
   captureScreenshot(): void;
+  saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
+
+  startReportingFrameRate(): void;
+  stopReportingFrameRate(): void;
 
   startProfilingCPU(): void;
   stopProfilingCPU(): void;
-
   startProfilingReact(): void;
   stopProfilingReact(): void;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): void;
   dispatchKeyPress(keyCode: number, direction: "Up" | "Down"): void;
+  dispatchButton(buttonType: DeviceButtonType, direction: "Up" | "Down"): void;
   dispatchWheel(point: TouchPoint, deltaX: number, deltaY: number): void;
   dispatchPaste(text: string): Promise<void>;
   dispatchCopy(): Promise<void>;
-  inspectElementAt(
-    xRatio: number,
-    yRatio: number,
-    requestStack: boolean,
-    callback: (inspectData: InspectData) => void
-  ): Promise<void>;
+  dispatchHomeButtonPress(): void;
+  dispatchAppSwitchButtonPress(): void;
+
+  sendBiometricAuthorization(isMatch: boolean): Promise<void>;
+
+  reloadCurrentSession(type: ReloadAction): Promise<void>;
+  startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void>;
+  terminateSession(deviceId: DeviceId): Promise<void>;
+
+  inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<InspectData>;
+
+  createAndroidDevice(
+    modelId: string,
+    displayName: string,
+    systemImage: AndroidSystemImageInfo
+  ): Promise<DeviceInfo>;
+  createIOSDevice(
+    deviceType: IOSDeviceTypeInfo,
+    displayName: string,
+    runtime: IOSRuntimeInfo
+  ): Promise<DeviceInfo>;
+  loadInstalledImages(): void;
+  renameDevice(device: DeviceInfo, newDisplayName: string): Promise<void>;
+  removeDevice(device: DeviceInfo): Promise<void>;
+
+  log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]): Promise<void>;
+  focusOutput(channel: Output): Promise<void>;
+
+  getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;
+  movePanelTo(location: IDEPanelMoveTarget): Promise<void>;
+  openExternalUrl(uriString: string): Promise<void>;
+  openFileAt(filePath: string, line0Based: number, column0Based: number): Promise<void>;
+  showDismissableError(errorMessage: string): Promise<void>;
+  showToast(message: string, timeout: number): Promise<void>;
+  openLaunchConfigurationFile(): Promise<void>;
+
+  reportIssue(): Promise<void>;
+  sendTelemetry(eventName: string, properties?: TelemetryEventProperties): Promise<void>;
 
   addListener<K extends keyof ProjectEventMap>(
     eventType: K,
