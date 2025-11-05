@@ -218,8 +218,13 @@ function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
  *   - "blob": Blob via BlobManager.createFromOptions()
  *   - "json": parsed JSON (or null on parse error)
  *   - "document": always null (unsupported)
- * 
+ *
  * More details: https://github.com/facebook/react-native/blob/main/packages/react-native/Libraries/Network/XMLHttpRequest.js
+ *
+ * By default, using 'fetch' in React Native uses polyfill, which always
+ * sets the responseType to 'blob' or 'arraybuffer', whichever is supported (so usually blob).
+ *
+ * More details: https://github.com/JakeChampion/fetch/blob/main/fetch.js
  *
  * The returned promise resolves to InternalResponseBodyData when a textual
  * preview is available, or to `undefined` when the response should not be
