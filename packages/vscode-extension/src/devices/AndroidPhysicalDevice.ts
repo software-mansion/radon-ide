@@ -18,6 +18,7 @@ import { StateManager } from "../project/StateManager";
 import { Logger } from "../Logger";
 import { AndroidBuildResult } from "../builders/buildAndroid";
 import { getAppCachesDir } from "../utilities/common";
+import { Preview } from "./preview";
 
 export class AndroidPhysicalDevice extends AndroidDevice {
   constructor(
@@ -44,6 +45,14 @@ export class AndroidPhysicalDevice extends AndroidDevice {
   public getClipboard(): Promise<string | void> {
     // TODO:
     return Promise.resolve("");
+  }
+
+  protected makePreview(licenseToken?: string): Preview {
+    const args = ["android_device", "--id", this.serial!];
+    if (licenseToken !== undefined) {
+      args.push("-t", licenseToken);
+    }
+    return new Preview(args);
   }
 
   public override sendRotate(rotation: DeviceRotation): void {

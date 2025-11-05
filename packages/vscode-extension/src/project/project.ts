@@ -271,7 +271,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   @guardFeatureAccess(Feature.IOSTabletSimulators, (deviceInfo: DeviceInfo) => {
     return deviceInfo.deviceType !== DeviceType.Tablet;
   })
-  @guardFeatureAccess(Feature.AndroidRemoteDevice, (deviceInfo: DeviceInfo) => {
+  @guardFeatureAccess(Feature.AndroidPhysicalDevice, (deviceInfo: DeviceInfo) => {
     if (deviceInfo.platform === DevicePlatform.IOS) {
       return true;
     }

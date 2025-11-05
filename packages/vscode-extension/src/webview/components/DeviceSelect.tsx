@@ -146,11 +146,11 @@ function DeviceSelect() {
     []
   );
 
-  const handleStartOrActivateSessionForAndroidRemoteDevice = usePaywalledCallback(
+  const handleStartOrActivateSessionForAndroidPhysicalDevice = usePaywalledCallback(
     async (deviceInfo: DeviceInfo) => {
       await project.startOrActivateSessionForDevice(deviceInfo);
     },
-    Feature.AndroidRemoteDevice,
+    Feature.AndroidPhysicalDevice,
     []
   );
 
@@ -180,7 +180,7 @@ function DeviceSelect() {
               await handleStartOrActivateSessionForAndroidTabletEmulator(deviceInfo);
               return;
             } else if (deviceInfo.emulator === false) {
-              handleStartOrActivateSessionForAndroidRemoteDevice(deviceInfo);
+              handleStartOrActivateSessionForAndroidPhysicalDevice(deviceInfo);
               return;
             } else {
               await handleStartOrActivateSessionForAndroidSmartphoneEmulator(deviceInfo);

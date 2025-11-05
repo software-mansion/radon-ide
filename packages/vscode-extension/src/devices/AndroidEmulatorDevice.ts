@@ -30,6 +30,7 @@ import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
 import { DevicesProvider } from "./DevicesProvider";
 import { StateManager } from "../project/StateManager";
 import { AndroidBuildResult } from "../builders/buildAndroid";
+import { Preview } from "./preview";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -391,6 +392,14 @@ export class AndroidEmulatorDevice extends AndroidDevice {
     });
 
     this.serial = await initPromise;
+  }
+
+  protected makePreview(licenseToken?: string): Preview {
+    const args = ["android", "--id", this.serial!];
+    if (licenseToken !== undefined) {
+      args.push("-t", licenseToken);
+    }
+    return new Preview(args);
   }
 
   public async getClipboard() {

@@ -76,7 +76,7 @@ export function getLicenseStatusFromString(str: string): LicenseStatus {
 export enum Feature {
   AndroidSmartphoneEmulators = "AndroidSmartphoneEmulators",
   AndroidTabletEmulators = "AndroidTabletEmulators",
-  AndroidRemoteDevice = "AndroidRemoteDevice",
+  AndroidPhysicalDevice = "AndroidPhysicalDevice",
   AppSwitcherButton = "AppSwitcherButton",
   Biometrics = "Biometrics",
   ComponentPreview = "ComponentPreview",
@@ -139,7 +139,7 @@ export const FreeFeatures: Set<Feature> = new Set<Feature>([
 
 export const ProFeatures: Set<Feature> = new Set<Feature>([
   Feature.AndroidTabletEmulators,
-  Feature.AndroidRemoteDevice,
+  Feature.AndroidPhysicalDevice,
   Feature.Biometrics,
   Feature.DeviceLocalizationSettings,
   Feature.DeviceRotation,

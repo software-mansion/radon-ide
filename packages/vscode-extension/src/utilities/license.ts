@@ -40,7 +40,6 @@ export type SimServerLicenseValidationResult =
     }
   | {
       status: Exclude<SimServerLicenseValidationStatus, SimServerLicenseValidationStatus.Success>;
-      licensePlan?: LicenseStatus;
     };
 
 async function saveTokenIfValid(response: Response) {
