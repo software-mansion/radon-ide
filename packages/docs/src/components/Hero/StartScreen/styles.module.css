@@ -38,6 +38,7 @@ p.preheadingLabel {
   font-size: 64px;
   font-weight: 400;
   line-height: 72px;
+  max-width: 920px;
   padding: 24px 0;
 }
 
