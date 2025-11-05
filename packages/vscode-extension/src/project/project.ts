@@ -646,6 +646,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       window.showWarningMessage("Wait for the app to load before running Maestro tests.", "Dismiss");
       return;
     }
+    commands.executeCommand("RNIDE.showPanel");
     await deviceSession.startMaestroTest(fileName);
   }
 
