@@ -50,7 +50,6 @@ import { isCDPMethod } from "../network/types/panelMessageProtocol";
 import { isFullInspectionData } from "../utilities/isFullInspectionData";
 import { SourceData } from "../common/types";
 import { toSourceInfo } from "../utilities/toSourceInfo";
-import { findSourcePosition } from "../utilities/trySymbolicateSource";
 
 const MAX_URL_HISTORY_SIZE = 20;
 
@@ -711,13 +710,12 @@ export class ApplicationSession implements Disposable {
       // using source maps via the debugger
       await Promise.all(
         stack.map(async (item) => {
-          const symbolicated =
-            this.debugSession && (await findSourcePosition(item.source, this.debugSession));
-
-          if (symbolicated) {
-            item.source = symbolicated;
-          } else {
-            Logger.error("Error finding original source position for stack item", item);
+          if (item.source?.fileName.startsWith("http") && this.debugSession) {
+            try {
+              item.source = await this.debugSession?.findOriginalPosition(item.source);
+            } catch (e) {
+              Logger.error("Error finding original source position for element", item, e);
+            }
           }
         })
       );
@@ -752,14 +750,17 @@ export class ApplicationSession implements Disposable {
 
     if (source) {
       const sourceInfo = toSourceInfo(source);
-      const symbolicated =
-        this.debugSession && (await findSourcePosition(sourceInfo, this.debugSession));
 
-      if (symbolicated) {
-        payload.value.source = {
-          fileName: symbolicated.fileName,
-          lineNumber: symbolicated.line0Based,
-        };
+      if (sourceInfo.fileName.startsWith("http") && this.debugSession) {
+        try {
+          const symbolicated = await this.debugSession?.findOriginalPosition(sourceInfo);
+          payload.value.source = {
+            fileName: symbolicated.fileName,
+            lineNumber: symbolicated.line0Based,
+          };
+        } catch (e) {
+          Logger.error("Error finding original source position for element", payload, e);
+        }
       }
     }
 
