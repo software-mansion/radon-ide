@@ -911,7 +911,9 @@ export class DeviceSession implements Disposable {
 
   public async startMaestroTest(fileName: string) {
     if (this.stateManager.getState().maestroTestState !== "stopped") {
-      window.showWarningMessage("A Maestro test is already running on this device. Abort it before starting a new one.");
+      window.showWarningMessage(
+        "A Maestro test is already running on this device. Abort it before starting a new one."
+      );
       return;
     }
     try {

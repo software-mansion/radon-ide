@@ -658,7 +658,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public async startMaestroTest(fileName: string) {
     const deviceSession = this.deviceSession;
     if (!deviceSession) {
-      window.showWarningMessage("Wait for the app to load before running Maestro tests.", "Dismiss");
+      window.showWarningMessage(
+        "Wait for the app to load before running Maestro tests.",
+        "Dismiss"
+      );
       return;
     }
     commands.executeCommand("RNIDE.showPanel");
@@ -668,7 +671,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public async stopMaestroTest() {
     const deviceSession = this.deviceSession;
     if (!deviceSession) {
-      window.showWarningMessage("Wait for the app to load before stopping Maestro tests.", "Dismiss");
+      window.showWarningMessage(
+        "Wait for the app to load before stopping Maestro tests.",
+        "Dismiss"
+      );
       return;
     }
     await deviceSession.stopMaestroTest();
