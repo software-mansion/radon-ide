@@ -4,7 +4,6 @@ import { EOL } from "node:os";
 import assert from "assert";
 import { v4 as uuidv4 } from "uuid";
 import { Disposable } from "vscode";
-import { Preview } from "./preview";
 import { REBOOT_TIMEOUT } from "./DeviceBase";
 import { cancellableRetry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
@@ -31,6 +30,7 @@ import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
 import { DevicesProvider } from "./DevicesProvider";
 import { StateManager } from "../project/StateManager";
 import { AndroidBuildResult } from "../builders/buildAndroid";
+import { Preview } from "./preview";
 
 export const EMULATOR_BINARY = path.join(
   ANDROID_HOME,
@@ -394,8 +394,12 @@ export class AndroidEmulatorDevice extends AndroidDevice {
     this.serial = await initPromise;
   }
 
-  public makePreview(): Preview {
-    return new Preview(["android", "--id", this.serial!]);
+  protected makePreview(licenseToken?: string): Preview {
+    const args = ["android", "--id", this.serial!];
+    if (licenseToken !== undefined) {
+      args.push("-t", licenseToken);
+    }
+    return new Preview(args);
   }
 
   public async getClipboard() {

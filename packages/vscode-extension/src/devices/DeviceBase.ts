@@ -93,7 +93,7 @@ export abstract class DeviceBase implements Disposable {
     appRoot: string
   ): Promise<void>;
   abstract terminateApp(packageNameOrBundleID: string): Promise<void>;
-  protected abstract makePreview(): Preview;
+  protected abstract makePreview(licenseToken?: string): Preview;
   protected abstract runMaestroTest(fileName: string): Promise<void>;
   protected abstract abortMaestroTest(): Promise<void>;
 
@@ -237,9 +237,9 @@ export abstract class DeviceBase implements Disposable {
     this.previewClosedEventEmitter.fire(error);
   };
 
-  public async startPreview() {
+  public async startPreview(licenseToken?: string) {
     if (!this.previewStartPromise) {
-      this.preview = this.makePreview();
+      this.preview = this.makePreview(licenseToken);
       this.preview.onClosed(this.previewClosedListener);
       this.previewStartPromise = this.preview.start();
       this.previewStartPromise.then(() => {
