@@ -52,8 +52,9 @@ async function representElement(
   element: DevtoolsElement,
   details: InspectElementFullData,
   depth: number,
-  isUserMade: boolean
-): Promise<string> {
+  isUserMade: boolean,
+  hasChildren: boolean
+): Promise<{ open: string; close: string }> {
   const indent = "\u0020".repeat(depth * 2);
   const hocDescriptors = printHocDescriptors(element);
   const textContent = !isUserMade ? printTextContent(indent, details) : "";
@@ -61,7 +62,12 @@ async function representElement(
   const shouldPrintSource = source && isAppSourceFile(source.fileName);
   const relativePath = shouldPrintSource ? workspace.asRelativePath(source.fileName, false) : "";
   const sourceDescription = shouldPrintSource ? `\u0020(${relativePath}:${source.lineNumber})` : "";
-  return `${indent}<${element.displayName}>${hocDescriptors}${sourceDescription}\n${textContent}`;
+  const cleanName = element.displayName && element.displayName.replaceAll(/(\.*\/+)/g, "");
+  const shouldRenderClose = (hasChildren && isUserMade) || textContent !== "";
+  return {
+    open: `${indent}<${cleanName}${shouldRenderClose ? "" : "\u0020/"}>${hocDescriptors}${sourceDescription}\n${textContent}`,
+    close: shouldRenderClose ? `${indent}</${cleanName}>\n` : "",
+  };
 }
 
 async function printComponentTree(
@@ -107,11 +113,11 @@ async function printComponentTree(
   );
 
   const componentRepr = !skipRendering
-    ? await representElement(element, details, depth, isComponentUserMade)
-    : "";
+    ? await representElement(element, details, depth, isComponentUserMade, childrenRepr.length > 0)
+    : { open: "", close: "" };
 
   // `skipRendering` affects the current component, but doesn't affect children
-  return componentRepr + childrenRepr.join("");
+  return componentRepr.open + childrenRepr.join("") + componentRepr.close;
 }
 
 export default printComponentTree;
