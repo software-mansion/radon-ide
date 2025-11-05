@@ -15,7 +15,7 @@ import { ApplicationContext } from "./ApplicationContext";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
-import { AppOrientation, InspectData, SourceInfo } from "../common/Project";
+import { AppOrientation, InspectData } from "../common/Project";
 import { disposeAll } from "../utilities/disposables";
 import { ToolKey, ToolPlugin, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
@@ -50,6 +50,7 @@ import { isCDPMethod } from "../network/types/panelMessageProtocol";
 import { isFullInspectionData } from "../utilities/isFullInspectionData";
 import { SourceData } from "../common/types";
 import { toSourceInfo } from "../utilities/toSourceInfo";
+import { findSourcePosition } from "../utilities/trySymbolicateSource";
 
 const MAX_URL_HISTORY_SIZE = 20;
 
@@ -684,18 +685,6 @@ export class ApplicationSession implements Disposable {
   //#endregion
 
   //#region Element Inspector
-  private async trySymbolicateSource(source: SourceInfo | null): Promise<SourceInfo | null> {
-    if (source?.fileName.startsWith("http") && this.debugSession) {
-      try {
-        return await this.debugSession.findOriginalPosition(source);
-      } catch (e) {
-        Logger.error("Error finding original source position for element", source, e);
-      }
-    }
-
-    return null;
-  }
-
   public async inspectElementAt(
     xRatio: number,
     yRatio: number,
@@ -722,7 +711,8 @@ export class ApplicationSession implements Disposable {
       // using source maps via the debugger
       await Promise.all(
         stack.map(async (item) => {
-          const symbolicated = await this.trySymbolicateSource(item.source);
+          const symbolicated =
+            this.debugSession && (await findSourcePosition(item.source, this.debugSession));
 
           if (symbolicated) {
             item.source = symbolicated;
@@ -762,7 +752,8 @@ export class ApplicationSession implements Disposable {
 
     if (source) {
       const sourceInfo = toSourceInfo(source);
-      const symbolicated = await this.trySymbolicateSource(sourceInfo);
+      const symbolicated =
+        this.debugSession && (await findSourcePosition(sourceInfo, this.debugSession));
 
       if (symbolicated) {
         payload.value.source = {
