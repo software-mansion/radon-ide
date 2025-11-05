@@ -195,13 +195,31 @@ function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
  *
  * This method is async because reading `blob` response types requires a
  * FileReader. Behavior summary:
- * - If `xhr` is falsy, not cached (`_cachedResponse`) or non-parsable binary type, returns
+ * - If `xhr` is falsy, or the responsebody is non-parsable binary type, returns
  *   `undefined` to avoid side effects.
  * - If `responseType` is `""` or `"text"`, reads `xhr.responseText` and
- *   delegates truncation/size-measurement to `truncateResponseBody`.
- * - If `responseType` is `"blob"` and the `Content-Type` indicates a text
- *   or parsable application type reads the blob as text using FileReader (asynchronously) and
- *   then delegates to `truncateResponseBody`.
+ *   delegates truncation/size-measurement to `parseResponseBodyData`.
+ * - If `responseType` is `"json"`, stringifies `xhr.response` and
+ *   delegates to `parseResponseBodyData`.
+ * - If `responseType` is `"blob"`:
+ *   - For images or octet-streams: reads as base64 via FileReader
+ *   - For text/parsable types: reads as text via FileReader
+ *   - Otherwise returns `undefined` (binary data not buffered)
+ * - If `responseType` is `"arraybuffer"`:
+ *   - For images or octet-streams: converts Uint8Array to base64
+ *   - For text/parsable types: decodes Uint8Array to text
+ *   - Otherwise returns `undefined` (binary data not buffered)
+ * - `responseType` "document" is not supported by XHRInterceptor in React Native.
+ *
+ * React Native XHR Implementation Details:
+ * - For empty/text responseType: returns '' if not DONE state, response text otherwise
+ * - For other responseTypes returns null until DONE, then transforms and caches in _cachedResponse:
+ *   - "arraybuffer": ArrayBuffer via base64.toByteArray().buffer
+ *   - "blob": Blob via BlobManager.createFromOptions()
+ *   - "json": parsed JSON (or null on parse error)
+ *   - "document": always null (unsupported)
+ * 
+ * More details: https://github.com/facebook/react-native/blob/main/packages/react-native/Libraries/Network/XMLHttpRequest.js
  *
  * The returned promise resolves to InternalResponseBodyData when a textual
  * preview is available, or to `undefined` when the response should not be
@@ -224,24 +242,44 @@ async function readResponseText(
     const responseType = xhr.responseType;
 
     if (responseType === "" || responseType === "text") {
-      return await parseResponseBodyData(xhr.responseText);
+      return await parseResponseBodyData(xhr.responseText ?? xhr.response);
     }
 
-    if (responseType === "blob") {
-      const contentType = getContentTypeHeader(xhr);
-      const isTextType = contentType.startsWith("text/");
-      const isParsableApplicationType = Array.from(PARSABLE_APPLICATION_CONTENT_TYPES).some(
-        (type) => contentType.startsWith(type)
-      );
-      const isImageType = contentType.startsWith("image/");
-      const isOctetStream = contentType === "application/octet-stream";
+    if (responseType === "json") {
+      return await parseResponseBodyData(JSON.stringify(xhr.response));
+    }
 
+    const contentType = getContentTypeHeader(xhr);
+    const isTextType = contentType.startsWith("text/");
+    const isParsableApplicationType = Array.from(PARSABLE_APPLICATION_CONTENT_TYPES).some((type) =>
+      contentType.startsWith(type)
+    );
+    const isImageType = contentType.startsWith("image/");
+    const isOctetStream = contentType === "application/octet-stream";
+
+    if (responseType === "blob") {
       if (isImageType || isOctetStream) {
         return await readBlobAsBase64(xhr.response, isImageType);
       }
 
       if (isTextType || isParsableApplicationType) {
         return await readBlobAsText(xhr.response);
+      }
+    }
+
+    if (responseType === "arraybuffer") {
+      const arrayBuffer = xhr.response as ArrayBuffer;
+      const uint8Array = new Uint8Array(arrayBuffer);
+
+      if (isImageType || isOctetStream) {
+        const base64String = dataToBase64(uint8Array);
+        const type = isImageType ? ResponseBodyDataType.Image : ResponseBodyDataType.Other;
+        return parseResponseBodyData(base64String, true, type);
+      }
+
+      if (isTextType || isParsableApplicationType) {
+        const textResult = decode(uint8Array);
+        return parseResponseBodyData(textResult, false, ResponseBodyDataType.Other);
       }
     }
 
