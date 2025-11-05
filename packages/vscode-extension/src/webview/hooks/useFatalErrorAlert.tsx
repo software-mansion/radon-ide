@@ -17,6 +17,7 @@ import {
   PreviewErrorDescriptor,
   PreviewErrorReason,
 } from "../../common/State";
+import { usePaywall } from "./usePaywall";
 
 const FATAL_ERROR_ALERT_ID = "fatal-error-alert";
 
@@ -204,6 +205,10 @@ export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undef
   const { appRoot, ios } = projectState.selectedLaunchConfiguration;
   const { xcodeSchemes } = useAppRootConfig(appRoot);
 
+  const { openPaywall } = usePaywall();
+
+  let shouldShowAlert = errorDescriptor !== undefined;
+
   if (errorDescriptor?.kind === "build") {
     errorAlert = createBuildErrorAlert(
       errorDescriptor,
@@ -218,8 +223,13 @@ export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undef
   } else if (errorDescriptor?.kind === "metro") {
     errorAlert = createMetroErrorAlert(errorDescriptor);
   } else if (errorDescriptor?.kind === "preview") {
-    errorAlert = createPreviewErrorAlert(errorDescriptor);
+    if (errorDescriptor.reason === PreviewErrorReason.NoAccess) {
+      openPaywall("Activate Radon Now");
+      shouldShowAlert = false;
+    } else {
+      errorAlert = createPreviewErrorAlert(errorDescriptor);
+    }
   }
 
-  useToggleableAlert(errorDescriptor !== undefined, errorAlert);
+  useToggleableAlert(shouldShowAlert, errorAlert);
 }
