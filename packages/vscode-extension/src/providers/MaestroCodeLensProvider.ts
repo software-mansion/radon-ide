@@ -12,25 +12,22 @@ export class MaestroCodeLensProvider implements CodeLensProvider {
     document: TextDocument,
     token: CancellationToken
   ): CodeLens[] | Thenable<CodeLens[]> {
-
     if (!this.checkMaestroFile(document)) {
       return [];
     }
-    
+
     const command: Command = {
       title: "Run Maestro test",
       command: "RNIDE.startMaestroTest",
-      arguments: [
-        document.fileName
-      ],
+      arguments: [document.fileName],
     };
-    
+
     const codeLenses: CodeLens[] = [];
     codeLenses.push(new CodeLens(this.createRange(document, 0), command));
-    
+
     return codeLenses;
   }
-  
+
   checkMaestroFile(document: TextDocument): boolean {
     // To fairly certainly identify a Maestro test file that we can run, it must:
     // not be named config.yaml or .yml
@@ -39,16 +36,16 @@ export class MaestroCodeLensProvider implements CodeLensProvider {
     // include valid steps beginning with "-" that are not comments
     const text = document.getText();
     if (
-      document.fileName.endsWith("config.yaml") || 
+      document.fileName.endsWith("config.yaml") ||
       document.fileName.endsWith("config.yml") ||
       !text.includes("appId:")
     ) {
-        return false;
+      return false;
     }
     const splitText = text.split("---");
     const stepDashes = splitText[1]?.match(/^\s*-\s+/gm);
     if (splitText.length < 2 || !stepDashes) {
-        return false;
+      return false;
     }
     return true;
   }

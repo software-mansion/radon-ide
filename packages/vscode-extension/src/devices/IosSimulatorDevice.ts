@@ -718,7 +718,9 @@ export class IosSimulatorDevice extends DeviceBase {
 
     this.maestroLogsOutputChannel.show(true);
     this.maestroLogsOutputChannel.appendLine("");
-    this.maestroLogsOutputChannel.appendLine(`Starting a Maestro flow from ${fileName} on ${this.deviceInfo.displayName}`);
+    this.maestroLogsOutputChannel.appendLine(
+      `Starting a Maestro flow from ${fileName} on ${this.deviceInfo.displayName}`
+    );
 
     // Right now Maestro uses xcodebuild test-without-building for running iOS tests,
     // which does not support simulators located outside the default device set.
@@ -729,18 +731,14 @@ export class IosSimulatorDevice extends DeviceBase {
     // similar to what Maestro would do in prebuilt mode, and wrap the xcrun
     // command to provide our own device set with the --set flag.
     const shimPath = path.resolve(__dirname, "..", "scripts", "shims");
-    
-    const maestroProcess = exec(
-      "maestro",
-      ["--device", this.deviceUDID, "test", fileName],
-      {
-        buffer: false,
-        stdin: "ignore",
-        env: {
-          PATH: `${shimPath}:${process.env.PATH}`,
-        },
-      }
-    );
+
+    const maestroProcess = exec("maestro", ["--device", this.deviceUDID, "test", fileName], {
+      buffer: false,
+      stdin: "ignore",
+      env: {
+        PATH: `${shimPath}:${process.env.PATH}`,
+      },
+    });
     this.maestroProcess = maestroProcess;
 
     lineReader(maestroProcess).onLineRead(this.maestroLogsOutputChannel.appendLine);

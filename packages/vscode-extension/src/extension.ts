@@ -203,7 +203,10 @@ export async function activate(context: ExtensionContext) {
     if (ide) {
       ide.project.startMaestroTest(fileName);
     } else {
-      window.showWarningMessage("Wait for the app to load before running Maestro tests.", "Dismiss");
+      window.showWarningMessage(
+        "Wait for the app to load before running Maestro tests.",
+        "Dismiss"
+      );
     }
   }
 
@@ -259,12 +262,8 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.showInlinePreview", showInlinePreview)
   );
-  context.subscriptions.push(
-    commands.registerCommand("RNIDE.startMaestroTest", startMaestroTest)
-  );
-  context.subscriptions.push(
-    commands.registerCommand("RNIDE.stopMaestroTest", stopMaestroTest)
-  );
+  context.subscriptions.push(commands.registerCommand("RNIDE.startMaestroTest", startMaestroTest));
+  context.subscriptions.push(commands.registerCommand("RNIDE.stopMaestroTest", stopMaestroTest));
 
   context.subscriptions.push(commands.registerCommand("RNIDE.captureReplay", captureReplay));
   context.subscriptions.push(commands.registerCommand("RNIDE.toggleRecording", toggleRecording));
@@ -365,9 +364,7 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     languages.registerCodeLensProvider(
-      [
-        { scheme: "file", language: "yaml" },
-      ],
+      [{ scheme: "file", language: "yaml" }],
       new MaestroCodeLensProvider()
     )
   );

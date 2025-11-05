@@ -220,16 +220,18 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     ]);
     return { canSafelyRemove: true };
   }
-  
+
   protected async runMaestroTest(fileName: string) {
     const document = await vscode.workspace.openTextDocument(fileName);
     if (document.isDirty) {
       await document.save();
     }
-    
+
     this.maestroLogsOutputChannel.show(true);
     this.maestroLogsOutputChannel.appendLine("");
-    this.maestroLogsOutputChannel.appendLine(`Starting a Maestro flow from ${fileName} on ${this.deviceInfo.displayName}`);
+    this.maestroLogsOutputChannel.appendLine(
+      `Starting a Maestro flow from ${fileName} on ${this.deviceInfo.displayName}`
+    );
 
     const maestroProcess = exec(
       "maestro",

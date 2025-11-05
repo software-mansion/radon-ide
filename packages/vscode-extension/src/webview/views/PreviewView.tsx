@@ -22,7 +22,12 @@ import AppRootSelect from "../components/AppRootSelect";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
-import { InspectorAvailabilityStatus, MaestroTestState, ProfilingState, ZoomLevelType } from "../../common/State";
+import {
+  InspectorAvailabilityStatus,
+  MaestroTestState,
+  ProfilingState,
+  ZoomLevelType,
+} from "../../common/State";
 import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
 import { ActivateLicenseView } from "./ActivateLicenseView";
@@ -128,7 +133,6 @@ function ActiveTestButton({
     </IconButton>
   );
 }
-
 
 function PreviewView() {
   const store$ = useStore();
@@ -334,9 +338,7 @@ function PreviewView() {
   );
 
   const maestroTestState = use$(() =>
-    isRunning
-      ? (selectedDeviceSessionState.maestroTestState.get() ?? "stopped")
-      : "stopped"
+    isRunning ? (selectedDeviceSessionState.maestroTestState.get() ?? "stopped") : "stopped"
   );
 
   return (
