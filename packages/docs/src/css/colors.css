@@ -310,7 +310,7 @@
 
   --ifm-table-head-background: var(--swm-off-background);
   --ifm-table-stripe-background: var(--swm-off-background) !important;
-  --ifm-table-border-color: var(--swm-table-border-color);
+  --ifm-table-border-color: var(--radon-border);
 
   /* Pagination */
   --swm-paginator-sublabel: var(--ifm-color-primary) !important;
