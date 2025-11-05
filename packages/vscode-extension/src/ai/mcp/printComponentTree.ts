@@ -63,7 +63,7 @@ async function representElement(
   const relativePath = shouldPrintSource ? workspace.asRelativePath(source.fileName, false) : "";
   const sourceDescription = shouldPrintSource ? `\u0020(${relativePath}:${source.lineNumber})` : "";
   const cleanName = element.displayName && element.displayName.replaceAll(/(\.*\/+)/g, "");
-  const shouldRenderClose = (hasChildren && isUserMade) || textContent !== "";
+  const shouldRenderClose = hasChildren || textContent !== "";
   return {
     open: `${indent}<${cleanName}${shouldRenderClose ? "" : "\u0020/"}>${hocDescriptors}${sourceDescription}\n${textContent}`,
     close: shouldRenderClose ? `${indent}</${cleanName}>\n` : "",
@@ -112,12 +112,14 @@ async function printComponentTree(
     })
   );
 
+  const childrenString = childrenRepr.join("");
+
   const componentRepr = !skipRendering
-    ? await representElement(element, details, depth, isComponentUserMade, childrenRepr.length > 0)
+    ? await representElement(element, details, depth, isComponentUserMade, childrenString !== "")
     : { open: "", close: "" };
 
   // `skipRendering` affects the current component, but doesn't affect children
-  return componentRepr.open + childrenRepr.join("") + componentRepr.close;
+  return componentRepr.open + childrenString + componentRepr.close;
 }
 
 export default printComponentTree;
