@@ -1,6 +1,13 @@
 const vscode = acquireVsCodeApi();
+
+const eventsStub = {
+  addListener: function () {},
+  removeListener: function () {},
+};
+
 window.chrome = {
   runtime: {
+    id: "chrome-api-stub-webview",
     sendMessage: (...args) => {
       const message = args.lenght > 1 ? args[1] : args[0];
       vscode.postMessage(message);
@@ -9,7 +16,10 @@ window.chrome = {
       const listeners = [];
       window.addEventListener("message", (ev) => {
         const payload = ev.data;
-        listeners.slice().forEach((listener) => listener(payload));
+        if (ev.source === window || payload.scope !== "rnide-chrome-stub") {
+          return;
+        }
+        listeners.slice().forEach((listener) => listener(payload.message));
       });
       return {
         onMessage: {
@@ -23,8 +33,9 @@ window.chrome = {
             }
           },
         },
+        onDisconnect: eventsStub,
         postMessage: (...args) => {
-          const message = args.lenght > 1 ? args[1] : args[0];
+          const message = args.length > 1 ? args[1] : args[0];
           vscode.postMessage(message);
         },
       };
@@ -33,5 +44,34 @@ window.chrome = {
   storage: {},
   tabs: {
     query() {},
+  },
+  devtools: {
+    inspectedWindow: {
+      // NOTE: hardcoded tabId, since we don't care about supporting multiple inspected targets at this point
+      tabId: 1,
+    },
+    network: {
+      onNavigated: eventsStub,
+    },
+    panels: {
+      // NOTE: we fake creating a separate web context for the panel,
+      // instead loading the code directly in the existing webview
+      // and triggering the onShown event listener after a short delay
+      // to let the panel initialize
+      create(name, iconPath, pagePath, callback) {
+        const panel = {
+          onShown: {
+            addListener(cb) {
+              setTimeout(() => {
+                cb(window);
+              }, 100);
+            },
+            removeListener() {},
+          },
+          onHidden: eventsStub,
+        };
+        callback(panel);
+      },
+    },
   },
 };

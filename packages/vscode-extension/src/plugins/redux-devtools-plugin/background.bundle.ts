@@ -6,7 +6,9 @@ const eventsStub = {
 };
 
 interface Sender {
-  id: string;
+  tab: {
+    id: string;
+  };
 }
 
 interface Port {
@@ -87,6 +89,7 @@ const chrome = {
     onMessage,
     onConnectExternal: eventsStub,
     onMessageExternal: eventsStub,
+    id: "chrome-stub-runtime",
   },
   storage: {
     onChanged: eventsStub,

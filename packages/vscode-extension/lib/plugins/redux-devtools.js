@@ -3,7 +3,7 @@ const {createWindowStub} = require("./window_stub")
 const window = createWindowStub({
   devToolsExtensionID: "redux-devtools",
 });
-const chrome = createChromeStub();
+const chrome = createChromeStub("redux-devtools");
 const document = {}
 const navigator = {
   userAgent: "ReactNative",
