@@ -41,27 +41,35 @@
 .paywall-benefit:nth-child(1) {
   animation-delay: 350ms;
 }
+
 .paywall-benefit:nth-child(2) {
   animation-delay: 400ms;
 }
+
 .paywall-benefit:nth-child(3) {
   animation-delay: 450ms;
 }
+
 .paywall-benefit:nth-child(4) {
   animation-delay: 500ms;
 }
+
 .paywall-benefit:nth-child(5) {
   animation-delay: 550ms;
 }
+
 .paywall-benefit:nth-child(6) {
   animation-delay: 600ms;
 }
+
 .paywall-benefit:nth-child(7) {
   animation-delay: 650ms;
 }
+
 .paywall-benefit:nth-child(8) {
   animation-delay: 700ms;
 }
+
 .paywall-benefit:nth-child(9) {
   animation-delay: 750ms;
 }
@@ -71,6 +79,7 @@
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -189,6 +198,15 @@
   transform: translateY(12px);
   animation: fadeInUp 0.3s ease-out forwards;
   animation-delay: 1000ms;
+  border-color: var(--vscode-editor-foreground);
+  border-width: 2px;
+  background-color: transparent;
+  color: var(--vscode-editor-foreground);
+}
+
+.activate-button:hover {
+  border-color: var(--swm-button-hover);
+  color: var(--swm-button);
 }
 
 .get-license-button {
