@@ -388,6 +388,7 @@ button {
   max-width: 1110px;
   --ifm-col-width: 100%;
   flex: 1;
+  min-height: calc(100vh - 365px);
 }
 
 [class*="mdxPageWrapper"] > .col--2 {
