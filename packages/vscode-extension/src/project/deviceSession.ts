@@ -909,7 +909,7 @@ export class DeviceSession implements Disposable {
     this.inspectorBridge?.sendShowStorybookStoryRequest(componentTitle, storyName);
   }
 
-  public async startMaestroTest(fileName: string) {
+  public async startMaestroTest(fileNames: string[]) {
     if (this.stateManager.getState().maestroTestState !== "stopped") {
       window.showWarningMessage(
         "A Maestro test is already running on this device. Abort it before starting a new one."
@@ -918,7 +918,7 @@ export class DeviceSession implements Disposable {
     }
     try {
       this.stateManager.updateState({ maestroTestState: "running" });
-      await this.device.startMaestroTest(fileName);
+      await this.device.startMaestroTest(fileNames);
     } finally {
       this.stateManager.updateState({ maestroTestState: "stopped" });
     }

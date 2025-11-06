@@ -640,22 +640,26 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Testing
 
-  public async openSelectMaestroFileDialog(): Promise<string | undefined> {
+  public async openSelectMaestroFileDialog(): Promise<string[] | undefined> {
     const pickerResult = await window.showOpenDialog({
-      canSelectMany: false,
-      canSelectFolders: false,
-      title: "Select Maestro test file",
+      canSelectMany: true,
+      canSelectFiles: true,
+      canSelectFolders: true,
+      title: "Select Maestro test file(s) or a folder",
+      openLabel: "Open and run",
       filters: {
         "Maestro Test Files": ["yaml", "yml"],
       },
     });
+
     if (!pickerResult || pickerResult.length === 0) {
       return undefined;
     }
-    return pickerResult[0].fsPath;
+
+    return pickerResult.map((u) => u.fsPath);
   }
 
-  public async startMaestroTest(fileName: string) {
+  public async startMaestroTest(fileNames: string[]) {
     const deviceSession = this.deviceSession;
     if (!deviceSession) {
       window.showWarningMessage(
@@ -665,7 +669,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       return;
     }
     commands.executeCommand("RNIDE.showPanel");
-    await deviceSession.startMaestroTest(fileName);
+    await deviceSession.startMaestroTest(fileNames);
   }
 
   public async stopMaestroTest() {

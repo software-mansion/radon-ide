@@ -132,9 +132,9 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
             data-testid="tools-dropdown-menu-maestro-test-button"
             onSelect={() => {
               const fileDialogPromise = project.openSelectMaestroFileDialog();
-              fileDialogPromise.then((fileName) => {
-                if (fileName) {
-                  project.startMaestroTest(fileName);
+              fileDialogPromise.then((fileNames) => {
+                if (fileNames) {
+                  project.startMaestroTest(fileNames);
                 }
               });
             }}>

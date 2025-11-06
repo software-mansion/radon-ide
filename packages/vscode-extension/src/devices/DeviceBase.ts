@@ -94,7 +94,7 @@ export abstract class DeviceBase implements Disposable {
   ): Promise<void>;
   abstract terminateApp(packageNameOrBundleID: string): Promise<void>;
   protected abstract makePreview(licenseToken?: string): Preview;
-  protected abstract runMaestroTest(fileName: string): Promise<void>;
+  protected abstract runMaestroTest(fileNames: string[]): Promise<void>;
   protected abstract abortMaestroTest(): Promise<void>;
 
   /**
@@ -249,8 +249,8 @@ export abstract class DeviceBase implements Disposable {
     return this.previewStartPromise;
   }
 
-  public async startMaestroTest(fileName: string) {
-    await this.runMaestroTest(fileName);
+  public async startMaestroTest(fileNames: string[]) {
+    await this.runMaestroTest(fileNames);
   }
 
   public async stopMaestroTest() {
