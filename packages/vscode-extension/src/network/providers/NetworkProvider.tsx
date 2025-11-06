@@ -6,7 +6,7 @@ import useNetworkTracker, {
 import { NetworkFilterProvider } from "./NetworkFilterProvider";
 import { generateId, createIDEResponsePromise } from "../utils/panelMessages";
 import { NetworkLog } from "../types/networkLog";
-import { IDEMethod } from "../types/panelMessageProtocol";
+import { IDEMethod, IDEType } from "../types/panelMessageProtocol";
 import { ResponseBodyData } from "../types/network";
 import { ThemeDescriptor, ThemeData } from "../../common/theme";
 
@@ -85,7 +85,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
     const transformer = createBodyDataResponseTransformer(requestId, responseBodiesRef);
     const promise = createIDEResponsePromise<ResponseBodyData | undefined>(
       messageId,
-      IDEMethod.ResponseBodyData,
+      IDEType.ResponseBodyData,
       transformer
     );
 
@@ -103,7 +103,7 @@ export default function NetworkProvider({ children }: PropsWithChildren) {
   };
   const getThemeData = (themeDescriptor: ThemeDescriptor): Promise<ThemeData> => {
     const messageId = generateId();
-    const promise = createIDEResponsePromise<ThemeData>(messageId, IDEMethod.Theme);
+    const promise = createIDEResponsePromise<ThemeData>(messageId, IDEType.Theme);
 
     // Send the message to the network-plugin backend
     sendWebviewIDEMessage({

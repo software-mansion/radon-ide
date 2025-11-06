@@ -105,7 +105,7 @@ export class CDPSession {
         this.handleCDPMessageResponse(message);
         return;
       }
-      await this.handleIncomingCDPMethodCalls(message);
+      await this.handleIncomingCDPDomainCalls(message);
     });
 
     this.onScriptParsed(({ isMainBundle }) => {
@@ -120,7 +120,7 @@ export class CDPSession {
 
   //#region CPD incoming communication
 
-  private handleIncomingCDPMethodCalls = async (message: any) => {
+  private handleIncomingCDPDomainCalls = async (message: any) => {
     switch (message.method) {
       case "Runtime.executionContextCreated":
         const context = message.params.context;

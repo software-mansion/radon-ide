@@ -46,7 +46,7 @@ import { RadonInspectorBridge } from "./inspectorBridge";
 import { NETWORK_EVENT_MAP, NetworkBridge } from "./networkBridge";
 import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
-import { isCDPMethod } from "../network/types/panelMessageProtocol";
+import { isCDPDomainCall } from "../network/types/panelMessageProtocol";
 
 const MAX_URL_HISTORY_SIZE = 20;
 
@@ -330,7 +330,7 @@ export class ApplicationSession implements Disposable {
 
   private onNetworkEvent = (event: DebugSessionCustomEvent): void => {
     const method = event.body?.method;
-    if (!method || !isCDPMethod(method)) {
+    if (!method || !isCDPDomainCall(method)) {
       Logger.error("Unknown network event method:", method);
       this.networkBridge.emitEvent("unknownEvent", event.body);
       return;
