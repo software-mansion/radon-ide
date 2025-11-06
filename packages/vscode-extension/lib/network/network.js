@@ -8,6 +8,10 @@ const {
   getContentTypeHeader,
 } = require("./networkRequestParsers");
 
+const fetchInterceptor = require("./fetchInterceptor");
+
+
+
 let setupCompleted = false;
 
 export function setup() {
@@ -18,6 +22,8 @@ export function setup() {
 
   const messageBridge = new PluginMessageBridge("network");
   const responseBuffer = new AsyncBoundedResponseBuffer();
+
+  fetchInterceptor.enableFetchInterceptor(messageBridge);
 
   let enabled = false;
   messageBridge.addMessageListener("cdp-message", (message) => {
