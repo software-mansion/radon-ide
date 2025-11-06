@@ -139,7 +139,7 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
               });
             }}>
             <span className="codicon codicon-github-action" />
-            Start Maestro test...
+            Start Maestro test(s)...
           </DropdownMenu.Item>
 
           <Label>Utilities</Label>
