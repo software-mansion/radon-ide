@@ -163,8 +163,8 @@ export interface ProjectInterface {
   startProfilingReact(): void;
   stopProfilingReact(): void;
 
-  openSelectMaestroFileDialog(): Promise<string | undefined>;
-  startMaestroTest(fileName: string): Promise<void>;
+  openSelectMaestroFileDialog(): Promise<string[] | undefined>;
+  startMaestroTest(fileNames: string[]): Promise<void>;
   stopMaestroTest(): Promise<void>;
 
   dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down"): void;

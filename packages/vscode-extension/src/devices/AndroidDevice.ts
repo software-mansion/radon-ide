@@ -1,4 +1,5 @@
 import path from "path";
+import fs from "fs";
 import xml2js from "xml2js";
 import * as vscode from "vscode";
 import { Disposable } from "vscode";
@@ -221,21 +222,32 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     return { canSafelyRemove: true };
   }
 
-  protected async runMaestroTest(fileName: string) {
-    const document = await vscode.workspace.openTextDocument(fileName);
-    if (document.isDirty) {
-      await document.save();
-    }
-
+  protected async runMaestroTest(fileNames: string[]) {
     this.maestroLogsOutputChannel.show(true);
     this.maestroLogsOutputChannel.appendLine("");
-    this.maestroLogsOutputChannel.appendLine(
-      `Starting a Maestro flow from ${fileName} on ${this.deviceInfo.displayName}`
-    );
+
+    if (fileNames.length === 1) {
+      const fileName = fileNames[0];
+      const isFile = fs.lstatSync(fileName).isFile();
+      if (isFile) {
+        const document = await vscode.workspace.openTextDocument(fileName);
+        if (document.isDirty) {
+          await document.save();
+        }
+      }
+      this.maestroLogsOutputChannel.appendLine(
+        `Starting ${isFile ? "a Maestro flow" : "all Maestro flows"} from ${fileName} on ${this.deviceInfo.displayName}`
+      );
+    } else {
+      const areFiles = fileNames.every((fileName) => fs.lstatSync(fileName).isFile());
+      this.maestroLogsOutputChannel.appendLine(
+        `Starting ${areFiles ? fileNames.length : "all"} Maestro flows${!areFiles ? ` from ${fileNames.length} folders` : ""}: ${fileNames.join(", ")} on ${this.deviceInfo.displayName}`
+      );
+    }
 
     const maestroProcess = exec(
       "maestro",
-      ["--device", this.serial || "device", "test", fileName],
+      ["--device", this.serial || "device", "test", ...fileNames],
       { buffer: false, stdin: "ignore" }
     );
     this.maestroProcess = maestroProcess;
