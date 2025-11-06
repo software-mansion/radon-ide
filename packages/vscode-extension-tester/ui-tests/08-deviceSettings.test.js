@@ -40,14 +40,14 @@ describe("8 - Device Settings", () => {
 
   beforeEach(async () => {
     radonViewsService.openRadonIDEPanel();
-    // await appManipulationService.waitForAppToLoad();
+    await appManipulationService.waitForAppToLoad();
 
-    // await driver.wait(async () => {
-    //   appWebsocket = get().appWebsocket;
-    //   return appWebsocket != null;
-    // }, 5000);
+    await driver.wait(async () => {
+      appWebsocket = get().appWebsocket;
+      return appWebsocket != null;
+    }, 5000);
 
-    // await appManipulationService.hideExpoOverlay(appWebsocket);
+    await appManipulationService.hideExpoOverlay(appWebsocket);
   });
 
   afterEach(async () => {
@@ -56,29 +56,18 @@ describe("8 - Device Settings", () => {
   });
 
   it("change location", async () => {
-    await driver.wait(async () => {
-      try {
-        const messageElement =
-          await elementHelperService.findAndWaitForElementByTag(
-            "startup-message"
-          );
-        if ((await messageElement.getText()).includes("Launching")) {
-          return true;
-        }
-        return false;
-      } catch {
-        return false;
-      }
-    }, 600000);
-    console.log("bbb");
     execSync(
       "xcrun simctl --set ~/Library/Caches/com.swmansion.radon-ide/Devices/iOS privacy booted grant location org.reactjs.native.example.reactNative81AdditionalLibs"
     );
+    await elementHelperService.findAndClickElementByTag(
+      "top-bar-reload-button-options-button"
+    );
+    await elementHelperService.findAndClickElementByTag(
+      "top-bar-reload-button-option-restart-app-process"
+    );
 
-    console.log("bbbb");
     await appManipulationService.waitForAppToLoad();
-    console.log("cccc");
-
+    await driver.sleep(3000);
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
@@ -100,6 +89,8 @@ describe("8 - Device Settings", () => {
     await locationInput.clear();
     await locationInput.sendKeys("0.0, 0.0", Key.ENTER);
     await elementHelperService.findAndClickElementByTag("modal-close-button");
+    await driver.sleep(100000);
+    await driver.sleep(10000);
     location = await appManipulationService.sendMessageAndWaitForResponse(
       appWebsocket,
       "getLocation"
@@ -107,7 +98,6 @@ describe("8 - Device Settings", () => {
     console.log(location);
     assert.approximately(location.value.latitude, 0.0, 0.1);
     assert.approximately(location.value.longitude, 0.0, 0.1);
-    await driver.sleep(600000);
   });
 
   // it("should toggle device frame", async () => {

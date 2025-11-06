@@ -1,8 +1,10 @@
+import dotenv from "dotenv";
 import { By, BottomBarPanel, Key } from "vscode-extension-tester";
 import { createCanvas } from "canvas";
 import { ElementHelperService } from "./helperServices.js";
 import AppManipulationService from "./appManipulationService.js";
 
+dotenv.config();
 const licenseKey = process.env.RADON_IDE_LICENSE_KEY || "";
 
 export default class RadonViewsService {
