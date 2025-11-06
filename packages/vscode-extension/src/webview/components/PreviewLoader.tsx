@@ -81,7 +81,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
           100
       );
     }
-  }, [startupMessage]);
+  }, [startupMessage, stageProgress]);
 
   useEffect(() => {
     setIsLoadingSlowly(false);
