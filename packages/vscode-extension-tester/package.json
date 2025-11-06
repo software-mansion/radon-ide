@@ -116,6 +116,7 @@
     "domelementtype": "^2.3.0",
     "domhandler": "^5.0.3",
     "domutils": "^3.2.2",
+    "dotenv": "^17.2.3",
     "dunder-proto": "^1.0.1",
     "duplexer2": "^0.1.4",
     "eastasianwidth": "^0.2.0",
