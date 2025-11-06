@@ -40,6 +40,7 @@ import { FileTransfer } from "./FileTransfer";
 import { DevtoolsServer } from "./devtools";
 import { MetroError, MetroProvider, MetroSession } from "./metro";
 import { PreviewError } from "../devices/preview";
+import { getLicenseToken } from "../utilities/license";
 
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
@@ -210,7 +211,8 @@ export class DeviceSession implements Disposable {
   }
 
   private async startPreview() {
-    const previewURL = await this.device.startPreview();
+    const licenseToken = await getLicenseToken();
+    const previewURL = await this.device.startPreview(licenseToken);
     this.stateManager.updateState({ previewURL });
   }
 

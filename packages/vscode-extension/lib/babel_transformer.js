@@ -79,7 +79,7 @@ if (RN_VERSION.startsWith("0.7")) {
 
 function transformWrapper({ filename, src, ...rest }) {
   function isTransforming(unixPath) {
-    return filename.endsWith(path.normalize(unixPath));
+    return filename.includes(path.normalize(unixPath));
   }
 
   const { transform } = require(ORIGINAL_TRANSFORMER_PATH);
@@ -186,12 +186,9 @@ function transformWrapper({ filename, src, ...rest }) {
     }
   } else if (
     isTransforming("node_modules/@tanstack/react-query/src/index.ts") ||
-    isTransforming("node_modules/@tanstack/react-query/build/lib/index.js") ||
-    isTransforming("node_modules/@tanstack/react-query/build/legacy/index.js") ||
-    isTransforming("node_modules/@tanstack/react-query/build/modern/index.js") ||
-    isTransforming("node_modules/@tanstack/react-query/build/lib/index.mjs") ||
-    isTransforming("node_modules/@tanstack/react-query/build/legacy/index.mjs") ||
-    isTransforming("node_modules/@tanstack/react-query/build/modern/index.mjs")
+    isTransforming("node_modules/@tanstack/react-query/build/lib/index") ||
+    isTransforming("node_modules/@tanstack/react-query/build/legacy/index") ||
+    isTransforming("node_modules/@tanstack/react-query/build/modern/index")
   ) {
     // note: react-query-devtools integration has to be done after the QueryClient class is required
     // which is why the src needs to come before it. Also we need to ensure that we don't

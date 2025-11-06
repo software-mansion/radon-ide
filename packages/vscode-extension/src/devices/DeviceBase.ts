@@ -91,7 +91,7 @@ export abstract class DeviceBase implements Disposable {
     appRoot: string
   ): Promise<void>;
   abstract terminateApp(packageNameOrBundleID: string): Promise<void>;
-  protected abstract makePreview(): Preview;
+  protected abstract makePreview(licenseToken?: string): Preview;
 
   /**
    * @returns whether the file can be safely removed after the operation finished.
@@ -233,9 +233,9 @@ export abstract class DeviceBase implements Disposable {
     this.previewClosedEventEmitter.fire(error);
   };
 
-  public async startPreview() {
+  public async startPreview(licenseToken?: string) {
     if (!this.previewStartPromise) {
-      this.preview = this.makePreview();
+      this.preview = this.makePreview(licenseToken);
       this.preview.onClosed(this.previewClosedListener);
       this.previewStartPromise = this.preview.start();
       this.previewStartPromise.then(() => {
