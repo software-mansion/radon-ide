@@ -109,6 +109,17 @@ export function InspectDataMenu({
           <DropdownMenu.Label className="inspect-data-menu-label">
             {displayDimensionsText}
           </DropdownMenu.Label>
+          <DropdownMenu.Item
+            className="inspect-data-menu-item ask-ai"
+            key={"ask-ai"}
+            onSelect={(e) => {
+              e.preventDefault(); // prevents the dropdown from closing
+            }}>
+            <DropdownMenu.Label className="inspect-data-menu-label ask-ai">
+              <span className="codicon codicon-lightbulb" />
+              <span className="ask-ai-text">Fix with AI</span>
+            </DropdownMenu.Label>
+          </DropdownMenu.Item>
           {inspectItems.map((item) => (
             <InspectItem item={item} onSelected={onSelected} onHover={onHover} />
           ))}

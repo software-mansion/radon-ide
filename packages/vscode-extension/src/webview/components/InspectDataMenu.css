@@ -77,3 +77,50 @@
   justify-content: center;
   flex-wrap: nowrap;
 }
+
+.inspect-data-menu-item.ask-ai {
+  line-height: 1;
+  color: var(--swm-default-text);
+
+  width: fit-content;
+  height: fit-content;
+  min-height: 20px;
+
+  display: flex;
+  flex: auto;
+  flex-wrap: wrap;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 2px 7px;
+  margin: 1px 0;
+  position: relative;
+  user-select: none;
+  outline: none;
+
+  /* Add border gradient anomation on hover */
+  border-radius: 8px;
+  border: 1px solid #555;
+  background-color: #444;
+}
+
+.inspect-data-menu-label.ask-ai {
+  font-size: clamp(4px, 6vw, 12px);
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex: auto;
+  flex-wrap: wrap;
+
+  align-items: center;
+  justify-content: center;
+}
+
+.inspect-data-menu-label > .codicon {
+  font-size: clamp(4px, 6vw, 14px);
+}
+
+.inspect-data-menu-label > .ask-ai-text {
+  margin: 0 2px;
+}
