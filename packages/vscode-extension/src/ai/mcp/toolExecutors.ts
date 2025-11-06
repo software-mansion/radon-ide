@@ -2,19 +2,19 @@ import { readFileSync } from "fs";
 
 import { Store } from "react-devtools-inline";
 import { IDE } from "../../project/ide";
-import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils";
-import { DevtoolsElement, TextContent, ToolResponse } from "./models";
+import {
+  getDevtoolsElementByID,
+  pngToToolContent,
+  textToToolContent,
+  textToToolResponse,
+} from "./utils";
+import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
 import printComponentTree from "./printComponentTree";
 
-// This util removes the need for type-casting on every `store.getElementByID` call
-function getElementByID(id: number, store: Store): DevtoolsElement | null {
-  return store.getElementByID(id) as unknown as DevtoolsElement | null;
-}
-
 export function tryGetTreeRoot(store: Store) {
-  const treeRoot = getElementByID(store.roots[0], store);
+  const treeRoot = getDevtoolsElementByID(store.roots[0], store);
   if (treeRoot) {
     return treeRoot;
   }

@@ -4,11 +4,7 @@ import { Store } from "../../../third-party/react-devtools/headless";
 import { DeviceSession } from "../../project/deviceSession";
 import { DevtoolsElement } from "./models";
 import { isAppSourceFile } from "../../utilities/isAppSourceFile";
-
-// This util removes the need for type-casting on every `store.getElementByID` call
-function getElementByID(id: number, store: Store): DevtoolsElement | null {
-  return store.getElementByID(id) as unknown as DevtoolsElement | null;
-}
+import { getDevtoolsElementByID } from "./utils";
 
 // This methods finds and returns the `AppWrapper` if said component exists
 function findTreeEntryPoint(store: Store, element: DevtoolsElement): DevtoolsElement | null {
@@ -17,7 +13,7 @@ function findTreeEntryPoint(store: Store, element: DevtoolsElement): DevtoolsEle
   }
 
   for (const childId of element.children) {
-    const child = getElementByID(childId, store);
+    const child = getDevtoolsElementByID(childId, store);
 
     if (!child) {
       throw new Error(`Component tree is corrupted. Element with ID ${childId} not found.`);
@@ -102,7 +98,7 @@ async function printComponentTree(
 
   const childrenStrings = await Promise.all(
     element.children.map((childId) => {
-      const child = getElementByID(childId, store);
+      const child = getDevtoolsElementByID(childId, store);
 
       if (!child) {
         return `Component tree is corrupted. Element with ID ${childId} not found.`;
