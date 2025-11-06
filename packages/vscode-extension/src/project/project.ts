@@ -665,7 +665,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       return;
     }
     commands.executeCommand("RNIDE.showPanel");
-    await deviceSession.startMaestroTest(fileName);
+
+    const applicationDependencies =
+      this.stateManager.getState().applicationContext.applicationDependencies;
+    if (applicationDependencies?.maestro?.status === "installed") {
+      await deviceSession.startMaestroTest(fileName);
+    } else {
+      window.showErrorMessage("Maestro is not installed.", "Dismiss");
+    }
   }
 
   public async stopMaestroTest() {

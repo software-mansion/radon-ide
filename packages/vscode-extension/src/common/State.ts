@@ -125,6 +125,7 @@ export type ApplicationDependency =
   | "expo"
   | "expoRouter"
   | "storybook"
+  | "maestro"
   | "easCli";
 
 export type InstallationStatus = "installed" | "notInstalled" | "installing";
