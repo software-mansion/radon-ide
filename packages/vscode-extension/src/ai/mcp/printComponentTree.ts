@@ -101,7 +101,7 @@ async function printComponentTree(
       const child = getDevtoolsElementByID(childId, store);
 
       if (!child) {
-        return `Component tree is corrupted. Element with ID ${childId} not found.`;
+        throw new Error(`Component tree is corrupted. Element with ID ${childId} not found.`);
       }
 
       return printComponentTree(session, child, userLogicalComponentIDs, childDepth);
