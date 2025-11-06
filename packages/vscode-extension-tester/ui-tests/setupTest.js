@@ -50,6 +50,11 @@ before(async function () {
   }
   await workbench.executeCommand("Chat: Open Chat");
   await workbench.executeCommand("View: Toggle Secondary Side Bar Visibility");
+
+  const radonViewsService = initServices(driver).radonViewsService;
+  await radonViewsService.activateRadonIDELicense();
+
+  await driver.switchTo().defaultContent();
 });
 
 afterEach(async function () {

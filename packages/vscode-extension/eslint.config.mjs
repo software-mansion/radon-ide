@@ -6,7 +6,7 @@ import globals from "globals";
 
 export default [
   {
-    ignores: ["webview-ui/**/*"],
+    ignores: ["webview-ui/**/*", "**/*.bundle.ts", "**/*.bundle.js"],
   },
   eslint.configs.recommended,
   {

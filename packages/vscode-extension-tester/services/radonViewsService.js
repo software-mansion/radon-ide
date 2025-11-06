@@ -1,7 +1,11 @@
+import dotenv from "dotenv";
 import { By, BottomBarPanel, Key } from "vscode-extension-tester";
 import { createCanvas } from "canvas";
 import { ElementHelperService } from "./helperServices.js";
 import AppManipulationService from "./appManipulationService.js";
+
+dotenv.config();
+const licenseKey = process.env.RADON_IDE_LICENSE_KEY || "";
 
 export default class RadonViewsService {
   constructor(driver) {
@@ -39,6 +43,41 @@ export default class RadonViewsService {
       }
       return false;
     });
+  }
+
+  async activateRadonIDELicense() {
+    if (await this.hasActiveLicense()) {
+      return;
+    }
+
+    await this.driver.switchTo().defaultContent();
+
+    await this.openRadonIDEPanel();
+    await this.elementHelperService.findAndClickElementByTag(
+      "open-activate-license-modal-button"
+    );
+    const keyInput = await this.elementHelperService.findAndClickElementByTag(
+      "license-key-input"
+    );
+    await keyInput.sendKeys(licenseKey);
+    await this.elementHelperService.findAndClickElementByTag(
+      "activate-license-button"
+    );
+    await this.elementHelperService.findAndClickElementByTag(
+      "activate-license-confirm-button"
+    );
+  }
+
+  async hasActiveLicense() {
+    await this.openRadonIDEPanel();
+    if (
+      this.elementHelperService.safeFind(
+        By.css('[data-testid="open-activate-license-modal-button"]')
+      )
+    ) {
+      return false;
+    }
+    return true;
   }
 
   async switchToRadonIDEFrame() {

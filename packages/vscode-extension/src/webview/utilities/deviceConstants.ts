@@ -76,7 +76,7 @@ export type DevicePropertiesFrame = {
   height: number;
   offsetX: number;
   offsetY: number;
-  image: string;
+  image?: string;
   imageLandscape?: string;
 };
 
@@ -86,8 +86,8 @@ export type DeviceProperties = {
   platform: DevicePlatform;
   screenWidth: number;
   screenHeight: number;
-  screenMaskImage: string;
-  landscapeScreenMaskImage: string;
+  screenMaskImage?: string;
+  landscapeScreenMaskImage?: string;
   minimumAndroidApiLevel?: number;
   bezel: DevicePropertiesFrame;
   skin: DevicePropertiesFrame;
@@ -406,14 +406,10 @@ export const AndroidSupportedDevices: DeviceProperties[] = [
   },
 ] as const;
 
-export function mapIdToModel(deviceId: string): string {
+export function mapIdToModel(deviceId: string): string | undefined {
   let device =
     iOSSupportedDevices.find((d) => d.modelId === deviceId) ||
     AndroidSupportedDevices.find((d) => d.modelId === deviceId);
 
-  if (device) {
-    return device.modelName;
-  } else {
-    throw new Error("Device id not recognized");
-  }
+  return device?.modelName;
 }

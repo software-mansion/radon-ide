@@ -1,8 +1,10 @@
 import path from "path";
 import fs from "fs";
+import assert from "assert";
 import { ExecaChildProcess, ExecaError } from "execa";
 import mime from "mime";
 import _ from "lodash";
+import { Disposable } from "vscode";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
@@ -18,6 +20,7 @@ import { Output } from "../common/OutputChannel";
 import {
   DeviceInfo,
   DevicePlatform,
+  DevicesByType,
   DeviceSettings,
   DeviceType,
   InstallationError,
@@ -26,7 +29,11 @@ import {
   IOSRuntimeInfo,
   Locale,
 } from "../common/State";
-import assert from "assert";
+import { checkXcodeExists } from "../utilities/checkXcodeExists";
+import { Platform } from "../utilities/platform";
+import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
+import { DevicesProvider } from "./DevicesProvider";
+import { StateManager } from "../project/StateManager";
 
 interface SimulatorInfo {
   availability?: string;
@@ -947,5 +954,70 @@ async function ensureUniqueDisplayNames(devices: IOSDeviceInfo[]) {
       device.displayName = newName;
       await renameIosSimulator(device.UDID, newName);
     }
+  }
+}
+
+export class IosSimulatorProvider implements DevicesProvider<IOSDeviceInfo>, Disposable {
+  constructor(
+    private stateManager: StateManager<DevicesByType>,
+    private outputChannelRegistry: OutputChannelRegistry
+  ) {}
+
+  public async listDevices() {
+    let shouldLoadSimulators = Platform.OS === "macos";
+
+    if (!shouldLoadSimulators) {
+      return [];
+    }
+
+    if (!(await checkXcodeExists())) {
+      Logger.debug("Couldn't list iOS simulators as XCode installation wasn't found");
+      return [];
+    }
+
+    try {
+      const simulators = await listSimulators(SimulatorDeviceSet.RN_IDE);
+      this.stateManager.updateState({ iosSimulators: simulators });
+      return simulators;
+    } catch (e) {
+      Logger.error("Error fetching simulators", e);
+      return [];
+    }
+  }
+
+  public async acquireDevice(
+    deviceInfo: DeviceInfo,
+    deviceSettings: DeviceSettings
+  ): Promise<IosSimulatorDevice | undefined> {
+    if (deviceInfo.platform !== DevicePlatform.IOS) {
+      return undefined;
+    }
+
+    if (Platform.OS !== "macos") {
+      throw new Error("Invalid platform. Expected macos.");
+    }
+
+    const simulators = await listSimulators(SimulatorDeviceSet.RN_IDE);
+    const simulatorInfo = simulators.find((device) => device.id === deviceInfo.id);
+    if (!simulatorInfo || simulatorInfo.platform !== DevicePlatform.IOS) {
+      throw new Error(`Simulator ${deviceInfo.id} not found`);
+    }
+    const device = new IosSimulatorDevice(
+      deviceSettings,
+      simulatorInfo.UDID,
+      simulatorInfo,
+      this.outputChannelRegistry
+    );
+
+    if (await device.acquire()) {
+      return device;
+    }
+
+    device.dispose();
+    throw new DeviceAlreadyUsedError();
+  }
+
+  public dispose() {
+    this.stateManager.dispose();
   }
 }
