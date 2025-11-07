@@ -131,7 +131,7 @@ export class DevtoolsConnection implements Disposable {
     return this._store;
   }
 
-  private resolveInspectElementResult(requestID: number): Promise<InspectedElementPayload> {
+  private getInspectElementResponse(requestID: number): Promise<InspectedElementPayload> {
     const { promise, resolve, reject } = Promise.withResolvers<InspectedElementPayload>();
 
     const cleanup = () => {
@@ -160,7 +160,7 @@ export class DevtoolsConnection implements Disposable {
     const requestID = this.bridgeRequestCounter++;
     const rendererID = this._store.getRendererIDForElement(id) as number;
 
-    const promise = this.resolveInspectElementResult(requestID);
+    const promise = this.getInspectElementResponse(requestID);
 
     this.bridge.send(INSPECT_REQUEST_EVENT, {
       id,
