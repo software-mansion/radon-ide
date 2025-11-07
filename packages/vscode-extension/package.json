@@ -22,7 +22,7 @@
     "workspaceContains:**/app.config.ts",
     "onWebviewPanel:RadonIDETabPanel"
   ],
-  "version": "1.12.0",
+  "version": "1.13.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -1075,9 +1075,9 @@
     "vscode:publish": "vsce publish",
     "open-vsx:publish": "ovsx publish",
     "copy:screen-sharing-agent": "mkdir -p dist/resources/android && cp -r third-party/screen-sharing-agent/* dist/resources/android",
-    "build:apollo-client-devtools-ui": "rm -rf dist/apollo-client && mkdir -p dist/apollo-client && cp src/plugins/chrome-api-stub.webview.js dist/apollo-client && cp -R third-party/apollo-client-devtools/{devtools.js,panel.js,images} dist/apollo-client",
+    "build:apollo-client-devtools-ui": "rm -rf dist/apollo-client && mkdir -p dist/apollo-client && cp src/plugins/chrome-api-stub.webview.js dist/apollo-client && cp -R third-party/apollo-client-devtools/devtools.js third-party/apollo-client-devtools/panel.js third-party/apollo-client-devtools/images dist/apollo-client",
     "build:react-query-devtools-ui": "rm -rf dist/react-query-devtools && cp -R ../radon-ide-react-query-webui/artifacts dist/react-query-devtools",
-    "build:redux-devtools-ui": "rm -rf dist/redux-devtools && mkdir -p dist/redux-devtools && cp src/plugins/chrome-api-stub.webview.js dist/redux-devtools && cp -R third-party/redux-devtools/{devpanel.bundle.css,devpanel.bundle.js,img,*.woff2} dist/redux-devtools",
+    "build:redux-devtools-ui": "rm -rf dist/redux-devtools && mkdir -p dist/redux-devtools && cp src/plugins/chrome-api-stub.webview.js dist/redux-devtools && cp -R third-party/redux-devtools/devpanel.bundle.css third-party/redux-devtools/devpanel.bundle.js third-party/redux-devtools/img third-party/redux-devtools/roboto-mono-v4-latin-regular-45PG2VAM.woff2 third-party/redux-devtools/roboto-v15-latin-regular-3XGOHEZN.woff2 third-party/redux-devtools/source-code-pro-v6-latin-regular-T5LNFASY.woff2 third-party/redux-devtools/source-sans-pro-v9-latin-600-S3ZWYGUG.woff2 third-party/redux-devtools/source-sans-pro-v9-latin-regular-BEFFICBH.woff2 dist/redux-devtools",
     "build:third-party": "npm run build:redux-devtools-ui && npm run build:react-query-devtools-ui && npm run build:apollo-client-devtools-ui",
     "build:webview": "vite build --mode production && cp ./node_modules/@vscode/codicons/dist/codicon.* dist/.",
     "build:extension-debug": "npm run prepare:fake_editor && npm run fetch:third-party && node ./scripts/buildExtensionCode.mjs debug && npm run build:third-party",
