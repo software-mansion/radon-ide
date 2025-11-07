@@ -24,5 +24,6 @@ If you want to debug an application on a device running iOS, an [out-of-tree pla
      To avoid this, make sure the device is unlocked.
    - on newer Android versions, you may be prompted to send the application for verification.
      This will block launching the app until an action is taken.
+     For more information about this, see the [Google Play Protect documentation](https://developers.google.com/android/play-protect/warning-dev-guidance#send_app_for_security_check).
 
    <img height="400" src="/img/docs/ide_physical_play_protect.png" className="shadow-image" />
