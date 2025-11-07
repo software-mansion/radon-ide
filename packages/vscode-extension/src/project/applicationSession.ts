@@ -10,12 +10,13 @@ import {
   workspace,
 } from "vscode";
 import { minimatch } from "minimatch";
+import { InspectedElementPayload, InspectElementFullData } from "react-devtools-inline";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { ApplicationContext } from "./ApplicationContext";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
-import { AppOrientation, InspectData } from "../common/Project";
+import { AppOrientation, InspectData, SourceInfo } from "../common/Project";
 import { disposeAll } from "../utilities/disposables";
 import { ToolKey, ToolPlugin, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
@@ -46,9 +47,6 @@ import { RadonInspectorBridge } from "./inspectorBridge";
 import { NETWORK_EVENT_MAP, NetworkBridge } from "./networkBridge";
 import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
-import { isFullInspectionData } from "../utilities/isFullInspectionData";
-import { SourceData } from "../common/types";
-import { toSourceInfo } from "../utilities/toSourceInfo";
 import { isCDPDomainCall } from "../network/types/panelMessageProtocol";
 
 const MAX_URL_HISTORY_SIZE = 20;
@@ -77,6 +75,26 @@ function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: Ca
       // we ignore cancellation rejections as this is another surfaces for it to bubble up
     });
   return promise;
+}
+
+type SourceData = {
+  sourceURL: string;
+  line: number;
+  column: number;
+};
+
+function isFullInspectionData(
+  payload?: InspectedElementPayload
+): payload is InspectElementFullData {
+  return payload?.type === "full-data";
+}
+
+export function toSourceInfo(source: SourceData): SourceInfo {
+  return {
+    fileName: source.sourceURL,
+    column0Based: source.column,
+    line0Based: source.line,
+  };
 }
 
 export class ApplicationSession implements Disposable {
