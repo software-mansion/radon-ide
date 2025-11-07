@@ -19,6 +19,7 @@ import { Logger } from "../Logger";
 import { AndroidBuildResult } from "../builders/buildAndroid";
 import { getAppCachesDir } from "../utilities/common";
 import { Preview } from "./preview";
+import { getClosestDeviceModel } from "./DeviceNameCache";
 
 export class AndroidPhysicalDevice extends AndroidDevice {
   constructor(
@@ -115,12 +116,34 @@ export async function listConnectedDevices(): Promise<AndroidPhysicalDeviceInfo[
           if (!screenDimensions) {
             return undefined;
           }
+
+          const androidVersion = await exec(
+            ADB_PATH,
+            ["shell", "getprop", "ro.build.version.release"],
+            { env: { ANDROID_SERIAL: serial } }
+          ).then((res) => res.stdout.trim());
+
+          const apiLevel = await exec(ADB_PATH, ["shell", "getprop", "ro.build.version.sdk"], {
+            env: { ANDROID_SERIAL: serial },
+          }).then((res) => res.stdout.trim());
+
+          const deviceInfo = await getClosestDeviceModel(props["model"]);
+          const deviceBrand = deviceInfo ? deviceInfo.brand : props["device"];
+          const deviceModel = deviceInfo ? deviceInfo.name : props["model"];
+
+          // To avoid things like "Samsung Samsung Galaxy..."
+          const brandRegex = new RegExp(`^${deviceBrand}$`, "m");
+          const isBrandInModel = brandRegex.test(deviceModel.split(" ")[0]);
+          const deviceName = `${!isBrandInModel ? deviceBrand + " " : ""}${deviceModel}`;
+
           return {
             id: serial,
             platform: DevicePlatform.Android,
             modelId: props["model"],
-            systemName: "Unknown",
-            displayName: `${props["device"]} ${props["model"]}`.trim(),
+            systemName: androidVersion
+              ? `Android ${androidVersion} (API Level ${apiLevel ?? "unknown"})`
+              : "Android (unknown version)",
+            displayName: deviceName,
             deviceType: DeviceType.Phone,
             available: true,
             emulator: false,
