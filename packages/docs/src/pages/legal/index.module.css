@@ -1,6 +1,6 @@
 .container {
-  width: 60%;
-  margin: 0 auto;
+  width: 75%;
+  margin: 80px auto;
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -10,43 +10,64 @@
   overflow: hidden;
 }
 
+.wrapper {
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0 40px;
+  align-items: center;
+}
+
 .card {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   gap: 1rem;
   padding: 2rem;
-  border: 2px solid var(--swm-navy-light-40);
+  border: var(--radon-border-layout);
 }
 
 .card div {
   font-size: 20px;
 }
+
 .card .button {
   text-decoration: underline;
-}
-
-@media (max-width: 1920px) {
-  .container {
-    width: 65%;
-  }
-}
-
-@media (max-width: 1440px) {
-  .container {
-    width: 75%;
-  }
+  text-underline-offset: 3px;
+  text-align: end;
 }
 
 @media (max-width: 996px) {
   .container {
     width: 85%;
   }
+  .card div {
+    font-size: 16px;
+  }
+  .button {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 800px) {
+  .wrapper {
+    padding: 0 24px;
+  }
+  .card div {
+    max-width: 250px;
+  }
+}
+
+@media (max-width: 600px) {
+  .button {
+    width: 72px;
+  }
 }
 
 @media (max-width: 430px) {
   .container {
-    width: 90%;
+    width: 100%;
+    margin: 40px auto;
   }
 }

@@ -1,0 +1,46 @@
+.download p {
+  font-size: 16px;
+  font-weight: 400;
+  font-family: Aeonik;
+
+  color: var(--radon-button-secondary);
+
+  margin: 0;
+  line-height: 24px;
+}
+
+.download {
+  display: flex;
+  height: 40px;
+  padding: 8px 12px;
+  justify-content: center;
+  align-items: center;
+  border: 1px solid var(--radon-button-secondary);
+  background-color: transparent;
+  cursor: pointer;
+}
+
+.download:hover {
+  opacity: 0.75;
+  background-color: transparent;
+  transition: opacity 0.3s;
+}
+
+.mobileDownload {
+  transition: color 0.2s;
+  background-color: transparent;
+  border: none;
+  padding: 0;
+}
+.mobileDownload:hover {
+  background-color: transparent;
+}
+
+.mobileDownload p {
+  color: var(--ifm-color-primary);
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--ifm-color-primary);
+
+  margin: 0;
+}

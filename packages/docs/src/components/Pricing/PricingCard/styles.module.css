@@ -1,22 +1,50 @@
 .item {
   display: block;
   height: 100%;
-  max-width: 420px;
 }
 
 .plan__container {
-  border: 1px solid var(--swm-border);
+  border: 1px solid var(--radon-border);
   height: 100%;
-  padding: 24px;
   display: flex;
   flex-direction: column;
-  background-color: var(--swm-off-background);
-}
-
-.plan__container__bold {
-  border: 2px solid var(--swm-border);
+  background-color: transparent;
 }
 
 .plan__container ul {
   padding-left: 24px;
+}
+
+.cardMain {
+  display: flex;
+  padding: 28px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+  border-top: var(--radon-border-layout);
+}
+
+.proCardBorder {
+  border-top: 1px solid var(--radon-border-highlight);
+}
+
+.cardFeatures {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.cardFeatures p {
+  margin: 0;
+  color: var(--radon-text-green-highlight);
+  font-weight: 500;
+}
+
+.pricingCardContainer {
+  border: var(--radon-border-layout);
+}
+
+.proCardContainer {
+  border: 1px solid var(--radon-border-highlight);
 }
