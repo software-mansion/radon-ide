@@ -30,6 +30,7 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
 
   private justCalledStepOver = false;
   private resumeEventTimeout: NodeJS.Timeout | undefined;
+  private pausedEventTimeout: NodeJS.Timeout | undefined;
   private mainScriptId: string | undefined;
 
   public onDebuggerPaused = this.debuggerPausedEmitter.event;
@@ -97,6 +98,11 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       clearTimeout(this.resumeEventTimeout);
       this.resumeEventTimeout = undefined;
     }
+    if (this.pausedEventTimeout) {
+      // if pause event was delayed, we clear it
+      clearTimeout(this.pausedEventTimeout);
+      this.pausedEventTimeout = undefined;
+    }
     if (this.justCalledStepOver) {
       // when step-over is called, we expect Debugger.resumed event to be called
       // after which the paused event will be fired almost immediately as the
@@ -115,6 +121,13 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
   }
 
   private handleDebuggerPaused(command: IProtocolCommand, tunnel: ProxyTunnel) {
+    if (this.pausedEventTimeout) {
+      // we clear pause event here as well as we will either schedule a new one
+      // or fire the event immediately.
+      clearTimeout(this.pausedEventTimeout);
+      this.pausedEventTimeout = undefined;
+    }
+
     const params = command.params as Cdp.Debugger.PausedEvent;
     if (this.shouldResumeImmediately(params)) {
       tunnel.injectDebuggerCommand({
@@ -133,7 +146,9 @@ export class RadonCDPProxyDelegate implements CDPProxyDelegate {
       this.resumeEventTimeout = undefined;
     }
 
-    this.debuggerPausedEmitter.fire({ reason: "breakpoint" });
+    this.pausedEventTimeout = setTimeout(() => {
+      this.debuggerPausedEmitter.fire({ reason: "breakpoint" });
+    }, 100);
     return command;
   }
 
