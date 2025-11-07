@@ -82,9 +82,12 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
         if (payload.pluginId === "network") {
           try {
             const payloadData = JSON.parse(payload.data);
-
             if (payload.type === WebviewMessageDescriptor.IDEMessage) {
               this.broadcastMessage(payloadData, WebviewCommand.IDECall);
+
+              if (payloadData.method === IDEMethod.ClearStoredMessages) {
+                this.clearNetworkMessages();
+              }
             } else {
               this.broadcastMessage(payloadData, WebviewCommand.CDPCall);
             }
@@ -99,10 +102,6 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("appReady", () => {
         this.sendCDPMessage({ method: NetworkMethod.Enable, params: {} });
-
-        // Clear any stored messages in the panel and plugin state
-        this.broadcastMessage({ method: IDEMethod.ClearStoredMessages }, WebviewCommand.IDECall);
-        this.clearNetworkMessages();
       })
     );
   }

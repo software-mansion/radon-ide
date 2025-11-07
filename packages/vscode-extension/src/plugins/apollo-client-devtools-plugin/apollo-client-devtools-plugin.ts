@@ -2,12 +2,15 @@ import { commands, window, Webview, Disposable } from "vscode";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { RadonInspectorBridge } from "../../project/inspectorBridge";
-import { ReduxDevToolsPluginWebviewProvider } from "./ReduxDevToolsPluginWebviewProvider";
 import { disposeAll } from "../../utilities/disposables";
 import { addConnection } from "./background.bundle";
+import { ApolloClientDevtoolsPluginWebviewProvider } from "./ApolloClientDevtoolsPluginWebviewProvider";
 
-export const REDUX_PLUGIN_ID = "redux-devtools";
-const REDUX_PLUGIN_PREFIX = "RNIDE.Tool.ReduxDevTools";
+export const APOLLO_PLUGIN_ID = "apollo-client-devtools";
+
+const APOLLO_PLUGIN_PREFIX = "RNIDE.Tool.ApolloClient";
+
+const TAB_ID = "1";
 
 let initialzed = false;
 
@@ -18,8 +21,8 @@ function initialize() {
   initialzed = true;
   extensionContext.subscriptions.push(
     window.registerWebviewViewProvider(
-      `${REDUX_PLUGIN_PREFIX}.view`,
-      new ReduxDevToolsPluginWebviewProvider(extensionContext),
+      `${APOLLO_PLUGIN_PREFIX}.view`,
+      new ApolloClientDevtoolsPluginWebviewProvider(extensionContext),
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
@@ -48,7 +51,7 @@ function createChromePort(name: string, onMessage: (message: unknown) => void) {
       },
     },
     sender: {
-      tab: { id: "1" },
+      tab: { id: TAB_ID },
     },
   };
   function postMessage(message: unknown) {
@@ -61,9 +64,9 @@ function createChromePort(name: string, onMessage: (message: unknown) => void) {
   return { connection, postMessage, disconnect };
 }
 
-export class ReduxDevtoolsPlugin implements ToolPlugin {
-  public readonly id: ToolKey = REDUX_PLUGIN_ID;
-  public readonly label = "Redux DevTools";
+export class ApolloClientDevtoolsPlugin implements ToolPlugin {
+  public readonly id: ToolKey = APOLLO_PLUGIN_ID;
+  public readonly label = "Apollo Client";
 
   public pluginAvailable = true;
   public toolInstalled = false;
@@ -80,8 +83,8 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   connectDevtoolsWebview(webview: Webview) {
     this.connectedWebviewListener?.dispose();
     this.connectedWebview = webview;
-    const { connection, postMessage, disconnect } = createChromePort("monitor", (message) =>
-      this.connectedWebview?.postMessage(message)
+    const { connection, postMessage, disconnect } = createChromePort(TAB_ID, (message) =>
+      this.connectedWebview?.postMessage({ scope: "rnide-chrome-stub", message })
     );
     addConnection(connection);
     const connectedWebviewListener = webview.onDidReceiveMessage((message) => {
@@ -101,15 +104,15 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   }
 
   enable() {
-    commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
+    commands.executeCommand("setContext", `${APOLLO_PLUGIN_PREFIX}.available`, true);
     const { connection, postMessage, disconnect } = createChromePort("tab", (message) => {
-      this.inspectorBridge.sendPluginMessage(REDUX_PLUGIN_ID, "chrome", message);
+      this.inspectorBridge.sendPluginMessage(APOLLO_PLUGIN_ID, "chrome", message);
     });
 
     this.devtoolsListeners.push(new Disposable(disconnect));
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("pluginMessage", ({ pluginId, type, data }) => {
-        if (pluginId === REDUX_PLUGIN_ID) {
+        if (pluginId === APOLLO_PLUGIN_ID) {
           postMessage(data);
         }
       })
@@ -119,7 +122,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
 
   disable() {
     disposeAll(this.devtoolsListeners);
-    commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, false);
+    commands.executeCommand("setContext", `${APOLLO_PLUGIN_PREFIX}.available`, false);
   }
 
   activate() {
@@ -131,7 +134,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   }
 
   openTool() {
-    commands.executeCommand(`${REDUX_PLUGIN_PREFIX}.view.focus`);
+    commands.executeCommand(`${APOLLO_PLUGIN_PREFIX}.view.focus`);
   }
 
   dispose() {
