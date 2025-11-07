@@ -18,31 +18,6 @@
   box-sizing: border-box;
 }
 
-.response-tab-truncated-warning {
-  display: flex;
-  align-items: center;
-  color: var(--vscode-problemsWarningIcon-foreground);
-  margin: 0 0 14px 0;
-}
-
-.response-tab-failed-fetch-information {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-
-  p {
-    margin: 0px;
-  }
-
-  .codicon {
-    opacity: 0.6;
-    font-size: 48px;
-  }
-}
-
 .response-tab-button-wrapper {
   position: sticky;
   top: 8px;

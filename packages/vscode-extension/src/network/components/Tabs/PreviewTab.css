@@ -27,32 +27,6 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.preview-tab-loading,
-.preview-tab-no-preview,
-.preview-tab-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  gap: 12px;
-  color: var(--vscode-descriptionForeground);
-
-  p {
-    margin: 0;
-    font-size: 14px;
-  }
-
-  .codicon {
-    font-size: 48px;
-  }
-}
-
-.preview-tab-error {
-  color: var(--vscode-errorForeground);
-}
-
 .preview-tab-metadata {
   display: flex;
   justify-content: center;

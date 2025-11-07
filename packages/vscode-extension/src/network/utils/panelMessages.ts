@@ -1,4 +1,4 @@
-import { IDEMethod, WebviewMessage } from "../types/panelMessageProtocol";
+import { IDEDomainCall, WebviewMessage } from "../types/panelMessageProtocol";
 
 let nextId = 0;
 
@@ -18,7 +18,7 @@ export function generateId(): string {
  */
 export function createIDEResponsePromise<T>(
   messageId: string,
-  messageExpectedMethod: IDEMethod,
+  messageExpectedMethod: IDEDomainCall,
   resultTransformer?: (result: unknown) => T
 ): Promise<T> {
   const { promise, resolve } = Promise.withResolvers<T>();
