@@ -89,8 +89,14 @@ describe("8 - Device Settings", () => {
     await locationInput.clear();
     await locationInput.sendKeys("0.0, 0.0", Key.ENTER);
     await elementHelperService.findAndClickElementByTag("modal-close-button");
-    await driver.sleep(100000);
-    await driver.sleep(10000);
+    await driver.wait(async () => {
+      location = await appManipulationService.sendMessageAndWaitForResponse(
+        appWebsocket,
+        "getLocation"
+      );
+      console.log(location);
+      return false;
+    }, 100000);
     location = await appManipulationService.sendMessageAndWaitForResponse(
       appWebsocket,
       "getLocation"
