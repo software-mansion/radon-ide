@@ -30,7 +30,7 @@ function findTreeEntryPoint(store: Store, element: DevtoolsElement): DevtoolsEle
 }
 
 function printHocDescriptors(element: DevtoolsElement): string {
-  return element?.hocDisplayNames?.length ? `\u0020[${element.hocDisplayNames.join(", ")}]` : "";
+  return element.hocDisplayNames ? `\u0020[${element.hocDisplayNames.join(", ")}]` : "";
 }
 
 function printTextContent(indent: string, payload: InspectElementFullData): string {
