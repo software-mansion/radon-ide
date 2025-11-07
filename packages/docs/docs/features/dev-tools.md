@@ -38,6 +38,14 @@ Once enabled you can use the official [React Query's devtool UI](https://tanstac
 
 <img width="700" src="/img/docs/ide_devtools_react_query.png" className="shadow-image" />
 
+## Apollo Client
+
+This plugin doesn't require any additional configuration.
+When your application first loads the Apollo Client, the plugin should appear in the Dev Tools menu.
+Once enabled, the official [Apollo Client Devtools](https://github.com/apollographql/apollo-client-devtools) will be attached to your application and allow you to inspect your Apollo Client usage in the editor's panel:
+
+<img width="700" src="/img/docs/ide_devtools_apollo_client.png" className="shadow-image" />
+
 ## CPU Profiling JavaScript
 
 Radon IDE integrates with the hermes sampling CPU profiler.
