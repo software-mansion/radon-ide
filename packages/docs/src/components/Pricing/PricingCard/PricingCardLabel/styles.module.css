@@ -1,0 +1,118 @@
+.container {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  justify-content: space-between;
+  max-height: 275px;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.planDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex-grow: 1;
+}
+
+.planName,
+.planPro {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+  color: var(--radon-text-green-highlight);
+  height: 30px;
+  align-items: center;
+}
+
+.planPro {
+  display: flex;
+  justify-content: space-between;
+}
+
+.planPro p {
+  margin: 0;
+  color: var(--radon-button-text);
+}
+
+.popularBadge {
+  background-color: var(--radon-button);
+  padding: 5px 10px;
+  align-items: center;
+}
+
+.popularBadge p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.priceDescription {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+  color: var(--radon-subheading);
+  align-items: center;
+  flex-grow: 1;
+  display: flex;
+}
+
+.priceDescription span {
+  font-size: 44px;
+  font-weight: 500;
+  line-height: normal;
+  color: var(--ifm-color-primary);
+}
+
+.planLabel {
+  font-size: 17px;
+  color: var(--radon-subheading);
+  line-height: 28px;
+  margin: 0;
+}
+
+.period {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+}
+
+.period p {
+  margin: 0;
+  line-height: 24px;
+}
+
+.fullPrice {
+  text-decoration: line-through var(--radon-text-green-highlight);
+  color: var(--ifm-color-primary);
+  font-size: 20px;
+  line-height: normal;
+}
+
+.price {
+  display: flex;
+  gap: 8px;
+}
+
+span.customPrice {
+  font-size: 32px;
+}
+
+.proGradient {
+  background: var(
+    --gradient-plan-dark,
+    radial-gradient(
+      45% 50% at 50% 50%,
+      var(--radon-gradient-green) 0%,
+      var(--radon-gradient-color) 100%
+    )
+  );
+  position: absolute;
+  left: 0;
+  bottom: -210px;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+}
