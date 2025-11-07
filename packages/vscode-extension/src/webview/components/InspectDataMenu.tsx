@@ -3,6 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import "./InspectDataMenu.css";
+import { commands } from "vscode";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
@@ -113,6 +114,9 @@ export function InspectDataMenu({
             className="inspect-data-menu-item ask-ai"
             key={"ask-ai"}
             onSelect={(e) => {
+              commands.executeCommand("workbench.action.chat.attachFile");
+              commands.executeCommand("copilot-chat.focus");
+              commands.executeCommand("workbench.panel.chat.view.copilot.toggleVisibility");
               e.preventDefault(); // prevents the dropdown from closing
             }}>
             <DropdownMenu.Label className="inspect-data-menu-label ask-ai">
