@@ -15,6 +15,8 @@ import {
 } from "../common/State";
 import { sleep } from "../utilities/retry";
 
+const EX_NOPERM = 77;
+
 interface MultimediaPromiseHandlers {
   resolve: (value: MultimediaData) => void;
   reject: (reason?: unknown) => void;
@@ -123,14 +125,24 @@ export class Preview implements Disposable {
       this.closedEventEmitter.fire();
     });
     subprocess.catch((error) => {
-      if (error.exitCode === 1) {
-        this.closedEventEmitter.fire(
-          new PreviewError("Device disconnected.", PreviewErrorReason.StreamClosed)
-        );
-      } else {
-        this.closedEventEmitter.fire(
-          new PreviewError("Device screen mirroring closed unexpectedly.")
-        );
+      switch (error.exitCode) {
+        case 1:
+          this.closedEventEmitter.fire(
+            new PreviewError("Device disconnected.", PreviewErrorReason.StreamClosed)
+          );
+          break;
+        case EX_NOPERM:
+          this.closedEventEmitter.fire(
+            new PreviewError(
+              "No sufficient license was provided in time to prevent shutdown.",
+              PreviewErrorReason.NoAccess
+            )
+          );
+          break;
+        default:
+          this.closedEventEmitter.fire(
+            new PreviewError("Device screen mirroring closed unexpectedly.")
+          );
       }
     });
     this.tokenChangeListener = watchLicenseTokenChange((token) => {
