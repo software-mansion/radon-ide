@@ -103,6 +103,13 @@
   border-radius: 8px;
   border: 1px solid #555;
   background-color: #444;
+
+  transition: all 500ms;
+}
+
+.inspect-data-menu-item.ask-ai:hover {
+  border-color: #666;
+  background-color: #555;
 }
 
 .inspect-data-menu-label.ask-ai {
