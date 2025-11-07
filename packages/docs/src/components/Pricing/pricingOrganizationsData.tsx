@@ -32,7 +32,7 @@ export const pricingOrganizationsData: PricingPlanCardProps[] = [
     featuresTeamManagement: [
       { label: "Multiple license management" },
       { label: "Centralized team billing" },
-      { label: "Insights Dashboard with usage stats" },
+      // { label: "Insights Dashboard with usage stats" },
     ],
     featuresSupport: [
       { label: "Early access to new features" },
