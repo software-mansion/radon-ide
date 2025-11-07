@@ -32,7 +32,7 @@
   font-weight: 600;
   font-size: 16px;
 
-  .plan-name{
+  .plan-name {
     text-align: left;
   }
 }
@@ -62,7 +62,7 @@
     font-size: 18px;
   }
 
-  .per-month-year{
+  .per-month-year {
     white-space: nowrap;
   }
 }

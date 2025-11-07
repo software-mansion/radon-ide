@@ -30,7 +30,8 @@ function SubscriptionOption({
           {showSaving && savingText && <span className="plan-saving">{savingText}</span>}
         </span>
         <span className="plan-price-container">
-          <span className='price'>{planPrice}</span> <span className='per-month-year' >/ {planType === "yearly" ? "year" : "month"}</span>
+          <span className="price">{planPrice}</span>{" "}
+          <span className="per-month-year">/ {planType === "yearly" ? "year" : "month"}</span>
         </span>
       </div>
       <div className="plan-description">{planDescription}</div>
