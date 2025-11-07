@@ -117,15 +117,9 @@ export async function listConnectedDevices(): Promise<AndroidPhysicalDeviceInfo[
             return undefined;
           }
 
-          const androidVersion = await exec(
-            ADB_PATH,
-            ["shell", "getprop", "ro.build.version.release"],
-            { env: { ANDROID_SERIAL: serial } }
-          ).then((res) => res.stdout.trim());
+          const androidVersion = await exec(ADB_PATH, ["-s", serial, "shell", "getprop", "ro.build.version.release"]).then((res) => res.stdout.trim());
 
-          const apiLevel = await exec(ADB_PATH, ["shell", "getprop", "ro.build.version.sdk"], {
-            env: { ANDROID_SERIAL: serial },
-          }).then((res) => res.stdout.trim());
+          const apiLevel = await exec(ADB_PATH, ["-s", serial, "shell", "getprop", "ro.build.version.sdk"]).then((res) => res.stdout.trim());
 
           const deviceInfo = await getClosestDeviceModel(props["model"]);
           const deviceBrand = deviceInfo ? deviceInfo.brand : props["device"];
