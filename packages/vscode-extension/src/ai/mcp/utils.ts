@@ -1,4 +1,5 @@
-import { ImageContent, TextContent, ToolResponse } from "./models";
+import { Store } from "react-devtools-inline";
+import { DevtoolsElement, ImageContent, TextContent, ToolResponse } from "./models";
 
 export function pngToToolContent(base64Encoded: string): ImageContent {
   return {
@@ -19,4 +20,9 @@ export function textToToolResponse(text: string): ToolResponse {
   return {
     content: [textToToolContent(text)],
   };
+}
+
+// This util removes the need for type-casting on every `store.getElementByID` call
+export function getDevtoolsElementByID(id: number, store: Store): DevtoolsElement | null {
+  return store.getElementByID(id) as unknown as DevtoolsElement | null;
 }
