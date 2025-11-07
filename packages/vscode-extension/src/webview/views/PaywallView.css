@@ -1,14 +1,24 @@
+.modal-content:has(.paywall-view) {
+  padding: 0;
+  border: none;
+
+  .modal-content-container {
+    height: 100%;
+  }
+}
+
 .paywall-view {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: calc(100vh - 40px);
 }
 
 .paywall-container {
   max-width: 400px;
   width: 100%;
+  height: 100%;
   text-align: center;
+  padding: 25px;
 }
 
 .paywall-title {
