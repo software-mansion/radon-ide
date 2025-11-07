@@ -5,6 +5,7 @@ import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 import { PanelLocation, RecursivePartial, State, StateSerializer } from "../common/State";
+import { SIMMethod } from "../network/types/panelMessageProtocol";
 
 type EventBase = Record<string, unknown>;
 
@@ -16,6 +17,10 @@ interface GetStateCommand extends EventBase {
 }
 interface UpdateStateCommand extends EventBase {
   command: "RNIDE_update_state";
+}
+
+interface TestTestTestCommand extends EventBase {
+  command: SIMMethod.AddContextToChat;
 }
 
 interface CallArgs {
@@ -35,8 +40,9 @@ interface UpdateStateArgs {
 type CallEvent = CallCommand & CallArgs;
 type GetStateEvent = GetStateCommand & GetStateArgs;
 type UpdateStateEvent = UpdateStateCommand & UpdateStateArgs;
+type TestTestTest = TestTestTestCommand;
 
-export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent;
+export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent | TestTestTest;
 
 export class WebviewController implements Disposable {
   private disposables: Disposable[] = [];
@@ -103,12 +109,18 @@ export class WebviewController implements Disposable {
         if (!message.method || (message.method !== "dispatchTouches" && message.method !== "log")) {
           Logger.log("Message from webview", message);
         }
+
         if (message.command === "call") {
           this.handleRemoteCall(message);
         } else if (message.command === "RNIDE_get_state") {
           this.handleGetState(message);
         } else if (message.command === "RNIDE_update_state") {
           this.handleUpdateState(message);
+        } else if (message.command === SIMMethod.AddContextToChat) {
+          console.log("RECEIVED CHAT PANEL TEST");
+          commands.executeCommand("workbench.action.chat.attachFile");
+          commands.executeCommand("copilot-chat.focus");
+          commands.executeCommand("workbench.panel.chat.view.copilot.toggleVisibility");
         }
       },
       undefined,

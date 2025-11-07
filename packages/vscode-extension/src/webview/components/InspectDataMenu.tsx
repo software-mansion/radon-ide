@@ -3,6 +3,8 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import "./InspectDataMenu.css";
+import { vscode } from "../utilities/vscode";
+import { SIMMethod } from "../../network/types/panelMessageProtocol";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
@@ -131,6 +133,12 @@ export function InspectDataMenu({
               className="inspect-data-menu-item inspector-button"
               key={"ask-ai"}
               onSelect={(e) => {
+                const message = {
+                  command: SIMMethod.AddContextToChat,
+                };
+
+                console.log("POSTING CHAT PANEL TEST:", message);
+                vscode.postMessage(message);
                 e.preventDefault(); // prevents the dropdown from closing
               }}>
               <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
