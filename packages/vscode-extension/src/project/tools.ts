@@ -23,15 +23,20 @@ import { disposeAll } from "../utilities/disposables";
 import { ToolsState } from "../common/State";
 import { StateManager } from "./StateManager";
 import { WorkspaceConfiguration } from "../common/State";
+import {
+  APOLLO_PLUGIN_ID,
+  ApolloClientDevtoolsPlugin,
+} from "../plugins/apollo-client-devtools-plugin/apollo-client-devtools-plugin";
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
 export type ToolKey =
   | ExpoDevPluginToolName
-  | typeof REACT_QUERY_PLUGIN_ID
+  | typeof APOLLO_PLUGIN_ID
   | typeof NETWORK_PLUGIN_ID
+  | typeof RENDER_OUTLINES_PLUGIN_ID
   | typeof REDUX_PLUGIN_ID
-  | typeof RENDER_OUTLINES_PLUGIN_ID;
+  | typeof REACT_QUERY_PLUGIN_ID;
 
 export interface ToolPlugin extends Disposable {
   id: ToolKey;
@@ -90,6 +95,7 @@ export class ToolsManager implements Disposable {
     };
 
     this.plugins.set(REDUX_PLUGIN_ID, new ReduxDevtoolsPlugin(inspectorBridge));
+    this.plugins.set(APOLLO_PLUGIN_ID, new ApolloClientDevtoolsPlugin(inspectorBridge));
     this.plugins.set(
       NETWORK_PLUGIN_ID,
       new NetworkPlugin(inspectorBridge, networkBridge, metroPort)
