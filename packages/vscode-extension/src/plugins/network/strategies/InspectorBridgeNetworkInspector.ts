@@ -82,9 +82,12 @@ export default class InspectorBridgeNetworkInspector extends BaseNetworkInspecto
         if (payload.pluginId === "network") {
           try {
             const payloadData = JSON.parse(payload.data);
-
             if (payload.type === WebviewMessageDescriptor.IDEMessage) {
               this.broadcastMessage(payloadData, WebviewCommand.IDECall);
+
+              if (payloadData.method === IDEMethod.ClearStoredMessages) {
+                this.clearNetworkMessages();
+              }
             } else {
               this.broadcastMessage(payloadData, WebviewCommand.CDPCall);
             }
