@@ -19,6 +19,13 @@
   text-overflow: ellipsis;
 }
 
+.inspect-data-menu-group {
+  display: flex;
+  flex-direction: row;
+  gap: 9px;
+  padding: 5px;
+}
+
 .inspect-data-menu-label {
   font-size: 12px;
   line-height: 25px;
@@ -78,7 +85,7 @@
   flex-wrap: nowrap;
 }
 
-.inspect-data-menu-item.ask-ai {
+.inspect-data-menu-item.inspector-button {
   line-height: 1;
   color: var(--swm-default-text);
 
@@ -100,24 +107,24 @@
   outline: none;
 
   /* Add border gradient anomation on hover */
-  border-radius: 8px;
+  border-radius: 3px;
   border: 1px solid #555;
   background-color: #444;
 
   transition: all 100ms;
 }
 
-.inspect-data-menu-item.ask-ai:hover {
+.inspect-data-menu-item.inspector-button:hover {
   border-color: #666;
   background-color: #555;
 }
 
-.inspect-data-menu-item.ask-ai:active {
+.inspect-data-menu-item.inspector-button:active {
   border-color: #505050;
   background-color: #404040;
 }
 
-.inspect-data-menu-label.ask-ai {
+.inspect-data-menu-label.inspector-button {
   font-size: clamp(4px, 6vw, 12px);
   padding: 0;
   margin: 0;
@@ -134,6 +141,6 @@
   margin-top: 1px; /* The lightbulb icon seems misaligned by 1px */
 }
 
-.inspect-data-menu-label > .ask-ai-text {
+.inspect-data-menu-label > .inspector-button-text {
   margin: 0 4px;
 }

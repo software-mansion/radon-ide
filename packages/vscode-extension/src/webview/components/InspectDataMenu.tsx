@@ -109,31 +109,36 @@ export function InspectDataMenu({
           <DropdownMenu.Label className="inspect-data-menu-label">
             {displayDimensionsText}
           </DropdownMenu.Label>
-          <DropdownMenu.Item
-            className="inspect-data-menu-item ask-ai"
-            key={"ask-ai"}
-            onSelect={(e) => {
-              e.preventDefault(); // prevents the dropdown from closing
-            }}>
-            <DropdownMenu.Label className="inspect-data-menu-label ask-ai">
-              <span className="codicon codicon-lightbulb" />
-              <span className="ask-ai-text">Fix with AI</span>
-            </DropdownMenu.Label>
-          </DropdownMenu.Item>
           {inspectItems.map((item) => (
             <InspectItem item={item} onSelected={onSelected} onHover={onHover} />
           ))}
-          {isOverMaxItems && !shouldShowAll && (
+          <DropdownMenu.Group className="inspect-data-menu-group">
+            {isOverMaxItems && !shouldShowAll && (
+              <DropdownMenu.Item
+                className="inspect-data-menu-item show-all inspector-button"
+                key={"show-all"}
+                onSelect={(e) => {
+                  setShouldShowAll(true);
+                  e.preventDefault(); // prevents the dropdown from closing
+                }}>
+                <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
+                  <span className="codicon codicon-plus" />
+                  <span className="inspector-button-text">Show all</span>
+                </DropdownMenu.Label>
+              </DropdownMenu.Item>
+            )}
             <DropdownMenu.Item
-              className="inspect-data-menu-item show-all"
-              key={"show-all"}
+              className="inspect-data-menu-item inspector-button"
+              key={"ask-ai"}
               onSelect={(e) => {
-                setShouldShowAll(true);
                 e.preventDefault(); // prevents the dropdown from closing
               }}>
-              <DropdownMenu.Label className="inspect-data-menu-label">Show all</DropdownMenu.Label>
+              <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
+                <span className="codicon codicon-lightbulb" />
+                <span className="inspector-button-text">Fix with AI</span>
+              </DropdownMenu.Label>
             </DropdownMenu.Item>
-          )}
+          </DropdownMenu.Group>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
