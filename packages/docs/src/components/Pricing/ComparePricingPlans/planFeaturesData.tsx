@@ -89,7 +89,7 @@ export const planFeaturesData = [
   { label: "Radon AI assistant",                      free: false, pro: true, team: true, enterprise: true },
   { label: "Multiple license management",             free: false, pro: false, team: true, enterprise: true },
   { label: "Centralized team billing",                free: false, pro: false, team: true, enterprise: true },
-  { label: "Insights Dashboard with usage stats",     free: false, pro: false, team: true, enterprise: true },
+  // { label: "Insights Dashboard with usage stats",     free: false, pro: false, team: true, enterprise: true },
   { label: "Usage-based pricing",                     free: false, pro: false, team: false, enterprise: true },
   { label: "Single sign-on for the Radon IDE Portal", free: false, pro: false, team: false, enterprise: true },
   { label: "Service-level Agreement (SLA)",           free: false, pro: false, team: false, enterprise: true },
