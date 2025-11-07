@@ -39,6 +39,10 @@ You will be able to add or remove simulators later using the device menu in the 
 In case the IDE cannot locate system images to use for the device, you will see an empty list when creating new emulator or simulator.
 Please follow the [simulators](/docs/guides/simulators) section to learn how to manage system versions of Android emulators or iOS simulators that the IDE can use.
 
+### Run on a physical device
+
+You may also run your application on a [physical Android device](/docs/guides/physical-devices.md) or use [Radon Connect](/docs/getting-started/connect-mode.md) to connect to an application already running on an external device.
+
 ## -sec-num- Decide on the location of the IDE panel
 
 The main extension panel can be presented as one of the editor tabs (which is the default behavior), in a standalone editor window, or as a side panel (in primary or secondary side panel location).
