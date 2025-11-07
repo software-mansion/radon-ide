@@ -41,7 +41,8 @@ Please follow the [simulators](/docs/guides/simulators) section to learn how to 
 
 ### Run on a physical device
 
-You may also run your application on a [physical Android device](/docs/guides/physical-devices.md) or use [Radon Connect](/docs/getting-started/connect-mode.md) to connect to an application already running on an external device.
+You may also run your application on a [physical Android device](/docs/guides/physical-devices.md)
+or use [Radon Connect](/docs/getting-started/connect-mode.md) to connect to an application that's already running on an external device.
 
 ## -sec-num- Decide on the location of the IDE panel
 
