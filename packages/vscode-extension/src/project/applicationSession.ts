@@ -712,9 +712,9 @@ export class ApplicationSession implements Disposable {
         stack.map(async (item) => {
           if (item.source?.fileName.startsWith("http") && this.debugSession) {
             try {
-              item.source = await this.debugSession?.findOriginalPosition(item.source);
+              item.source = await this.debugSession.findOriginalPosition(item.source);
             } catch (e) {
-              Logger.error("Error finding original source position for element", item, e);
+              Logger.error("Error finding original source position for stack item", item, e);
             }
           }
         })
