@@ -27,6 +27,7 @@ import {
   DevicePlatform,
   DeviceRotation,
   DeviceType,
+  initialApplicationSessionState,
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
   NavigationHistoryItem,
@@ -212,6 +213,7 @@ export class ApplicationSession implements Disposable {
     private readonly packageNameOrBundleId: string,
     private readonly supportedOrientations: DeviceRotation[]
   ) {
+    this.stateManager.updateState(initialApplicationSessionState);
     this.registerMetroListeners();
     this.networkBridge = new NetworkBridge();
 
