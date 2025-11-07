@@ -753,7 +753,7 @@ export class ApplicationSession implements Disposable {
 
       if (sourceInfo.fileName.startsWith("http") && this.debugSession) {
         try {
-          const symbolicated = await this.debugSession?.findOriginalPosition(sourceInfo);
+          const symbolicated = await this.debugSession.findOriginalPosition(sourceInfo);
           payload.value.source = {
             fileName: symbolicated.fileName,
             lineNumber: symbolicated.line0Based,
