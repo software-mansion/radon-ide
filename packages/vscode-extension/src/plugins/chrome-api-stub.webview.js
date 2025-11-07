@@ -49,6 +49,9 @@ window.chrome = {
     inspectedWindow: {
       // NOTE: hardcoded tabId, since we don't care about supporting multiple inspected targets at this point
       tabId: 1,
+      getResources(cb) {
+        cb([{ url: "" }]);
+      },
     },
     network: {
       onNavigated: eventsStub,
