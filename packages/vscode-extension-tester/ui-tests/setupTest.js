@@ -51,11 +51,11 @@ before(async function () {
 
   const radonViewsService = initServices(driver).radonViewsService;
 
+  await radonViewsService.activateRadonIDELicense();
+  await driver.switchTo().defaultContent();
   if (IS_RECORDING) {
     recorder = startRecording(driver, { interval: 100 });
   }
-  await driver.switchTo().defaultContent();
-  await radonViewsService.activateRadonIDELicense();
 });
 
 afterEach(async function () {

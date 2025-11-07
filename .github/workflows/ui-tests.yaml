@@ -24,6 +24,7 @@ on:
           - "react-native-80"
           - "react-native-81"
           - "react-native-82"
+          - "react-native-81-additional-libs"
           - "expo-51"
           - "expo-52-prebuild-with-plugins"
           - "expo-53"
@@ -108,14 +109,6 @@ jobs:
       - name: Enforce HTTPS for submodules
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
-      # - name: Cache npm (extension)
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/.npm
-      #     key: ${{ runner.os }}-node-${{ hashFiles('packages/vscode-extension/package-lock.json') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-node-
-
       - name: Add Homebrew to PATH
         run: echo "/opt/homebrew/bin" >> $GITHUB_PATH
 
@@ -142,14 +135,6 @@ jobs:
       - name: Install dependencies (extension)
         run: npm ci
         working-directory: packages/vscode-extension
-
-      # - name: Cache npm (tester)
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ~/.npm
-      #     key: ${{ runner.os }}-node-${{ hashFiles('packages/vscode-extension-tester/package-lock.json') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-node-
 
       - name: Install dependencies (tester)
         run: npm ci
