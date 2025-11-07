@@ -29,14 +29,8 @@ function findTreeEntryPoint(store: Store, element: DevtoolsElement): DevtoolsEle
   return null;
 }
 
-function hasHocDescriptors(element: DevtoolsElement): element is DevtoolsElement & {
-  hocDisplayNames: NonNullable<DevtoolsElement["hocDisplayNames"]>;
-} {
-  return !!element?.hocDisplayNames?.length;
-}
-
 function printHocDescriptors(element: DevtoolsElement): string {
-  return hasHocDescriptors(element) ? `\u0020[${element.hocDisplayNames.join(", ")}]` : "";
+  return element?.hocDisplayNames?.length ? `\u0020[${element.hocDisplayNames.join(", ")}]` : "";
 }
 
 function printTextContent(indent: string, payload: InspectElementFullData): string {
