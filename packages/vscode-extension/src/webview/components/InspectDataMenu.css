@@ -93,7 +93,7 @@
   align-items: center;
   justify-content: center;
 
-  padding: 2px 7px;
+  padding: 2px 5px;
   margin: 1px 0;
   position: relative;
   user-select: none;
@@ -104,12 +104,17 @@
   border: 1px solid #555;
   background-color: #444;
 
-  transition: all 500ms;
+  transition: all 100ms;
 }
 
 .inspect-data-menu-item.ask-ai:hover {
   border-color: #666;
   background-color: #555;
+}
+
+.inspect-data-menu-item.ask-ai:active {
+  border-color: #505050;
+  background-color: #404040;
 }
 
 .inspect-data-menu-label.ask-ai {
@@ -126,8 +131,9 @@
 
 .inspect-data-menu-label > .codicon {
   font-size: clamp(4px, 6vw, 14px);
+  margin-top: 1px; /* The lightbulb icon seems misaligned by 1px */
 }
 
 .inspect-data-menu-label > .ask-ai-text {
-  margin: 0 2px;
+  margin: 0 4px;
 }
