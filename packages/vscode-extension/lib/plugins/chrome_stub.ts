@@ -1,21 +1,9 @@
 import { PluginMessageBridge } from "./PluginMessageBridge";
 
-interface ConnectOptions {
-  name: string;
-}
-
-export function createChromeStub() {
+export function createChromeStub(extensionId: string) {
   const runtime = {
-    connect(...args: [string, ConnectOptions] | [ConnectOptions]) {
-      let extensionId: string | undefined;
-      let options: ConnectOptions;
-      if (args.length === 1) {
-        options = args[0];
-      } else {
-        extensionId = args[0];
-        options = args[1];
-      }
-
+    id: "chrome-stub-runtime",
+    connect() {
       const bridge = new PluginMessageBridge(extensionId);
       global.__RNIDE_register_dev_plugin(extensionId);
 

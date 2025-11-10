@@ -185,6 +185,12 @@ function transformWrapper({ filename, src, ...rest }) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}");`;
     }
   } else if (
+    isTransforming("node_modules/@apollo/client/index") ||
+    isTransforming("node_modules/@apollo/client/main") ||
+    isTransforming("node_modules/@apollo/client/apollo-client")
+  ) {
+    src = `require("__RNIDE_lib__/plugins/apollo-client-devtools.js");\n${src}`;
+  } else if (
     isTransforming("node_modules/@tanstack/react-query/src/index.ts") ||
     isTransforming("node_modules/@tanstack/react-query/build/lib/index") ||
     isTransforming("node_modules/@tanstack/react-query/build/legacy/index") ||

@@ -22,8 +22,11 @@ export function setup() {
 
   const messageBridge = new PluginMessageBridge("network");
   const responseBuffer = new AsyncBoundedResponseBuffer();
-
   fetchInterceptor.enableFetchInterceptor(messageBridge);
+
+  // Clear any stored messages on the extension end on setup
+  messageBridge.sendMessage("ide-message", JSON.stringify({ method: "IDE.clearStoredMessages", params: {} }));
+
 
   let enabled = false;
   messageBridge.addMessageListener("cdp-message", (message) => {

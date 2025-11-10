@@ -189,7 +189,7 @@ function SelectProPlan() {
           className="continue-button"
           onClick={handleContinue}
           disabled={isLoadingPrices || !prices}>
-          Continue
+          Try Free
         </Button>
       </div>
     </>

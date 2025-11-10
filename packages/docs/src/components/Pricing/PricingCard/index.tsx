@@ -1,19 +1,59 @@
 import React from "react";
 import styles from "./styles.module.css";
 import clsx from "clsx";
+import PricingCardLabel from "../PricingCard/PricingCardLabel";
+import PricingButton from "../ComparePricingPlans/PricingButton";
+import { PricingPlanCardProps, PlanType } from "../PricingPlansList";
+import PricingFeaturesList from "../PricingPlansList/PricingFeaturesList";
 
 interface PricingCardProps {
-  children: React.ReactNode;
-  bold?: boolean;
+  planData?: PricingPlanCardProps;
+  isMonthly?: boolean;
+  onButtonClick?: (planId: PlanType) => void;
+  children?: React.ReactNode;
 }
 
-function PricingCard({ children, bold }: PricingCardProps) {
+const PlanHeaders: Record<PlanType, string> = {
+  FREE: "",
+  PRO: "All the Free features, plus:",
+  TEAM: "Development & Testing - All Pro features",
+  ENTERPRISE: "All the Team features, plus:",
+};
+
+function PricingCard({ planData, isMonthly, onButtonClick, children }: PricingCardProps) {
+  const { plan, stylingFilled, buttonLabel, featuresAll, featuresTeamManagement, featuresSupport } =
+    planData;
+
+  const isProPlan = plan === "PRO";
+  const headerText = PlanHeaders[plan];
+
   return (
-    <li className={styles.item}>
-      <div className={clsx(styles.plan__container, bold && styles.plan__container__bold)}>
-        {children}
+    <div className={isProPlan ? styles.proCardContainer : styles.pricingCardContainer}>
+      <PricingCardLabel planData={planData} isMonthly={isMonthly}>
+        <PricingButton stylingFilled={stylingFilled} onClick={() => onButtonClick(plan)}>
+          {buttonLabel}
+        </PricingButton>
+      </PricingCardLabel>
+      <div className={clsx(styles.cardMain, isProPlan && styles.proCardBorder)}>
+        <div className={styles.cardFeatures}>
+          {headerText && <p>{headerText}</p>}
+          <PricingFeaturesList featuresList={featuresAll} plan={plan} />
+        </div>
+        {featuresSupport && (
+          <div className={styles.cardFeatures}>
+            <p>Support & Updates</p>
+            <PricingFeaturesList featuresList={featuresSupport} />
+          </div>
+        )}
+        {featuresTeamManagement && (
+          <div className={styles.cardFeatures}>
+            <p>Team Management</p>
+            <PricingFeaturesList featuresList={featuresTeamManagement} />
+          </div>
+        )}
       </div>
-    </li>
+      {children}
+    </div>
   );
 }
 
