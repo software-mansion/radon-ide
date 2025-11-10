@@ -2,6 +2,7 @@ import { Disposable } from "vscode";
 import { throttle } from "lodash";
 import { RadonInspectorBridge } from "./inspectorBridge";
 import { DeviceBase } from "../devices/DeviceBase";
+import { AndroidPhysicalDevice } from "../devices/AndroidPhysicalDevice";
 import { Logger } from "../Logger";
 import {
   BuildError,
@@ -129,6 +130,16 @@ export class DeviceSession implements Disposable {
       })
     );
 
+    if (device instanceof AndroidPhysicalDevice) {
+      this.disposables.push(
+        device.onDeviceReconnected(() => {
+          this.handleDeviceReconnection().catch((error) => {
+            Logger.error("Failed to handle device reconnection", error);
+          });
+        })
+      );
+    }
+
     this.disposables.push(
       this.deviceSettingsStateManager.onSetState(async (partialState) => {
         const deviceSettings = this.deviceSettingsStateManager.getState();
@@ -214,6 +225,80 @@ export class DeviceSession implements Disposable {
     const licenseToken = await getLicenseToken();
     const previewURL = await this.device.startPreview(licenseToken);
     this.stateManager.updateState({ previewURL });
+  }
+
+  private async handleDeviceReconnection() {
+    Logger.info("Handling physical Android device reconnection");
+
+    const canRecover =
+      this.state.status === "running" ||
+      (this.state.status === "fatalError" && this.state.error?.kind === "preview");
+
+    if (!canRecover) {
+      Logger.debug("Device session not in recoverable state, ignoring reconnection");
+      return;
+    }
+
+    try {
+      this.resetStartingState(StartupMessage.WaitingForAppToLoad);
+
+      if (this.device instanceof AndroidPhysicalDevice && this.metro) {
+        await this.device.recoverConnectionAfterReconnect(this.metro.port, this.devtoolsServer?.port);
+      }
+
+      await this.startPreview();
+
+      if (this.applicationSession) {
+        try {
+          Logger.info("Reactivating existing application session after reconnection");
+          await this.applicationSession.activate();
+        } catch (error) {
+          Logger.debug("Failed to reactivate application session, will trigger reload", error);
+          this.applicationSession.dispose();
+          this.applicationSession = undefined;
+        }
+      }
+
+      if (this.metro) {
+        Logger.info("Triggering app reload after device reconnection");
+        await this.metro.reload();
+      }
+
+      if (!this.applicationSession) {
+        Logger.info("Waiting for app to reconnect after device reconnection");
+        const cancelToken = new CancelToken();
+        const timeout = setTimeout(() => {
+          Logger.warn("App did not reconnect within timeout, continuing anyway");
+          cancelToken.cancel();
+        }, 10000);
+
+        try {
+          await this.launchApp(cancelToken);
+        } catch (error) {
+          if (!(error instanceof CancelError)) {
+            throw error;
+          }
+        } finally {
+          clearTimeout(timeout);
+        }
+      } else {
+        this.stateManager.updateState({
+          status: "running",
+        });
+      }
+
+      Logger.info("Successfully recovered from device reconnection");
+    } catch (error) {
+      Logger.error("Failed to recover from device reconnection", error);
+      this.stateManager.updateState({
+        status: "fatalError",
+        error: {
+          kind: "preview",
+          message: (error as Error).message,
+          reason: (error as PreviewError)?.reason || null,
+        },
+      });
+    }
   }
 
   private async isBuildStale(build: BuildResult) {
