@@ -1,5 +1,5 @@
 import path from "path";
-import { promises } from "fs";
+import { workspace, Uri } from "vscode";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 
@@ -21,8 +21,9 @@ const CACHE_DURATION_MS = 5 * 24 * 60 * 60 * 1000;
 async function readCacheFile(): Promise<CacheFile | null> {
   try {
     const filePath = path.join(extensionContext.globalStorageUri.fsPath, DEVICE_MODELS_FILENAME);
-    const file = await promises.readFile(filePath, "utf-8");
-    const json = JSON.parse(file) as CacheFile;
+    const fileUri = Uri.file(filePath);
+    const file = await workspace.fs.readFile(fileUri);
+    const json = JSON.parse(file.toString()) as CacheFile;
     return json;
   } catch (error) {
     if ((error as NodeJS.ErrnoException)?.code === "ENOENT") {
@@ -41,8 +42,11 @@ async function writeCacheFile(data: DeviceModels): Promise<void> {
       savedAt: Date.now(),
       data: data,
     };
-    await promises.mkdir(path.dirname(filePath), { recursive: true });
-    await promises.writeFile(filePath, JSON.stringify(contents), "utf-8");
+    await workspace.fs.createDirectory(Uri.file(path.dirname(filePath)));
+    await workspace.fs.writeFile(
+      Uri.file(filePath),
+      Buffer.from(JSON.stringify(contents), "utf-8")
+    );
     return;
   } catch (error) {
     Logger.error(`Error writing device models cache file: ${(error as Error).message}`);
