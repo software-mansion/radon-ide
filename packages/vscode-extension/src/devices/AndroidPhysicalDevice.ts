@@ -91,6 +91,41 @@ async function getPhysicalScreenDimensions(
   };
 }
 
+async function getAndroidVersion(serial: string): Promise<string | undefined> {
+  const { stdout } = await exec(ADB_PATH, [
+    "-s",
+    serial,
+    "shell",
+    "getprop",
+    "ro.build.version.release",
+  ]);
+  const version = stdout.trim();
+  return version.length > 0 ? version : undefined;
+}
+
+async function getApiLevel(serial: string): Promise<string | undefined> {
+  const { stdout } = await exec(ADB_PATH, [
+    "-s",
+    serial,
+    "shell",
+    "getprop",
+    "ro.build.version.sdk",
+  ]);
+  const apiLevel = stdout.trim();
+  return apiLevel.length > 0 ? apiLevel : undefined;
+}
+
+async function getDisplayName(props: Record<string, string>): Promise<string> {
+  const deviceData = await getClosestDeviceModel(props["model"]);
+  const deviceBrand = deviceData ? deviceData.brand : props["device"];
+  const deviceModel = deviceData ? deviceData.name : props["model"];
+
+  // To avoid things like "Samsung Samsung Galaxy..."
+  const brandRegex = /^${deviceBrand}$/m;
+  const isBrandInModel = brandRegex.test(deviceModel.split(" ")[0]);
+  return `${!isBrandInModel ? deviceBrand + " " : ""}${deviceModel}`;
+}
+
 export async function listConnectedDevices(): Promise<AndroidPhysicalDeviceInfo[]> {
   const { stdout } = await exec(ADB_PATH, ["devices", "-l"]);
   const devices = (
@@ -116,31 +151,9 @@ export async function listConnectedDevices(): Promise<AndroidPhysicalDeviceInfo[
           if (!screenDimensions) {
             return undefined;
           }
-
-          const androidVersion = await exec(ADB_PATH, [
-            "-s",
-            serial,
-            "shell",
-            "getprop",
-            "ro.build.version.release",
-          ]).then((res) => res.stdout.trim());
-
-          const apiLevel = await exec(ADB_PATH, [
-            "-s",
-            serial,
-            "shell",
-            "getprop",
-            "ro.build.version.sdk",
-          ]).then((res) => res.stdout.trim());
-
-          const deviceInfo = await getClosestDeviceModel(props["model"]);
-          const deviceBrand = deviceInfo ? deviceInfo.brand : props["device"];
-          const deviceModel = deviceInfo ? deviceInfo.name : props["model"];
-
-          // To avoid things like "Samsung Samsung Galaxy..."
-          const brandRegex = new RegExp(`^${deviceBrand}$`, "m");
-          const isBrandInModel = brandRegex.test(deviceModel.split(" ")[0]);
-          const deviceName = `${!isBrandInModel ? deviceBrand + " " : ""}${deviceModel}`;
+          const androidVersion = await getAndroidVersion(serial);
+          const apiLevel = await getApiLevel(serial);
+          const deviceName = await getDisplayName(props);
 
           return {
             id: serial,

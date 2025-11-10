@@ -25,7 +25,11 @@ async function readCacheFile(): Promise<CacheFile | null> {
     const json = JSON.parse(file) as CacheFile;
     return json;
   } catch (error) {
-    Logger.warn(`Failed to read device models cache file: ${(error as Error).message}`);
+    if ((error as NodeJS.ErrnoException)?.code === "ENOENT") {
+      Logger.info("Device models cache file does not exist, a new one will be created");
+      return null;
+    }
+    Logger.error(`Error reading device models cache file: ${(error as Error).message}`);
     return null;
   }
 }
@@ -41,29 +45,34 @@ async function writeCacheFile(data: DeviceModels): Promise<void> {
     await promises.writeFile(filePath, JSON.stringify(contents), "utf-8");
     return;
   } catch (error) {
-    Logger.warn(`Failed to write device models cache file: ${(error as Error).message}`);
+    Logger.error(`Error writing device models cache file: ${(error as Error).message}`);
   }
 }
 
-export async function getDeviceModels(): Promise<DeviceModels> {
-  const file = await readCacheFile();
-  const now = Date.now();
-  if (file && file.data && now - file.savedAt < CACHE_DURATION_MS) {
-    return file.data;
-  }
+async function fetchDeviceModels(): Promise<DeviceModels> {
   try {
     const response = await fetch(DEVICE_MODELS_URL);
     const json = await response.json();
-    await writeCacheFile(json);
     return json;
   } catch (error) {
-    Logger.warn(`Failed to fetch device models: ${(error as Error).message}`);
+    Logger.error(`Error fetching device models: ${(error as Error).message}`);
     return {};
   }
 }
 
+export async function getDeviceModels(noRefetchIfPresent?: string): Promise<DeviceModels> {
+  const file = await readCacheFile();
+  const now = Date.now();
+  if (file && now - file.savedAt < CACHE_DURATION_MS && file.data[noRefetchIfPresent ?? ""]) {
+    return file.data;
+  }
+  const json = await fetchDeviceModels();
+  await writeCacheFile(json);
+  return json;
+}
+
 export async function getClosestDeviceModel(modelId: string): Promise<DeviceModel | null> {
-  const devices = await getDeviceModels();
+  const devices = await getDeviceModels(modelId);
   if (devices[modelId]) {
     return devices[modelId];
   }
