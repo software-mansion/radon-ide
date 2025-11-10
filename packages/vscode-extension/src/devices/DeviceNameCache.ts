@@ -1,3 +1,6 @@
+import path from "path";
+import { promises } from "fs";
+import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 
 type DeviceModel = {
@@ -6,30 +9,55 @@ type DeviceModel = {
 };
 type DeviceModels = Record<string, DeviceModel>;
 
-const DEVICE_MODELS_URL = "https://cdn.jsdelivr.net/gh/bsthen/device-models/devices.json";
-const CACHE_DURATION_MS = 24 * 60 * 60 * 1000;
+type CacheFile = {
+  savedAt: number;
+  data: DeviceModels;
+};
 
-let cachedPromise: Promise<DeviceModels> | null = null;
-let cachedAt = 0;
+const DEVICE_MODELS_URL = "https://cdn.jsdelivr.net/gh/bsthen/device-models/devices.json";
+const DEVICE_MODELS_FILENAME = "RNIDE_device_models.json";
+const CACHE_DURATION_MS = 5 * 24 * 60 * 60 * 1000;
+
+async function readCacheFile(): Promise<CacheFile | null> {
+  try {
+    const filePath = path.join(extensionContext.globalStorageUri.fsPath, DEVICE_MODELS_FILENAME);
+    const file = await promises.readFile(filePath, "utf-8");
+    const json = JSON.parse(file) as CacheFile;
+    return json;
+  } catch (error) {
+    Logger.warn(`Failed to read device models cache file: ${(error as Error).message}`);
+    return null;
+  }
+}
+
+async function writeCacheFile(data: DeviceModels): Promise<void> {
+  try {
+    const filePath = path.join(extensionContext.globalStorageUri.fsPath, DEVICE_MODELS_FILENAME);
+    const contents = {
+      savedAt: Date.now(),
+      data: data,
+    };
+    await promises.mkdir(path.dirname(filePath), { recursive: true });
+    await promises.writeFile(filePath, JSON.stringify(contents), "utf-8");
+    return;
+  } catch (error) {
+    Logger.warn(`Failed to write device models cache file: ${(error as Error).message}`);
+  }
+}
 
 export async function getDeviceModels(): Promise<DeviceModels> {
+  const file = await readCacheFile();
   const now = Date.now();
-  if (cachedPromise && now - cachedAt < CACHE_DURATION_MS) {
-    return cachedPromise;
+  if (file && file.data && now - file.savedAt < CACHE_DURATION_MS) {
+    return file.data;
   }
-
   try {
     const response = await fetch(DEVICE_MODELS_URL);
-    if (!response.ok) {
-      Logger.warn(`Failed to fetch device models: ${response.statusText}`);
-      return {};
-    }
-    const json = (await response.json()) as DeviceModels;
-    cachedPromise = Promise.resolve(json ?? {});
-    cachedAt = now;
-    return cachedPromise;
+    const json = await response.json();
+    await writeCacheFile(json);
+    return json;
   } catch (error) {
-    Logger.error(`Error fetching device models: ${(error as Error).message}`);
+    Logger.warn(`Failed to fetch device models: ${(error as Error).message}`);
     return {};
   }
 }
