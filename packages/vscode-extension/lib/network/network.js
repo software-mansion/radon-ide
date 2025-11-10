@@ -10,8 +10,6 @@ const {
 
 const fetchInterceptor = require("./fetchInterceptor");
 
-
-
 let setupCompleted = false;
 
 export function setup() {
@@ -22,7 +20,7 @@ export function setup() {
 
   const messageBridge = new PluginMessageBridge("network");
   const responseBuffer = new AsyncBoundedResponseBuffer();
-  fetchInterceptor.enableFetchInterceptor(messageBridge);
+  fetchInterceptor.enableFetchInterceptor(messageBridge, responseBuffer);
 
   // Clear any stored messages on the extension end on setup
   messageBridge.sendMessage("ide-message", JSON.stringify({ method: "IDE.clearStoredMessages", params: {} }));
@@ -122,8 +120,8 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
       sendCDPMessage("Network.requestWillBeSent", {
         requestId: requestId,
         loaderId,
-        timestamp: sendTime / 1000,
-        wallTime: Math.floor(Date.now() / 1000),
+        timestamp: sendTime,
+        wallTime: Math.floor(Date.now()),
         request: {
           url: xhr._url,
           method: xhr._method,
@@ -140,7 +138,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         try {
           sendCDPMessage("Network.loadingFailed", {
             requestId: requestId,
-            timestamp: Date.now() / 1000,
+            timestamp: Date.now(),
             type: "XHR",
             errorText: "Aborted",
             canceled: true,
@@ -153,7 +151,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         try {
           sendCDPMessage("Network.loadingFailed", {
             requestId: requestId,
-            timestamp: Date.now() / 1000,
+            timestamp: Date.now(),
             type: "XHR",
             errorText: "Failed",
             cancelled: false,
@@ -176,11 +174,12 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         }
 
         try {
+          console.log(xhr)
           const mimeType = mimeTypeFromResponseType(xhr.responseType);
           sendCDPMessage("Network.responseReceived", {
             requestId: requestId,
             loaderId,
-            timestamp: Date.now() / 1000,
+            timestamp: Date.now(),
             ttfb,
             type: "XHR",
             response: {
@@ -190,7 +189,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
               statusText: xhr.statusText,
               headers: xhr.responseHeaders,
               mimeType: mimeType,
-              data: deserializeRequestData(data, mimeType),
+              // data: deserializeRequestData(data, mimeType),
             },
           });
         } catch (error) {}
@@ -208,7 +207,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         try {
           sendCDPMessage("Network.loadingFinished", {
             requestId: requestId,
-            timestamp: Date.now() / 1000,
+            timestamp: Date.now(),
             duration: Date.now() - sendTime,
             encodedDataLength: xhr._response?.size || xhr._response?.length, // when response is blob, we use size, and length otherwise
           });

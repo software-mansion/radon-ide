@@ -28,6 +28,14 @@ export const ContentTypeHeader = {
   LowerCase: "content-type",
 } as const;
 
+export type BlobLikeResponse = {
+  size: number;
+  type: string;
+  blobId: number;
+  name: string;
+  offset: number;
+}
+
 interface SerializedTypedArray {
   length: number;
   [key: number]: number;
