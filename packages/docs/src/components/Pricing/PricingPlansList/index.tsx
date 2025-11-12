@@ -19,9 +19,8 @@ export interface PricingPlanCardProps {
   plan: PlanType;
   price: {
     monthly: number | string;
-    yearly: number | string;
+    yearlyPerMonth: number | string;
   };
-  yearlyFullPrice?: number | string;
   label: string;
   buttonLabel: string;
   stylingFilled: boolean;
