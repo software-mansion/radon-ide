@@ -84,7 +84,7 @@ export class AndroidPhysicalDevice extends AndroidDevice {
     try {
       await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
       Logger.info(`Re-established adb reverse for metro port ${metroPort}`);
-      
+
       if (devtoolsPort !== undefined) {
         await exec(ADB_PATH, [
           "-s",

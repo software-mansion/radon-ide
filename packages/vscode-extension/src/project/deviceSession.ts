@@ -240,10 +240,13 @@ export class DeviceSession implements Disposable {
     }
 
     try {
-      this.resetStartingState(StartupMessage.WaitingForAppToLoad);
+      this.resetStartingState();
 
       if (this.device instanceof AndroidPhysicalDevice && this.metro) {
-        await this.device.recoverConnectionAfterReconnect(this.metro.port, this.devtoolsServer?.port);
+        await this.device.recoverConnectionAfterReconnect(
+          this.metro.port,
+          this.devtoolsServer?.port
+        );
       }
 
       await this.startPreview();
@@ -252,39 +255,18 @@ export class DeviceSession implements Disposable {
         try {
           Logger.info("Reactivating existing application session after reconnection");
           await this.applicationSession.activate();
+          this.stateManager.updateState({
+            status: "running",
+          });
         } catch (error) {
           Logger.debug("Failed to reactivate application session, will trigger reload", error);
           this.applicationSession.dispose();
           this.applicationSession = undefined;
         }
-      }
-
-      if (this.metro) {
-        Logger.info("Triggering app reload after device reconnection");
-        await this.metro.reload();
-      }
-
-      if (!this.applicationSession) {
-        Logger.info("Waiting for app to reconnect after device reconnection");
-        const cancelToken = new CancelToken();
-        const timeout = setTimeout(() => {
-          Logger.warn("App did not reconnect within timeout, continuing anyway");
-          cancelToken.cancel();
-        }, 10000);
-
-        try {
-          await this.launchApp(cancelToken);
-        } catch (error) {
-          if (!(error instanceof CancelError)) {
-            throw error;
-          }
-        } finally {
-          clearTimeout(timeout);
-        }
       } else {
-        this.stateManager.updateState({
-          status: "running",
-        });
+        Logger.info("Relaunching application after device reconnection");
+        const cancelToken = this.cancelToken;
+        await this.launchApp(cancelToken);
       }
 
       Logger.info("Successfully recovered from device reconnection");
