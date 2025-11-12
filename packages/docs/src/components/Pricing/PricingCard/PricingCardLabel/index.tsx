@@ -9,14 +9,13 @@ interface PricingCardLabelProps {
 }
 
 export default function PricingCardLabel({ planData, isMonthly, children }: PricingCardLabelProps) {
-  const { price, plan, label, yearlyFullPrice } = planData;
-  const periodPrice = isMonthly ? price.monthly : price.yearly;
+  const { price, plan, label } = planData;
+  const periodPrice = isMonthly ? price.monthly : price.yearlyPerMonth;
   const isProPlan = plan === "PRO";
 
-  const perSeatText = plan === "TEAM" ? "per seat" : "";
-  const periodText = isMonthly ? `/month ` : `/year `;
+  const perSeatText = plan === "TEAM" ? " per seat" : "";
 
-  const showYearlyFullPrice = !isMonthly && yearlyFullPrice;
+  const showYearlyFullPrice = !isMonthly && price.yearlyPerMonth != 0;
 
   return (
     <div className={styles.container}>
@@ -35,8 +34,8 @@ export default function PricingCardLabel({ planData, isMonthly, children }: Pric
             <div className={styles.price}>
               <span>${periodPrice}</span>
               <div className={styles.period}>
-                {showYearlyFullPrice && <p className={styles.fullPrice}>${yearlyFullPrice}</p>}
-                <p>{`${periodText}${perSeatText}`}</p>
+                {showYearlyFullPrice && <p className={styles.fullPrice}>${price.monthly}</p>}
+                <p>{`/month${perSeatText}${showYearlyFullPrice ? ", billed annually" : ""}`}</p>
               </div>
             </div>
           ) : (

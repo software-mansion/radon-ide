@@ -21,7 +21,7 @@ export default function PricingPeriodButton({ isMonthly, setIsMonthly }: TimePer
         className={clsx(styles.btn, isMonthly ? "" : styles.active)}
         onClick={() => setIsMonthly(false)}>
         <p className={styles.yearlyContainer}>
-          Yearly<span className={styles.plan_pay_annually__discount}>(Save 17%)</span>
+          Yearly<span className={styles.plan_pay_annually__discount}>(Save 16%)</span>
         </p>
       </button>
     </div>

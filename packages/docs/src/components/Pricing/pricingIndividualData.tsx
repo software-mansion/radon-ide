@@ -3,8 +3,7 @@ import { PricingPlanCardProps } from "./PricingPlansList";
 export const pricingIndividualData: PricingPlanCardProps[] = [
   {
     plan: "FREE",
-    price: { monthly: 0, yearly: 0 },
-    yearlyFullPrice: "",
+    price: { monthly: 0, yearlyPerMonth: 0 },
     label: "For non-commercial use",
     buttonLabel: "Install",
     stylingFilled: false,
@@ -29,8 +28,7 @@ export const pricingIndividualData: PricingPlanCardProps[] = [
   },
   {
     plan: "PRO",
-    price: { monthly: 25, yearly: 250 },
-    yearlyFullPrice: 300,
+    price: { monthly: 25, yearlyPerMonth: 21 },
     label: "For professional developers",
     buttonLabel: "Start 14-day trial",
     stylingFilled: true,
