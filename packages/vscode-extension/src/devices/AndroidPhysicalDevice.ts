@@ -76,15 +76,12 @@ export class AndroidPhysicalDevice extends AndroidDevice {
   }
 
   public notifyDeviceReconnected() {
-    Logger.info(`Physical device reconnected: ${this.serial}`);
     this.deviceReconnectedEventEmitter.fire();
   }
 
   public async recoverConnectionAfterReconnect(metroPort: number, devtoolsPort?: number) {
     try {
       await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
-      Logger.info(`Re-established adb reverse for metro port ${metroPort}`);
-
       if (devtoolsPort !== undefined) {
         await exec(ADB_PATH, [
           "-s",
@@ -93,7 +90,6 @@ export class AndroidPhysicalDevice extends AndroidDevice {
           `tcp:${devtoolsPort}`,
           `tcp:${devtoolsPort}`,
         ]);
-        Logger.info(`Re-established adb reverse for devtools port ${devtoolsPort}`);
       }
     } catch (error) {
       Logger.error("Failed to re-establish adb reverse", error);

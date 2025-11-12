@@ -253,18 +253,15 @@ export class DeviceSession implements Disposable {
 
       if (this.applicationSession) {
         try {
-          Logger.info("Reactivating existing application session after reconnection");
           await this.applicationSession.activate();
           this.stateManager.updateState({
             status: "running",
           });
         } catch (error) {
-          Logger.debug("Failed to reactivate application session, will trigger reload", error);
           this.applicationSession.dispose();
           this.applicationSession = undefined;
         }
       } else {
-        Logger.info("Relaunching application after device reconnection");
         const cancelToken = this.cancelToken;
         await this.launchApp(cancelToken);
       }
