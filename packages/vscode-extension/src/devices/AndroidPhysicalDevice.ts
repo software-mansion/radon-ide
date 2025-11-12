@@ -121,9 +121,7 @@ async function getDisplayName(props: Record<string, string>): Promise<string> {
   const deviceModel = deviceData ? deviceData.name : props["model"];
 
   // To avoid things like "Samsung Samsung Galaxy..."
-  const brandRegex = /^${deviceBrand}$/m;
-  const isBrandInModel = brandRegex.test(deviceModel.split(" ")[0]);
-  return `${!isBrandInModel ? deviceBrand + " " : ""}${deviceModel}`;
+  return `${!deviceModel.startsWith(deviceBrand + " ") ? deviceBrand + " " : ""}${deviceModel}`;
 }
 
 export async function listConnectedDevices(): Promise<AndroidPhysicalDeviceInfo[]> {

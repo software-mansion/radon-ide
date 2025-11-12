@@ -1,4 +1,3 @@
-import path from "path";
 import { workspace, Uri } from "vscode";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
@@ -18,65 +17,71 @@ const DEVICE_MODELS_URL = "https://cdn.jsdelivr.net/gh/bsthen/device-models/devi
 const DEVICE_MODELS_FILENAME = "RNIDE_device_models.json";
 const CACHE_DURATION_MS = 5 * 24 * 60 * 60 * 1000;
 
+let fetchModelsPromise: Promise<DeviceModels | null> | null;
+
 async function readCacheFile(): Promise<CacheFile | null> {
   try {
-    const filePath = path.join(extensionContext.globalStorageUri.fsPath, DEVICE_MODELS_FILENAME);
-    const fileUri = Uri.file(filePath);
+    const fileUri = Uri.joinPath(extensionContext.globalStorageUri, DEVICE_MODELS_FILENAME);
     const file = await workspace.fs.readFile(fileUri);
     const json = JSON.parse(file.toString()) as CacheFile;
     return json;
   } catch (error) {
-    if ((error as NodeJS.ErrnoException)?.code === "ENOENT") {
-      Logger.info("Device models cache file does not exist, a new one will be created");
-      return null;
+    if ((error as NodeJS.ErrnoException)?.code !== "FileNotFound") {
+      Logger.error(`Error reading device models cache file: ${(error as Error).message}`);
     }
-    Logger.error(`Error reading device models cache file: ${(error as Error).message}`);
     return null;
   }
 }
 
 async function writeCacheFile(data: DeviceModels): Promise<void> {
   try {
-    const filePath = path.join(extensionContext.globalStorageUri.fsPath, DEVICE_MODELS_FILENAME);
+    const fileUri = Uri.joinPath(extensionContext.globalStorageUri, DEVICE_MODELS_FILENAME);
     const contents = {
       savedAt: Date.now(),
       data: data,
     };
-    await workspace.fs.createDirectory(Uri.file(path.dirname(filePath)));
-    await workspace.fs.writeFile(
-      Uri.file(filePath),
-      Buffer.from(JSON.stringify(contents), "utf-8")
-    );
+    await workspace.fs.createDirectory(extensionContext.globalStorageUri);
+    await workspace.fs.writeFile(fileUri, Buffer.from(JSON.stringify(contents), "utf-8"));
     return;
   } catch (error) {
     Logger.error(`Error writing device models cache file: ${(error as Error).message}`);
   }
 }
 
-async function fetchDeviceModels(): Promise<DeviceModels> {
+async function fetchDeviceModels(): Promise<DeviceModels | null> {
   try {
     const response = await fetch(DEVICE_MODELS_URL);
     const json = await response.json();
     return json;
   } catch (error) {
     Logger.error(`Error fetching device models: ${(error as Error).message}`);
-    return {};
+    return null;
   }
 }
 
-export async function getDeviceModels(noRefetchIfPresent?: string): Promise<DeviceModels> {
+async function getDeviceModels(noRefetchIfPresent?: string): Promise<DeviceModels | null> {
   const file = await readCacheFile();
   const now = Date.now();
   if (file && now - file.savedAt < CACHE_DURATION_MS && file.data[noRefetchIfPresent ?? ""]) {
     return file.data;
   }
-  const json = await fetchDeviceModels();
-  await writeCacheFile(json);
+  if (fetchModelsPromise) {
+    return await fetchModelsPromise;
+  }
+  fetchModelsPromise = fetchDeviceModels();
+  const json = await fetchModelsPromise;
+  if (json) {
+    await writeCacheFile(json);
+  }
+  fetchModelsPromise = null;
   return json;
 }
 
 export async function getClosestDeviceModel(modelId: string): Promise<DeviceModel | null> {
   const devices = await getDeviceModels(modelId);
+  if (!devices) {
+    return null;
+  }
   if (devices[modelId]) {
     return devices[modelId];
   }
