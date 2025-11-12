@@ -23,13 +23,18 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 8px;
+  gap: 10px;
 }
 
-.plan-name {
+.plan-name-container {
   display: flex;
   align-items: center;
   font-weight: 600;
   font-size: 16px;
+
+  .plan-name {
+    text-align: left;
+  }
 }
 
 .plan-saving {
@@ -44,16 +49,22 @@
   vertical-align: middle;
 }
 
-.plan-price {
+.plan-price-container {
   display: flex;
   align-items: center;
   font-weight: 500;
   font-size: 14px;
-}
+  justify-content: flex-end;
+  flex-wrap: wrap;
 
-.plan-price span {
-  font-weight: 700;
-  font-size: 18px;
+  .price {
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .per-month-year {
+    white-space: nowrap;
+  }
 }
 
 .plan-description {

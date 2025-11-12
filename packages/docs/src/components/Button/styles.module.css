@@ -1,12 +1,10 @@
 .button {
-  height: 50px;
-  padding: 8px;
+  height: 60px;
+  width: 100%;
+  padding: 16px;
 
   font-weight: 500;
   font-size: 18px;
-
-  color: var(--swm-off-white);
-  background-color: var(--swm-landing-button-purple);
 
   cursor: pointer;
   transition:
@@ -14,13 +12,13 @@
     color 0.3s;
 
   display: flex;
-  gap: 8px;
+  align-self: stretch;
   align-items: center;
   justify-content: center;
+  gap: 12px;
 
-  background-color: var(--swm-landing-button-green);
-  color: var(--swm-off-white);
-  border: 1px solid var(--swm-landing-button-green);
+  background-color: var(--radon-button);
+  color: var(--radon-button-text);
 }
 
 .disabled {
@@ -61,7 +59,7 @@ a.buttonLink:hover {
   }
   .button {
     height: auto;
-    font-size: 18px;
+    font-size: 16px;
   }
 }
 
@@ -69,39 +67,8 @@ a.buttonLink:hover {
   margin: 0 0 2px 0;
 }
 
-.button svg {
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.arrow {
-  transition: left 0.3s;
-}
-
-.arrow {
-  left: 8px;
-}
-
-.button svg {
-  transition: stroke 0.3s;
-}
-
-.button:hover .arrow {
-  left: 16px;
-}
-
-.button svg {
-  stroke: var(--swm-off-white);
-}
-
 .button:hover {
-  background-color: transparent;
-  color: var(--swm-landing-button-green);
-}
-
-.button:hover svg {
-  stroke: var(--swm-landing-button-green);
+  background-color: var(--radon-button-hover);
 }
 
 .arrow {

@@ -37,3 +37,20 @@ export interface ToolResult {
     tool_call_id: string;
   }[];
 }
+
+// Extracted from `react-devtools-shared/src/frontend/types`
+export type DevtoolsElement = {
+  id: number;
+  parentID: number;
+  children: Array<number>;
+  type: number;
+  displayName: string | null;
+  key: number | string | null;
+  hocDisplayNames: null | Array<string>;
+  isCollapsed: boolean;
+  ownerID: number;
+  depth: number;
+  weight: number;
+  isStrictModeNonCompliant: boolean;
+  compiledWithForget: boolean;
+};
