@@ -19,7 +19,7 @@ interface UpdateStateCommand extends EventBase {
   command: "RNIDE_update_state";
 }
 
-interface TestTestTestCommand extends EventBase {
+interface ChatRequestCommand extends EventBase {
   command: SIMMethod.AddContextToChat;
 }
 
@@ -40,9 +40,24 @@ interface UpdateStateArgs {
 type CallEvent = CallCommand & CallArgs;
 type GetStateEvent = GetStateCommand & GetStateArgs;
 type UpdateStateEvent = UpdateStateCommand & UpdateStateArgs;
-type TestTestTest = TestTestTestCommand;
+type ChatRequestEvent = ChatRequestCommand;
 
-export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent | TestTestTest;
+export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent | ChatRequestEvent;
+
+function handleChatFixRequest(message: ChatRequestEvent) {
+  commands
+    .executeCommand("copilot-chat.focus")
+    .then(() => {
+      return commands.executeCommand(
+        "workbench.action.chat.attachFile",
+        Uri.file("/Users/ignacylatka/dev/StickerSmash/app/bester.html")
+      );
+    })
+    .then(() => {
+      const prompt = `write two sum with test cases in javascript `;
+      return commands.executeCommand("workbench.action.chat.open", prompt);
+    });
+}
 
 export class WebviewController implements Disposable {
   private disposables: Disposable[] = [];
@@ -117,10 +132,7 @@ export class WebviewController implements Disposable {
         } else if (message.command === "RNIDE_update_state") {
           this.handleUpdateState(message);
         } else if (message.command === SIMMethod.AddContextToChat) {
-          console.log("RECEIVED CHAT PANEL TEST");
-          commands.executeCommand("workbench.action.chat.attachFile");
-          commands.executeCommand("copilot-chat.focus");
-          commands.executeCommand("workbench.panel.chat.view.copilot.toggleVisibility");
+          handleChatFixRequest(message);
         }
       },
       undefined,
