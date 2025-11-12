@@ -8,7 +8,7 @@ const defaultConfig = {
   // https://github.com/ReactiveCircus/android-emulator-runner/issues/350
   // https://github.com/utmapp/UTM/issues/6821
   // android tests can be run on a local machine with android studio installed
-  IS_ANDROID: true,
+  IS_ANDROID: false,
   IS_GITHUB_ACTIONS: false,
 };
 
