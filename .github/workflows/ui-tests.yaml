@@ -38,7 +38,7 @@ on:
           # - "nx-monorepo"
           # - "pnpm-monorepo"
       isAndroid:
-        description: Whether the test app is for Android
+        description: Whether to run tests on Android device
         type: boolean
         required: false
         default: "false"

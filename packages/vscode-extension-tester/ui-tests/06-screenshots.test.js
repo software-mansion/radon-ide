@@ -1,6 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
-import { WebView, Key, By, BottomBarPanel } from "vscode-extension-tester";
+import { WebView, Key, By } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { validateImage, validateVideo } from "../utils/imageProcessing.js";
 import { get } from "./setupTest.js";
