@@ -34,12 +34,6 @@ export const NETWORK_TYPES = Object.values(NetworkType);
 
 export type CDPDomainCall = NetworkEvent | NetworkMethod | NetworkType;
 
-// TODO: We currently have 2 separate completely unrelated systems for handling webview messages:
-//       - One for Network inspector webview
-//       - One for Simulator webview
-//       Would be great to remove the latter in favour of the former, and unify the two systems.
-
-// Network inspector webview
 export enum IDEMethod {
   FetchFullResponseBody = "IDE.fetchFullResponseBody",
   GetResponseBodyData = "IDE.getResponseBodyData",
