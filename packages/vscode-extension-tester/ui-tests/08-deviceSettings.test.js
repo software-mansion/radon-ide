@@ -87,23 +87,62 @@ describe("8 - Device Settings", () => {
       "coordinates-input"
     );
     await locationInput.clear();
-    await locationInput.sendKeys("0.0, 0.0", Key.ENTER);
+    await locationInput.sendKeys("1.5 N 1.5 E", Key.ENTER);
     await elementHelperService.findAndClickElementByTag("modal-close-button");
     await driver.wait(async () => {
-      location = await appManipulationService.sendMessageAndWaitForResponse(
-        appWebsocket,
-        "getLocation"
-      );
-      console.log(location);
-      return false;
-    }, 100000);
-    location = await appManipulationService.sendMessageAndWaitForResponse(
-      appWebsocket,
-      "getLocation"
+      try {
+        const location =
+          await appManipulationService.sendMessageAndWaitForResponse(
+            appWebsocket,
+            "getLocation"
+          );
+        assert.approximately(location.value.latitude, 1.5, 0.1);
+        assert.approximately(location.value.longitude, 1.5, 0.1);
+        return true;
+      } catch {
+        return false;
+      }
+    }, 10000);
+  });
+
+  it("change location", async () => {
+    radonViewsService.openRadonDeviceSettingsMenu();
+    await elementHelperService.findAndClickElementByTag(
+      "device-settings-localization"
     );
-    console.log(location);
-    assert.approximately(location.value.latitude, 0.0, 0.1);
-    assert.approximately(location.value.longitude, 0.0, 0.1);
+    const input = await elementHelperService.findAndClickElementByTag(
+      "localization-search-input"
+    );
+    await input.sendKeys("Spanish", Key.ENTER);
+    await elementHelperService.findAndClickElementByTag(
+      "localization-tile-es_es"
+    );
+    await elementHelperService.findAndClickElementByTag(
+      "confirm-localization-change-button"
+    );
+
+    await elementHelperService.findAndWaitForElementByTag("startup-message");
+
+    await appManipulationService.waitForAppToLoad();
+
+    await driver.wait(async () => {
+      appWebsocket = get().appWebsocket;
+      return appWebsocket != null;
+    }, 5000);
+
+    await driver.wait(async () => {
+      try {
+        const localization =
+          await appManipulationService.sendMessageAndWaitForResponse(
+            appWebsocket,
+            "getLocalization"
+          );
+        assert.equal(localization.value.countryCode.toLowerCase(), "es");
+        return true;
+      } catch {
+        return false;
+      }
+    }, 10000);
   });
 
   // it("should toggle device frame", async () => {
