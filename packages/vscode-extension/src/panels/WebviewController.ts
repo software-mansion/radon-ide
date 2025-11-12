@@ -54,12 +54,14 @@ function handleChatFixRequest(message: ChatRequestEvent) {
     .then(() => {
       return commands.executeCommand(
         "workbench.action.chat.attachFile",
-        Uri.file("/Users/ignacylatka/dev/StickerSmash/app/bester.html")
+        Uri.file(message.filePaths[0])
       );
     })
     .then(() => {
-      const prompt = `write two sum with test cases in javascript `;
-      return commands.executeCommand("workbench.action.chat.open", prompt);
+      return commands.executeCommand(
+        "workbench.action.chat.attachFile",
+        Uri.file(message.filePaths[1])
+      );
     });
 }
 
