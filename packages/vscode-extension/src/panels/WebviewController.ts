@@ -49,20 +49,11 @@ type ChatRequestEvent = ChatRequestCommand & ChatRequestArgs;
 export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent | ChatRequestEvent;
 
 function handleChatFixRequest(message: ChatRequestEvent) {
-  commands
-    .executeCommand("copilot-chat.focus")
-    .then(() => {
-      return commands.executeCommand(
-        "workbench.action.chat.attachFile",
-        Uri.file(message.filePaths[0])
-      );
-    })
-    .then(() => {
-      return commands.executeCommand(
-        "workbench.action.chat.attachFile",
-        Uri.file(message.filePaths[1])
-      );
-    });
+  commands.executeCommand("copilot-chat.focus").then(async () => {
+    for (const filePath of message.filePaths) {
+      await commands.executeCommand("workbench.action.chat.attachFile", Uri.file(filePath));
+    }
+  });
 }
 
 export class WebviewController implements Disposable {
