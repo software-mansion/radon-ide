@@ -145,7 +145,7 @@ export function InspectDataMenu({
               }}>
               <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
                 <span className="codicon codicon-lightbulb" />
-                <span className="inspector-button-text">Fix with AI</span>
+                <span className="inspector-button-text">Ask in chat</span>
               </DropdownMenu.Label>
             </DropdownMenu.Item>
           </DropdownMenu.Group>
