@@ -5,7 +5,6 @@ import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 import { PanelLocation, RecursivePartial, State, StateSerializer } from "../common/State";
-import { SIMMethod } from "../network/types/panelMessageProtocol";
 
 type EventBase = Record<string, unknown>;
 
@@ -20,7 +19,7 @@ interface UpdateStateCommand extends EventBase {
 }
 
 interface ChatRequestCommand extends EventBase {
-  command: SIMMethod.ChatRequest;
+  command: "RNIDE_chatRequest";
 }
 
 interface CallArgs {
@@ -37,10 +36,15 @@ interface UpdateStateArgs {
   state: string;
 }
 
+interface ChatRequestArgs {
+  prompt: string;
+  filePaths: string[];
+}
+
 type CallEvent = CallCommand & CallArgs;
 type GetStateEvent = GetStateCommand & GetStateArgs;
 type UpdateStateEvent = UpdateStateCommand & UpdateStateArgs;
-type ChatRequestEvent = ChatRequestCommand;
+type ChatRequestEvent = ChatRequestCommand & ChatRequestArgs;
 
 export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent | ChatRequestEvent;
 
@@ -131,7 +135,7 @@ export class WebviewController implements Disposable {
           this.handleGetState(message);
         } else if (message.command === "RNIDE_update_state") {
           this.handleUpdateState(message);
-        } else if (message.command === SIMMethod.ChatRequest) {
+        } else if (message.command === "RNIDE_chatRequest") {
           handleChatFixRequest(message);
         }
       },

@@ -4,7 +4,6 @@ import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import "./InspectDataMenu.css";
 import { vscode } from "../utilities/vscode";
-import { SIMMessage, SIMMethod } from "../../network/types/panelMessageProtocol";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
@@ -133,12 +132,11 @@ export function InspectDataMenu({
               className="inspect-data-menu-item inspector-button"
               key={"ask-ai"}
               onSelect={(e) => {
-                const message: SIMMessage = {
-                  command: SIMMethod.ChatRequest,
-                  params: {
-                    prompt: "",
-                    filePaths: [],
-                  },
+                // Include component + where it's used. ([0] & [0].owner? Could require more if component is nested, likely can't cover all cases, but attaching everything isn't an option either)
+                const message = {
+                  command: "RNIDE_chatRequest",
+                  prompt: "Calculate 56 + 89",
+                  filePaths: [inspectItems[0].source.fileName, inspectItems[1].source.fileName],
                 };
 
                 console.log("POSTING CHAT PANEL TEST:", message);
