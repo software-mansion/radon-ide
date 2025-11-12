@@ -267,6 +267,9 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.rotateDeviceClockwise", rotateDeviceClockwise)
   );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.toggleDeviceAppearance", toggleDeviceAppearance)
+  );
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
   // When it does happen, we open the IDE panel and restart the app.
@@ -458,6 +461,13 @@ async function rotateDeviceAnticlockwise() {
 
 async function rotateDeviceClockwise() {
   await rotateDevice(DeviceRotationDirection.Clockwise);
+}
+
+async function toggleDeviceAppearance() {
+  const config = workspace.getConfiguration("RadonIDE");
+  const currentAppearance = config.get<"light" | "dark">("deviceSettings.appearance");
+  const newAppearance = currentAppearance === "light" ? "dark" : "light";
+  await config.update("deviceSettings.appearance", newAppearance, true);
 }
 
 async function openChat() {
