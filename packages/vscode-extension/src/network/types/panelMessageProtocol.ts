@@ -52,8 +52,18 @@ export enum IDEMethod {
 
 // Simulator webview
 export enum SIMMethod {
-  AddContextToChat = "IDE.addContextToChat",
+  ChatRequest = "IDE.chatRequest",
 }
+
+interface SIMChatRequestMessage {
+  command: SIMMethod.ChatRequest;
+  params: {
+    prompt: string;
+    filePaths: string[];
+  };
+}
+
+export type SIMMessage = SIMChatRequestMessage;
 
 export enum IDEType {
   Theme = "IDE.Theme",

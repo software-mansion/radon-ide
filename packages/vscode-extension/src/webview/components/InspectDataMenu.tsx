@@ -4,7 +4,7 @@ import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import "./InspectDataMenu.css";
 import { vscode } from "../utilities/vscode";
-import { SIMMethod } from "../../network/types/panelMessageProtocol";
+import { SIMMessage, SIMMethod } from "../../network/types/panelMessageProtocol";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
@@ -133,8 +133,12 @@ export function InspectDataMenu({
               className="inspect-data-menu-item inspector-button"
               key={"ask-ai"}
               onSelect={(e) => {
-                const message = {
-                  command: SIMMethod.AddContextToChat,
+                const message: SIMMessage = {
+                  command: SIMMethod.ChatRequest,
+                  params: {
+                    prompt: "",
+                    filePaths: [],
+                  },
                 };
 
                 console.log("POSTING CHAT PANEL TEST:", message);

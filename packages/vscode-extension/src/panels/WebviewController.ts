@@ -20,7 +20,7 @@ interface UpdateStateCommand extends EventBase {
 }
 
 interface ChatRequestCommand extends EventBase {
-  command: SIMMethod.AddContextToChat;
+  command: SIMMethod.ChatRequest;
 }
 
 interface CallArgs {
@@ -131,7 +131,7 @@ export class WebviewController implements Disposable {
           this.handleGetState(message);
         } else if (message.command === "RNIDE_update_state") {
           this.handleUpdateState(message);
-        } else if (message.command === SIMMethod.AddContextToChat) {
+        } else if (message.command === SIMMethod.ChatRequest) {
           handleChatFixRequest(message);
         }
       },
