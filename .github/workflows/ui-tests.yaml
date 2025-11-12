@@ -37,6 +37,11 @@ on:
           # - "expo-router"
           # - "nx-monorepo"
           # - "pnpm-monorepo"
+      isAndroid:
+        description: Whether the test app is for Android
+        type: boolean
+        required: false
+        default: "false"
       isRecording:
         description: Whether to record video
         type: boolean
@@ -54,6 +59,7 @@ on:
         description: vscode version to use (e.g. "1.99.1")
         required: true
         default: "latest"
+
   schedule:
     - cron: "27 1 * * *"
 
@@ -69,7 +75,7 @@ jobs:
       - id: set-matrix
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "matrix={\"include\":[{\"testApp\":\"${{ github.event.inputs.testApp }}\",\"node\":\"${{ github.event.inputs.node || '22' }}\",\"isRecording\":\"${{ github.event.inputs.isRecording }}\",\"testsToRun\":\"${{ github.event.inputs.testsToRun }}\",\"testsToExclude\":\"${{ github.event.inputs.testsToExclude }}\",\"codeVersion\":\"${{ github.event.inputs.VSCodeVersion || 'latest' }}\"}]}" >> $GITHUB_OUTPUT
+            echo "matrix={\"include\":[{\"testApp\":\"${{ github.event.inputs.testApp }}\",\"node\":\"${{ github.event.inputs.node || '22' }}\",\"isRecording\":\"${{ github.event.inputs.isRecording }}\",\"isAndroid\":\"${{ github.event.inputs.isAndroid }}\",\"testsToRun\":\"${{ github.event.inputs.testsToRun }}\",\"testsToExclude\":\"${{ github.event.inputs.testsToExclude }}\",\"codeVersion\":\"${{ github.event.inputs.VSCodeVersion || 'latest' }}\"}]}" >> $GITHUB_OUTPUT
           else
             MATRIX=$(jq -c . autorun_test_params.json)
             echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
@@ -168,6 +174,7 @@ jobs:
           PROJECT_NAME: ${{ matrix.testApp }}
           IS_RECORDING: ${{ matrix.isRecording }}
           CODE_VERSION: ${{ matrix.codeVersion }}
+          IS_ANDROID: ${{ matrix.isAndroid }}
           RADON_IDE_LICENSE_KEY: ${{ secrets.RADON_IDE_LICENSE_KEY }}
 
       - name: Upload test output artifact
