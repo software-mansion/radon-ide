@@ -38,30 +38,6 @@ class XHRNetworkInterceptor {
     this.networkProxy.sendMessage("cdp-message", JSON.stringify({ method, params }));
   }
 
-  public enable(networkProxy: NetworkProxy, responseBuffer: AsyncBoundedResponseBuffer): void {
-    if (this.enabled) {
-      return;
-    }
-
-    this.responseBuffer = responseBuffer;
-    this.networkProxy = networkProxy;
-    this.setupInterception();
-
-    this.enabled = true;
-  }
-
-  public disable(): void {
-    if (!this.enabled) {
-      return;
-    }
-
-    this.XHRInterceptor.disableInterception();
-    this.responseBuffer = undefined;
-    this.networkProxy = undefined;
-
-    this.enabled = false;
-  }
-
   // arrow function to preserve 'this' context
   private sendCallback = (data: unknown, xhr: ExtendedXMLHttpRequest): void => {
     try {
@@ -175,6 +151,30 @@ class XHRNetworkInterceptor {
     this.XHRInterceptor.disableInterception();
     this.XHRInterceptor.setSendCallback(this.sendCallback);
     this.XHRInterceptor.enableInterception();
+  }
+
+  public enable(networkProxy: NetworkProxy, responseBuffer: AsyncBoundedResponseBuffer): void {
+    if (this.enabled) {
+      return;
+    }
+
+    this.responseBuffer = responseBuffer;
+    this.networkProxy = networkProxy;
+    this.setupInterception();
+
+    this.enabled = true;
+  }
+
+  public disable(): void {
+    if (!this.enabled) {
+      return;
+    }
+
+    this.XHRInterceptor.disableInterception();
+    this.responseBuffer = undefined;
+    this.networkProxy = undefined;
+
+    this.enabled = false;
   }
 }
 
