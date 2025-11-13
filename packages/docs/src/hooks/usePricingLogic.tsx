@@ -19,7 +19,7 @@ const RADON_TEAM_YEARLY_PRICE_ID = isProduction
 export const usePricingLogic = () => {
   const paddle = usePaddle();
 
-  const [isMonthly, setIsMonthly] = useState(true);
+  const [isMonthly, setIsMonthly] = useState(false);
   const openRadonProCheckout = () => {
     paddle?.Checkout.open({
       items: [

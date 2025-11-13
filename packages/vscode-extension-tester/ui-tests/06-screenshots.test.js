@@ -29,9 +29,9 @@ describe("6 - screenshots tests", () => {
     } = initServices(driver));
 
     await managingDevicesService.deleteAllDevices();
+    await radonSettingsService.setEnableReplays(true);
     await managingDevicesService.addNewDevice("newDevice");
     await elementHelperService.findAndClickElementByTag("modal-close-button");
-    await radonSettingsService.setEnableReplays(true);
     view = new WebView();
     await view.switchBack();
   });

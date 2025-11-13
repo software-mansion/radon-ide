@@ -45,11 +45,17 @@ before(async function () {
   await workbench.executeCommand("View: Close All Editors");
 
   view = new WebView();
+
+  await workbench.executeCommand("Chat: Open Chat");
+  await workbench.executeCommand("View: Toggle Secondary Side Bar Visibility");
+
+  const radonViewsService = initServices(driver).radonViewsService;
+
+  await radonViewsService.activateRadonIDELicense();
+  await driver.switchTo().defaultContent();
   if (IS_RECORDING) {
     recorder = startRecording(driver, { interval: 100 });
   }
-  await workbench.executeCommand("Chat: Open Chat");
-  await workbench.executeCommand("View: Toggle Secondary Side Bar Visibility");
 });
 
 afterEach(async function () {

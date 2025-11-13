@@ -3,8 +3,7 @@ import { PricingPlanCardProps } from "./PricingPlansList";
 export const pricingOrganizationsData: PricingPlanCardProps[] = [
   {
     plan: "TEAM",
-    price: { monthly: 75, yearly: 750 },
-    yearlyFullPrice: 900,
+    price: { monthly: 75, yearlyPerMonth: 63 },
     label: "For small and medium teams",
     buttonLabel: "Buy your licenses",
     stylingFilled: true,
@@ -41,8 +40,7 @@ export const pricingOrganizationsData: PricingPlanCardProps[] = [
   },
   {
     plan: "ENTERPRISE",
-    price: { monthly: "Custom pricing", yearly: "Custom pricing" },
-    yearlyFullPrice: "",
+    price: { monthly: "Custom pricing", yearlyPerMonth: "Custom pricing" },
     label: "For enterprise-grade teams",
     buttonLabel: "Get your quote",
     stylingFilled: true,
