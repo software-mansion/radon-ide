@@ -1,7 +1,11 @@
 // @ts-ignore
 import Fetch from "react-native-fetch-api/src/Fetch";
 import { AsyncBoundedResponseBuffer } from "../AsyncBoundedResponseBuffer";
-import { getFetchResponseDataPromise, deserializeRequestData } from "../networkRequestParsers";
+import {
+  getFetchResponseDataPromise,
+  deserializeRequestData,
+  trimContentType,
+} from "../networkRequestParsers";
 import type { NetworkProxy, NativeResponseType, BlobLikeResponse } from "../types";
 
 type BodyInit =
@@ -148,7 +152,7 @@ class PolyfillFetchInterceptor {
     Fetch.prototype.__didCreateRequest = function (requestId: number) {
       self.original__didCreateRequest.call(this, requestId);
 
-      const mimeType = this._request._body._mimeType;
+      const mimeType = trimContentType(this._request._body._mimeType);
 
       self.startTime = Date.now();
       self.sendCDPMessage("Network.requestWillBeSent", {
@@ -162,7 +166,7 @@ class PolyfillFetchInterceptor {
           headers: this._request.headers,
           postData: deserializeRequestData(this._request._body._bodyInit, mimeType),
         },
-        type: this._request._body._mimeType,
+        type: mimeType,
         initiator: {
           type: "script",
         },
@@ -222,6 +226,7 @@ class PolyfillFetchInterceptor {
       }
 
       const timeStamp = Date.now();
+      const mimeType = trimContentType(this._response._body._mimeType);
 
       self.sendCDPMessage("Network.dataReceived", {
         requestId: requestId,
@@ -230,7 +235,7 @@ class PolyfillFetchInterceptor {
         dataLength: responseText.length,
         ttfb: self.ttfbTime,
         encodedDataLength: total <= 0 ? progress : total,
-        type: this._response._body._mimeType,
+        type: mimeType,
         response: {
           type: this._response.type,
           status: this._responseStatus,
@@ -312,18 +317,20 @@ class PolyfillFetchInterceptor {
         getFetchResponseDataPromise(this._response, this._nativeResponseType)
       );
 
+      const mimeType = trimContentType(this._response._body._mimeType);
+
       self.sendCDPMessage("Network.loadingFinished", {
         requestId: requestId,
         timestamp: timeStamp,
         duration: timeStamp - self.startTime,
-        type: this._response._body._mimeType,
+        type: mimeType,
         // additionally setting the response here, as here we have complete reponse information
         response: {
           type: this._response.type,
           status: this._responseStatus,
           url: this._responseUrl,
           headers: this._nativeResponseHeaders,
-          mimeType: this._response._body._mimeType,
+          mimeType: mimeType,
         },
         // Not sending the ecnodedDataLength, as we've done so in didReceiveNetworkData and didReceiveNetworkIncrementalData
       });

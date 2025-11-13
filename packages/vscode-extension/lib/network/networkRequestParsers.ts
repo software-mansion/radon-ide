@@ -8,7 +8,7 @@ import {
   type RequestData,
   type InternalResponseBodyData,
   type ContentTypeAnalysis,
-} from "./types"
+} from "./types";
 
 // Due to import conflicts from "src" directory, some types
 // are redeclared here from src/network/types/network.ts
@@ -443,15 +443,27 @@ export function deserializeRequestData(data: RequestData, contentType: string | 
   return data;
 }
 
+export function trimContentType(contentType: string | undefined) {
+  if (!contentType) {
+    return "";
+  }
+  const semicolonIndex = contentType.indexOf(";");
+  if (semicolonIndex !== -1) {
+    return contentType.substring(0, semicolonIndex);
+  }
+  return contentType;
+}
+
 export function getContentTypeHeader(xhr: XMLHttpRequest): string {
-  const hiddenPropertyHeadersValue =
+  let headerValue =
     // @ts-ignore - RN-specific property
     xhr._headers?.[ContentTypeHeader.LowerCase] || xhr._headers?.[ContentTypeHeader.Default] || "";
 
   if (xhr.getResponseHeader) {
-    return xhr.getResponseHeader(ContentTypeHeader.Default) || hiddenPropertyHeadersValue;
+    headerValue = xhr.getResponseHeader(ContentTypeHeader.Default) || headerValue;
   }
-  return hiddenPropertyHeadersValue;
+
+  return trimContentType(headerValue);
 }
 
 // function create
@@ -462,4 +474,5 @@ module.exports = {
   mimeTypeFromResponseType,
   getContentTypeHeader,
   getFetchResponseDataPromise,
+  trimContentType
 };

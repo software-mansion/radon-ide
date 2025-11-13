@@ -1,7 +1,6 @@
 import { AsyncBoundedResponseBuffer } from "../AsyncBoundedResponseBuffer";
 import {
   deserializeRequestData,
-  mimeTypeFromResponseType,
   getXHRResponseDataPromise,
   getContentTypeHeader,
 } from "../networkRequestParsers";
@@ -81,7 +80,6 @@ class XHRNetworkInterceptor {
           headers: xhr._headers,
           postData: deserializeRequestData(data as RequestData, getContentTypeHeader(xhr)),
         },
-        type: "XHR", // FIX ME
         initiator: {
           type: "script",
         },
@@ -92,7 +90,7 @@ class XHRNetworkInterceptor {
           this.sendCDPMessage("Network.loadingFailed", {
             requestId: requestId,
             timestamp: Date.now(),
-            type: "XHR", // FIX ME
+            type: "",
             errorText: "Aborted",
             canceled: true,
           });
@@ -105,7 +103,7 @@ class XHRNetworkInterceptor {
           this.sendCDPMessage("Network.loadingFailed", {
             requestId: requestId,
             timestamp: Date.now(),
-            type: "XHR", // FIX ME
+            type: "",
             errorText: "Failed",
             cancelled: false,
           });
@@ -129,13 +127,13 @@ class XHRNetworkInterceptor {
         }
 
         try {
-          const mimeType = mimeTypeFromResponseType(xhr.responseType);
+          const mimeType = getContentTypeHeader(xhr) || "xhr";
           this.sendCDPMessage("Network.responseReceived", {
             requestId: requestId,
             loaderId: LOADER_ID,
             timestamp: Date.now(),
             ttfb,
-            type: "XHR", // FIX ME
+            type: mimeType,
             response: {
               type: xhr.responseType,
               url: xhr._url,
