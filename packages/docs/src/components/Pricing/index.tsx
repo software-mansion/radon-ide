@@ -30,11 +30,9 @@ const Pricing = () => {
 
   const handlePricingTableFree = () => {
     track("Pricing table Get free license button");
-    window.open(FREE_URL, "_blank");
   };
   const handlePricingCardFree = () => {
     track("Pricing card Get free license button");
-    window.open(FREE_URL, "_blank");
   };
 
   return (
