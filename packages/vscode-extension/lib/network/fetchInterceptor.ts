@@ -217,7 +217,7 @@ class FetchInterceptor {
     ) {
       self._original__didCompleteNetworkResponse.call(this, requestId, errorMessage, didTimeOut);
 
-      if (requestId !== this._requestId || !this._nativeResponse || !this._response) {
+      if (requestId !== this._requestId || !this._response) {
         return;
       }
 
