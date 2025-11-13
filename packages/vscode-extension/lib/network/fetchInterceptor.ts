@@ -60,16 +60,6 @@ interface Body {
   formData(): Promise<FormData>;
 }
 
-// interface RequestInit {
-//   body?: BodyInit;
-//   method?: string;
-//   headers?: Headers;
-//   signal?: AbortSignal;
-//   reactNative?: {
-//     textStreaming?: boolean;
-//     __nativeResponseType?: "text" | "blob" | "base64";
-//   };
-// }
 
 interface FetchRequest extends Request {
   _body: Body;
