@@ -1,5 +1,4 @@
-import { InternalResponseBodyData } from "./networkRequestParsers";
-type ResponseBodyData = Omit<InternalResponseBodyData, "dataSize">;
+import type { ResponseBodyData, InternalResponseBodyData } from "./types";
 
 /**
  * Maximum memory size (in bytes) to store buffered text and image request

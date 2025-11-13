@@ -1,7 +1,55 @@
 // @ts-ignore
 import Fetch from "react-native-fetch-api/src/Fetch";
-import { AsyncBoundedResponseBuffer } from "./AsyncBoundedResponseBuffer";
-import { getFetchResponseDataPromise, deserializeRequestData } from "./networkRequestParsers";
+import { AsyncBoundedResponseBuffer } from "../AsyncBoundedResponseBuffer";
+import { getFetchResponseDataPromise, deserializeRequestData } from "../networkRequestParsers";
+import type { NetworkProxy, NativeResponseType, BlobLikeResponse } from "../types";
+
+type BodyInit =
+  | Blob
+  | FormData
+  | URLSearchParams
+  | ArrayBuffer
+  | ArrayBufferView
+  | ReadableStream<Uint8Array>
+  | string;
+
+interface Body {
+  readonly body: ReadableStream<Uint8Array>;
+  bodyUsed: boolean;
+
+  // Internal properties
+  _bodyInit?: BodyInit;
+  _bodyText?: string;
+  _bodyBlob?: Blob;
+  _bodyFormData?: FormData;
+  _bodyArrayBuffer?: ArrayBuffer;
+  _bodyReadableStream?: ReadableStream<Uint8Array>;
+  _mimeType?: string;
+
+  blob(): Promise<Blob>;
+  arrayBuffer(): Promise<ArrayBuffer>;
+  text(): Promise<string>;
+  json<T = unknown>(): Promise<T>;
+  formData(): Promise<FormData>;
+}
+
+interface FetchRequest extends Request {
+  _body: Body;
+
+  clone(): Request;
+}
+
+interface FetchResponse extends Response {
+  _body: Body;
+
+  clone(): Response;
+}
+
+interface DeferredPromise<T> {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason?: unknown) => void;
+}
 
 type DidCreateRequestFn = (requestId: number) => void;
 type DidReceiveNetworkResponseFn = (
@@ -23,64 +71,6 @@ type DidCompleteNetworkResponseFn = (
   didTimeOut: boolean
 ) => void;
 
-type BodyInit =
-  | Blob
-  | FormData
-  | URLSearchParams
-  | ArrayBuffer
-  | ArrayBufferView
-  | ReadableStream<Uint8Array>
-  | string;
-
-type BlobLikeResponse = {
-  size: number;
-  type: string;
-  blobId: number;
-  name: string;
-  offset: number;
-};
-
-interface Body {
-  readonly body: ReadableStream<Uint8Array>;
-  bodyUsed: boolean;
-
-  // Internal properties
-  _bodyInit?: BodyInit;
-  _bodyText?: string;
-  _bodyBlob?: Blob;
-  _bodyFormData?: FormData;
-  _bodyArrayBuffer?: ArrayBuffer;
-  _bodyReadableStream?: ReadableStream<Uint8Array>;
-  _mimeType?: string;
-
-  blob(): Promise<Blob>;
-  arrayBuffer(): Promise<ArrayBuffer>;
-  text(): Promise<string>;
-  json<T = any>(): Promise<T>;
-  formData(): Promise<FormData>;
-}
-
-
-interface FetchRequest extends Request {
-  _body: Body;
-
-  clone(): Request;
-}
-
-interface FetchResponse extends Response {
-  _body: Body;
-
-  clone(): Response;
-}
-
-type NativeResponseType = "text" | "blob" | "base64";
-
-interface DeferredPromise<T> {
-  promise: Promise<T>;
-  resolve: (value: T) => void;
-  reject: (reason?: any) => void;
-}
-
 interface FetchPolyfill {
   // Internal properties
   _nativeNetworkSubscriptions: Set<() => void>;
@@ -101,13 +91,9 @@ interface FetchPolyfill {
   _abortFn?: () => void;
 }
 
-interface NetworkProxy {
-  sendMessage: (channel: string, message: string) => void;
-}
-
 const LOADER_ID = "fetch-interceptor";
 
-class FetchInterceptor {
+class PolyfillFetchInterceptor {
   private enabled: boolean = false;
 
   private networkProxy?: NetworkProxy = undefined;
@@ -394,7 +380,7 @@ class FetchInterceptor {
     this.enabled = false;
   }
 
-  private sendCDPMessage(method: string, params: any) {
+  private sendCDPMessage(method: string, params: Record<string, unknown>) {
     if (!this.networkProxy) {
       return;
     }
@@ -409,14 +395,14 @@ class FetchInterceptor {
   }
 }
 
-let interceptorInstance: FetchInterceptor | null = new FetchInterceptor();
+let interceptorInstance: PolyfillFetchInterceptor | null = new PolyfillFetchInterceptor();
 
-export function enableFetchInterceptor(
+export function enableInterception(
   networkProxy: NetworkProxy,
   responseBuffer: AsyncBoundedResponseBuffer
 ): void {
   if (!interceptorInstance) {
-    interceptorInstance = new FetchInterceptor();
+    interceptorInstance = new PolyfillFetchInterceptor();
   }
 
   if (!interceptorInstance.isEnabled()) {
@@ -424,10 +410,13 @@ export function enableFetchInterceptor(
   }
 }
 
-export function disableFetchInterceptor(): void {
+export function disableInterception(): void {
   if (interceptorInstance && interceptorInstance.isEnabled()) {
     interceptorInstance.disable();
   }
 }
 
-module.exports = { enableFetchInterceptor, disableFetchInterceptor };
+module.exports = {
+  enableInterception,
+  disableInterception,
+};

@@ -1,49 +1,17 @@
 // @ts-ignore
 import { drainStream } from "react-native-fetch-api/src/utils";
 import { TextDecoder } from "../polyfills";
+import {
+  ResponseBodyDataType,
+  ContentTypeHeader,
+  type SerializedTypedArray,
+  type RequestData,
+  type InternalResponseBodyData,
+  type ContentTypeAnalysis,
+} from "./types"
 
 // Due to import conflicts from "src" directory, some types
 // are redeclared here from src/network/types/network.ts
-
-// Redeclared in src/network/types/network.ts
-// Based on resourceTypeFromMimeType method in React-Native's resourceTypyFromMimeType
-enum ResponseBodyDataType {
-  Media = "Media",
-  Image = "Image",
-  Script = "Script",
-  XHR = "XHR",
-  Other = "Other",
-}
-
-export type InternalResponseBodyData = {
-  body: string | undefined;
-  wasTruncated: boolean;
-  base64Encoded: boolean;
-  type: ResponseBodyDataType;
-  dataSize: number;
-};
-
-// Redeclared here from definition in
-// src/network/typesc/network.ts
-export const ContentTypeHeader = {
-  Default: "Content-Type",
-  LowerCase: "content-type",
-} as const;
-
-interface SerializedTypedArray {
-  length: number;
-  [key: number]: number;
-  [Symbol.iterator](): Iterator<number>;
-}
-
-interface ContentTypeAnalysis {
-  isImageType: boolean;
-  isOctetStream: boolean;
-  isTextType: boolean;
-  isParsableApplicationType: boolean;
-}
-
-type RequestData = string | SerializedTypedArray | null | object;
 
 // Allowed content types for processing text-based data
 const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
