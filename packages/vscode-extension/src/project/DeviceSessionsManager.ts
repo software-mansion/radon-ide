@@ -293,7 +293,9 @@ export class DeviceSessionsManager implements Disposable {
     });
 
     const reconnectedDevices = devices.filter((d) => {
-      return d.available && previousDevices.some((device) => device.id === d.id && !device.available);
+      return (
+        d.available && previousDevices.some((device) => device.id === d.id && !device.available)
+      );
     });
 
     if (removedDevices.length > 1) {

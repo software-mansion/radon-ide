@@ -129,7 +129,6 @@ export class DeviceSession implements Disposable {
       })
     );
 
-
     this.disposables.push(
       this.deviceSettingsStateManager.onSetState(async (partialState) => {
         const deviceSettings = this.deviceSettingsStateManager.getState();
