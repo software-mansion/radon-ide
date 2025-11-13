@@ -292,6 +292,10 @@ export class DeviceSessionsManager implements Disposable {
       );
     });
 
+    const reconnectedDevices = devices.filter((d) => {
+      return d.available && previousDevices.some((device) => device.id === d.id && !device.available);
+    });
+
     if (removedDevices.length > 1) {
       Logger.warn(
         "Multiple devices were removed in one update, the results might be unpredictable. These devices were removed:",
@@ -302,6 +306,15 @@ export class DeviceSessionsManager implements Disposable {
     // NOTE: stop removed devices and (unselected) disconnected physical devices
     const devicesToStop = removedDevices.concat(
       disconnectedDevices.filter((d) => d.id !== this.activeSessionId)
+    );
+
+    await Promise.all(
+      reconnectedDevices.map(async (device) => {
+        const session = this.deviceSessions.get(device.id);
+        if (session) {
+          await session.onDeviceAvailable();
+        }
+      })
     );
 
     await Promise.all(

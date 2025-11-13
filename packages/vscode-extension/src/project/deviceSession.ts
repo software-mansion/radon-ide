@@ -2,7 +2,6 @@ import { Disposable } from "vscode";
 import { throttle } from "lodash";
 import { RadonInspectorBridge } from "./inspectorBridge";
 import { DeviceBase } from "../devices/DeviceBase";
-import { AndroidPhysicalDevice } from "../devices/AndroidPhysicalDevice";
 import { Logger } from "../Logger";
 import {
   BuildError,
@@ -130,15 +129,6 @@ export class DeviceSession implements Disposable {
       })
     );
 
-    if (device instanceof AndroidPhysicalDevice) {
-      this.disposables.push(
-        device.onDeviceReconnected(() => {
-          this.handleDeviceReconnection().catch((error) => {
-            Logger.error("Failed to handle device reconnection", error);
-          });
-        })
-      );
-    }
 
     this.disposables.push(
       this.deviceSettingsStateManager.onSetState(async (partialState) => {
@@ -242,11 +232,11 @@ export class DeviceSession implements Disposable {
     try {
       this.resetStartingState();
 
-      if (this.device instanceof AndroidPhysicalDevice && this.metro) {
-        await this.device.recoverConnectionAfterReconnect(
-          this.metro.port,
-          this.devtoolsServer?.port
-        );
+      if (this.metro) {
+        await this.device.forwardDevicePort(this.metro.port);
+        if (this.devtoolsServer) {
+          await this.device.forwardDevicePort(this.devtoolsServer.port);
+        }
       }
 
       await this.startPreview();
@@ -278,6 +268,10 @@ export class DeviceSession implements Disposable {
         },
       });
     }
+  }
+
+  public async onDeviceAvailable() {
+    await this.handleDeviceReconnection();
   }
 
   private async isBuildStale(build: BuildResult) {

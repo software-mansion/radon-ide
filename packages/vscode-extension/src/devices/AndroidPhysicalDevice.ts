@@ -1,5 +1,5 @@
 import path from "path";
-import { Disposable, EventEmitter } from "vscode";
+import { Disposable } from "vscode";
 import _ from "lodash";
 import {
   DeviceSettings,
@@ -22,9 +22,6 @@ import { Preview } from "./preview";
 import { getClosestDeviceModel } from "./DeviceNameCache";
 
 export class AndroidPhysicalDevice extends AndroidDevice {
-  private deviceReconnectedEventEmitter = new EventEmitter<void>();
-  public readonly onDeviceReconnected = this.deviceReconnectedEventEmitter.event;
-
   constructor(
     public readonly deviceInfo: AndroidPhysicalDeviceInfo,
     deviceSettings: DeviceSettings,
@@ -74,33 +71,6 @@ export class AndroidPhysicalDevice extends AndroidDevice {
   protected override mirrorNativeLogs(_build: AndroidBuildResult): void {
     // TODO:
     return;
-  }
-
-  public notifyDeviceReconnected() {
-    this.deviceReconnectedEventEmitter.fire();
-  }
-
-  public async recoverConnectionAfterReconnect(metroPort: number, devtoolsPort?: number) {
-    try {
-      await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
-      if (devtoolsPort !== undefined) {
-        await exec(ADB_PATH, [
-          "-s",
-          this.serial!,
-          "reverse",
-          `tcp:${devtoolsPort}`,
-          `tcp:${devtoolsPort}`,
-        ]);
-      }
-    } catch (error) {
-      Logger.error("Failed to re-establish adb reverse", error);
-      throw error;
-    }
-  }
-
-  public override dispose() {
-    super.dispose();
-    this.deviceReconnectedEventEmitter.dispose();
   }
 }
 
@@ -209,7 +179,6 @@ export class PhysicalAndroidDeviceProvider
   implements DevicesProvider<AndroidPhysicalDeviceInfo>, Disposable
 {
   private disposables: Disposable[];
-  private activeDevices = new Map<string, AndroidPhysicalDevice>();
 
   constructor(
     private stateManager: StateManager<DevicesByType>,
@@ -232,7 +201,6 @@ export class PhysicalAndroidDeviceProvider
     );
 
     if (await device.acquire()) {
-      this.activeDevices.set(deviceInfo.id, device);
       return device;
     }
 
@@ -250,21 +218,6 @@ export class PhysicalAndroidDeviceProvider
           available: false,
         })
       );
-
-    const reconnectedDeviceIds = devices
-      .filter((d) => {
-        const prevDevice = previousDevices.find((pd) => pd.id === d.id);
-        return prevDevice && !prevDevice.available;
-      })
-      .map((d) => d.id);
-
-    for (const deviceId of reconnectedDeviceIds) {
-      const activeDevice = this.activeDevices.get(deviceId);
-      if (activeDevice) {
-        activeDevice.notifyDeviceReconnected();
-      }
-    }
-
     const updatedDevices = devices.concat(disconnectedDevices);
     if (!_.isEqual(updatedDevices, previousDevices)) {
       this.stateManager.updateState({
@@ -277,6 +230,5 @@ export class PhysicalAndroidDeviceProvider
 
   public dispose() {
     this.disposables.forEach((d) => d.dispose());
-    this.activeDevices.clear();
   }
 }
