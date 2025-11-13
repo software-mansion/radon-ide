@@ -3,6 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import "./InspectDataMenu.css";
+import { vscode } from "../utilities/vscode";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
@@ -112,17 +113,42 @@ export function InspectDataMenu({
           {inspectItems.map((item) => (
             <InspectItem item={item} onSelected={onSelected} onHover={onHover} />
           ))}
-          {isOverMaxItems && !shouldShowAll && (
+          <DropdownMenu.Group className="inspect-data-menu-group">
+            {isOverMaxItems && !shouldShowAll && (
+              <DropdownMenu.Item
+                className="inspect-data-menu-item show-all inspector-button"
+                key={"show-all"}
+                onSelect={(e) => {
+                  setShouldShowAll(true);
+                  e.preventDefault(); // prevents the dropdown from closing
+                }}>
+                <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
+                  <span className="codicon codicon-plus" />
+                  <span className="inspector-button-text">Show all</span>
+                </DropdownMenu.Label>
+              </DropdownMenu.Item>
+            )}
             <DropdownMenu.Item
-              className="inspect-data-menu-item show-all"
-              key={"show-all"}
+              className="inspect-data-menu-item inspector-button"
+              key={"ask-ai"}
               onSelect={(e) => {
-                setShouldShowAll(true);
+                // Include component + where it's used. ([0] & [0].owner? Could require more if component is nested, likely can't cover all cases, but attaching everything isn't an option either)
+                const message = {
+                  command: "RNIDE_chatRequest",
+                  prompt: "Calculate 56 + 89",
+                  filePaths: [inspectItems[0].source.fileName, inspectItems[1].source.fileName],
+                };
+
+                console.log("POSTING CHAT PANEL TEST:", message);
+                vscode.postMessage(message);
                 e.preventDefault(); // prevents the dropdown from closing
               }}>
-              <DropdownMenu.Label className="inspect-data-menu-label">Show all</DropdownMenu.Label>
+              <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
+                <span className="codicon codicon-lightbulb" />
+                <span className="inspector-button-text">Reference in chat</span>
+              </DropdownMenu.Label>
             </DropdownMenu.Item>
-          )}
+          </DropdownMenu.Group>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

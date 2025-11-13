@@ -18,6 +18,10 @@ interface UpdateStateCommand extends EventBase {
   command: "RNIDE_update_state";
 }
 
+interface ChatRequestCommand extends EventBase {
+  command: "RNIDE_chatRequest";
+}
+
 interface CallArgs {
   callId: string;
   object: string;
@@ -32,11 +36,25 @@ interface UpdateStateArgs {
   state: string;
 }
 
+interface ChatRequestArgs {
+  prompt: string;
+  filePaths: string[];
+}
+
 type CallEvent = CallCommand & CallArgs;
 type GetStateEvent = GetStateCommand & GetStateArgs;
 type UpdateStateEvent = UpdateStateCommand & UpdateStateArgs;
+type ChatRequestEvent = ChatRequestCommand & ChatRequestArgs;
 
-export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent;
+export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent | ChatRequestEvent;
+
+function handleChatFixRequest(message: ChatRequestEvent) {
+  commands.executeCommand("copilot-chat.focus").then(async () => {
+    for (const filePath of message.filePaths) {
+      await commands.executeCommand("workbench.action.chat.attachFile", Uri.file(filePath));
+    }
+  });
+}
 
 export class WebviewController implements Disposable {
   private disposables: Disposable[] = [];
@@ -103,12 +121,15 @@ export class WebviewController implements Disposable {
         if (!message.method || (message.method !== "dispatchTouches" && message.method !== "log")) {
           Logger.log("Message from webview", message);
         }
+
         if (message.command === "call") {
           this.handleRemoteCall(message);
         } else if (message.command === "RNIDE_get_state") {
           this.handleGetState(message);
         } else if (message.command === "RNIDE_update_state") {
           this.handleUpdateState(message);
+        } else if (message.command === "RNIDE_chatRequest") {
+          handleChatFixRequest(message);
         }
       },
       undefined,
