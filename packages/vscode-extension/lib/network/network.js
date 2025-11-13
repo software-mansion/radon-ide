@@ -190,7 +190,6 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
               statusText: xhr.statusText,
               headers: xhr.responseHeaders,
               mimeType: mimeType,
-              // data: deserializeRequestData(data, mimeType),
             },
           });
         } catch (error) {}
