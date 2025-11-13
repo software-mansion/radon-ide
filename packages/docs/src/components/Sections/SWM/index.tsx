@@ -9,7 +9,7 @@ export default function SWM({ children }) {
       <div className={styles.container}>
         <div className={styles.textContainer}>
           <h2 className={styles.heading}>
-            <span>Radon IDE </span>is built by Software Mansion
+            <span>Radon </span>is built by Software Mansion
           </h2>
           <p className={styles.textContent}>{children}</p>
           <a href="https://swmansion.com/" target="_blank" className={styles.learnMoreButton}>

@@ -12,7 +12,7 @@ export default function FeaturesLanding() {
         </h2>{" "}
         <div className={styles.description}>
           <p>
-            Discover the power of Radon IDE. Designed for React Native and Expo, it helps you write
+            Discover the power of Radon. Designed for React Native and Expo, it helps you write
             cleaner code, catch errors instantly, and focus on what matters most — building great
             apps.
           </p>

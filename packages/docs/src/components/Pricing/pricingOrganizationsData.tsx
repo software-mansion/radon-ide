@@ -49,7 +49,7 @@ export const pricingOrganizationsData: PricingPlanCardProps[] = [
         label: "Usage-based pricing",
         info: "You only pay for the number of seats that your employees are actually using",
       },
-      { label: "Single sign-on for the Radon IDE Portal" },
+      { label: "Single sign-on for the Radon Portal" },
       { label: "Service-level agreement (SLA)" },
       { label: "Dedicated payment method and invoicing" },
       { label: "Onboarding meeting" },

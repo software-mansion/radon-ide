@@ -14,7 +14,7 @@ const FAQ = () => {
         <div className={styles.faqMain}>
           <h2 className={styles.faqHeading}>Frequently Asked Questions</h2>
           <span className={styles.faqSubheading}>
-            Here are the answers to your most frequent questions about the Radon IDE.
+            Here are the answers to your most frequent questions about the Radon.
           </span>
         </div>
         <div className={styles.faqsContainer}>

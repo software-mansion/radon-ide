@@ -10,7 +10,7 @@ export default function LandingBanner() {
       <div className={styles.left}>
         <div className={styles.radonText}>
           <p>
-            <span>Radon IDE</span> helps you build better apps, faster.
+            <span>Radon</span> helps you build better apps, faster.
           </p>
         </div>
         <div className={styles.spacer}></div>

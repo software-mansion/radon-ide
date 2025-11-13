@@ -10,7 +10,7 @@ import clsx from "clsx";
 
 export default function Contact(): JSX.Element {
   return (
-    <Layout description="Contact Us – Radon IDE: VSCode Extension for React Native">
+    <Layout description="Contact Us – Radon: VSCode Extension for React Native">
       <div className={styles.preventfulContainer}>
         <div className={clsx(styles.wrapper, "border-layout")}>
           <div className={styles.titleContainer}>
@@ -44,7 +44,7 @@ export default function Contact(): JSX.Element {
               icon={<UserIcon color={"var(--radon-icon)"} />}
               title="Customer Portal"
               description="Manage your subscription and access your license key."
-              linkText="Visit Radon IDE Portal"
+              linkText="Visit Radon Portal"
               linkHref="https://portal.ide.swmansion.com/"
               linkTarget="_blank"
             />

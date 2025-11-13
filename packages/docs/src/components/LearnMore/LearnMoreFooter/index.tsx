@@ -63,7 +63,7 @@ const LearnMoreFooter = () => {
         )}>
         <h2>
           Join <span>{summaryInstalls} developers</span>
-          <br /> using Radon IDE for faster,
+          <br /> using Radon for faster,
           <br /> more efficient app development
         </h2>
         <div className={styles.buttonContainer}>

@@ -19,7 +19,7 @@ export const featuresList = [
     label: "Logs",
     title: "Search through the logs easily",
     content:
-      "Radon IDE uses the built-in VSCode console allowing you to filter through the logs. The links displayed in the console automatically link back to your source code.",
+      "Radon uses the built-in VSCode console allowing you to filter through the logs. The links displayed in the console automatically link back to your source code.",
     imageSrc: `/img/features/feature_logs_light.svg`,
     imageDarkSrc: `/img/features/feature_logs_dark.svg`,
   },
@@ -27,7 +27,7 @@ export const featuresList = [
     label: "Previews",
     title: "Develop components in isolation",
     content:
-      "Radon IDE comes with a package allowing to preview components in full isolation. Develop your components individually without distractions.",
+      "Radon comes with a package allowing to preview components in full isolation. Develop your components individually without distractions.",
     imageSrc: `/img/features/feature_previews_light.svg`,
     imageDarkSrc: `/img/features/feature_previews_dark.svg`,
   },
