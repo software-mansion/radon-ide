@@ -1,3 +1,4 @@
+// @ts-ignore
 import { drainStream } from "react-native-fetch-api/src/utils";
 import { TextDecoder } from "../polyfills";
 
@@ -324,8 +325,6 @@ export async function getFetchResponseDataPromise(
   );
 
   const type = isImageType ? ResponseBodyDataType.Image : ResponseBodyDataType.Other;
-
-  console.log("NATIVE_RESPONSE_TYPE", nativeResponseType);
 
   if (nativeResponseType === "blob") {
     if (isImageType || isOctetStream) {

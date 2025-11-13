@@ -123,7 +123,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         requestId: requestId,
         loaderId,
         timestamp: sendTime,
-        wallTime: Math.floor(Date.now()),
+        wallTime: Date.now(),
         request: {
           url: xhr._url,
           method: xhr._method,
