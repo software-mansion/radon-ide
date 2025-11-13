@@ -1,7 +1,7 @@
 // @ts-ignore
 import Fetch from "react-native-fetch-api/src/Fetch";
 import { AsyncBoundedResponseBuffer } from "./AsyncBoundedResponseBuffer";
-import { getFetchResponseDataPromise } from "./networkRequestParsers";
+import { getFetchResponseDataPromise, deserializeRequestData } from "./networkRequestParsers";
 
 type DidCreateRequestFn = (requestId: number) => void;
 type DidReceiveNetworkResponseFn = (
@@ -172,7 +172,8 @@ class FetchInterceptor {
     Fetch.prototype.__didCreateRequest = function (requestId: number) {
       self.original__didCreateRequest.call(this, requestId);
 
-      // Use original fetch's `this` context to access request details
+      const mimeType = this._request._body._mimeType;
+
       self.startTime = Date.now();
       self.sendCDPMessage("Network.requestWillBeSent", {
         requestId: requestId,
@@ -183,9 +184,9 @@ class FetchInterceptor {
           url: this._request.url,
           method: this._request.method,
           headers: this._request.headers,
-          postData: this._request.body,
+          postData: deserializeRequestData(this._request._body._bodyInit, mimeType),
         },
-        type: this._request.type, // FIX THIS
+        type: this._request._body._mimeType,
         initiator: {
           type: "script",
         },
@@ -373,7 +374,7 @@ class FetchInterceptor {
     };
   }
 
-  public enable(networkProxy: any, responseBuffer: AsyncBoundedResponseBuffer) {
+  public enable(networkProxy: NetworkProxy, responseBuffer: AsyncBoundedResponseBuffer) {
     if (this.enabled || !this.checkCompatibility()) {
       return;
     }
@@ -403,7 +404,7 @@ class FetchInterceptor {
     this.enabled = false;
   }
 
-  private sendCDPMessage(method: any, params: any) {
+  private sendCDPMessage(method: string, params: any) {
     if (!this.networkProxy) {
       return;
     }
