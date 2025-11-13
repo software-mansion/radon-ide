@@ -1,11 +1,7 @@
 // @ts-ignore
 import Fetch from "react-native-fetch-api/src/Fetch";
 import { AsyncBoundedResponseBuffer } from "./AsyncBoundedResponseBuffer";
-import { BlobLikeResponse, getFetchResponseDataPromise } from "./networkRequestParsers";
-
-const { Networking } = require("react-native");
-
-const LOADER_ID = "fetch-interceptor";
+import { getFetchResponseDataPromise } from "./networkRequestParsers";
 
 type DidCreateRequestFn = (requestId: number) => void;
 type DidReceiveNetworkResponseFn = (
@@ -20,78 +16,168 @@ type DidReceiveNetworkIncrementalDataFn = (
   progress: number,
   total: number
 ) => void;
-type DidReceiveNetworkDataFn = (requestId: number, response: BlobLikeResponse) => void;
+type DidReceiveNetworkDataFn = (requestId: number, response: BlobLikeResponse | string) => void;
 type DidCompleteNetworkResponseFn = (
   requestId: number,
   errorMessage: string,
   didTimeOut: boolean
 ) => void;
 
-class FetchInterceptor {
-  private _enabled: boolean = false;
+type BodyInit =
+  | Blob
+  | FormData
+  | URLSearchParams
+  | ArrayBuffer
+  | ArrayBufferView
+  | ReadableStream<Uint8Array>
+  | string;
 
-  private _networkProxy = null;
-  private _responseBuffer: AsyncBoundedResponseBuffer | null = null;
+type BlobLikeResponse = {
+  size: number;
+  type: string;
+  blobId: number;
+  name: string;
+  offset: number;
+};
+
+interface Body {
+  readonly body: ReadableStream<Uint8Array>;
+  bodyUsed: boolean;
+
+  // Internal properties
+  _bodyInit?: BodyInit;
+  _bodyText?: string;
+  _bodyBlob?: Blob;
+  _bodyFormData?: FormData;
+  _bodyArrayBuffer?: ArrayBuffer;
+  _bodyReadableStream?: ReadableStream<Uint8Array>;
+  _mimeType?: string;
+
+  blob(): Promise<Blob>;
+  arrayBuffer(): Promise<ArrayBuffer>;
+  text(): Promise<string>;
+  json<T = any>(): Promise<T>;
+  formData(): Promise<FormData>;
+}
+
+// interface RequestInit {
+//   body?: BodyInit;
+//   method?: string;
+//   headers?: Headers;
+//   signal?: AbortSignal;
+//   reactNative?: {
+//     textStreaming?: boolean;
+//     __nativeResponseType?: "text" | "blob" | "base64";
+//   };
+// }
+
+interface FetchRequest extends Request {
+  _body: Body;
+
+  clone(): Request;
+}
+
+interface FetchResponse extends Response {
+  _body: Body;
+
+  clone(): Response;
+}
+
+type NativeResponseType = "text" | "blob" | "base64";
+
+interface DeferredPromise<T> {
+  promise: Promise<T>;
+  resolve: (value: T) => void;
+  reject: (reason?: any) => void;
+}
+
+interface FetchPolyfill {
+  // Internal properties
+  _nativeNetworkSubscriptions: Set<() => void>;
+  _nativeResponseType: NativeResponseType;
+  _nativeRequestHeaders: Record<string, string>;
+  _nativeResponseHeaders: Record<string, string>;
+  _nativeRequestTimeout: number;
+  _nativeResponse?: BlobLikeResponse | string;
+  _textEncoder: TextEncoder;
+  _requestId?: number;
+  _request: FetchRequest;
+  _response?: FetchResponse;
+  _streamController?: ReadableStreamDefaultController<Uint8Array>;
+  _stream?: ReadableStream<Uint8Array>;
+  _deferredPromise: DeferredPromise<Response>;
+  _responseStatus: number;
+  _responseUrl: string;
+  _abortFn?: () => void;
+}
+
+interface NetworkProxy {
+  sendMessage: (channel: string, message: string) => void;
+}
+
+const LOADER_ID = "fetch-interceptor";
+
+class FetchInterceptor {
+  private enabled: boolean = false;
+
+  private networkProxy?: NetworkProxy = undefined;
+  private responseBuffer?: AsyncBoundedResponseBuffer = undefined;
 
   // timing
-  private _startTime: number = 0;
-  private _ttfbTime = 0;
+  private startTime: number = 0;
+  private ttfbTime = 0;
 
-  private _original__didCreateRequest: DidCreateRequestFn = () => {};
-  private _original__didReceiveNetworkResponse: DidReceiveNetworkResponseFn = () => {};
-  private _original__didReceiveNetworkIncrementalData: DidReceiveNetworkIncrementalDataFn =
-    () => {};
-  private _original__didReceiveNetworkData: DidReceiveNetworkDataFn = () => {};
-  private _original__didCompleteNetworkResponse: DidCompleteNetworkResponseFn = () => {};
-  private _original__abort: () => void = () => {};
+  private original__didCreateRequest: DidCreateRequestFn = () => {};
+  private original__didReceiveNetworkResponse: DidReceiveNetworkResponseFn = () => {};
+  private original__didReceiveNetworkIncrementalData: DidReceiveNetworkIncrementalDataFn = () => {};
+  private original__didReceiveNetworkData: DidReceiveNetworkDataFn = () => {};
+  private original__didCompleteNetworkResponse: DidCompleteNetworkResponseFn = () => {};
+  private original__abort: () => void = () => {};
 
   private checkCompatibility() {
-    if (!Fetch || !Networking) {
-      return false;
-    }
-    return true;
+    return !!Fetch;
   }
 
-  private _setupInterceptors() {
-    this._handleDidCreateRequest();
-    this._handleDidReceiveNetworkResponse();
-    this._handleDidReceiveNetworkIncrementalData();
-    this._handleDidReceiveNetworkData();
-    this._handleDidCompleteNetworkResponse();
-    this._handleAbort();
+  private setupInterceptors() {
+    this.handleDidCreateRequest();
+    this.handleDidReceiveNetworkResponse();
+    this.handleDidReceiveNetworkIncrementalData();
+    this.handleDidReceiveNetworkData();
+    this.handleDidCompleteNetworkResponse();
+    this.handleAbort();
   }
 
   private _cleanupInterceptors() {
-    Fetch.prototype.__didCreateRequest = this._original__didCreateRequest;
-    Fetch.prototype.__didReceiveNetworkResponse = this._original__didReceiveNetworkResponse;
+    Fetch.prototype.__didCreateRequest = this.original__didCreateRequest;
+    Fetch.prototype.__didReceiveNetworkResponse = this.original__didReceiveNetworkResponse;
     Fetch.prototype.__didReceiveNetworkIncrementalData =
-      this._original__didReceiveNetworkIncrementalData;
-    Fetch.prototype.__didReceiveNetworkData = this._original__didReceiveNetworkData;
-    Fetch.prototype.__didCompleteNetworkResponse = this._original__didCompleteNetworkResponse;
-    Fetch.prototype.__abort = this._original__abort;
+      this.original__didReceiveNetworkIncrementalData;
+    Fetch.prototype.__didReceiveNetworkData = this.original__didReceiveNetworkData;
+    Fetch.prototype.__didCompleteNetworkResponse = this.original__didCompleteNetworkResponse;
+    Fetch.prototype.__abort = this.original__abort;
 
-    this._original__didCreateRequest = () => {};
-    this._original__didReceiveNetworkResponse = () => {};
-    this._original__didReceiveNetworkIncrementalData = () => {};
-    this._original__didReceiveNetworkData = () => {};
-    this._original__didCompleteNetworkResponse = () => {};
-    this._original__abort = () => {};
+    this.original__didCreateRequest = () => {};
+    this.original__didReceiveNetworkResponse = () => {};
+    this.original__didReceiveNetworkIncrementalData = () => {};
+    this.original__didReceiveNetworkData = () => {};
+    this.original__didCompleteNetworkResponse = () => {};
+    this.original__abort = () => {};
   }
 
-  private _handleDidCreateRequest() {
+  private handleDidCreateRequest() {
     // eslint-disable-next-line
     const self = this;
-    self._original__didCreateRequest = Fetch.prototype.__didCreateRequest;
+    self.original__didCreateRequest = Fetch.prototype.__didCreateRequest;
 
     Fetch.prototype.__didCreateRequest = function (requestId: number) {
-      self._original__didCreateRequest.call(this, requestId);
+      self.original__didCreateRequest.call(this, requestId);
 
       // Use original fetch's `this` context to access request details
-      self._startTime = Date.now();
-      self._sendCDPMessage("Network.requestWillBeSent", {
+      self.startTime = Date.now();
+      self.sendCDPMessage("Network.requestWillBeSent", {
         requestId: requestId,
         loaderId: LOADER_ID,
-        timestamp: self._startTime,
+        timestamp: self.startTime,
         wallTime: Date.now(),
         request: {
           url: this._request.url,
@@ -107,34 +193,36 @@ class FetchInterceptor {
     };
   }
 
-  private _handleDidReceiveNetworkResponse() {
+  private handleDidReceiveNetworkResponse() {
     // eslint-disable-next-line
     const self = this;
-    self._original__didReceiveNetworkResponse = Fetch.prototype.__didReceiveNetworkResponse;
+    self.original__didReceiveNetworkResponse = Fetch.prototype.__didReceiveNetworkResponse;
 
     Fetch.prototype.__didReceiveNetworkResponse = function (
+      this: FetchPolyfill,
       requestId: number,
       status: number,
       headers: Record<string, string>,
       url: string
     ) {
-      self._original__didReceiveNetworkResponse?.call(this, requestId, status, headers, url);
+      self.original__didReceiveNetworkResponse?.call(this, requestId, status, headers, url);
 
       if (requestId !== this._requestId) {
         return;
       }
 
-      self._ttfbTime = Date.now() - self._startTime;
+      self.ttfbTime = Date.now() - self.startTime;
     };
   }
 
-  private _handleDidReceiveNetworkIncrementalData() {
+  private handleDidReceiveNetworkIncrementalData() {
     // eslint-disable-next-line
     const self = this;
-    self._original__didReceiveNetworkIncrementalData =
+    self.original__didReceiveNetworkIncrementalData =
       Fetch.prototype.__didReceiveNetworkIncrementalData;
 
     Fetch.prototype.__didReceiveNetworkIncrementalData = function (
+      this: FetchPolyfill,
       requestId: number,
       responseText: string,
       progress: number,
@@ -144,7 +232,7 @@ class FetchInterceptor {
         return;
       }
 
-      self._original__didReceiveNetworkIncrementalData.call(
+      self.original__didReceiveNetworkIncrementalData.call(
         this,
         requestId,
         responseText,
@@ -152,14 +240,18 @@ class FetchInterceptor {
         total
       );
 
+      if (!this._response) {
+        return;
+      }
+
       const timeStamp = Date.now();
 
-      self._sendCDPMessage("Network.dataReceived", {
+      self.sendCDPMessage("Network.dataReceived", {
         requestId: requestId,
         loaderId: LOADER_ID,
         timestamp: timeStamp,
         dataLength: responseText.length,
-        ttfb: self._ttfbTime,
+        ttfb: self.ttfbTime,
         encodedDataLength: total <= 0 ? progress : total,
         type: this._response._body._mimeType,
         response: {
@@ -172,50 +264,53 @@ class FetchInterceptor {
     };
   }
 
-  private _handleDidReceiveNetworkData() {
+  private handleDidReceiveNetworkData() {
     // eslint-disable-next-line
     const self = this;
 
-    this._original__didReceiveNetworkData = Fetch.prototype.__didReceiveNetworkData;
+    this.original__didReceiveNetworkData = Fetch.prototype.__didReceiveNetworkData;
     Fetch.prototype.__didReceiveNetworkData = function (
+      this: FetchPolyfill,
       requestId: number,
-      response: BlobLikeResponse
+      response: BlobLikeResponse | string
     ) {
-      self._original__didReceiveNetworkData.call(this, requestId, response);
-      if (requestId !== this._requestId) {
+      self.original__didReceiveNetworkData.call(this, requestId, response);
+      if (requestId !== this._requestId || !this._nativeResponse) {
         return;
       }
 
       const timeStamp = Date.now();
 
-      self._sendCDPMessage("Network.responseReceived", {
+      self.sendCDPMessage("Network.responseReceived", {
         requestId: requestId,
         loaderId: LOADER_ID,
         timestamp: timeStamp,
-        ttfb: self._ttfbTime,
-        type: response.type,
+        ttfb: self.ttfbTime,
+        type: typeof response === "string" ? "text" : response.type,
         response: {
           type: "basic",
           status: this._responseStatus,
           url: this._responseUrl,
           headers: this._nativeResponseHeaders,
         },
+        // @ts-ignore
         encodedDataLength: this._nativeResponse?.size || this._nativeResponse?.length,
       });
     };
   }
 
-  private _handleDidCompleteNetworkResponse() {
+  private handleDidCompleteNetworkResponse() {
     // eslint-disable-next-line
     const self = this;
-    self._original__didCompleteNetworkResponse = Fetch.prototype.__didCompleteNetworkResponse;
+    self.original__didCompleteNetworkResponse = Fetch.prototype.__didCompleteNetworkResponse;
 
     Fetch.prototype.__didCompleteNetworkResponse = function (
+      this: FetchPolyfill,
       requestId: number,
       errorMessage: string,
       didTimeOut: boolean
     ) {
-      self._original__didCompleteNetworkResponse.call(this, requestId, errorMessage, didTimeOut);
+      self.original__didCompleteNetworkResponse.call(this, requestId, errorMessage, didTimeOut);
 
       if (requestId !== this._requestId || !this._response) {
         return;
@@ -224,7 +319,7 @@ class FetchInterceptor {
       const timeStamp = Date.now();
 
       if (didTimeOut || errorMessage) {
-        self._sendCDPMessage("Network.loadingFailed", {
+        self.sendCDPMessage("Network.loadingFailed", {
           requestId: requestId,
           timestamp: timeStamp,
           type: "",
@@ -235,15 +330,15 @@ class FetchInterceptor {
         return;
       }
 
-      self._responseBuffer?.put(
+      self.responseBuffer?.put(
         requestId.toString(),
         getFetchResponseDataPromise(this._response, this._nativeResponseType)
       );
 
-      self._sendCDPMessage("Network.loadingFinished", {
+      self.sendCDPMessage("Network.loadingFinished", {
         requestId: requestId,
         timestamp: timeStamp,
-        duration: timeStamp - self._startTime,
+        duration: timeStamp - self.startTime,
         type: this._response._body._mimeType,
         // additionally setting the response here, as here we have complete reponse information
         response: {
@@ -258,20 +353,20 @@ class FetchInterceptor {
     };
   }
 
-  private _handleAbort() {
+  private handleAbort() {
     // eslint-disable-next-line
     const self = this;
-    self._original__abort = Fetch.prototype.__abort;
+    self.original__abort = Fetch.prototype.__abort;
 
-    Fetch.prototype.__abort = function () {
-      self._original__abort.call(this);
+    Fetch.prototype.__abort = function (this: FetchPolyfill) {
+      self.original__abort.call(this);
 
       const timeStamp = Date.now();
 
-      self._sendCDPMessage("Network.loadingFailed", {
+      self.sendCDPMessage("Network.loadingFailed", {
         requestId: this._requestId,
         timestamp: timeStamp,
-        type: "XHR", // FIX THIS
+        type: "", // FIX THIS
         errorText: "Aborted",
         canceled: true,
       });
@@ -279,54 +374,54 @@ class FetchInterceptor {
   }
 
   public enable(networkProxy: any, responseBuffer: AsyncBoundedResponseBuffer) {
-    if (this._enabled || !this.checkCompatibility()) {
+    if (this.enabled || !this.checkCompatibility()) {
       return;
     }
 
-    this._networkProxy = networkProxy;
-    this._responseBuffer = responseBuffer;
+    this.networkProxy = networkProxy;
+    this.responseBuffer = responseBuffer;
 
     if (!global.fetch) {
       return;
     }
 
     // Setup interceptors
-    this._setupInterceptors();
-    this._enabled = true;
+    this.setupInterceptors();
+    this.enabled = true;
   }
 
   public disable() {
-    if (!this._enabled) {
+    if (!this.enabled) {
       return;
     }
 
     // Cleanup interceptors
     this._cleanupInterceptors();
 
-    this._networkProxy = null;
-    this._responseBuffer = null;
-    this._enabled = false;
+    this.networkProxy = undefined;
+    this.responseBuffer = undefined;
+    this.enabled = false;
   }
 
-  private _sendCDPMessage(method: any, params: any) {
-    if (!this._networkProxy) {
+  private sendCDPMessage(method: any, params: any) {
+    if (!this.networkProxy) {
       return;
     }
-    this._networkProxy.sendMessage("cdp-message", JSON.stringify({ method, params }));
+    this.networkProxy.sendMessage("cdp-message", JSON.stringify({ method, params }));
   }
 
   /**
    * Check if interceptor is enabled
    */
   isEnabled(): boolean {
-    return this._enabled;
+    return this.enabled;
   }
 }
 
 let interceptorInstance: FetchInterceptor | null = new FetchInterceptor();
 
 export function enableFetchInterceptor(
-  networkProxy: any,
+  networkProxy: NetworkProxy,
   responseBuffer: AsyncBoundedResponseBuffer
 ): void {
   if (!interceptorInstance) {

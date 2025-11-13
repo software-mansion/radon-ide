@@ -30,14 +30,6 @@ export const ContentTypeHeader = {
   LowerCase: "content-type",
 } as const;
 
-export type BlobLikeResponse = {
-  size: number;
-  type: string;
-  blobId: number;
-  name: string;
-  offset: number;
-};
-
 interface SerializedTypedArray {
   length: number;
   [key: number]: number;
@@ -374,7 +366,7 @@ export async function getFetchResponseDataPromise(
     return processTypedArrayResponse(typedArray, contentTypeAnalysis);
   }
 
-  if (nativeResponseType === "arraybuffer") {
+  if (nativeResponseType === "base64") {
     const uint8Array = new Uint8Array(responseBody);
     return processTypedArrayResponse(uint8Array, contentTypeAnalysis);
   }
