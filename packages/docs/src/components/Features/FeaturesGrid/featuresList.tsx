@@ -3,13 +3,13 @@ export const featuresList = [
     label: "Debugger",
     title: "Use breakpoints right in VSCode",
     content:
-      "Our VSCode extension integrates tightly with your deep-linked application, allowing you to effortlessly jump around the navigation structure. It supports both React Navigation and Expo Router projects.",
+      "Add React Native breakpoints in Visual Studio Code to debug your React Native applications. No extra setup needed. It. Just. Works. What's more, Radon automatically stops at runtime exceptions and shows you the exact line of code where they happened.",
     imageSrc: `/img/features/feature_debugger_light.svg`,
     imageDarkSrc: `/img/features/feature_debugger_dark.svg`,
   },
   {
     label: "Router Integration",
-    title: "Navigation made easier",
+    title: "Enjoy easier navigation",
     content:
       "Our VSCode extension integrates tightly with your deep-linked application, allowing you to effortlessly jump around the navigation structure. It supports both React Navigation and Expo Router projects.",
     imageSrc: `/img/features/feature_router_light.svg`,
@@ -41,7 +41,7 @@ export const featuresList = [
   },
   {
     label: "Screen Recording",
-    title: "Instant Replays",
+    title: "Access instant replays",
     content:
       "Missed a bug? You can rewatch what happened on the device anytime. No need to manually start the recording ever again.",
     imageSrc: `/img/features/feature_recording_light.svg`,

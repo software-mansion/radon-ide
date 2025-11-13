@@ -7,7 +7,7 @@ const autoNum = require("./src/remark/auto-num.js");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Radon – The Best IDE for React Native",
+  title: "Radon – the Best IDE for React Native & Expo",
   favicon: "img/favicon.png",
 
   url: "https://ide.swmansion.com",

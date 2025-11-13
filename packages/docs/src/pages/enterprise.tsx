@@ -28,11 +28,9 @@ export default function Enterprise(): JSX.Element {
           <div className={styles.headerWrapper}>
             <div className={styles.headerText}>
               <div className={styles.titleContainer}>
-                <h1 className={styles.headingLabel}>
-                  Radon <span> IDE </span> Enterprise
-                </h1>
+                <h1 className={styles.headingLabel}>Radon Enterprise</h1>
                 <h3 className={styles.subheadingLabel}>
-                  Helping teams deliver high-quality React Native apps faster
+                  Help your team deliver high-quality React Native and Expo apps faster
                 </h3>
               </div>
               <div className={styles.buttonContainer}>

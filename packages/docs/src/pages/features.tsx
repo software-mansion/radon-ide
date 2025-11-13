@@ -16,7 +16,8 @@ export default function Features(): JSX.Element {
           <div className={styles.titleContainer}>
             <h1 className={styles.headingLabel}>Features</h1>
             <h3 className={styles.subheadingLabel}>
-              Radon turns your editor into a fully featured IDE for React Native and Expo
+              Explore features offered by Radon and turn your editor into an IDE for React Native
+              and Expo
             </h3>
           </div>
           <FeatureSliderLanding />
