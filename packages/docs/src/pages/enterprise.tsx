@@ -22,7 +22,9 @@ export default function Enterprise(): JSX.Element {
   };
 
   return (
-    <Layout>
+    <Layout
+      title="Radon Enterprise. A React Native & Expo Extension Tailored to Your Business"
+      description="Explore Radon Enterprise – a tool that will allow your team to deliver high-quality React Native & Expo apps faster.">
       <div className={styles.preventfulContainer}>
         <div className={clsx("border-layout")}>
           <div className={styles.headerWrapper}>
