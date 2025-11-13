@@ -352,7 +352,7 @@ describe("7 - Radon tools tests", () => {
     );
 
     await elementHelperService.findAndClickElementByTag(
-      "dev-tool-Outline-Renders"
+      "dev-tool-outline-renders"
     );
 
     await driver.actions().sendKeys(Key.ESCAPE).perform();
