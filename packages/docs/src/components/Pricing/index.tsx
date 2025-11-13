@@ -18,7 +18,6 @@ export interface PricingProps {
   setIsMonthly?: (value: boolean) => void;
 }
 
-const FREE_URL = "https://portal.ide.swmansion.com/";
 const Pricing = () => {
   const { isMonthly, setIsMonthly, openRadonProCheckout, openRadonTeamCheckout } =
     usePricingLogic();
