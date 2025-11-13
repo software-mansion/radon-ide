@@ -13,7 +13,7 @@ export default function SWM({ children }) {
           </h2>
           <p className={styles.textContent}>{children}</p>
           <a href="https://swmansion.com/" target="_blank" className={styles.learnMoreButton}>
-            Learn more About Us
+            Learn more about us
           </a>
         </div>
         <div className={styles.box}>
