@@ -1,3 +1,4 @@
+import { drainStream } from "react-native-fetch-api/src/utils";
 import { TextDecoder } from "../polyfills";
 
 // Due to import conflicts from "src" directory, some types
@@ -34,7 +35,7 @@ export type BlobLikeResponse = {
   blobId: number;
   name: string;
   offset: number;
-}
+};
 
 interface SerializedTypedArray {
   length: number;
@@ -242,7 +243,7 @@ function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
  * @returns A promise resolving to an InternalResponseBodyData when a text
  * preview is available, or `undefined` for non-parsable or uncached responses.
  */
-async function readResponseText(
+async function getXHRResponseDataPromise(
   xhr: XMLHttpRequest
 ): Promise<InternalResponseBodyData | undefined> {
   try {
@@ -301,6 +302,81 @@ async function readResponseText(
   } catch (error) {
     return handleReadResponseError(error);
   }
+}
+
+export async function getFetchResponseDataPromise(
+  fetchResponse: Response,
+  nativeResponseType: string
+): Promise<InternalResponseBodyData | undefined> {
+  if (!fetchResponse) {
+    return undefined;
+  }
+
+  const contentType = fetchResponse.headers.get(ContentTypeHeader.Default) || "";
+  // @ts-ignore
+  const responseBody = fetchResponse._body._bodyInit;
+
+  const isImageType = contentType.startsWith("image/");
+  const isOctetStream = contentType === "application/octet-stream";
+  const isTextType = contentType.startsWith("text/");
+  const isParsableApplicationType = Array.from(PARSABLE_APPLICATION_CONTENT_TYPES).some((type) =>
+    contentType.startsWith(type)
+  );
+
+  const type = isImageType ? ResponseBodyDataType.Image : ResponseBodyDataType.Other;
+
+  console.log("NATIVE_RESPONSE_TYPE", nativeResponseType);
+
+  if (nativeResponseType === "blob") {
+    if (isImageType || isOctetStream) {
+      return await readBlobAsBase64(responseBody, isImageType);
+    }
+
+    if (isTextType || isParsableApplicationType) {
+      return await readBlobAsText(responseBody);
+    }
+  }
+
+  // Text-streaming case
+  if (nativeResponseType === "text") {
+    // return parseResponseBodyData(responseBody, false, ResponseBodyDataType.Other);
+    const stream = fetchResponse.body;
+    const typedArray = await drainStream(stream);
+    if (isImageType || isOctetStream) {
+      const base64String = dataToBase64(typedArray);
+      return parseResponseBodyData(base64String, true, type);
+    }
+
+    if (isTextType || isParsableApplicationType) {
+      const textResult = decode(typedArray);
+      return parseResponseBodyData(textResult, false, ResponseBodyDataType.Other);
+    }
+  }
+
+  if (nativeResponseType === "arraybuffer") {
+    const arrayBuffer = responseBody as ArrayBuffer;
+    const uint8Array = new Uint8Array(arrayBuffer);
+
+    if (isImageType || isOctetStream) {
+      const base64String = dataToBase64(uint8Array);
+      return parseResponseBodyData(base64String, true, type);
+    }
+
+    if (isTextType || isParsableApplicationType) {
+      const textResult = decode(uint8Array);
+      return parseResponseBodyData(textResult, false, ResponseBodyDataType.Other);
+    }
+  }
+
+  // fallback
+  return undefined;
+
+  // const resultingPromise = new Promise<InternalResponseBodyData>((resolve, reject) => {
+  //   responseTextPromise.then((responseText) => {
+  //     const parsedData = parseResponseBodyData(responseText, isBase64Encoded, type);
+  //     resolve(parsedData);
+  //   });
+  // });
 }
 
 /**
@@ -402,9 +478,12 @@ function getContentTypeHeader(xhr: XMLHttpRequest): string {
   return hiddenPropertyHeadersValue;
 }
 
+// function create
+
 module.exports = {
-  readResponseText,
+  getXHRResponseDataPromise,
   deserializeRequestData,
   mimeTypeFromResponseType,
   getContentTypeHeader,
+  getFetchResponseDataPromise,
 };

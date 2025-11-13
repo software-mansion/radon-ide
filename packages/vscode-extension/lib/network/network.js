@@ -4,7 +4,7 @@ const { AsyncBoundedResponseBuffer } = require("./AsyncBoundedResponseBuffer");
 const {
   deserializeRequestData,
   mimeTypeFromResponseType,
-  readResponseText,
+  getXHRResponseDataPromise,
   getContentTypeHeader,
 } = require("./networkRequestParsers");
 
@@ -23,8 +23,10 @@ export function setup() {
   fetchInterceptor.enableFetchInterceptor(messageBridge, responseBuffer);
 
   // Clear any stored messages on the extension end on setup
-  messageBridge.sendMessage("ide-message", JSON.stringify({ method: "IDE.clearStoredMessages", params: {} }));
-
+  messageBridge.sendMessage(
+    "ide-message",
+    JSON.stringify({ method: "IDE.clearStoredMessages", params: {} })
+  );
 
   let enabled = false;
   messageBridge.addMessageListener("cdp-message", (message) => {
@@ -76,11 +78,11 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
           networkProxy.removeMessageListener("ide-message", ideListener);
           break;
         case "Network.getResponseBody":
-          if (!message.params?.requestId?.startsWith(requestIdPrefix)) {
-            return;
-          }
+          // if (!message.params?.requestId?.startsWith(requestIdPrefix)) {
+          //   return;
+          // }
 
-          const requestId = message.params.requestId;
+          const requestId = `${message.params.requestId}`;
           const responsePromise = responseBuffer.get(requestId);
 
           // Upon initial launch, the message gets send twice in dev, because of
@@ -174,7 +176,6 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         }
 
         try {
-          console.log(xhr)
           const mimeType = mimeTypeFromResponseType(xhr.responseType);
           sendCDPMessage("Network.responseReceived", {
             requestId: requestId,
@@ -201,7 +202,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         }
         // We only store the xhr response body object, so we only put on
         // the buffer when loading ends, to get the actual loaded response
-        const responsePromise = readResponseText(xhr);
+        const responsePromise = getXHRResponseDataPromise(xhr);
         responseBuffer.put(requestId, responsePromise);
 
         try {

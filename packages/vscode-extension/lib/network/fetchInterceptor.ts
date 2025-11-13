@@ -1,6 +1,6 @@
 import Fetch from "react-native-fetch-api/src/Fetch";
 import { AsyncBoundedResponseBuffer } from "./AsyncBoundedResponseBuffer";
-import type { BlobLikeResponse } from "./networkRequestParsers";
+import { BlobLikeResponse, getFetchResponseDataPromise } from "./networkRequestParsers";
 
 const { Networking } = require("react-native");
 
@@ -183,8 +183,6 @@ class FetchInterceptor {
         return;
       }
 
-      console.log("MLEKO_didReceiveIncrementalData", responseText, progress, total);
-
       self._original__didReceiveNetworkIncrementalData.call(
         this,
         requestId,
@@ -200,10 +198,20 @@ class FetchInterceptor {
 
       self._sendCDPMessage("Network.dataReceived", {
         requestId: requestId,
+        loaderId: "fetch-interceptor",
         timestamp: timeStamp,
         dataLength: responseText.length,
+        ttfb: self._ttfbTime,
         // check if correct
         encodedDataLength: typedArray.length,
+        type: this._response.type,
+        response: {
+          type: this._response.type,
+          url: self._url,
+          status: self._status,
+          headers: self._headers,
+          mimeType: this._response._body._mimeType,
+        },
       });
     };
   }
@@ -218,15 +226,12 @@ class FetchInterceptor {
       response: BlobLikeResponse
     ) {
       self._original__didReceiveNetworkData.call(this, requestId, response);
-
       if (requestId !== this._requestId) {
         return;
       }
-      console.log("aa");
 
       self._nativeResponse = this._nativeResponse;
       self._response = response;
-      console.log("MLEKO_didReceiveData", response, self._nativeResponse);
 
       const mimeType = mimeTypeFromResponseType(response.type);
       self._sendCDPMessage("Network.responseReceived", {
@@ -250,7 +255,7 @@ class FetchInterceptor {
     // eslint-disable-next-line
     const self = this;
 
-    this._original__didCompleteNetworkResponse = Fetch.prototype.__didCompleteNetworkResponse;
+    self._original__didCompleteNetworkResponse = Fetch.prototype.__didCompleteNetworkResponse;
     Fetch.prototype.__didCompleteNetworkResponse = function (
       requestId: number,
       errorMessage: string,
@@ -261,8 +266,14 @@ class FetchInterceptor {
       }
 
       self._original__didCompleteNetworkResponse.call(this, requestId, errorMessage, didTimeOut);
+      self._response = this._response?.clone();
 
-      console.log("MLEKO_RESPONSE", self._response);
+      if (self._responseBuffer) {
+        self._responseBuffer.put(
+          requestId.toString(),
+          getFetchResponseDataPromise(self._response, this._nativeResponseType)
+        );
+      }
 
       self._sendCDPMessage("Network.loadingFinished", {
         requestId: requestId,
@@ -331,7 +342,6 @@ class FetchInterceptor {
     if (!this._networkProxy) {
       return;
     }
-    // console.log(method, params);
     this._networkProxy.sendMessage("cdp-message", JSON.stringify({ method, params }));
   }
 
