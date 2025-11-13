@@ -75,7 +75,7 @@ type DidCompleteNetworkResponseFn = (
   didTimeOut: boolean
 ) => void;
 
-interface FetchPolyfill {
+interface PolyfillFetch {
   // Internal properties
   _nativeNetworkSubscriptions: Set<() => void>;
   _nativeResponseType: NativeResponseType;
@@ -127,7 +127,7 @@ class PolyfillFetchInterceptor {
     this.handleAbort();
   }
 
-  private _cleanupInterceptors() {
+  private cleanupInterceptors() {
     Fetch.prototype.__didCreateRequest = this.original__didCreateRequest;
     Fetch.prototype.__didReceiveNetworkResponse = this.original__didReceiveNetworkResponse;
     Fetch.prototype.__didReceiveNetworkIncrementalData =
@@ -180,7 +180,7 @@ class PolyfillFetchInterceptor {
     self.original__didReceiveNetworkResponse = Fetch.prototype.__didReceiveNetworkResponse;
 
     Fetch.prototype.__didReceiveNetworkResponse = function (
-      this: FetchPolyfill,
+      this: PolyfillFetch,
       requestId: number,
       status: number,
       headers: Record<string, string>,
@@ -203,7 +203,7 @@ class PolyfillFetchInterceptor {
       Fetch.prototype.__didReceiveNetworkIncrementalData;
 
     Fetch.prototype.__didReceiveNetworkIncrementalData = function (
-      this: FetchPolyfill,
+      this: PolyfillFetch,
       requestId: number,
       responseText: string,
       progress: number,
@@ -252,7 +252,7 @@ class PolyfillFetchInterceptor {
 
     this.original__didReceiveNetworkData = Fetch.prototype.__didReceiveNetworkData;
     Fetch.prototype.__didReceiveNetworkData = function (
-      this: FetchPolyfill,
+      this: PolyfillFetch,
       requestId: number,
       response: BlobLikeResponse | string
     ) {
@@ -287,7 +287,7 @@ class PolyfillFetchInterceptor {
     self.original__didCompleteNetworkResponse = Fetch.prototype.__didCompleteNetworkResponse;
 
     Fetch.prototype.__didCompleteNetworkResponse = function (
-      this: FetchPolyfill,
+      this: PolyfillFetch,
       requestId: number,
       errorMessage: string,
       didTimeOut: boolean
@@ -342,7 +342,7 @@ class PolyfillFetchInterceptor {
     const self = this;
     self.original__abort = Fetch.prototype.__abort;
 
-    Fetch.prototype.__abort = function (this: FetchPolyfill) {
+    Fetch.prototype.__abort = function (this: PolyfillFetch) {
       self.original__abort.call(this);
 
       const timeStamp = Date.now();
@@ -380,7 +380,7 @@ class PolyfillFetchInterceptor {
     }
 
     // Cleanup interceptors
-    this._cleanupInterceptors();
+    this.cleanupInterceptors();
 
     this.networkProxy = undefined;
     this.responseBuffer = undefined;
