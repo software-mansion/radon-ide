@@ -2,11 +2,9 @@ import React from "react";
 import styles from "./styles.module.css";
 import CheckIcon from "../../CheckIcon";
 import PlanTableLabel from "./PlanTableLabel";
-import { useModal } from "../../ModalProvider";
 import { PricingProps } from "..";
 import clsx from "clsx";
 import { planFeaturesData } from "./planFeaturesData";
-import { track } from "@vercel/analytics";
 
 export interface FeatureItem {
   label: string;
@@ -43,7 +41,7 @@ export default function ComparePricingPlans({
           <PlanTableLabel
             plan="FREE"
             monthlyPrice={0}
-            buttonLabel="Install"
+            buttonLabel="Get free license"
             stylingFilled={false}
             onClick={handleFree}
           />

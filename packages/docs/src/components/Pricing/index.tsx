@@ -8,7 +8,6 @@ import ComparePricingPlans from "./ComparePricingPlans";
 import { usePricingLogic } from "@site/src/hooks/usePricingLogic";
 import EnterpriseForm from "../EnterpriseForm";
 import { useScrollToForm } from "@site/src/hooks/useScrollToForm";
-import { useModal } from "../ModalProvider";
 
 export interface PricingProps {
   handleFree: () => void;
@@ -19,23 +18,23 @@ export interface PricingProps {
   setIsMonthly?: (value: boolean) => void;
 }
 
+const FREE_URL = "https://portal.ide.swmansion.com/";
 const Pricing = () => {
   const { isMonthly, setIsMonthly, openRadonProCheckout, openRadonTeamCheckout } =
     usePricingLogic();
   const { scrollToForm } = useScrollToForm();
-  const { onOpen } = useModal();
   const formRef = useRef<HTMLDivElement | null>(null);
   const handleSubmitTrack = () => {
     track("Pricing form submit");
   };
 
-  const handlePricingTableInstall = () => {
-    track("Pricing table install button");
-    onOpen("Pricing table modal");
+  const handlePricingTableFree = () => {
+    track("Pricing table Get free license button");
+    window.open(FREE_URL, "_blank");
   };
-  const handlePricingCardInstall = () => {
-    track("Pricing card install button");
-    onOpen("Pricing card modal");
+  const handlePricingCardFree = () => {
+    track("Pricing card Get free license button");
+    window.open(FREE_URL, "_blank");
   };
 
   return (
@@ -48,7 +47,7 @@ const Pricing = () => {
       </div>
       <div className={styles.wrapper}>
         <PricingPlansList
-          handleFree={handlePricingCardInstall}
+          handleFree={handlePricingCardFree}
           handlePro={openRadonProCheckout}
           handleTeam={openRadonTeamCheckout}
           handleEnterprise={() => scrollToForm(formRef)}
@@ -57,7 +56,7 @@ const Pricing = () => {
         />
       </div>
       <ComparePricingPlans
-        handleFree={handlePricingTableInstall}
+        handleFree={handlePricingTableFree}
         handlePro={openRadonProCheckout}
         handleTeam={openRadonTeamCheckout}
         handleEnterprise={() => scrollToForm(formRef)}

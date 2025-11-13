@@ -12,10 +12,10 @@ interface PricingButtonProps {
 
 function PricingButton({
   children,
-  target = "_self",
-  onClick,
   stylingFilled,
   isTable = false,
+  target = "_blank",
+  onClick,
 }: PricingButtonProps) {
   return (
     <a
