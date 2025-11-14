@@ -105,17 +105,17 @@ const REQUEST_ID_PREFIX = "FETCH";
 /**
  * Intercepts network requests made using the react-native-fetch-api polyfill package.
  * https://github.com/react-native-community/fetch
- * 
+ *
  * This interceptor hooks into the Fetch.js class internal lifecycle methods to capture
  * network activity and report it via CDP-compliant messages (like XHRInterceptor). It handles three native
  * response types:
  * - "text": Streaming responses with incremental data callbacks
  * - "blob": Single callback with Blob response (default)
  * - "base64": Single callback with base64-encoded ArrayBuffer
- * 
+ *
  * Should be used alongside XHRInterceptor to cover all network request types.
  * Shares AsyncBoundedResponseBuffer with XHRInterceptor for response storage.
- * 
+ *
  * @see polyfill_readme.md for detailed implementation notes
  */
 class PolyfillFetchInterceptor {
@@ -412,34 +412,19 @@ class PolyfillFetchInterceptor {
     }
     this.networkProxy.sendMessage("cdp-message", JSON.stringify({ method, params }));
   }
-
-  /**
-   * Check if interceptor is enabled
-   */
-  isEnabled(): boolean {
-    return this.enabled;
-  }
 }
 
-let interceptorInstance: PolyfillFetchInterceptor = new PolyfillFetchInterceptor();
+const interceptorInstance: PolyfillFetchInterceptor = new PolyfillFetchInterceptor();
 
 export function enableInterception(
   networkProxy: NetworkProxy,
   responseBuffer: AsyncBoundedResponseBuffer
 ): void {
-  if (!interceptorInstance) {
-    interceptorInstance = new PolyfillFetchInterceptor();
-  }
-
-  if (!interceptorInstance.isEnabled()) {
-    interceptorInstance.enable(networkProxy, responseBuffer);
-  }
+  interceptorInstance.enable(networkProxy, responseBuffer);
 }
 
 export function disableInterception(): void {
-  if (interceptorInstance && interceptorInstance.isEnabled()) {
-    interceptorInstance.disable();
-  }
+  interceptorInstance.disable();
 }
 
 module.exports = {
