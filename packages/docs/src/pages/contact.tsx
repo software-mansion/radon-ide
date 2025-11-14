@@ -23,7 +23,7 @@ export default function Contact(): JSX.Element {
               title="Sales"
               description="Contact us about plans, pricings, and enterprise contracts."
               linkText="Talk to Sales"
-              linkHref="mailto:projects@swmansion.com"
+              linkHref="mailto:ide@swmansion.com"
             />
             <ContactCard
               icon={<MessageIcon color={"var(--radon-icon)"} />}
