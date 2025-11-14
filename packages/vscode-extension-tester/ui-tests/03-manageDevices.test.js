@@ -193,6 +193,7 @@ describe("3 - Adding device tests", () => {
     await radonViewsService.openRadonIDEPanel();
     await managingDevicesService.addNewDevice(deviceName1);
     await elementHelperService.findAndClickElementByTag("modal-close-button");
+    await appManipulationService.waitForAppToLoad();
     await managingDevicesService.addNewDevice(deviceName2);
     await elementHelperService.findAndClickElementByTag(
       `device-row-start-button-device-${deviceName2}`
