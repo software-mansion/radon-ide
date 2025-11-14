@@ -1,5 +1,3 @@
-// @ts-ignore
-import Fetch from "react-native-fetch-api/src/Fetch";
 import { AsyncBoundedResponseBuffer } from "../AsyncBoundedResponseBuffer";
 import {
   getFetchResponseDataPromise,
@@ -7,6 +5,11 @@ import {
   trimContentType,
 } from "../networkRequestParsers";
 import type { NetworkProxy, NativeResponseType, BlobLikeResponse } from "../types";
+
+let Fetch: any = undefined;
+try {
+  Fetch = require("react-native-fetch-api/src/Fetch")?.default;
+} catch {}
 
 type BodyInit =
   | Blob
