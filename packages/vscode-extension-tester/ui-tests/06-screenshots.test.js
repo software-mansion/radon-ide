@@ -127,7 +127,7 @@ safeDescribe("6 - screenshots tests", () => {
 
     await driver.sleep(5000);
 
-    await validateVideo(filePath, DEFAULT_VIDEO_DURATION_SECS);
+    await validateVideo(filePath);
   });
 
   it("Should record screen using shortcut", async () => {
@@ -167,7 +167,7 @@ safeDescribe("6 - screenshots tests", () => {
 
     await driver.sleep(5000);
 
-    await validateVideo(filePath, DEFAULT_VIDEO_DURATION_SECS);
+    await validateVideo(filePath);
   });
 
   it("Should open replay overlay", async () => {
