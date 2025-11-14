@@ -23,6 +23,7 @@ export interface PricingPlanCardProps {
   };
   label: string;
   buttonLabel: string;
+  href?: string;
   stylingFilled: boolean;
   featuresAll: FeatureProps[];
   featuresTeamManagement?: FeatureProps[];
@@ -83,6 +84,7 @@ const PricingPlansList = ({
             key={planData.plan}
             planData={planData}
             isMonthly={isMonthly}
+            href={planData.href}
             onButtonClick={(planId: PlanType) => actions[planId]?.()}
           />
         ))}

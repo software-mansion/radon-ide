@@ -10,13 +10,16 @@ import FeaturesGrid from "../components/Features/FeaturesGrid";
 
 export default function Features(): JSX.Element {
   return (
-    <Layout>
+    <Layout
+      title="Explore features of Radon. A VSCode & Cursor Extension for React Native & Expo"
+      description="Explore all the available features offered by Radon and turn your editor into a React Native and Expo IDE.">
       <div className={styles.preventfulContainer}>
         <div className={clsx("border-layout")}>
           <div className={styles.titleContainer}>
             <h1 className={styles.headingLabel}>Features</h1>
             <h3 className={styles.subheadingLabel}>
-              Radon IDE turns your editor into a fully featured IDE for React Native and Expo
+              Explore features offered by Radon and turn your editor into an IDE for React Native
+              and Expo
             </h3>
           </div>
           <FeatureSliderLanding />

@@ -86,6 +86,7 @@
 
 .fullPrice {
   text-decoration: line-through var(--radon-text-green-highlight);
+  -webkit-text-decoration: line-through var(--radon-text-green-highlight);
   color: var(--ifm-color-primary);
   font-size: 20px;
   line-height: normal;

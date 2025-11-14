@@ -20,6 +20,7 @@ export default function PlanTableLabel({
   yearlyLowPrice,
   buttonLabel,
   stylingFilled,
+  href,
   onClick,
 }: PlanTableLabelProps) {
   return (
@@ -41,7 +42,7 @@ export default function PlanTableLabel({
           )}
         </div>
       </div>
-      <PricingButton stylingFilled={stylingFilled} onClick={onClick} isTable={true}>
+      <PricingButton stylingFilled={stylingFilled} onClick={onClick} isTable={true} href={href}>
         {buttonLabel}
       </PricingButton>
     </div>
