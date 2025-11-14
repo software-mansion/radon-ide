@@ -207,9 +207,13 @@ export class DeviceSession implements Disposable {
       this.devicesStateManager.getState().devicesByType
     );
     this.disposables.push(
-      this.devicesStateManager.onSetState(() => {
+      this.devicesStateManager.onSetState((partialState) => {
         try {
-          const currentDevices = flattenDevices(this.devicesStateManager.getState().devicesByType);
+          const devicesByType = partialState.devicesByType;
+          if (devicesByType === REMOVE || devicesByType === undefined) {
+            return;
+          }
+          const currentDevices = flattenDevices(devicesByType as DevicesByType);
           const previousState = previousDevices.find((d) => d.id === this.state.deviceInfo.id);
           const currentState = currentDevices.find((d) => d.id === this.state.deviceInfo.id);
           if (previousState?.available === false && currentState?.available === true) {
