@@ -100,39 +100,6 @@ safeDescribe("6 - screenshots tests", () => {
     await validateImage(filePath);
   });
 
-  it("Should open replay overlay", async () => {
-    // some time to wait for replay to record
-    await driver.sleep(3000);
-
-    await elementHelperService.findAndClickElementByTag(
-      "radon-top-bar-show-replay-button"
-    );
-
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
-  });
-
-  it("Should open replay overlay using shortcut", async () => {
-    // some time to wait for replay to record
-    await driver.sleep(3000);
-
-    await driver
-      .actions()
-      .keyDown(Key.COMMAND)
-      .keyDown(Key.SHIFT)
-      .sendKeys("r")
-      .keyUp(Key.SHIFT)
-      .keyUp(Key.COMMAND)
-      .perform();
-
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
-  });
-
   it("Should record screen", async () => {
     const filePath = path.join(cwd, "recordingTest..mp4");
 
@@ -201,6 +168,39 @@ safeDescribe("6 - screenshots tests", () => {
     await driver.sleep(5000);
 
     await validateVideo(filePath, DEFAULT_VIDEO_DURATION_SECS);
+  });
+
+  it("Should open replay overlay", async () => {
+    // some time to wait for replay to record
+    await driver.sleep(3000);
+
+    await elementHelperService.findAndClickElementByTag(
+      "radon-top-bar-show-replay-button"
+    );
+
+    await elementHelperService.findAndWaitForElementByTag(
+      "replay-overlay",
+      "Timed out waiting for replay overlay to appear"
+    );
+  });
+
+  it("Should open replay overlay using shortcut", async () => {
+    // some time to wait for replay to record
+    await driver.sleep(3000);
+
+    await driver
+      .actions()
+      .keyDown(Key.COMMAND)
+      .keyDown(Key.SHIFT)
+      .sendKeys("r")
+      .keyUp(Key.SHIFT)
+      .keyUp(Key.COMMAND)
+      .perform();
+
+    await elementHelperService.findAndWaitForElementByTag(
+      "replay-overlay",
+      "Timed out waiting for replay overlay to appear"
+    );
   });
 
   it("Should save replay", async () => {
