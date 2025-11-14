@@ -400,7 +400,7 @@ safeDescribe("7 - Radon tools tests", () => {
       const deviceName2 = "newDevice2";
 
       await managingDevicesService.addNewDevice(deviceName2);
-      await elementHelperService.findAndClickElementByTag(`close-modal-button`);
+      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
       await managingDevicesService.switchToDevice(deviceName2);
       await appManipulationService.waitForAppToLoad();
 
