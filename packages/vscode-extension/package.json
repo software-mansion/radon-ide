@@ -163,7 +163,7 @@
         "command": "RNIDE.toggleDeviceAppearance",
         "title": "Toggle device appearance (light/dark mode)",
         "category": "Radon IDE",
-        "enablement": "RNIDE.extensionIsActive"
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
     "keybindings": [
@@ -229,9 +229,7 @@
         "mac": "ctrl+alt+9"
       },
       {
-        "command": "RNIDE.toggleDeviceAppearance",
-        "key": "ctrl+shift+L",
-        "mac": "cmd+shift+L"
+        "command": "RNIDE.toggleDeviceAppearance"
       }
     ],
     "configuration": [

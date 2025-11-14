@@ -464,10 +464,8 @@ async function rotateDeviceClockwise() {
 }
 
 async function toggleDeviceAppearance() {
-  const config = workspace.getConfiguration("RadonIDE");
-  const currentAppearance = config.get<"light" | "dark">("deviceSettings.appearance");
-  const newAppearance = currentAppearance === "light" ? "dark" : "light";
-  await config.update("deviceSettings.appearance", newAppearance, true);
+  const project = IDE.getInstanceIfExists()?.project;
+  await project?.toggleDeviceAppearance();
 }
 
 async function openChat() {
