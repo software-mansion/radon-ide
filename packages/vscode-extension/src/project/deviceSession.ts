@@ -27,6 +27,9 @@ import {
   DeviceSettings,
   InstallationError,
   NavigationState,
+  DevicesState,
+  DeviceInfo,
+  DevicesByType,
   RecursivePartial,
   REMOVE,
   StartupMessage,
@@ -112,7 +115,8 @@ export class DeviceSession implements Disposable {
     private readonly devtoolsServer: (DevtoolsServer & { port: number }) | undefined,
     initialRotation: DeviceRotation,
     private readonly outputChannelRegistry: OutputChannelRegistry,
-    private readonly metroProvider: MetroProvider
+    private readonly metroProvider: MetroProvider,
+    private readonly devicesStateManager: StateManager<DevicesState>
   ) {
     this.deviceSettingsStateManager =
       applicationContext.workspaceConfigState.getDerived("deviceSettings");
@@ -192,6 +196,37 @@ export class DeviceSession implements Disposable {
 
     this.fileTransfer = new FileTransfer(stateManager.getDerived("fileTransfer"), device);
     this.disposables.push(this.fileTransfer);
+
+    // We observe the global devices state to detect when this device
+    // gets reconnected (available changes from false to true)
+    const flattenDevices = (devicesByType: DevicesByType) =>
+      Object.keys(devicesByType).flatMap<DeviceInfo>(
+        (k) => (devicesByType?.[k as keyof DevicesByType] ?? []) as DeviceInfo[]
+      );
+
+    let previousDevices: DeviceInfo[] = flattenDevices(
+      this.devicesStateManager.getState().devicesByType
+    );
+
+    this.disposables.push(
+      this.devicesStateManager.onSetState(() => {
+        try {
+          const currentDevices = flattenDevices(this.devicesStateManager.getState().devicesByType);
+          const previousAvailable = previousDevices.find(
+            (d) => d.id === this.state.deviceInfo.id
+          )?.available;
+          const currentAvailable = currentDevices.find(
+            (d) => d.id === this.state.deviceInfo.id
+          )?.available;
+          if (previousAvailable === false && currentAvailable === true) {
+            void this.handleDeviceReconnection();
+          }
+          previousDevices = currentDevices;
+        } catch (e) {
+          Logger.warn("Error while handling devices state change", e);
+        }
+      })
+    );
   }
 
   private get state(): DeviceSessionStore {
@@ -267,10 +302,6 @@ export class DeviceSession implements Disposable {
         },
       });
     }
-  }
-
-  public async onDeviceAvailable() {
-    await this.handleDeviceReconnection();
   }
 
   private async isBuildStale(build: BuildResult) {
