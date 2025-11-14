@@ -91,7 +91,7 @@ export async function validateVideo(filePath, expectedDuration = null) {
     assert.approximately(
       info.format.duration,
       expectedDuration,
-      1,
+      0.5,
       "Video duration is not as expected"
     );
 
@@ -103,7 +103,7 @@ export async function validateVideo(filePath, expectedDuration = null) {
         count: 1,
         folder: path.dirname(framePath),
         filename: path.basename(framePath),
-        timemarks: [Math.floor(info.format.duration)],
+        timemarks: [Math.floor(info.format.duration)], // last second of video
       })
       .on("end", resolve)
       .on("error", reject);
