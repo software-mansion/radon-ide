@@ -108,6 +108,7 @@ export abstract class DeviceBase implements Disposable {
     buildResult: BuildResult,
     terminateApp: boolean
   ): Promise<void>;
+  abstract forwardDevicePort(port: number): Promise<void>;
 
   async acquire() {
     const acquired = await tryAcquiringLock(this.lockFilePath);

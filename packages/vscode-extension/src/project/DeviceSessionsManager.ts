@@ -185,7 +185,8 @@ export class DeviceSessionsManager implements Disposable {
       await this.applicationContext.devtoolsServer,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
       this.outputChannelRegistry,
-      this.applicationContext.metroProvider
+      this.applicationContext.metroProvider,
+      this.devicesStateManager
     );
 
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
