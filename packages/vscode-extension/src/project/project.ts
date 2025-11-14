@@ -365,6 +365,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     });
   }
 
+  public async toggleDeviceAppearance() {
+    const currentAppearance = this.workspaceStateManager.getState().deviceSettings.appearance;
+    const nextAppearance = currentAppearance === "light" ? "dark" : "light";
+    this.workspaceStateManager.updateState({
+      deviceSettings: { appearance: nextAppearance },
+    });
+  }
+
   // #endregion Device Settings
 
   // #region Tools
