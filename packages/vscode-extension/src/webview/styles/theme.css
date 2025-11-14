@@ -334,6 +334,5 @@ body {
 }
 
 body.vscode-high-contrast {
-  --swm-switch-root-background-checked: var(--vscode-editorGutter-addedBackground);
-  --swm-switch-root-background: var(--vscode-editorOverviewRuler-addedForeground);
+  --swm-switch-root-background-checked: var(--vscode-menu-border);
 }

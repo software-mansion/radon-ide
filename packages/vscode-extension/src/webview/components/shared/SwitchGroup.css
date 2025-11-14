@@ -20,6 +20,11 @@
   position: relative;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
 }
+
+.vscode-high-contrast .switch-root {
+  border: var(--swm-dropdown-border);
+}
+
 .switch-root[data-state="checked"] {
   background-color: var(--swm-switch-root-background-checked);
 }
