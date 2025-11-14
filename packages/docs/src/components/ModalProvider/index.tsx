@@ -66,7 +66,7 @@ export function ModalProvider({ children }: ModalProviderProps) {
               <CloseIcon />
             </button>
           </div>
-          <p className={styles.modalSubheading}>Choose how you want to use Radon IDE:</p>
+          <p className={styles.modalSubheading}>Choose how you want to use Radon:</p>
           <DownloadButtons vertical={true} trackFrom={trackSource} />
         </dialog>
       )}

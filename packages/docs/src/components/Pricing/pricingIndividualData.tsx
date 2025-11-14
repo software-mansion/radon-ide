@@ -5,7 +5,8 @@ export const pricingIndividualData: PricingPlanCardProps[] = [
     plan: "FREE",
     price: { monthly: 0, yearlyPerMonth: 0 },
     label: "For non-commercial use",
-    buttonLabel: "Install",
+    buttonLabel: "Get free license",
+    href: "https://portal.ide.swmansion.com",
     stylingFilled: false,
     featuresAll: [
       { label: "Element inspector" },

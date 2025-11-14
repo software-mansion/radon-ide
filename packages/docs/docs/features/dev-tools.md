@@ -6,7 +6,7 @@ sidebar_position: 7
 
 Radon IDE comes with support for launching Dev Tools as separate panels within VSCode or Cursor.
 
-The built-in tools for [Network Inspector](/docs/features/network-inspector), Redux, Outline Renders (via [react-scan](https://react-scan.com/)) and React Query are integrated with the IDE and doesn't require any additional configuration.
+The built-in tools for [Network Inspector](/docs/features/network-inspector), Redux, Outline Renders (via [react-scan](https://react-scan.com/)) and React Query are integrated with the IDE and don't require any additional configuration.
 
 When the IDE detects that a specific tool is available and configured properly (see below for details on configuring individual tools), it will be listed in the tools menu where you can turn it on and off:
 <img width="350" src="/img/docs/ide_devtools_menu.png" className="shadow-image" />

@@ -20,7 +20,7 @@ export default function FeatureSliderLanding() {
       badge: "Built-In Previews",
       title: "Integrated Experience",
       content:
-        "See the preview of your application right where you need it the most – close to your codebase. Radon IDE runs iOS Simulator and Android emulator directly in your Visual Studio Code and Cursor project.",
+        "See the preview of your application right where you need it the most – close to your codebase. Radon runs iOS Simulator and Android emulator directly in your Visual Studio Code and Cursor project.",
       videoSrc: {
         light: useBaseUrl("/video/landing/integrated-experience-light.mp4"),
         dark: useBaseUrl("/video/landing/integrated-experience-dark.mp4"),
@@ -50,7 +50,7 @@ export default function FeatureSliderLanding() {
       badge: "React Scan Integration",
       title: "Outline Renders",
       content:
-        "Radon IDE can highlight components that re-render too frequently. See for yourself what parts of your application need optimization.",
+        "Radon can highlight components that re-render too frequently. See for yourself what parts of your application need optimization.",
       videoSrc: {
         light: useBaseUrl("/video/landing/outline-renders-light.mp4"),
         dark: useBaseUrl("/video/landing/outline-renders-dark.mp4"),

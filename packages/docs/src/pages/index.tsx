@@ -22,7 +22,7 @@ export default function Home(): JSX.Element {
   usePosthog();
 
   return (
-    <Layout description="Radon IDE is a VSCode extension that turns your editor into an advanced React Native IDE with a robust debugger, network inspector, and more.">
+    <Layout description="Radon is a VSCode & Cursor extension that turns your editor into an advanced React Native IDE with a robust debugger, network inspector, and more.">
       <LandingBackground />
       <div className={styles.preventfulContainer}>
         <div className={clsx(styles.container, "border-layout")}>

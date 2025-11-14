@@ -37,14 +37,6 @@
   line-height: 72px;
 }
 
-.headingLabel span {
-  color: var(--radon-text-green-highlight);
-  font-size: 64px;
-  font-style: normal;
-  font-weight: 700;
-  line-height: 72px;
-}
-
 .subheadingLabel {
   text-align: center;
   font-weight: 400;

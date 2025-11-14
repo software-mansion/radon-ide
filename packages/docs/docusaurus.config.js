@@ -7,7 +7,7 @@ const autoNum = require("./src/remark/auto-num.js");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Radon IDE – The Best IDE for React Native",
+  title: "Radon – the Best IDE for React Native & Expo",
   favicon: "img/favicon.png",
 
   url: "https://ide.swmansion.com",
@@ -56,7 +56,7 @@ const config = {
       navbar: {
         hideOnScroll: false,
         logo: {
-          alt: "Radon IDE logo",
+          alt: "Radon logo",
           src: "img/logo.svg",
           srcDark: "img/logo-dark.svg",
           width: 116,
@@ -110,7 +110,7 @@ const config = {
       },
       // announcementBar: {
       //   id: `product-hunt-launch-banner`,
-      //   content: `🎉  Radon IDE just launched on Product Hunt! <a href="https://www.producthunt.com/posts/radon-ide" target="_blank">Upvote!</a>`,
+      //   content: `🎉  Radon just launched on Product Hunt! <a href="https://www.producthunt.com/posts/radon-ide" target="_blank">Upvote!</a>`,
       // },
       metadata: [
         {
