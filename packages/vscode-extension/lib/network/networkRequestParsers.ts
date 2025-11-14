@@ -1,5 +1,3 @@
-// @ts-ignore
-import { drainStream } from "react-native-fetch-api/src/utils";
 import { TextDecoder } from "../polyfills";
 import {
   ResponseBodyDataType,
@@ -224,6 +222,44 @@ function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
 
     reader.readAsText(blob);
   });
+}
+
+/**
+ * Function used to read entirety of a stream into a single Uint8Array result.
+ * This functionality is only used when using the fetch polyfill, allowing for streaming:
+ * https://github.com/react-native-community/fetch/tree/master
+ *
+ * More on implementation:
+ * // https://github.com/react-native-community/fetch/blob/master/src/utils.js
+ * // https://developer.mozilla.org/en-US/docs/Web/API/Streams_API/Using_readable_streams
+ */
+async function drainStream(stream: ReadableStream<Uint8Array> | null): Promise<Uint8Array> {
+  if (!stream || !stream.getReader) {
+    return new Uint8Array();
+  }
+
+  const chunks: Uint8Array[] = [];
+  const reader = stream.getReader();
+  let totalLength = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    totalLength += value ? value.length : 0;
+    if (done) {
+      break;
+    }
+    chunks.push(value);
+  }
+
+  // merge all chunks
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  }
+
+  return result;
 }
 
 /**
@@ -474,5 +510,5 @@ module.exports = {
   mimeTypeFromResponseType,
   getContentTypeHeader,
   getFetchResponseDataPromise,
-  trimContentType
+  trimContentType,
 };
