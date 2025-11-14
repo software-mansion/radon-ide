@@ -180,7 +180,9 @@ safeDescribe("3 - Adding device tests", () => {
     await elementHelperService.findAndWaitForElementByTag(
       `device-${deviceName}`
     );
-    await elementHelperService.findAndClickElementByTag("device-running-badge");
+    await elementHelperService.findAndClickElementByTag(
+      `device-running-badge-${deviceName}`
+    );
 
     await driver.wait(async () => {
       ({ stdout } = await execCommand(
