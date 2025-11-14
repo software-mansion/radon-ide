@@ -332,3 +332,8 @@ body {
   --swm-dropdown-border: 1px solid var(--vscode-menu-border);
   --swm-dropdown-shadow: 0 0 8px 2px var(--vscode-widget-shadow);
 }
+
+body.vscode-high-contrast {
+  --swm-switch-root-background-checked: var(--vscode-editorGutter-addedBackground);
+  --swm-switch-root-background: var(--vscode-editorOverviewRuler-addedForeground);
+}
