@@ -103,7 +103,7 @@ export async function validateVideo(filePath, expectedDuration = null) {
         count: 1,
         folder: path.dirname(framePath),
         filename: path.basename(framePath),
-        timemarks: ["1"],
+        timemarks: [Math.floor(info.format.duration)],
       })
       .on("end", resolve)
       .on("error", reject);

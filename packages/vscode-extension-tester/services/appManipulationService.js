@@ -23,23 +23,6 @@ export default class AppManipulationService {
           return phoneScreen;
         }
 
-        const messageElement =
-          await this.elementHelperService.findAndWaitForElementByTag(
-            "startup-message"
-          );
-        const message = (await messageElement.getText())
-          .replace(/\./g, "")
-          .trim();
-
-        // in case the device startup process has frozen
-        if (!currentMessage.includes("Building") && currentMessage == message) {
-          if (Date.now() - currentMessageFirstAppear > 100000)
-            await this.restartDevice();
-        } else {
-          currentMessage = message;
-          currentMessageFirstAppear = Date.now();
-        }
-
         const errorPopup = await this.elementHelperService.safeFind(
           By.css('[data-testid="alert-dialog-content"]')
         );
@@ -56,6 +39,25 @@ export default class AppManipulationService {
           fs.writeFileSync("output.txt", text);
           await this.driver.sleep(1000);
           throw new Error("App error popup displayed");
+        }
+
+        const messageElement = await this.elementHelperService.safeFind(
+          By.css('[data-testid="startup-message"]')
+        );
+
+        if (!messageElement) return false;
+
+        const message = (await messageElement.getText())
+          .replace(/\./g, "")
+          .trim();
+
+        // in case the device startup process has frozen
+        if (!currentMessage.includes("Building") && currentMessage == message) {
+          if (Date.now() - currentMessageFirstAppear > 100000)
+            await this.restartDevice();
+        } else {
+          currentMessage = message;
+          currentMessageFirstAppear = Date.now();
         }
 
         return false;
