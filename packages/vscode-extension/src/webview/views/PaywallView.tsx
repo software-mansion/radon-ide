@@ -25,11 +25,11 @@ const RadonIDEProYearlyPriceID = window.RNIDE_isDev
 
 const proBenefits = [
   "All the Free features",
-  "Redux UI plugin",
-  "React Query plugin",
-  "CPU Profiler integration",
-  "React Profiler integration",
-  "React Scan integration",
+  "Replays and Screen Recordings",
+  "Device Screenshots",
+  "Location settings",
+  "Localization settings",
+  "Storybook integration",
   "Radon AI assistant",
   "Remote Android Devices Integration",
   "Early access to new features",
