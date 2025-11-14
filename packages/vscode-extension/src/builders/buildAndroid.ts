@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import semver from "semver";
+import { AndroidConfig } from "@expo/config-plugins";
 import loadConfig from "@react-native-community/cli-config";
 import { calculateAppArtifactHash, getNativeABI } from "../utilities/common";
 import { ANDROID_HOME, findJavaHome } from "../utilities/android";
@@ -27,6 +28,7 @@ export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
   apkPath: string;
   packageName: string;
+  expoDevClientLaunchActivity?: string;
   buildHash: string;
 };
 
@@ -54,6 +56,42 @@ async function extractPackageName(artifactPath: string, cancelToken: CancelToken
   return packageName;
 }
 
+async function getApplicationManifest(
+  projectRoot: string
+): Promise<AndroidConfig.Manifest.AndroidManifest | undefined> {
+  try {
+    const filePath = await AndroidConfig.Paths.getAndroidManifestAsync(projectRoot);
+    const androidManifest = await AndroidConfig.Manifest.readAndroidManifestAsync(filePath);
+
+    if (!androidManifest) {
+      return undefined;
+    }
+    return androidManifest;
+  } catch (e) {
+    // ignore errors and just return undefined here
+  }
+  return undefined;
+}
+
+async function getLaunchActivityAsync(
+  projectRoot: string,
+  packageName: string
+): Promise<string | undefined> {
+  const manifest = await getApplicationManifest(projectRoot);
+  if (!manifest) return undefined;
+
+  const mainActivity = await AndroidConfig.Manifest.getRunnableActivity(manifest);
+  if (!mainActivity) return undefined;
+
+  const mainActivityName = mainActivity.$["android:name"];
+
+  // Note(Filip Kamiński): we might want to support "custom app id in the future"
+  // then the format for launch activity would be `${customAppId}/${packageName}${mainActivityName}`
+  // the generation of the launch activity is inspired by expo CLI and good entry point to find out more
+  // is here https://github.com/expo/expo/blob/main/packages/%40expo/cli/src/run/android/resolveLaunchProps.ts
+  return `${packageName}/${mainActivityName}`;
+}
+
 function getApkPath(appRootFolder: string, productFlavor: string, buildType: string) {
   const androidSourceDir = getAndroidSourceDir(appRootFolder);
   const apkFile = ["app", productFlavor, buildType].filter(Boolean).join("-") + ".apk";
@@ -68,7 +106,20 @@ export async function getAndroidBuildPaths(
 ) {
   const apkPath = getApkPath(appRootFolder, productFlavor, buildType);
   const packageName = await extractPackageName(apkPath, cancelToken);
-  return { apkPath, packageName };
+  // setting the launchActivity to anything truthy will affect how the application is launched
+  // in expo dev client set ups and relies on "AndroidConfig" utility provided by expo
+  // it is used to mitigate a bug with deep links that might happen in dev client with
+  // product flavor causing application to open additional not defined webview on start
+  // the alternative approach that uses expoDevClientLaunchActivity should also work
+  // for other set ups (e.g. bare rn applications), but it was not tested in production
+  // environment so to avoid unnecessary risks we use it only when we know we need it
+  // similarly to how expo CLI does it. You can read expo implementation here:
+  // https://github.com/expo/expo/blob/645e63df903d28149ee9eda6682f6032b31601d7/packages/%40expo/cli/src/start/platforms/android/AndroidPlatformManager.ts#L93
+  const launchActivity = await cancelToken.adapt(
+    getLaunchActivityAsync(appRootFolder, packageName)
+  );
+  const expoDevClientLaunchActivity = productFlavor ? launchActivity : undefined;
+  return { apkPath, packageName, expoDevClientLaunchActivity };
 }
 
 function makeBuildTaskName(productFlavor: string, buildType: string, appName?: string) {

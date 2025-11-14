@@ -139,7 +139,12 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     const expoDeeplink = await fetchExpoLaunchDeeplink(metroPort, "android", deepLinkChoice);
     if (expoDeeplink) {
       await this.configureExpoDevMenu(build.packageName);
-      await this.launchWithExpoDeeplink(metroPort, devtoolsPort, expoDeeplink);
+      await this.launchWithExpoDeeplink(
+        metroPort,
+        devtoolsPort,
+        expoDeeplink,
+        build.expoDevClientLaunchActivity
+      );
     } else {
       await this.configureMetroPort(build.packageName, metroPort);
       await this.launchWithBuild(build);
@@ -308,7 +313,8 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
   private async launchWithExpoDeeplink(
     metroPort: number,
     devtoolsPort: number | undefined,
-    expoDeeplink: string
+    expoDeeplink: string,
+    expoDevClientLaunchActivity: string | undefined
   ) {
     // For Expo dev-client and expo go setup, we use deeplink to launch the app. Since Expo's manifest is configured to
     // return localhost:PORT as the destination, we need to setup adb reverse for metro port first.
@@ -322,18 +328,38 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
         `tcp:${devtoolsPort}`,
       ]);
     }
+
     // next, we open the link
-    await exec(ADB_PATH, [
-      "-s",
-      this.serial!,
-      "shell",
-      "am",
-      "start",
-      "-a",
-      "android.intent.action.VIEW",
-      "-d",
-      expoDeeplink,
-    ]);
+    // if expoDevClientLaunchActivity exists we use it instead of generic android.intent.action.VIEW intent
+    if (expoDevClientLaunchActivity) {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "shell",
+        "am",
+        "start",
+        // FLAG_ACTIVITY_SINGLE_TOP -- If set, the activity will not be launched if it is already running at the top of the history stack.
+        "-f",
+        "0x20000000",
+        // Activity to open first: com.bacon.app/.MainActivity
+        "-n",
+        expoDevClientLaunchActivity,
+        "-d",
+        expoDeeplink,
+      ]);
+    } else {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial!,
+        "shell",
+        "am",
+        "start",
+        "-a",
+        "android.intent.action.VIEW",
+        "-d",
+        expoDeeplink,
+      ]);
+    }
   }
 
   protected abstract mirrorNativeLogs(build: AndroidBuildResult): void;
