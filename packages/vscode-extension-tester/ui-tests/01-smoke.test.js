@@ -2,9 +2,10 @@ import { assert } from "chai";
 import { By } from "vscode-extension-tester";
 import { texts } from "../utils/constants.js";
 import initServices from "../services/index.js";
+import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
-describe("1 - Smoke tests Radon IDE", () => {
+safeDescribe("1 - Smoke tests Radon IDE", () => {
   let driver, workbench, elementHelperService, radonViewsService;
 
   beforeEach(async function () {

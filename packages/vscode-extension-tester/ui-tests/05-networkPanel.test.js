@@ -1,9 +1,10 @@
 import { assert } from "chai";
 import { WebView, BottomBarPanel } from "vscode-extension-tester";
 import initServices from "../services/index.js";
+import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
-describe("5 - Network panel tests", () => {
+safeDescribe("5 - Network panel tests", () => {
   let driver,
     view,
     appWebsocket,

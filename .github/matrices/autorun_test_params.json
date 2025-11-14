@@ -13,6 +13,15 @@
       "node": "22",
       "isRecording": "true",
       "testsToRun": "",
+      "isAndroid": "true",
+      "testsToExclude": "",
+      "codeVersion": "latest"
+    },
+    {
+      "testApp": "expo-53",
+      "node": "22",
+      "isRecording": "true",
+      "testsToRun": "",
       "testsToExclude": "",
       "codeVersion": "latest"
     },

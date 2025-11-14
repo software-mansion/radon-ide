@@ -1,3 +1,5 @@
+import { cleanUpAfterTest } from "../ui-tests/setupTest.js";
+
 export function centerCoordinates(position) {
   return {
     x: position.x - 0.5,
@@ -9,7 +11,7 @@ export function centerCoordinates(position) {
 
 export function describeIf(condition, title, fn) {
   if (condition) {
-    describe(title, fn);
+    safeDescribe(title, fn);
   } else {
     describe.skip(title, fn);
   }
@@ -21,4 +23,14 @@ export function itIf(condition, title, fn) {
   } else {
     it.skip(title, fn);
   }
+}
+
+export function safeDescribe(title, fn) {
+  describe(title, () => {
+    after(async () => {
+      await cleanUpAfterTest();
+    });
+
+    fn();
+  });
 }

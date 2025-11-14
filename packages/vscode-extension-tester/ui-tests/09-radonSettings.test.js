@@ -1,9 +1,10 @@
 import { WebView, SideBarView, EditorView } from "vscode-extension-tester";
 import { assert } from "chai";
 import initServices from "../services/index.js";
+import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
-describe("9 - Radon Settings", () => {
+safeDescribe("9 - Radon Settings", () => {
   let driver,
     view,
     elementHelperService,

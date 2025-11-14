@@ -15,6 +15,7 @@ import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { Feature } from "../../common/License";
 import { useDevices } from "../hooks/useDevices";
+import { PropsWithDataTest } from "../../common/types";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -24,7 +25,12 @@ const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.Sel
   )
 );
 
-function RunningBadgeButton({ onStopClick }: { onStopClick?: (e: React.MouseEvent) => void }) {
+function RunningBadgeButton({
+  onStopClick,
+  dataTest,
+}: PropsWithDataTest<{
+  onStopClick?: (e: React.MouseEvent) => void;
+}>) {
   return (
     <div
       onPointerUpCapture={(e) => {
@@ -32,10 +38,7 @@ function RunningBadgeButton({ onStopClick }: { onStopClick?: (e: React.MouseEven
         e.stopPropagation();
       }}
       onClick={onStopClick}>
-      <Badge
-        variant="activity-bar-counter"
-        className="running-badge-button"
-        data-testid="device-running-badge">
+      <Badge variant="activity-bar-counter" className="running-badge-button" data-testid={dataTest}>
         <span />
       </Badge>
     </div>
@@ -71,7 +74,10 @@ function renderDevices(
           disabled={!device.available}
           isSelected={device.id === selectedProjectDevice?.id}>
           {isRunning(device.id) && (
-            <RunningBadgeButton onStopClick={() => handleDeviceStop(device.id)} />
+            <RunningBadgeButton
+              onStopClick={() => handleDeviceStop(device.id)}
+              dataTest={`device-running-badge-${device.displayName}`}
+            />
           )}
         </RichSelectItem>
       ))}

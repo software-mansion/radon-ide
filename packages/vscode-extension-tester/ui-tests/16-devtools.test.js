@@ -63,14 +63,14 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
       "radon-tools-dropdown-menu"
     );
     const reduxSwitch = await elementHelperService.findAndWaitForElementByTag(
-      "dev-tool-redux-devtools-devplugin"
+      "dev-tool-redux-devtools"
     );
 
     if ((await reduxSwitch.getAttribute("data-state")) !== "checked") {
       await reduxSwitch.click();
     } else {
       await elementHelperService.findAndClickElementByTag(
-        "dev-tool-redux-devtools-devplugin-open-button"
+        "dev-tool-redux-devtools-open-button"
       );
     }
     await driver.sleep(1000);
@@ -191,14 +191,14 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
     );
     const reactQuerySwitch =
       await elementHelperService.findAndWaitForElementByTag(
-        "dev-tool-redux-devtools-devplugin"
+        "dev-tool-redux-devtools"
       );
 
     if ((await reactQuerySwitch.getAttribute("data-state")) !== "checked") {
       await reactQuerySwitch.click();
     } else {
       await elementHelperService.findAndClickElementByTag(
-        "dev-tool-redux-devtools-devplugin-open-button"
+        "dev-tool-redux-devtools-open-button"
       );
     }
     await driver.sleep(1000);
