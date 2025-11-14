@@ -4,6 +4,7 @@ import assert from "assert";
 import { ExecaChildProcess, ExecaError } from "execa";
 import mime from "mime";
 import _ from "lodash";
+import * as vscode from "vscode";
 import { Disposable } from "vscode";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
@@ -18,7 +19,6 @@ import { IOSBuildResult } from "../builders/buildIOS";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import {
-  DeviceInfo,
   DevicePlatform,
   DevicesByType,
   DeviceSettings,
@@ -75,7 +75,7 @@ export class IosSimulatorDevice extends DeviceBase {
   constructor(
     deviceSettings: DeviceSettings,
     private readonly deviceUDID: string,
-    private readonly _deviceInfo: DeviceInfo,
+    private readonly _deviceInfo: IOSDeviceInfo,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     super(deviceSettings);
@@ -85,7 +85,7 @@ export class IosSimulatorDevice extends DeviceBase {
     return DevicePlatform.IOS;
   }
 
-  public get deviceInfo() {
+  public get deviceInfo(): IOSDeviceInfo {
     return this._deviceInfo;
   }
 
@@ -97,6 +97,9 @@ export class IosSimulatorDevice extends DeviceBase {
 
   private get nativeLogsOutputChannel() {
     return this.outputChannelRegistry.getOrCreateOutputChannel(Output.IosDevice);
+  }
+  private get maestroLogsOutputChannel() {
+    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.MaestroIos);
   }
 
   public dispose() {
@@ -706,6 +709,87 @@ export class IosSimulatorDevice extends DeviceBase {
     await exec("xcrun", args);
     return { canSafelyRemove: true };
   }
+
+  protected async runMaestroTest(fileNames: string[]) {
+    this.maestroLogsOutputChannel.show(true);
+    this.maestroLogsOutputChannel.appendLine("");
+
+    if (fileNames.length === 1) {
+      const fileName = fileNames[0];
+      const isFile = fs.lstatSync(fileName).isFile();
+      if (isFile) {
+        const document = await vscode.workspace.openTextDocument(fileName);
+        if (document.isDirty) {
+          await document.save();
+        }
+      }
+      this.maestroLogsOutputChannel.appendLine(
+        `Starting ${isFile ? "a Maestro flow" : "all Maestro flows"} from ${fileName} on ${this.deviceInfo.displayName}`
+      );
+    } else {
+      this.maestroLogsOutputChannel.appendLine(
+        `Starting ${fileNames.length} Maestro flows: ${fileNames.join(", ")} on ${this.deviceInfo.displayName}`
+      );
+    }
+
+    // Right now Maestro uses xcodebuild test-without-building for running iOS tests,
+    // which does not support simulators located outside the default device set.
+    // The creators provide a prebuilt test runner that can be ran through simctl,
+    // and even have have written working code that uses it, but as for now
+    // there's no built-in way to call these methods with Maestro CLI.
+    // As a workaround, we replace the xcodebuild command with instructions
+    // similar to what Maestro would do in prebuilt mode, and wrap the xcrun
+    // command to provide our own device set with the --set flag.
+    const shimPath = path.resolve(__dirname, "..", "scripts", "shims");
+
+    const maestroProcess = exec("maestro", ["--device", this.deviceUDID, "test", ...fileNames], {
+      buffer: false,
+      stdin: "ignore",
+      env: {
+        PATH: `${shimPath}:${process.env.PATH}`,
+      },
+    });
+    this.maestroProcess = maestroProcess;
+
+    lineReader(maestroProcess).onLineRead(this.maestroLogsOutputChannel.appendLine);
+
+    const resultOrError = await maestroProcess.catch((e) => e);
+    const exitCode = resultOrError.exitCode ?? 1;
+
+    this.maestroProcess = undefined;
+    if (exitCode !== 0) {
+      this.maestroLogsOutputChannel.appendLine(`Maestro test failed with exit code ${exitCode}`);
+    } else {
+      this.maestroLogsOutputChannel.appendLine("Maestro test completed successfully!");
+    }
+  }
+
+  protected async abortMaestroTest(): Promise<void> {
+    if (!this.maestroProcess) {
+      return;
+    }
+
+    this.maestroLogsOutputChannel.appendLine("Aborting Maestro test...");
+
+    const proc = this.maestroProcess;
+    try {
+      proc.kill();
+    } catch (e) {}
+
+    const killer = setTimeout(() => {
+      try {
+        proc.kill(9);
+      } catch (e) {}
+    }, 3000);
+
+    try {
+      await proc;
+    } catch (_e) {}
+
+    clearTimeout(killer);
+    this.maestroProcess = undefined;
+    this.maestroLogsOutputChannel.appendLine("Maestro test aborted");
+  }
 }
 
 const SUPPORTED_FILE_URL_EXTS = [
@@ -990,7 +1074,7 @@ export class IosSimulatorProvider implements DevicesProvider<IOSDeviceInfo>, Dis
   }
 
   public async acquireDevice(
-    deviceInfo: DeviceInfo,
+    deviceInfo: IOSDeviceInfo,
     deviceSettings: DeviceSettings
   ): Promise<IosSimulatorDevice | undefined> {
     if (deviceInfo.platform !== DevicePlatform.IOS) {

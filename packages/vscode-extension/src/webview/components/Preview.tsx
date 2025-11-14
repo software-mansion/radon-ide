@@ -140,8 +140,13 @@ function Preview({
 
   const showDevicePreview = previewURL && (showPreviewRequested || isRunning);
 
+  // Maestro usually closes and opens the app during a test, so we prevent
+  // the disconnected alert when testing not to confuse the user
+  const maestroTestStatus = use$(selectedDeviceSessionState.maestroTestState);
   const isAppDisconnected =
-    isRunning && inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
+    isRunning &&
+    maestroTestStatus === "stopped" &&
+    inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
   useApplicationDisconnectedAlert(isAppDisconnected);
 
   useFatalErrorAlert(fatalErrorDescriptor);

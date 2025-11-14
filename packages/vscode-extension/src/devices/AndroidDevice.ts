@@ -1,7 +1,9 @@
 import path from "path";
+import fs from "fs";
 import xml2js from "xml2js";
+import * as vscode from "vscode";
 import { Disposable } from "vscode";
-import { exec } from "../utilities/subprocess";
+import { exec, lineReader } from "../utilities/subprocess";
 import {
   DevicePlatform,
   DeviceSettings,
@@ -42,6 +44,9 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
 
   protected get nativeLogsOutputChannel() {
     return this.outputChannelRegistry.getOrCreateOutputChannel(Output.AndroidDevice);
+  }
+  private get maestroLogsOutputChannel() {
+    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.MaestroAndroid);
   }
 
   public get platform(): DevicePlatform {
@@ -215,6 +220,76 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
       `file:///sdcard/Download`,
     ]);
     return { canSafelyRemove: true };
+  }
+
+  protected async runMaestroTest(fileNames: string[]) {
+    this.maestroLogsOutputChannel.show(true);
+    this.maestroLogsOutputChannel.appendLine("");
+
+    if (fileNames.length === 1) {
+      const fileName = fileNames[0];
+      const isFile = fs.lstatSync(fileName).isFile();
+      if (isFile) {
+        const document = await vscode.workspace.openTextDocument(fileName);
+        if (document.isDirty) {
+          await document.save();
+        }
+      }
+      this.maestroLogsOutputChannel.appendLine(
+        `Starting ${isFile ? "a Maestro flow" : "all Maestro flows"} from ${fileName} on ${this.deviceInfo.displayName}`
+      );
+    } else {
+      const areFiles = fileNames.every((fileName) => fs.lstatSync(fileName).isFile());
+      this.maestroLogsOutputChannel.appendLine(
+        `Starting ${areFiles ? fileNames.length : "all"} Maestro flows${!areFiles ? ` from ${fileNames.length} folders` : ""}: ${fileNames.join(", ")} on ${this.deviceInfo.displayName}`
+      );
+    }
+
+    const maestroProcess = exec(
+      "maestro",
+      ["--device", this.serial || "device", "test", ...fileNames],
+      { buffer: false, stdin: "ignore" }
+    );
+    this.maestroProcess = maestroProcess;
+
+    lineReader(maestroProcess).onLineRead(this.maestroLogsOutputChannel.appendLine);
+
+    const resultOrError = await maestroProcess.catch((e) => e);
+    const exitCode = resultOrError.exitCode ?? 1;
+
+    this.maestroProcess = undefined;
+    if (exitCode !== 0) {
+      this.maestroLogsOutputChannel.appendLine(`Maestro test failed with exit code ${exitCode}`);
+    } else {
+      this.maestroLogsOutputChannel.appendLine("Maestro test completed successfully!");
+    }
+  }
+
+  protected async abortMaestroTest(): Promise<void> {
+    if (!this.maestroProcess) {
+      return;
+    }
+
+    this.maestroLogsOutputChannel.appendLine("Aborting Maestro test...");
+
+    const proc = this.maestroProcess;
+    try {
+      proc.kill();
+    } catch (e) {}
+
+    const killer = setTimeout(() => {
+      try {
+        proc.kill(9);
+      } catch (e) {}
+    }, 3000);
+
+    try {
+      await proc;
+    } catch (_e) {}
+
+    clearTimeout(killer);
+    this.maestroProcess = undefined;
+    this.maestroLogsOutputChannel.appendLine("Maestro test aborted");
   }
 
   private async configureExpoDevMenu(packageName: string) {

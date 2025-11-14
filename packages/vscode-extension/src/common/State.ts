@@ -125,6 +125,7 @@ export type ApplicationDependency =
   | "expo"
   | "expoRouter"
   | "storybook"
+  | "maestro"
   | "easCli";
 
 export type InstallationStatus = "installed" | "notInstalled" | "installing";
@@ -196,6 +197,8 @@ export enum InspectorBridgeStatus {
 }
 
 export type ProfilingState = "stopped" | "profiling" | "saving";
+
+export type MaestroTestState = "stopped" | "running" | "aborting";
 
 export type ApplicationSessionState = {
   appOrientation: DeviceRotation | null;
@@ -396,6 +399,7 @@ export type DeviceSessionStore = {
   previewURL: string | undefined;
   fileTransfer: FileTransferState;
   screenCapture: ScreenCaptureState;
+  maestroTestState: MaestroTestState;
 } & (DeviceSessionStateStarting | DeviceSessionStateRunning | DeviceSessionStateFatalError);
 
 // #endregion Device Session
@@ -562,6 +566,7 @@ const initialDeviceSessionStore: DeviceSessionStore = {
     navigationRouteList: [],
   },
   previewURL: undefined,
+  maestroTestState: "stopped",
   screenCapture: {
     isRecording: false,
     recordingTime: 0,

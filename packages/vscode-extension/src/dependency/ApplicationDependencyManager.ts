@@ -83,6 +83,7 @@ export class ApplicationDependencyManager implements Disposable {
 
     this.checkProjectUsesExpoRouter();
     this.checkProjectUsesStorybook();
+    this.checkMaestroInstallationStatus();
     this.checkEasCliInstallationStatus();
   }
 
@@ -368,6 +369,27 @@ export class ApplicationDependencyManager implements Disposable {
       },
     });
     return installed;
+  }
+
+  public async checkMaestroInstallationStatus() {
+    try {
+      await exec("maestro", ["--version"]);
+      this.stateManager.updateState({
+        maestro: {
+          status: "installed",
+          isOptional: true,
+        },
+      });
+      return true;
+    } catch (error) {
+      this.stateManager.updateState({
+        maestro: {
+          status: "notInstalled",
+          isOptional: true,
+        },
+      });
+      return false;
+    }
   }
 
   public async checkEasCliInstallationStatus() {

@@ -1,4 +1,4 @@
-import { Disposable } from "vscode";
+import { Disposable, window } from "vscode";
 import { throttle } from "lodash";
 import { RadonInspectorBridge } from "./inspectorBridge";
 import { DeviceBase } from "../devices/DeviceBase";
@@ -915,6 +915,30 @@ export class DeviceSession implements Disposable {
 
   public openStorybookStory(componentTitle: string, storyName: string) {
     this.inspectorBridge?.sendShowStorybookStoryRequest(componentTitle, storyName);
+  }
+
+  public async startMaestroTest(fileNames: string[]) {
+    if (this.stateManager.getState().maestroTestState !== "stopped") {
+      window.showWarningMessage(
+        "A Maestro test is already running on this device. Abort it before starting a new one."
+      );
+      return;
+    }
+    try {
+      this.stateManager.updateState({ maestroTestState: "running" });
+      await this.device.startMaestroTest(fileNames);
+    } finally {
+      this.stateManager.updateState({ maestroTestState: "stopped" });
+    }
+  }
+
+  public async stopMaestroTest() {
+    this.stateManager.updateState({ maestroTestState: "aborting" });
+    try {
+      await this.device.stopMaestroTest();
+    } finally {
+      this.stateManager.updateState({ maestroTestState: "stopped" });
+    }
   }
 
   //#region Application Session
