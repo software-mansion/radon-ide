@@ -125,8 +125,6 @@ safeDescribe("6 - screenshots tests", () => {
       "Timed out waiting for recording to be saved"
     );
 
-    await driver.sleep(5000);
-
     await validateVideo(filePath);
   });
 
@@ -164,8 +162,6 @@ safeDescribe("6 - screenshots tests", () => {
       10000,
       "Timed out waiting for recording to be saved"
     );
-
-    await driver.sleep(5000);
 
     await validateVideo(filePath);
   });
@@ -245,8 +241,6 @@ safeDescribe("6 - screenshots tests", () => {
       10000,
       "Timed out waiting for recording to be saved"
     );
-
-    await driver.sleep(10000);
 
     await validateVideo(filePath);
   });

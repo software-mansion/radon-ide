@@ -1,15 +1,13 @@
-import * as fs from "fs";
 import { assert } from "chai";
 import { WebView, EditorView } from "vscode-extension-tester";
 import { itIf } from "../utils/helpers.js";
 import initServices from "../services/index.js";
-import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
 const IS_GITHUB_ACTIONS = process.env.IS_GITHUB_ACTIONS === "true";
 
-safeDescribe("14 - Error tests", () => {
-  let driver, originalText;
+describe("14 - Error tests", () => {
+  let driver;
   let {
     radonViewsService,
     appManipulationService,
@@ -28,27 +26,10 @@ safeDescribe("14 - Error tests", () => {
       vscodeHelperService,
     } = initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
-
-    originalText = fs.readFileSync(
-      "./data/react-native-app/shared/automatedTests.tsx",
-      "utf-8"
-    );
+    await managingDevicesService.prepareDevices();
 
     const view = new WebView();
     await view.switchBack();
-  });
-
-  afterEach(async () => {
-    fs.writeFileSync(
-      "./data/react-native-app/shared/automatedTests.tsx",
-      originalText,
-      "utf-8"
-    );
   });
 
   // this test creates bundle error before building app
@@ -57,39 +38,45 @@ safeDescribe("14 - Error tests", () => {
     await vscodeHelperService.openFileInEditor(
       "/data/react-native-app/shared/automatedTests.tsx"
     );
-
     const editor = await new EditorView().openEditor("automatedTests.tsx", 1);
-    await editor.moveCursor(1, 1);
-    await editor.typeText(`
+    const originalText = await editor.getText();
+    try {
+      await editor.moveCursor(1, 1);
+      await editor.typeText(`
         import notExisting from 'not-existing';
         notExisting();
         `);
-    await editor.save();
+      await editor.save();
 
-    await radonViewsService.openRadonIDEPanel();
-    await appManipulationService.waitForAppToLoad();
-    await driver.switchTo().defaultContent();
-    await radonViewsService.openRadonIDEPanel();
+      await radonViewsService.openRadonIDEPanel();
+      await appManipulationService.waitForAppToLoad();
+      await driver.switchTo().defaultContent();
+      await radonViewsService.openRadonIDEPanel();
 
-    await driver.wait(
-      async () => {
-        try {
-          await elementHelperService.findAndWaitForElementByTag(
-            "alert-dialog-content"
-          );
-          return true;
-        } catch {
-          return false;
-        }
-      },
-      10000,
-      "Error dialog did not show up"
-    );
-
-    const dialogTitle = await elementHelperService.findAndWaitForElementByTag(
-      "alert-dialog-title"
-    );
-    assert.equal(await dialogTitle.getText(), "Bundle error");
+      await driver.wait(
+        async () => {
+          try {
+            await elementHelperService.findAndWaitForElementByTag(
+              "alert-dialog-content"
+            );
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        10000,
+        "Error dialog did not show up"
+      );
+      const dialogTitle = await elementHelperService.findAndWaitForElementByTag(
+        "alert-dialog-title"
+      );
+      assert.equal(await dialogTitle.getText(), "Bundle error");
+    } finally {
+      await driver.switchTo().defaultContent();
+      const editor = await new EditorView().openEditor("automatedTests.tsx", 1);
+      await editor.setText(originalText);
+      await editor.save();
+    }
   });
 
   // TODO: Re-enable this test on GitHub Actions.
@@ -106,35 +93,45 @@ safeDescribe("14 - Error tests", () => {
       await vscodeHelperService.openFileInEditor(
         "/data/react-native-app/shared/automatedTests.tsx"
       );
-
       const editor = await new EditorView().openEditor("automatedTests.tsx", 1);
-      await editor.moveCursor(1, 1);
-      await editor.typeText(`
+      const originalText = await editor.getText();
+      try {
+        await editor.moveCursor(1, 1);
+        await editor.typeText(`
         import notExisting from 'not-existing';
         notExisting();
         `);
-      await editor.save();
+        await editor.save();
+        await radonViewsService.openRadonIDEPanel();
 
-      await radonViewsService.openRadonIDEPanel();
-      await driver.wait(
-        async () => {
-          try {
-            await elementHelperService.findAndWaitForElementByTag(
-              "alert-dialog-content"
-            );
-            return true;
-          } catch {
-            return false;
-          }
-        },
-        10000,
-        "Error dialog did not show up"
-      );
-
-      const dialogTitle = await elementHelperService.findAndWaitForElementByTag(
-        "alert-dialog-title"
-      );
-      assert.equal(await dialogTitle.getText(), "Bundle error");
+        await driver.wait(
+          async () => {
+            try {
+              await elementHelperService.findAndWaitForElementByTag(
+                "alert-dialog-content"
+              );
+              return true;
+            } catch {
+              return false;
+            }
+          },
+          10000,
+          "Error dialog did not show up"
+        );
+        const dialogTitle =
+          await elementHelperService.findAndWaitForElementByTag(
+            "alert-dialog-title"
+          );
+        assert.equal(await dialogTitle.getText(), "Bundle error");
+      } finally {
+        await driver.switchTo().defaultContent();
+        const editor = await new EditorView().openEditor(
+          "automatedTests.tsx",
+          1
+        );
+        await editor.setText(originalText);
+        await editor.save();
+      }
     }
   );
 });
