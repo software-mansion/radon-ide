@@ -99,6 +99,8 @@ interface PolyfillFetch {
 }
 
 const LOADER_ID = "fetch-interceptor";
+const INITIATOR_TYPE = "script";
+const REQUEST_ID_PREFIX = "FETCH";
 
 class PolyfillFetchInterceptor {
   private enabled: boolean = false;
@@ -156,10 +158,11 @@ class PolyfillFetchInterceptor {
       self.original__didCreateRequest.call(this, requestId);
 
       const mimeType = trimContentType(this._request._body._mimeType);
-
       self.startTime = Date.now();
+      const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
+
       self.sendCDPMessage("Network.requestWillBeSent", {
-        requestId: requestId,
+        requestId: requestIdStr,
         loaderId: LOADER_ID,
         timestamp: self.startTime,
         wallTime: Date.now(),
@@ -171,7 +174,7 @@ class PolyfillFetchInterceptor {
         },
         type: mimeType,
         initiator: {
-          type: "script",
+          type: INITIATOR_TYPE,
         },
       });
     };
@@ -230,9 +233,10 @@ class PolyfillFetchInterceptor {
 
       const timeStamp = Date.now();
       const mimeType = trimContentType(this._response._body._mimeType);
+      const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
 
       self.sendCDPMessage("Network.dataReceived", {
-        requestId: requestId,
+        requestId: requestIdStr,
         loaderId: LOADER_ID,
         timestamp: timeStamp,
         dataLength: responseText.length,
@@ -265,9 +269,10 @@ class PolyfillFetchInterceptor {
       }
 
       const timeStamp = Date.now();
+      const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
 
       self.sendCDPMessage("Network.responseReceived", {
-        requestId: requestId,
+        requestId: requestIdStr,
         loaderId: LOADER_ID,
         timestamp: timeStamp,
         ttfb: self.ttfbTime,
@@ -302,28 +307,28 @@ class PolyfillFetchInterceptor {
       }
 
       const timeStamp = Date.now();
+      const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
 
+      // send loadingFailed and return early
       if (didTimeOut || errorMessage) {
-        self.sendCDPMessage("Network.loadingFailed", {
-          requestId: requestId,
+        return self.sendCDPMessage("Network.loadingFailed", {
+          requestId: requestIdStr,
           timestamp: timeStamp,
           type: "",
           errorText: errorMessage || "Timeout",
           canceled: false,
         });
-
-        return;
       }
 
       self.responseBuffer?.put(
-        requestId.toString(),
+        requestIdStr,
         getFetchResponseDataPromise(this._response, this._nativeResponseType)
       );
 
       const mimeType = trimContentType(this._response._body._mimeType);
 
       self.sendCDPMessage("Network.loadingFinished", {
-        requestId: requestId,
+        requestId: requestIdStr,
         timestamp: timeStamp,
         duration: timeStamp - self.startTime,
         type: mimeType,
@@ -349,11 +354,12 @@ class PolyfillFetchInterceptor {
       self.original__abort.call(this);
 
       const timeStamp = Date.now();
+      const requestIdStr = `${REQUEST_ID_PREFIX}-${this._requestId}`;
 
       self.sendCDPMessage("Network.loadingFailed", {
-        requestId: this._requestId,
+        requestId: requestIdStr,
         timestamp: timeStamp,
-        type: "", // FIX THIS
+        type: "",
         errorText: "Aborted",
         canceled: true,
       });
@@ -361,18 +367,13 @@ class PolyfillFetchInterceptor {
   }
 
   public enable(networkProxy: NetworkProxy, responseBuffer: AsyncBoundedResponseBuffer) {
-    if (this.enabled || !this.checkCompatibility()) {
+    if (this.enabled || !this.checkCompatibility() || !global.fetch) {
       return;
     }
 
     this.networkProxy = networkProxy;
     this.responseBuffer = responseBuffer;
 
-    if (!global.fetch) {
-      return;
-    }
-
-    // Setup interceptors
     this.setupInterceptors();
     this.enabled = true;
   }
@@ -382,7 +383,6 @@ class PolyfillFetchInterceptor {
       return;
     }
 
-    // Cleanup interceptors
     this.cleanupInterceptors();
 
     this.networkProxy = undefined;
@@ -405,7 +405,7 @@ class PolyfillFetchInterceptor {
   }
 }
 
-let interceptorInstance: PolyfillFetchInterceptor | null = new PolyfillFetchInterceptor();
+let interceptorInstance: PolyfillFetchInterceptor = new PolyfillFetchInterceptor();
 
 export function enableInterception(
   networkProxy: NetworkProxy,
