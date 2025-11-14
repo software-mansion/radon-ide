@@ -53,10 +53,6 @@ export enum ResponseBodyDataType {
   Other = "Other",
 }
 
-/**
- * Internal response body data structure with metadata.
- * Contains the body content, truncation status, encoding info, type, and size.
- */
 export interface InternalResponseBodyData {
   body: string | undefined;
   wasTruncated: boolean;
@@ -67,13 +63,12 @@ export interface InternalResponseBodyData {
 
 /**
  * Response body data without the internal size tracking.
- * Used by AsyncBoundedResponseBuffer for storing response data.
  */
 export type ResponseBodyData = Omit<InternalResponseBodyData, "dataSize">;
 
 /**
- * Content-Type header constants.
- * The casing differs on android and iOS, so this is used for workaround.
+ * The casing in Content-Type header differs on android and iOS,
+ * so this is used in the workaround.
  */
 export const ContentTypeHeader = {
   Default: "Content-Type",
@@ -81,7 +76,6 @@ export const ContentTypeHeader = {
 } as const;
 
 /**
- * Content type analysis result.
  * Used to determine how to process request/response data based on MIME type.
  */
 export interface ContentTypeAnalysis {
@@ -93,13 +87,12 @@ export interface ContentTypeAnalysis {
 
 /**
  * Native response type for React Native fetch polyfill.
- * Determines how the response body is initially received from native side.
  */
 export type NativeResponseType = "text" | "blob" | "base64";
 
 /**
  * Blob-like response object from React Native.
- * Used as a Blob representation in RN.
+ * Used as a Blob representation in RN when dealing with network responses.
  */
 export interface BlobLikeResponse {
   size: number;

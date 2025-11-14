@@ -6,6 +6,7 @@ import {
   type RequestData,
   type InternalResponseBodyData,
   type ContentTypeAnalysis,
+  ExtendedXMLHttpRequest,
 } from "./types";
 
 // Due to import conflicts from "src" directory, some types
@@ -490,9 +491,8 @@ export function trimContentType(contentType: string | undefined) {
   return contentType;
 }
 
-export function getContentTypeHeader(xhr: XMLHttpRequest): string {
+export function getContentTypeHeader(xhr: ExtendedXMLHttpRequest): string {
   let headerValue =
-    // @ts-ignore - RN-specific property
     xhr._headers?.[ContentTypeHeader.LowerCase] || xhr._headers?.[ContentTypeHeader.Default] || "";
 
   if (xhr.getResponseHeader) {
@@ -501,8 +501,6 @@ export function getContentTypeHeader(xhr: XMLHttpRequest): string {
 
   return trimContentType(headerValue);
 }
-
-// function create
 
 module.exports = {
   getXHRResponseDataPromise,
