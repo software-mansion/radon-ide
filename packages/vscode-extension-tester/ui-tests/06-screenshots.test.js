@@ -3,11 +3,12 @@ import * as path from "path";
 import { WebView, Key, By } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { validateImage, validateVideo } from "../utils/imageProcessing.js";
+import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
 const DEFAULT_VIDEO_DURATION_SECS = 4;
 
-describe("6 - screenshots tests", () => {
+safeDescribe("6 - screenshots tests", () => {
   let driver,
     view,
     appWebsocket,
@@ -39,12 +40,10 @@ describe("6 - screenshots tests", () => {
   beforeEach(async () => {
     await radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
-
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
     }, 5000);
-
     await appManipulationService.hideExpoOverlay(appWebsocket);
   });
 
@@ -101,6 +100,39 @@ describe("6 - screenshots tests", () => {
     await validateImage(filePath);
   });
 
+  it("Should open replay overlay", async () => {
+    // some time to wait for replay to record
+    await driver.sleep(3000);
+
+    await elementHelperService.findAndClickElementByTag(
+      "radon-top-bar-show-replay-button"
+    );
+
+    await elementHelperService.findAndWaitForElementByTag(
+      "replay-overlay",
+      "Timed out waiting for replay overlay to appear"
+    );
+  });
+
+  it("Should open replay overlay using shortcut", async () => {
+    // some time to wait for replay to record
+    await driver.sleep(3000);
+
+    await driver
+      .actions()
+      .keyDown(Key.COMMAND)
+      .keyDown(Key.SHIFT)
+      .sendKeys("r")
+      .keyUp(Key.SHIFT)
+      .keyUp(Key.COMMAND)
+      .perform();
+
+    await elementHelperService.findAndWaitForElementByTag(
+      "replay-overlay",
+      "Timed out waiting for replay overlay to appear"
+    );
+  });
+
   it("Should record screen", async () => {
     const filePath = path.join(cwd, "recordingTest..mp4");
 
@@ -125,6 +157,8 @@ describe("6 - screenshots tests", () => {
       10000,
       "Timed out waiting for recording to be saved"
     );
+
+    await driver.sleep(5000);
 
     await validateVideo(filePath, DEFAULT_VIDEO_DURATION_SECS);
   });
@@ -164,40 +198,9 @@ describe("6 - screenshots tests", () => {
       "Timed out waiting for recording to be saved"
     );
 
+    await driver.sleep(5000);
+
     await validateVideo(filePath, DEFAULT_VIDEO_DURATION_SECS);
-  });
-
-  it("Should open replay overlay", async () => {
-    // some time to wait for replay to record
-    await driver.sleep(3000);
-
-    await elementHelperService.findAndClickElementByTag(
-      "radon-top-bar-show-replay-button"
-    );
-
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
-  });
-
-  it("Should open replay overlay using shortcut", async () => {
-    // some time to wait for replay to record
-    await driver.sleep(3000);
-
-    await driver
-      .actions()
-      .keyDown(Key.COMMAND)
-      .keyDown(Key.SHIFT)
-      .sendKeys("r")
-      .keyUp(Key.SHIFT)
-      .keyUp(Key.COMMAND)
-      .perform();
-
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
   });
 
   it("Should save replay", async () => {
@@ -242,6 +245,9 @@ describe("6 - screenshots tests", () => {
       10000,
       "Timed out waiting for recording to be saved"
     );
+
+    await driver.sleep(10000);
+
     await validateVideo(filePath);
   });
 });
