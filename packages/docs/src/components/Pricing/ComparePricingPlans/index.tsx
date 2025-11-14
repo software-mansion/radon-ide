@@ -50,7 +50,7 @@ export default function ComparePricingPlans({
           <PlanTableLabel
             plan="PRO"
             monthlyPrice={25}
-            yearlyLowPrice={250}
+            yearlyLowPrice={252}
             buttonLabel="Start 14-day trial"
             stylingFilled={true}
             onClick={handlePro}
@@ -58,7 +58,7 @@ export default function ComparePricingPlans({
           <PlanTableLabel
             plan="TEAM"
             monthlyPrice={75}
-            yearlyLowPrice={750}
+            yearlyLowPrice={756}
             buttonLabel="Buy licenses"
             stylingFilled={true}
             onClick={handleTeam}
