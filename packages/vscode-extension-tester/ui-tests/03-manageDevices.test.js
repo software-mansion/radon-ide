@@ -121,7 +121,9 @@ safeDescribe("3 - Adding device tests", () => {
       `device-${deviceName}`
     );
 
-    await elementHelperService.findAndClickElementByTag("device-running-badge");
+    await elementHelperService.findAndClickElementByTag(
+      `device-running-badge-${deviceName}`
+    );
     await elementHelperService.waitUntilElementGone(
       By.css(`[data-testid="phone-display-container"]`),
       10000,
