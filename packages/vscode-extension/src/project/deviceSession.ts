@@ -203,22 +203,16 @@ export class DeviceSession implements Disposable {
       Object.keys(devicesByType).flatMap<DeviceInfo>(
         (k) => (devicesByType?.[k as keyof DevicesByType] ?? []) as DeviceInfo[]
       );
-
     let previousDevices: DeviceInfo[] = flattenDevices(
       this.devicesStateManager.getState().devicesByType
     );
-
     this.disposables.push(
       this.devicesStateManager.onSetState(() => {
         try {
           const currentDevices = flattenDevices(this.devicesStateManager.getState().devicesByType);
-          const previousAvailable = previousDevices.find(
-            (d) => d.id === this.state.deviceInfo.id
-          )?.available;
-          const currentAvailable = currentDevices.find(
-            (d) => d.id === this.state.deviceInfo.id
-          )?.available;
-          if (previousAvailable === false && currentAvailable === true) {
+          const previousState = previousDevices.find((d) => d.id === this.state.deviceInfo.id);
+          const currentState = currentDevices.find((d) => d.id === this.state.deviceInfo.id);
+          if (previousState?.available === false && currentState?.available === true) {
             void this.handleDeviceReconnection();
           }
           previousDevices = currentDevices;
@@ -253,7 +247,6 @@ export class DeviceSession implements Disposable {
 
   private async handleDeviceReconnection() {
     Logger.info("Handling physical Android device reconnection");
-
     const canRecover =
       this.state.status === "running" ||
       (this.state.status === "fatalError" && this.state.error?.kind === "preview");
@@ -262,17 +255,14 @@ export class DeviceSession implements Disposable {
       Logger.debug("Device session not in recoverable state, ignoring reconnection");
       return;
     }
-
     try {
       this.resetStartingState();
-
       if (this.metro) {
         await this.device.forwardDevicePort(this.metro.port);
         if (this.devtoolsServer) {
           await this.device.forwardDevicePort(this.devtoolsServer.port);
         }
       }
-
       await this.startPreview();
 
       if (this.applicationSession) {
@@ -289,7 +279,6 @@ export class DeviceSession implements Disposable {
         const cancelToken = this.cancelToken;
         await this.launchApp(cancelToken);
       }
-
       Logger.info("Successfully recovered from device reconnection");
     } catch (error) {
       Logger.error("Failed to recover from device reconnection", error);
