@@ -178,17 +178,17 @@ class XHRNetworkInterceptor {
   }
 }
 
-const RadonXHRInterceptorInstance = new XHRNetworkInterceptor();
+const XHRNetworkInterceptorInstance = new XHRNetworkInterceptor();
 
 export function enableInterception(
   networkProxy: NetworkProxy,
   responseBuffer: AsyncBoundedResponseBuffer
 ): void {
-  RadonXHRInterceptorInstance.enable(networkProxy, responseBuffer);
+  XHRNetworkInterceptorInstance.enable(networkProxy, responseBuffer);
 }
 
 export function disableInterception(): void {
-  RadonXHRInterceptorInstance.disable();
+  XHRNetworkInterceptorInstance.disable();
 }
 
 module.exports = {
