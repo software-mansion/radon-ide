@@ -1,52 +1,16 @@
 import { TextDecoder } from "../polyfills";
+import {
+  ResponseBodyDataType,
+  ContentTypeHeader,
+  type SerializedTypedArray,
+  type RequestData,
+  type InternalResponseBodyData,
+  type ContentTypeAnalysis,
+  ExtendedXMLHttpRequest,
+} from "./types";
 
 // Due to import conflicts from "src" directory, some types
 // are redeclared here from src/network/types/network.ts
-
-// Redeclared in src/network/types/network.ts
-// Based on resourceTypeFromMimeType method in React-Native's resourceTypyFromMimeType
-enum ResponseBodyDataType {
-  Media = "Media",
-  Image = "Image",
-  Script = "Script",
-  XHR = "XHR",
-  Other = "Other",
-}
-
-export type InternalResponseBodyData = {
-  body: string | undefined;
-  wasTruncated: boolean;
-  base64Encoded: boolean;
-  type: ResponseBodyDataType;
-  dataSize: number;
-};
-
-// Redeclared here from definition in
-// src/network/typesc/network.ts
-export const ContentTypeHeader = {
-  Default: "Content-Type",
-  LowerCase: "content-type",
-} as const;
-
-interface SerializedTypedArray {
-  length: number;
-  [key: number]: number;
-  [Symbol.iterator](): Iterator<number>;
-}
-
-function isSerializedTypedArray(obj: unknown): obj is SerializedTypedArray {
-  if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
-    return false;
-  }
-  const record = obj as Record<string, unknown>;
-  // length may exist but not be a number, so check safely
-  if (typeof record.length !== "number") {
-    return false;
-  }
-  return Object.keys(record).every((key) => !isNaN(parseInt(key, 10)));
-}
-
-type RequestData = string | SerializedTypedArray | null | object;
 
 // Allowed content types for processing text-based data
 const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
@@ -91,6 +55,77 @@ const DEFAULT_RESPONSE_BODY_DATA = {
   type: ResponseBodyDataType.Other,
   dataSize: 0,
 };
+
+/**
+ * @param contentType The MIME content type string to analyze.
+ * @returns An object containing boolean predicates for different content type categories.
+ */
+function analyzeContentType(contentType: string): ContentTypeAnalysis {
+  const isImageType = contentType.startsWith("image/");
+  const isOctetStream = contentType === "application/octet-stream";
+  const isTextType = contentType.startsWith("text/");
+  const isParsableApplicationType = Array.from(PARSABLE_APPLICATION_CONTENT_TYPES).some((type) =>
+    contentType.startsWith(type)
+  );
+
+  return {
+    isImageType,
+    isOctetStream,
+    isTextType,
+    isParsableApplicationType,
+  };
+}
+
+/**
+ * Process blob response based on content type.
+ *
+ * @param blob The Blob object to process.
+ * @param contentTypeAnalysis The content type classification flags.
+ * @returns A promise resolving to InternalResponseBodyData or undefined if not processable.
+ */
+async function processBlobResponse(
+  blob: Blob,
+  contentTypeAnalysis: ContentTypeAnalysis
+): Promise<InternalResponseBodyData> {
+  const { isImageType, isOctetStream, isTextType, isParsableApplicationType } = contentTypeAnalysis;
+
+  if (isImageType || isOctetStream) {
+    return await readBlobAsBase64(blob, isImageType);
+  }
+
+  if (isTextType || isParsableApplicationType) {
+    return await readBlobAsText(blob);
+  }
+
+  return DEFAULT_RESPONSE_BODY_DATA;
+}
+
+/**
+ * Process typed array data based on content type.
+ *
+ * @param typedArray The Uint8Array to process.
+ * @param contentTypeAnalysis The content type classification flags.
+ * @returns InternalResponseBodyData with processed data or default empty data.
+ */
+function processTypedArrayResponse(
+  typedArray: Uint8Array,
+  contentTypeAnalysis: ContentTypeAnalysis
+): InternalResponseBodyData {
+  const { isImageType, isOctetStream, isTextType, isParsableApplicationType } = contentTypeAnalysis;
+  const type = isImageType ? ResponseBodyDataType.Image : ResponseBodyDataType.Other;
+
+  if (isImageType || isOctetStream) {
+    const base64String = dataToBase64(typedArray);
+    return parseResponseBodyData(base64String, true, type);
+  }
+
+  if (isTextType || isParsableApplicationType) {
+    const textResult = decode(typedArray);
+    return parseResponseBodyData(textResult, false, ResponseBodyDataType.Other);
+  }
+
+  return DEFAULT_RESPONSE_BODY_DATA;
+}
 
 /**
  * Parse data gotten from Network.getResponseBody, truncate if needed and measure the body for buffering.
@@ -191,6 +226,44 @@ function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
 }
 
 /**
+ * Function used to read entirety of a stream into a single Uint8Array result.
+ * This functionality is only used when using the fetch polyfill, allowing for streaming:
+ * https://github.com/react-native-community/fetch/tree/master
+ *
+ * More on implementation:
+ * // https://github.com/react-native-community/fetch/blob/master/src/utils.js
+ * // https://developer.mozilla.org/en-US/docs/Web/API/Streams_API/Using_readable_streams
+ */
+async function drainStream(stream: ReadableStream<Uint8Array> | null): Promise<Uint8Array> {
+  if (!stream || !stream.getReader) {
+    return new Uint8Array();
+  }
+
+  const chunks: Uint8Array[] = [];
+  const reader = stream.getReader();
+  let totalLength = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    totalLength += value ? value.length : 0;
+    if (done) {
+      break;
+    }
+    chunks.push(value);
+  }
+
+  // merge all chunks
+  const result = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.length;
+  }
+
+  return result;
+}
+
+/**
  * Parse an `XMLHttpRequest` response into an InternalResponseBodyData.
  *
  * This method is async because reading `blob` response types requires a
@@ -234,14 +307,14 @@ function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
  * @returns A promise resolving to an InternalResponseBodyData when a text
  * preview is available, or `undefined` for non-parsable or uncached responses.
  */
-async function readResponseText(
+export async function getXHRResponseDataPromise(
   xhr: XMLHttpRequest
-): Promise<InternalResponseBodyData | undefined> {
+): Promise<InternalResponseBodyData> {
   try {
     if (!xhr) {
       // if response was not accessed, it's not cached and we don't want to read it
       // here to avoid potential side effects
-      return undefined;
+      return DEFAULT_RESPONSE_BODY_DATA;
     }
 
     const responseType = xhr.responseType;
@@ -255,44 +328,56 @@ async function readResponseText(
     }
 
     const contentType = getContentTypeHeader(xhr);
-    const isTextType = contentType.startsWith("text/");
-    const isParsableApplicationType = Array.from(PARSABLE_APPLICATION_CONTENT_TYPES).some((type) =>
-      contentType.startsWith(type)
-    );
-    const isImageType = contentType.startsWith("image/");
-    const isOctetStream = contentType === "application/octet-stream";
+    const contentTypeAnalysis = analyzeContentType(contentType);
 
     if (responseType === "blob") {
-      if (isImageType || isOctetStream) {
-        return await readBlobAsBase64(xhr.response, isImageType);
-      }
-
-      if (isTextType || isParsableApplicationType) {
-        return await readBlobAsText(xhr.response);
-      }
+      return await processBlobResponse(xhr.response, contentTypeAnalysis);
     }
 
     if (responseType === "arraybuffer") {
-      const arrayBuffer = xhr.response as ArrayBuffer;
-      const uint8Array = new Uint8Array(arrayBuffer);
-
-      if (isImageType || isOctetStream) {
-        const base64String = dataToBase64(uint8Array);
-        const type = isImageType ? ResponseBodyDataType.Image : ResponseBodyDataType.Other;
-        return parseResponseBodyData(base64String, true, type);
-      }
-
-      if (isTextType || isParsableApplicationType) {
-        const textResult = decode(uint8Array);
-        return parseResponseBodyData(textResult, false, ResponseBodyDataType.Other);
-      }
+      const uint8Array = new Uint8Array(xhr.response);
+      return processTypedArrayResponse(uint8Array, contentTypeAnalysis);
     }
 
     // fallback
-    return undefined;
+    return DEFAULT_RESPONSE_BODY_DATA;
   } catch (error) {
     return handleReadResponseError(error);
   }
+}
+
+export async function getFetchResponseDataPromise(
+  fetchResponse: Response,
+  nativeResponseType: string
+): Promise<InternalResponseBodyData> {
+  if (!fetchResponse) {
+    return DEFAULT_RESPONSE_BODY_DATA;
+  }
+
+  const contentType = fetchResponse.headers.get(ContentTypeHeader.Default) || "";
+  const contentTypeAnalysis = analyzeContentType(contentType);
+
+  // @ts-ignore
+  const responseBody = fetchResponse._body._bodyInit;
+
+  if (nativeResponseType === "blob") {
+    return await processBlobResponse(responseBody, contentTypeAnalysis);
+  }
+
+  // Text-streaming case
+  if (nativeResponseType === "text") {
+    const stream = fetchResponse.body;
+    const typedArray = await drainStream(stream);
+    return processTypedArrayResponse(typedArray, contentTypeAnalysis);
+  }
+
+  if (nativeResponseType === "base64") {
+    const uint8Array = new Uint8Array(responseBody);
+    return processTypedArrayResponse(uint8Array, contentTypeAnalysis);
+  }
+
+  // fallback
+  return DEFAULT_RESPONSE_BODY_DATA;
 }
 
 /**
@@ -300,7 +385,7 @@ async function readResponseText(
  *
  * @returns A best-effort MIME type string, or `undefined` when unknown.
  */
-function mimeTypeFromResponseType(responseType: string): string | undefined {
+export function mimeTypeFromResponseType(responseType: string): string | undefined {
   switch (responseType) {
     case "arraybuffer":
     case "blob":
@@ -330,16 +415,6 @@ function shouldDecodeAsText(contentType: string | undefined) {
   return PARSABLE_APPLICATION_CONTENT_TYPES.has(mimeType);
 }
 
-function reconstructTypedArray(serializedData: SerializedTypedArray): Uint8Array {
-  const length = Object.keys(serializedData).length;
-  const uint8Array = new Uint8Array(length);
-  Object.keys(serializedData).forEach((key) => {
-    const numKey = parseInt(key);
-    uint8Array[numKey] = serializedData[numKey];
-  });
-  return uint8Array;
-}
-
 function dataToBase64(array: SerializedTypedArray) {
   // cannot be done as one-liner such as String.fromCharCode.apply(null, Array.from(array))
   // because of Hermes' "Maximum call stack size exceeded" for large arrays
@@ -354,6 +429,28 @@ function decode(array: Uint8Array) {
   return new TextDecoder().decode(array);
 }
 
+function isSerializedTypedArray(obj: unknown): obj is SerializedTypedArray {
+  if (!obj || typeof obj !== "object" || Array.isArray(obj)) {
+    return false;
+  }
+  const record = obj as Record<string, unknown>;
+  // length may exist but not be a number, so check safely
+  if (typeof record.length !== "number") {
+    return false;
+  }
+  return Object.keys(record).every((key) => !isNaN(parseInt(key, 10)));
+}
+
+function reconstructTypedArray(serializedData: SerializedTypedArray): Uint8Array {
+  const length = Object.keys(serializedData).length;
+  const uint8Array = new Uint8Array(length);
+  Object.keys(serializedData).forEach((key) => {
+    const numKey = parseInt(key);
+    uint8Array[numKey] = serializedData[numKey];
+  });
+  return uint8Array;
+}
+
 /**
  * Deserialize request/response payloads that may be raw binary ({@link Uint8Array}),
  * serialized typed arrays (objects with numeric keys), plain strings, null (if no data
@@ -363,7 +460,7 @@ function decode(array: Uint8Array) {
  * @param contentType The MIME content type that guides decoding decisions.
  * @returns Either a decoded string, base64 string, or the original data.
  */
-function deserializeRequestData(data: RequestData, contentType: string | undefined) {
+export function deserializeRequestData(data: RequestData, contentType: string | undefined) {
   if (!data || !contentType) {
     return data;
   }
@@ -383,20 +480,33 @@ function deserializeRequestData(data: RequestData, contentType: string | undefin
   return data;
 }
 
-function getContentTypeHeader(xhr: XMLHttpRequest): string {
-  const hiddenPropertyHeadersValue =
-    // @ts-ignore - RN-specific property
+export function trimContentType(contentType: string | undefined) {
+  if (!contentType) {
+    return "";
+  }
+  const semicolonIndex = contentType.indexOf(";");
+  if (semicolonIndex !== -1) {
+    return contentType.substring(0, semicolonIndex);
+  }
+  return contentType;
+}
+
+export function getContentTypeHeader(xhr: ExtendedXMLHttpRequest): string {
+  let headerValue =
     xhr._headers?.[ContentTypeHeader.LowerCase] || xhr._headers?.[ContentTypeHeader.Default] || "";
 
   if (xhr.getResponseHeader) {
-    return xhr.getResponseHeader(ContentTypeHeader.Default) || hiddenPropertyHeadersValue;
+    headerValue = xhr.getResponseHeader(ContentTypeHeader.Default) || headerValue;
   }
-  return hiddenPropertyHeadersValue;
+
+  return trimContentType(headerValue);
 }
 
 module.exports = {
-  readResponseText,
+  getXHRResponseDataPromise,
   deserializeRequestData,
   mimeTypeFromResponseType,
   getContentTypeHeader,
+  getFetchResponseDataPromise,
+  trimContentType,
 };
