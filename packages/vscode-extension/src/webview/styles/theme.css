@@ -339,5 +339,6 @@ body.vscode-high-contrast {
   --swm-slider: var(--vscode-menu-border);
   --swm-device-icon-background-selected: var(--vscode-menu-border);
   --swm-button-background: var(--vscode-menu-border);
-  --swm-button-hover: var(--vscode-menu-border);
+  --swm-button: var(--vscode-input-background);
+  --swm-button-hover: var(--vscode-input-background);
 }

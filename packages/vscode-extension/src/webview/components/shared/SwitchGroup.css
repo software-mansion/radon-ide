@@ -24,6 +24,10 @@
 .vscode-high-contrast .switch-root {
   border: var(--swm-dropdown-border);
 }
+.vscode-high-contrast .switch-thumb {
+  box-sizing: border-box;
+  border: var(--swm-dropdown-border);
+}
 
 .switch-root[data-state="checked"] {
   background-color: var(--swm-switch-root-background-checked);

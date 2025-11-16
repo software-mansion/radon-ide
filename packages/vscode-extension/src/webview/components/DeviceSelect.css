@@ -151,4 +151,5 @@
 
 .vscode-high-contrast .running-badge-button[variant="activity-bar-counter"] {
   background-color: var(--swm-button-background);
+  color: var(--swm-button-hover);
 }
