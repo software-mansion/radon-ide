@@ -148,3 +148,7 @@
 .running-badge-button span::before {
   content: "Running";
 }
+
+.vscode-high-contrast .running-badge-button[variant="activity-bar-counter"] {
+  background-color: var(--swm-button-background);
+}

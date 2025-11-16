@@ -335,4 +335,9 @@ body {
 
 body.vscode-high-contrast {
   --swm-switch-root-background-checked: var(--vscode-menu-border);
+  --swm-radio-group-indicator: var(--vscode-menu-border);
+  --swm-slider: var(--vscode-menu-border);
+  --swm-device-icon-background-selected: var(--vscode-menu-border);
+  --swm-button-background: var(--vscode-menu-border);
+  --swm-button-hover: var(--vscode-menu-border);
 }
