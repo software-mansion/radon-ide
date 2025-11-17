@@ -9,10 +9,7 @@ import {
 import { IDE } from "../project/ide";
 
 export class MaestroCodeLensProvider implements CodeLensProvider {
-  async provideCodeLenses(
-    document: TextDocument,
-    token: CancellationToken
-  ): Promise<CodeLens[]> {
+  async provideCodeLenses(document: TextDocument, token: CancellationToken): Promise<CodeLens[]> {
     if (!this.checkMaestroFile(document)) {
       return [];
     }
@@ -22,7 +19,8 @@ export class MaestroCodeLensProvider implements CodeLensProvider {
     }
     try {
       const state = await ide.getState();
-      const maestroStatus = state.projectState?.applicationContext?.applicationDependencies?.maestro?.status;
+      const maestroStatus =
+        state.projectState?.applicationContext?.applicationDependencies?.maestro?.status;
       if (maestroStatus !== "installed") {
         return [];
       }
