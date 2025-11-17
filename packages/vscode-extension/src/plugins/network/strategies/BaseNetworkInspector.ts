@@ -4,6 +4,7 @@ import {
   WebviewMessage,
   IDEMessage,
   WebviewCommand,
+  IDEType,
   IDEMethod,
   CDPMessage,
 } from "../../../network/types/panelMessageProtocol";
@@ -203,7 +204,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     const { messageId: id, params } = message;
     const { themeDescriptor } = params || {};
     const theme = extractTheme(themeDescriptor);
-    this.sendIDEMessage({ method: IDEMethod.Theme, messageId: id, result: theme });
+    this.sendIDEMessage({ method: IDEType.Theme, messageId: id, result: theme });
   }
 
   /**
@@ -213,7 +214,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   private async handleGetSessionData(message: IDEMessage): Promise<void> {
     const { messageId } = message;
     this.sendIDEMessage({
-      method: IDEMethod.SessionData,
+      method: IDEType.SessionData,
       messageId,
       result: {
         networkMessages: this.networkMessages,

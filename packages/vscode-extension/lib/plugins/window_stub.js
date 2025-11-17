@@ -31,6 +31,7 @@ export function createWindowStub(overrides) {
     postMessage: (message) => {
       callListeners(message);
     },
+    location: {},
     ...overrides,
   };
 

@@ -1,5 +1,4 @@
 import { commands, window, Webview, Disposable } from "vscode";
-import { uniqueId } from "lodash";
 import { ToolKey, ToolPlugin } from "../../project/tools";
 import { extensionContext } from "../../utilities/extensionContext";
 import { RadonInspectorBridge } from "../../project/inspectorBridge";
@@ -49,7 +48,7 @@ function createChromePort(name: string, onMessage: (message: unknown) => void) {
       },
     },
     sender: {
-      id: uniqueId(),
+      tab: { id: "1" },
     },
   };
   function postMessage(message: unknown) {
@@ -82,7 +81,7 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     this.connectedWebviewListener?.dispose();
     this.connectedWebview = webview;
     const { connection, postMessage, disconnect } = createChromePort("monitor", (message) =>
-      this.connectedWebview?.postMessage(message)
+      this.connectedWebview?.postMessage({ scope: "rnide-chrome-stub", message })
     );
     addConnection(connection);
     const connectedWebviewListener = webview.onDidReceiveMessage((message) => {

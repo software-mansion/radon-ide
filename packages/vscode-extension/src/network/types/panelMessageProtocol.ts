@@ -32,22 +32,27 @@ export const NETWORK_METHODS = Object.values(NetworkMethod);
 
 export const NETWORK_TYPES = Object.values(NetworkType);
 
-export type CDPMethod = NetworkEvent | NetworkMethod | NetworkType;
+export type CDPDomainCall = NetworkEvent | NetworkMethod | NetworkType;
 
 export enum IDEMethod {
   FetchFullResponseBody = "IDE.fetchFullResponseBody",
   GetResponseBodyData = "IDE.getResponseBodyData",
   GetTheme = "IDE.getTheme",
   GetSessionData = "IDE.getSessionData",
-  ResponseBodyData = "IDE.ResponseBodyData",
-  Theme = "IDE.Theme",
-  SessionData = "IDE.SessionData",
   StartNetworkTracking = "IDE.startNetworkTracking",
   StopNetworkTracking = "IDE.stopNetworkTracking",
   ClearStoredMessages = "IDE.clearStoredMessages",
 }
 
-export function isCDPMethod(method: string): method is CDPMethod {
+export enum IDEType {
+  Theme = "IDE.Theme",
+  SessionData = "IDE.SessionData",
+  ResponseBodyData = "IDE.ResponseBodyData",
+}
+
+export type IDEDomainCall = IDEMethod | IDEType;
+
+export function isCDPDomainCall(method: string): method is CDPDomainCall {
   return (
     NETWORK_EVENTS.includes(method as NetworkEvent) ||
     NETWORK_METHODS.includes(method as NetworkMethod) ||
@@ -86,7 +91,7 @@ export interface CDPParams {
 
 // Generic CDP message structure
 export interface CDPMessage {
-  method: CDPMethod;
+  method: CDPDomainCall;
   messageId?: string | number;
   params?: CDPParams;
   result?: unknown;
@@ -103,7 +108,7 @@ type IDEMessageParams = {
 
 // IDE-specific message structure
 export interface IDEMessage {
-  method: IDEMethod;
+  method: IDEDomainCall;
   messageId?: string | number;
   params?: IDEMessageParams;
   result?: unknown;

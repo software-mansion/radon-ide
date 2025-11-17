@@ -668,6 +668,10 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
+  async forwardDevicePort(port: number) {
+    // iOS Simulators do not require port forwarding
+  }
+
   makePreview(licenseToken?: string): Preview {
     const args = [
       "ios",

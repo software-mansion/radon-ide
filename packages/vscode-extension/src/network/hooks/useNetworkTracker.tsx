@@ -12,6 +12,7 @@ import {
   NetworkType,
   IDEMethod,
   SessionData,
+  IDEType,
 } from "../types/panelMessageProtocol";
 import { generateId, createIDEResponsePromise } from "../utils/panelMessages";
 
@@ -208,7 +209,7 @@ const useNetworkTracker = (): NetworkTracker => {
 
   const getSessionData = (): Promise<SessionData> => {
     const messageId = generateId();
-    const promise = createIDEResponsePromise<SessionData>(messageId, IDEMethod.SessionData);
+    const promise = createIDEResponsePromise<SessionData>(messageId, IDEType.SessionData);
 
     sendWebviewIDEMessage({
       method: IDEMethod.GetSessionData,

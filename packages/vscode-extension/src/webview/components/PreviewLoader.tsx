@@ -81,29 +81,19 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
           100
       );
     }
-  }, [stageProgress, startupMessage]);
+  }, [startupMessage, stageProgress]);
 
   useEffect(() => {
     setIsLoadingSlowly(false);
 
-    // we show the slow loading message after:
-    // - 5 seconds native build phase for  12 seconds for each phase,
-    // - 17 seconds for waiting for app to load phase (loads slowly on android devices after clean build)
-    // - 12 seconds for other phases
-    let timeoutMs = 12_000;
-    if (startupMessage === StartupMessage.WaitingForAppToLoad) {
-      timeoutMs = 17_000;
-    }
-    if (startupMessage === StartupMessage.Building) {
-      timeoutMs = 5_000;
-    }
+    const timeoutMs = 5_000;
 
     const timeoutHandle = setTimeout(() => {
       setIsLoadingSlowly(true);
     }, timeoutMs);
 
     return () => timeoutHandle && clearTimeout(timeoutHandle);
-  }, [startupMessage]);
+  }, [startupMessage, stageProgress]);
 
   function handleLoaderClick() {
     if (startupMessage === StartupMessage.Building) {

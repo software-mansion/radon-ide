@@ -9,3 +9,5 @@ data/react-native-app
 videos/
 data/
 output.txt
+*.pem
+.env

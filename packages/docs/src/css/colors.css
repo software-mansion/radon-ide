@@ -5,6 +5,7 @@
   --swm-navy-light-40: #919fcf;
   --swm-navy-light-20: #c1c6e5;
   --swm-navy-light-10: #eef0ff;
+  --swm-navy-light-transparent: #33488e40;
 
   --swm-navy-dark-140: #1b2445;
   --swm-navy-dark-120: #122154;
@@ -21,7 +22,6 @@
   --swm-purple-light-40: #e8dafc;
   --swm-purple-light-20: #f5eeff;
   --swm-purple-light-transparent: #f5eeff40;
-  --swm-purple-light-transparent-80: #8b7f9d80;
 
   --swm-purple-dark-140: #473d68;
   --swm-purple-dark-120: #6a539a;
@@ -41,7 +41,7 @@
   --swm-blue-dark-120: #126893;
   --swm-blue-dark-100: #00a9f0;
   --swm-blue-dark-80: #6fcef5;
-  --swm-blue-dark-60: #00a9f0;
+  --swm-blue-dark-60: #a8dbf0;
   --swm-blue-dark-40: #d7f0fa;
 
   --swm-green-light-100: #57b495;
@@ -92,10 +92,131 @@
   --swm-light-off-navy: #30354a;
   --swm-off-navy: #272b3c;
   --swm-navy: #232736;
-  --swm-navy-transparent: #23273613;
+
+  /* Rebranding colors */
+
+  /* ---------------- Gray / Neutrals ---------------- */
+  --radon-color-gray-dark-900: #222222;
+  --radon-color-gray-dark-800: #333333;
+  --radon-color-gray-dark-700: #555555;
+  --radon-color-gray-dark-600: #777777;
+  --radon-color-gray-dark-500: #a1a1a1;
+  --radon-color-gray-light-300: #666666;
+  --radon-color-gray-light-400: #888888;
+  --radon-color-gray-light-200: #d4e5df;
+  --radon-color-gray-light-100: #e1ede9;
+  --radon-color-gray-light-50: #fafafa;
+
+  /* ---------------- White / Black ---------------- */
+  --radon-color-white-light-100: #ffffff;
+  --radon-color-white-light-200: #ffffffbf;
+  --radon-color-white-light-300: #ffffffe6;
+  --radon-color-white-light-transparent: #ffffff00;
+  --radon-color-black-dark-900: #111111;
+  --radon-color-black-dark-800: #111111e6;
+  --radon-color-black-dark-700: #111111bf;
+  --radon-color-black-dark-transparent: #11111100;
+  --radon-color-black-dark-600: #333333;
+
+  /* ---------------- Green / Accent ---------------- */
+  --radon-color-green-dark-700: #248363;
+  --radon-color-green-dark-900: #186e51;
+  --radon-color-green-light-400: #38a880;
+
+  /* ----------------------------- */
+
+  /* ---------------- Text ---------------- */
+  --radon-text-primary-dark: var(--radon-color-gray-light-50);
+  --radon-text-secondary-dark: var(--radon-color-gray-dark-500);
+  --radon-text-tertiary-dark: var(--radon-color-gray-dark-600);
+
+  --radon-text-primary-light: var(--radon-color-gray-dark-800);
+  --radon-text-secondary-light: var(--radon-color-gray-light-300);
+  --radon-text-tertiary-light: var(--radon-color-gray-light-400);
+
+  --radon-text-accent: var(--swm-green-light-100);
+  --radon-text-link-light: var(--radon-color-white-light-100);
+  --radon-text-link-dark: var(--swm-green-light-100);
+
+  /* ---------------- Button ---------------- */
+  --radon-button-primary-background-dark: var(--radon-color-green-dark-700);
+  --radon-button-primary-background-light: var(--radon-color-green-dark-700);
+  --radon-button-primary-background-hover-dark: var(--radon-color-green-dark-900);
+  --radon-button-primary-background-hover-light: var(--radon-color-green-dark-900);
+  --radon-button-primary-foreground: var(--radon-color-white-light-100);
+  --radon-button-secondary-background-dark: var(--radon-color-white-light-100);
+  --radon-button-secondary-background-light: var(--radon-color-gray-dark-800);
+  --radon-button-tertiary-background-hover-dark: var(--radon-color-green-dark-700);
+  --radon-button-tertiary-background-hover-light: var(--radon-color-green-dark-700);
+  --radon-button-tertiary-foreground: var(--radon-color-white-light-100);
+
+  /* ---------------- Background ---------------- */
+  --radon-background-page-light: var(--radon-color-white-light-100);
+  --radon-background-page-dark: var(--radon-color-black-dark-900);
+  --radon-card-background-light: var(--radon-color-white-light-100);
+  --radon-card-background-dark: var(--radon-color-black-dark-900);
+  --radon-card-background-hover-light: var(--radon-color-white-light-200);
+  --radon-card-background-hover-dark: var(--radon-color-gray-dark-800);
+
+  /* ---------------- Border ---------------- */
+  --radon-border-grid-subtle-dark: var(--radon-color-gray-dark-900);
+  --radon-border-grid-dark: var(--radon-color-gray-dark-800);
+  --radon-border-grid-light: var(--radon-color-gray-light-200);
+  --radon-border-grid-subtle-light: var(--radon-color-gray-light-100);
+  --radon-border-accent: var(--swm-green-light-100);
+
+  /* ---------------- Badge ---------------- */
+  --radon-badge-text-dark: var(--radon-color-white-light-100);
+  --radon-badge-text-light: var(--radon-color-gray-dark-800);
+  --radon-badge-background-light: var(--swm-green-light-40);
+  --radon-badge-background-dark: var(--radon-color-gray-dark-800);
+
+  /* ---------------- Image ---------------- */
+  --radon-image-in-grid-dark: var(--radon-color-gray-dark-700);
+  --radon-image-in-grid-light: var(--swm-green-light-100);
+  --radon-SWM-icon-stroke-light: var(--swm-navy-light-100);
+  --radon-SWM-icon-stroke-dark: var(--radon-color-white-light-100);
+  /* ----------------------------- */
+
+  --radon-border-grid-subtle: var(--radon-border-grid-subtle-light);
+  --radon-border: var(--radon-border-grid-light);
+  --radon-border-highlight: var(--radon-border-accent);
+
+  --radon-button: var(--radon-button-primary-background-light);
+  --radon-button-hover: var(--radon-button-primary-background-hover-light);
+  --radon-button-text: var(--radon-button-primary-foreground);
+
+  --radon-subheading: var(--radon-text-secondary-light);
+  --radon-text-green-highlight: var(--swm-green-light-100);
+  --radon-copyright: var(--radon-text-tertiary-light);
+
+  --radon-button-tertiary: var(--radon-color-black-dark-900);
+  --radon-button-secondary: var(--radon-button-secondary-background-light);
+  --radon-gradient-green: var(--radon-color-green-light-400);
+  --radon-gradient-black: var(--radon-color-black-dark-transparent);
+
+  --radon-icon: var(--swm-green-light-100);
+  --radon-image-in-grid: var(--radon-image-in-grid-light);
+  --radon-active-tab: var(--swm-green-light-100);
+
+  --radon-gradient-color: var(--radon-color-white-light-100);
+  --radon-gradient-transparent: var(--radon-color-white-light-transparent);
+
+  --radon-Ai-chat: var(--radon-color-white-light-200);
+  --radon-Ai-radon-icon: var(--radon-color-gray-light-100);
+  --radon-green-radon-icon: var(--radon-color-gray-light-200);
+
+  --radon-badge: var(--radon-badge-background-light);
+  --radon-badge-text: var(--radon-badge-text-light);
+
+  --radon-fill-pattern: var(--radon-color-gray-light-200);
+
+  --radon-SWM-icon: var(--radon-SWM-icon-stroke-light);
+
+  --radon-required-field: var(--swm-red-light-60);
 
   /* Infima main colors */
-  --ifm-color-primary: var(--swm-navy-light-100);
+  --ifm-color-primary: var(--radon-text-primary-light);
   --ifm-color-primary-dark: var(--swm-navy-dark-80);
   --ifm-color-primary-darker: var(--swm-navy-dark-100);
   --ifm-color-primary-darkest: var(--swm-navy-dark-120);
@@ -104,8 +225,8 @@
   --ifm-color-primary-lightest: var(--swm-navy-light-40);
 
   /* Main site settings */
-  --swm-background: var(--swm-white);
-  --swm-off-background: var(--swm-off-white);
+  --swm-background: var(--radon-background-page-light);
+  --swm-off-background: var(---radon-background-page-light);
 
   --ifm-background-color: var(--swm-background);
   --ifm-navbar-background-color: var(--swm-background);
@@ -120,7 +241,8 @@
 
   /* Typography */
   --ifm-heading-color: var(--ifm-color-primary);
-  --ifm-font-color-base: var(--swm-navy-light-100);
+  --ifm-font-color-base: var(--ifm-color-primary);
+  --radon-sub-subheading: var(--ifm-color-primary);
 
   /* Tabs */
   --swm-tab: var(--swm-navy-light-20);
@@ -167,7 +289,7 @@
   --swm-background-quote-purple: var(--swm-purple-light-40);
 
   /* Code snippets */
-  --swm-border: var(--swm-navy-light-20);
+  --swm-border: var(--radon-color-gray-light-200);
   --docusaurus-highlighted-code-line-bg: var(--swm-blue-light-20);
   /* --swm-navy-light-40 in rgba */
   --swm-code-lines-buttons-background: rgba(145, 159, 207, 0.2);
@@ -188,12 +310,12 @@
 
   --ifm-table-head-background: var(--swm-off-background);
   --ifm-table-stripe-background: var(--swm-off-background) !important;
-  --ifm-table-border-color: var(--swm-table-border-color);
+  --ifm-table-border-color: var(--radon-border);
 
   /* Pagination */
-  --swm-paginator-sublabel: var(--swm-navy-light-100);
-  --swm-paginator-label: var(--swm-green-light-80);
-  --swm-paginator-label-hover: var(--swm-green-light-100);
+  --swm-paginator-sublabel: var(--ifm-color-primary) !important;
+  --swm-paginator-label: var(--radon-subheading) !important;
+  --swm-paginator-label-hover: var(--ifm-color-primary);
 
   /* Footer */
   --swm-brand-copyright-color: var(--swm-navy-light-100);
@@ -215,6 +337,8 @@
   --swm-search-hit-border: var(--swm-green-light-40);
   --swm-search-hit-border-hover: var(--swm-green-light-100);
   --swm-search-hit-active-color: var(--swm-off-white);
+
+  --swm-docsearch-hit-source-color: var(--swm-navy-light-100);
 
   --swm-search-hit-results-color: var(--swm-navy-light-40);
 
@@ -243,6 +367,12 @@
 
   --swm-landing-sponsors-color: var(--ifm-font-color-base);
 
+  /* Hire Us Section */
+
+  /* --swm-hire-us-section-title: var(--swm-purple-light-80);
+  --swm-hire-us-section: var(--swm-navy-light-100);
+  --swm-hire-us-section-color: var(--swm-off-white); */
+
   /* Cards */
   --swm-card-background: var(--swm-background);
   --swm-card-border: var(--swm-navy-light-20);
@@ -254,6 +384,9 @@
 
   --swm-sidebar-label-text-experimental: var(--swm-navy-light-100);
   --swm-sidebar-label-background-experimental: var(--swm-yellow-light-40);
+
+  --swm-sidebar-label-text-unreleased: var(--swm-navy-light-100);
+  --swm-sidebar-label-background-unreleased: var(--swm-blue-light-40);
 
   /* Mobile sidebar versions */
   --swm-sidebar-elements-version-text: var(--swm-navy-light-100);
@@ -285,12 +418,37 @@
 }
 
 :root[data-theme="dark"] {
+  /* Rebranding */
+  --radon-border-grid-subtle: var(--radon-border-grid-subtle-dark);
+  --radon-border: var(--radon-border-grid-dark);
+  --radon-button: var(--radon-button-primary-background-dark);
+  --radon-button-hover: var(--radon-button-primary-background-hover-dark);
+  --radon-button-text: var(--radon-button-primary-foreground);
+  --radon-copyright: var(--radon-text-tertiary-dark);
+
+  --radon-button-secondary: var(--radon-button-secondary-background-dark);
+
+  --radon-gradient-color: var(--radon-color-black-dark-900);
+  --radon-gradient-transparent: var(--radon-color-black-dark-transparent);
+
+  --radon-Ai-chat: var(--radon-color-black-dark-700);
+  --radon-Ai-radon-icon: var(--radon-border-grid-subtle);
+
+  --radon-green-radon-icon: var(--radon-color-gray-dark-800);
+
+  --radon-badge: var(--radon-badge-background-dark);
+  --radon-badge-text: var(--radon-badge-text-dark);
+
+  --radon-image-in-grid: var(--radon-image-in-grid-dark);
+  --radon-fill-pattern: var(--radon-color-gray-dark-800);
+  --radon-SWM-icon: var(--radon-SWM-icon-stroke-dark);
+
   /* Infima main colors */
-  --ifm-color-primary: var(--swm-navy-light-10);
+  --ifm-color-primary: var(--radon-text-primary-dark);
 
   /* Main site settings */
-  --swm-background: var(--swm-navy);
-  --swm-off-background: var(--swm-off-navy);
+  --swm-background: var(--radon-background-page-dark);
+  --swm-off-background: var(--radon-background-page-dark);
 
   --ifm-background-color: var(--swm-background);
   --ifm-navbar-background-color: var(--swm-background);
@@ -301,7 +459,9 @@
   --swm-color-mode-disabled-color: var(--swm-navy-light-40);
 
   /* Typography */
-  --ifm-font-color-base: var(--swm-navy-light-10);
+  --ifm-font-color-base: var(--radon-text-primary-dark);
+  --radon-subheading: var(--radon-text-secondary-dark);
+  --radon-sub-subheading: var(--radon-text-tertiary-dark);
 
   /* Tabs */
   --swm-tab: var(--swm-navy-light-60);
@@ -312,6 +472,11 @@
   --ifm-toc-border-color: transparent;
   --ifm-toc-link-color: var(--swm-navy-light-40);
   --ifm-toc-link-color-active: var(--swm-off-white);
+
+  --swm-hire-us-toc: var(--swm-blue-light-80);
+  --swm-hire-us-toc-color: var(--swm-off-white);
+  --swm-hire-us-toc-color-hover: var(--swm-navy-light-40);
+  --swm-hire-us-toc-border-hover: var(--swm-navy-light-40);
 
   /* Details section */
   --swm-details-foreground: var(--swm-green-dark-120);
@@ -343,7 +508,7 @@
   --swm-background-quote-purple: var(--swm-purple-dark-140);
 
   /* Code snippets */
-  --swm-border: var(--swm-navy-light-60);
+  --swm-border: var(--radon-border);
   --docusaurus-highlighted-code-line-bg: var(--swm-blue-dark-140);
 
   /* Interactive Examples */
@@ -365,8 +530,8 @@
   --swm-paginator-label-hover: var(--swm-green-light-40);
 
   /* Footer */
-  --swm-brand-copyright-color: var(--swm-navy-light-20);
-  --swm-copyright-color: var(--swm-navy-light-40);
+  --swm-brand-copyright-color: var(--radon-copyright);
+  --swm-copyright-color: var(--radon-copyright);
 
   --swm-brand-copyright-color-landing: var(--swm-navy-light-20);
   --swm-copyright-color-landing: var(--swm-off-white);
@@ -381,6 +546,8 @@
   --swm-search-hit-border: var(--swm-green-dark-120);
   --swm-search-hit-border-hover: var(--swm-green-dark-40);
   --swm-search-hit-active-color: var(--swm-navy-light-100);
+
+  --swm-docsearch-hit-source-color: var(--swm-navy-light-10);
 
   --swm-search-hit-results-color: var(--swm-navy-light-20);
 
@@ -409,9 +576,15 @@
 
   --swm-landing-sponsors-color: var(--swm-off-white);
 
+  /* Hire Us Section */
+
+  /* --swm-hire-us-section-title: var(--swm-purple-dark-100);
+  --swm-hire-us-section: var(--swm-purple-dark-100);
+  --swm-hire-us-section-color: var(--swm-off-white); */
+
   /* Cards */
-  --swm-card-background: var(--swm-navy);
-  --swm-card-border: var(--swm-navy-dark-60);
+  --swm-card-background: var(--swm-background);
+  --swm-card-border: var(--radon-border);
   --swm-card-border-hover: var(--swm-green-dark-80);
 
   /* Sidebar label*/
@@ -420,6 +593,9 @@
 
   --swm-sidebar-label-text-experimental: var(--swm-off-white);
   --swm-sidebar-label-background-experimental: var(--swm-yellow-dark-120);
+
+  --swm-sidebar-label-text-unreleased: var(--swm-off-white);
+  --swm-sidebar-label-background-unreleased: var(--swm-blue-dark-120);
 
   /* Mobile sidebar versions */
   --swm-sidebar-elements-version-text: var(--swm-navy-dark-20);
