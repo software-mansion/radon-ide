@@ -58,6 +58,7 @@ export default function ReplayUI({ replayData, onClose }: ReplayVideoProps) {
       />
       {/* VHS rewind effect on top of MediaCanvas */}
       {isRewinding && <VHSRewind />}
+      <div className="replay-background" />
     </span>
   );
 }
