@@ -70,6 +70,7 @@ export class DeviceSession implements Disposable {
   private applicationSession: ApplicationSession | undefined;
   private metro: (MetroSession & Disposable) | undefined;
   private maybeBuildResult: BuildResult | undefined;
+  private previousDeviceInfo: DeviceInfo | undefined;
   private buildManager: BuildManager;
   private cancelToken: CancelToken = new CancelToken();
   private deviceSettingsStateManager: StateManager<DeviceSettings>;
@@ -199,31 +200,10 @@ export class DeviceSession implements Disposable {
 
     // We observe the global devices state to detect when this device
     // gets reconnected (available changes from false to true)
-    const flattenDevices = (devicesByType: DevicesByType) =>
-      Object.keys(devicesByType).flatMap<DeviceInfo>(
-        (k) => (devicesByType?.[k as keyof DevicesByType] ?? []) as DeviceInfo[]
-      );
-    let previousDevices: DeviceInfo[] = flattenDevices(
-      this.devicesStateManager.getState().devicesByType
-    );
+    // as state.deviceInfo isn't updated in that case
+    this.previousDeviceInfo = this.state.deviceInfo;
     this.disposables.push(
-      this.devicesStateManager.onSetState((partialState) => {
-        try {
-          const devicesByType = partialState.devicesByType;
-          if (devicesByType === REMOVE || devicesByType === undefined) {
-            return;
-          }
-          const currentDevices = flattenDevices(devicesByType as DevicesByType);
-          const previousState = previousDevices.find((d) => d.id === this.state.deviceInfo.id);
-          const currentState = currentDevices.find((d) => d.id === this.state.deviceInfo.id);
-          if (previousState?.available === false && currentState?.available === true) {
-            void this.handleDeviceReconnection();
-          }
-          previousDevices = currentDevices;
-        } catch (e) {
-          Logger.warn("Error while handling devices state change", e);
-        }
-      })
+      this.devicesStateManager.onSetState(this.checkDeviceReconnected.bind(this))
     );
   }
 
@@ -249,8 +229,27 @@ export class DeviceSession implements Disposable {
     this.stateManager.updateState({ previewURL });
   }
 
+  private checkDeviceReconnected(partialState: RecursivePartial<DevicesState>) {
+    try {
+      const devicesByType = partialState.devicesByType;
+      if (devicesByType === REMOVE || devicesByType === undefined) {
+        return;
+      }
+      const currentDevices = Object.keys(devicesByType).flatMap(
+        (k) => (devicesByType[k as keyof DevicesByType] ?? []) as DeviceInfo[]
+      );
+      const currentState = currentDevices.find((d) => d.id === this.state.deviceInfo.id);
+      if (this.previousDeviceInfo?.available === false && currentState?.available === true) {
+        void this.handleDeviceReconnection();
+      }
+      this.previousDeviceInfo = currentState;
+    } catch (e) {
+      Logger.warn("Error while handling devices state change", e);
+    }
+  }
+
   private async handleDeviceReconnection() {
-    Logger.info("Handling physical Android device reconnection");
+    Logger.info("Handling device reconnection");
     const canRecover =
       this.state.status === "running" ||
       (this.state.status === "fatalError" && this.state.error?.kind === "preview");
