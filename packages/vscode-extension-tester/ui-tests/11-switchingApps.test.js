@@ -2,9 +2,10 @@ import { exec } from "child_process";
 import { By, VSBrowser } from "vscode-extension-tester";
 import { assert } from "chai";
 import initServices from "../services/index.js";
+import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
-describe("11 - App switching tests", () => {
+safeDescribe("11 - App switching tests", () => {
   let driver,
     appWebsocket,
     elementHelperService,
