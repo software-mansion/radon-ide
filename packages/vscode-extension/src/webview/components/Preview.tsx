@@ -313,10 +313,6 @@ function Preview({
   /**
    * Trigger the "Up" event after the input events are re-enabled.
    * The currentMousePosition right after re-enabling does not change.
-   *
-   * The dependency array does not include the state,
-   * but updates are triggered correctly by changes to
-   * the booleans in shouldPreventInputEvents
    */
   useEffect(() => {
     if (!shouldPreventInputEvents) {
