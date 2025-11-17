@@ -79,9 +79,9 @@ safeDescribe("7 - Radon tools tests", () => {
 
     const position = centerCoordinates(originalPosition);
 
-    const PhoneRect = await phoneScreen.getRect();
-    const phoneWidth = PhoneRect.width;
-    const phoneHeight = PhoneRect.height;
+    const phoneRect = await phoneScreen.getRect();
+    const phoneWidth = phoneRect.width;
+    const phoneHeight = phoneRect.height;
 
     const actions = driver.actions({ bridge: true });
 
@@ -99,8 +99,8 @@ safeDescribe("7 - Radon tools tests", () => {
 
     const inspectAreaRect = await inspectArea.getRect();
     const relativeRect = {
-      x: (inspectAreaRect.x - PhoneRect.x) / phoneWidth,
-      y: (inspectAreaRect.y - PhoneRect.y) / phoneHeight,
+      x: (inspectAreaRect.x - phoneRect.x) / phoneWidth,
+      y: (inspectAreaRect.y - phoneRect.y) / phoneHeight,
       width: inspectAreaRect.width / phoneWidth,
       height: inspectAreaRect.height / phoneHeight,
     };
