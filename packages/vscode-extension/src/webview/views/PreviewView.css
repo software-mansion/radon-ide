@@ -144,6 +144,10 @@
   flex-shrink: 1;
 }
 
+.vscode-high-contrast .app-device-group {
+  border: var(--swm-dropdown-border);
+}
+
 .activate-license-button::before {
   content: "Activate License";
   text-wrap: nowrap;

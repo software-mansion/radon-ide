@@ -27,6 +27,9 @@ import {
   DeviceSettings,
   InstallationError,
   NavigationState,
+  DevicesState,
+  DeviceInfo,
+  DevicesByType,
   RecursivePartial,
   REMOVE,
   StartupMessage,
@@ -67,6 +70,7 @@ export class DeviceSession implements Disposable {
   private applicationSession: ApplicationSession | undefined;
   private metro: (MetroSession & Disposable) | undefined;
   private maybeBuildResult: BuildResult | undefined;
+  private previousDeviceInfo: DeviceInfo | undefined;
   private buildManager: BuildManager;
   private cancelToken: CancelToken = new CancelToken();
   private deviceSettingsStateManager: StateManager<DeviceSettings>;
@@ -93,6 +97,14 @@ export class DeviceSession implements Disposable {
     return this.applicationSession?.inspectorBridge;
   }
 
+  public get devtoolsStore() {
+    return this.applicationSession?.devtoolsStore;
+  }
+
+  public async inspectElementById(id: number) {
+    return this.applicationSession?.inspectElementById(id);
+  }
+
   public get platform(): DevicePlatform {
     return this.state.deviceInfo.platform;
   }
@@ -104,7 +116,8 @@ export class DeviceSession implements Disposable {
     private readonly devtoolsServer: (DevtoolsServer & { port: number }) | undefined,
     initialRotation: DeviceRotation,
     private readonly outputChannelRegistry: OutputChannelRegistry,
-    private readonly metroProvider: MetroProvider
+    private readonly metroProvider: MetroProvider,
+    private readonly devicesStateManager: StateManager<DevicesState>
   ) {
     this.deviceSettingsStateManager =
       applicationContext.workspaceConfigState.getDerived("deviceSettings");
@@ -184,6 +197,14 @@ export class DeviceSession implements Disposable {
 
     this.fileTransfer = new FileTransfer(stateManager.getDerived("fileTransfer"), device);
     this.disposables.push(this.fileTransfer);
+
+    // We observe the global devices state to detect when this device
+    // gets reconnected (available changes from false to true)
+    // as state.deviceInfo isn't updated in that case
+    this.previousDeviceInfo = this.state.deviceInfo;
+    this.disposables.push(
+      this.devicesStateManager.onSetState(this.checkDeviceReconnected.bind(this))
+    );
   }
 
   private get state(): DeviceSessionStore {
@@ -206,6 +227,73 @@ export class DeviceSession implements Disposable {
     const licenseToken = await getLicenseToken();
     const previewURL = await this.device.startPreview(licenseToken);
     this.stateManager.updateState({ previewURL });
+  }
+
+  private checkDeviceReconnected(partialState: RecursivePartial<DevicesState>) {
+    try {
+      const devicesByType = partialState.devicesByType;
+      if (devicesByType === REMOVE || devicesByType === undefined) {
+        return;
+      }
+      const currentDevices = Object.keys(devicesByType).flatMap(
+        (k) => (devicesByType[k as keyof DevicesByType] ?? []) as DeviceInfo[]
+      );
+      const currentState = currentDevices.find((d) => d.id === this.state.deviceInfo.id);
+      if (this.previousDeviceInfo?.available === false && currentState?.available === true) {
+        void this.handleDeviceReconnection();
+      }
+      this.previousDeviceInfo = currentState;
+    } catch (e) {
+      Logger.warn("Error while handling devices state change", e);
+    }
+  }
+
+  private async handleDeviceReconnection() {
+    Logger.info("Handling device reconnection");
+    const canRecover =
+      this.state.status === "running" ||
+      (this.state.status === "fatalError" && this.state.error?.kind === "preview");
+
+    if (!canRecover) {
+      Logger.debug("Device session not in recoverable state, ignoring reconnection");
+      return;
+    }
+    try {
+      this.resetStartingState();
+      if (this.metro) {
+        await this.device.forwardDevicePort(this.metro.port);
+        if (this.devtoolsServer) {
+          await this.device.forwardDevicePort(this.devtoolsServer.port);
+        }
+      }
+      await this.startPreview();
+
+      if (this.applicationSession) {
+        try {
+          await this.applicationSession.activate();
+          this.stateManager.updateState({
+            status: "running",
+          });
+        } catch (error) {
+          this.applicationSession.dispose();
+          this.applicationSession = undefined;
+        }
+      } else {
+        const cancelToken = this.cancelToken;
+        await this.launchApp(cancelToken);
+      }
+      Logger.info("Successfully recovered from device reconnection");
+    } catch (error) {
+      Logger.error("Failed to recover from device reconnection", error);
+      this.stateManager.updateState({
+        status: "fatalError",
+        error: {
+          kind: "preview",
+          message: (error as Error).message,
+          reason: (error as PreviewError)?.reason || null,
+        },
+      });
+    }
   }
 
   private async isBuildStale(build: BuildResult) {

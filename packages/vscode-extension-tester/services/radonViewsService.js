@@ -60,6 +60,7 @@ export default class RadonViewsService {
       "license-key-input"
     );
     await keyInput.sendKeys(licenseKey);
+    await this.driver.sleep(1000);
     await this.elementHelperService.findAndClickElementByTag(
       "activate-license-button"
     );

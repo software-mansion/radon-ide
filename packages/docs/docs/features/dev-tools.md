@@ -6,7 +6,7 @@ sidebar_position: 7
 
 Radon IDE comes with support for launching Dev Tools as separate panels within VSCode or Cursor.
 
-The built-in tools for [Network Inspector](/docs/features/network-inspector), Redux, Outline Renders (via [react-scan](https://react-scan.com/)) and React Query are integrated with the IDE and doesn't require any additional configuration.
+The built-in tools for [Network Inspector](/docs/features/network-inspector), Redux, Outline Renders (via [react-scan](https://react-scan.com/)) and React Query are integrated with the IDE and don't require any additional configuration.
 
 When the IDE detects that a specific tool is available and configured properly (see below for details on configuring individual tools), it will be listed in the tools menu where you can turn it on and off:
 <img width="350" src="/img/docs/ide_devtools_menu.png" className="shadow-image" />
@@ -37,6 +37,14 @@ When the IDE detects your app uses React Query, the plugin will be listed in the
 Once enabled you can use the official [React Query's devtool UI](https://tanstack.com/query/v4/docs/framework/react/devtools) from within the editor panel:
 
 <img width="700" src="/img/docs/ide_devtools_react_query.png" className="shadow-image" />
+
+## Apollo Client
+
+This plugin doesn't require any additional configuration.
+When your application first loads the Apollo Client, the plugin should appear in the Dev Tools menu.
+Once enabled, the official [Apollo Client Devtools](https://github.com/apollographql/apollo-client-devtools) will be attached to your application and allow you to inspect your Apollo Client usage in the editor's panel:
+
+<img width="700" src="/img/docs/ide_devtools_apollo_client.png" className="shadow-image" />
 
 ## CPU Profiling JavaScript
 

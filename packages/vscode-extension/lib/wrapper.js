@@ -493,6 +493,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
   return (
     <View
+      key="__RNIDE_APP_WRAPPER"
       ref={mainContainerRef}
       style={{ flex: 1 }}
       onLayout={(event) => {

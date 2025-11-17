@@ -12,6 +12,8 @@ export default class AppManipulationService {
   }
 
   async waitForAppToLoad() {
+    let currentMessage = "";
+    let currentMessageFirstAppear = Date.now();
     await this.driver.wait(
       async () => {
         const phoneScreen = await this.elementHelperService.safeFind(
@@ -39,10 +41,50 @@ export default class AppManipulationService {
           throw new Error("App error popup displayed");
         }
 
+        const messageElement = await this.elementHelperService.safeFind(
+          By.css('[data-testid="startup-message"]')
+        );
+
+        if (!messageElement) return false;
+
+        const message = (await messageElement.getText())
+          .replace(/\./g, "")
+          .trim();
+
+        // in case the device startup process has frozen
+        if (!currentMessage.includes("Building") && currentMessage == message) {
+          if (Date.now() - currentMessageFirstAppear > 100000)
+            await this.restartDevice();
+        } else {
+          currentMessage = message;
+          currentMessageFirstAppear = Date.now();
+        }
+
         return false;
       },
       600000,
       "Timed out waiting for phone-screen"
+    );
+  }
+
+  async restartDevice() {
+    const runningDevice =
+      await this.elementHelperService.findAndWaitForElementByTag(
+        "device-select-value-text"
+      );
+    const runningDeviceName = await runningDevice.getText();
+    await this.elementHelperService.findAndClickElementByTag(
+      "radon-bottom-bar-device-select-dropdown-trigger"
+    );
+    await this.elementHelperService.findAndWaitForElementByTag(
+      "device-select-menu"
+    );
+    await this.elementHelperService.findAndClickElementByTag(
+      `device-running-badge-${runningDeviceName}`
+    );
+    await this.driver.sleep(1000);
+    await this.elementHelperService.findAndClickElementByTag(
+      `device-${runningDeviceName}`
     );
   }
 

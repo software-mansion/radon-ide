@@ -1,33 +1,65 @@
-import React from "react";
+import React, { useRef } from "react";
 import styles from "./styles.module.css";
+import { track } from "@vercel/analytics";
 import PricingPlansList from "./PricingPlansList";
 import FAQ from "../Sections/FAQ";
-import Motivation from "../Motivation";
-import { CompatibilityInfo } from "./CompatibilityInfo";
+import clsx from "clsx";
+import ComparePricingPlans from "./ComparePricingPlans";
+import { usePricingLogic } from "@site/src/hooks/usePricingLogic";
+import EnterpriseForm from "../EnterpriseForm";
+import { useScrollToForm } from "@site/src/hooks/useScrollToForm";
+
+export interface PricingProps {
+  handleFree: () => void;
+  handlePro: () => void;
+  handleTeam: () => void;
+  handleEnterprise: () => void;
+  isMonthly?: boolean;
+  setIsMonthly?: (value: boolean) => void;
+}
 
 const Pricing = () => {
+  const { isMonthly, setIsMonthly, openRadonProCheckout, openRadonTeamCheckout } =
+    usePricingLogic();
+  const { scrollToForm } = useScrollToForm();
+  const formRef = useRef<HTMLDivElement | null>(null);
+  const handleSubmitTrack = () => {
+    track("Pricing form submit");
+  };
+
+  const handlePricingTableFree = () => {
+    track("Pricing table Get free license button");
+  };
+  const handlePricingCardFree = () => {
+    track("Pricing card Get free license button");
+  };
+
   return (
-    <div className={styles.container}>
-      <h1 className={styles.headingLabel}>
-        Get the best developer experience with our IDE for React Native
-      </h1>
-      <h3 className={styles.subheadlingLabel}>
-        Choose a plan that works for your needs. Pay monthly for flexibility or yearly for the best
-        price.
-      </h3>
-      <div className={styles.wrapper}>
-        <PricingPlansList />
+    <div className={clsx(styles.container, "border-layout")}>
+      <div className={styles.titleContainer}>
+        <h1 className={styles.headingLabel}>Pricing</h1>
+        <h3 className={styles.subheadlingLabel}>
+          Choose the subscription plan tailored to your needs
+        </h3>
       </div>
-      <CompatibilityInfo />
-      <p>
-        Windows users can use beta version of Radon IDE for Windows which is available under{" "}
-        <a href="https://ide.swmansion.com/legal" target="_blank" className={styles.highlight}>
-          free beta license
-        </a>
-        .
-      </p>
-      <Motivation />
+      <div className={styles.wrapper}>
+        <PricingPlansList
+          handleFree={handlePricingCardFree}
+          handlePro={openRadonProCheckout}
+          handleTeam={openRadonTeamCheckout}
+          handleEnterprise={() => scrollToForm(formRef)}
+          isMonthly={isMonthly}
+          setIsMonthly={setIsMonthly}
+        />
+      </div>
+      <ComparePricingPlans
+        handleFree={handlePricingTableFree}
+        handlePro={openRadonProCheckout}
+        handleTeam={openRadonTeamCheckout}
+        handleEnterprise={() => scrollToForm(formRef)}
+      />
       <FAQ />
+      <EnterpriseForm ref={formRef} trackSubmit={handleSubmitTrack} />
     </div>
   );
 };
