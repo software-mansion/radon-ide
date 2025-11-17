@@ -52,6 +52,7 @@ const config = {
       image: "img/og-image.png",
       colorMode: {
         respectPrefersColorScheme: true,
+        defaultMode: "dark",
       },
       navbar: {
         hideOnScroll: false,

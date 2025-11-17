@@ -7,26 +7,26 @@ import IconSystemMode from "../IconSystemMode";
 import { useColorMode } from "@docusaurus/theme-common";
 
 function ColorModeToggle() {
-  const { colorMode, setColorMode } = useColorMode();
-  const [theme, setTheme] = useState<"system" | "light" | "dark">("system");
+  const { setColorMode } = useColorMode();
+  const [theme, setTheme] = useState<"system" | "light" | "dark">("dark");
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved === "light" || saved === "dark") {
-      setTheme(saved);
-    } else if (!saved) {
-      setTheme("system");
+    const userTheme = localStorage.getItem("user-theme");
+    const initialTheme = (userTheme as "system" | "light" | "dark") || "dark";
+
+    setTheme(initialTheme);
+
+    if (!userTheme) {
+      localStorage.setItem("user-theme", "dark");
     }
   }, []);
 
   const handleModeChange = (mode: "system" | "light" | "dark") => {
-    if (mode === "system") {
-      setColorMode(null);
-      setTheme("system");
-    } else {
-      setColorMode(mode);
-      setTheme(mode);
-    }
+    setTheme(mode);
+    localStorage.setItem("user-theme", mode);
+
+    const newColorMode = mode === "system" ? undefined : mode;
+    setColorMode(newColorMode);
   };
 
   return (
