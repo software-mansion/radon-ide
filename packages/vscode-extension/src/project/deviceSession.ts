@@ -41,6 +41,7 @@ import { DevtoolsServer } from "./devtools";
 import { MetroError, MetroProvider, MetroSession } from "./metro";
 import { PreviewError } from "../devices/preview";
 import { getLicenseToken } from "../utilities/license";
+import { MaestroTestRunner } from "./MaestroTestRunner";
 
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
@@ -72,6 +73,7 @@ export class DeviceSession implements Disposable {
   private deviceSettingsStateManager: StateManager<DeviceSettings>;
   private frameReporter: FrameReporter;
   private navigationStateManager: StateManager<NavigationState>;
+  private maestroTestRunner: MaestroTestRunner | undefined;
   private screenCapture: ScreenCapture;
 
   private isActive = false;
@@ -109,6 +111,9 @@ export class DeviceSession implements Disposable {
     this.deviceSettingsStateManager =
       applicationContext.workspaceConfigState.getDerived("deviceSettings");
     this.disposables.push(this.deviceSettingsStateManager);
+
+    this.maestroTestRunner = new MaestroTestRunner(this.device, this.outputChannelRegistry);
+    this.disposables.push(this.maestroTestRunner);
 
     this.disposables.push(
       this.device.onPreviewClosed((error: void | PreviewError) => {
@@ -918,7 +923,7 @@ export class DeviceSession implements Disposable {
     }
     try {
       this.stateManager.updateState({ maestroTestState: "running" });
-      await this.device.startMaestroTest(fileNames);
+      await this.maestroTestRunner?.startMaestroTest(fileNames);
     } finally {
       this.stateManager.updateState({ maestroTestState: "stopped" });
     }
@@ -927,7 +932,7 @@ export class DeviceSession implements Disposable {
   public async stopMaestroTest() {
     this.stateManager.updateState({ maestroTestState: "aborting" });
     try {
-      await this.device.stopMaestroTest();
+      await this.maestroTestRunner?.stopMaestroTest();
     } finally {
       this.stateManager.updateState({ maestroTestState: "stopped" });
     }
