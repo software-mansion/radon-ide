@@ -317,6 +317,19 @@ function Preview({
 
   const shouldPreventFromSendingTouch = isInspecting || !!inspectFrame;
 
+  /**
+   * Trigger the "Up" event after the input events are re-enabled.
+   * The currentMousePosition right after re-enabling does not change.
+   */
+  useEffect(() => {
+    if (!shouldPreventInputEvents) {
+      setIsPressing(false);
+      if (currentMousePosition.current) {
+        sendTouch(currentMousePosition.current, "Up");
+      }
+    }
+  }, [shouldPreventInputEvents]);
+
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
     if (isInspecting) {
