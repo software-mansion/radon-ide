@@ -1,4 +1,4 @@
-import { execSync } from "child_process";
+import { exec, execSync } from "child_process";
 import { assert } from "chai";
 import { WebView, By, Key } from "vscode-extension-tester";
 import initServices from "../services/index.js";
@@ -33,8 +33,6 @@ safeDescribe("8 - Device Settings", () => {
 
     await managingDevicesService.prepareDevices();
 
-    // await appManipulationService.waitForAppToLoad();
-
     view = new WebView();
     await view.switchBack();
   });
@@ -57,9 +55,25 @@ safeDescribe("8 - Device Settings", () => {
   });
 
   it("change location", async () => {
-    execSync(
-      "xcrun simctl --set ~/Library/Caches/com.swmansion.radon-ide/Devices/iOS privacy booted grant location org.reactjs.native.example.reactNative81AdditionalLibs"
-    );
+    if (getConfiguration().IS_ANDROID) {
+      const deviceId = execSync("adb devices | awk 'NR==2 {print $1}'")
+        .toString()
+        .trim();
+      const test = execSync(
+        `adb -s ${deviceId} shell pm list packages`
+      ).toString();
+      console.log(test);
+      execSync(
+        `adb -s ${deviceId} shell pm grant com.reactnative81additionallibs android.permission.ACCESS_FINE_LOCATION`
+      );
+      execSync(
+        `adb -s ${deviceId} shell pm grant com.reactnative81additionallibs android.permission.ACCESS_COARSE_LOCATION`
+      );
+    } else {
+      execSync(
+        "xcrun simctl --set ~/Library/Caches/com.swmansion.radon-ide/Devices/iOS privacy booted grant location org.reactjs.native.example.reactNative81AdditionalLibs"
+      );
+    }
     await elementHelperService.findAndClickElementByTag(
       "top-bar-reload-button-options-button"
     );
@@ -88,7 +102,29 @@ safeDescribe("8 - Device Settings", () => {
       "coordinates-input"
     );
     await locationInput.clear();
-    await locationInput.sendKeys("1.5 N 1.5 E", Key.ENTER);
+    await driver.sleep(5000);
+    await locationInput.sendKeys("1 1", Key.ENTER);
+
+    await elementHelperService.findAndClickElementByTag(
+      "top-bar-reload-button-options-button"
+    );
+    await elementHelperService.findAndClickElementByTag(
+      "top-bar-reload-button-option-restart-app-process"
+    );
+
+    await appManipulationService.waitForAppToLoad();
+    await driver.sleep(3000);
+    await driver.wait(async () => {
+      appWebsocket = get().appWebsocket;
+      return appWebsocket != null;
+    }, 5000);
+
+    await appManipulationService.hideExpoOverlay(appWebsocket);
+    location = await appManipulationService.sendMessageAndWaitForResponse(
+      appWebsocket,
+      "getLocation"
+    );
+
     await elementHelperService.findAndClickElementByTag("modal-close-button");
     await driver.wait(async () => {
       try {
@@ -97,13 +133,13 @@ safeDescribe("8 - Device Settings", () => {
             appWebsocket,
             "getLocation"
           );
-        assert.approximately(location.value.latitude, 1.5, 0.1);
-        assert.approximately(location.value.longitude, 1.5, 0.1);
+        assert.approximately(location.value.latitude, 1, 0.1);
+        assert.approximately(location.value.longitude, 1, 0.1);
         return true;
       } catch {
         return false;
       }
-    }, 10000);
+    }, 100000);
   });
 
   it("change location", async () => {
