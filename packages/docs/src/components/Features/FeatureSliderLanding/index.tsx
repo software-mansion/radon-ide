@@ -103,10 +103,22 @@ export default function FeatureSliderLanding() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 1 }}>
-              <video autoPlay className={clsx(styles.video, styles.videoLight)} loop muted>
+              <video
+                autoPlay
+                playsInline
+                webkit-playsinline
+                className={clsx(styles.video, styles.videoLight)}
+                loop
+                muted>
                 <source src={features[activeItem.index].videoSrc.light} type="video/mp4" />
               </video>
-              <video autoPlay className={clsx(styles.video, styles.videoDark)} loop muted>
+              <video
+                autoPlay
+                playsInline
+                webkit-playsinline
+                className={clsx(styles.video, styles.videoDark)}
+                loop
+                muted>
                 <source src={features[activeItem.index].videoSrc.dark} type="video/mp4" />
               </video>
             </motion.div>
