@@ -19,6 +19,8 @@ function ColorModeToggle() {
     if (!userTheme) {
       localStorage.setItem("user-theme", "dark");
     }
+    const newColorMode = initialTheme === "system" ? undefined : initialTheme;
+    setColorMode(newColorMode);
   }, []);
 
   const handleModeChange = (mode: "system" | "light" | "dark") => {
