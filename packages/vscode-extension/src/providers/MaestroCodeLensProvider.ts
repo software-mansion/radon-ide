@@ -6,13 +6,27 @@ import {
   Range,
   Command,
 } from "vscode";
+import { IDE } from "../project/ide";
 
 export class MaestroCodeLensProvider implements CodeLensProvider {
-  provideCodeLenses(
+  async provideCodeLenses(
     document: TextDocument,
     token: CancellationToken
-  ): CodeLens[] | Thenable<CodeLens[]> {
+  ): Promise<CodeLens[]> {
     if (!this.checkMaestroFile(document)) {
+      return [];
+    }
+    const ide = IDE.getInstanceIfExists();
+    if (!ide) {
+      return [];
+    }
+    try {
+      const state = await ide.getState();
+      const maestroStatus = state.projectState?.applicationContext?.applicationDependencies?.maestro?.status;
+      if (maestroStatus !== "installed") {
+        return [];
+      }
+    } catch (e) {
       return [];
     }
 
@@ -21,7 +35,6 @@ export class MaestroCodeLensProvider implements CodeLensProvider {
       command: "RNIDE.startMaestroTest",
       arguments: [[document.fileName]],
     };
-
     const codeLenses: CodeLens[] = [];
     codeLenses.push(new CodeLens(this.createRange(document, 0), command));
 
@@ -42,7 +55,7 @@ export class MaestroCodeLensProvider implements CodeLensProvider {
     ) {
       return false;
     }
-    const splitText = text.split("---");
+    const splitText = text.split(/^---$/m);
     const stepDashes = splitText[1]?.match(/^\s*-\s+/gm);
     if (splitText.length < 2 || !stepDashes) {
       return false;
