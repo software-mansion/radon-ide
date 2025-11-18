@@ -404,12 +404,14 @@ safeDescribe("7 - Radon tools tests", () => {
       await managingDevicesService.switchToDevice(deviceName2);
       await appManipulationService.waitForAppToLoad();
 
-      await radonSettingsService.rotateDevice("landscape-left");
-
       await driver.wait(async () => {
         appWebsocket = get().appWebsocket;
         return appWebsocket != null;
       }, 5000);
+
+      await appManipulationService.hideExpoOverlay(appWebsocket);
+
+      await radonSettingsService.rotateDevice("landscape-left");
 
       await driver.wait(async () => {
         const orientation =

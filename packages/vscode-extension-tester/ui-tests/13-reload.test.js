@@ -91,14 +91,9 @@ safeDescribe("13 - Reload app tests", () => {
       "top-bar-reload-button-option-reboot-device"
     );
 
-    await driver.wait(async () => {
-      const messageElement =
-        await elementHelperService.findAndWaitForElementByTag(
-          "startup-message"
-        );
-      assert.include(await messageElement.getText(), "Booting device");
-
-      await appManipulationService.waitForAppToLoad();
-    }, 10000);
+    const messageElement =
+      await elementHelperService.findAndWaitForElementByTag("startup-message");
+    assert.include(await messageElement.getText(), "Initializing device");
+    await appManipulationService.waitForAppToLoad();
   });
 });
