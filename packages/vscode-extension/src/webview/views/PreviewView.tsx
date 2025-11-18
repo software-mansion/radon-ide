@@ -26,6 +26,9 @@ import { InspectorAvailabilityStatus, ProfilingState, ZoomLevelType } from "../.
 import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
 import { ActivateLicenseView } from "./ActivateLicenseView";
+import { Feature, LicenseStatus } from "../../common/License";
+import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import { useDevices } from "../hooks/useDevices";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -41,6 +44,7 @@ function ActivateLicenseButton() {
   return (
     <Button
       className="activate-license-button"
+      dataTest="open-activate-license-modal-button"
       onClick={() => {
         project.sendTelemetry("activateLicenseButtonClicked");
         openModal(<ActivateLicenseView />, { title: "Activate License" });
@@ -95,14 +99,15 @@ function PreviewView() {
   const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
   const selectedProjectDevice = use$(selectedDeviceSessionState.deviceInfo);
   const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
+  const licenseStatus = use$(store$.license.status);
 
-  const { projectState, project, hasActiveLicense } = useProject();
+  const { projectState, project } = useProject();
 
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
 
-  const devices = use$(store$.devicesState.devices) ?? [];
+  const devices = useDevices(store$);
   const fps = use$(useSelectedDeviceSessionState().frameReporting.frameReport.fps);
   const frameReportingEnabled = use$(useSelectedDeviceSessionState().frameReporting.enabled);
   const initialized = use$(store$.projectState.initialized);
@@ -169,9 +174,17 @@ function PreviewView() {
     };
   }, []);
 
+  const paywalledToggleRecording = usePaywalledCallback(
+    async () => {
+      await project.toggleRecording();
+    },
+    Feature.ScreenRecording,
+    []
+  );
+
   function toggleRecording() {
     try {
-      project.toggleRecording();
+      paywalledToggleRecording();
     } catch (e) {
       if (isRecording) {
         project.showDismissableError("Failed to capture recording");
@@ -191,16 +204,36 @@ function PreviewView() {
     project.stopReportingFrameRate();
   }
 
+  const paywalledCaptureReplay = usePaywalledCallback(
+    async () => {
+      await project.captureReplay();
+    },
+    Feature.ScreenReplay,
+    []
+  );
+
   async function handleReplay() {
     try {
-      await project.captureReplay();
+      await paywalledCaptureReplay();
     } catch (e) {
       project.showDismissableError("Failed to capture replay");
     }
   }
 
+  const paywalledCaptureScreenshot = usePaywalledCallback(
+    async () => {
+      await project.captureScreenshot();
+    },
+    Feature.Screenshot,
+    []
+  );
+
   async function captureScreenshot() {
-    project.captureScreenshot();
+    try {
+      await paywalledCaptureScreenshot();
+    } catch (e) {
+      project.showDismissableError("Failed to capture screenshot");
+    }
   }
 
   function onInspectorItemSelected(item: InspectDataStackItem) {
@@ -395,7 +428,9 @@ function PreviewView() {
           <DeviceSelect />
         </div>
         <div className="spacer" />
-        {Platform.OS === "macos" && !hasActiveLicense && <ActivateLicenseButton />}
+        {Platform.OS === "macos" && licenseStatus === LicenseStatus.Inactive && (
+          <ActivateLicenseButton />
+        )}
         <DeviceSettingsDropdown disabled={!navBarButtonsActive}>
           <IconButton
             tooltip={{ label: "Device settings", type: "primary" }}

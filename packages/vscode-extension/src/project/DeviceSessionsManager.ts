@@ -1,12 +1,11 @@
 import { Disposable, window } from "vscode";
 import _ from "lodash";
-import { DeviceAlreadyUsedError, DeviceManager } from "../devices/DeviceManager";
+import { DeviceManager } from "../devices/DeviceManager";
+import { DeviceAlreadyUsedError } from "../devices/DeviceAlreadyUsedError";
 import { Logger } from "../Logger";
 import { extensionContext } from "../utilities/extensionContext";
 import { ApplicationContext } from "./ApplicationContext";
 import { DeviceSession } from "./deviceSession";
-import { AndroidEmulatorDevice } from "../devices/AndroidEmulatorDevice";
-import { IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { disposeAll } from "../utilities/disposables";
 import { DeviceId } from "../common/Project";
 import { Connector } from "../connect/Connector";
@@ -22,6 +21,7 @@ import {
   ProjectStore,
   REMOVE,
 } from "../common/State";
+import { DeviceBase } from "../devices/DeviceBase";
 
 const LAST_SELECTED_DEVICE_KEY = "last_selected_device";
 const SWITCH_DEVICE_THROTTLE_MS = 300;
@@ -50,6 +50,15 @@ export class DeviceSessionsManager implements Disposable {
   private activeSessionId: DeviceId | undefined;
   private findingDevice: boolean = false;
   private previousDevices: DeviceInfo[] = [];
+  private get devices(): DeviceInfo[] {
+    const devicesByType = this.devicesStateManager.getState().devicesByType;
+    if (devicesByType === null) {
+      return [];
+    }
+    return (
+      ["iosSimulators", "androidEmulators", "androidPhysicalDevices"] as const
+    ).flatMap<DeviceInfo>((deviceType) => devicesByType[deviceType] ?? []);
+  }
 
   constructor(
     private readonly stateManager: StateManager<DeviceSessions>,
@@ -63,9 +72,9 @@ export class DeviceSessionsManager implements Disposable {
   ) {
     this.disposables.push(
       this.devicesStateManager.onSetState((partialState) => {
-        const devices = partialState.devices;
+        const devices = partialState.devicesByType;
         if (devices !== undefined && devices !== null && devices !== REMOVE) {
-          this.devicesChangedListener(devices);
+          this.devicesChangedListener();
         }
       })
     );
@@ -176,7 +185,8 @@ export class DeviceSessionsManager implements Disposable {
       await this.applicationContext.devtoolsServer,
       this.deviceSessionManagerDelegate.getDeviceRotation(),
       this.outputChannelRegistry,
-      this.applicationContext.metroProvider
+      this.applicationContext.metroProvider,
+      this.devicesStateManager
     );
 
     this.deviceSessions.set(deviceInfo.id, newDeviceSession);
@@ -239,8 +249,8 @@ export class DeviceSessionsManager implements Disposable {
     try {
       this.findingDevice = true;
 
-      const devices = this.devicesStateManager.getState().devices;
-      if (devices === null) {
+      const devices = this.devices;
+      if (devices.length === 0) {
         // If no devices are found, we can return early
         return;
       }
@@ -254,8 +264,10 @@ export class DeviceSessionsManager implements Disposable {
       const defaultDevice =
         devices.find((device) => device.platform === DevicePlatform.IOS) ?? devices.at(0);
       const initialDevice = devices.find((device) => device.id === lastDeviceId) ?? defaultDevice;
+      const isPhysicalDevice =
+        initialDevice?.platform === DevicePlatform.Android && !initialDevice.emulator;
 
-      if (initialDevice) {
+      if (initialDevice && !isPhysicalDevice) {
         // if we found a device on the devices list, we try to select it
         await this.startOrActivateSessionForDevice(initialDevice);
       }
@@ -267,11 +279,19 @@ export class DeviceSessionsManager implements Disposable {
   };
 
   // used in callbacks, needs to be an arrow function
-  private devicesChangedListener = async (devices: DeviceInfo[]) => {
+  private devicesChangedListener = async () => {
     const previousDevices = this.previousDevices;
+    const devices = this.devices;
+
     const removedDevices = previousDevices.filter(
       (prevDevice) => !devices.some((device) => device.id === prevDevice.id)
     );
+
+    const disconnectedDevices = devices.filter((d) => {
+      return (
+        !d.available && previousDevices.some((device) => device.id === d.id && device.available)
+      );
+    });
 
     if (removedDevices.length > 1) {
       Logger.warn(
@@ -280,8 +300,13 @@ export class DeviceSessionsManager implements Disposable {
       );
     }
 
+    // NOTE: stop removed devices and (unselected) disconnected physical devices
+    const devicesToStop = removedDevices.concat(
+      disconnectedDevices.filter((d) => d.id !== this.activeSessionId)
+    );
+
     await Promise.all(
-      removedDevices.map((device) => {
+      devicesToStop.map((device) => {
         this.terminateSession(device.id);
       })
     );
@@ -295,6 +320,7 @@ export class DeviceSessionsManager implements Disposable {
 
   private async updateSelectedSession(session: DeviceSession | undefined) {
     const previousSession = this.selectedDeviceSession;
+    const previousSessionId = this.activeSessionId;
     this.activeSessionId = session?.id;
     if (previousSession === session) {
       return;
@@ -305,19 +331,32 @@ export class DeviceSessionsManager implements Disposable {
     }
     extensionContext.workspaceState.update(LAST_SELECTED_DEVICE_KEY, this.activeSessionId);
     this.projectStateManager.updateState({ selectedDeviceSessionId: this.activeSessionId });
-    await previousSession?.deactivate();
+
+    const wasPreviousDeviceDisconnected = !this.devices.find((d) => d.id === previousSessionId)
+      ?.available;
+
+    // NOTE: if previous device was already disconnected,
+    // we terminate its session instead of deactivating it,
+    // since after reconnecting it will need restarting anyway
+    if (previousSessionId && wasPreviousDeviceDisconnected) {
+      await this.terminateSession(previousSessionId);
+    } else {
+      await previousSession?.deactivate();
+    }
+
     await session.activate();
   }
 
   private async acquireDeviceByDeviceInfo(deviceInfo: DeviceInfo) {
     if (!deviceInfo.available) {
-      window.showErrorMessage(
-        "Selected device is not available. Perhaps the system image it uses is not installed. Please select another device.",
-        "Dismiss"
-      );
+      const message =
+        deviceInfo.platform === DevicePlatform.Android && !deviceInfo.emulator
+          ? "Selected device is not connected anymore. Please connect it to your computer and try again."
+          : "Selected device is not available. Perhaps the system image it uses is not installed. Please select another device.";
+      window.showErrorMessage(message, "Dismiss");
       return undefined;
     }
-    let device: IosSimulatorDevice | AndroidEmulatorDevice | undefined;
+    let device: DeviceBase | undefined;
     try {
       device = await this.deviceManager.acquireDevice(
         deviceInfo,

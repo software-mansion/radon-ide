@@ -61,8 +61,9 @@ export function generateWebviewContent(
               content="default-src 'none';
                       img-src vscode-resource: http: https: data:;
                       media-src vscode-resource: http: https:;
-                      style-src ${webview.cspSource} 'unsafe-inline';
-                      script-src 'nonce-${nonce}' ${allowUnsafeEval ? "'unsafe-eval'" : ""};
+                      style-src ${webview.cspSource} 'unsafe-inline' https://cdn.paddle.com;
+                      script-src 'nonce-${nonce}' ${allowUnsafeEval ? "'unsafe-eval'" : ""} https://cdn.paddle.com;
+                      connect-src https://public.profitwell.com https://cdn.paddle.com https://api.paddle.com;
                       worker-src 'self' blob:;
                       font-src vscode-resource: https:;" />
         <link rel="stylesheet" type="text/css" href="style.css" />

@@ -1,8 +1,9 @@
 import { WebView, EditorView } from "vscode-extension-tester";
 import initServices from "../services/index.js";
+import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
-describe("2 - Main interface buttons tests", () => {
+safeDescribe("2 - Main interface buttons tests", () => {
   let driver, elementHelperService, radonViewsService, managingDevicesService;
 
   before(async () => {
@@ -95,6 +96,20 @@ describe("2 - Main interface buttons tests", () => {
 
     await elementHelperService.findAndWaitForElementByTag(
       "approot-select-dropdown-content"
+    );
+  });
+
+  it("Should open add launch configuration modal", async function () {
+    await elementHelperService.findAndClickElementByTag(
+      "radon-bottom-bar-approot-select-dropdown-trigger"
+    );
+
+    await elementHelperService.findAndClickElementByTag(
+      "add-launch-config-button"
+    );
+
+    await elementHelperService.findAndWaitForElementByTag(
+      "launch-configuration-modal"
     );
   });
 });

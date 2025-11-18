@@ -28,6 +28,9 @@ export function registerNavigationPlugin(name, plugin) {
 const devtoolPlugins = new Set(["network"]);
 const devtoolPluginsChangedListeners = new Set();
 export function registerDevtoolPlugin(name) {
+  if (devtoolPlugins.has(name)) {
+    return;
+  }
   devtoolPlugins.add(name);
   devtoolPluginsChangedListeners.forEach((listener) => listener());
 }
@@ -51,9 +54,6 @@ const InternalImports = {
   get setupNetworkPlugin() {
     return require("./network/network").setup;
   },
-  get reduxDevtoolsExtensionCompose() {
-    return require("./plugins/redux-devtools").compose;
-  },
   get setupRenderOutlinesPlugin() {
     return require("./render_outlines").setup;
   },
@@ -63,10 +63,6 @@ const InternalImports = {
   get setupInspectorAvailabilityListeners() {
     return require("./inspector_availability").setup;
   },
-};
-
-window.__REDUX_DEVTOOLS_EXTENSION_COMPOSE__ = function (...args) {
-  return InternalImports.reduxDevtoolsExtensionCompose(...args);
 };
 
 const RNInternals = require("./rn-internals/rn-internals");
@@ -497,6 +493,7 @@ export function AppWrapper({ children, initialProps, fabric }) {
 
   return (
     <View
+      key="__RNIDE_APP_WRAPPER"
       ref={mainContainerRef}
       style={{ flex: 1 }}
       onLayout={(event) => {

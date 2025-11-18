@@ -4,6 +4,7 @@ import { extensionContext } from "../../utilities/extensionContext";
 import { RadonInspectorBridge } from "../../project/inspectorBridge";
 import { ReduxDevToolsPluginWebviewProvider } from "./ReduxDevToolsPluginWebviewProvider";
 import { disposeAll } from "../../utilities/disposables";
+import { addConnection } from "./background.bundle";
 
 export const REDUX_PLUGIN_ID = "redux-devtools";
 const REDUX_PLUGIN_PREFIX = "RNIDE.Tool.ReduxDevTools";
@@ -22,6 +23,42 @@ function initialize() {
       { webviewOptions: { retainContextWhenHidden: true } }
     )
   );
+}
+
+function createChromePort(name: string, onMessage: (message: unknown) => void) {
+  const messageListeners: ((message: unknown) => void)[] = [];
+  const disconnectListeners: (() => void)[] = [];
+  const connection = {
+    name,
+    postMessage: onMessage,
+    onMessage: {
+      addListener(listener: (message: unknown) => void) {
+        messageListeners.push(listener);
+      },
+      removeListener(listener: (message: unknown) => void) {
+        messageListeners.splice(messageListeners.indexOf(listener), 1);
+      },
+    },
+    onDisconnect: {
+      addListener(listener: () => void) {
+        disconnectListeners.push(listener);
+      },
+      removeListener(listener: () => void) {
+        disconnectListeners.splice(disconnectListeners.indexOf(listener), 1);
+      },
+    },
+    sender: {
+      tab: { id: "1" },
+    },
+  };
+  function postMessage(message: unknown) {
+    messageListeners.slice().forEach((listener) => listener(message));
+  }
+  function disconnect() {
+    disconnectListeners.slice().forEach((listener) => listener());
+    messageListeners.length = 0;
+  }
+  return { connection, postMessage, disconnect };
 }
 
 export class ReduxDevtoolsPlugin implements ToolPlugin {
@@ -43,8 +80,16 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
   connectDevtoolsWebview(webview: Webview) {
     this.connectedWebviewListener?.dispose();
     this.connectedWebview = webview;
-    this.connectedWebviewListener = webview.onDidReceiveMessage((message) => {
-      this.inspectorBridge.sendPluginMessage(REDUX_PLUGIN_ID, message.type, message.data);
+    const { connection, postMessage, disconnect } = createChromePort("monitor", (message) =>
+      this.connectedWebview?.postMessage({ scope: "rnide-chrome-stub", message })
+    );
+    addConnection(connection);
+    const connectedWebviewListener = webview.onDidReceiveMessage((message) => {
+      postMessage(message);
+    });
+    this.connectedWebviewListener = new Disposable(() => {
+      disconnect();
+      connectedWebviewListener.dispose();
     });
   }
 
@@ -55,42 +100,34 @@ export class ReduxDevtoolsPlugin implements ToolPlugin {
     }
   }
 
-  activate() {
+  enable() {
     commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, true);
+    const { connection, postMessage, disconnect } = createChromePort("tab", (message) => {
+      this.inspectorBridge.sendPluginMessage(REDUX_PLUGIN_ID, "chrome", message);
+    });
+
+    this.devtoolsListeners.push(new Disposable(disconnect));
     this.devtoolsListeners.push(
       this.inspectorBridge.onEvent("pluginMessage", ({ pluginId, type, data }) => {
         if (pluginId === REDUX_PLUGIN_ID) {
-          this.connectedWebview?.postMessage({
-            scope: "RNIDE-redux-devtools",
-            data: {
-              type,
-              data,
-            },
-          });
+          postMessage(data);
         }
       })
     );
-    this.devtoolsListeners.push(
-      this.inspectorBridge.onEvent("appReady", () => {
-        // Sometimes, the messaging channel (devtools) is established only after
-        // the Redux store is created and after it sends the first message. In that
-        // case, the "start" event never makes it to the webview.
-        // To workaround this, we use "appReady" event which is sent after the messaging
-        // channel is established. We then force reload the webview with redux devtools
-        // which causes the devtools to initialize a new session and, as a consequence force the store
-        // to reconnect.
-        if (this.connectedWebview) {
-          const html = this.connectedWebview.html;
-          this.connectedWebview.html = "";
-          this.connectedWebview.html = html;
-        }
-      })
-    );
+    addConnection(connection);
+  }
+
+  disable() {
+    disposeAll(this.devtoolsListeners);
+    commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, false);
+  }
+
+  activate() {
+    this.enable();
   }
 
   deactivate() {
-    disposeAll(this.devtoolsListeners);
-    commands.executeCommand("setContext", `${REDUX_PLUGIN_PREFIX}.available`, false);
+    this.disable();
   }
 
   openTool() {

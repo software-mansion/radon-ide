@@ -72,3 +72,11 @@
 .button-replay:hover {
   background-color: var(--swm-button-replay-hover);
 }
+
+.vscode-high-contrast .button {
+  border: var(--swm-dropdown-border);
+
+  &:hover {
+    color: var(--swm-active-item);
+  }
+}

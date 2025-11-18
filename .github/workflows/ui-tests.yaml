@@ -1,4 +1,6 @@
 name: Build VSIX and Run Tests (macOS)
+permissions:
+  contents: read
 
 on:
   workflow_dispatch:
@@ -22,10 +24,12 @@ on:
           - "react-native-80"
           - "react-native-81"
           - "react-native-82"
+          - "react-native-81-additional-libs"
           - "expo-51"
           - "expo-52-prebuild-with-plugins"
           - "expo-53"
           - "expo-54"
+          - "expo-54-prebuild-with-plugins"
           # - "expo-52-eas"
           # - "expo-50-dev-client"
           # - "expo-51-dev-client"
@@ -33,6 +37,11 @@ on:
           # - "expo-router"
           # - "nx-monorepo"
           # - "pnpm-monorepo"
+      isAndroid:
+        description: Whether to run tests on Android device
+        type: boolean
+        required: false
+        default: "false"
       isRecording:
         description: Whether to record video
         type: boolean
@@ -50,6 +59,7 @@ on:
         description: vscode version to use (e.g. "1.99.1")
         required: true
         default: "latest"
+
   schedule:
     - cron: "27 1 * * *"
 
@@ -65,7 +75,7 @@ jobs:
       - id: set-matrix
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "matrix={\"include\":[{\"testApp\":\"${{ github.event.inputs.testApp }}\",\"node\":\"${{ github.event.inputs.node || '22' }}\",\"isRecording\":\"${{ github.event.inputs.isRecording }}\",\"testsToRun\":\"${{ github.event.inputs.testsToRun }}\",\"testsToExclude\":\"${{ github.event.inputs.testsToExclude }}\",\"codeVersion\":\"${{ github.event.inputs.VSCodeVersion || 'latest' }}\"}]}" >> $GITHUB_OUTPUT
+            echo "matrix={\"include\":[{\"testApp\":\"${{ github.event.inputs.testApp }}\",\"node\":\"${{ github.event.inputs.node || '22' }}\",\"isRecording\":\"${{ github.event.inputs.isRecording }}\",\"isAndroid\":\"${{ github.event.inputs.isAndroid }}\",\"testsToRun\":\"${{ github.event.inputs.testsToRun }}\",\"testsToExclude\":\"${{ github.event.inputs.testsToExclude }}\",\"codeVersion\":\"${{ github.event.inputs.VSCodeVersion || 'latest' }}\"}]}" >> $GITHUB_OUTPUT
           else
             MATRIX=$(jq -c . autorun_test_params.json)
             echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
@@ -74,7 +84,7 @@ jobs:
 
   build-and-test:
     needs: set-matrix
-    runs-on: macos-latest-xlarge
+    runs-on: self-hosted
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.set-matrix.outputs.matrix) }}
@@ -105,25 +115,32 @@ jobs:
       - name: Enforce HTTPS for submodules
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
-      - name: Cache npm (extension)
-        uses: actions/cache@v4
+      - name: Add Homebrew to PATH
+        run: echo "/opt/homebrew/bin" >> $GITHUB_PATH
+
+      - name: Install gh
+        run: brew install gh
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('packages/vscode-extension/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Install Ruby and Bundler
+        shell: bash
+        run: |
+          brew install ruby
+          echo "/opt/homebrew/opt/ruby/bin" >> $GITHUB_PATH
+          echo "/opt/homebrew/lib/ruby/gems/3.4.0/bin" >> $GITHUB_PATH
+          export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
+          ruby -v
+          gem -v
+          gem install bundler -v 2.5.3
 
       - name: Install dependencies (extension)
         run: npm ci
         working-directory: packages/vscode-extension
-
-      - name: Cache npm (tester)
-        uses: actions/cache@v4
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('packages/vscode-extension-tester/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
 
       - name: Install dependencies (tester)
         run: npm ci
@@ -146,14 +163,28 @@ jobs:
         if: ${{ matrix.isRecording == 'true' }}
         run: brew install ffmpeg
 
-      - name: Run setup-run-tests
-        run: npm run setup-run-tests -- ${{ matrix.testsToRun }} --exclude ${{ matrix.testsToExclude }}
+      - name: Run setup-run-tests and save output
+        run: |
+          set -o pipefail
+          mkdir -p artifacts
+          npm run setup-run-tests -- ${{ matrix.testsToRun }} --exclude ${{ matrix.testsToExclude }} \
+            | tee artifacts/test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}.txt
         working-directory: packages/vscode-extension-tester
         env:
           PROJECT_NAME: ${{ matrix.testApp }}
           IS_RECORDING: ${{ matrix.isRecording }}
           CODE_VERSION: ${{ matrix.codeVersion }}
-          IS_GITHUB_ACTIONS: "true"
+          IS_ANDROID: ${{ matrix.isAndroid }}
+          RADON_IDE_LICENSE_KEY: ${{ secrets.RADON_IDE_LICENSE_KEY }}
+
+      - name: Upload test output artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}
+          path: packages/vscode-extension-tester/artifacts/test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}.txt
+          retention-days: 7
 
       - name: make video
         if: ${{ always() && matrix.isRecording == 'true' }}
@@ -196,6 +227,15 @@ jobs:
           path: packages/vscode-extension-tester/data/screenshotTest..png
           retention-days: 7
 
+      - name: Upload automatedTests.tsx
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        timeout-minutes: 1
+        with:
+          name: automatedTests.tsx
+          path: packages/vscode-extension-tester/data/react-native-app/shared/automatedTests.tsx
+          retention-days: 7
+
       - name: Upload recording made by radon
         if: ${{ always() && matrix.isRecording == 'true' }}
         uses: actions/upload-artifact@v4
@@ -203,4 +243,31 @@ jobs:
         with:
           name: radon-recording-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}
           path: packages/vscode-extension-tester/data/recordingTest..mp4
+          retention-days: 7
+
+  summarize:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: always()
+    timeout-minutes: 2
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all test output artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./all_results
+
+      - name: Summary
+        run: |
+          mkdir -p packages/vscode-extension-tester/combined
+          find ./all_results -type f -name "test-output-*.txt" -exec cat {} + > packages/vscode-extension-tester/combined/all_results.txt
+          python3 packages/vscode-extension-tester/scripts/make_summary.py packages/vscode-extension-tester/combined/all_results.txt
+
+      - name: Upload combined results
+        uses: actions/upload-artifact@v4
+        with:
+          name: combined-test-results
+          path: packages/vscode-extension-tester/combined/all_results.txt
           retention-days: 7

@@ -164,4 +164,40 @@ export default class ManagingDevicesService {
       `renaming-device-view-save-button`
     );
   }
+
+  async switchToDevice(deviceName) {
+    const chosenDevice =
+      await this.elementHelperService.findAndWaitForElementByTag(
+        "device-select-value-text"
+      );
+    if ((await chosenDevice.getText()) !== deviceName) {
+      await this.elementHelperService.findAndClickElementByTag(
+        "radon-bottom-bar-device-select-dropdown-trigger"
+      );
+      await this.elementHelperService.findAndClickElementByTag(
+        `device-${deviceName}`
+      );
+      await this.driver.wait(
+        async () => {
+          const chosenDevice =
+            await this.elementHelperService.findAndWaitForElementByTag(
+              "device-select-value-text"
+            );
+          return deviceName === (await chosenDevice.getText());
+        },
+        10000,
+        "timed out waiting for device to be switched"
+      );
+    }
+  }
+
+  async prepareDevices(deviceName = "newDevice") {
+    await this.deleteAllDevices();
+    await this.addNewDevice(deviceName);
+    try {
+      await this.elementHelperService.findAndClickElementByTag(
+        `modal-close-button`
+      );
+    } catch {}
+  }
 }

@@ -9,6 +9,15 @@ export class CancelError extends Error {
 export class CancelToken {
   private isCancelled = false;
   private cancelListeners: (() => void)[] = [];
+  private abortController: AbortController;
+
+  constructor() {
+    this.abortController = new AbortController();
+  }
+
+  public get signal() {
+    return this.abortController.signal;
+  }
 
   public onCancel(cb: () => void) {
     this.cancelListeners.push(cb);
@@ -66,6 +75,7 @@ export class CancelToken {
 
   public cancel() {
     this.isCancelled = true;
+    this.abortController.abort();
     for (const listener of this.cancelListeners) {
       listener();
     }
@@ -73,6 +83,12 @@ export class CancelToken {
 
   get cancelled() {
     return this.isCancelled;
+  }
+
+  public throwIfCancelled() {
+    if (this.cancelled) {
+      throw new CancelError("The operation was cancelled");
+    }
   }
 }
 

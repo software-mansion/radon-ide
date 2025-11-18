@@ -3,7 +3,11 @@ import { use$ } from "@legendapp/state/react";
 import "./Preview.css";
 import { clamp, debounce, throttle } from "lodash";
 import { Platform, useProject } from "../providers/ProjectProvider";
-import { AndroidSupportedDevices, iOSSupportedDevices } from "../utilities/deviceConstants";
+import {
+  AndroidSupportedDevices,
+  DeviceProperties,
+  iOSSupportedDevices,
+} from "../utilities/deviceConstants";
 import PreviewLoader from "./PreviewLoader";
 import { useFatalErrorAlert } from "../hooks/useFatalErrorAlert";
 import { useBundleErrorAlert } from "../hooks/useBundleErrorAlert";
@@ -24,12 +28,15 @@ import InspectorUnavailableBox from "./InspectorUnavailableBox";
 import { useApplicationDisconnectedAlert } from "../hooks/useApplicationDisconnectedAlert";
 import { SendFilesOverlay } from "./SendFilesOverlay";
 import {
+  DevicePlatform,
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
   MultimediaData,
+  PreviewErrorReason,
   ZoomLevelType,
 } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { ActivateLicenseMessage } from "./ActivateLicenseMessage";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -88,7 +95,7 @@ function Preview({
   const inspectorBridgeStatus = use$(
     selectedDeviceSessionState.applicationSession.inspectorBridgeStatus
   );
-  const modelId = use$(selectedDeviceSessionState.deviceInfo.modelId);
+  const deviceInfo = use$(selectedDeviceSessionState.deviceInfo);
   const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
   const currentMousePosition = useRef<MouseEvent<HTMLDivElement>>(null);
@@ -133,7 +140,12 @@ function Preview({
 
   const previewURL = use$(selectedDeviceSessionState.previewURL);
 
-  const showDevicePreview = previewURL && (showPreviewRequested || isRunning);
+  const shouldShowActivateLicenseMessage =
+    fatalErrorDescriptor?.kind === "preview" &&
+    fatalErrorDescriptor.reason === PreviewErrorReason.NoAccess;
+
+  const showDevicePreview =
+    previewURL && (showPreviewRequested || isRunning) && !shouldShowActivateLicenseMessage;
 
   const isAppDisconnected =
     isRunning && inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
@@ -304,6 +316,19 @@ function Preview({
     debugPaused || isRefreshing || !showDevicePreview || !!replayData;
 
   const shouldPreventFromSendingTouch = isInspecting || !!inspectFrame;
+
+  /**
+   * Trigger the "Up" event after the input events are re-enabled.
+   * The currentMousePosition right after re-enabling does not change.
+   */
+  useEffect(() => {
+    if (!shouldPreventInputEvents) {
+      setIsPressing(false);
+      if (currentMousePosition.current) {
+        sendTouch(currentMousePosition.current, "Up");
+      }
+    }
+  }, [shouldPreventInputEvents]);
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -541,9 +566,33 @@ function Preview({
     };
   }, [project, shouldPreventInputEvents]);
 
-  const device = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
-    return sd.modelId === modelId;
-  });
+  const isExternalDevice = deviceInfo?.platform === DevicePlatform.Android && !deviceInfo.emulator;
+
+  const device: DeviceProperties | undefined = isExternalDevice
+    ? ({
+        modelName: deviceInfo.modelId,
+        modelId: deviceInfo.modelId,
+        platform: deviceInfo.platform,
+        screenWidth: deviceInfo.properties.screenWidth,
+        screenHeight: deviceInfo.properties.screenHeight,
+        bezel: {
+          type: "mask" as const,
+          width: deviceInfo.properties.screenWidth,
+          height: deviceInfo.properties.screenHeight,
+          offsetX: 0,
+          offsetY: 0,
+        },
+        skin: {
+          type: "skin" as const,
+          width: deviceInfo.properties.screenWidth,
+          height: deviceInfo.properties.screenHeight,
+          offsetX: 0,
+          offsetY: 0,
+        },
+      } as const)
+    : iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
+        return sd.modelId === deviceInfo?.modelId;
+      });
 
   const mirroredTouchPosition = calculateMirroredTouchPosition(touchPoint, anchorPoint);
   const normalTouchIndicatorSize = 33;
@@ -648,9 +697,16 @@ function Preview({
             </div>
           </Device>
         )}
-        {hasFatalError && (
+        {hasFatalError && !shouldShowActivateLicenseMessage && (
           <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="phone-sized extension-error-screen" />
+          </Device>
+        )}
+        {shouldShowActivateLicenseMessage && (
+          <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
+            <div className="phone-sized">
+              <ActivateLicenseMessage />
+            </div>
           </Device>
         )}
       </div>

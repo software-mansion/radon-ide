@@ -7,6 +7,12 @@ import { useTabBar } from "../../providers/TabBarProvider";
 import { getNetworkLogValue } from "../../utils/networkLogParsers";
 import "./PreviewTab.css";
 import "./PayloadAndResponseTab.css";
+import {
+  ResponseLoadingInfo,
+  PreviewImageError,
+  ResponseDataFetchFailedInfo,
+  NoPreviewAvailableInfo,
+} from "./ResponseStatusMessages";
 
 interface PreviewTabProps {
   networkLog: NetworkLog;
@@ -136,9 +142,7 @@ function PreviewTab({ networkLog, responseBodyData, isActive }: PreviewTabProps)
     return (
       <div className="tab-padding">
         <div className="preview-tab-container">
-          <div className="preview-tab-failed-fetch-information">
-            <h4>Failed to load response data</h4>
-          </div>
+          <ResponseDataFetchFailedInfo />
         </div>
       </div>
     );
@@ -148,10 +152,7 @@ function PreviewTab({ networkLog, responseBodyData, isActive }: PreviewTabProps)
     return (
       <div className="tab-padding">
         <div className="preview-tab-content">
-          <div className="preview-tab-no-preview">
-            <span className="codicon codicon-file-media" />
-            <p>No preview available</p>
-          </div>
+          <NoPreviewAvailableInfo />
         </div>
       </div>
     );
@@ -176,18 +177,8 @@ function PreviewTab({ networkLog, responseBodyData, isActive }: PreviewTabProps)
           onLoad={handleImageLoad}
           onError={handleImageError}
         />
-        {isImageLoading && (
-          <div className="preview-tab-loading">
-            <span className="codicon codicon-info" />
-            <p>Loading...</p>
-          </div>
-        )}
-        {error && (
-          <div className="preview-tab-error">
-            <span className="codicon codicon-error" />
-            <p>Error loading image</p>
-          </div>
-        )}
+        {isImageLoading && <ResponseLoadingInfo />}
+        {error && <PreviewImageError />}
       </div>
     </div>
   );

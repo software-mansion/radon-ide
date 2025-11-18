@@ -61,7 +61,7 @@ function generateWebviewContent(
           <meta charset="utf-8" />
           <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
           <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-          <title>redux-devtools-expo-dev-plugin-webui</title>
+          <title>redux-devtools</title>
           <!-- The react-native-web recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
           <style id="expo-reset">
             /* These styles make the body full-height */

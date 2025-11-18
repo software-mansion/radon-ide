@@ -26,6 +26,8 @@ import {
   watchLicenseTokenChange,
   getLicenseToken,
   refreshTokenPeriodically,
+  checkLicenseToken,
+  SimServerLicenseValidationStatus,
 } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey } from "./tools";
@@ -39,15 +41,17 @@ import {
 import { FingerprintProvider } from "./FingerprintProvider";
 import { Connector } from "../connect/Connector";
 import { LaunchConfigurationsManager } from "./launchConfigurationsManager";
-import { LaunchConfiguration } from "../common/LaunchConfig";
+import { LaunchConfiguration, LaunchConfigurationKind } from "../common/LaunchConfig";
 import { OutputChannelRegistry } from "./OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import { StateManager } from "./StateManager";
 import {
   AndroidSystemImageInfo,
   DeviceInfo,
+  DevicePlatform,
   DeviceRotation,
   DevicesState,
+  DeviceType,
   IOSDeviceTypeInfo,
   IOSRuntimeInfo,
   MultimediaData,
@@ -58,10 +62,67 @@ import { EnvironmentDependencyManager } from "../dependency/EnvironmentDependenc
 import { Telemetry } from "./telemetry";
 import { EditorBindings } from "./EditorBindings";
 import { saveMultimedia } from "../utilities/saveMultimedia";
+import {
+  Feature,
+  FeatureAvailabilityStatus,
+  getFeatureAvailabilityStatus,
+  getLicensesForFeature,
+  LicenseState,
+  LicenseStatus,
+} from "../common/License";
+import { RestrictedFunctionalityError } from "../common/Errors";
 
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 
 const DEEP_LINKS_HISTORY_LIMIT = 50;
+
+type ProjectMethodParameters<K extends keyof Project> = Project[K] extends (
+  ...args: infer P
+) => unknown
+  ? P
+  : never;
+
+/**
+ * Checks if the current license status allows access to the specified feature.
+ * @argument feature - The feature to check access for.
+ * @throws {RestrictedFunctionalityError} if the user does not have access to the feature.
+ */
+function guardFeatureAccess<K extends keyof Project>(
+  feature: Feature,
+  shouldSkipLicenseCheck?: (...args: ProjectMethodParameters<K>) => boolean
+) {
+  return function (target: Project, propertyKey: K, descriptor: PropertyDescriptor) {
+    const originalMethod = descriptor.value;
+    if (!originalMethod || typeof originalMethod !== "function") {
+      return descriptor;
+    }
+    descriptor.value = function (this: Project, ...args: ProjectMethodParameters<K>) {
+      if (shouldSkipLicenseCheck) {
+        const shouldSkip = shouldSkipLicenseCheck(...args);
+        if (shouldSkip) {
+          return originalMethod.apply(this, args);
+        }
+      }
+
+      const licenseStatus = this.licenseState.status;
+
+      const availabilityStatus = getFeatureAvailabilityStatus(licenseStatus, feature);
+
+      switch (availabilityStatus) {
+        case FeatureAvailabilityStatus.Available:
+          return originalMethod.apply(this, args);
+        case FeatureAvailabilityStatus.InsufficientLicense:
+          const allowedLicenses = getLicensesForFeature(feature);
+          throw new RestrictedFunctionalityError(
+            `This feature requires one of the following licenses: ${allowedLicenses.join(", ")}`,
+            allowedLicenses
+          );
+      }
+    };
+
+    return descriptor;
+  };
+}
 
 export class Project implements Disposable, ProjectInterface, DeviceSessionsManagerDelegate {
   // #region Properties
@@ -114,6 +175,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     private readonly stateManager: StateManager<ProjectStore>,
     private readonly workspaceStateManager: StateManager<WorkspaceConfiguration>,
     private readonly devicesStateManager: StateManager<DevicesState>,
+    private readonly licenseStateManager: StateManager<LicenseState>,
     private readonly deviceManager: DeviceManager,
     private readonly editorBindings: EditorBindings,
     private readonly outputChannelRegistry: OutputChannelRegistry,
@@ -154,6 +216,8 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       },
     };
 
+    this.updateLicenseStatus();
+
     this.maybeStartInitialDeviceSession();
 
     this.disposables.push(
@@ -167,12 +231,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
     this.disposables.push(fingerprintProvider);
     this.disposables.push(refreshTokenPeriodically());
-    this.disposables.push(
-      watchLicenseTokenChange(async () => {
-        const hasActiveLicense = await this.hasActiveLicense();
-        this.eventEmitter.emit("licenseActivationChanged", hasActiveLicense);
-      })
-    );
+    this.disposables.push(watchLicenseTokenChange(this.updateLicenseStatus));
     this.disposables.push(
       this.launchConfigsManager.onLaunchConfigurationsChanged((launchConfigs) => {
         this.updateProjectState({
@@ -181,7 +240,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       })
     );
 
-    this.disposables.push(this.stateManager, this.workspaceStateManager, this.devicesStateManager);
+    this.disposables.push(
+      this.stateManager,
+      this.workspaceStateManager,
+      this.devicesStateManager,
+      this.licenseStateManager
+    );
   }
 
   // #endregion Constructor
@@ -202,6 +266,17 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
+  @guardFeatureAccess(Feature.AndroidSmartphoneEmulators)
+  @guardFeatureAccess(Feature.IOSSmartphoneSimulators)
+  @guardFeatureAccess(Feature.IOSTabletSimulators, (deviceInfo: DeviceInfo) => {
+    return deviceInfo.deviceType !== DeviceType.Tablet;
+  })
+  @guardFeatureAccess(Feature.AndroidPhysicalDevice, (deviceInfo: DeviceInfo) => {
+    if (deviceInfo.platform === DevicePlatform.IOS) {
+      return true;
+    }
+    return deviceInfo.emulator !== false;
+  })
   public startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void> {
     return this.deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
   }
@@ -275,6 +350,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Device Settings
 
+  @guardFeatureAccess(Feature.DeviceRotation)
   public async rotateDevices(direction: DeviceRotationDirection) {
     const currentRotation = this.workspaceStateManager.getState().deviceSettings.deviceRotation;
     if (currentRotation === undefined) {
@@ -377,9 +453,26 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return activated;
   }
 
-  public async hasActiveLicense() {
-    return !!(await getLicenseToken());
+  public get licenseState() {
+    return this.licenseStateManager.getState();
   }
+
+  // needs to be an arrow function (used in callbacks)
+  private updateLicenseStatus = async () => {
+    const token = await getLicenseToken();
+    if (!token) {
+      this.licenseStateManager.updateState({ status: LicenseStatus.Inactive });
+      return;
+    }
+
+    const validationResult = await checkLicenseToken(token);
+    const status =
+      validationResult.status === SimServerLicenseValidationStatus.Success
+        ? validationResult.licensePlan
+        : LicenseStatus.Inactive;
+
+    this.licenseStateManager.updateState({ status });
+  };
 
   // #endregion License
 
@@ -388,7 +481,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public async resetAppPermissions(permissionType: AppPermissionType) {
     const needsRestart = await this.deviceSession?.resetAppPermissions(permissionType);
     if (needsRestart) {
-      await this.deviceSessionsManager.reloadCurrentSession("restartProcess");
+      await this.reloadCurrentSession("restartProcess");
     }
   }
 
@@ -416,6 +509,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region File Transfer
 
+  @guardFeatureAccess(Feature.SendFile)
   public async openSendFileDialog() {
     if (!this.deviceSession) {
       throw new Error("No device session available");
@@ -423,6 +517,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSession.fileTransfer.openSendFileDialog();
   }
 
+  @guardFeatureAccess(Feature.SendFile)
   public async sendFileToDevice({
     fileName,
     data,
@@ -440,6 +535,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Recording
 
+  @guardFeatureAccess(Feature.ScreenRecording)
   public async toggleRecording() {
     getTelemetryReporter().sendTelemetryEvent("recording:toggle-recording", {
       platform: this.deviceSession?.platform,
@@ -450,6 +546,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSession.toggleRecording();
   }
 
+  @guardFeatureAccess(Feature.ScreenReplay)
   public async captureReplay() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-replay", {
       platform: this.deviceSession?.platform,
@@ -460,6 +557,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSession.captureReplay();
   }
 
+  @guardFeatureAccess(Feature.Screenshot)
   public async captureScreenshot() {
     getTelemetryReporter().sendTelemetryEvent("replay:capture-screenshot", {
       platform: this.deviceSession?.platform,
@@ -582,6 +680,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     this.deviceSession?.sendButton("appSwitch", "Up");
   }
 
+  @guardFeatureAccess(Feature.Biometrics)
   public async sendBiometricAuthorization(isMatch: boolean) {
     await this.deviceSession?.sendBiometricAuthorization(isMatch);
   }
@@ -591,6 +690,32 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   // #region Reloading
 
   public reloadCurrentSession(type: ReloadAction): Promise<void> {
+    if (this.selectedLaunchConfiguration.kind === LaunchConfigurationKind.Custom) {
+      // upon reload, we verify the selected launch configuration is still present:
+      // 1) if it is, we proceed to reloading the session.
+      // 2) if the launch configuration was modified, we search for a matching launch configuration and select it.
+      // 3) if no matching launch configuration is found, we show an error message and throw an error.
+      const exactConfigExists = this.launchConfigsManager.launchConfigurations.some((config) =>
+        _.isEqual(config, this.selectedLaunchConfiguration)
+      );
+      if (!exactConfigExists) {
+        // find config with the same name and app root as the best candidate
+        const matchingConfigCandidate = this.launchConfigsManager.launchConfigurations.find(
+          (config) =>
+            config.name === this.selectedLaunchConfiguration.name &&
+            config.appRoot === this.selectedLaunchConfiguration.appRoot
+        );
+        if (matchingConfigCandidate) {
+          return this.selectLaunchConfiguration(matchingConfigCandidate);
+        } else {
+          window.showErrorMessage(
+            "The selected launch configuration was deleted or changed. Please select a new launch configuration from the list of available ones.",
+            "Dismiss"
+          );
+          throw new Error("Selected launch configuration is stale");
+        }
+      }
+    }
     return this.deviceSessionsManager.reloadCurrentSession(type);
   }
 
@@ -617,6 +742,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     return this.deviceManager.createAndroidDevice(modelId, displayName, systemImage);
   }
 
+  @guardFeatureAccess(Feature.AndroidSmartphoneEmulators)
+  @guardFeatureAccess(Feature.IOSSmartphoneSimulators)
+  @guardFeatureAccess(Feature.IOSTabletSimulators, (deviceInfo: IOSDeviceTypeInfo) => {
+    return !deviceInfo.name.includes("iPad");
+  })
   public createIOSDevice(
     deviceType: IOSDeviceTypeInfo,
     displayName: string,
@@ -671,6 +801,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
   }
 
+  @guardFeatureAccess(Feature.StorybookIntegration)
   public async showStorybookStory(componentTitle: string, storyName: string) {
     if (this.applicationContext.applicationDependencyManager === undefined) {
       Logger.error(

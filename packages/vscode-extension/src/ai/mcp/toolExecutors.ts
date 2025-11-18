@@ -1,11 +1,26 @@
 import { readFileSync } from "fs";
 
+import { Store } from "react-devtools-inline";
 import { IDE } from "../../project/ide";
-import { pngToToolContent, textToToolContent, textToToolResponse } from "./utils";
+import {
+  getDevtoolsElementByID,
+  pngToToolContent,
+  textToToolContent,
+  textToToolResponse,
+} from "./utils";
 import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
 import { ReloadAction } from "../../project/DeviceSessionsManager";
+import printComponentTree from "./printComponentTree";
+
+export function tryGetTreeRoot(store: Store) {
+  const treeRoot = getDevtoolsElementByID(store.roots[0], store);
+  if (treeRoot) {
+    return treeRoot;
+  }
+  throw new Error(`Component tree is corrupted. Tree root could not be found.`);
+}
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
@@ -50,6 +65,26 @@ export async function restartDeviceExec(input: AppReloadRequest): Promise<ToolRe
     return textToToolResponse("App reloaded successfully.");
   } catch (error) {
     return textToToolResponse(`Failed to reload the app. Details: ${String(error)}`);
+  }
+}
+
+export async function viewComponentTreeExec(): Promise<ToolResponse> {
+  const project = IDE.getInstanceIfExists()?.project;
+
+  if (!project?.deviceSession?.devtoolsStore) {
+    return textToToolResponse(
+      "Could not extract the component tree from the app, the app is not running!\n" +
+        "The development device is likely turned off.\n" +
+        "Please turn on the Radon IDE emulator before proceeding."
+    );
+  }
+
+  try {
+    const root = tryGetTreeRoot(project.deviceSession.devtoolsStore);
+    const repr = await printComponentTree(project.deviceSession, root);
+    return textToToolResponse(repr);
+  } catch (error) {
+    return textToToolResponse((error as Error).message);
   }
 }
 

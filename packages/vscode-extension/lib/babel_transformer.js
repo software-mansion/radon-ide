@@ -79,7 +79,7 @@ if (RN_VERSION.startsWith("0.7")) {
 
 function transformWrapper({ filename, src, ...rest }) {
   function isTransforming(unixPath) {
-    return filename.endsWith(path.normalize(unixPath));
+    return filename.includes(path.normalize(unixPath));
   }
 
   const { transform } = require(ORIGINAL_TRANSFORMER_PATH);
@@ -105,7 +105,13 @@ function transformWrapper({ filename, src, ...rest }) {
   } else if (isTransforming("node_modules/@dev-plugins/react-native-mmkv/build/index.js")) {
     src = `require("__RNIDE_lib__/plugins/expo_dev_plugins.js").register("@dev-plugins/react-native-mmkv");${src}`;
   } else if (isTransforming("node_modules/redux-devtools-expo-dev-plugin/build/index.js")) {
-    src = `require("__RNIDE_lib__/plugins/expo_dev_plugins.js").register("redux-devtools-expo-dev-plugin");${src}`;
+    const pluginOverridePath = path.join(
+      process.env.RADON_IDE_LIB_PATH,
+      "plugins",
+      "redux-devtools-expo-dev-plugin.js"
+    );
+
+    src = fs.readFileSync(pluginOverridePath);
   } else if (
     isTransforming("react-native/Libraries/Renderer/implementations/ReactFabric-dev.js") ||
     isTransforming("react-native/Libraries/Renderer/implementations/ReactNativeRenderer-dev.js")
@@ -137,13 +143,13 @@ function transformWrapper({ filename, src, ...rest }) {
     // Thankfully, in RN 0.80 the new owner stack-based approach made it possible to
     // retrieve the actual call-site stack for components. Therefore the below logic
     // only covers versions on or after 0.74 but before 0.80.
-    const { version } = requireFromAppDir("react-native/package.json");
+    const { version: reactNativeVersion } = requireFromAppDir("react-native/package.json");
     const rendererFileName = filename.split(path.sep).pop();
     if (
-      version.startsWith("0.74") ||
-      version.startsWith("0.75") ||
-      version.startsWith("0.76") ||
-      version.startsWith("0.77")
+      reactNativeVersion.startsWith("0.74") ||
+      reactNativeVersion.startsWith("0.75") ||
+      reactNativeVersion.startsWith("0.76") ||
+      reactNativeVersion.startsWith("0.77")
     ) {
       const rendererFilePath = path.join(
         process.env.RADON_IDE_LIB_PATH,
@@ -154,7 +160,11 @@ function transformWrapper({ filename, src, ...rest }) {
       const rendererAsString = fs.readFileSync(rendererFilePath, "utf-8");
       src = rendererAsString;
     }
-    if (version.startsWith("0.78") || version.startsWith("0.79")) {
+    const { version: reactVersion } = requireFromAppDir("react/package.json");
+    if (
+      (reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) &&
+      reactVersion.startsWith("19.0")
+    ) {
       const rendererFilePath = path.join(
         process.env.RADON_IDE_LIB_PATH,
         "rn-renderer",
@@ -165,18 +175,31 @@ function transformWrapper({ filename, src, ...rest }) {
       src = rendererAsString;
     }
   } else if (isTransforming("node_modules/react/cjs/react-jsx-dev-runtime.development.js")) {
-    const { version } = requireFromAppDir("react-native/package.json");
+    const { version: reactNativeVersion } = requireFromAppDir("react-native/package.json");
     const jsxRuntimeFileName = filename.split(path.sep).pop();
-    if (version.startsWith("0.78") || version.startsWith("0.79")) {
+    const reactVersion = requireFromAppDir("react/package.json").version;
+    if (
+      (reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) &&
+      reactVersion.startsWith("19.0")
+    ) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}");`;
     }
   } else if (
-    isTransforming("node_modules/@tanstack/react-query/src/index.ts") ||
-    isTransforming("node_modules/@tanstack/react-query/build/lib/index.js") ||
-    isTransforming("node_modules/@tanstack/react-query/build/legacy/index.js") ||
-    isTransforming("node_modules/@tanstack/react-query/build/modern/index.js")
+    isTransforming("node_modules/@apollo/client/index") ||
+    isTransforming("node_modules/@apollo/client/main") ||
+    isTransforming("node_modules/@apollo/client/apollo-client")
   ) {
-    src = `require("__RNIDE_lib__/plugins/react-query-devtools.js");${src}`;
+    src = `require("__RNIDE_lib__/plugins/apollo-client-devtools.js");\n${src}`;
+  } else if (
+    isTransforming("node_modules/@tanstack/react-query/src/index.ts") ||
+    isTransforming("node_modules/@tanstack/react-query/build/lib/index") ||
+    isTransforming("node_modules/@tanstack/react-query/build/legacy/index") ||
+    isTransforming("node_modules/@tanstack/react-query/build/modern/index")
+  ) {
+    // note: react-query-devtools integration has to be done after the QueryClient class is required
+    // which is why the src needs to come before it. Also we need to ensure that we don't
+    // attach our code in the line containing a comment so we need to add a new line beforehand.
+    src = `${src};\nrequire("__RNIDE_lib__/plugins/react-query-devtools.js");`;
   } else if (isTransforming("/lib/rn-internals/rn-internals.js")) {
     const { version } = requireFromAppDir("react-native/package.json");
     const majorMinorVersion = version.split(".").slice(0, 2).join(".");

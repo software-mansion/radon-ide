@@ -7,9 +7,10 @@ import {
 } from "vscode-extension-tester";
 import { assert } from "chai";
 import initServices from "../services/index.js";
+import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
-describe("4 - App interaction tests", () => {
+safeDescribe("4 - App interaction tests", () => {
   let driver,
     appWebsocket,
     view,
@@ -32,11 +33,7 @@ describe("4 - App interaction tests", () => {
       vscodeHelperService,
     } = initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
+    await managingDevicesService.prepareDevices();
 
     await appManipulationService.waitForAppToLoad();
     await radonSettingsService.setShowTouches(true);

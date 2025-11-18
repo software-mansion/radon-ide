@@ -2,14 +2,16 @@ import { exec } from "child_process";
 import { By, VSBrowser } from "vscode-extension-tester";
 import { assert } from "chai";
 import initServices from "../services/index.js";
+import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
-describe("11 - App switching tests", () => {
+safeDescribe("11 - App switching tests", () => {
   let driver,
     appWebsocket,
     elementHelperService,
     radonViewsService,
     managingDevicesService,
+    vscodeHelperService,
     appManipulationService;
 
   before(async () => {
@@ -19,13 +21,17 @@ describe("11 - App switching tests", () => {
       radonViewsService,
       managingDevicesService,
       appManipulationService,
+      vscodeHelperService,
     } = initServices(driver));
 
-    await managingDevicesService.deleteAllDevices();
-    await managingDevicesService.addNewDevice("newDevice");
-    try {
-      await elementHelperService.findAndClickElementByTag(`modal-close-button`);
-    } catch {}
+    await managingDevicesService.prepareDevices();
+  });
+
+  after(async () => {
+    await execAsync("rm -rf ./data/react-native-app2");
+    const browser = VSBrowser.instance;
+    browser.openResources(`./data/react-native-app`);
+    await vscodeHelperService.hideSecondarySideBar();
   });
 
   function execAsync(command) {
@@ -41,7 +47,7 @@ describe("11 - App switching tests", () => {
     await execAsync("./scripts/downloadRepo.sh test-app react-native-app2");
     const browser = VSBrowser.instance;
     browser.openResources(`./data`);
-    await driver.switchTo().defaultContent();
+    await vscodeHelperService.hideSecondarySideBar();
     await driver.wait(async () => {
       try {
         await radonViewsService.openRadonIDEPanel();

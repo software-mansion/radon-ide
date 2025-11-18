@@ -1,21 +1,39 @@
 import path from "path";
-import { Disposable, workspace } from "vscode";
+import assert from "assert";
+import { Disposable, EventEmitter, workspace } from "vscode";
 import { exec, ChildProcess, lineReader } from "../utilities/subprocess";
 import { Logger } from "../Logger";
 import { TouchPoint, DeviceButtonType } from "../common/Project";
 import { simulatorServerBinary } from "../utilities/simulatorServerBinary";
 import { watchLicenseTokenChange } from "../utilities/license";
 import { disposeAll } from "../utilities/disposables";
-import { DeviceRotation, FrameRateReport, MultimediaData } from "../common/State";
+import {
+  DeviceRotation,
+  FrameRateReport,
+  MultimediaData,
+  PreviewErrorReason,
+} from "../common/State";
+import { sleep } from "../utilities/retry";
+
+const EX_NOPERM = 77;
 
 interface MultimediaPromiseHandlers {
   resolve: (value: MultimediaData) => void;
-  reject: (reason?: any) => void;
+  reject: (reason?: unknown) => void;
 }
 
 enum MultimediaType {
   Video = "video",
   Screenshot = "screenshot",
+}
+
+export class PreviewError extends Error {
+  constructor(
+    message: string,
+    public reason: PreviewErrorReason | null = null
+  ) {
+    super(message);
+  }
 }
 
 export class Preview implements Disposable {
@@ -27,18 +45,30 @@ export class Preview implements Disposable {
   public streamURL?: string;
   private replaysStarted = false;
 
-  constructor(private args: string[]) {}
+  private closedEventEmitter = new EventEmitter<void | PreviewError>();
+
+  public readonly onClosed = this.closedEventEmitter.event;
+
+  constructor(private args: string[]) {
+    this.disposables.push(new Disposable(this.stop), this.closedEventEmitter);
+  }
 
   dispose() {
     disposeAll(this.disposables);
   }
 
-  private sendCommandOrThrow(command: string) {
+  private sendCommand(command: string, cb?: (error: Error | null | undefined) => void) {
+    try {
+      this.sendCommandOrThrow(command, cb);
+    } catch {}
+  }
+
+  private sendCommandOrThrow(command: string, cb?: (error: Error | null | undefined) => void) {
     const stdin = this.subprocess?.stdin;
-    if (!stdin) {
+    if (!stdin || stdin.writableEnded) {
       throw new Error("sim-server process not available");
     }
-    stdin.write(command);
+    stdin.write(command, cb);
   }
 
   private saveMultimediaWithID(
@@ -51,35 +81,70 @@ export class Preview implements Disposable {
       throw new Error("sim-server process not available");
     }
 
-    let resolvePromise: (value: MultimediaData) => void;
-    let rejectPromise: (reason?: any) => void;
-    const promise = new Promise<MultimediaData>((resolve, reject) => {
-      resolvePromise = resolve;
-      rejectPromise = reject;
-    });
+    const { promise, resolve, reject } = Promise.withResolvers<MultimediaData>();
 
     const lastPromise = this.multimediaPromises.get(id);
     if (lastPromise) {
       promise.then(lastPromise.resolve, lastPromise.reject);
     }
 
-    const newPromiseHandler = { resolve: resolvePromise!, reject: rejectPromise! };
-    this.multimediaPromises.set(id, newPromiseHandler);
+    this.multimediaPromises.set(id, { resolve, reject });
     stdin.write(`${type} ${id} ${type === "video" ? "save " : ""}-r ${rotation}\n`);
     return promise;
   }
 
-  async start() {
+  private stop = async () => {
+    if (this.subprocess === undefined) {
+      return;
+    }
+    const subprocess = this.subprocess;
+    const EXIT_SIM_SERVER_TIMEOUT = 1000;
+    subprocess.stdin?.end();
+    const result = await Promise.race([
+      subprocess,
+      sleep(EXIT_SIM_SERVER_TIMEOUT).then(() => "timeout"),
+    ]);
+    if (result === "timeout") {
+      Logger.debug(`sim-server did not exit within ${EXIT_SIM_SERVER_TIMEOUT}ms, killing it`);
+      subprocess.kill("SIGKILL");
+    }
+  };
+
+  public async start() {
+    assert(this.subprocess === undefined, "Preview.start() is only called once");
     const simControllerBinary = simulatorServerBinary();
 
     Logger.debug(`Launch preview ${simControllerBinary} ${this.args}`);
 
     const subprocess = exec(simControllerBinary, this.args, {
       buffer: false,
+      cwd: path.dirname(simControllerBinary),
     });
     this.subprocess = subprocess;
-    this.disposables.push(new Disposable(() => subprocess.kill()));
-
+    subprocess.then(() => {
+      this.closedEventEmitter.fire();
+    });
+    subprocess.catch((error) => {
+      switch (error.exitCode) {
+        case 1:
+          this.closedEventEmitter.fire(
+            new PreviewError("Device disconnected.", PreviewErrorReason.StreamClosed)
+          );
+          break;
+        case EX_NOPERM:
+          this.closedEventEmitter.fire(
+            new PreviewError(
+              "No sufficient license was provided in time to prevent shutdown.",
+              PreviewErrorReason.NoAccess
+            )
+          );
+          break;
+        default:
+          this.closedEventEmitter.fire(
+            new PreviewError("Device screen mirroring closed unexpectedly.")
+          );
+      }
+    });
     this.tokenChangeListener = watchLicenseTokenChange((token) => {
       if (token) {
         this.sendCommandOrThrow(`token ${token}\n`);
@@ -92,11 +157,20 @@ export class Preview implements Disposable {
         // we expect the preview server to produce a line with the URL
         // if it doesn't do that and exists w/o error, we still want to reject
         // the promise to prevent the caller from waiting indefinitely
-        reject(new Error("Preview server exited without URL"));
+        reject(new PreviewError("Preview server exited without URL", PreviewErrorReason.EarlyExit));
       });
 
       lineReader(subprocess).onLineRead((line, stderr) => {
         if (stderr) {
+          if (line.match(/Device .+ is not connected or not available/)) {
+            reject(
+              new PreviewError(
+                "Could not connect to the device. " +
+                  "Verify the selected device is connected to your computer and try again.",
+                PreviewErrorReason.DeviceNotConnected
+              )
+            );
+          }
           Logger.info("sim-server:", line);
           return;
         }
@@ -182,29 +256,29 @@ export class Preview implements Disposable {
   }
 
   public startReportingFrameRate(onFpsReport: (report: FrameRateReport) => void) {
-    this.subprocess?.stdin?.write("fps true\n");
+    this.sendCommand("fps true\n");
     this.fpsReportListener = onFpsReport;
   }
 
   public stopReportingFrameRate() {
-    this.subprocess?.stdin?.write("fps false\n");
+    this.sendCommand("fps false\n");
     this.fpsReportListener = undefined;
   }
 
   public setUpKeyboard() {
-    this.subprocess?.stdin?.write("setUpKeyboard\n");
+    this.sendCommand("setUpKeyboard\n");
   }
 
   public showTouches() {
-    this.subprocess?.stdin?.write("pointer show true\n");
+    this.sendCommand("pointer show true\n");
   }
 
   public hideTouches() {
-    this.subprocess?.stdin?.write("pointer show false\n");
+    this.sendCommand("pointer show false\n");
   }
 
   public rotateDevice(rotation: DeviceRotation) {
-    this.subprocess?.stdin?.write(`rotate ${rotation}\n`, (err) => {
+    this.sendCommand(`rotate ${rotation}\n`, (err) => {
       if (err) {
         Logger.error("sim-server: Error rotating device:", err);
         throw new Error(`Failed to rotate device: ${err.message}`);
@@ -257,7 +331,7 @@ export class Preview implements Disposable {
   ) {
     // transform touch coordinates to account for different device orientations before
     // translation and sending them to the simulator-server.
-    const transformedTouches = touches.map((touch, i) => {
+    const transformedTouches = touches.map((touch) => {
       const { xRatio: x, yRatio: y } = touch;
       switch (rotation) {
         // 90° anticlockwise map (x,y) to (1-y, x)
@@ -276,24 +350,24 @@ export class Preview implements Disposable {
     });
 
     const touchesCoords = transformedTouches.map((pt) => `${pt.xRatio},${pt.yRatio}`).join(" ");
-    this.subprocess?.stdin?.write(`touch ${type} ${touchesCoords}\n`);
+    this.sendCommand(`touch ${type} ${touchesCoords}\n`);
   }
 
   public sendKey(keyCode: number, direction: "Up" | "Down") {
-    this.subprocess?.stdin?.write(`key ${direction} ${keyCode}\n`);
+    this.sendCommand(`key ${direction} ${keyCode}\n`);
   }
 
   public sendButton(button: DeviceButtonType, direction: "Up" | "Down") {
-    this.subprocess?.stdin?.write(`button ${direction} ${button}\n`);
+    this.sendCommand(`button ${direction} ${button}\n`);
   }
 
   public sendClipboard(text: string) {
     // We use markers for start and end of the paste to handle multi-line pastes
-    this.subprocess?.stdin?.write(`paste START-SIMSERVER-PASTE>>>${text}<<<END-SIMSERVER-PASTE\n`);
+    this.sendCommand(`paste START-SIMSERVER-PASTE>>>${text}<<<END-SIMSERVER-PASTE\n`);
   }
 
   public sendWheel(point: TouchPoint, deltaX: number, deltaY: number) {
-    this.subprocess?.stdin?.write(
+    this.sendCommand(
       `wheel ${point.xRatio},${point.yRatio} --dx ${this.normalizeWheel(
         deltaX
       )} --dy ${this.normalizeWheel(deltaY)}\n`

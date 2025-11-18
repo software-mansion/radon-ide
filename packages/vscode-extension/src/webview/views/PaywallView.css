@@ -1,14 +1,24 @@
+.modal-content:has(.paywall-view) {
+  padding: 0;
+  border: none;
+
+  .modal-content-container {
+    height: 100%;
+  }
+}
+
 .paywall-view {
   display: flex;
   justify-content: center;
   align-items: center;
-  height: calc(100vh - 40px);
 }
 
 .paywall-container {
   max-width: 400px;
   width: 100%;
+  height: 100%;
   text-align: center;
+  padding: 25px;
 }
 
 .paywall-title {
@@ -41,27 +51,35 @@
 .paywall-benefit:nth-child(1) {
   animation-delay: 350ms;
 }
+
 .paywall-benefit:nth-child(2) {
   animation-delay: 400ms;
 }
+
 .paywall-benefit:nth-child(3) {
   animation-delay: 450ms;
 }
+
 .paywall-benefit:nth-child(4) {
   animation-delay: 500ms;
 }
+
 .paywall-benefit:nth-child(5) {
   animation-delay: 550ms;
 }
+
 .paywall-benefit:nth-child(6) {
   animation-delay: 600ms;
 }
+
 .paywall-benefit:nth-child(7) {
   animation-delay: 650ms;
 }
+
 .paywall-benefit:nth-child(8) {
   animation-delay: 700ms;
 }
+
 .paywall-benefit:nth-child(9) {
   animation-delay: 750ms;
 }
@@ -71,6 +89,7 @@
     opacity: 0;
     transform: translateY(16px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -104,17 +123,49 @@
   flex-shrink: 0;
 }
 
+.benefits-section {
+  margin: 12px 0 8px;
+}
+
+.benefits-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 8px 0;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.3s ease-out forwards;
+  animation-delay: 300ms;
+}
+
+.benefits-badge {
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  line-height: 18px;
+}
+
+.benefits-badge.free {
+  background: var(--vscode-badge-background);
+  color: var(--vscode-badge-foreground);
+}
+
+.benefits-badge.pro {
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+}
+
 .subscription-options {
   display: flex;
   flex-direction: column;
   gap: 12px;
   margin-bottom: 32px;
-  justify-content: center;
   opacity: 0;
   transform: translateY(12px);
   animation: fadeInUp 0.4s ease-out forwards;
   animation-delay: 1250ms;
-  min-height: auto;
   justify-content: flex-start;
 }
 
@@ -144,6 +195,51 @@
   cursor: not-allowed;
   color: var(--swm-button);
   background-color: var(--swm-button-background);
+}
+
+.activate-button {
+  box-sizing: border-box;
+  padding: 12px 24px;
+  margin-top: 16px;
+  font-size: 16px;
+  height: unset;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.3s ease-out forwards;
+  animation-delay: 1000ms;
+  border-color: var(--vscode-editor-foreground);
+  border-width: 2px;
+  background-color: transparent;
+  color: var(--vscode-editor-foreground);
+}
+
+.activate-button:hover {
+  border-color: var(--swm-button-hover);
+  color: var(--swm-button);
+}
+
+.get-license-button {
+  box-sizing: border-box;
+  padding: 12px 24px;
+  margin-top: 16px;
+  font-size: 16px;
+  height: unset;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.3s ease-out forwards;
+  animation-delay: 900ms;
+}
+
+.pricing-error {
+  color: var(--vscode-errorForeground);
+  font-size: 12px;
+  margin-top: 8px;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: fadeInUp 0.3s ease-out forwards;
+  animation-delay: 900ms;
 }
 
 .paywall-background-image {

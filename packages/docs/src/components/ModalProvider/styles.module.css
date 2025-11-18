@@ -1,0 +1,50 @@
+dialog.modalContainer {
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  width: 100%;
+  gap: 24px;
+  padding: 24px;
+  background-color: var(--swm-background);
+  transition: opacity 0.3s ease;
+}
+
+dialog.modalContainer[open]::backdrop {
+  backdrop-filter: blur(5px);
+}
+
+.modalContainer p {
+  margin: 0;
+}
+
+.modalHead p {
+  font-size: 24px;
+  color: var(--ifm-color-primary);
+}
+
+.modalHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1 1 0;
+}
+
+.modalSubheading {
+  color: var(--radon-subheading);
+  font-size: 18px;
+}
+
+.dialogCloseButton {
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (max-width: 630px) {
+  dialog.modalContainer {
+    max-width: 327px;
+  }
+}

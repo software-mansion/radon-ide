@@ -13,6 +13,15 @@
       "node": "22",
       "isRecording": "true",
       "testsToRun": "",
+      "isAndroid": "true",
+      "testsToExclude": "",
+      "codeVersion": "latest"
+    },
+    {
+      "testApp": "expo-53",
+      "node": "22",
+      "isRecording": "true",
+      "testsToRun": "",
       "testsToExclude": "",
       "codeVersion": "latest"
     },
@@ -31,6 +40,22 @@
       "testsToRun": "",
       "testsToExclude": "",
       "codeVersion": "1.99.1"
+    },
+    {
+      "testApp": "expo-52-prebuild-with-plugins",
+      "node": "22",
+      "isRecording": "true",
+      "testsToRun": "16",
+      "testsToExclude": "",
+      "codeVersion": "latest"
+    },
+    {
+      "testApp": "expo-54-prebuild-with-plugins",
+      "node": "22",
+      "isRecording": "true",
+      "testsToRun": "16",
+      "testsToExclude": "",
+      "codeVersion": "latest"
     }
   ]
 }

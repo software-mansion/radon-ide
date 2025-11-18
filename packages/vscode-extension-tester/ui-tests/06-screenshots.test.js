@@ -2,9 +2,13 @@ import * as fs from "fs";
 import * as path from "path";
 import { WebView, Key, By } from "vscode-extension-tester";
 import initServices from "../services/index.js";
+import { validateImage, validateVideo } from "../utils/imageProcessing.js";
+import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
-describe("6 - screenshots tests", () => {
+const DEFAULT_VIDEO_DURATION_SECS = 4;
+
+safeDescribe("6 - screenshots tests", () => {
   let driver,
     view,
     appWebsocket,
@@ -26,9 +30,9 @@ describe("6 - screenshots tests", () => {
     } = initServices(driver));
 
     await managingDevicesService.deleteAllDevices();
+    await radonSettingsService.setEnableReplays(true);
     await managingDevicesService.addNewDevice("newDevice");
     await elementHelperService.findAndClickElementByTag("modal-close-button");
-    await radonSettingsService.setEnableReplays(true);
     view = new WebView();
     await view.switchBack();
   });
@@ -36,12 +40,10 @@ describe("6 - screenshots tests", () => {
   beforeEach(async () => {
     await radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
-
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
     }, 5000);
-
     await appManipulationService.hideExpoOverlay(appWebsocket);
   });
 
@@ -67,6 +69,8 @@ describe("6 - screenshots tests", () => {
       10000,
       "Timed out waiting for screenshot to be saved"
     );
+
+    await validateImage(filePath);
   });
 
   it("Should take a screenshot using shortcut", async () => {
@@ -92,6 +96,8 @@ describe("6 - screenshots tests", () => {
       10000,
       "Timed out waiting for screenshot to be saved"
     );
+
+    await validateImage(filePath);
   });
 
   it("Should record screen", async () => {
@@ -103,7 +109,7 @@ describe("6 - screenshots tests", () => {
       "toggle-recording-button"
     );
     // recording for 4 sec
-    await driver.sleep(4000);
+    await driver.sleep(DEFAULT_VIDEO_DURATION_SECS * 1000);
     await elementHelperService.findAndClickElementByTag(
       "toggle-recording-button"
     );
@@ -118,6 +124,8 @@ describe("6 - screenshots tests", () => {
       10000,
       "Timed out waiting for recording to be saved"
     );
+
+    await validateVideo(filePath);
   });
 
   it("Should record screen using shortcut", async () => {
@@ -133,8 +141,8 @@ describe("6 - screenshots tests", () => {
       .keyUp(Key.SHIFT)
       .keyUp(Key.COMMAND)
       .perform();
-    // recording for 4 sec
-    await driver.sleep(4000);
+
+    await driver.sleep(DEFAULT_VIDEO_DURATION_SECS * 1000);
 
     await driver
       .actions()
@@ -154,6 +162,8 @@ describe("6 - screenshots tests", () => {
       10000,
       "Timed out waiting for recording to be saved"
     );
+
+    await validateVideo(filePath);
   });
 
   it("Should open replay overlay", async () => {
@@ -231,5 +241,7 @@ describe("6 - screenshots tests", () => {
       10000,
       "Timed out waiting for recording to be saved"
     );
+
+    await validateVideo(filePath);
   });
 });
