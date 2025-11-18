@@ -135,7 +135,7 @@ export class ApplicationSession implements Disposable {
     cancelToken: CancelToken
   ): Promise<ApplicationSession> {
     const packageNameOrBundleId =
-      buildResult.platform === DevicePlatform.IOS ? buildResult.bundleID : buildResult.packageName;
+      buildResult.platform === DevicePlatform.IOS ? buildResult.bundleID : buildResult.appId;
     const supportedOrientations =
       buildResult.platform === DevicePlatform.IOS ? buildResult.supportedInterfaceOrientations : [];
     const session = new ApplicationSession(
