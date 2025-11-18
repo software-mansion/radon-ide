@@ -253,7 +253,7 @@
           "RadonIDE.userInterface.panelLocation": {
             "type": "string",
             "scope": "window",
-            "default": "tab",
+            "default": "side-panel",
             "enum": [
               "tab",
               "side-panel"

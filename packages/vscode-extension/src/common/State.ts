@@ -611,7 +611,7 @@ export const initialState: State = {
       inspectorExcludePattern: null,
     },
     userInterface: {
-      panelLocation: "tab",
+      panelLocation: "side-panel",
       showDeviceFrame: true,
     },
     deviceSettings: {
