@@ -158,7 +158,7 @@
     "get-proto": "^1.0.1",
     "get-stream": "^8.0.1",
     "github-from-package": "^0.0.0",
-    "glob": "^10.4.5",
+    "glob": "^11.1.0",
     "glob-parent": "^5.1.2",
     "globby": "^14.1.0",
     "gopd": "^1.2.0",
