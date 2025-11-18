@@ -17,6 +17,7 @@ import initServices from "../services/index.js";
 import startRecording from "../utils/screenRecording.js";
 import getConfiguration from "../configuration.js";
 import { texts } from "../utils/constants.js";
+import { get } from "lodash";
 
 const { IS_RECORDING } = getConfiguration();
 
@@ -122,7 +123,7 @@ after(async function () {
   console.log(
     `==== Summary app: ${texts.expectedProjectName} | code version: ${
       process.env["CODE_VERSION"] || "latest"
-    } ====`
+    } ${getConfiguration().IS_ANDROID ? "android" : "ios"} ====`
   );
   // console log additional informations after standard mocha report
   setTimeout(() => {

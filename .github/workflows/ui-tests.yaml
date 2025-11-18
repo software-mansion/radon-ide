@@ -182,7 +182,7 @@ jobs:
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
-          name: test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}
+          name: test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}-${{ matrix.isAndroid && 'android' || 'ios' }}
           path: packages/vscode-extension-tester/artifacts/test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}.txt
           retention-days: 7
 
@@ -196,7 +196,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: vscode-ui-screenshots-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}
+          name: vscode-ui-screenshots-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}-${{ matrix.isAndroid && 'android' || 'ios' }}
           path: packages/vscode-extension-tester/screenshots/
           retention-days: 7
 
@@ -205,7 +205,7 @@ jobs:
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
-          name: output-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}
+          name: output-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}-${{ matrix.isAndroid && 'android' || 'ios' }}
           path: packages/vscode-extension-tester/output.txt
           retention-days: 7
 
@@ -214,7 +214,7 @@ jobs:
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
-          name: vscode-ui-recording-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}
+          name: vscode-ui-recording-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}-${{ matrix.isAndroid && 'android' || 'ios' }}
           path: packages/vscode-extension-tester/videos/vscode-ui-recording.mp4
           retention-days: 7
 
@@ -223,17 +223,8 @@ jobs:
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
-          name: radon-screenshot-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}
+          name: radon-screenshot-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}-${{ matrix.isAndroid && 'android' || 'ios' }}
           path: packages/vscode-extension-tester/data/screenshotTest..png
-          retention-days: 7
-
-      - name: Upload automatedTests.tsx
-        if: ${{ always() }}
-        uses: actions/upload-artifact@v4
-        timeout-minutes: 1
-        with:
-          name: automatedTests.tsx
-          path: packages/vscode-extension-tester/data/react-native-app/shared/automatedTests.tsx
           retention-days: 7
 
       - name: Upload recording made by radon
@@ -241,7 +232,7 @@ jobs:
         uses: actions/upload-artifact@v4
         timeout-minutes: 1
         with:
-          name: radon-recording-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}
+          name: radon-recording-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}-${{ matrix.isAndroid && 'android' || 'ios' }}
           path: packages/vscode-extension-tester/data/recordingTest..mp4
           retention-days: 7
 
