@@ -16,6 +16,7 @@ import { disposeAll } from "../../utilities/disposables";
 import { registerRadonChat } from "../chat";
 import { extensionContext } from "../../utilities/extensionContext";
 import { cleanupOldMcpConfigEntries } from "./configFileHelper";
+import { IDE } from "../../project/ide";
 
 const RADON_AI_MCP_ENTRY_NAME = "RadonAI";
 const RADON_AI_MCP_PROVIDER_ID = "RadonAIMCPProvider";
@@ -82,21 +83,30 @@ class RadonMcpController implements Disposable {
     this.registerRadonMcpServerProviderInVSCode();
     cleanupOldMcpConfigEntries();
 
+    if (radonAiEnabled) {
+      this.enableServer();
+    }
+
     this.disposables.push(
       workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration("RadonIDE.radonAI.enabledBoolean")) {
-          if (isEnabledInSettings()) {
+          const updatedRadonAiEnabled = isEnabledInSettings();
+          if (updatedRadonAiEnabled) {
             this.enableServer();
           } else {
             this.disableServer();
           }
+
+          IDE.getInstanceIfExists()?.updateState({
+            workspaceConfiguration: {
+              general: {
+                enableRadonAI: updatedRadonAiEnabled,
+              },
+            },
+          });
         }
       })
     );
-
-    if (isEnabledInSettings()) {
-      this.enableServer();
-    }
   }
 
   private enableServer() {
