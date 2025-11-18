@@ -4,6 +4,8 @@ import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import "./InspectDataMenu.css";
 import { vscode } from "../utilities/vscode";
+import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import { Feature } from "../../common/License";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
@@ -81,6 +83,22 @@ export function InspectDataMenu({
   const inspectMenuAlign = inspectLocation.x <= window.innerWidth / 2 ? "start" : "end";
   const isOverMaxItems = filteredData.length > MAX_INSPECT_ITEMS + 1;
 
+  const onReferenceInChat = usePaywalledCallback(
+    (e) => {
+      // Include component + where it's used. ([0] & [0].owner? Could require more if component is nested, likely can't cover all cases, but attaching everything isn't an option either)
+      const message = {
+        command: "RNIDE_add_to_chat_context",
+        filePaths: [inspectItems[0].source.fileName, inspectItems[1].source.fileName],
+      };
+
+      console.log("POSTING CHAT PANEL TEST:", message);
+      vscode.postMessage(message);
+      e.preventDefault(); // prevents the dropdown from closing
+    },
+    Feature.RadonAI,
+    []
+  );
+
   return (
     <DropdownMenu.Root
       defaultOpen={true}
@@ -131,17 +149,7 @@ export function InspectDataMenu({
             <DropdownMenu.Item
               className="inspect-data-menu-item inspector-button"
               key={"ask-ai"}
-              onSelect={(e) => {
-                // Include component + where it's used. ([0] & [0].owner? Could require more if component is nested, likely can't cover all cases, but attaching everything isn't an option either)
-                const message = {
-                  command: "RNIDE_add_to_chat_context",
-                  filePaths: [inspectItems[0].source.fileName, inspectItems[1].source.fileName],
-                };
-
-                console.log("POSTING CHAT PANEL TEST:", message);
-                vscode.postMessage(message);
-                e.preventDefault(); // prevents the dropdown from closing
-              }}>
+              onSelect={onReferenceInChat}>
               <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
                 <span className="codicon codicon-lightbulb" />
                 <span className="inspector-button-text">Reference in chat</span>
