@@ -54,34 +54,41 @@ safeDescribe("8 - Device Settings", () => {
     await radonSettingsService.rotateDevice("portrait");
   });
 
+  async function permissionForAndroid() {
+    const deviceId = execSync("adb devices | awk 'NR==2 {print $1}'")
+      .toString()
+      .trim();
+    await driver.wait(async () => {
+      appWebsocket = get().appWebsocket;
+      return appWebsocket != null;
+    }, 5000);
+
+    appWebsocket.send(
+      JSON.stringify({
+        message: "getLocation",
+        id: 123,
+      })
+    );
+
+    await driver.sleep(1000);
+    execSync(
+      `adb -s ${deviceId} shell pm grant com.reactnative81additionallibs android.permission.ACCESS_FINE_LOCATION`
+    );
+    await driver.sleep(1000);
+  }
+
   it("change location", async () => {
     if (getConfiguration().IS_ANDROID) {
-      const deviceId = execSync("adb devices | awk 'NR==2 {print $1}'")
-        .toString()
-        .trim();
-      const test = execSync(
-        `adb -s ${deviceId} shell pm list packages`
-      ).toString();
-      console.log(test);
-      execSync(
-        `adb -s ${deviceId} shell pm grant com.reactnative81additionallibs android.permission.ACCESS_FINE_LOCATION`
-      );
-      execSync(
-        `adb -s ${deviceId} shell pm grant com.reactnative81additionallibs android.permission.ACCESS_COARSE_LOCATION`
-      );
+      await permissionForAndroid();
     } else {
       execSync(
         "xcrun simctl --set ~/Library/Caches/com.swmansion.radon-ide/Devices/iOS privacy booted grant location org.reactjs.native.example.reactNative81AdditionalLibs"
       );
     }
-    await elementHelperService.findAndClickElementByTag(
-      "top-bar-reload-button-options-button"
-    );
-    await elementHelperService.findAndClickElementByTag(
-      "top-bar-reload-button-option-restart-app-process"
-    );
 
+    await appManipulationService.restartDevice();
     await appManipulationService.waitForAppToLoad();
+
     await driver.sleep(3000);
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
@@ -93,6 +100,7 @@ safeDescribe("8 - Device Settings", () => {
       appWebsocket,
       "getLocation"
     );
+
     console.log(location);
     radonViewsService.openRadonDeviceSettingsMenu();
     await elementHelperService.findAndClickElementByTag(
@@ -105,14 +113,11 @@ safeDescribe("8 - Device Settings", () => {
     await driver.sleep(5000);
     await locationInput.sendKeys("1 1", Key.ENTER);
 
-    await elementHelperService.findAndClickElementByTag(
-      "top-bar-reload-button-options-button"
-    );
-    await elementHelperService.findAndClickElementByTag(
-      "top-bar-reload-button-option-restart-app-process"
-    );
+    if (getConfiguration().IS_ANDROID) {
+      await appManipulationService.restartDevice();
+      await appManipulationService.waitForAppToLoad();
+    }
 
-    await appManipulationService.waitForAppToLoad();
     await driver.sleep(3000);
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
