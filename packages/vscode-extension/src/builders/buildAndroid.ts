@@ -27,8 +27,8 @@ import { BuildOptions } from "./BuildManager";
 export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
   apkPath: string;
-  packageName: string;
-  expoDevClientLaunchActivity?: string;
+  appId: string;
+  launchActivity?: string;
   buildHash: string;
 };
 
@@ -48,12 +48,20 @@ function locateAapt() {
   return path.join(BUILD_TOOLS_PATH, latestVersion, "aapt");
 }
 
-async function extractPackageName(artifactPath: string, cancelToken: CancelToken) {
+/**
+ * This function extracts the application Id that allows for identifying the application
+ * while managing its runtime it might be defined by multiple configurations
+ * https://developer.android.com/build/configure-app-module
+ * @param artifactPath
+ * @param cancelToken
+ * @returns Promise<string>
+ */
+async function extractAppId(artifactPath: string, cancelToken: CancelToken) {
   const aaptPath = locateAapt();
   const { stdout } = await cancelToken.adapt(exec(aaptPath, ["dump", "badging", artifactPath]));
   const packageLine = stdout.split("\n").find((line: string) => line.startsWith("package: name="));
-  const packageName = packageLine!.split("'")[1];
-  return packageName;
+  const appId = packageLine!.split("'")[1];
+  return appId;
 }
 
 async function getApplicationManifest(
@@ -73,9 +81,32 @@ async function getApplicationManifest(
   return undefined;
 }
 
+async function resolveAppIdFromNativeAsync(packageName: string): Promise<string | null> {
+  const applicationIdFromGradle = await AndroidConfig.Package.getApplicationIdAsync(
+    packageName
+  ).catch(() => null);
+  if (applicationIdFromGradle) {
+    return applicationIdFromGradle;
+  }
+
+  try {
+    const filePath = await AndroidConfig.Paths.getAndroidManifestAsync(packageName);
+    const androidManifest = await AndroidConfig.Manifest.readAndroidManifestAsync(filePath);
+    // Assert MainActivity defined.
+    await AndroidConfig.Manifest.getMainActivityOrThrow(androidManifest);
+    if (androidManifest.manifest?.$?.package) {
+      return androidManifest.manifest.$.package;
+    }
+  } catch (error: any) {
+    Logger.debug("Expected error resolving the package name from the AndroidManifest.xml:", error);
+  }
+
+  return null;
+}
+
 async function getLaunchActivityAsync(
   projectRoot: string,
-  packageName: string
+  appId: string
 ): Promise<string | undefined> {
   const manifest = await getApplicationManifest(projectRoot);
   if (!manifest) return undefined;
@@ -85,11 +116,28 @@ async function getLaunchActivityAsync(
 
   const mainActivityName = mainActivity.$["android:name"];
 
-  // Note(Filip Kamiński): we might want to support "custom app id in the future"
-  // then the format for launch activity would be `${customAppId}/${packageName}${mainActivityName}`
+  const packageName = await resolveAppIdFromNativeAsync(projectRoot);
+
+  // note(Filip Kamiński): returning anything other then undefined from this helper
+  // will affect how the application is launched; instead of using the default
+  // "android.intent.action.VIEW" intent we will use returned launch activity.
+  // Launching using launchActivity is a more precise way of doing it and in some setups
+  // a necessary one, as using the default path might lead to some deep linking issues,
+  // with newly opened application routing to unexpected screens, but it is not extensively tested
+  // in production, so we restrain the usage of it only to the situations in which we observed
+  // a problem: when appId used by build application is different then the one defined by the
+  // applications manifest. It is quite common and happens when the productFlavor or buildType
+  // defines a special prefix/suffix to the appId. Most of the code is inspired by how expo CLI
+  // handles this case with the added bonus that radons solution does not require additional
+  // user configuration. You can explore the expo solution here:
+  // https://github.com/expo/expo/blob/645e63df903d28149ee9eda6682f6032b31601d7/packages/%40expo/cli/src/start/platforms/android/AndroidPlatformManager.ts#L93
+  if (packageName == appId) {
+    return undefined;
+  }
+
   // the generation of the launch activity is inspired by expo CLI and good entry point to find out more
   // is here https://github.com/expo/expo/blob/main/packages/%40expo/cli/src/run/android/resolveLaunchProps.ts
-  return `${packageName}/${mainActivityName}`;
+  return `${appId}/${packageName}${mainActivityName}`;
 }
 
 function getApkPath(appRootFolder: string, productFlavor: string, buildType: string) {
@@ -105,21 +153,11 @@ export async function getAndroidBuildPaths(
   buildType: string
 ) {
   const apkPath = getApkPath(appRootFolder, productFlavor, buildType);
-  const packageName = await extractPackageName(apkPath, cancelToken);
-  // setting the launchActivity to anything truthy will affect how the application is launched
-  // in expo dev client set ups and relies on "AndroidConfig" utility provided by expo
-  // it is used to mitigate a bug with deep links that might happen in dev client with
-  // product flavor causing application to open additional not defined webview on start
-  // the alternative approach that uses expoDevClientLaunchActivity should also work
-  // for other set ups (e.g. bare rn applications), but it was not tested in production
-  // environment so to avoid unnecessary risks we use it only when we know we need it
-  // similarly to how expo CLI does it. You can read expo implementation here:
-  // https://github.com/expo/expo/blob/645e63df903d28149ee9eda6682f6032b31601d7/packages/%40expo/cli/src/start/platforms/android/AndroidPlatformManager.ts#L93
-  const launchActivity = await cancelToken.adapt(
-    getLaunchActivityAsync(appRootFolder, packageName)
-  );
-  const expoDevClientLaunchActivity = productFlavor ? launchActivity : undefined;
-  return { apkPath, packageName, expoDevClientLaunchActivity };
+  const appId = await extractAppId(apkPath, cancelToken);
+
+  const launchActivity = await cancelToken.adapt(getLaunchActivityAsync(appRootFolder, appId));
+
+  return { apkPath, appId, launchActivity };
 }
 
 function makeBuildTaskName(productFlavor: string, buildType: string, appName?: string) {
@@ -163,7 +201,7 @@ export async function buildAndroid(
 
       return {
         apkPath,
-        packageName: await extractPackageName(apkPath, cancelToken),
+        appId: await extractAppId(apkPath, cancelToken),
         platform: DevicePlatform.Android,
         buildHash: await calculateAppArtifactHash(apkPath),
       };
@@ -182,7 +220,7 @@ export async function buildAndroid(
 
       return {
         apkPath,
-        packageName: await extractPackageName(apkPath, cancelToken),
+        appId: await extractAppId(apkPath, cancelToken),
         platform: DevicePlatform.Android,
         buildHash: await calculateAppArtifactHash(apkPath),
       };
@@ -201,7 +239,7 @@ export async function buildAndroid(
 
       return {
         apkPath,
-        packageName: await extractPackageName(apkPath, cancelToken),
+        appId: await extractAppId(apkPath, cancelToken),
         platform: DevicePlatform.Android,
         buildHash: await calculateAppArtifactHash(apkPath),
       };
@@ -213,7 +251,7 @@ export async function buildAndroid(
       const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken, appRoot);
       return {
         apkPath,
-        packageName: EXPO_GO_PACKAGE_NAME,
+        appId: EXPO_GO_PACKAGE_NAME,
         platform: DevicePlatform.Android,
         buildHash: await calculateAppArtifactHash(apkPath),
       };

@@ -780,7 +780,7 @@ export class DeviceSession implements Disposable {
       if (terminateApp) {
         const packageNameOrBundleID =
           this.maybeBuildResult.platform === DevicePlatform.Android
-            ? this.maybeBuildResult.packageName
+            ? this.maybeBuildResult.appId
             : this.maybeBuildResult.bundleID;
 
         await this.device.terminateApp(packageNameOrBundleID);
