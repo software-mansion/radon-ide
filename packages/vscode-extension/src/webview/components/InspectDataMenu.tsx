@@ -134,8 +134,7 @@ export function InspectDataMenu({
               onSelect={(e) => {
                 // Include component + where it's used. ([0] & [0].owner? Could require more if component is nested, likely can't cover all cases, but attaching everything isn't an option either)
                 const message = {
-                  command: "RNIDE_chatRequest",
-                  prompt: "Calculate 56 + 89",
+                  command: "RNIDE_add_to_chat_context",
                   filePaths: [inspectItems[0].source.fileName, inspectItems[1].source.fileName],
                 };
 

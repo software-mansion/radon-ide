@@ -19,7 +19,7 @@ interface UpdateStateCommand extends EventBase {
 }
 
 interface ChatRequestCommand extends EventBase {
-  command: "RNIDE_chatRequest";
+  command: "RNIDE_add_to_chat_context";
 }
 
 interface CallArgs {
@@ -37,7 +37,6 @@ interface UpdateStateArgs {
 }
 
 interface ChatRequestArgs {
-  prompt: string;
   filePaths: string[];
 }
 
@@ -128,7 +127,7 @@ export class WebviewController implements Disposable {
           this.handleGetState(message);
         } else if (message.command === "RNIDE_update_state") {
           this.handleUpdateState(message);
-        } else if (message.command === "RNIDE_chatRequest") {
+        } else if (message.command === "RNIDE_add_to_chat_context") {
           handleChatFixRequest(message);
         }
       },
