@@ -17,7 +17,6 @@ import initServices from "../services/index.js";
 import startRecording from "../utils/screenRecording.js";
 import getConfiguration from "../configuration.js";
 import { texts } from "../utils/constants.js";
-import { get } from "lodash";
 
 const { IS_RECORDING } = getConfiguration();
 
