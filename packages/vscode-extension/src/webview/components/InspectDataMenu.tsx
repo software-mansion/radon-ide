@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { use$ } from "@legendapp/state/react";
 import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import "./InspectDataMenu.css";
 import { vscode } from "../utilities/vscode";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { Feature } from "../../common/License";
+import { useStore } from "../providers/storeProvider";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
@@ -99,6 +101,9 @@ export function InspectDataMenu({
     []
   );
 
+  const store$ = useStore();
+  const radonAIEnabled = use$(store$.workspaceConfiguration.general.enableRadonAI);
+
   return (
     <DropdownMenu.Root
       defaultOpen={true}
@@ -146,15 +151,17 @@ export function InspectDataMenu({
                 </DropdownMenu.Label>
               </DropdownMenu.Item>
             )}
-            <DropdownMenu.Item
-              className="inspect-data-menu-item inspector-button"
-              key={"ask-ai"}
-              onSelect={onReferenceInChat}>
-              <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
-                <span className="codicon codicon-lightbulb" />
-                <span className="inspector-button-text">Reference in chat</span>
-              </DropdownMenu.Label>
-            </DropdownMenu.Item>
+            {radonAIEnabled && (
+              <DropdownMenu.Item
+                className="inspect-data-menu-item inspector-button"
+                key={"ask-ai"}
+                onSelect={onReferenceInChat}>
+                <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
+                  <span className="codicon codicon-lightbulb" />
+                  <span className="inspector-button-text">Reference in chat</span>
+                </DropdownMenu.Label>
+              </DropdownMenu.Item>
+            )}
           </DropdownMenu.Group>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
