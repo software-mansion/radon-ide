@@ -15,6 +15,7 @@ import { EditorBindings } from "./EditorBindings";
 import { PhysicalAndroidDeviceProvider } from "../devices/AndroidPhysicalDevice";
 import { AndroidEmulatorProvider } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorProvider } from "../devices/IosSimulatorDevice";
+import loadAISettingsToState from "../ai/mcp/loadAISettingsToState";
 
 function createDeviceProviders(
   stateManager: StateManager<DevicesState>,
@@ -97,11 +98,14 @@ export class IDE implements Disposable {
       this.stateManager.updateState({ applicationRoots });
     });
 
+    const aiSettingsListener = loadAISettingsToState(this.stateManager);
+
     this.disposables.push(
       this.project,
       this.workspaceConfigController,
       this.outputChannelRegistry,
       this.telemetry,
+      aiSettingsListener,
       devicesStateManager,
       ...deviceProviders
     );
