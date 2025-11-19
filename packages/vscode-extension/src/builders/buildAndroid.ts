@@ -135,9 +135,17 @@ async function getLaunchActivityAsync(
     return undefined;
   }
 
+  // Note(Filip Kamiński) This is not supported by the expo version at the time this code wa written, 
+  // but seems to be an important edge case for at least one project considering using Radon, 
+  // they even opened a PR to expo to support activities with domain names.
+  // https://github.com/expo/expo/pull/39236
+  const combinedMainActivity = mainActivityName.startsWith('.')
+    ? `${packageName}${mainActivityName}`
+    : mainActivityName;
+
   // the generation of the launch activity is inspired by expo CLI and good entry point to find out more
   // is here https://github.com/expo/expo/blob/main/packages/%40expo/cli/src/run/android/resolveLaunchProps.ts
-  return `${appId}/${packageName}${mainActivityName}`;
+  return `${appId}/${combinedMainActivity}`;
 }
 
 function getApkPath(appRootFolder: string, productFlavor: string, buildType: string) {
