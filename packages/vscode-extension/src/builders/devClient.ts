@@ -31,6 +31,7 @@ export async function isDevClientProject(
     const result = await exec("node", [devClientProjectTesterScript], {
       cwd: appRoot,
       allowNonZeroExit: true,
+      quietErrorsOnExit: true,
     });
     return result.exitCode === 0;
   } catch (e) {
