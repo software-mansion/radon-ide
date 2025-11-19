@@ -9,6 +9,7 @@ import PricingFeaturesList from "../PricingPlansList/PricingFeaturesList";
 interface PricingCardProps {
   planData?: PricingPlanCardProps;
   isMonthly?: boolean;
+  href?: string;
   onButtonClick?: (planId: PlanType) => void;
   children?: React.ReactNode;
 }
@@ -20,7 +21,7 @@ const PlanHeaders: Record<PlanType, string> = {
   ENTERPRISE: "All the Team features, plus:",
 };
 
-function PricingCard({ planData, isMonthly, onButtonClick, children }: PricingCardProps) {
+function PricingCard({ planData, isMonthly, href, onButtonClick, children }: PricingCardProps) {
   const { plan, stylingFilled, buttonLabel, featuresAll, featuresTeamManagement, featuresSupport } =
     planData;
 
@@ -30,7 +31,10 @@ function PricingCard({ planData, isMonthly, onButtonClick, children }: PricingCa
   return (
     <div className={isProPlan ? styles.proCardContainer : styles.pricingCardContainer}>
       <PricingCardLabel planData={planData} isMonthly={isMonthly}>
-        <PricingButton stylingFilled={stylingFilled} onClick={() => onButtonClick(plan)}>
+        <PricingButton
+          stylingFilled={stylingFilled}
+          onClick={() => onButtonClick(plan)}
+          href={href}>
           {buttonLabel}
         </PricingButton>
       </PricingCardLabel>

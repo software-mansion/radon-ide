@@ -92,7 +92,7 @@ const EnterpriseForm = forwardRef<HTMLDivElement, EnterpriseFormProps>(({ trackS
           Ready to streamline your team’s React Native development?
         </h2>
         <p className={styles.subheading}>
-          Schedule a personalized demo and see how Radon IDE can improve your team’s workflow.
+          Schedule a personalized demo and see how Radon can improve your team’s workflow.
         </p>
       </div>
       <div className={styles.formBox}>

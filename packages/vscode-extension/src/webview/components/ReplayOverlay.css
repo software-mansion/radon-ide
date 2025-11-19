@@ -1,11 +1,10 @@
 .replay-overlay {
-  z-index: var(--replay-z-index); /* defined in ReplayUI.css */
+  z-index: var(--replay-controls-z-index); /* defined in ReplayUI.css */
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: var(--swm-replay-overlay-background);
   display: flex;
   justify-content: center;
   align-items: center;

@@ -35,7 +35,7 @@ export default function AI() {
         <div className={styles.textContent}>
           <div className={styles.heading}>
             <p>Your expert React Native</p>
-            <p>AI assistant inside Radon IDE</p>
+            <p>AI assistant inside Radon</p>
           </div>
           <p className={styles.subheading}>
             Enhance your favorite LLM with up-to-date knowledge about the React Native ecosystem.

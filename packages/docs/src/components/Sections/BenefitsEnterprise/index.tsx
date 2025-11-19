@@ -13,7 +13,7 @@ const benefits = [
     icon: <TerminalIcon />,
     title: "Better dev experience",
     description:
-      "Free your team from constant context switching. With Radon IDE, devs can run simulators, preview components, and debug errors directly inside VSCode.",
+      "Free your team from constant context switching. With Radon, devs can run simulators, preview components, and debug errors directly inside VSCode.",
   },
   {
     icon: <RocketIcon />,
@@ -25,13 +25,13 @@ const benefits = [
     icon: <SquareCodeIcon />,
     title: "Higher code quality",
     description:
-      "Radon IDE automatically stops at runtime exceptions and highlights parts of your app that need optimization, helping your team catch problems early and deliver stable apps.",
+      "Radon automatically stops at runtime exceptions and highlights parts of your app that need optimization, helping your team catch problems early and deliver stable apps.",
   },
   {
     icon: <SquareCheckIcon />,
     title: "Lower operational overhead",
     description:
-      "Simple installation and setup make Radon IDE easy to roll out across organizations. We know no one likes red tape and complex infrastructure.",
+      "Simple installation and setup make Radon easy to roll out across organizations. We know no one likes red tape and complex infrastructure.",
   },
   {
     icon: <UserCheckIcon />,
@@ -41,9 +41,9 @@ const benefits = [
   },
   {
     icon: <MessageSquareCodeicon />,
-    title: "Radon IDE keeps growing with you",
+    title: "Radon keeps growing with you",
     description:
-      "We keep expanding Radon IDE based on research, community input, and feedback from teams like yours so new features truly make devs’ lives easier.",
+      "We keep expanding Radon based on research, community input, and feedback from teams like yours so new features truly make devs’ lives easier.",
   },
 ];
 
@@ -52,7 +52,7 @@ export default function BenefitsEnterprise() {
     <div className={styles.sectionContainer}>
       <div className={styles.title}>
         <h2>
-          What makes <span>Radon IDE</span>
+          What makes <span>Radon</span>
           <br /> the right fit for your business?
         </h2>
       </div>

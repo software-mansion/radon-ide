@@ -2,11 +2,9 @@ import React from "react";
 import styles from "./styles.module.css";
 import CheckIcon from "../../CheckIcon";
 import PlanTableLabel from "./PlanTableLabel";
-import { useModal } from "../../ModalProvider";
 import { PricingProps } from "..";
 import clsx from "clsx";
 import { planFeaturesData } from "./planFeaturesData";
-import { track } from "@vercel/analytics";
 
 export interface FeatureItem {
   label: string;
@@ -43,14 +41,15 @@ export default function ComparePricingPlans({
           <PlanTableLabel
             plan="FREE"
             monthlyPrice={0}
-            buttonLabel="Install"
+            buttonLabel="Get free license"
             stylingFilled={false}
+            href="https://portal.ide.swmansion.com"
             onClick={handleFree}
           />
           <PlanTableLabel
             plan="PRO"
             monthlyPrice={25}
-            yearlyLowPrice={250}
+            yearlyLowPrice={252}
             buttonLabel="Start 14-day trial"
             stylingFilled={true}
             onClick={handlePro}
@@ -58,7 +57,7 @@ export default function ComparePricingPlans({
           <PlanTableLabel
             plan="TEAM"
             monthlyPrice={75}
-            yearlyLowPrice={750}
+            yearlyLowPrice={756}
             buttonLabel="Buy licenses"
             stylingFilled={true}
             onClick={handleTeam}

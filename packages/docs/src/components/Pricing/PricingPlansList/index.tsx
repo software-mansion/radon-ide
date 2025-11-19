@@ -19,11 +19,11 @@ export interface PricingPlanCardProps {
   plan: PlanType;
   price: {
     monthly: number | string;
-    yearly: number | string;
+    yearlyPerMonth: number | string;
   };
-  yearlyFullPrice?: number | string;
   label: string;
   buttonLabel: string;
+  href?: string;
   stylingFilled: boolean;
   featuresAll: FeatureProps[];
   featuresTeamManagement?: FeatureProps[];
@@ -84,6 +84,7 @@ const PricingPlansList = ({
             key={planData.plan}
             planData={planData}
             isMonthly={isMonthly}
+            href={planData.href}
             onButtonClick={(planId: PlanType) => actions[planId]?.()}
           />
         ))}

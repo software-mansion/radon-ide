@@ -32,9 +32,11 @@ import {
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
   MultimediaData,
+  PreviewErrorReason,
   ZoomLevelType,
 } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+import { ActivateLicenseMessage } from "./ActivateLicenseMessage";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -138,7 +140,12 @@ function Preview({
 
   const previewURL = use$(selectedDeviceSessionState.previewURL);
 
-  const showDevicePreview = previewURL && (showPreviewRequested || isRunning);
+  const shouldShowActivateLicenseMessage =
+    fatalErrorDescriptor?.kind === "preview" &&
+    fatalErrorDescriptor.reason === PreviewErrorReason.NoAccess;
+
+  const showDevicePreview =
+    previewURL && (showPreviewRequested || isRunning) && !shouldShowActivateLicenseMessage;
 
   const isAppDisconnected =
     isRunning && inspectorBridgeStatus === InspectorBridgeStatus.Disconnected;
@@ -309,6 +316,19 @@ function Preview({
     debugPaused || isRefreshing || !showDevicePreview || !!replayData;
 
   const shouldPreventFromSendingTouch = isInspecting || !!inspectFrame;
+
+  /**
+   * Trigger the "Up" event after the input events are re-enabled.
+   * The currentMousePosition right after re-enabling does not change.
+   */
+  useEffect(() => {
+    if (!shouldPreventInputEvents) {
+      setIsPressing(false);
+      if (currentMousePosition.current) {
+        sendTouch(currentMousePosition.current, "Up");
+      }
+    }
+  }, [shouldPreventInputEvents]);
 
   function onMouseMove(e: MouseEvent<HTMLDivElement>) {
     e.preventDefault();
@@ -677,9 +697,16 @@ function Preview({
             </div>
           </Device>
         )}
-        {hasFatalError && (
+        {hasFatalError && !shouldShowActivateLicenseMessage && (
           <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
             <div className="phone-sized extension-error-screen" />
+          </Device>
+        )}
+        {shouldShowActivateLicenseMessage && (
+          <Device device={device!} zoomLevel={zoomLevel} wrapperDivRef={wrapperDivRef}>
+            <div className="phone-sized">
+              <ActivateLicenseMessage />
+            </div>
           </Device>
         )}
       </div>
