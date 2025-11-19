@@ -15,6 +15,15 @@ function resolveFromAppDir(module, options) {
   return require.resolve(module, { paths });
 }
 
+function doesModuleExist(module, options) {
+  try {
+    require.resolve(module, options);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 function requireFromAppDependency(dependency, module, options) {
   const path = resolveFromAppDependency(dependency, module, options);
   return require(path);
@@ -212,6 +221,7 @@ module.exports = {
   requireFromAppDir,
   requireFromAppDependency,
   resolveFromAppDir,
+  doesModuleExist,
   overrideModuleFromAppDir,
   overrideModuleFromAppDependency,
 };

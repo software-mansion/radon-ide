@@ -6,10 +6,7 @@ import {
 } from "../networkRequestParsers";
 import type { NetworkProxy, NativeResponseType, BlobLikeResponse } from "../types";
 
-let Fetch: any = undefined;
-try {
-  Fetch = require("react-native-fetch-api/src/Fetch")?.default;
-} catch {}
+const Fetch = require("../../polyfills/babel_transform/FetchPolyfill.js")?.default;
 
 type BodyInit =
   | Blob
