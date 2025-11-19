@@ -93,7 +93,6 @@ export function InspectDataMenu({
         filePaths: [inspectItems[0].source.fileName, inspectItems[1].source.fileName],
       };
 
-      console.log("POSTING CHAT PANEL TEST:", message);
       vscode.postMessage(message);
       e.preventDefault(); // prevents the dropdown from closing
     },
