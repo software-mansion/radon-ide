@@ -81,7 +81,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     // flag in waitForEmulatorOnline. But even after that even is delivered, adb install also sometimes
     // fails claiming it is too early. The workaround therefore is to retry install command.
     if (forceReinstall) {
-      await uninstallApp(build.appId);
+      await uninstallApp(build.packageName);
     }
     try {
       await retry(
@@ -99,7 +99,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
             // avoid "INSTALL_FAILED_UPDATE_INCOMPATIBLE: Existing package <name>
             // signatures do not match newer version; ignoring!" error. This error
             // may come when building locally and with EAS.
-            await uninstallApp(build.appId);
+            await uninstallApp(build.packageName);
             await installApk(true);
           }
         },
@@ -130,14 +130,15 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     }
     // terminate the app before launching, otherwise launch commands won't actually start the process which
     // may be in a bad state
-    await this.terminateApp(build.appId);
+    await this.terminateApp(build.packageName);
 
     this.mirrorNativeLogs(build);
 
-    const deepLinkChoice = build.appId === EXPO_GO_PACKAGE_NAME ? "expo-go" : "expo-dev-client";
+    const deepLinkChoice =
+      build.packageName === EXPO_GO_PACKAGE_NAME ? "expo-go" : "expo-dev-client";
     const expoDeeplink = await fetchExpoLaunchDeeplink(metroPort, "android", deepLinkChoice);
     if (expoDeeplink) {
-      await this.configureExpoDevMenu(build.appId);
+      await this.configureExpoDevMenu(build.packageName);
       await this.launchWithExpoDeeplink(
         metroPort,
         devtoolsPort,
@@ -145,7 +146,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
         build.launchActivity
       );
     } else {
-      await this.configureMetroPort(build.appId, metroPort);
+      await this.configureMetroPort(build.packageName, metroPort);
       await this.launchWithBuild(build);
     }
   }
@@ -170,7 +171,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
       "android.intent.action.VIEW",
       "-d",
       link,
-      build.appId,
+      build.packageName,
     ]);
   }
 
@@ -191,7 +192,14 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
         "Resetting all privacy permission as individual permissions aren't currently supported on Android."
       );
     }
-    await exec(ADB_PATH, ["-s", this.serial!, "shell", "pm", "reset-permissions", build.appId]);
+    await exec(ADB_PATH, [
+      "-s",
+      this.serial!,
+      "shell",
+      "pm",
+      "reset-permissions",
+      build.packageName,
+    ]);
     return true; // Android will terminate the process if any of the permissions were granted prior to reset-permissions call
   }
 
@@ -295,7 +303,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
       "shell",
       "monkey",
       "-p",
-      build.appId,
+      build.packageName,
       "-c",
       "android.intent.category.LAUNCHER",
       "1",

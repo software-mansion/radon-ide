@@ -27,7 +27,7 @@ import { BuildOptions } from "./BuildManager";
 export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
   apkPath: string;
-  appId: string;
+  packageName: string;
   launchActivity?: string;
   buildHash: string;
 };
@@ -161,11 +161,13 @@ export async function getAndroidBuildPaths(
   buildType: string
 ) {
   const apkPath = getApkPath(appRootFolder, productFlavor, buildType);
-  const appId = await extractAppId(apkPath, cancelToken);
+  const packageName = await extractAppId(apkPath, cancelToken);
 
-  const launchActivity = await cancelToken.adapt(getLaunchActivityAsync(appRootFolder, appId));
+  const launchActivity = await cancelToken.adapt(
+    getLaunchActivityAsync(appRootFolder, packageName)
+  );
 
-  return { apkPath, appId, launchActivity };
+  return { apkPath, packageName, launchActivity };
 }
 
 function makeBuildTaskName(productFlavor: string, buildType: string, appName?: string) {
@@ -209,7 +211,7 @@ export async function buildAndroid(
 
       return {
         apkPath,
-        appId: await extractAppId(apkPath, cancelToken),
+        packageName: await extractAppId(apkPath, cancelToken),
         platform: DevicePlatform.Android,
         buildHash: await calculateAppArtifactHash(apkPath),
       };
@@ -228,7 +230,7 @@ export async function buildAndroid(
 
       return {
         apkPath,
-        appId: await extractAppId(apkPath, cancelToken),
+        packageName: await extractAppId(apkPath, cancelToken),
         platform: DevicePlatform.Android,
         buildHash: await calculateAppArtifactHash(apkPath),
       };
@@ -247,7 +249,7 @@ export async function buildAndroid(
 
       return {
         apkPath,
-        appId: await extractAppId(apkPath, cancelToken),
+        packageName: await extractAppId(apkPath, cancelToken),
         platform: DevicePlatform.Android,
         buildHash: await calculateAppArtifactHash(apkPath),
       };
@@ -259,7 +261,7 @@ export async function buildAndroid(
       const apkPath = await downloadExpoGo(DevicePlatform.Android, cancelToken, appRoot);
       return {
         apkPath,
-        appId: EXPO_GO_PACKAGE_NAME,
+        packageName: EXPO_GO_PACKAGE_NAME,
         platform: DevicePlatform.Android,
         buildHash: await calculateAppArtifactHash(apkPath),
       };

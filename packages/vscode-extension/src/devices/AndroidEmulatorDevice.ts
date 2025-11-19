@@ -416,7 +416,7 @@ export class AndroidEmulatorDevice extends AndroidDevice {
 
     const extractPidFromLogcat = async (cancelToken: CancelToken) =>
       new Promise<string>((resolve, reject) => {
-        const regexString = `Start proc ([0-9]{4}):${build.appId}`;
+        const regexString = `Start proc ([0-9]{4}):${build.packageName}`;
         const process = exec(ADB_PATH, [
           "-s",
           this.serial!,
