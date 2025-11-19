@@ -395,7 +395,7 @@ export class AndroidEmulatorDevice extends AndroidDevice {
   }
 
   protected makePreview(licenseToken?: string): Preview {
-    const args = ["android", "--id", this.serial!];
+    const args = ["android", "--id", this.serial];
     if (licenseToken !== undefined) {
       args.push("-t", licenseToken);
     }
@@ -417,15 +417,7 @@ export class AndroidEmulatorDevice extends AndroidDevice {
     const extractPidFromLogcat = async (cancelToken: CancelToken) =>
       new Promise<string>((resolve, reject) => {
         const regexString = `Start proc ([0-9]{4}):${build.packageName}`;
-        const process = exec(ADB_PATH, [
-          "-s",
-          this.serial!,
-          "logcat",
-          "-e",
-          regexString,
-          "-T",
-          "1",
-        ]);
+        const process = exec(ADB_PATH, ["-s", this.serial, "logcat", "-e", regexString, "-T", "1"]);
         cancelToken.adapt(process);
 
         lineReader(process).onLineRead((line) => {
@@ -453,7 +445,7 @@ export class AndroidEmulatorDevice extends AndroidDevice {
 
     this.nativeLogsOutputChannel.clear();
     const pid = await extractPidFromLogcat(this.nativeLogsCancelToken);
-    const process = exec(ADB_PATH, ["-s", this.serial!, "logcat", "--pid", pid]);
+    const process = exec(ADB_PATH, ["-s", this.serial, "logcat", "--pid", pid]);
     this.nativeLogsCancelToken.adapt(process);
 
     lineReader(process).onLineRead(this.nativeLogsOutputChannel.appendLine);
