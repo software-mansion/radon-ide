@@ -5,6 +5,7 @@ import os from "os";
 import assert from "assert";
 import { Disposable, EventEmitter, Uri } from "vscode";
 import { WebSocketServer } from "ws";
+import { InspectedElementPayload } from "react-devtools-inline";
 import { Logger } from "../Logger";
 import {
   createBridge,
@@ -17,6 +18,11 @@ import {
 import { InspectorBridge, RadonInspectorBridgeEvents } from "./inspectorBridge";
 import { DebugSession } from "../debugging/DebugSession";
 import { disposeAll } from "../utilities/disposables";
+import { TimeoutError } from "../common/Errors";
+
+const TIMEOUT_DELAY = 10_000;
+const INSPECT_RESULT_EVENT = "inspectedElement";
+const INSPECT_REQUEST_EVENT = "inspectElement";
 
 function filePathForProfile() {
   const fileName = `profile-${Date.now()}.reactprofile`;
@@ -90,7 +96,7 @@ export class DevtoolsInspectorBridge extends InspectorBridge implements Disposab
 
 export class DevtoolsConnection implements Disposable {
   private bridge: FrontendBridge;
-  private store: Store;
+  private _store: Store;
 
   public connected: boolean = true;
 
@@ -102,34 +108,82 @@ export class DevtoolsConnection implements Disposable {
   public readonly onDisconnected = this.disconnectedEventEmitter.event;
   public readonly onProfilingChange = this.profilingEventEmitter.event;
 
+  private bridgeRequestCounter = 0;
+
   constructor(private readonly wall: Wall) {
     // create the DevTools frontend for the connection
     this.bridge = createBridge(wall);
-    this.store = createStore(this.bridge);
+    this._store = createStore(this.bridge);
 
     this.bridge.addListener("RNIDE_message", (payload: unknown) => {
       this.ideMessageEventEmitter.fire(payload as IdeMessage);
     });
 
     // Register for isProfiling event on the profiler store
-    this.store.profilerStore.addListener("isProfiling", () => {
+    this._store.profilerStore.addListener("isProfiling", () => {
       // @ts-ignore - isProfilingBasedOnUserInput exists but types are outdated
-      const isProfiling = this.store.profilerStore.isProfilingBasedOnUserInput;
+      const isProfiling = this._store.profilerStore.isProfilingBasedOnUserInput;
       this.profilingEventEmitter.fire(isProfiling);
     });
   }
 
+  public get store() {
+    return this._store;
+  }
+
+  private getInspectElementResponse(requestID: number): Promise<InspectedElementPayload> {
+    const { promise, resolve, reject } = Promise.withResolvers<InspectedElementPayload>();
+
+    const cleanup = () => {
+      this.bridge.removeListener(INSPECT_RESULT_EVENT, onInspectedElement);
+      clearTimeout(timeoutID);
+    };
+
+    const onInspectedElement = (data: InspectedElementPayload) => {
+      if (data.responseID === requestID) {
+        cleanup();
+        resolve(data);
+      }
+    };
+
+    this.bridge.addListener(INSPECT_RESULT_EVENT, onInspectedElement);
+
+    const timeoutID = setTimeout(() => {
+      cleanup();
+      reject(new TimeoutError(`Timed out while inspecting element.`));
+    }, TIMEOUT_DELAY);
+
+    return promise;
+  }
+
+  public async inspectElementById(id: number) {
+    const requestID = this.bridgeRequestCounter++;
+    const rendererID = this._store.getRendererIDForElement(id) as number;
+
+    const promise = this.getInspectElementResponse(requestID);
+
+    this.bridge.send(INSPECT_REQUEST_EVENT, {
+      id,
+      rendererID,
+      requestID,
+      path: null,
+      forceFullData: true,
+    });
+
+    return promise;
+  }
+
   public async startProfilingReact() {
-    this.store?.profilerStore.startProfiling();
+    this._store?.profilerStore.startProfiling();
   }
 
   public async stopProfilingReact() {
     const { resolve, reject, promise } = Promise.withResolvers<Uri>();
     const saveProfileListener = async () => {
-      const isProcessingData = this.store?.profilerStore.isProcessingData;
+      const isProcessingData = this._store?.profilerStore.isProcessingData;
       if (!isProcessingData) {
-        this.store?.profilerStore.removeListener("isProcessingData", saveProfileListener);
-        const profilingData = this.store?.profilerStore.profilingData;
+        this._store?.profilerStore.removeListener("isProcessingData", saveProfileListener);
+        const profilingData = this._store?.profilerStore.profilingData;
         if (profilingData) {
           const exportData = prepareProfilingDataExport(profilingData);
           const filePath = filePathForProfile();
@@ -141,8 +195,8 @@ export class DevtoolsConnection implements Disposable {
       }
     };
 
-    this.store?.profilerStore.addListener("isProcessingData", saveProfileListener);
-    this.store?.profilerStore.stopProfiling();
+    this._store?.profilerStore.addListener("isProcessingData", saveProfileListener);
+    this._store?.profilerStore.stopProfiling();
     this.bridge.addListener("shutdown", () => {
       this.disconnect();
     });

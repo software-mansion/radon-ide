@@ -1,0 +1,130 @@
+.navbarContainer {
+  height: 80px;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  opacity: 0.9;
+  border-bottom: var(--radon-border-layout);
+  background: var(--swm-background);
+  backdrop-filter: blur(2px);
+
+  z-index: 1000;
+}
+
+.navbarLeft {
+  display: flex;
+  padding: 0 24px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  border-right: 1px solid var(--radon-border);
+}
+
+.navbarLeft a {
+  width: 116px;
+  height: 40px;
+}
+
+.navbarCenter {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.navbarCenter .navLinks {
+  list-style-type: none;
+  display: flex;
+  margin: 0;
+  padding: 0;
+  gap: 24px;
+}
+
+.navLinks li a {
+  color: var(--ifm-color-primary);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  opacity: 0.75;
+}
+
+.navLinks li.activeLink a {
+  color: var(--radon-active-tab);
+  opacity: 1;
+}
+
+.navLinks li a:hover {
+  opacity: 1;
+}
+
+.navbarRight {
+  display: flex;
+  padding: 0 24px;
+  align-items: center;
+  gap: 24px;
+  align-self: stretch;
+  justify-content: space-between;
+}
+
+.headerGithub:before {
+  display: flex;
+  height: 28px;
+  width: 28px;
+  opacity: 0.75;
+  background-color: var(--ifm-color-primary);
+
+  mask: url(/static/img/github.svg) no-repeat 100% 100%;
+  mask-size: cover;
+  content: "";
+}
+
+.headerGithub:hover:before {
+  opacity: 1;
+}
+
+a:hover {
+  text-decoration: none;
+}
+.menuIcon {
+  display: none;
+}
+
+@media (max-width: 997px) {
+  .navbarLeft {
+    align-items: flex-start;
+    width: auto;
+  }
+}
+
+@media (max-width: 830px) {
+  .navbarContainer {
+    height: 100%;
+  }
+  .navbarRight {
+    display: none;
+  }
+  .navbarCenter {
+    display: none;
+  }
+  .menuIcon {
+    display: flex;
+    background-color: transparent;
+    border: none;
+    padding: 20px;
+  }
+  .navbarLeft {
+    width: 100%;
+  }
+  .navbarLeft a {
+    width: 116px;
+    height: 40px;
+  }
+
+  .logo {
+    width: 116px;
+    height: 40px;
+  }
+}

@@ -332,3 +332,14 @@ body {
   --swm-dropdown-border: 1px solid var(--vscode-menu-border);
   --swm-dropdown-shadow: 0 0 8px 2px var(--vscode-widget-shadow);
 }
+
+body.vscode-high-contrast {
+  --swm-switch-root-background-checked: var(--vscode-menu-border);
+  --swm-radio-group-indicator: var(--vscode-menu-border);
+  --swm-slider: var(--vscode-menu-border);
+  --swm-device-icon-background-selected: var(--vscode-menu-border);
+  --swm-button-background: var(--vscode-menu-border);
+  --swm-button: var(--vscode-input-background);
+  --swm-button-hover: var(--vscode-input-background);
+  --swm-device-icon-selected: var(--swm-button);
+}

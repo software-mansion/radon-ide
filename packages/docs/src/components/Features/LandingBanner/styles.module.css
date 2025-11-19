@@ -1,0 +1,163 @@
+.container {
+  display: flex;
+  justify-content: space-between;
+  border-top: var(--radon-border-layout);
+  border-bottom: var(--radon-border-layout);
+  max-height: 240px;
+  margin-top: 30px;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+}
+
+.radonText {
+  display: flex;
+  height: 200px;
+  padding: 0 80px;
+  align-items: center;
+  align-self: stretch;
+  justify-content: center;
+  flex: 1;
+}
+
+.radonText p {
+  color: var(--ifm-color-primary);
+
+  font-size: 48px;
+  font-weight: 250;
+  line-height: normal;
+  margin: 0;
+}
+
+.radonText p span {
+  color: var(--radon-text-green-highlight);
+  font-size: 48px;
+  font-weight: 500;
+  line-height: normal;
+}
+
+.spacer {
+  display: flex;
+  height: 40px;
+  padding: 8px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  align-self: stretch;
+  border-top: var(--radon-border-layout);
+}
+
+.right {
+  border-left: var(--radon-border-layout);
+}
+
+.pattern {
+  display: none;
+}
+
+.builtFor {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  height: 40px;
+
+  font-family: "DM Mono";
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+  letter-spacing: 2.4px;
+
+  color: var(--radon-image-in-grid);
+  border-bottom: var(--radon-border-layout);
+}
+
+.iconContainer {
+  display: flex;
+  flex-direction: row;
+}
+
+.reactNativeIcon {
+  display: flex;
+  width: 200px;
+  height: 200px;
+  padding: 49px 44px;
+  justify-content: center;
+  align-items: center;
+  border-right: var(--radon-border-layout);
+  color: var(--radon-image-in-grid);
+}
+
+.expoIcon {
+  display: flex;
+  width: 200px;
+  height: 200px;
+  padding: 0 33px 0 33px;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (max-width: 1024px) {
+  .radonText {
+    padding: 32px 24px;
+    height: auto;
+  }
+  .radonText p,
+  .radonText p span {
+    font-size: 40px;
+  }
+}
+
+@media (max-width: 830px) {
+  .container {
+    flex-direction: column;
+  }
+
+  .radonText p,
+  .radonText p span {
+    font-size: 28px;
+  }
+
+  .spacer {
+    display: none;
+  }
+
+  .pattern {
+    display: flex;
+    height: 20px;
+  }
+
+  .right {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    border-top: var(--radon-border-layout);
+  }
+
+  .builtForContainer {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+  }
+
+  .builtFor {
+    height: 60px;
+    border-bottom: none;
+    border-top: var(--radon-border-layout);
+  }
+
+  .reactNativeIcon {
+    width: 80px;
+    height: 80px;
+    padding: 20px 18px;
+    border-left: var(--radon-border-layout);
+  }
+
+  .expoIcon {
+    width: 80px;
+    height: 80px;
+    padding: 10px;
+  }
+}

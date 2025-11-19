@@ -7,7 +7,7 @@ const autoNum = require("./src/remark/auto-num.js");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
-  title: "Radon IDE – The Best IDE for React Native",
+  title: "Radon – the Best IDE for React Native & Expo",
   favicon: "img/favicon.png",
 
   url: "https://ide.swmansion.com",
@@ -24,7 +24,6 @@ const config = {
     defaultLocale: "en",
     locales: ["en"],
   },
-
   presets: [
     [
       "classic",
@@ -51,30 +50,45 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       image: "img/og-image.png",
+      colorMode: {
+        respectPrefersColorScheme: true,
+      },
       navbar: {
-        hideOnScroll: true,
+        hideOnScroll: false,
         logo: {
-          alt: "Radon IDE logo",
+          alt: "Radon logo",
           src: "img/logo.svg",
+          srcDark: "img/logo-dark.svg",
+          width: 116,
+          height: 40,
         },
         items: [
           {
             to: "/pricing",
             activeBasePath: "pricing",
             label: "Pricing",
-            position: "right",
           },
           {
             to: "docs/category/getting-started",
             activeBasePath: "docs",
             label: "Docs",
-            position: "right",
+          },
+          {
+            to: "/contact",
+            activeBasePath: "contact",
+            label: "Contact",
           },
           {
             "href": "https://github.com/software-mansion/radon-ide/",
             "position": "right",
             "className": "header-github",
             "aria-label": "GitHub repository",
+          },
+          {
+            href: "https://marketplace.visualstudio.com/items?itemName=swmansion.react-native-ide",
+            position: "right",
+            className: "header-download",
+            html: "Download",
           },
         ],
       },
@@ -96,7 +110,7 @@ const config = {
       },
       // announcementBar: {
       //   id: `product-hunt-launch-banner`,
-      //   content: `🎉  Radon IDE just launched on Product Hunt! <a href="https://www.producthunt.com/posts/radon-ide" target="_blank">Upvote!</a>`,
+      //   content: `🎉  Radon just launched on Product Hunt! <a href="https://www.producthunt.com/posts/radon-ide" target="_blank">Upvote!</a>`,
       // },
       metadata: [
         {

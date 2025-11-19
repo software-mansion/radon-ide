@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { readLogsToolExec, screenshotToolExec } from "./toolExecutors";
-import { ToolSchema } from "./models";
 import { invokeToolCall } from "../shared/api";
+import { ToolSchema } from "./models";
+import { readLogsToolExec, screenshotToolExec, viewComponentTreeExec } from "./toolExecutors";
 
 export function registerLocalMcpTools(server: McpServer) {
   server.registerTool(
@@ -13,6 +13,19 @@ export function registerLocalMcpTools(server: McpServer) {
       inputSchema: {},
     },
     screenshotToolExec
+  );
+
+  server.registerTool(
+    "view_component_tree",
+    {
+      description:
+        "Displays the component tree (view hierarchy) of the running app.\n" +
+        "This tool only displays mounted components, so some parts of the project might not be visible.\n" +
+        "Use this tool when a general overview of the UI is required, such as when resolving layout issues, looking for " +
+        "location of context providers, or looking for relation between the project file structure and project component structure.",
+      inputSchema: {},
+    },
+    viewComponentTreeExec
   );
 
   server.registerTool(

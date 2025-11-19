@@ -19,6 +19,7 @@ import { Logger } from "../Logger";
 import { AndroidBuildResult } from "../builders/buildAndroid";
 import { getAppCachesDir } from "../utilities/common";
 import { Preview } from "./preview";
+import { getClosestDeviceModel } from "./DeviceNameCache";
 
 export class AndroidPhysicalDevice extends AndroidDevice {
   constructor(
@@ -90,6 +91,39 @@ async function getPhysicalScreenDimensions(
   };
 }
 
+async function getAndroidVersion(serial: string): Promise<string | undefined> {
+  const { stdout } = await exec(ADB_PATH, [
+    "-s",
+    serial,
+    "shell",
+    "getprop",
+    "ro.build.version.release",
+  ]);
+  const version = stdout.trim();
+  return version.length > 0 ? version : undefined;
+}
+
+async function getApiLevel(serial: string): Promise<string | undefined> {
+  const { stdout } = await exec(ADB_PATH, [
+    "-s",
+    serial,
+    "shell",
+    "getprop",
+    "ro.build.version.sdk",
+  ]);
+  const apiLevel = stdout.trim();
+  return apiLevel.length > 0 ? apiLevel : undefined;
+}
+
+async function getDisplayName(props: Record<string, string>): Promise<string> {
+  const deviceData = await getClosestDeviceModel(props["model"]);
+  const deviceBrand = deviceData ? deviceData.brand : props["device"];
+  const deviceModel = deviceData ? deviceData.name : props["model"];
+
+  // To avoid things like "Samsung Samsung Galaxy..."
+  return `${!deviceModel.startsWith(deviceBrand + " ") ? deviceBrand + " " : ""}${deviceModel}`;
+}
+
 export async function listConnectedDevices(): Promise<AndroidPhysicalDeviceInfo[]> {
   const { stdout } = await exec(ADB_PATH, ["devices", "-l"]);
   const devices = (
@@ -115,12 +149,18 @@ export async function listConnectedDevices(): Promise<AndroidPhysicalDeviceInfo[
           if (!screenDimensions) {
             return undefined;
           }
+          const androidVersion = await getAndroidVersion(serial);
+          const apiLevel = await getApiLevel(serial);
+          const deviceName = await getDisplayName(props);
+
           return {
             id: serial,
             platform: DevicePlatform.Android,
             modelId: props["model"],
-            systemName: "Unknown",
-            displayName: `${props["device"]} ${props["model"]}`.trim(),
+            systemName: androidVersion
+              ? `Android ${androidVersion} (API Level ${apiLevel ?? "unknown"})`
+              : "Android (unknown version)",
+            displayName: deviceName,
             deviceType: DeviceType.Phone,
             available: true,
             emulator: false,
