@@ -88,9 +88,20 @@ export function InspectDataMenu({
   const onReferenceInChat = usePaywalledCallback(
     (e) => {
       // Include component + where it's used. ([0] & [0].owner? Could require more if component is nested, likely can't cover all cases, but attaching everything isn't an option either)
+      const childFilename = inspectItems[0].source.fileName;
+      let parentFilename = childFilename;
+
+      for (const item of inspectItems) {
+        const filename = item.source.fileName;
+        if (filename !== childFilename) {
+          parentFilename = filename;
+          break;
+        }
+      }
+
       const message = {
         command: "RNIDE_add_to_chat_context",
-        filePaths: [inspectItems[0].source.fileName, inspectItems[1].source.fileName],
+        filePaths: [childFilename, parentFilename],
       };
 
       vscode.postMessage(message);
