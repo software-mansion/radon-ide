@@ -17,19 +17,9 @@ export class MaestroCodeLensProvider implements CodeLensProvider {
     if (!ide) {
       return [];
     }
-    try {
-      const state = await ide.getState();
-      const maestroStatus =
-        state.projectState?.applicationContext?.applicationDependencies?.maestro?.status;
-      if (maestroStatus !== "installed") {
-        return [];
-      }
-    } catch (e) {
-      return [];
-    }
 
     const command: Command = {
-      title: "Run Maestro test",
+      title: "Radon IDE: Run Maestro test",
       command: "RNIDE.startMaestroTest",
       arguments: [[document.fileName]],
     };
@@ -53,7 +43,7 @@ export class MaestroCodeLensProvider implements CodeLensProvider {
     ) {
       return false;
     }
-    const splitText = text.split(/^---$/m);
+    const splitText = text.split(/^---\s*#.*$/m);
     const stepDashes = splitText[1]?.match(/^\s*-\s+/gm);
     if (splitText.length < 2 || !stepDashes) {
       return false;

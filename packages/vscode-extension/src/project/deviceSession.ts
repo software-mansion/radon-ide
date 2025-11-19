@@ -77,7 +77,7 @@ export class DeviceSession implements Disposable {
   private deviceSettingsStateManager: StateManager<DeviceSettings>;
   private frameReporter: FrameReporter;
   private navigationStateManager: StateManager<NavigationState>;
-  private maestroTestRunner: MaestroTestRunner | undefined;
+  private maestroTestRunner: MaestroTestRunner;
   private screenCapture: ScreenCapture;
 
   private isActive = false;
@@ -1016,7 +1016,7 @@ export class DeviceSession implements Disposable {
     }
     try {
       this.stateManager.updateState({ maestroTestState: "running" });
-      await this.maestroTestRunner?.startMaestroTest(fileNames);
+      await this.maestroTestRunner.startMaestroTest(fileNames);
     } finally {
       this.stateManager.updateState({ maestroTestState: "stopped" });
     }
@@ -1025,7 +1025,7 @@ export class DeviceSession implements Disposable {
   public async stopMaestroTest() {
     this.stateManager.updateState({ maestroTestState: "aborting" });
     try {
-      await this.maestroTestRunner?.stopMaestroTest();
+      await this.maestroTestRunner.stopMaestroTest();
     } finally {
       this.stateManager.updateState({ maestroTestState: "stopped" });
     }
