@@ -32,6 +32,13 @@ Alternatively, you can use the inspector by right-clicking on the element visibl
   <source src="/video/ide_element_inspector.mp4" type="video/mp4"/>
 </video>
 
+When Radon AI is enabled, you may also press the `Reference in chat` button,
+to attach the selected component, as well as its parent to chat context.
+
+<video autoPlay loop width="600" controls className="shadow-image">
+  <source src="/video/ide_element_inspector.mp4" type="video/mp4"/>
+</video>
+
 ## Limitations 
 
 Element inspector is disabled in the following scenarios: 
