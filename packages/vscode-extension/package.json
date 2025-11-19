@@ -418,6 +418,13 @@
       }
     ],
     "viewsContainers": {
+      "secondarySidebar": [
+        {
+          "id": "RadonIDE",
+          "title": "Radon IDE",
+          "icon": "assets/logo.svg"
+        }
+      ],
       "activitybar": [
         {
           "id": "RadonIDE",
