@@ -94,7 +94,7 @@ class RadonMcpController implements Disposable {
       })
     );
 
-    if (radonAiEnabled) {
+    if (isEnabledInSettings()) {
       this.enableServer();
     }
   }
