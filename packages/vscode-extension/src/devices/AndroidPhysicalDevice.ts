@@ -49,7 +49,7 @@ export class AndroidPhysicalDevice extends AndroidDevice {
   }
 
   protected makePreview(licenseToken?: string): Preview {
-    const args = ["android_device", "--id", this.serial!];
+    const args = ["android_device", "--id", this.serial];
     if (licenseToken !== undefined) {
       args.push("-t", licenseToken);
     }

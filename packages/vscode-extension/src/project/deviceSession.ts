@@ -550,9 +550,16 @@ export class DeviceSession implements Disposable {
     }
 
     if (!previewURL) {
-      // NOTE: sim-server could have stopped, due to an error or because the device was disconnected.
-      // We try to restart it here in that case.
-      await this.startPreview();
+      try {
+        // NOTE: sim-server could have stopped, due to an error or because the device was disconnected.
+        // We try to restart it here in that case.
+        await this.startPreview();
+      } catch {
+        // NOTE: if sim-server fails to connect to the device, it's not booted (yet?) or otherwise inaccessible,
+        // and the other reload actions are unlikely to succeed anyway, so we skip to fully restarting the device
+        await this.restartDevice({ forceClean: false });
+        return;
+      }
     }
 
     // if reloading JS is possible, we try to do it first and exit in case of success
