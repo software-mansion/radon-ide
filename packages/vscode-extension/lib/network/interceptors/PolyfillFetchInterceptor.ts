@@ -136,7 +136,20 @@ class PolyfillFetchInterceptor {
   private original__abort: () => void = () => {};
 
   private checkCompatibility() {
-    return !!Fetch;
+    if (!Fetch?.prototype) {
+      return false;
+    }
+
+    const allMethodsExist = [
+      Fetch.prototype.__didCreateRequest,
+      Fetch.prototype.__didReceiveNetworkResponse,
+      Fetch.prototype.__didReceiveNetworkIncrementalData,
+      Fetch.prototype.__didReceiveNetworkData,
+      Fetch.prototype.__didCompleteNetworkResponse,
+      Fetch.prototype.__abort,
+    ].every((method) => typeof method === "function");
+
+    return allMethodsExist;
   }
 
   private setupInterceptors() {
