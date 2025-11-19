@@ -81,16 +81,16 @@ async function getApplicationManifest(
   return undefined;
 }
 
-async function resolveAppIdFromNativeAsync(packageName: string): Promise<string | null> {
+async function resolveAppIdFromNativeAsync(projectRoot: string): Promise<string | null> {
   const applicationIdFromGradle = await AndroidConfig.Package.getApplicationIdAsync(
-    packageName
+    projectRoot
   ).catch(() => null);
   if (applicationIdFromGradle) {
     return applicationIdFromGradle;
   }
 
   try {
-    const filePath = await AndroidConfig.Paths.getAndroidManifestAsync(packageName);
+    const filePath = await AndroidConfig.Paths.getAndroidManifestAsync(projectRoot);
     const androidManifest = await AndroidConfig.Manifest.readAndroidManifestAsync(filePath);
     // Assert MainActivity defined.
     await AndroidConfig.Manifest.getMainActivityOrThrow(androidManifest);
