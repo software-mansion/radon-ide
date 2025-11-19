@@ -87,6 +87,7 @@ export type PanelLocation = "tab" | "side-panel";
 export type GeneralSettings = {
   defaultMultimediaSavingLocation: string | null;
   enableExperimentalElementInspector: boolean;
+  enableRadonAI: boolean;
   inspectorExcludePattern: string | null;
 };
 
@@ -608,6 +609,7 @@ export const initialState: State = {
     general: {
       defaultMultimediaSavingLocation: null,
       enableExperimentalElementInspector: false,
+      enableRadonAI: true,
       inspectorExcludePattern: null,
     },
     userInterface: {

@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { use$ } from "@legendapp/state/react";
 import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import "./InspectDataMenu.css";
+import { vscode } from "../utilities/vscode";
+import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import { Feature } from "../../common/License";
+import { useStore } from "../providers/storeProvider";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
@@ -80,6 +85,35 @@ export function InspectDataMenu({
   const inspectMenuAlign = inspectLocation.x <= window.innerWidth / 2 ? "start" : "end";
   const isOverMaxItems = filteredData.length > MAX_INSPECT_ITEMS + 1;
 
+  const onReferenceInChat = usePaywalledCallback(
+    (e) => {
+      // Include component + where it's used. ([0] & [0].owner? Could require more if component is nested, likely can't cover all cases, but attaching everything isn't an option either)
+      const childFilename = inspectItems[0].source.fileName;
+      let parentFilename = childFilename;
+
+      for (const item of inspectItems) {
+        const filename = item.source.fileName;
+        if (filename !== childFilename) {
+          parentFilename = filename;
+          break;
+        }
+      }
+
+      const message = {
+        command: "RNIDE_add_to_chat_context",
+        filePaths: [childFilename, parentFilename],
+      };
+
+      vscode.postMessage(message);
+      e.preventDefault(); // prevents the dropdown from closing
+    },
+    Feature.RadonAI,
+    []
+  );
+
+  const store$ = useStore();
+  const radonAIEnabled = use$(store$.workspaceConfiguration.general.enableRadonAI);
+
   return (
     <DropdownMenu.Root
       defaultOpen={true}
@@ -112,17 +146,33 @@ export function InspectDataMenu({
           {inspectItems.map((item) => (
             <InspectItem item={item} onSelected={onSelected} onHover={onHover} />
           ))}
-          {isOverMaxItems && !shouldShowAll && (
-            <DropdownMenu.Item
-              className="inspect-data-menu-item show-all"
-              key={"show-all"}
-              onSelect={(e) => {
-                setShouldShowAll(true);
-                e.preventDefault(); // prevents the dropdown from closing
-              }}>
-              <DropdownMenu.Label className="inspect-data-menu-label">Show all</DropdownMenu.Label>
-            </DropdownMenu.Item>
-          )}
+          <DropdownMenu.Group className="inspect-data-menu-group">
+            {isOverMaxItems && !shouldShowAll && (
+              <DropdownMenu.Item
+                className="inspect-data-menu-item show-all inspector-button"
+                key={"show-all"}
+                onSelect={(e) => {
+                  setShouldShowAll(true);
+                  e.preventDefault(); // prevents the dropdown from closing
+                }}>
+                <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
+                  <span className="codicon codicon-plus" />
+                  <span className="inspector-button-text">Show all</span>
+                </DropdownMenu.Label>
+              </DropdownMenu.Item>
+            )}
+            {radonAIEnabled && (
+              <DropdownMenu.Item
+                className="inspect-data-menu-item inspector-button"
+                key={"ask-ai"}
+                onSelect={onReferenceInChat}>
+                <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
+                  <span className="codicon codicon-lightbulb" />
+                  <span className="inspector-button-text">Reference in chat</span>
+                </DropdownMenu.Label>
+              </DropdownMenu.Item>
+            )}
+          </DropdownMenu.Group>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

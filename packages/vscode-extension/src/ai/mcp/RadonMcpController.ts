@@ -16,6 +16,7 @@ import { disposeAll } from "../../utilities/disposables";
 import { registerRadonChat } from "../chat";
 import { extensionContext } from "../../utilities/extensionContext";
 import { cleanupOldMcpConfigEntries } from "./configFileHelper";
+import { isRadonEnabledInSettings } from "./utils";
 
 const RADON_AI_MCP_ENTRY_NAME = "RadonAI";
 const RADON_AI_MCP_PROVIDER_ID = "RadonAIMCPProvider";
@@ -67,25 +68,25 @@ async function startRadonAIInCursor(server: LocalMcpServer) {
   }
 }
 
-function isEnabledInSettings() {
-  return workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabledBoolean") ?? true;
-}
-
 class RadonMcpController implements Disposable {
   private server: LocalMcpServer | undefined = undefined;
   private serverChangedEmitter = new EventEmitter<void>();
   private disposables: Disposable[] = [];
 
   constructor(context: ExtensionContext) {
-    const radonAiEnabled = isEnabledInSettings();
+    const radonAiEnabled = isRadonEnabledInSettings();
     registerRadonChat(context, radonAiEnabled);
     this.registerRadonMcpServerProviderInVSCode();
     cleanupOldMcpConfigEntries();
 
+    if (radonAiEnabled) {
+      this.enableServer();
+    }
+
     this.disposables.push(
       workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration("RadonIDE.radonAI.enabledBoolean")) {
-          if (isEnabledInSettings()) {
+          if (isRadonEnabledInSettings()) {
             this.enableServer();
           } else {
             this.disableServer();
@@ -93,10 +94,6 @@ class RadonMcpController implements Disposable {
         }
       })
     );
-
-    if (isEnabledInSettings()) {
-      this.enableServer();
-    }
   }
 
   private enableServer() {
