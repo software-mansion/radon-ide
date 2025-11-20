@@ -26,10 +26,8 @@ interface ViewScreenshotToolArgs {}
 
 export class ViewScreenshotTool implements vscode.LanguageModelTool<ViewScreenshotToolArgs> {
   async invoke(): Promise<vscode.LanguageModelToolResult> {
-    // NOTE: Image outputs are not supported by static tool definitions.
+    // TODO: Add version checks for supporting this, as this feature was added in 1.105.
     // ref: https://github.com/microsoft/vscode/issues/245104
-    // TODO: Check if this still applies in 1.105, it shouldn't.
-    // TODO: Add version checks for supporting this.
     return await screenshotToolExec();
   }
 }

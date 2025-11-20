@@ -1,22 +1,16 @@
 import { Store } from "react-devtools-inline";
-import { DevtoolsElement, ImageContent, TextContent, ToolResponse } from "./models";
+import vscode from "vscode";
+import { DevtoolsElement } from "./models";
 
-export function pngToToolContent(base64Encoded: string): ImageContent {
-  return {
-    type: "image",
-    data: base64Encoded,
-    mimeType: "image/png",
-  };
+export function pngToToolContent(base64Encoded: string): vscode.LanguageModelDataPart {
+  return vscode.LanguageModelDataPart.image(Uint8Array.from(base64Encoded), "image/png");
 }
 
-export function textToToolContent(text: string): TextContent {
-  return {
-    type: "text",
-    text,
-  };
+export function textToToolContent(text: string): vscode.LanguageModelTextPart {
+  return new vscode.LanguageModelTextPart(text);
 }
 
-export function textToToolResponse(text: string): ToolResponse {
+export function textToToolResponse(text: string): vscode.LanguageModelToolResult {
   return {
     content: [textToToolContent(text)],
   };
