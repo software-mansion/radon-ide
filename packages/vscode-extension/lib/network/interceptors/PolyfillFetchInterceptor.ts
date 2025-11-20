@@ -215,6 +215,36 @@ class PolyfillFetchInterceptor {
     this.original__abort = () => {};
   }
 
+  private bufferResponseBody(
+    requestId: string,
+    response: FetchResponse,
+    nativeResponseType: NativeResponseType
+  ) {
+    if (!this.responseBuffer) {
+      return;
+    }
+
+    // text-streaming case
+    // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L142-L157
+    const isIncrementalResponse = nativeResponseType === "text";
+
+    if (isIncrementalResponse) {
+      const incrementalResponseQueue = this.incrementalResponseQueue.getQueue(requestId);
+
+      const responseDataPromise = getFetchResponseDataPromise(
+        response,
+        nativeResponseType,
+        incrementalResponseQueue
+      );
+      this.responseBuffer.put(requestId, responseDataPromise);
+
+      this.incrementalResponseQueue.clearQueue(requestId);
+    } else {
+      const responseDataPromise = getFetchResponseDataPromise(response, nativeResponseType);
+      this.responseBuffer.put(requestId, responseDataPromise);
+    }
+  }
+
   private handleDidCreateRequest() {
     // eslint-disable-next-line
     const self = this;
@@ -301,6 +331,7 @@ class PolyfillFetchInterceptor {
       const mimeType = trimContentType(this._response._body._mimeType);
       const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
 
+      // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L168-L188
       self.incrementalResponseQueue.pushToQueue(requestIdStr, responseText);
 
       self.sendCDPMessage("Network.dataReceived", {
@@ -355,35 +386,6 @@ class PolyfillFetchInterceptor {
         encodedDataLength: this._nativeResponse?.size || this._nativeResponse?.length,
       });
     };
-  }
-
-  private bufferResponseBody(
-    requestId: string,
-    response: FetchResponse,
-    nativeResponseType: NativeResponseType
-  ) {
-    if (!this.responseBuffer) {
-      return;
-    }
-
-    // text-streaming case
-    // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L142-L157
-    const isIncrementalResponse = nativeResponseType === "text";
-
-    if (isIncrementalResponse) {
-      const incrementalResponseQueue = this.incrementalResponseQueue.getQueue(requestId);
-      const responseDataPromise = getFetchResponseDataPromise(
-        response,
-        nativeResponseType,
-        incrementalResponseQueue
-      );
-
-      this.responseBuffer.put(requestId, responseDataPromise);
-      this.incrementalResponseQueue.clearQueue(requestId);
-    } else {
-      const responseDataPromise = getFetchResponseDataPromise(response, nativeResponseType);
-      this.responseBuffer.put(requestId, responseDataPromise);
-    }
   }
 
   private handleDidCompleteNetworkResponse() {
