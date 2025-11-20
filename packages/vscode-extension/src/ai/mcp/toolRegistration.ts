@@ -1,8 +1,5 @@
-import { z } from "zod";
-
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { invokeToolCall } from "../shared/api";
-import { ToolSchema } from "./models";
+import { Disposable } from "vscode";
 import { readLogsToolExec, screenshotToolExec, viewComponentTreeExec } from "./toolExecutors";
 
 export function registerLocalMcpTools(server: McpServer) {
@@ -40,32 +37,6 @@ export function registerLocalMcpTools(server: McpServer) {
   );
 }
 
-function buildZodSchema(toolSchema: ToolSchema): z.ZodRawShape {
-  const props = Object.values(toolSchema.inputSchema.properties);
-  const entries = props.map((v) => [v.title, z.string()]);
-  const obj = Object.fromEntries(entries);
-  return obj;
-}
-
-export function registerRemoteMcpTool(
-  server: McpServer,
-  tool: ToolSchema,
-  invokeToolErrorHandler: (error: Error) => void
-) {
-  const registeredTool = server.registerTool(
-    tool.name,
-    {
-      description: tool.description,
-      inputSchema: buildZodSchema(tool),
-    },
-    async (args) => {
-      try {
-        return await invokeToolCall(tool.name, args);
-      } catch (error) {
-        invokeToolErrorHandler(error as Error);
-        throw error;
-      }
-    }
-  );
-  return registeredTool;
+export function registerRadonAI(): Disposable {
+  return Disposable.from();
 }
