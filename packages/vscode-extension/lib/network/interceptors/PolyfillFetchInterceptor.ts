@@ -174,7 +174,7 @@ class PolyfillFetchInterceptor {
   private original__abort: () => void = () => {};
 
   public static isCompatible() {
-    if (!Fetch?.prototype) {
+    if (!Fetch?.prototype || !global.TextEncoder?.prototype) {
       return false;
     }
 
