@@ -44,7 +44,6 @@ import { DevtoolsServer } from "./devtools";
 import { MetroError, MetroProvider, MetroSession } from "./metro";
 import { PreviewError } from "../devices/preview";
 import { getLicenseToken } from "../utilities/license";
-import { MaestroTestRunner } from "./MaestroTestRunner";
 
 const CACHE_STALE_THROTTLE_MS = 10 * 1000; // 10 seconds
 
@@ -77,7 +76,6 @@ export class DeviceSession implements Disposable {
   private deviceSettingsStateManager: StateManager<DeviceSettings>;
   private frameReporter: FrameReporter;
   private navigationStateManager: StateManager<NavigationState>;
-  private maestroTestRunner: MaestroTestRunner;
   private screenCapture: ScreenCapture;
 
   private isActive = false;
@@ -124,9 +122,6 @@ export class DeviceSession implements Disposable {
     this.deviceSettingsStateManager =
       applicationContext.workspaceConfigState.getDerived("deviceSettings");
     this.disposables.push(this.deviceSettingsStateManager);
-
-    this.maestroTestRunner = new MaestroTestRunner(this.device, this.outputChannelRegistry);
-    this.disposables.push(this.maestroTestRunner);
 
     this.disposables.push(
       this.device.onPreviewClosed((error: void | PreviewError) => {
@@ -1003,32 +998,15 @@ export class DeviceSession implements Disposable {
   }
 
   public async startMaestroTest(fileNames: string[]) {
-    if (this.stateManager.getState().maestroTestState !== "stopped") {
-      const selection = await window.showWarningMessage(
-        "A Maestro test is already running on this device. Abort it before starting a new one.",
-        "Abort and continue",
-        "Cancel"
-      );
-      if (selection !== "Abort and continue") {
-        return;
-      }
-      await this.stopMaestroTest();
+    if (!this.applicationSession) {
+      window.showWarningMessage("Wait for the app to load before starting Maestro tests.");
+      return;
     }
-    try {
-      this.stateManager.updateState({ maestroTestState: "running" });
-      await this.maestroTestRunner.startMaestroTest(fileNames);
-    } finally {
-      this.stateManager.updateState({ maestroTestState: "stopped" });
-    }
+    this.applicationSession.startMaestroTest(fileNames);
   }
 
   public async stopMaestroTest() {
-    this.stateManager.updateState({ maestroTestState: "aborting" });
-    try {
-      await this.maestroTestRunner.stopMaestroTest();
-    } finally {
-      this.stateManager.updateState({ maestroTestState: "stopped" });
-    }
+    this.applicationSession?.stopMaestroTest();
   }
 
   //#region Application Session

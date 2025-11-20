@@ -43,7 +43,7 @@ export class MaestroCodeLensProvider implements CodeLensProvider {
     ) {
       return false;
     }
-    const splitText = text.split(/^---\s*#.*$/m);
+    const splitText = text.split(/^---\s*(?:#.*)?$/m);
     const stepDashes = splitText[1]?.match(/^\s*-\s+/gm);
     if (splitText.length < 2 || !stepDashes) {
       return false;

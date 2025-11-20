@@ -675,20 +675,15 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (applicationDependencies?.maestro?.status === "installed") {
       await deviceSession.startMaestroTest(fileNames);
     } else {
-      window.showErrorMessage("Maestro is not installed.", "Dismiss");
+      window.showErrorMessage(
+        "Failed to run tests: could not find the Maestro executable. Make sure Maestro is installed and accessible in your PATH environment variable.",
+        "Dismiss"
+      );
     }
   }
 
   public async stopMaestroTest() {
-    const deviceSession = this.deviceSession;
-    if (!deviceSession) {
-      window.showWarningMessage(
-        "Wait for the app to load before stopping Maestro tests.",
-        "Dismiss"
-      );
-      return;
-    }
-    await deviceSession.stopMaestroTest();
+    await this.deviceSession?.stopMaestroTest();
   }
 
   // #endregion Testing

@@ -13,16 +13,12 @@ import { getOrCreateDeviceSet, IosSimulatorDevice } from "../devices/IosSimulato
 
 export class MaestroTestRunner implements Disposable {
   private readonly device: DeviceBase;
-  private readonly useExpoGo: boolean = false;
+  private readonly outputChannelRegistry: OutputChannelRegistry;
   private maestroProcess: ChildProcess | undefined;
 
-  constructor(
-    device: DeviceBase,
-    protected readonly outputChannelRegistry: OutputChannelRegistry,
-    useExpoGo: boolean = false
-  ) {
+  constructor(device: DeviceBase) {
     this.device = device;
-    this.useExpoGo = useExpoGo;
+    this.outputChannelRegistry = new OutputChannelRegistry();
   }
 
   private get outputChannel() {

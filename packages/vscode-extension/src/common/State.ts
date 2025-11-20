@@ -210,6 +210,7 @@ export type ApplicationSessionState = {
   logCounter: number;
   profilingCPUState: ProfilingState;
   profilingReactState: ProfilingState;
+  maestroTestState: MaestroTestState;
   toolsState: ToolsState;
 };
 
@@ -399,7 +400,6 @@ export type DeviceSessionStore = {
   previewURL: string | undefined;
   fileTransfer: FileTransferState;
   screenCapture: ScreenCaptureState;
-  maestroTestState: MaestroTestState;
 } & (DeviceSessionStateStarting | DeviceSessionStateRunning | DeviceSessionStateFatalError);
 
 // #endregion Device Session
@@ -544,6 +544,7 @@ export const initialApplicationSessionState: ApplicationSessionState = {
   logCounter: 0,
   profilingCPUState: "stopped",
   profilingReactState: "stopped",
+  maestroTestState: "stopped",
   toolsState: {},
 };
 
@@ -566,7 +567,6 @@ const initialDeviceSessionStore: DeviceSessionStore = {
     navigationRouteList: [],
   },
   previewURL: undefined,
-  maestroTestState: "stopped",
   screenCapture: {
     isRecording: false,
     recordingTime: 0,
