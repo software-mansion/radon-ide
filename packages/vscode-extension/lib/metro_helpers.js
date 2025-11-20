@@ -11,13 +11,13 @@ function requireFromAppDir(module, options) {
 
 function resolveFromAppDir(module, options) {
   const paths = options && options.paths ? [...options.paths, appRoot] : [appRoot];
-
   return require.resolve(module, { paths });
 }
 
 function doesModuleExist(module, options) {
+
   try {
-    require.resolve(module, options);
+    resolveFromAppDir(module, options);
     return true;
   } catch {
     return false;

@@ -6,6 +6,7 @@ const {
   doesModuleExist,
   requireFromAppDependency,
   overrideModuleFromAppDependency,
+  resolveFromAppDir,
 } = require("./metro_helpers");
 
 const RN_VERSION = requireFromAppDir("react-native/package.json").version;
@@ -207,7 +208,7 @@ function transformWrapper({ filename, src, ...rest }) {
     src = `module.exports = require("__RNIDE_lib__/rn-internals/rn-internals-${majorMinorVersion}.js");`;
   } else if (isTransforming("/lib/polyfills/babel_transform/FetchPolyfill.js")) {
     const polyfillModule = "react-native-fetch-api/src/Fetch";
-    const polyfillPath = doesModuleExist(polyfillModule) ? require.resolve(polyfillModule) : null;
+    const polyfillPath = doesModuleExist(polyfillModule) ? resolveFromAppDir(polyfillModule) : null;
     src = polyfillPath
       ? `module.exports = require("${polyfillPath}");`
       : `module.exports = undefined;`;
