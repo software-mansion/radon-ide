@@ -110,7 +110,8 @@ const REQUEST_ID_PREFIX = "FETCH";
  */
 class IncrementalResponseQueue {
   private queueMap: Map<string, Array<Uint8Array>> = new Map();
-  // text encoder is already polyfilled when the fetch polyfill is used
+  // text encoder is already polyfilled when the fetch polyfill is used,
+  // otherwise the fetch itself does not work
   // for RN version >= 74 the encoder should be included in Hermes
   private textEncoder = new TextEncoder();
 
