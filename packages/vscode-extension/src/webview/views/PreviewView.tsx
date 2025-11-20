@@ -339,7 +339,9 @@ function PreviewView() {
   );
 
   const maestroTestState = use$(() =>
-    isRunning ? (selectedDeviceSessionState.maestroTestState.get() ?? "stopped") : "stopped"
+    isRunning
+      ? (selectedDeviceSessionState.applicationSession.maestroTestState.get() ?? "stopped")
+      : "stopped"
   );
 
   return (

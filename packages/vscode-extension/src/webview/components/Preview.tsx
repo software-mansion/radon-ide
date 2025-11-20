@@ -149,7 +149,7 @@ function Preview({
 
   // Maestro usually closes and opens the app during a test, so we prevent
   // the disconnected alert when testing not to confuse the user
-  const maestroTestStatus = use$(selectedDeviceSessionState.maestroTestState);
+  const maestroTestStatus = use$(selectedDeviceSessionState.applicationSession.maestroTestState);
   const isAppDisconnected =
     isRunning &&
     maestroTestStatus === "stopped" &&
