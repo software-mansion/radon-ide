@@ -159,7 +159,7 @@ class PolyfillFetchInterceptor {
   private networkProxy?: NetworkProxy = undefined;
   private responseBuffer?: AsyncBoundedResponseBuffer = undefined;
 
-  private incrementalResponseQueue = new IncrementalResponseQueue();
+  private incrementalResponseQueue: IncrementalResponseQueue = new IncrementalResponseQueue();
 
   // timing
   private startTime: number = 0;
@@ -172,7 +172,7 @@ class PolyfillFetchInterceptor {
   private original__didCompleteNetworkResponse: DidCompleteNetworkResponseFn = () => {};
   private original__abort: () => void = () => {};
 
-  private checkCompatibility() {
+  public static isCompatible() {
     if (!Fetch?.prototype) {
       return false;
     }
@@ -249,9 +249,10 @@ class PolyfillFetchInterceptor {
     // eslint-disable-next-line
     const self = this;
     self.original__didCreateRequest = Fetch.prototype.__didCreateRequest;
-
     Fetch.prototype.__didCreateRequest = function (requestId: number) {
+      console.log("AAAA");
       self.original__didCreateRequest.call(this, requestId);
+      console.log("BBB");
 
       const mimeType = trimContentType(this._request._body._mimeType);
       self.startTime = Date.now();
@@ -466,10 +467,6 @@ class PolyfillFetchInterceptor {
   }
 
   public enable(networkProxy: NetworkProxy, responseBuffer: AsyncBoundedResponseBuffer) {
-    if (this.enabled || !this.checkCompatibility() || !global.fetch) {
-      return;
-    }
-
     this.networkProxy = networkProxy;
     this.responseBuffer = responseBuffer;
 
@@ -498,17 +495,25 @@ class PolyfillFetchInterceptor {
   }
 }
 
-const interceptorInstance: PolyfillFetchInterceptor = new PolyfillFetchInterceptor();
+let interceptorInstance: PolyfillFetchInterceptor | undefined = undefined;
 
 export function enableInterception(
   networkProxy: NetworkProxy,
   responseBuffer: AsyncBoundedResponseBuffer
 ): void {
+  if (!PolyfillFetchInterceptor.isCompatible()) {
+    return;
+  }
+
+  if (!interceptorInstance) {
+    interceptorInstance = new PolyfillFetchInterceptor();
+  }
+
   interceptorInstance.enable(networkProxy, responseBuffer);
 }
 
 export function disableInterception(): void {
-  interceptorInstance.disable();
+  interceptorInstance?.disable();
 }
 
 module.exports = {
