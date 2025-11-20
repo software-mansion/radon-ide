@@ -37,6 +37,23 @@
   },
   "main": "./dist/extension.js",
   "contributes": {
+    "languageModelTools": [
+      {
+        "displayName": "View screenshot",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "view_screenshot",
+        "name": "view_screenshot",
+        "modelDescription": "Get a screenshot of the app development viewport",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "tags": [
+          "react-native",
+          "debug"
+        ]
+      }
+    ],
     "mcpServerDefinitionProviders": [
       {
         "id": "RadonAIMCPProvider",
