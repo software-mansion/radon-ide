@@ -101,3 +101,11 @@ export interface BlobLikeResponse {
   name: string;
   offset: number;
 }
+
+export const DEFAULT_RESPONSE_BODY_DATA = {
+  body: undefined,
+  wasTruncated: false,
+  base64Encoded: false,
+  type: ResponseBodyDataType.Other,
+  dataSize: 0,
+};

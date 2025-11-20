@@ -7,6 +7,7 @@ import {
   type InternalResponseBodyData,
   type ContentTypeAnalysis,
   ExtendedXMLHttpRequest,
+  DEFAULT_RESPONSE_BODY_DATA,
 } from "./types";
 
 // Due to import conflicts from "src" directory, some types
@@ -47,14 +48,6 @@ const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
  */
 const MAX_BODY_SIZE = 1024 * 1024; // 1 MB
 const TRUNCATED_LENGTH = 1000; // 1000 characters
-
-const DEFAULT_RESPONSE_BODY_DATA = {
-  body: undefined,
-  wasTruncated: false,
-  base64Encoded: false,
-  type: ResponseBodyDataType.Other,
-  dataSize: 0,
-};
 
 /**
  * @param contentType The MIME content type string to analyze.
@@ -125,6 +118,31 @@ function processTypedArrayResponse(
   }
 
   return DEFAULT_RESPONSE_BODY_DATA;
+}
+
+/**
+ * Combine incremental response chunks into a single typed array and process it.
+ * Used in combination with react-native-fetch-api for streaming.
+ *
+ * @param incrementalResponseArray Array of Uint8Array chunks received incrementally.
+ * @param contentTypeAnalysis The content type classification flags.
+ * @returns InternalResponseBodyData with the processed combined response.
+ */
+function parseIncrementalResponse(
+  incrementalResponseArray: Array<Uint8Array>,
+  contentTypeAnalysis: ContentTypeAnalysis
+) {
+  const typedArray = new Uint8Array(
+    incrementalResponseArray.reduce((sum, arr) => sum + arr.length, 0)
+  );
+
+  let position = 0;
+  incrementalResponseArray.forEach((array) => {
+    typedArray.set(array, position);
+    position += array.length;
+  });
+
+  return processTypedArrayResponse(typedArray, contentTypeAnalysis);
 }
 
 /**
@@ -226,44 +244,6 @@ function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
 }
 
 /**
- * Function used to read entirety of a stream into a single Uint8Array result.
- * This functionality is only used when using the fetch polyfill, allowing for streaming:
- * https://github.com/react-native-community/fetch/tree/master
- *
- * More on implementation:
- * // https://github.com/react-native-community/fetch/blob/master/src/utils.js
- * // https://developer.mozilla.org/en-US/docs/Web/API/Streams_API/Using_readable_streams
- */
-async function drainStream(stream: ReadableStream<Uint8Array> | null): Promise<Uint8Array> {
-  if (!stream || !stream.getReader) {
-    return new Uint8Array();
-  }
-
-  const chunks: Uint8Array[] = [];
-  const reader = stream.getReader();
-  let totalLength = 0;
-
-  while (true) {
-    const { done, value } = await reader.read();
-    totalLength += value ? value.length : 0;
-    if (done) {
-      break;
-    }
-    chunks.push(value);
-  }
-
-  // merge all chunks
-  const result = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const chunk of chunks) {
-    result.set(chunk, offset);
-    offset += chunk.length;
-  }
-
-  return result;
-}
-
-/**
  * Parse an `XMLHttpRequest` response into an InternalResponseBodyData.
  *
  * This method is async because reading `blob` response types requires a
@@ -348,7 +328,8 @@ export async function getXHRResponseDataPromise(
 
 export async function getFetchResponseDataPromise(
   fetchResponse: Response,
-  nativeResponseType: string
+  nativeResponseType: string,
+  incrementalResponseArray?: Array<Uint8Array>
 ): Promise<InternalResponseBodyData> {
   if (!fetchResponse) {
     return DEFAULT_RESPONSE_BODY_DATA;
@@ -357,18 +338,18 @@ export async function getFetchResponseDataPromise(
   const contentType = fetchResponse.headers.get(ContentTypeHeader.Default) || "";
   const contentTypeAnalysis = analyzeContentType(contentType);
 
+  // text-streaming case
+  // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L142-L157
+  const isIncrementalResponse = nativeResponseType === "text" && incrementalResponseArray?.length;
+  if (isIncrementalResponse) {
+    return parseIncrementalResponse(incrementalResponseArray, contentTypeAnalysis);
+  }
+
   // @ts-ignore
   const responseBody = fetchResponse._body._bodyInit;
 
   if (nativeResponseType === "blob") {
     return await processBlobResponse(responseBody, contentTypeAnalysis);
-  }
-
-  // Text-streaming case
-  if (nativeResponseType === "text") {
-    const stream = fetchResponse.body;
-    const typedArray = await drainStream(stream);
-    return processTypedArrayResponse(typedArray, contentTypeAnalysis);
   }
 
   if (nativeResponseType === "base64") {
