@@ -59,6 +59,10 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     return DevicePlatform.Android;
   }
 
+  public get id(): string {
+    return this.serial || "device";
+  }
+
   public async installApp(build: BuildResult, forceReinstall: boolean) {
     if (build.platform !== DevicePlatform.Android) {
       throw new InstallationError("Invalid platform", InstallationErrorReason.InvalidPlatform);

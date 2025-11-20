@@ -125,6 +125,7 @@ export type ApplicationDependency =
   | "expo"
   | "expoRouter"
   | "storybook"
+  | "maestro"
   | "easCli";
 
 export type InstallationStatus = "installed" | "notInstalled" | "installing";
@@ -197,6 +198,8 @@ export enum InspectorBridgeStatus {
 
 export type ProfilingState = "stopped" | "profiling" | "saving";
 
+export type MaestroTestState = "stopped" | "running" | "aborting";
+
 export type ApplicationSessionState = {
   appOrientation: DeviceRotation | null;
   bundleError: BundleErrorDescriptor | null;
@@ -207,6 +210,7 @@ export type ApplicationSessionState = {
   logCounter: number;
   profilingCPUState: ProfilingState;
   profilingReactState: ProfilingState;
+  maestroTestState: MaestroTestState;
   toolsState: ToolsState;
 };
 
@@ -540,6 +544,7 @@ export const initialApplicationSessionState: ApplicationSessionState = {
   logCounter: 0,
   profilingCPUState: "stopped",
   profilingReactState: "stopped",
+  maestroTestState: "stopped",
   toolsState: {},
 };
 

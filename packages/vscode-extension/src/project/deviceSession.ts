@@ -1,4 +1,4 @@
-import { Disposable } from "vscode";
+import { Disposable, window } from "vscode";
 import { throttle } from "lodash";
 import { RadonInspectorBridge } from "./inspectorBridge";
 import { DeviceBase } from "../devices/DeviceBase";
@@ -1002,6 +1002,18 @@ export class DeviceSession implements Disposable {
 
   public openStorybookStory(componentTitle: string, storyName: string) {
     this.inspectorBridge?.sendShowStorybookStoryRequest(componentTitle, storyName);
+  }
+
+  public async startMaestroTest(fileNames: string[]) {
+    if (!this.applicationSession) {
+      window.showWarningMessage("Wait for the app to load before starting Maestro tests.");
+      return;
+    }
+    this.applicationSession.startMaestroTest(fileNames);
+  }
+
+  public async stopMaestroTest() {
+    this.applicationSession?.stopMaestroTest();
   }
 
   //#region Application Session

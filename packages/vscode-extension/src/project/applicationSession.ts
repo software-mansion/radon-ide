@@ -49,6 +49,7 @@ import { NETWORK_EVENT_MAP, NetworkBridge } from "./networkBridge";
 import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
 import { isCDPDomainCall } from "../network/types/panelMessageProtocol";
+import { MaestroTestRunner } from "./MaestroTestRunner";
 
 const MAX_URL_HISTORY_SIZE = 20;
 
@@ -107,6 +108,7 @@ export class ApplicationSession implements Disposable {
   private inspectCallID = 7621;
   private devtools: DevtoolsConnection | undefined;
   private toolsManager: ToolsManager;
+  private maestroTestRunner: MaestroTestRunner;
   private lastRegisteredInspectorAvailability: InspectorAvailabilityStatus =
     InspectorAvailabilityStatus.UnavailableInactive;
 
@@ -242,6 +244,9 @@ export class ApplicationSession implements Disposable {
 
     this.disposables.push(this.toolsManager);
     this.disposables.push(this.stateManager);
+
+    this.maestroTestRunner = new MaestroTestRunner(this.device);
+    this.disposables.push(this.maestroTestRunner);
   }
 
   private setupDevtoolsServer(devtoolsServer: DevtoolsServer) {
@@ -702,6 +707,39 @@ export class ApplicationSession implements Disposable {
     }
   }
   //#endregion
+
+  // #region Maestro testing
+
+  public async startMaestroTest(fileNames: string[]) {
+    if (this.stateManager.getState().maestroTestState !== "stopped") {
+      const selection = await window.showWarningMessage(
+        "A Maestro test is already running on this device. Abort it before starting a new one.",
+        "Abort and continue",
+        "Cancel"
+      );
+      if (selection !== "Abort and continue") {
+        return;
+      }
+      await this.stopMaestroTest();
+    }
+    try {
+      this.stateManager.updateState({ maestroTestState: "running" });
+      await this.maestroTestRunner.startMaestroTest(fileNames);
+    } finally {
+      this.stateManager.updateState({ maestroTestState: "stopped" });
+    }
+  }
+
+  public async stopMaestroTest() {
+    this.stateManager.updateState({ maestroTestState: "aborting" });
+    try {
+      await this.maestroTestRunner.stopMaestroTest();
+    } finally {
+      this.stateManager.updateState({ maestroTestState: "stopped" });
+    }
+  }
+
+  // #endregion
 
   //#region Element Inspector
   public async inspectElementAt(

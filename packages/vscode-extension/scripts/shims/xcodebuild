@@ -1,0 +1,117 @@
+#!/bin/bash
+#
+# Wrapper for xcodebuild that intercepts test-without-building commands
+# and replaces them with prebuilt runner installation using simctl
+#
+# This is needed because xcodebuild can't handle custom device sets properly
+
+set -e
+
+if [[ "$*" == *"test-without-building"* ]]; then
+    echo "[xcodebuild-shim] Intercepting xcodebuild test-without-building call with prebuilt runner installation"
+    
+    DEVICE_ID=""
+    XCTESTRUN_PATH=""
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -destination)
+                shift
+                # Because it's in "id=[device-id]" format
+                DEVICE_ID="${1#id=}"
+                ;;
+            -xctestrun)
+                shift
+                XCTESTRUN_PATH="$1"
+                ;;
+            *)
+                ;;
+        esac
+        shift
+    done
+    
+    if [[ -z "$DEVICE_ID" ]]; then
+        echo "[xcodebuild-shim] ERROR: Could not extract device ID from arguments"
+        exit 1
+    fi
+    
+    if [[ -z "$XCTESTRUN_PATH" ]]; then
+        echo "[xcodebuild-shim] ERROR: Could not find xctestrun path in arguments"
+        exit 1
+    fi
+    
+    echo "[xcodebuild-shim] Device ID: $DEVICE_ID"
+    echo "[xcodebuild-shim] xctestrun path: $XCTESTRUN_PATH"
+    
+    # Find the runner .app in the xctestrun file directory
+    XCTESTRUN_DIR=$(dirname "$XCTESTRUN_PATH")
+    APP_PATH=$(find "$XCTESTRUN_DIR" -name "maestro-driver-iosUITests-Runner.app" -type d -print -quit)
+    
+    if [[ -z "$APP_PATH" ]]; then
+        echo "[xcodebuild-shim] ERROR: Could not find maestro-driver-iosUITests-Runner.app in $XCTESTRUN_DIR"
+        exit 1
+    fi
+    
+    echo "[xcodebuild-shim] Found a test runner at: $APP_PATH"
+    
+    # Env variables used by Maestro
+    PORT="${TEST_RUNNER_PORT:-22087}"
+    SNAPSHOT_KEY="${TEST_RUNNER_snapshotKeyHonorModalViews:-}"
+
+    echo "[xcodebuild-shim] Port: $PORT"
+    ENV_VARS="SIMCTL_CHILD_PORT=$PORT"
+    
+    if [[ -n "$SNAPSHOT_KEY" ]]; then
+        echo "[xcodebuild-shim] snapshotKeyHonorModalViews: $SNAPSHOT_KEY"
+        ENV_VARS="$ENV_VARS SIMCTL_CHILD_snapshotKeyHonorModalViews=$SNAPSHOT_KEY"
+    fi
+    
+    # Install the runner with simctl
+    echo "[xcodebuild-shim] Installing the test runner on device $DEVICE_ID..."
+    xcrun simctl install "$DEVICE_ID" "$APP_PATH"
+    
+    if [[ $? -ne 0 ]]; then
+        echo "[xcodebuild-shim] ERROR: Failed to install the test runner"
+        exit 1
+    fi
+
+    echo "[xcodebuild-shim] Successfully installed the test runner"
+    echo "[xcodebuild-shim] Launching test runner on device $DEVICE_ID..."
+    
+    # Log dir structure similar to XCRunnerCLIUtils
+    LOG_DIR="$HOME/Library/Logs/maestro/xctest_runner_logs"
+    mkdir -p "$LOG_DIR"
+    TIMESTAMP=$(date +"%Y-%m-%d_%H%M%S")
+    LOG_FILE="$LOG_DIR/xctest_runner_$TIMESTAMP.log"
+    
+    echo "[xcodebuild-shim] Logs will be written to: $LOG_FILE"
+    
+    # Launch with environment variables and redirect output to log file
+    env $ENV_VARS xcrun simctl launch \
+        --console \
+        --terminate-running-process \
+        "$DEVICE_ID" \
+        dev.mobile.maestro-driver-iosUITests.xctrunner \
+        > "$LOG_FILE" 2>&1 &
+    
+    LAUNCH_PID=$!
+    
+    echo "[xcodebuild-shim] Test runner launched (PID: $LAUNCH_PID)"
+    echo "[xcodebuild-shim] Prebuilt runner installation complete"
+    
+    wait $LAUNCH_PID
+    
+else
+    echo "[xcodebuild-shim] Not a test-without-building command, passing through to real xcodebuild"
+    
+    # Find the real xcodebuild in PATH excluding this directory
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    REAL_XCODEBUILD=$(PATH="${PATH//$SCRIPT_DIR:/}" command -v xcodebuild)
+    
+    if [[ -z "$REAL_XCODEBUILD" ]]; then
+        echo "[xcodebuild-shim] ERROR: Could not find real xcodebuild in PATH"
+        exit 1
+    fi
+    
+    exec "$REAL_XCODEBUILD" "$@"
+fi
