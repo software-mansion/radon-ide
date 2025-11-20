@@ -15,7 +15,6 @@ function resolveFromAppDir(module, options) {
 }
 
 function doesModuleExist(module, options) {
-
   try {
     resolveFromAppDir(module, options);
     return true;
