@@ -1,3 +1,4 @@
+import assert from "assert";
 import fs from "fs";
 import path from "path";
 import semver from "semver";
@@ -54,15 +55,13 @@ function locateAapt() {
  * This function extracts the application Id that allows for identifying the application
  * while managing its runtime it might be defined by multiple configurations
  * https://developer.android.com/build/configure-app-module
- * @param artifactPath
- * @param cancelToken
- * @returns Promise<string>
  */
 async function extractAppId(artifactPath: string, cancelToken: CancelToken) {
   const aaptPath = locateAapt();
   const { stdout } = await cancelToken.adapt(exec(aaptPath, ["dump", "badging", artifactPath]));
   const packageLine = stdout.split("\n").find((line: string) => line.startsWith("package: name="));
-  const appId = packageLine!.split("'")[1];
+  assert(packageLine, "aapt file always contains the line specifying the package name");
+  const appId = packageLine.split("'")[1];
   return appId;
 }
 
@@ -73,11 +72,10 @@ async function getApplicationManifest(
     const filePath = await AndroidConfig.Paths.getAndroidManifestAsync(projectRoot);
     const androidManifest = await AndroidConfig.Manifest.readAndroidManifestAsync(filePath);
 
-    if (!androidManifest) {
-      return undefined;
+    if (androidManifest) {
+      return androidManifest;
     }
-    return androidManifest;
-  } catch (e) {
+  } catch {
     // ignore errors and just return undefined here
   }
   return undefined;
@@ -96,8 +94,9 @@ async function resolveAppIdFromNative(projectRoot: string): Promise<string | nul
     const androidManifest = await AndroidConfig.Manifest.readAndroidManifestAsync(filePath);
     // Assert MainActivity defined.
     await AndroidConfig.Manifest.getMainActivityOrThrow(androidManifest);
-    if (androidManifest.manifest?.$?.package) {
-      return androidManifest.manifest.$.package;
+    const appId = androidManifest.manifest?.$?.package;
+    if (appId) {
+      return appId;
     }
   } catch (error: any) {
     Logger.debug("Expected error resolving the package name from the AndroidManifest.xml:", error);
