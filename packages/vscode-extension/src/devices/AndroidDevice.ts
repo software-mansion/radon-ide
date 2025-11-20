@@ -31,7 +31,18 @@ export const ADB_PATH = path.join(
 );
 
 export abstract class AndroidDevice extends DeviceBase implements Disposable {
-  protected serial: string | undefined;
+  private _serial: string | undefined;
+
+  protected get serial(): string {
+    if (this._serial === undefined) {
+      throw new Error("Device used before boot completed");
+    }
+    return this._serial;
+  }
+
+  protected set serial(value: string) {
+    this._serial = value;
+  }
 
   constructor(
     deviceSettings: DeviceSettings,
@@ -48,6 +59,10 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     return DevicePlatform.Android;
   }
 
+  public get id(): string {
+    return this.serial || "device";
+  }
+
   public async installApp(build: BuildResult, forceReinstall: boolean) {
     if (build.platform !== DevicePlatform.Android) {
       throw new InstallationError("Invalid platform", InstallationErrorReason.InvalidPlatform);
@@ -57,7 +72,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     const installApk = (allowDowngrade: boolean) =>
       exec(
         ADB_PATH,
-        ["-s", this.serial!, "install", ...(allowDowngrade ? ["-d"] : []), "-r", build.apkPath],
+        ["-s", this.serial, "install", ...(allowDowngrade ? ["-d"] : []), "-r", build.apkPath],
         { allowNonZeroExit: true }
       );
 
@@ -65,7 +80,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
       try {
         await retry(
           () =>
-            exec(ADB_PATH, ["-s", this.serial!, "uninstall", packageName], {
+            exec(ADB_PATH, ["-s", this.serial, "uninstall", packageName], {
               allowNonZeroExit: true,
             }),
           2,
@@ -147,7 +162,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
   }
 
   public async terminateApp(packageName: string) {
-    await exec(ADB_PATH, ["-s", this.serial!, "shell", "am", "force-stop", packageName]);
+    await exec(ADB_PATH, ["-s", this.serial, "shell", "am", "force-stop", packageName]);
   }
 
   public async sendDeepLink(link: string, build: BuildResult) {
@@ -157,7 +172,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
 
     await exec(ADB_PATH, [
       "-s",
-      this.serial!,
+      this.serial,
       "shell",
       "am",
       "start",
@@ -171,7 +186,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
   }
 
   public async forwardDevicePort(port: number) {
-    await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${port}`, `tcp:${port}`]);
+    await exec(ADB_PATH, ["-s", this.serial, "reverse", `tcp:${port}`, `tcp:${port}`]);
   }
 
   public setUpKeyboard() {
@@ -193,7 +208,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     }
     await exec(ADB_PATH, [
       "-s",
-      this.serial!,
+      this.serial,
       "shell",
       "pm",
       "reset-permissions",
@@ -204,11 +219,11 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
 
   public async sendFile(filePath: string) {
     const args = ["push", "-q", filePath, `/sdcard/Download/${path.basename(filePath)}`];
-    await exec(ADB_PATH, ["-s", this.serial!, ...args]);
+    await exec(ADB_PATH, ["-s", this.serial, ...args]);
     // Notify the media scanner about the new file
     await exec(ADB_PATH, [
       "-s",
-      this.serial!,
+      this.serial,
       "shell",
       "am",
       "broadcast",
@@ -234,7 +249,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
       ADB_PATH,
       [
         "-s",
-        this.serial!,
+        this.serial,
         "shell",
         `run-as ${packageName} sh -c 'mkdir -p /data/data/${packageName}/shared_prefs && cat > /data/data/${packageName}/shared_prefs/expo.modules.devmenu.sharedpreferences.xml'`,
       ],
@@ -247,14 +262,14 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
 
   private async configureMetroPort(packageName: string, metroPort: number) {
     // read preferences
-    await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
+    await exec(ADB_PATH, ["-s", this.serial, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
     let prefs: { map: any };
     try {
       const { stdout } = await exec(
         ADB_PATH,
         [
           "-s",
-          this.serial!,
+          this.serial,
           "shell",
           "run-as",
           packageName,
@@ -284,7 +299,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
       ADB_PATH,
       [
         "-s",
-        this.serial!,
+        this.serial,
         "shell",
         `run-as ${packageName} sh -c 'mkdir -p /data/data/${packageName}/shared_prefs && cat > /data/data/${packageName}/shared_prefs/${packageName}_preferences.xml'`,
       ],
@@ -298,7 +313,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
   private async launchWithBuild(build: AndroidBuildResult) {
     await exec(ADB_PATH, [
       "-s",
-      this.serial!,
+      this.serial,
       "shell",
       "monkey",
       "-p",
@@ -316,11 +331,11 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
   ) {
     // For Expo dev-client and expo go setup, we use deeplink to launch the app. Since Expo's manifest is configured to
     // return localhost:PORT as the destination, we need to setup adb reverse for metro port first.
-    await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
+    await exec(ADB_PATH, ["-s", this.serial, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
     if (devtoolsPort !== undefined) {
       await exec(ADB_PATH, [
         "-s",
-        this.serial!,
+        this.serial,
         "reverse",
         `tcp:${devtoolsPort}`,
         `tcp:${devtoolsPort}`,
@@ -329,7 +344,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     // next, we open the link
     await exec(ADB_PATH, [
       "-s",
-      this.serial!,
+      this.serial,
       "shell",
       "am",
       "start",

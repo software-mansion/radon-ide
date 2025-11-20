@@ -43,7 +43,7 @@ export default function ComparePricingPlans({
             monthlyPrice={0}
             buttonLabel="Get free license"
             stylingFilled={false}
-            href="https://portal.ide.swmansion.com"
+            href="https://portal.ide.swmansion.com/free"
             onClick={handleFree}
           />
           <PlanTableLabel

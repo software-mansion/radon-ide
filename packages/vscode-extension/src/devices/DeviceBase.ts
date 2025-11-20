@@ -99,6 +99,7 @@ export abstract class DeviceBase implements Disposable {
   abstract sendFile(filePath: string): Promise<{ canSafelyRemove: boolean }>;
   abstract get platform(): DevicePlatform;
   abstract get deviceInfo(): DeviceInfo;
+  abstract get id(): string;
   abstract resetAppPermissions(
     appPermission: AppPermissionType,
     buildResult: BuildResult

@@ -18,7 +18,6 @@ import { IOSBuildResult } from "../builders/buildIOS";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import {
-  DeviceInfo,
   DevicePlatform,
   DevicesByType,
   DeviceSettings,
@@ -75,7 +74,7 @@ export class IosSimulatorDevice extends DeviceBase {
   constructor(
     deviceSettings: DeviceSettings,
     private readonly deviceUDID: string,
-    private readonly _deviceInfo: DeviceInfo,
+    private readonly _deviceInfo: IOSDeviceInfo,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     super(deviceSettings);
@@ -85,8 +84,12 @@ export class IosSimulatorDevice extends DeviceBase {
     return DevicePlatform.IOS;
   }
 
-  public get deviceInfo() {
+  public get deviceInfo(): IOSDeviceInfo {
     return this._deviceInfo;
+  }
+
+  public get id(): string {
+    return this.deviceUDID;
   }
 
   public get lockFilePath(): string {
@@ -97,6 +100,9 @@ export class IosSimulatorDevice extends DeviceBase {
 
   private get nativeLogsOutputChannel() {
     return this.outputChannelRegistry.getOrCreateOutputChannel(Output.IosDevice);
+  }
+  private get maestroLogsOutputChannel() {
+    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.MaestroIos);
   }
 
   public dispose() {
@@ -918,7 +924,7 @@ function getOldDeviceSetLocation() {
   return path.join(oldAppCachesDir, "Devices", "iOS");
 }
 
-function getOrCreateDeviceSet(deviceUDID?: string) {
+export function getOrCreateDeviceSet(deviceUDID?: string) {
   let deviceSetLocation = getDeviceSetLocation(deviceUDID);
   if (!fs.existsSync(deviceSetLocation)) {
     fs.mkdirSync(deviceSetLocation, { recursive: true });
@@ -994,7 +1000,7 @@ export class IosSimulatorProvider implements DevicesProvider<IOSDeviceInfo>, Dis
   }
 
   public async acquireDevice(
-    deviceInfo: DeviceInfo,
+    deviceInfo: IOSDeviceInfo,
     deviceSettings: DeviceSettings
   ): Promise<IosSimulatorDevice | undefined> {
     if (deviceInfo.platform !== DevicePlatform.IOS) {
