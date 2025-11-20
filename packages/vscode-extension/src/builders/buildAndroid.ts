@@ -28,6 +28,8 @@ export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
   apkPath: string;
   packageName: string;
+  /** This is application id as defined in build.gradle, before any modifications made by build type or product flavor. */
+  baseAppId?: string;
   launchActivity?: string;
   buildHash: string;
 };
@@ -81,7 +83,7 @@ async function getApplicationManifest(
   return undefined;
 }
 
-async function resolveAppIdFromNativeAsync(projectRoot: string): Promise<string | null> {
+async function resolveAppIdFromNative(projectRoot: string): Promise<string | null> {
   const applicationIdFromGradle = await AndroidConfig.Package.getApplicationIdAsync(
     projectRoot
   ).catch(() => null);
@@ -104,9 +106,10 @@ async function resolveAppIdFromNativeAsync(projectRoot: string): Promise<string 
   return null;
 }
 
-async function getLaunchActivityAsync(
+async function getLaunchActivity(
   projectRoot: string,
-  appId: string
+  appId: string,
+  baseAppId: string
 ): Promise<string | undefined> {
   const manifest = await getApplicationManifest(projectRoot);
   if (!manifest) return undefined;
@@ -116,36 +119,19 @@ async function getLaunchActivityAsync(
 
   const mainActivityName = mainActivity.$["android:name"];
 
-  const packageName = await resolveAppIdFromNativeAsync(projectRoot);
-
-  // note(Filip Kamiński): returning anything other then undefined from this helper
-  // will affect how the application is launched; instead of using the default
-  // "android.intent.action.VIEW" intent we will use returned launch activity.
-  // Launching using launchActivity is a more precise way of doing it and in some setups
-  // a necessary one, as using the default path might lead to some deep linking issues,
-  // with newly opened application routing to unexpected screens, but it is not extensively tested
-  // in production, so we restrain the usage of it only to the situations in which we observed
-  // a problem: when appId used by build application is different then the one defined by the
-  // applications manifest. It is quite common and happens when the productFlavor or buildType
-  // defines a special prefix/suffix to the appId. Most of the code is inspired by how expo CLI
-  // handles this case with the added bonus that radons solution does not require additional
-  // user configuration. You can explore the expo solution here:
-  // https://github.com/expo/expo/blob/645e63df903d28149ee9eda6682f6032b31601d7/packages/%40expo/cli/src/start/platforms/android/AndroidPlatformManager.ts#L93
-  if (packageName == appId) {
-    return undefined;
-  }
-
   // Note(Filip Kamiński) This is not supported by the expo version at the time this code wa written,
   // but seems to be an important edge case for at least one project considering using Radon,
   // they even opened a PR to expo to support activities with domain names.
   // https://github.com/expo/expo/pull/39236
   const combinedMainActivity = mainActivityName.startsWith(".")
-    ? `${packageName}${mainActivityName}`
+    ? `${baseAppId}${mainActivityName}`
     : mainActivityName;
 
   // the generation of the launch activity is inspired by expo CLI and good entry point to find out more
   // is here https://github.com/expo/expo/blob/main/packages/%40expo/cli/src/run/android/resolveLaunchProps.ts
-  return `${appId}/${combinedMainActivity}`;
+  return baseAppId && appId !== baseAppId
+    ? `${appId}/${combinedMainActivity}`
+    : `${appId}/${mainActivity}`;
 }
 
 function getApkPath(appRootFolder: string, productFlavor: string, buildType: string) {
@@ -163,11 +149,16 @@ export async function getAndroidBuildPaths(
   const apkPath = getApkPath(appRootFolder, productFlavor, buildType);
   const packageName = await extractAppId(apkPath, cancelToken);
 
+  const baseAppId = await cancelToken.adapt(resolveAppIdFromNative(appRootFolder));
+  if (baseAppId === null) {
+    return { apkPath, packageName };
+  }
+
   const launchActivity = await cancelToken.adapt(
-    getLaunchActivityAsync(appRootFolder, packageName)
+    getLaunchActivity(appRootFolder, packageName, baseAppId)
   );
 
-  return { apkPath, packageName, launchActivity };
+  return { apkPath, packageName, baseAppId, launchActivity };
 }
 
 function makeBuildTaskName(productFlavor: string, buildType: string, appName?: string) {

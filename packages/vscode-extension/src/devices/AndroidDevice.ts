@@ -154,6 +154,8 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
         metroPort,
         devtoolsPort,
         expoDeeplink,
+        build.packageName,
+        build.baseAppId,
         build.launchActivity
       );
     } else {
@@ -329,6 +331,8 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     metroPort: number,
     devtoolsPort: number | undefined,
     expoDeeplink: string,
+    packageName: string,
+    baseAppId: string | undefined,
     launchActivity: string | undefined
   ) {
     // For Expo dev-client and expo go setup, we use deeplink to launch the app. Since Expo's manifest is configured to
@@ -345,8 +349,19 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     }
 
     // next, we open the link
-    // if launchActivity exists we use it instead of generic android.intent.action.VIEW intent
-    if (launchActivity) {
+    // note(Filip Kamiński): instead of using the default "android.intent.action.VIEW" intent,
+    // when base appID is different then packageName we will use returned launch activity.
+    // Launching using launchActivity is a more precise way of doing it and in some setups
+    // a necessary one, as using the default path might lead to some deep linking issues,
+    // with newly opened application routing to unexpected screens, but it is not extensively tested
+    // in production, so we restrain the usage of it only to the situations in which we observed
+    // a problem: when appId used by build application is different then the one defined by the
+    // applications manifest. It is quite common and happens when the productFlavor or buildType
+    // defines a special prefix/suffix to the appId. Most of the code is inspired by how expo CLI
+    // handles this case with the added bonus that radons solution does not require additional
+    // user configuration. You can explore the expo solution here:
+    // https://github.com/expo/expo/blob/645e63df903d28149ee9eda6682f6032b31601d7/packages/%40expo/cli/src/start/platforms/android/AndroidPlatformManager.ts#L93
+    if (packageName !== baseAppId && launchActivity) {
       await exec(ADB_PATH, [
         "-s",
         this.serial,
