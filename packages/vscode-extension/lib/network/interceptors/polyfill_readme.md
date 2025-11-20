@@ -70,6 +70,17 @@ It is important to note, that this interceptor should be initialised and enabled
 
 The interceptor shares the `AsyncBoundedResponseBuffer` for storing responses data with XHR interceptor.
 
+## Incremental Response Handling
+
+For streaming responses (when `nativeResponseType` is `"text"`), the interceptor uses an `IncrementalResponseQueue` to accumulate response chunks:
+
+- Each chunk arrives as a string via `__didReceiveNetworkIncrementalData`
+- Chunks are encoded to `Uint8Array` using `TextEncoder` (matching polyfill's internal behavior,
+  preserves multi-byte character boundaries and allows proper base64 encoding for binary responses.)
+- Accumulated chunks are stored per request ID until completion
+- On `__didCompleteNetworkResponse`, all chunks are combined and processed based on content type
+- Queue is cleared after successful buffering or on errors/abort
+
 ## Native Response Types
 
 The polyfill supports three response types:
