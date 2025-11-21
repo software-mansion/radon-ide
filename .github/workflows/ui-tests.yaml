@@ -107,11 +107,6 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-
       - name: Enforce HTTPS for submodules
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
