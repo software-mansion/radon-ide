@@ -134,6 +134,7 @@ export function DeviceLocationView() {
           <Input
             ref={inputRef}
             className="coordinate"
+            data-testid="coordinates-input"
             data-error={!isCoordinateValid}
             type="string"
             defaultValue={formatLocation(

@@ -438,7 +438,10 @@ const LocalizationItem = () => {
   );
 
   return (
-    <DropdownMenu.Item className="dropdown-menu-item" onSelect={handleOpenLocalizationView}>
+    <DropdownMenu.Item
+      className="dropdown-menu-item"
+      onSelect={handleOpenLocalizationView}
+      data-testid="device-settings-localization">
       <span className="codicon codicon-globe" />
       Localization
     </DropdownMenu.Item>
