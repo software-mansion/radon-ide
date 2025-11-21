@@ -6,12 +6,24 @@ export class RestrictedFunctionalityError extends Error {
     public readonly allowedUsers: LicenseStatus[]
   ) {
     super(message);
+    Object.setPrototypeOf(this, RestrictedFunctionalityError.prototype);
+    this.name = "RestrictedFunctionalityError";
   }
 }
 
 export class TimeoutError extends Error {
   constructor(message: string) {
     super(message);
+    Object.setPrototypeOf(this, TimeoutError.prototype);
+    this.name = "TimeoutError";
+  }
+}
+
+export class AuthorizationError extends Error {
+  constructor(message: string) {
+    super(message);
+    Object.setPrototypeOf(this, AuthorizationError.prototype); // TODO: Check why every guide recommends this, does it fix `instanceof`?
+    this.name = "AuthorizationError"; // TODO: Check if this is redundant
   }
 }
 
