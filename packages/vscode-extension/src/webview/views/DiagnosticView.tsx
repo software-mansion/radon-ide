@@ -120,8 +120,12 @@ function DiagnosticItem({ label, name, info, action }: DiagnosticItemProps) {
   return (
     <div className="diagnostic-item-wrapper">
       <div className="diagnostic-item">
-        <div className="diagnostic-icon">{icon}</div>
-        <p className="diagnostic-item-text">{`${label}${details}`}</p>
+        <div className="diagnostic-icon" data-testid={`diagnostic-icon-${name}-${info?.status}`}>
+          {icon}
+        </div>
+        <p
+          className="diagnostic-item-text"
+          data-testid={`diagnostic-item-text-${name}`}>{`${label}${details}`}</p>
         {description && (
           <Tooltip label={description} type="secondary" instant>
             <span className="diagnostic-item-info-icon codicon codicon-info" />
