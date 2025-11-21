@@ -84,6 +84,36 @@
         ]
       },
       {
+        "displayName": "View component tree",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "view_component_tree",
+        "name": "view_component_tree",
+        "modelDescription": "Displays the component tree (view hierarchy) of the running app.\nThis tool only displays mounted components, so some parts of the project might not be visible.\nUse this tool when a general overview of the UI is required, such as when resolving layout issues, looking for location of context providers, or looking for relation between the project file structure and project component structure",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "tags": [
+          "react-native",
+          "debug"
+        ]
+      },
+      {
+        "displayName": "View application logs",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "view_application_logs",
+        "name": "view_application_logs",
+        "modelDescription": "Returns all the build, bundling and runtime logs. Use this function whenever the user has any issue with the app, if it's builds are failing, or when there are errors in the console. These logs are always a useful debugging aid.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "tags": [
+          "react-native",
+          "debug"
+        ]
+      },
+      {
         "displayName": "View screenshot",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "view_screenshot",

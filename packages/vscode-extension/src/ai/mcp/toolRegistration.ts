@@ -1,30 +1,10 @@
 import vscode, { Disposable } from "vscode";
-import { screenshotToolExec } from "./toolExecutors";
+import { readLogsToolExec, screenshotToolExec, viewComponentTreeExec } from "./toolExecutors";
 import { invokeToolCall } from "../shared/api";
 import { textToToolResponse } from "./utils";
 import { AuthorizationError } from "../../common/Errors";
 
 const PLACEHOLDER_ID = "1234";
-
-/*
-
-view_screenshot: Get a screenshot of the app development viewport.
-
-view_component_tree: Displays the component tree (view hierarchy) of the running app.\n
-This tool only displays mounted components, so some parts of the project might not be visible.\n
-Use this tool when a general overview of the UI is required, such as when resolving layout issues, looking for 
-location of context providers, or looking for relation between the project file structure and project component structure
-
-view_application_logs: Returns all the build, bundling and runtime logs. Use this function whenever the user has any issue with the app, 
-if it's builds are failing, or when there are errors in the console. These logs are always a useful debugging aid.
-
-get_library_description:
-
-
-query_documentation: 
-
-
-*/
 
 interface LibraryDescriptionToolArgs {
   library_npm_name: string;
@@ -34,8 +14,7 @@ export class LibraryDescriptionTool
   implements vscode.LanguageModelTool<LibraryDescriptionToolArgs>
 {
   async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<LibraryDescriptionToolArgs>,
-    token: vscode.CancellationToken
+    options: vscode.LanguageModelToolInvocationOptions<LibraryDescriptionToolArgs>
   ): Promise<vscode.LanguageModelToolResult> {
     const toolName = "get_library_description";
     try {
@@ -61,8 +40,7 @@ export class QueryDocumentationTool
   implements vscode.LanguageModelTool<QueryDocumentationToolArgs>
 {
   async invoke(
-    options: vscode.LanguageModelToolInvocationOptions<QueryDocumentationToolArgs>,
-    token: vscode.CancellationToken
+    options: vscode.LanguageModelToolInvocationOptions<QueryDocumentationToolArgs>
   ): Promise<vscode.LanguageModelToolResult> {
     const toolName = "query_documentation";
     try {
@@ -81,13 +59,25 @@ export class QueryDocumentationTool
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface ViewScreenshotToolArgs {}
+interface EmptyToolArgs {}
 
-export class ViewScreenshotTool implements vscode.LanguageModelTool<ViewScreenshotToolArgs> {
+export class ViewScreenshotTool implements vscode.LanguageModelTool<EmptyToolArgs> {
   async invoke(): Promise<vscode.LanguageModelToolResult> {
     // TODO: Add version checks for supporting this, as this feature was added in 1.105.
     // ref: https://github.com/microsoft/vscode/issues/245104
     return await screenshotToolExec();
+  }
+}
+
+export class ViewComponentTreeTool implements vscode.LanguageModelTool<EmptyToolArgs> {
+  async invoke(): Promise<vscode.LanguageModelToolResult> {
+    return await viewComponentTreeExec();
+  }
+}
+
+export class ViewApplicationLogsTool implements vscode.LanguageModelTool<EmptyToolArgs> {
+  async invoke(): Promise<vscode.LanguageModelToolResult> {
+    return await readLogsToolExec();
   }
 }
 
@@ -104,5 +94,21 @@ export function registerRadonAI(): Disposable {
 
   const viewScreenshotTool = vscode.lm.registerTool("view_screenshot", new ViewScreenshotTool());
 
-  return Disposable.from(queryDocumentationTool, libraryDescriptionTool, viewScreenshotTool);
+  const viewComponentTreeTool = vscode.lm.registerTool(
+    "view_component_tree",
+    new ViewComponentTreeTool()
+  );
+
+  const viewApplicationLogsTool = vscode.lm.registerTool(
+    "view_application_logs",
+    new ViewApplicationLogsTool()
+  );
+
+  return Disposable.from(
+    queryDocumentationTool,
+    libraryDescriptionTool,
+    viewScreenshotTool,
+    viewComponentTreeTool,
+    viewApplicationLogsTool
+  );
 }
