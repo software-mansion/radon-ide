@@ -170,6 +170,7 @@ jobs:
           npm run setup-run-tests -- ${{ matrix.testsToRun }} --exclude ${{ matrix.testsToExclude }} \
             | tee artifacts/test-output-${{ matrix.testApp }}-${{ matrix.codeVersion }}.txt
         working-directory: packages/vscode-extension-tester
+        timeout-minutes: 90
         env:
           PROJECT_NAME: ${{ matrix.testApp }}
           IS_RECORDING: ${{ matrix.isRecording }}
