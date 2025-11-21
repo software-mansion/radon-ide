@@ -1,71 +1,114 @@
-import { z } from "zod";
-
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { invokeToolCall } from "../shared/api";
-import { ToolSchema } from "./models";
+import vscode, { Disposable } from "vscode";
 import { readLogsToolExec, screenshotToolExec, viewComponentTreeExec } from "./toolExecutors";
+import { invokeToolCall } from "../shared/api";
+import { textToToolResponse } from "./utils";
+import { AuthorizationError } from "../../common/Errors";
 
-export function registerLocalMcpTools(server: McpServer) {
-  server.registerTool(
-    "view_screenshot",
-    {
-      description: "Get a screenshot of the app development viewport.",
-      inputSchema: {},
-    },
-    screenshotToolExec
-  );
+const PLACEHOLDER_ID = "1234";
 
-  server.registerTool(
-    "view_component_tree",
-    {
-      description:
-        "Displays the component tree (view hierarchy) of the running app.\n" +
-        "This tool only displays mounted components, so some parts of the project might not be visible.\n" +
-        "Use this tool when a general overview of the UI is required, such as when resolving layout issues, looking for " +
-        "location of context providers, or looking for relation between the project file structure and project component structure.",
-      inputSchema: {},
-    },
-    viewComponentTreeExec
-  );
-
-  server.registerTool(
-    "view_application_logs",
-    {
-      description:
-        "Returns all the build, bundling and runtime logs. Use this function whenever the user has any issue with the app, " +
-        "if it's builds are failing, or when there are errors in the console. These logs are always a useful debugging aid.",
-      inputSchema: {},
-    },
-    readLogsToolExec
-  );
+interface LibraryDescriptionToolArgs {
+  library_npm_name: string;
 }
 
-function buildZodSchema(toolSchema: ToolSchema): z.ZodRawShape {
-  const props = Object.values(toolSchema.inputSchema.properties);
-  const entries = props.map((v) => [v.title, z.string()]);
-  const obj = Object.fromEntries(entries);
-  return obj;
-}
-
-export function registerRemoteMcpTool(
-  server: McpServer,
-  tool: ToolSchema,
-  invokeToolErrorHandler: (error: Error) => void
-) {
-  const registeredTool = server.registerTool(
-    tool.name,
-    {
-      description: tool.description,
-      inputSchema: buildZodSchema(tool),
-    },
-    async (args) => {
-      try {
-        return await invokeToolCall(tool.name, args);
-      } catch (error) {
-        invokeToolErrorHandler(error as Error);
-        throw error;
+export class LibraryDescriptionTool
+  implements vscode.LanguageModelTool<LibraryDescriptionToolArgs>
+{
+  async invoke(
+    options: vscode.LanguageModelToolInvocationOptions<LibraryDescriptionToolArgs>
+  ): Promise<vscode.LanguageModelToolResult> {
+    const toolName = "get_library_description";
+    try {
+      return await invokeToolCall(toolName, options.input, PLACEHOLDER_ID);
+    } catch (error) {
+      if (error instanceof AuthorizationError) {
+        // This error is a fallback, as LLM tools should be disabled when no valid license is present.
+        const msg = `You have to have a valid Radon IDE license to use the ${toolName} tool.`;
+        return textToToolResponse(msg);
       }
+
+      // TODO: Disable tools for users with no license
+      return textToToolResponse(String(error));
     }
+  }
+}
+
+interface QueryDocumentationToolArgs {
+  text: string;
+}
+
+export class QueryDocumentationTool
+  implements vscode.LanguageModelTool<QueryDocumentationToolArgs>
+{
+  async invoke(
+    options: vscode.LanguageModelToolInvocationOptions<QueryDocumentationToolArgs>
+  ): Promise<vscode.LanguageModelToolResult> {
+    const toolName = "query_documentation";
+    try {
+      return await invokeToolCall(toolName, options.input, PLACEHOLDER_ID);
+    } catch (error) {
+      if (error instanceof AuthorizationError) {
+        // This error is a fallback, as LLM tools should be disabled when no valid license is present.
+        const msg = `You have to have a valid Radon IDE license to use the ${toolName} tool.`;
+        return textToToolResponse(msg);
+      }
+
+      // TODO: Disable tools for users with no license
+      return textToToolResponse(String(error));
+    }
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface EmptyToolArgs {}
+
+export class ViewScreenshotTool implements vscode.LanguageModelTool<EmptyToolArgs> {
+  async invoke(): Promise<vscode.LanguageModelToolResult> {
+    // TODO: Add version checks for supporting this, as this feature was added in 1.105.
+    // ref: https://github.com/microsoft/vscode/issues/245104
+    return await screenshotToolExec();
+  }
+}
+
+export class ViewComponentTreeTool implements vscode.LanguageModelTool<EmptyToolArgs> {
+  async invoke(): Promise<vscode.LanguageModelToolResult> {
+    return await viewComponentTreeExec();
+  }
+}
+
+export class ViewApplicationLogsTool implements vscode.LanguageModelTool<EmptyToolArgs> {
+  async invoke(): Promise<vscode.LanguageModelToolResult> {
+    return await readLogsToolExec();
+  }
+}
+
+export function registerRadonAI(): Disposable {
+  const queryDocumentationTool = vscode.lm.registerTool(
+    "query_documentation",
+    new ViewScreenshotTool()
   );
-  return registeredTool;
+
+  const libraryDescriptionTool = vscode.lm.registerTool(
+    "get_library_description",
+    new ViewScreenshotTool()
+  );
+
+  const viewScreenshotTool = vscode.lm.registerTool("view_screenshot", new ViewScreenshotTool());
+
+  const viewComponentTreeTool = vscode.lm.registerTool(
+    "view_component_tree",
+    new ViewComponentTreeTool()
+  );
+
+  const viewApplicationLogsTool = vscode.lm.registerTool(
+    "view_application_logs",
+    new ViewApplicationLogsTool()
+  );
+
+  return Disposable.from(
+    queryDocumentationTool,
+    libraryDescriptionTool,
+    viewScreenshotTool,
+    viewComponentTreeTool,
+    viewApplicationLogsTool
+  );
 }

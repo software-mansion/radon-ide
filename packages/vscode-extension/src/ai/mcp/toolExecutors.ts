@@ -1,5 +1,5 @@
 import { readFileSync } from "fs";
-
+import vscode from "vscode";
 import { Store } from "react-devtools-inline";
 import { IDE } from "../../project/ide";
 import {
@@ -8,7 +8,6 @@ import {
   textToToolContent,
   textToToolResponse,
 } from "./utils";
-import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
 import printComponentTree from "./printComponentTree";
@@ -21,9 +20,8 @@ export function tryGetTreeRoot(store: Store) {
   throw new Error(`Component tree is corrupted. Tree root could not be found.`);
 }
 
-export async function screenshotToolExec(): Promise<ToolResponse> {
+export async function screenshotToolExec(): Promise<vscode.LanguageModelToolResult> {
   const project = IDE.getInstanceIfExists()?.project;
-
   if (!project || !project.deviceSession) {
     return textToToolResponse(
       "Could not capture a screenshot!\n" +
@@ -34,14 +32,14 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
 
   const screenshot = await project.getScreenshot();
 
-  const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
+  const contents = readFileSync(screenshot.tempFileLocation);
 
   return {
     content: [pngToToolContent(contents)],
   };
 }
 
-export async function viewComponentTreeExec(): Promise<ToolResponse> {
+export async function viewComponentTreeExec(): Promise<vscode.LanguageModelToolResult> {
   const project = IDE.getInstanceIfExists()?.project;
 
   if (!project?.deviceSession?.devtoolsStore) {
@@ -61,7 +59,7 @@ export async function viewComponentTreeExec(): Promise<ToolResponse> {
   }
 }
 
-export async function readLogsToolExec(): Promise<ToolResponse> {
+export async function readLogsToolExec(): Promise<vscode.LanguageModelToolResult> {
   const ideInstance = IDE.getInstanceIfExists();
 
   if (!ideInstance) {
@@ -94,7 +92,7 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
     isAndroid ? Output.AndroidDevice : Output.IosDevice
   );
 
-  const combinedLogsContent: TextContent[] = [];
+  const combinedLogsContent: vscode.LanguageModelResponsePart[] = [];
 
   if (!buildLogs.isEmpty()) {
     const rawLogs = ["=== BUILD PROCESS LOGS ===\n\n", ...buildLogs.readAll()];
@@ -118,7 +116,7 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
 
   if (session.previewReady) {
     const screenshot = await session.getScreenshot();
-    const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
+    const contents = readFileSync(screenshot.tempFileLocation);
 
     return {
       content: [...combinedLogsContent, pngToToolContent(contents)],

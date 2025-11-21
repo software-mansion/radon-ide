@@ -37,8 +37,8 @@ import { isIdeConfig } from "./utilities/launchConfiguration";
 import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
 import { RestrictedFunctionalityError } from "./common/Errors";
-import { registerRadonAI } from "./ai/mcp/RadonMcpController";
 import { MaestroCodeLensProvider } from "./providers/MaestroCodeLensProvider";
+import { registerRadonAI } from "./ai/mcp/toolRegistration";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -380,7 +380,7 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
-  context.subscriptions.push(registerRadonAI(context));
+  context.subscriptions.push(registerRadonAI());
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
