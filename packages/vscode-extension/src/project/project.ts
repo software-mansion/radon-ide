@@ -638,6 +638,56 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #endregion Profiling
 
+  // #region Testing
+
+  public async openSelectMaestroFileDialog(): Promise<string[] | undefined> {
+    const pickerResult = await window.showOpenDialog({
+      canSelectMany: true,
+      canSelectFiles: true,
+      canSelectFolders: true,
+      title: "Select Maestro test file(s) or a folder",
+      openLabel: "Open and run",
+      filters: {
+        "Maestro Test Files": ["yaml", "yml"],
+      },
+    });
+
+    if (!pickerResult || pickerResult.length === 0) {
+      return undefined;
+    }
+
+    return pickerResult.map((u) => u.fsPath);
+  }
+
+  public async startMaestroTest(fileNames: string[]) {
+    const deviceSession = this.deviceSession;
+    if (!deviceSession) {
+      window.showWarningMessage(
+        "Wait for the app to load before running Maestro tests.",
+        "Dismiss"
+      );
+      return;
+    }
+    commands.executeCommand("RNIDE.showPanel");
+
+    const applicationDependencies =
+      this.stateManager.getState().applicationContext.applicationDependencies;
+    if (applicationDependencies?.maestro?.status === "installed") {
+      await deviceSession.startMaestroTest(fileNames);
+    } else {
+      window.showErrorMessage(
+        "Failed to run tests: could not find the Maestro executable. Make sure Maestro is installed and accessible in your PATH environment variable.",
+        "Dismiss"
+      );
+    }
+  }
+
+  public async stopMaestroTest() {
+    await this.deviceSession?.stopMaestroTest();
+  }
+
+  // #endregion Testing
+
   // #region Device Input
 
   public dispatchTouches(touches: Array<TouchPoint>, type: "Up" | "Move" | "Down") {

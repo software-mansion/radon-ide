@@ -150,6 +150,11 @@ export function dependencyDescription(dependency: Dependency) {
         info: "Whether Storybook is installed.",
         error: "Storybook is not installed.",
       };
+    case "maestro":
+      return {
+        info: "Whether Maestro is installed.",
+        error: "Maestro is not installed.",
+      };
     case "easCli":
       return {
         info: "Whether eas-cli is installed.",

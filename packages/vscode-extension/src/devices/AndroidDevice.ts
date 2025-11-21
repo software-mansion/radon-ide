@@ -31,7 +31,18 @@ export const ADB_PATH = path.join(
 );
 
 export abstract class AndroidDevice extends DeviceBase implements Disposable {
-  protected serial: string | undefined;
+  private _serial: string | undefined;
+
+  protected get serial(): string {
+    if (this._serial === undefined) {
+      throw new Error("Device used before boot completed");
+    }
+    return this._serial;
+  }
+
+  protected set serial(value: string) {
+    this._serial = value;
+  }
 
   constructor(
     deviceSettings: DeviceSettings,
@@ -48,6 +59,10 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     return DevicePlatform.Android;
   }
 
+  public get id(): string {
+    return this.serial || "device";
+  }
+
   public async installApp(build: BuildResult, forceReinstall: boolean) {
     if (build.platform !== DevicePlatform.Android) {
       throw new InstallationError("Invalid platform", InstallationErrorReason.InvalidPlatform);
@@ -57,7 +72,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     const installApk = (allowDowngrade: boolean) =>
       exec(
         ADB_PATH,
-        ["-s", this.serial!, "install", ...(allowDowngrade ? ["-d"] : []), "-r", build.apkPath],
+        ["-s", this.serial, "install", ...(allowDowngrade ? ["-d"] : []), "-r", build.apkPath],
         { allowNonZeroExit: true }
       );
 
@@ -65,7 +80,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
       try {
         await retry(
           () =>
-            exec(ADB_PATH, ["-s", this.serial!, "uninstall", packageName], {
+            exec(ADB_PATH, ["-s", this.serial, "uninstall", packageName], {
               allowNonZeroExit: true,
             }),
           2,
@@ -139,7 +154,14 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     const expoDeeplink = await fetchExpoLaunchDeeplink(metroPort, "android", deepLinkChoice);
     if (expoDeeplink) {
       await this.configureExpoDevMenu(build.packageName);
-      await this.launchWithExpoDeeplink(metroPort, devtoolsPort, expoDeeplink);
+      await this.launchWithExpoDeeplink(
+        metroPort,
+        devtoolsPort,
+        expoDeeplink,
+        build.packageName,
+        build.baseAppId,
+        build.launchActivity
+      );
     } else {
       await this.configureMetroPort(build.packageName, metroPort);
       await this.launchWithBuild(build);
@@ -147,7 +169,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
   }
 
   public async terminateApp(packageName: string) {
-    await exec(ADB_PATH, ["-s", this.serial!, "shell", "am", "force-stop", packageName]);
+    await exec(ADB_PATH, ["-s", this.serial, "shell", "am", "force-stop", packageName]);
   }
 
   public async sendDeepLink(link: string, build: BuildResult) {
@@ -157,7 +179,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
 
     await exec(ADB_PATH, [
       "-s",
-      this.serial!,
+      this.serial,
       "shell",
       "am",
       "start",
@@ -171,7 +193,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
   }
 
   public async forwardDevicePort(port: number) {
-    await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${port}`, `tcp:${port}`]);
+    await exec(ADB_PATH, ["-s", this.serial, "reverse", `tcp:${port}`, `tcp:${port}`]);
   }
 
   public setUpKeyboard() {
@@ -193,7 +215,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     }
     await exec(ADB_PATH, [
       "-s",
-      this.serial!,
+      this.serial,
       "shell",
       "pm",
       "reset-permissions",
@@ -204,11 +226,11 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
 
   public async sendFile(filePath: string) {
     const args = ["push", "-q", filePath, `/sdcard/Download/${path.basename(filePath)}`];
-    await exec(ADB_PATH, ["-s", this.serial!, ...args]);
+    await exec(ADB_PATH, ["-s", this.serial, ...args]);
     // Notify the media scanner about the new file
     await exec(ADB_PATH, [
       "-s",
-      this.serial!,
+      this.serial,
       "shell",
       "am",
       "broadcast",
@@ -234,7 +256,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
       ADB_PATH,
       [
         "-s",
-        this.serial!,
+        this.serial,
         "shell",
         `run-as ${packageName} sh -c 'mkdir -p /data/data/${packageName}/shared_prefs && cat > /data/data/${packageName}/shared_prefs/expo.modules.devmenu.sharedpreferences.xml'`,
       ],
@@ -247,14 +269,14 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
 
   private async configureMetroPort(packageName: string, metroPort: number) {
     // read preferences
-    await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
+    await exec(ADB_PATH, ["-s", this.serial, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
     let prefs: { map: any };
     try {
       const { stdout } = await exec(
         ADB_PATH,
         [
           "-s",
-          this.serial!,
+          this.serial,
           "shell",
           "run-as",
           packageName,
@@ -284,7 +306,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
       ADB_PATH,
       [
         "-s",
-        this.serial!,
+        this.serial,
         "shell",
         `run-as ${packageName} sh -c 'mkdir -p /data/data/${packageName}/shared_prefs && cat > /data/data/${packageName}/shared_prefs/${packageName}_preferences.xml'`,
       ],
@@ -298,7 +320,7 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
   private async launchWithBuild(build: AndroidBuildResult) {
     await exec(ADB_PATH, [
       "-s",
-      this.serial!,
+      this.serial,
       "shell",
       "monkey",
       "-p",
@@ -312,32 +334,66 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
   private async launchWithExpoDeeplink(
     metroPort: number,
     devtoolsPort: number | undefined,
-    expoDeeplink: string
+    expoDeeplink: string,
+    packageName: string,
+    baseAppId: string | undefined,
+    launchActivity: string | undefined
   ) {
     // For Expo dev-client and expo go setup, we use deeplink to launch the app. Since Expo's manifest is configured to
     // return localhost:PORT as the destination, we need to setup adb reverse for metro port first.
-    await exec(ADB_PATH, ["-s", this.serial!, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
+    await exec(ADB_PATH, ["-s", this.serial, "reverse", `tcp:${metroPort}`, `tcp:${metroPort}`]);
     if (devtoolsPort !== undefined) {
       await exec(ADB_PATH, [
         "-s",
-        this.serial!,
+        this.serial,
         "reverse",
         `tcp:${devtoolsPort}`,
         `tcp:${devtoolsPort}`,
       ]);
     }
+
     // next, we open the link
-    await exec(ADB_PATH, [
-      "-s",
-      this.serial!,
-      "shell",
-      "am",
-      "start",
-      "-a",
-      "android.intent.action.VIEW",
-      "-d",
-      expoDeeplink,
-    ]);
+    // note(Filip Kamiński): instead of using the default "android.intent.action.VIEW" intent,
+    // when base appID is different then packageName we will use returned launch activity.
+    // Launching using launchActivity is a more precise way of doing it and in some setups
+    // a necessary one, as using the default path might lead to some deep linking issues,
+    // with newly opened application routing to unexpected screens, but it is not extensively tested
+    // in production, so we restrain the usage of it only to the situations in which we observed
+    // a problem: when appId used by build application is different then the one defined by the
+    // applications manifest. It is quite common and happens when the productFlavor or buildType
+    // defines a special prefix/suffix to the appId. Most of the code is inspired by how expo CLI
+    // handles this case with the added bonus that radons solution does not require additional
+    // user configuration. You can explore the expo solution here:
+    // https://github.com/expo/expo/blob/645e63df903d28149ee9eda6682f6032b31601d7/packages/%40expo/cli/src/start/platforms/android/AndroidPlatformManager.ts#L93
+    if (packageName !== baseAppId && launchActivity) {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial,
+        "shell",
+        "am",
+        "start",
+        // FLAG_ACTIVITY_SINGLE_TOP -- If set, the activity will not be launched if it is already running at the top of the history stack.
+        "-f",
+        "0x20000000",
+        // Activity to open first: com.bacon.app/.MainActivity
+        "-n",
+        launchActivity,
+        "-d",
+        expoDeeplink,
+      ]);
+    } else {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial,
+        "shell",
+        "am",
+        "start",
+        "-a",
+        "android.intent.action.VIEW",
+        "-d",
+        expoDeeplink,
+      ]);
+    }
   }
 
   protected abstract mirrorNativeLogs(build: AndroidBuildResult): void;
