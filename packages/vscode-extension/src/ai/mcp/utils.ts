@@ -2,8 +2,8 @@ import { Store } from "react-devtools-inline";
 import vscode from "vscode";
 import { DevtoolsElement } from "./models";
 
-export function pngToToolContent(base64Encoded: string): vscode.LanguageModelDataPart {
-  return vscode.LanguageModelDataPart.image(Uint8Array.from(base64Encoded), "image/png");
+export function pngToToolContent(buffer: Buffer<ArrayBufferLike>): vscode.LanguageModelDataPart {
+  return vscode.LanguageModelDataPart.image(buffer, "image/png");
 }
 
 export function textToToolContent(text: string): vscode.LanguageModelTextPart {

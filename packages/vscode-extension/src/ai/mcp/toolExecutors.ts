@@ -32,7 +32,7 @@ export async function screenshotToolExec(): Promise<vscode.LanguageModelToolResu
 
   const screenshot = await project.getScreenshot();
 
-  const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
+  const contents = readFileSync(screenshot.tempFileLocation);
 
   return {
     content: [pngToToolContent(contents)],
@@ -116,7 +116,7 @@ export async function readLogsToolExec(): Promise<vscode.LanguageModelToolResult
 
   if (session.previewReady) {
     const screenshot = await session.getScreenshot();
-    const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
+    const contents = readFileSync(screenshot.tempFileLocation);
 
     return {
       content: [...combinedLogsContent, pngToToolContent(contents)],
