@@ -42,6 +42,7 @@ export function DeviceLocalizationView() {
       <div className="search-bar">
         <Input
           ref={inputRef}
+          data-testid="localization-search-input"
           className="search-input"
           type="string"
           placeholder="Search..."
@@ -82,7 +83,10 @@ type LocaleTileProps = {
 
 const LocaleTile = ({ locale, isActive, onClick }: LocaleTileProps) => {
   return (
-    <div className="localeTile" onClick={onClick}>
+    <div
+      className="localeTile"
+      onClick={onClick}
+      data-testid={`localization-tile-${locale.localeIdentifier.toLowerCase()}`}>
       <div>{locale.Description}</div>
       {isActive && <span className="codicon codicon-check" />}
     </div>
@@ -115,6 +119,7 @@ const LocalizationChangeConfirmationView = ({
         </Button>
         <Button
           className="localization-change-button"
+          dataTest="confirm-localization-change-button"
           type="ternary"
           onClick={async () => {
             store$.workspaceConfiguration.deviceSettings.locale.set(locale.localeIdentifier);

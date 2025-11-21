@@ -1,3 +1,6 @@
+import { execSync } from "child_process";
+import * as fs from "fs";
+import { assert } from "chai";
 import { WebView, By, Key } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { getAppWebsocket } from "../server/webSocketServer.js";
@@ -7,6 +10,10 @@ import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
 const rotationSequence = "1010110010101110010010111011100100100111";
+
+const raw = fs.readFileSync("./data/react-native-app/package.json");
+const data = JSON.parse(raw);
+const IS_APP_WITH_ADDITIONAL_LIBS = data.name.includes("AdditionalLibs");
 
 safeDescribe("8 - Device Settings", () => {
   let driver,
@@ -30,8 +37,6 @@ safeDescribe("8 - Device Settings", () => {
     } = initServices(driver));
 
     await managingDevicesService.prepareDevices();
-
-    await appManipulationService.waitForAppToLoad();
 
     view = new WebView();
     await view.switchBack();
@@ -324,4 +329,97 @@ safeDescribe("8 - Device Settings", () => {
       return appState.value === "background";
     }, 5000);
   });
+
+  itIf(
+    !getConfiguration().IS_ANDROID && IS_APP_WITH_ADDITIONAL_LIBS,
+    "change location",
+    async () => {
+      execSync(
+        "xcrun simctl --set ~/Library/Caches/com.swmansion.radon-ide/Devices/iOS privacy booted grant location org.reactjs.native.example.reactNative81AdditionalLibs"
+      );
+
+      await appManipulationService.restartDevice();
+      await appManipulationService.waitForAppToLoad();
+
+      await driver.sleep(3000);
+      await driver.wait(async () => {
+        appWebsocket = get().appWebsocket;
+        return appWebsocket != null;
+      }, 5000);
+
+      await appManipulationService.hideExpoOverlay(appWebsocket);
+
+      radonViewsService.openRadonDeviceSettingsMenu();
+      await elementHelperService.findAndClickElementByTag(
+        "device-settings-location"
+      );
+      const locationInput =
+        await elementHelperService.findAndWaitForElementByTag(
+          "coordinates-input"
+        );
+      await locationInput.clear();
+      await driver.sleep(1000);
+      await locationInput.sendKeys("1 1", Key.ENTER);
+
+      await elementHelperService.findAndClickElementByTag("modal-close-button");
+      await driver.wait(async () => {
+        try {
+          const location =
+            await appManipulationService.sendMessageAndWaitForResponse(
+              appWebsocket,
+              "getLocation"
+            );
+          assert.approximately(location.value.latitude, 1, 0.1);
+          assert.approximately(location.value.longitude, 1, 0.1);
+          return true;
+        } catch {
+          return false;
+        }
+      }, 100000);
+    }
+  );
+
+  itIf(
+    !getConfiguration().IS_ANDROID && IS_APP_WITH_ADDITIONAL_LIBS,
+    "change location",
+    async () => {
+      radonViewsService.openRadonDeviceSettingsMenu();
+      await elementHelperService.findAndClickElementByTag(
+        "device-settings-localization"
+      );
+      const input = await elementHelperService.findAndClickElementByTag(
+        "localization-search-input"
+      );
+      await input.sendKeys("Spanish", Key.ENTER);
+      await elementHelperService.findAndClickElementByTag(
+        "localization-tile-es_es"
+      );
+      await elementHelperService.findAndClickElementByTag(
+        "confirm-localization-change-button"
+      );
+
+      await elementHelperService.findAndWaitForElementByTag("startup-message");
+
+      await appManipulationService.waitForAppToLoad();
+
+      await driver.wait(async () => {
+        appWebsocket = get().appWebsocket;
+        return appWebsocket != null;
+      }, 5000);
+
+      await driver.wait(async () => {
+        try {
+          const localization =
+            await appManipulationService.sendMessageAndWaitForResponse(
+              appWebsocket,
+              "getLocalization"
+            );
+          assert.equal(localization.value.countryCode.toLowerCase(), "es");
+          return true;
+        } catch {
+          return false;
+        }
+      }, 10000);
+    }
+  );
 });
