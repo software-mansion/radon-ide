@@ -39,6 +39,51 @@
   "contributes": {
     "languageModelTools": [
       {
+        "displayName": "Get library description",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "get_library_description",
+        "name": "get_library_description",
+        "modelDescription": "Returns a detailed description of a library and it's use-cases",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "library_npm_name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "library_npm_name"
+          ]
+        },
+        "tags": [
+          "react-native",
+          "query",
+          "description"
+        ]
+      },
+      {
+        "displayName": "Query documentation",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "query_documentation",
+        "name": "query_documentation",
+        "modelDescription": "Returns documentation snippets relevant to the provided query",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        },
+        "tags": [
+          "react-native",
+          "query"
+        ]
+      },
+      {
         "displayName": "View screenshot",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "view_screenshot",
