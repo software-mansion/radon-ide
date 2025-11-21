@@ -251,9 +251,7 @@ class PolyfillFetchInterceptor {
     const self = this;
     self.original__didCreateRequest = Fetch.prototype.__didCreateRequest;
     Fetch.prototype.__didCreateRequest = function (requestId: number) {
-      console.log("AAAA");
       self.original__didCreateRequest.call(this, requestId);
-      console.log("BBB");
 
       const mimeType = trimContentType(this._request._body._mimeType);
       self.startTime = Date.now();
