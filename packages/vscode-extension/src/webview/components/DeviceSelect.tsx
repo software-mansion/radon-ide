@@ -14,6 +14,8 @@ import { DeviceInfo, DevicePlatform, DeviceType } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { Feature } from "../../common/License";
+import { useDevices } from "../hooks/useDevices";
+import { PropsWithDataTest } from "../../common/types";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -23,7 +25,12 @@ const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.Sel
   )
 );
 
-function RunningBadgeButton({ onStopClick }: { onStopClick?: (e: React.MouseEvent) => void }) {
+function RunningBadgeButton({
+  onStopClick,
+  dataTest,
+}: PropsWithDataTest<{
+  onStopClick?: (e: React.MouseEvent) => void;
+}>) {
   return (
     <div
       onPointerUpCapture={(e) => {
@@ -31,10 +38,7 @@ function RunningBadgeButton({ onStopClick }: { onStopClick?: (e: React.MouseEven
         e.stopPropagation();
       }}
       onClick={onStopClick}>
-      <Badge
-        variant="activity-bar-counter"
-        className="running-badge-button"
-        data-testid="device-running-badge">
+      <Badge variant="activity-bar-counter" className="running-badge-button" data-testid={dataTest}>
         <span />
       </Badge>
     </div>
@@ -70,25 +74,15 @@ function renderDevices(
           disabled={!device.available}
           isSelected={device.id === selectedProjectDevice?.id}>
           {isRunning(device.id) && (
-            <RunningBadgeButton onStopClick={() => handleDeviceStop(device.id)} />
+            <RunningBadgeButton
+              onStopClick={() => handleDeviceStop(device.id)}
+              dataTest={`device-running-badge-${device.displayName}`}
+            />
           )}
         </RichSelectItem>
       ))}
     </Select.Group>
   );
-}
-
-function partitionDevices(devices: DeviceInfo[]): Record<string, DeviceInfo[]> {
-  const validDevices = devices.filter(({ modelId }) => modelId.length > 0);
-
-  const [iosDevices, androidDevices] = _.partition(
-    validDevices,
-    ({ platform }) => platform === DevicePlatform.IOS
-  );
-  return {
-    iOS: iosDevices,
-    Android: androidDevices,
-  };
 }
 
 function DeviceSelect() {
@@ -97,7 +91,8 @@ function DeviceSelect() {
 
   const { projectState, project } = useProject();
 
-  const devices = use$(store$.devicesState.devices) ?? [];
+  const devicesByType = use$(store$.devicesState.devicesByType);
+  const devices = useDevices(store$);
 
   const { openModal } = useModal();
 
@@ -109,7 +104,21 @@ function DeviceSelect() {
 
   const runningSessionIds = Object.keys(deviceSessions);
 
-  const deviceSections = partitionDevices(devices ?? []);
+  function shouldShowDevice(device: DeviceInfo) {
+    // NOTE: we hide disconnected physical devices in the dropdown, since they're not selectable anyway
+    if (device.platform === DevicePlatform.Android && !device.emulator) {
+      return device.available;
+    }
+
+    return true;
+  }
+
+  const deviceSections = {
+    "iOS": devicesByType.iosSimulators ?? [],
+    "Android Emulators": devicesByType.androidEmulators ?? [],
+    "Connected Android Devices":
+      devicesByType.androidPhysicalDevices?.filter(shouldShowDevice) ?? [],
+  };
 
   const handleStartOrActivateSessionForIOSTabletDevice = usePaywalledCallback(
     async (deviceInfo: DeviceInfo) => {
@@ -119,7 +128,7 @@ function DeviceSelect() {
     []
   );
 
-  const handleStartOrActivateSessionForAndroidTabletDevice = usePaywalledCallback(
+  const handleStartOrActivateSessionForAndroidTabletEmulator = usePaywalledCallback(
     async (deviceInfo: DeviceInfo) => {
       await project.startOrActivateSessionForDevice(deviceInfo);
     },
@@ -135,11 +144,19 @@ function DeviceSelect() {
     []
   );
 
-  const handleStartOrActivateSessionForAndroidSmartphoneDevice = usePaywalledCallback(
+  const handleStartOrActivateSessionForAndroidSmartphoneEmulator = usePaywalledCallback(
     async (deviceInfo: DeviceInfo) => {
       await project.startOrActivateSessionForDevice(deviceInfo);
     },
     Feature.AndroidSmartphoneEmulators,
+    []
+  );
+
+  const handleStartOrActivateSessionForAndroidPhysicalDevice = usePaywalledCallback(
+    async (deviceInfo: DeviceInfo) => {
+      await project.startOrActivateSessionForDevice(deviceInfo);
+    },
+    Feature.AndroidPhysicalDevice,
     []
   );
 
@@ -166,10 +183,13 @@ function DeviceSelect() {
             }
           case DevicePlatform.Android:
             if (deviceInfo.deviceType === DeviceType.Tablet) {
-              await handleStartOrActivateSessionForAndroidTabletDevice(deviceInfo);
+              await handleStartOrActivateSessionForAndroidTabletEmulator(deviceInfo);
+              return;
+            } else if (deviceInfo.emulator === false) {
+              handleStartOrActivateSessionForAndroidPhysicalDevice(deviceInfo);
               return;
             } else {
-              await handleStartOrActivateSessionForAndroidSmartphoneDevice(deviceInfo);
+              await handleStartOrActivateSessionForAndroidSmartphoneEmulator(deviceInfo);
               return;
             }
         }

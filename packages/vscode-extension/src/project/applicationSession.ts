@@ -10,12 +10,13 @@ import {
   workspace,
 } from "vscode";
 import { minimatch } from "minimatch";
+import { InspectedElementPayload, InspectElementFullData } from "react-devtools-inline";
 import { DebugSession, DebugSessionImpl, DebugSource } from "../debugging/DebugSession";
 import { ApplicationContext } from "./ApplicationContext";
 import { ReconnectingDebugSession } from "../debugging/ReconnectingDebugSession";
 import { DeviceBase } from "../devices/DeviceBase";
 import { Logger } from "../Logger";
-import { AppOrientation, InspectData } from "../common/Project";
+import { AppOrientation, InspectData, SourceInfo } from "../common/Project";
 import { disposeAll } from "../utilities/disposables";
 import { ToolKey, ToolPlugin, ToolsManager } from "./tools";
 import { focusSource } from "../utilities/focusSource";
@@ -26,6 +27,7 @@ import {
   DevicePlatform,
   DeviceRotation,
   DeviceType,
+  initialApplicationSessionState,
   InspectorAvailabilityStatus,
   InspectorBridgeStatus,
   NavigationHistoryItem,
@@ -46,7 +48,8 @@ import { RadonInspectorBridge } from "./inspectorBridge";
 import { NETWORK_EVENT_MAP, NetworkBridge } from "./networkBridge";
 import { MetroSession } from "./metro";
 import { getDebuggerTargetForDevice } from "./DebuggerTarget";
-import { isCDPMethod } from "../network/types/panelMessageProtocol";
+import { isCDPDomainCall } from "../network/types/panelMessageProtocol";
+import { MaestroTestRunner } from "./MaestroTestRunner";
 
 const MAX_URL_HISTORY_SIZE = 20;
 
@@ -76,6 +79,26 @@ function waitForAppReady(inspectorBridge: RadonInspectorBridge, cancelToken?: Ca
   return promise;
 }
 
+type SourceData = {
+  sourceURL: string;
+  line: number;
+  column: number;
+};
+
+function isFullInspectionData(
+  payload?: InspectedElementPayload
+): payload is InspectElementFullData {
+  return payload?.type === "full-data";
+}
+
+export function toSourceInfo(source: SourceData): SourceInfo {
+  return {
+    fileName: source.sourceURL,
+    column0Based: source.column,
+    line0Based: source.line,
+  };
+}
+
 export class ApplicationSession implements Disposable {
   private disposables: Disposable[] = [];
   private debugSession?: DebugSession & Disposable;
@@ -85,12 +108,17 @@ export class ApplicationSession implements Disposable {
   private inspectCallID = 7621;
   private devtools: DevtoolsConnection | undefined;
   private toolsManager: ToolsManager;
+  private maestroTestRunner: MaestroTestRunner;
   private lastRegisteredInspectorAvailability: InspectorAvailabilityStatus =
     InspectorAvailabilityStatus.UnavailableInactive;
 
   private readonly _inspectorBridge: DevtoolsInspectorBridge;
   public get inspectorBridge(): RadonInspectorBridge {
     return this._inspectorBridge;
+  }
+
+  public get devtoolsStore() {
+    return this.devtools?.store;
   }
 
   public static async launch(
@@ -187,6 +215,7 @@ export class ApplicationSession implements Disposable {
     private readonly packageNameOrBundleId: string,
     private readonly supportedOrientations: DeviceRotation[]
   ) {
+    this.stateManager.updateState(initialApplicationSessionState);
     this.registerMetroListeners();
     this.networkBridge = new NetworkBridge();
 
@@ -215,6 +244,9 @@ export class ApplicationSession implements Disposable {
 
     this.disposables.push(this.toolsManager);
     this.disposables.push(this.stateManager);
+
+    this.maestroTestRunner = new MaestroTestRunner(this.device);
+    this.disposables.push(this.maestroTestRunner);
   }
 
   private setupDevtoolsServer(devtoolsServer: DevtoolsServer) {
@@ -330,7 +362,7 @@ export class ApplicationSession implements Disposable {
 
   private onNetworkEvent = (event: DebugSessionCustomEvent): void => {
     const method = event.body?.method;
-    if (!method || !isCDPMethod(method)) {
+    if (!method || !isCDPDomainCall(method)) {
       Logger.error("Unknown network event method:", method);
       this.networkBridge.emitEvent("unknownEvent", event.body);
       return;
@@ -676,6 +708,39 @@ export class ApplicationSession implements Disposable {
   }
   //#endregion
 
+  // #region Maestro testing
+
+  public async startMaestroTest(fileNames: string[]) {
+    if (this.stateManager.getState().maestroTestState !== "stopped") {
+      const selection = await window.showWarningMessage(
+        "A Maestro test is already running on this device. Abort it before starting a new one.",
+        "Abort and continue",
+        "Cancel"
+      );
+      if (selection !== "Abort and continue") {
+        return;
+      }
+      await this.stopMaestroTest();
+    }
+    try {
+      this.stateManager.updateState({ maestroTestState: "running" });
+      await this.maestroTestRunner.startMaestroTest(fileNames);
+    } finally {
+      this.stateManager.updateState({ maestroTestState: "stopped" });
+    }
+  }
+
+  public async stopMaestroTest() {
+    this.stateManager.updateState({ maestroTestState: "aborting" });
+    try {
+      await this.maestroTestRunner.stopMaestroTest();
+    } finally {
+      this.stateManager.updateState({ maestroTestState: "stopped" });
+    }
+  }
+
+  // #endregion
+
   //#region Element Inspector
   public async inspectElementAt(
     xRatio: number,
@@ -729,6 +794,35 @@ export class ApplicationSession implements Disposable {
       });
     }
     return { frame: inspectData.frame, stack };
+  }
+
+  public async inspectElementById(id: number) {
+    const payload = await this.devtools?.inspectElementById(id);
+
+    if (!isFullInspectionData(payload)) {
+      return undefined;
+    }
+
+    // `source` is incorrectly typed as `Source`, it's actually `SourceData` when `payload.type === 'full-data'`
+    const source = payload.value.source as SourceData | null;
+
+    if (source) {
+      const sourceInfo = toSourceInfo(source);
+
+      if (sourceInfo.fileName.startsWith("http") && this.debugSession) {
+        try {
+          const symbolicated = await this.debugSession.findOriginalPosition(sourceInfo);
+          payload.value.source = {
+            fileName: symbolicated.fileName,
+            lineNumber: symbolicated.line0Based,
+          };
+        } catch (e) {
+          Logger.error("Error finding original source position for element", payload, e);
+        }
+      }
+    }
+
+    return payload;
   }
   //#endregion
 

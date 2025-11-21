@@ -131,6 +131,15 @@
   animation: pulse 1.5s ease-in-out infinite;
 }
 
+.stop-square {
+  width: 15px;
+  height: 15px;
+  background-color: red;
+  align-self: center;
+  border-radius: 2px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
 .app-device-group {
   border: 0px solid transparent;
   display: flex;
@@ -142,6 +151,10 @@
   user-select: none;
   min-width: 0;
   flex-shrink: 1;
+}
+
+.vscode-high-contrast .app-device-group {
+  border: var(--swm-dropdown-border);
 }
 
 .activate-license-button::before {

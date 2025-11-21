@@ -19,6 +19,8 @@ function targetDeviceFilter(deviceInfo: DeviceInfo) {
     if (deviceInfo.platform === DevicePlatform.IOS) {
       // On iOS, we want to connect to the target that has the same device name as our device
       return target.deviceName === deviceInfo.displayName;
+    } else if (deviceInfo.platform === DevicePlatform.Android && !deviceInfo.emulator) {
+      return target.deviceName.startsWith(deviceInfo.modelId.replace("_", "-"));
     } else {
       // TODO: figure out how to get this string from the AVD or system image
       return target.deviceName.startsWith("sdk_gphone64_");

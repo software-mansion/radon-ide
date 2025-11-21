@@ -1,148 +1,95 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import styles from "./styles.module.css";
-import usePaddle from "@site/src/hooks/usePaddle";
-import pricing from "../PricingCard/pricing.module.css";
-import Button from "../../Button";
+import { PricingProps } from "..";
+import PricingPeriodButton from "./PricingPeriodButton";
+import usePageType from "@site/src/hooks/usePageType";
+import { pricingIndividualData } from "../pricingIndividualData";
+import { pricingOrganizationsData } from "../pricingOrganizationsData";
+import clsx from "clsx";
 import PricingCard from "../PricingCard";
-import { clsx } from "clsx";
 
-const isProduction = process.env.NODE_ENV === "production";
+export type PlanType = "FREE" | "PRO" | "TEAM" | "ENTERPRISE";
 
-const INDIVIDUAL_MONTHLY_PRICE_ID = isProduction
-  ? "pri_01hx944ht3wnpvgktatj6v5k4b"
-  : "pri_01j0tjqzqhv6vezhf14pwtxfm0";
-const INDIVIDUAL_YEARLY_PRICE_ID = isProduction
-  ? "pri_01hzf02s579nwrwb756enh8r7g"
-  : "pri_01jb1ajv7btj3cbnshrdq4ncjf";
-const BUSINESS_MONTHLY_PRICE_ID = isProduction
-  ? "pri_01jdyc0j8wkfqx3a7nbf6tsaxy"
-  : "pri_01jdyap7jcydxvewmek2r0e35q";
-const BUSINESS_YEARLY_PRICE_ID = isProduction
-  ? "pri_01jdyc1z1nh3pgp01ya4h8g075"
-  : "pri_01jdyaqnwf3w4pm6hsgwehm1by";
+export interface FeatureProps {
+  label: string;
+  info?: string;
+}
 
-const PricingPlansList = () => {
-  const paddle = usePaddle();
-  const [isMonthly, setIsMonthly] = useState(true);
-
-  const individual = isMonthly ? (
-    <>
-      $19 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/month excl. VAT </p>
-    </>
-  ) : (
-    <>
-      $190 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/year excl. VAT </p>
-    </>
-  );
-  const business = isMonthly ? (
-    <>
-      $29 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/month excl. VAT </p>
-    </>
-  ) : (
-    <>
-      $290 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/year excl. VAT </p>
-    </>
-  );
-
-  const ultra = isMonthly ? (
-    <>
-      $75 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/month excl. VAT </p>
-    </>
-  ) : (
-    <>
-      $750 <span className={pricing.plan__currency}>USD</span>
-      <p className={pricing.plan__price_second_line}> per seat/year excl. VAT </p>
-    </>
-  );
-
-  const enterprise = (
-    <>
-      Custom
-      <p className={clsx(pricing.plan__price_second_line, pricing.plan__price_second_line_hidden)}>
-        .
-      </p>
-    </>
-  );
-
-  const openIndividualCheckout = () => {
-    paddle?.Checkout.open({
-      items: [
-        {
-          priceId: isMonthly ? INDIVIDUAL_MONTHLY_PRICE_ID : INDIVIDUAL_YEARLY_PRICE_ID,
-          quantity: 1,
-        },
-      ],
-    });
+export interface PricingPlanCardProps {
+  plan: PlanType;
+  price: {
+    monthly: number | string;
+    yearlyPerMonth: number | string;
   };
-  const openBusinessCheckout = () => {
-    paddle?.Checkout.open({
-      items: [
-        { priceId: isMonthly ? BUSINESS_MONTHLY_PRICE_ID : BUSINESS_YEARLY_PRICE_ID, quantity: 1 },
-      ],
-    });
+  label: string;
+  buttonLabel: string;
+  href?: string;
+  stylingFilled: boolean;
+  featuresAll: FeatureProps[];
+  featuresTeamManagement?: FeatureProps[];
+  featuresSupport?: FeatureProps[];
+}
+
+const PricingPlansList = ({
+  handleFree,
+  handleTeam,
+  handlePro,
+  handleEnterprise,
+  isMonthly,
+  setIsMonthly,
+}: PricingProps) => {
+  const { isEnterprise } = usePageType();
+  const [isIndividual, setIsIndividual] = useState(true);
+
+  const currentPlans = useMemo(() => {
+    if (isEnterprise) return pricingOrganizationsData;
+    return isIndividual ? pricingIndividualData : pricingOrganizationsData;
+  }, [isIndividual, isEnterprise]);
+
+  const actions: Record<PlanType, () => void> = {
+    FREE: handleFree,
+    PRO: handlePro,
+    TEAM: handleTeam,
+    ENTERPRISE: handleEnterprise,
   };
+
   return (
-    <>
-      <div className={styles.plan_pay_annually}>
-        <p>Monthly</p>
-        <label className={styles.toggleSwitch}>
-          <input
-            type="checkbox"
-            checked={isMonthly}
-            onChange={() => void setIsMonthly(!isMonthly)}
-          />
-          <div className={styles.toggleSwitchBackground}>
-            <div className={styles.toggleSwitchHandle}></div>
+    <div className={styles.planContainer}>
+      <div
+        className={clsx(
+          styles.plan_pay_individual,
+          isEnterprise ? styles.btnEnterprise : styles.btnPricing
+        )}>
+        {!isEnterprise && (
+          <div className={styles.planBtnContainer}>
+            <button
+              type="button"
+              className={clsx(styles.btn, isIndividual ? styles.active : "")}
+              onClick={() => setIsIndividual(true)}>
+              For individuals
+            </button>
+            <button
+              type="button"
+              className={clsx(styles.btn, isIndividual ? "" : styles.active)}
+              onClick={() => setIsIndividual(false)}>
+              For organizations
+            </button>
           </div>
-        </label>
-        <p>
-          Yearly <p className={styles.plan_pay_annually__discount}>(save 16%)</p>
-        </p>
+        )}
+        <PricingPeriodButton isMonthly={isMonthly} setIsMonthly={setIsMonthly} />
       </div>
-      <ul className={styles.list}>
-        <PricingCard>
-          <h2 className={pricing.plan__name}>Radon IDE Individual</h2>
-          <h3 className={pricing.plan__price}>{individual}</h3>
-          <p className={pricing.plan__tagline}>
-            For individual developers and freelancers craving more enjoyable coding sessions.
-          </p>
-          <div className={pricing.plan__spacer} />
-          <Button onClick={openIndividualCheckout}>Buy Individual</Button>
-        </PricingCard>
-        <PricingCard>
-          <h2 className={pricing.plan__name}>Radon IDE Business</h2>
-          <h3 className={pricing.plan__price}>{business}</h3>
-          <p className={pricing.plan__tagline}>
-            For companies seeking to drastically improve their developer experience.
-          </p>
-          <div className={pricing.plan__spacer} />
-          <Button onClick={openBusinessCheckout}>Buy Business</Button>
-        </PricingCard>
-        <PricingCard>
-          <h2 className={pricing.plan__name}>Radon IDE Ultra</h2>
-          <h3 className={pricing.plan__price}>{ultra}</h3>
-          <p className={pricing.plan__tagline}>
-            For high-performing teams that value reduced context switching.
-          </p>
-          <div className={pricing.plan__spacer} />
-          <Button href="mailto:projects@swmansion.com">Contact Us</Button>
-        </PricingCard>
-        <PricingCard>
-          <h2 className={pricing.plan__name}>Radon IDE Enterprise</h2>
-          <h3 className={pricing.plan__price}>{enterprise}</h3>
-          <p className={pricing.plan__tagline}>
-            For organizations that need custom contract options, pricing plans, and support.
-          </p>
-          <div className={pricing.plan__spacer} />
-          <Button href="mailto:projects@swmansion.com">Contact Us</Button>
-        </PricingCard>
-      </ul>
-    </>
+      <div className={styles.list}>
+        {currentPlans.map((planData) => (
+          <PricingCard
+            key={planData.plan}
+            planData={planData}
+            isMonthly={isMonthly}
+            href={planData.href}
+            onButtonClick={(planId: PlanType) => actions[planId]?.()}
+          />
+        ))}
+      </div>
+    </div>
   );
 };
 

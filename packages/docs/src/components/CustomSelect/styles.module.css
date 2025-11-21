@@ -1,0 +1,74 @@
+.selectWrapper {
+  position: relative;
+}
+
+.selectTrigger {
+  display: flex;
+  padding: 12px;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--radon-border);
+  font-size: 16px;
+  font-family: Aeonik;
+  cursor: pointer;
+  user-select: none;
+  position: relative;
+  color: var(--ifm-color-primary);
+  flex-direction: row;
+}
+
+.selectTrigger:focus {
+  border: 1px solid var(--radon-active-tab);
+}
+
+.placeholder {
+  color: var(--ifm-color-primary);
+}
+
+.selectOptions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--swm-background);
+  margin-top: 4px;
+  z-index: 10;
+  gap: 0;
+}
+
+.selectOption {
+  padding: 8px;
+  cursor: pointer;
+  color: var(--ifm-color-primary);
+  transition: background-color 0.3s;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.selectOption svg,
+.selectContent svg {
+  width: 18px;
+  height: 18px;
+}
+
+.selectOption svg path {
+  stroke: transparent;
+}
+.selectOption .active svg path {
+  stroke: var(--radon-active-tab);
+}
+
+.selectOption:hover {
+  background-color: var(--radon-border);
+  color: var(--ifm-color-primary);
+}
+
+.selectContent {
+  flex-direction: row;
+  align-items: center;
+}
+
+.hideSelect {
+  display: none;
+}

@@ -98,3 +98,6 @@ AppRegistry.setWrapperComponentProvider = (provider) => {
     return require("__RNIDE_lib__/wrapper.js").createNestedAppWrapper(CustomWrapper);
   });
 };
+
+// setup devtool plugins
+require("./plugins/redux-devtools");

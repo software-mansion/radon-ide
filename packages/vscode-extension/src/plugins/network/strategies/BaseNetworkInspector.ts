@@ -4,7 +4,9 @@ import {
   WebviewMessage,
   IDEMessage,
   WebviewCommand,
+  IDEType,
   IDEMethod,
+  CDPMessage,
 } from "../../../network/types/panelMessageProtocol";
 import { RequestData, RequestOptions } from "../../../network/types/network";
 import { Logger } from "../../../Logger";
@@ -17,14 +19,18 @@ import { extractTheme } from "../../../utilities/themeExtractor";
 
 export abstract class BaseNetworkInspector implements NetworkInspector {
   protected broadcastListeners: BroadcastListener[] = [];
+  private networkMessages: WebviewMessage[] = [];
+  private trackingEnabled: boolean = true;
 
   constructor(private readonly metroPort: number) {}
 
   // #region abstract
 
+  public abstract enable(): void;
+  public abstract disable(): void;
+  public abstract dispose(): void;
   public abstract activate(): void;
   public abstract deactivate(): void;
-  public abstract dispose(): void;
   protected abstract handleGetResponseBodyData(payload: IDEMessage): Promise<void>;
   protected abstract handleCDPMessage(
     message: WebviewMessage & { command: WebviewCommand.CDPCall }
@@ -64,10 +70,37 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     }
   }
 
-  protected broadcastMessage(message: Parameters<BroadcastListener>[0]): void {
+  private shouldTrackMessage(message: WebviewMessage): boolean {
+    return this.trackingEnabled || message.command === WebviewCommand.IDECall;
+  }
+
+  protected setNetworkTracking(shouldTrack: boolean): void {
+    this.trackingEnabled = shouldTrack;
+  }
+
+  protected clearNetworkMessages(): void {
+    this.networkMessages = [];
+  }
+
+  protected broadcastMessage(message: IDEMessage, command: WebviewCommand.IDECall): void;
+  protected broadcastMessage(message: CDPMessage, command: WebviewCommand.CDPCall): void;
+  protected broadcastMessage(payload: CDPMessage | IDEMessage, command: WebviewCommand): void {
+    const message: WebviewMessage = {
+      command: command,
+      payload: payload,
+    } as WebviewMessage;
+
+    if (!this.shouldTrackMessage(message)) {
+      return;
+    }
     if (this.isInternalRequest(message)) {
       Logger.info(`Http request to metro filtered out: ${message.payload.params?.request?.url}`);
       return;
+    }
+
+    // Store CDP messages (network requests/responses)
+    if (command === WebviewCommand.CDPCall) {
+      this.networkMessages.push(message);
     }
 
     this.broadcastListeners.forEach((cb) => cb(message));
@@ -106,11 +139,7 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
   }
 
   private sendIDEMessage(payload: IDEMessage): void {
-    const message: WebviewMessage = {
-      command: WebviewCommand.IDECall,
-      payload,
-    };
-    this.broadcastMessage(message);
+    this.broadcastMessage(payload, WebviewCommand.IDECall);
   }
 
   /**
@@ -175,9 +204,24 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
     const { messageId: id, params } = message;
     const { themeDescriptor } = params || {};
     const theme = extractTheme(themeDescriptor);
-    this.sendIDEMessage({ method: IDEMethod.Theme, messageId: id, result: theme });
+    this.sendIDEMessage({ method: IDEType.Theme, messageId: id, result: theme });
   }
 
+  /**
+   * Handle get session data request from webview
+   * (network messages history and tracking status synchronisation)
+   */
+  private async handleGetSessionData(message: IDEMessage): Promise<void> {
+    const { messageId } = message;
+    this.sendIDEMessage({
+      method: IDEType.SessionData,
+      messageId,
+      result: {
+        networkMessages: this.networkMessages,
+        shouldTrackNetwork: this.trackingEnabled,
+      },
+    });
+  }
   /**
    * Handle IDE messages from webview
    */
@@ -194,6 +238,18 @@ export abstract class BaseNetworkInspector implements NetworkInspector {
         break;
       case IDEMethod.GetTheme:
         this.handleGetTheme(payload);
+        break;
+      case IDEMethod.GetSessionData:
+        this.handleGetSessionData(payload);
+        break;
+      case IDEMethod.StartNetworkTracking:
+        this.setNetworkTracking(true);
+        break;
+      case IDEMethod.StopNetworkTracking:
+        this.setNetworkTracking(false);
+        break;
+      case IDEMethod.ClearStoredMessages:
+        this.clearNetworkMessages();
         break;
       default:
         Logger.warn("Unknown IDE method received");

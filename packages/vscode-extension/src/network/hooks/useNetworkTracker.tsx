@@ -9,26 +9,31 @@ import {
   NetworkEvent,
   NETWORK_EVENTS,
   WebviewCommand,
-  NetworkMethod,
   NetworkType,
+  IDEMethod,
+  SessionData,
+  IDEType,
 } from "../types/panelMessageProtocol";
+import { generateId, createIDEResponsePromise } from "../utils/panelMessages";
 
 export interface NetworkTracker {
   networkLogs: NetworkLog[];
+  isTracking: boolean;
   clearLogs: () => void;
-  toggleNetwork: (isRunning: boolean) => void;
   getSource: (networkLog: NetworkLog) => void;
   sendWebviewCDPMessage: (messageData: CDPMessage) => void;
   sendWebviewIDEMessage: (messageData: IDEMessage) => void;
+  setIsTracking: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const networkTrackerInitialState: NetworkTracker = {
   networkLogs: [],
+  isTracking: true,
   clearLogs: () => {},
-  toggleNetwork: () => {},
   getSource: () => {},
   sendWebviewCDPMessage: () => {},
   sendWebviewIDEMessage: () => {},
+  setIsTracking: () => {},
 };
 
 interface NetworkEventTimestampMap {
@@ -118,8 +123,12 @@ class RequestTimingTracker {
 const useNetworkTracker = (): NetworkTracker => {
   const [networkLogs, setNetworkLogs] = useState<NetworkLog[]>([]);
   const [cdpMessages, setCdpMessages] = useState<CDPMessage[]>([]);
-  const requestTimtingTrakcerRef = useRef(new RequestTimingTracker());
-  const requestTimingTracker = requestTimtingTrakcerRef.current;
+  const [isTracking, setIsTracking] = useState(true);
+
+  const isSynchronisedRef = useRef(false);
+
+  const requestTimingTrackerRef = useRef(new RequestTimingTracker());
+  const requestTimingTracker = requestTimingTrackerRef.current;
 
   const validateCDPMessage = (message: WebviewMessage): CDPMessage | null => {
     try {
@@ -198,16 +207,60 @@ const useNetworkTracker = (): NetworkTracker => {
     }
   };
 
+  const getSessionData = (): Promise<SessionData> => {
+    const messageId = generateId();
+    const promise = createIDEResponsePromise<SessionData>(messageId, IDEType.SessionData);
+
+    sendWebviewIDEMessage({
+      method: IDEMethod.GetSessionData,
+      messageId: messageId,
+    });
+
+    return promise;
+  };
+
+  const updateCDPMessages = (message: WebviewMessage) => {
+    const cdpMessage = validateCDPMessage(message);
+    if (cdpMessage) {
+      setCdpMessages((prev) => [...prev, cdpMessage]);
+    }
+  };
+
+  const synchronizeSessionData = async () => {
+    const sessionData = await getSessionData();
+    const { networkMessages, shouldTrackNetwork } = sessionData || {};
+
+    networkMessages.forEach(updateCDPMessages);
+
+    setIsTracking(shouldTrackNetwork);
+    isSynchronisedRef.current = true;
+  };
+
+  const handleWindowMessage = (message: MessageEvent) => {
+    const webviewMessage: WebviewMessage = message.data;
+
+    if (webviewMessage.payload.method === IDEMethod.ClearStoredMessages) {
+      setNetworkLogs([]);
+      setCdpMessages([]);
+      return;
+    }
+
+    updateCDPMessages(webviewMessage);
+  };
+
   useEffect(() => {
-    const listener = (message: MessageEvent) => {
-      const cdpMessage = validateCDPMessage(message.data);
-      if (cdpMessage) {
-        setCdpMessages((prev) => [...prev, cdpMessage]);
-      }
-    };
-    window.addEventListener("message", listener);
+    if (!isSynchronisedRef.current) {
+      return;
+    }
+    sendNetworkTrackingUpdate(isTracking);
+  }, [isTracking]);
+
+  useEffect(() => {
+    synchronizeSessionData();
+    window.addEventListener("message", handleWindowMessage);
+
     return () => {
-      window.removeEventListener("message", listener);
+      window.removeEventListener("message", handleWindowMessage);
     };
   }, []);
 
@@ -225,6 +278,11 @@ const useNetworkTracker = (): NetworkTracker => {
   const clearLogs = () => {
     setNetworkLogs([]);
     setCdpMessages([]);
+
+    sendWebviewIDEMessage({
+      messageId: "clearStoredMessages",
+      method: IDEMethod.ClearStoredMessages,
+    });
   };
 
   const sendWebviewCDPMessage = (messageData: CDPMessage) => {
@@ -241,10 +299,10 @@ const useNetworkTracker = (): NetworkTracker => {
     });
   };
 
-  const toggleNetwork = (isRunning: boolean) => {
-    sendWebviewCDPMessage({
-      messageId: "enable",
-      method: isRunning ? NetworkMethod.Disable : NetworkMethod.Enable,
+  const sendNetworkTrackingUpdate = (shouldTrack: boolean) => {
+    sendWebviewIDEMessage({
+      messageId: "toggleTracking",
+      method: shouldTrack ? IDEMethod.StartNetworkTracking : IDEMethod.StopNetworkTracking,
     });
   };
 
@@ -261,11 +319,12 @@ const useNetworkTracker = (): NetworkTracker => {
 
   return {
     networkLogs: networkLogs.filter((log) => log?.request?.url !== undefined),
+    isTracking,
     clearLogs,
-    toggleNetwork,
     getSource,
     sendWebviewCDPMessage,
     sendWebviewIDEMessage,
+    setIsTracking,
   };
 };
 

@@ -22,12 +22,18 @@ import AppRootSelect from "../components/AppRootSelect";
 import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
-import { InspectorAvailabilityStatus, ProfilingState, ZoomLevelType } from "../../common/State";
+import {
+  InspectorAvailabilityStatus,
+  MaestroTestState,
+  ProfilingState,
+  ZoomLevelType,
+} from "../../common/State";
 import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
 import { ActivateLicenseView } from "./ActivateLicenseView";
 import { Feature, LicenseStatus } from "../../common/License";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import { useDevices } from "../hooks/useDevices";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -43,6 +49,7 @@ function ActivateLicenseButton() {
   return (
     <Button
       className="activate-license-button"
+      dataTest="open-activate-license-modal-button"
       onClick={() => {
         project.sendTelemetry("activateLicenseButtonClicked");
         openModal(<ActivateLicenseView />, { title: "Activate License" });
@@ -91,6 +98,43 @@ function ActiveToolButton({
   );
 }
 
+function ActiveTestButton({
+  testState,
+  title,
+  onClick,
+  dataTest,
+}: {
+  testState: MaestroTestState;
+  title: string;
+  onClick: () => void;
+  dataTest?: string;
+}) {
+  const showButton = testState !== "stopped";
+  return (
+    <IconButton
+      className={showButton ? "button-recording-on" : "button-recording-off"}
+      data-testid={dataTest}
+      tooltip={{
+        label: title,
+      }}
+      disabled={testState !== "running"}
+      onClick={onClick}>
+      {showButton && (
+        <>
+          <span
+            className={
+              testState === "aborting"
+                ? "codicon codicon-loading codicon-modifier-spin"
+                : "stop-square"
+            }
+          />
+          <span>{title}</span>
+        </>
+      )}
+    </IconButton>
+  );
+}
+
 function PreviewView() {
   const store$ = useStore();
   const selectedDeviceSessionState = useSelectedDeviceSessionState();
@@ -105,7 +149,7 @@ function PreviewView() {
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
 
-  const devices = use$(store$.devicesState.devices) ?? [];
+  const devices = useDevices(store$);
   const fps = use$(useSelectedDeviceSessionState().frameReporting.frameReport.fps);
   const frameReportingEnabled = use$(useSelectedDeviceSessionState().frameReporting.enabled);
   const initialized = use$(store$.projectState.initialized);
@@ -202,6 +246,10 @@ function PreviewView() {
     project.stopReportingFrameRate();
   }
 
+  function stopMaestroTest() {
+    project.stopMaestroTest();
+  }
+
   const paywalledCaptureReplay = usePaywalledCallback(
     async () => {
       await project.captureReplay();
@@ -290,6 +338,12 @@ function PreviewView() {
       : "stopped"
   );
 
+  const maestroTestState = use$(() =>
+    isRunning
+      ? (selectedDeviceSessionState.applicationSession.maestroTestState.get() ?? "stopped")
+      : "stopped"
+  );
+
   return (
     <div className="panel-view" data-testid="radon-panel-view">
       <div className="button-group-top">
@@ -313,6 +367,12 @@ function PreviewView() {
             toolState={frameReportingEnabled ? "profiling" : "stopped"}
             title={"FPS: " + (fps ?? 0)}
             onClick={stopReportingFrameRate}
+          />
+          <ActiveTestButton
+            testState={maestroTestState}
+            title="Abort Maestro test"
+            onClick={stopMaestroTest}
+            dataTest="radon-top-bar-maestro-test-button"
           />
           <ToolsDropdown disabled={!debuggerToolsButtonsActive}>
             <IconButton

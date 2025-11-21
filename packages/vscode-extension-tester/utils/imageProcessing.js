@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import { createCanvas, loadImage } from "canvas";
 import ffmpeg from "fluent-ffmpeg";
-import ffprobeStatic from "ffprobe-static";
+import ffprobeInstaller from "@ffprobe-installer/ffprobe";
 import { assert } from "chai";
 
 export function cropCanvas(canvas, position) {
@@ -66,8 +66,7 @@ export async function validateImage(filePath) {
 }
 
 export async function validateVideo(filePath, expectedDuration = null) {
-  ffmpeg.setFfprobePath(ffprobeStatic.path);
-
+  ffmpeg.setFfprobePath(ffprobeInstaller.path);
   async function getVideoInfo(filePath) {
     return new Promise((resolve, reject) => {
       ffmpeg.ffprobe(filePath, (err, metadata) => {
@@ -104,7 +103,7 @@ export async function validateVideo(filePath, expectedDuration = null) {
         count: 1,
         folder: path.dirname(framePath),
         filename: path.basename(framePath),
-        timemarks: ["1"], /// frame at 1s
+        timemarks: [Math.floor(info.format.duration)], // last second of video
       })
       .on("end", resolve)
       .on("error", reject);

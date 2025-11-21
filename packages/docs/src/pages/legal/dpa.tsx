@@ -2,6 +2,7 @@ import React from "react";
 import Layout from "@theme/Layout";
 import styles from "./dpa.module.css";
 import Button from "@site/src/components/Button";
+import clsx from "clsx";
 
 const dpaUrl =
   "https://uzpiutmionwuvyybiztr.supabase.co/storage/v1/object/public/legal//Radon%20DPA.pdf";
@@ -9,7 +10,7 @@ const dpaUrl =
 export default function DPA(): JSX.Element {
   return (
     <Layout description="Data Processing Addendum">
-      <div className={styles.container}>
+      <div className={clsx(styles.container, "border-layout")}>
         <h1>DPA</h1>
         <p>
           We prioritize the privacy and security of your information. To reflect this, we have

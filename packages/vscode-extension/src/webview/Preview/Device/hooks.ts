@@ -2,11 +2,11 @@ import { use$ } from "@legendapp/state/react";
 import { DeviceProperties } from "../../utilities/deviceConstants";
 import { useStore } from "../../providers/storeProvider";
 
-export function useDeviceFrame(device: DeviceProperties) {
+export function useDeviceFrame(device: DeviceProperties | undefined) {
   const store$ = useStore();
   const showDeviceFrame = use$(store$.workspaceConfiguration.userInterface.showDeviceFrame);
   const isFrameDisabled = showDeviceFrame === false;
-  const frame = isFrameDisabled ? device.bezel : device.skin;
+  const frame = isFrameDisabled ? device?.bezel : device?.skin;
 
   return frame;
 }

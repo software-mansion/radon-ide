@@ -26,6 +26,8 @@ import {
   watchLicenseTokenChange,
   getLicenseToken,
   refreshTokenPeriodically,
+  checkLicenseToken,
+  SimServerLicenseValidationStatus,
 } from "../utilities/license";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey } from "./tools";
@@ -46,6 +48,7 @@ import { StateManager } from "./StateManager";
 import {
   AndroidSystemImageInfo,
   DeviceInfo,
+  DevicePlatform,
   DeviceRotation,
   DevicesState,
   DeviceType,
@@ -213,11 +216,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       },
     };
 
-    getLicenseToken().then((token) => {
-      this.licenseStateManager.updateState({
-        status: token ? LicenseStatus.Pro : LicenseStatus.Inactive,
-      });
-    });
+    this.updateLicenseStatus();
 
     this.maybeStartInitialDeviceSession();
 
@@ -232,14 +231,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
     this.disposables.push(fingerprintProvider);
     this.disposables.push(refreshTokenPeriodically());
-    this.disposables.push(
-      watchLicenseTokenChange(async () => {
-        const hasActiveLicense = !!(await getLicenseToken());
-        this.licenseStateManager.updateState({
-          status: hasActiveLicense ? LicenseStatus.Pro : LicenseStatus.Inactive,
-        });
-      })
-    );
+    this.disposables.push(watchLicenseTokenChange(this.updateLicenseStatus));
     this.disposables.push(
       this.launchConfigsManager.onLaunchConfigurationsChanged((launchConfigs) => {
         this.updateProjectState({
@@ -278,6 +270,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   @guardFeatureAccess(Feature.IOSSmartphoneSimulators)
   @guardFeatureAccess(Feature.IOSTabletSimulators, (deviceInfo: DeviceInfo) => {
     return deviceInfo.deviceType !== DeviceType.Tablet;
+  })
+  @guardFeatureAccess(Feature.AndroidPhysicalDevice, (deviceInfo: DeviceInfo) => {
+    if (deviceInfo.platform === DevicePlatform.IOS) {
+      return true;
+    }
+    return deviceInfo.emulator !== false;
   })
   public startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void> {
     return this.deviceSessionsManager.startOrActivateSessionForDevice(deviceInfo);
@@ -364,6 +362,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     const newIndex = (currentIndex - direction + ROTATIONS.length) % ROTATIONS.length;
     this.workspaceStateManager.updateState({
       deviceSettings: { deviceRotation: ROTATIONS[newIndex] },
+    });
+  }
+
+  public async toggleDeviceAppearance() {
+    const currentAppearance = this.workspaceStateManager.getState().deviceSettings.appearance;
+    const nextAppearance = currentAppearance === "light" ? "dark" : "light";
+    this.workspaceStateManager.updateState({
+      deviceSettings: { appearance: nextAppearance },
     });
   }
 
@@ -458,6 +464,23 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   public get licenseState() {
     return this.licenseStateManager.getState();
   }
+
+  // needs to be an arrow function (used in callbacks)
+  private updateLicenseStatus = async () => {
+    const token = await getLicenseToken();
+    if (!token) {
+      this.licenseStateManager.updateState({ status: LicenseStatus.Inactive });
+      return;
+    }
+
+    const validationResult = await checkLicenseToken(token);
+    const status =
+      validationResult.status === SimServerLicenseValidationStatus.Success
+        ? validationResult.licensePlan
+        : LicenseStatus.Inactive;
+
+    this.licenseStateManager.updateState({ status });
+  };
 
   // #endregion License
 
@@ -622,6 +645,56 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   // #endregion Profiling
+
+  // #region Testing
+
+  public async openSelectMaestroFileDialog(): Promise<string[] | undefined> {
+    const pickerResult = await window.showOpenDialog({
+      canSelectMany: true,
+      canSelectFiles: true,
+      canSelectFolders: true,
+      title: "Select Maestro test file(s) or a folder",
+      openLabel: "Open and run",
+      filters: {
+        "Maestro Test Files": ["yaml", "yml"],
+      },
+    });
+
+    if (!pickerResult || pickerResult.length === 0) {
+      return undefined;
+    }
+
+    return pickerResult.map((u) => u.fsPath);
+  }
+
+  public async startMaestroTest(fileNames: string[]) {
+    const deviceSession = this.deviceSession;
+    if (!deviceSession) {
+      window.showWarningMessage(
+        "Wait for the app to load before running Maestro tests.",
+        "Dismiss"
+      );
+      return;
+    }
+    commands.executeCommand("RNIDE.showPanel");
+
+    const applicationDependencies =
+      this.stateManager.getState().applicationContext.applicationDependencies;
+    if (applicationDependencies?.maestro?.status === "installed") {
+      await deviceSession.startMaestroTest(fileNames);
+    } else {
+      window.showErrorMessage(
+        "Failed to run tests: could not find the Maestro executable. Make sure Maestro is installed and accessible in your PATH environment variable.",
+        "Dismiss"
+      );
+    }
+  }
+
+  public async stopMaestroTest() {
+    await this.deviceSession?.stopMaestroTest();
+  }
+
+  // #endregion Testing
 
   // #region Device Input
 

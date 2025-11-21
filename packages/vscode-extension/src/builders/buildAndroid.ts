@@ -1,6 +1,8 @@
+import assert from "assert";
 import fs from "fs";
 import path from "path";
 import semver from "semver";
+import { AndroidConfig } from "@expo/config-plugins";
 import loadConfig from "@react-native-community/cli-config";
 import { calculateAppArtifactHash, getNativeABI } from "../utilities/common";
 import { ANDROID_HOME, findJavaHome } from "../utilities/android";
@@ -27,6 +29,9 @@ export type AndroidBuildResult = {
   platform: DevicePlatform.Android;
   apkPath: string;
   packageName: string;
+  /** This is application id as defined in build.gradle, before any modifications made by build type or product flavor. */
+  baseAppId?: string;
+  launchActivity?: string;
   buildHash: string;
 };
 
@@ -46,12 +51,86 @@ function locateAapt() {
   return path.join(BUILD_TOOLS_PATH, latestVersion, "aapt");
 }
 
-async function extractPackageName(artifactPath: string, cancelToken: CancelToken) {
+/**
+ * This function extracts the application Id that allows for identifying the application
+ * while managing its runtime it might be defined by multiple configurations
+ * https://developer.android.com/build/configure-app-module
+ */
+async function extractAppId(artifactPath: string, cancelToken: CancelToken) {
   const aaptPath = locateAapt();
   const { stdout } = await cancelToken.adapt(exec(aaptPath, ["dump", "badging", artifactPath]));
   const packageLine = stdout.split("\n").find((line: string) => line.startsWith("package: name="));
-  const packageName = packageLine!.split("'")[1];
-  return packageName;
+  assert(packageLine, "aapt file always contains the line specifying the package name");
+  const appId = packageLine.split("'")[1];
+  return appId;
+}
+
+async function getApplicationManifest(
+  projectRoot: string
+): Promise<AndroidConfig.Manifest.AndroidManifest | undefined> {
+  try {
+    const filePath = await AndroidConfig.Paths.getAndroidManifestAsync(projectRoot);
+    const androidManifest = await AndroidConfig.Manifest.readAndroidManifestAsync(filePath);
+
+    if (androidManifest) {
+      return androidManifest;
+    }
+  } catch {
+    // ignore errors and just return undefined here
+  }
+  return undefined;
+}
+
+async function resolveAppIdFromNative(projectRoot: string): Promise<string | null> {
+  const applicationIdFromGradle = await AndroidConfig.Package.getApplicationIdAsync(
+    projectRoot
+  ).catch(() => null);
+  if (applicationIdFromGradle) {
+    return applicationIdFromGradle;
+  }
+
+  try {
+    const filePath = await AndroidConfig.Paths.getAndroidManifestAsync(projectRoot);
+    const androidManifest = await AndroidConfig.Manifest.readAndroidManifestAsync(filePath);
+    // Assert MainActivity defined.
+    await AndroidConfig.Manifest.getMainActivityOrThrow(androidManifest);
+    const appId = androidManifest.manifest?.$?.package;
+    if (appId) {
+      return appId;
+    }
+  } catch (error: any) {
+    Logger.debug("Expected error resolving the package name from the AndroidManifest.xml:", error);
+  }
+
+  return null;
+}
+
+async function getLaunchActivity(
+  projectRoot: string,
+  appId: string,
+  baseAppId: string
+): Promise<string | undefined> {
+  const manifest = await getApplicationManifest(projectRoot);
+  if (!manifest) return undefined;
+
+  const mainActivity = await AndroidConfig.Manifest.getRunnableActivity(manifest);
+  if (!mainActivity) return undefined;
+
+  const mainActivityName = mainActivity.$["android:name"];
+
+  // Note(Filip Kamiński) This is not supported by the expo version at the time this code wa written,
+  // but seems to be an important edge case for at least one project considering using Radon,
+  // they even opened a PR to expo to support activities with domain names.
+  // https://github.com/expo/expo/pull/39236
+  const combinedMainActivity = mainActivityName.startsWith(".")
+    ? `${baseAppId}${mainActivityName}`
+    : mainActivityName;
+
+  // the generation of the launch activity is inspired by expo CLI and good entry point to find out more
+  // is here https://github.com/expo/expo/blob/main/packages/%40expo/cli/src/run/android/resolveLaunchProps.ts
+  return baseAppId && appId !== baseAppId
+    ? `${appId}/${combinedMainActivity}`
+    : `${appId}/${mainActivity}`;
 }
 
 function getApkPath(appRootFolder: string, productFlavor: string, buildType: string) {
@@ -67,8 +146,18 @@ export async function getAndroidBuildPaths(
   buildType: string
 ) {
   const apkPath = getApkPath(appRootFolder, productFlavor, buildType);
-  const packageName = await extractPackageName(apkPath, cancelToken);
-  return { apkPath, packageName };
+  const packageName = await extractAppId(apkPath, cancelToken);
+
+  const baseAppId = await cancelToken.adapt(resolveAppIdFromNative(appRootFolder));
+  if (baseAppId === null) {
+    return { apkPath, packageName };
+  }
+
+  const launchActivity = await cancelToken.adapt(
+    getLaunchActivity(appRootFolder, packageName, baseAppId)
+  );
+
+  return { apkPath, packageName, baseAppId, launchActivity };
 }
 
 function makeBuildTaskName(productFlavor: string, buildType: string, appName?: string) {
@@ -112,7 +201,7 @@ export async function buildAndroid(
 
       return {
         apkPath,
-        packageName: await extractPackageName(apkPath, cancelToken),
+        packageName: await extractAppId(apkPath, cancelToken),
         platform: DevicePlatform.Android,
         buildHash: await calculateAppArtifactHash(apkPath),
       };
@@ -131,7 +220,7 @@ export async function buildAndroid(
 
       return {
         apkPath,
-        packageName: await extractPackageName(apkPath, cancelToken),
+        packageName: await extractAppId(apkPath, cancelToken),
         platform: DevicePlatform.Android,
         buildHash: await calculateAppArtifactHash(apkPath),
       };
@@ -150,7 +239,7 @@ export async function buildAndroid(
 
       return {
         apkPath,
-        packageName: await extractPackageName(apkPath, cancelToken),
+        packageName: await extractAppId(apkPath, cancelToken),
         platform: DevicePlatform.Android,
         buildHash: await calculateAppArtifactHash(apkPath),
       };

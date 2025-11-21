@@ -71,7 +71,16 @@ export function fetchExpoLaunchDeeplink(
       (res) => {
         if (res.statusCode === 307) {
           // we want to retrieve redirect location
-          resolve(res.headers.location);
+          const location = new URL(res.headers.location!);
+          // NOTE: for physical Android devices, the address for the host machine is different
+          // than the one we get in the redirect. However, since we forward the metro port, we can
+          // use `localhost` for the host without issue.
+          if (choice === "expo-go") {
+            location.hostname = "localhost";
+          } else {
+            location.searchParams.set("url", `http://localhost:${metroPort}`);
+          }
+          resolve(location.toString());
         } else {
           resolve();
         }

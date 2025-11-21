@@ -1,8 +1,10 @@
 import path from "path";
 import fs from "fs";
+import assert from "assert";
 import { ExecaChildProcess, ExecaError } from "execa";
 import mime from "mime";
 import _ from "lodash";
+import { Disposable } from "vscode";
 import { getAppCachesDir, getOldAppCachesDir } from "../utilities/common";
 import { DeviceBase } from "./DeviceBase";
 import { Preview } from "./preview";
@@ -16,8 +18,8 @@ import { IOSBuildResult } from "../builders/buildIOS";
 import { OutputChannelRegistry } from "../project/OutputChannelRegistry";
 import { Output } from "../common/OutputChannel";
 import {
-  DeviceInfo,
   DevicePlatform,
+  DevicesByType,
   DeviceSettings,
   DeviceType,
   InstallationError,
@@ -26,7 +28,11 @@ import {
   IOSRuntimeInfo,
   Locale,
 } from "../common/State";
-import assert from "assert";
+import { checkXcodeExists } from "../utilities/checkXcodeExists";
+import { Platform } from "../utilities/platform";
+import { DeviceAlreadyUsedError } from "./DeviceAlreadyUsedError";
+import { DevicesProvider } from "./DevicesProvider";
+import { StateManager } from "../project/StateManager";
 
 interface SimulatorInfo {
   availability?: string;
@@ -68,7 +74,7 @@ export class IosSimulatorDevice extends DeviceBase {
   constructor(
     deviceSettings: DeviceSettings,
     private readonly deviceUDID: string,
-    private readonly _deviceInfo: DeviceInfo,
+    private readonly _deviceInfo: IOSDeviceInfo,
     private readonly outputChannelRegistry: OutputChannelRegistry
   ) {
     super(deviceSettings);
@@ -78,8 +84,12 @@ export class IosSimulatorDevice extends DeviceBase {
     return DevicePlatform.IOS;
   }
 
-  public get deviceInfo() {
+  public get deviceInfo(): IOSDeviceInfo {
     return this._deviceInfo;
+  }
+
+  public get id(): string {
+    return this.deviceUDID;
   }
 
   public get lockFilePath(): string {
@@ -90,6 +100,9 @@ export class IosSimulatorDevice extends DeviceBase {
 
   private get nativeLogsOutputChannel() {
     return this.outputChannelRegistry.getOrCreateOutputChannel(Output.IosDevice);
+  }
+  private get maestroLogsOutputChannel() {
+    return this.outputChannelRegistry.getOrCreateOutputChannel(Output.MaestroIos);
   }
 
   public dispose() {
@@ -655,14 +668,22 @@ export class IosSimulatorDevice extends DeviceBase {
     ]);
   }
 
-  makePreview(): Preview {
-    return new Preview([
+  async forwardDevicePort(port: number) {
+    // iOS Simulators do not require port forwarding
+  }
+
+  makePreview(licenseToken?: string): Preview {
+    const args = [
       "ios",
       "--id",
       this.deviceUDID,
       "--device-set",
       getOrCreateDeviceSet(this.deviceUDID),
-    ]);
+    ];
+    if (licenseToken !== undefined) {
+      args.push("-t", licenseToken);
+    }
+    return new Preview(args);
   }
 
   public async sendFile(filePath: string) {
@@ -903,7 +924,7 @@ function getOldDeviceSetLocation() {
   return path.join(oldAppCachesDir, "Devices", "iOS");
 }
 
-function getOrCreateDeviceSet(deviceUDID?: string) {
+export function getOrCreateDeviceSet(deviceUDID?: string) {
   let deviceSetLocation = getDeviceSetLocation(deviceUDID);
   if (!fs.existsSync(deviceSetLocation)) {
     fs.mkdirSync(deviceSetLocation, { recursive: true });
@@ -947,5 +968,70 @@ async function ensureUniqueDisplayNames(devices: IOSDeviceInfo[]) {
       device.displayName = newName;
       await renameIosSimulator(device.UDID, newName);
     }
+  }
+}
+
+export class IosSimulatorProvider implements DevicesProvider<IOSDeviceInfo>, Disposable {
+  constructor(
+    private stateManager: StateManager<DevicesByType>,
+    private outputChannelRegistry: OutputChannelRegistry
+  ) {}
+
+  public async listDevices() {
+    let shouldLoadSimulators = Platform.OS === "macos";
+
+    if (!shouldLoadSimulators) {
+      return [];
+    }
+
+    if (!(await checkXcodeExists())) {
+      Logger.debug("Couldn't list iOS simulators as XCode installation wasn't found");
+      return [];
+    }
+
+    try {
+      const simulators = await listSimulators(SimulatorDeviceSet.RN_IDE);
+      this.stateManager.updateState({ iosSimulators: simulators });
+      return simulators;
+    } catch (e) {
+      Logger.error("Error fetching simulators", e);
+      return [];
+    }
+  }
+
+  public async acquireDevice(
+    deviceInfo: IOSDeviceInfo,
+    deviceSettings: DeviceSettings
+  ): Promise<IosSimulatorDevice | undefined> {
+    if (deviceInfo.platform !== DevicePlatform.IOS) {
+      return undefined;
+    }
+
+    if (Platform.OS !== "macos") {
+      throw new Error("Invalid platform. Expected macos.");
+    }
+
+    const simulators = await listSimulators(SimulatorDeviceSet.RN_IDE);
+    const simulatorInfo = simulators.find((device) => device.id === deviceInfo.id);
+    if (!simulatorInfo || simulatorInfo.platform !== DevicePlatform.IOS) {
+      throw new Error(`Simulator ${deviceInfo.id} not found`);
+    }
+    const device = new IosSimulatorDevice(
+      deviceSettings,
+      simulatorInfo.UDID,
+      simulatorInfo,
+      this.outputChannelRegistry
+    );
+
+    if (await device.acquire()) {
+      return device;
+    }
+
+    device.dispose();
+    throw new DeviceAlreadyUsedError();
+  }
+
+  public dispose() {
+    this.stateManager.dispose();
   }
 }

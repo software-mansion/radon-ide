@@ -12,6 +12,11 @@ import { NetworkLog } from "../../types/networkLog";
 import "./PayloadAndResponseTab.css";
 import { ThemeData } from "../../../common/theme";
 import { NetworkEvent } from "../../types/panelMessageProtocol";
+import {
+  ResponseTooLargeWarning,
+  ResponseLoadingInfo,
+  ResponseDataFetchFailedInfo,
+} from "./ResponseStatusMessages";
 
 interface ResponseTabProps {
   networkLog: NetworkLog;
@@ -23,6 +28,7 @@ interface ResponseTabProps {
 interface ResponseBodyContentProps {
   wasTruncated: boolean;
   dataFetchFailed: boolean;
+  dataLoading: boolean;
   responseData: string | undefined;
   language: string;
   editorThemeData?: ThemeData;
@@ -30,19 +36,12 @@ interface ResponseBodyContentProps {
   isActive?: boolean;
 }
 
-function ResponseTooLargeWarning() {
-  return (
-    <pre className="response-tab-truncated-warning">
-      <span className="codicon codicon-warning" /> Response too large, showing truncated data.
-    </pre>
-  );
-}
-
 const NO_RESPONSE_PLACEHOLDER = "No response body";
 
 const ResponseBodyContent = ({
   wasTruncated,
   dataFetchFailed,
+  dataLoading,
   responseData,
   language,
   editorThemeData,
@@ -50,12 +49,11 @@ const ResponseBodyContent = ({
   isActive,
 }: ResponseBodyContentProps) => {
   if (dataFetchFailed) {
-    return (
-      <div className="response-tab-failed-fetch-information">
-        <span className="codicon codicon-info" />
-        <h4>Failed to load response data</h4>
-      </div>
-    );
+    return <ResponseDataFetchFailedInfo />;
+  }
+
+  if (dataLoading) {
+    return <ResponseLoadingInfo />;
   }
 
   if (!responseData) {
@@ -120,6 +118,9 @@ const ResponseTab = ({
   const language = getLanguage();
 
   const requestFailed = networkLog.currentState === NetworkEvent.LoadingFailed;
+  const requestLoading =
+    networkLog.currentState !== NetworkEvent.LoadingFinished &&
+    networkLog.currentState !== NetworkEvent.LoadingFailed;
   const dataFetchFailed = requestFailed && !responseData;
 
   const handleOpenInEditor = () => {
@@ -130,13 +131,13 @@ const ResponseTab = ({
     <>
       <TabActionButtons
         data={responseData}
-        disabled={!responseData}
+        disabled={!responseData || requestLoading}
         additionalButtons={
           <IconButton
             className="response-tab-copy-button"
             tooltip={{ label: "Open response in editor", side: "bottom" }}
             onClick={handleOpenInEditor}
-            disabled={dataFetchFailed}>
+            disabled={dataFetchFailed || requestLoading}>
             <span className="codicon codicon-chrome-restore" />
           </IconButton>
         }
@@ -145,6 +146,7 @@ const ResponseTab = ({
         <ResponseBodyContent
           wasTruncated={wasTruncated}
           dataFetchFailed={dataFetchFailed}
+          dataLoading={requestLoading}
           responseData={responseData}
           language={language}
           editorThemeData={editorThemeData}

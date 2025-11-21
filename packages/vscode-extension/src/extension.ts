@@ -38,6 +38,7 @@ import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
 import { RestrictedFunctionalityError } from "./common/Errors";
 import { registerRadonAI } from "./ai/mcp/RadonMcpController";
+import { MaestroCodeLensProvider } from "./providers/MaestroCodeLensProvider";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -197,6 +198,25 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
+  async function startMaestroTest(fileNames: string[]) {
+    const ide = IDE.getInstanceIfExists();
+    if (ide) {
+      ide.project.startMaestroTest(fileNames);
+    } else {
+      window.showWarningMessage(
+        "Wait for the app to load before running Maestro tests.",
+        "Dismiss"
+      );
+    }
+  }
+
+  async function stopMaestroTest() {
+    const ide = IDE.getInstanceIfExists();
+    if (ide) {
+      ide.project.stopMaestroTest();
+    }
+  }
+
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       SidePanelViewProvider.viewType,
@@ -242,6 +262,8 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.showInlinePreview", showInlinePreview)
   );
+  context.subscriptions.push(commands.registerCommand("RNIDE.startMaestroTest", startMaestroTest));
+  context.subscriptions.push(commands.registerCommand("RNIDE.stopMaestroTest", stopMaestroTest));
 
   context.subscriptions.push(commands.registerCommand("RNIDE.captureReplay", captureReplay));
   context.subscriptions.push(commands.registerCommand("RNIDE.toggleRecording", toggleRecording));
@@ -266,6 +288,9 @@ export async function activate(context: ExtensionContext) {
   );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.rotateDeviceClockwise", rotateDeviceClockwise)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.toggleDeviceAppearance", toggleDeviceAppearance)
   );
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
@@ -337,6 +362,13 @@ export async function activate(context: ExtensionContext) {
         { scheme: "file", language: "javascript" },
       ],
       new PreviewCodeLensProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    languages.registerCodeLensProvider(
+      [{ scheme: "file", language: "yaml" }],
+      new MaestroCodeLensProvider()
     )
   );
 
@@ -458,6 +490,11 @@ async function rotateDeviceAnticlockwise() {
 
 async function rotateDeviceClockwise() {
   await rotateDevice(DeviceRotationDirection.Clockwise);
+}
+
+async function toggleDeviceAppearance() {
+  const project = IDE.getInstanceIfExists()?.project;
+  await project?.toggleDeviceAppearance();
 }
 
 async function openChat() {
