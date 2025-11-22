@@ -55,7 +55,7 @@ export function getCurrentWorkspaceConfiguration(config: WorkspaceConfiguration)
     userInterface: {
       panelLocation:
         config.get<PanelLocation>(WorkspaceConfigurationKeyMap.userInterface.panelLocation) ??
-        "tab",
+        "side-panel",
       showDeviceFrame:
         config.get<boolean>(WorkspaceConfigurationKeyMap.userInterface.showDeviceFrame) ?? true,
     },
