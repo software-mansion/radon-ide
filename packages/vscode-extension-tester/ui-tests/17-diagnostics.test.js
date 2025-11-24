@@ -1,22 +1,42 @@
-import { exec, execSync } from "child_process";
+import { execSync } from "child_process";
+import path from "path";
 import * as fs from "fs";
 import { WebView, EditorView } from "vscode-extension-tester";
 import { assert } from "chai";
 import initServices from "../services/index.js";
-import { safeDescribe } from "../utils/helpers.js";
+import { safeDescribe, itIf } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
+const raw = fs.readFileSync("./data/react-native-app/package.json");
+const data = JSON.parse(raw);
+const IS_EXPO = data.name.includes("expo");
+
 safeDescribe("17 - Diagnostics tests", () => {
-  let driver, elementHelperService, radonViewsService, managingDevicesService;
+  let driver;
+  let {
+    elementHelperService,
+    radonViewsService,
+    managingDevicesService,
+    appManipulationService,
+  } = initServices();
 
   before(async () => {
     driver = get().driver;
 
-    ({ elementHelperService, radonViewsService, managingDevicesService } =
-      initServices(driver));
+    ({
+      elementHelperService,
+      radonViewsService,
+      managingDevicesService,
+      appManipulationService,
+    } = initServices(driver));
+
+    await managingDevicesService.prepareDevices();
+    await appManipulationService.waitForAppToLoad();
+
+    let view = new WebView();
+    await view.switchBack();
 
     await managingDevicesService.deleteAllDevices();
-    const view = new WebView();
     await view.switchBack();
     await new EditorView().closeAllEditors();
   });
@@ -53,14 +73,17 @@ safeDescribe("17 - Diagnostics tests", () => {
       await elementHelperService.findAndWaitForElementByTag(
         `diagnostic-icon-${name}-notInstalled`
       );
-      const errorElement = await elementHelperService.findAndClickElementByTag(
-        `diagnostic-error-${name}`
-      );
-      assert.equal(
-        await errorElement.getText(),
-        errorMessage,
-        `Error message for ${name} is not correct`
-      );
+      if (errorMessage) {
+        const errorElement =
+          await elementHelperService.findAndClickElementByTag(
+            `diagnostic-error-${name}`
+          );
+        assert.equal(
+          await errorElement.getText(),
+          errorMessage,
+          `Error message for ${name} is not correct`
+        );
+      }
     } finally {
       await fixFunction();
       await elementHelperService.findAndClickElementByTag(
@@ -125,7 +148,7 @@ safeDescribe("17 - Diagnostics tests", () => {
     );
   });
 
-  it("should show correct diagnostic for pods", async function () {
+  itIf(!IS_EXPO, "should show correct diagnostic for pods", async function () {
     await testDiagnostic(
       "pods",
       async () => {
@@ -142,7 +165,7 @@ safeDescribe("17 - Diagnostics tests", () => {
     );
   });
 
-  it("should show correct diagnostic for ios", async function () {
+  itIf(!IS_EXPO, "should show correct diagnostic for ios", async function () {
     await testDiagnostic(
       "ios",
       async () => {
@@ -159,57 +182,136 @@ safeDescribe("17 - Diagnostics tests", () => {
     );
   });
 
-  it("should show correct diagnostic for android", async function () {
+  itIf(
+    !IS_EXPO,
+    "should show correct diagnostic for android",
+    async function () {
+      await testDiagnostic(
+        "android",
+        async () => {
+          execSync(
+            "mv ./data/react-native-app/android ./data/react-native-app/not_android"
+          );
+        },
+        async () => {
+          execSync(
+            "mv ./data/react-native-app/not_android ./data/react-native-app/android"
+          );
+        },
+        `"android" directory does not exist in the main application directory`
+      );
+    }
+  );
+
+  itIf(
+    !IS_EXPO,
+    "should show correct diagnostic for cocoapods",
+    async function () {
+      await testDiagnostic(
+        "cocoaPods",
+        async () => {
+          execSync("brew unlink cocoapods");
+          execSync(
+            "mv ./data/react-native-app/Gemfile ./data/react-native-app/not_Gemfile"
+          );
+        },
+        async () => {
+          execSync("brew link cocoapods");
+          execSync(
+            "mv ./data/react-native-app/not_Gemfile ./data/react-native-app/Gemfile"
+          );
+        },
+        `CocoaPods was not found. Make sure to install CocoaPods.`
+      );
+    }
+  );
+
+  itIf(
+    !IS_EXPO,
+    "should show correct diagnostic for react-native",
+    async function () {
+      const reactNativeVersion = getPackageVersion("react-native");
+      const targetDir = path.join(process.cwd(), "data", "react-native-app");
+      await testDiagnostic(
+        "reactNative",
+        async () => {
+          execSync("npm uninstall react-native", { cwd: targetDir });
+          execSync("npm uninstall @react-native/new-app-screen", {
+            cwd: targetDir,
+          });
+        },
+        async () => {
+          execSync(`npm install react-native@${reactNativeVersion}`, {
+            cwd: targetDir,
+          });
+          execSync("npm install @react-native/new-app-screen", {
+            cwd: targetDir,
+          });
+        },
+        `React Native is not installed or it is older than supported version 0.71.0.`
+      );
+    }
+  );
+
+  itIf(IS_EXPO, "should show correct diagnostic for expo", async function () {
+    const targetDir = path.join(process.cwd(), "data", "react-native-app");
+    const packageJsonPath = path.join(targetDir, "package.json");
+    const originalPackageJson = fs.readFileSync(packageJsonPath, "utf8");
+
     await testDiagnostic(
-      "android",
+      "expo",
       async () => {
-        execSync(
-          "mv ./data/react-native-app/android ./data/react-native-app/not_android"
-        );
+        const packageData = JSON.parse(originalPackageJson);
+
+        const filterDeps = (deps) => {
+          if (!deps) return {};
+          const newDeps = {};
+          Object.keys(deps).forEach((key) => {
+            if (!key.startsWith("expo") && !key.startsWith("@expo")) {
+              newDeps[key] = deps[key];
+            }
+          });
+          return newDeps;
+        };
+
+        if (packageData.dependencies) {
+          packageData.dependencies = filterDeps(packageData.dependencies);
+        }
+        if (packageData.devDependencies) {
+          packageData.devDependencies = filterDeps(packageData.devDependencies);
+        }
+
+        fs.writeFileSync(packageJsonPath, JSON.stringify(packageData, null, 2));
+        execSync("npm install", { cwd: targetDir, stdio: "inherit" });
       },
       async () => {
-        execSync(
-          "mv ./data/react-native-app/not_android ./data/react-native-app/android"
-        );
-      },
-      `"android" directory does not exist in the main application directory`
+        if (originalPackageJson) {
+          fs.writeFileSync(packageJsonPath, originalPackageJson);
+          execSync("npm install", { cwd: targetDir, stdio: "inherit" });
+        }
+      }
     );
   });
 
-  it("should show correct diagnostic for cocoapods", async function () {
-    await testDiagnostic(
-      "cocoaPods",
-      async () => {
-        execSync("brew unlink cocoapods");
-        execSync(
-          "mv ./data/react-native-app/Gemfile ./data/react-native-app/not_Gemfile"
-        );
-      },
-      async () => {
-        execSync("brew link cocoapods");
-        execSync(
-          "mv ./data/react-native-app/not_Gemfile ./data/react-native-app/Gemfile"
-        );
-      },
-      `CocoaPods was not found. Make sure to install CocoaPods.`
-    );
-  });
-
-  // it("should show correct diagnostic for react-native", async function () {
-  //   const reactNativeVersion = getPackageVersion("react-native");
-  //   await testDiagnostic(
-  //     "reactNative",
-  //     async () => {
-  //       execSync("npm uninstall react-native");
-  //       execSync("npm uninstall @react-native/new-app-screen");
-  //       execSync("npm install");
-  //     },
-  //     async () => {
-  //       execSync(`npm install react-native@${reactNativeVersion}`);
-  //       execSync("npm install @react-native/new-app-screen");
-  //       execSync("npm install");
-  //     },
-  //     `React Native was not found. Make sure to install React Native.`
-  //   );
-  // });
+  itIf(
+    IS_EXPO,
+    "should show correct diagnostic for expo-router",
+    async function () {
+      const targetDir = path.join(process.cwd(), "data", "react-native-app");
+      const packageJsonPath = path.join(targetDir, "package.json");
+      const originalPackageJson = fs.readFileSync(packageJsonPath, "utf8");
+      await testDiagnostic(
+        "expoRouter",
+        async () => {
+          execSync("npm uninstall expo-router", { cwd: targetDir });
+        },
+        async () => {
+          if (originalPackageJson) {
+            fs.writeFileSync(packageJsonPath, originalPackageJson);
+            execSync("npm install", { cwd: targetDir, stdio: "inherit" });
+          }
+        }
+      );
+    }
+  );
 });
