@@ -92,7 +92,7 @@ To cover this scenario the interceptor now patches the stream controller's priva
 `_cancelAlgorithm` right after it is created inside `__didReceiveNetworkResponse`. When the cancel
 path is executed we:
 
-- BUffer the queued incremental chunks through `bufferResponseBody` to
+- Buffer the queued incremental chunks through `bufferResponseBody` to
   `AsyncBoundedResponseBuffer`.
 - Emit `Network.loadingFinished` CDP message that mirrors the metadata we normally send
   on successful completion (response info, duration, MIME type).
@@ -102,6 +102,19 @@ path is executed we:
 This keeps the inspector timeline consistent: the UI still receives a final event for the request
 and can show whatever data arrived before cancellation instead of leaving the entry stuck in
 "Receiving" state.
+
+### Stream Reader Completion Handling
+
+The polyfill exposes a `ReadableStream` on the response body and consumers call `response.body.getReader()`. Each reader carries an internal `_closedPromise` that resolves when the stream finishes producing data and rejects when it closes with an error.
+
+To ensure we mirror native completion even when `__didCompleteNetworkResponse` is not invoked (e.g. when stream is canceled by user), the interceptor overrides the `getReader` call on every response stream that we see inside `__didReceiveNetworkResponse`. The patched version:
+
+- Hooks into `_closedPromise.then()` to buffer the final response body and emit a
+  `Network.loadingFinished` CDP event with the same metadata as the regular completion path.
+- Hooks into `_closedPromise.catch()` to flush any incremental chunks and emit
+  `Network.loadingFailed`.
+
+This ensures we always surface a terminal Network event regardless of how the consumer interacts with the streamed body (reader cancellation, early completion, or runtime errors).
 
 ## Native Response Types
 
