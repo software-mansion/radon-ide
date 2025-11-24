@@ -87,6 +87,13 @@ export function InspectDataMenu({
 
   const onReferenceInChat = usePaywalledCallback(
     (e) => {
+      if (inspectItems.length === 0) {
+        // Silently aborting when `inspectedItems` is empty.
+        // This case should never occur, but it's certainly possible (e.g. CDP communication failure).
+        e.preventDefault();
+        return;
+      }
+
       // Include component + where it's used. ([0] & [0].owner? Could require more if component is nested, likely can't cover all cases, but attaching everything isn't an option either)
       const childFilename = inspectItems[0].source.fileName;
       let parentFilename = childFilename;
