@@ -11,7 +11,6 @@ safeDescribe("1 - Smoke tests Radon IDE", () => {
   beforeEach(async function () {
     ({ driver, workbench } = get());
     ({ elementHelperService, radonViewsService } = initServices(driver));
-    await driver.sleep(600000);
   });
 
   it("should open Radon IDE view using command line", async function () {
