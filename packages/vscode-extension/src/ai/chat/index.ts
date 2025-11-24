@@ -23,11 +23,16 @@ async function processChatResponse(
       Logger.info(CHAT_LOG, "Tool call requested");
       const results = await invokeToolCall(toolCall.name, toolCall.input, toolCall.callId);
       const toolMessages = [];
-      for (const response of results.content) {
-        if (response.type === "text") {
+
+      // By default, `results.content` is mistyped as `unknown`
+      for (const response of results.content as (
+        | vscode.LanguageModelTextPart
+        | vscode.LanguageModelDataPart
+      )[]) {
+        if ("value" in response) {
           toolMessages.push(
             vscode.LanguageModelChatMessage.Assistant(
-              `"${chunk.name}" has been called - results:\n\n\`\`\`\n${response}\n\`\`\``
+              `"${chunk.name}" has been called - results:\n\n\`\`\`\n${response.value}\n\`\`\``
             )
           );
         } else {
