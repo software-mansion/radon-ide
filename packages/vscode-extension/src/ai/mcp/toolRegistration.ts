@@ -1,4 +1,4 @@
-import vscode, { Disposable } from "vscode";
+import vscode, { commands, Disposable } from "vscode";
 import { readLogsToolExec, screenshotToolExec, viewComponentTreeExec } from "./toolExecutors";
 import { invokeToolCall } from "../shared/api";
 import { textToToolResponse } from "./utils";
@@ -81,7 +81,23 @@ export class ViewApplicationLogsTool implements vscode.LanguageModelTool<EmptyTo
   }
 }
 
-export function registerRadonAI(): Disposable {
+// TODO: Find a better name
+function updateExtensionContextShouldUseDirectRegistering() {
+  commands.executeCommand("setContext", "RNIDE.useStaticToolRegistering", true);
+}
+
+function shouldUseDirectRegistering() {
+  return (
+    // @ts-ignore vscode.lm.registerTool API with image support only available in VSCode version 1.105+ (excluding Cursor)
+    vscode.version.localeCompare("1.105.0", undefined, { numeric: true }) >= 0
+  );
+}
+
+function registerMcpTools(): Disposable {
+  return Disposable.from();
+}
+
+function registerStaticTools() {
   const queryDocumentationTool = vscode.lm.registerTool(
     "query_documentation",
     new ViewScreenshotTool()
@@ -111,4 +127,14 @@ export function registerRadonAI(): Disposable {
     viewComponentTreeTool,
     viewApplicationLogsTool
   );
+}
+
+export function registerRadonAI(): Disposable {
+  updateExtensionContextShouldUseDirectRegistering();
+
+  if (shouldUseDirectRegistering()) {
+    return registerStaticTools();
+  } else {
+    return registerMcpTools();
+  }
 }

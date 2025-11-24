@@ -37,8 +37,16 @@
   },
   "main": "./dist/extension.js",
   "contributes": {
+    "mcpServerDefinitionProviders": [
+      {
+        "when": "!RNIDE.useStaticToolRegistering",
+        "id": "RadonAIMCPProvider",
+        "label": "MCP server integrating with Radon IDE"
+      }
+    ],
     "languageModelTools": [
       {
+        "when": "RNIDE.useStaticToolRegistering",
         "displayName": "Get library description",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "get_library_description",
@@ -62,6 +70,7 @@
         ]
       },
       {
+        "when": "RNIDE.useStaticToolRegistering",
         "displayName": "Query documentation",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "query_documentation",
@@ -84,6 +93,7 @@
         ]
       },
       {
+        "when": "RNIDE.useStaticToolRegistering",
         "displayName": "View component tree",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "view_component_tree",
@@ -99,6 +109,7 @@
         ]
       },
       {
+        "when": "RNIDE.useStaticToolRegistering",
         "displayName": "View application logs",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "view_application_logs",
@@ -114,6 +125,7 @@
         ]
       },
       {
+        "when": "RNIDE.useStaticToolRegistering",
         "displayName": "View screenshot",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "view_screenshot",
