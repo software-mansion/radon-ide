@@ -1,5 +1,6 @@
 import { Disposable } from "vscode";
 import _ from "lodash";
+import { SemVer } from "semver";
 import { RadonInspectorBridge } from "./inspectorBridge";
 import { NetworkBridge } from "./networkBridge";
 import { extensionContext } from "../utilities/extensionContext";
@@ -72,7 +73,8 @@ export class ToolsManager implements Disposable {
     public readonly inspectorBridge: RadonInspectorBridge,
     public readonly networkBridge: NetworkBridge,
     public readonly workspaceConfigState: StateManager<WorkspaceConfiguration>,
-    public readonly metroPort: number
+    public readonly metroPort: number,
+    private readonly reactNativeVersion: SemVer | null
   ) {
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
     for (const plugin of createExpoDevPluginTools()) {
@@ -98,7 +100,7 @@ export class ToolsManager implements Disposable {
     this.plugins.set(APOLLO_PLUGIN_ID, new ApolloClientDevtoolsPlugin(inspectorBridge));
     this.plugins.set(
       NETWORK_PLUGIN_ID,
-      new NetworkPlugin(inspectorBridge, networkBridge, metroPort)
+      new NetworkPlugin(inspectorBridge, networkBridge, metroPort, this.reactNativeVersion)
     );
     this.plugins.set(
       RENDER_OUTLINES_PLUGIN_ID,

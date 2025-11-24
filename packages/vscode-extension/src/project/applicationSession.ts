@@ -239,7 +239,8 @@ export class ApplicationSession implements Disposable {
       devtoolsInspectorBridge,
       this.networkBridge,
       this.applicationContext.workspaceConfigState,
-      this.metro.port
+      this.metro.port,
+      this.applicationContext.reactNativeVersion
     );
 
     this.disposables.push(this.toolsManager);

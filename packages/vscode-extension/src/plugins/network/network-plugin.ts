@@ -1,4 +1,5 @@
 import { commands, Disposable, window } from "vscode";
+import { SemVer } from "semver";
 import { RadonInspectorBridge } from "../../project/inspectorBridge";
 import { NetworkBridge } from "../../project/networkBridge";
 import { ToolKey, ToolPlugin } from "../../project/tools";
@@ -11,12 +12,8 @@ import InspectorBridgeNetworkInspector from "./strategies/InspectorBridgeNetwork
 import DebuggerNetworkInspector from "./strategies/DebuggerNetworkInspector";
 
 export const NETWORK_PLUGIN_ID = "network";
-/**
- * Toggles usage of handling the new network inspector devtools communication.
- * Disabled by default until new network inspector is integradated into react native.
- * The instructions to enable the features are in plugins/network/README.md
- */
-const ENABLE_DEBUGGER_INSPECTOR = false;
+
+const DEBUGGER_NETWORK_INSPECTOR_VERSION_MINOR = 83;
 
 export type BroadcastListener = (message: WebviewMessage) => void;
 
@@ -60,9 +57,14 @@ export class NetworkPlugin implements ToolPlugin {
   constructor(
     inspectorBridge: RadonInspectorBridge,
     networkBridge: NetworkBridge,
-    metroPort: number
+    metroPort: number,
+    reactNativeVersion: SemVer | null
   ) {
-    this.networkInspector = ENABLE_DEBUGGER_INSPECTOR
+    // using SemVer.compare does not work because it evaluates 0 to false in its implementation
+    const enableDebuggerInspector =
+      reactNativeVersion && reactNativeVersion.minor >= DEBUGGER_NETWORK_INSPECTOR_VERSION_MINOR;
+
+    this.networkInspector = enableDebuggerInspector
       ? new DebuggerNetworkInspector(inspectorBridge, networkBridge, metroPort)
       : new InspectorBridgeNetworkInspector(inspectorBridge, metroPort);
     initialize();
