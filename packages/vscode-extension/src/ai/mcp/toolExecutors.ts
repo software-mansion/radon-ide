@@ -118,9 +118,7 @@ export async function readLogsToolExec(): Promise<vscode.LanguageModelToolResult
     const screenshot = await session.getScreenshot();
     const contents = readFileSync(screenshot.tempFileLocation);
 
-    return {
-      content: [...combinedLogsContent, pngToToolContent(contents)],
-    };
+    combinedLogsContent.push(pngToToolContent(contents));
   }
 
   return {
