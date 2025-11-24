@@ -38,6 +38,10 @@ interface Body {
   formData(): Promise<FormData>;
 }
 
+interface FetchReadableStreamController extends ReadableByteStreamController {
+  _cancelAlgorithm: (reason: any) => Promise<void>;
+}
+
 interface FetchRequest extends Request {
   _body: Body;
 
@@ -276,6 +280,57 @@ class PolyfillFetchInterceptor {
     };
   }
 
+  private handleStreamCancel(
+    streamController: FetchReadableStreamController,
+    fetchInstance: PolyfillFetch,
+    interceptorInstance: PolyfillFetchInterceptor
+  ) {
+    if (!fetchInstance._response) {
+      return;
+    }
+
+    // _cancelAlgorithm is called when the stream is cancelled via reader.cancel() method
+    // this private API is present across the versions and is used to not additionally import CancelSteps token
+    // https://github.com/MattiasBuelens/web-streams-polyfill/blob/master/src/lib/readable-stream/default-controller.ts#L105-L111
+    const original_cancelAlgorithm = streamController._cancelAlgorithm;
+    if (!original_cancelAlgorithm) {
+      return;
+    }
+
+    streamController._cancelAlgorithm = function (reason: any) {
+      if (!fetchInstance._response) {
+        return original_cancelAlgorithm.call(this, reason);
+      }
+
+      const timeStamp = Date.now();
+      const requestIdStr = `${REQUEST_ID_PREFIX}-${fetchInstance._requestId}`;
+      const mimeType = trimContentType(fetchInstance._response._body._mimeType);
+
+      interceptorInstance.bufferResponseBody(
+        requestIdStr,
+        fetchInstance._response,
+        fetchInstance._nativeResponseType
+      );
+
+      interceptorInstance.sendCDPMessage("Network.loadingFinished", {
+        requestId: requestIdStr,
+        timestamp: timeStamp,
+        duration: timeStamp - interceptorInstance.startTime,
+        type: mimeType,
+        response: {
+          type: fetchInstance._response?.type,
+          status: fetchInstance._responseStatus,
+          url: fetchInstance._responseUrl,
+          headers: fetchInstance._nativeResponseHeaders,
+          mimeType: mimeType,
+        },
+        // Not sending the ecnodedDataLength, as we've done so in didReceiveNetworkData and didReceiveNetworkIncrementalData
+      });
+
+      return original_cancelAlgorithm.call(this, reason);
+    };
+  }
+
   private handleDidReceiveNetworkResponse() {
     // eslint-disable-next-line
     const self = this;
@@ -295,6 +350,16 @@ class PolyfillFetchInterceptor {
       }
 
       self.ttfbTime = Date.now() - self.startTime;
+
+      // stream and streamController are created and assigned in __didReceiveNetworkResponse
+      // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L130-L157
+      if (this._streamController) {
+        self.handleStreamCancel(
+          this._streamController as FetchReadableStreamController,
+          this,
+          self
+        );
+      }
     };
   }
 

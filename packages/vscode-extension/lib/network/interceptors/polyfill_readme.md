@@ -81,6 +81,28 @@ For streaming responses (when `nativeResponseType` is `"text"`), the interceptor
 - On `__didCompleteNetworkResponse`, all chunks are combined and processed based on content type
 - Queue is cleared after successful buffering or on errors/abort
 
+### Stream Cancellation Handling
+
+Readable stream consumers may call `reader.cancel()` while a streaming fetch is still in progress
+(for example when a user closes a preview). Without extra handling, the internal
+`__didCompleteNetworkResponse` callback never fires, so the inspector would miss the terminal
+event and the buffered chunks collected so far.
+
+To cover this scenario the interceptor now patches the stream controller's private
+`_cancelAlgorithm` right after it is created inside `__didReceiveNetworkResponse`. When the cancel
+path is executed we:
+
+- BUffer the queued incremental chunks through `bufferResponseBody` to
+  `AsyncBoundedResponseBuffer`.
+- Emit `Network.loadingFinished` CDP message that mirrors the metadata we normally send
+  on successful completion (response info, duration, MIME type).
+- Delegate back to the original cancel algorithm so the underlying polyfill proceeds with its
+  cleanup.
+
+This keeps the inspector timeline consistent: the UI still receives a final event for the request
+and can show whatever data arrived before cancellation instead of leaving the entry stuck in
+"Receiving" state.
+
 ## Native Response Types
 
 The polyfill supports three response types:
