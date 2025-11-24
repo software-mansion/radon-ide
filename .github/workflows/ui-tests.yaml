@@ -171,6 +171,7 @@ jobs:
           CODE_VERSION: ${{ matrix.codeVersion }}
           IS_ANDROID: ${{ matrix.isAndroid }}
           RADON_IDE_LICENSE_KEY: ${{ secrets.RADON_IDE_LICENSE_KEY }}
+          ALLOW_ENVIRONMENT_MODIFICATIONS: "true"
 
       - name: Upload test output artifact
         if: always()

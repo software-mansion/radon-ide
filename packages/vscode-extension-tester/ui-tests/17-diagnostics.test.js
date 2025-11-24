@@ -3,15 +3,18 @@ import path from "path";
 import * as fs from "fs";
 import { WebView, EditorView } from "vscode-extension-tester";
 import { assert } from "chai";
+import getConfiguration from "../configuration.js";
 import initServices from "../services/index.js";
-import { safeDescribe, itIf } from "../utils/helpers.js";
+import { describeIf, itIf } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
 const raw = fs.readFileSync("./data/react-native-app/package.json");
 const data = JSON.parse(raw);
 const IS_EXPO = data.name.includes("expo");
 
-safeDescribe("17 - Diagnostics tests", () => {
+const { ALLOW_ENVIRONMENT_MODIFICATIONS } = getConfiguration();
+
+describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
   let driver;
   let {
     elementHelperService,
