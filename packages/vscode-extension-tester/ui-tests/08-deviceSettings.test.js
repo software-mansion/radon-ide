@@ -349,33 +349,53 @@ safeDescribe("8 - Device Settings", () => {
 
       await appManipulationService.hideExpoOverlay(appWebsocket);
 
-      radonViewsService.openRadonDeviceSettingsMenu();
-      await elementHelperService.findAndClickElementByTag(
-        "device-settings-location"
-      );
-      const locationInput =
-        await elementHelperService.findAndWaitForElementByTag(
-          "coordinates-input"
+      const locationsToTest = [
+        { lattitude: 1, longitude: 1 },
+        { lattitude: 0, longitude: 0 },
+        { lattitude: -1, longitude: -1 },
+      ];
+      for (const actualLocation of locationsToTest) {
+        radonViewsService.openRadonDeviceSettingsMenu();
+        await elementHelperService.findAndClickElementByTag(
+          "device-settings-location"
         );
-      await locationInput.clear();
-      await driver.sleep(1000);
-      await locationInput.sendKeys("1 1", Key.ENTER);
+        const locationInput =
+          await elementHelperService.findAndWaitForElementByTag(
+            "coordinates-input"
+          );
+        await locationInput.clear();
+        await driver.sleep(1000);
+        await locationInput.sendKeys(
+          `${actualLocation.lattitude} ${actualLocation.longitude}`,
+          Key.ENTER
+        );
 
-      await elementHelperService.findAndClickElementByTag("modal-close-button");
-      await driver.wait(async () => {
-        try {
-          const location =
-            await appManipulationService.sendMessageAndWaitForResponse(
-              appWebsocket,
-              "getLocation"
+        await elementHelperService.findAndClickElementByTag(
+          "modal-close-button"
+        );
+        await driver.wait(async () => {
+          try {
+            const location =
+              await appManipulationService.sendMessageAndWaitForResponse(
+                appWebsocket,
+                "getLocation"
+              );
+            assert.approximately(
+              location.value.latitude,
+              actualLocation.lattitude,
+              0.1
             );
-          assert.approximately(location.value.latitude, 1, 0.1);
-          assert.approximately(location.value.longitude, 1, 0.1);
-          return true;
-        } catch {
-          return false;
-        }
-      }, 100000);
+            assert.approximately(
+              location.value.longitude,
+              actualLocation.longitude,
+              0.1
+            );
+            return true;
+          } catch {
+            return false;
+          }
+        }, 10000);
+      }
     }
   );
 
@@ -415,6 +435,8 @@ safeDescribe("8 - Device Settings", () => {
               "getLocalization"
             );
           assert.equal(localization.value.countryCode.toLowerCase(), "es");
+          assert.equal(localization.value.languageTag.toLowerCase(), "es-es");
+          assert.equal(localization.value.languageCode.toLowerCase(), "es");
           return true;
         } catch {
           return false;
