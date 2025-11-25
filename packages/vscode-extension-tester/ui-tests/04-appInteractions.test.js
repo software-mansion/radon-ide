@@ -85,7 +85,7 @@ safeDescribe("4 - App interaction tests", () => {
 
     const position = await appManipulationService.getButtonCoordinates(
       appWebsocket,
-      "console-log-button"
+      "breakpoints-button"
     );
     await appManipulationService.clickInsidePhoneScreen(position);
 
