@@ -15,6 +15,7 @@ export default class RadonViewsService {
   }
 
   async openRadonIDEPanel() {
+    await this.driver.switchTo().defaultContent();
     const radonIDEButton =
       await this.elementHelperService.findAndWaitForElement(
         By.css("div#swmansion\\.react-native-ide")
