@@ -60,6 +60,58 @@ safeDescribe("4 - App interaction tests", () => {
     await workbench.executeCommand("Remove All Breakpoints");
   });
 
+  async function prepareBreakpoints(breakpoints = [1, 2, 3]) {
+    await vscodeHelperService.openFileInEditor(
+      "/data/react-native-app/shared/automatedTests.tsx"
+    );
+    const editor = new TextEditor();
+    const breakpointLines = [];
+    for (const breakpoint of breakpoints) {
+      breakpointLines.push(
+        await editor.getLineOfText(`// BREAKPOINT ${breakpoint}`)
+      );
+    }
+    const stepIntoLine = await editor.getLineOfText("// STEP INTO LINE");
+    const stepOutLine = await editor.getLineOfText("// STEP OUT LINE");
+    const lineAfterFunction = await editor.getLineOfText(
+      "// LINE AFTER FUNCTION"
+    );
+
+    for (const line of breakpointLines) {
+      await editor.toggleBreakpoint(line);
+    }
+
+    await radonViewsService.openRadonIDEPanel();
+
+    const position = await appManipulationService.getButtonCoordinates(
+      appWebsocket,
+      "console-log-button"
+    );
+    await appManipulationService.clickInsidePhoneScreen(position);
+
+    await driver.switchTo().defaultContent();
+    await radonViewsService.openRadonIDEPanel();
+
+    return {
+      breakpointLines,
+      stepIntoLine,
+      stepOutLine,
+      lineAfterFunction,
+    };
+  }
+
+  async function getDebuggerStopLineNumber() {
+    return await driver.wait(async () => {
+      try {
+        const debuggerLineStop =
+          await vscodeHelperService.getDebuggerStopLineNumber();
+        return debuggerLineStop;
+      } catch {
+        return false;
+      }
+    });
+  }
+
   it("Should click in app", async () => {
     const position = await appManipulationService.getButtonCoordinates(
       appWebsocket,
@@ -168,6 +220,94 @@ safeDescribe("4 - App interaction tests", () => {
       By.css(`[data-testid="app-debugger-container"]`),
       "Timed out waiting for debugger stop view in app"
     );
+  });
+
+  it("Should go to next breakpoint on resume", async () => {
+    const { breakpointLines } = await prepareBreakpoints();
+
+    await elementHelperService.findAndClickElementByTag("debug-resume");
+
+    const debuggerLineStop = await driver.wait(async () => {
+      try {
+        const debuggerLineStop =
+          await vscodeHelperService.getDebuggerStopLineNumber();
+        return debuggerLineStop;
+      } catch {
+        return false;
+      }
+    });
+
+    assert.equal(debuggerLineStop, breakpointLines[1]);
+  });
+
+  it("Should step over", async () => {
+    const { breakpointLines } = await prepareBreakpoints();
+
+    await elementHelperService.findAndClickElementByTag("debug-step-over");
+
+    const debuggerLineStop = await driver.wait(async () => {
+      try {
+        const debuggerLineStop =
+          await vscodeHelperService.getDebuggerStopLineNumber();
+        return debuggerLineStop;
+      } catch {
+        return false;
+      }
+    });
+
+    assert.equal(debuggerLineStop, breakpointLines[0] + 1);
+  });
+
+  it("Should step into", async () => {
+    const { stepIntoLine } = await prepareBreakpoints();
+
+    await elementHelperService.findAndClickElementByTag("debug-step-over");
+
+    await driver.switchTo().defaultContent();
+    await radonViewsService.openRadonIDEPanel();
+    await elementHelperService.findAndClickElementByTag("debug-step-into");
+
+    const debuggerLineStop = await getDebuggerStopLineNumber();
+
+    assert.equal(debuggerLineStop, stepIntoLine);
+  });
+
+  it("Should step out", async () => {
+    const { stepOutLine } = await prepareBreakpoints();
+
+    await elementHelperService.findAndClickElementByTag("debug-step-over");
+
+    await driver.switchTo().defaultContent();
+    await radonViewsService.openRadonIDEPanel();
+    await elementHelperService.findAndClickElementByTag("debug-step-into");
+
+    await driver.switchTo().defaultContent();
+    await radonViewsService.openRadonIDEPanel();
+    await elementHelperService.findAndClickElementByTag("debug-step-out");
+
+    const debuggerLineStop = await getDebuggerStopLineNumber();
+
+    assert.equal(debuggerLineStop, stepOutLine);
+  });
+
+  it("Should step over correct if breakpoint is on the end of function", async () => {
+    const { lineAfterFunction } = await prepareBreakpoints([4]);
+
+    await elementHelperService.findAndClickElementByTag("debug-step-over");
+
+    const debuggerLineStop = await getDebuggerStopLineNumber();
+
+    assert.equal(debuggerLineStop, lineAfterFunction - 1);
+  });
+
+  it("Should step over if trying to step into external function", async () => {
+    const { breakpointLines } = await prepareBreakpoints([2]);
+
+    await elementHelperService.findAndClickElementByTag("debug-step-into");
+
+    const debuggerLineStop = await getDebuggerStopLineNumber();
+
+    assert.equal(debuggerLineStop, breakpointLines[1]);
   });
 
   it("should throw error in debug console", async () => {
