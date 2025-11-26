@@ -194,6 +194,7 @@ body {
   /* Button */
   --swm-button: var(--vscode-button-foreground);
   --swm-button-background: var(--vscode-button-background);
+  --swm-button-border: var(--vscode-button-border);
   --swm-button-disabled: var(--swm-disabled-text);
   --swm-button-hover: var(--vscode-button-hoverBackground);
   --swm-icon-button: var(--vscode-icon-foreground);
@@ -222,6 +223,11 @@ body {
   --swm-button-counter: var(--vscode-activityBarBadge-foreground);
   --swm-button-counter-background: var(--vscode-activityBarBadge-background);
   --swm-button-counter-border: var(--vscode-contrastBorder);
+
+  --swm-button-popover-secondary: var(--vscode-button-secondaryForeground);
+  --swm-button-popover-secondary-background: var(--swm-button-secondary-hover);
+  --swm-button-popover-secondary-active-background: var(--vscode-button-secondaryHoverBackground);
+  --swm-button-popover-secondary-hover: var(--vscode-menu-border);
 
   --swm-button-recording-on: var(--vscode-activityBarBadge-foreground);
   --swm-button-recording-on-background: var(--vscode-activityBarBadge-background);

@@ -87,7 +87,7 @@
 
 .inspect-data-menu-item.inspector-button {
   line-height: 1;
-  color: var(--swm-default-text);
+  color: var(--swm-button-popover-secondary);
 
   width: fit-content;
   height: fit-content;
@@ -106,22 +106,19 @@
   user-select: none;
   outline: none;
 
-  /* Add border gradient anomation on hover */
   border-radius: 3px;
-  border: 1px solid #555;
-  background-color: #444;
+  border: 1px solid var(--swm-button-border);
+  background-color: var(--swm-button-popover-secondary-background);
 
   transition: all 100ms;
 }
 
 .inspect-data-menu-item.inspector-button:hover {
-  border-color: #666;
-  background-color: #555;
+  background-color: var(--swm-button-popover-secondary-hover);
 }
 
 .inspect-data-menu-item.inspector-button:active {
-  border-color: #505050;
-  background-color: #404040;
+  background-color: var(----vscode-editor-background);
 }
 
 .inspect-data-menu-label.inspector-button {
