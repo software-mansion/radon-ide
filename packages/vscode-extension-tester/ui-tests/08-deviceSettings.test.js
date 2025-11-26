@@ -330,31 +330,36 @@ safeDescribe("8 - Device Settings", () => {
     }, 5000);
   });
 
-  itIf(
-    !getConfiguration().IS_ANDROID && IS_APP_WITH_ADDITIONAL_LIBS,
-    "change location",
-    async () => {
-      execSync(
-        "xcrun simctl --set ~/Library/Caches/com.swmansion.radon-ide/Devices/iOS privacy booted grant location org.reactjs.native.example.reactNative81AdditionalLibs"
-      );
+  const locationsToTest = [
+    { lattitude: 1, longitude: 1 },
+    { lattitude: -1, longitude: -1 },
+    { lattitude: 0, longitude: 0 },
+  ];
+  let permissionGranted = false;
 
-      await appManipulationService.restartDevice();
-      await appManipulationService.waitForAppToLoad();
+  for (const actualLocation of locationsToTest) {
+    itIf(
+      !getConfiguration().IS_ANDROID && IS_APP_WITH_ADDITIONAL_LIBS,
+      `Should change location to (${actualLocation.lattitude}, ${actualLocation.longitude})`,
+      async () => {
+        if (!permissionGranted) {
+          execSync(
+            "xcrun simctl --set ~/Library/Caches/com.swmansion.radon-ide/Devices/iOS privacy booted grant location org.reactjs.native.example.reactNative81AdditionalLibs"
+          );
 
-      await driver.sleep(3000);
-      await driver.wait(async () => {
-        appWebsocket = get().appWebsocket;
-        return appWebsocket != null;
-      }, 5000);
+          await appManipulationService.restartDevice();
+          await appManipulationService.waitForAppToLoad();
 
-      await appManipulationService.hideExpoOverlay(appWebsocket);
+          await driver.sleep(3000);
+          await driver.wait(async () => {
+            appWebsocket = get().appWebsocket;
+            return appWebsocket != null;
+          }, 5000);
+          permissionGranted = true;
+        }
 
-      const locationsToTest = [
-        { lattitude: 1, longitude: 1 },
-        { lattitude: 0, longitude: 0 },
-        { lattitude: -1, longitude: -1 },
-      ];
-      for (const actualLocation of locationsToTest) {
+        await appManipulationService.hideExpoOverlay(appWebsocket);
+
         radonViewsService.openRadonDeviceSettingsMenu();
         await elementHelperService.findAndClickElementByTag(
           "device-settings-location"
@@ -396,8 +401,8 @@ safeDescribe("8 - Device Settings", () => {
           }
         }, 10000);
       }
-    }
-  );
+    );
+  }
 
   itIf(
     !getConfiguration().IS_ANDROID && IS_APP_WITH_ADDITIONAL_LIBS,
