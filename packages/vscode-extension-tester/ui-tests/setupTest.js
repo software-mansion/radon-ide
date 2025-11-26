@@ -63,30 +63,35 @@ export const cleanUpAfterTest = async () => {
   await driver.actions().sendKeys(Key.ESCAPE).perform();
 
   const { vscodeHelperService } = initServices(driver);
-
-  try {
-    await new EditorView().closeAllEditors();
-    await new BottomBarPanel().toggle(false);
-    await driver.switchTo().defaultContent();
-  } catch (e) {
-    console.warn("Error closing UI elements during cleanup:", e);
-  }
+  view = new WebView();
+  await view.switchBack();
+  let bottomBar = new BottomBarPanel();
+  await bottomBar.toggle(false);
+  await new EditorView().closeAllEditors();
+  await driver.switchTo().defaultContent();
 
   await vscodeHelperService.openCommandLineAndExecute(
     "Developer: Reload Window"
   );
 
-  await browser.waitForWorkbench();
-  workbench = new Workbench();
+  driver.wait(async () => {
+    try {
+      workbench = new Workbench();
+    } catch {
+      return false;
+    }
+    return true;
+  }, 10000);
 
-  await driver.wait(
-    async () => {
-      const title = await workbench.getTitleBar().getTitle();
-      return title !== undefined;
-    },
-    15000,
-    "Workbench title bar did not appear after reload"
-  );
+  // waiting for vscode to get ready after reload
+  await driver.wait(async () => {
+    try {
+      await workbench.getTitleBar().getTitle();
+      return true;
+    } catch {
+      return false;
+    }
+  }, 10000);
 };
 
 afterEach(async function () {
@@ -117,7 +122,7 @@ after(async function () {
   console.log(
     `==== Summary app: ${texts.expectedProjectName} | code version: ${
       process.env["CODE_VERSION"] || "latest"
-    } ====`
+    } ${getConfiguration().IS_ANDROID ? "android" : "ios"} ====`
   );
   // console log additional informations after standard mocha report
   setTimeout(() => {
