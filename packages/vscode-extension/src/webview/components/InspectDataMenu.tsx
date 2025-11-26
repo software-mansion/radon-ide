@@ -4,10 +4,10 @@ import { use$ } from "@legendapp/state/react";
 import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import "./InspectDataMenu.css";
-import { vscode } from "../utilities/vscode";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { Feature } from "../../common/License";
 import { useStore } from "../providers/storeProvider";
+import { useProject } from "../providers/ProjectProvider";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
@@ -64,6 +64,7 @@ export function InspectDataMenu({
   onCancel,
 }: InspectDataMenuProps) {
   const [shouldShowAll, setShouldShowAll] = useState(false);
+  const { project } = useProject();
 
   const displayDimensionsText = (() => {
     if (device && frame) {
@@ -106,12 +107,7 @@ export function InspectDataMenu({
         }
       }
 
-      const message = {
-        command: "RNIDE_add_to_chat_context",
-        filePaths: [childFilename, parentFilename],
-      };
-
-      vscode.postMessage(message);
+      project.addToChatContext(childFilename, parentFilename);
       e.preventDefault(); // prevents the dropdown from closing
     },
     Feature.RadonAI,

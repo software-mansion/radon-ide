@@ -5,6 +5,7 @@ import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 import { PanelLocation, RecursivePartial, State, StateSerializer } from "../common/State";
+import { undefined } from "zod";
 
 type EventBase = Record<string, unknown>;
 
@@ -16,10 +17,6 @@ interface GetStateCommand extends EventBase {
 }
 interface UpdateStateCommand extends EventBase {
   command: "RNIDE_update_state";
-}
-
-interface ChatRequestCommand extends EventBase {
-  command: "RNIDE_add_to_chat_context";
 }
 
 interface CallArgs {
@@ -36,24 +33,11 @@ interface UpdateStateArgs {
   state: string;
 }
 
-interface ChatRequestArgs {
-  filePaths: string[];
-}
-
 type CallEvent = CallCommand & CallArgs;
 type GetStateEvent = GetStateCommand & GetStateArgs;
 type UpdateStateEvent = UpdateStateCommand & UpdateStateArgs;
-type ChatRequestEvent = ChatRequestCommand & ChatRequestArgs;
 
-export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent | ChatRequestEvent;
-
-function handleChatFixRequest(message: ChatRequestEvent) {
-  commands.executeCommand("copilot-chat.focus").then(async () => {
-    for (const filePath of message.filePaths) {
-      await commands.executeCommand("workbench.action.chat.attachFile", Uri.file(filePath));
-    }
-  });
-}
+export type WebviewEvent = CallEvent | GetStateEvent | UpdateStateEvent;
 
 export class WebviewController implements Disposable {
   private disposables: Disposable[] = [];
@@ -127,8 +111,6 @@ export class WebviewController implements Disposable {
           this.handleGetState(message);
         } else if (message.command === "RNIDE_update_state") {
           this.handleUpdateState(message);
-        } else if (message.command === "RNIDE_add_to_chat_context") {
-          handleChatFixRequest(message);
         }
       },
       undefined,
