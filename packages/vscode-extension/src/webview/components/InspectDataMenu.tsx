@@ -95,7 +95,8 @@ export function InspectDataMenu({
         return;
       }
 
-      // Include component + where it's used (or component's parent & grandparent if the component is non-user-defined).
+      // Include component's inner & outer scopes - where it's implemented and where it's used.
+      // If the component is defined in node_modules, we include two inner-most outer scopes.
       const childFilename = inspectItems[0].source.fileName;
       let parentFilename = childFilename;
 
