@@ -154,7 +154,14 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     const expoDeeplink = await fetchExpoLaunchDeeplink(metroPort, "android", deepLinkChoice);
     if (expoDeeplink) {
       await this.configureExpoDevMenu(build.packageName);
-      await this.launchWithExpoDeeplink(metroPort, devtoolsPort, expoDeeplink);
+      await this.launchWithExpoDeeplink(
+        metroPort,
+        devtoolsPort,
+        expoDeeplink,
+        build.packageName,
+        build.baseAppId,
+        build.launchActivity
+      );
     } else {
       await this.configureMetroPort(build.packageName, metroPort);
       await this.launchWithBuild(build);
@@ -327,7 +334,10 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
   private async launchWithExpoDeeplink(
     metroPort: number,
     devtoolsPort: number | undefined,
-    expoDeeplink: string
+    expoDeeplink: string,
+    packageName: string,
+    baseAppId: string | undefined,
+    launchActivity: string | undefined
   ) {
     // For Expo dev-client and expo go setup, we use deeplink to launch the app. Since Expo's manifest is configured to
     // return localhost:PORT as the destination, we need to setup adb reverse for metro port first.
@@ -341,18 +351,49 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
         `tcp:${devtoolsPort}`,
       ]);
     }
+
     // next, we open the link
-    await exec(ADB_PATH, [
-      "-s",
-      this.serial,
-      "shell",
-      "am",
-      "start",
-      "-a",
-      "android.intent.action.VIEW",
-      "-d",
-      expoDeeplink,
-    ]);
+    // note(Filip Kamiński): instead of using the default "android.intent.action.VIEW" intent,
+    // when base appID is different then packageName we will use returned launch activity.
+    // Launching using launchActivity is a more precise way of doing it and in some setups
+    // a necessary one, as using the default path might lead to some deep linking issues,
+    // with newly opened application routing to unexpected screens, but it is not extensively tested
+    // in production, so we restrain the usage of it only to the situations in which we observed
+    // a problem: when appId used by build application is different then the one defined by the
+    // applications manifest. It is quite common and happens when the productFlavor or buildType
+    // defines a special prefix/suffix to the appId. Most of the code is inspired by how expo CLI
+    // handles this case with the added bonus that radons solution does not require additional
+    // user configuration. You can explore the expo solution here:
+    // https://github.com/expo/expo/blob/645e63df903d28149ee9eda6682f6032b31601d7/packages/%40expo/cli/src/start/platforms/android/AndroidPlatformManager.ts#L93
+    if (packageName !== baseAppId && launchActivity) {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial,
+        "shell",
+        "am",
+        "start",
+        // FLAG_ACTIVITY_SINGLE_TOP -- If set, the activity will not be launched if it is already running at the top of the history stack.
+        "-f",
+        "0x20000000",
+        // Activity to open first: com.bacon.app/.MainActivity
+        "-n",
+        launchActivity,
+        "-d",
+        expoDeeplink,
+      ]);
+    } else {
+      await exec(ADB_PATH, [
+        "-s",
+        this.serial,
+        "shell",
+        "am",
+        "start",
+        "-a",
+        "android.intent.action.VIEW",
+        "-d",
+        expoDeeplink,
+      ]);
+    }
   }
 
   protected abstract mirrorNativeLogs(build: AndroidBuildResult): void;

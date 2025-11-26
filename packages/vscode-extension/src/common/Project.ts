@@ -120,6 +120,7 @@ export interface ProjectInterface {
   runDependencyChecks(): Promise<void>;
 
   rotateDevices(direction: DeviceRotationDirection): Promise<void>;
+  toggleDeviceAppearance(): Promise<void>;
 
   updateToolEnabledState(toolName: keyof ToolsState, enabled: boolean): Promise<void>;
   openTool(toolName: keyof ToolsState): Promise<void>;

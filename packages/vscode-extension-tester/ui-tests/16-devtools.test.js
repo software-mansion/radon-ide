@@ -208,12 +208,6 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
     );
     await driver.switchTo().frame(reduxIFrame);
 
-    let reduxIFrame2 = await elementHelperService.findAndWaitForElement(
-      By.css("iframe"),
-      "Timed out waiting for Redux DevTools iframe"
-    );
-    await driver.switchTo().frame(reduxIFrame2);
-
     let element = await elementHelperService.safeFind(
       By.xpath("//label[contains(text(), 'INCREMENT')]")
     );
