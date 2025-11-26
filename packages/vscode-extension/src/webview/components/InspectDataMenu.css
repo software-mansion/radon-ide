@@ -110,7 +110,7 @@
   border: 1px solid var(--swm-button-border);
   background-color: var(--swm-button-popover-secondary-background);
 
-  transition: all 100ms;
+  transition: all 80ms;
 }
 
 .inspect-data-menu-item.inspector-button:hover {
@@ -118,7 +118,7 @@
 }
 
 .inspect-data-menu-item.inspector-button:active {
-  background-color: var(----vscode-editor-background);
+  background-color: var(--swm-button-popover-secondary-active-background);
 }
 
 .inspect-data-menu-label.inspector-button {

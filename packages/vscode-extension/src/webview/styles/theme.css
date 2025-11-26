@@ -226,7 +226,7 @@ body {
 
   --swm-button-popover-secondary: var(--vscode-button-secondaryForeground);
   --swm-button-popover-secondary-background: var(--swm-button-secondary-hover);
-  --swm-button-popover-secondary-active-background: var(--vscode-button-secondaryHoverBackground);
+  --swm-button-popover-secondary-active-background: var(--swm-button-border);
   --swm-button-popover-secondary-hover: var(--vscode-menu-border);
 
   --swm-button-recording-on: var(--vscode-activityBarBadge-foreground);
