@@ -115,7 +115,7 @@ export function InspectDataMenu({
   );
 
   const store$ = useStore();
-  const radonAIEnabled = use$(store$.workspaceConfiguration.general.enableRadonAI);
+  const radonAIEnabled = use$(store$.workspaceConfiguration.radonAI.enableRadonAI);
 
   return (
     <DropdownMenu.Root

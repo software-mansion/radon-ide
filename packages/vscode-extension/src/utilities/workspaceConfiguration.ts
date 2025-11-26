@@ -16,9 +16,9 @@ const WorkspaceConfigurationKeyMap = {
   general: {
     defaultMultimediaSavingLocation: "general.defaultMultimediaSavingLocation",
     enableExperimentalElementInspector: "general.enableExperimentalElementInspector",
-    enableRadonAI: "general.enableRadonAI",
     inspectorExcludePattern: "general.inspectorExcludePattern",
   },
+  radonAI: { enableRadonAI: "radonAI.enableRadonAI" },
   userInterface: {
     panelLocation: "userInterface.panelLocation",
     showDeviceFrame: "userInterface.showDeviceFrame",
@@ -48,12 +48,14 @@ export function getCurrentWorkspaceConfiguration(config: WorkspaceConfiguration)
       defaultMultimediaSavingLocation:
         config.get<string>(WorkspaceConfigurationKeyMap.general.defaultMultimediaSavingLocation) ??
         null,
-      enableRadonAI:
-        config.get<boolean>(WorkspaceConfigurationKeyMap.general.enableRadonAI) ?? true,
       enableExperimentalElementInspector:
         config.get<boolean>(
           WorkspaceConfigurationKeyMap.general.enableExperimentalElementInspector
         ) ?? false,
+    },
+    radonAI: {
+      enableRadonAI:
+        config.get<boolean>(WorkspaceConfigurationKeyMap.radonAI.enableRadonAI) ?? true,
     },
     userInterface: {
       panelLocation:

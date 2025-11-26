@@ -87,8 +87,11 @@ export type PanelLocation = "tab" | "side-panel";
 export type GeneralSettings = {
   defaultMultimediaSavingLocation: string | null;
   enableExperimentalElementInspector: boolean;
-  enableRadonAI: boolean;
   inspectorExcludePattern: string | null;
+};
+
+export type RadonAISettings = {
+  enableRadonAI: boolean;
 };
 
 export type UserInterfaceSettings = {
@@ -103,6 +106,7 @@ export type DeviceControlSettings = {
 
 export type WorkspaceConfiguration = {
   general: GeneralSettings;
+  radonAI: RadonAISettings;
   userInterface: UserInterfaceSettings;
   deviceSettings: DeviceSettings;
   deviceControl: DeviceControlSettings;
@@ -609,8 +613,10 @@ export const initialState: State = {
     general: {
       defaultMultimediaSavingLocation: null,
       enableExperimentalElementInspector: false,
-      enableRadonAI: true,
       inspectorExcludePattern: null,
+    },
+    radonAI: {
+      enableRadonAI: true,
     },
     userInterface: {
       panelLocation: "tab",

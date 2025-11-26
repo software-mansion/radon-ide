@@ -7,7 +7,7 @@ export default function loadAISettingsToState(stateManager: StateManager<State>)
   const radonAiEnabled = isRadonEnabledInSettings();
   stateManager.updateState({
     workspaceConfiguration: {
-      general: {
+      radonAI: {
         enableRadonAI: radonAiEnabled,
       },
     },
@@ -18,7 +18,7 @@ export default function loadAISettingsToState(stateManager: StateManager<State>)
       const updatedRadonAiEnabled = isRadonEnabledInSettings();
       stateManager.updateState({
         workspaceConfiguration: {
-          general: {
+          radonAI: {
             enableRadonAI: updatedRadonAiEnabled,
           },
         },
