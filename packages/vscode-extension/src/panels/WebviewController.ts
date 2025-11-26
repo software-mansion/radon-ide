@@ -5,7 +5,6 @@ import { IDE } from "../project/ide";
 import { disposeAll } from "../utilities/disposables";
 import { RENDER_OUTLINES_PLUGIN_ID } from "../common/RenderOutlines";
 import { PanelLocation, RecursivePartial, State, StateSerializer } from "../common/State";
-import { undefined } from "zod";
 
 type EventBase = Record<string, unknown>;
 
@@ -104,7 +103,6 @@ export class WebviewController implements Disposable {
         if (!message.method || (message.method !== "dispatchTouches" && message.method !== "log")) {
           Logger.log("Message from webview", message);
         }
-
         if (message.command === "call") {
           this.handleRemoteCall(message);
         } else if (message.command === "RNIDE_get_state") {
