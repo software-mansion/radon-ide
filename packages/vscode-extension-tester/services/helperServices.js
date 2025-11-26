@@ -8,13 +8,18 @@ import {
   Key,
   Workbench,
 } from "vscode-extension-tester";
+import { TIMEOUTS } from "../utils/timeouts.js";
+
+// Determine the modifier key based on the platform (Command for Mac, Control for others if needed)
+// For now, keeping COMMAND it may be changed in the future.
+const MODIFIER_KEY = Key.COMMAND;
 
 export class ElementHelperService {
   constructor(driver) {
     this.driver = driver;
   }
 
-  async waitForElement(element, timeout = 5000) {
+  async waitForElement(element, timeout = TIMEOUTS.DEFAULT) {
     await this.driver.wait(
       until.elementIsVisible(element),
       timeout,
@@ -22,21 +27,25 @@ export class ElementHelperService {
     );
   }
 
-  async findAndWaitForElement(selector, timeoutMessage, timeout = 10000) {
+  async findAndWaitForElement(
+    selector,
+    timeoutMessage,
+    timeout = TIMEOUTS.MEDIUM
+  ) {
     const element = await this.driver.wait(
       until.elementLocated(selector),
       timeout,
       timeoutMessage
     );
     await this.driver.executeScript("arguments[0].scrollIntoView()", element);
-    await this.waitForElement(element);
+    await this.waitForElement(element, timeout);
     return element;
   }
 
   async findAndWaitForElementByTag(
     tagName,
-    timeoutMessage = `Timed out waiting for element by tag ${tagName}`,
-    timeout = 10000
+    timeout = TIMEOUTS.MEDIUM,
+    timeoutMessage = `Timed out waiting for element by tag ${tagName}`
   ) {
     const selector = By.css(`[data-testid="${tagName}"]`);
     return this.findAndWaitForElement(selector, timeoutMessage, timeout);
@@ -44,7 +53,7 @@ export class ElementHelperService {
 
   async findAndClickElementByTag(
     dataTag,
-    timeout = 15000,
+    timeout = TIMEOUTS.LONG,
     message = `Timed out waiting for element with tag name ${dataTag}`
   ) {
     const element = await this.findAndWaitForElement(
@@ -58,7 +67,7 @@ export class ElementHelperService {
 
   async waitUntilElementGone(
     locator,
-    timeout = 5000,
+    timeout = TIMEOUTS.DEFAULT,
     message = "Element did not disappear"
   ) {
     await this.driver.wait(
@@ -73,12 +82,13 @@ export class ElementHelperService {
 
   async safeFind(selector) {
     const elements = await this.driver.findElements(selector);
-    return elements.length > 0 ? elements[0] : null;
+    return elements[0] ?? null;
   }
 
   async hasClass(element, className) {
     const classes = await element.getAttribute("class");
-    return classes?.split(" ").includes(className) ?? false;
+    if (!classes) return false;
+    return classes.split(/\s+/).includes(className);
   }
 }
 
@@ -87,24 +97,27 @@ export class VSCodeHelperService {
     this.driver = driver;
   }
 
-  async openFileInEditor(path) {
+  async openFileInEditor(filePath) {
     await this.driver.switchTo().defaultContent();
     await this.openCommandLineAndExecute("workbench.action.files.openFile");
-    console.log("Opening file: " + process.cwd() + path);
-    this.driver
+
+    const fullPath = path.join(process.cwd(), filePath);
+    console.log("Opening file: " + fullPath);
+
+    await this.driver
       .actions()
-      .keyDown(Key.COMMAND)
+      .keyDown(MODIFIER_KEY)
       .sendKeys("a")
-      .keyUp(Key.COMMAND)
-      .sendKeys(process.cwd() + path)
+      .keyUp(MODIFIER_KEY)
+      .sendKeys(fullPath)
       .sendKeys(Key.ENTER)
       .perform();
   }
 
   async getCursorLineInEditor() {
     const editor = new TextEditor();
-    const lineNumber = (await editor.getCoordinates())[0];
-    return lineNumber;
+    const coordinates = await editor.getCoordinates();
+    return coordinates[0];
   }
 
   async getFileNameInEditor() {
@@ -117,36 +130,42 @@ export class VSCodeHelperService {
     const view = new WebView();
     await view.switchBack();
 
-    const btn = await new ActivityBar().getViewControl("Run");
-    const debugView = await btn.openView();
-    const num = 1;
+    const runViewControl = await new ActivityBar().getViewControl("Run");
+    const debugView = await runViewControl.openView();
+
+    // Index of the stack frame to check
+    const STACK_FRAME_INDEX = 1;
 
     const callStack = await debugView.getCallStackSection();
     const items = await callStack.getVisibleItems();
-    const item = await items.at(num);
-    const tooltip = await item.getTooltip();
 
-    let line;
+    if (items.length <= STACK_FRAME_INDEX) {
+      return undefined;
+    }
+
+    const item = await items.at(STACK_FRAME_INDEX);
+    const tooltip = await item.getTooltip();
 
     const match = tooltip.match(/line (\d+)/);
     if (match) {
-      line = parseInt(match[1], 10);
+      const line = parseInt(match[1], 10);
       console.log("Line number:", line);
+      return line;
     }
 
-    return line;
+    return undefined;
   }
 
-  // in some situations workbench.executeCommand() is not working properly
+  // In some situations, workbench.executeCommand() does not work properly
   async openCommandLineAndExecute(command) {
     await this.driver.switchTo().defaultContent();
     await this.driver
       .actions()
-      .keyDown(Key.COMMAND)
+      .keyDown(MODIFIER_KEY)
       .keyDown(Key.SHIFT)
       .sendKeys("p")
       .keyUp(Key.SHIFT)
-      .keyUp(Key.COMMAND)
+      .keyUp(MODIFIER_KEY)
       .perform();
     await this.driver.actions().sendKeys(command).perform();
     await this.driver.actions().sendKeys(Key.ENTER).perform();
@@ -155,6 +174,8 @@ export class VSCodeHelperService {
   async hideSecondarySideBar() {
     await this.driver.switchTo().defaultContent();
     const workbench = new Workbench();
+
+    // Using Chat open command to ensure focus context before toggling sidebar
     await workbench.executeCommand("Chat: Open Chat");
     await workbench.executeCommand(
       "View: Toggle Secondary Side Bar Visibility"

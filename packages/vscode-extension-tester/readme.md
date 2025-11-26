@@ -54,7 +54,7 @@ The `/services/` directory contains Service Classes with frequently used functio
 
   - `async RadonViewsService.openRadonIDEPanel()`
     - Opens the main Radon IDE panel.
-    - **Note:** The Radon IDE view works inside an `iframe` within VS Code. To find an element inside the Radon view, you must switch to the correct iframe. This method handles that switch automatically.
+    - > **Note:** The Radon IDE view works inside an `iframe` within VS Code. To find an element inside the Radon view, you must switch to the correct iframe. This method handles that switch automatically.
 
 - **AppManipulationService**
   - `async AppManipulationService.waitForAppToLoad()`
@@ -119,9 +119,14 @@ Example (running tests 1, 2, 3, and 4 on the `react-native-81` app):
 npm run prepare-and-run-tests -- react-native-81 1 2 3 4
 ```
 
+> **Note**: side effect of running tests locally is fact that devices added in Radon IDE will be deleted.
+
 ### CI / GitHub Actions
 
 We aim to run tests on a locally hosted CI runner.
+
+> [!NOTE]
+> test
 
 - Tests run automatically nightly.
 - Tests can be triggered manually via the **Actions** tab on GitHub.

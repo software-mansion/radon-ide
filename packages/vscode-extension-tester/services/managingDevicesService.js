@@ -1,7 +1,11 @@
 import { By, Key, WebView, EditorView } from "vscode-extension-tester";
 import getConfiguration from "../configuration.js";
+import { TIMEOUTS } from "../utils/timeouts.js";
 import { ElementHelperService } from "./helperServices.js";
 import RadonViewsService from "./radonViewsService.js";
+
+// Determine modifier key (Command for Mac, Control for Windows/Linux)
+const MODIFIER_KEY = Key.COMMAND;
 
 export default class ManagingDevicesService {
   constructor(driver) {
@@ -20,7 +24,7 @@ export default class ManagingDevicesService {
       return await dropdownButton.isEnabled();
     });
 
-    dropdownButton.click();
+    await dropdownButton.click();
 
     await this.elementHelperService.findAndClickElementByTag(
       "device-select-menu-manage-devices-button"
@@ -37,11 +41,13 @@ export default class ManagingDevicesService {
     );
 
     const { IS_ANDROID, IS_GITHUB_ACTIONS } = getConfiguration();
+
     let device = IS_ANDROID ? "pixel" : "com.apple";
-    device = IS_GITHUB_ACTIONS
-      ? "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro"
-      : device;
-    let systemImage = IS_GITHUB_ACTIONS
+    if (IS_GITHUB_ACTIONS) {
+      device = "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro";
+    }
+
+    const systemImage = IS_GITHUB_ACTIONS
       ? "com.apple.CoreSimulator.SimRuntime.iOS-18-5"
       : "";
 
@@ -70,17 +76,19 @@ export default class ManagingDevicesService {
     const deviceNameInput =
       await this.elementHelperService.findAndWaitForElement(
         By.css('[data-testid="creating-device-form-name-input"]'),
-        "Timed out waiting for an element matching from system image list"
+        "Timed out waiting for the device name input element"
       );
 
-    // this method of clearing input seems to be most reliable
-    deviceNameInput.click();
-    await deviceNameInput.sendKeys(Key.chord(Key.COMMAND, "a"));
+    // This method of clearing input seems to be most reliable
+    await deviceNameInput.click();
+    await deviceNameInput.sendKeys(Key.chord(MODIFIER_KEY, "a"));
     await deviceNameInput.sendKeys(Key.BACK_SPACE);
+
     await this.driver.wait(async () => {
       const value = await deviceNameInput.getAttribute("value");
       return value === "";
-    }, 3000);
+    }, TIMEOUTS.ANDROID_OVERLAY);
+
     await deviceNameInput.sendKeys(deviceName);
   }
 
@@ -99,42 +107,52 @@ export default class ManagingDevicesService {
     );
 
     await this.elementHelperService.findAndClickElementByTag(
-      `confirm-delete-device-button`
+      "confirm-delete-device-button"
     );
   }
+
   async deleteAllDevices() {
     await this.radonViewsService.openRadonIDEPanel();
     await this.elementHelperService.findAndClickElementByTag(
-      `radon-bottom-bar-device-select-dropdown-trigger`
+      "radon-bottom-bar-device-select-dropdown-trigger"
     );
     await this.elementHelperService.findAndClickElementByTag(
-      `device-select-menu-manage-devices-button`
+      "device-select-menu-manage-devices-button"
     );
 
-    try {
-      while (true) {
-        const deviceDeleteButton =
-          await this.elementHelperService.findAndWaitForElement(
-            By.css(
-              `[data-testid^="manage-devices-menu-delete-button-device-"]`
-            ),
-            "Timed out waiting for device delete button",
-            5000
-          );
-        await deviceDeleteButton.click();
-        await this.elementHelperService.findAndClickElementByTag(
-          `confirm-delete-device-button`
-        );
+    // Loop until no delete buttons are found
+    while (true) {
+      // Check if any delete button exists without waiting/throwing error
+      const deviceDeleteButton = await this.elementHelperService.safeFind(
+        By.css('[data-testid^="manage-devices-menu-delete-button-device-"]')
+      );
 
-        await this.elementHelperService.waitUntilElementGone(
-          By.css(`[data-testid="device-removing-confirmation-view"]`),
-          // deleting device on GitHub CI takes a lot of time for some reason
-          20000,
-          "delete confirmation modal did not disappear"
-        );
+      if (!deviceDeleteButton) {
+        break;
       }
-    } catch (e) {}
-    this.elementHelperService.findAndClickElementByTag(`modal-close-button`);
+
+      await deviceDeleteButton.click();
+
+      await this.elementHelperService.findAndClickElementByTag(
+        "confirm-delete-device-button"
+      );
+
+      await this.elementHelperService.waitUntilElementGone(
+        By.css('[data-testid="device-removing-confirmation-view"]'),
+        // Deleting a device on GitHub CI takes a lot of time for some reason
+        TIMEOUTS.LONG,
+        "Delete confirmation modal did not disappear"
+      );
+    }
+
+    try {
+      await this.elementHelperService.findAndClickElementByTag(
+        "modal-close-button"
+      );
+    } catch (e) {
+      // Ignore if close button is not present/clickable
+    }
+
     const view = new WebView();
     await view.switchBack();
     await new EditorView().closeAllEditors();
@@ -152,16 +170,21 @@ export default class ManagingDevicesService {
         "Timed out waiting for device name input"
       );
 
-    deviceNameInput.click();
-    await deviceNameInput.sendKeys(Key.chord(Key.COMMAND, "a"), Key.BACK_SPACE);
-    deviceNameInput.clear();
+    await deviceNameInput.click();
+    await deviceNameInput.sendKeys(
+      Key.chord(MODIFIER_KEY, "a"),
+      Key.BACK_SPACE
+    );
+
     await this.driver.wait(async () => {
-      return (await deviceNameInput.getAttribute("value")) === "";
+      const value = await deviceNameInput.getAttribute("value");
+      return value === "";
     });
+
     await deviceNameInput.sendKeys(modifiedDeviceName);
 
     await this.elementHelperService.findAndClickElementByTag(
-      `renaming-device-view-save-button`
+      "renaming-device-view-save-button"
     );
   }
 
@@ -170,6 +193,7 @@ export default class ManagingDevicesService {
       await this.elementHelperService.findAndWaitForElementByTag(
         "device-select-value-text"
       );
+
     if ((await chosenDevice.getText()) !== deviceName) {
       await this.elementHelperService.findAndClickElementByTag(
         "radon-bottom-bar-device-select-dropdown-trigger"
@@ -177,16 +201,17 @@ export default class ManagingDevicesService {
       await this.elementHelperService.findAndClickElementByTag(
         `device-${deviceName}`
       );
+
       await this.driver.wait(
         async () => {
-          const chosenDevice =
+          const currentDevice =
             await this.elementHelperService.findAndWaitForElementByTag(
               "device-select-value-text"
             );
-          return deviceName === (await chosenDevice.getText());
+          return deviceName === (await currentDevice.getText());
         },
-        10000,
-        "timed out waiting for device to be switched"
+        TIMEOUTS.MEDIUM,
+        "Timed out waiting for device to be switched"
       );
     }
   }
@@ -194,10 +219,13 @@ export default class ManagingDevicesService {
   async prepareDevices(deviceName = "newDevice") {
     await this.deleteAllDevices();
     await this.addNewDevice(deviceName);
+
     try {
       await this.elementHelperService.findAndClickElementByTag(
-        `modal-close-button`
+        "modal-close-button"
       );
-    } catch {}
+    } catch (e) {
+      // Modal might be already closed
+    }
   }
 }

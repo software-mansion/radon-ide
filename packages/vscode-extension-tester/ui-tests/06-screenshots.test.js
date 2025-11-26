@@ -174,10 +174,7 @@ safeDescribe("6 - screenshots tests", () => {
       "radon-top-bar-show-replay-button"
     );
 
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
+    await elementHelperService.findAndWaitForElementByTag("replay-overlay");
   });
 
   it("Should open replay overlay using shortcut", async () => {
@@ -193,10 +190,7 @@ safeDescribe("6 - screenshots tests", () => {
       .keyUp(Key.COMMAND)
       .perform();
 
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
+    await elementHelperService.findAndWaitForElementByTag("replay-overlay");
   });
 
   it("Should save replay", async () => {
@@ -226,10 +220,7 @@ safeDescribe("6 - screenshots tests", () => {
       "radon-top-bar-show-replay-button"
     );
 
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
+    await elementHelperService.findAndWaitForElementByTag("replay-overlay");
 
     await elementHelperService.findAndClickElementByTag("replay-save-button");
     await radonViewsService.findAndFillSaveFileForm("replayTest");
