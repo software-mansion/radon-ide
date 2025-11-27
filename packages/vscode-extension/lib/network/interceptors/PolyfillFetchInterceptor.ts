@@ -62,6 +62,13 @@ interface FetchResponse extends Response {
   clone(): Response;
 }
 
+interface BlobFetchResponse extends Response {
+  _blobResponse: FetchResponse;
+}
+interface ArrayBufferFetchResponse extends Response {
+  _arrayBufferResponse: FetchResponse;
+}
+
 interface DeferredPromise<T> {
   promise: Promise<T>;
   resolve: (value: T) => void;
@@ -99,7 +106,7 @@ interface PolyfillFetch {
   _textEncoder: TextEncoder;
   _requestId?: number;
   _request: FetchRequest;
-  _response?: FetchResponse;
+  _response?: FetchResponse | BlobFetchResponse | ArrayBufferFetchResponse;
   _streamController?: ReadableStreamDefaultController<Uint8Array>;
   _stream?: ReadableStream<Uint8Array>;
   _deferredPromise: DeferredPromise<Response>;
@@ -266,6 +273,25 @@ class PolyfillFetchInterceptor {
     }
   }
 
+  /**
+   * Backwards compatibility handling for library 2.0.0 and 1.0.0 versions
+   * See: https://github.com/react-native-community/fetch/blob/v2.0.0/src/StreamBlobResponse.js
+   */
+  private getCompatibleFetchResponse(
+    response: FetchResponse | BlobFetchResponse | ArrayBufferFetchResponse | undefined
+  ): FetchResponse | undefined {
+    if (!response) {
+      return undefined;
+    }
+    if ("_blobResponse" in response) {
+      return response._blobResponse;
+    }
+    if ("_arrayBufferResponse" in response) {
+      return response._arrayBufferResponse;
+    }
+    return response;
+  }
+
   private override__didCreateRequest() {
     // eslint-disable-next-line
     const self = this;
@@ -320,6 +346,11 @@ class PolyfillFetchInterceptor {
         return reader;
       }
 
+      const _response = interceptorInstance.getCompatibleFetchResponse(fetchInstance._response);
+      if (!_response) {
+        return reader;
+      }
+
       const timeStamp = Date.now();
       const requestIdStr = `${REQUEST_ID_PREFIX}-${fetchInstance._requestId}`;
 
@@ -330,11 +361,11 @@ class PolyfillFetchInterceptor {
 
         interceptorInstance.bufferResponseBody(
           requestIdStr,
-          fetchInstance._response,
+          _response,
           fetchInstance._nativeResponseType
         );
 
-        const mimeType = trimContentType(fetchInstance._response._body._mimeType);
+        const mimeType = trimContentType(_response._body._mimeType);
 
         interceptorInstance.sendCDPMessage("Network.loadingFinished", {
           requestId: requestIdStr,
@@ -342,7 +373,7 @@ class PolyfillFetchInterceptor {
           duration: timeStamp - interceptorInstance.startTime,
           type: mimeType,
           response: {
-            type: fetchInstance._response.type,
+            type: _response.type,
             status: fetchInstance._responseStatus,
             url: fetchInstance._responseUrl,
             headers: fetchInstance._nativeResponseHeaders,
@@ -410,10 +441,6 @@ class PolyfillFetchInterceptor {
       progress: number,
       total: number
     ) {
-      if (requestId !== this._requestId) {
-        return;
-      }
-
       self.original__didReceiveNetworkIncrementalData.call(
         this,
         requestId,
@@ -422,12 +449,14 @@ class PolyfillFetchInterceptor {
         total
       );
 
-      if (!this._response) {
+      const _response = self.getCompatibleFetchResponse(this._response);
+
+      if (requestId !== this._requestId || !_response) {
         return;
       }
 
       const timeStamp = Date.now();
-      const mimeType = trimContentType(this._response._body._mimeType);
+      const mimeType = trimContentType(_response._body._mimeType);
       const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
 
       // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L168-L188
@@ -447,7 +476,7 @@ class PolyfillFetchInterceptor {
         ttfb: self.ttfbTime,
         type: mimeType,
         response: {
-          type: this._response.type,
+          type: _response.type,
           status: this._responseStatus,
           url: this._responseUrl,
           headers: this._nativeResponseHeaders,
@@ -498,15 +527,22 @@ class PolyfillFetchInterceptor {
     const self = this;
     self.original__didCompleteNetworkResponse = Fetch.prototype.__didCompleteNetworkResponse;
 
-    Fetch.prototype.__didCompleteNetworkResponse = function (
+    Fetch.prototype.__didCompleteNetworkResponse = async function (
       this: PolyfillFetch,
       requestId: number,
       errorMessage: string,
       didTimeOut: boolean
     ) {
-      self.original__didCompleteNetworkResponse.call(this, requestId, errorMessage, didTimeOut);
+      await self.original__didCompleteNetworkResponse.call(
+        this,
+        requestId,
+        errorMessage,
+        didTimeOut
+      );
 
-      if (requestId !== this._requestId || !this._response) {
+      const _response = self.getCompatibleFetchResponse(this._response);
+
+      if (requestId !== this._requestId || !_response) {
         return;
       }
 
@@ -525,13 +561,11 @@ class PolyfillFetchInterceptor {
         });
       }
 
-      self.bufferResponseBody(requestIdStr, this._response, this._nativeResponseType);
+      self.bufferResponseBody(requestIdStr, _response, this._nativeResponseType);
 
-      const nativeResponseHeadersContentType = this._response.headers.get("content-type") || "";
+      const responseHeadersContentType = _response.headers.get("content-type") || "";
 
-      const mimeType = trimContentType(
-        this._response._body._mimeType || nativeResponseHeadersContentType
-      );
+      const mimeType = trimContentType(_response._body._mimeType || responseHeadersContentType);
 
       self.sendCDPMessage("Network.loadingFinished", {
         requestId: requestIdStr,
@@ -540,7 +574,7 @@ class PolyfillFetchInterceptor {
         type: mimeType,
         // additionally setting the response here, as here we have complete reponse information
         response: {
-          type: this._response.type,
+          type: _response.type,
           status: this._responseStatus,
           url: this._responseUrl,
           headers: this._nativeResponseHeaders,
