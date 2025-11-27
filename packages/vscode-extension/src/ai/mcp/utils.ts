@@ -1,5 +1,4 @@
 import { Store } from "react-devtools-inline";
-import { workspace } from "vscode";
 import { DevtoolsElement, ImageContent, TextContent, ToolResponse } from "./models";
 
 export function pngToToolContent(base64Encoded: string): ImageContent {
@@ -26,8 +25,4 @@ export function textToToolResponse(text: string): ToolResponse {
 // This util removes the need for type-casting on every `store.getElementByID` call
 export function getDevtoolsElementByID(id: number, store: Store): DevtoolsElement | null {
   return store.getElementByID(id) as unknown as DevtoolsElement | null;
-}
-
-export function isRadonEnabledInSettings() {
-  return workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabledBoolean") ?? true;
 }
