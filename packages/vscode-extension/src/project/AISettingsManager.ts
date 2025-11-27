@@ -17,11 +17,6 @@ export class AISettingsManager implements Disposable {
   constructor(stateManager: StateManager<State>) {
     this.state = stateManager.getDerived("workspaceConfiguration").getDerived("radonAI");
 
-    const radonAiEnabled = AISettingsManager.getIsAIEnabled();
-    this.updateState({
-      enableRadonAI: radonAiEnabled,
-    });
-
     this.configurationListenerDisposable = workspace.onDidChangeConfiguration((event) => {
       if (event.affectsConfiguration("RadonIDE.radonAI.enabledBoolean")) {
         const updatedRadonAiEnabled = AISettingsManager.getIsAIEnabled();
