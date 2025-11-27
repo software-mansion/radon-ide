@@ -107,11 +107,6 @@ jobs:
       - name: Show Xcode version
         run: xcodebuild -version
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-
       - name: Enforce HTTPS for submodules
         run: git config --global url."https://github.com/".insteadOf "git@github.com:"
 
@@ -177,6 +172,7 @@ jobs:
           CODE_VERSION: ${{ matrix.codeVersion }}
           IS_ANDROID: ${{ matrix.isAndroid }}
           RADON_IDE_LICENSE_KEY: ${{ secrets.RADON_IDE_LICENSE_KEY }}
+          ALLOW_ENVIRONMENT_MODIFICATIONS: "true"
 
       - name: Upload test output artifact
         if: always()
