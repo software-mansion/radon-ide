@@ -208,7 +208,17 @@ function transformWrapper({ filename, src, ...rest }) {
     src = `module.exports = require("__RNIDE_lib__/rn-internals/rn-internals-${majorMinorVersion}.js");`;
   } else if (isTransforming("/lib/network/interceptors/PolyfillFetchInterceptor.ts")) {
     const polyfillModule = "react-native-fetch-api/src/Fetch";
-    const polyfillPath = doesModuleExist(polyfillModule) ? resolveFromAppDir(polyfillModule) : null;
+    const polyfillPackage = "react-native-fetch-api/package.json";
+    // https://www.npmjs.com/package/react-native-fetch-api?activeTab=versions
+    const compatibleVersions = ["1.0.0", "1.0.1", "1.0.2", "2.0.0", "3.0.0"];
+
+    const moduleExists = doesModuleExist(polyfillModule);
+    const packageExists = doesModuleExist(polyfillPackage);
+    const { version } = packageExists ? requireFromAppDir(polyfillPackage) : {};
+
+    const isCompatible = moduleExists && compatibleVersions.includes(version);
+
+    const polyfillPath = isCompatible ? resolveFromAppDir(polyfillModule) : null;
     const fetchValue = polyfillPath ? `require("${polyfillPath}")?.default` : "undefined";
     const fetchDeclaration = `const Fetch = ${fetchValue};`;
 
