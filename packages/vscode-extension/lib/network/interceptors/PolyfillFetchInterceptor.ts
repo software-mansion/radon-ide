@@ -7,7 +7,15 @@ import {
 } from "../networkRequestParsers";
 import type { NetworkProxy, NativeResponseType, BlobLikeResponse } from "../types";
 
-const Fetch = require("../../polyfills/babel_transform/FetchPolyfill.js")?.default;
+/**
+ * Below line is replaced during the babel transformation process
+ * to point to the react-native-fetch-api module if available.
+ * If the package is not installed, the value is set to undefined.
+ * 
+ * The declaration below *HAS TO* start with "const Fetch" to be correctly identified,
+ * see lib/babel_transformer.js for more details.
+ */
+const Fetch: any = undefined;
 
 type BodyInit =
   | Blob

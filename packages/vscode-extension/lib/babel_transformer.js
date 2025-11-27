@@ -206,12 +206,16 @@ function transformWrapper({ filename, src, ...rest }) {
     const { version } = requireFromAppDir("react-native/package.json");
     const majorMinorVersion = version.split(".").slice(0, 2).join(".");
     src = `module.exports = require("__RNIDE_lib__/rn-internals/rn-internals-${majorMinorVersion}.js");`;
-  } else if (isTransforming("/lib/polyfills/babel_transform/FetchPolyfill.js")) {
+  } else if (isTransforming("/lib/network/interceptors/PolyfillFetchInterceptor.ts")) {
     const polyfillModule = "react-native-fetch-api/src/Fetch";
     const polyfillPath = doesModuleExist(polyfillModule) ? resolveFromAppDir(polyfillModule) : null;
-    src = polyfillPath
-      ? `module.exports = require("${polyfillPath}");`
-      : `module.exports = undefined;`;
+    const fetchValue = polyfillPath ? `require("${polyfillPath}")?.default` : "undefined";
+    const fetchDeclaration = `const Fetch = ${fetchValue};`;
+
+    src = src
+      .split("\n")
+      .map((line) => (line.trim().startsWith("const Fetch") ? fetchDeclaration : line))
+      .join("\n");
   }
 
   return transform({ filename, src, ...rest });
