@@ -20,10 +20,6 @@ import { cleanupOldMcpConfigEntries } from "./configFileHelper";
 const RADON_AI_MCP_ENTRY_NAME = "RadonAI";
 const RADON_AI_MCP_PROVIDER_ID = "RadonAIMCPProvider";
 
-export function isAIEnabledInSettings() {
-  return workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabledBoolean") ?? true;
-}
-
 function canUseMcpDefinitionProviderAPI() {
   return (
     // @ts-ignore lm.registerMcpServerDefinitionProvider API is only available in VSCode 1.101+.
@@ -71,13 +67,17 @@ async function startRadonAIInCursor(server: LocalMcpServer) {
   }
 }
 
+function isEnabledInSettings() {
+  return workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabledBoolean") ?? true;
+}
+
 class RadonMcpController implements Disposable {
   private server: LocalMcpServer | undefined = undefined;
   private serverChangedEmitter = new EventEmitter<void>();
   private disposables: Disposable[] = [];
 
   constructor(context: ExtensionContext) {
-    const radonAiEnabled = isAIEnabledInSettings();
+    const radonAiEnabled = isEnabledInSettings();
     registerRadonChat(context, radonAiEnabled);
     this.registerRadonMcpServerProviderInVSCode();
     cleanupOldMcpConfigEntries();
@@ -89,7 +89,7 @@ class RadonMcpController implements Disposable {
     this.disposables.push(
       workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration("RadonIDE.radonAI.enabledBoolean")) {
-          if (isAIEnabledInSettings()) {
+          if (isEnabledInSettings()) {
             this.enableServer();
           } else {
             this.disableServer();
