@@ -195,12 +195,12 @@ class PolyfillFetchInterceptor {
   }
 
   private setupInterceptors() {
-    this.handleDidCreateRequest();
-    this.handleDidReceiveNetworkResponse();
-    this.handleDidReceiveNetworkIncrementalData();
-    this.handleDidReceiveNetworkData();
-    this.handleDidCompleteNetworkResponse();
-    this.handleAbort();
+    this.override__didCreateRequest();
+    this.override__didReceiveNetworkResponse();
+    this.override__didReceiveNetworkIncrementalData();
+    this.override__didReceiveNetworkData();
+    this.override__didCompleteNetworkResponse();
+    this.override__abort();
   }
 
   private cleanupInterceptors() {
@@ -250,7 +250,7 @@ class PolyfillFetchInterceptor {
     }
   }
 
-  private handleDidCreateRequest() {
+  private override__didCreateRequest() {
     // eslint-disable-next-line
     const self = this;
     self.original__didCreateRequest = Fetch.prototype.__didCreateRequest;
@@ -283,17 +283,20 @@ class PolyfillFetchInterceptor {
   // https://github.com/MattiasBuelens/web-streams-polyfill/blob/master/src/lib/readable-stream/generic-reader.ts#L60-L66
   // https://github.com/MattiasBuelens/web-streams-polyfill/blob/master/src/lib/readable-stream/default-reader.ts#L118-L128
   // Observes stream closure via the internal _closedPromise, which is accessed normally bu closed() method
-  private handleStreamReaderClosed(
+  private override__getReader(
     stream: ReadableStream,
     fetchInstance: PolyfillFetch,
     interceptorInstance: PolyfillFetchInterceptor
   ) {
-    const originalGetStreamReader = stream.getReader;
+    const original__getReader = stream.getReader;
+    if (typeof original__getReader !== "function") {
+      return;
+    }
 
     // @ts-ignore - Overriding getReader to intercept stream closure
     stream.getReader = function (this: FetchReadableStream, options?: { mode?: string }) {
       // @ts-ignore - Reader has internal _closedPromise property
-      const reader: FetchReadableStream = originalGetStreamReader.call(this, options);
+      const reader: FetchReadableStream = original__getReader.call(this, options);
 
       const closedPromise = reader._closedPromise;
       if (!closedPromise?.then) {
@@ -338,7 +341,7 @@ class PolyfillFetchInterceptor {
           requestId: requestIdStr,
           timestamp: timeStamp,
           type: "",
-          errorText: e.message || "Timeout",
+          errorText: e.message || "Stream error",
           canceled: false,
         });
       };
@@ -349,7 +352,7 @@ class PolyfillFetchInterceptor {
     };
   }
 
-  private handleDidReceiveNetworkResponse() {
+  private override__didReceiveNetworkResponse() {
     // eslint-disable-next-line
     const self = this;
     self.original__didReceiveNetworkResponse = Fetch.prototype.__didReceiveNetworkResponse;
@@ -372,12 +375,12 @@ class PolyfillFetchInterceptor {
       // stream and streamController are created and assigned in __didReceiveNetworkResponse
       // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L130-L157
       if (this._stream) {
-        self.handleStreamReaderClosed(this._stream, this, self);
+        self.override__getReader(this._stream, this, self);
       }
     };
   }
 
-  private handleDidReceiveNetworkIncrementalData() {
+  private override__didReceiveNetworkIncrementalData() {
     // eslint-disable-next-line
     const self = this;
     self.original__didReceiveNetworkIncrementalData =
@@ -431,7 +434,7 @@ class PolyfillFetchInterceptor {
     };
   }
 
-  private handleDidReceiveNetworkData() {
+  private override__didReceiveNetworkData() {
     // eslint-disable-next-line
     const self = this;
 
@@ -467,7 +470,7 @@ class PolyfillFetchInterceptor {
     };
   }
 
-  private handleDidCompleteNetworkResponse() {
+  private override__didCompleteNetworkResponse() {
     // eslint-disable-next-line
     const self = this;
     self.original__didCompleteNetworkResponse = Fetch.prototype.__didCompleteNetworkResponse;
@@ -521,7 +524,7 @@ class PolyfillFetchInterceptor {
     };
   }
 
-  private handleAbort() {
+  private override__abort() {
     // eslint-disable-next-line
     const self = this;
     self.original__abort = Fetch.prototype.__abort;
