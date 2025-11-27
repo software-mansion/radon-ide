@@ -11,7 +11,7 @@ import type { NetworkProxy, NativeResponseType, BlobLikeResponse } from "../type
  * Below line is replaced during the babel transformation process
  * to point to the react-native-fetch-api module if available.
  * If the package is not installed, the value is set to undefined.
- * 
+ *
  * The declaration below *HAS TO* start with "const Fetch" to be correctly identified,
  * see lib/babel_transformer.js for more details.
  */
@@ -148,6 +148,14 @@ class IncrementalResponseQueue {
   public resetQueue(): void {
     this.queueMap.clear();
   }
+
+  public getResponseSize(requestId: string): number {
+    const queue = this.queueMap.get(requestId);
+    if (!queue) {
+      return 0;
+    }
+    return queue.reduce((acc, chunk) => acc + chunk.length, 0);
+  }
 }
 
 /**
@@ -267,6 +275,7 @@ class PolyfillFetchInterceptor {
 
       const mimeType = trimContentType(this._request._body._mimeType);
       self.startTime = Date.now();
+
       const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
 
       self.sendCDPMessage("Network.requestWillBeSent", {
@@ -277,7 +286,7 @@ class PolyfillFetchInterceptor {
         request: {
           url: this._request.url,
           method: this._request.method,
-          headers: this._request.headers,
+          headers: this._nativeRequestHeaders,
           postData: deserializeRequestData(this._request._body._bodyInit, mimeType),
         },
         type: mimeType,
@@ -424,13 +433,18 @@ class PolyfillFetchInterceptor {
       // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L168-L188
       self.incrementalResponseQueue.pushToQueue(requestIdStr, responseText);
 
+      const eventMessageSize = total <= 0 ? progress : total;
+      const messageSize =
+        eventMessageSize < 0
+          ? self.incrementalResponseQueue.getResponseSize(requestIdStr)
+          : eventMessageSize;
+
       self.sendCDPMessage("Network.dataReceived", {
         requestId: requestIdStr,
         loaderId: LOADER_ID,
         timestamp: timeStamp,
         dataLength: responseText.length,
         ttfb: self.ttfbTime,
-        encodedDataLength: total <= 0 ? progress : total,
         type: mimeType,
         response: {
           type: this._response.type,
@@ -438,6 +452,7 @@ class PolyfillFetchInterceptor {
           url: this._responseUrl,
           headers: this._nativeResponseHeaders,
         },
+        encodedDataLength: messageSize,
       });
     };
   }
@@ -512,7 +527,11 @@ class PolyfillFetchInterceptor {
 
       self.bufferResponseBody(requestIdStr, this._response, this._nativeResponseType);
 
-      const mimeType = trimContentType(this._response._body._mimeType);
+      const nativeResponseHeadersContentType = this._response.headers.get("content-type") || "";
+
+      const mimeType = trimContentType(
+        this._response._body._mimeType || nativeResponseHeadersContentType
+      );
 
       self.sendCDPMessage("Network.loadingFinished", {
         requestId: requestIdStr,
