@@ -18,7 +18,7 @@ const WorkspaceConfigurationKeyMap = {
     enableExperimentalElementInspector: "general.enableExperimentalElementInspector",
     inspectorExcludePattern: "general.inspectorExcludePattern",
   },
-  radonAI: { enableRadonAI: "radonAI.enableRadonAI" },
+  radonAI: { enableRadonAI: "radonAI.enabledBoolean" },
   userInterface: {
     panelLocation: "userInterface.panelLocation",
     showDeviceFrame: "userInterface.showDeviceFrame",
