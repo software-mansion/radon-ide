@@ -172,6 +172,7 @@ export class ApplicationContext implements Disposable {
 
   public async updateLaunchConfig(launchConfig: LaunchConfiguration) {
     this.launchConfig = resolveLaunchConfig(launchConfig);
+    this.reactNativeVersion = getReactNativeVersion(this.launchConfig.absoluteAppRoot);
     this.applicationDependencyManager.setLaunchConfiguration(this.launchConfig);
     await this.applicationDependencyManager.runAllDependencyChecks();
 

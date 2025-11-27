@@ -61,10 +61,8 @@ export class NetworkPlugin implements ToolPlugin {
     reactNativeVersion: SemVer | null
   ) {
     // using SemVer.compare does not work because it evaluates 0 to false in its implementation
-    const enableDebuggerInspector =
-      reactNativeVersion && reactNativeVersion.minor >= DEBUGGER_NETWORK_INSPECTOR_VERSION_MINOR;
 
-    this.networkInspector = enableDebuggerInspector
+    this.networkInspector = this.checkCompatibility(reactNativeVersion)
       ? new DebuggerNetworkInspector(inspectorBridge, networkBridge, metroPort)
       : new InspectorBridgeNetworkInspector(inspectorBridge, metroPort);
     initialize();
@@ -72,6 +70,28 @@ export class NetworkPlugin implements ToolPlugin {
 
   public get pluginAvailable(): boolean {
     return this.networkInspector.pluginAvailable;
+  }
+
+  private checkCompatibility(reactNativeVersion: SemVer | null): boolean {
+    if (
+      !reactNativeVersion ||
+      reactNativeVersion.minor < DEBUGGER_NETWORK_INSPECTOR_VERSION_MINOR
+    ) {
+      return false;
+    }
+
+    // Check whether the 83 prerelease is >= rc.3,
+    // as network debugger was enabled in in rc.3
+    const prerelease = reactNativeVersion.prerelease;
+    if (
+      prerelease.length > 0 &&
+      reactNativeVersion.minor === 83 &&
+      typeof prerelease[1] === "number"
+    ) {
+      return prerelease[1] >= 3;
+    }
+
+    return true;
   }
 
   public enable(): void {
