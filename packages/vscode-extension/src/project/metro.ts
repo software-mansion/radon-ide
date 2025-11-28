@@ -3,7 +3,6 @@ import fs from "fs";
 import stripAnsi from "strip-ansi";
 import WebSocket from "ws";
 import { Disposable, EventEmitter, ExtensionMode, Uri, workspace } from "vscode";
-import _ from "lodash";
 import { DebugSource } from "../debugging/DebugSession";
 import { ResolvedLaunchConfig } from "./ApplicationContext";
 import { ChildProcess, command, exec, lineReader } from "../utilities/subprocess";
@@ -260,6 +259,7 @@ export class Metro implements MetroSession, Disposable {
   protected _expoPreludeLineCount = 0;
   protected _watchFolders: string[] | undefined;
   protected readonly metroOutputChannel;
+  protected readonly appOutputChannel;
 
   protected readonly bundleErrorEventEmitter = new EventEmitter<BundleErrorEvent>();
   protected readonly bundleProgressEventEmitter = new EventEmitter<BundleProgressEvent>();
@@ -279,14 +279,14 @@ export class Metro implements MetroSession, Disposable {
   ) {
     this._watchFolders = watchFolders;
 
-    const metroOutputChannel =
-      IDE.getInstanceIfExists()?.outputChannelRegistry.getOrCreateOutputChannel(
-        Output.MetroBundler
-      );
-    if (!metroOutputChannel) {
+    const outputChannelRegistry = IDE.getInstanceIfExists()?.outputChannelRegistry;
+
+    if (!outputChannelRegistry) {
       throw new MetroError("Cannot start bundler process. The IDE is not initialized.");
     }
-    this.metroOutputChannel = metroOutputChannel;
+
+    this.metroOutputChannel = outputChannelRegistry.getOrCreateOutputChannel(Output.MetroBundler);
+    this.appOutputChannel = outputChannelRegistry.getOrCreateOutputChannel(Output.JSApplication);
   }
 
   public async getDebuggerPages(): Promise<CDPTargetDescription[]> {
@@ -493,9 +493,7 @@ class SubprocessMetroSession extends Metro implements Disposable {
         this.bundleProgressEventEmitter.fire({ bundleProgress });
       }
     } else if (event.type === "client_log" && event.level === "error") {
-      const err = stripAnsi(event.data[0]);
-      Logger.error(err);
-      this.metroOutputChannel.appendLine(err);
+      Logger.error(stripAnsi(event.data[0]));
     } else {
       Logger.debug("Metro", event);
     }
@@ -510,6 +508,12 @@ class SubprocessMetroSession extends Metro implements Disposable {
         this.metroOutputChannel.appendLine(log);
         Logger.info(log);
         this.bundlerReady.resolve();
+        break;
+      case "client_log":
+        const content = event.data[0];
+        if (content !== "__RNIDE_INTERNAL") {
+          this.appOutputChannel.appendLine(stripAnsi(content));
+        }
         break;
       case "RNIDE_watch_folders":
         this._watchFolders = event.watchFolders;
