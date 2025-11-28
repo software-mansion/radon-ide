@@ -17,9 +17,7 @@ interface LibraryDescriptionToolArgs {
   library_npm_name: string;
 }
 
-export class LibraryDescriptionTool
-  implements vscode.LanguageModelTool<LibraryDescriptionToolArgs>
-{
+class LibraryDescriptionTool implements vscode.LanguageModelTool<LibraryDescriptionToolArgs> {
   async invoke(
     options: vscode.LanguageModelToolInvocationOptions<LibraryDescriptionToolArgs>
   ): Promise<vscode.LanguageModelToolResult> {
@@ -43,9 +41,7 @@ interface QueryDocumentationToolArgs {
   text: string;
 }
 
-export class QueryDocumentationTool
-  implements vscode.LanguageModelTool<QueryDocumentationToolArgs>
-{
+class QueryDocumentationTool implements vscode.LanguageModelTool<QueryDocumentationToolArgs> {
   async invoke(
     options: vscode.LanguageModelToolInvocationOptions<QueryDocumentationToolArgs>
   ): Promise<vscode.LanguageModelToolResult> {
@@ -68,14 +64,14 @@ export class QueryDocumentationTool
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface EmptyToolArgs {}
 
-export class ViewScreenshotTool implements vscode.LanguageModelTool<EmptyToolArgs> {
+class ViewScreenshotTool implements vscode.LanguageModelTool<EmptyToolArgs> {
   async invoke(): Promise<vscode.LanguageModelToolResult> {
     const toolResponse = await screenshotToolExec();
     return toolResponseToToolResult(toolResponse);
   }
 }
 
-export class RestartDeviceTool implements vscode.LanguageModelTool<AppReloadRequest> {
+class RestartDeviceTool implements vscode.LanguageModelTool<AppReloadRequest> {
   async invoke(
     options: vscode.LanguageModelToolInvocationOptions<AppReloadRequest>
   ): Promise<vscode.LanguageModelToolResult> {
@@ -84,14 +80,14 @@ export class RestartDeviceTool implements vscode.LanguageModelTool<AppReloadRequ
   }
 }
 
-export class ViewComponentTreeTool implements vscode.LanguageModelTool<EmptyToolArgs> {
+class ViewComponentTreeTool implements vscode.LanguageModelTool<EmptyToolArgs> {
   async invoke(): Promise<vscode.LanguageModelToolResult> {
     const toolResponse = await viewComponentTreeExec();
     return toolResponseToToolResult(toolResponse);
   }
 }
 
-export class ViewApplicationLogsTool implements vscode.LanguageModelTool<EmptyToolArgs> {
+class ViewApplicationLogsTool implements vscode.LanguageModelTool<EmptyToolArgs> {
   async invoke(): Promise<vscode.LanguageModelToolResult> {
     const toolResponse = await readLogsToolExec();
     return toolResponseToToolResult(toolResponse);
