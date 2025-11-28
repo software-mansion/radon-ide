@@ -138,7 +138,7 @@ export default class ManagingDevicesService {
 
       await this.elementHelperService.waitUntilElementGone(
         By.css('[data-testid="device-removing-confirmation-view"]'),
-        // Deleting a device on GitHub CI takes a lot of time for some reason
+        // Deleting a device on GitHub CI may take a lot of time for some reason
         TIMEOUTS.LONG,
         "Delete confirmation modal did not disappear"
       );

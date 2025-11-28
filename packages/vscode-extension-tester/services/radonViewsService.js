@@ -188,17 +188,17 @@ export default class RadonViewsService {
 
     await this.driver.executeScript("arguments[0].value = '';", quickInput);
 
-    const fullPath = path.join(process.cwd(), "data");
+    const fullPath = path.join(process.cwd(), "data", filename);
     await quickInput.sendKeys(fullPath);
-    await quickInput.sendKeys(filename);
+    await quickInput.sendKeys(Key.ENTER);
 
-    const quickInputButton =
-      await this.elementHelperService.findAndWaitForElement(
-        By.css(".quick-input-action"),
-        "Timed out waiting for quick input button"
-      );
+    // const quickInputButton =
+    //   await this.elementHelperService.findAndWaitForElement(
+    //     By.css(".quick-input-action"),
+    //     "Timed out waiting for quick input button"
+    //   );
 
-    await quickInputButton.click();
+    // await quickInputButton.click();
   }
 
   async findWebViewIFrame(iframeTitle) {

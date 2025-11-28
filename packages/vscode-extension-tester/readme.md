@@ -1,6 +1,6 @@
 # Radon End-to-End Tests
 
-We use the [vscode-extension-tester](https://github.com/redhat-developer/vscode-extension-tester/wiki) library to write tests.
+We use the [vscode-extension-tester](https://github.com/redhat-developer/vscode-extension-tester/wiki) library, with standard assertion library `chai` to write tests
 
 The entire test suite is divided into smaller parts (`describes`). Tests within a single `describe` block should cover similar themes or functionality.
 
@@ -11,7 +11,40 @@ The entire test suite is divided into smaller parts (`describes`). Tests within 
   - **Test Suite Number:** A unique identifier that allows running specific test suites. When adding a new suite, use the next available natural number (e.g., if `19` is taken, use `20`).
 - **Locators:** Elements in `vscode-extension-tester` are localized using the `data-testid` HTML attribute.
 
-## 2. Adding a New Test
+- **App Naming:** Test apps are named according to their React Native or Expo version, following the convention `react-native-{version}` or `expo-{version}` (e.g., `react-native-81`, `expo-53`).
+
+## 2. Code Structure
+
+### Directory Layout
+
+```text
+root/
+├── data/                      # Storage for temporary test files
+├── scripts/
+│   ├── run_ui_tests.sh        # Running tests script
+│   └── ...
+├── screenshots/               # screenshots on test fail
+├── server/                    # Server logic
+│   └── webSocketServer.js     # WS server (communication with app)
+├── services/                  # Reusable Service Classes
+│   ├── AppManipulationService.js
+│   ├── ElementHelperService.js
+│   ├── RadonViewsService.js
+│   └── RadonViewsService.js
+├── ui-tests/                  # Test Suites
+│   ├── 01-smoke.test.js
+│   ├── 02-GUIButtons.test.js
+│   ├── ...
+│   └── setupTest.js           # Global test setup
+├── utils/                     # utilities and common functions
+│   ├── constants.test.js
+│   ├── helpers.test.js
+│   └── ...
+├── configuration.js           # Global test configuration
+└── package.json
+```
+
+## 3. Adding a New Test
 
 ### Test Template
 
@@ -62,7 +95,7 @@ The `/services/` directory contains Service Classes with frequently used functio
   - `async AppManipulationService.waitForAppToLoad()`
     - Waits for the application to load completely.
 
-## 3. React Native Application
+## 4. React Native Application
 
 Test applications are available here: [radon-ide-test-apps](https://github.com/software-mansion-labs/radon-ide-test-apps).
 
@@ -83,7 +116,7 @@ Where `id` is a unique request ID.
 
 ### Retrieving Coordinates and Data
 
-Our React Native apps provide a `TrackableButton(id)` class. To get the button coordinates, send a request with the message format: `getPosition:${id}`.
+Our React Native apps provide a `TrackableButton(id)` class. To get the button coordinates, send a request with the message: `getPosition:{id}`.
 
 The response returns coordinates in the following format:
 
@@ -112,6 +145,8 @@ The response returns coordinates in the following format:
 
 Tests can be run on a local machine using the command below.
 
+> [!NOTE] > **Note**: To run tests locally, you need a `.env` file in the root directory with the `RADON_IDE_LICENSE_KEY` variable containing an active Radon license key.
+
 Syntax:
 `npm run prepare-and-run-tests -- <app-name> <space-separated test numbers>`
 
@@ -121,7 +156,7 @@ Example (running tests 1, 2, 3, and 4 on the `react-native-81` app):
 npm run prepare-and-run-tests -- react-native-81 1 2 3 4
 ```
 
-> **Note**: side effect of running tests locally is fact that devices added in Radon IDE will be deleted.
+> [!NOTE] > **Note**: side effect of running tests locally is fact that devices added in Radon IDE will be deleted.
 
 ### CI / GitHub Actions
 

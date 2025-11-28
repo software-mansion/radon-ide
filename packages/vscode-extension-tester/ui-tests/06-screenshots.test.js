@@ -9,14 +9,14 @@ import { get } from "./setupTest.js";
 const DEFAULT_VIDEO_DURATION_SECS = 4;
 
 safeDescribe("6 - screenshots tests", () => {
-  let driver,
-    view,
-    appWebsocket,
+  let driver, view, appWebsocket;
+  let {
     elementHelperService,
     radonViewsService,
     managingDevicesService,
     appManipulationService,
-    radonSettingsService;
+    radonSettingsService,
+  } = initServices(driver);
   const cwd = process.cwd() + "/data";
 
   before(async () => {
