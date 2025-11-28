@@ -14,6 +14,7 @@ import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
 import { ActivateLicenseView } from "../views/ActivateLicenseView";
 import { LicenseStatus } from "../../common/License";
+import ExportLogsView from "../views/ExportLogsView";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -148,6 +149,22 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
               <span className="codicon codicon-report" />
               <div className="dropdown-menu-item-content" data-testid="settings-report-issue">
                 Report Issue
+              </div>
+            </span>
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            className="dropdown-menu-item"
+            onSelect={async () => {
+              const fffff = await project.getLogFileNames();
+              console.log("frytki", fffff);
+              console.log("frytki");
+              project.buildDiagnosticsReport(fffff);
+              openModal(<ExportLogsView/>)
+            }}>
+            <span className="dropdown-menu-item-wraper">
+              <span className="codicon codicon-report" />
+              <div className="dropdown-menu-item-content" data-testid="settings-report-issue">
+                Build Diagnostics Report
               </div>
             </span>
           </DropdownMenu.Item>

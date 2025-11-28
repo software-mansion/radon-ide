@@ -1,0 +1,26 @@
+.export-logs-intro {
+  margin-top: 0;
+}
+
+.export-logs-box {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  margin: 0 4px 16px;
+  border-radius: 4px;
+  box-shadow: var(--swm-input-shadow);
+  background: var(--vscode-input-background, transparent);
+  max-height: 220px;
+  overflow: auto;
+}
+
+.export-logs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.export-logs-intro {
+  margin-top: 0;
+}
