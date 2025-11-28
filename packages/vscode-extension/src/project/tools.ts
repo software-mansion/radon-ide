@@ -28,6 +28,7 @@ import {
   APOLLO_PLUGIN_ID,
   ApolloClientDevtoolsPlugin,
 } from "../plugins/apollo-client-devtools-plugin/apollo-client-devtools-plugin";
+import { ApplicationContext } from "./ApplicationContext";
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
@@ -67,15 +68,19 @@ export class ToolsManager implements Disposable {
   private plugins: Map<ToolKey, ToolPlugin> = new Map();
   private activePlugins: Set<ToolPlugin> = new Set();
   private disposables: Disposable[] = [];
+  private readonly workspaceConfigState: StateManager<WorkspaceConfiguration>;
+  private readonly reactNativeVersion: SemVer | null;
 
   public constructor(
     private readonly stateManager: StateManager<ToolsState>,
+    private readonly applicationContext: ApplicationContext,
     public readonly inspectorBridge: RadonInspectorBridge,
     public readonly networkBridge: NetworkBridge,
-    public readonly workspaceConfigState: StateManager<WorkspaceConfiguration>,
-    public readonly metroPort: number,
-    private readonly reactNativeVersion: SemVer | null
+    public readonly metroPort: number
   ) {
+    this.workspaceConfigState = this.applicationContext.workspaceConfigState;
+    this.reactNativeVersion = this.applicationContext.reactNativeVersion;
+
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
     for (const plugin of createExpoDevPluginTools()) {
       this.plugins.set(plugin.id, plugin);
@@ -107,7 +112,7 @@ export class ToolsManager implements Disposable {
       new RenderOutlinesPlugin(
         inspectorBridge,
         handleRenderOutlinesAvailabilityChange,
-        workspaceConfigState
+        this.workspaceConfigState
       )
     );
 
