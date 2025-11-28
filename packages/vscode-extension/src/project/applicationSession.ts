@@ -236,9 +236,9 @@ export class ApplicationSession implements Disposable {
 
     this.toolsManager = new ToolsManager(
       this.stateManager.getDerived("toolsState"),
+      this.applicationContext,
       devtoolsInspectorBridge,
       this.networkBridge,
-      this.applicationContext.workspaceConfigState,
       this.metro.port
     );
 
