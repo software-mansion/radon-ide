@@ -7,7 +7,7 @@ import {
   viewComponentTreeExec,
 } from "./toolExecutors";
 import { invokeToolCall } from "../shared/api";
-import { textToToolResponse, textToToolResult, toolResponseToToolResult } from "./utils";
+import { textToToolResult, toolResponseToToolResult } from "./utils";
 import { AuthorizationError } from "../../common/Errors";
 import { RadonMcpController } from "./RadonMcpController";
 
@@ -53,10 +53,10 @@ class QueryDocumentationTool implements vscode.LanguageModelTool<QueryDocumentat
       if (error instanceof AuthorizationError) {
         // This error is a fallback, as LLM tools should be disabled when no valid license is present.
         const msg = `You have to have a valid Radon IDE license to use the ${toolName} tool.`;
-        return textToToolResponse(msg);
+        return textToToolResult(msg);
       }
 
-      return textToToolResponse(String(error));
+      return textToToolResult(String(error));
     }
   }
 }
