@@ -101,8 +101,9 @@ function setGlobalUseDirectToolRegistering(useStaticRegistering: boolean) {
 }
 
 function shouldUseDirectRegistering() {
+  // The `vscode.lm.registerTool` API with image support only available in VSCode version 1.105+
+  // This API is not implemented on Cursor (it is a stub).
   return (
-    // @ts-ignore vscode.lm.registerTool API with image support only available in VSCode version 1.105+ (excluding Cursor)
     vscode.version.localeCompare("1.105.0", undefined, { numeric: true }) >= 0 &&
     getEditorType() === EditorType.VSCODE
   );
