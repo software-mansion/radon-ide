@@ -1,5 +1,11 @@
 import vscode, { commands, Disposable, ExtensionContext } from "vscode";
-import { readLogsToolExec, screenshotToolExec, viewComponentTreeExec } from "./toolExecutors";
+import {
+  AppReloadRequest,
+  readLogsToolExec,
+  restartDeviceExec,
+  screenshotToolExec,
+  viewComponentTreeExec,
+} from "./toolExecutors";
 import { invokeToolCall } from "../shared/api";
 import { textToToolResponse, textToToolResult, toolResponseToToolResult } from "./utils";
 import { AuthorizationError } from "../../common/Errors";
@@ -69,6 +75,15 @@ export class ViewScreenshotTool implements vscode.LanguageModelTool<EmptyToolArg
   }
 }
 
+export class RestartDeviceTool implements vscode.LanguageModelTool<AppReloadRequest> {
+  async invoke(
+    options: vscode.LanguageModelToolInvocationOptions<AppReloadRequest>
+  ): Promise<vscode.LanguageModelToolResult> {
+    const toolResponse = await restartDeviceExec(options.input);
+    return toolResponseToToolResult(toolResponse);
+  }
+}
+
 export class ViewComponentTreeTool implements vscode.LanguageModelTool<EmptyToolArgs> {
   async invoke(): Promise<vscode.LanguageModelToolResult> {
     const toolResponse = await viewComponentTreeExec();
@@ -110,6 +125,11 @@ function registerStaticTools() {
 
   const viewScreenshotTool = vscode.lm.registerTool("view_screenshot", new ViewScreenshotTool());
 
+  const reloadApplicationTool = vscode.lm.registerTool(
+    "reload_application",
+    new RestartDeviceTool()
+  );
+
   const viewComponentTreeTool = vscode.lm.registerTool(
     "view_component_tree",
     new ViewComponentTreeTool()
@@ -124,6 +144,7 @@ function registerStaticTools() {
     queryDocumentationTool,
     libraryDescriptionTool,
     viewScreenshotTool,
+    reloadApplicationTool,
     viewComponentTreeTool,
     viewApplicationLogsTool
   );

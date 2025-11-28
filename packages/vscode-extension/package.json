@@ -94,6 +94,27 @@
       },
       {
         "when": "RNIDE.useStaticToolRegistering",
+        "displayName": "Reload application",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "reload_application",
+        "name": "reload_application",
+        "modelDescription": "Triggers a reload of the app running in the development emulator. Use this tool whenever you are debugging the state and want to reset it, or when the app crashes or breaks due to an interaction.\nThere are 3 ways you can reload the app:\n- `reloadJs`: Causes the JS bundle to be reloaded, it does not trigger any rebuild or restart of the native part of the app. Use this to restart the JS state of the app.\n- `restartProcess`: Restarts the native part of the app. Use this method for resetting state of bugged **NATIVE** libraries or components.\n- `rebuild`: Rebuilds both the js and the native parts of the app. Use it whenever changes are made to the native part, as such changes require a full rebuild.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "reloadMethod": {
+              "type": "string",
+              "description": "Method for performing the reload. There are 3 valid options: \"reloadJs\" | \"rebuild\" | \"restartProcess\"\n- `reloadJs`: Causes the JS bundle to be reloaded, it does not trigger any rebuild or restart of the native part of the app. Use this to restart the JS state of the app.\n- `restartProcess`: Restarts the native part of the app. Use this method for resetting state of bugged **NATIVE** libraries or components.\n- `rebuild`: Rebuilds both the js and the native parts of the app. Use it whenever changes are made to the native part, as such changes require a full rebuild."
+            }
+          }
+        },
+        "tags": [
+          "react-native",
+          "debug"
+        ]
+      },
+      {
+        "when": "RNIDE.useStaticToolRegistering",
         "displayName": "View component tree",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "view_component_tree",

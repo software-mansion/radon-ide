@@ -41,7 +41,7 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
   };
 }
 
-interface AppReloadRequest {
+export interface AppReloadRequest {
   // Limiting the reload options to these three basic methods,
   // as others require too much nuance and domain specific knowledge from the AI.
   reloadMethod: Extract<ReloadAction, "reloadJs" | "rebuild" | "restartProcess">;
