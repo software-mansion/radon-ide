@@ -79,7 +79,7 @@ export function InspectDataMenu({
   })();
 
   const filteredData = inspectStack.filter((item) => !item.hide);
-  const inspectItems =
+  const inspectedItems =
     shouldShowAll || filteredData.length === MAX_INSPECT_ITEMS + 1
       ? filteredData
       : filteredData.slice(0, MAX_INSPECT_ITEMS);
@@ -88,7 +88,7 @@ export function InspectDataMenu({
 
   const onReferenceInChat = usePaywalledCallback(
     (e) => {
-      if (inspectItems.length === 0) {
+      if (inspectedItems.length === 0) {
         // Silently aborting when `inspectedItems` is empty.
         // This case should never occur, but it's certainly possible (e.g. CDP communication failure).
         e.preventDefault();
@@ -97,10 +97,10 @@ export function InspectDataMenu({
 
       // Include component's inner & outer scopes - where it's implemented and where it's used.
       // If the component is defined in node_modules, we include two inner-most outer scopes.
-      const childFilename = inspectItems[0].source.fileName;
+      const childFilename = inspectedItems[0].source.fileName;
       let parentFilename = childFilename;
 
-      for (const item of inspectItems) {
+      for (const item of inspectedItems) {
         const filename = item.source.fileName;
         if (filename !== childFilename) {
           parentFilename = filename;
@@ -147,7 +147,7 @@ export function InspectDataMenu({
           <DropdownMenu.Label className="inspect-data-menu-label">
             {displayDimensionsText}
           </DropdownMenu.Label>
-          {inspectItems.map((item) => (
+          {inspectedItems.map((item) => (
             <InspectItem item={item} onSelected={onSelected} onHover={onHover} />
           ))}
           <DropdownMenu.Group className="inspect-data-menu-group">
