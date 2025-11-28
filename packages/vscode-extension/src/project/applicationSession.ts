@@ -239,7 +239,7 @@ export class ApplicationSession implements Disposable {
       this.applicationContext,
       devtoolsInspectorBridge,
       this.networkBridge,
-      this.metro.port,
+      this.metro.port
     );
 
     this.disposables.push(this.toolsManager);
