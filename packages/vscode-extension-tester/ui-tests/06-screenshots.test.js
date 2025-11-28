@@ -129,7 +129,7 @@ safeDescribe("6 - screenshots tests", () => {
   });
 
   it("Should record screen using shortcut", async () => {
-    const filePath = path.join(cwd, "recordingTest..mp4");
+    const filePath = path.join(cwd, "recordingTestShortcut..mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
