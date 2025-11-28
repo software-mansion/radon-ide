@@ -10,6 +10,7 @@ import { invokeToolCall } from "../shared/api";
 import { textToToolResult, toolResponseToToolResult } from "./utils";
 import { AuthorizationError } from "../../common/Errors";
 import { RadonMcpController } from "./RadonMcpController";
+import { getEditorType, EditorType } from "../../utilities/editorType";
 
 const PLACEHOLDER_ID = "1234";
 
@@ -102,7 +103,8 @@ function setGlobalUseDirectToolRegistering(useStaticRegistering: boolean) {
 function shouldUseDirectRegistering() {
   return (
     // @ts-ignore vscode.lm.registerTool API with image support only available in VSCode version 1.105+ (excluding Cursor)
-    vscode.version.localeCompare("1.105.0", undefined, { numeric: true }) >= 0
+    vscode.version.localeCompare("1.105.0", undefined, { numeric: true }) >= 0 &&
+    getEditorType() === EditorType.VSCODE
   );
 }
 
