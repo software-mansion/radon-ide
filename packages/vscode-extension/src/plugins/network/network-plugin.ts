@@ -63,9 +63,7 @@ export class NetworkPlugin implements ToolPlugin {
     metroPort: number,
     reactNativeVersion: SemVer | null
   ) {
-    // using SemVer.compare does not work because it evaluates 0 to false in its implementation
-
-    this.networkInspector = this.checkCompatibility(reactNativeVersion)
+    this.networkInspector = this.checkDebuggerNetworkInspectorSupport(reactNativeVersion)
       ? new DebuggerNetworkInspector(inspectorBridge, networkBridge, metroPort)
       : new InspectorBridgeNetworkInspector(inspectorBridge, metroPort);
     initialize();
@@ -75,22 +73,11 @@ export class NetworkPlugin implements ToolPlugin {
     return this.networkInspector.pluginAvailable;
   }
 
-  private checkCompatibility(reactNativeVersion: SemVer | null): boolean {
+  private checkDebuggerNetworkInspectorSupport(reactNativeVersion: SemVer | null): boolean {
+    // using SemVer.compare does not work because it evaluates 0 to false in its implementation
     if (!reactNativeVersion || reactNativeVersion.minor < MINIMUM_RN_DEBUGGER_INSPECTOR_VERSION) {
       return false;
     }
-
-    // Check whether the 83 prerelease is >= rc.3,
-    // as network debugger was enabled in in rc.3\
-    const prerelease = reactNativeVersion.prerelease;
-    if (
-      prerelease.length > 0 &&
-      reactNativeVersion.minor === 83 &&
-      typeof prerelease[1] === "number"
-    ) {
-      return prerelease[1] >= 3;
-    }
-
     return true;
   }
 
