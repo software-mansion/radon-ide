@@ -101,13 +101,13 @@ function registerStaticTools() {
   // TODO: Disable when license not available
   const queryDocumentationTool = vscode.lm.registerTool(
     "query_documentation",
-    new ViewScreenshotTool()
+    new QueryDocumentationTool()
   );
 
   // TODO: Disable when license not available
   const libraryDescriptionTool = vscode.lm.registerTool(
     "get_library_description",
-    new ViewScreenshotTool()
+    new LibraryDescriptionTool()
   );
 
   const viewScreenshotTool = vscode.lm.registerTool("view_screenshot", new ViewScreenshotTool());
