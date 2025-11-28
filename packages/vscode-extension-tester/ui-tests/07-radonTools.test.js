@@ -17,16 +17,15 @@ import { get } from "./setupTest.js";
 const cwd = process.cwd() + "/data";
 
 safeDescribe("7 - Radon tools tests", () => {
-  let driver,
-    appWebsocket,
-    view,
-    workbench,
+  let driver, appWebsocket, view, workbench;
+  let {
     elementHelperService,
     radonViewsService,
     managingDevicesService,
     appManipulationService,
     radonSettingsService,
-    vscodeHelperService;
+    vscodeHelperService,
+  } = initServices(driver);
 
   before(async () => {
     ({ driver, view, workbench } = get());

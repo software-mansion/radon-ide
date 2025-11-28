@@ -104,6 +104,8 @@ export class VSCodeHelperService {
     const fullPath = path.join(process.cwd(), filePath);
     console.log("Opening file: " + fullPath);
 
+    await this.driver.sleep(TIMEOUTS.SHORT);
+
     await this.driver
       .actions()
       .keyDown(MODIFIER_KEY)

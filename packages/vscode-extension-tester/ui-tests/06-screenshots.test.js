@@ -153,7 +153,7 @@ safeDescribe("6 - screenshots tests", () => {
       .keyUp(Key.COMMAND)
       .perform();
 
-    await radonViewsService.findAndFillSaveFileForm("recordingTest");
+    await radonViewsService.findAndFillSaveFileForm("recordingTestShortcut");
 
     await driver.wait(
       async () => {
