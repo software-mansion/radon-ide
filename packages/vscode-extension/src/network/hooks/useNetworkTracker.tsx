@@ -41,6 +41,7 @@ interface NetworkEventTimestampMap {
   [NetworkEvent.ResponseReceived]?: number;
   [NetworkEvent.LoadingFinished]?: number;
   [NetworkEvent.LoadingFailed]?: number;
+  [NetworkEvent.DataReceived]?: number;
 }
 
 interface RequestDurationData {
@@ -67,7 +68,7 @@ class RequestTimingTracker {
     if (timeStart === undefined || timeEnd === undefined) {
       return undefined;
     }
-    return _.round((timeEnd - timeStart) * 1000, 2);
+    return timeEnd - timeStart;
   }
 
   public setRequestTimestamp(message: CDPMessage) {
@@ -95,7 +96,8 @@ class RequestTimingTracker {
     }
 
     const requestWillBeSentTimestamp = timestamps[NetworkEvent.RequestWillBeSent];
-    const responseReceivedTimestamp = timestamps[NetworkEvent.ResponseReceived];
+    const responseReceivedTimestamp =
+      timestamps[NetworkEvent.ResponseReceived] || timestamps[NetworkEvent.DataReceived];
     const loadingFinishedTimestamp =
       timestamps[NetworkEvent.LoadingFinished] ?? timestamps[NetworkEvent.LoadingFailed];
 
