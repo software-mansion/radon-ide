@@ -380,7 +380,7 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
-  context.subscriptions.push(registerRadonAI());
+  context.subscriptions.push(registerRadonAI(context));
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 

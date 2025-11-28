@@ -1,8 +1,9 @@
-import vscode, { commands, Disposable } from "vscode";
+import vscode, { commands, Disposable, ExtensionContext } from "vscode";
 import { readLogsToolExec, screenshotToolExec, viewComponentTreeExec } from "./toolExecutors";
 import { invokeToolCall } from "../shared/api";
 import { textToToolResponse, textToToolResult, toolResponseToToolResult } from "./utils";
 import { AuthorizationError } from "../../common/Errors";
+import { RadonMcpController } from "./RadonMcpController";
 
 const PLACEHOLDER_ID = "1234";
 
@@ -94,10 +95,6 @@ function shouldUseDirectRegistering() {
   );
 }
 
-function registerMcpTools(): Disposable {
-  return Disposable.from();
-}
-
 function registerStaticTools() {
   // TODO: Disable when license not available
   const queryDocumentationTool = vscode.lm.registerTool(
@@ -132,12 +129,12 @@ function registerStaticTools() {
   );
 }
 
-export function registerRadonAI(): Disposable {
+export function registerRadonAI(context: ExtensionContext): Disposable {
   updateExtensionContextShouldUseDirectRegistering();
 
   if (shouldUseDirectRegistering()) {
     return registerStaticTools();
   } else {
-    return registerMcpTools();
+    return new RadonMcpController(context);
   }
 }
