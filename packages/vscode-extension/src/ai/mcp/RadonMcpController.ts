@@ -71,7 +71,7 @@ function isEnabledInSettings() {
   return workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabledBoolean") ?? true;
 }
 
-class RadonMcpController implements Disposable {
+export class RadonMcpController implements Disposable {
   private server: LocalMcpServer | undefined = undefined;
   private serverChangedEmitter = new EventEmitter<void>();
   private disposables: Disposable[] = [];
@@ -151,8 +151,4 @@ class RadonMcpController implements Disposable {
     this.serverChangedEmitter.dispose();
     disposeAll(this.disposables);
   }
-}
-
-export function registerRadonAI(context: ExtensionContext) {
-  return new RadonMcpController(context);
 }
