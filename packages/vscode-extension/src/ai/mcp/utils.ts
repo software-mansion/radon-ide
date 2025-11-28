@@ -22,9 +22,8 @@ export function textToToolResponse(text: string): ToolResponse {
   };
 }
 
-// @ts-ignore `vscode.LanguageModelDataPart` introduced in 1.105.0
 export function pngToDataPart(buffer: Buffer<ArrayBufferLike>): vscode.LanguageModelDataPart {
-  // @ts-ignore
+  // @ts-ignore `vscode.LanguageModelDataPart` introduced in 1.105.0
   return vscode.LanguageModelDataPart.image(buffer, "image/png");
 }
 
@@ -35,6 +34,17 @@ export function textToTextPart(text: string): vscode.LanguageModelTextPart {
 export function textToToolResult(text: string): vscode.LanguageModelToolResult {
   return {
     content: [textToToolContent(text)],
+  };
+}
+
+export function toolResponseToToolResult(response: ToolResponse): vscode.LanguageModelToolResult {
+  return {
+    content: response.content.map(
+      (element) =>
+        element.type === "text"
+          ? textToTextPart(element.text)
+          : pngToDataPart(Buffer.from(element.data, "base64")) // FIXME: This won't work, the data format differs, align the data formats
+    ),
   };
 }
 

@@ -3,7 +3,7 @@ import { Logger } from "../../Logger";
 import { getLicenseToken } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
 import { CHAT_LOG } from "../chat";
-import { ToolResult, ToolsInfo } from "../mcp/models";
+import { ToolResponse, ToolResult, ToolsInfo } from "../mcp/models";
 import { textToToolResponse } from "../mcp/utils";
 
 const BACKEND_URL = "https://radon-ai-backend.swmansion.com/";
@@ -28,7 +28,7 @@ export async function invokeToolCall(
   toolName: string,
   args: unknown,
   callId: string = PLACEHOLDER_ID
-): Promise<vscode.LanguageModelToolResult> {
+): Promise<ToolResponse> {
   getTelemetryReporter().sendTelemetryEvent("radon-ai:tool-called", { toolName });
   const url = new URL("/api/tool_calls/", BACKEND_URL);
   const token = await getLicenseToken();
