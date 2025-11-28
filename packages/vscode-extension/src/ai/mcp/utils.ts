@@ -39,11 +39,10 @@ export function textToToolResult(text: string): vscode.LanguageModelToolResult {
 
 export function toolResponseToToolResult(response: ToolResponse): vscode.LanguageModelToolResult {
   return {
-    content: response.content.map(
-      (element) =>
-        element.type === "text"
-          ? textToTextPart(element.text)
-          : pngToDataPart(Buffer.from(element.data, "base64")) // FIXME: This won't work, the data format differs, align the data formats
+    content: response.content.map((element) =>
+      element.type === "text"
+        ? textToTextPart(element.text)
+        : pngToDataPart(Buffer.from(element.data, "base64"))
     ),
   };
 }
