@@ -82,6 +82,10 @@ class RadonMcpController implements Disposable {
     this.registerRadonMcpServerProviderInVSCode();
     cleanupOldMcpConfigEntries();
 
+    if (radonAiEnabled) {
+      this.enableServer();
+    }
+
     this.disposables.push(
       workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration("RadonIDE.radonAI.enabledBoolean")) {
@@ -93,10 +97,6 @@ class RadonMcpController implements Disposable {
         }
       })
     );
-
-    if (isEnabledInSettings()) {
-      this.enableServer();
-    }
   }
 
   private enableServer() {

@@ -19,6 +19,13 @@
   text-overflow: ellipsis;
 }
 
+.inspect-data-menu-group {
+  display: flex;
+  flex-direction: row;
+  gap: 9px;
+  padding: 5px;
+}
+
 .inspect-data-menu-label {
   font-size: 12px;
   line-height: 25px;
@@ -76,4 +83,61 @@
   padding: 3px 6px;
   justify-content: center;
   flex-wrap: nowrap;
+}
+
+.inspect-data-menu-item.inspector-button {
+  line-height: 1;
+  color: var(--swm-button-popover-secondary);
+
+  width: fit-content;
+  height: fit-content;
+  min-height: 20px;
+
+  display: flex;
+  flex: auto;
+  flex-wrap: wrap;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 2px 5px;
+  margin: 1px 0;
+  position: relative;
+  user-select: none;
+  outline: none;
+
+  border-radius: 3px;
+  border: 1px solid var(--swm-button-border);
+  background-color: var(--swm-button-popover-secondary-background);
+
+  transition: all 80ms;
+}
+
+.inspect-data-menu-item.inspector-button:hover {
+  background-color: var(--swm-button-popover-secondary-hover);
+}
+
+.inspect-data-menu-item.inspector-button:active {
+  background-color: var(--swm-button-popover-secondary-active-background);
+}
+
+.inspect-data-menu-label.inspector-button {
+  font-size: clamp(4px, 6vw, 12px);
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex: auto;
+  flex-wrap: wrap;
+
+  align-items: center;
+  justify-content: center;
+}
+
+.inspect-data-menu-label > .codicon {
+  font-size: clamp(4px, 6vw, 14px);
+  margin-top: 1px; /* The lightbulb icon seems misaligned by 1px */
+}
+
+.inspect-data-menu-label > .inspector-button-text {
+  margin: 0 4px;
 }
