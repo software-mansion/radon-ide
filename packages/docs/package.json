@@ -27,7 +27,7 @@
     "@vercel/analytics": "^1.2.2",
     "clsx": "^2.1.0",
     "front-matter": "^4.0.2",
-    "glob": "^11.0.1",
+    "glob": "^11.1.0",
     "motion": "^11.11.17",
     "posthog-js": "^1.259.0",
     "prism-react-renderer": "^2.1.0",
