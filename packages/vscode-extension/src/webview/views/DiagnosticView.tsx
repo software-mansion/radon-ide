@@ -13,6 +13,7 @@ import { Platform, useProject } from "../providers/ProjectProvider";
 import { ApplicationDependency, DependencyStatus, EnvironmentDependency } from "../../common/State";
 import { dependencyDescription } from "../hooks/useDependencyErrors";
 import { useStore } from "../providers/storeProvider";
+import { PropsWithDataTest } from "../../common/types";
 
 function DiagnosticView() {
   const { project } = useProject();
@@ -74,7 +75,7 @@ function DiagnosticView() {
       <div className="diagnostic-section-margin" />
 
       <div className="diagnostic-button-container">
-        <Button onClick={reRunChecks} type="secondary">
+        <Button onClick={reRunChecks} type="secondary" dataTest="rerun-diagnostics-button">
           <span slot="start" className="codicon codicon-refresh" />
           Re-run checks
         </Button>
@@ -120,8 +121,12 @@ function DiagnosticItem({ label, name, info, action }: DiagnosticItemProps) {
   return (
     <div className="diagnostic-item-wrapper">
       <div className="diagnostic-item">
-        <div className="diagnostic-icon">{icon}</div>
-        <p className="diagnostic-item-text">{`${label}${details}`}</p>
+        <div className="diagnostic-icon" data-testid={`diagnostic-icon-${name}-${info?.status}`}>
+          {icon}
+        </div>
+        <p
+          className="diagnostic-item-text"
+          data-testid={`diagnostic-item-text-${name}`}>{`${label}${details}`}</p>
         {description && (
           <Tooltip label={description} type="secondary" instant>
             <span className="diagnostic-item-info-icon codicon codicon-info" />
@@ -129,7 +134,7 @@ function DiagnosticItem({ label, name, info, action }: DiagnosticItemProps) {
         )}
       </div>
       {error && (
-        <div className="diagnostic-error-wrapper">
+        <div className="diagnostic-error-wrapper" data-testid={`diagnostic-error-${name}`}>
           <DiagnosticError message={error} />
           {action}
         </div>
@@ -142,7 +147,7 @@ interface DiagnosticErrorProps {
   message?: string;
 }
 
-export function DiagnosticError({ message }: DiagnosticErrorProps) {
+export function DiagnosticError({ message, dataTest }: PropsWithDataTest<DiagnosticErrorProps>) {
   if (!message) {
     return null;
   }
@@ -156,7 +161,7 @@ export function DiagnosticError({ message }: DiagnosticErrorProps) {
   const [fullLink, title, url] = result;
   const [messageFirstPart, messageSecondPart] = message.split(fullLink);
   return (
-    <p className="diagnostic-item-error">
+    <p className="diagnostic-item-error" data-testid={dataTest}>
       {messageFirstPart}
       <Anchor url={url}>{title}</Anchor>
       {messageSecondPart}

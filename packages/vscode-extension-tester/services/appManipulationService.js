@@ -103,9 +103,7 @@ export default class AppManipulationService {
     await this.elementHelperService.findAndClickElementByTag(
       `device-running-badge-${runningDeviceName}`
     );
-
     await this.driver.actions().sendKeys(Key.ESCAPE).perform();
-
     await this.elementHelperService.findAndClickElementByTag(
       "radon-bottom-bar-device-select-dropdown-trigger"
     );

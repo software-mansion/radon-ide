@@ -95,7 +95,6 @@ export default class ManagingDevicesService {
   async addNewDevice(newDeviceName) {
     await this.openDeviceCreationModal();
     await this.fillDeviceCreationForm(newDeviceName);
-
     await this.elementHelperService.findAndClickElementByTag(
       "creating-device-form-confirmation-button"
     );
