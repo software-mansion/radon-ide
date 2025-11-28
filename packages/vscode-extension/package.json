@@ -158,6 +158,12 @@
         "title": "Rotate device anticlockwise",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.toggleDeviceAppearance",
+        "title": "Toggle device appearance (light/dark mode)",
+        "category": "Radon IDE",
+        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       }
     ],
     "keybindings": [
@@ -221,6 +227,9 @@
         "command": "RNIDE.rotateDeviceAnticlockwise",
         "key": "ctrl+alt+9",
         "mac": "ctrl+alt+9"
+      },
+      {
+        "command": "RNIDE.toggleDeviceAppearance"
       }
     ],
     "configuration": [
