@@ -13,7 +13,10 @@ import DebuggerNetworkInspector from "./strategies/DebuggerNetworkInspector";
 
 export const NETWORK_PLUGIN_ID = "network";
 
-const DEBUGGER_NETWORK_INSPECTOR_VERSION_MINOR = 83;
+/**
+ * Minimum React Native minor version that includes debugger network inspector support
+ */
+const MINIMUM_RN_DEBUGGER_INSPECTOR_VERSION = 83;
 
 export type BroadcastListener = (message: WebviewMessage) => void;
 
@@ -73,15 +76,12 @@ export class NetworkPlugin implements ToolPlugin {
   }
 
   private checkCompatibility(reactNativeVersion: SemVer | null): boolean {
-    if (
-      !reactNativeVersion ||
-      reactNativeVersion.minor < DEBUGGER_NETWORK_INSPECTOR_VERSION_MINOR
-    ) {
+    if (!reactNativeVersion || reactNativeVersion.minor < MINIMUM_RN_DEBUGGER_INSPECTOR_VERSION) {
       return false;
     }
 
     // Check whether the 83 prerelease is >= rc.3,
-    // as network debugger was enabled in in rc.3
+    // as network debugger was enabled in in rc.3\
     const prerelease = reactNativeVersion.prerelease;
     if (
       prerelease.length > 0 &&
