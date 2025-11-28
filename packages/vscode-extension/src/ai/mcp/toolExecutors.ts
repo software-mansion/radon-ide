@@ -1,5 +1,4 @@
 import { readFileSync } from "fs";
-import vscode from "vscode";
 import { Store } from "react-devtools-inline";
 import { IDE } from "../../project/ide";
 import {
@@ -12,6 +11,7 @@ import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
 import { ReloadAction } from "../../project/DeviceSessionsManager";
 import printComponentTree from "./printComponentTree";
+import { ImageContent, TextContent, ToolResponse } from "./models";
 
 export function tryGetTreeRoot(store: Store) {
   const treeRoot = getDevtoolsElementByID(store.roots[0], store);
@@ -21,7 +21,7 @@ export function tryGetTreeRoot(store: Store) {
   throw new Error(`Component tree is corrupted. Tree root could not be found.`);
 }
 
-export async function screenshotToolExec(): Promise<vscode.LanguageModelToolResult> {
+export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
   if (!project || !project.deviceSession) {
     return textToToolResponse(
@@ -33,7 +33,7 @@ export async function screenshotToolExec(): Promise<vscode.LanguageModelToolResu
 
   const screenshot = await project.getScreenshot();
 
-  const contents = readFileSync(screenshot.tempFileLocation);
+  const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
 
   return {
     content: [pngToToolContent(contents)],
@@ -46,9 +46,7 @@ interface AppReloadRequest {
   reloadMethod: Extract<ReloadAction, "reloadJs" | "rebuild" | "restartProcess">;
 }
 
-export async function restartDeviceExec(
-  input: AppReloadRequest
-): Promise<vscode.LanguageModelToolResult> {
+export async function restartDeviceExec(input: AppReloadRequest): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
 
   if (!project || !project.deviceSession) {
@@ -68,7 +66,7 @@ export async function restartDeviceExec(
   }
 }
 
-export async function viewComponentTreeExec(): Promise<vscode.LanguageModelToolResult> {
+export async function viewComponentTreeExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
 
   if (!project?.deviceSession?.devtoolsStore) {
@@ -88,7 +86,7 @@ export async function viewComponentTreeExec(): Promise<vscode.LanguageModelToolR
   }
 }
 
-export async function readLogsToolExec(): Promise<vscode.LanguageModelToolResult> {
+export async function readLogsToolExec(): Promise<ToolResponse> {
   const ideInstance = IDE.getInstanceIfExists();
 
   if (!ideInstance) {
@@ -121,7 +119,7 @@ export async function readLogsToolExec(): Promise<vscode.LanguageModelToolResult
     isAndroid ? Output.AndroidDevice : Output.IosDevice
   );
 
-  const combinedLogsContent: vscode.LanguageModelResponsePart[] = [];
+  const combinedLogsContent: (TextContent | ImageContent)[] = [];
 
   if (!buildLogs.isEmpty()) {
     const rawLogs = ["=== BUILD PROCESS LOGS ===\n\n", ...buildLogs.readAll()];
@@ -145,8 +143,7 @@ export async function readLogsToolExec(): Promise<vscode.LanguageModelToolResult
 
   if (session.previewReady) {
     const screenshot = await session.getScreenshot();
-    const contents = readFileSync(screenshot.tempFileLocation);
-
+    const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
     combinedLogsContent.push(pngToToolContent(contents));
   }
 

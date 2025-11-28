@@ -63,21 +63,22 @@ interface EmptyToolArgs {}
 
 export class ViewScreenshotTool implements vscode.LanguageModelTool<EmptyToolArgs> {
   async invoke(): Promise<vscode.LanguageModelToolResult> {
-    // TODO: Add version checks for supporting this, as this feature was added in 1.105.
-    // ref: https://github.com/microsoft/vscode/issues/245104
-    return await screenshotToolExec();
+    const toolResponse = await screenshotToolExec();
+    return toolResponseToToolResult(toolResponse);
   }
 }
 
 export class ViewComponentTreeTool implements vscode.LanguageModelTool<EmptyToolArgs> {
   async invoke(): Promise<vscode.LanguageModelToolResult> {
-    return await viewComponentTreeExec();
+    const toolResponse = await viewComponentTreeExec();
+    return toolResponseToToolResult(toolResponse);
   }
 }
 
 export class ViewApplicationLogsTool implements vscode.LanguageModelTool<EmptyToolArgs> {
   async invoke(): Promise<vscode.LanguageModelToolResult> {
-    return await readLogsToolExec();
+    const toolResponse = await readLogsToolExec();
+    return toolResponseToToolResult(toolResponse);
   }
 }
 
