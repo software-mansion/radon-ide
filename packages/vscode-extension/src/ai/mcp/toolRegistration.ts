@@ -84,8 +84,8 @@ export class ViewApplicationLogsTool implements vscode.LanguageModelTool<EmptyTo
 }
 
 // TODO: Find a better name
-function updateExtensionContextShouldUseDirectRegistering() {
-  commands.executeCommand("setContext", "RNIDE.useStaticToolRegistering", true);
+function setGlobalUseDirectToolRegistering(useStaticRegistering: boolean) {
+  commands.executeCommand("setContext", "RNIDE.useStaticToolRegistering", useStaticRegistering);
 }
 
 function shouldUseDirectRegistering() {
@@ -130,9 +130,9 @@ function registerStaticTools() {
 }
 
 export function registerRadonAI(context: ExtensionContext): Disposable {
-  updateExtensionContextShouldUseDirectRegistering();
-
-  if (shouldUseDirectRegistering()) {
+  const useStaticRegistering = shouldUseDirectRegistering();
+  setGlobalUseDirectToolRegistering(useStaticRegistering);
+  if (useStaticRegistering) {
     return registerStaticTools();
   } else {
     return new RadonMcpController(context);

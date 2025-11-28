@@ -23,6 +23,7 @@ export function tryGetTreeRoot(store: Store) {
 
 export async function screenshotToolExec(): Promise<ToolResponse> {
   const project = IDE.getInstanceIfExists()?.project;
+
   if (!project || !project.deviceSession) {
     return textToToolResponse(
       "Could not capture a screenshot!\n" +
