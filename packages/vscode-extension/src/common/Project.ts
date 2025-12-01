@@ -203,7 +203,7 @@ export interface ProjectInterface {
   focusOutput(channel: Output): Promise<void>;
 
   buildDiagnosticsReport(logFilesToInclude: string[]): Promise<void>;
-  getLogFileNames() : Promise<string[]> 
+  getLogFileNames(): Promise<string[]>;
   getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;
   movePanelTo(location: IDEPanelMoveTarget): Promise<void>;
   openExternalUrl(uriString: string): Promise<void>;

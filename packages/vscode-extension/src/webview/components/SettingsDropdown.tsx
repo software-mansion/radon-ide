@@ -155,16 +155,12 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           <DropdownMenu.Item
             className="dropdown-menu-item"
             onSelect={async () => {
-              const fffff = await project.getLogFileNames();
-              console.log("frytki", fffff);
-              console.log("frytki");
-              project.buildDiagnosticsReport(fffff);
-              openModal(<ExportLogsView/>)
+              openModal(<ExportLogsView />, { title: "Export Radon Logs" });
             }}>
             <span className="dropdown-menu-item-wraper">
-              <span className="codicon codicon-report" />
+              <span className="codicon codicon-share" />
               <div className="dropdown-menu-item-content" data-testid="settings-report-issue">
-                Build Diagnostics Report
+                Export Diagnostics Report
               </div>
             </span>
           </DropdownMenu.Item>

@@ -1,5 +1,4 @@
 import { EventEmitter } from "stream";
-import fs from "fs";
 import os from "os";
 import path from "path";
 import { env, Disposable, commands, workspace, window } from "vscode";
@@ -896,23 +895,12 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Editor
 
-  public async buildDiagnosticsReport(logFilesToInclude: string[]) {
-    console.log("Frytki na smalcu", logFilesToInclude);
-    
-    const logsUri = extensionContext.logUri;
-    const logsPath = logsUri.path
-    
-    console.log("Frytki logs uri", logsUri);
-    
+  public buildDiagnosticsReport(logFilesToInclude: string[]): Promise<void> {
+    return this.editorBindings.buildDiagnosticsReport(logFilesToInclude);
   }
-  
-  public async getLogFileNames() : Promise<string[]> {
-    const logsUri = extensionContext.logUri;
-    const logsPath = logsUri.path;
-    console.log("frytki get get get", logsPath);
-    const files = await fs.promises.readdir(logsPath);
-    console.log("frytki", files)
-    return files;
+
+  public getLogFileNames(): Promise<string[]> {
+    return this.editorBindings.getLogFileNames();
   }
 
   public getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined> {

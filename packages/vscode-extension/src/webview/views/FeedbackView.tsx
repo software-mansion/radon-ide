@@ -7,6 +7,7 @@ import { useModal } from "../providers/ModalProvider";
 import { Sentiment } from "../components/SendFeedbackItem";
 import { Textarea } from "../components/shared/Textarea";
 import { useProject } from "../providers/ProjectProvider";
+import { VscodeCheckbox } from "@vscode-elements/react-elements";
 
 const CLOSE_MODAL_AFTER = 2400;
 
@@ -20,6 +21,7 @@ function FeedbackView({ initialSentiment }: FeedbackViewProps) {
   const { register, handleSubmit } = useForm();
   const { project } = useProject();
   const [sentiment, setSentiment] = useState(initialSentiment);
+  const [includeLogs, setIncludeLogs] = useState(false);
 
   const onSubmit: SubmitHandler<FieldValues> = (e) => {
     const { message } = e;
@@ -27,6 +29,10 @@ function FeedbackView({ initialSentiment }: FeedbackViewProps) {
     showHeader(false);
     setFeedbackSent(true);
   };
+
+  useEffect(() => {
+    setIncludeLogs(false);
+  }, [sentiment]);
 
   useEffect(() => {
     if (isFeedbackSent) {
@@ -70,8 +76,17 @@ function FeedbackView({ initialSentiment }: FeedbackViewProps) {
         placeholder="Tell us why (optional)"
         rows={5}
       />
+      {sentiment === "negative" && (
+        <div className="checkbox-container feedback-logs-checkbox">
+          <VscodeCheckbox
+            checked={includeLogs}
+            onClick={() => setIncludeLogs(!includeLogs)}
+            label="Include diagnostic logs with feedback"
+          />
+        </div>
+      )}
       <p className="feedback-report-issue">
-        We don't include any details about the project, your setup or the logs. Have a problem?{" "}
+        Have a problem?{" "}
         <a
           href="https://github.com/software-mansion/radon-ide/issues/new/choose"
           target="_blank"
