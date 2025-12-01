@@ -46,7 +46,7 @@
     ],
     "languageModelTools": [
       {
-        "when": "RNIDE.useStaticToolRegistering",
+        "when": "RNIDE.useStaticToolRegistering && RNIDE.licenseActive",
         "displayName": "Get library description",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "get_library_description",
@@ -70,7 +70,7 @@
         ]
       },
       {
-        "when": "RNIDE.useStaticToolRegistering",
+        "when": "RNIDE.useStaticToolRegistering && RNIDE.licenseActive",
         "displayName": "Query documentation",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "query_documentation",

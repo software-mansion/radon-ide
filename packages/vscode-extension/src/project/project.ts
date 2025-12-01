@@ -470,6 +470,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     const token = await getLicenseToken();
     if (!token) {
       this.licenseStateManager.updateState({ status: LicenseStatus.Inactive });
+      commands.executeCommand("setContext", "RNIDE.licenseActive", false);
       return;
     }
 
@@ -479,6 +480,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         ? validationResult.licensePlan
         : LicenseStatus.Inactive;
 
+    commands.executeCommand("setContext", "RNIDE.licenseActive", status);
     this.licenseStateManager.updateState({ status });
   };
 
