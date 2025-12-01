@@ -31,7 +31,6 @@ safeDescribe("11 - App switching tests", () => {
     await execAsync("rm -rf ./data/react-native-app2");
     const browser = VSBrowser.instance;
     browser.openResources(`./data/react-native-app`);
-    await vscodeHelperService.hideSecondarySideBar();
   });
 
   function execAsync(command) {
