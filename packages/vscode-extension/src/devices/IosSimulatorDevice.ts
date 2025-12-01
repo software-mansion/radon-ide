@@ -218,6 +218,14 @@ export class IosSimulatorDevice extends DeviceBase {
         "clear",
       ]);
     } else {
+      // NOTE: because `simctl` does not accept `"0,0"` location coordinates, we pass smallest accepted values instead whenever the passed values would be rounded down to `"0,0"`
+      let latitude = settings.location.latitude.toString();
+      let longitude = settings.location.longitude.toString();
+      if (latitude === "0" && longitude === "0") {
+        latitude = "0.0001";
+        longitude = "0.0001";
+      }
+
       await exec("xcrun", [
         "simctl",
         "--set",
@@ -225,7 +233,7 @@ export class IosSimulatorDevice extends DeviceBase {
         "location",
         this.deviceUDID,
         "set",
-        `${settings.location.latitude.toString()},${settings.location.longitude.toString()}`,
+        `${latitude},${longitude}`,
       ]);
     }
     await exec("xcrun", [
