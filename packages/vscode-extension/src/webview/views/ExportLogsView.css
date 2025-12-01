@@ -14,11 +14,27 @@
   overflow: auto;
 }
 
+.export-logs-required {
+  color: var(--swm-secondary-text);
+  font-size: 11px;
+  margin-left: 8px;
+}
+
 .export-logs-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
   margin: 4px 0;
+}
+
+.export-logs-list vscode-checkbox[disabled] {
+  opacity: 1 !important;
+}
+
+.export-logs-list vscode-checkbox[disabled]::part(control),
+.export-logs-list vscode-checkbox[disabled]::part(label) {
+  opacity: 1 !important;
+  cursor: not-allowed;
 }
 
 .export-logs-intro {

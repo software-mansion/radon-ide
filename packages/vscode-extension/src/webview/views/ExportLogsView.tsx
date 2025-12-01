@@ -16,8 +16,14 @@ function ExportLogsView() {
   useEffect(() => {
     async function fetchLogs() {
       const logs = await project.getLogFileNames();
-      setAllLogs(logs);
-      setSelected(Object.fromEntries(logs.map((name) => [name, true])));
+      // Move "Radon IDE.log" to the front if it exists
+      const radonLog = "Radon IDE.log";
+      const hasRadonLog = logs.includes(radonLog);
+      const orderedLogs = hasRadonLog
+        ? [radonLog, ...logs.filter((name) => name !== radonLog)]
+        : logs;
+      setAllLogs(orderedLogs);
+      setSelected(Object.fromEntries(orderedLogs.map((name) => [name, true])));
     }
     fetchLogs();
   }, [project]);
@@ -41,19 +47,27 @@ function ExportLogsView() {
 
   return (
     <form className="container" data-testid="export-logs-view" onSubmit={(e) => e.preventDefault()}>
-      <p className="export-logs-intro">Select which logs to include in the export.</p>
+      <p className="export-logs-intro">
+        Warning: Logs may contain sensitive information such as file paths, environment variables,
+        or other sensitive information logged by your application.
+      </p>
 
       <div className="export-logs-box" role="group" aria-label="Select logs to export">
         <div className="export-logs-list">
-          {allLogs.map((name) => (
-            <div className="checkbox-container" key={name}>
-              <VscodeCheckbox
-                checked={!!selected[name]}
-                onClick={() => toggle(name)}
-                label={name}
-              />
-            </div>
-          ))}
+          {allLogs.map((name) => {
+            const isRequired = name === "Radon IDE.log";
+            return (
+              <div className="checkbox-container" key={name}>
+                <VscodeCheckbox
+                  checked={!!selected[name]}
+                  onClick={() => !isRequired && toggle(name)}
+                  disabled={isRequired}
+                  label={name}
+                />
+                {isRequired && <span className="export-logs-required">(always included)</span>}
+              </div>
+            );
+          })}
         </div>
       </div>
 

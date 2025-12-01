@@ -78,7 +78,11 @@ function FeedbackView({ initialSentiment }: FeedbackViewProps) {
         placeholder="Tell us why (optional)"
         rows={5}
       />
-      {sentiment === "negative" && (
+      {/* Note(Filip Kamiński): this feature is disabled for no as it  
+      would require a lot of additional work on customer portal side,
+      but the ground work for it from extension side is already here */}
+      {/* eslint-disable-next-line */}
+      {false && sentiment === "negative" && (
         <div className="checkbox-container feedback-logs-checkbox">
           <VscodeCheckbox
             checked={includeLogs}
