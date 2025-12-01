@@ -68,7 +68,14 @@ export default class AppManipulationService {
       By.css('[data-testid="alert-dialog-content"]')
     );
 
-    if (await errorPopup?.isDisplayed()) {
+    const logsButton = await this.elementHelperService.safeFind(
+      By.css('[data-testid="alert-open-logs-button"]')
+    );
+
+    if (
+      (await errorPopup?.isDisplayed()) &&
+      (await logsButton?.isDisplayed())
+    ) {
       await this.elementHelperService.findAndClickElementByTag(
         "alert-open-logs-button"
       );

@@ -163,6 +163,16 @@ safeDescribe("7 - Radon tools tests", () => {
         await radonSettingsService.rotateDevice(
           rotate ? "landscape-left" : "portrait"
         );
+
+        await driver.wait(async () => {
+          const orientation =
+            await appManipulationService.sendMessageAndWaitForResponse(
+              appWebsocket,
+              "getOrientation"
+            );
+          return orientation.value === rotate ? "landscape" : "portrait";
+        }, TIMEOUTS.MEDIUM);
+
         await testIfInspectElementAppearsInCorrectPlace();
       } finally {
         await radonSettingsService.rotateDevice("portrait");
