@@ -11,6 +11,7 @@ import {
   MultimediaData,
   ToolsState,
 } from "./State";
+import { Sentiment } from "./types";
 
 export type DeviceId = DeviceInfo["id"];
 
@@ -213,6 +214,13 @@ export interface ProjectInterface {
   openLaunchConfigurationFile(): Promise<void>;
 
   reportIssue(): Promise<void>;
+  sendFeedback(
+    sentiment: Sentiment,
+    options: {
+      message?: string;
+      includeLogs?: boolean;
+    }
+  ): Promise<void>;
   sendTelemetry(eventName: string, properties?: TelemetryEventProperties): Promise<void>;
 
   addListener<K extends keyof ProjectEventMap>(

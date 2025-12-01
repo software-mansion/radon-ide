@@ -4,10 +4,10 @@ import Button from "../components/shared/Button";
 import { FeedbackButton } from "../components/Feedback";
 import "./FeedbackView.css";
 import { useModal } from "../providers/ModalProvider";
-import { Sentiment } from "../components/SendFeedbackItem";
 import { Textarea } from "../components/shared/Textarea";
 import { useProject } from "../providers/ProjectProvider";
 import { VscodeCheckbox } from "@vscode-elements/react-elements";
+import { Sentiment } from "../../common/types";
 
 const CLOSE_MODAL_AFTER = 2400;
 
@@ -25,7 +25,9 @@ function FeedbackView({ initialSentiment }: FeedbackViewProps) {
 
   const onSubmit: SubmitHandler<FieldValues> = (e) => {
     const { message } = e;
-    project.sendTelemetry(`feedback:${sentiment}`, { message });
+    if (sentiment) {
+      project.sendFeedback(sentiment, { message });
+    }
     showHeader(false);
     setFeedbackSent(true);
   };

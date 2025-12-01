@@ -15,6 +15,7 @@ import { EditorBindings } from "./EditorBindings";
 import { PhysicalAndroidDeviceProvider } from "../devices/AndroidPhysicalDevice";
 import { AndroidEmulatorProvider } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorProvider } from "../devices/IosSimulatorDevice";
+import { FeedbackGenerator } from "./feedbackGenerator";
 
 function createDeviceProviders(
   stateManager: StateManager<DevicesState>,
@@ -48,6 +49,7 @@ export class IDE implements Disposable {
   private environmentDependencyManager: EnvironmentDependencyManager;
 
   private readonly telemetry: Telemetry;
+  private readonly feedbackGenerator: FeedbackGenerator;
 
   private stateManager: StateManager<State>;
 
@@ -71,6 +73,7 @@ export class IDE implements Disposable {
       deviceProviders
     );
     this.editorBindings = new EditorBindings();
+    this.feedbackGenerator = new FeedbackGenerator(this.telemetry, this.editorBindings);
 
     this.environmentDependencyManager = new EnvironmentDependencyManager(
       this.stateManager.getDerived("environmentDependencies")
@@ -90,6 +93,7 @@ export class IDE implements Disposable {
       this.outputChannelRegistry,
       this.environmentDependencyManager,
       this.telemetry,
+      this.feedbackGenerator,
       initialLaunchConfig
     );
 
