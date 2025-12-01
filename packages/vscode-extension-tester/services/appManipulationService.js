@@ -1,5 +1,5 @@
 import * as fs from "fs";
-import { By, BottomBarPanel } from "vscode-extension-tester";
+import { By, BottomBarPanel, Key } from "vscode-extension-tester";
 import getConfiguration from "../configuration.js";
 import { centerCoordinates } from "../utils/helpers.js";
 import { waitForMessage } from "../server/webSocketServer.js";
@@ -41,25 +41,32 @@ export default class AppManipulationService {
           throw new Error("App error popup displayed");
         }
 
-        const messageElement = await this.elementHelperService.safeFind(
-          By.css('[data-testid="startup-message"]')
-        );
+        try {
+          const messageElement = await this.elementHelperService.safeFind(
+            By.css('[data-testid="startup-message"]')
+          );
 
-        if (!messageElement) return false;
+          if (!messageElement) return false;
 
-        const message = (await messageElement.getText())
-          .replace(/\./g, "")
-          .trim();
+          const message = (await messageElement.getText())
+            .replace(/\./g, "")
+            .replace(/\s+/g, "")
+            .trim();
 
-        // in case the device startup process has frozen
-        if (!currentMessage.includes("Building") && currentMessage == message) {
-          if (Date.now() - currentMessageFirstAppear > 100000)
-            await this.restartDevice();
-        } else {
-          currentMessage = message;
-          currentMessageFirstAppear = Date.now();
+          // in case the device startup process has frozen
+          if (
+            !currentMessage.includes("Building") &&
+            currentMessage == message
+          ) {
+            if (Date.now() - currentMessageFirstAppear > 100000)
+              await this.restartDevice();
+          } else {
+            currentMessage = message;
+            currentMessageFirstAppear = Date.now();
+          }
+        } catch (err) {
+          if (err.name !== "StaleElementReferenceError") throw err;
         }
-
         return false;
       },
       600000,
@@ -82,7 +89,10 @@ export default class AppManipulationService {
     await this.elementHelperService.findAndClickElementByTag(
       `device-running-badge-${runningDeviceName}`
     );
-    await this.driver.sleep(1000);
+    await this.driver.actions().sendKeys(Key.ESCAPE).perform();
+    await this.elementHelperService.findAndClickElementByTag(
+      "radon-bottom-bar-device-select-dropdown-trigger"
+    );
     await this.elementHelperService.findAndClickElementByTag(
       `device-${runningDeviceName}`
     );
