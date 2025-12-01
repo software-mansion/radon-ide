@@ -218,9 +218,7 @@ export class IosSimulatorDevice extends DeviceBase {
         "clear",
       ]);
     } else {
-      // This is a work around for the problem with location set command not working  when passed, 0 0 coordinates
-      // when provided coordinates are close enough to 0 that the xcrun assumes they are 0 we pass the smallest
-      // working number instead.
+      // NOTE: because `simctl` does not accept `"0,0"` location coordinates, we pass smallest accepted values instead whenever the passed values would be rounded down to `"0,0"`
       let latitude = settings.location.latitude.toString();
       let longitude = settings.location.longitude.toString();
       if (latitude === "0" && longitude === "0") {
