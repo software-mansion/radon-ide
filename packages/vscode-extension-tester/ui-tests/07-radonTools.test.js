@@ -12,6 +12,7 @@ import { assert } from "chai";
 import { cropCanvas, compareImages } from "../utils/imageProcessing.js";
 import initServices from "../services/index.js";
 import { centerCoordinates, safeDescribe } from "../utils/helpers.js";
+import { TIMEOUTS } from "../utils/timeouts.js";
 import { get } from "./setupTest.js";
 
 const cwd = process.cwd() + "/data";
@@ -422,6 +423,8 @@ safeDescribe("7 - Radon tools tests", () => {
       }, 5000);
 
       await managingDevicesService.switchToDevice(deviceName1);
+
+      await driver.sleep(TIMEOUTS.SHORT);
 
       await testIfInspectElementAppearsInCorrectPlace();
     } finally {
