@@ -29,6 +29,10 @@ export function initServer(port = 8080) {
   return wss;
 }
 
+export function resetAppWebsocket() {
+  appWebsocket = null;
+}
+
 export function getAppWebsocket() {
   return appWebsocket;
 }

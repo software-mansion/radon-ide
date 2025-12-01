@@ -3,6 +3,7 @@ import getConfiguration from "../configuration.js";
 import { TIMEOUTS } from "../utils/timeouts.js";
 import { ElementHelperService } from "./helperServices.js";
 import RadonViewsService from "./radonViewsService.js";
+import { resetAppWebsocket } from "../server/webSocketServer.js";
 
 // Determine modifier key (Command for Mac, Control for Windows/Linux)
 const MODIFIER_KEY = Key.COMMAND;
@@ -188,6 +189,7 @@ export default class ManagingDevicesService {
   }
 
   async switchToDevice(deviceName) {
+    resetAppWebsocket();
     const chosenDevice =
       await this.elementHelperService.findAndWaitForElementByTag(
         "device-select-value-text"
