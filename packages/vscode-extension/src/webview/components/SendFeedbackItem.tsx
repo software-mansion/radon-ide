@@ -4,8 +4,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useModal } from "../providers/ModalProvider";
 import FeedbackView from "../views/FeedbackView";
 import { Feedback } from "./Feedback";
-
-export type Sentiment = "positive" | "negative";
+import { Sentiment } from "../../common/types";
 
 export function SendFeedbackItem() {
   const { openModal } = useModal();

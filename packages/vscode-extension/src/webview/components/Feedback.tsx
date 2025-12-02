@@ -1,8 +1,8 @@
 import { Dispatch, MouseEvent, SetStateAction } from "react";
 import "./Feedback.css";
 import classNames from "classnames";
-import { Sentiment } from "./SendFeedbackItem";
 import { useProject } from "../providers/ProjectProvider";
+import { Sentiment } from "../../common/types";
 
 type FeedbackProps = {
   sentiment: Sentiment | undefined;

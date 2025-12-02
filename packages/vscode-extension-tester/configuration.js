@@ -10,6 +10,9 @@ const defaultConfig = {
   // android tests can be run on a local machine with android studio installed
   IS_ANDROID: false,
   IS_GITHUB_ACTIONS: false,
+  // Allows tests to modify the environment (e.g. disabling node)
+  // Enabling this may lead to unexpected behavior.
+  ALLOW_ENVIRONMENT_MODIFICATIONS: false,
 };
 
 function prioritizeEnv(field) {
@@ -22,10 +25,14 @@ export default function getConfiguration() {
   const IS_RECORDING = prioritizeEnv("IS_RECORDING");
   const IS_ANDROID = prioritizeEnv("IS_ANDROID");
   const IS_GITHUB_ACTIONS = prioritizeEnv("IS_GITHUB_ACTIONS");
+  const ALLOW_ENVIRONMENT_MODIFICATIONS = prioritizeEnv(
+    "ALLOW_ENVIRONMENT_MODIFICATIONS"
+  );
 
   return {
     IS_RECORDING,
     IS_ANDROID,
     IS_GITHUB_ACTIONS,
+    ALLOW_ENVIRONMENT_MODIFICATIONS,
   };
 }

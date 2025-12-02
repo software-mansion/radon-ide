@@ -56,6 +56,7 @@ input {
 .modal-content-container {
   max-height: 80vh;
   overflow-y: auto;
+  transition: height 0.3s ease-out;
 }
 
 .modal-content-container-fullscreen {

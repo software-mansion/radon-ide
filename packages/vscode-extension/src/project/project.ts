@@ -71,6 +71,8 @@ import {
   LicenseStatus,
 } from "../common/License";
 import { RestrictedFunctionalityError } from "../common/Errors";
+import { Sentiment } from "../common/types";
+import { FeedbackGenerator } from "./feedbackGenerator";
 
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 
@@ -181,6 +183,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     private readonly outputChannelRegistry: OutputChannelRegistry,
     private readonly environmentDependencyManager: EnvironmentDependencyManager,
     private readonly telemetry: Telemetry,
+    private readonly feedbackGenerator: FeedbackGenerator,
     initialLaunchConfigOptions?: LaunchConfiguration
   ) {
     const fingerprintProvider = new FingerprintProvider();
@@ -895,6 +898,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Editor
 
+  public buildDiagnosticsReport(logFilesToInclude: string[]): Promise<void> {
+    return this.editorBindings.buildDiagnosticsReport(logFilesToInclude);
+  }
+
+  public getLogFileNames(): Promise<string[]> {
+    return this.editorBindings.getLogFileNames();
+  }
+
   public getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined> {
     return this.editorBindings.getCommandsCurrentKeyBinding(commandName);
   }
@@ -933,6 +944,16 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async reportIssue(): Promise<void> {
     this.telemetry.reportIssue();
+  }
+
+  public async sendFeedback(
+    sentiment: Sentiment,
+    options: {
+      message?: string;
+      includeLogs?: boolean;
+    }
+  ): Promise<void> {
+    return this.feedbackGenerator.sendFeedback(sentiment, options);
   }
 
   public async sendTelemetry(
