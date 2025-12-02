@@ -66,7 +66,6 @@ safeDescribe("4 - App interaction tests", () => {
       appWebsocket,
       "console-log-button"
     );
-    console.log("test");
 
     const message = await appManipulationService.clickInPhoneAndWaitForMessage(
       position
