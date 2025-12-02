@@ -177,10 +177,8 @@ export default class AppManipulationService {
   }
 
   async hideExpoOverlay(appWebsocket) {
-    // The Expo developer menu overlay loads slower on the Android app; since it is a test app, I cannot check it programmatically
-    if (getConfiguration().IS_ANDROID) {
-      await this.driver.sleep(TIMEOUTS.ANDROID_OVERLAY);
-    }
+    // The Expo developer menu overlay may load slower on CI runner; since it is a test app, I cannot check it programmatically
+    await this.driver.sleep(TIMEOUTS.DEFAULT);
 
     const position = await this.getButtonCoordinates(
       appWebsocket,
