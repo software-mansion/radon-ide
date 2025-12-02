@@ -171,7 +171,6 @@ export default class AppManipulationService {
     const id = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
     const messagePromise = waitForMessage(id);
 
-    console.log(`Sending message to app: ${message}: ${id}`);
     appWebsocket.send(JSON.stringify({ message, id }));
 
     return await messagePromise;
