@@ -279,7 +279,19 @@ async function buildLocal(
     }`
   );
 
-  const scheme = buildConfig.scheme ?? (await findXcodeScheme(xcodeProject))[0];
+  let scheme = buildConfig.scheme;
+  if (scheme === undefined) {
+    const availableSchemes = await findXcodeScheme(xcodeProject);
+    if (availableSchemes.length > 1) {
+      Logger.warn(
+        `Multiple Xcode schemes found ` +
+          `(${availableSchemes.map((s) => `"${s}"`).join(", ")}). ` +
+          `Scheme "${availableSchemes[0]}" will be used. ` +
+          `Consider specifying the scheme in the launch configuration.`
+      );
+    }
+    scheme = availableSchemes[0];
+  }
 
   Logger.debug(`Xcode build will use "${scheme}" scheme`);
 

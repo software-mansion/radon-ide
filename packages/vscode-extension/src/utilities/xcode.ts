@@ -1,6 +1,6 @@
 import path from "path";
 import { RelativePattern, workspace } from "vscode";
-import { getProjectConfig } from "@react-native-community/cli-config-apple";
+import { getProjectConfig, findPbxprojFile } from "@react-native-community/cli-config-apple";
 import { Logger } from "../Logger";
 const getIOSProjectConfig = getProjectConfig({ platformName: "ios" });
 
@@ -13,23 +13,22 @@ export async function findXcodeScheme(xcodeProject: IOSProjectInfo) {
   const basename = xcodeProject.isWorkspace
     ? path.basename(xcodeProject.xcodeProjectLocation, ".xcworkspace")
     : path.basename(xcodeProject.xcodeProjectLocation, ".xcodeproj");
+  const projectFile = findPbxprojFile({
+    name: path.basename(xcodeProject.xcodeProjectLocation),
+    path: path.dirname(xcodeProject.xcodeProjectLocation),
+    isWorkspace: xcodeProject.isWorkspace,
+  });
+  const projectDir = path.dirname(projectFile);
 
   // we try to search for the scheme name under .xcodeproj/xcshareddata/xcschemes
   const schemeFiles = await workspace.findFiles(
-    new RelativePattern(xcodeProject.xcodeProjectLocation, "**/xcshareddata/xcschemes/*.xcscheme")
+    new RelativePattern(projectDir, "**/xcshareddata/xcschemes/*.xcscheme")
   );
-  if (schemeFiles.length === 1) {
-    return [path.basename(schemeFiles[0].fsPath, ".xcscheme")];
-  } else if (schemeFiles.length > 1) {
-    Logger.warn(
-      `Ambiguous scheme files in ${xcodeProject.xcodeProjectLocation}, using workspace name "${basename}" as scheme`
-    );
-    return schemeFiles.map((schemeFile) => {
-      return path.basename(schemeFile.fsPath, ".xcscheme");
-    });
+  if (schemeFiles.length >= 1) {
+    return schemeFiles.map((schemeFile) => path.basename(schemeFile.fsPath, ".xcscheme"));
   }
   Logger.warn(
-    `Could not find any scheme files in ${xcodeProject.xcodeProjectLocation}, using workspace name "${basename}" as scheme`
+    `Could not find any scheme files in ${projectDir}, using workspace name "${basename}" as scheme`
   );
   return [basename];
 }
