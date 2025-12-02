@@ -52,7 +52,6 @@ safeDescribe("4 - App interaction tests", () => {
     }, 5000);
 
     await appManipulationService.hideExpoOverlay(appWebsocket);
-    console.log("test");
     await radonViewsService.clearDebugConsole();
     await radonViewsService.switchToRadonIDEFrame();
   });
@@ -81,10 +80,8 @@ safeDescribe("4 - App interaction tests", () => {
       appWebsocket,
       "console-log-button"
     );
-    console.log("test");
 
     await appManipulationService.clickInPhoneAndWaitForMessage(position);
-    console.log("after click");
 
     const debugConsole =
       await radonViewsService.openAndGetDebugConsoleElement();
