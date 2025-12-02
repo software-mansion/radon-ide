@@ -150,17 +150,29 @@ export default class AppManipulationService {
       .perform();
   }
 
-  async clickInPhoneAndWaitForMessage(position) {
-    const messagePromise = waitForMessage();
-    await this.clickInsidePhoneScreen(position);
-    try {
-      return await messagePromise;
-    } catch (err) {
-      console.log("Error while waiting for message from app:");
-      const radonViewsService = new RadonViewsService(this.driver);
-      await radonViewsService.openAndGetDebugConsoleElement();
-      this.driver.sleep(20000);
-      throw err;
+  async clickInPhoneAndWaitForMessage(position, retries = 1) {
+    let lastError;
+
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const messagePromise = waitForMessage();
+        await this.clickInsidePhoneScreen(position);
+        return await messagePromise;
+      } catch (err) {
+        lastError = err;
+        console.log(
+          `Attempt ${
+            attempt + 1
+          } to click in phone and wait for message failed: ${err.message}`
+        );
+        const radonViewsService = new RadonViewsService(this.driver);
+        await radonViewsService.openAndGetDebugConsoleElement();
+        await this.driver.sleep(20000);
+        if (attempt === retries) {
+          console.log("Error while waiting for message from app:");
+          throw lastError;
+        }
+      }
     }
   }
 
