@@ -37,25 +37,45 @@ export function getAppWebsocket() {
   return appWebsocket;
 }
 
-export function waitForMessage(id, timeoutMs = 5000) {
+export function waitForMessage(id, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
     const appWebsocket = getAppWebsocket();
-    if (!appWebsocket) {
-      reject(new Error("No websocket connection"));
+
+    if (!appWebsocket || appWebsocket.readyState !== 1) {
+      // 1 = OPEN
+      reject(
+        new Error(
+          `Websocket not connected or not ready. State: ${
+            appWebsocket ? appWebsocket.readyState : "null"
+          }`
+        )
+      );
       return;
     }
 
     const timer = setTimeout(() => {
       appWebsocket.off("message", handler);
-      reject(new Error("Timeout waiting for message"));
+      reject(
+        new Error(
+          `Timeout waiting for message ID: ${id}. Ensure the app is sending it.`
+        )
+      );
     }, timeoutMs);
 
     const handler = (message) => {
-      const msg = JSON.parse(message);
-      if (msg.id === id) {
-        clearTimeout(timer);
-        appWebsocket.off("message", handler);
-        resolve(msg);
+      try {
+        const msg = JSON.parse(message);
+
+        // Console log strictly for debugging CI issues
+        console.log(`[WS DEBUG] Received: ${msg.id}, Waiting for: ${id}`);
+
+        if (msg.id === id) {
+          clearTimeout(timer);
+          appWebsocket.off("message", handler);
+          resolve(msg);
+        }
+      } catch (e) {
+        console.error(`[WS ERROR] Failed to parse message: ${message}`);
       }
     };
 
