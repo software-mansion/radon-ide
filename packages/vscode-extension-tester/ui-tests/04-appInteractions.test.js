@@ -50,6 +50,7 @@ safeDescribe("4 - App interaction tests", () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
     }, 5000);
+    console.log(appWebsocket);
     await appManipulationService.hideExpoOverlay(appWebsocket);
     await radonViewsService.clearDebugConsole();
     await radonViewsService.switchToRadonIDEFrame();
