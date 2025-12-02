@@ -78,7 +78,6 @@ function DeviceRow({
   return (
     <button
       className="device-row"
-      disabled={disabled}
       onClick={selectDevice}
       data-selected={isSelected}
       data-testid={dataTest}>
