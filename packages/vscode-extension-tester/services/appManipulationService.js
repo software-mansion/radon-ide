@@ -5,6 +5,7 @@ import { centerCoordinates } from "../utils/helpers.js";
 import { waitForMessage } from "../server/webSocketServer.js";
 import { TIMEOUTS } from "../utils/timeouts.js";
 import { ElementHelperService } from "./helperServices.js";
+import RadonViewsService from "./radonViewsService.js";
 
 export default class AppManipulationService {
   constructor(driver) {
@@ -152,7 +153,15 @@ export default class AppManipulationService {
   async clickInPhoneAndWaitForMessage(position) {
     const messagePromise = waitForMessage();
     await this.clickInsidePhoneScreen(position);
-    return await messagePromise;
+    try {
+      return await messagePromise;
+    } catch (err) {
+      console.log("Error while waiting for message from app:");
+      const radonViewsService = new RadonViewsService(this.driver);
+      await radonViewsService.openAndGetDebugConsoleElement();
+      this.driver.sleep(20000);
+      throw err;
+    }
   }
 
   async getButtonCoordinates(appWebsocket, buttonID) {
