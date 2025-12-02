@@ -68,17 +68,14 @@ export default class AppManipulationService {
       By.css('[data-testid="alert-dialog-content"]')
     );
 
-    const logsButton = await this.elementHelperService.safeFind(
-      By.css('[data-testid="alert-open-logs-button"]')
-    );
-
-    if (
-      (await errorPopup?.isDisplayed()) &&
-      (await logsButton?.isDisplayed())
-    ) {
-      await this.elementHelperService.findAndClickElementByTag(
-        "alert-open-logs-button"
-      );
+    if (await errorPopup?.isDisplayed()) {
+      try {
+        await this.elementHelperService.findAndClickElementByTag(
+          "alert-open-logs-button"
+        );
+      } catch (err) {
+        if (err.name !== "StaleElementReferenceError") return;
+      }
       await this.driver.sleep(TIMEOUTS.SHORT);
       await this.driver.switchTo().defaultContent();
 
