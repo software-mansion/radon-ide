@@ -14,8 +14,12 @@ function ExportLogsView() {
   const [selected, setSelected] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchLogs() {
       const logs = await project.getLogFileNames();
+      if (cancelled) return;
+
       // Move "Radon IDE.log" to the front if it exists
       const radonLog = "Radon IDE.log";
       const hasRadonLog = logs.includes(radonLog);
@@ -25,7 +29,11 @@ function ExportLogsView() {
       setAllLogs(orderedLogs);
       setSelected(Object.fromEntries(orderedLogs.map((name) => [name, true])));
     }
+
     fetchLogs();
+    return () => {
+      cancelled = true;
+    };
   }, [project]);
 
   const selectedFiles = useMemo(
@@ -34,7 +42,12 @@ function ExportLogsView() {
   );
 
   function toggle(name: string) {
-    setSelected((prev) => ({ ...prev, [name]: !prev[name] }));
+    setSelected((prev) => {
+      if (!(name in prev)) {
+        return prev;
+      }
+      return { ...prev, [name]: !prev[name] };
+    });
   }
 
   async function onExport() {

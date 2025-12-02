@@ -11,6 +11,11 @@ import { Sentiment } from "../../common/types";
 
 const CLOSE_MODAL_AFTER = 2400;
 
+// Note(Filip Kamiński): this feature is disabled for no as it
+// would require a lot of additional work on customer portal side,
+// but the ground work for it from extension side is already here
+const SHOW_INCLUDE_DIAGNOSTICS_CHECKBOX = false;
+
 type FeedbackViewProps = {
   initialSentiment: Sentiment | undefined;
 };
@@ -78,11 +83,7 @@ function FeedbackView({ initialSentiment }: FeedbackViewProps) {
         placeholder="Tell us why (optional)"
         rows={5}
       />
-      {/* Note(Filip Kamiński): this feature is disabled for no as it  
-      would require a lot of additional work on customer portal side,
-      but the ground work for it from extension side is already here */}
-      {/* eslint-disable-next-line */}
-      {false && sentiment === "negative" && (
+      {SHOW_INCLUDE_DIAGNOSTICS_CHECKBOX && sentiment === "negative" && (
         <div className="checkbox-container feedback-logs-checkbox">
           <VscodeCheckbox
             checked={includeLogs}
