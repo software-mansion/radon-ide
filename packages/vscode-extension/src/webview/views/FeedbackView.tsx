@@ -4,11 +4,17 @@ import Button from "../components/shared/Button";
 import { FeedbackButton } from "../components/Feedback";
 import "./FeedbackView.css";
 import { useModal } from "../providers/ModalProvider";
-import { Sentiment } from "../components/SendFeedbackItem";
 import { Textarea } from "../components/shared/Textarea";
 import { useProject } from "../providers/ProjectProvider";
+import { VscodeCheckbox } from "@vscode-elements/react-elements";
+import { Sentiment } from "../../common/types";
 
 const CLOSE_MODAL_AFTER = 2400;
+
+// Note(Filip Kamiński): this feature is disabled for no as it
+// would require a lot of additional work on customer portal side,
+// but the ground work for it from extension side is already here
+const SHOW_INCLUDE_DIAGNOSTICS_CHECKBOX = false;
 
 type FeedbackViewProps = {
   initialSentiment: Sentiment | undefined;
@@ -20,13 +26,20 @@ function FeedbackView({ initialSentiment }: FeedbackViewProps) {
   const { register, handleSubmit } = useForm();
   const { project } = useProject();
   const [sentiment, setSentiment] = useState(initialSentiment);
+  const [includeLogs, setIncludeLogs] = useState(false);
 
   const onSubmit: SubmitHandler<FieldValues> = (e) => {
     const { message } = e;
-    project.sendTelemetry(`feedback:${sentiment}`, { message });
+    if (sentiment) {
+      project.sendFeedback(sentiment, { message });
+    }
     showHeader(false);
     setFeedbackSent(true);
   };
+
+  useEffect(() => {
+    setIncludeLogs(false);
+  }, [sentiment]);
 
   useEffect(() => {
     if (isFeedbackSent) {
@@ -70,8 +83,17 @@ function FeedbackView({ initialSentiment }: FeedbackViewProps) {
         placeholder="Tell us why (optional)"
         rows={5}
       />
+      {SHOW_INCLUDE_DIAGNOSTICS_CHECKBOX && sentiment === "negative" && (
+        <div className="checkbox-container feedback-logs-checkbox">
+          <VscodeCheckbox
+            checked={includeLogs}
+            onClick={() => setIncludeLogs(!includeLogs)}
+            label="Include diagnostic logs with feedback"
+          />
+        </div>
+      )}
       <p className="feedback-report-issue">
-        We don't include any details about the project, your setup or the logs. Have a problem?{" "}
+        Have a problem?{" "}
         <a
           href="https://github.com/software-mansion/radon-ide/issues/new/choose"
           target="_blank"

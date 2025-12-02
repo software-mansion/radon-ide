@@ -12,6 +12,8 @@ import { Logger } from "../Logger";
 import { Platform } from "../utilities/platform";
 import { extensionContext } from "../utilities/extensionContext";
 import { IDEPanelMoveTarget } from "../common/Project";
+import { createLogsArchive } from "../utilities/createLogsArchive";
+import { saveFile } from "../utilities/saveFile";
 
 type KeybindingType = {
   command: string;
@@ -21,6 +23,38 @@ type KeybindingType = {
 };
 
 export class EditorBindings {
+  public async buildDiagnosticsReport(logFilesToInclude: string[]) {
+    const logsUri = extensionContext.logUri;
+    const logsPath = logsUri.path;
+
+    try {
+      const tempArchivePath = await createLogsArchive(logsPath, logFilesToInclude);
+
+      const savedUri = await saveFile(tempArchivePath, {
+        baseFileName: "radon-ide-diagnostics",
+        extension: ".tar.gz",
+        filterLabel: "Archive Files",
+      });
+
+      await fs.promises.unlink(tempArchivePath);
+
+      if (savedUri) {
+        Logger.info(`Diagnostics report saved to: ${savedUri.fsPath}`);
+        window.showInformationMessage(`Diagnostics report saved successfully`);
+      }
+    } catch (error) {
+      Logger.error("Failed to build diagnostics report", error);
+      window.showErrorMessage(`Failed to build diagnostics report: ${error}`);
+    }
+  }
+
+  public async getLogFileNames(): Promise<string[]> {
+    const logsUri = extensionContext.logUri;
+    const logsPath = logsUri.path;
+    const files = await fs.promises.readdir(logsPath);
+    return files;
+  }
+
   public async getCommandsCurrentKeyBinding(commandName: string) {
     const packageJsonPath = path.join(extensionContext.extensionPath, "package.json");
     const extensionPackageJson = require(packageJsonPath);
