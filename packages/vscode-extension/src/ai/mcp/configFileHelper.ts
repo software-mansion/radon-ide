@@ -42,7 +42,7 @@ export function removeOldRadonEntryFromConfig(config: string): string | undefine
   // mcp.json files and we don't want to remove that entry.
   const editorType = getEditorType();
 
-  if (!(editorType in [EditorType.VSCODE, EditorType.CURSOR])) {
+  if (![EditorType.VSCODE, EditorType.CURSOR].includes(editorType)) {
     // Other editor types are not supported yet,
     // and thus don't have entries that have to be removed.
     return;
