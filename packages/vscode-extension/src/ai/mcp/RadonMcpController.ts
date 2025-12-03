@@ -66,7 +66,7 @@ async function startRadonAIInCursor(server: LocalMcpServer) {
     });
     server.onToolListChanged(() => {
       // Cursor has a bug where it doesn't respond to the tool list changed notification
-      // This bug is reported meny times including here: https://forum.cursor.com/t/mcp-client-update-tools/77294
+      // This bug is reported many times including here: https://forum.cursor.com/t/mcp-client-update-tools/77294
       // To workaround it, we use a hidden command that Cursor exposes: `mcp.toolListChanged`
       // Despite this method updating the tool list properly, it also throws an error and so we ignore it here
       commands.executeCommand("mcp.toolListChanged").then(
