@@ -22,7 +22,7 @@ export function textToToolResponse(text: string): ToolResponse {
   };
 }
 
-export function pngToDataPart(buffer: Buffer<ArrayBufferLike>): vscode.LanguageModelDataPart {
+export function pngToDataPart(buffer: Buffer): vscode.LanguageModelDataPart {
   // @ts-ignore `vscode.LanguageModelDataPart` introduced in 1.105.0
   return vscode.LanguageModelDataPart.image(buffer, "image/png");
 }
