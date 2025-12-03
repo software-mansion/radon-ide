@@ -9,6 +9,7 @@ export function pngToToolContent(base64Encoded: string): ImageContent {
     mimeType: "image/png",
   };
 }
+
 export function textToToolContent(text: string): TextContent {
   return {
     type: "text",
