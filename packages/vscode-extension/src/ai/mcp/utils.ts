@@ -33,7 +33,7 @@ export function textToTextPart(text: string): vscode.LanguageModelTextPart {
 
 export function textToToolResult(text: string): vscode.LanguageModelToolResult {
   return {
-    content: [textToToolContent(text)],
+    content: [textToTextPart(text)],
   };
 }
 
