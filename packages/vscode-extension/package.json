@@ -51,7 +51,7 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "get_library_description",
         "name": "get_library_description",
-        "modelDescription": "Returns a detailed description of a library and it's use-cases",
+        "modelDescription": "Returns a detailed description of a library and its use-cases",
         "inputSchema": {
           "type": "object",
           "properties": {
