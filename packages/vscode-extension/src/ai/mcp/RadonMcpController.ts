@@ -5,20 +5,48 @@ import {
   version,
   Disposable,
   workspace,
-  ExtensionContext,
   commands,
   cursor,
   EventEmitter,
+  ExtensionContext,
 } from "vscode";
 import { Logger } from "../../Logger";
 import { LocalMcpServer } from "./LocalMcpServer";
 import { disposeAll } from "../../utilities/disposables";
-import { registerRadonChat } from "../chat";
 import { extensionContext } from "../../utilities/extensionContext";
 import { cleanupOldMcpConfigEntries } from "./configFileHelper";
+import {
+  checkLicenseToken,
+  getLicenseToken,
+  SimServerLicenseValidationStatus,
+  watchLicenseTokenChange,
+} from "../../utilities/license";
+import { FeatureAvailabilityStatus } from "../../common/License";
+import { registerRadonChat } from "../chat";
+import { getEditorType, EditorType } from "../../utilities/editorType";
+import { registerStaticTools } from "./toolRegistration";
 
 const RADON_AI_MCP_ENTRY_NAME = "RadonAI";
 const RADON_AI_MCP_PROVIDER_ID = "RadonAIMCPProvider";
+
+function setGlobalUseDirectToolRegistering(useStaticRegistering: boolean) {
+  commands.executeCommand("setContext", "RNIDE.useStaticToolRegistering", useStaticRegistering);
+}
+
+function setGlobalEnableAI(isAIEnabled: boolean) {
+  commands.executeCommand("setContext", "RNIDE.AIEnabled", isAIEnabled);
+}
+
+/**
+  The `vscode.lm.registerTool` API with image support only available in VSCode version 1.105+.  
+  Said API is not implemented on Cursor, Windsurf or Antigravity (it is a stub on these editors).
+*/
+function shouldUseDirectRegistering() {
+  return (
+    version.localeCompare("1.105.0", undefined, { numeric: true }) >= 0 &&
+    getEditorType() === EditorType.VSCODE
+  );
+}
 
 function canUseMcpDefinitionProviderAPI() {
   return (
@@ -47,7 +75,7 @@ async function startRadonAIInCursor(server: LocalMcpServer) {
     });
     server.onToolListChanged(() => {
       // Cursor has a bug where it doesn't respond to the tool list changed notification
-      // This bug is reported meny times including here: https://forum.cursor.com/t/mcp-client-update-tools/77294
+      // This bug is reported many times including here: https://forum.cursor.com/t/mcp-client-update-tools/77294
       // To workaround it, we use a hidden command that Cursor exposes: `mcp.toolListChanged`
       // Despite this method updating the tool list properly, it also throws an error and so we ignore it here
       commands.executeCommand("mcp.toolListChanged").then(
@@ -67,8 +95,23 @@ async function startRadonAIInCursor(server: LocalMcpServer) {
   }
 }
 
-function isEnabledInSettings() {
+export function isAiEnabledInSettings() {
   return workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabledBoolean") ?? true;
+}
+
+async function radonAIAvailabilityStatus() {
+  const token = await getLicenseToken();
+  if (!token) {
+    return FeatureAvailabilityStatus.PAYWALLED;
+  }
+  const checkLicenseTokenResult = await checkLicenseToken(token);
+  const isTokenValid = checkLicenseTokenResult.status === SimServerLicenseValidationStatus.Success;
+
+  if (!isTokenValid) {
+    return FeatureAvailabilityStatus.PAYWALLED;
+  }
+
+  return checkLicenseTokenResult.featuresAvailability.RadonAI;
 }
 
 class RadonMcpController implements Disposable {
@@ -76,28 +119,71 @@ class RadonMcpController implements Disposable {
   private serverChangedEmitter = new EventEmitter<void>();
   private disposables: Disposable[] = [];
 
-  constructor(context: ExtensionContext) {
-    const radonAiEnabled = isEnabledInSettings();
-    registerRadonChat(context, radonAiEnabled);
+  public static async initialize(context: ExtensionContext) {
+    const radonAvailabilityStatus = await radonAIAvailabilityStatus();
+
+    return new RadonMcpController(context, {
+      isAiEnabledInSettings: isAiEnabledInSettings(),
+      radonAvailabilityStatus,
+    });
+  }
+
+  constructor(
+    context: ExtensionContext,
+    options: { isAiEnabledInSettings: boolean; radonAvailabilityStatus: FeatureAvailabilityStatus }
+  ) {
+    const isAiEnabled =
+      options.isAiEnabledInSettings ||
+      options.radonAvailabilityStatus !== FeatureAvailabilityStatus.AVAILABLE;
+    setGlobalEnableAI(isAiEnabled);
+    registerRadonChat(context, options);
+
+    const useStaticRegistering = shouldUseDirectRegistering();
+    setGlobalUseDirectToolRegistering(useStaticRegistering);
+
     this.registerRadonMcpServerProviderInVSCode();
     cleanupOldMcpConfigEntries();
 
+    if (useStaticRegistering) {
+      // We don't bother with de-registering and re-registering static tools, as the resource gain from doing so is minimal,
+      // while complicating the logic by a lot. Tool availability is already reliably toggled via `setGlobalEnableAI`.
+      this.disposables.push(registerStaticTools());
+    } else {
+      if (isAiEnabled) {
+        this.enableServer();
+      }
+    }
+
     this.disposables.push(
-      workspace.onDidChangeConfiguration((event) => {
-        if (event.affectsConfiguration("RadonIDE.radonAI.enabledBoolean")) {
-          if (isEnabledInSettings()) {
-            this.enableServer();
-          } else {
-            this.disableServer();
-          }
-        }
+      workspace.onDidChangeConfiguration(() => {
+        this.onSettingsOrLicenseHasChanged();
       })
     );
 
-    if (isEnabledInSettings()) {
-      this.enableServer();
-    }
+    this.disposables.push(
+      watchLicenseTokenChange(() => {
+        this.onSettingsOrLicenseHasChanged();
+      })
+    );
   }
+
+  // used in callbacks needs to be an arrow function
+  private onSettingsOrLicenseHasChanged = async () => {
+    const radonAiEnabled =
+      isAiEnabledInSettings() &&
+      (await radonAIAvailabilityStatus()) === FeatureAvailabilityStatus.AVAILABLE;
+
+    // `setGlobalEnableAI` sets availability of both static and local server tools.
+    setGlobalEnableAI(radonAiEnabled);
+
+    if (!shouldUseDirectRegistering()) {
+      if (radonAiEnabled) {
+        this.enableServer();
+      } else {
+        this.disableServer();
+      }
+    }
+  };
 
   private enableServer() {
     this.server = new LocalMcpServer();
@@ -153,6 +239,6 @@ class RadonMcpController implements Disposable {
   }
 }
 
-export function registerRadonAI(context: ExtensionContext) {
-  return new RadonMcpController(context);
+export async function registerRadonAI(context: ExtensionContext) {
+  return RadonMcpController.initialize(context);
 }

@@ -1,7 +1,7 @@
 import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
-import { env, Disposable, commands, workspace, window } from "vscode";
+import { env, Disposable, commands, workspace, window, Uri } from "vscode";
 import _ from "lodash";
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import {
@@ -63,14 +63,13 @@ import { Telemetry } from "./telemetry";
 import { EditorBindings } from "./EditorBindings";
 import { saveMultimedia } from "../utilities/saveMultimedia";
 import {
+  DefaultFeaturesAvailability,
   Feature,
   FeatureAvailabilityStatus,
-  getFeatureAvailabilityStatus,
-  getLicensesForFeature,
   LicenseState,
   LicenseStatus,
 } from "../common/License";
-import { RestrictedFunctionalityError } from "../common/Errors";
+import { AdminRestrictedFunctionalityError, PaywalledFunctionalityError } from "../common/Errors";
 import { Sentiment } from "../common/types";
 import { FeedbackGenerator } from "./feedbackGenerator";
 
@@ -87,7 +86,8 @@ type ProjectMethodParameters<K extends keyof Project> = Project[K] extends (
 /**
  * Checks if the current license status allows access to the specified feature.
  * @argument feature - The feature to check access for.
- * @throws {RestrictedFunctionalityError} if the user does not have access to the feature.
+ * @throws {PaywalledFunctionalityError} if the user does not have access to the feature because license is not sufficient.
+ * @throws {AdminRestrictedFunctionalityError} if the user does not have access to the feature because it was restricted by the license admin.
  */
 function guardFeatureAccess<K extends keyof Project>(
   feature: Feature,
@@ -106,18 +106,18 @@ function guardFeatureAccess<K extends keyof Project>(
         }
       }
 
-      const licenseStatus = this.licenseState.status;
-
-      const availabilityStatus = getFeatureAvailabilityStatus(licenseStatus, feature);
+      const availabilityStatus = this.licenseState.featuresAvailability[feature];
 
       switch (availabilityStatus) {
-        case FeatureAvailabilityStatus.Available:
+        case FeatureAvailabilityStatus.AVAILABLE:
           return originalMethod.apply(this, args);
-        case FeatureAvailabilityStatus.InsufficientLicense:
-          const allowedLicenses = getLicensesForFeature(feature);
-          throw new RestrictedFunctionalityError(
-            `This feature requires one of the following licenses: ${allowedLicenses.join(", ")}`,
-            allowedLicenses
+        case FeatureAvailabilityStatus.PAYWALLED:
+          throw new PaywalledFunctionalityError(
+            `TThis feature requires a higher license plan, to use it upgrade the plan or contact your license administrator.`
+          );
+        case FeatureAvailabilityStatus.ADMIN_DISABLED:
+          throw new AdminRestrictedFunctionalityError(
+            `This feature is a restricted feature, please consult your license administrator in order to unlock or purchase access to the feature.`
           );
       }
     };
@@ -219,7 +219,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       },
     };
 
-    this.updateLicenseStatus();
+    this.updateLicenseState();
 
     this.maybeStartInitialDeviceSession();
 
@@ -234,7 +234,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
     this.disposables.push(fingerprintProvider);
     this.disposables.push(refreshTokenPeriodically());
-    this.disposables.push(watchLicenseTokenChange(this.updateLicenseStatus));
+    this.disposables.push(watchLicenseTokenChange(this.updateLicenseState));
     this.disposables.push(
       this.launchConfigsManager.onLaunchConfigurationsChanged((launchConfigs) => {
         this.updateProjectState({
@@ -469,20 +469,34 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   // needs to be an arrow function (used in callbacks)
-  private updateLicenseStatus = async () => {
+  private updateLicenseState = async () => {
     const token = await getLicenseToken();
     if (!token) {
-      this.licenseStateManager.updateState({ status: LicenseStatus.Inactive });
+      this.licenseStateManager.updateState({
+        status: LicenseStatus.Inactive,
+        featuresAvailability: DefaultFeaturesAvailability,
+      });
+      commands.executeCommand("setContext", "RNIDE.licenseActive", false);
       return;
     }
 
     const validationResult = await checkLicenseToken(token);
-    const status =
-      validationResult.status === SimServerLicenseValidationStatus.Success
-        ? validationResult.licensePlan
-        : LicenseStatus.Inactive;
+    const newState = {
+      status: LicenseStatus.Inactive,
+      featuresAvailability: DefaultFeaturesAvailability,
+    };
 
-    this.licenseStateManager.updateState({ status });
+    if (validationResult.status === SimServerLicenseValidationStatus.Success) {
+      newState.status = validationResult.licensePlan;
+      newState.featuresAvailability = validationResult.featuresAvailability;
+    }
+
+    commands.executeCommand(
+      "setContext",
+      "RNIDE.licenseActive",
+      newState.status !== LicenseStatus.Inactive
+    );
+    this.licenseStateManager.updateState(newState);
   };
 
   // #endregion License
@@ -781,6 +795,25 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   // #endregion Reloading
+
+  // #region Chat
+
+  addToChatContext(...filePaths: string[]): void {
+    try {
+      commands.executeCommand("copilot-chat.focus").then(async () => {
+        for (const filePath of filePaths) {
+          await commands.executeCommand("workbench.action.chat.attachFile", Uri.file(filePath));
+        }
+      });
+    } catch (e) {
+      const msg =
+        typeof e === "object" && e !== null && "message" in e ? String(e.message) : String(e);
+
+      Logger.error("Attaching files to chat context via element inspector failed. Details:", msg);
+    }
+  }
+
+  // #endregion Chat
 
   // #region Inspector
 

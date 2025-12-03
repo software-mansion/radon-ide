@@ -38,9 +38,17 @@ async function removeOldRadonEntry(location: ConfigLocation) {
 // exported for testing
 export function removeOldRadonEntryFromConfig(config: string): string | undefined {
   // only remove the old Radon entry from mcp config if it points to http:// based server.
-  // we now provide stdio based MCP server that people can optionally conifgure in their
+  // we now provide stdio based MCP server that people can optionally configure in their
   // mcp.json files and we don't want to remove that entry.
-  const rootKey = getEditorType() === EditorType.VSCODE ? VSCODE_KEY : CURSOR_KEY;
+  const editorType = getEditorType();
+
+  if (![EditorType.VSCODE, EditorType.CURSOR].includes(editorType)) {
+    // Other editor types are not supported yet,
+    // and thus don't have entries that have to be removed.
+    return;
+  }
+
+  const rootKey = editorType === EditorType.VSCODE ? VSCODE_KEY : CURSOR_KEY;
 
   const mcpConfigTree = parseTree(config);
   if (!mcpConfigTree) {

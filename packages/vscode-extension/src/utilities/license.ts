@@ -5,7 +5,12 @@ import { Logger } from "../Logger";
 import { simulatorServerBinary } from "./simulatorServerBinary";
 import { ActivateDeviceResult } from "../common/Project";
 import { throttleAsync } from "./throttle";
-import { getLicenseStatusFromString, LicenseStatus } from "../common/License";
+import {
+  DefaultFeaturesAvailability,
+  FeaturesAvailability,
+  getLicenseStatusFromString,
+  LicenseStatus,
+} from "../common/License";
 
 const TOKEN_KEY = "RNIDE_license_token_key";
 const TOKEN_KEY_TIMESTAMP = "RNIDE_license_token_key_timestamp";
@@ -37,6 +42,7 @@ export type SimServerLicenseValidationResult =
   | {
       status: SimServerLicenseValidationStatus.Success;
       licensePlan: LicenseStatus;
+      featuresAvailability: FeaturesAvailability;
     }
   | {
       status: Exclude<SimServerLicenseValidationStatus, SimServerLicenseValidationStatus.Success>;
@@ -186,9 +192,19 @@ export async function checkLicenseToken(token: string): Promise<SimServerLicense
 
   if (stdout.startsWith("token_valid")) {
     const licensePlan = stdout.split(" ", 2)[1];
+    const tokenPayload = await decodeJWTPayload(token);
+
+    //Frytki just for testing
+    let featuresAvailability = DefaultFeaturesAvailability;
+
+    if (tokenPayload && tokenPayload.cp_features) {
+      featuresAvailability = tokenPayload.cp_features;
+    }
+
     return {
       status: SimServerLicenseValidationStatus.Success,
       licensePlan: getLicenseStatusFromString(licensePlan),
+      featuresAvailability,
     };
   } else {
     try {
@@ -209,6 +225,40 @@ export async function checkLicenseToken(token: string): Promise<SimServerLicense
     return {
       status: SimServerLicenseValidationStatus.Corrupted,
     };
+  }
+}
+
+async function decodeJWTPayload(token: string) {
+  /**
+   * JWT payload structure returned by the Customer Portal (cp_* fields)
+   */
+  type LicenseJWTPayload = {
+    cp_sub: string;
+    cp_pri: string;
+    cp_fpr: string;
+    cp_ent: number;
+    cp_usr: string;
+    cp_plan: string;
+    cp_features: FeaturesAvailability;
+  };
+
+  try {
+    // JWT format: header.payload.signature (all base64url)
+    const parts = token.split(".");
+    if (parts.length < 2) {
+      return null;
+    }
+    const payloadB64Url = parts[1];
+    // Convert base64url to base64
+    const base64 = payloadB64Url.replace(/-/g, "+").replace(/_/g, "/");
+    // Pad base64 if necessary
+    const padded = base64 + "===".slice((base64.length + 3) % 4);
+    const json = Buffer.from(padded, "base64").toString("utf8");
+    const payload = JSON.parse(json) as Partial<LicenseJWTPayload>;
+    return payload as LicenseJWTPayload;
+  } catch (e) {
+    Logger.warn("Failed to decode JWT payload", e);
+    return null;
   }
 }
 

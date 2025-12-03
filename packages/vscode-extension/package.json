@@ -39,8 +39,127 @@
   "contributes": {
     "mcpServerDefinitionProviders": [
       {
+        "when": "!RNIDE.useStaticToolRegistering && RNIDE.AIEnabled",
         "id": "RadonAIMCPProvider",
         "label": "MCP server integrating with Radon IDE"
+      }
+    ],
+    "languageModelTools": [
+      {
+        "when": "RNIDE.useStaticToolRegistering && RNIDE.licenseActive && RNIDE.AIEnabled",
+        "displayName": "Get library description",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "get_library_description",
+        "name": "get_library_description",
+        "modelDescription": "Returns a detailed description of a library and its use-cases",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "library_npm_name": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "library_npm_name"
+          ]
+        },
+        "tags": [
+          "react-native",
+          "query",
+          "description"
+        ]
+      },
+      {
+        "when": "RNIDE.useStaticToolRegistering && RNIDE.licenseActive && RNIDE.AIEnabled",
+        "displayName": "Query documentation",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "query_documentation",
+        "name": "query_documentation",
+        "modelDescription": "Returns documentation snippets relevant to the provided query",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "text"
+          ]
+        },
+        "tags": [
+          "react-native",
+          "query"
+        ]
+      },
+      {
+        "when": "RNIDE.useStaticToolRegistering && RNIDE.AIEnabled",
+        "displayName": "Reload application",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "reload_application",
+        "name": "reload_application",
+        "modelDescription": "Triggers a reload of the app running in the development emulator. Use this tool whenever you are debugging the state and want to reset it, or when the app crashes or breaks due to an interaction.\nThere are 3 ways you can reload the app:\n- `reloadJs`: Causes the JS bundle to be reloaded, it does not trigger any rebuild or restart of the native part of the app. Use this to restart the JS state of the app.\n- `restartProcess`: Restarts the native part of the app. Use this method for resetting state of bugged **NATIVE** libraries or components.\n- `rebuild`: Rebuilds both the js and the native parts of the app. Use it whenever changes are made to the native part, as such changes require a full rebuild.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "reloadMethod": {
+              "type": "string",
+              "description": "Method for performing the reload. There are 3 valid options: \"reloadJs\" | \"rebuild\" | \"restartProcess\"\n- `reloadJs`: Causes the JS bundle to be reloaded, it does not trigger any rebuild or restart of the native part of the app. Use this to restart the JS state of the app.\n- `restartProcess`: Restarts the native part of the app. Use this method for resetting state of bugged **NATIVE** libraries or components.\n- `rebuild`: Rebuilds both the js and the native parts of the app. Use it whenever changes are made to the native part, as such changes require a full rebuild."
+            }
+          }
+        },
+        "tags": [
+          "react-native",
+          "debug"
+        ]
+      },
+      {
+        "when": "RNIDE.useStaticToolRegistering && RNIDE.AIEnabled",
+        "displayName": "View component tree",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "view_component_tree",
+        "name": "view_component_tree",
+        "modelDescription": "Displays the component tree (view hierarchy) of the running app.\nThis tool only displays mounted components, so some parts of the project might not be visible.\nUse this tool when a general overview of the UI is required, such as when resolving layout issues, looking for location of context providers, or looking for relation between the project file structure and project component structure",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "tags": [
+          "react-native",
+          "debug"
+        ]
+      },
+      {
+        "when": "RNIDE.useStaticToolRegistering && RNIDE.AIEnabled",
+        "displayName": "View application logs",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "view_application_logs",
+        "name": "view_application_logs",
+        "modelDescription": "Returns all the build, bundling and runtime logs. Use this function whenever the user has any issue with the app, if it's builds are failing, or when there are errors in the console. These logs are always a useful debugging aid.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "tags": [
+          "react-native",
+          "debug"
+        ]
+      },
+      {
+        "when": "RNIDE.useStaticToolRegistering && RNIDE.AIEnabled",
+        "displayName": "View screenshot",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "view_screenshot",
+        "name": "view_screenshot",
+        "modelDescription": "Displays a screenshot of the app development viewport. Use this function whenever it is necessary to inspect what the user sees on their mobile device.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {}
+        },
+        "tags": [
+          "react-native",
+          "debug"
+        ]
       }
     ],
     "commands": [

@@ -34,6 +34,7 @@ import { ActivateLicenseView } from "./ActivateLicenseView";
 import { Feature, LicenseStatus } from "../../common/License";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { useDevices } from "../hooks/useDevices";
+import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -216,6 +217,10 @@ function PreviewView() {
     };
   }, []);
 
+  const isRecordingAdminDisabled = useIsFeatureAdminDisabled(Feature.ScreenRecording);
+
+  const showRecordingButton = !isRecordingAdminDisabled;
+
   const paywalledToggleRecording = usePaywalledCallback(
     async () => {
       await project.toggleRecording();
@@ -250,6 +255,8 @@ function PreviewView() {
     project.stopMaestroTest();
   }
 
+  const isReplayAdminDisabled = useIsFeatureAdminDisabled(Feature.ScreenReplay);
+
   const paywalledCaptureReplay = usePaywalledCallback(
     async () => {
       await project.captureReplay();
@@ -265,6 +272,10 @@ function PreviewView() {
       project.showDismissableError("Failed to capture replay");
     }
   }
+
+  const isScreenshotAdminDisabled = useIsFeatureAdminDisabled(Feature.Screenshot);
+
+  const showScreenshotButton = !isScreenshotAdminDisabled;
 
   const paywalledCaptureScreenshot = usePaywalledCallback(
     async () => {
@@ -291,7 +302,7 @@ function PreviewView() {
     setInspectStackData(null);
   }
 
-  const showReplayButton = deviceSettings.replaysEnabled && !isRecording;
+  const showReplayButton = deviceSettings.replaysEnabled && !isRecording && !isReplayAdminDisabled;
 
   const recordingTimeFormat = `${Math.floor(recordingTime / 60)}:${(recordingTime % 60)
     .toString()
@@ -381,23 +392,25 @@ function PreviewView() {
               <span className="codicon codicon-tools" />
             </IconButton>
           </ToolsDropdown>
-          <IconButton
-            className={isRecording ? "button-recording-on" : ""}
-            tooltip={{
-              label: isRecording ? "Stop screen recording" : "Start screen recording",
-            }}
-            onClick={toggleRecording}
-            disabled={!navBarButtonsActive}
-            dataTest="toggle-recording-button">
-            {isRecording ? (
-              <div className="recording-rec-indicator">
-                <div className="recording-rec-dot" />
-                <span>{recordingTimeFormat}</span>
-              </div>
-            ) : (
-              <RecordingIcon />
-            )}
-          </IconButton>
+          {showRecordingButton && (
+            <IconButton
+              className={isRecording ? "button-recording-on" : ""}
+              tooltip={{
+                label: isRecording ? "Stop screen recording" : "Start screen recording",
+              }}
+              onClick={toggleRecording}
+              disabled={!navBarButtonsActive || isRecordingAdminDisabled}
+              dataTest="toggle-recording-button">
+              {isRecording ? (
+                <div className="recording-rec-indicator">
+                  <div className="recording-rec-dot" />
+                  <span>{recordingTimeFormat}</span>
+                </div>
+              ) : (
+                <RecordingIcon />
+              )}
+            </IconButton>
+          )}
           {showReplayButton && (
             <IconButton
               tooltip={{
@@ -405,19 +418,21 @@ function PreviewView() {
               }}
               dataTest="radon-top-bar-show-replay-button"
               onClick={handleReplay}
-              disabled={!navBarButtonsActive}>
+              disabled={!navBarButtonsActive || isReplayAdminDisabled}>
               <ReplayIcon />
             </IconButton>
           )}
-          <IconButton
-            tooltip={{
-              label: "Capture a screenshot of the app",
-            }}
-            onClick={captureScreenshot}
-            disabled={!navBarButtonsActive}
-            dataTest="capture-screenshot-button">
-            <span slot="start" className="codicon codicon-device-camera" />
-          </IconButton>
+          {showScreenshotButton && (
+            <IconButton
+              tooltip={{
+                label: "Capture a screenshot of the app",
+              }}
+              onClick={captureScreenshot}
+              disabled={!navBarButtonsActive || isScreenshotAdminDisabled}
+              dataTest="capture-screenshot-button">
+              <span slot="start" className="codicon codicon-device-camera" />
+            </IconButton>
+          )}
           <IconButton
             counter={logCounter}
             counterMode="compact"

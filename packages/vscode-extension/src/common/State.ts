@@ -1,6 +1,6 @@
 import { ApplicationRoot } from "./AppRootConfig";
 import { BuildType } from "./BuildConfig";
-import { LicenseState, LicenseStatus } from "./License";
+import { DefaultFeaturesAvailability, LicenseState, LicenseStatus } from "./License";
 import { merge } from "./Merge";
 import { DeviceId } from "./Project";
 
@@ -90,6 +90,10 @@ export type GeneralSettings = {
   inspectorExcludePattern: string | null;
 };
 
+export type RadonAISettings = {
+  enableRadonAI: boolean;
+};
+
 export type UserInterfaceSettings = {
   panelLocation: PanelLocation;
   showDeviceFrame: boolean;
@@ -102,6 +106,7 @@ export type DeviceControlSettings = {
 
 export type WorkspaceConfiguration = {
   general: GeneralSettings;
+  radonAI: RadonAISettings;
   userInterface: UserInterfaceSettings;
   deviceSettings: DeviceSettings;
   deviceControl: DeviceControlSettings;
@@ -596,6 +601,7 @@ export const initialState: State = {
   environmentDependencies: {},
   license: {
     status: LicenseStatus.Inactive,
+    featuresAvailability: DefaultFeaturesAvailability,
   },
   projectState: {
     applicationContext: {
@@ -614,6 +620,9 @@ export const initialState: State = {
       defaultMultimediaSavingLocation: null,
       enableExperimentalElementInspector: false,
       inspectorExcludePattern: null,
+    },
+    radonAI: {
+      enableRadonAI: true,
     },
     userInterface: {
       panelLocation: "tab",

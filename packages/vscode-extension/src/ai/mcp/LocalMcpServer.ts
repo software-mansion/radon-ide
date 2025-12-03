@@ -1,9 +1,9 @@
 import { createHash, randomUUID } from "node:crypto";
 import { AddressInfo } from "node:net";
 import http from "node:http";
-import express from "express";
 import * as path from "path";
 import * as fs from "fs/promises";
+import express from "express";
 import { McpServer, RegisteredTool } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { isInitializeRequest } from "@modelcontextprotocol/sdk/types.js";
@@ -13,8 +13,9 @@ import { registerLocalMcpTools, registerRemoteMcpTool } from "./toolRegistration
 import { extensionContext } from "../../utilities/extensionContext";
 import { watchLicenseTokenChange } from "../../utilities/license";
 import { getAppCachesDir } from "../../utilities/common";
-import { AuthenticationError, fetchRemoteToolSchema, ServerUnreachableError } from "../shared/api";
+import { fetchRemoteToolSchema, ServerUnreachableError } from "../shared/api";
 import { throttleAsync } from "../../utilities/throttle";
+import { AuthorizationError } from "../../common/Errors";
 
 const NETWORK_RETRY_INTERVAL_MS = 15 * 1000; // 15 seconds
 
@@ -160,7 +161,7 @@ export class LocalMcpServer implements Disposable {
       // delete all remote tools as they are not available and retry later
       this.unloadAllRemoteTools();
       this.retryReloadRemoteTools();
-    } else if (error instanceof AuthenticationError) {
+    } else if (error instanceof AuthorizationError) {
       // delete all toos and don't retry, we will wait for authentication event to reload the tools
       this.unloadAllRemoteTools();
     } else {

@@ -10,12 +10,20 @@ import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
 import { useStore } from "../providers/storeProvider";
-import { DeviceInfo, DevicePlatform, DeviceType } from "../../common/State";
+import {
+  AndroidEmulatorInfo,
+  AndroidPhysicalDeviceInfo,
+  DeviceInfo,
+  DevicePlatform,
+  DeviceType,
+  IOSDeviceInfo,
+} from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { Feature } from "../../common/License";
 import { useDevices } from "../hooks/useDevices";
 import { PropsWithDataTest } from "../../common/types";
+import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
 
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
@@ -197,6 +205,14 @@ function DeviceSelect() {
     }
   };
 
+  const isAdminDisabledDeviceSections = ([label]: [
+    string,
+    IOSDeviceInfo[] | AndroidEmulatorInfo[] | AndroidPhysicalDeviceInfo[],
+  ]): boolean => {
+    const isRemoteAndroidAdminDisabled = useIsFeatureAdminDisabled(Feature.AndroidPhysicalDevice);
+    return label !== "Connected Android Devices" || !isRemoteAndroidAdminDisabled;
+  };
+
   const handleDeviceStop = (deviceId: string) => {
     project.terminateSession(deviceId);
   };
@@ -239,15 +255,17 @@ function DeviceSelect() {
             <span className="codicon codicon-chevron-up" />
           </Select.ScrollUpButton>
           <Select.Viewport className="device-select-viewport">
-            {Object.entries(deviceSections).map(([label, sectionDevices]) =>
-              renderDevices(
-                label,
-                sectionDevices,
-                selectedDevice,
-                runningSessionIds,
-                handleDeviceStop
-              )
-            )}
+            {Object.entries(deviceSections)
+              .filter(isAdminDisabledDeviceSections)
+              .map(([label, sectionDevices]) =>
+                renderDevices(
+                  label,
+                  sectionDevices,
+                  selectedDevice,
+                  runningSessionIds,
+                  handleDeviceStop
+                )
+              )}
             <Select.Separator className="device-select-separator" />
             <Select.Group>
               <RichSelectItem

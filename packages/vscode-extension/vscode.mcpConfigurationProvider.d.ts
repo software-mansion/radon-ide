@@ -140,6 +140,18 @@ declare module "vscode" {
     resolveMcpServerDefinition?(server: T, token: CancellationToken): ProviderResult<T>;
   }
 
+  export enum LanguageModelPartAudience {
+    Assistant = 0,
+    User = 1,
+    Extension = 2,
+  }
+
+  export interface LanguageModelDataPart {
+    mimeType: string;
+    data: Uint8Array<ArrayBufferLike>;
+    audience: LanguageModelPartAudience[] | undefined;
+  }
+
   namespace lm {
     export function registerMcpServerDefinitionProvider(
       id: string,

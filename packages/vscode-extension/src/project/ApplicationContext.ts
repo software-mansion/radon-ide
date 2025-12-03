@@ -119,6 +119,7 @@ export class ApplicationContext implements Disposable {
   public applicationDependencyManager: ApplicationDependencyManager;
   public buildManager: BuildManager;
   public launchConfig: ResolvedLaunchConfig;
+  public reactNativeVersion: SemVer | null;
   public readonly buildCache: BuildCache;
   private _metroProvider: MetroProvider & Partial<Disposable>;
   private _devtoolsServer: Promise<WebSocketDevtoolsServer> | undefined;
@@ -140,6 +141,7 @@ export class ApplicationContext implements Disposable {
   ) {
     this.buildCache = new BuildCache();
     this.launchConfig = resolveLaunchConfig(launchConfig);
+    this.reactNativeVersion = getReactNativeVersion(this.launchConfig.absoluteAppRoot);
     this.applicationDependencyManager = new ApplicationDependencyManager(
       this.stateManager.getDerived("applicationDependencies"),
       this.launchConfig,
@@ -170,6 +172,7 @@ export class ApplicationContext implements Disposable {
 
   public async updateLaunchConfig(launchConfig: LaunchConfiguration) {
     this.launchConfig = resolveLaunchConfig(launchConfig);
+    this.reactNativeVersion = getReactNativeVersion(this.launchConfig.absoluteAppRoot);
     this.applicationDependencyManager.setLaunchConfiguration(this.launchConfig);
     await this.applicationDependencyManager.runAllDependencyChecks();
 

@@ -27,11 +27,8 @@ import { DevicePlatform, DeviceRotation, DeviceSettings } from "../../common/Sta
 import { PropsWithDataTest } from "../../common/types";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
-import {
-  Feature,
-  FeatureAvailabilityStatus,
-  getFeatureAvailabilityStatus,
-} from "../../common/License";
+import { Feature, FeatureAvailabilityStatus } from "../../common/License";
+import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
 
 const contentSizes = [
   "xsmall",
@@ -168,12 +165,14 @@ function DeviceAppearanceSettings() {
 
 function RotateSettingsSubmenu() {
   const store$ = useStore();
-  const licenseStatus = use$(store$.license.status);
 
   const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
-  const isDeviceRotationAvailable =
-    getFeatureAvailabilityStatus(licenseStatus, Feature.DeviceRotation) ===
-    FeatureAvailabilityStatus.Available;
+  const isDeviceRotationAvailable = use$(() => {
+    return (
+      store$.license.featuresAvailability.DeviceRotation.get() ===
+      FeatureAvailabilityStatus.AVAILABLE
+    );
+  });
 
   const { project } = useProject();
   const handleRotateDevice = usePaywalledCallback(
@@ -295,6 +294,8 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
   const isPhysicalAndroid = platform === DevicePlatform.Android && !deviceInfo?.emulator;
 
+  const isSendFilesAdminDisabled = useIsFeatureAdminDisabled(Feature.SendFile);
+
   const openSendFileDialog = usePaywalledCallback(
     () => project.openSendFileDialog(),
     Feature.SendFile,
@@ -330,13 +331,16 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           />
           <RotateSettingsSubmenu />
           {platform === DevicePlatform.IOS && <BiometricsItem />}
-          <DropdownMenu.Item
-            className="dropdown-menu-item"
-            data-testid="device-settings-send-file"
-            onSelect={openSendFileDialog}>
-            <span className="codicon codicon-share" />
-            Send File
-          </DropdownMenu.Item>
+          {!isSendFilesAdminDisabled && (
+            <DropdownMenu.Item
+              className="dropdown-menu-item"
+              data-testid="device-settings-send-file"
+              disabled={isSendFilesAdminDisabled}
+              onSelect={openSendFileDialog}>
+              <span className="codicon codicon-share" />
+              Send File
+            </DropdownMenu.Item>
+          )}
           {!isPhysicalAndroid && (
             <>
               <LocationItem />
@@ -407,6 +411,8 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 }
 
 const LocationItem = () => {
+  const isLocationAdminDisabled = useIsFeatureAdminDisabled(Feature.LocationSimulation);
+
   const { openModal } = useModal();
   const handleOpenLocationView = usePaywalledCallback(
     () => {
@@ -419,6 +425,7 @@ const LocationItem = () => {
     <DropdownMenu.Item
       className="dropdown-menu-item"
       data-testid="device-settings-location"
+      disabled={isLocationAdminDisabled}
       onSelect={handleOpenLocationView}>
       <span className="codicon codicon-location" />
       Location
@@ -427,6 +434,7 @@ const LocationItem = () => {
 };
 
 const LocalizationItem = () => {
+  const isLocalizationAdminDisabled = useIsFeatureAdminDisabled(Feature.DeviceLocalizationSettings);
   const { openModal } = useModal();
 
   const handleOpenLocalizationView = usePaywalledCallback(
@@ -440,6 +448,7 @@ const LocalizationItem = () => {
   return (
     <DropdownMenu.Item
       className="dropdown-menu-item"
+      disabled={isLocalizationAdminDisabled}
       onSelect={handleOpenLocalizationView}
       data-testid="device-settings-localization">
       <span className="codicon codicon-globe" />
@@ -481,6 +490,9 @@ function CommandItem({
 
 const BiometricsItem = () => {
   const store$ = useStore();
+
+  const isBiometricsAdminDisabled = useIsFeatureAdminDisabled(Feature.Biometrics);
+
   const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
 
   const { project } = useProject();
@@ -505,7 +517,7 @@ const BiometricsItem = () => {
 
   return (
     <DropdownMenu.Sub>
-      <DropdownMenu.SubTrigger className="dropdown-menu-item">
+      <DropdownMenu.SubTrigger disabled={isBiometricsAdminDisabled} className="dropdown-menu-item">
         <span className="codicon codicon-layout" />
         Biometrics
         <span className="codicon codicon-chevron-right right-slot" />
@@ -515,6 +527,7 @@ const BiometricsItem = () => {
         <DropdownMenu.SubContent className="dropdown-menu-subcontent">
           <DropdownMenu.Item
             className="dropdown-menu-item"
+            disabled={isBiometricsAdminDisabled}
             onSelect={handleToggleBiometricsEnrolment}>
             <span className="codicon codicon-layout-sidebar-left" />
             Enrolled
@@ -529,7 +542,7 @@ const BiometricsItem = () => {
             commandName="RNIDE.performBiometricAuthorization"
             label="Matching ID"
             icon="layout-sidebar-left"
-            disabled={!deviceSettings.hasEnrolledBiometrics}
+            disabled={!deviceSettings.hasEnrolledBiometrics || isBiometricsAdminDisabled}
           />
           <CommandItem
             onSelect={() => {
@@ -538,7 +551,7 @@ const BiometricsItem = () => {
             commandName="RNIDE.performFailedBiometricAuthorization"
             label="Non-Matching ID"
             icon="layout-sidebar-left"
-            disabled={!deviceSettings.hasEnrolledBiometrics}
+            disabled={!deviceSettings.hasEnrolledBiometrics || isBiometricsAdminDisabled}
           />
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
