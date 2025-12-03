@@ -483,7 +483,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         ? validationResult.licensePlan
         : LicenseStatus.Inactive;
 
-    commands.executeCommand("setContext", "RNIDE.licenseActive", status);
+    commands.executeCommand("setContext", "RNIDE.licenseActive", status !== LicenseStatus.Inactive);
     this.licenseStateManager.updateState({ status });
   };
 
