@@ -3,6 +3,7 @@ import {
   getFetchResponseDataPromise,
   deserializeRequestData,
   trimContentType,
+  getIncrementalResponseData,
 } from "../networkRequestParsers";
 import type { NetworkProxy, NativeResponseType, BlobLikeResponse } from "../types";
 
@@ -153,18 +154,13 @@ class CompletedRequestTracker {
  * Manages incremental response data chunks for streaming fetch requests.
  * Accumulates Uint8Array chunks keyed by request ID for later processing.
  *
- * The chunks put on the queue come in the form of strings and are encoded to Uint8Array,
- * like in react-native-fetch-api. This allows for later handling of multi-byte characters
- * when response should be displayed as base64.
+ * The chunks put on the queue come in the form of strings and, unlike the polyfill's approach, are not encoded due to performance reasons. The chunks come in as a string, which are later converted to Blob, which later gets processed as the standard fetch blob
+ * response in react native.
  */
 class IncrementalResponseQueue {
-  private queueMap: Map<string, Array<Uint8Array>> = new Map();
-  // text encoder is already polyfilled when the fetch polyfill is used,
-  // otherwise the fetch itself does not work
-  // for RN version >= 74 the encoder should be included in Hermes
-  private textEncoder = new TextEncoder();
+  private queueMap: Map<string, Array<string>> = new Map();
 
-  public getQueue(requestId: string): Array<Uint8Array> {
+  public getQueue(requestId: string): Array<string> {
     if (!this.queueMap.has(requestId)) {
       this.queueMap.set(requestId, []);
     }
@@ -173,9 +169,8 @@ class IncrementalResponseQueue {
   }
 
   public pushToQueue(requestId: string, data: string): void {
-    const encodedData = this.textEncoder.encode(data);
     const requestQueue = this.getQueue(requestId);
-    requestQueue.push(encodedData);
+    requestQueue.push(data);
   }
 
   public clearQueue(requestId: string): void {
@@ -290,11 +285,7 @@ class PolyfillFetchInterceptor {
     if (isIncrementalResponse) {
       const incrementalResponseQueue = this.incrementalResponseQueue.getQueue(requestId);
 
-      const responseDataPromise = getFetchResponseDataPromise(
-        response,
-        nativeResponseType,
-        incrementalResponseQueue
-      );
+      const responseDataPromise = getIncrementalResponseData(incrementalResponseQueue, response);
       this.responseBuffer.put(requestId, responseDataPromise);
 
       this.incrementalResponseQueue.clearQueue(requestId);
@@ -336,10 +327,6 @@ class PolyfillFetchInterceptor {
     const responseHeadersContentType = response.headers.get("content-type") || "";
     const mimeType = trimContentType(response._body._mimeType || responseHeadersContentType);
 
-    if (shouldBufferResponse) {
-      this.bufferResponseBody(requestId, response, fetchInstance._nativeResponseType);
-    }
-
     const timeStamp = Date.now();
     this.sendCDPMessage("Network.loadingFinished", {
       requestId,
@@ -357,6 +344,9 @@ class PolyfillFetchInterceptor {
     });
 
     this.completedRequestTracker.markCompleted(requestId);
+    if (shouldBufferResponse) {
+      this.bufferResponseBody(requestId, response, fetchInstance._nativeResponseType);
+    }
   }
 
   private sendLoadingFailed(

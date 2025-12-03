@@ -121,31 +121,6 @@ function processTypedArrayResponse(
 }
 
 /**
- * Combine incremental response chunks into a single typed array and process it.
- * Used in combination with react-native-fetch-api for streaming.
- *
- * @param incrementalResponseArray Array of Uint8Array chunks received incrementally.
- * @param contentTypeAnalysis The content type classification flags.
- * @returns InternalResponseBodyData with the processed combined response.
- */
-function parseIncrementalResponse(
-  incrementalResponseArray: Array<Uint8Array>,
-  contentTypeAnalysis: ContentTypeAnalysis
-) {
-  const typedArray = new Uint8Array(
-    incrementalResponseArray.reduce((sum, arr) => sum + arr.length, 0)
-  );
-
-  let position = 0;
-  incrementalResponseArray.forEach((array) => {
-    typedArray.set(array, position);
-    position += array.length;
-  });
-
-  return processTypedArrayResponse(typedArray, contentTypeAnalysis);
-}
-
-/**
  * Parse data gotten from Network.getResponseBody, truncate if needed and measure the body for buffering.
  *
  * - Add metadata fields defined in IDE.getResponseBodyData method,
@@ -326,10 +301,20 @@ export async function getXHRResponseDataPromise(
   }
 }
 
+export async function getIncrementalResponseData(
+  incrementalResponseArray: string[],
+  response: Response
+) {
+  const blob = new Blob(incrementalResponseArray);
+  const contentType = response.headers.get(ContentTypeHeader.Default) || "";
+  const contentTypeAnalysis = analyzeContentType(contentType);
+  return await processBlobResponse(blob, contentTypeAnalysis);
+}
+
 export async function getFetchResponseDataPromise(
   fetchResponse: Response,
   nativeResponseType: string,
-  incrementalResponseArray?: Array<Uint8Array>
+  incrementalResponseBlob?: Blob
 ): Promise<InternalResponseBodyData> {
   if (!fetchResponse) {
     return DEFAULT_RESPONSE_BODY_DATA;
@@ -337,13 +322,6 @@ export async function getFetchResponseDataPromise(
 
   const contentType = fetchResponse.headers.get(ContentTypeHeader.Default) || "";
   const contentTypeAnalysis = analyzeContentType(contentType);
-
-  // text-streaming case
-  // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L142-L157
-  const isIncrementalResponse = nativeResponseType === "text" && incrementalResponseArray?.length;
-  if (isIncrementalResponse) {
-    return parseIncrementalResponse(incrementalResponseArray, contentTypeAnalysis);
-  }
 
   // @ts-ignore
   const responseBody = fetchResponse._body._bodyInit;
