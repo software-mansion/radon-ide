@@ -1,3 +1,6 @@
+/**
+ * Extracted from MCP specification.
+ */
 export interface ImageContent {
   [x: string]: unknown;
   type: "image";
@@ -5,6 +8,9 @@ export interface ImageContent {
   mimeType: `image/${string}`;
 }
 
+/**
+ * Extracted from MCP specification.
+ */
 export interface TextContent {
   [x: string]: unknown;
   type: "text";
