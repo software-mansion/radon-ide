@@ -66,3 +66,18 @@
   font-size: 18px;
   text-align: center;
 }
+
+.feedback-logs-checkbox {
+  margin-top: 8px;
+  margin-bottom: 8px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

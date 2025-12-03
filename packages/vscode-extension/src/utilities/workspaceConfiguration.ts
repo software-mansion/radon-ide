@@ -18,6 +18,7 @@ const WorkspaceConfigurationKeyMap = {
     enableExperimentalElementInspector: "general.enableExperimentalElementInspector",
     inspectorExcludePattern: "general.inspectorExcludePattern",
   },
+  radonAI: { enableRadonAI: "radonAI.enabledBoolean" },
   userInterface: {
     panelLocation: "userInterface.panelLocation",
     showDeviceFrame: "userInterface.showDeviceFrame",
@@ -51,6 +52,10 @@ export function getCurrentWorkspaceConfiguration(config: WorkspaceConfiguration)
         config.get<boolean>(
           WorkspaceConfigurationKeyMap.general.enableExperimentalElementInspector
         ) ?? false,
+    },
+    radonAI: {
+      enableRadonAI:
+        config.get<boolean>(WorkspaceConfigurationKeyMap.radonAI.enableRadonAI) ?? true,
     },
     userInterface: {
       panelLocation:

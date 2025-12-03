@@ -1,7 +1,7 @@
 import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
-import { env, Disposable, commands, workspace, window } from "vscode";
+import { env, Disposable, commands, workspace, window, Uri } from "vscode";
 import _ from "lodash";
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import {
@@ -71,6 +71,8 @@ import {
   LicenseStatus,
 } from "../common/License";
 import { RestrictedFunctionalityError } from "../common/Errors";
+import { Sentiment } from "../common/types";
+import { FeedbackGenerator } from "./feedbackGenerator";
 
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 
@@ -181,6 +183,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     private readonly outputChannelRegistry: OutputChannelRegistry,
     private readonly environmentDependencyManager: EnvironmentDependencyManager,
     private readonly telemetry: Telemetry,
+    private readonly feedbackGenerator: FeedbackGenerator,
     initialLaunchConfigOptions?: LaunchConfiguration
   ) {
     const fingerprintProvider = new FingerprintProvider();
@@ -781,6 +784,25 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #endregion Reloading
 
+  // #region Chat
+
+  addToChatContext(...filePaths: string[]): void {
+    try {
+      commands.executeCommand("copilot-chat.focus").then(async () => {
+        for (const filePath of filePaths) {
+          await commands.executeCommand("workbench.action.chat.attachFile", Uri.file(filePath));
+        }
+      });
+    } catch (e) {
+      const msg =
+        typeof e === "object" && e !== null && "message" in e ? String(e.message) : String(e);
+
+      Logger.error("Attaching files to chat context via element inspector failed. Details:", msg);
+    }
+  }
+
+  // #endregion Chat
+
   // #region Inspector
 
   public async inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean) {
@@ -897,6 +919,14 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Editor
 
+  public buildDiagnosticsReport(logFilesToInclude: string[]): Promise<void> {
+    return this.editorBindings.buildDiagnosticsReport(logFilesToInclude);
+  }
+
+  public getLogFileNames(): Promise<string[]> {
+    return this.editorBindings.getLogFileNames();
+  }
+
   public getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined> {
     return this.editorBindings.getCommandsCurrentKeyBinding(commandName);
   }
@@ -935,6 +965,16 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   public async reportIssue(): Promise<void> {
     this.telemetry.reportIssue();
+  }
+
+  public async sendFeedback(
+    sentiment: Sentiment,
+    options: {
+      message?: string;
+      includeLogs?: boolean;
+    }
+  ): Promise<void> {
+    return this.feedbackGenerator.sendFeedback(sentiment, options);
   }
 
   public async sendTelemetry(

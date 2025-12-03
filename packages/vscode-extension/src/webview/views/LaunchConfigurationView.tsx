@@ -449,6 +449,13 @@ function StandardBuildConfiguration({
       return { value: xcodeScheme, label: xcodeScheme };
     });
 
+    const selectedScheme = config?.ios?.scheme;
+
+    // NOTE: this is necessary for a custom scheme to appear in the list when initially opening the modal
+    if (selectedScheme && !availableXcodeSchemes.find((s) => s.value === selectedScheme)) {
+      availableXcodeSchemes.unshift({ value: selectedScheme, label: selectedScheme });
+    }
+
     return (
       <>
         <FormGroup variant="settings-group">
@@ -458,10 +465,8 @@ function StandardBuildConfiguration({
           <FormHelper>
             {launchConfigAttrs?.properties?.ios?.properties?.scheme?.description}
           </FormHelper>
-          <SingleSelect initialValue={config?.ios?.scheme ?? ""} name="ios.scheme">
-            <Option disabled value="">
-              Detect automatically
-            </Option>
+          <SingleSelect combobox creatable initialValue={selectedScheme ?? ""} name="ios.scheme">
+            <Option value="">Detect automatically ({xcodeSchemes[0]})</Option>
             {availableXcodeSchemes.map((scheme) => (
               <Option key={scheme.value} value={scheme.value}>
                 {scheme.label}

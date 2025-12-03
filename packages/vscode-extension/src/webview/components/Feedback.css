@@ -23,10 +23,16 @@
   transform: scale(0.96);
 }
 
-.feedback-button:hover span,
-.feedback-button-positive-active span,
+.feedback-button:hover span {
+  color: var(--swm-icon-button-hover-background);
+}
+
+.feedback-button-positive-active span {
+  color: var(--green-dark-100) !important;
+}
+
 .feedback-button-negative-active span {
-  color: var(--swm-popover-background) !important;
+  color: var(--red-dark-100) !important;
 }
 
 .feedback-button:hover {
