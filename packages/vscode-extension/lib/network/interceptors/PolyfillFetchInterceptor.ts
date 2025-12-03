@@ -464,7 +464,6 @@ class PolyfillFetchInterceptor {
       closedPromise
         .then(() => {
           restoreReleaseLock();
-          console.log("I WAS SENT FROM GETREADER");
           if (fetchInstance._response) {
             interceptorInstance.sendLoadingFinished(requestIdStr, _response, fetchInstance, true);
           }
@@ -638,7 +637,6 @@ class PolyfillFetchInterceptor {
           true // shouldClearQueue
         );
       }
-      console.log("I WAS SENT FROM DIDCOMPLETE");
       self.sendLoadingFinished(
         requestIdStr,
         _response,
