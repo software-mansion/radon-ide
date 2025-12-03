@@ -3,7 +3,6 @@ import {
   getFetchResponseDataPromise,
   deserializeRequestData,
   trimContentType,
-  // getIncrementalFetchResponseDataPromise,
 } from "../networkRequestParsers";
 import type { NetworkProxy, NativeResponseType, BlobLikeResponse } from "../types";
 
@@ -48,6 +47,7 @@ interface Body {
 
 interface FetchReadableStream extends ReadableStream {
   _closedPromise: Promise<void>;
+  releaseLock(): void;
 }
 
 interface FetchRequest extends Request {
@@ -120,6 +120,36 @@ const INITIATOR_TYPE = "script";
 const REQUEST_ID_PREFIX = "FETCH";
 
 /**
+ * Tracks request IDs that have received a terminal CDP event (loadingFinished or loadingFailed).
+ * Used to prevent duplicate terminal events when multiple code paths
+ * (e.g., stream close vs didCompleteNetworkResponse) could trigger them.
+ */
+class CompletedRequestTracker {
+  private completedIds: Set<string> = new Set();
+
+  /**
+   * Marks a request as completed (terminal event sent).
+   */
+  public markCompleted(requestId: string): void {
+    this.completedIds.add(requestId);
+  }
+
+  /**
+   * Checks if a request has already received a terminal event.
+   */
+  public isCompleted(requestId: string): boolean {
+    return this.completedIds.has(requestId);
+  }
+
+  /**
+   * Clears all tracked request IDs. Should be called when the interceptor is disabled.
+   */
+  public reset(): void {
+    this.completedIds.clear();
+  }
+}
+
+/**
  * Manages incremental response data chunks for streaming fetch requests.
  * Accumulates Uint8Array chunks keyed by request ID for later processing.
  *
@@ -152,7 +182,7 @@ class IncrementalResponseQueue {
     this.queueMap.delete(requestId);
   }
 
-  public resetQueue(): void {
+  public reset(): void {
     this.queueMap.clear();
   }
 
@@ -188,6 +218,7 @@ class PolyfillFetchInterceptor {
   private responseBuffer?: AsyncBoundedResponseBuffer = undefined;
 
   private incrementalResponseQueue: IncrementalResponseQueue = new IncrementalResponseQueue();
+  private completedRequestTracker: CompletedRequestTracker = new CompletedRequestTracker();
 
   // timing
   private startTime: number = 0;
@@ -292,6 +323,69 @@ class PolyfillFetchInterceptor {
     return response;
   }
 
+  private sendLoadingFinished(
+    requestId: string,
+    response: FetchResponse,
+    fetchInstance: PolyfillFetch,
+    shouldBufferResponse: boolean
+  ) {
+    if (this.completedRequestTracker.isCompleted(requestId)) {
+      return;
+    }
+
+    const responseHeadersContentType = response.headers.get("content-type") || "";
+    const mimeType = trimContentType(response._body._mimeType || responseHeadersContentType);
+
+    if (shouldBufferResponse) {
+      this.bufferResponseBody(requestId, response, fetchInstance._nativeResponseType);
+    }
+
+    const timeStamp = Date.now();
+    this.sendCDPMessage("Network.loadingFinished", {
+      requestId,
+      timestamp: timeStamp,
+      duration: timeStamp - this.startTime,
+      type: mimeType,
+      response: {
+        type: response.type,
+        status: fetchInstance._responseStatus,
+        url: fetchInstance._responseUrl,
+        headers: fetchInstance._nativeResponseHeaders,
+        mimeType: mimeType,
+      },
+      // Not sending the encodedDataLength, as we've done so in didReceiveNetworkData and didReceiveNetworkIncrementalData
+    });
+
+    this.completedRequestTracker.markCompleted(requestId);
+  }
+
+  private sendLoadingFailed(
+    requestId: string,
+    errorText: string,
+    canceled: boolean,
+    shouldClearQueue: boolean
+  ) {
+    if (this.completedRequestTracker.isCompleted(requestId)) {
+      return;
+    }
+
+    const timeStamp = Date.now();
+
+    if (shouldClearQueue) {
+      this.incrementalResponseQueue.clearQueue(requestId);
+    }
+
+    this.sendCDPMessage("Network.loadingFailed", {
+      requestId,
+      timestamp: timeStamp,
+      type: "",
+      errorText,
+      canceled,
+    });
+
+    this.completedRequestTracker.markCompleted(requestId);
+  }
+
   private override__didCreateRequest() {
     // eslint-disable-next-line
     const self = this;
@@ -323,9 +417,11 @@ class PolyfillFetchInterceptor {
     };
   }
 
-  // https://github.com/MattiasBuelens/web-streams-polyfill/blob/master/src/lib/readable-stream/generic-reader.ts#L60-L66
-  // https://github.com/MattiasBuelens/web-streams-polyfill/blob/master/src/lib/readable-stream/default-reader.ts#L118-L128
-  // Observes stream closure via the internal _closedPromise, which is accessed normally bu closed() method
+  /**
+   * Intercepts stream.getReader() to observe stream closure via _closedPromise.
+   * @see https://github.com/MattiasBuelens/web-streams-polyfill/blob/master/src/lib/readable-stream/generic-reader.ts#L60-L66
+   * @see https://github.com/MattiasBuelens/web-streams-polyfill/blob/master/src/lib/readable-stream/default-reader.ts#L118-L128
+   */
   private override__getReader(
     stream: ReadableStream,
     fetchInstance: PolyfillFetch,
@@ -341,60 +437,45 @@ class PolyfillFetchInterceptor {
       // @ts-ignore - Reader has internal _closedPromise property
       const reader: FetchReadableStream = original__getReader.call(this, options);
 
-      const closedPromise = reader._closedPromise;
-      if (!closedPromise?.then) {
-        return reader;
-      }
-
       const _response = interceptorInstance.getCompatibleFetchResponse(fetchInstance._response);
-      if (!_response) {
+      const closedPromise = reader._closedPromise;
+
+      // Early exit if we can't observe stream closure
+      if (!closedPromise?.then || !_response) {
         return reader;
       }
 
-      const timeStamp = Date.now();
+      // releaseLock causes the _closedPromise to reject, 
+      // so we have to make sure we can tell it apart from actual errors
+      let lockReleased = false;
+      const originalReleaseLock = reader.releaseLock;
+      const restoreReleaseLock = () => {
+        reader.releaseLock = originalReleaseLock;
+      };
+      reader.releaseLock = function (this) {
+        if (!lockReleased) {
+          lockReleased = true;
+          originalReleaseLock.call(this);
+        }
+      };
+
       const requestIdStr = `${REQUEST_ID_PREFIX}-${fetchInstance._requestId}`;
 
-      const handleStreamClosed = () => {
-        if (!fetchInstance._response) {
-          return;
-        }
-
-        interceptorInstance.bufferResponseBody(
-          requestIdStr,
-          _response,
-          fetchInstance._nativeResponseType
-        );
-
-        const mimeType = trimContentType(_response._body._mimeType);
-
-        interceptorInstance.sendCDPMessage("Network.loadingFinished", {
-          requestId: requestIdStr,
-          timestamp: timeStamp,
-          duration: timeStamp - interceptorInstance.startTime,
-          type: mimeType,
-          response: {
-            type: _response.type,
-            status: fetchInstance._responseStatus,
-            url: fetchInstance._responseUrl,
-            headers: fetchInstance._nativeResponseHeaders,
-            mimeType: mimeType,
-          },
-          // Not sending the ecnodedDataLength, as we've done so in didReceiveNetworkData and didReceiveNetworkIncrementalData
+      closedPromise
+        .then(() => {
+          restoreReleaseLock();
+          console.log("I WAS SENT FROM GETREADER");
+          if (fetchInstance._response) {
+            interceptorInstance.sendLoadingFinished(requestIdStr, _response, fetchInstance, true);
+          }
+        })
+        .catch((e: Error) => {
+          restoreReleaseLock();
+          const errorMessage = e.message || "Stream error";
+          if (!lockReleased) {
+            interceptorInstance.sendLoadingFailed(requestIdStr, errorMessage, false, true);
+          }
         });
-      };
-
-      const handleStreamError = (e: Error) => {
-        interceptorInstance.incrementalResponseQueue.clearQueue(requestIdStr);
-        interceptorInstance.sendCDPMessage("Network.loadingFailed", {
-          requestId: requestIdStr,
-          timestamp: timeStamp,
-          type: "",
-          errorText: e.message || "Stream error",
-          canceled: false,
-        });
-      };
-
-      closedPromise.then(handleStreamClosed).catch(handleStreamError);
 
       return reader;
     };
@@ -546,42 +627,24 @@ class PolyfillFetchInterceptor {
         return;
       }
 
-      const timeStamp = Date.now();
       const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
 
       // send loadingFailed and return early
       if (didTimeOut || errorMessage) {
-        self.incrementalResponseQueue.clearQueue(requestIdStr);
-        return self.sendCDPMessage("Network.loadingFailed", {
-          requestId: requestIdStr,
-          timestamp: timeStamp,
-          type: "",
-          errorText: errorMessage || "Timeout",
-          canceled: false,
-        });
+        return self.sendLoadingFailed(
+          requestIdStr,
+          errorMessage || "Timeout",
+          false, // canceled
+          true // shouldClearQueue
+        );
       }
-
-      self.bufferResponseBody(requestIdStr, _response, this._nativeResponseType);
-
-      const responseHeadersContentType = _response.headers.get("content-type") || "";
-
-      const mimeType = trimContentType(_response._body._mimeType || responseHeadersContentType);
-
-      self.sendCDPMessage("Network.loadingFinished", {
-        requestId: requestIdStr,
-        timestamp: timeStamp,
-        duration: timeStamp - self.startTime,
-        type: mimeType,
-        // additionally setting the response here, as here we have complete reponse information
-        response: {
-          type: _response.type,
-          status: this._responseStatus,
-          url: this._responseUrl,
-          headers: this._nativeResponseHeaders,
-          mimeType: mimeType,
-        },
-        // Not sending the ecnodedDataLength, as we've done so in didReceiveNetworkData and didReceiveNetworkIncrementalData
-      });
+      console.log("I WAS SENT FROM DIDCOMPLETE");
+      self.sendLoadingFinished(
+        requestIdStr,
+        _response,
+        this,
+        true // shouldBufferResponse
+      );
     };
   }
 
@@ -593,18 +656,14 @@ class PolyfillFetchInterceptor {
     Fetch.prototype.__abort = function (this: PolyfillFetch) {
       self.original__abort.call(this);
 
-      const timeStamp = Date.now();
       const requestIdStr = `${REQUEST_ID_PREFIX}-${this._requestId}`;
 
-      self.incrementalResponseQueue.clearQueue(requestIdStr);
-
-      self.sendCDPMessage("Network.loadingFailed", {
-        requestId: requestIdStr,
-        timestamp: timeStamp,
-        type: "",
-        errorText: "Aborted",
-        canceled: true,
-      });
+      self.sendLoadingFailed(
+        requestIdStr,
+        "Aborted",
+        true, // canceled
+        true // shouldClearQueue
+      );
     };
   }
 
@@ -622,7 +681,8 @@ class PolyfillFetchInterceptor {
     }
 
     this.cleanupInterceptors();
-    this.incrementalResponseQueue.resetQueue();
+    this.incrementalResponseQueue.reset();
+    this.completedRequestTracker.reset();
 
     this.networkProxy = undefined;
     this.responseBuffer = undefined;
