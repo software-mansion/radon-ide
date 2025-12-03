@@ -1,7 +1,8 @@
 import vscode, { commands, ExtensionContext, Disposable } from "vscode";
 import { getEditorType, EditorType } from "../../utilities/editorType";
 import { registerStaticTools } from "./toolRegistration";
-import { registerMCPTools } from "./RadonMcpController";
+import { isAiEnabledInSettings, registerLocalServerTools } from "./RadonMcpController";
+import { registerRadonChat } from "../chat";
 
 function setGlobalUseDirectToolRegistering(useStaticRegistering: boolean) {
   commands.executeCommand("setContext", "RNIDE.useStaticToolRegistering", useStaticRegistering);
@@ -17,11 +18,17 @@ function shouldUseDirectRegistering() {
 }
 
 export function registerRadonAI(context: ExtensionContext): Disposable {
+  // FIXME: AI Enablement logic should be moved, preferably to RadonMCPController
+
+  const radonAiEnabled = isAiEnabledInSettings();
+  registerRadonChat(context, radonAiEnabled);
+
   const useStaticRegistering = shouldUseDirectRegistering();
   setGlobalUseDirectToolRegistering(useStaticRegistering);
+
   if (useStaticRegistering) {
     return registerStaticTools();
   } else {
-    return registerMCPTools(context);
+    return registerLocalServerTools();
   }
 }

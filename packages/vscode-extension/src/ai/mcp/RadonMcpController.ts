@@ -5,7 +5,6 @@ import {
   version,
   Disposable,
   workspace,
-  ExtensionContext,
   commands,
   cursor,
   EventEmitter,
@@ -13,7 +12,6 @@ import {
 import { Logger } from "../../Logger";
 import { LocalMcpServer } from "./LocalMcpServer";
 import { disposeAll } from "../../utilities/disposables";
-import { registerRadonChat } from "../chat";
 import { extensionContext } from "../../utilities/extensionContext";
 import { cleanupOldMcpConfigEntries } from "./configFileHelper";
 
@@ -67,7 +65,7 @@ async function startRadonAIInCursor(server: LocalMcpServer) {
   }
 }
 
-function isEnabledInSettings() {
+export function isAiEnabledInSettings() {
   return workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabledBoolean") ?? true;
 }
 
@@ -76,16 +74,19 @@ class RadonMcpController implements Disposable {
   private serverChangedEmitter = new EventEmitter<void>();
   private disposables: Disposable[] = [];
 
-  constructor(context: ExtensionContext) {
-    const radonAiEnabled = isEnabledInSettings();
-    registerRadonChat(context, radonAiEnabled);
+  constructor() {
+    const radonAiEnabled = isAiEnabledInSettings();
     this.registerRadonMcpServerProviderInVSCode();
     cleanupOldMcpConfigEntries();
+
+    if (radonAiEnabled) {
+      this.enableServer();
+    }
 
     this.disposables.push(
       workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration("RadonIDE.radonAI.enabledBoolean")) {
-          if (isEnabledInSettings()) {
+          if (isAiEnabledInSettings()) {
             this.enableServer();
           } else {
             this.disableServer();
@@ -93,10 +94,6 @@ class RadonMcpController implements Disposable {
         }
       })
     );
-
-    if (isEnabledInSettings()) {
-      this.enableServer();
-    }
   }
 
   private enableServer() {
@@ -153,6 +150,6 @@ class RadonMcpController implements Disposable {
   }
 }
 
-export function registerMCPTools(context: ExtensionContext) {
-  return new RadonMcpController(context);
+export function registerLocalServerTools() {
+  return new RadonMcpController();
 }
