@@ -38,7 +38,7 @@ async function removeOldRadonEntry(location: ConfigLocation) {
 // exported for testing
 export function removeOldRadonEntryFromConfig(config: string): string | undefined {
   // only remove the old Radon entry from mcp config if it points to http:// based server.
-  // we now provide stdio based MCP server that people can optionally conifgure in their
+  // we now provide stdio based MCP server that people can optionally configure in their
   // mcp.json files and we don't want to remove that entry.
   const editorType = getEditorType();
 
