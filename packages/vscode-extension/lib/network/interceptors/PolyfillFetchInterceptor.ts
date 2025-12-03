@@ -525,18 +525,16 @@ class PolyfillFetchInterceptor {
         return;
       }
 
+      const incrementalResponseQueue = self.incrementalResponseQueue;
       const timeStamp = Date.now();
       const mimeType = trimContentType(_response._body._mimeType);
       const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
 
       // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L168-L188
-      self.incrementalResponseQueue.pushToQueue(requestIdStr, responseText);
+      incrementalResponseQueue.pushToQueue(requestIdStr, responseText);
 
-      const eventMessageSize = total <= 0 ? progress : total;
       const messageSize =
-        eventMessageSize < 0
-          ? self.incrementalResponseQueue.getResponseSize(requestIdStr)
-          : eventMessageSize;
+        progress >= 0 ? progress : incrementalResponseQueue.getResponseSize(requestIdStr);
 
       self.sendCDPMessage("Network.dataReceived", {
         requestId: requestIdStr,
