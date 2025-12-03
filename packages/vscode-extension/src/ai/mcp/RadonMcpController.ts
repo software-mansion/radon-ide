@@ -97,6 +97,7 @@ class RadonMcpController implements Disposable {
 
   constructor(context: ExtensionContext) {
     const radonAiEnabled = isAiEnabledInSettings();
+    setGlobalEnableAI(radonAiEnabled);
     registerRadonChat(context, radonAiEnabled);
 
     const useStaticRegistering = shouldUseDirectRegistering();
