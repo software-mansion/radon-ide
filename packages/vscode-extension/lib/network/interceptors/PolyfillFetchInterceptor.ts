@@ -11,10 +11,10 @@ import type { NetworkProxy, NativeResponseType, BlobLikeResponse } from "../type
  * to point to the react-native-fetch-api module if available.
  * If the package is not installed, the value is set to undefined.
  *
- * The declaration below *HAS TO* start with "const Fetch" to be correctly identified,
+ * The declaration below HAS TO use this specific string to be correctly identified,
  * see lib/babel_transformer.js for more details.
  */
-const Fetch: any = undefined;
+const Fetch: any = "__RADON_REQUIRE_FETCH__";
 
 type BodyInit =
   | Blob
@@ -445,7 +445,7 @@ class PolyfillFetchInterceptor {
         return reader;
       }
 
-      // releaseLock causes the _closedPromise to reject, 
+      // releaseLock causes the _closedPromise to reject,
       // so we have to make sure we can tell it apart from actual errors
       let lockReleased = false;
       const originalReleaseLock = reader.releaseLock;

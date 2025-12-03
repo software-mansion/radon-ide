@@ -219,13 +219,9 @@ function transformWrapper({ filename, src, ...rest }) {
     const isCompatible = moduleExists && compatibleVersions.includes(version);
 
     const polyfillPath = isCompatible ? resolveFromAppDir(polyfillModule) : null;
-    const fetchValue = polyfillPath ? `require("${polyfillPath}")?.default` : "undefined";
-    const fetchDeclaration = `const Fetch = ${fetchValue};`;
+    const fetchDeclaration = polyfillPath ? `require("${polyfillPath}")?.default` : "undefined";
 
-    src = src
-      .split("\n")
-      .map((line) => (line.trim().startsWith("const Fetch") ? fetchDeclaration : line))
-      .join("\n");
+    src = src.replace(/"__RADON_REQUIRE_FETCH__"/g, fetchDeclaration);
   }
 
   return transform({ filename, src, ...rest });
