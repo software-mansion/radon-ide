@@ -8,12 +8,10 @@ import {
   screenshotToolExec,
   viewComponentTreeExec,
 } from "./toolExecutors";
-import { invokeToolCall } from "../shared/api";
+import { AI_API_PLACEHOLDER_ID, invokeToolCall } from "../shared/api";
 import { textToToolResult, toolResponseToToolResult } from "./utils";
 import { AuthorizationError } from "../../common/Errors";
 import { ToolSchema } from "./models";
-
-const PLACEHOLDER_ID = "1234";
 
 interface LibraryDescriptionToolArgs {
   library_npm_name: string;
@@ -25,7 +23,7 @@ class LibraryDescriptionTool implements vscode.LanguageModelTool<LibraryDescript
   ): Promise<vscode.LanguageModelToolResult> {
     const toolName = "get_library_description";
     try {
-      const toolResponse = await invokeToolCall(toolName, options.input, PLACEHOLDER_ID);
+      const toolResponse = await invokeToolCall(toolName, options.input, AI_API_PLACEHOLDER_ID);
       return toolResponseToToolResult(toolResponse);
     } catch (error) {
       if (error instanceof AuthorizationError) {
@@ -49,7 +47,7 @@ class QueryDocumentationTool implements vscode.LanguageModelTool<QueryDocumentat
   ): Promise<vscode.LanguageModelToolResult> {
     const toolName = "query_documentation";
     try {
-      const toolResponse = await invokeToolCall(toolName, options.input, PLACEHOLDER_ID);
+      const toolResponse = await invokeToolCall(toolName, options.input, AI_API_PLACEHOLDER_ID);
       return toolResponseToToolResult(toolResponse);
     } catch (error) {
       if (error instanceof AuthorizationError) {
