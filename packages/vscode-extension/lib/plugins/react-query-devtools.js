@@ -1,10 +1,15 @@
 import { QueryClient } from "@tanstack/react-query";
 import { register } from "./expo_dev_plugins";
 import { PluginMessageBridge } from "./PluginMessageBridge";
+import { stringify } from "../third-party/flatted/esm.js";
 
 function broadcastQueryClient(queryClient) {
   register("react-query");
   const proxy = new PluginMessageBridge("react-query");
+
+  function sendMessage(type, payload) {
+    proxy.sendMessage(type, stringify(payload));
+  }
 
   let transaction = false;
 
@@ -26,7 +31,7 @@ function broadcastQueryClient(queryClient) {
     } = queryEvent;
 
     if (queryEvent.type === "updated" && queryEvent.action.type === "success") {
-      proxy.sendMessage("updated", {
+      sendMessage("updated", {
         queryHash,
         queryKey,
         state,
@@ -34,7 +39,7 @@ function broadcastQueryClient(queryClient) {
     }
 
     if (queryEvent.type === "removed") {
-      proxy.sendMessage("removed", {
+      sendMessage("removed", {
         queryHash,
         queryKey,
       });
@@ -79,11 +84,11 @@ function broadcastQueryClient(queryClient) {
       queryClient
         .getQueryCache()
         .getAll()
-        .forEach((query) => {
-          proxy.sendMessage("updated", {
-            queryHash: query.queryHash,
-            queryKey: query.queryKey,
-            state: query.state,
+        .forEach(({ queryHash, queryKey, state }) => {
+          sendMessage("updated", {
+            queryHash,
+            queryKey,
+            state,
           });
         });
     });
