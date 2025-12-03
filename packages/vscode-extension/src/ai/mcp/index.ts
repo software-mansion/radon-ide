@@ -1,7 +1,7 @@
 import vscode, { commands, ExtensionContext, Disposable } from "vscode";
-import { RadonMcpController } from "./RadonMcpController";
 import { getEditorType, EditorType } from "../../utilities/editorType";
 import { registerStaticTools } from "./toolRegistration";
+import { registerMCPTools } from "./RadonMcpController";
 
 function setGlobalUseDirectToolRegistering(useStaticRegistering: boolean) {
   commands.executeCommand("setContext", "RNIDE.useStaticToolRegistering", useStaticRegistering);
@@ -22,6 +22,6 @@ export function registerRadonAI(context: ExtensionContext): Disposable {
   if (useStaticRegistering) {
     return registerStaticTools();
   } else {
-    return new RadonMcpController(context);
+    return registerMCPTools(context);
   }
 }
