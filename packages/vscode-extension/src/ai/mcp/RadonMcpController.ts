@@ -8,15 +8,36 @@ import {
   commands,
   cursor,
   EventEmitter,
+  ExtensionContext,
 } from "vscode";
 import { Logger } from "../../Logger";
 import { LocalMcpServer } from "./LocalMcpServer";
 import { disposeAll } from "../../utilities/disposables";
 import { extensionContext } from "../../utilities/extensionContext";
 import { cleanupOldMcpConfigEntries } from "./configFileHelper";
+import { registerRadonChat } from "../chat";
+import { getEditorType, EditorType } from "../../utilities/editorType";
+import { registerStaticTools } from "./toolRegistration";
 
 const RADON_AI_MCP_ENTRY_NAME = "RadonAI";
 const RADON_AI_MCP_PROVIDER_ID = "RadonAIMCPProvider";
+
+function setGlobalUseDirectToolRegistering(useStaticRegistering: boolean) {
+  commands.executeCommand("setContext", "RNIDE.useStaticToolRegistering", useStaticRegistering);
+}
+
+function setGlobalEnableAI(isAIEnabled: boolean) {
+  commands.executeCommand("setContext", "RNIDE.AIEnabled", isAIEnabled);
+}
+
+function shouldUseDirectRegistering() {
+  // The `vscode.lm.registerTool` API with image support only available in VSCode version 1.105+
+  // This API is not implemented on Cursor, Windsurf or Antigravity. (it is a stub on these editors).
+  return (
+    version.localeCompare("1.105.0", undefined, { numeric: true }) >= 0 &&
+    getEditorType() === EditorType.VSCODE
+  );
+}
 
 function canUseMcpDefinitionProviderAPI() {
   return (
@@ -74,22 +95,40 @@ class RadonMcpController implements Disposable {
   private serverChangedEmitter = new EventEmitter<void>();
   private disposables: Disposable[] = [];
 
-  constructor() {
+  constructor(context: ExtensionContext) {
     const radonAiEnabled = isAiEnabledInSettings();
+    registerRadonChat(context, radonAiEnabled);
+
+    const useStaticRegistering = shouldUseDirectRegistering();
+    setGlobalUseDirectToolRegistering(useStaticRegistering);
+
     this.registerRadonMcpServerProviderInVSCode();
     cleanupOldMcpConfigEntries();
 
-    if (radonAiEnabled) {
-      this.enableServer();
+    if (useStaticRegistering) {
+      // We don't bother with de-registering and re-registering tools, as the resource gain from doing so is minimal,
+      // while complicating the logic by a lot. Tool availability is already reliably toggled via `setGlobalEnableAI`.
+      registerStaticTools();
+    } else {
+      if (radonAiEnabled) {
+        this.enableServer();
+      }
     }
 
     this.disposables.push(
       workspace.onDidChangeConfiguration((event) => {
         if (event.affectsConfiguration("RadonIDE.radonAI.enabledBoolean")) {
-          if (isAiEnabledInSettings()) {
-            this.enableServer();
-          } else {
-            this.disableServer();
+          const newIsAiEnabled = isAiEnabledInSettings();
+
+          // `setGlobalEnableAI` sets availability of both static and local server tools.
+          setGlobalEnableAI(newIsAiEnabled);
+
+          if (!useStaticRegistering) {
+            if (newIsAiEnabled) {
+              this.enableServer();
+            } else {
+              this.disableServer();
+            }
           }
         }
       })
@@ -150,6 +189,6 @@ class RadonMcpController implements Disposable {
   }
 }
 
-export function registerLocalServerTools() {
-  return new RadonMcpController();
+export function registerRadonAI(context: ExtensionContext) {
+  return new RadonMcpController(context);
 }

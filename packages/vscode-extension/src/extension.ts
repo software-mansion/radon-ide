@@ -38,7 +38,7 @@ import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
 import { RestrictedFunctionalityError } from "./common/Errors";
 import { MaestroCodeLensProvider } from "./providers/MaestroCodeLensProvider";
-import { registerRadonAI } from "./ai/mcp";
+import { registerRadonAI } from "./ai/mcp/RadonMcpController";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
