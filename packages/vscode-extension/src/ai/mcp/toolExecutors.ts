@@ -121,6 +121,8 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
     isAndroid ? Output.AndroidDevice : Output.IosDevice
   );
 
+  const appLogs = registry.getOrCreateOutputChannel(Output.JSApplication);
+
   const combinedLogsContent: TextContent[] = [];
 
   if (!buildLogs.isEmpty()) {
@@ -139,7 +141,12 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
   }
 
   if (!deviceLogs.isEmpty()) {
-    const rawLogs = ["=== APPLICATION LOGS ===\n\n", ...deviceLogs.readAll()];
+    const rawLogs = ["=== NATIVE-SIDE APP LOGS ===\n\n", ...deviceLogs.readAll()];
+    combinedLogsContent.push(textToToolContent(rawLogs.join("")));
+  }
+
+  if (!appLogs.isEmpty()) {
+    const rawLogs = ["=== JS-SIDE APP LOGS ===\n\n", ...appLogs.readAll()];
     combinedLogsContent.push(textToToolContent(rawLogs.join("")));
   }
 
