@@ -6,12 +6,21 @@ export class RestrictedFunctionalityError extends Error {
     public readonly allowedUsers: LicenseStatus[]
   ) {
     super(message);
+    this.name = "RestrictedFunctionalityError";
   }
 }
 
 export class TimeoutError extends Error {
   constructor(message: string) {
     super(message);
+    this.name = "TimeoutError";
+  }
+}
+
+export class AuthorizationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AuthorizationError";
   }
 }
 

@@ -1,5 +1,4 @@
 import { readFileSync } from "fs";
-
 import { Store } from "react-devtools-inline";
 import { IDE } from "../../project/ide";
 import {
@@ -8,11 +7,11 @@ import {
   textToToolContent,
   textToToolResponse,
 } from "./utils";
-import { TextContent, ToolResponse } from "./models";
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
 import { ReloadAction } from "../../project/DeviceSessionsManager";
 import printComponentTree from "./printComponentTree";
+import { ImageContent, TextContent, ToolResponse } from "./models";
 
 export function tryGetTreeRoot(store: Store) {
   const treeRoot = getDevtoolsElementByID(store.roots[0], store);
@@ -42,7 +41,7 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
   };
 }
 
-interface AppReloadRequest {
+export interface AppReloadRequest {
   // Limiting the reload options to these three basic methods,
   // as others require too much nuance and domain specific knowledge from the AI.
   reloadMethod: Extract<ReloadAction, "reloadJs" | "rebuild" | "restartProcess">;
@@ -123,7 +122,7 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
 
   const appLogs = registry.getOrCreateOutputChannel(Output.JSApplication);
 
-  const combinedLogsContent: TextContent[] = [];
+  const combinedLogsContent: (TextContent | ImageContent)[] = [];
 
   if (!buildLogs.isEmpty()) {
     const rawLogs = ["=== BUILD PROCESS LOGS ===\n\n", ...buildLogs.readAll()];
@@ -153,10 +152,7 @@ export async function readLogsToolExec(): Promise<ToolResponse> {
   if (session.previewReady) {
     const screenshot = await session.getScreenshot();
     const contents = readFileSync(screenshot.tempFileLocation, { encoding: "base64" });
-
-    return {
-      content: [...combinedLogsContent, pngToToolContent(contents)],
-    };
+    combinedLogsContent.push(pngToToolContent(contents));
   }
 
   return {

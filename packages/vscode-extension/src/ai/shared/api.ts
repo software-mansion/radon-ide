@@ -5,17 +5,11 @@ import { getTelemetryReporter } from "../../utilities/telemetry";
 import { CHAT_LOG } from "../chat";
 import { ToolResponse, ToolResult, ToolsInfo } from "../mcp/models";
 import { textToToolResponse } from "../mcp/utils";
+import { AuthorizationError } from "../../common/Errors";
 
 const BACKEND_URL = "https://radon-ai-backend.swmansion.com/";
 
-const PLACEHOLDER_ID = "3241"; // This placeholder is needed by the API, but the value doesn't matter
-
-export class AuthenticationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "AuthenticationError";
-  }
-}
+export const AI_API_PLACEHOLDER_ID = "3241"; // This placeholder is needed by the API, but the value doesn't matter
 
 export class ServerUnreachableError extends Error {
   constructor(message: string, cause: Error) {
@@ -27,7 +21,7 @@ export class ServerUnreachableError extends Error {
 export async function invokeToolCall(
   toolName: string,
   args: unknown,
-  callId: string = PLACEHOLDER_ID
+  callId: string = AI_API_PLACEHOLDER_ID
 ): Promise<ToolResponse> {
   getTelemetryReporter().sendTelemetryEvent("radon-ai:tool-called", { toolName });
   const url = new URL("/api/tool_calls/", BACKEND_URL);
@@ -61,7 +55,7 @@ export async function invokeToolCall(
       toolName,
       error: `Authorization failed`,
     });
-    throw new AuthenticationError(`Authorization failed when connecting to the backend.`);
+    throw new AuthorizationError(`Authorization failed when connecting to the backend.`);
   }
 
   if (!response.ok) {
@@ -108,7 +102,7 @@ export async function fetchRemoteToolSchema(): Promise<ToolsInfo> {
     getTelemetryReporter().sendTelemetryEvent("radon-ai:get-tool-schema", {
       error: `Authorization failed`,
     });
-    throw new AuthenticationError(`Authorization failed when connecting to the backend.`);
+    throw new AuthorizationError(`Authorization failed when connecting to the backend.`);
   }
 
   if (!response.ok) {
