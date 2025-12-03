@@ -106,7 +106,7 @@ class RadonMcpController implements Disposable {
     cleanupOldMcpConfigEntries();
 
     if (useStaticRegistering) {
-      // We don't bother with de-registering and re-registering tools, as the resource gain from doing so is minimal,
+      // We don't bother with de-registering and re-registering static tools, as the resource gain from doing so is minimal,
       // while complicating the logic by a lot. Tool availability is already reliably toggled via `setGlobalEnableAI`.
       registerStaticTools();
     } else {
