@@ -1,7 +1,7 @@
 import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
-import { env, Disposable, commands, workspace, window } from "vscode";
+import { env, Disposable, commands, workspace, window, Uri } from "vscode";
 import _ from "lodash";
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import {
@@ -781,6 +781,25 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   // #endregion Reloading
+
+  // #region Chat
+
+  addToChatContext(...filePaths: string[]): void {
+    try {
+      commands.executeCommand("copilot-chat.focus").then(async () => {
+        for (const filePath of filePaths) {
+          await commands.executeCommand("workbench.action.chat.attachFile", Uri.file(filePath));
+        }
+      });
+    } catch (e) {
+      const msg =
+        typeof e === "object" && e !== null && "message" in e ? String(e.message) : String(e);
+
+      Logger.error("Attaching files to chat context via element inspector failed. Details:", msg);
+    }
+  }
+
+  // #endregion Chat
 
   // #region Inspector
 

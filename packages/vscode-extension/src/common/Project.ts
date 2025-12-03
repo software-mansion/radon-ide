@@ -184,6 +184,8 @@ export interface ProjectInterface {
   startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void>;
   terminateSession(deviceId: DeviceId): Promise<void>;
 
+  addToChatContext(...filePaths: string[]): void;
+
   inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<InspectData>;
 
   createAndroidDevice(

@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { use$ } from "@legendapp/state/react";
 import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import "./InspectDataMenu.css";
+import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import { Feature } from "../../common/License";
+import { useStore } from "../providers/storeProvider";
+import { useProject } from "../providers/ProjectProvider";
 
 type OnSelectedCallback = (item: InspectDataStackItem) => void;
 
@@ -59,6 +64,7 @@ export function InspectDataMenu({
   onCancel,
 }: InspectDataMenuProps) {
   const [shouldShowAll, setShouldShowAll] = useState(false);
+  const { project } = useProject();
 
   const displayDimensionsText = (() => {
     if (device && frame) {
@@ -73,12 +79,44 @@ export function InspectDataMenu({
   })();
 
   const filteredData = inspectStack.filter((item) => !item.hide);
-  const inspectItems =
+  const inspectedItems =
     shouldShowAll || filteredData.length === MAX_INSPECT_ITEMS + 1
       ? filteredData
       : filteredData.slice(0, MAX_INSPECT_ITEMS);
   const inspectMenuAlign = inspectLocation.x <= window.innerWidth / 2 ? "start" : "end";
   const isOverMaxItems = filteredData.length > MAX_INSPECT_ITEMS + 1;
+
+  const onReferenceInChat = usePaywalledCallback(
+    (e) => {
+      if (inspectedItems.length === 0) {
+        // Silently aborting when `inspectedItems` is empty.
+        // This case should never occur, but it's certainly possible (e.g. CDP communication failure).
+        e.preventDefault();
+        return;
+      }
+
+      // Include component's inner & outer scopes - where it's implemented and where it's used.
+      // If the component is defined in node_modules, we include two inner-most outer scopes.
+      const childFilename = inspectedItems[0].source.fileName;
+      let parentFilename = childFilename;
+
+      for (const item of inspectedItems) {
+        const filename = item.source.fileName;
+        if (filename !== childFilename) {
+          parentFilename = filename;
+          break;
+        }
+      }
+
+      project.addToChatContext(childFilename, parentFilename);
+      e.preventDefault(); // prevents the dropdown from closing
+    },
+    Feature.RadonAI,
+    []
+  );
+
+  const store$ = useStore();
+  const radonAIEnabled = use$(store$.workspaceConfiguration.radonAI.enableRadonAI);
 
   return (
     <DropdownMenu.Root
@@ -109,20 +147,36 @@ export function InspectDataMenu({
           <DropdownMenu.Label className="inspect-data-menu-label">
             {displayDimensionsText}
           </DropdownMenu.Label>
-          {inspectItems.map((item) => (
+          {inspectedItems.map((item) => (
             <InspectItem item={item} onSelected={onSelected} onHover={onHover} />
           ))}
-          {isOverMaxItems && !shouldShowAll && (
-            <DropdownMenu.Item
-              className="inspect-data-menu-item show-all"
-              key={"show-all"}
-              onSelect={(e) => {
-                setShouldShowAll(true);
-                e.preventDefault(); // prevents the dropdown from closing
-              }}>
-              <DropdownMenu.Label className="inspect-data-menu-label">Show all</DropdownMenu.Label>
-            </DropdownMenu.Item>
-          )}
+          <DropdownMenu.Group className="inspect-data-menu-group">
+            {isOverMaxItems && !shouldShowAll && (
+              <DropdownMenu.Item
+                className="inspect-data-menu-item show-all inspector-button"
+                key={"show-all"}
+                onSelect={(e) => {
+                  setShouldShowAll(true);
+                  e.preventDefault(); // prevents the dropdown from closing
+                }}>
+                <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
+                  <span className="codicon codicon-plus" />
+                  <span className="inspector-button-text">Show all</span>
+                </DropdownMenu.Label>
+              </DropdownMenu.Item>
+            )}
+            {radonAIEnabled && (
+              <DropdownMenu.Item
+                className="inspect-data-menu-item inspector-button"
+                key={"ask-ai"}
+                onSelect={onReferenceInChat}>
+                <DropdownMenu.Label className="inspect-data-menu-label inspector-button">
+                  <span className="codicon codicon-lightbulb" />
+                  <span className="inspector-button-text">Reference in chat</span>
+                </DropdownMenu.Label>
+              </DropdownMenu.Item>
+            )}
+          </DropdownMenu.Group>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>
