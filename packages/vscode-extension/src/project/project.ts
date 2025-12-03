@@ -2,6 +2,7 @@ import { EventEmitter } from "stream";
 import os from "os";
 import path from "path";
 import { env, Disposable, commands, workspace, window, Uri } from "vscode";
+import { env, Disposable, commands, workspace, window, Uri } from "vscode";
 import _ from "lodash";
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import {
