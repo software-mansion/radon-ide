@@ -11,6 +11,7 @@ import {
   MultimediaData,
   ToolsState,
 } from "./State";
+import { Sentiment } from "./types";
 
 export type DeviceId = DeviceInfo["id"];
 
@@ -183,6 +184,8 @@ export interface ProjectInterface {
   startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void>;
   terminateSession(deviceId: DeviceId): Promise<void>;
 
+  addToChatContext(...filePaths: string[]): void;
+
   inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<InspectData>;
 
   createAndroidDevice(
@@ -202,6 +205,8 @@ export interface ProjectInterface {
   log(type: "info" | "error" | "warn" | "log", message: string, ...args: any[]): Promise<void>;
   focusOutput(channel: Output): Promise<void>;
 
+  buildDiagnosticsReport(logFilesToInclude: string[]): Promise<void>;
+  getLogFileNames(): Promise<string[]>;
   getCommandsCurrentKeyBinding(commandName: string): Promise<string | undefined>;
   movePanelTo(location: IDEPanelMoveTarget): Promise<void>;
   openExternalUrl(uriString: string): Promise<void>;
@@ -211,6 +216,13 @@ export interface ProjectInterface {
   openLaunchConfigurationFile(): Promise<void>;
 
   reportIssue(): Promise<void>;
+  sendFeedback(
+    sentiment: Sentiment,
+    options: {
+      message?: string;
+      includeLogs?: boolean;
+    }
+  ): Promise<void>;
   sendTelemetry(eventName: string, properties?: TelemetryEventProperties): Promise<void>;
 
   addListener<K extends keyof ProjectEventMap>(
