@@ -464,10 +464,7 @@ export function deserializeRequestData(data: RequestData, contentType: string | 
   // Handle React Native FormData with _parts structure
   if (isFormDataObject(data)) {
     try {
-      const obj: Record<string, unknown> = {};
-      data._parts.forEach(([key, value]) => {
-        obj[key] = value;
-      });
+      const obj = Object.fromEntries(data._parts);
       return JSON.stringify(obj, null, 2);
     } catch {
       return "[FormData]";
