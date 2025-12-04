@@ -48,13 +48,19 @@ async function getPathEnv(appRoot: string) {
   return path;
 }
 
+let lastAppRoot: string | undefined;
 let pathEnv: string | undefined;
 export async function setupPathEnv(appRoot: string) {
-  if (!pathEnv) {
-    pathEnv = await getPathEnv(appRoot);
+  if (!pathEnv || lastAppRoot !== appRoot) {
+    lastAppRoot = undefined;
+    pathEnv = await getPathEnv(appRoot).catch((e) => {
+      Logger.error("Error while resolving PATH environment variable in app root", appRoot);
+      return undefined;
+    });
     if (!pathEnv) {
       throw new Error("Error in getting PATH environment variable");
     }
+    lastAppRoot = appRoot;
   }
 }
 

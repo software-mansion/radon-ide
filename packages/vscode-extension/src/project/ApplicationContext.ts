@@ -16,6 +16,7 @@ import { FingerprintProvider } from "./FingerprintProvider";
 import { requireNoCache } from "../utilities/requireNoCache";
 import { MetroProvider, SharedMetroProvider, UniqueMetroProvider } from "./metro";
 import { DevtoolsServer, WebSocketDevtoolsServer } from "./devtools";
+import { setupPathEnv } from "../utilities/subprocess";
 
 /**
  * Represents a launch configuration that has been resolved with additional properties.
@@ -141,6 +142,7 @@ export class ApplicationContext implements Disposable {
   ) {
     this.buildCache = new BuildCache();
     this.launchConfig = resolveLaunchConfig(launchConfig);
+    setupPathEnv(this.launchConfig.absoluteAppRoot);
     this.reactNativeVersion = getReactNativeVersion(this.launchConfig.absoluteAppRoot);
     this.applicationDependencyManager = new ApplicationDependencyManager(
       this.stateManager.getDerived("applicationDependencies"),
@@ -172,6 +174,7 @@ export class ApplicationContext implements Disposable {
 
   public async updateLaunchConfig(launchConfig: LaunchConfiguration) {
     this.launchConfig = resolveLaunchConfig(launchConfig);
+    setupPathEnv(this.launchConfig.absoluteAppRoot);
     this.reactNativeVersion = getReactNativeVersion(this.launchConfig.absoluteAppRoot);
     this.applicationDependencyManager.setLaunchConfiguration(this.launchConfig);
     await this.applicationDependencyManager.runAllDependencyChecks();
