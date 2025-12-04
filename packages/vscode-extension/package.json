@@ -1177,7 +1177,7 @@
     },
     "chatParticipants": [
       {
-        "when": "RNIDE.AIEnabled && RNIDE.licenseActive",
+        "when": "RNIDE.AIEnabled",
         "id": "chat.radon-ai",
         "fullName": "Radon AI",
         "name": "radon",
