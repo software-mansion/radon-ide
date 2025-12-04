@@ -115,7 +115,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
   function sendCallback(data, xhr) {
     try {
       const requestId = `${requestIdPrefix}-${requestIdCounter++}`;
-      const sendTime = Date.now();
+      const sendTime = Date.now() / 1000;
       const requestContentType = getContentTypeHeader(xhr);
       let ttfb;
 
@@ -123,7 +123,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         requestId: requestId,
         loaderId,
         timestamp: sendTime,
-        wallTime: Date.now(),
+        wallTime: sendTime,
         request: {
           url: xhr._url,
           method: xhr._method,
@@ -137,9 +137,11 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
 
       xhr.addEventListener("abort", (event) => {
         try {
+          const timestamp = Date.now() / 1000;
+
           sendCDPMessage("Network.loadingFailed", {
             requestId: requestId,
-            timestamp: Date.now(),
+            timestamp: timestamp,
             type: "",
             errorText: "Aborted",
             canceled: true,
@@ -150,9 +152,11 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
 
       xhr.addEventListener("error", (event) => {
         try {
+          const timestamp = Date.now() / 1000;
+
           sendCDPMessage("Network.loadingFailed", {
             requestId: requestId,
-            timestamp: Date.now(),
+            timestamp: timestamp,
             type: "",
             errorText: "Failed",
             cancelled: false,
@@ -175,13 +179,14 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         }
 
         try {
+          const timestamp = Date.now() / 1000;
           const responseContentType = xhr.getResponseHeader("content-type") || "";
           const responseMimeType = trimContentType(responseContentType);
           const resourceType = getResourceType(responseMimeType);
           sendCDPMessage("Network.responseReceived", {
             requestId: requestId,
             loaderId,
-            timestamp: Date.now(),
+            timestamp: timestamp,
             ttfb,
             type: resourceType,
             response: {
@@ -206,10 +211,11 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         responseBuffer.put(requestId, responsePromise);
 
         try {
+          const timestamp = Date.now() / 1000;
           sendCDPMessage("Network.loadingFinished", {
             requestId: requestId,
-            timestamp: Date.now(),
-            duration: Date.now() - sendTime,
+            timestamp: timestamp,
+            duration: timestamp - sendTime,
             encodedDataLength: xhr._response?.size || xhr._response?.length, // when response is blob, we use size, and length otherwise
           });
         } catch (error) {}
