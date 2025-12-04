@@ -104,7 +104,6 @@ export function getRequestPayload(log: NetworkLog): string | undefined {
   }
 
   const { url, postData } = request;
-
   const _hasUrlParams = hasUrlParams(log);
   const urlParams = formatUrlParams(url);
   const bodyData = getFormattedRequestBody(postData);

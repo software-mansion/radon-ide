@@ -48,6 +48,16 @@ function isSerializedTypedArray(obj: unknown): obj is SerializedTypedArray {
 
 type RequestData = string | SerializedTypedArray | null | object;
 
+type FormDataObject = { _parts: Array<[string, unknown]> };
+
+function isFormDataObject(obj: unknown): obj is FormDataObject {
+  if (!obj || typeof obj !== "object") {
+    return false;
+  }
+  const record = obj as Record<string, unknown>;
+  return Array.isArray(record._parts);
+}
+
 // Allowed content types for processing text-based data
 const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
   // Shell scripts
@@ -364,8 +374,21 @@ function decode(array: Uint8Array) {
  * @returns Either a decoded string, base64 string, or the original data.
  */
 function deserializeRequestData(data: RequestData, contentType: string | undefined) {
-  if (!data || !contentType) {
+  if (!data) {
     return data;
+  }
+
+  // Handle React Native FormData with _parts structure
+  if (isFormDataObject(data)) {
+    try {
+      const obj: Record<string, unknown> = {};
+      data._parts.forEach(([key, value]) => {
+        obj[key] = value;
+      });
+      return JSON.stringify(obj, null, 2);
+    } catch {
+      return "[FormData]";
+    }
   }
 
   // Handle native typed Uint8Arrays
