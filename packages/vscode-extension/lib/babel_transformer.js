@@ -3,8 +3,10 @@ const path = require("path");
 const fs = require("fs");
 const {
   requireFromAppDir,
+  doesModuleExist,
   requireFromAppDependency,
   overrideModuleFromAppDependency,
+  resolveFromAppDir,
 } = require("./metro_helpers");
 
 const RN_VERSION = requireFromAppDir("react-native/package.json").version;
@@ -204,6 +206,22 @@ function transformWrapper({ filename, src, ...rest }) {
     const { version } = requireFromAppDir("react-native/package.json");
     const majorMinorVersion = version.split(".").slice(0, 2).join(".");
     src = `module.exports = require("__RNIDE_lib__/rn-internals/rn-internals-${majorMinorVersion}.js");`;
+  } else if (isTransforming("/lib/network/interceptors/PolyfillFetchInterceptor.ts")) {
+    const polyfillModule = "react-native-fetch-api/src/Fetch";
+    const polyfillPackage = "react-native-fetch-api/package.json";
+    // https://www.npmjs.com/package/react-native-fetch-api?activeTab=versions
+    const compatibleVersions = ["1.0.0", "1.0.1", "1.0.2", "2.0.0", "3.0.0"];
+
+    const moduleExists = doesModuleExist(polyfillModule);
+    const packageExists = doesModuleExist(polyfillPackage);
+    const { version } = packageExists ? requireFromAppDir(polyfillPackage) : {};
+
+    const isCompatible = moduleExists && compatibleVersions.includes(version);
+
+    const polyfillPath = isCompatible ? resolveFromAppDir(polyfillModule) : null;
+    const fetchDeclaration = polyfillPath ? `require("${polyfillPath}")?.default` : "undefined";
+
+    src = src.replace(/"__RADON_REQUIRE_FETCH__"/g, fetchDeclaration);
   }
 
   return transform({ filename, src, ...rest });
