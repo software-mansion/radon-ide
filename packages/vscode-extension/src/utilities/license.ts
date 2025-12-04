@@ -189,7 +189,10 @@ export function watchLicenseTokenChange(callback: (token: string | undefined) =>
   });
 }
 
-export async function checkLicenseToken(token: string): Promise<SimServerLicenseValidationResult> {
+export async function checkLicenseToken(
+  token: string,
+  isRetry: boolean = false
+): Promise<SimServerLicenseValidationResult> {
   const simControllerBinary = simulatorServerBinary();
   const { stdout } = await exec(simControllerBinary, ["verify_token", token]);
 
@@ -197,10 +200,35 @@ export async function checkLicenseToken(token: string): Promise<SimServerLicense
     const licensePlan = stdout.split(" ", 2)[1];
     const tokenPayload = await decodeJWTPayload(token);
 
-    let featuresAvailability = DefaultFeaturesAvailability;
+    let featuresAvailability = { ...DefaultFeaturesAvailability };
 
     if (tokenPayload && tokenPayload.cp_features) {
-      featuresAvailability = tokenPayload.cp_features;
+      const allFeatures = Object.values(Feature);
+      const tokenFeatures = Object.keys(tokenPayload.cp_features);
+      const missingFeatures = allFeatures.filter((feature) => !tokenFeatures.includes(feature));
+
+      if (missingFeatures.length > 0 && !isRetry) {
+        Logger.warn(
+          `Token is missing ${missingFeatures.length} features: ${missingFeatures.join(", ")}. Attempting to refresh token.`
+        );
+        await refreshToken(token);
+
+        const refreshedToken = await getLicenseToken();
+        if (refreshedToken && refreshedToken !== token) {
+          return checkLicenseToken(refreshedToken, true);
+        }
+      }
+
+      featuresAvailability = {
+        ...DefaultFeaturesAvailability,
+        ...tokenPayload.cp_features,
+      };
+
+      if (missingFeatures.length > 0 && isRetry) {
+        Logger.warn(
+          `Token still missing ${missingFeatures.length} features after refresh. Using defaults for: ${missingFeatures.join(", ")}`
+        );
+      }
     }
 
     return {
@@ -237,7 +265,7 @@ async function decodeJWTPayload(token: string): Promise<{
   cp_ent?: number;
   cp_usr?: string;
   cp_plan?: string;
-  cp_features?: FeaturesAvailability;
+  cp_features?: Partial<FeaturesAvailability>;
 } | null> {
   // Zod schema for runtime validation of features object
   const featureAvailabilityStatusSchema = z.enum([
@@ -247,7 +275,7 @@ async function decodeJWTPayload(token: string): Promise<{
   ]);
 
   const featuresSchema = z.record(z.string(), z.unknown()).transform((obj) => {
-    const result: FeaturesAvailability = { ...DefaultFeaturesAvailability };
+    const result: Partial<FeaturesAvailability> = {};
 
     for (const [key, value] of Object.entries(obj)) {
       if (!Object.values(Feature).includes(key as Feature)) {
@@ -259,9 +287,7 @@ async function decodeJWTPayload(token: string): Promise<{
       if (validationResult.success) {
         result[key as Feature] = validationResult.data as FeatureAvailabilityStatus;
       } else {
-        Logger.warn(
-          `Invalid FeatureAvailabilityStatus value for feature ${key}: ${value}, using default`
-        );
+        Logger.warn(`Invalid FeatureAvailabilityStatus value for feature ${key}: ${value}`);
       }
     }
 
