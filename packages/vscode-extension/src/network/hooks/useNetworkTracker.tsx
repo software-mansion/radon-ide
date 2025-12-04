@@ -68,7 +68,6 @@ class RequestTimingTracker {
     if (timeStart === undefined || timeEnd === undefined) {
       return undefined;
     }
-    console.log("Calculating time difference:", (timeEnd - timeStart) * 1000);
     return _.round((timeEnd - timeStart) * 1000, 2);
   }
 

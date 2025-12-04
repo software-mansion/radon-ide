@@ -364,10 +364,7 @@ export function mimeTypeFromResponseType(responseType: string): string | undefin
  */
 //
 export function getResourceType(mimeType: string): ResourceType {
-  console.log(mimeType);
-  // Normalize casing to ensure robustness (optional, but recommended for MIME types)
   const normalizedType = mimeType.toLowerCase().trim();
-  console.log(normalizedType === "application/json");
 
   if (normalizedType.startsWith("image/")) {
     return ResourceType.Image;
