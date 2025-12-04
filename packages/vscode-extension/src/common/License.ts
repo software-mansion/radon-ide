@@ -91,8 +91,7 @@ export const DefaultFeaturesAvailability = {
   [Feature.DeviceAppearanceSettings]: FeatureAvailabilityStatus.AVAILABLE,
   [Feature.DeviceFontSizeSettings]: FeatureAvailabilityStatus.AVAILABLE,
   [Feature.DeviceLocalizationSettings]: FeatureAvailabilityStatus.PAYWALLED,
-  // FRYTKI - this is changed only for testing
-  [Feature.DeviceRotation]: FeatureAvailabilityStatus.ADMIN_DISABLED,
+  [Feature.DeviceRotation]: FeatureAvailabilityStatus.PAYWALLED,
   [Feature.ElementInspector]: FeatureAvailabilityStatus.AVAILABLE,
   [Feature.ExpoRouterIntegration]: FeatureAvailabilityStatus.AVAILABLE,
   [Feature.HomeButton]: FeatureAvailabilityStatus.AVAILABLE,
@@ -113,8 +112,7 @@ export const DefaultFeaturesAvailability = {
   [Feature.ScreenRecording]: FeatureAvailabilityStatus.PAYWALLED,
   [Feature.ScreenReplay]: FeatureAvailabilityStatus.PAYWALLED,
   [Feature.Screenshot]: FeatureAvailabilityStatus.PAYWALLED,
-  // Frytki
-  [Feature.SendFile]: FeatureAvailabilityStatus.ADMIN_DISABLED,
+  [Feature.SendFile]: FeatureAvailabilityStatus.PAYWALLED,
   [Feature.StorybookIntegration]: FeatureAvailabilityStatus.PAYWALLED,
   [Feature.VolumeButtons]: FeatureAvailabilityStatus.AVAILABLE,
 };

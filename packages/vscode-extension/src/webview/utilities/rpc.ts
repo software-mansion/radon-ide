@@ -25,7 +25,7 @@ function callResultListener(event: MessageEvent) {
       if (event.data.error) {
         const errorData = event.data.error;
         const ErrorConstructor = ErrorTypeGetter(errorData.className);
-        const error = new ErrorConstructor(...errorData);
+        const error = new ErrorConstructor(errorData.message);
         error.name = errorData.name;
         promise.reject(error);
       } else {

@@ -25,6 +25,18 @@ import { useDevices } from "../hooks/useDevices";
 import { PropsWithDataTest } from "../../common/types";
 import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
 
+enum DeviceSection {
+  PhysicalAndroid = "PhysicalAndroid",
+  AndroidEmulator = "AndroidEmulator",
+  IosSimulator = "IosSimulator",
+}
+
+const DeviceSectionLabels = {
+  PhysicalAndroid: "Connected Android Devices",
+  AndroidEmulator: "Android Emulators",
+  IosSimulator: "iOS",
+} as const;
+
 const SelectItem = React.forwardRef<HTMLDivElement, PropsWithChildren<Select.SelectItemProps>>(
   ({ children, ...props }, forwardedRef) => (
     <Select.Item className="device-select-item" {...props} ref={forwardedRef}>
@@ -122,9 +134,9 @@ function DeviceSelect() {
   }
 
   const deviceSections = {
-    "iOS": devicesByType.iosSimulators ?? [],
-    "Android Emulators": devicesByType.androidEmulators ?? [],
-    "Connected Android Devices":
+    [DeviceSection.IosSimulator]: devicesByType.iosSimulators ?? [],
+    [DeviceSection.AndroidEmulator]: devicesByType.androidEmulators ?? [],
+    [DeviceSection.PhysicalAndroid]:
       devicesByType.androidPhysicalDevices?.filter(shouldShowDevice) ?? [],
   };
 
@@ -205,12 +217,12 @@ function DeviceSelect() {
     }
   };
 
-  const isAdminDisabledDeviceSections = ([label]: [
+  const isAdminDisabledDeviceSections = ([section]: [
     string,
     IOSDeviceInfo[] | AndroidEmulatorInfo[] | AndroidPhysicalDeviceInfo[],
   ]): boolean => {
     const isRemoteAndroidAdminDisabled = useIsFeatureAdminDisabled(Feature.AndroidPhysicalDevice);
-    return label !== "Connected Android Devices" || !isRemoteAndroidAdminDisabled;
+    return !(section === DeviceSection.PhysicalAndroid && isRemoteAndroidAdminDisabled);
   };
 
   const handleDeviceStop = (deviceId: string) => {
@@ -257,9 +269,9 @@ function DeviceSelect() {
           <Select.Viewport className="device-select-viewport">
             {Object.entries(deviceSections)
               .filter(isAdminDisabledDeviceSections)
-              .map(([label, sectionDevices]) =>
+              .map(([section, sectionDevices]) =>
                 renderDevices(
-                  label,
+                  DeviceSectionLabels[section as keyof typeof DeviceSectionLabels],
                   sectionDevices,
                   selectedDevice,
                   runningSessionIds,

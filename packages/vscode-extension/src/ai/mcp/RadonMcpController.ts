@@ -148,27 +148,25 @@ class RadonMcpController implements Disposable {
       // We don't bother with de-registering and re-registering static tools, as the resource gain from doing so is minimal,
       // while complicating the logic by a lot. Tool availability is already reliably toggled via `setGlobalEnableAI`.
       this.disposables.push(registerStaticTools());
-    } else {
-      if (isAiEnabled) {
-        this.enableServer();
-      }
     }
+
+    this.updateAvailability();
 
     this.disposables.push(
       workspace.onDidChangeConfiguration(() => {
-        this.onSettingsOrLicenseHasChanged();
+        this.updateAvailability();
       })
     );
 
     this.disposables.push(
       watchLicenseTokenChange(() => {
-        this.onSettingsOrLicenseHasChanged();
+        this.updateAvailability();
       })
     );
   }
 
   // used in callbacks needs to be an arrow function
-  private onSettingsOrLicenseHasChanged = async () => {
+  private updateAvailability = async () => {
     const radonAiEnabled =
       isAiEnabledInSettings() &&
       (await radonAIAvailabilityStatus()) === FeatureAvailabilityStatus.AVAILABLE;

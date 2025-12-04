@@ -1,4 +1,5 @@
 import fetch, { Response } from "node-fetch";
+import { z } from "zod";
 import { extensionContext } from "./extensionContext";
 import { exec } from "./subprocess";
 import { Logger } from "../Logger";
@@ -7,6 +8,8 @@ import { ActivateDeviceResult } from "../common/Project";
 import { throttleAsync } from "./throttle";
 import {
   DefaultFeaturesAvailability,
+  Feature,
+  FeatureAvailabilityStatus,
   FeaturesAvailability,
   getLicenseStatusFromString,
   LicenseStatus,
@@ -194,7 +197,6 @@ export async function checkLicenseToken(token: string): Promise<SimServerLicense
     const licensePlan = stdout.split(" ", 2)[1];
     const tokenPayload = await decodeJWTPayload(token);
 
-    //Frytki just for testing
     let featuresAvailability = DefaultFeaturesAvailability;
 
     if (tokenPayload && tokenPayload.cp_features) {
@@ -228,34 +230,77 @@ export async function checkLicenseToken(token: string): Promise<SimServerLicense
   }
 }
 
-async function decodeJWTPayload(token: string) {
-  /**
-   * JWT payload structure returned by the Customer Portal (cp_* fields)
-   */
-  type LicenseJWTPayload = {
-    cp_sub: string;
-    cp_pri: string;
-    cp_fpr: string;
-    cp_ent: number;
-    cp_usr: string;
-    cp_plan: string;
-    cp_features: FeaturesAvailability;
-  };
+async function decodeJWTPayload(token: string): Promise<{
+  cp_sub?: string;
+  cp_pri?: string;
+  cp_fpr?: string;
+  cp_ent?: number;
+  cp_usr?: string;
+  cp_plan?: string;
+  cp_features?: FeaturesAvailability;
+} | null> {
+  // Zod schema for runtime validation of features object
+  const featureAvailabilityStatusSchema = z.enum([
+    FeatureAvailabilityStatus.AVAILABLE.toString(),
+    FeatureAvailabilityStatus.PAYWALLED.toString(),
+    FeatureAvailabilityStatus.ADMIN_DISABLED.toString(),
+  ]);
+
+  const featuresSchema = z.record(z.string(), z.unknown()).transform((obj) => {
+    const result: FeaturesAvailability = { ...DefaultFeaturesAvailability };
+
+    for (const [key, value] of Object.entries(obj)) {
+      if (!Object.values(Feature).includes(key as Feature)) {
+        continue;
+      }
+
+      // Validate the value is a valid FeatureAvailabilityStatus
+      const validationResult = featureAvailabilityStatusSchema.safeParse(value);
+      if (validationResult.success) {
+        result[key as Feature] = validationResult.data as FeatureAvailabilityStatus;
+      } else {
+        Logger.warn(
+          `Invalid FeatureAvailabilityStatus value for feature ${key}: ${value}, using default`
+        );
+      }
+    }
+
+    return result;
+  });
+
+  const payloadSchema = z.object({
+    cp_sub: z.string().optional(),
+    cp_pri: z.string().optional(),
+    cp_fpr: z.string().optional(),
+    cp_ent: z.number().optional(),
+    cp_usr: z.string().optional(),
+    cp_plan: z.string().optional(),
+    cp_features: featuresSchema.optional(),
+  });
 
   try {
     // JWT format: header.payload.signature (all base64url)
     const parts = token.split(".");
     if (parts.length < 2) {
+      Logger.warn("Invalid JWT format: expected at least 2 parts");
       return null;
     }
+
     const payloadB64Url = parts[1];
     // Convert base64url to base64
     const base64 = payloadB64Url.replace(/-/g, "+").replace(/_/g, "/");
     // Pad base64 if necessary
     const padded = base64 + "===".slice((base64.length + 3) % 4);
     const json = Buffer.from(padded, "base64").toString("utf8");
-    const payload = JSON.parse(json) as Partial<LicenseJWTPayload>;
-    return payload as LicenseJWTPayload;
+    const parsed = JSON.parse(json) as unknown;
+
+    const result = payloadSchema.safeParse(parsed);
+    if (!result.success) {
+      Logger.warn("JWT payload validation failed:", result.error.issues);
+      return null;
+    }
+
+    return result.data;
   } catch (e) {
     Logger.warn("Failed to decode JWT payload", e);
     return null;
