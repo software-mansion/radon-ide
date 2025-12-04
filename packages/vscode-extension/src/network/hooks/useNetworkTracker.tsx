@@ -184,7 +184,7 @@ const useNetworkTracker = (): NetworkTracker => {
           timestamp: params.timestamp,
           wallTime: params.wallTime,
           durationMs:
-            params.duration ?? requestDurationData.totalTime ??  existingLog.timeline.durationMs,
+            params.duration ?? requestDurationData.totalTime ?? existingLog.timeline.durationMs,
           ttfb: params.ttfb ?? requestDurationData.ttfb ?? existingLog.timeline.ttfb,
           downloadTime: requestDurationData.downloadTime ?? existingLog.timeline.downloadTime,
         },
