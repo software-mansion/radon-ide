@@ -4,6 +4,7 @@ import {
   deserializeRequestData,
   trimContentType,
   getIncrementalResponseData,
+  getResourceType,
 } from "../networkRequestParsers";
 import type { NetworkProxy, NativeResponseType, BlobLikeResponse } from "../types";
 
@@ -330,7 +331,6 @@ class PolyfillFetchInterceptor {
       requestId,
       timestamp: timeStamp,
       duration: timeStamp - this.startTime,
-      type: mimeType,
       response: {
         type: response.type,
         status: fetchInstance._responseStatus,
@@ -395,7 +395,6 @@ class PolyfillFetchInterceptor {
           headers: this._nativeRequestHeaders,
           postData: deserializeRequestData(this._request._body._bodyInit, mimeType),
         },
-        type: mimeType,
         initiator: {
           type: INITIATOR_TYPE,
         },
@@ -524,6 +523,7 @@ class PolyfillFetchInterceptor {
       const incrementalResponseQueue = self.incrementalResponseQueue;
       const timeStamp = Date.now();
       const mimeType = trimContentType(_response._body._mimeType);
+      const resourceType = getResourceType(mimeType);
       const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
 
       // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L168-L188
@@ -538,7 +538,7 @@ class PolyfillFetchInterceptor {
         timestamp: timeStamp,
         dataLength: responseText.length,
         ttfb: self.ttfbTime,
-        type: mimeType,
+        type: resourceType,
         response: {
           type: _response.type,
           status: this._responseStatus,
@@ -561,19 +561,23 @@ class PolyfillFetchInterceptor {
       response: BlobLikeResponse | string
     ) {
       self.original__didReceiveNetworkData.call(this, requestId, response);
+
       if (requestId !== this._requestId || !this._nativeResponse) {
         return;
       }
 
       const timeStamp = Date.now();
       const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
+      const nativeResponseHeaders = this._nativeResponseHeaders; // upper-case headers
+      const mimeType = trimContentType(nativeResponseHeaders["Content-Type"] || "");
+      const resourceType = getResourceType(mimeType);
 
       self.sendCDPMessage("Network.responseReceived", {
         requestId: requestIdStr,
         loaderId: LOADER_ID,
         timestamp: timeStamp,
         ttfb: self.ttfbTime,
-        type: typeof response === "string" ? "text" : response.type,
+        type: resourceType,
         response: {
           type: "basic",
           status: this._responseStatus,

@@ -1,27 +1,15 @@
 import { TextDecoder } from "../polyfills";
 import {
-  ResponseBodyDataType,
+  ResourceType,
   ContentTypeHeader,
   type SerializedTypedArray,
   type RequestData,
   type InternalResponseBodyData,
   type ContentTypeAnalysis,
+  type FormDataObject,
   ExtendedXMLHttpRequest,
   DEFAULT_RESPONSE_BODY_DATA,
 } from "./types";
-
-// Due to import conflicts from "src" directory, some types
-// are redeclared here from src/network/types/network.ts
-
-type FormDataObject = { _parts: Array<[string, unknown]> };
-
-function isFormDataObject(obj: unknown): obj is FormDataObject {
-  if (!obj || typeof obj !== "object") {
-    return false;
-  }
-  const record = obj as Record<string, unknown>;
-  return Array.isArray(record._parts);
-}
 
 // Allowed content types for processing text-based data
 const PARSABLE_APPLICATION_CONTENT_TYPES = new Set([
@@ -115,7 +103,7 @@ function processTypedArrayResponse(
   contentTypeAnalysis: ContentTypeAnalysis
 ): InternalResponseBodyData {
   const { isImageType, isOctetStream, isTextType, isParsableApplicationType } = contentTypeAnalysis;
-  const type = isImageType ? ResponseBodyDataType.Image : ResponseBodyDataType.Other;
+  const type = isImageType ? ResourceType.Image : ResourceType.Other;
 
   if (isImageType || isOctetStream) {
     const base64String = dataToBase64(typedArray);
@@ -124,7 +112,7 @@ function processTypedArrayResponse(
 
   if (isTextType || isParsableApplicationType) {
     const textResult = decode(typedArray);
-    return parseResponseBodyData(textResult, false, ResponseBodyDataType.Other);
+    return parseResponseBodyData(textResult, false, ResourceType.Other);
   }
 
   return DEFAULT_RESPONSE_BODY_DATA;
@@ -151,7 +139,7 @@ function processTypedArrayResponse(
 function parseResponseBodyData(
   responseBody: string | undefined,
   base64Encoded: boolean = false,
-  type: ResponseBodyDataType = ResponseBodyDataType.Other
+  type: ResourceType = ResourceType.Other
 ): InternalResponseBodyData {
   if (!responseBody) {
     return DEFAULT_RESPONSE_BODY_DATA;
@@ -194,7 +182,7 @@ function readBlobAsBase64(blob: Blob, isImage?: boolean): Promise<InternalRespon
         textResult = reader.result;
       }
 
-      const type = isImage ? ResponseBodyDataType.Image : ResponseBodyDataType.Other;
+      const type = isImage ? ResourceType.Image : ResourceType.Other;
 
       resolve(parseResponseBodyData(textResult, true, type));
     };
@@ -217,7 +205,7 @@ function readBlobAsText(blob: Blob): Promise<InternalResponseBodyData> {
     reader.onload = () => {
       const result = reader.result;
       const textResult = typeof result === "string" ? result : undefined;
-      resolve(parseResponseBodyData(textResult, false, ResponseBodyDataType.Other));
+      resolve(parseResponseBodyData(textResult, false, ResourceType.Other));
     };
 
     reader.onerror = (error) => {
@@ -357,7 +345,6 @@ export async function getFetchResponseDataPromise(
 export function mimeTypeFromResponseType(responseType: string): string | undefined {
   switch (responseType) {
     case "arraybuffer":
-    case "blob":
     case "base64":
       return "application/octet-stream";
     case "text":
@@ -369,6 +356,41 @@ export function mimeTypeFromResponseType(responseType: string): string | undefin
       return "text/html";
   }
   return undefined;
+}
+/**
+ * We've been using the plain "XHR" type for all requests so far,
+ * but we can improve this behaviour by mapping MIME types to resource types.
+ * @see https://github.com/facebook/react-native/blob/main/packages/react-native/ReactCommon/jsinspector-modern/network/CdpNetwork.cpp#L144-L165
+ */
+//
+export function getResourceType(mimeType: string): ResourceType {
+  console.log(mimeType);
+  // Normalize casing to ensure robustness (optional, but recommended for MIME types)
+  const normalizedType = mimeType.toLowerCase().trim();
+  console.log(normalizedType === "application/json");
+
+  if (normalizedType.startsWith("image/")) {
+    return ResourceType.Image;
+  }
+
+  if (normalizedType.startsWith("video/") || normalizedType.startsWith("audio/")) {
+    return ResourceType.Media;
+  }
+
+  const scriptTypes = ["application/javascript", "text/javascript", "application/x-javascript"];
+  if (scriptTypes.includes(normalizedType)) {
+    return ResourceType.Script;
+  }
+
+  if (
+    normalizedType === "application/json" ||
+    normalizedType.startsWith("application/xml") ||
+    normalizedType === "text/xml"
+  ) {
+    return ResourceType.XHR;
+  }
+
+  return ResourceType.Other;
 }
 
 function shouldDecodeAsText(contentType: string | undefined) {
@@ -418,6 +440,14 @@ function reconstructTypedArray(serializedData: SerializedTypedArray): Uint8Array
     uint8Array[numKey] = serializedData[numKey];
   });
   return uint8Array;
+}
+
+function isFormDataObject(obj: unknown): obj is FormDataObject {
+  if (!obj || typeof obj !== "object") {
+    return false;
+  }
+  const record = obj as Record<string, unknown>;
+  return Array.isArray(record._parts);
 }
 
 /**
@@ -492,4 +522,5 @@ module.exports = {
   getFetchResponseDataPromise,
   getIncrementalResponseData,
   trimContentType,
+  getResourceType,
 };
