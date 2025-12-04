@@ -68,7 +68,7 @@ class RequestTimingTracker {
     if (timeStart === undefined || timeEnd === undefined) {
       return undefined;
     }
-    return timeEnd - timeStart;
+    return _.round((timeEnd - timeStart) * 1000, 2);
   }
 
   public setRequestTimestamp(message: CDPMessage) {

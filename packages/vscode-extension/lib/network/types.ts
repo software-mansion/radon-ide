@@ -45,7 +45,7 @@ export type RequestData = string | SerializedTypedArray | null | object;
  * Response body data type classification.
  * Based on resourceTypeFromMimeType method in React Native's implementation.
  */
-export enum ResponseBodyDataType {
+export enum ResourceType {
   Media = "Media",
   Image = "Image",
   Script = "Script",
@@ -57,7 +57,7 @@ export interface InternalResponseBodyData {
   body: string | undefined;
   wasTruncated: boolean;
   base64Encoded: boolean;
-  type: ResponseBodyDataType;
+  type: ResourceType;
   dataSize: number;
 }
 
@@ -91,6 +91,11 @@ export interface ContentTypeAnalysis {
 export type NativeResponseType = "text" | "blob" | "base64";
 
 /**
+ * FormData-like object structure used in React Native.
+ */
+export type FormDataObject = { _parts: Array<[string, unknown]> };
+
+/**
  * Blob-like response object from React Native.
  * Used as a Blob representation in RN when dealing with network responses.
  */
@@ -106,6 +111,6 @@ export const DEFAULT_RESPONSE_BODY_DATA = {
   body: undefined,
   wasTruncated: false,
   base64Encoded: false,
-  type: ResponseBodyDataType.Other,
+  type: ResourceType.Other,
   dataSize: 0,
 };

@@ -4,6 +4,7 @@ import {
   deserializeRequestData,
   trimContentType,
   getIncrementalResponseData,
+  getResourceType,
 } from "../networkRequestParsers";
 import type { NetworkProxy, NativeResponseType, BlobLikeResponse } from "../types";
 
@@ -325,12 +326,11 @@ class PolyfillFetchInterceptor {
     const responseHeadersContentType = response.headers.get("content-type") || "";
     const mimeType = trimContentType(response._body._mimeType || responseHeadersContentType);
 
-    const timeStamp = Date.now();
+    const timeStamp = Date.now() / 1000;
     this.sendCDPMessage("Network.loadingFinished", {
       requestId,
       timestamp: timeStamp,
-      duration: timeStamp - this.startTime,
-      type: mimeType,
+      duration: Math.round((timeStamp - this.startTime) * 1000),
       response: {
         type: response.type,
         status: fetchInstance._responseStatus,
@@ -355,7 +355,7 @@ class PolyfillFetchInterceptor {
       return;
     }
 
-    const timeStamp = Date.now();
+    const timeStamp = Date.now() / 1000;
 
     if (shouldClearQueue) {
       this.incrementalResponseQueue.clearQueue(requestId);
@@ -380,7 +380,9 @@ class PolyfillFetchInterceptor {
       self.original__didCreateRequest.call(this, requestId);
 
       const mimeType = trimContentType(this._request._body._mimeType);
-      self.startTime = Date.now();
+      const timestamp = Date.now() / 1000;
+
+      self.startTime = timestamp;
 
       const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
 
@@ -388,14 +390,13 @@ class PolyfillFetchInterceptor {
         requestId: requestIdStr,
         loaderId: LOADER_ID,
         timestamp: self.startTime,
-        wallTime: Date.now(),
+        wallTime: timestamp,
         request: {
           url: this._request.url,
           method: this._request.method,
           headers: this._nativeRequestHeaders,
           postData: deserializeRequestData(this._request._body._bodyInit, mimeType),
         },
-        type: mimeType,
         initiator: {
           type: INITIATOR_TYPE,
         },
@@ -483,8 +484,8 @@ class PolyfillFetchInterceptor {
       if (requestId !== this._requestId) {
         return;
       }
-
-      self.ttfbTime = Date.now() - self.startTime;
+      const timestamp = Date.now() / 1000;
+      self.ttfbTime = timestamp - self.startTime;
 
       // stream and streamController are created and assigned in __didReceiveNetworkResponse
       // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L130-L157
@@ -522,8 +523,9 @@ class PolyfillFetchInterceptor {
       }
 
       const incrementalResponseQueue = self.incrementalResponseQueue;
-      const timeStamp = Date.now();
+      const timeStamp = Date.now() / 1000;
       const mimeType = trimContentType(_response._body._mimeType);
+      const resourceType = getResourceType(mimeType);
       const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
 
       // https://github.com/react-native-community/fetch/blob/master/src/Fetch.js#L168-L188
@@ -538,7 +540,7 @@ class PolyfillFetchInterceptor {
         timestamp: timeStamp,
         dataLength: responseText.length,
         ttfb: self.ttfbTime,
-        type: mimeType,
+        type: resourceType,
         response: {
           type: _response.type,
           status: this._responseStatus,
@@ -561,19 +563,23 @@ class PolyfillFetchInterceptor {
       response: BlobLikeResponse | string
     ) {
       self.original__didReceiveNetworkData.call(this, requestId, response);
+
       if (requestId !== this._requestId || !this._nativeResponse) {
         return;
       }
 
-      const timeStamp = Date.now();
+      const timeStamp = Date.now() / 1000;
       const requestIdStr = `${REQUEST_ID_PREFIX}-${requestId}`;
+      const nativeResponseHeaders = this._nativeResponseHeaders; // upper-case headers
+      const mimeType = trimContentType(nativeResponseHeaders["Content-Type"] || "");
+      const resourceType = getResourceType(mimeType);
 
       self.sendCDPMessage("Network.responseReceived", {
         requestId: requestIdStr,
         loaderId: LOADER_ID,
         timestamp: timeStamp,
         ttfb: self.ttfbTime,
-        type: typeof response === "string" ? "text" : response.type,
+        type: resourceType,
         response: {
           type: "basic",
           status: this._responseStatus,

@@ -93,7 +93,9 @@ const NetworkLogFormatters = {
   },
 
   time: (log: NetworkLog): string => {
-    const time = log.timeline?.durationMs && `${log.timeline?.durationMs} ms`;
+    const timeDuration = log.timeline?.durationMs;
+    const isTimeValid = timeDuration !== undefined && timeDuration !== null;
+    const time = isTimeValid && `${timeDuration} ms`;
     return getLogValueWithChecks(log, time);
   },
 } as const;

@@ -6,9 +6,10 @@ const fetchInterceptor = require("./interceptors/PolyfillFetchInterceptor");
 
 const {
   deserializeRequestData,
-  mimeTypeFromResponseType,
+  getResourceType,
   getXHRResponseDataPromise,
   getContentTypeHeader,
+  trimContentType,
 } = require("./networkRequestParsers");
 
 let setupCompleted = false;
@@ -23,7 +24,10 @@ export function setup() {
   const responseBuffer = new AsyncBoundedResponseBuffer();
 
   // Clear any stored messages on the extension end on setup
-  messageBridge.sendMessage("ide-message", JSON.stringify({ method: "IDE.clearStoredMessages", params: {} }));
+  messageBridge.sendMessage(
+    "ide-message",
+    JSON.stringify({ method: "IDE.clearStoredMessages", params: {} })
+  );
 
   let enabled = false;
   messageBridge.addMessageListener("cdp-message", (message) => {
@@ -111,21 +115,21 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
   function sendCallback(data, xhr) {
     try {
       const requestId = `${requestIdPrefix}-${requestIdCounter++}`;
-      const sendTime = Date.now();
+      const sendTime = Date.now() / 1000;
+      const requestContentType = getContentTypeHeader(xhr);
       let ttfb;
 
       sendCDPMessage("Network.requestWillBeSent", {
         requestId: requestId,
         loaderId,
         timestamp: sendTime,
-        wallTime: Date.now(),
+        wallTime: sendTime,
         request: {
           url: xhr._url,
           method: xhr._method,
           headers: xhr._headers,
-          postData: deserializeRequestData(data, getContentTypeHeader(xhr)),
+          postData: deserializeRequestData(data, requestContentType),
         },
-        type: "XHR",
         initiator: {
           type: "script",
         },
@@ -133,10 +137,12 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
 
       xhr.addEventListener("abort", (event) => {
         try {
+          const timestamp = Date.now() / 1000;
+
           sendCDPMessage("Network.loadingFailed", {
             requestId: requestId,
-            timestamp: Date.now(),
-            type: "XHR",
+            timestamp: timestamp,
+            type: "",
             errorText: "Aborted",
             canceled: true,
           });
@@ -146,10 +152,12 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
 
       xhr.addEventListener("error", (event) => {
         try {
+          const timestamp = Date.now() / 1000;
+
           sendCDPMessage("Network.loadingFailed", {
             requestId: requestId,
-            timestamp: Date.now(),
-            type: "XHR",
+            timestamp: timestamp,
+            type: "",
             errorText: "Failed",
             cancelled: false,
           });
@@ -171,22 +179,44 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         }
 
         try {
-          const mimeType = mimeTypeFromResponseType(xhr.responseType);
+          const timestamp = Date.now() / 1000;
+          const responseContentType = xhr.getResponseHeader("content-type") || "";
+          const responseMimeType = trimContentType(responseContentType);
+          const resourceType = getResourceType(responseMimeType);
           sendCDPMessage("Network.responseReceived", {
             requestId: requestId,
             loaderId,
-            timestamp: Date.now(),
+            timestamp: timestamp,
             ttfb,
-            type: "XHR",
+            type: resourceType,
             response: {
               type: xhr.responseType,
               url: xhr._url,
               status: xhr.status,
               statusText: xhr.statusText,
               headers: xhr.responseHeaders,
-              mimeType: mimeType,
-              data: deserializeRequestData(data, mimeType),
+              mimeType: responseMimeType,
             },
+          });
+        } catch (error) {}
+      });
+
+      xhr.addEventListener("progress", (event) => {
+        if (xhr._error || xhr._aborted) {
+          return;
+        }
+
+        try {
+          const responseContentType = xhr.getResponseHeader("content-type") || "";
+          const responseMimeType = trimContentType(responseContentType);
+          const resourceType = getResourceType(responseMimeType);
+
+          sendCDPMessage("Network.dataReceived", {
+            requestId: requestId,
+            loaderId,
+            ttfb,
+            type: resourceType,
+            encodedDataLength: xhr._response?.length || 0,
           });
         } catch (error) {}
       });
@@ -201,10 +231,11 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         responseBuffer.put(requestId, responsePromise);
 
         try {
+          const timestamp = Date.now() / 1000;
           sendCDPMessage("Network.loadingFinished", {
             requestId: requestId,
-            timestamp: Date.now(),
-            duration: Date.now() - sendTime,
+            timestamp: timestamp,
+            duration: Math.round((timestamp - sendTime) * 1000),
             encodedDataLength: xhr._response?.size || xhr._response?.length, // when response is blob, we use size, and length otherwise
           });
         } catch (error) {}
