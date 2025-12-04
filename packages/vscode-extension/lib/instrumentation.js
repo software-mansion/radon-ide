@@ -7,7 +7,7 @@ const {
   instrument,
   isCompositeFiber,
   traverseRenderedFibers,
-} = require("__RNIDE_lib__/bippy");
+} = require("__RNIDE_lib__/third-party/bippy");
 const RNInternals = require("./rn-internals/rn-internals");
 const { StatusBar, UIManager, Platform } = require("react-native");
 const DimensionsObserver = require("./dimensions_observer");
