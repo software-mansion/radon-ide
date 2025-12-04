@@ -215,7 +215,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
           sendCDPMessage("Network.loadingFinished", {
             requestId: requestId,
             timestamp: timestamp,
-            duration: timestamp - sendTime,
+            duration: Math.round((timestamp - sendTime) * 1000),
             encodedDataLength: xhr._response?.size || xhr._response?.length, // when response is blob, we use size, and length otherwise
           });
         } catch (error) {}

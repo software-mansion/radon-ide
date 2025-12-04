@@ -68,6 +68,7 @@ class RequestTimingTracker {
     if (timeStart === undefined || timeEnd === undefined) {
       return undefined;
     }
+    console.log("Calculating time difference:", (timeEnd - timeStart) * 1000);
     return _.round((timeEnd - timeStart) * 1000, 2);
   }
 
@@ -183,7 +184,7 @@ const useNetworkTracker = (): NetworkTracker => {
           timestamp: params.timestamp,
           wallTime: params.wallTime,
           durationMs:
-            params.duration ?? requestDurationData.totalTime ?? existingLog.timeline.durationMs,
+            params.duration ?? requestDurationData.totalTime ??  existingLog.timeline.durationMs,
           ttfb: params.ttfb ?? requestDurationData.ttfb ?? existingLog.timeline.ttfb,
           downloadTime: requestDurationData.downloadTime ?? existingLog.timeline.downloadTime,
         },
