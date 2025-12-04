@@ -113,12 +113,25 @@ export default class ManagingDevicesService {
 
   async deleteAllDevices() {
     await this.radonViewsService.openRadonIDEPanel();
-    await this.elementHelperService.findAndClickElementByTag(
-      "radon-bottom-bar-device-select-dropdown-trigger"
-    );
-    await this.elementHelperService.findAndClickElementByTag(
-      "device-select-menu-manage-devices-button"
-    );
+    try {
+      await this.elementHelperService.findAndClickElementByTag(
+        "radon-bottom-bar-device-select-dropdown-trigger"
+      );
+      await this.elementHelperService.findAndClickElementByTag(
+        "device-select-menu-manage-devices-button"
+      );
+    } catch (error) {
+      // this step is sometimes flaky so we use a retry mechanism
+      if (error.name === "StaleElementReferenceError") {
+        this.driver.action.sendKeys(Key.ESCAPE).perform();
+        await this.elementHelperService.findAndClickElementByTag(
+          "radon-bottom-bar-device-select-dropdown-trigger"
+        );
+        await this.elementHelperService.findAndClickElementByTag(
+          "device-select-menu-manage-devices-button"
+        );
+      }
+    }
 
     // Loop until no delete buttons are found
     while (true) {

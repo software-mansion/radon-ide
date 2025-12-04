@@ -11,19 +11,18 @@ import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
 safeDescribe("4 - App interaction tests", () => {
-  let driver,
-    appWebsocket,
-    view,
-    workbench,
+  let driver, appWebsocket, view;
+  let {
     elementHelperService,
     radonViewsService,
     managingDevicesService,
     appManipulationService,
     radonSettingsService,
-    vscodeHelperService;
+    vscodeHelperService,
+  } = initServices(driver);
 
   before(async () => {
-    ({ driver, view, workbench } = get());
+    ({ driver, view } = get());
     ({
       elementHelperService,
       radonViewsService,
@@ -58,7 +57,9 @@ safeDescribe("4 - App interaction tests", () => {
 
   afterEach(async function () {
     await driver.switchTo().defaultContent();
-    await workbench.executeCommand("Remove All Breakpoints");
+    await vscodeHelperService.openCommandLineAndExecute(
+      "Remove All Breakpoints"
+    );
   });
 
   it("Should click in app", async () => {

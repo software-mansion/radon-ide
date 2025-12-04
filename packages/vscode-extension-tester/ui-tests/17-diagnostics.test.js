@@ -12,7 +12,7 @@ const raw = fs.readFileSync("./data/react-native-app/package.json");
 const data = JSON.parse(raw);
 const IS_EXPO = data.name.includes("expo");
 
-const { ALLOW_ENVIRONMENT_MODIFICATIONS } = getConfiguration();
+const { ALLOW_ENVIRONMENT_MODIFICATIONS, IS_ANDROID } = getConfiguration();
 
 describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
   let driver;
@@ -151,22 +151,26 @@ describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
     );
   });
 
-  itIf(!IS_EXPO, "should show correct diagnostic for pods", async function () {
-    await testDiagnostic(
-      "pods",
-      async () => {
-        execSync(
-          "mv ./data/react-native-app/ios/Pods ./data/react-native-app/ios/not_Pods"
-        );
-      },
-      async () => {
-        execSync(
-          "mv ./data/react-native-app/ios/not_Pods ./data/react-native-app/ios/Pods"
-        );
-      },
-      `Pods are not installed.`
-    );
-  });
+  itIf(
+    !IS_EXPO && !IS_ANDROID,
+    "should show correct diagnostic for pods",
+    async function () {
+      await testDiagnostic(
+        "pods",
+        async () => {
+          execSync(
+            "mv ./data/react-native-app/ios/Pods ./data/react-native-app/ios/not_Pods"
+          );
+        },
+        async () => {
+          execSync(
+            "mv ./data/react-native-app/ios/not_Pods ./data/react-native-app/ios/Pods"
+          );
+        },
+        `Pods are not installed.`
+      );
+    }
+  );
 
   itIf(!IS_EXPO, "should show correct diagnostic for ios", async function () {
     await testDiagnostic(
