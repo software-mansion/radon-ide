@@ -116,6 +116,7 @@ async function radonAIAvailabilityStatus() {
 
 class RadonMcpController implements Disposable {
   private server: LocalMcpServer | undefined = undefined;
+  private radonAvailabilityStatus: FeatureAvailabilityStatus;
   private serverChangedEmitter = new EventEmitter<void>();
   private disposables: Disposable[] = [];
 
@@ -132,10 +133,8 @@ class RadonMcpController implements Disposable {
     context: ExtensionContext,
     options: { isAiEnabledInSettings: boolean; radonAvailabilityStatus: FeatureAvailabilityStatus }
   ) {
-    const isAiEnabled =
-      options.isAiEnabledInSettings ||
-      options.radonAvailabilityStatus !== FeatureAvailabilityStatus.AVAILABLE;
-    setGlobalEnableAI(isAiEnabled);
+    this.radonAvailabilityStatus = options.radonAvailabilityStatus;
+
     registerRadonChat(context, options);
 
     const useStaticRegistering = shouldUseDirectRegistering();
@@ -159,17 +158,22 @@ class RadonMcpController implements Disposable {
     );
 
     this.disposables.push(
-      watchLicenseTokenChange(() => {
-        this.updateAvailability();
+      watchLicenseTokenChange(async () => {
+        const newRadonAIAvailabilityStatus = await radonAIAvailabilityStatus();
+        this.updateAvailability(newRadonAIAvailabilityStatus);
       })
     );
   }
 
   // used in callbacks needs to be an arrow function
-  private updateAvailability = async () => {
+  private updateAvailability = (newRadonAIAvailabilityStatus?: FeatureAvailabilityStatus) => {
+    if (newRadonAIAvailabilityStatus) {
+      this.radonAvailabilityStatus = newRadonAIAvailabilityStatus;
+    }
+
     const radonAiEnabled =
       isAiEnabledInSettings() &&
-      (await radonAIAvailabilityStatus()) === FeatureAvailabilityStatus.AVAILABLE;
+      this.radonAvailabilityStatus === FeatureAvailabilityStatus.AVAILABLE;
 
     // `setGlobalEnableAI` sets availability of both static and local server tools.
     setGlobalEnableAI(radonAiEnabled);

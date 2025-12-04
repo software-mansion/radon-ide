@@ -31,7 +31,7 @@ enum DeviceSection {
   IosSimulator = "IosSimulator",
 }
 
-const DeviceSectionLabels = {
+const DeviceSectionLabels: Record<DeviceSection, string> = {
   PhysicalAndroid: "Connected Android Devices",
   AndroidEmulator: "Android Emulators",
   IosSimulator: "iOS",
@@ -271,7 +271,7 @@ function DeviceSelect() {
               .filter(isAdminDisabledDeviceSections)
               .map(([section, sectionDevices]) =>
                 renderDevices(
-                  DeviceSectionLabels[section as keyof typeof DeviceSectionLabels],
+                  DeviceSectionLabels[section as DeviceSection],
                   sectionDevices,
                   selectedDevice,
                   runningSessionIds,
