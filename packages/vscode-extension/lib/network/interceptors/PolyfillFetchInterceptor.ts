@@ -330,7 +330,7 @@ class PolyfillFetchInterceptor {
     this.sendCDPMessage("Network.loadingFinished", {
       requestId,
       timestamp: timeStamp,
-      duration: timeStamp - this.startTime,
+      duration: Math.round((timeStamp - this.startTime) * 1000),
       response: {
         type: response.type,
         status: fetchInstance._responseStatus,
