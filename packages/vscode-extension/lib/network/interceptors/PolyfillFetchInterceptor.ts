@@ -284,7 +284,6 @@ class PolyfillFetchInterceptor {
 
     if (isIncrementalResponse) {
       const incrementalResponseQueue = this.incrementalResponseQueue.getQueue(requestId);
-
       const responseDataPromise = getIncrementalResponseData(incrementalResponseQueue, response);
       this.responseBuffer.put(requestId, responseDataPromise);
 
@@ -317,8 +316,7 @@ class PolyfillFetchInterceptor {
   private sendLoadingFinished(
     requestId: string,
     response: FetchResponse,
-    fetchInstance: PolyfillFetch,
-    shouldBufferResponse: boolean
+    fetchInstance: PolyfillFetch
   ) {
     if (this.completedRequestTracker.isCompleted(requestId)) {
       return;
@@ -344,9 +342,7 @@ class PolyfillFetchInterceptor {
     });
 
     this.completedRequestTracker.markCompleted(requestId);
-    if (shouldBufferResponse) {
-      this.bufferResponseBody(requestId, response, fetchInstance._nativeResponseType);
-    }
+    this.bufferResponseBody(requestId, response, fetchInstance._nativeResponseType);
   }
 
   private sendLoadingFailed(
@@ -455,7 +451,7 @@ class PolyfillFetchInterceptor {
         .then(() => {
           restoreReleaseLock();
           if (fetchInstance._response) {
-            interceptorInstance.sendLoadingFinished(requestIdStr, _response, fetchInstance, true);
+            interceptorInstance.sendLoadingFinished(requestIdStr, _response, fetchInstance);
           }
         })
         .catch((e: Error) => {
@@ -625,12 +621,7 @@ class PolyfillFetchInterceptor {
           true // shouldClearQueue
         );
       }
-      self.sendLoadingFinished(
-        requestIdStr,
-        _response,
-        this,
-        true // shouldBufferResponse
-      );
+      self.sendLoadingFinished(requestIdStr, _response, this);
     };
   }
 

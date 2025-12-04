@@ -467,5 +467,6 @@ module.exports = {
   mimeTypeFromResponseType,
   getContentTypeHeader,
   getFetchResponseDataPromise,
+  getIncrementalResponseData,
   trimContentType,
 };
