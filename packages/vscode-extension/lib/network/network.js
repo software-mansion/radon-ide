@@ -1,10 +1,13 @@
 const RNInternals = require("../rn-internals/rn-internals");
 const { PluginMessageBridge } = require("../plugins/PluginMessageBridge");
 const { AsyncBoundedResponseBuffer } = require("./AsyncBoundedResponseBuffer");
+
+const fetchInterceptor = require("./interceptors/PolyfillFetchInterceptor");
+
 const {
   deserializeRequestData,
   mimeTypeFromResponseType,
-  readResponseText,
+  getXHRResponseDataPromise,
   getContentTypeHeader,
 } = require("./networkRequestParsers");
 
@@ -38,15 +41,17 @@ export function setup() {
 
 function disableNetworkInspect(responseBuffer) {
   RNInternals.XHRInterceptor.disableInterception();
+  fetchInterceptor.disableInterception();
   responseBuffer.clear();
 }
 
 function enableNetworkInspect(networkProxy, responseBuffer) {
   const XHRInterceptor = RNInternals.XHRInterceptor;
+  fetchInterceptor.enableInterception(networkProxy, responseBuffer);
 
   const loaderId = "xhr-interceptor";
 
-  const requestIdPrefix = Math.random().toString(36).slice(2);
+  const requestIdPrefix = "XHR";
   let requestIdCounter = 0;
 
   function sendCDPMessage(method, params) {
@@ -72,11 +77,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
           networkProxy.removeMessageListener("ide-message", ideListener);
           break;
         case "Network.getResponseBody":
-          if (!message.params?.requestId?.startsWith(requestIdPrefix)) {
-            return;
-          }
-
-          const requestId = message.params.requestId;
+          const requestId = `${message.params.requestId}`;
           const responsePromise = responseBuffer.get(requestId);
 
           // Upon initial launch, the message gets send twice in dev, because of
@@ -116,8 +117,8 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
       sendCDPMessage("Network.requestWillBeSent", {
         requestId: requestId,
         loaderId,
-        timestamp: sendTime / 1000,
-        wallTime: Math.floor(Date.now() / 1000),
+        timestamp: sendTime,
+        wallTime: Date.now(),
         request: {
           url: xhr._url,
           method: xhr._method,
@@ -134,7 +135,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         try {
           sendCDPMessage("Network.loadingFailed", {
             requestId: requestId,
-            timestamp: Date.now() / 1000,
+            timestamp: Date.now(),
             type: "XHR",
             errorText: "Aborted",
             canceled: true,
@@ -147,7 +148,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         try {
           sendCDPMessage("Network.loadingFailed", {
             requestId: requestId,
-            timestamp: Date.now() / 1000,
+            timestamp: Date.now(),
             type: "XHR",
             errorText: "Failed",
             cancelled: false,
@@ -174,7 +175,7 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
           sendCDPMessage("Network.responseReceived", {
             requestId: requestId,
             loaderId,
-            timestamp: Date.now() / 1000,
+            timestamp: Date.now(),
             ttfb,
             type: "XHR",
             response: {
@@ -195,13 +196,13 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         }
         // We only store the xhr response body object, so we only put on
         // the buffer when loading ends, to get the actual loaded response
-        const responsePromise = readResponseText(xhr);
+        const responsePromise = getXHRResponseDataPromise(xhr);
         responseBuffer.put(requestId, responsePromise);
 
         try {
           sendCDPMessage("Network.loadingFinished", {
             requestId: requestId,
-            timestamp: Date.now() / 1000,
+            timestamp: Date.now(),
             duration: Date.now() - sendTime,
             encodedDataLength: xhr._response?.size || xhr._response?.length, // when response is blob, we use size, and length otherwise
           });
