@@ -201,6 +201,26 @@ function enableNetworkInspect(networkProxy, responseBuffer) {
         } catch (error) {}
       });
 
+      xhr.addEventListener("progress", (event) => {
+        if (xhr._error || xhr._aborted) {
+          return;
+        }
+
+        try {
+          const responseContentType = xhr.getResponseHeader("content-type") || "";
+          const responseMimeType = trimContentType(responseContentType);
+          const resourceType = getResourceType(responseMimeType);
+
+          sendCDPMessage("Network.dataReceived", {
+            requestId: requestId,
+            loaderId,
+            ttfb,
+            type: resourceType,
+            encodedDataLength: xhr._response?.length || 0,
+          });
+        } catch (error) {}
+      });
+
       xhr.addEventListener("loadend", (event) => {
         if (xhr._error || xhr._aborted) {
           return;
