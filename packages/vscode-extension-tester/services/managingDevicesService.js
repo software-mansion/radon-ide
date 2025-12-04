@@ -123,7 +123,7 @@ export default class ManagingDevicesService {
     } catch (error) {
       // this step is sometimes flaky so we use a retry mechanism
       if (error.name === "StaleElementReferenceError") {
-        this.driver.action.sendKeys(Key.ESCAPE).perform();
+        this.driver.actions().sendKeys(Key.ESCAPE).perform();
         await this.elementHelperService.findAndClickElementByTag(
           "radon-bottom-bar-device-select-dropdown-trigger"
         );
