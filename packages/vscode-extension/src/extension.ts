@@ -39,6 +39,7 @@ import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
 import { AdminRestrictedFunctionalityError, PaywalledFunctionalityError } from "./common/Errors";
 import { registerRadonAI } from "./ai/mcp/RadonMcpController";
 import { MaestroCodeLensProvider } from "./providers/MaestroCodeLensProvider";
+import { removeLicense } from "./utilities/license";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -226,6 +227,20 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
+  function removeLicenseWithConfirmation() {
+    window
+      .showWarningMessage(
+        "Are you sure you want to remove license? Restoring it will require a license key.",
+        "Yes",
+        "No"
+      )
+      .then((item) => {
+        if (item === "Yes") {
+          removeLicense();
+        }
+      });
+  }
+
   context.subscriptions.push(
     window.registerWebviewViewProvider(
       SidePanelViewProvider.viewType,
@@ -300,6 +315,9 @@ export async function activate(context: ExtensionContext) {
   );
   context.subscriptions.push(
     commands.registerCommand("RNIDE.toggleDeviceAppearance", toggleDeviceAppearance)
+  );
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.removeLicense", removeLicenseWithConfirmation)
   );
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen

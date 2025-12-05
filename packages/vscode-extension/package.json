@@ -304,6 +304,11 @@
         "title": "Toggle device appearance (light/dark mode)",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      }, 
+      {
+        "command": "RNIDE.removeLicense",
+        "title": "Remove license",
+        "category": "Radon IDE"
       }
     ],
     "keybindings": [
