@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import { Store } from "react-devtools-inline";
 import { IDE } from "../../project/ide";
 import {
+  findTreeEntryPoint,
   getDevtoolsElementByID,
   pngToToolContent,
   textToToolContent,
@@ -62,7 +63,13 @@ export async function touchElementExec(input: TouchElementRequest): Promise<Tool
   try {
     const store = project.deviceSession.devtoolsStore;
     const root = tryGetTreeRoot(store);
-    const element = findInComponentTree(store, root, input.elementText);
+    const entryPoint = findTreeEntryPoint(store, root);
+
+    if (!entryPoint) {
+      return textToToolResponse("Element could not be found! [**THIS IS A PLACEHOLDER**]");
+    }
+
+    const element = findInComponentTree(project.deviceSession, store, root, input.elementText);
 
     if (!element) {
       return textToToolResponse("Element could not be found! [**THIS IS A PLACEHOLDER**]");
