@@ -75,12 +75,13 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "query_documentation",
         "name": "query_documentation",
-        "modelDescription": "Returns documentation snippets relevant to the provided query",
+        "modelDescription": "Returns documentation snippets relevant to the provided question. Use this tool whenever the user asks a question, which requires deep knowledge about a specific library, or the react native ecosystem in general. Also use this tool, when it's unclear which library is most suitable to be used for user's use-case.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "text": {
-              "type": "string"
+              "type": "string",
+              "description": "Semantic query to the database - use natural language to describe the feature you want to learn more about, or the issue you want to resolve."
             }
           },
           "required": [
@@ -283,7 +284,7 @@
         "title": "Toggle device appearance (light/dark mode)",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
-      }, 
+      },
       {
         "command": "RNIDE.removeLicense",
         "title": "Remove license",
