@@ -301,7 +301,7 @@ async function decodeJWTPayload(token: string): Promise<{
     cp_ent: z.string().optional(),
     cp_usr: z.string().optional(),
     cp_plan: z.string().optional(),
-    cp_features: featuresSchema.optional(),
+    cp_features: featuresSchema.default({}),
   });
 
   try {
