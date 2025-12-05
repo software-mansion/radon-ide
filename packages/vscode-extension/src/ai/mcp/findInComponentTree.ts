@@ -4,10 +4,10 @@ import { DevtoolsElement } from "./models";
 import { getDevtoolsElementByID } from "./utils";
 import { DeviceSession } from "../../project/deviceSession";
 
-function extractTextContent(payload: InspectElementFullData): string {
-  // TODO: `testID` should be available alongside `children`
-  const text = (payload.value?.props?.data as { children?: unknown })?.children;
-  return typeof text === "string" ? text : "";
+type QueryProps = { children?: string; testID?: string };
+
+function extractQueryProps(payload: InspectElementFullData): QueryProps {
+  return payload.value?.props?.data as QueryProps;
 }
 
 async function findInComponentTree(
@@ -24,8 +24,8 @@ async function findInComponentTree(
   const details = await session.inspectElementById(element.id);
 
   if (details !== undefined) {
-    const text = extractTextContent(details);
-    if (text.includes(query)) {
+    const props = extractQueryProps(details);
+    if (props.children?.includes(query) || props.testID?.includes(query)) {
       return element;
     }
   }
