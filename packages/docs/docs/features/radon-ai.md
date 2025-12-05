@@ -4,7 +4,7 @@ title: Radon AI
 sidebar_position: 11
 ---
 
-Radon AI is a dedicated React Native AI assistant enhanced with up-to-date information about the React Native ecosystem. At its heart is our extensive React Native knowledge database, which is queried before answering your question.
+Radon AI is a set of tools enhancing your editor's Agent, with among other things - up-to-date knowledge about the React Native ecosystem, comprehensive set of debugging data, that isn't otherwise available, and app interaction abilities. You can find the full set of tools available to it: here. //%% TODO
 
 We index all of the popular React Native libraries to match questions to relevant pieces of documentation, providing additional, accurate context to your conversation.
 
@@ -21,22 +21,6 @@ Our knowledge database is updated daily to provide the most up-to-date informati
 ## Usage in Visual Studio Code
 
 You can use Radon AI in Visual Studio Code as a [GitHub Copilot Chat participant](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#chat-participants) or via [Model Context Protocol (MCP) server](https://modelcontextprotocol.io/introduction) in the [agent mode](https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode).
-
-### Use Radon AI as Copilot Chat participant
-
-To start chatting with Radon AI open the GitHub Copilot Chat panel.
-
-Open the vscode command palette (Ctrl+Shift+P or Cmd+Shift+P) and type "Chat: Open Chat" or "Radon IDE: Chat with Radon AI" and select the command.
-
-**Messages that you want to send to Radon AI need to be started with `@radon` prefix.**
-
-<video autoPlay loop width="700" controls className="shadow-image">
-  <source src="/video/ide_chat.mp4" type="video/mp4"/>
-</video>
-
-Radon AI has the context of the history of previous messages sent in the chat window started with `@radon`. This allows you to send additional follow-up questions.
-
-To start a new conversation open a new chat window.
 
 ### Use Radon AI in agent mode
 
