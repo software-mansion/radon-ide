@@ -51,7 +51,7 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "get_library_description",
         "name": "get_library_description",
-        "modelDescription": "Returns a detailed description of a library and its use-cases",
+        "modelDescription": "Returns a detailed description of a library and its use-cases. Use this whenever you need to get started with an obscure library.",
         "inputSchema": {
           "type": "object",
           "properties": {
@@ -75,12 +75,13 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "query_documentation",
         "name": "query_documentation",
-        "modelDescription": "Returns documentation snippets relevant to the provided query",
+        "modelDescription": "Given a technical question about React Native or related libraries, return concise, accurate, and context-specific documentation snippets, code examples, or library recommendations. Trigger this tool when the user asks for implementation guidance, library selection, or detailed technical explanations.",
         "inputSchema": {
           "type": "object",
           "properties": {
             "text": {
-              "type": "string"
+              "type": "string",
+              "description": "Semantic query to the database - use natural language to describe the feature you want to learn more about, or the issue you want to resolve."
             }
           },
           "required": [
@@ -119,11 +120,7 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "view_component_tree",
         "name": "view_component_tree",
-        "modelDescription": "Displays the component tree (view hierarchy) of the running app.\nThis tool only displays mounted components, so some parts of the project might not be visible.\nUse this tool when a general overview of the UI is required, such as when resolving layout issues, looking for location of context providers, or looking for relation between the project file structure and project component structure",
-        "inputSchema": {
-          "type": "object",
-          "properties": {}
-        },
+        "modelDescription": "Displays the current component tree (view hierarchy) of the running app. Only mounted components (these visible to the user) appear! Use this tool when you need an overview of the UI, to resolve layout issues, to locate context providers, or associate file structure with the rendered content.",
         "tags": [
           "react-native",
           "debug"
@@ -135,11 +132,7 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "view_application_logs",
         "name": "view_application_logs",
-        "modelDescription": "Returns all the build, bundling and runtime logs. Use this function whenever the user has any issue with the app, if it's builds are failing, or when there are errors in the console. These logs are always a useful debugging aid.",
-        "inputSchema": {
-          "type": "object",
-          "properties": {}
-        },
+        "modelDescription": "Returns all available development logs, which includes: build, bundling, and runtime logs. Use this whenever builds fail, errors hit the console, or some app behaviours are suspicious. These logs are the quickest way to find the root cause of most issues.",
         "tags": [
           "react-native",
           "debug"
@@ -151,11 +144,7 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "view_screenshot",
         "name": "view_screenshot",
-        "modelDescription": "Displays a screenshot of the app development viewport. Use this function whenever it is necessary to inspect what the user sees on their mobile device.",
-        "inputSchema": {
-          "type": "object",
-          "properties": {}
-        },
+        "modelDescription": "Capture an up-to-date screenshot of the running app so you can instantly see exactly what the user sees and reason about UI issues or state.",
         "tags": [
           "react-native",
           "debug"
@@ -283,7 +272,7 @@
         "title": "Toggle device appearance (light/dark mode)",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
-      }, 
+      },
       {
         "command": "RNIDE.removeLicense",
         "title": "Remove license",
