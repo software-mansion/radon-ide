@@ -283,7 +283,7 @@
         "title": "Toggle device appearance (light/dark mode)",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
-      }, 
+      },
       {
         "command": "RNIDE.removeLicense",
         "title": "Remove license",
@@ -546,6 +546,12 @@
             "default": true,
             "scope": "window",
             "description": "Enables the Radon AI functionality in the extension."
+          },
+          "RadonIDE.radonAI.enableChatParticipant": {
+            "type": "boolean",
+            "default": false,
+            "scope": "window",
+            "description": "**[deprecated]** Enables `@radon` AI chat participant."
           }
         }
       }
@@ -1182,6 +1188,7 @@
     },
     "chatParticipants": [
       {
+        "when": "RNIDE.chatParticipantEnabled",
         "id": "chat.radon-ai",
         "fullName": "Radon AI",
         "name": "radon",
