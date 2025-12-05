@@ -72,7 +72,7 @@ You configure the Radon AI MCP server from Cursor Settings. There, you can choos
 
 <img width="550" src="/img/docs/ai_cursor_mcp_settings.png" className="shadow-image"/>
 
-Alternatively, you can type and run `"View: Open MCP Settings"` from the Command Palette (Ctrl+Shift+P or Cmd+Shift+P).
+Alternatively, you can type and run "View: Open MCP Settings" from the Command Palette (Ctrl+Shift+P or Cmd+Shift+P).
 
 ## Available tools
 
