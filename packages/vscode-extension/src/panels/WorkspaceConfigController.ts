@@ -46,7 +46,7 @@ export class WorkspaceConfigController implements Disposable {
 
         this.workspaceConfigurationUpdatesToIgnore.push(updatedConfig);
 
-        await updateWorkspaceConfig(config, singleChange);
+        await updateWorkspaceConfig(config, currentWorkspaceConfig, singleChange);
       }
     });
 
