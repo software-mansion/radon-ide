@@ -11,6 +11,7 @@ import {
   REMOVE,
   WorkspaceConfiguration as WorkspaceConfigurationState,
 } from "../common/State";
+import { merge } from "../common/Merge";
 
 const WorkspaceConfigurationKeyMap = {
   general: {
@@ -109,9 +110,14 @@ interface KeyMap {
 
 export async function updateWorkspaceConfig(
   config: WorkspaceConfiguration,
+  currentWorkspaceConfig: WorkspaceConfigurationState,
   change: RecursivePartial<WorkspaceConfigurationState>
 ): Promise<void> {
-  function getConfigEntry<T>(partialState: RecursivePartial<T>, keyMap: KeyMap): [string, any] {
+  function getConfigEntry<T>(
+    partialState: RecursivePartial<T>,
+    currentState: T,
+    keyMap: KeyMap
+  ): [string, any] {
     const entries = Object.entries(partialState);
     if (entries.length > 1) {
       throw new Error("Partial state must have a single leaf");
@@ -123,14 +129,23 @@ export async function updateWorkspaceConfig(
     const [key, value] = entries[0];
 
     if (typeof keyMap[key] === "string") {
-      return [keyMap[key], value];
+      let newValue = value;
+      if (value !== null && typeof value === "object") {
+        newValue = merge((currentState as any)[key], value);
+      }
+      return [keyMap[key], newValue];
     }
 
-    return getConfigEntry<T[keyof T]>(value as RecursivePartial<T[keyof T]>, keyMap[key]);
+    return getConfigEntry<T[keyof T]>(
+      value as RecursivePartial<T[keyof T]>,
+      (currentState as any)[key] as T[keyof T],
+      keyMap[key]
+    );
   }
 
   const configEntry = getConfigEntry<WorkspaceConfigurationState>(
     change,
+    currentWorkspaceConfig,
     WorkspaceConfigurationKeyMap
   );
 
