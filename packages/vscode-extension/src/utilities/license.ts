@@ -262,7 +262,7 @@ async function decodeJWTPayload(token: string): Promise<{
   cp_sub?: string;
   cp_pri?: string;
   cp_fpr?: string;
-  cp_ent?: number;
+  cp_ent?: string;
   cp_usr?: string;
   cp_plan?: string;
   cp_features?: Partial<FeaturesAvailability>;
@@ -298,7 +298,7 @@ async function decodeJWTPayload(token: string): Promise<{
     cp_sub: z.string().optional(),
     cp_pri: z.string().optional(),
     cp_fpr: z.string().optional(),
-    cp_ent: z.number().optional(),
+    cp_ent: z.string().optional(),
     cp_usr: z.string().optional(),
     cp_plan: z.string().optional(),
     cp_features: featuresSchema.optional(),
