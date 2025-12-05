@@ -30,7 +30,6 @@ async function findInComponentTree(
     }
   }
 
-  // TODO: What if element.children is iterable but not an array??? Doesn't this throw
   for (const childId of element.children) {
     const child = getDevtoolsElementByID(childId, store);
 
