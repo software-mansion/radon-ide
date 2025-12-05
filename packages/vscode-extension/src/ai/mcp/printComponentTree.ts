@@ -1,33 +1,9 @@
 import { InspectElementFullData } from "react-devtools-inline";
 import { workspace } from "vscode";
-import { Store } from "../../../third-party/react-devtools/headless";
 import { DeviceSession } from "../../project/deviceSession";
 import { DevtoolsElement } from "./models";
 import { isAppSourceFile } from "../../utilities/isAppSourceFile";
-import { getDevtoolsElementByID } from "./utils";
-
-// This methods finds and returns the `AppWrapper` if said component exists
-function findTreeEntryPoint(store: Store, element: DevtoolsElement): DevtoolsElement | null {
-  if (element.key === "__RNIDE_APP_WRAPPER") {
-    return element;
-  }
-
-  for (const childId of element.children) {
-    const child = getDevtoolsElementByID(childId, store);
-
-    if (!child) {
-      throw new Error(`Component tree is corrupted. Element with ID ${childId} not found.`);
-    }
-
-    const entryPoint = findTreeEntryPoint(store, child);
-
-    if (entryPoint) {
-      return entryPoint;
-    }
-  }
-
-  return null;
-}
+import { findTreeEntryPoint, getDevtoolsElementByID } from "./utils";
 
 function printHocDescriptors(element: DevtoolsElement): string {
   return element.hocDisplayNames ? `\u0020[${element.hocDisplayNames.join(", ")}]` : "";
