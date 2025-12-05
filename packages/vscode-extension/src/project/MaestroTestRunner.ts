@@ -8,6 +8,7 @@ import { DevicePlatform } from "../common/State";
 import { DeviceBase } from "../devices/DeviceBase";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { getOrCreateDeviceSet, IosSimulatorDevice } from "../devices/IosSimulatorDevice";
+import { extensionContext } from "../utilities/extensionContext";
 
 class MaestroPseudoTerminal implements vscode.Pseudoterminal {
   private writeEmitter = new vscode.EventEmitter<string>();
@@ -115,7 +116,7 @@ export class MaestroTestRunner implements Disposable {
     // As a workaround, we replace the xcodebuild command with instructions
     // similar to what Maestro would do in prebuilt mode, and wrap the xcrun
     // command to provide our own device set with the --set flag.
-    const shimPath = path.resolve(__dirname, "..", "scripts", "shims");
+    const shimPath = path.resolve(extensionContext.extensionPath, "shims", "maestro");
     const maestroProcess = exec("maestro", ["--device", this.device.id, "test", ...fileNames], {
       buffer: false,
       reject: true,

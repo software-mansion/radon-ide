@@ -7,6 +7,7 @@ dist/tests/**
 !dist/**
 !lib/**
 !assets/**
+!shims/**
 !LICENSE.txt
 !README.md
 !ThirdPartyNotices.json
