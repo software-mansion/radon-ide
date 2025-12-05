@@ -19,23 +19,42 @@ async function getPathEnv(appRoot: string) {
 
   const shellPath = process.env.SHELL ?? "/bin/zsh";
 
+  // Build a list of commands to run in a chain.
+  // We always have cd and echo, and conditionally include nvm use if available.
+  const commands: string[] = [];
+
+  // Always start with cd to the app root
+  commands.push(`cd "${appRoot}"`);
+
+  // Test if nvm is available and set up correctly with a dry-run.
+  // Only include 'nvm use' in the command chain if this succeeds.
+  try {
+    await execa(
+      shellPath,
+      ["-i", "-l", "-c", `cd "${appRoot}" && type nvm > /dev/null 2>&1 && nvm use`],
+      {
+        extendEnv: false,
+        env: {},
+      }
+    );
+    // If the dry-run succeeds, include nvm use in the command chain
+    commands.push("nvm use");
+  } catch (error) {
+    // nvm is not available or nvm use failed, proceed without it
+    Logger.debug("nvm is not available or not set up correctly, proceeding without nvm");
+  }
+
+  // Always end with echo to capture the PATH
+  commands.push(`echo "${RNIDE_PATH_DELIMITER}$PATH${RNIDE_PATH_DELIMITER}"`);
+
   // Our goal is to determine the PATH variable that would be set when running commands from the application root.
   // To simulate this accurately, we need to avoid inheriting the vscode process's environment variables.
   // Therefore, we explicitly set the environment variable object to empty and disable automatic extension,
   // which would otherwise fill missing variables with those from the currently running process.
-  const { stdout } = await execa(
-    shellPath,
-    [
-      "-i",
-      "-l",
-      "-c",
-      `cd "${appRoot}" && echo "${RNIDE_PATH_DELIMITER}$PATH${RNIDE_PATH_DELIMITER}"`,
-    ],
-    {
-      extendEnv: false,
-      env: {},
-    }
-  );
+  const { stdout } = await execa(shellPath, ["-i", "-l", "-c", commands.join(" && ")], {
+    extendEnv: false,
+    env: {},
+  });
 
   // The approach above is not always loading the whole path as it ignores some setup scripts,
   // like .zprofile for example, to mitigate the effects of that problem we append the PATH
