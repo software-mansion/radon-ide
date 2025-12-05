@@ -75,7 +75,7 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "query_documentation",
         "name": "query_documentation",
-        "modelDescription": "Returns documentation snippets relevant to the provided question. Use this tool whenever the user asks a question, which requires deep knowledge about a specific library, or the react native ecosystem in general. Also use this tool, when it's unclear which library is most suitable to be used for user's use-case.",
+        "modelDescription": "Given a technical question about React Native or related libraries, return concise, accurate, and context-specific documentation snippets, code examples, or library recommendations. Trigger this tool when the user asks for implementation guidance, library selection, or detailed technical explanations.",
         "inputSchema": {
           "type": "object",
           "properties": {
