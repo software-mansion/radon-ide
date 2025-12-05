@@ -120,7 +120,7 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "view_component_tree",
         "name": "view_component_tree",
-        "modelDescription": "Displays the component tree (view hierarchy) of the running app.\nThis tool only displays mounted components, so some parts of the project might not be visible.\nUse this tool when a general overview of the UI is required, such as when resolving layout issues, looking for location of context providers, or looking for relation between the project file structure and project component structure",
+        "modelDescription": "Displays the current component tree (view hierarchy) of the running app. Only mounted components (these visible to the user) appear! Use this tool when you need an overview of the UI, to resolve layout issues, to locate context providers, or associate file structure with the rendered content.",
         "tags": [
           "react-native",
           "debug"
