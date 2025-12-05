@@ -6,6 +6,8 @@ import {
   readLogsToolExec,
   restartDeviceExec,
   screenshotToolExec,
+  touchElementExec,
+  TouchElementRequest,
   viewComponentTreeExec,
 } from "./toolExecutors";
 import { AI_API_PLACEHOLDER_ID, invokeToolCall } from "../shared/api";
@@ -71,6 +73,15 @@ class ViewScreenshotTool implements vscode.LanguageModelTool<EmptyToolArgs> {
   }
 }
 
+class PressElementTool implements vscode.LanguageModelTool<TouchElementRequest> {
+  async invoke(
+    options: vscode.LanguageModelToolInvocationOptions<TouchElementRequest>
+  ): Promise<vscode.LanguageModelToolResult> {
+    const toolResponse = await touchElementExec(options.input);
+    return toolResponseToToolResult(toolResponse);
+  }
+}
+
 class RestartDeviceTool implements vscode.LanguageModelTool<AppReloadRequest> {
   async invoke(
     options: vscode.LanguageModelToolInvocationOptions<AppReloadRequest>
@@ -107,6 +118,8 @@ export function registerStaticTools() {
 
   const viewScreenshotTool = vscode.lm.registerTool("view_screenshot", new ViewScreenshotTool());
 
+  const pressElementTool = vscode.lm.registerTool("press_element", new PressElementTool());
+
   const reloadApplicationTool = vscode.lm.registerTool(
     "reload_application",
     new RestartDeviceTool()
@@ -126,6 +139,7 @@ export function registerStaticTools() {
     queryDocumentationTool,
     libraryDescriptionTool,
     viewScreenshotTool,
+    pressElementTool,
     reloadApplicationTool,
     viewComponentTreeTool,
     viewApplicationLogsTool

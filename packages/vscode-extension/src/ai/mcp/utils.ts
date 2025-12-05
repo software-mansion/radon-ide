@@ -73,7 +73,34 @@ export function toolResponseToToolResult(response: ToolResponse): vscode.Languag
   };
 }
 
-// This util removes the need for type-casting on every `store.getElementByID` call
+/**
+ * Removes the need for type-casting on every `store.getElementByID` call.
+ */
 export function getDevtoolsElementByID(id: number, store: Store): DevtoolsElement | null {
   return store.getElementByID(id) as unknown as DevtoolsElement | null;
+}
+
+/**
+ * Finds and returns the `AppWrapper` in a component tree. Returns `null` if `AppWrapper` couldn't be found.
+ */
+export function findTreeEntryPoint(store: Store, element: DevtoolsElement): DevtoolsElement | null {
+  if (element.key === "__RNIDE_APP_WRAPPER") {
+    return element;
+  }
+
+  for (const childId of element.children) {
+    const child = getDevtoolsElementByID(childId, store);
+
+    if (!child) {
+      throw new Error(`Component tree is corrupted. Element with ID ${childId} not found.`);
+    }
+
+    const entryPoint = findTreeEntryPoint(store, child);
+
+    if (entryPoint) {
+      return entryPoint;
+    }
+  }
+
+  return null;
 }
