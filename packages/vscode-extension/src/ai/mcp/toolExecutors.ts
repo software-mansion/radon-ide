@@ -63,13 +63,19 @@ export async function touchElementExec(input: TouchElementRequest): Promise<Tool
   try {
     const store = project.deviceSession.devtoolsStore;
     const root = tryGetTreeRoot(store);
+
     const entryPoint = findTreeEntryPoint(store, root);
 
     if (!entryPoint) {
       return textToToolResponse("Element could not be found! [**THIS IS A PLACEHOLDER**]");
     }
 
-    const element = findInComponentTree(project.deviceSession, store, root, input.elementText);
+    const element = await findInComponentTree(
+      project.deviceSession,
+      store,
+      root,
+      input.elementText
+    );
 
     if (!element) {
       return textToToolResponse("Element could not be found! [**THIS IS A PLACEHOLDER**]");
