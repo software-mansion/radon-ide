@@ -269,9 +269,9 @@ async function decodeJWTPayload(token: string): Promise<{
 } | null> {
   // Zod schema for runtime validation of features object
   const featureAvailabilityStatusSchema = z.enum([
-    FeatureAvailabilityStatus.AVAILABLE.toString(),
-    FeatureAvailabilityStatus.PAYWALLED.toString(),
-    FeatureAvailabilityStatus.ADMIN_DISABLED.toString(),
+    FeatureAvailabilityStatus.AVAILABLE,
+    FeatureAvailabilityStatus.PAYWALLED,
+    FeatureAvailabilityStatus.ADMIN_DISABLED,
   ]);
 
   const featuresSchema = z.record(z.string(), z.unknown()).transform((obj) => {

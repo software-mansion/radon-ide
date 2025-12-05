@@ -10,14 +10,7 @@ import { useModal } from "../providers/ModalProvider";
 import ManageDevicesView from "../views/ManageDevicesView";
 import RichSelectItem from "./shared/RichSelectItem";
 import { useStore } from "../providers/storeProvider";
-import {
-  AndroidEmulatorInfo,
-  AndroidPhysicalDeviceInfo,
-  DeviceInfo,
-  DevicePlatform,
-  DeviceType,
-  IOSDeviceInfo,
-} from "../../common/State";
+import { DeviceInfo, DevicePlatform, DeviceType } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { Feature } from "../../common/License";
@@ -26,9 +19,9 @@ import { PropsWithDataTest } from "../../common/types";
 import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
 
 enum DeviceSection {
-  PhysicalAndroid = "PhysicalAndroid",
-  AndroidEmulator = "AndroidEmulator",
   IosSimulator = "IosSimulator",
+  AndroidEmulator = "AndroidEmulator",
+  PhysicalAndroid = "PhysicalAndroid",
 }
 
 const DeviceSectionLabels: Record<DeviceSection, string> = {
@@ -217,10 +210,7 @@ function DeviceSelect() {
     }
   };
 
-  const isAdminDisabledDeviceSections = ([section]: [
-    string,
-    IOSDeviceInfo[] | AndroidEmulatorInfo[] | AndroidPhysicalDeviceInfo[],
-  ]): boolean => {
+  const isAdminDisabledDeviceSections = (section: DeviceSection): boolean => {
     const isRemoteAndroidAdminDisabled = useIsFeatureAdminDisabled(Feature.AndroidPhysicalDevice);
     return !(section === DeviceSection.PhysicalAndroid && isRemoteAndroidAdminDisabled);
   };
@@ -267,12 +257,12 @@ function DeviceSelect() {
             <span className="codicon codicon-chevron-up" />
           </Select.ScrollUpButton>
           <Select.Viewport className="device-select-viewport">
-            {Object.entries(deviceSections)
+            {Object.values(DeviceSection)
               .filter(isAdminDisabledDeviceSections)
-              .map(([section, sectionDevices]) =>
+              .map((section) =>
                 renderDevices(
-                  DeviceSectionLabels[section as DeviceSection],
-                  sectionDevices,
+                  DeviceSectionLabels[section],
+                  deviceSections[section],
                   selectedDevice,
                   runningSessionIds,
                   handleDeviceStop

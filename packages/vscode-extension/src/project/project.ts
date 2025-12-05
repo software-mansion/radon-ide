@@ -476,7 +476,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         status: LicenseStatus.Inactive,
         featuresAvailability: DefaultFeaturesAvailability,
       });
-      commands.executeCommand("setContext", "RNIDE.licenseActive", false);
       return;
     }
 
@@ -491,11 +490,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       newState.featuresAvailability = validationResult.featuresAvailability;
     }
 
-    commands.executeCommand(
-      "setContext",
-      "RNIDE.licenseActive",
-      newState.status !== LicenseStatus.Inactive
-    );
     this.licenseStateManager.updateState(newState);
   };
 

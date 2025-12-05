@@ -167,7 +167,7 @@ class RadonMcpController implements Disposable {
 
   // used in callbacks needs to be an arrow function
   private updateAvailability = (newRadonAIAvailabilityStatus?: FeatureAvailabilityStatus) => {
-    if (newRadonAIAvailabilityStatus) {
+    if (newRadonAIAvailabilityStatus !== undefined) {
       this.radonAvailabilityStatus = newRadonAIAvailabilityStatus;
     }
 
