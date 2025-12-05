@@ -5,6 +5,7 @@ import { getTelemetryReporter } from "../../utilities/telemetry";
 import { getChatHistory } from "./history";
 import { getReactNativePackagesPrompt } from "./packages";
 import { getSystemPrompt, invokeToolCall } from "../shared/api";
+import { FeatureAvailabilityStatus } from "../../common/License";
 
 export const CHAT_PARTICIPANT_ID = "chat.radon-ai";
 const TOOLS_INTERACTION_LIMIT = 3;
@@ -50,7 +51,10 @@ async function processChatResponse(
   return [];
 }
 
-export function registerRadonChat(context: vscode.ExtensionContext, enableRadonAI: boolean) {
+export function registerRadonChat(
+  context: vscode.ExtensionContext,
+  options: { isAiEnabledInSettings: boolean; radonAvailabilityStatus: FeatureAvailabilityStatus }
+) {
   const chatHandler: vscode.ChatRequestHandler = async (
     request,
     chatContext,
@@ -61,9 +65,15 @@ export function registerRadonChat(context: vscode.ExtensionContext, enableRadonA
     Logger.info(CHAT_LOG, "Chat requested");
     getTelemetryReporter().sendTelemetryEvent("radon-chat:requested");
 
-    if (!enableRadonAI) {
-      const msg =
+    const { isAiEnabledInSettings, radonAvailabilityStatus } = options;
+
+    if (!isAiEnabledInSettings || radonAvailabilityStatus !== FeatureAvailabilityStatus.AVAILABLE) {
+      let msg =
         "You have disabled radon AI. You can enable it using 'Radon IDE: Enable Radon AI' setting in your editor.";
+      if (radonAvailabilityStatus === FeatureAvailabilityStatus.ADMIN_DISABLED) {
+        msg =
+          "Your license administrator has disabled this functionality, please contact them to enable it.";
+      }
       Logger.warn(CHAT_LOG, msg);
       getTelemetryReporter().sendTelemetryEvent("radon-chat:radon-ai-disabled", { error: msg });
       stream.markdown(msg);

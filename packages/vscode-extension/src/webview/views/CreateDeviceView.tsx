@@ -14,13 +14,13 @@ import { Input } from "../components/shared/Input";
 import { useDependencyErrors } from "../hooks/useDependencyErrors";
 import { useStore } from "../providers/storeProvider";
 import { Platform, useProject } from "../providers/ProjectProvider";
-import { RestrictedFunctionalityError } from "../../common/Errors";
-import { usePaywall } from "../hooks/usePaywall";
 import {
-  Feature,
-  FeatureAvailabilityStatus,
-  getFeatureAvailabilityStatus,
-} from "../../common/License";
+  AdminRestrictedFunctionalityError,
+  PaywalledFunctionalityError,
+} from "../../common/Errors";
+import { usePaywall } from "../hooks/usePaywall";
+import { FeatureAvailabilityStatus } from "../../common/License";
+import { useAdminBlock } from "../hooks/useAdminBlock";
 
 interface CreateDeviceViewProps {
   onCreate: () => void;
@@ -31,10 +31,11 @@ function useSupportedDevices() {
   const store$ = useStore();
   const iOSRuntimes = use$(store$.devicesState.iOSRuntimes) ?? [];
 
-  const licenseStatus = use$(store$.license.status);
-  const hasAccessToIPads =
-    getFeatureAvailabilityStatus(licenseStatus, Feature.IOSTabletSimulators) ===
-    FeatureAvailabilityStatus.Available;
+  const hasAccessToIPads = use$(
+    () =>
+      store$.license.featuresAvailability.IOSTabletSimulators.get() ===
+      FeatureAvailabilityStatus.AVAILABLE
+  );
 
   const errors = useDependencyErrors();
 
@@ -79,6 +80,7 @@ export function formatDisplayName(name: string) {
 
 function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
   const { openPaywall } = usePaywall();
+  const { openAdminBlock } = useAdminBlock();
 
   const [deviceProperties, setDeviceProperties] = useState<DeviceProperties | undefined>(undefined);
   const [selectedSystemName, selectSystemName] = useState<string>("");
@@ -153,8 +155,12 @@ function CreateDeviceView({ onCreate, onCancel }: CreateDeviceViewProps) {
         );
       }
     } catch (e) {
-      if (e instanceof RestrictedFunctionalityError) {
+      if (e instanceof PaywalledFunctionalityError) {
         openPaywall();
+        return;
+      }
+      if (e instanceof AdminRestrictedFunctionalityError) {
+        openAdminBlock();
         return;
       }
     } finally {

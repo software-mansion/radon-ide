@@ -1,54 +1,20 @@
 // #region License Helpers
+
 export enum FeatureAvailabilityStatus {
-  Available,
-  InsufficientLicense,
-}
-
-export function getFeatureAvailabilityStatus(
-  licenseStatus: LicenseStatus,
-  feature: Feature
-): FeatureAvailabilityStatus {
-  switch (licenseStatus) {
-    case LicenseStatus.Inactive:
-    case LicenseStatus.Free:
-      return FreeFeatures.has(feature)
-        ? FeatureAvailabilityStatus.Available
-        : FeatureAvailabilityStatus.InsufficientLicense;
-    case LicenseStatus.Pro:
-      return ProFeatures.has(feature)
-        ? FeatureAvailabilityStatus.Available
-        : FeatureAvailabilityStatus.InsufficientLicense;
-    case LicenseStatus.Team:
-      return TeamFeatures.has(feature)
-        ? FeatureAvailabilityStatus.Available
-        : FeatureAvailabilityStatus.InsufficientLicense;
-    case LicenseStatus.Enterprise:
-      return EnterpriseFeatures.has(feature)
-        ? FeatureAvailabilityStatus.Available
-        : FeatureAvailabilityStatus.InsufficientLicense;
-    default:
-      return FeatureAvailabilityStatus.InsufficientLicense;
-  }
-}
-
-export function getLicensesForFeature(feature: Feature) {
-  const hasAccess = (license: LicenseStatus) =>
-    getFeatureAvailabilityStatus(license, feature) === FeatureAvailabilityStatus.Available;
-  const licenses = [
-    LicenseStatus.Free,
-    LicenseStatus.Pro,
-    LicenseStatus.Team,
-    LicenseStatus.Enterprise,
-  ];
-  return licenses.filter(hasAccess);
+  AVAILABLE = "AVAILABLE",
+  PAYWALLED = "PAYWALLED",
+  ADMIN_DISABLED = "ADMIN_DISABLED",
 }
 
 // #endregion License Helpers
 
 // #region License State
 
+export type FeaturesAvailability = { [F in Feature]: FeatureAvailabilityStatus };
+
 export type LicenseState = {
   status: LicenseStatus;
+  featuresAvailability: FeaturesAvailability;
 };
 
 export enum LicenseStatus {
@@ -112,51 +78,43 @@ export enum Feature {
 
 // #endregion Features
 
-// #region Feature By License
+// #region Default Features Availability
 
-export const FreeFeatures: Set<Feature> = new Set<Feature>([
-  Feature.AndroidSmartphoneEmulators,
-  Feature.AppSwitcherButton,
-  Feature.ComponentPreview,
-  Feature.Debugger,
-  Feature.DeviceAppearanceSettings,
-  Feature.DeviceFontSizeSettings,
-  Feature.ElementInspector,
-  Feature.ExpoRouterIntegration,
-  Feature.HomeButton,
-  Feature.IOSSmartphoneSimulators,
-  Feature.JSLogging,
-  Feature.JSProfiler,
-  Feature.NetworkInspection,
-  Feature.OpenDeepLink,
-  Feature.OutlineRenders,
-  Feature.ReactProfiler,
-  Feature.ReactQueryDevTools,
-  Feature.RadonConnect,
-  Feature.ReduxDevTools,
-  Feature.VolumeButtons,
-]);
-
-export const ProFeatures: Set<Feature> = new Set<Feature>([
-  Feature.AndroidTabletEmulators,
-  Feature.AndroidPhysicalDevice,
-  Feature.Biometrics,
-  Feature.DeviceLocalizationSettings,
-  Feature.DeviceRotation,
-  Feature.IOSTabletSimulators,
-  Feature.LocationSimulation,
-  Feature.Permissions,
-  Feature.RadonAI,
-  Feature.ScreenRecording,
-  Feature.ScreenReplay,
-  Feature.Screenshot,
-  Feature.SendFile,
-  Feature.StorybookIntegration,
-  ...FreeFeatures,
-]);
-
-export const TeamFeatures: Set<Feature> = new Set<Feature>([...ProFeatures]);
-
-export const EnterpriseFeatures: Set<Feature> = new Set<Feature>([...TeamFeatures]);
+export const DefaultFeaturesAvailability = {
+  [Feature.AndroidSmartphoneEmulators]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.AndroidTabletEmulators]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.AndroidPhysicalDevice]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.AppSwitcherButton]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.Biometrics]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.ComponentPreview]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.Debugger]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.DeviceAppearanceSettings]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.DeviceFontSizeSettings]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.DeviceLocalizationSettings]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.DeviceRotation]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.ElementInspector]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.ExpoRouterIntegration]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.HomeButton]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.IOSSmartphoneSimulators]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.IOSTabletSimulators]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.JSLogging]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.JSProfiler]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.LocationSimulation]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.NetworkInspection]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.OpenDeepLink]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.OutlineRenders]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.Permissions]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.ReactProfiler]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.ReactQueryDevTools]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.RadonConnect]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.RadonAI]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.ReduxDevTools]: FeatureAvailabilityStatus.AVAILABLE,
+  [Feature.ScreenRecording]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.ScreenReplay]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.Screenshot]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.SendFile]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.StorybookIntegration]: FeatureAvailabilityStatus.PAYWALLED,
+  [Feature.VolumeButtons]: FeatureAvailabilityStatus.AVAILABLE,
+};
 
 // #endregion Feature By License

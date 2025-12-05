@@ -5,7 +5,7 @@ import { Frame, InspectDataStackItem } from "../../common/Project";
 import { DeviceProperties } from "../utilities/deviceConstants";
 import "./InspectDataMenu.css";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
-import { Feature } from "../../common/License";
+import { Feature, FeatureAvailabilityStatus } from "../../common/License";
 import { useStore } from "../providers/storeProvider";
 import { useProject } from "../providers/ProjectProvider";
 
@@ -116,7 +116,11 @@ export function InspectDataMenu({
   );
 
   const store$ = useStore();
-  const radonAIEnabled = use$(store$.workspaceConfiguration.radonAI.enableRadonAI);
+  const radonAIEnabled = use$(
+    () =>
+      store$.workspaceConfiguration.radonAI.enableRadonAI.get() &&
+      store$.license.featuresAvailability.RadonAI.get() === FeatureAvailabilityStatus.AVAILABLE
+  );
 
   return (
     <DropdownMenu.Root

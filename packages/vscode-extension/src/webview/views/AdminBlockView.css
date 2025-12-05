@@ -1,0 +1,107 @@
+.modal-content:has(.admin-block-view) {
+  padding: 0;
+  border: none;
+
+  .modal-content-container {
+    height: 100%;
+  }
+}
+
+.admin-block-view {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.admin-block-container {
+  max-width: 400px;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  padding: 25px;
+}
+
+.admin-block-title {
+  font-size: 32px;
+  font-weight: 600;
+  margin-bottom: 32px;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: adminBlockFadeInUp 0.4s ease-out forwards;
+}
+
+.admin-block-icon {
+  font-size: 64px;
+  color: var(--vscode-errorForeground);
+  margin-bottom: 24px;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: adminBlockFadeInUp 0.4s ease-out forwards;
+  animation-delay: 200ms;
+}
+
+.admin-block-message {
+  margin: 32px 0;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: adminBlockFadeInUp 0.4s ease-out forwards;
+  animation-delay: 400ms;
+}
+
+.admin-block-message p {
+  font-size: 14px;
+  line-height: 1.6;
+  margin-bottom: 16px;
+  color: var(--vscode-foreground);
+}
+
+.admin-block-message strong {
+  color: var(--vscode-editor-foreground);
+  font-weight: 600;
+}
+
+.admin-block-button {
+  box-sizing: border-box;
+  padding: 12px 24px;
+  margin-top: 16px;
+  font-size: 16px;
+  height: unset;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(12px);
+  animation: adminBlockFadeInUp 0.3s ease-out forwards;
+  animation-delay: 600ms;
+  border-color: var(--vscode-editor-foreground);
+  border-width: 2px;
+  background-color: transparent;
+  color: var(--vscode-editor-foreground);
+}
+
+.admin-block-button:hover {
+  border-color: var(--swm-button-hover);
+  color: var(--swm-button);
+}
+
+.admin-block-background-image {
+  width: 100%;
+  position: absolute;
+  top: -20%;
+  right: -50%;
+  z-index: -1;
+}
+
+.admin-block-background-image path {
+  stroke: var(--vscode-badge-background);
+}
+
+@keyframes adminBlockFadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,10 +1,12 @@
-import { LicenseStatus } from "./License";
+export class PaywalledFunctionalityError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RestrictedFunctionalityError";
+  }
+}
 
-export class RestrictedFunctionalityError extends Error {
-  constructor(
-    message: string,
-    public readonly allowedUsers: LicenseStatus[]
-  ) {
+export class AdminRestrictedFunctionalityError extends Error {
+  constructor(message: string) {
     super(message);
     this.name = "RestrictedFunctionalityError";
   }
@@ -25,8 +27,9 @@ export class AuthorizationError extends Error {
 }
 
 export const ErrorTypeGetters = {
+  AdminRestrictedFunctionalityError: AdminRestrictedFunctionalityError,
   Error: Error,
-  RestrictedFunctionalityError: RestrictedFunctionalityError,
+  PaywalledFunctionalityError: PaywalledFunctionalityError,
   TimeoutError: TimeoutError,
 } as const;
 

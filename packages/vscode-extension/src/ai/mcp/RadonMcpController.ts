@@ -15,6 +15,13 @@ import { LocalMcpServer } from "./LocalMcpServer";
 import { disposeAll } from "../../utilities/disposables";
 import { extensionContext } from "../../utilities/extensionContext";
 import { cleanupOldMcpConfigEntries } from "./configFileHelper";
+import {
+  checkLicenseToken,
+  getLicenseToken,
+  SimServerLicenseValidationStatus,
+  watchLicenseTokenChange,
+} from "../../utilities/license";
+import { FeatureAvailabilityStatus } from "../../common/License";
 import { registerRadonChat } from "../chat";
 import { getEditorType, EditorType } from "../../utilities/editorType";
 import { registerStaticTools } from "./toolRegistration";
@@ -92,15 +99,43 @@ export function isAiEnabledInSettings() {
   return workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabledBoolean") ?? true;
 }
 
+async function radonAIAvailabilityStatus() {
+  const token = await getLicenseToken();
+  if (!token) {
+    return FeatureAvailabilityStatus.PAYWALLED;
+  }
+  const checkLicenseTokenResult = await checkLicenseToken(token);
+  const isTokenValid = checkLicenseTokenResult.status === SimServerLicenseValidationStatus.Success;
+
+  if (!isTokenValid) {
+    return FeatureAvailabilityStatus.PAYWALLED;
+  }
+
+  return checkLicenseTokenResult.featuresAvailability.RadonAI;
+}
+
 class RadonMcpController implements Disposable {
   private server: LocalMcpServer | undefined = undefined;
+  private radonAvailabilityStatus: FeatureAvailabilityStatus;
   private serverChangedEmitter = new EventEmitter<void>();
   private disposables: Disposable[] = [];
 
-  constructor(context: ExtensionContext) {
-    const radonAiEnabled = isAiEnabledInSettings();
-    setGlobalEnableAI(radonAiEnabled);
-    registerRadonChat(context, radonAiEnabled);
+  public static async initialize(context: ExtensionContext) {
+    const radonAvailabilityStatus = await radonAIAvailabilityStatus();
+
+    return new RadonMcpController(context, {
+      isAiEnabledInSettings: isAiEnabledInSettings(),
+      radonAvailabilityStatus,
+    });
+  }
+
+  constructor(
+    context: ExtensionContext,
+    options: { isAiEnabledInSettings: boolean; radonAvailabilityStatus: FeatureAvailabilityStatus }
+  ) {
+    this.radonAvailabilityStatus = options.radonAvailabilityStatus;
+
+    registerRadonChat(context, options);
 
     const useStaticRegistering = shouldUseDirectRegistering();
     setGlobalUseDirectToolRegistering(useStaticRegistering);
@@ -112,31 +147,45 @@ class RadonMcpController implements Disposable {
       // We don't bother with de-registering and re-registering static tools, as the resource gain from doing so is minimal,
       // while complicating the logic by a lot. Tool availability is already reliably toggled via `setGlobalEnableAI`.
       this.disposables.push(registerStaticTools());
-    } else {
-      if (radonAiEnabled) {
-        this.enableServer();
-      }
     }
 
+    this.updateAvailability();
+
     this.disposables.push(
-      workspace.onDidChangeConfiguration((event) => {
-        if (event.affectsConfiguration("RadonIDE.radonAI.enabledBoolean")) {
-          const newIsAiEnabled = isAiEnabledInSettings();
+      workspace.onDidChangeConfiguration(() => {
+        this.updateAvailability();
+      })
+    );
 
-          // `setGlobalEnableAI` sets availability of both static and local server tools.
-          setGlobalEnableAI(newIsAiEnabled);
-
-          if (!useStaticRegistering) {
-            if (newIsAiEnabled) {
-              this.enableServer();
-            } else {
-              this.disableServer();
-            }
-          }
-        }
+    this.disposables.push(
+      watchLicenseTokenChange(async () => {
+        const newRadonAIAvailabilityStatus = await radonAIAvailabilityStatus();
+        this.updateAvailability(newRadonAIAvailabilityStatus);
       })
     );
   }
+
+  // used in callbacks needs to be an arrow function
+  private updateAvailability = (newRadonAIAvailabilityStatus?: FeatureAvailabilityStatus) => {
+    if (newRadonAIAvailabilityStatus !== undefined) {
+      this.radonAvailabilityStatus = newRadonAIAvailabilityStatus;
+    }
+
+    const radonAiEnabled =
+      isAiEnabledInSettings() &&
+      this.radonAvailabilityStatus === FeatureAvailabilityStatus.AVAILABLE;
+
+    // `setGlobalEnableAI` sets availability of both static and local server tools.
+    setGlobalEnableAI(radonAiEnabled);
+
+    if (!shouldUseDirectRegistering()) {
+      if (radonAiEnabled) {
+        this.enableServer();
+      } else {
+        this.disableServer();
+      }
+    }
+  };
 
   private enableServer() {
     this.server = new LocalMcpServer();
@@ -192,6 +241,6 @@ class RadonMcpController implements Disposable {
   }
 }
 
-export function registerRadonAI(context: ExtensionContext) {
-  return new RadonMcpController(context);
+export async function registerRadonAI(context: ExtensionContext) {
+  return RadonMcpController.initialize(context);
 }

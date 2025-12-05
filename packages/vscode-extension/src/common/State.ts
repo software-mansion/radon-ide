@@ -1,6 +1,6 @@
 import { ApplicationRoot } from "./AppRootConfig";
 import { BuildType } from "./BuildConfig";
-import { LicenseState, LicenseStatus } from "./License";
+import { DefaultFeaturesAvailability, LicenseState, LicenseStatus } from "./License";
 import { merge } from "./Merge";
 import { DeviceId } from "./Project";
 
@@ -601,6 +601,7 @@ export const initialState: State = {
   environmentDependencies: {},
   license: {
     status: LicenseStatus.Inactive,
+    featuresAvailability: DefaultFeaturesAvailability,
   },
   projectState: {
     applicationContext: {

@@ -36,22 +36,27 @@ import { launchConfigurationFromOptions } from "./project/launchConfigurationsMa
 import { isIdeConfig } from "./utilities/launchConfiguration";
 import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
-import { RestrictedFunctionalityError } from "./common/Errors";
-import { MaestroCodeLensProvider } from "./providers/MaestroCodeLensProvider";
+import { AdminRestrictedFunctionalityError, PaywalledFunctionalityError } from "./common/Errors";
 import { registerRadonAI } from "./ai/mcp/RadonMcpController";
+import { MaestroCodeLensProvider } from "./providers/MaestroCodeLensProvider";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
-function wrapPaywalledFunction<F extends (...args: any[]) => Promise<void> | void>(
+function wrapGuardedFunction<F extends (...args: any[]) => Promise<void> | void>(
   fn: F,
-  messageOnRestricted: string
+  messageOnPaywalled: string,
+  messageOnAdminRestricted: string
 ) {
   return async (...args: Parameters<F>) => {
     try {
       await fn(...args);
     } catch (e) {
-      if (e instanceof RestrictedFunctionalityError) {
-        window.showInformationMessage(messageOnRestricted);
+      if (e instanceof PaywalledFunctionalityError) {
+        window.showInformationMessage(messageOnPaywalled);
+        return;
+      }
+      if (e instanceof AdminRestrictedFunctionalityError) {
+        window.showInformationMessage(messageOnAdminRestricted);
         return;
       }
       throw e;
@@ -175,18 +180,22 @@ export async function activate(context: ExtensionContext) {
       });
   }
 
-  const showStorybookStory = wrapPaywalledFunction(async function (
-    componentTitle: string,
-    storyName: string
-  ) {
-    commands.executeCommand("RNIDE.openPanel");
-    const ide = IDE.getInstanceIfExists();
-    if (ide) {
-      ide.project.showStorybookStory(componentTitle, storyName);
-    } else {
-      window.showWarningMessage("Wait for the app to load before launching storybook.", "Dismiss");
-    }
-  }, "Storybook integration is a Pro feature. Please upgrade your plan to access it.");
+  const showStorybookStory = wrapGuardedFunction(
+    async function (componentTitle: string, storyName: string) {
+      commands.executeCommand("RNIDE.openPanel");
+      const ide = IDE.getInstanceIfExists();
+      if (ide) {
+        ide.project.showStorybookStory(componentTitle, storyName);
+      } else {
+        window.showWarningMessage(
+          "Wait for the app to load before launching storybook.",
+          "Dismiss"
+        );
+      }
+    },
+    "Storybook integration is a Pro feature. Please upgrade your plan to access it.",
+    "Storybook integration was restricted by your administrator. Please contact them to enable this functionality."
+  );
 
   async function showInlinePreview(fileName: string, lineNumber: number) {
     commands.executeCommand("RNIDE.openPanel");
@@ -380,7 +389,7 @@ export async function activate(context: ExtensionContext) {
     })
   );
 
-  context.subscriptions.push(registerRadonAI(context));
+  context.subscriptions.push(await registerRadonAI(context));
 
   const shouldExtensionActivate = findAppRootFolder() !== undefined;
 
@@ -434,13 +443,21 @@ async function openDevMenu() {
   IDE.getInstanceIfExists()?.project.openDevMenu();
 }
 
-const performBiometricAuthorization = wrapPaywalledFunction(async function () {
-  await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
-}, "Biometric authentication is a Pro feature. Please upgrade your plan to access it.");
+const performBiometricAuthorization = wrapGuardedFunction(
+  async function () {
+    await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(true);
+  },
+  "Biometric authentication is a Pro feature. Please upgrade your plan to access it.",
+  "Biometric authentication was restricted by your administrator. Please contact them to enable this functionality."
+);
 
-const performFailedBiometricAuthorization = wrapPaywalledFunction(async function () {
-  await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
-}, "Biometric authentication is a Pro feature. Please upgrade your plan to access it.");
+const performFailedBiometricAuthorization = wrapGuardedFunction(
+  async function () {
+    await IDE.getInstanceIfExists()?.project.sendBiometricAuthorization(false);
+  },
+  "Biometric authentication is a Pro feature. Please upgrade your plan to access it.",
+  "Biometric authentication was restricted by your administrator. Please contact them to enable this functionality."
+);
 
 async function deviceHomeButtonPress() {
   const project = IDE.getInstanceIfExists()?.project;
@@ -476,13 +493,17 @@ async function captureScreenshot() {
   IDE.getInstanceIfExists()?.project.captureScreenshot();
 }
 
-const rotateDevice = wrapPaywalledFunction(async function (direction: DeviceRotationDirection) {
-  const project = IDE.getInstanceIfExists()?.project;
-  if (!project) {
-    throw new Error("Radon IDE is not initialized yet.");
-  }
-  await project.rotateDevices(direction);
-}, "Device rotation is a Pro feature. Please upgrade your plan to access it.");
+const rotateDevice = wrapGuardedFunction(
+  async function (direction: DeviceRotationDirection) {
+    const project = IDE.getInstanceIfExists()?.project;
+    if (!project) {
+      throw new Error("Radon IDE is not initialized yet.");
+    }
+    await project.rotateDevices(direction);
+  },
+  "Device rotation is a Pro feature. Please upgrade your plan to access it.",
+  "Device rotation was restricted by your administrator. Please contact them to enable this functionality."
+);
 
 async function rotateDeviceAnticlockwise() {
   await rotateDevice(DeviceRotationDirection.Anticlockwise);

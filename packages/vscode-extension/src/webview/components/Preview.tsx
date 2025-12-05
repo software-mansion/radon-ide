@@ -37,6 +37,8 @@ import {
 } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { ActivateLicenseMessage } from "./ActivateLicenseMessage";
+import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
+import { Feature } from "../../common/License";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -128,6 +130,8 @@ function Preview({
   });
 
   const isRunning = selectedDeviceSessionStatus === "running";
+
+  const isSendFilesAdminDisabled = useIsFeatureAdminDisabled(Feature.SendFile);
 
   const isRefreshing = use$(() =>
     isRunning ? selectedDeviceSessionState.applicationSession.isRefreshing.get() : false
@@ -624,7 +628,7 @@ function Preview({
                 data-testid="phone-screen"
               />
               <RenderOutlinesOverlay />
-              {isRunning && <SendFilesOverlay />}
+              {isRunning && !isSendFilesAdminDisabled && <SendFilesOverlay />}
               {replayData && <ReplayUI onClose={onReplayClose} replayData={replayData} />}
 
               {isMultiTouching && (

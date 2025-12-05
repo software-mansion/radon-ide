@@ -1,11 +1,19 @@
 import fetch, { Response } from "node-fetch";
+import { z } from "zod";
 import { extensionContext } from "./extensionContext";
 import { exec } from "./subprocess";
 import { Logger } from "../Logger";
 import { simulatorServerBinary } from "./simulatorServerBinary";
 import { ActivateDeviceResult } from "../common/Project";
 import { throttleAsync } from "./throttle";
-import { getLicenseStatusFromString, LicenseStatus } from "../common/License";
+import {
+  DefaultFeaturesAvailability,
+  Feature,
+  FeatureAvailabilityStatus,
+  FeaturesAvailability,
+  getLicenseStatusFromString,
+  LicenseStatus,
+} from "../common/License";
 
 const TOKEN_KEY = "RNIDE_license_token_key";
 const TOKEN_KEY_TIMESTAMP = "RNIDE_license_token_key_timestamp";
@@ -37,6 +45,7 @@ export type SimServerLicenseValidationResult =
   | {
       status: SimServerLicenseValidationStatus.Success;
       licensePlan: LicenseStatus;
+      featuresAvailability: FeaturesAvailability;
     }
   | {
       status: Exclude<SimServerLicenseValidationStatus, SimServerLicenseValidationStatus.Success>;
@@ -180,15 +189,52 @@ export function watchLicenseTokenChange(callback: (token: string | undefined) =>
   });
 }
 
-export async function checkLicenseToken(token: string): Promise<SimServerLicenseValidationResult> {
+export async function checkLicenseToken(
+  token: string,
+  isRetry: boolean = false
+): Promise<SimServerLicenseValidationResult> {
   const simControllerBinary = simulatorServerBinary();
   const { stdout } = await exec(simControllerBinary, ["verify_token", token]);
 
   if (stdout.startsWith("token_valid")) {
     const licensePlan = stdout.split(" ", 2)[1];
+    const tokenPayload = await decodeJWTPayload(token);
+
+    let featuresAvailability = { ...DefaultFeaturesAvailability };
+
+    if (tokenPayload && tokenPayload.cp_features) {
+      const allFeatures = Object.values(Feature);
+      const tokenFeatures = Object.keys(tokenPayload.cp_features);
+      const missingFeatures = allFeatures.filter((feature) => !tokenFeatures.includes(feature));
+
+      if (missingFeatures.length > 0 && !isRetry) {
+        Logger.warn(
+          `Token is missing ${missingFeatures.length} features: ${missingFeatures.join(", ")}. Attempting to refresh token.`
+        );
+        await refreshToken(token);
+
+        const refreshedToken = await getLicenseToken();
+        if (refreshedToken && refreshedToken !== token) {
+          return checkLicenseToken(refreshedToken, true);
+        }
+      }
+
+      featuresAvailability = {
+        ...DefaultFeaturesAvailability,
+        ...tokenPayload.cp_features,
+      };
+
+      if (missingFeatures.length > 0 && isRetry) {
+        Logger.warn(
+          `Token still missing ${missingFeatures.length} features after refresh. Using defaults for: ${missingFeatures.join(", ")}`
+        );
+      }
+    }
+
     return {
       status: SimServerLicenseValidationStatus.Success,
       licensePlan: getLicenseStatusFromString(licensePlan),
+      featuresAvailability,
     };
   } else {
     try {
@@ -209,6 +255,81 @@ export async function checkLicenseToken(token: string): Promise<SimServerLicense
     return {
       status: SimServerLicenseValidationStatus.Corrupted,
     };
+  }
+}
+
+async function decodeJWTPayload(token: string): Promise<{
+  cp_sub?: string;
+  cp_pri?: string;
+  cp_fpr?: string;
+  cp_ent?: number;
+  cp_usr?: string;
+  cp_plan?: string;
+  cp_features?: Partial<FeaturesAvailability>;
+} | null> {
+  // Zod schema for runtime validation of features object
+  const featureAvailabilityStatusSchema = z.enum([
+    FeatureAvailabilityStatus.AVAILABLE,
+    FeatureAvailabilityStatus.PAYWALLED,
+    FeatureAvailabilityStatus.ADMIN_DISABLED,
+  ]);
+
+  const featuresSchema = z.record(z.string(), z.unknown()).transform((obj) => {
+    const result: Partial<FeaturesAvailability> = {};
+
+    for (const [key, value] of Object.entries(obj)) {
+      if (!Object.values(Feature).includes(key as Feature)) {
+        continue;
+      }
+
+      // Validate the value is a valid FeatureAvailabilityStatus
+      const validationResult = featureAvailabilityStatusSchema.safeParse(value);
+      if (validationResult.success) {
+        result[key as Feature] = validationResult.data as FeatureAvailabilityStatus;
+      } else {
+        Logger.warn(`Invalid FeatureAvailabilityStatus value for feature ${key}: ${value}`);
+      }
+    }
+
+    return result;
+  });
+
+  const payloadSchema = z.object({
+    cp_sub: z.string().optional(),
+    cp_pri: z.string().optional(),
+    cp_fpr: z.string().optional(),
+    cp_ent: z.number().optional(),
+    cp_usr: z.string().optional(),
+    cp_plan: z.string().optional(),
+    cp_features: featuresSchema.optional(),
+  });
+
+  try {
+    // JWT format: header.payload.signature (all base64url)
+    const parts = token.split(".");
+    if (parts.length < 2) {
+      Logger.warn("Invalid JWT format: expected at least 2 parts");
+      return null;
+    }
+
+    const payloadB64Url = parts[1];
+    // Convert base64url to base64
+    const base64 = payloadB64Url.replace(/-/g, "+").replace(/_/g, "/");
+    // Pad base64 if necessary
+    const padded = base64 + "===".slice((base64.length + 3) % 4);
+    const json = Buffer.from(padded, "base64").toString("utf8");
+    const parsed = JSON.parse(json) as unknown;
+
+    const result = payloadSchema.safeParse(parsed);
+    if (!result.success) {
+      Logger.warn("JWT payload validation failed:", result.error.issues);
+      return null;
+    }
+
+    return result.data;
+  } catch (e) {
+    Logger.warn("Failed to decode JWT payload", e);
+    return null;
   }
 }
 
