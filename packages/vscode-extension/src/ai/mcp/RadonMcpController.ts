@@ -37,6 +37,10 @@ function setGlobalEnableAI(isAIEnabled: boolean) {
   commands.executeCommand("setContext", "RNIDE.AIEnabled", isAIEnabled);
 }
 
+function setGlobalEnableChat(isChatEnabled: boolean) {
+  commands.executeCommand("setContext", "RNIDE.chatParticipantEnabled", isChatEnabled);
+}
+
 /**
   The `vscode.lm.registerTool` API with image support only available in VSCode version 1.105+.  
   Said API is not implemented on Cursor, Windsurf or Antigravity (it is a stub on these editors).
@@ -99,6 +103,12 @@ export function isAiEnabledInSettings() {
   return workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enabledBoolean") ?? true;
 }
 
+export function isChatEnabledInSettings() {
+  return (
+    workspace.getConfiguration("RadonIDE").get<boolean>("radonAI.enableChatParticipant") ?? false
+  );
+}
+
 async function radonAIAvailabilityStatus() {
   const token = await getLicenseToken();
   if (!token) {
@@ -135,6 +145,10 @@ class RadonMcpController implements Disposable {
   ) {
     this.radonAvailabilityStatus = options.radonAvailabilityStatus;
 
+    setGlobalEnableChat(isChatEnabledInSettings());
+
+    // Registering `@radon` chat regardless of `isChatEnabledInSettings`,
+    // as visibility of the chat participant is toggled within `package.json`.
     registerRadonChat(context, options);
 
     const useStaticRegistering = shouldUseDirectRegistering();
@@ -177,6 +191,9 @@ class RadonMcpController implements Disposable {
 
     // `setGlobalEnableAI` sets availability of both static and local server tools.
     setGlobalEnableAI(radonAiEnabled);
+
+    // `setGlobalEnableChat` sets availability of `@radon` chat participant
+    setGlobalEnableChat(isChatEnabledInSettings());
 
     if (!shouldUseDirectRegistering()) {
       if (radonAiEnabled) {
