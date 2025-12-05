@@ -90,7 +90,6 @@ export enum ActivateDeviceResult {
 
 export interface ProjectEventMap {
   projectStateChanged: ProjectState;
-  licenseActivationChanged: boolean;
 }
 
 export interface ProjectEventListener<T> {
