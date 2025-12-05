@@ -41,6 +41,26 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
   };
 }
 
+export interface TouchElementRequest {
+  // Limiting the reload options to these three basic methods,
+  // as others require too much nuance and domain specific knowledge from the AI.
+  elementText: string;
+}
+
+export async function touchElementExec(input: TouchElementRequest): Promise<ToolResponse> {
+  const project = IDE.getInstanceIfExists()?.project;
+
+  if (!project || !project.deviceSession) {
+    return textToToolResponse(
+      "Could not press the element!\n" +
+        "The development device is likely turned off.\n" +
+        "Please turn on the Radon IDE emulator before proceeding."
+    );
+  }
+
+  return textToToolResponse("You pressed the element! [**THIS IS A PLACEHOLDER**]");
+}
+
 export interface AppReloadRequest {
   // Limiting the reload options to these three basic methods,
   // as others require too much nuance and domain specific knowledge from the AI.

@@ -94,6 +94,27 @@
       },
       {
         "when": "RNIDE.useStaticToolRegistering && RNIDE.AIEnabled",
+        "displayName": "Press element",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "press_element",
+        "name": "press_element",
+        "modelDescription": "Simulates a touch event on the selected element. This is useful for navigating through the application, testing workflows, creating new e2e tests, testing pressable elements and more.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "elementText": {
+              "type": "string",
+              "description": "Text used to identify the clicked element. This could be either the text displayed within the element, or it's `testID` property - both will work."
+            }
+          }
+        },
+        "tags": [
+          "react-native",
+          "debug"
+        ]
+      },
+      {
+        "when": "RNIDE.useStaticToolRegistering && RNIDE.AIEnabled",
         "displayName": "Reload application",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "reload_application",
