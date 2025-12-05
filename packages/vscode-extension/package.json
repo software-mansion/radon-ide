@@ -104,7 +104,7 @@
           "properties": {
             "elementText": {
               "type": "string",
-              "description": "Text used to identify the clicked element. This could be either the text displayed within the element, or it's `testID` property - both will work."
+              "description": "Text used to identify the clicked element. This could be either the text displayed within the element, or its `testID` property, or its `key` property - each of these will work."
             }
           }
         },
@@ -156,7 +156,7 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "view_application_logs",
         "name": "view_application_logs",
-        "modelDescription": "Returns all the build, bundling and runtime logs. Use this function whenever the user has any issue with the app, if it's builds are failing, or when there are errors in the console. These logs are always a useful debugging aid.",
+        "modelDescription": "Returns all the build, bundling and runtime logs. Use this function whenever the user has any issue with the app, if its builds are failing, or when there are errors in the console. These logs are always a useful debugging aid.",
         "inputSchema": {
           "type": "object",
           "properties": {}

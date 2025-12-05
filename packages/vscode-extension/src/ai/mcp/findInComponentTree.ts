@@ -16,7 +16,6 @@ async function findInComponentTree(
   element: DevtoolsElement,
   query: string
 ): Promise<DevtoolsElement | null> {
-  // TODO: Document that `key` is checked as well
   if (element.key?.toString().includes(query)) {
     return element;
   }
@@ -25,12 +24,11 @@ async function findInComponentTree(
 
   if (details !== undefined) {
     const props = extractQueryProps(details);
+    // TODO: Test if `testID` really works.
     if (props.children?.includes(query) || props.testID?.includes(query)) {
       return element;
     }
   }
-
-  // TODO: Check testID
 
   // TODO: What if element.children is iterable but not an array??? Doesn't this throw
   for (const childId of element.children) {
