@@ -152,7 +152,7 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "view_screenshot",
         "name": "view_screenshot",
-        "modelDescription": "Displays a screenshot of the app development viewport. Use this function whenever it is necessary to inspect what the user sees on their mobile device.",
+        "modelDescription": "Capture an up-to-date screenshot of the running app so you can instantly see exactly what the user sees and reason about UI issues or state.",
         "inputSchema": {
           "type": "object",
           "properties": {}
