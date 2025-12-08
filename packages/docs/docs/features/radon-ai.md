@@ -20,15 +20,11 @@ Our knowledge database is updated daily to provide the most up-to-date informati
 
 ## Usage in Visual Studio Code
 
-You can use Radon AI in Visual Studio Code as a [GitHub Copilot Chat participant](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#chat-participants) or via [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) in the [agent mode](https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode).
+Radon AI assistant integrates with VSCode's `agent mode`.
 
-### Use Radon AI in agent mode
+To access `agent mode` in Visual Studio code use `Ctrl + Shift + I` or `Cmd + Shift + I`.
 
-Radon IDE automatically configures and activates Radon AI MCP tools for you.
-
-To access agent mode in Visual Studio code use `Ctrl + Shift + I` or `Cmd + Shift + I`.
-
-Alternatively, open VSCode command palette (`Ctrl + Shift + P` or `Cmd + Shift + P`) and type `Chat: Open Chat` then select agent mode.
+Alternatively, open VSCode command palette (`Ctrl + Shift + P` or `Cmd + Shift + P`) and type `Chat: Open Chat`, then select `agent mode`.
 
 <img width="550" src="/img/docs/ai_vscode_agent_mode.png" className="shadow-image"/>
 
