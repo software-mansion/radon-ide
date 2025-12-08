@@ -20,7 +20,7 @@ Our knowledge database is updated daily to provide the most up-to-date informati
 
 ## Usage in Visual Studio Code
 
-You can use Radon AI in Visual Studio Code as a [GitHub Copilot Chat participant](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#chat-participants) or via [Model Context Protocol (MCP) server](https://modelcontextprotocol.io/introduction) in the [agent mode](https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode).
+You can use Radon AI in Visual Studio Code as a [GitHub Copilot Chat participant](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#chat-participants) or via [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) in the [agent mode](https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode).
 
 ### Use Radon AI as Copilot Chat participant
 
@@ -40,7 +40,7 @@ To start a new conversation open a new chat window.
 
 ### Use Radon AI in agent mode
 
-Radon IDE automatically configures and activates Radon AI MCP server for you.
+Radon IDE automatically configures and activates Radon AI MCP tools for you.
 
 To access agent mode in Visual Studio code use Ctrl+Shift+I or Cmd+Shift+I.
 
@@ -48,27 +48,27 @@ Alternatively, open vscode command palette (Ctrl+Shift+P or Cmd+Shift+P) and typ
 
 <img width="550" src="/img/docs/ai_vscode_agent_mode.png" className="shadow-image"/>
 
-To adjust the configuration of the MCP server choose `Configure Tools...` menu.
+To adjust the configuration of the MCP tools exposed by Radon - choose `Configure Tools...` menu.
 
 <img width="550" src="/img/docs/ai_vscode_choose_tools.png" className="shadow-image"/>
 
-There you can adjust which tools are enabled or disable the Radon AI MCP server completely.
+There you can adjust which tools are enabled or disable the Radon AI MCP toolset completely.
 
 <img width="600" src="/img/docs/ai_vscode_mcp_tools.png" className="shadow-image"/>
 
 ## Usage in Cursor
 
-Radon AI assistant integrates with Cursor's `agent mode` via Model Context Protocol (MCP) server.
+Radon AI assistant integrates with Cursor's `agent mode`.
 
 <img width="550" src="/img/docs/ai_cursor_chat_response.png" className="shadow-image"/>
 
 The Radon IDE automatically registers Radon AI tools in Cursor.
-You configure the Radon AI MCP server from Cursor Settings. There, you can choose which tools are enabled or disable the MCP server completely.
+You configure the Radon AI MCP tools from Cursor Settings. There, you can choose which tools are enabled or disable the MCP Radon toolset completely.
 
 1. In Cursor, open `Cursor Settings` (Ctrl+Shift+J or Cmd+Shift+J).
 2. Navigate to the `Tools & Integrations`.
 3. Find the `MCP Tools` section.
-4. Select `Radon AI` from the list of available servers.
+4. Select `Radon AI` from the list of available toolsets.
 
 <img width="550" src="/img/docs/ai_cursor_mcp_settings.png" className="shadow-image"/>
 
