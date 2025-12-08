@@ -877,6 +877,10 @@
               "disableNativeBuildStaleChecks": {
                 "type": "boolean",
                 "description": "When set to true, Radon will not run fingerprint checks on reloads and after file changes that would detect whether the native code needs to be rebuilt."
+              },
+              "useNativeNetworkInspector": {
+                "type": "boolean",
+                "description": "When set to true, Radon will use the Native (\"Fusebox\") Network Inspector implementation introduced in 0.83.0. Note that this requires at least React Native 0.83.0 and for earlier version will not intercept network messages."
               }
             }
           }

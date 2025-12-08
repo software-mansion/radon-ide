@@ -89,6 +89,7 @@ function serializeLaunchConfig(formData: FormData, defaultAppRoot: string) {
     isExpo: valueAsBoolean(data.isExpo),
     env: data.env ? JSON.parse(data.env) : {},
     usePrebuild: valueAsBoolean(data.usePrebuild),
+    useNativeNetworkInspector: valueAsBoolean(data.useNativeNetworkInspector),
   };
 
   for (const platform of ["ios", "android"] as const) {
@@ -295,6 +296,39 @@ function LaunchConfigurationView({
               Yes
             </Option>
             <Option value="false" data-testid="launch-configuration-use-prebuild-no">
+              No
+            </Option>
+          </SingleSelect>
+        </FormGroup>
+
+        <FormGroup variant="settings-group">
+          <Label>Use Native Network Inspector Implementation</Label>
+          <FormHelper>
+            {launchConfigAttrs?.properties?.useNativeNetworkInspector?.description}
+          </FormHelper>
+          <SingleSelect
+            data-testid="launch-configuration-use-native-network-inspector-select"
+            name="useNativeNetworkInspector"
+            initialValue={
+              launchConfig?.useNativeNetworkInspector === undefined
+                ? ""
+                : launchConfig.useNativeNetworkInspector
+                  ? "true"
+                  : "false"
+            }>
+            <Option
+              value=""
+              data-testid="launch-configuration-use-native-network-inspector-select-detect-automatically">
+              Detect automatically
+            </Option>
+            <Option
+              value="true"
+              data-testid="launch-configuration-use-native-network-inspector-select-yes">
+              Yes
+            </Option>
+            <Option
+              value="false"
+              data-testid="launch-configuration-use-native-network-inspector-select-no">
               No
             </Option>
           </SingleSelect>
