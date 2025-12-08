@@ -106,7 +106,12 @@ export class ToolsManager implements Disposable {
     this.plugins.set(APOLLO_PLUGIN_ID, new ApolloClientDevtoolsPlugin(inspectorBridge));
     this.plugins.set(
       NETWORK_PLUGIN_ID,
-      new NetworkPlugin(inspectorBridge, networkBridge, metroPort, this.useNativeNetworkInspectorFlag)
+      new NetworkPlugin(
+        inspectorBridge,
+        networkBridge,
+        metroPort,
+        this.useNativeNetworkInspectorFlag
+      )
     );
     this.plugins.set(
       RENDER_OUTLINES_PLUGIN_ID,

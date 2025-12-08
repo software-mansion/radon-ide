@@ -115,7 +115,9 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
     },
     usePrebuild: configuration.usePrebuild,
     useOldDevtools: configuration.useOldDevtools ?? !checkFuseboxSupport(absoluteAppRoot),
-    useNativeNetworkInspector: configuration.useNativeNetworkInspector ?? checkNativeNetworkInspectorSupport(absoluteAppRoot),
+    useNativeNetworkInspector:
+      configuration.useNativeNetworkInspector ??
+      checkNativeNetworkInspectorSupport(absoluteAppRoot),
   };
 }
 
