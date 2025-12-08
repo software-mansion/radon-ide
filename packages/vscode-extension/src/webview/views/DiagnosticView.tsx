@@ -70,7 +70,6 @@ function DiagnosticView() {
       <Label>Other</Label>
       <DiagnosticItem label="Expo Router" name="expoRouter" info={dependencies.expoRouter} />
       <DiagnosticItem label="Storybook" name="storybook" info={dependencies.storybook} />
-      <DiagnosticItem label="Maestro" name="maestro" info={dependencies.maestro} />
       <DiagnosticItem label="eas-cli" name="easCli" info={dependencies.easCli} />
       <div className="diagnostic-section-margin" />
 
