@@ -880,7 +880,7 @@
               },
               "useNativeNetworkInspector": {
                 "type": "boolean",
-                "description": "When set to true, Radon will use the Native (\"Fusebox\") Network Inspector implementation introduced in 0.83.0. Note, that this requires at least React Native 0.83.0 and it will not intercept network messages for earlier versions."
+                "description": "When set to true, Radon will use the Native (\"Fusebox\") Network Inspector implementation introduced in 0.83.0. Note that this is only supported on React Native 0.83.0 and newer, and might not intercept network messages on earlier versions."
               }
             }
           }
