@@ -4,7 +4,7 @@ title: Radon AI
 sidebar_position: 11
 ---
 
-Radon AI is a set of tools enhancing your editor's Agent, with among other things - up-to-date knowledge about the React Native ecosystem, comprehensive set of debugging data, that isn't otherwise available, and app interaction abilities. You can find the full set of tools available to it: here. //%% TODO
+Radon AI is a set of tools enhancing your editor's Agent, with among other things - up-to-date knowledge about the React Native ecosystem, comprehensive set of debugging data, that isn't otherwise available, and app interaction abilities. You can find the full set of tools available to it: [here](/docs/features/radon-ai#available-tools).
 
 We index all of the popular React Native libraries to match questions to relevant pieces of documentation, providing additional, accurate context to your conversation.
 
@@ -26,9 +26,9 @@ You can use Radon AI in Visual Studio Code as a [GitHub Copilot Chat participant
 
 Radon IDE automatically configures and activates Radon AI MCP tools for you.
 
-To access agent mode in Visual Studio code use Ctrl+Shift+I or Cmd+Shift+I.
+To access agent mode in Visual Studio code use `Ctrl + Shift + I` or `Cmd + Shift + I`.
 
-Alternatively, open vscode command palette (Ctrl+Shift+P or Cmd+Shift+P) and type "Chat: Open Chat" then select agent mode.
+Alternatively, open VSCode command palette (`Ctrl + Shift + P` or `Cmd + Shift + P`) and type `Chat: Open Chat` then select agent mode.
 
 <img width="550" src="/img/docs/ai_vscode_agent_mode.png" className="shadow-image"/>
 
@@ -49,14 +49,14 @@ Radon AI assistant integrates with Cursor's `agent mode`.
 The Radon IDE automatically registers Radon AI tools in Cursor.
 You configure the Radon AI MCP tools from Cursor Settings. There, you can choose which tools are enabled or disable the MCP Radon toolset completely.
 
-1. In Cursor, open `Cursor Settings` (Ctrl+Shift+J or Cmd+Shift+J).
+1. In Cursor, open `Cursor Settings` (`Ctrl + Shift + J` or `Cmd + Shift + J`).
 2. Navigate to the `Tools & Integrations`.
 3. Find the `MCP Tools` section.
 4. Select `Radon AI` from the list of available toolsets.
 
 <img width="550" src="/img/docs/ai_cursor_mcp_settings.png" className="shadow-image"/>
 
-Alternatively, you can type and run "View: Open MCP Settings" from the Command Palette (Ctrl+Shift+P or Cmd+Shift+P).
+Alternatively, you can type and run `View: Open MCP Settings` from the Command Palette (`Ctrl + Shift + P` or `Cmd + Shift + P`).
 
 ## Available tools
 
@@ -82,9 +82,9 @@ The AI models automatically discover and invoke tools when they decide it will b
 
 To disable Radon AI assistant navigate to the editor settings.
 
-You can type "Preferences: Open User Settings" in the command palette (Ctrl+Shift+P or Cmd+Shift+P).
+You can type `Preferences: Open User Settings` in the command palette (`Ctrl + Shift + P` or `Cmd + Shift + P`).
 
-Within editor settings, type "Radon AI: Enabled", press the first result and select `Disabled`.
+Within editor settings, type `Radon AI: Enabled`, press the first result and select `Disabled`.
 
 ## Privacy
 
