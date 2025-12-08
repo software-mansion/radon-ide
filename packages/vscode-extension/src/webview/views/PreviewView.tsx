@@ -188,7 +188,10 @@ function PreviewView() {
     navBarButtonsActive &&
     isRunning &&
     inspectorAvailabilityStatus === InspectorAvailabilityStatus.Available;
-  const debuggerToolsButtonsActive = navBarButtonsActive; // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later
+  // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later,
+  // once we support js and react profiling in radon connect.
+  const debuggerToolsButtonsActive = navBarButtonsActive;
+  const debugConsoleButtonActive = navBarButtonsActive || radonConnectConnected;
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === modelId;
@@ -441,7 +444,7 @@ function PreviewView() {
             tooltip={{
               label: "Open logs panel",
             }}
-            disabled={!debuggerToolsButtonsActive}>
+            disabled={!debugConsoleButtonActive}>
             <span slot="start" className="codicon codicon-debug-console" />
           </IconButton>
           <SettingsDropdown project={project} isDeviceRunning={isRunning || radonConnectConnected}>
