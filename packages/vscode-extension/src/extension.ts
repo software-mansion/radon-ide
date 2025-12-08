@@ -38,6 +38,7 @@ import { PanelLocation } from "./common/State";
 import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
 import { AdminRestrictedFunctionalityError, PaywalledFunctionalityError } from "./common/Errors";
 import { registerRadonAI } from "./ai/mcp/RadonMcpController";
+import { MaestroCodeLensProvider } from "./providers/MaestroCodeLensProvider";
 import { removeLicense } from "./utilities/license";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
@@ -207,6 +208,25 @@ export async function activate(context: ExtensionContext) {
     }
   }
 
+  async function startMaestroTest(fileNames: string[]) {
+    const ide = IDE.getInstanceIfExists();
+    if (ide) {
+      ide.project.startMaestroTest(fileNames);
+    } else {
+      window.showWarningMessage(
+        "Wait for the app to load before running Maestro tests.",
+        "Dismiss"
+      );
+    }
+  }
+
+  async function stopMaestroTest() {
+    const ide = IDE.getInstanceIfExists();
+    if (ide) {
+      ide.project.stopMaestroTest();
+    }
+  }
+
   function removeLicenseWithConfirmation() {
     window
       .showWarningMessage(
@@ -266,6 +286,8 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.showInlinePreview", showInlinePreview)
   );
+  context.subscriptions.push(commands.registerCommand("RNIDE.startMaestroTest", startMaestroTest));
+  context.subscriptions.push(commands.registerCommand("RNIDE.stopMaestroTest", stopMaestroTest));
 
   context.subscriptions.push(commands.registerCommand("RNIDE.captureReplay", captureReplay));
   context.subscriptions.push(commands.registerCommand("RNIDE.toggleRecording", toggleRecording));
@@ -367,6 +389,13 @@ export async function activate(context: ExtensionContext) {
         { scheme: "file", language: "javascript" },
       ],
       new PreviewCodeLensProvider()
+    )
+  );
+
+  context.subscriptions.push(
+    languages.registerCodeLensProvider(
+      [{ scheme: "file", language: "yaml" }],
+      new MaestroCodeLensProvider()
     )
   );
 
