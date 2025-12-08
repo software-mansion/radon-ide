@@ -1,6 +1,5 @@
 import { Disposable } from "vscode";
 import _ from "lodash";
-import { SemVer } from "semver";
 import { RadonInspectorBridge } from "./inspectorBridge";
 import { NetworkBridge } from "./networkBridge";
 import { extensionContext } from "../utilities/extensionContext";
@@ -28,7 +27,7 @@ import {
   APOLLO_PLUGIN_ID,
   ApolloClientDevtoolsPlugin,
 } from "../plugins/apollo-client-devtools-plugin/apollo-client-devtools-plugin";
-import { ApplicationContext } from "./ApplicationContext";
+import { ApplicationContext, ResolvedLaunchConfig } from "./ApplicationContext";
 
 const TOOLS_SETTINGS_KEY = "tools_settings";
 
@@ -69,7 +68,8 @@ export class ToolsManager implements Disposable {
   private activePlugins: Set<ToolPlugin> = new Set();
   private disposables: Disposable[] = [];
   private readonly workspaceConfigState: StateManager<WorkspaceConfiguration>;
-  private readonly reactNativeVersion: SemVer | null;
+  private readonly launchConfig: ResolvedLaunchConfig;
+  private readonly useNativeNetworkInspectorFlag: boolean;
 
   public constructor(
     private readonly stateManager: StateManager<ToolsState>,
@@ -79,7 +79,8 @@ export class ToolsManager implements Disposable {
     public readonly metroPort: number
   ) {
     this.workspaceConfigState = this.applicationContext.workspaceConfigState;
-    this.reactNativeVersion = this.applicationContext.reactNativeVersion;
+    this.launchConfig = this.applicationContext.launchConfig;
+    this.useNativeNetworkInspectorFlag = this.launchConfig.useNativeNetworkInspector ?? false;
 
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
     for (const plugin of createExpoDevPluginTools()) {
@@ -105,7 +106,12 @@ export class ToolsManager implements Disposable {
     this.plugins.set(APOLLO_PLUGIN_ID, new ApolloClientDevtoolsPlugin(inspectorBridge));
     this.plugins.set(
       NETWORK_PLUGIN_ID,
-      new NetworkPlugin(inspectorBridge, networkBridge, metroPort, this.reactNativeVersion)
+      new NetworkPlugin(
+        inspectorBridge,
+        networkBridge,
+        metroPort,
+        this.useNativeNetworkInspectorFlag
+      )
     );
     this.plugins.set(
       RENDER_OUTLINES_PLUGIN_ID,

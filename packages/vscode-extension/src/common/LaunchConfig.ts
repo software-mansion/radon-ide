@@ -33,6 +33,7 @@ export interface LaunchOptions {
   useCustomJSDebugger?: boolean;
   metroPort?: number;
   disableNativeBuildStaleChecks?: boolean;
+  useNativeNetworkInspector?: boolean;
 }
 
 export const LAUNCH_OPTIONS_KEYS = [
@@ -50,6 +51,7 @@ export const LAUNCH_OPTIONS_KEYS = [
   "preview",
   "usePrebuild",
   "useOldDevtools",
+  "useNativeNetworkInspector",
   "useCustomJSDebugger",
   "metroPort",
   "disableNativeBuildStaleChecks",
