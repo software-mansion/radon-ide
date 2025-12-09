@@ -10,7 +10,9 @@ The entire test suite is divided into smaller parts (describes). Tests within a 
 
 - **File Naming:** Each `describe` block should be placed in a separate file inside `/ui-tests` named according to the following pattern:
   `[test suite number]-[test suite name].test.js` (e.g. 05-networkPanel.test.js)
+
 - **Test Suite Number:** A unique identifier that allows running specific test suites. When adding a new suite, use the next available natural number (e.g., if `19` is taken, use `20`).
+
 - **Locators:** Elements in `Visual Studio Code` are localized using the `data-testid` HTML attribute. This attribute has to be added in extension frontend code.
 
 - **App Naming:** Test apps are named according to their React Native or Expo version, following the convention `react-native-{version}` or `expo-{version}` (e.g., `react-native-81`, `expo-53`).
