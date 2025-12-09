@@ -4,9 +4,13 @@ title: Network Inspector
 sidebar_position: 8
 ---
 
-Radon IDE comes with a Network Inspector panel allowing you to inspect network traffic. The tool will capture and list all requests of `fetch` and `XMLHttpRequest` triggered by the JavaScript code. The panel works for both React Native CLI and Expo applications.
+Radon IDE comes with a Network Inspector panel allowing you to inspect network traffic. The tool captures all network requests initiated by `fetch` and `XMLHttpRequest`, with support for the native implementation of the React Native's Network Inspector, specifically for versions above 0.83.0.
 
-Images or websocket connections aren't currently supported and won't show up.
+Activation of the native network inspector implementation is configurable within [Launch Configuration](/docs/guides/configuration.md).
+
+Supported external libraries that polyfill the fetch implementation are currently limited to [`react-native-fetch-api`](https://www.npmjs.com/package/react-native-fetch-api).
+
+Requests made by `Image` elements and WebSocket traffic are not supported outside the native implementation and will not be displayed in the inspector.
 
 <video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/ide_network_inspector_new.mp4" type="video/mp4"/>
@@ -31,7 +35,6 @@ You can customize the Network Inspector behaviour using the following buttons:
 1. **Toggle network activity recording** - starts or stops the capture of network requests made by your application.
 2. **Clear network log** - erases all currently displayed network requests displayed in a list.
 3. **Filter domains** - opens input field allowing for filtering the displayed logs.
- 
 
 ## Filtering and sorting
 
@@ -41,7 +44,6 @@ Clicking on the **Filter** button opens an input field where you can define filt
 
 - Apply filters globally across all columns by entering plain-text.
 - Apply filters to specified columns using the syntax `column:value` for simple filters, or `column:"value with spaces"` for values that include spaces.
-
 
 Hovering over a column header also displays a filter icon. Clicking it inserts a filter template directly into the filter input field for you.
 
@@ -58,11 +60,13 @@ The Network Inspector displays a log of all network requests made by your applic
 - **Name** - the segment of the path of the URL request.
 - **Status** - a HTTP status code returned by the server.
 - **Method** - a HTTP request method used (e.g. GET, POST, PUT, DELETE, etc.).
-- **Type** - a MIME type of the requested resource. Currently, only `XHR` type is supported.
+- **Type** - a resource type as it was perceived by the rendering engine.
 - **Size** - the total size of the transferred resource.
 - **Time** - the total duration of the request.
 
 Clicking on the network log shows more details about the contents of the request. The details of the request are grouped into into Headers, Payload, Response, and Timing tabs.
+
+<img width="500" src="/img/docs/ide_devtools_network_inspector_context_menu.png" className="shadow-image" />
 
 Right clicking on the network log opens **Context Menu**, allowing for sorting and filtering the logs, copying the request details, refetching and opening responses in the editor's tab.
 
