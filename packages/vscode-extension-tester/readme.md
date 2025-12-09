@@ -77,6 +77,13 @@ safeDescribe("19 - new tests", async () => {
 
 The actual test logic should be placed inside an `it` block. The hooks `before`, `beforeEach`, `after`, and `afterEach` can be used to define actions that run before or after each test or the entire `describe`. If they are not needed, they can simply be removed.
 
+`/utils/helpers` provides two additional functions:
+
+- `itIF(condition, testName, function)`
+- `describeIf(condition, testName, function)`
+
+These can be used to run specific tests only if a certain condition is met (e.g., the app is running on iOS).
+
 ### Useful Functions and Services
 
 The `/services/` directory contains Service Classes with frequently used functions. Every service class must be initialized with the `driver`. Initialization should be done in `before` block inside `describe`.
@@ -180,7 +187,7 @@ The app returns coordinates in the following format:
 
 ---
 
-> [!NOTE]
+> [!NOTE] 
 > **Note:** Some specific tests may require changes in test apps.
 
 ## 5. Running Tests
