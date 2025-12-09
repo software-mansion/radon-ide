@@ -1,19 +1,23 @@
 # Radon End-to-End Tests
 
-We use the [vscode-extension-tester](https://github.com/redhat-developer/vscode-extension-tester/wiki) library, with standard assertion library `chai` to write tests
+We use the [vscode-extension-tester](https://github.com/redhat-developer/vscode-extension-tester) library, together with the standard `chai` assertion library to write tests.  
+This library provides extensive capabilities for interacting with VS Code, such as opening editors, executing commands, manipulating UI elements, or managing workspaces.  
+Documentation: https://github.com/redhat-developer/vscode-extension-tester/wiki
 
-The entire test suite is divided into smaller parts (`describes`). Tests within a single `describe` block should cover similar themes or functionality.
+The entire test suite is divided into smaller parts (describes). Tests within a single describe block should cover similar themes or functionality. Each describe block is placed in a separate file to keep the structure modular and easy to navigate.
 
 ## 1. Conventions and File Organization
 
 - **File Naming:** Each `describe` block should be placed in a separate file inside `/ui-tests` named according to the following pattern:
-  `[test suite number]-[test suite name].test.js`
-  - **Test Suite Number:** A unique identifier that allows running specific test suites. When adding a new suite, use the next available natural number (e.g., if `19` is taken, use `20`).
+  `[test suite number]-[test suite name].test.js` (e.g. 05-networkPanel.test.js)
+- **Test Suite Number:** A unique identifier that allows running specific test suites. When adding a new suite, use the next available natural number (e.g., if `19` is taken, use `20`).
 - **Locators:** Elements in `vscode-extension-tester` are localized using the `data-testid` HTML attribute.
 
 - **App Naming:** Test apps are named according to their React Native or Expo version, following the convention `react-native-{version}` or `expo-{version}` (e.g., `react-native-81`, `expo-53`).
 
 ## 2. Code Structure
+
+The diagram shows code structure
 
 ### Directory Layout
 
@@ -41,6 +45,7 @@ root/
 │   ├── helpers.test.js
 │   └── ...
 ├── configuration.js           # Global test configuration
+├── .env                       # env variables (e.g. Radon license key)
 └── package.json
 ```
 
@@ -48,7 +53,7 @@ root/
 
 ### Test Template
 
-Below is a template for starting a new test file. The `driver` object is an instance of the `WebDriver` class, which allows interactions with the opened VS Code instance (e.g., finding elements, clicking, waiting).
+Below is a template for starting a new test file. The `driver` object is an instance of the WebDriver class, which provides high-level control over the running VS Code instance — for example, locating UI elements, clicking, typing, or waiting for specific conditions.
 
 ```js
 import { get } from "./setupTest.js";
@@ -70,9 +75,11 @@ safeDescribe("19 - new tests", async () => {
 });
 ```
 
+The actual test logic should be placed inside an `it` block. The hooks `before`, `beforeEach`, `after`, and `afterEach` can be used to define actions that run before or after each test or the entire `describe`. If they are not needed, they can simply be removed.
+
 ### Useful Functions and Services
 
-The `/services/` directory contains Service Classes with frequently used functions. Every service class must be initialized with the `driver`.
+The `/services/` directory contains Service Classes with frequently used functions. Every service class must be initialized with the `driver`. Initialization should be done in `before` block inside `describe`.
 
 **Key Methods:**
 
@@ -91,9 +98,19 @@ The `/services/` directory contains Service Classes with frequently used functio
 
     - > **Note:** The Radon IDE view works inside an `iframe` within VS Code. To find an element inside the Radon view, you must switch to the correct iframe. This method handles that switch automatically.
 
+  - `async RadonViewsService.activateRadonIDELicense()`
+    - Activates Radon IDE license with key provided as enviromental variable.
+
 - **AppManipulationService**
+
   - `async AppManipulationService.waitForAppToLoad()`
-    - Waits for the application to load completely.
+    - Waits for the application to load completely (is active for user).
+
+- **ManagingDevicesService**
+  - `async ManagingDevicesService.addNewDevice(newDeviceName)`
+    - adds new device with given name and OS defined in `configuration.js`.
+
+These are some of the most important and frequently used methods. There are additional functions as well, but their names are mostly self-explanatory and do not require detailed descriptions.
 
 ## 4. React Native Application
 
@@ -101,24 +118,33 @@ Test applications are available here: [radon-ide-test-apps](https://github.com/s
 
 ### Communication with the App
 
-Communication between the React Native app running in Radon and the tester app occurs via WebSocket.
+Communication between the React Native app running in Radon and the tester app occurs via WebSocket. The tester app maintains an open WebSocket connection with the currently running app.
 
 Requests to the React Native app are sent as stringified JSON in the following format:
 
 ```json
 {
   "message": "message_name",
-  "id": "unique_request_id"
+  "id": "unique request id"
 }
 ```
 
-Where `id` is a unique request ID.
+`id` is a unique identifier for the request. Some functionalities may require additional fields.
+
+The app resopns with the following format
+
+```json
+{
+  "pos/value": "returned value",
+  "id": "rewritten request id"
+}
+```
 
 ### Retrieving Coordinates and Data
 
-Our React Native apps provide a `TrackableButton(id)` class. To get the button coordinates, send a request with the message: `getPosition:{id}`.
+`TrackableButton(id)` class is provided in React Native apps and allows retrieving its location on screen. To get the button’s coordinates, send a request with the message: `getPosition:{id}`.
 
-The response returns coordinates in the following format:
+The app returns coordinates in the following format:
 
 ```json
 {
@@ -132,20 +158,37 @@ The response returns coordinates in the following format:
 - The values are relative to the screen size.
 - The origin (0,0) is the top-left corner.
 
-**Some of other available endpoints include:**
+**Other available endpoints include:**
 
-- `getFontSize`
-- `getOrientation`
-- `getColorSchema`
-- ...
+- `getFontSize` - returns the device’s font size.
+- `getOrientation` - returns the device orientation (`landscape`, `portrait`)
+- `getColorSchema` - returns the device color scheme (`light`, `dark`)
+- `getAppState` - returns the app state (`active`, `inactive`, `background`)
+- `fetchData` - fetches data from a given URL, body and headers can also be provided if needed
 
-## 4. Running Tests
+  - correct format:
+
+  ```json
+  {
+    "message": "fetchData",
+    "url": "https://example.com",
+    "body": {},
+    "headers": {},
+    "id": "unique request id"
+  }
+  ```
+
+---
+
+This list may be extended in the future if additional functionalities are required.
+
+## 5. Running Tests
 
 ### Local Execution
 
 Tests can be run on a local machine using the command below.
 
-> [!NOTE]
+> [!NOTE] 
 > **Note**: To run tests locally, you need a `.env` file in the root directory with the `RADON_IDE_LICENSE_KEY` variable containing an active Radon license key.
 
 Syntax:
@@ -157,8 +200,8 @@ Example (running tests 1, 2, 3, and 4 on the `react-native-81` app):
 npm run prepare-and-run-tests -- react-native-81 1 2 3 4
 ```
 
-> [!NOTE] 
-> **Note**: side effect of running tests locally is fact that devices added in Radon IDE will be deleted.
+> [!WARNING] 
+> **Note**: Running tests locally will remove any devices added in Radon IDE.
 
 ### CI / GitHub Actions
 
