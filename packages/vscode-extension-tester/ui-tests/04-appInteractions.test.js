@@ -290,7 +290,7 @@ safeDescribe("4 - App interaction tests", () => {
     assert.equal(debuggerLineStop, stepOutLine);
   });
 
-  it("Should step over correct if breakpoint is on the end of function", async () => {
+  it("Should step out if breakpoint is at the end of a function", async () => {
     const { lineAfterFunction } = await prepareBreakpoints([4]);
 
     await elementHelperService.findAndClickElementByTag("debug-step-over");
