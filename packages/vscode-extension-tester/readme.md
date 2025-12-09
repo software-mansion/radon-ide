@@ -136,9 +136,11 @@ Requests to the React Native app are sent as stringified JSON in the following f
 }
 ```
 
-`id` is a unique identifier for the request. Some functionalities may require additional fields.
+`id` is a unique identifier for the request.
+Some functionalities may require additional fields.
 
-The app resopns with the following format
+
+The app resopnds with the following format
 
 ```json
 {
