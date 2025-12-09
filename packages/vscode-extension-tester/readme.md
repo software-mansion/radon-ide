@@ -180,7 +180,8 @@ The app returns coordinates in the following format:
 
 ---
 
-This list may be extended in the future if additional functionalities are required.
+> [!NOTE]
+> **Note:** Some specific tests may require changes in test apps.
 
 ## 5. Running Tests
 
