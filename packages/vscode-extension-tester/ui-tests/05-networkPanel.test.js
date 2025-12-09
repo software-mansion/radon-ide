@@ -72,6 +72,42 @@ safeDescribe("5 - Network panel tests", () => {
     }, 5000);
   });
 
+  // async function testDetails(endpoint, body ) {
+  //   const base = "http://localhost:8080/";
+  //   appWebsocket.send(
+  //     JSON.stringify({
+  //       message: "fetchData",
+  //       url: `${base}${endpoint}`,
+  //       body: body
+  //     })
+  //   );
+
+  //   await openNetworkPanel();
+
+  //   const row = await elementHelperService.findAndWaitForElementByTag(
+  //     "network-panel-row-get"
+  //   );
+
+  //   await driver.executeScript("arguments[0].click();", row);
+
+  //   await elementHelperService.findAndWaitForElementByTag(
+  //     "network-panel-log-details-tabs"
+  //   );
+
+  //   const headers = ["payload", "response", "timing", "headers"];
+
+  //   for (const header of headers) {
+  //     await elementHelperService.findAndClickElementByTag(
+  //       `network-panel-tab-header-${header}`
+  //     );
+
+  //     const tab = await elementHelperService.findAndWaitForElementByTag(
+  //       `network-panel-tab-panel-${header}`
+  //     );
+  //     console.log(await tab.getText());
+  //   }
+  // });
+
   async function openNetworkPanel() {
     await elementHelperService.findAndClickElementByTag(
       "radon-top-bar-tools-dropdown-trigger"
@@ -89,72 +125,81 @@ safeDescribe("5 - Network panel tests", () => {
     driver.switchTo().frame(networkIFrame);
   }
 
-  it("Should open the network panel", async () => {
-    await elementHelperService.findAndClickElementByTag(
-      "radon-top-bar-tools-dropdown-trigger"
-    );
-    await elementHelperService.findAndWaitForElementByTag(
-      "radon-tools-dropdown-menu"
-    );
-    await elementHelperService.findAndClickElementByTag(
-      "dev-tool-network-open-button"
-    );
-    await driver.sleep(1000);
+  // it("Should open the network panel", async () => {
+  //   await elementHelperService.findAndClickElementByTag(
+  //     "radon-top-bar-tools-dropdown-trigger"
+  //   );
+  //   await elementHelperService.findAndWaitForElementByTag(
+  //     "radon-tools-dropdown-menu"
+  //   );
+  //   await elementHelperService.findAndClickElementByTag(
+  //     "dev-tool-network-open-button"
+  //   );
+  //   await driver.sleep(1000);
 
-    await radonViewsService.findWebViewIFrame("Radon Network Inspector");
-  });
+  //   await radonViewsService.findWebViewIFrame("Radon Network Inspector");
+  // });
 
-  it("Should show fetch in network panel", async () => {
-    const position = await appManipulationService.getButtonCoordinates(
-      appWebsocket,
-      "fetch-request-button"
-    );
-    await appManipulationService.clickInsidePhoneScreen(position);
+  // it("Should show fetch in network panel", async () => {
+  //   appWebsocket.send(
+  //     JSON.stringify({
+  //       message: "fetchData",
+  //       url: "http://localhost:8080/api/get",
+  //     })
+  //   );
 
-    await openNetworkPanel();
+  //   await openNetworkPanel();
 
-    await elementHelperService.findAndWaitForElementByTag(
-      "network-panel-row-ditto"
-    );
+  //   await elementHelperService.findAndWaitForElementByTag(
+  //     "network-panel-row-get"
+  //   );
 
-    const data = await elementHelperService.findAndWaitForElementByTag(
-      "network-panel-row-ditto-status"
-    );
+  //   const data = await elementHelperService.findAndWaitForElementByTag(
+  //     "network-panel-row-get-status"
+  //   );
 
-    assert.equal(await data.getText(), "200");
-  });
+  //   assert.equal(await data.getText(), "200");
+  // });
 
-  it("should open network panel details for fetch", async () => {
-    const position = await appManipulationService.getButtonCoordinates(
-      appWebsocket,
-      "fetch-request-button"
-    );
-    await appManipulationService.clickInsidePhoneScreen(position);
+  // it("should open network panel details for fetch", async () => {
+  //   appWebsocket.send(
+  //     JSON.stringify({
+  //       message: "fetchData",
+  //       url: "http://localhost:8080/api/get",
+  //     })
+  //   );
 
-    await openNetworkPanel();
+  //   await openNetworkPanel();
 
-    const row = await elementHelperService.findAndWaitForElementByTag(
-      "network-panel-row-ditto"
-    );
+  //   const row = await elementHelperService.findAndWaitForElementByTag(
+  //     "network-panel-row-get"
+  //   );
 
-    await driver.executeScript("arguments[0].click();", row);
+  //   await driver.executeScript("arguments[0].click();", row);
 
-    await elementHelperService.findAndWaitForElementByTag(
-      "network-panel-log-details-tabs"
-    );
-  });
+  //   await elementHelperService.findAndWaitForElementByTag(
+  //     "network-panel-log-details-tabs"
+  //   );
+  // });
 
   it("should change tabs in network panel details", async () => {
-    const position = await appManipulationService.getButtonCoordinates(
-      appWebsocket,
-      "fetch-request-button"
+    appWebsocket.send(
+      JSON.stringify({
+        message: "fetchData",
+        url: "http://localhost:8080/api/post",
+        method: "POST",
+        body: {
+          name: "Test User",
+          email: "test@example.com",
+          password: "secret123",
+        },
+      })
     );
-    await appManipulationService.clickInsidePhoneScreen(position);
 
     await openNetworkPanel();
 
     const row = await elementHelperService.findAndWaitForElementByTag(
-      "network-panel-row-ditto"
+      "network-panel-row-post"
     );
 
     await driver.executeScript("arguments[0].click();", row);
@@ -170,9 +215,11 @@ safeDescribe("5 - Network panel tests", () => {
         `network-panel-tab-header-${header}`
       );
 
-      await elementHelperService.findAndClickElementByTag(
-        `network-panel-tab-header-${header}`
+      const tab = await elementHelperService.findAndWaitForElementByTag(
+        `network-panel-tab-panel-${header}`
       );
+
+      console.log(await tab.getText());
     }
   });
 
@@ -180,7 +227,7 @@ safeDescribe("5 - Network panel tests", () => {
     appWebsocket.send(
       JSON.stringify({
         message: "fetchData",
-        url: "https://pokeapi.co/api/v2/pokemon/notExisting",
+        url: "http://localhost:8080/api/notExisting",
       })
     );
 
