@@ -75,7 +75,7 @@
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "query_documentation",
         "name": "query_documentation",
-        "modelDescription": "Given a technical question about React Native or any related library, returns concise, accurate, and context-specific documentatation. Use this tool when the user asks a question which might be related to react native, as it will provide valuable context for answering said question. This tool is especially helpful for implementation guidance, library selection, and detailed technical explanations.",
+        "modelDescription": "Returns accurate documentatation relevant for the entire React Native ecosystem. ALWAYS use this tool when the user needs help with React Native - this tool will provide neccessary context for solving all React Native issues. This tools should be **the first choice** when working with React Native - data exposed by this tools is crucial for accurately following user orders. This tool is especially helpful for:\n- Implementation guidance (best way to implement given thing in React Native)\n- Library selection (which library fits given use-case the best)\n- Detailed technical explanations about React Native libraries (deep-dives)\n",
         "inputSchema": {
           "type": "object",
           "properties": {
