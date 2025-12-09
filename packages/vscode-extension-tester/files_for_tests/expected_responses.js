@@ -3,7 +3,7 @@ const expectedResponses = {
     payload: null,
     expectedResponse: {
       meta: {
-        page: "1",
+        page: 1,
         sort: "asc",
         total: 2,
       },
@@ -31,11 +31,6 @@ const expectedResponses = {
     expectedResponse: {
       message: "Post request successful",
       userId: 3,
-      captured_data: {
-        name: "Test User",
-        email: "test@example.com",
-        password: "secret123",
-      },
     },
     expectedStatus: 201,
   },
