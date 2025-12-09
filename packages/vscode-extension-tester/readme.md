@@ -145,7 +145,8 @@ The response returns coordinates in the following format:
 
 Tests can be run on a local machine using the command below.
 
-> [!NOTE] > **Note**: To run tests locally, you need a `.env` file in the root directory with the `RADON_IDE_LICENSE_KEY` variable containing an active Radon license key.
+> [!NOTE]
+> **Note**: To run tests locally, you need a `.env` file in the root directory with the `RADON_IDE_LICENSE_KEY` variable containing an active Radon license key.
 
 Syntax:
 `npm run prepare-and-run-tests -- <app-name> <space-separated test numbers>`
@@ -156,7 +157,8 @@ Example (running tests 1, 2, 3, and 4 on the `react-native-81` app):
 npm run prepare-and-run-tests -- react-native-81 1 2 3 4
 ```
 
-> [!NOTE] > **Note**: side effect of running tests locally is fact that devices added in Radon IDE will be deleted.
+> [!NOTE] 
+> **Note**: side effect of running tests locally is fact that devices added in Radon IDE will be deleted.
 
 ### CI / GitHub Actions
 
