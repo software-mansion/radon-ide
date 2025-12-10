@@ -66,6 +66,11 @@ const testCases: ChatTestCase[] = [
   },
 ];
 
+// FIXME: Temporary workaround for being unable to await chat request
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 export async function testChatToolUsage() {
   const runStatus: ChatTestResult[] = [];
 
@@ -86,8 +91,11 @@ export async function testChatToolUsage() {
   };
 
   for (const testCase of testCases) {
+    // TODO: Send `undo` command, or just confirm it.
     await commands.executeCommand("workbench.action.chat.newChat");
     await commands.executeCommand("workbench.action.chat.open", testCase.prompt);
+
+    await sleep(15_000);
 
     // FIXME: Use system-agnostic temp path
     const filepath = "/tmp/exported_vscode_chat.json";
