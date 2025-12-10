@@ -161,8 +161,6 @@ function AppRootSelect() {
     customLaunchConfigurations: customConfigurations,
   } = projectState;
 
-  console.log("Frytki", selectedConfiguration);
-
   const selectedAppRootPath = projectState.appRootPath;
   const selectedAppRoot = applicationRoots.find((root) => root.path === selectedAppRootPath);
   const { openModal } = useModal();
