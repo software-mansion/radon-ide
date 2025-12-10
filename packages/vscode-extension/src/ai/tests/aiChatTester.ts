@@ -73,13 +73,14 @@ const testCases: ChatTestCase[] = [
   },
 ];
 
-export function testChatToolUsage() {
+export async function testChatToolUsage() {
   const runStatus: string[] = [];
 
   for (const testCase of testCases) {
-    commands.executeCommand("workbench.action.chat.newChat");
-    commands.executeCommand("workbench.action.chat.open", prompt);
+    await commands.executeCommand("workbench.action.chat.newChat");
+    await commands.executeCommand("workbench.action.chat.open", testCase.prompt);
 
+    // FIXME: Await agent's response.
     // TODO: Export chat, load the .json file
     const chatData = placeholderChatData;
 

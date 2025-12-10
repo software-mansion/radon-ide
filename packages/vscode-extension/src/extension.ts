@@ -39,6 +39,7 @@ import { DeviceRotationDirection, IDEPanelMoveTarget } from "./common/Project";
 import { AdminRestrictedFunctionalityError, PaywalledFunctionalityError } from "./common/Errors";
 import { registerRadonAI } from "./ai/mcp/RadonMcpController";
 import { removeLicense } from "./utilities/license";
+import { testChatToolUsage } from "./ai/tests/aiChatTester";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -297,6 +298,11 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.removeLicense", removeLicenseWithConfirmation)
   );
+
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.testChatToolUsage", testChatToolUsage)
+  );
+
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration
   // The current workflow is that people shouldn't run it, but since it is listed under launch options it might happen
   // When it does happen, we open the IDE panel and restart the app.
