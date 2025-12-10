@@ -1,4 +1,8 @@
+import { randomBytes } from "crypto";
 import { readFileSync } from "fs";
+import { mkdtemp } from "fs/promises";
+import { tmpdir } from "os";
+import path from "path";
 import { commands, Uri } from "vscode";
 
 interface ChatData {
@@ -90,6 +94,8 @@ export async function testChatToolUsage() {
     });
   };
 
+  const dir = await mkdtemp(path.join(tmpdir(), "radon-chat-exports-"));
+
   for (const testCase of testCases) {
     // TODO: Send `undo` command, or just confirm it.
     await commands.executeCommand("workbench.action.chat.newChat");
@@ -97,8 +103,7 @@ export async function testChatToolUsage() {
 
     await sleep(15_000);
 
-    // FIXME: Use system-agnostic temp path
-    const filepath = "/tmp/exported_vscode_chat.json";
+    const filepath = dir + randomBytes(8).toString("hex") + ".json";
 
     await commands.executeCommand("workbench.action.chat.export", Uri.parse(filepath));
 
