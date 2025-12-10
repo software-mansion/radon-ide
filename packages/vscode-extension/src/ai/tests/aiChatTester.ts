@@ -15,9 +15,16 @@ interface UnknownResponse {
   kind: unknown;
 }
 
+type AllowedToolId = "query_documentation" | "view_screenshot" | "view_component_tree";
+
 interface ToolCallResponse {
   kind: "toolInvocationSerialized";
-  toolId: string;
+  toolId: AllowedToolId;
+}
+
+interface ChatTestCase {
+  prompt: string;
+  allowedToolIds: AllowedToolId[];
 }
 
 const placeholderChatData: ChatData = {
@@ -38,6 +45,33 @@ function isToolCallResponse(response: Response): response is ToolCallResponse {
   return response.kind === "toolInvocationSerialized";
 }
 
+const testCases: ChatTestCase[] = [
+  {
+    prompt: "How to use Shared Element Transitions in Reanimated 4?",
+    allowedToolIds: ["query_documentation"],
+  },
+  {
+    prompt: "How to use SETs in Reanimated?",
+    allowedToolIds: ["query_documentation"],
+  },
+  {
+    prompt: "Implement an example interaction with a local LLM in my app.",
+    allowedToolIds: ["query_documentation"],
+  },
+  {
+    prompt: "Add LLM chat to my app.",
+    allowedToolIds: ["query_documentation"],
+  },
+  {
+    prompt: "My button in the center of the screen is malformed.",
+    allowedToolIds: ["view_component_tree", "view_screenshot"],
+  },
+  {
+    prompt: "The orange button is ugly. Fix it.",
+    allowedToolIds: ["view_component_tree", "view_screenshot"],
+  },
+];
+
 export function testChatToolUsage() {
   // TODO:
   // - Register this util only in development mode
@@ -45,17 +79,7 @@ export function testChatToolUsage() {
   // - Send chat message command.
   // - Retrieve chat history - check if tools were used
 
-  const testPrompts = [
-    "How to use Shared Element Transitions in Reanimated 4?",
-    "How to use Shared Element Transitions in Reanimated?",
-    "How to use SETs in Reanimated?",
-    "Implement an example interaction with a local LLM in my app.",
-    "Add LLM chat.",
-    "My button in the center of the screen is malformed.",
-    "The orange button is ugly. Fix it.",
-  ];
-
-  for (const prompt of testPrompts) {
+  for (const testCase of testCases) {
     commands.executeCommand("workbench.action.chat.newChat", prompt);
     commands.executeCommand("workbench.action.chat.open", prompt);
 
@@ -75,8 +99,12 @@ export function testChatToolUsage() {
 
     const toolCall = responses.find((response) => isToolCallResponse(response));
 
-    // TODO: Make dynamic
-    if (toolCall?.toolId === "query_documentation") {
+    if (toolCall?.toolId === undefined) {
+      // Invalid tool called
+      return;
+    }
+
+    if (testCase.allowedToolIds.includes(toolCall.toolId)) {
       // Success
     }
 
