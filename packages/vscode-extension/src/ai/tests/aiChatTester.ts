@@ -1,5 +1,4 @@
 import { commands } from "vscode";
-import { Logger } from "../../Logger";
 
 interface ChatData {
   requests: Request[];
@@ -26,6 +25,12 @@ interface ToolCallResponse {
 interface ChatTestCase {
   prompt: string;
   allowedToolIds: AllowedToolId[];
+}
+
+interface ChatTestResult {
+  prompt: string;
+  success: boolean;
+  cause: string | null;
 }
 
 const placeholderChatData: ChatData = {
@@ -74,7 +79,23 @@ const testCases: ChatTestCase[] = [
 ];
 
 export async function testChatToolUsage() {
-  const runStatus: string[] = [];
+  const runStatus: ChatTestResult[] = [];
+
+  const fail = (testCase: ChatTestCase, cause: string) => {
+    runStatus.push({
+      cause,
+      success: false,
+      prompt: testCase.prompt,
+    });
+  };
+
+  const success = (testCase: ChatTestCase) => {
+    runStatus.push({
+      cause: null,
+      success: true,
+      prompt: testCase.prompt,
+    });
+  };
 
   for (const testCase of testCases) {
     await commands.executeCommand("workbench.action.chat.newChat");
@@ -85,12 +106,12 @@ export async function testChatToolUsage() {
     const chatData = placeholderChatData;
 
     if (chatData.requests.length === 0) {
-      runStatus.push("Internal: `workbench.action.chat.open` did not work.");
+      fail(testCase, "Internal error: `workbench.action.chat.open` did not work.");
       continue;
     }
 
     if (chatData.requests.length > 1) {
-      runStatus.push("Internal: `workbench.action.chat.newChat` did not work.");
+      fail(testCase, "Internal error: `workbench.action.chat.newChat` did not work.");
       continue;
     }
 
@@ -99,18 +120,20 @@ export async function testChatToolUsage() {
     const toolCall = responses.find((response) => isToolCallResponse(response));
 
     if (toolCall?.toolId === undefined) {
-      runStatus.push("No tools were called.");
+      fail(testCase, "No tools were called.");
       continue;
     }
 
     if (testCase.allowedToolIds.includes(toolCall.toolId)) {
-      runStatus.push("OK");
+      success(testCase);
     } else {
-      runStatus.push("Unrecognized tool called:", toolCall.toolId);
+      const expected = `expected tool call(s): ${testCase.allowedToolIds.join(" or ")}`;
+      const received = `received tool call: ${toolCall.toolId}`;
+      const cause = `${expected}\n${received}`;
+      fail(testCase, cause);
     }
   }
 
   // TODO: Rework error reporting, use more structured approach with metadata
-  Logger.error(runStatus.join(", "));
   console.error(runStatus);
 }
