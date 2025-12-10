@@ -802,7 +802,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
       if (editor === EditorType.CURSOR) {
         focusCommand = "composer.startComposerPrompt";
-        // attachFileCommand = "composer.startComposerPrompt";
+        attachFileCommand = "composer.addfilestocomposer";
       }
 
       commands.executeCommand(focusCommand).then(async () => {
