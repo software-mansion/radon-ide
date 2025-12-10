@@ -56,10 +56,7 @@ function renderLaunchConfigurations(
 
   return (
     <Select.Group>
-      <div
-        className="approot-select-label-collapsible"
-        onClick={onToggleExpand}
-        style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
+      <div className="approot-select-label-collapsible" onClick={onToggleExpand}>
         <span
           className={`codicon ${isExpanded ? "codicon-chevron-down" : "codicon-chevron-right"}`}
         />
