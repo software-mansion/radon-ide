@@ -16,6 +16,7 @@ import { ProjectInterface } from "../../common/Project";
 import Tooltip from "./shared/Tooltip";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { ToolsState, ToolState } from "../../common/State";
+import { useStore } from "../providers/storeProvider";
 
 interface DevToolCheckboxProps {
   label: string;
@@ -94,7 +95,12 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
   const selectedDeviceSessionStatus = use$(selectedDeviceSessionState.status);
 
   const { project } = useProject();
+  const store$ = useStore();
+  const applicationDependencies = use$(
+    store$.projectState.applicationContext.applicationDependencies
+  );
 
+  const isMaestroInstalled = applicationDependencies.maestro?.status === "installed";
   const isRunning = selectedDeviceSessionStatus === "running";
 
   const profilingCPUState = use$(selectedDeviceSessionState?.applicationSession.profilingCPUState);
@@ -126,6 +132,26 @@ function ToolsDropdown({ children, disabled }: { children: React.ReactNode; disa
           data-testid="radon-tools-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Tools</h4>
+          {isMaestroInstalled && (
+            <>
+              <Label>Testing</Label>
+              <DropdownMenu.Item
+                className="dropdown-menu-item"
+                data-testid="tools-dropdown-menu-maestro-test-button"
+                onSelect={() => {
+                  const fileDialogPromise = project.openSelectMaestroFileDialog();
+                  fileDialogPromise.then((fileNames) => {
+                    if (fileNames) {
+                      project.startMaestroTest(fileNames);
+                    }
+                  });
+                }}>
+                <span className="codicon codicon-github-action" />
+                Start Maestro test(s)...
+              </DropdownMenu.Item>
+            </>
+          )}
+
           <Label>Utilities</Label>
           <DropdownMenu.Item
             className="dropdown-menu-item"
