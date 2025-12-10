@@ -97,7 +97,7 @@ export async function testChatToolUsage() {
   const dir = await mkdtemp(path.join(tmpdir(), "radon-chat-exports-"));
 
   for (const testCase of testCases) {
-    // TODO: Send `undo` command, or just confirm it.
+    await commands.executeCommand("workbench.action.chat.undoEdits");
     await commands.executeCommand("workbench.action.chat.newChat");
     await commands.executeCommand("workbench.action.chat.open", testCase.prompt);
 
