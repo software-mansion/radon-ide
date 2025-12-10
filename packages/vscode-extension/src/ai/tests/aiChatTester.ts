@@ -1,15 +1,22 @@
 import { commands } from "vscode";
 
-export interface ChatData {
+interface ChatData {
   requests: Request[];
 }
 
-export interface Request {
+interface Request {
   response: Response[];
 }
 
-export interface Response {
-  kind: string;
+type Response = ToolCallResponse | UnknownResponse;
+
+interface UnknownResponse {
+  // `Exclude<string, "literal">` resolves to `string` (does not work)
+  kind: unknown;
+}
+
+interface ToolCallResponse {
+  kind: "toolInvocationSerialized";
   toolId: string;
 }
 
@@ -25,6 +32,11 @@ const placeholderChatData: ChatData = {
     },
   ],
 };
+
+function isToolCallResponse(response: Response): response is ToolCallResponse {
+  // Smart-casting with `Exclude<string, "literal">` does not work, which is why this utility function is necessary
+  return response.kind === "toolInvocationSerialized";
+}
 
 export function testChatToolUsage() {
   // TODO:
@@ -48,8 +60,26 @@ export function testChatToolUsage() {
     commands.executeCommand("workbench.action.chat.open", prompt);
 
     // TODO: Export chat, load the .json file
-    const _chatData = placeholderChatData;
+    const chatData = placeholderChatData;
 
     // .requests[0].response[0].toolName
+    if (chatData.requests.length === 0) {
+      return; // `workbench.action.chat.open` didn't work
+    }
+
+    if (chatData.requests.length > 1) {
+      return; // `workbench.action.chat.newChat` didn't work
+    }
+
+    const responses = chatData.requests[0].response;
+
+    const toolCall = responses.find((response) => isToolCallResponse(response));
+
+    // TODO: Make dynamic
+    if (toolCall?.toolId === "query_documentation") {
+      // Success
+    }
+
+    // Fail
   }
 }
