@@ -66,6 +66,13 @@
   user-select: none;
 }
 
+.approot-select-label-collapsible {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .approot-select-item {
   height: 32px;
   line-height: 1.2;
