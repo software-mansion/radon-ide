@@ -3,12 +3,13 @@ import { homedir } from "os";
 import path from "path";
 import * as vscode from "vscode";
 import { Disposable } from "vscode";
-import { ExecaError } from "execa";
-import { DevicePlatform } from "../common/State";
+import { DeviceInfo, DevicePlatform, DeviceType } from "../common/State";
 import { DeviceBase } from "../devices/DeviceBase";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { getOrCreateDeviceSet, IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { extensionContext } from "../utilities/extensionContext";
+import { Logger } from "../Logger";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 class MaestroPseudoTerminal implements vscode.Pseudoterminal {
   private writeEmitter = new vscode.EventEmitter<string>();
@@ -44,6 +45,27 @@ class MaestroPseudoTerminal implements vscode.Pseudoterminal {
   exit(code?: number): void {
     this.closeEmitter.fire(code);
   }
+}
+
+enum DeviceFamily {
+  IPHONE_SIMULATOR = "iphone_simulator",
+  IPAD_SIMULATOR = "ipad_simulator",
+  ANDROID_EMULATOR = "android_emulator",
+  ANDROID_PHYSICAL = "android_physical",
+}
+
+function getDeviceFamily(deviceInfo: DeviceInfo) {
+  if (deviceInfo.platform === DevicePlatform.IOS) {
+    if (deviceInfo.deviceType === DeviceType.Tablet) {
+      return DeviceFamily.IPAD_SIMULATOR;
+    }
+    return DeviceFamily.IPHONE_SIMULATOR;
+  }
+
+  if (deviceInfo.emulator) {
+    return DeviceFamily.ANDROID_EMULATOR;
+  }
+  return DeviceFamily.ANDROID_PHYSICAL;
 }
 
 export class MaestroTestRunner implements Disposable {
@@ -88,6 +110,9 @@ export class MaestroTestRunner implements Disposable {
   }
 
   public async startMaestroTest(fileNames: string[]): Promise<void> {
+    const deviceFamily = getDeviceFamily(this.device.deviceInfo);
+    getTelemetryReporter().sendTelemetryEvent(`maestro:test_started:${deviceFamily}`);
+
     const { terminal, pty } = this.getOrCreateTerminal();
     terminal.show(true);
     // For some reason the terminal isn't ready immediately and loses initial output
@@ -108,6 +133,70 @@ export class MaestroTestRunner implements Disposable {
       pty.writeLine(`Starting ${fileNames.length} Maestro flows: ${fileNames.join(", ")}`);
     }
 
+    // NOTE: maestro sets application permissions using the `applesimutils` utility,
+    // which does not support custom device sets.
+    // To work around this, we create a symlink to the target Radon device
+    // in the default simulator location for the duration of the test, and remove it afterwards.
+    const cleanupSymlink = await this.setupSimulatorSymlink();
+    try {
+      await this.runMaestro(fileNames, pty);
+      pty.writeLine(`\x1b[32mMaestro test completed successfully!\x1b[0m`);
+      getTelemetryReporter().sendTelemetryEvent(`maestro:test_completed:${deviceFamily}`);
+    } catch (error) {
+      const exitCode =
+        error && typeof error === "object" && "exitCode" in error ? error.exitCode : null;
+      // SIGTERM exit code
+      if (exitCode !== null && exitCode !== 143) {
+        pty.writeLine(`\x1b[31mMaestro test failed with exit code ${exitCode}\x1b[0m`);
+        getTelemetryReporter().sendTelemetryEvent(`maestro:test_failed:${deviceFamily}`);
+      }
+    } finally {
+      await cleanupSymlink();
+    }
+    this.maestroProcess = undefined;
+  }
+
+  public async stopMaestroTest(): Promise<void> {
+    if (!this.maestroProcess) {
+      return;
+    }
+    const deviceFamily = getDeviceFamily(this.device.deviceInfo);
+
+    this.pty?.writeLine("");
+    this.pty?.writeLine(`\x1b[33mAborting Maestro test...\x1b[0m`);
+
+    const proc = this.maestroProcess;
+    try {
+      proc.kill();
+    } catch (e) {}
+
+    const killer = setTimeout(() => {
+      try {
+        proc.kill(9);
+      } catch (e) {}
+    }, 3000);
+
+    try {
+      await proc;
+    } catch (e) {}
+    clearTimeout(killer);
+    this.maestroProcess = undefined;
+
+    this.pty?.writeLine(`\x1b[33mMaestro test aborted\x1b[0m`);
+    getTelemetryReporter().sendTelemetryEvent(`maestro:test_aborted:${deviceFamily}`);
+  }
+
+  public async dispose() {
+    await this.stopMaestroTest();
+    this.pty?.exit();
+    this.terminal?.dispose();
+    this.onCloseTerminal?.dispose();
+    this.pty = undefined;
+    this.terminal = undefined;
+    this.onCloseTerminal = undefined;
+  }
+
+  private async runMaestro(fileNames: string[], pty: MaestroPseudoTerminal) {
     // Right now, for running iOS tests, Maestro uses xcodebuild test-without-building,
     // which does not support simulators located outside the default device set.
     // The creators provide a prebuilt XCTest runner that can be ran through simctl,
@@ -117,6 +206,7 @@ export class MaestroTestRunner implements Disposable {
     // similar to what Maestro would do in prebuilt mode, and wrap the xcrun
     // command to provide our own device set with the --set flag.
     const shimPath = path.resolve(extensionContext.extensionPath, "shims", "maestro");
+
     const maestroProcess = exec("maestro", ["--device", this.device.id, "test", ...fileNames], {
       buffer: false,
       reject: true,
@@ -145,54 +235,53 @@ export class MaestroTestRunner implements Disposable {
       pty.writeLine(line);
     });
 
-    await maestroProcess.then(
-      (resolved) => {
-        pty.writeLine(`\x1b[32mMaestro test completed successfully!\x1b[0m`);
-      },
-      (error: ExecaError) => {
-        // SIGTERM exit code
-        if (error.exitCode !== 143) {
-          pty.writeLine(`\x1b[31mMaestro test failed with exit code ${error.exitCode}\x1b[0m`);
-        }
-      }
-    );
-    this.maestroProcess = undefined;
+    await maestroProcess;
   }
 
-  public async stopMaestroTest(): Promise<void> {
-    if (!this.maestroProcess) {
-      return;
+  private async setupSimulatorSymlink() {
+    if (this.device.platform !== DevicePlatform.IOS) {
+      return async () => {
+        // NOOP
+      };
     }
-    this.pty?.writeLine("");
-    this.pty?.writeLine(`\x1b[33mAborting Maestro test...\x1b[0m`);
+    const id = this.device.id;
+    const devicePath = path.join(getOrCreateDeviceSet(id), id);
+    const coreSimulatorPath = path.join(
+      homedir(),
+      "Library",
+      "Developer",
+      "CoreSimulator",
+      "Devices",
+      id
+    );
 
-    const proc = this.maestroProcess;
-    try {
-      proc.kill();
-    } catch (e) {}
-
-    const killer = setTimeout(() => {
+    async function cleanupSymlink() {
       try {
-        proc.kill(9);
-      } catch (e) {}
-    }, 3000);
+        return await promises.unlink(coreSimulatorPath);
+      } catch {
+        // NOTE: not much we can do here.
+        // The symlink will remain, but it should not impact the user.
+        Logger.error("Failed to remove simulator symlink: ", coreSimulatorPath);
+      }
+    }
 
     try {
-      await proc;
-    } catch (e) {}
-    clearTimeout(killer);
-    this.maestroProcess = undefined;
-
-    this.pty?.writeLine(`\x1b[33mMaestro test aborted\x1b[0m`);
-  }
-
-  public async dispose() {
-    await this.stopMaestroTest();
-    this.pty?.exit();
-    this.terminal?.dispose();
-    this.onCloseTerminal?.dispose();
-    this.pty = undefined;
-    this.terminal = undefined;
-    this.onCloseTerminal = undefined;
+      await promises.symlink(devicePath, coreSimulatorPath);
+      return cleanupSymlink;
+    } catch (e) {
+      // NOTE: check if symlink already exists and points to the correct location
+      const existingLink = await promises.readlink(coreSimulatorPath).catch(() => null);
+      if (existingLink === devicePath) {
+        // NOTE: the symlink might be left here from a previous run,
+        // for example if the extension or VSCode was closed while the test was running,
+        // and cleanup didn't get to run to completion.
+        // We clean up the symlink in that case here.
+        // Let's hope the user did not create the symlink themselves for whatever reason...
+        return cleanupSymlink;
+      }
+    }
+    return async () => {
+      // NOOP
+    };
   }
 }
