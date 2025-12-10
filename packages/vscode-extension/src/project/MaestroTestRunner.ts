@@ -3,12 +3,13 @@ import { homedir } from "os";
 import path from "path";
 import * as vscode from "vscode";
 import { Disposable } from "vscode";
-import { DevicePlatform } from "../common/State";
+import { DeviceInfo, DevicePlatform, DeviceType } from "../common/State";
 import { DeviceBase } from "../devices/DeviceBase";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
 import { getOrCreateDeviceSet, IosSimulatorDevice } from "../devices/IosSimulatorDevice";
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
+import { getTelemetryReporter } from "../utilities/telemetry";
 
 class MaestroPseudoTerminal implements vscode.Pseudoterminal {
   private writeEmitter = new vscode.EventEmitter<string>();
@@ -44,6 +45,27 @@ class MaestroPseudoTerminal implements vscode.Pseudoterminal {
   exit(code?: number): void {
     this.closeEmitter.fire(code);
   }
+}
+
+enum DeviceFamily {
+  IPHONE_SIMULATOR = "iphone_simulator",
+  IPAD_SIMULATOR = "ipad_simulator",
+  ANDROID_EMULATOR = "android_emulator",
+  ANDROID_PHYSICAL = "android_physical",
+}
+
+function getDeviceFamily(deviceInfo: DeviceInfo) {
+  if (deviceInfo.platform === DevicePlatform.IOS) {
+    if (deviceInfo.deviceType === DeviceType.Tablet) {
+      return DeviceFamily.IPAD_SIMULATOR;
+    }
+    return DeviceFamily.IPHONE_SIMULATOR;
+  }
+
+  if (deviceInfo.emulator) {
+    return DeviceFamily.ANDROID_EMULATOR;
+  }
+  return DeviceFamily.ANDROID_PHYSICAL;
 }
 
 export class MaestroTestRunner implements Disposable {
@@ -88,6 +110,9 @@ export class MaestroTestRunner implements Disposable {
   }
 
   public async startMaestroTest(fileNames: string[]): Promise<void> {
+    const deviceFamily = getDeviceFamily(this.device.deviceInfo);
+    getTelemetryReporter().sendTelemetryEvent(`maestro:test_started:${deviceFamily}`);
+
     const { terminal, pty } = this.getOrCreateTerminal();
     terminal.show(true);
     // For some reason the terminal isn't ready immediately and loses initial output
@@ -116,12 +141,14 @@ export class MaestroTestRunner implements Disposable {
     try {
       await this.runMaestro(fileNames, pty);
       pty.writeLine(`\x1b[32mMaestro test completed successfully!\x1b[0m`);
+      getTelemetryReporter().sendTelemetryEvent(`maestro:test_completed:${deviceFamily}`);
     } catch (error) {
       const exitCode =
         error && typeof error === "object" && "exitCode" in error ? error.exitCode : null;
       // SIGTERM exit code
       if (exitCode !== null && exitCode !== 143) {
         pty.writeLine(`\x1b[31mMaestro test failed with exit code ${exitCode}\x1b[0m`);
+        getTelemetryReporter().sendTelemetryEvent(`maestro:test_failed:${deviceFamily}`);
       }
     } finally {
       await cleanupSymlink();
@@ -133,6 +160,8 @@ export class MaestroTestRunner implements Disposable {
     if (!this.maestroProcess) {
       return;
     }
+    const deviceFamily = getDeviceFamily(this.device.deviceInfo);
+
     this.pty?.writeLine("");
     this.pty?.writeLine(`\x1b[33mAborting Maestro test...\x1b[0m`);
 
@@ -154,6 +183,7 @@ export class MaestroTestRunner implements Disposable {
     this.maestroProcess = undefined;
 
     this.pty?.writeLine(`\x1b[33mMaestro test aborted\x1b[0m`);
+    getTelemetryReporter().sendTelemetryEvent(`maestro:test_aborted:${deviceFamily}`);
   }
 
   public async dispose() {
