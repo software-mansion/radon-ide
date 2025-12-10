@@ -99,7 +99,7 @@ export async function testChatToolUsage() {
   for (const testCase of testCases) {
     await commands.executeCommand("workbench.action.chat.undoEdits");
     await commands.executeCommand("workbench.action.chat.newChat");
-    await commands.executeCommand("workbench.action.chat.open", testCase.prompt);
+    await commands.executeCommand("workbench.action.chat.openagent", testCase.prompt);
 
     await sleep(15_000);
 
