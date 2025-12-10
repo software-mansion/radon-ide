@@ -1,4 +1,5 @@
-import { commands } from "vscode";
+import { readFileSync } from "fs";
+import { commands, Uri } from "vscode";
 
 interface ChatData {
   requests: Request[];
@@ -32,19 +33,6 @@ interface ChatTestResult {
   success: boolean;
   cause: string | null;
 }
-
-const placeholderChatData: ChatData = {
-  requests: [
-    {
-      response: [
-        {
-          kind: "toolInvocationSerialized",
-          toolId: "query_documentation",
-        },
-      ],
-    },
-  ],
-};
 
 function isToolCallResponse(response: Response): response is ToolCallResponse {
   // Smart-casting with `Exclude<string, "literal">` does not work, which is why this utility function is necessary
@@ -101,9 +89,19 @@ export async function testChatToolUsage() {
     await commands.executeCommand("workbench.action.chat.newChat");
     await commands.executeCommand("workbench.action.chat.open", testCase.prompt);
 
-    // FIXME: Await agent's response.
-    // TODO: Export chat, load the .json file
-    const chatData = placeholderChatData;
+    // FIXME: Use system-agnostic temp path
+    const filepath = "/tmp/exported_vscode_chat.json";
+
+    await commands.executeCommand("workbench.action.chat.export", Uri.parse(filepath));
+
+    let chatData;
+    try {
+      const exportedText = readFileSync(filepath).toString();
+      chatData = JSON.parse(exportedText) as ChatData;
+    } catch {
+      fail(testCase, "Internal error: `workbench.action.chat.export` did not work.");
+      continue;
+    }
 
     if (chatData.requests.length === 0) {
       fail(testCase, "Internal error: `workbench.action.chat.open` did not work.");
