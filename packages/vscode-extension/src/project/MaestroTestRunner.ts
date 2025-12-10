@@ -108,6 +108,10 @@ export class MaestroTestRunner implements Disposable {
       pty.writeLine(`Starting ${fileNames.length} Maestro flows: ${fileNames.join(", ")}`);
     }
 
+    // NOTE: maestro sets application permissions using the `applesimutils` utility,
+    // which does not support custom device sets.
+    // To work around this, we create a symlink to the target Radon device
+    // in the default simulator location for the duration of the test, and remove it afterwards.
     const cleanupSymlink = await this.setupSimulatorSymlink();
     try {
       await this.runMaestro(fileNames, pty);
