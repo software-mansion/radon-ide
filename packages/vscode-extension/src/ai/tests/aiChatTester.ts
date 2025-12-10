@@ -127,8 +127,8 @@ export async function testChatToolUsage() {
     if (testCase.allowedToolIds.includes(toolCall.toolId)) {
       success(testCase);
     } else {
-      const expected = `expected tool call(s): ${testCase.allowedToolIds.join(" or ")}`;
-      const received = `received tool call: ${toolCall.toolId}`;
+      const expected = `expected tool call to ${testCase.allowedToolIds.join(" or ")}`;
+      const received = `received tool call to ${toolCall.toolId}`;
       const cause = `${expected}\n${received}`;
       fail(testCase, cause);
     }
