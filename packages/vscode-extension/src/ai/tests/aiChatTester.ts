@@ -1,4 +1,5 @@
 import { commands } from "vscode";
+import { Logger } from "../../Logger";
 
 interface ChatData {
   requests: Request[];
@@ -73,26 +74,23 @@ const testCases: ChatTestCase[] = [
 ];
 
 export function testChatToolUsage() {
-  // TODO:
-  // - Register this util only in development mode
-  // - New chat
-  // - Send chat message command.
-  // - Retrieve chat history - check if tools were used
+  const runStatus: string[] = [];
 
   for (const testCase of testCases) {
-    commands.executeCommand("workbench.action.chat.newChat", prompt);
+    commands.executeCommand("workbench.action.chat.newChat");
     commands.executeCommand("workbench.action.chat.open", prompt);
 
     // TODO: Export chat, load the .json file
     const chatData = placeholderChatData;
 
-    // .requests[0].response[0].toolName
     if (chatData.requests.length === 0) {
-      return; // `workbench.action.chat.open` didn't work
+      runStatus.push("Internal: `workbench.action.chat.open` did not work.");
+      continue;
     }
 
     if (chatData.requests.length > 1) {
-      return; // `workbench.action.chat.newChat` didn't work
+      runStatus.push("Internal: `workbench.action.chat.newChat` did not work.");
+      continue;
     }
 
     const responses = chatData.requests[0].response;
@@ -100,14 +98,18 @@ export function testChatToolUsage() {
     const toolCall = responses.find((response) => isToolCallResponse(response));
 
     if (toolCall?.toolId === undefined) {
-      // Invalid tool called
-      return;
+      runStatus.push("No tools were called.");
+      continue;
     }
 
     if (testCase.allowedToolIds.includes(toolCall.toolId)) {
-      // Success
+      runStatus.push("OK");
+    } else {
+      runStatus.push("Unrecognized tool called:", toolCall.toolId);
     }
-
-    // Fail
   }
+
+  // TODO: Rework error reporting, use more structured approach with metadata
+  Logger.error(runStatus.join(", "));
+  console.error(runStatus);
 }
