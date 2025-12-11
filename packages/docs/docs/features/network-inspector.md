@@ -68,7 +68,7 @@ Right clicking on the network log opens **Context Menu**, allowing for sorting a
 
 Current caveats and limitations:
 - `Image` components requests and WebSocket traffic are not tracked and will not appear in the inspector.
-- Some external fetch polyfills may be incompatible, as certain third-party fetch implementations bypass our interception layer. Currently, the inspector provides explicit support for the [`react-native-fetch-api`](https://www.npmjs.com/package/react-native-fetch-api).
+- Some external network-related libraries and polyfills may be incompatible, as their implementations may bypass our interception layer. Currently, the inspector provides explicit support for the [`react-native-fetch-api`](https://www.npmjs.com/package/react-native-fetch-api).
 
 For **React Native versions 0.83.0 and newer**, the native implementation of the React Native's Network Inspector is enabled by default and may address some of the limitations above. You can also explicitly enable the native Network Inspector via the [Launch Configuration](/docs/guides/configuration.md), however, for versions prior to 0.83.0, it will not function properly without additional setup.
 
