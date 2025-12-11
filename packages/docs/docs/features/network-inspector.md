@@ -30,7 +30,7 @@ You can access the Network tab from IDE by clicking the Link icon next to the Ne
 
 You can customize the Network Inspector behaviour using the following buttons:
 
-<img width="175" src="/img/docs/ide_network_inspector_buttons.png" className="shadow-image"/>
+<img width="550" src="/img/docs/ide_network_inspector_buttons.png" className="shadow-image"/>
 
 1. **Toggle network activity recording** - starts or stops the capture of network requests made by your application.
 2. **Clear network log** - erases all currently displayed network requests displayed in a list.
