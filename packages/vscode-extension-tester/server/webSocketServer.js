@@ -1,4 +1,4 @@
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 
 let wss = null;
 let appWebsocket = null;
@@ -41,12 +41,10 @@ export function waitForMessage(id, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
     const appWebsocket = getAppWebsocket();
 
-    if (!appWebsocket || appWebsocket.readyState !== 1) {
+    if (!appWebsocket || appWebsocket.readyState !== WebSocket.OPEN) {
       reject(
         new Error(
-          `Websocket not connected or not ready. State: ${
-            appWebsocket ? appWebsocket.readyState : "null"
-          }`
+          `Websocket not connected or not ready. State: ${appWebsocket?.readyState}`
         )
       );
       return;
@@ -65,7 +63,10 @@ export function waitForMessage(id, timeoutMs = 10000) {
           appWebsocket.off("message", handler);
           resolve(msg);
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("Error parsing message:", message);
+        console.error(e);
+      }
     };
 
     appWebsocket.on("message", handler);

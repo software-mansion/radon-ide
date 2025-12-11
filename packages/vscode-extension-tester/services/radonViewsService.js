@@ -191,7 +191,6 @@ export default class RadonViewsService {
     const fullPath = path.join(process.cwd(), "data", filename);
     await quickInput.sendKeys(fullPath);
     await this.driver.sleep(TIMEOUTS.SHORT);
-    // await quickInput.sendKeys(Key.ENTER);
 
     const quickInputButton =
       await this.elementHelperService.findAndWaitForElement(
