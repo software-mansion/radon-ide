@@ -6,11 +6,11 @@ sidebar_position: 8
 
 Radon IDE comes with a Network Inspector panel allowing you to inspect network traffic. The tool captures all network requests initiated by `fetch` and `XMLHttpRequest`, with support for the native implementation of the React Native's Network Inspector, specifically for versions above 0.83.0.
 
-Activation of the native network inspector implementation is configurable within [Launch Configuration](/docs/guides/configuration.md).
+You can activate the native network inspector implementation within [Launch Configuration](/docs/guides/configuration.md).
 
-Supported external libraries that polyfill the fetch implementation are currently limited to [`react-native-fetch-api`](https://www.npmjs.com/package/react-native-fetch-api).
+At present, the inspector supports a single external fetch implementation library: [`react-native-fetch-api`](https://www.npmjs.com/package/react-native-fetch-api).
 
-Requests made by `Image` elements and WebSocket traffic are not supported outside the native implementation and will not be displayed in the inspector.
+Requests made by `Image` elements and WebSocket traffic are not supported outside the native implementation and the inspecotr will not display them.
 
 <video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/ide_network_inspector_new.mp4" type="video/mp4"/>
@@ -57,12 +57,12 @@ Clicking directly on a column header will additionally **Sort** the logs accordi
 
 The Network Inspector displays a log of all network requests made by your application in a table. Each row represents a single request, and the columns provide key information about that request namely:
 
-- **Name** - the segment of the path of the URL request.
-- **Status** - a HTTP status code returned by the server.
-- **Method** - a HTTP request method used (e.g. GET, POST, PUT, DELETE, etc.).
-- **Type** - a resource type as it was perceived by the rendering engine.
-- **Size** - the total size of the transferred resource.
-- **Time** - the total duration of the request.
+- **Name** - segment of the path of the URL request.
+- **Status** - HTTP status code returned by the server.
+- **Method** - HTTP request method used (e.g. GET, POST, PUT, DELETE, etc.).
+- **Type** - resource type of the received response.
+- **Size** - total size of the transferred resource.
+- **Time** - total duration of the request.
 
 Clicking on the network log shows more details about the contents of the request. The details of the request are grouped into into Headers, Payload, Response, and Timing tabs.
 
