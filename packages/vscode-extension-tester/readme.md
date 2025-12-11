@@ -35,7 +35,7 @@ root/
 ├── services/                  # Reusable Service Classes
 │   ├── AppManipulationService.js
 │   ├── ElementHelperService.js
-│   ├── RadonViewsService.js
+
 │   └── RadonViewsService.js
 ├── ui-tests/                  # Test Suites
 │   ├── 01-smoke.test.js
@@ -108,7 +108,7 @@ The `/services/` directory contains Service Classes with frequently used functio
     - > **Note:** The Radon IDE view works inside an `iframe` within VS Code. To find an element inside the Radon view, you must switch to the correct iframe. This method handles that switch automatically.
 
   - `async RadonViewsService.activateRadonIDELicense()`
-    - Activates Radon IDE license with key provided as enviromental variable.
+    - Activates Radon IDE license with key provided as environmental variable.
 
 - **AppManipulationService**
 
@@ -142,7 +142,7 @@ Requests to the React Native app are sent as stringified JSON in the following f
 Some functionalities may require additional fields.
 
 
-The app resopnds with the following format
+The app responds with the following format
 
 ```json
 {
@@ -173,7 +173,7 @@ The app returns coordinates in the following format:
 
 - `getFontSize` - returns the device’s font size.
 - `getOrientation` - returns the device orientation (`landscape`, `portrait`)
-- `getColorSchema` - returns the device color scheme (`light`, `dark`)
+- `getColorScheme` - returns the device color scheme (`light`, `dark`)
 - `getAppState` - returns the app state (`active`, `inactive`, `background`)
 - `fetchData` - fetches data from a given URL, body and headers can also be provided if needed
 
