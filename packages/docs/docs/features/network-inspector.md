@@ -4,13 +4,7 @@ title: Network Inspector
 sidebar_position: 8
 ---
 
-Radon IDE comes with a Network Inspector panel allowing you to inspect network traffic. The tool captures all network requests initiated by `fetch` and `XMLHttpRequest`, with support for the native implementation of the React Native's Network Inspector, specifically for versions above 0.83.0.
-
-You can activate the native network inspector implementation within [Launch Configuration](/docs/guides/configuration.md).
-
-At present, the inspector supports a single external fetch implementation library: [`react-native-fetch-api`](https://www.npmjs.com/package/react-native-fetch-api).
-
-Requests made by `Image` elements and WebSocket traffic are not supported outside the native implementation and the inspecotr will not display them.
+Radon IDE comes with a Network Inspector panel allowing you to inspect network traffic. The tool captures all network requests initiated by `fetch` and `XMLHttpRequest` and supports the native implementation of the React Native's Network Inspector for version 0.83.0 and newer.
 
 <video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/ide_network_inspector_new.mp4" type="video/mp4"/>
@@ -69,3 +63,13 @@ Clicking on the network log shows more details about the contents of the request
 <img width="500" src="/img/docs/ide_devtools_network_inspector_context_menu.png" className="shadow-image" />
 
 Right clicking on the network log opens **Context Menu**, allowing for sorting and filtering the logs, copying the request details, refetching and opening responses in the editor's tab.
+
+## Network Events Coverage
+
+Current caveats and limitations:
+- `Image` components requests and WebSocket traffic are not tracked and will not appear in the inspector.
+- Some external fetch polyfills may be incompatible, as certain third-party fetch implementations bypass our interception layer. Currently, the inspector provides explicit support for the [`react-native-fetch-api`](https://www.npmjs.com/package/react-native-fetch-api).
+
+For **React Native versions 0.83.0 and newer**, the native implementation of the React Native's Network Inspector is enabled by default and may address some of the limitations above. You can also explicitly enable the native Network Inspector via the [Launch Configuration](/docs/guides/configuration.md), however, for versions prior to 0.83.0, it will not function properly without additional setup.
+
+ The native Network Inspector tracks all network requests officially supported by React Native DevTools. You may read more about the native implementation [here](https://reactnative.dev/blog/2025/12/10/react-native-0.83).
