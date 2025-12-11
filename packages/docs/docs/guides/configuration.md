@@ -12,30 +12,30 @@ However, due to the spectrum of possible modifications to React Native project s
 We constantly look into ways of improving things, so if the IDE doesn't work for your setup, please report an issue with a sample project that reproduces the setup that you use.
 While some project setups (like brownfield projects) are more challenging than others, we want the IDE to be universally available for all types of React Native projects and will investigate the possibilities of expanding configuration options or handling some project modifications in an automated way.
 
-## Managing configuration file
+## Managing configurations
 
 Radon IDE uses the standard VS Code `launch.json` format for customizing the build process to your project.
 Before you can change any of the options you'll need to create a launch configuration file, unless you already have one in your project.
 
-### Creating and updating `launch.js` using Radon IDE's panel
+### Creating and updating `launch.json` using Radon IDE's panel
 
-In order to create a new project configuration, open `Launch Configuration Selector` and select `Add custom launch config option` You will be presented with a wizard, that will allow you to configure the specific options in a GUI environment.
+In order to create a new project configuration, open `Launch Configuration Selector` and select `Add custom launch config option`. The wizard will guide you through configuring the options in a GUI environment.  
 
 <img width="400" src="/img/docs/ide_add_custom_launch_config.png" className="shadow-image"/>
 
-The wizard provides simple means to generate and edit `launch.js` file and currently supports setting the basic launch options. If needed, the `Edit in launch.json` button can be used to jump to the file itself, which may then be edited manually.
+The wizard provides simple means to generate and edit `launch.json`. If necessary, you can use the `Edit in launch.json` button to jump to the file itself and make changes manually.  
 
-After defining the set of options, `Save` button allows for creating the `launch.json` configuration file, which can then be used from the `Launch Configuration Selector`.
+After filling out the options, click the `Save` button to create the `launch.json` configuration file (if it does not exist yet) and write your launch configuration to it. You can then select created configuration from the `Launch Configuration Selector`.  
 
-The file should be added to version control (git) as it carries configuration that is specific to your project setup rather than user specific editor settings.
+You should consider adding the `launch.json` file to your project's version control system (e.g. `git`) as it carries configuration that is specific to your project setup rather than user specific editor settings.  
 
 <img width="400" src="/img/docs/ide_launch_config_window.png" className="shadow-image"/>
 
-The existing custom launch configuration can be edited or deleted by clicking on the cog icon next to its name in `Launch Configuration Selector`.
+You can edit or delete existing custom launch configuration by clicking on the cog icon next to its name in `Launch Configuration Selector`.  
 
 <img width="300" src="/img/docs/ide_edit_launch_config.png" className="shadow-image"/>
 
-### Creating `launch.js` using VS Code's Debug Panel
+### Creating `launch.json` using VS Code's Debug Panel
 
 If you have the launch configuration file you can move to the next step.
 Otherwise go to **Run and Build** panel and click **create a launch.json file**:
@@ -255,17 +255,7 @@ Below is an example that replaces iOS and Android local builds with builds from 
 }
 ```
 
-## Other launch configuration customization
-
-### Preview settings
-
-The `preview` object allows you to customize the behavior of device preview:
-
-| Attribute            | Description                                                                                                                                                   |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **waitForAppLaunch** | Defaults to `true`, this should only be set to `false` for brownfield setups when React Native components aren't rendered immediately after the app launches. |
-
-### Other settings
+## Other settings
 
 Here, we list other attributes that can be configured using launch configuration which don't fit in any of the above categories:
 
