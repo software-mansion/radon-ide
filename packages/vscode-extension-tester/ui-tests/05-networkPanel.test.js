@@ -86,8 +86,6 @@ safeDescribe("5 - Network panel tests", () => {
 
     await openNetworkPanel();
 
-    await driver.sleep(100000);
-
     const name = endpoint.split("/").pop().split("?")[0];
     console.log("Testing details for:", name);
 
