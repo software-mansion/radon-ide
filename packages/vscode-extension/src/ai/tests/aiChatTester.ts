@@ -97,11 +97,19 @@ export async function testChatToolUsage() {
   const dir = await mkdtemp(path.join(tmpdir(), "radon-chat-exports-"));
 
   for (const testCase of testCases) {
-    await commands.executeCommand("workbench.action.chat.undoEdits");
+    await commands.executeCommand("workbench.panel.chat.view.copilot.focus");
+
+    // Rejection requires confirmation (human input), acceptance does not.
+    await commands.executeCommand("chatEditing.acceptAllFiles");
+
+    // TODO: Revert all changes via git
+
     await commands.executeCommand("workbench.action.chat.newChat");
     await commands.executeCommand("workbench.action.chat.openagent", testCase.prompt);
 
-    await sleep(15_000);
+    await sleep(10_000); // FIXME: Fixed timouts like this are unacceptable on prod
+
+    // TODO: Add a way to interrupt & cancel the process
 
     const filepath = dir + randomBytes(8).toString("hex") + ".json";
 
@@ -128,6 +136,7 @@ export async function testChatToolUsage() {
 
     const responses = chatData.requests[0].response;
 
+    // TODO: Check all, not only the first one
     const toolCall = responses.find((response) => isToolCallResponse(response));
 
     if (toolCall?.toolId === undefined) {
