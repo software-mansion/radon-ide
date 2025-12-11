@@ -113,6 +113,14 @@ export class MaestroTestRunner implements Disposable {
     const deviceFamily = getDeviceFamily(this.device.deviceInfo);
     getTelemetryReporter().sendTelemetryEvent(`maestro:test_started:${deviceFamily}`);
 
+    if (deviceFamily === DeviceFamily.IPAD_SIMULATOR) {
+      vscode.window.showErrorMessage(
+        "Maestro tests are currently unsupported for iPad simulator devices. " +
+          "Switch to a different device and run the test again."
+      );
+      return;
+    }
+
     const { terminal, pty } = this.getOrCreateTerminal();
     terminal.show(true);
     // For some reason the terminal isn't ready immediately and loses initial output
