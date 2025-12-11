@@ -16810,7 +16810,7 @@ __DEV__ &&
       shouldSuspendImpl = newShouldSuspendImpl;
     };
     var isomorphicReactPackageVersion = React.version;
-    if ("19.0.0" !== isomorphicReactPackageVersion || "19.0.1" !== isomorphicReactPackageVersion)
+    if ("19.0.0" !== isomorphicReactPackageVersion && "19.0.1" !== isomorphicReactPackageVersion)
       throw Error(
         'Incompatible React versions: The "react" and "react-native-renderer" packages must have the exact same version. Instead got:\n  - react:                  ' +
           (isomorphicReactPackageVersion +
