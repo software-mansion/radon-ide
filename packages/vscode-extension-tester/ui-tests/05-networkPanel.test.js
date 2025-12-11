@@ -86,6 +86,8 @@ safeDescribe("5 - Network panel tests", () => {
 
     await openNetworkPanel();
 
+    await driver.sleep(100000);
+
     const name = endpoint.split("/").pop().split("?")[0];
     console.log("Testing details for:", name);
 
@@ -113,8 +115,6 @@ safeDescribe("5 - Network panel tests", () => {
     );
 
     if (method) assert.equal(await methodElement.getText(), method);
-
-    // const headers = ["payload", "response", "timing", "headers"];
 
     await elementHelperService.findAndClickElementByTag(
       `network-panel-tab-header-response`
@@ -150,6 +150,21 @@ safeDescribe("5 - Network panel tests", () => {
         JSON.stringify(body).replace(/\s/g, "")
       );
     }
+
+    await elementHelperService.findAndClickElementByTag(
+      `network-panel-tab-header-headers`
+    );
+
+    await elementHelperService.findAndWaitForElementByTag(
+      `network-panel-tab-panel-headers`
+    );
+
+    const contentType = await elementHelperService.findAndClickElementByTag(
+      "network-log-response-headers-Content-Type-value"
+    );
+
+    console.log("Content-Type:", await contentType.getText());
+
     await driver.switchTo().defaultContent();
     await radonViewsService.openRadonIDEPanel();
   }
