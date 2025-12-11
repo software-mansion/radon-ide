@@ -103,8 +103,6 @@ export async function activate(context: ExtensionContext) {
   // after improper deactivation of the extension.
   commands.executeCommand("setContext", "RNIDE.panelIsOpen", false);
 
-  getTelemetryReporter().sendTelemetryEvent(`extension:activated:${getEditorType()}`);
-
   context.subscriptions.push(
     window.registerWebviewPanelSerializer(TabPanel.viewType, new TabPanelSerializer())
   );
@@ -123,6 +121,7 @@ export async function activate(context: ExtensionContext) {
   }
 
   migrateOldConfiguration();
+  getTelemetryReporter().sendTelemetryEvent(`extension:activated:${getEditorType()}`);
 
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 

@@ -95,7 +95,22 @@ export async function validateVideo(filePath, expectedDuration = null) {
       "Video duration is not as expected"
     );
 
-  const framePath = path.join(path.dirname(filePath), "tmp_video_frame.png");
+  const waitForFile = async (file, timeout = 2000) => {
+    const start = Date.now();
+    while (Date.now() - start < timeout) {
+      try {
+        await fs.promises.access(file);
+        return true;
+      } catch {}
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    return false;
+  };
+
+  const framePath = path.join(
+    path.dirname(filePath),
+    `frame_${path.basename(filePath)}.png`
+  );
 
   await new Promise((resolve, reject) => {
     ffmpeg(filePath)
@@ -103,9 +118,12 @@ export async function validateVideo(filePath, expectedDuration = null) {
         count: 1,
         folder: path.dirname(framePath),
         filename: path.basename(framePath),
-        timemarks: [Math.floor(info.format.duration)], // last second of video
+        timemarks: [Math.floor(info.format.duration) - 1], // last second
       })
-      .on("end", resolve)
+      .on("end", async () => {
+        await waitForFile(framePath);
+        resolve();
+      })
       .on("error", reject);
   });
 
