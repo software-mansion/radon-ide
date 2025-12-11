@@ -86,6 +86,8 @@ The actual test logic should be placed inside an `it` block. The hooks `before`,
 
 These can be used to run specific tests only if a certain condition is met (e.g., the app is running on iOS).
 
+It also provides a function `safeDescribe(testName, function)`, which adds cleanup after tests. 
+
 ### Useful Functions and Services
 
 The `/services/` directory contains Service Classes with frequently used functions. Every service class must be initialized with the `driver`. Initialization should be done in `before` block inside `describe`.
