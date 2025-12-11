@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import { By, BottomBarPanel, Key } from "vscode-extension-tester";
-import getConfiguration from "../configuration.js";
 import { centerCoordinates } from "../utils/helpers.js";
 import { waitForMessage } from "../server/webSocketServer.js";
 import { TIMEOUTS } from "../utils/timeouts.js";
