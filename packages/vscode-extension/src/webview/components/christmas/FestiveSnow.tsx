@@ -1,10 +1,14 @@
 import { useState, useEffect } from "react";
 import Snowfall from "react-snowfall";
+import { use$ } from "@legendapp/state/react";
+import { useStore } from "../../providers/storeProvider";
 
 const SNOW_DARK_THEME = "#ffffff99";
 const SNOW_LIGHT_THEME = "#97979787";
 
 function FestiveSnow() {
+  const store$ = useStore();
+  const christmasMode = use$(store$.christmasMode);
   const [snowColor, setSnowColor] = useState(SNOW_DARK_THEME);
 
   useEffect(() => {
@@ -26,6 +30,10 @@ function FestiveSnow() {
 
     return () => observer.disconnect();
   }, []);
+
+  if (!christmasMode) {
+    return null;
+  }
 
   return (
     // @ts-ignore

@@ -1,4 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
+import { use$ } from "@legendapp/state/react";
+import { useStore } from "../../providers/storeProvider";
 import "./AsciiChristmasTree.css";
 
 interface Pixel {
@@ -16,6 +18,8 @@ const COLORS = {
 };
 
 function AsciiChristmasTree({ width = 46, height = 19 }: { width?: number; height?: number }) {
+  const store$ = useStore();
+  const christmasMode = use$(store$.christmasMode);
   const [baubleColors, setBaubleColors] = useState<string[]>([
     COLORS.yellow,
     COLORS.red,
@@ -39,22 +43,28 @@ function AsciiChristmasTree({ width = 46, height = 19 }: { width?: number; heigh
     return generateChristmasScene(width, height, baubleColors);
   }, [width, height, baubleColors]);
 
+  if (!christmasMode) {
+    return null;
+  }
+
   return (
-    <pre className="ascii-christmas-tree" aria-label="ASCII Christmas Tree">
-      {treeImage.map((row, i) => (
-        <div key={i} className="tree-row">
-          {row.map((pixel, j) => (
-            <span
-              key={j}
-              style={{
-                color: pixel.color || "inherit",
-              }}>
-              {pixel.value || " "}
-            </span>
-          ))}
-        </div>
-      ))}
-    </pre>
+    <div className="preview-loader-tree-container">
+      <pre className="ascii-christmas-tree" aria-label="ASCII Christmas Tree">
+        {treeImage.map((row, i) => (
+          <div key={i} className="tree-row">
+            {row.map((pixel, j) => (
+              <span
+                key={j}
+                style={{
+                  color: pixel.color || "inherit",
+                }}>
+                {pixel.value || " "}
+              </span>
+            ))}
+          </div>
+        ))}
+      </pre>
+    </div>
   );
 }
 
