@@ -160,6 +160,7 @@ function PreviewView() {
   const radonConnectEnabled = projectState.connectState.enabled;
   const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
   const zoomLevel = use$(store$.projectState.previewZoom);
+  const christmasMode = use$(store$.christmasMode);
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
       store$.projectState.previewZoom.set(zoom);
@@ -362,7 +363,7 @@ function PreviewView() {
 
   return (
     <div className="panel-view" data-testid="radon-panel-view">
-      <FestiveSnow />
+      {christmasMode && <FestiveSnow />}
       <div className="button-group-top">
         <div className="button-group-top-left">
           <UrlBar disabled={!selectedProjectDevice} />

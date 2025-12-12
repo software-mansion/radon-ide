@@ -1,6 +1,4 @@
 import { useState, useEffect, useMemo } from "react";
-import { use$ } from "@legendapp/state/react";
-import { useStore } from "../../providers/storeProvider";
 import "./AsciiChristmasTree.css";
 
 interface Pixel {
@@ -18,8 +16,6 @@ const COLORS = {
 };
 
 function AsciiChristmasTree({ width = 46, height = 19 }: { width?: number; height?: number }) {
-  const store$ = useStore();
-  const christmasMode = use$(store$.christmasMode);
   const [baubleColors, setBaubleColors] = useState<string[]>([
     COLORS.yellow,
     COLORS.red,
@@ -42,10 +38,6 @@ function AsciiChristmasTree({ width = 46, height = 19 }: { width?: number; heigh
   const treeImage = useMemo(() => {
     return generateChristmasScene(width, height, baubleColors);
   }, [width, height, baubleColors]);
-
-  if (!christmasMode) {
-    return null;
-  }
 
   return (
     <div className="preview-loader-tree-container">

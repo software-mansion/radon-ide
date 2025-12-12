@@ -112,9 +112,15 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
     }
   }
 
+  const christmasMode = use$(store$.christmasMode);
+
   return (
     <div className={`preview-loader-wrapper ${isLandscape ? "landscape" : "portrait"}`}>
-      <AsciiChristmasTree />
+      {christmasMode && (
+        <div className="preview-loader-tree-container">
+          <AsciiChristmasTree />
+        </div>
+      )}
       <div className="preview-loader-load-info">
         <button className="preview-loader-container" onClick={handleLoaderClick}>
           <div className="preview-loader-button-group">
