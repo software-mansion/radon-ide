@@ -288,6 +288,11 @@
         "command": "RNIDE.removeLicense",
         "title": "Remove license",
         "category": "Radon IDE"
+      },
+      {
+        "command": "RNIDE.testChatToolUsage",
+        "title": "Test AI tool usage",
+        "category": "Radon IDE"
       }
     ],
     "keybindings": [
