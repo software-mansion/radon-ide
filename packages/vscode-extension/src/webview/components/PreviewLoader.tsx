@@ -5,7 +5,7 @@ import { use$ } from "@legendapp/state/react";
 import "./PreviewLoader.css";
 
 import StartupMessageComponent from "./shared/StartupMessage";
-import AsciiChristmasTree from "./AsciiChristmasTree";
+import AsciiChristmasTree from "./christmas/AsciiChristmasTree";
 import ProgressBar from "./shared/ProgressBar";
 
 import { useProject } from "../providers/ProjectProvider";

@@ -1,6 +1,5 @@
 import React from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import * as Switch from "@radix-ui/react-switch";
 import { use$ } from "@legendapp/state/react";
 import "./shared/Dropdown.css";
 import { useModal } from "../providers/ModalProvider";
@@ -16,6 +15,7 @@ import { useStore } from "../providers/storeProvider";
 import { ActivateLicenseView } from "../views/ActivateLicenseView";
 import { LicenseStatus } from "../../common/License";
 import ExportLogsView from "../views/ExportLogsView";
+import { ChristmasModeToggle } from "./christmas/ChristmasModeToggle";
 
 interface SettingsDropdownProps {
   children: React.ReactNode;
@@ -48,7 +48,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
   const panelLocation = use$(store$.workspaceConfiguration.userInterface.panelLocation);
   const telemetryEnabled = use$(store$.telemetry.enabled);
   const licenseStatus = use$(store$.license.status);
-  const christmasMode = use$(store$.workspaceConfiguration.userInterface.christmasMode);
 
   const shouldShowActivateLicenseItem =
     licenseStatus === LicenseStatus.Inactive || LicenseStatus.Free;
@@ -168,21 +167,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           </DropdownMenu.Item>
           {telemetryEnabled && <SendFeedbackItem />}
           {shouldShowActivateLicenseItem && <ActivateLicenseItem />}
-          <div className="dropdown-menu-item">
-            <span className="codicon codicon-sparkle" />
-            Christmas Mode
-            <Switch.Root
-              className="switch-root small-switch"
-              id="christmas-mode"
-              data-testid="settings-dropdown-christmas-mode-switch"
-              onCheckedChange={(checked) =>
-                store$.workspaceConfiguration.userInterface.christmasMode.set(checked)
-              }
-              defaultChecked={christmasMode}
-              style={{ marginLeft: "auto" }}>
-              <Switch.Thumb className="switch-thumb" />
-            </Switch.Root>
-          </div>
+          <ChristmasModeToggle />
           <div className="dropdown-menu-item device-settings-version-text">
             Radon IDE version: {extensionVersion}
           </div>

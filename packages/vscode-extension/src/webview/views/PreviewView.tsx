@@ -44,7 +44,7 @@ const INSPECTOR_AVAILABILITY_MESSAGES = {
     "Element Inspector is disabled when the app is inactive",
 } as const;
 
-import FestiveSnow from "../components/FestiveSnow";
+import FestiveSnow from "../components/christmas/FestiveSnow";
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();
