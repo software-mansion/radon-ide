@@ -1,16 +1,17 @@
 import classNames from "classnames";
 import { useEffect, useState } from "react";
+import { use$ } from "@legendapp/state/react";
 
 import "./PreviewLoader.css";
 
 import StartupMessageComponent from "./shared/StartupMessage";
+import AsciiChristmasTree from "./AsciiChristmasTree";
 import ProgressBar from "./shared/ProgressBar";
 
 import { useProject } from "../providers/ProjectProvider";
 import Button from "./shared/Button";
 import { Output } from "../../common/OutputChannel";
 import { useStore } from "../providers/storeProvider";
-import { use$ } from "@legendapp/state/react";
 import {
   DevicePlatform,
   DeviceRotation,
@@ -111,8 +112,15 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
     }
   }
 
+  const christmasMode = use$(store$.workspaceConfiguration.userInterface.christmasMode);
+
   return (
     <div className={`preview-loader-wrapper ${isLandscape ? "landscape" : "portrait"}`}>
+      {christmasMode && (
+        <div className="preview-loader-tree-container">
+          <AsciiChristmasTree />
+        </div>
+      )}
       <div className="preview-loader-load-info">
         <button className="preview-loader-container" onClick={handleLoaderClick}>
           <div className="preview-loader-button-group">
