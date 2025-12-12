@@ -165,7 +165,7 @@ function transformWrapper({ filename, src, ...rest }) {
     const { version: reactVersion } = requireFromAppDir("react/package.json");
     if (
       (reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) &&
-      reactVersion.startsWith("19.0")
+      reactVersion.startsWith("19.0.0")
     ) {
       const rendererFilePath = path.join(
         process.env.RADON_IDE_LIB_PATH,
@@ -182,7 +182,7 @@ function transformWrapper({ filename, src, ...rest }) {
     const reactVersion = requireFromAppDir("react/package.json").version;
     if (
       (reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) &&
-      reactVersion.startsWith("19.0")
+      reactVersion.startsWith("19.0.0")
     ) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}");`;
     }
