@@ -54,9 +54,9 @@ export class NetworkPlugin implements ToolPlugin {
     inspectorBridge: RadonInspectorBridge,
     networkBridge: NetworkBridge,
     metroPort: number,
-    useNativeNetworkInspectorFlag: boolean
+    useNativeNetworkInspector: boolean
   ) {
-    this.networkInspector = useNativeNetworkInspectorFlag
+    this.networkInspector = useNativeNetworkInspector
       ? new DebuggerNetworkInspector(inspectorBridge, networkBridge, metroPort)
       : new InspectorBridgeNetworkInspector(inspectorBridge, metroPort);
     initialize();

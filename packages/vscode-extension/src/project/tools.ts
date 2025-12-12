@@ -69,18 +69,17 @@ export class ToolsManager implements Disposable {
   private disposables: Disposable[] = [];
   private readonly workspaceConfigState: StateManager<WorkspaceConfiguration>;
   private readonly launchConfig: ResolvedLaunchConfig;
-  private readonly useNativeNetworkInspectorFlag: boolean;
 
   public constructor(
     private readonly stateManager: StateManager<ToolsState>,
     private readonly applicationContext: ApplicationContext,
     public readonly inspectorBridge: RadonInspectorBridge,
     public readonly networkBridge: NetworkBridge,
-    public readonly metroPort: number
+    public readonly metroPort: number,
+    private readonly useNativeNetworkInspector: boolean
   ) {
     this.workspaceConfigState = this.applicationContext.workspaceConfigState;
     this.launchConfig = this.applicationContext.launchConfig;
-    this.useNativeNetworkInspectorFlag = this.launchConfig.useNativeNetworkInspector ?? false;
 
     this.toolsSettings = Object.assign({}, extensionContext.workspaceState.get(TOOLS_SETTINGS_KEY));
     for (const plugin of createExpoDevPluginTools()) {
@@ -106,12 +105,7 @@ export class ToolsManager implements Disposable {
     this.plugins.set(APOLLO_PLUGIN_ID, new ApolloClientDevtoolsPlugin(inspectorBridge));
     this.plugins.set(
       NETWORK_PLUGIN_ID,
-      new NetworkPlugin(
-        inspectorBridge,
-        networkBridge,
-        metroPort,
-        this.useNativeNetworkInspectorFlag
-      )
+      new NetworkPlugin(inspectorBridge, networkBridge, metroPort, this.useNativeNetworkInspector)
     );
     this.plugins.set(
       RENDER_OUTLINES_PLUGIN_ID,
