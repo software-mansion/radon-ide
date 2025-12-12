@@ -15,6 +15,7 @@ import { useStore } from "../providers/storeProvider";
 import { ActivateLicenseView } from "../views/ActivateLicenseView";
 import { LicenseStatus } from "../../common/License";
 import ExportLogsView from "../views/ExportLogsView";
+
 import { ChristmasModeToggle } from "./christmas/ChristmasModeToggle";
 
 interface SettingsDropdownProps {

@@ -1,11 +1,9 @@
 import classNames from "classnames";
 import { useEffect, useState } from "react";
-import { use$ } from "@legendapp/state/react";
 
 import "./PreviewLoader.css";
 
 import StartupMessageComponent from "./shared/StartupMessage";
-import AsciiChristmasTree from "./christmas/AsciiChristmasTree";
 import ProgressBar from "./shared/ProgressBar";
 
 import { useProject } from "../providers/ProjectProvider";
@@ -19,6 +17,8 @@ import {
   StartupStageWeight,
 } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
+
+import AsciiChristmasTree from "./christmas/AsciiChristmasTree";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => acc + cur,
