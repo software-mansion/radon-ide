@@ -1361,5 +1361,8 @@
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.40.0"
+  },
+  "dependencies": {
+    "react-snowfall": "^2.4.0"
   }
 }

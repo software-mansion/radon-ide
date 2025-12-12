@@ -44,6 +44,8 @@ const INSPECTOR_AVAILABILITY_MESSAGES = {
     "Element Inspector is disabled when the app is inactive",
 } as const;
 
+import FestiveSnow from "../components/FestiveSnow";
+
 function ActivateLicenseButton() {
   const { openModal } = useModal();
   const { project } = useProject();
@@ -158,6 +160,7 @@ function PreviewView() {
   const radonConnectEnabled = projectState.connectState.enabled;
   const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
   const zoomLevel = use$(store$.projectState.previewZoom);
+  const christmasMode = use$(store$.workspaceConfiguration.userInterface.christmasMode);
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
       store$.projectState.previewZoom.set(zoom);
@@ -360,6 +363,7 @@ function PreviewView() {
 
   return (
     <div className="panel-view" data-testid="radon-panel-view">
+      {christmasMode && <FestiveSnow />}
       <div className="button-group-top">
         <div className="button-group-top-left">
           <UrlBar disabled={!selectedProjectDevice} />
