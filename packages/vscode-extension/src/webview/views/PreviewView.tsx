@@ -36,6 +36,8 @@ import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { useDevices } from "../hooks/useDevices";
 import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
 
+import FestiveSnow from "../components/christmas/FestiveSnow";
+
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
   [InspectorAvailabilityStatus.UnavailableEdgeToEdge]:
@@ -44,7 +46,7 @@ const INSPECTOR_AVAILABILITY_MESSAGES = {
     "Element Inspector is disabled when the app is inactive",
 } as const;
 
-import FestiveSnow from "../components/christmas/FestiveSnow";
+
 
 function ActivateLicenseButton() {
   const { openModal } = useModal();

@@ -1,5 +1,6 @@
 import classNames from "classnames";
 import { useEffect, useState } from "react";
+import { use$ } from "@legendapp/state/react";
 
 import "./PreviewLoader.css";
 
@@ -116,11 +117,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
 
   return (
     <div className={`preview-loader-wrapper ${isLandscape ? "landscape" : "portrait"}`}>
-      {christmasMode && (
-        <div className="preview-loader-tree-container">
-          <AsciiChristmasTree />
-        </div>
-      )}
+      {christmasMode && <AsciiChristmasTree />}
       <div className="preview-loader-load-info">
         <button className="preview-loader-container" onClick={handleLoaderClick}>
           <div className="preview-loader-button-group">
