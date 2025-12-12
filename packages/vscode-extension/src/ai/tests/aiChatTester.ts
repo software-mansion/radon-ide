@@ -4,6 +4,7 @@ import { mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
 import { commands, Uri } from "vscode";
+import { Logger } from "../../Logger";
 
 interface ChatData {
   requests: Request[];
@@ -115,7 +116,7 @@ export async function testChatToolUsage() {
     await commands.executeCommand("workbench.action.chat.newChat");
     await commands.executeCommand("workbench.action.chat.openagent", testCase.prompt);
 
-    await sleep(10_000); // FIXME: Fixed timouts like this are unacceptable on prod
+    await sleep(6_000); // FIXME: Fixed timouts like this are unacceptable on prod
 
     // TODO: Add a way to interrupt & cancel the process
 
@@ -144,26 +145,31 @@ export async function testChatToolUsage() {
 
     const responses = chatData.requests[0].response;
 
-    // TODO: Check all, not only the first one
-    const toolCall = responses.find((response) => isToolCallResponse(response));
+    const toolCalls = responses.filter((response) => isToolCallResponse(response));
 
-    if (toolCall?.toolId === undefined) {
+    if (toolCalls.length === 0) {
       fail(testCase, "No tools were called.");
       continue;
     }
 
-    if (testCase.allowedToolIds.includes(toolCall.toolId)) {
-      success(testCase);
-    } else {
-      const expected = `expected tool call to ${testCase.allowedToolIds.join(" or ")}`;
-      const received = `received tool call to ${toolCall.toolId}`;
-      const cause = `${expected}\n${received}`;
-      fail(testCase, cause);
+    const otherCalledTools = [];
+    for (const toolCall of toolCalls) {
+      if (testCase.allowedToolIds.includes(toolCall.toolId)) {
+        success(testCase);
+        continue;
+      }
+
+      otherCalledTools.push(toolCall.toolId);
     }
+
+    const expected = `Expected: ${testCase.allowedToolIds.join(" | ")}`;
+    const received = `Received: ${otherCalledTools.join(", ")}`;
+    const cause = `${expected}. ${received}`;
+    fail(testCase, cause);
   }
 
   clearEdits();
 
-  // TODO: Rework error reporting, use more structured approach with metadata
-  console.error(runStatus);
+  const response = `\n=== AI TEST RESULTS ===\n${runStatus.map((v) => `${v.success ? " OK " : "FAIL"}${v.cause !== null ? ` | Error: ${v.cause}` : ""}`).join("\n")}`;
+  Logger.log(response);
 }
