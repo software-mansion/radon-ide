@@ -46,8 +46,6 @@ const INSPECTOR_AVAILABILITY_MESSAGES = {
     "Element Inspector is disabled when the app is inactive",
 } as const;
 
-
-
 function ActivateLicenseButton() {
   const { openModal } = useModal();
   const { project } = useProject();

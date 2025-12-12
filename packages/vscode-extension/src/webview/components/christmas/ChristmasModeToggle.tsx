@@ -7,8 +7,8 @@ function isChristmasSeason(): boolean {
   const month = now.getMonth(); // 0-based: 0 = January, 11 = December
   const day = now.getDate();
 
-  // December 20th to December 31st
-  if (month === 11 && day >= 20) {
+  // December 19th to December 31st
+  if (month === 11 && day >= 19) {
     return true;
   }
 
@@ -36,9 +36,7 @@ export function ChristmasModeToggle() {
         className="switch-root small-switch"
         id="christmas-mode"
         data-testid="settings-dropdown-christmas-mode-switch"
-        onCheckedChange={(checked) =>
-          store$.christmasMode.set(checked)
-        }
+        onCheckedChange={(checked) => store$.christmasMode.set(checked)}
         defaultChecked={christmasMode}
         style={{ marginLeft: "auto" }}>
         <Switch.Thumb className="switch-thumb" />
