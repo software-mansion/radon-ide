@@ -75,6 +75,15 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function clearEdits() {
+  await commands.executeCommand("workbench.panel.chat.view.copilot.focus");
+
+  // Rejection requires confirmation (human input), acceptance does not.
+  await commands.executeCommand("chatEditing.acceptAllFiles");
+
+  // TODO: Revert all changes via git
+}
+
 export async function testChatToolUsage() {
   const runStatus: ChatTestResult[] = [];
 
@@ -97,12 +106,7 @@ export async function testChatToolUsage() {
   const dir = await mkdtemp(path.join(tmpdir(), "radon-chat-exports-"));
 
   for (const testCase of testCases) {
-    await commands.executeCommand("workbench.panel.chat.view.copilot.focus");
-
-    // Rejection requires confirmation (human input), acceptance does not.
-    await commands.executeCommand("chatEditing.acceptAllFiles");
-
-    // TODO: Revert all changes via git
+    clearEdits();
 
     await commands.executeCommand("workbench.action.chat.newChat");
     await commands.executeCommand("workbench.action.chat.openagent", testCase.prompt);
@@ -153,6 +157,8 @@ export async function testChatToolUsage() {
       fail(testCase, cause);
     }
   }
+
+  clearEdits();
 
   // TODO: Rework error reporting, use more structured approach with metadata
   console.error(runStatus);
