@@ -527,6 +527,7 @@ export type DevicesState = {
 
 export type State = {
   applicationRoots: ApplicationRoot[];
+  christmasMode: boolean;
   devicesState: DevicesState;
   environmentDependencies: EnvironmentDependencyStatuses;
   license: LicenseState;
@@ -589,6 +590,7 @@ const initialDeviceSessionStore: DeviceSessionStore = {
 
 export const initialState: State = {
   applicationRoots: [],
+  christmasMode: false,
   devicesState: {
     devicesByType: {
       iosSimulators: null,
