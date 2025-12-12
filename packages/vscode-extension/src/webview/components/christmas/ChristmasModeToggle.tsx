@@ -1,7 +1,6 @@
 import * as Switch from "@radix-ui/react-switch";
 import { use$ } from "@legendapp/state/react";
 import { useStore } from "../../providers/storeProvider";
-// import "../shared/SwitchGroup.css";
 
 function isChristmasSeason(): boolean {
   const now = new Date();
@@ -23,7 +22,7 @@ function isChristmasSeason(): boolean {
 
 export function ChristmasModeToggle() {
   const store$ = useStore();
-  const christmasMode = use$(store$.workspaceConfiguration.userInterface.christmasMode);
+  const christmasMode = use$(store$.christmasMode);
 
   if (!isChristmasSeason()) {
     return null;
@@ -38,7 +37,7 @@ export function ChristmasModeToggle() {
         id="christmas-mode"
         data-testid="settings-dropdown-christmas-mode-switch"
         onCheckedChange={(checked) =>
-          store$.workspaceConfiguration.userInterface.christmasMode.set(checked)
+          store$.christmasMode.set(checked)
         }
         defaultChecked={christmasMode}
         style={{ marginLeft: "auto" }}>

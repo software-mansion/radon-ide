@@ -160,7 +160,7 @@ function PreviewView() {
   const radonConnectEnabled = projectState.connectState.enabled;
   const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
   const zoomLevel = use$(store$.projectState.previewZoom);
-  const christmasMode = use$(store$.workspaceConfiguration.userInterface.christmasMode);
+  const christmasMode = use$(store$.christmasMode);
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
       store$.projectState.previewZoom.set(zoom);

@@ -97,7 +97,6 @@ export type RadonAISettings = {
 export type UserInterfaceSettings = {
   panelLocation: PanelLocation;
   showDeviceFrame: boolean;
-  christmasMode: boolean;
 };
 
 export type DeviceControlSettings = {
@@ -528,6 +527,7 @@ export type DevicesState = {
 
 export type State = {
   applicationRoots: ApplicationRoot[];
+  christmasMode: boolean;
   devicesState: DevicesState;
   environmentDependencies: EnvironmentDependencyStatuses;
   license: LicenseState;
@@ -590,6 +590,7 @@ const initialDeviceSessionStore: DeviceSessionStore = {
 
 export const initialState: State = {
   applicationRoots: [],
+  christmasMode: false,
   devicesState: {
     devicesByType: {
       iosSimulators: null,
@@ -628,7 +629,6 @@ export const initialState: State = {
     userInterface: {
       panelLocation: "tab",
       showDeviceFrame: true,
-      christmasMode: false,
     },
     deviceSettings: {
       deviceRotation: DeviceRotation.Portrait,

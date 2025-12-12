@@ -112,7 +112,7 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
     }
   }
 
-  const christmasMode = use$(store$.workspaceConfiguration.userInterface.christmasMode);
+  const christmasMode = use$(store$.christmasMode);
 
   return (
     <div className={`preview-loader-wrapper ${isLandscape ? "landscape" : "portrait"}`}>
