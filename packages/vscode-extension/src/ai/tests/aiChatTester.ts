@@ -76,6 +76,10 @@ function sleep(ms: number) {
 }
 
 async function clearEdits() {
+  // Stop previous response - prevents pop-ups on new chat.
+  await commands.executeCommand("workbench.action.chat.cancel");
+
+  // Move cursor to input - REQUIRED for `chatEditing.acceptAllFiles`.
   await commands.executeCommand("workbench.panel.chat.view.copilot.focus");
 
   // Rejection requires confirmation (human input), acceptance does not.
