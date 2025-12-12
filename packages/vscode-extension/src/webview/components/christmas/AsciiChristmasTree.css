@@ -13,3 +13,12 @@
   display: block;
   white-space: pre;
 }
+
+.preview-loader-tree-container {
+  filter: contrast(0.5);
+  opacity: 0.5;
+  position: absolute;
+  bottom: 0;
+  margin-bottom: 10px;
+  pointer-events: none;
+}
