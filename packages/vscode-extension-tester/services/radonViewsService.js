@@ -192,13 +192,20 @@ export default class RadonViewsService {
     await quickInput.sendKeys(fullPath);
     await this.driver.sleep(TIMEOUTS.SHORT);
 
-    const quickInputButton =
-      await this.elementHelperService.findAndWaitForElement(
-        By.css(".quick-input-action"),
-        "Timed out waiting for quick input button"
-      );
+    await this.driver.actions().sendKeys(Key.ENTER).perform();
+    await this.driver.sleep(TIMEOUTS.SHORT);
 
-    await quickInputButton.click();
+    // in case it does not save on enter
+    try {
+      const quickInputButton =
+        await this.elementHelperService.findAndWaitForElement(
+          By.css(".quick-input-action"),
+          "Timed out waiting for quick input button"
+        );
+
+      await quickInputButton.click();
+    } catch {}
+
     await this.driver.sleep(TIMEOUTS.SHORT);
   }
 

@@ -63,6 +63,16 @@ safeDescribe("15 - Launch Configuration Tests", () => {
     deleteLaunchConfigs();
   });
 
+  const expandConfigurationsCollapsible = async () => {
+    const collapsible = await elementHelperService.findAndWaitForElementByTag(
+      "approot-collapsible-custom-configurations"
+    );
+    const isExpanded = await collapsible.getAttribute("data-expanded");
+    if (isExpanded !== "true") {
+      await collapsible.click();
+    }
+  };
+
   it("Should add launch configuration", async function () {
     await elementHelperService.findAndClickElementByTag(
       "radon-bottom-bar-approot-select-dropdown-trigger"
@@ -89,6 +99,8 @@ safeDescribe("15 - Launch Configuration Tests", () => {
     await elementHelperService.findAndClickElementByTag(
       "radon-bottom-bar-approot-select-dropdown-trigger"
     );
+
+    await expandConfigurationsCollapsible();
 
     await elementHelperService.findAndWaitForElementByTag(
       "approot-select-item-testConfig"
@@ -122,6 +134,8 @@ safeDescribe("15 - Launch Configuration Tests", () => {
       "radon-bottom-bar-approot-select-dropdown-trigger"
     );
 
+    await expandConfigurationsCollapsible();
+
     await elementHelperService.findAndClickElementByTag(
       "edit-launch-config-button-testConfig"
     );
@@ -136,6 +150,8 @@ safeDescribe("15 - Launch Configuration Tests", () => {
     await elementHelperService.findAndClickElementByTag(
       "launch-configuration-modal-save-button"
     );
+
+    await expandConfigurationsCollapsible();
 
     await elementHelperService.findAndWaitForElementByTag(
       "approot-select-item-newTestConfig"
