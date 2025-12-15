@@ -8,7 +8,7 @@ import {
 import { assert } from "chai";
 import initServices from "../services/index.js";
 import { safeDescribe } from "../utils/helpers.js";
-import TIMEOUTS from "../utils/timeouts.js";
+import { TIMEOUTS } from "../utils/timeouts.js";
 import { get } from "./setupTest.js";
 
 safeDescribe("4 - App interaction tests", () => {
