@@ -7,6 +7,7 @@ import { commands, Uri, workspace } from "vscode";
 import { Logger } from "../../Logger";
 import { exec } from "../../utilities/subprocess";
 import { Platform } from "../../utilities/platform";
+import { sleep } from "../../utilities/retry";
 
 export const GIT_PATH = Platform.select({
   macos: "git",
@@ -78,11 +79,6 @@ const testCases: ChatTestCase[] = [
     allowedToolIds: ["view_component_tree", "view_screenshot"],
   },
 ];
-
-// FIXME: Temporary workaround for being unable to await chat request
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
 
 async function clearEdits() {
   // Stop previous response - prevents pop-ups on `workbench.action.chat.newChat`.
