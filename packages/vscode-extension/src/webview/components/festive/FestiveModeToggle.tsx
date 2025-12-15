@@ -1,7 +1,7 @@
 import * as Switch from "@radix-ui/react-switch";
 import { use$ } from "@legendapp/state/react";
 import { useStore } from "../../providers/storeProvider";
-export function festiveModeToggle() {
+export function FestiveModeToggle() {
   const store$ = useStore();
   const festiveMode = use$(store$.workspaceConfiguration.userInterface.festiveMode);
   return (
