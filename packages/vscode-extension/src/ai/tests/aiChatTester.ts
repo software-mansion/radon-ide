@@ -3,8 +3,16 @@ import { readFileSync } from "fs";
 import { mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
-import { commands, Uri } from "vscode";
+import { commands, Uri, workspace } from "vscode";
 import { Logger } from "../../Logger";
+import { exec } from "../../utilities/subprocess";
+import { Platform } from "../../utilities/platform";
+
+export const GIT_PATH = Platform.select({
+  macos: "git",
+  windows: "git.exe",
+  linux: "git",
+});
 
 interface ChatData {
   requests: Request[];
@@ -77,16 +85,26 @@ function sleep(ms: number) {
 }
 
 async function clearEdits() {
-  // Stop previous response - prevents pop-ups on new chat.
+  // Stop previous response - prevents pop-ups on `workbench.action.chat.newChat`.
   await commands.executeCommand("workbench.action.chat.cancel");
 
   // Move cursor to input - REQUIRED for `chatEditing.acceptAllFiles`.
   await commands.executeCommand("workbench.panel.chat.view.copilot.focus");
 
-  // Rejection requires confirmation (human input), acceptance does not.
+  // Rejection requires user confirmation, acceptance does not.
   await commands.executeCommand("chatEditing.acceptAllFiles");
 
-  // TODO: Revert all changes via git
+  Logger.error(String(workspace.workspaceFolders?.[0].uri));
+
+  const gitUri = workspace.workspaceFolders?.[0].uri;
+
+  if (!gitUri) {
+    // This case will never occur when tests are being run in a test up.
+    return;
+  }
+
+  // Revert all changes via git - **cannot** use `commands.executeCommand`, as it requires user confirmation.
+  await exec(GIT_PATH, ["-C", gitUri.fsPath, "restore", "."]);
 }
 
 export async function testChatToolUsage() {
@@ -116,7 +134,8 @@ export async function testChatToolUsage() {
     await commands.executeCommand("workbench.action.chat.newChat");
     await commands.executeCommand("workbench.action.chat.openagent", testCase.prompt);
 
-    await sleep(6_000); // FIXME: Fixed timouts like this are unacceptable on prod
+    // FIXME: Fixed timouts like this should be removed if possible
+    await sleep(10_000);
 
     // TODO: Add a way to interrupt & cancel the process
 
