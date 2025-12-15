@@ -625,7 +625,7 @@ export const initialState: State = {
       enableRadonAI: true,
     },
     userInterface: {
-      panelLocation: "tab",
+      panelLocation: "side-panel",
       showDeviceFrame: true,
     },
     deviceSettings: {
