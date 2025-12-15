@@ -23,7 +23,7 @@ const WorkspaceConfigurationKeyMap = {
   userInterface: {
     panelLocation: "userInterface.panelLocation",
     showDeviceFrame: "userInterface.showDeviceFrame",
-    christmasMode: "userInterface.christmasMode",
+    festiveMode: "userInterface.festiveMode",
   },
   deviceSettings: {
     deviceRotation: "deviceSettings.deviceRotation",
@@ -65,8 +65,8 @@ export function getCurrentWorkspaceConfiguration(config: WorkspaceConfiguration)
         "tab",
       showDeviceFrame:
         config.get<boolean>(WorkspaceConfigurationKeyMap.userInterface.showDeviceFrame) ?? true,
-      christmasMode:
-        config.get<boolean>(WorkspaceConfigurationKeyMap.userInterface.christmasMode) ?? false,
+      festiveMode:
+        config.get<boolean>(WorkspaceConfigurationKeyMap.userInterface.festiveMode) ?? false,
     },
     deviceControl: {
       startDeviceOnLaunch:
