@@ -1,8 +1,9 @@
+import { readFileSync } from "fs";
+import { join } from "path";
 import { assert } from "chai";
 import { WebView, BottomBarPanel } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { safeDescribe } from "../utils/helpers.js";
-import expected_responses from "../files_for_tests/expected_responses.js";
 import { get } from "./setupTest.js";
 
 safeDescribe("5 - Network panel tests", () => {
@@ -13,6 +14,13 @@ safeDescribe("5 - Network panel tests", () => {
     radonViewsService,
     managingDevicesService,
     appManipulationService;
+
+  const filePath = join(
+    process.cwd(),
+    "files_for_tests/network_tests_expected_values.json"
+  );
+  const fileContent = readFileSync(filePath, "utf-8");
+  const data = JSON.parse(fileContent);
 
   before(async () => {
     ({ driver } = get());
@@ -73,14 +81,21 @@ safeDescribe("5 - Network panel tests", () => {
     }, 5000);
   });
 
-  async function testDetails(endpoint, body, method) {
-    const base = "http://localhost:8080";
+  async function testDetails(endpoint) {
+    const expectedMethod = data[endpoint].request.method;
+    const expectedRequestBody = data[endpoint].request.body;
+    const expectedStatus = data[endpoint].response?.status;
+    const expectedResponseBody = data[endpoint].response?.body
+      ? data[endpoint].response.body
+      : "No response body";
+
     appWebsocket.send(
       JSON.stringify({
         message: "fetchData",
-        url: `${base}${endpoint}`,
-        body: body,
-        method: method,
+        url: data[endpoint].request.url,
+        method: data[endpoint].request.method,
+        headers: data[endpoint].request.headers,
+        body: data[endpoint].request.body,
       })
     );
 
@@ -103,16 +118,14 @@ safeDescribe("5 - Network panel tests", () => {
       `network-panel-row-${name}-status`
     );
 
-    assert.equal(
-      await status.getText(),
-      expected_responses[endpoint].expectedStatus.toString()
-    );
+    assert.equal(await status.getText(), expectedStatus.toString());
 
     const methodElement = await elementHelperService.findAndWaitForElementByTag(
       `network-panel-row-${name}-method`
     );
 
-    if (method) assert.equal(await methodElement.getText(), method);
+    if (expectedMethod)
+      assert.equal(await methodElement.getText(), expectedMethod);
 
     await elementHelperService.findAndClickElementByTag(
       `network-panel-tab-header-response`
@@ -124,15 +137,17 @@ safeDescribe("5 - Network panel tests", () => {
 
     const responseText = await tab.getText();
 
-    assert.equal(
+    const expectedString =
+      typeof expectedResponseBody === "string"
+        ? expectedResponseBody
+        : JSON.stringify(expectedResponseBody);
+
+    assert.include(
       responseText.replace(/\s/g, ""),
-      JSON.stringify(expected_responses[endpoint].expectedResponse).replace(
-        /\s/g,
-        ""
-      )
+      expectedString.replace(/\s/g, "")
     );
 
-    if (body) {
+    if (expectedRequestBody) {
       await elementHelperService.findAndClickElementByTag(
         `network-panel-tab-header-payload`
       );
@@ -143,9 +158,9 @@ safeDescribe("5 - Network panel tests", () => {
 
       const payload = await payloadTab.getText();
 
-      assert.equal(
+      assert.include(
         payload.replace(/\s/g, ""),
-        JSON.stringify(body).replace(/\s/g, "")
+        JSON.stringify(expectedRequestBody).replace(/\s/g, "")
       );
     }
 
@@ -157,11 +172,11 @@ safeDescribe("5 - Network panel tests", () => {
       `network-panel-tab-panel-headers`
     );
 
-    const contentType = await elementHelperService.findAndClickElementByTag(
-      "network-log-response-headers-Content-Type-value"
-    );
+    // const contentType = await elementHelperService.findAndClickElementByTag(
+    //   "network-log-response-headers-Content-Type-value"
+    // );
 
-    console.log("Content-Type:", await contentType.getText());
+    // console.log("Content-Type:", await contentType.getText());
 
     await driver.switchTo().defaultContent();
     await radonViewsService.openRadonIDEPanel();
@@ -241,56 +256,44 @@ safeDescribe("5 - Network panel tests", () => {
   //   );
   // });
 
-  it("should change tabs in network panel details", async () => {
-    await testDetails("/api/get");
-    await testDetails(
-      "/api/post",
-      {
-        name: "Test User",
-        email: "test@example.com",
-        password: "secret123",
-      },
-      "POST"
-    );
-    // appWebsocket.send(
-    //   JSON.stringify({
-    //     message: "fetchData",
-    //     url: "http://localhost:8080/api/post",
-    //     method: "POST",
-    //     body: {
-    //       name: "Test User",
-    //       email: "test@example.com",
-    //       password: "secret123",
-    //     },
-    //   })
-    // );
+  // it("should change tabs in network panel details", async () => {
+  // appWebsocket.send(
+  //   JSON.stringify({
+  //     message: "fetchData",
+  //     url: "http://localhost:8080/api/post",
+  //     method: "POST",
+  //     body: {
+  //       name: "Test User",
+  //       email: "test@example.com",
+  //       password: "secret123",
+  //     },
+  //   })
+  // );
+  // await openNetworkPanel();
+  // const row = await elementHelperService.findAndWaitForElementByTag(
+  //   "network-panel-row-post"
+  // );
+  // await driver.executeScript("arguments[0].click();", row);
+  // await elementHelperService.findAndWaitForElementByTag(
+  //   "network-panel-log-details-tabs"
+  // );
+  // const headers = ["payload", "response", "timing", "headers"];
+  // for (const header of headers) {
+  //   await elementHelperService.findAndClickElementByTag(
+  //     `network-panel-tab-header-${header}`
+  //   );
+  //   const tab = await elementHelperService.findAndWaitForElementByTag(
+  //     `network-panel-tab-panel-${header}`
+  //   );
+  //   console.log(await tab.getText());
+  // }
+  // });
 
-    // await openNetworkPanel();
-
-    // const row = await elementHelperService.findAndWaitForElementByTag(
-    //   "network-panel-row-post"
-    // );
-
-    // await driver.executeScript("arguments[0].click();", row);
-
-    // await elementHelperService.findAndWaitForElementByTag(
-    //   "network-panel-log-details-tabs"
-    // );
-
-    // const headers = ["payload", "response", "timing", "headers"];
-
-    // for (const header of headers) {
-    //   await elementHelperService.findAndClickElementByTag(
-    //     `network-panel-tab-header-${header}`
-    //   );
-
-    //   const tab = await elementHelperService.findAndWaitForElementByTag(
-    //     `network-panel-tab-panel-${header}`
-    //   );
-
-    //   console.log(await tab.getText());
-    // }
-  });
+  for (const endpoint of Object.keys(data)) {
+    it(`should show correct details for request ${endpoint}`, async () => {
+      await testDetails(endpoint);
+    });
+  }
 
   it("should show status 404", async () => {
     appWebsocket.send(

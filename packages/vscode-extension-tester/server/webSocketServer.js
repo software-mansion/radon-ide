@@ -41,11 +41,26 @@ app.get("/api/get", (req, res) => {
 app.post("/api/post", (req, res) => {
   const newUser = { id: users.length + 1, ...req.body };
   users.push(newUser);
+  console.log({
+    message: "Post request successful",
+    userId: newUser.id,
+    captured_data: req.body,
+  });
 
   res.status(201).json({
     message: "Post request successful",
     userId: newUser.id,
     captured_data: req.body,
+  });
+});
+
+app.post("/api/query-and-body", (req, res) => {
+  const { type, source } = req.query;
+  const { payload, extra } = req.body;
+  res.json({
+    received_query: { type, source },
+    received_body: { payload, extra },
+    message: "Query params and body received successfully",
   });
 });
 
@@ -100,6 +115,7 @@ app.post("/api/multipart", upload.single("multipart_data"), (req, res) => {
 
 app.post("/api/form", (req, res) => {
   const { username } = req.body;
+  console.log(req.body);
   res.json({
     type: "Legacy Form",
     received_user: username,
@@ -110,7 +126,7 @@ app.post("/api/form", (req, res) => {
 app.get("/api/binary", (req, res) => {
   const buffer = Buffer.alloc(128);
   for (let i = 0; i < 128; i++) {
-    buffer[i] = Math.floor(Math.random() * 256);
+    buffer[i] = Math.floor(Math.abs(Math.sin(i + 12345)) * 256);
   }
   res.setHeader("Content-Type", "application/octet-stream");
   res.send(buffer);
@@ -254,6 +270,10 @@ app.get("/api/image", (req, res) => {
   res.sendFile(path.join(__dirname, "img.png"));
 });
 
+app.get("/api/large-image", (req, res) => {
+  res.sendFile(path.join(__dirname, "img", "large_img.jpg"));
+});
+
 app.use((req, res) => {
   res.status(404).json({ error: "Not Found", endpoint: req.originalUrl });
 });
@@ -261,8 +281,6 @@ app.use((req, res) => {
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
-
-// -- WebSocket Helpers --
 
 export function getAppWebsocket() {
   return appWebsocket;
@@ -289,9 +307,7 @@ export function waitForMessage(id, timeoutMs = 5000) {
           currentWs.off("message", handler);
           resolve(msg);
         }
-      } catch (e) {
-        // Ignore parse errors for specific message wait
-      }
+      } catch (e) {}
     };
 
     currentWs.on("message", handler);
@@ -347,7 +363,6 @@ export function initServer(port = 8080) {
         console.log("Received raw message:", msgStr);
       }
 
-      // Echo functionality merged from express server
       ws.send(JSON.stringify({ type: "ECHO", content: msgStr }));
     });
 

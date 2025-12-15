@@ -102,7 +102,10 @@ afterEach(async function () {
     const screenshotDir = path.join(process.cwd(), "screenshots");
     const filePath = path.join(
       screenshotDir,
-      `${this.currentTest.title}-${Date.now()}.png`
+      `${this.currentTest.title.replace(
+        /[/\\?%*:|"<>]/g,
+        "-"
+      )}-${Date.now()}.png`
     );
 
     fs.mkdirSync(screenshotDir, { recursive: true });
