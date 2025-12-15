@@ -409,6 +409,12 @@
             "scope": "window",
             "default": true,
             "description": "Shows device frame in the IDE panel."
+          },
+          "RadonIDE.userInterface.christmasMode": {
+            "type": "boolean",
+            "scope": "window",
+            "default": false,
+            "description": "Enables festive mode in the IDE panel."
           }
         }
       },
@@ -1357,7 +1363,8 @@
     "vscode-test": "^1.6.1",
     "ws": "^8.18.1",
     "xml2js": "^0.6.2",
-    "zod": "^3.25.32"
+    "zod": "^3.25.32",
+    "react-snowfall": "^2.4.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.40.0"
