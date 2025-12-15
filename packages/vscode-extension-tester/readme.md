@@ -58,6 +58,7 @@ root/
 Below is a template for starting a new test file. The `driver` object is an instance of the WebDriver class, which provides high-level control over the running VS Code instance — for example, locating UI elements, clicking, typing, or waiting for specific conditions.
 
 ```js
+import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
 safeDescribe("19 - new tests", async () => {
@@ -86,7 +87,7 @@ The actual test logic should be placed inside an `it` block. The hooks `before`,
 
 These can be used to run specific tests only if a certain condition is met (e.g., the app is running on iOS).
 
-It also provides a function `safeDescribe(testName, function)`, which adds cleanup after tests. 
+It also provides a function `safeDescribe(testName, function)`, which adds cleanup after tests.
 
 ### Useful Functions and Services
 
@@ -143,7 +144,6 @@ Requests to the React Native app are sent as stringified JSON in the following f
 `id` is a unique identifier for the request.
 Some functionalities may require additional fields.
 
-
 The app responds with the following format
 
 ```json
@@ -193,8 +193,7 @@ The app returns coordinates in the following format:
 
 ---
 
-> [!NOTE]
-> **Note:** Some specific tests may require changes in test apps.
+> [!NOTE] > **Note:** Some specific tests may require changes in test apps.
 
 ## 5. Running Tests
 
@@ -202,8 +201,7 @@ The app returns coordinates in the following format:
 
 Tests can be run on a local machine using the command below.
 
-> [!NOTE]
-> **Note**: To run tests locally, you need a `.env` file in the root directory with the `RADON_IDE_LICENSE_KEY` variable containing an active Radon license key.
+> [!NOTE] > **Note**: To run tests locally, you need a `.env` file in the root directory with the `RADON_IDE_LICENSE_KEY` variable containing an active Radon license key.
 
 Syntax:
 `npm run prepare-and-run-tests -- <app-name> <space-separated test numbers>`
@@ -214,8 +212,7 @@ Example (running tests 1, 2, 3, and 4 on the `react-native-81` app):
 npm run prepare-and-run-tests -- react-native-81 1 2 3 4
 ```
 
-> [!WARNING]
-> **Note**: Running tests locally will remove any devices added in Radon IDE.
+> [!WARNING] > **Note**: Running tests locally will remove any devices added in Radon IDE.
 
 ### CI / GitHub Actions
 
