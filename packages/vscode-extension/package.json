@@ -409,6 +409,12 @@
             "scope": "window",
             "default": true,
             "description": "Shows device frame in the IDE panel."
+          },
+          "RadonIDE.userInterface.christmasMode": {
+            "type": "boolean",
+            "scope": "window",
+            "default": false,
+            "description": "Enables festive mode in the IDE panel."
           }
         }
       },
