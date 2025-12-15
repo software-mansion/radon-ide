@@ -19,7 +19,7 @@ import {
 } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 
-import AsciiChristmasTree from "./christmas/AsciiChristmasTree";
+import AsciiChristmasTree from "./festive/AsciiChristmasTree";
 
 const startupStageWeightSum = StartupStageWeight.map((item) => item.weight).reduce(
   (acc, cur) => acc + cur,
@@ -113,11 +113,11 @@ function PreviewLoader({ onRequestShowPreview }: { onRequestShowPreview: () => v
     }
   }
 
-  const christmasMode = use$(store$.workspaceConfiguration.userInterface.christmasMode);
+  const festiveMode = use$(store$.workspaceConfiguration.userInterface.festiveMode);
 
   return (
     <div className={`preview-loader-wrapper ${isLandscape ? "landscape" : "portrait"}`}>
-      {christmasMode && <AsciiChristmasTree />}
+      {festiveMode && <AsciiChristmasTree />}
       <div className="preview-loader-load-info">
         <button className="preview-loader-container" onClick={handleLoaderClick}>
           <div className="preview-loader-button-group">
