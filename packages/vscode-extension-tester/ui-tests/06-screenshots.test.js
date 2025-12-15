@@ -48,10 +48,7 @@ safeDescribe("6 - screenshots tests", () => {
   });
 
   it("Should take a screenshot", async () => {
-    // VSCode for some reason puts two dots in file name, but it's not an issue
-    // it only happens in vscode instance opened by vscode-extension-tester which uses different save file dialog
-    // regular VSCode instance use macOS default save file dialog
-    const filePath = path.join(cwd, "screenshotTest..png");
+    const filePath = path.join(cwd, "screenshotTest.png");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
@@ -74,7 +71,7 @@ safeDescribe("6 - screenshots tests", () => {
   });
 
   it("Should take a screenshot using shortcut", async () => {
-    const filePath = path.join(cwd, "screenshotTestShortcut..png");
+    const filePath = path.join(cwd, "screenshotTestShortcut.png");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
@@ -101,7 +98,7 @@ safeDescribe("6 - screenshots tests", () => {
   });
 
   it("Should record screen", async () => {
-    const filePath = path.join(cwd, "recordingTest..mp4");
+    const filePath = path.join(cwd, "recordingTest.mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
@@ -129,7 +126,7 @@ safeDescribe("6 - screenshots tests", () => {
   });
 
   it("Should record screen using shortcut", async () => {
-    const filePath = path.join(cwd, "recordingTestShortcut..mp4");
+    const filePath = path.join(cwd, "recordingTestShortcut.mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
@@ -194,7 +191,7 @@ safeDescribe("6 - screenshots tests", () => {
   });
 
   it("Should save replay", async () => {
-    const filePath = path.join(cwd, "replayTest..mp4");
+    const filePath = path.join(cwd, "replayTest.mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     await radonSettingsService.setEnableReplays(true);
