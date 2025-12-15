@@ -61,15 +61,6 @@ function checkFuseboxSupport(appRoot: string): boolean {
   return supportsFusebox;
 }
 
-function checkNativeNetworkInspectorSupport(appRoot: string): boolean {
-  const reactNativeVersion = getReactNativeVersion(appRoot);
-  if (reactNativeVersion === null) {
-    return false;
-  }
-  const supportsNativeNetworkInspector = reactNativeVersion.compare("0.83.0") >= 0;
-  return supportsNativeNetworkInspector;
-}
-
 function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunchConfig {
   const appRoot = configuration.appRoot;
   const absoluteAppRoot = path.resolve(workspace.workspaceFolders![0].uri.fsPath, appRoot);
@@ -115,9 +106,7 @@ function resolveLaunchConfig(configuration: LaunchConfiguration): ResolvedLaunch
     },
     usePrebuild: configuration.usePrebuild,
     useOldDevtools: configuration.useOldDevtools ?? !checkFuseboxSupport(absoluteAppRoot),
-    useNativeNetworkInspector:
-      configuration.useNativeNetworkInspector ??
-      checkNativeNetworkInspectorSupport(absoluteAppRoot),
+    useNativeNetworkInspector: configuration.useNativeNetworkInspector,
   };
 }
 
