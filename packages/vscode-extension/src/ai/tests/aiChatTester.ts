@@ -94,8 +94,6 @@ async function clearEdits() {
   // Rejection requires user confirmation, acceptance does not.
   await commands.executeCommand("chatEditing.acceptAllFiles");
 
-  Logger.error(String(workspace.workspaceFolders?.[0].uri));
-
   const gitUri = workspace.workspaceFolders?.[0].uri;
 
   if (!gitUri) {
