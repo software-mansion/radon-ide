@@ -122,6 +122,8 @@ export function InspectDataMenu({
       store$.license.featuresAvailability.RadonAI.get() === FeatureAvailabilityStatus.AVAILABLE
   );
 
+  const displayAIButton = radonAIEnabled && inspectedItems.length > 0;
+
   return (
     <DropdownMenu.Root
       defaultOpen={true}
@@ -169,7 +171,7 @@ export function InspectDataMenu({
                 </DropdownMenu.Label>
               </DropdownMenu.Item>
             )}
-            {radonAIEnabled && (
+            {displayAIButton && (
               <DropdownMenu.Item
                 className="inspect-data-menu-item inspector-button"
                 key={"ask-ai"}
