@@ -40,7 +40,7 @@ import { AdminRestrictedFunctionalityError, PaywalledFunctionalityError } from "
 import { registerRadonAI } from "./ai/mcp/RadonMcpController";
 import { MaestroCodeLensProvider } from "./providers/MaestroCodeLensProvider";
 import { removeLicense } from "./utilities/license";
-import { testChatToolUsage } from "./ai/tests/aiChatTester";
+import { terminateChatToolTest, testChatToolUsage } from "./ai/tests/aiChatTester";
 import { getTelemetryReporter } from "./utilities/telemetry";
 import { getEditorType } from "./utilities/editorType";
 
@@ -326,6 +326,11 @@ export async function activate(context: ExtensionContext) {
 
   context.subscriptions.push(
     commands.registerCommand("RNIDE.testChatToolUsage", testChatToolUsage)
+  );
+
+  // TODO: Align naming convention
+  context.subscriptions.push(
+    commands.registerCommand("RNIDE.terminateChatToolTest", terminateChatToolTest)
   );
 
   // Debug adapter used by custom launch configuration, we register it in case someone tries to run the IDE configuration

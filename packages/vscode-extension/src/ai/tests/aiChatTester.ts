@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import { mkdtemp } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
-import { commands, Uri, workspace } from "vscode";
+import { window, commands, Uri, workspace, StatusBarAlignment, ThemeColor } from "vscode";
 import { Logger } from "../../Logger";
 import { exec } from "../../utilities/subprocess";
 import { Platform } from "../../utilities/platform";
@@ -101,8 +101,36 @@ async function clearEdits() {
   await exec(GIT_PATH, ["-C", gitUri.fsPath, "restore", "."]);
 }
 
-export async function testChatToolUsage() {
+function setGlobalTestsRunning(areTestsRunning: boolean) {
+  commands.executeCommand("setContext", "RNIDE.MCPToolTestsRunning", areTestsRunning);
+}
+
+function throwOnTestTerminationSignal(): Promise<void> {
+  return new Promise((_, reject) => {
+    this.stateManager.onSetState(() => {
+      const terminateMCPTests = this.stateManager.getState().shouldTerminateMCPTests;
+
+      if (terminateMCPTests) {
+        reject();
+      }
+    });
+  });
+}
+
+async function setTestTerminationSignal(terminate: boolean) {
+  this.stateManager.updateState({
+    shouldTerminateMCPTests: terminate,
+  });
+}
+
+export function terminateChatToolTest() {
+  setTestTerminationSignal(true);
+}
+
+export async function testChatToolUsage(): Promise<void> {
   const runStatus: ChatTestResult[] = [];
+
+  setGlobalTestsRunning(true);
 
   const fail = (testCase: ChatTestCase, cause: string) => {
     runStatus.push({
@@ -120,6 +148,17 @@ export async function testChatToolUsage() {
     });
   };
 
+  // - `showInformationMessage` cannot be programatically dismissed
+  // - `showQuickPick` is a list-selection - does not look right
+  // - `createStatusBarItem` looks good, and can be dismissed both programatically and by the user
+  const statusBar = window.createStatusBarItem(StatusBarAlignment.Left, 0);
+  statusBar.command = "RNIDE.terminateMCPToolTests";
+  statusBar.text = "$(debug-stop) MCP tests running — Terminate";
+  statusBar.tooltip = "Click to terminate running E2E tests";
+  statusBar.color = new ThemeColor("statusBar.foreground");
+  statusBar.backgroundColor = new ThemeColor("statusBarItem.errorBackground");
+  statusBar.show();
+
   const dir = await mkdtemp(path.join(tmpdir(), "radon-chat-exports-"));
 
   for (const testCase of testCases) {
@@ -129,9 +168,12 @@ export async function testChatToolUsage() {
     await commands.executeCommand("workbench.action.chat.openagent", testCase.prompt);
 
     // FIXME: Fixed timouts like this should be removed if possible
-    await sleep(10_000);
-
-    // TODO: Add a way to interrupt & cancel the process
+    try {
+      await Promise.race([sleep(10_000), throwOnTestTerminationSignal()]);
+    } catch {
+      setTestTerminationSignal(false);
+      break;
+    }
 
     const filepath = dir + randomBytes(8).toString("hex") + ".json";
 
@@ -181,8 +223,14 @@ export async function testChatToolUsage() {
     fail(testCase, cause);
   }
 
+  setGlobalTestsRunning(false);
+
   clearEdits();
 
+  statusBar.hide();
+  statusBar.dispose();
+
+  // TODO: Move results to modal
   const response = `\n=== AI TEST RESULTS ===\n${runStatus.map((v) => `${v.success ? " OK " : "FAIL"}${v.cause !== null ? ` | Error: ${v.cause}` : ""}`).join("\n")}`;
   Logger.log(response);
 }
