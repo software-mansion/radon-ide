@@ -183,7 +183,7 @@ export interface ProjectInterface {
   startOrActivateSessionForDevice(deviceInfo: DeviceInfo): Promise<void>;
   terminateSession(deviceId: DeviceId): Promise<void>;
 
-  addToChatContext(...filePaths: string[]): void;
+  addToChatContext(targetPath: string, ...attachedFilenames: string[]): void;
 
   inspectElementAt(xRatio: number, yRatio: number, requestStack: boolean): Promise<InspectData>;
 

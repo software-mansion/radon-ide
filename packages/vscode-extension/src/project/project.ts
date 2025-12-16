@@ -793,7 +793,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Chat
 
-  addToChatContext(...filePaths: string[]): void {
+  addToChatContext(targetPath: string, ...attachedFilenames: string[]): void {
     try {
       const editor = getEditorType();
 
@@ -806,7 +806,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       }
 
       commands.executeCommand(focusCommand).then(async () => {
-        for (const filePath of filePaths) {
+        for (const filePath of attachedFilenames) {
           await commands.executeCommand(attachFileCommand, Uri.file(filePath));
         }
       });

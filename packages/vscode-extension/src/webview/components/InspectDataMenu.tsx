@@ -108,7 +108,7 @@ export function InspectDataMenu({
         }
       }
 
-      project.addToChatContext(childFilename, parentFilename);
+      project.addToChatContext("", childFilename, parentFilename);
       e.preventDefault(); // prevents the dropdown from closing
     },
     Feature.RadonAI,
