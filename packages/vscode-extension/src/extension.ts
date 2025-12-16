@@ -21,11 +21,7 @@ import {
   DebugAdapterDescriptorFactory,
 } from "./debugging/DebugAdapterDescriptorFactory";
 import { Logger, enableDevModeLogging } from "./Logger";
-import {
-  extensionContext,
-  findAppRootFolder,
-  setExtensionContext,
-} from "./utilities/extensionContext";
+import { findAppRootFolder, setExtensionContext } from "./utilities/extensionContext";
 import { SidePanelViewProvider } from "./panels/SidepanelViewProvider";
 import { Platform } from "./utilities/platform";
 import { IDE } from "./project/ide";
@@ -42,8 +38,6 @@ import { MaestroCodeLensProvider } from "./providers/MaestroCodeLensProvider";
 import { removeLicense } from "./utilities/license";
 import { getTelemetryReporter } from "./utilities/telemetry";
 import { getEditorType } from "./utilities/editorType";
-
-const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
 function wrapGuardedFunction<F extends (...args: any[]) => Promise<void> | void>(
   fn: F,
@@ -297,7 +291,6 @@ export async function activate(context: ExtensionContext) {
   context.subscriptions.push(
     commands.registerCommand("RNIDE.captureScreenshot", captureScreenshot)
   );
-  context.subscriptions.push(commands.registerCommand("RNIDE.openChat", openChat));
 
   context.subscriptions.push(
     commands.registerCommand("RNIDE.nextRunningDevice", () =>
@@ -537,17 +530,6 @@ async function rotateDeviceClockwise() {
 async function toggleDeviceAppearance() {
   const project = IDE.getInstanceIfExists()?.project;
   await project?.toggleDeviceAppearance();
-}
-
-async function openChat() {
-  let prompt = undefined;
-
-  if (!extensionContext.globalState.get(CHAT_ONBOARDING_COMPLETED)) {
-    prompt = "@radon what is Radon IDE?";
-    extensionContext.globalState.update(CHAT_ONBOARDING_COMPLETED, true);
-  }
-
-  commands.executeCommand("workbench.action.chat.open", prompt);
 }
 
 async function diagnoseWorkspaceStructure() {

@@ -249,12 +249,6 @@
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
       },
       {
-        "command": "RNIDE.openChat",
-        "title": "Chat with Radon AI",
-        "category": "Radon IDE",
-        "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
-      },
-      {
         "command": "RNIDE.nextRunningDevice",
         "title": "Switch to next running device",
         "category": "Radon IDE",
