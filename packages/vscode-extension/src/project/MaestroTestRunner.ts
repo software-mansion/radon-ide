@@ -10,6 +10,7 @@ import { getOrCreateDeviceSet, IosSimulatorDevice } from "../devices/IosSimulato
 import { extensionContext } from "../utilities/extensionContext";
 import { Logger } from "../Logger";
 import { getTelemetryReporter } from "../utilities/telemetry";
+import { EXPO_GO_BUNDLE_ID, fetchExpoLaunchDeeplink } from "../builders/expoGo";
 
 class MaestroPseudoTerminal implements vscode.Pseudoterminal {
   private writeEmitter = new vscode.EventEmitter<string>();
@@ -215,6 +216,7 @@ export class MaestroTestRunner implements Disposable {
     // similar to what Maestro would do in prebuilt mode, and wrap the xcrun
     // command to provide our own device set with the --set flag.
     const shimPath = path.resolve(extensionContext.extensionPath, "shims", "maestro");
+    const launchArgs = await this.setupLaunchArguments();
 
     const maestroProcess = exec("maestro", ["--device", this.device.id, "test", ...fileNames], {
       buffer: false,
@@ -224,7 +226,7 @@ export class MaestroTestRunner implements Disposable {
       env: {
         PATH: `${shimPath}:${process.env.PATH}`,
         __RADON_APP_ID: this.applicationId,
-        __RADON_METRO_PORT: this.metroPort.toString(),
+        __RADON_LAUNCH_ARGS: launchArgs,
         __RADON_CUSTOM_DEVICE_SET: getOrCreateDeviceSet(
           this.device instanceof IosSimulatorDevice ? this.device.deviceInfo.id : undefined
         ),
@@ -247,6 +249,21 @@ export class MaestroTestRunner implements Disposable {
     });
 
     await maestroProcess;
+  }
+
+  private async setupLaunchArguments() {
+    if (this.device.platform !== DevicePlatform.IOS) {
+      return undefined;
+    }
+
+    const deepLinkChoice = this.applicationId === EXPO_GO_BUNDLE_ID ? "expo-go" : "expo-dev-client";
+    const expoDeepLink = await fetchExpoLaunchDeeplink(this.metroPort, "ios", deepLinkChoice);
+
+    if (expoDeepLink) {
+      return [`--initialUrl`, expoDeepLink].join(" ");
+    }
+
+    return [`-RCT_jsLocation`, `localhost:${this.metroPort}`].join(" ");
   }
 
   private async setupSimulatorSymlink() {

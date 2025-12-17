@@ -17,7 +17,7 @@ if [[ "$1" == "simctl" ]]; then
 	echo "[xcrun-shim] $(date +%s) - simctl called with args: ${@:2}" >>"$HOME/maestro-shim.log"
 	# When launching the app, we may need to pass the metro port as well
 	if [[ $2 == "launch" && "$*" == *"$__RADON_APP_ID"* ]]; then
-		exec "$REAL_XCRUN" "$1" --set "$__RADON_CUSTOM_DEVICE_SET" "${@:2}" -RCT_jsLocation "localhost:${__RADON_METRO_PORT}"
+		exec "$REAL_XCRUN" "$1" --set "$__RADON_CUSTOM_DEVICE_SET" "${@:2}" $__RADON_LAUNCH_ARGS
 	else
 		exec "$REAL_XCRUN" "$1" --set "$__RADON_CUSTOM_DEVICE_SET" "${@:2}"
 	fi
