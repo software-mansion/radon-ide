@@ -22,7 +22,6 @@ import {
   watchLicenseTokenChange,
 } from "../../utilities/license";
 import { FeatureAvailabilityStatus } from "../../common/License";
-import { registerRadonChat } from "../chat";
 import { getEditorType, EditorType } from "../../utilities/editorType";
 import { registerStaticTools } from "./toolRegistration";
 
@@ -35,10 +34,6 @@ function setGlobalUseDirectToolRegistering(useStaticRegistering: boolean) {
 
 function setGlobalEnableAI(isAIEnabled: boolean) {
   commands.executeCommand("setContext", "RNIDE.AIEnabled", isAIEnabled);
-}
-
-function setGlobalEnableChat(isChatEnabled: boolean) {
-  commands.executeCommand("setContext", "RNIDE.chatParticipantEnabled", isChatEnabled);
 }
 
 /**
@@ -145,12 +140,6 @@ class RadonMcpController implements Disposable {
   ) {
     this.radonAvailabilityStatus = options.radonAvailabilityStatus;
 
-    setGlobalEnableChat(isChatEnabledInSettings());
-
-    // Registering `@radon` chat regardless of `isChatEnabledInSettings`,
-    // as visibility of the chat participant is toggled within `package.json`.
-    registerRadonChat(context, options);
-
     const useStaticRegistering = shouldUseDirectRegistering();
     setGlobalUseDirectToolRegistering(useStaticRegistering);
 
@@ -191,9 +180,6 @@ class RadonMcpController implements Disposable {
 
     // `setGlobalEnableAI` sets availability of both static and local server tools.
     setGlobalEnableAI(radonAiEnabled);
-
-    // `setGlobalEnableChat` sets availability of `@radon` chat participant
-    setGlobalEnableChat(isChatEnabledInSettings());
 
     if (!shouldUseDirectRegistering()) {
       if (radonAiEnabled) {
