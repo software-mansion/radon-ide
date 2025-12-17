@@ -8,7 +8,7 @@ import {
   screenshotToolExec,
   viewComponentTreeExec,
 } from "./toolExecutors";
-import { AI_API_PLACEHOLDER_ID, invokeToolCall } from "../shared/api";
+import { AI_API_PLACEHOLDER_ID, invokeToolCall } from "./api";
 import { textToToolResult, toolResponseToToolResult } from "./utils";
 import { AuthorizationError } from "../../common/Errors";
 import { ToolSchema } from "./models";
