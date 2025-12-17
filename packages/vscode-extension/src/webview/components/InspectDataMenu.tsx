@@ -89,7 +89,6 @@ export function InspectDataMenu({
   const onReferenceInChat = usePaywalledCallback(
     (e) => {
       if (inspectedItems.length === 0) {
-        // Silently aborting when `inspectedItems` is empty. There are bugs which make this case possible.
         e.preventDefault();
         return;
       }
