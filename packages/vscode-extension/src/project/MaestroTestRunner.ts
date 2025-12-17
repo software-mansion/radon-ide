@@ -69,15 +69,16 @@ function getDeviceFamily(deviceInfo: DeviceInfo) {
 }
 
 export class MaestroTestRunner implements Disposable {
-  private readonly device: DeviceBase;
   private terminal: vscode.Terminal | undefined;
   private pty: MaestroPseudoTerminal | undefined;
   private maestroProcess: ChildProcess | undefined;
   private onCloseTerminal: vscode.Disposable | undefined;
 
-  constructor(device: DeviceBase) {
-    this.device = device;
-  }
+  constructor(
+    private readonly device: DeviceBase,
+    private readonly metroPort: number,
+    private readonly applicationId: string
+  ) {}
 
   private getOrCreateTerminal(): { terminal: vscode.Terminal; pty: MaestroPseudoTerminal } {
     if (this.terminal && this.pty) {
@@ -222,7 +223,9 @@ export class MaestroTestRunner implements Disposable {
       cwd: homedir(),
       env: {
         PATH: `${shimPath}:${process.env.PATH}`,
-        CUSTOM_DEVICE_SET: getOrCreateDeviceSet(
+        __RADON_APP_ID: this.applicationId,
+        __RADON_METRO_PORT: this.metroPort.toString(),
+        __RADON_CUSTOM_DEVICE_SET: getOrCreateDeviceSet(
           this.device instanceof IosSimulatorDevice ? this.device.deviceInfo.id : undefined
         ),
       },
