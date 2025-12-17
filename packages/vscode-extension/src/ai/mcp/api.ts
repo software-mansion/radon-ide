@@ -1,6 +1,6 @@
 import { getLicenseToken } from "../../utilities/license";
 import { getTelemetryReporter } from "../../utilities/telemetry";
-import { ToolResponse, ToolResult } from "../mcp/models";
+import { ToolResponse, ToolResult, ToolsInfo } from "../mcp/models";
 import { textToToolResponse } from "../mcp/utils";
 import { AuthorizationError } from "../../common/Errors";
 
@@ -77,4 +77,39 @@ export async function invokeToolCall(
 
   const msg = results.tool_results[0].content;
   return textToToolResponse(msg);
+}
+
+export async function fetchRemoteToolSchema(): Promise<ToolsInfo> {
+  const url = new URL("/api/get_tool_schema/", BACKEND_URL);
+  const token = await getLicenseToken();
+  let response: Response | null = null;
+  try {
+    response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+    });
+  } catch (error) {
+    // we don't want to send network failure events to telemetry as they would happen while user is likely offline
+    // anyway and they are not indicative of a problem with the API.
+    throw new ServerUnreachableError("Network failure", error as Error);
+  }
+
+  if (response.status === 401) {
+    getTelemetryReporter().sendTelemetryEvent("radon-ai:get-tool-schema", {
+      error: `Authorization failed`,
+    });
+    throw new AuthorizationError(`Authorization failed when connecting to the backend.`);
+  }
+
+  if (!response.ok) {
+    getTelemetryReporter().sendTelemetryEvent("radon-ai:get-tool-schema", {
+      error: `Invalid status code: ${response.status}`,
+    });
+    throw new Error(`Server responded with status code: ${response.status}`);
+  }
+
+  return response.json();
 }
