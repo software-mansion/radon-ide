@@ -16,6 +16,7 @@ import { PhysicalAndroidDeviceProvider } from "../devices/AndroidPhysicalDevice"
 import { AndroidEmulatorProvider } from "../devices/AndroidEmulatorDevice";
 import { IosSimulatorProvider } from "../devices/IosSimulatorDevice";
 import { FeedbackGenerator } from "./feedbackGenerator";
+import { getEditorType } from "../utilities/editorType";
 
 function createDeviceProviders(
   stateManager: StateManager<DevicesState>,
@@ -109,6 +110,12 @@ export class IDE implements Disposable {
       devicesStateManager,
       ...deviceProviders
     );
+
+    this.telemetry.sendTelemetry("ide:initialized", {
+      licenseStatus: this.project.licenseState.status,
+      editorType: getEditorType(),
+    });
+
     // register disposable with context
     extensionContext.subscriptions.push(this);
   }
