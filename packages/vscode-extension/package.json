@@ -546,13 +546,6 @@
             "default": true,
             "scope": "window",
             "description": "Enables the Radon AI functionality in the extension."
-          },
-          "RadonIDE.radonAI.enableChatParticipant": {
-            "type": "boolean",
-            "default": false,
-            "scope": "window",
-            "markdownDescription": "**[deprecated]** Enables `@radon` AI chat participant.",
-            "description": "[deprecated] Enables `@radon` AI chat participant."
           }
         }
       }
@@ -1191,16 +1184,6 @@
         }
       }
     },
-    "chatParticipants": [
-      {
-        "when": "RNIDE.chatParticipantEnabled",
-        "id": "chat.radon-ai",
-        "fullName": "Radon AI",
-        "name": "radon",
-        "description": "Get up-to-date answers related to React Native",
-        "isSticky": true
-      }
-    ],
     "customEditors": [
       {
         "viewType": "RadonIDE.reactDevtoolsProfiler",
