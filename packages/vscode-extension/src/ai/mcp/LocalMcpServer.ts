@@ -13,7 +13,7 @@ import { registerLocalMcpTools, registerRemoteMcpTool } from "./toolRegistration
 import { extensionContext } from "../../utilities/extensionContext";
 import { watchLicenseTokenChange } from "../../utilities/license";
 import { getAppCachesDir } from "../../utilities/common";
-import { fetchRemoteToolSchema, ServerUnreachableError } from "../shared/api";
+import { fetchRemoteToolSchema, ServerUnreachableError } from "./api";
 import { throttleAsync } from "../../utilities/throttle";
 import { AuthorizationError } from "../../common/Errors";
 
