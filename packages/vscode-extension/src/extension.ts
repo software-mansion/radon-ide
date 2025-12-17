@@ -41,7 +41,6 @@ import { registerRadonAI } from "./ai/mcp/RadonMcpController";
 import { MaestroCodeLensProvider } from "./providers/MaestroCodeLensProvider";
 import { removeLicense } from "./utilities/license";
 import { getTelemetryReporter } from "./utilities/telemetry";
-import { getEditorType } from "./utilities/editorType";
 
 const CHAT_ONBOARDING_COMPLETED = "chat_onboarding_completed";
 
@@ -120,9 +119,8 @@ export async function activate(context: ExtensionContext) {
   }
 
   migrateOldConfiguration();
-  getTelemetryReporter().sendTelemetryEvent(`extension:activated`, {
-    editor: getEditorType(),
-  });
+
+  getTelemetryReporter().sendTelemetryEvent(`extension:activated`);
 
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
