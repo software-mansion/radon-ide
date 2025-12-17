@@ -120,7 +120,9 @@ export async function activate(context: ExtensionContext) {
   }
 
   migrateOldConfiguration();
-  getTelemetryReporter().sendTelemetryEvent(`extension:activated:${getEditorType()}`);
+  getTelemetryReporter().sendTelemetryEvent(`extension:activated`, {
+    editor: getEditorType(),
+  });
 
   commands.executeCommand("setContext", "RNIDE.sidePanelIsClosed", false);
 
