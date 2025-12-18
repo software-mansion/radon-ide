@@ -139,8 +139,8 @@ function getIdeInstance() {
  * TODO: This - explicitly note that this is a command executor
  */
 export function terminateChatToolTest() {
-  const stateManager = getIdeInstance();
-  setTestStatus(false, stateManager);
+  const ideInstance = getIdeInstance();
+  setTestStatus(false, ideInstance);
 }
 
 /**
