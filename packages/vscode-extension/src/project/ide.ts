@@ -109,7 +109,6 @@ export class IDE implements Disposable {
       devicesStateManager,
       ...deviceProviders
     );
-
     // register disposable with context
     extensionContext.subscriptions.push(this);
   }
