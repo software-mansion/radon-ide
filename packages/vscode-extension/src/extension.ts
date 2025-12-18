@@ -328,7 +328,6 @@ export async function activate(context: ExtensionContext) {
     commands.registerCommand("RNIDE.testChatToolUsage", testChatToolUsage)
   );
 
-  // TODO: Align naming convention
   context.subscriptions.push(
     commands.registerCommand("RNIDE.terminateChatToolTest", terminateChatToolTest)
   );
