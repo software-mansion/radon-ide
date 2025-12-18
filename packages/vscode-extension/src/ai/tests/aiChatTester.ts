@@ -177,7 +177,7 @@ export async function testChatToolUsage(): Promise<void> {
   // - `showQuickPick` is a list-selection - does not look right
   // - `createStatusBarItem` looks good, and can be dismissed both programatically and by the user
   const statusBar = window.createStatusBarItem(StatusBarAlignment.Left, 0);
-  statusBar.command = "RNIDE.terminateMCPToolTests";
+  statusBar.command = "RNIDE.terminateChatToolTest";
   statusBar.text = "$(debug-stop) MCP tests running — Terminate";
   statusBar.tooltip = "Click to terminate running E2E tests";
   statusBar.color = new ThemeColor("statusBar.foreground");
