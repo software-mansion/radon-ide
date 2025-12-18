@@ -8,9 +8,7 @@ import { Logger } from "../../Logger";
 import { exec } from "../../utilities/subprocess";
 import { Platform } from "../../utilities/platform";
 import { sleep } from "../../utilities/retry";
-import { StateManager } from "../../project/StateManager";
 import { IDE } from "../../project/ide";
-import { State } from "../../common/State";
 
 export const GIT_PATH = Platform.select({
   macos: "git",
@@ -108,28 +106,28 @@ function setGlobalTestsRunning(areTestsRunning: boolean) {
   commands.executeCommand("setContext", "RNIDE.MCPToolTestsRunning", areTestsRunning);
 }
 
-//stateManager: StateManager<State>
-
-function throwOnTestTermination(stateManager: StateManager<State>): Promise<void> {
+function throwOnTestTermination(ideInstance: IDE): Promise<void> {
   return new Promise((_, reject) => {
-    stateManager.onSetState(() => {
-      const continueRunningTests = stateManager.getState().areMCPTestsRunning;
-      if (!continueRunningTests) {
-        reject();
-      }
+    ideInstance.onStateChanged((_partialState) => {
+      // TODO: Try using `partialState`
+      ideInstance.getState().then((state) => {
+        const continueRunningTests = state.areMCPTestsRunning;
+        if (!continueRunningTests) {
+          reject();
+        }
+      });
     });
   });
 }
 
-async function setTestStatus(areTestsRunning: boolean, stateManager: StateManager<State>) {
+async function setTestStatus(areTestsRunning: boolean, ideInstance: IDE) {
   setGlobalTestsRunning(areTestsRunning);
-  stateManager.updateState({
+  ideInstance.updateState({
     areMCPTestsRunning: !areTestsRunning,
   });
 }
 
-function getStateManager() {
-  // FIXME: Avoid this ugly typecasting. Note: IDE exposes same API as StateManager
+function getIdeInstance() {
   const stateManager = IDE.getInstanceIfExists();
 
   if (!stateManager) {
@@ -137,14 +135,14 @@ function getStateManager() {
     throw Error();
   }
 
-  return stateManager as unknown as StateManager<State>;
+  return stateManager;
 }
 
 /**
  * TODO: This - explicitly note that this is a command executor
  */
 export function terminateChatToolTest() {
-  const stateManager = getStateManager();
+  const stateManager = getIdeInstance();
   setTestStatus(false, stateManager);
 }
 
@@ -152,10 +150,10 @@ export function terminateChatToolTest() {
  * TODO: This - explicitly note that this is a command executor
  */
 export async function testChatToolUsage(): Promise<void> {
-  const stateManager = getStateManager();
+  const ideInstance = getIdeInstance();
   const runStatus: ChatTestResult[] = [];
 
-  setTestStatus(true, stateManager);
+  setTestStatus(true, ideInstance);
 
   const fail = (testCase: ChatTestCase, cause: string) => {
     runStatus.push({
@@ -197,7 +195,7 @@ export async function testChatToolUsage(): Promise<void> {
         // FIXME: Fixed timouts like this should be avoided if possible
         // Note: Found no way of avoiding this one for now :(
         sleep(10_000),
-        throwOnTestTermination(stateManager),
+        throwOnTestTermination(ideInstance),
       ]);
     } catch {
       break;
@@ -251,7 +249,7 @@ export async function testChatToolUsage(): Promise<void> {
     fail(testCase, cause);
   }
 
-  setTestStatus(false, stateManager);
+  setTestStatus(false, ideInstance);
 
   clearEdits();
 
