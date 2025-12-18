@@ -155,7 +155,7 @@ export async function testChatToolUsage(): Promise<void> {
   const stateManager = getStateManager();
   const runStatus: ChatTestResult[] = [];
 
-  setGlobalTestsRunning(true);
+  setTestStatus(true, stateManager);
 
   const fail = (testCase: ChatTestCase, cause: string) => {
     runStatus.push({
@@ -251,7 +251,7 @@ export async function testChatToolUsage(): Promise<void> {
     fail(testCase, cause);
   }
 
-  setGlobalTestsRunning(false);
+  setTestStatus(false, stateManager);
 
   clearEdits();
 
