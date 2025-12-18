@@ -108,14 +108,11 @@ function setGlobalTestsRunning(areTestsRunning: boolean) {
 
 function throwOnTestTermination(ideInstance: IDE): Promise<void> {
   return new Promise((_, reject) => {
-    ideInstance.onStateChanged((_partialState) => {
-      // TODO: Try using `partialState`
-      ideInstance.getState().then((state) => {
-        const continueRunningTests = state.areMCPTestsRunning;
-        if (!continueRunningTests) {
-          reject();
-        }
-      });
+    ideInstance.onStateChanged((partialState) => {
+      const continueRunningTests = partialState.areMCPTestsRunning;
+      if (continueRunningTests === false) {
+        reject();
+      }
     });
   });
 }
@@ -197,7 +194,8 @@ export async function testChatToolUsage(): Promise<void> {
         sleep(10_000),
         throwOnTestTermination(ideInstance),
       ]);
-    } catch {
+    } catch (e) {
+      console.log("FOOBAR: Error", e);
       break;
     }
 
