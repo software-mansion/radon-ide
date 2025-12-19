@@ -4,6 +4,7 @@ import path from "path";
 import semver from "semver";
 import { AndroidConfig } from "@expo/config-plugins";
 import loadConfig from "@react-native-community/cli-config";
+import { getAppBuildGradleAsync } from "@expo/config-plugins/build/android/Paths.js";
 import { calculateAppArtifactHash, getNativeABI } from "../utilities/common";
 import { ANDROID_HOME, findJavaHome } from "../utilities/android";
 import { Logger } from "../Logger";
@@ -81,19 +82,28 @@ async function getApplicationManifest(
   return undefined;
 }
 
+async function getNamespaceFromGradle(projectRoot: string): Promise<string | null> {
+  const gradleBuild = await getAppBuildGradleAsync(projectRoot);
+  if (!gradleBuild) {
+    return null;
+  }
+
+  // The namespace field in build.gradle defines the Java package name for the app's code.
+  const matchResult = gradleBuild.contents.match(/namespace\s+['"].*['"]/);
+  return matchResult?.[1] ?? null;
+}
+
 async function resolveAppIdFromNative(projectRoot: string): Promise<string | null> {
-  const applicationIdFromGradle = await AndroidConfig.Package.getApplicationIdAsync(
-    projectRoot
-  ).catch(() => null);
-  if (applicationIdFromGradle) {
-    return applicationIdFromGradle;
+  const namespaceFromGradle = await getNamespaceFromGradle(projectRoot);
+  if (namespaceFromGradle) {
+    return namespaceFromGradle;
   }
 
   try {
     const filePath = await AndroidConfig.Paths.getAndroidManifestAsync(projectRoot);
     const androidManifest = await AndroidConfig.Manifest.readAndroidManifestAsync(filePath);
     // Assert MainActivity defined.
-    await AndroidConfig.Manifest.getMainActivityOrThrow(androidManifest);
+    AndroidConfig.Manifest.getMainActivityOrThrow(androidManifest);
     const appId = androidManifest.manifest?.$?.package;
     if (appId) {
       return appId;
@@ -111,10 +121,14 @@ async function getLaunchActivity(
   baseAppId: string
 ): Promise<string | undefined> {
   const manifest = await getApplicationManifest(projectRoot);
-  if (!manifest) return undefined;
+  if (!manifest) {
+    return undefined;
+  }
 
-  const mainActivity = await AndroidConfig.Manifest.getRunnableActivity(manifest);
-  if (!mainActivity) return undefined;
+  const mainActivity = AndroidConfig.Manifest.getRunnableActivity(manifest);
+  if (!mainActivity) {
+    return undefined;
+  }
 
   const mainActivityName = mainActivity.$["android:name"];
 
