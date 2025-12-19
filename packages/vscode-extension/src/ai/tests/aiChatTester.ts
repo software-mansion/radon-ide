@@ -136,7 +136,8 @@ function getIdeInstance() {
 }
 
 /**
- * TODO: This - explicitly note that this is a command executor
+ * Executor for `RNIDE.terminateChatToolTest` VSCode command.
+ * Terminates ongoing MCP tool tests, which were initiated by `RNIDE.testChatToolUsage` VSCode command.
  */
 export async function terminateChatToolTest() {
   const ideInstance = getIdeInstance();
@@ -144,7 +145,9 @@ export async function terminateChatToolTest() {
 }
 
 /**
- * TODO: This - explicitly note that this is a command executor
+ * Executor for `RNIDE.testChatToolUsage` VSCode command.
+ * Temporarily takes control over the AI chat tab, testing it's responses to various prompts.
+ * Running this command may interfere with other VSCode functionalities as well.
  */
 export async function testChatToolUsage(): Promise<void> {
   const ideInstance = getIdeInstance();
