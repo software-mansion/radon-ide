@@ -102,8 +102,8 @@ async function clearEdits() {
   await exec(GIT_PATH, ["-C", gitUri.fsPath, "restore", "."]);
 }
 
-function setGlobalTestsRunning(areTestsRunning: boolean) {
-  commands.executeCommand("setContext", "RNIDE.MCPToolTestsRunning", areTestsRunning);
+async function setGlobalTestsRunning(areTestsRunning: boolean) {
+  await commands.executeCommand("setContext", "RNIDE.MCPToolTestsRunning", areTestsRunning);
 }
 
 function throwOnTestTermination(ideInstance: IDE): Promise<void> {
@@ -118,7 +118,7 @@ function throwOnTestTermination(ideInstance: IDE): Promise<void> {
 }
 
 async function setTestStatus(areTestsRunning: boolean, ideInstance: IDE) {
-  setGlobalTestsRunning(areTestsRunning);
+  await setGlobalTestsRunning(areTestsRunning);
   await ideInstance.updateState({
     areMCPTestsRunning: !areTestsRunning,
   });
