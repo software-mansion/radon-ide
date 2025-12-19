@@ -334,10 +334,9 @@ export class ApplicationSession implements Disposable {
     const reactNativeVersion = this.applicationContext.reactNativeVersion;
     const meetsMinimumVersion = (reactNativeVersion?.compare("0.83.0") ?? -1) >= 0;
     const isAndroid = this.device.platform === DevicePlatform.Android;
-    const isAndroid0830 = reactNativeVersion?.compare("0.83.0") === 0 && isAndroid;
 
-    // RN 0.83.0 on Android has known issues with native network inspector
-    if (isAndroid0830) {
+    // Android has known issues with native network inspector
+    if (isAndroid) {
       return false;
     }
 
