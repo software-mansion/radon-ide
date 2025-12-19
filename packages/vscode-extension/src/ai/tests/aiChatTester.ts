@@ -119,7 +119,7 @@ function throwOnTestTermination(ideInstance: IDE): Promise<void> {
 
 async function setTestStatus(areTestsRunning: boolean, ideInstance: IDE) {
   setGlobalTestsRunning(areTestsRunning);
-  ideInstance.updateState({
+  await ideInstance.updateState({
     areMCPTestsRunning: !areTestsRunning,
   });
 }
@@ -138,9 +138,9 @@ function getIdeInstance() {
 /**
  * TODO: This - explicitly note that this is a command executor
  */
-export function terminateChatToolTest() {
+export async function terminateChatToolTest() {
   const ideInstance = getIdeInstance();
-  setTestStatus(false, ideInstance);
+  await setTestStatus(false, ideInstance);
 }
 
 /**
@@ -150,7 +150,7 @@ export async function testChatToolUsage(): Promise<void> {
   const ideInstance = getIdeInstance();
   const runStatus: ChatTestResult[] = [];
 
-  setTestStatus(true, ideInstance);
+  await setTestStatus(true, ideInstance);
 
   const fail = (testCase: ChatTestCase, cause: string) => {
     runStatus.push({
@@ -247,7 +247,7 @@ export async function testChatToolUsage(): Promise<void> {
     fail(testCase, cause);
   }
 
-  setTestStatus(false, ideInstance);
+  await setTestStatus(false, ideInstance);
 
   clearEdits();
 
