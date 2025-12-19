@@ -290,6 +290,7 @@
         "category": "Radon IDE"
       },
       {
+        "enablement": "!RNIDE.MCPToolTestsRunning",
         "command": "RNIDE.testChatToolUsage",
         "title": "Test AI tool usage",
         "category": "Radon IDE"
