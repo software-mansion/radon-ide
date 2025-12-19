@@ -98,7 +98,7 @@ async function clearEdits() {
     return;
   }
 
-  // Revert all changes via git - **cannot** use `commands.executeCommand`, as it requires user confirmation.
+  // Revert all changes via git - we CANNOT use `commands.executeCommand`, as it requires user confirmation.
   await exec(GIT_PATH, ["-C", gitUri.fsPath, "restore", "."]);
 }
 
