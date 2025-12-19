@@ -58,7 +58,6 @@ export function textToToolResult(text: string): vscode.LanguageModelToolResult {
  * `vscode.lm.registerTool` requires `vscode.LanguageModelToolResult` as the tool output.
  * Internally, we still operate on the MCP-style `ToolResponse`, as it is required for:
  * - Cursor
- * - Chat participant
  * - Legacy VSCode support
  *
  * This function is required to bridge `ToolResponse` to a type suitable for `vscode.lm.registerTool`.
