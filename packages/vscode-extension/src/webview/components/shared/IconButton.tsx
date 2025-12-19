@@ -4,6 +4,8 @@ import "./IconButton.css";
 import Tooltip from "./Tooltip";
 import { usePing } from "../../hooks/usePing";
 import { PropsWithDataTest } from "../../../common/types";
+import { useStore } from "../../providers/storeProvider";
+import { use$ } from "@legendapp/state/react";
 
 export interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -12,6 +14,7 @@ export interface IconButtonProps {
   disableTooltip?: boolean;
   counter?: number;
   counterMode?: "full" | "compact";
+  proFeature?: boolean;
   active?: boolean;
   type?: "primary" | "secondary";
   side?: "left" | "right" | "center";
@@ -41,11 +44,17 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
       className = "",
       shouldDisplayLabelWhileDisabled = false,
       dataTest,
+      proFeature,
       ...rest
     } = props;
 
-    const shouldPing = usePing(counter ?? 0, counterMode);
+    const store$ = useStore();
+    const licenseStatus = use$(store$.license.status);
 
+    const isProFeature = proFeature !== undefined && proFeature;
+    const isLocked = isProFeature && (licenseStatus === "free" || licenseStatus === "inactive");
+
+    const shouldPing = usePing(counter ?? 0, counterMode);
     const showCounter = Boolean(counter);
     const button = (
       <button
@@ -59,13 +68,15 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
           size === "small" && "icon-button-small",
           side === "left" && "icon-button-left",
           side === "right" && "icon-button-right",
+          isLocked && "locked",
           className
         )}
         data-testid={dataTest}
         {...rest}
         ref={ref}>
         {children}
-        {counterMode === "full" && counter !== null && (
+        {isLocked && <span className={"pro-feature-badge"}>PRO</span>}
+        {!isProFeature && counterMode === "full" && counter !== null && (
           <span className={classnames("icon-button-counter", showCounter && "visible")}>
             {counter}
           </span>

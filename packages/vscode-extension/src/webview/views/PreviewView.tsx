@@ -401,6 +401,7 @@ function PreviewView() {
           </ToolsDropdown>
           {showRecordingButton && (
             <IconButton
+              proFeature
               className={isRecording ? "button-recording-on" : ""}
               tooltip={{
                 label: isRecording ? "Stop screen recording" : "Start screen recording",
@@ -425,7 +426,8 @@ function PreviewView() {
               }}
               dataTest="radon-top-bar-show-replay-button"
               onClick={handleReplay}
-              disabled={!navBarButtonsActive || isReplayAdminDisabled}>
+              disabled={!navBarButtonsActive || isReplayAdminDisabled}
+              proFeature>
               <ReplayIcon />
             </IconButton>
           )}
@@ -436,7 +438,8 @@ function PreviewView() {
               }}
               onClick={captureScreenshot}
               disabled={!navBarButtonsActive || isScreenshotAdminDisabled}
-              dataTest="capture-screenshot-button">
+              dataTest="capture-screenshot-button"
+              proFeature>
               <span slot="start" className="codicon codicon-device-camera" />
             </IconButton>
           )}
