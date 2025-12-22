@@ -126,7 +126,7 @@ app.get("/api/error/client-error", (req, res) => {
   res.status(403).json({
     error: "Forbidden",
     message: "Invalid Token provided",
-    code: 4003,
+    code: 403,
   });
 });
 

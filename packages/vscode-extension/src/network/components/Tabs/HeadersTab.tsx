@@ -78,7 +78,7 @@ function Section({ data, dataTest }: PropsWithDataTest<SectionProps>) {
             <td className="network-log-request-header">{key}:</td>
             <td
               className="network-log-request-header-value"
-              data-testid={`network-log-${dataTest}-${key}-value`}>
+              data-testid={`network-log-${dataTest}-${key.toLowerCase().replace(/ /g, "-")}-value`}>
               {key === STATUS_CODE_KEY && <StatusDot status={value} />}
               {String(value)}
             </td>

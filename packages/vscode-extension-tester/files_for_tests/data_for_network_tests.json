@@ -1,0 +1,477 @@
+{
+  "api/get": {
+    "request": {
+      "url": "http://localhost:8080/api/get?page=2&sort=desc",
+      "method": "GET",
+      "headers": {},
+      "query": {
+        "page": 2,
+        "sort": "desc"
+      }
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "162",
+        "content-type": "application/json; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": {
+        "meta": {
+          "page": "2",
+          "sort": "desc",
+          "total": 2
+        },
+        "data": [
+          {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john@example.com"
+          },
+          {
+            "id": 2,
+            "name": "Jane Doe",
+            "email": "jane@example.com"
+          }
+        ]
+      }
+    }
+  },
+  "api/post": {
+    "request": {
+      "url": "http://localhost:8080/api/post",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "query": {},
+      "body": {
+        "name": "Alice",
+        "email": "alice@example.com"
+      }
+    },
+    "response": {
+      "status": 201,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "109",
+        "content-type": "application/json; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": {
+        "message": "Post request successful",
+        "userId": 3,
+        "captured_data": {
+          "name": "Alice",
+          "email": "alice@example.com"
+        }
+      }
+    }
+  },
+  "api/patch/1": {
+    "request": {
+      "url": "http://localhost:8080/api/patch/1",
+      "method": "PATCH",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "query": {},
+      "body": {
+        "name": "Johnny"
+      }
+    },
+    "response": {
+      "status": 204,
+      "headers": {
+        "connection": "keep-alive",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": ""
+    }
+  },
+  "api/put/2": {
+    "request": {
+      "url": "http://localhost:8080/api/put/2",
+      "method": "PUT",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "query": {},
+      "body": {
+        "name": "Janette",
+        "email": "janette@example.com"
+      }
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "99",
+        "content-type": "application/json; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": {
+        "message": "Put request successful",
+        "user": {
+          "id": 2,
+          "name": "Janette",
+          "email": "janette@example.com"
+        }
+      }
+    }
+  },
+  "api/delete/1": {
+    "request": {
+      "url": "http://localhost:8080/api/delete/1",
+      "method": "DELETE",
+      "headers": {},
+      "query": {}
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "53",
+        "content-type": "application/json; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": {
+        "message": "Delete request successful",
+        "deletedId": 1
+      }
+    }
+  },
+  "api/multipart": {
+    "request": {
+      "url": "http://localhost:8080/api/multipart",
+      "method": "POST",
+      "multipart": true,
+      "headers": {},
+      "body": {
+        "description": "User profile picture",
+        "multipart_data": {
+          "uri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+          "type": "image/png",
+          "name": "profile.png"
+        }
+      }
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "102",
+        "content-type": "application/json; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": {
+        "filename": "profile.png",
+        "mimetype": "image/png",
+        "size": 70,
+        "metadata_received": "User profile picture"
+      }
+    }
+  },
+  "api/form": {
+    "request": {
+      "url": "http://localhost:8080/api/form",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/x-www-form-urlencoded"
+      },
+      "query": {},
+      "body": "username=testuser&password=1234"
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "73",
+        "content-type": "application/json; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": {
+        "type": "Legacy Form",
+        "received_user": "testuser",
+        "login_status": "active"
+      }
+    }
+  },
+  "api/binary": {
+    "request": {
+      "url": "http://localhost:8080/api/binary",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "128",
+        "content-type": "application/octet-stream",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": "/nGD/5Bj/K1B88Ud5doG0+sqvfdNo/5vhf+OZfyrQ/TEH+bZBNXqKL72S6T9bYf/jGf8qUX0wyLn2AHW6SbA9kmm/WuJ/4tp/adH9cEk6NcA1+gjwfVHqP1pi/+Ja/2mSfbAJunWAtjnIcP0Rar8Z43/h239pEz2vijq1ATZ5h8="
+    }
+  },
+  "api/compress": {
+    "request": {
+      "url": "http://localhost:8080/api/compress",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-encoding": "gzip",
+        "content-type": "application/json; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "Identity",
+        "vary": "Accept-Encoding",
+        "x-powered-by": "Express"
+      },
+      "body": "Content too large for syntax highlighting"
+    }
+  },
+  "api/redirect": {
+    "request": {
+      "url": "http://localhost:8080/api/redirect",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "body": {
+        "meta": {
+          "page": "2",
+          "sort": "desc",
+          "total": 2
+        },
+        "data": [
+          {
+            "id": 1,
+            "name": "John Doe",
+            "email": "john@example.com"
+          },
+          {
+            "id": 2,
+            "name": "Jane Doe",
+            "email": "jane@example.com"
+          }
+        ]
+      }
+    }
+  },
+  "api/delay": {
+    "request": {
+      "url": "http://localhost:8080/api/delay",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "59",
+        "content-type": "application/json; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": {
+        "message": "Response received after delay",
+        "delay_ms": 3000
+      }
+    },
+    "delay_ms": 3000
+  },
+  "api/large-body": {
+    "request": {
+      "url": "http://localhost:8080/api/large-body",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "5242880",
+        "content-type": "text/html; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": "Response too large, showing truncated data"
+    }
+  },
+  "api/image": {
+    "request": {
+      "url": "http://localhost:8080/api/image",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "accept-ranges": "bytes",
+        "cache-control": "public, max-age=0",
+        "connection": "keep-alive",
+        "content-length": "687864",
+        "content-type": "image/png",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": "<image>"
+    }
+  },
+  "api/stream-xhr": {
+    "request": {
+      "url": "http://localhost:8080/api/stream-xhr",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "cache-control": "no-cache",
+        "connection": "keep-alive",
+        "content-type": "text/plain; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "transfer-encoding": "Identity",
+        "x-content-type-options": "nosniff",
+        "x-powered-by": "Express"
+      },
+      "body": "--- Stream Started ---\n[Chunk 1] Data received\n[Chunk 2] Data received\n[Chunk 3] Data received\n[Chunk 4] Data received\n[Chunk 5] Data received\n--- Stream Finished ---"
+    },
+    "delay_ms": 5000
+  },
+  "api/external/1": {
+    "request": {
+      "url": "https://jsonplaceholder.typicode.com/todos/1",
+      "method": "GET"
+    },
+    "response": {
+      "userId": 1,
+      "id": 1,
+      "title": "delectus aut autem",
+      "completed": false
+    }
+  },
+  "api/error/client-error": {
+    "request": {
+      "url": "http://localhost:8080/api/error/client-error",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "response": {
+      "status": 403,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "67",
+        "content-type": "application/json; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": {
+        "error": "Forbidden",
+        "message": "Invalid Token provided",
+        "code": 403
+      }
+    }
+  },
+  "api/error/server-error": {
+    "request": {
+      "url": "http://localhost:8080/api/error/server-error",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "response": {
+      "status": 503,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "262",
+        "content-type": "text/html; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": "\n        <html>\n            <body>\n                <h1>503 Service Unavailable</h1>\n                <p>The upstream server is currently unavailable.</p>\n                <hr>\n                <address>Nginx/1.18.0</address>\n            </body>\n        </html>\n    "
+    }
+  },
+  "api/error/truncated": {
+    "request": {
+      "url": "http://localhost:8080/api/error/truncated",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "1024",
+        "content-type": "application/json",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      }
+    },
+    "error": "Invalid response body while trying to fetch http://localhost:8080/api/error/truncated: aborted"
+  },
+  "api/error/json": {
+    "request": {
+      "url": "http://localhost:8080/api/error/json",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "44",
+        "content-type": "application/json; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      }
+    },
+    "error": "Unterminated string in JSON at position 44 (line 1 column 45)"
+  },
+  "api/error/protocol": {
+    "request": {
+      "url": "http://localhost:8080/api/error/protocol",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "error": "request to http://localhost:8080/api/error/protocol failed, reason: Parse Error: Expected HTTP/, RTSP/ or ICE/"
+  },
+  "api/error/hang": {
+    "request": {
+      "url": "http://localhost:8080/api/error/hang",
+      "method": "GET",
+      "headers": {},
+      "query": {}
+    },
+    "error": "Request timed out",
+    "delay_ms": 5000
+  }
+}
