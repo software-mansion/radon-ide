@@ -1,9 +1,11 @@
 import React from "react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { use$ } from "@legendapp/state/react";
+
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
 import * as Switch from "@radix-ui/react-switch";
-import { use$ } from "@legendapp/state/react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as PaywallDropdownMenu from "./shared/DropdownMenuWrappers";
 
 import "./shared/Dropdown.css";
 import "./shared/RadioGroup.css";
@@ -26,9 +28,9 @@ import { useStore } from "../providers/storeProvider";
 import { DevicePlatform, DeviceRotation, DeviceSettings } from "../../common/State";
 import { PropsWithDataTest } from "../../common/types";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
-import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { Feature, FeatureAvailabilityStatus } from "../../common/License";
 import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
+
 
 const contentSizes = [
   "xsmall",
@@ -175,24 +177,16 @@ function RotateSettingsSubmenu() {
   });
 
   const { project } = useProject();
-  const handleRotateDevice = usePaywalledCallback(
-    (direction: DeviceRotationDirection) => {
-      project.rotateDevices(direction);
-    },
-    Feature.DeviceRotation,
-    []
-  );
+  const handleRotateDevice = (direction: DeviceRotationDirection) => {
+    project.rotateDevices(direction);
+  };
 
-  const handleSetRotateDevice = usePaywalledCallback(
-    (deviceRotation: DeviceRotation) => {
-      store$.workspaceConfiguration.deviceSettings.deviceRotation.set(deviceRotation);
-    },
-    Feature.DeviceRotation,
-    []
-  );
+  const handleSetRotateDevice = (deviceRotation: DeviceRotation) => {
+    store$.workspaceConfiguration.deviceSettings.deviceRotation.set(deviceRotation);
+  };
 
   return (
-    <DropdownMenu.Sub>
+    <PaywallDropdownMenu.Sub proFeature={Feature.DeviceRotation}>
       <DropdownMenu.SubTrigger
         className="dropdown-menu-item"
         data-testid="device-settings-rotate-device-menu-trigger">
@@ -242,7 +236,7 @@ function RotateSettingsSubmenu() {
           ))}
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
-    </DropdownMenu.Sub>
+    </PaywallDropdownMenu.Sub>
   );
 }
 
@@ -296,11 +290,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
   const isSendFilesAdminDisabled = useIsFeatureAdminDisabled(Feature.SendFile);
 
-  const openSendFileDialog = usePaywalledCallback(
-    () => project.openSendFileDialog(),
-    Feature.SendFile,
-    []
-  );
+  const openSendFileDialog = () => project.openSendFileDialog();
 
   return (
     <DropdownMenuRoot>
@@ -332,14 +322,15 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           <RotateSettingsSubmenu />
           {platform === DevicePlatform.IOS && <BiometricsItem />}
           {!isSendFilesAdminDisabled && (
-            <DropdownMenu.Item
+            <PaywallDropdownMenu.Item
+              proFeature={Feature.SendFile}
               className="dropdown-menu-item"
               data-testid="device-settings-send-file"
               disabled={isSendFilesAdminDisabled}
               onSelect={openSendFileDialog}>
               <span className="codicon codicon-share" />
               Send File
-            </DropdownMenu.Item>
+            </PaywallDropdownMenu.Item>
           )}
           {!isPhysicalAndroid && (
             <>
@@ -414,22 +405,16 @@ const LocationItem = () => {
   const isLocationAdminDisabled = useIsFeatureAdminDisabled(Feature.LocationSimulation);
 
   const { openModal } = useModal();
-  const handleOpenLocationView = usePaywalledCallback(
-    () => {
-      openModal(<DeviceLocationView />, { title: "Location" });
-    },
-    Feature.LocationSimulation,
-    []
-  );
   return (
-    <DropdownMenu.Item
+    <PaywallDropdownMenu.Item
       className="dropdown-menu-item"
       data-testid="device-settings-location"
       disabled={isLocationAdminDisabled}
-      onSelect={handleOpenLocationView}>
+      onSelect={() => openModal(<DeviceLocationView />, { title: "Location" })}
+      proFeature={Feature.LocationSimulation}>
       <span className="codicon codicon-location" />
       Location
-    </DropdownMenu.Item>
+    </PaywallDropdownMenu.Item>
   );
 };
 
@@ -437,23 +422,16 @@ const LocalizationItem = () => {
   const isLocalizationAdminDisabled = useIsFeatureAdminDisabled(Feature.DeviceLocalizationSettings);
   const { openModal } = useModal();
 
-  const handleOpenLocalizationView = usePaywalledCallback(
-    () => {
-      openModal(<DeviceLocalizationView />, { title: "Localization" });
-    },
-    Feature.DeviceLocalizationSettings,
-    []
-  );
-
   return (
-    <DropdownMenu.Item
+    <PaywallDropdownMenu.Item
       className="dropdown-menu-item"
       disabled={isLocalizationAdminDisabled}
-      onSelect={handleOpenLocalizationView}
-      data-testid="device-settings-localization">
+      onSelect={() => openModal(<DeviceLocalizationView />, { title: "Localization" })}
+      data-testid="device-settings-localization"
+      proFeature={Feature.DeviceLocalizationSettings}>
       <span className="codicon codicon-globe" />
       Localization
-    </DropdownMenu.Item>
+    </PaywallDropdownMenu.Item>
   );
 };
 
@@ -464,19 +442,25 @@ function CommandItem({
   icon,
   disabled = false,
   dataTest,
+  proFeature,
+  proFeatureDependencies,
 }: PropsWithDataTest<{
   onSelect: () => void;
   commandName: string;
   label: string;
   icon: string;
   disabled?: boolean;
+  proFeature?: Feature;
+  proFeatureDependencies?: unknown[];
 }>) {
   return (
-    <DropdownMenu.Item
+    <PaywallDropdownMenu.Item
       className="dropdown-menu-item"
       onSelect={onSelect}
       disabled={disabled}
-      data-testid={dataTest}>
+      data-testid={dataTest}
+      proFeature={proFeature}
+      proFeatureDependencies={proFeatureDependencies}>
       <span className="dropdown-menu-item-wraper">
         <span className={`codicon codicon-${icon}`} />
         <div className="dropdown-menu-item-content">
@@ -484,7 +468,7 @@ function CommandItem({
           <KeybindingInfo commandName={commandName} />
         </div>
       </span>
-    </DropdownMenu.Item>
+    </PaywallDropdownMenu.Item>
   );
 }
 
@@ -497,26 +481,18 @@ const BiometricsItem = () => {
 
   const { project } = useProject();
 
-  const handleToggleBiometricsEnrolment = usePaywalledCallback(
-    () => {
-      store$.workspaceConfiguration.deviceSettings.hasEnrolledBiometrics.set(
-        !deviceSettings.hasEnrolledBiometrics
-      );
-    },
-    Feature.Biometrics,
-    []
-  );
+  const handleToggleBiometricsEnrolment = () => {
+    store$.workspaceConfiguration.deviceSettings.hasEnrolledBiometrics.set(
+      !deviceSettings.hasEnrolledBiometrics
+    );
+  };
 
-  const handleSendBiometricAuthorization = usePaywalledCallback(
-    async (isMatching: boolean) => {
-      await project.sendBiometricAuthorization(isMatching);
-    },
-    Feature.Biometrics,
-    []
-  );
+  const handleSendBiometricAuthorization = async (isMatching: boolean) => {
+    await project.sendBiometricAuthorization(isMatching);
+  };
 
   return (
-    <DropdownMenu.Sub>
+    <PaywallDropdownMenu.Sub proFeature={Feature.Biometrics}>
       <DropdownMenu.SubTrigger disabled={isBiometricsAdminDisabled} className="dropdown-menu-item">
         <span className="codicon codicon-layout" />
         Biometrics
@@ -552,10 +528,11 @@ const BiometricsItem = () => {
             label="Non-Matching ID"
             icon="layout-sidebar-left"
             disabled={!deviceSettings.hasEnrolledBiometrics || isBiometricsAdminDisabled}
+            proFeature={Feature.Biometrics}
           />
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
-    </DropdownMenu.Sub>
+    </PaywallDropdownMenu.Sub>
   );
 };
 
@@ -563,14 +540,14 @@ const CameraItem = () => {
   const { openModal } = useModal();
 
   return (
-    <DropdownMenu.Item
+    <PaywallDropdownMenu.Item
       className="dropdown-menu-item"
       onSelect={() => {
         openModal(<CameraSettingsView />, { title: "Camera Settings" });
       }}>
       <span className="codicon codicon-device-camera" />
       Camera Settings
-    </DropdownMenu.Item>
+    </PaywallDropdownMenu.Item>
   );
 };
 

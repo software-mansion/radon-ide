@@ -1,11 +1,13 @@
 import React from "react";
 import classnames from "classnames";
 import "./IconButton.css";
+import { use$ } from "@legendapp/state/react";
 import Tooltip from "./Tooltip";
 import { usePing } from "../../hooks/usePing";
 import { PropsWithDataTest } from "../../../common/types";
 import { useStore } from "../../providers/storeProvider";
-import { use$ } from "@legendapp/state/react";
+import { Feature } from "../../../common/License";
+import { usePaywalledCallback } from "../../hooks/usePaywalledCallback";
 
 export interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -14,7 +16,8 @@ export interface IconButtonProps {
   disableTooltip?: boolean;
   counter?: number;
   counterMode?: "full" | "compact";
-  proFeature?: boolean;
+  proFeature?: Feature;
+  proFeatureDependencies?: unknown[];
   active?: boolean;
   type?: "primary" | "secondary";
   side?: "left" | "right" | "center";
@@ -34,7 +37,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
       counter,
       counterMode = "full",
       children,
-      onClick,
+      onClick = () => {},
       tooltip,
       disabled,
       active,
@@ -45,20 +48,25 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
       shouldDisplayLabelWhileDisabled = false,
       dataTest,
       proFeature,
+      proFeatureDependencies = [],
       ...rest
     } = props;
 
     const store$ = useStore();
     const licenseStatus = use$(store$.license.status);
 
-    const isProFeature = proFeature !== undefined && proFeature;
+    const isProFeature = proFeature !== undefined;
     const isLocked = isProFeature && (licenseStatus === "free" || licenseStatus === "inactive");
+
+    const wrappedOnClick = proFeature
+      ? usePaywalledCallback(onClick, proFeature, proFeatureDependencies)
+      : onClick;
 
     const shouldPing = usePing(counter ?? 0, counterMode);
     const showCounter = Boolean(counter);
     const button = (
       <button
-        onClick={onClick}
+        onClick={wrappedOnClick}
         disabled={disabled}
         className={classnames(
           "icon-button",

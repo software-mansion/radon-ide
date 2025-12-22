@@ -32,7 +32,6 @@ import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
 import { ActivateLicenseView } from "./ActivateLicenseView";
 import { Feature, LicenseStatus } from "../../common/License";
-import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { useDevices } from "../hooks/useDevices";
 import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
 
@@ -227,13 +226,9 @@ function PreviewView() {
 
   const showRecordingButton = !isRecordingAdminDisabled;
 
-  const paywalledToggleRecording = usePaywalledCallback(
-    async () => {
-      await project.toggleRecording();
-    },
-    Feature.ScreenRecording,
-    []
-  );
+  const paywalledToggleRecording = async () => {
+    await project.toggleRecording();
+  };
 
   function toggleRecording() {
     try {
@@ -263,13 +258,9 @@ function PreviewView() {
 
   const isReplayAdminDisabled = useIsFeatureAdminDisabled(Feature.ScreenReplay);
 
-  const paywalledCaptureReplay = usePaywalledCallback(
-    async () => {
-      await project.captureReplay();
-    },
-    Feature.ScreenReplay,
-    []
-  );
+  const paywalledCaptureReplay = async () => {
+    await project.captureReplay();
+  };
 
   async function handleReplay() {
     try {
@@ -283,13 +274,9 @@ function PreviewView() {
 
   const showScreenshotButton = !isScreenshotAdminDisabled;
 
-  const paywalledCaptureScreenshot = usePaywalledCallback(
-    async () => {
-      await project.captureScreenshot();
-    },
-    Feature.Screenshot,
-    []
-  );
+  const paywalledCaptureScreenshot = async () => {
+    await project.captureScreenshot();
+  };
 
   async function captureScreenshot() {
     try {
@@ -401,7 +388,7 @@ function PreviewView() {
           </ToolsDropdown>
           {showRecordingButton && (
             <IconButton
-              proFeature
+              proFeature={Feature.ScreenRecording}
               className={isRecording ? "button-recording-on" : ""}
               tooltip={{
                 label: isRecording ? "Stop screen recording" : "Start screen recording",
@@ -427,7 +414,7 @@ function PreviewView() {
               dataTest="radon-top-bar-show-replay-button"
               onClick={handleReplay}
               disabled={!navBarButtonsActive || isReplayAdminDisabled}
-              proFeature>
+              proFeature={Feature.ScreenReplay}>
               <ReplayIcon />
             </IconButton>
           )}
@@ -439,7 +426,7 @@ function PreviewView() {
               onClick={captureScreenshot}
               disabled={!navBarButtonsActive || isScreenshotAdminDisabled}
               dataTest="capture-screenshot-button"
-              proFeature>
+              proFeature={Feature.Screenshot}>
               <span slot="start" className="codicon codicon-device-camera" />
             </IconButton>
           )}

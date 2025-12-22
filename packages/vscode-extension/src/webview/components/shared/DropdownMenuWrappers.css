@@ -1,0 +1,31 @@
+.dropdown-menu-item-pro {
+  position: relative;
+}
+
+.pro-feature-badge-dropdown {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 6px;
+  padding: 1px 4px;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--vscode-badge-foreground);
+  background-color: var(--vscode-badge-background);
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dropdown-menu-subcontent-pro {
+  position: relative;
+}
+
+.dropdown-menu-subcontent-pro-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  pointer-events: none;
+}
