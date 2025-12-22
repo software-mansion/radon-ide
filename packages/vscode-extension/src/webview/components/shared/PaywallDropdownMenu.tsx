@@ -6,7 +6,7 @@ import { useStore } from "../../providers/storeProvider";
 import { usePaywalledCallback } from "../../hooks/usePaywalledCallback";
 import { Feature } from "../../../common/License";
 
-import "./DropdownMenuWrappers.css";
+import "./PaywallDropdownMenu.css";
 
 interface PaywallItemProps extends DropdownMenu.DropdownMenuItemProps {
   proFeature?: Feature;
@@ -37,10 +37,10 @@ export function Item({
     <DropdownMenu.Item
       ref={ref}
       onSelect={wrappedOnSelect}
-      className={classnames(className, isLocked && "locked")}
+      className={classnames(className, "paywall-dropdown-menu-item", isLocked && "locked")}
       {...props}>
       {children}
-      {isLocked && <span className="pro-feature-badge-dropdown">PRO</span>}
+      {isLocked && <span className="paywall-dropdown-menu-badge">PRO</span>}
     </DropdownMenu.Item>
   );
 }
@@ -51,12 +51,7 @@ interface PaywallSub extends DropdownMenu.DropdownMenuSubProps {
   children: React.ReactNode;
 }
 
-export function Sub({
-  proFeature,
-  proFeatureDependencies = [],
-  children,
-  ...props
-}: PaywallSub) {
+export function Sub({ proFeature, proFeatureDependencies = [], children, ...props }: PaywallSub) {
   const store$ = useStore();
   const licenseStatus = use$(store$.license.status);
   const isLocked =
@@ -78,18 +73,14 @@ export function Sub({
           {
             className: classnames(
               originalClassName,
-              proFeature && "dropdown-menu-subcontent-pro",
+              proFeature && "paywall-dropdown-menu-sub",
               isLocked && "locked"
             ),
             onClick: proFeature ? handlePaywallCheck : originalOnClick,
             children: (
               <>
                 {childProps.children}
-                {proFeature && (
-                  <div className="dropdown-menu-subcontent-pro-indicator">
-                    <span className="pro-feature-badge-dropdown">PRO</span>
-                  </div>
-                )}
+                {proFeature && <span className="paywall-dropdown-menu-badge">PRO</span>}
               </>
             ),
           }

@@ -5,7 +5,7 @@ import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
 import * as Switch from "@radix-ui/react-switch";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import * as PaywallDropdownMenu from "./shared/DropdownMenuWrappers";
+import * as PaywallDropdownMenu from "./shared/PaywallDropdownMenu";
 
 import "./shared/Dropdown.css";
 import "./shared/RadioGroup.css";
@@ -30,7 +30,6 @@ import { PropsWithDataTest } from "../../common/types";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { Feature, FeatureAvailabilityStatus } from "../../common/License";
 import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
-
 
 const contentSizes = [
   "xsmall",
@@ -347,6 +346,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <span className="codicon codicon-link" />
             Open Deep Link
           </DropdownMenu.Item>
+
           <div className="dropdown-menu-item">
             <ReplayIcon />
             Enable Replays
@@ -362,6 +362,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               <Switch.Thumb className="switch-thumb" />
             </Switch.Root>
           </div>
+          
           <div className="dropdown-menu-item">
             <span className="codicon codicon-record" />
             Show Touches

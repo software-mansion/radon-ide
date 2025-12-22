@@ -93,10 +93,16 @@
   font-size: 7px;
   right: 0px;
   transform: translateY(-50%);
-  /* transform: translateX(-50%); */
+  opacity: 0;
   transition:
     left 200ms ease-in-out,
     opacity 200ms ease-in-out;
+  transition-delay: 0ms;
+}
+
+.icon-button.locked:hover .pro-feature-badge {
+  opacity: 1;
+  transition-delay: 200ms;
 }
 
 
