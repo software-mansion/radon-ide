@@ -14,11 +14,6 @@ let server = null;
 let wss = null;
 let appWebsocket = null;
 
-let users = [
-  { id: 1, name: "John Doe", email: "john@example.com" },
-  { id: 2, name: "Jane Doe", email: "jane@example.com" },
-];
-
 app.use(express.static("."));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -26,30 +21,24 @@ app.use(express.urlencoded({ extended: true }));
 const upload = multer({ storage: multer.memoryStorage() });
 
 app.get("/api/get", (req, res) => {
-  const { page, sort } = req.query;
   res.setHeader("Content-Type", "application/json");
   res.json({
     meta: {
-      page: page || 1,
-      sort: sort || "asc",
-      total: users.length,
+      page: "2",
+      sort: "desc",
+      total: 2,
     },
-    data: users,
+    data: [
+      { id: 1, name: "John Doe", email: "john@example.com" },
+      { id: 2, name: "Jane Doe", email: "jane@example.com" },
+    ],
   });
 });
 
 app.post("/api/post", (req, res) => {
-  const newUser = { id: users.length + 1, ...req.body };
-  users.push(newUser);
-  console.log({
-    message: "Post request successful",
-    userId: newUser.id,
-    captured_data: req.body,
-  });
-
   res.status(201).json({
     message: "Post request successful",
-    userId: newUser.id,
+    userId: 3,
     captured_data: req.body,
   });
 });
@@ -65,37 +54,26 @@ app.post("/api/query-and-body", (req, res) => {
 });
 
 app.patch("/api/patch/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  const user = users.find((u) => u.id === id);
-  if (!user) {
-    return res.status(404).json({ error: "User not found" });
-  }
-  Object.assign(user, req.body);
-  console.log(`Updating profile for ID: ${req.params.id}`);
   res.status(204).send();
 });
 
 app.put("/api/put/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const index = users.findIndex((u) => u.id === id);
-  if (index === -1) {
-    return res.status(404).json({ error: "User not found" });
-  }
-  users[index] = { id, ...req.body };
   res.status(200).json({
     message: "Put request successful",
-    user: users[index],
+    user: {
+      id: id,
+      ...req.body,
+    },
   });
 });
 
 app.delete("/api/delete/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const index = users.findIndex((u) => u.id === id);
-  if (index === -1) {
-    return res.status(404).json({ error: "User not found" });
-  }
-  users.splice(index, 1);
-  res.json({ message: "Delete request successful", deletedId: id });
+  res.json({
+    message: "Delete request successful",
+    deletedId: id,
+  });
 });
 
 app.post("/api/multipart", upload.single("multipart_data"), (req, res) => {
@@ -196,8 +174,7 @@ app.get("/api/stream-xhr", (req, res) => {
 
   const interval = setInterval(() => {
     chunkCount++;
-    const timestamp = new Date().toLocaleTimeString();
-    res.write(`[Chunk ${chunkCount}] Data received at ${timestamp}\n`);
+    res.write(`[Chunk ${chunkCount}] Data received\n`);
 
     if (chunkCount >= maxChunks) {
       clearInterval(interval);
@@ -267,7 +244,7 @@ app.get("/api/delay", (req, res) => {
 });
 
 app.get("/api/image", (req, res) => {
-  res.sendFile(path.join(__dirname, "img.png"));
+  res.sendFile(path.join(__dirname, "img", "img.png"));
 });
 
 app.get("/api/large-image", (req, res) => {

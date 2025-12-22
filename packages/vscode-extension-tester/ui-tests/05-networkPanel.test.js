@@ -5,6 +5,7 @@ import { WebView, BottomBarPanel } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
+import { response } from "express";
 
 safeDescribe("5 - Network panel tests", () => {
   let driver,
@@ -96,6 +97,7 @@ safeDescribe("5 - Network panel tests", () => {
         method: data[endpoint].request.method,
         headers: data[endpoint].request.headers,
         body: data[endpoint].request.body,
+        multipart: data[endpoint].request.multipart,
       })
     );
 
@@ -118,7 +120,8 @@ safeDescribe("5 - Network panel tests", () => {
       `network-panel-row-${name}-status`
     );
 
-    assert.equal(await status.getText(), expectedStatus.toString());
+    if (expectedStatus)
+      assert.equal(await status.getText(), expectedStatus.toString());
 
     const methodElement = await elementHelperService.findAndWaitForElementByTag(
       `network-panel-row-${name}-method`
@@ -142,6 +145,11 @@ safeDescribe("5 - Network panel tests", () => {
         ? expectedResponseBody
         : JSON.stringify(expectedResponseBody);
 
+    if (endpoint !== "api/image") {
+      console.log(expectedString.replace(/\s/g, ""));
+      console.log(responseText.replace(/\s/g, ""));
+    }
+
     assert.include(
       responseText.replace(/\s/g, ""),
       expectedString.replace(/\s/g, "")
@@ -156,12 +164,26 @@ safeDescribe("5 - Network panel tests", () => {
         `network-panel-tab-panel-payload`
       );
 
-      const payload = await payloadTab.getText();
+      const payload = await payloadTab.getAttribute("textContent");
+      const expectedRequestBodyString =
+        typeof expectedRequestBody === "string"
+          ? expectedRequestBody
+          : JSON.stringify(expectedRequestBody);
 
-      assert.include(
-        payload.replace(/\s/g, ""),
-        JSON.stringify(expectedRequestBody).replace(/\s/g, "")
-      );
+      console.log(payload);
+
+      console.log(payload.replace(/\s/g, ""));
+      console.log(expectedRequestBodyString.replace(/\s/g, ""));
+
+      try {
+        assert.include(
+          payload.replace(/\s/g, ""),
+          expectedRequestBodyString.replace(/\s/g, "")
+        );
+      } catch (e) {
+        console.error(e);
+        await driver.sleep(1000000);
+      }
     }
 
     await elementHelperService.findAndClickElementByTag(

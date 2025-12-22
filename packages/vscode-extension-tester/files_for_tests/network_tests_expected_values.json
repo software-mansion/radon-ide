@@ -160,9 +160,16 @@
     "request": {
       "url": "http://localhost:8080/api/multipart",
       "method": "POST",
+      "multipart": true,
       "headers": {},
-      "query": {},
-      "multipart": true
+      "body": {
+        "description": "User profile picture",
+        "multipart_data": {
+          "uri": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==",
+          "type": "image/png",
+          "name": "profile.png"
+        }
+      }
     },
     "response": {
       "status": 200,
@@ -176,10 +183,10 @@
         "x-powered-by": "Express"
       },
       "body": {
-        "filename": "test.txt",
-        "mimetype": "text/plain",
-        "size": 11,
-        "metadata_received": "Test file upload"
+        "filename": "profile.png",
+        "mimetype": "image/png",
+        "size": 70,
+        "metadata_received": "User profile picture"
       }
     }
   },
@@ -265,30 +272,24 @@
     "response": {
       "status": 200,
       "headers": {
-        "connection": "keep-alive",
-        "content-length": "159",
-        "content-type": "application/json; charset=utf-8",
-        "date": "Fri, 12 Dec 2025 12:55:31 GMT",
-        "etag": "W/\"9f-18IiP7LEw26Ro7mkVv2e1OK1A98\"",
-        "keep-alive": "timeout=5",
-        "x-powered-by": "Express"
+        "content-type": "application/json; charset=utf-8"
       },
       "body": {
         "meta": {
-          "page": 1,
-          "sort": "asc",
+          "page": "2",
+          "sort": "desc",
           "total": 2
         },
         "data": [
           {
-            "id": 2,
-            "name": "Janette",
-            "email": "janette@example.com"
+            "id": 1,
+            "name": "John Doe",
+            "email": "john@example.com"
           },
           {
-            "id": 3,
-            "name": "Alice",
-            "email": "alice@example.com"
+            "id": 2,
+            "name": "Jane Doe",
+            "email": "jane@example.com"
           }
         ]
       }
@@ -385,7 +386,7 @@
       "body": "--- Stream Started ---\n[Chunk 1] Data received\n[Chunk 2] Data received\n[Chunk 3] Data received\n[Chunk 4] Data received\n[Chunk 5] Data received\n--- Stream Finished ---"
     }
   },
-  "api/github-zen": {
+  "api/github/zen": {
     "request": {
       "url": "https://api.github.com/zen",
       "method": "GET"
