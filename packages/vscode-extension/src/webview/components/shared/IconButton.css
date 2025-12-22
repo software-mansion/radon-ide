@@ -32,13 +32,13 @@
   min-width: var(--swm-button-size);
 }
 
-.icon-button:disabled{
+.icon-button:disabled {
   cursor: default;
   pointer-events: none;
   color: var(--swm-button-disabled);
 }
 
-.icon-button.locked{
+.icon-button.locked {
   color: var(--swm-button-disabled);
 
   &:hover {
@@ -86,7 +86,7 @@
   color: var(--swm-button-counter);
   background-color: var(--swm-button-counter-background);
   border: 1px solid var(--swm-button-counter-border);
-  padding: 2px 2px ;
+  padding: 2px 2px;
   font-size: 10px;
   position: absolute;
   top: 25%;
@@ -104,7 +104,6 @@
   opacity: 1;
   transition-delay: 200ms;
 }
-
 
 .icon-button-counter {
   border: 0px solid transparent;
