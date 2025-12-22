@@ -3,9 +3,9 @@ import { use$ } from "@legendapp/state/react";
 
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
-import * as Switch from "@radix-ui/react-switch";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as PaywallDropdownMenu from "./shared/PaywallDropdownMenu";
+import * as DropdownMenuComponents from "./shared/DropdownMenuComponents";
 
 import "./shared/Dropdown.css";
 import "./shared/RadioGroup.css";
@@ -18,15 +18,12 @@ import { useProject } from "../providers/ProjectProvider";
 import { AppPermissionType, DeviceRotationDirection } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
-import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
-import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
 import { DevicePlatform, DeviceRotation, DeviceSettings } from "../../common/State";
-import { PropsWithDataTest } from "../../common/types";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { Feature, FeatureAvailabilityStatus } from "../../common/License";
 import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
@@ -200,14 +197,14 @@ function RotateSettingsSubmenu() {
           sideOffset={2}
           alignOffset={-5}>
           <Label>Rotate</Label>
-          <CommandItem
+          <DropdownMenuComponents.CommandItem
             onSelect={() => handleRotateDevice(DeviceRotationDirection.Clockwise)}
             commandName={"RNIDE.rotateDeviceClockwise"}
             label={"Clockwise"}
             dataTest={`device-settings-set-orientation-clockwise`}
             icon={"refresh"}
           />
-          <CommandItem
+          <DropdownMenuComponents.CommandItem
             onSelect={() => handleRotateDevice(DeviceRotationDirection.Anticlockwise)}
             commandName={"RNIDE.rotateDeviceAnticlockwise"}
             label={"Anticlockwise"}
@@ -292,7 +289,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
   const openSendFileDialog = () => project.openSendFileDialog();
 
   return (
-    <DropdownMenuRoot>
+    <DropdownMenuComponents.DropdownMenuRoot>
       <DropdownMenu.Trigger asChild disabled={disabled}>
         {children}
       </DropdownMenu.Trigger>
@@ -304,14 +301,14 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
           {!isPhysicalAndroid && <DeviceAppearanceSettings />}
-          <CommandItem
+          <DropdownMenuComponents.CommandItem
             onSelect={() => project.dispatchHomeButtonPress()}
             commandName="RNIDE.deviceHomeButtonPress"
             label="Press Home Button"
             icon="home"
             dataTest="press-home-button"
           />
-          <CommandItem
+          <DropdownMenuComponents.CommandItem
             onSelect={() => project.dispatchAppSwitchButtonPress()}
             commandName="RNIDE.deviceAppSwitchButtonPress"
             label="Open App Switcher"
@@ -347,58 +344,45 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Open Deep Link
           </DropdownMenu.Item>
 
-          <div className="dropdown-menu-item">
-            <ReplayIcon />
+          <PaywallDropdownMenu.SwitchItem
+            icon={<ReplayIcon />}
+            proFeature={Feature.ScreenReplay}
+            checked={deviceSettings.replaysEnabled}
+            onCheckedChange={(checked) =>
+              store$.workspaceConfiguration.deviceSettings.replaysEnabled.set(checked)
+            }
+            dataTestId="device-settings-enable-replays-switch"
+            id="enable-replays">
             Enable Replays
-            <Switch.Root
-              className="switch-root small-switch"
-              data-testid="device-settings-enable-replays-switch"
-              id="enable-replays"
-              onCheckedChange={(checked) =>
-                store$.workspaceConfiguration.deviceSettings.replaysEnabled.set(checked)
-              }
-              defaultChecked={deviceSettings.replaysEnabled}
-              style={{ marginLeft: "auto" }}>
-              <Switch.Thumb className="switch-thumb" />
-            </Switch.Root>
-          </div>
-          
-          <div className="dropdown-menu-item">
-            <span className="codicon codicon-record" />
+          </PaywallDropdownMenu.SwitchItem>
+
+          <DropdownMenuComponents.SwitchItem
+            icon={<span className="codicon codicon-record" />}
+            checked={deviceSettings.showTouches}
+            onCheckedChange={(checked) =>
+              store$.workspaceConfiguration.deviceSettings.showTouches.set(checked)
+            }
+            dataTestId="device-settings-show-touches-switch"
+            id="show-touches">
             Show Touches
-            <Switch.Root
-              className="switch-root small-switch"
-              data-testid="device-settings-show-touches-switch"
-              id="show-touches"
-              onCheckedChange={(checked) =>
-                store$.workspaceConfiguration.deviceSettings.showTouches.set(checked)
-              }
-              defaultChecked={deviceSettings.showTouches}
-              style={{ marginLeft: "auto" }}>
-              <Switch.Thumb className="switch-thumb" />
-            </Switch.Root>
-          </div>
+          </DropdownMenuComponents.SwitchItem>
+
           {!isPhysicalAndroid && (
-            <div className="dropdown-menu-item">
-              <span className="codicon codicon-device-mobile" />
+            <DropdownMenuComponents.SwitchItem
+              icon={<span className="codicon codicon-device-mobile" />}
+              checked={showDeviceFrame}
+              onCheckedChange={(checked) =>
+                store$.workspaceConfiguration.userInterface.showDeviceFrame.set(checked)
+              }
+              dataTestId="device-settings-show-device-frame-switch"
+              id="show-device-frame">
               Show Device Frame
-              <Switch.Root
-                className="switch-root small-switch"
-                id="show-device-frame"
-                data-testid="device-settings-show-device-frame-switch"
-                onCheckedChange={(checked) =>
-                  store$.workspaceConfiguration.userInterface.showDeviceFrame.set(checked)
-                }
-                defaultChecked={showDeviceFrame}
-                style={{ marginLeft: "auto" }}>
-                <Switch.Thumb className="switch-thumb" />
-              </Switch.Root>
-            </div>
+            </DropdownMenuComponents.SwitchItem>
           )}
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
-    </DropdownMenuRoot>
+    </DropdownMenuComponents.DropdownMenuRoot>
   );
 }
 
@@ -435,43 +419,6 @@ const LocalizationItem = () => {
     </PaywallDropdownMenu.Item>
   );
 };
-
-function CommandItem({
-  onSelect,
-  commandName,
-  label,
-  icon,
-  disabled = false,
-  dataTest,
-  proFeature,
-  proFeatureDependencies,
-}: PropsWithDataTest<{
-  onSelect: () => void;
-  commandName: string;
-  label: string;
-  icon: string;
-  disabled?: boolean;
-  proFeature?: Feature;
-  proFeatureDependencies?: unknown[];
-}>) {
-  return (
-    <PaywallDropdownMenu.Item
-      className="dropdown-menu-item"
-      onSelect={onSelect}
-      disabled={disabled}
-      data-testid={dataTest}
-      proFeature={proFeature}
-      proFeatureDependencies={proFeatureDependencies}>
-      <span className="dropdown-menu-item-wraper">
-        <span className={`codicon codicon-${icon}`} />
-        <div className="dropdown-menu-item-content">
-          {label}
-          <KeybindingInfo commandName={commandName} />
-        </div>
-      </span>
-    </PaywallDropdownMenu.Item>
-  );
-}
 
 const BiometricsItem = () => {
   const store$ = useStore();
@@ -512,7 +459,7 @@ const BiometricsItem = () => {
               <span className="codicon codicon-check right-slot" />
             )}
           </DropdownMenu.Item>
-          <CommandItem
+          <DropdownMenuComponents.CommandItem
             onSelect={() => {
               handleSendBiometricAuthorization(true);
             }}
@@ -521,7 +468,7 @@ const BiometricsItem = () => {
             icon="layout-sidebar-left"
             disabled={!deviceSettings.hasEnrolledBiometrics || isBiometricsAdminDisabled}
           />
-          <CommandItem
+          <DropdownMenuComponents.CommandItem
             onSelect={() => {
               handleSendBiometricAuthorization(false);
             }}

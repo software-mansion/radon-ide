@@ -1,8 +1,14 @@
 .paywall-dropdown-menu-item {
   position: relative;
 
-  &.locked {
+  &.locked,
+  &.locked:hover {
     color: var(--swm-button-disabled);
+
+    .switch-root {
+      cursor: unset;
+      pointer-events: none;
+    }
   }
 }
 
@@ -33,7 +39,8 @@
 .paywall-dropdown-menu-sub {
   position: relative;
 
-  &.locked {
+  &.locked,
+  &.locked:hover {
     color: var(--swm-button-disabled);
   }
 
