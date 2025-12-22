@@ -29,12 +29,11 @@ interface PaywallItemProps extends DropdownMenu.DropdownMenuItemProps {
 }
 
 export function Item({
-  proFeature,
   children,
   className,
-  proFeatureDependencies = [],
-  ref,
   onSelect = () => {},
+  proFeature,
+  proFeatureDependencies = [],
   ...props
 }: PaywallItemProps) {
   const store$ = useStore();
@@ -48,7 +47,6 @@ export function Item({
 
   return (
     <DropdownMenu.Item
-      ref={ref}
       onSelect={wrappedOnSelect}
       className={classnames(className, "paywall-dropdown-menu-item", isLocked && "locked")}
       {...props}>

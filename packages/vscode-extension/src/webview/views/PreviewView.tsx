@@ -226,13 +226,9 @@ function PreviewView() {
 
   const showRecordingButton = !isRecordingAdminDisabled;
 
-  const paywalledToggleRecording = async () => {
-    await project.toggleRecording();
-  };
-
-  function toggleRecording() {
+  async function toggleRecording() {
     try {
-      paywalledToggleRecording();
+      await project.toggleRecording();
     } catch (e) {
       if (isRecording) {
         project.showDismissableError("Failed to capture recording");
@@ -258,13 +254,10 @@ function PreviewView() {
 
   const isReplayAdminDisabled = useIsFeatureAdminDisabled(Feature.ScreenReplay);
 
-  const paywalledCaptureReplay = async () => {
-    await project.captureReplay();
-  };
 
   async function handleReplay() {
     try {
-      await paywalledCaptureReplay();
+      await project.captureReplay();
     } catch (e) {
       project.showDismissableError("Failed to capture replay");
     }
@@ -274,13 +267,9 @@ function PreviewView() {
 
   const showScreenshotButton = !isScreenshotAdminDisabled;
 
-  const paywalledCaptureScreenshot = async () => {
-    await project.captureScreenshot();
-  };
-
   async function captureScreenshot() {
     try {
-      await paywalledCaptureScreenshot();
+      await project.captureScreenshot();
     } catch (e) {
       project.showDismissableError("Failed to capture screenshot");
     }

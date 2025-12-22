@@ -286,7 +286,6 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
   const isSendFilesAdminDisabled = useIsFeatureAdminDisabled(Feature.SendFile);
 
-  const openSendFileDialog = () => project.openSendFileDialog();
 
   return (
     <DropdownMenuComponents.DropdownMenuRoot>
@@ -323,7 +322,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               className="dropdown-menu-item"
               data-testid="device-settings-send-file"
               disabled={isSendFilesAdminDisabled}
-              onSelect={openSendFileDialog}>
+              onSelect={project.openSendFileDialog}>
               <span className="codicon codicon-share" />
               Send File
             </PaywallDropdownMenu.Item>
