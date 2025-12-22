@@ -24,10 +24,14 @@
 .paywall-title {
   font-size: 32px;
   font-weight: 600;
-  margin-bottom: 32px;
+  margin-bottom: 0;
   opacity: 0;
   transform: translateY(12px);
   animation: fadeInUp 0.4s ease-out forwards;
+}
+
+.paywall-feature-description{
+  margin-bottom: 32px;
 }
 
 .paywall-benefits {

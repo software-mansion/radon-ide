@@ -71,6 +71,38 @@ export enum Feature {
   StorybookIntegration = "StorybookIntegration",
 }
 
+export const FeatureNamesMap: { [F in Feature]: string } = {
+  [Feature.AndroidSmartphoneEmulators]: "Android Smartphone Emulators",
+  [Feature.AndroidTabletEmulators]: "Android Tablet Emulators",
+  [Feature.AndroidPhysicalDevice]: "Android Physical Device",
+  [Feature.Biometrics]: "Biometrics",
+  [Feature.ComponentPreview]: "Component Preview",
+  [Feature.DeviceAppearanceSettings]: "Device Appearance Settings",
+  [Feature.DeviceFontSizeSettings]: "Device Font Size Settings",
+  [Feature.DeviceLocalizationSettings]: "Device Localization Settings",
+  [Feature.DeviceRotation]: "Device Rotation",
+  [Feature.ElementInspector]: "Element Inspector",
+  [Feature.ExpoRouterIntegration]: "Expo Router Integration",
+  [Feature.IOSSmartphoneSimulators]: "iOS Smartphone Simulators",
+  [Feature.IOSTabletSimulators]: "iOS Tablet Simulators",
+  [Feature.JSProfiler]: "JS Profiler",
+  [Feature.LocationSimulation]: "Location Simulation",
+  [Feature.NetworkInspection]: "Network Inspection",
+  [Feature.OpenDeepLink]: "Open Deep Link",
+  [Feature.OutlineRenders]: "Outline Renders",
+  [Feature.Permissions]: "Permissions",
+  [Feature.ReactProfiler]: "React Profiler",
+  [Feature.ReactQueryDevTools]: "React Query DevTools",
+  [Feature.RadonConnect]: "Radon Connect",
+  [Feature.RadonAI]: "Radon AI",
+  [Feature.ReduxDevTools]: "Redux DevTools",
+  [Feature.ScreenRecording]: "Screen Recording",
+  [Feature.ScreenReplay]: "Screen Replay",
+  [Feature.Screenshot]: "Screenshot",
+  [Feature.SendFile]: "Send File",
+  [Feature.StorybookIntegration]: "Storybook Integration",
+};
+
 // #endregion Features
 
 // #region Default Features Availability
