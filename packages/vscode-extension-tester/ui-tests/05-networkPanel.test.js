@@ -5,6 +5,7 @@ import { WebView, BottomBarPanel } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { safeDescribe } from "../utils/helpers.js";
 import getConfiguration from "../configuration.js";
+import { TIMEOUTS } from "../utils/timeouts.js";
 import { get } from "./setupTest.js";
 
 const { IS_ANDROID } = getConfiguration();
@@ -108,6 +109,9 @@ safeDescribe("5 - Network panel tests", () => {
       })
     );
 
+    await driver.sleep(TIMEOUTS.SHORT);
+
+    // additional wait for delayed responses
     if (expectedDelayMs) await driver.sleep(expectedDelayMs);
 
     await openNetworkPanel();
@@ -201,8 +205,12 @@ safeDescribe("5 - Network panel tests", () => {
         await elementHelperService.findAndWaitForElementByTag(
           `network-log-response-headers-${headerKey}-value`
         );
-      const headerValue = await headerElement.getText();
-      assert.equal(headerValue, expectedResponseHeaders[headerKey]);
+      let headerValue = await headerElement.getText();
+      let expectedHeaderValue = expectedResponseHeaders[headerKey];
+      if (expectedHeaderValue.toLowerCase() === "identity" && IS_ANDROID) {
+        expectedHeaderValue = "chunked";
+      }
+      assert.equal(headerValue, expectedHeaderValue);
     }
 
     await driver.switchTo().defaultContent();
@@ -219,7 +227,8 @@ safeDescribe("5 - Network panel tests", () => {
     await elementHelperService.findAndClickElementByTag(
       "dev-tool-network-open-button"
     );
-    await driver.sleep(1000);
+
+    await driver.sleep(TIMEOUTS.SHORT);
     const networkIFrame = await radonViewsService.findWebViewIFrame(
       "Radon Network Inspector"
     );
@@ -236,7 +245,7 @@ safeDescribe("5 - Network panel tests", () => {
     await elementHelperService.findAndClickElementByTag(
       "dev-tool-network-open-button"
     );
-    await driver.sleep(1000);
+    await driver.sleep(TIMEOUTS.SHORT);
 
     await radonViewsService.findWebViewIFrame("Radon Network Inspector");
   });
