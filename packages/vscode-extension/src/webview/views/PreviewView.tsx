@@ -36,6 +36,8 @@ import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { useDevices } from "../hooks/useDevices";
 import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
 
+import FestiveSnow from "../components/festive/FestiveSnow";
+
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
   [InspectorAvailabilityStatus.UnavailableEdgeToEdge]:
@@ -158,6 +160,7 @@ function PreviewView() {
   const radonConnectEnabled = projectState.connectState.enabled;
   const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
   const zoomLevel = use$(store$.projectState.previewZoom);
+  const festiveMode = use$(store$.workspaceConfiguration.userInterface.festiveMode);
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
       store$.projectState.previewZoom.set(zoom);
@@ -188,7 +191,10 @@ function PreviewView() {
     navBarButtonsActive &&
     isRunning &&
     inspectorAvailabilityStatus === InspectorAvailabilityStatus.Available;
-  const debuggerToolsButtonsActive = navBarButtonsActive; // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later
+  // this stays in sync with navBarButtonsActive, but we will enable it for radon connect later,
+  // once we support js and react profiling in radon connect.
+  const debuggerToolsButtonsActive = navBarButtonsActive;
+  const debugConsoleButtonActive = navBarButtonsActive || radonConnectConnected;
 
   const deviceProperties = iOSSupportedDevices.concat(AndroidSupportedDevices).find((sd) => {
     return sd.modelId === modelId;
@@ -357,6 +363,7 @@ function PreviewView() {
 
   return (
     <div className="panel-view" data-testid="radon-panel-view">
+      {festiveMode && <FestiveSnow />}
       <div className="button-group-top">
         <div className="button-group-top-left">
           <UrlBar disabled={!selectedProjectDevice} />
@@ -441,7 +448,7 @@ function PreviewView() {
             tooltip={{
               label: "Open logs panel",
             }}
-            disabled={!debuggerToolsButtonsActive}>
+            disabled={!debugConsoleButtonActive}>
             <span slot="start" className="codicon codicon-debug-console" />
           </IconButton>
           <SettingsDropdown project={project} isDeviceRunning={isRunning || radonConnectConnected}>

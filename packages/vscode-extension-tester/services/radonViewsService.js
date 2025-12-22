@@ -1,11 +1,16 @@
+import * as path from "path";
 import dotenv from "dotenv";
 import { By, BottomBarPanel, Key } from "vscode-extension-tester";
 import { createCanvas } from "canvas";
+import { TIMEOUTS } from "../utils/timeouts.js";
 import { ElementHelperService } from "./helperServices.js";
 import AppManipulationService from "./appManipulationService.js";
 
 dotenv.config();
 const licenseKey = process.env.RADON_IDE_LICENSE_KEY || "";
+
+// Determine modifier key (Command for Mac, Control for Windows/Linux)
+const MODIFIER_KEY = Key.COMMAND;
 
 export default class RadonViewsService {
   constructor(driver) {
@@ -15,24 +20,15 @@ export default class RadonViewsService {
   }
 
   async openRadonIDEPanel() {
+    await this.driver.switchTo().defaultContent();
     const radonIDEButton =
       await this.elementHelperService.findAndWaitForElement(
         By.css("div#swmansion\\.react-native-ide")
       );
     await radonIDEButton.click();
 
-    const webview = await this.elementHelperService.findAndWaitForElement(
-      By.css('iframe[class*="webview"]'),
-      "Timed out waiting for Radon IDE webview"
-    );
-    await this.driver.switchTo().frame(webview);
+    await this.switchToRadonIDEFrame();
 
-    const iframe = await this.elementHelperService.findAndWaitForElement(
-      By.css('iframe[title="Radon IDE"]'),
-      "Timed out waiting for Radon IDE iframe"
-    );
-
-    await this.driver.switchTo().frame(iframe);
     await this.driver.wait(async () => {
       try {
         await this.driver.findElement(
@@ -60,7 +56,7 @@ export default class RadonViewsService {
       "license-key-input"
     );
     await keyInput.sendKeys(licenseKey);
-    await this.driver.sleep(1000);
+    await this.driver.sleep(TIMEOUTS.SHORT);
     await this.elementHelperService.findAndClickElementByTag(
       "activate-license-button"
     );
@@ -72,7 +68,7 @@ export default class RadonViewsService {
   async hasActiveLicense() {
     await this.openRadonIDEPanel();
     if (
-      this.elementHelperService.safeFind(
+      await this.elementHelperService.safeFind(
         By.css('[data-testid="open-activate-license-modal-button"]')
       )
     ) {
@@ -82,12 +78,14 @@ export default class RadonViewsService {
   }
 
   async switchToRadonIDEFrame() {
-    this.driver.switchTo().defaultContent();
+    await this.driver.switchTo().defaultContent();
+
     const webview = await this.elementHelperService.findAndWaitForElement(
       By.css('iframe[class*="webview"]'),
       "Timed out waiting for Radon IDE webview"
     );
     await this.driver.switchTo().frame(webview);
+
     const iframe = await this.elementHelperService.findAndWaitForElement(
       By.css('iframe[title="Radon IDE"]'),
       "Timed out waiting for Radon IDE iframe"
@@ -123,8 +121,9 @@ export default class RadonViewsService {
       "radon-top-bar-debug-console-button"
     );
 
-    await this.driver.sleep(1000);
+    await this.driver.sleep(TIMEOUTS.SHORT);
     await this.driver.switchTo().defaultContent();
+
     const debugConsole = await this.elementHelperService.findAndWaitForElement(
       By.css(`#workbench\\.panel\\.repl`),
       "Timed out waiting for debug console"
@@ -141,7 +140,7 @@ export default class RadonViewsService {
     const actions = this.driver.actions({ async: true });
     await actions.move({ origin: zoomControlsWrapper }).perform();
 
-    await this.driver.sleep(500);
+    await this.driver.sleep(TIMEOUTS.ANIMATION || 500);
   }
 
   async clickOnSourceInDebugConsole(debugConsole, textPattern) {
@@ -156,18 +155,19 @@ export default class RadonViewsService {
   }
 
   async clearDebugConsole() {
-    // debug console button is only active when app is started
+    // Debug console button is only active when app is started
     await this.appManipulationService.waitForAppToLoad();
     await this.openAndGetDebugConsoleElement();
     await new BottomBarPanel().openDebugConsoleView();
-    // in vscode 1.99.1 method clearText() doesnt work
 
+    // In VS Code 1.99.1 method clearText() does not work
     await this.driver
       .actions()
-      .keyDown(Key.COMMAND)
+      .keyDown(MODIFIER_KEY)
       .sendKeys("k")
-      .keyUp(Key.COMMAND)
+      .keyUp(MODIFIER_KEY)
       .perform();
+
     const bottomBar = new BottomBarPanel();
     await bottomBar.toggle(false);
   }
@@ -184,12 +184,13 @@ export default class RadonViewsService {
       } catch {
         return false;
       }
-    }, 10000);
+    }, TIMEOUTS.MEDIUM);
 
     await this.driver.executeScript("arguments[0].value = '';", quickInput);
 
-    await quickInput.sendKeys(process.cwd() + "/data/");
-    await quickInput.sendKeys(filename);
+    const fullPath = path.join(process.cwd(), "data", filename);
+    await quickInput.sendKeys(fullPath);
+    await this.driver.sleep(TIMEOUTS.SHORT);
 
     const quickInputButton =
       await this.elementHelperService.findAndWaitForElement(
@@ -197,7 +198,8 @@ export default class RadonViewsService {
         "Timed out waiting for quick input button"
       );
 
-    quickInputButton.click();
+    await quickInputButton.click();
+    await this.driver.sleep(TIMEOUTS.SHORT);
   }
 
   async findWebViewIFrame(iframeTitle) {
@@ -205,13 +207,14 @@ export default class RadonViewsService {
     const webviews = await this.driver.findElements(
       By.css('iframe[class*="webview"]')
     );
-    for (let webview of webviews) {
+
+    for (const webview of webviews) {
       await this.driver.switchTo().frame(webview);
       try {
         const iframe = await this.elementHelperService.findAndWaitForElement(
           By.css(`iframe[title="${iframeTitle}"]`),
           `Timed out waiting for Radon IDE iframe with title ${iframeTitle}`,
-          5000
+          TIMEOUTS.DEFAULT
         );
         return iframe;
       } catch (error) {
@@ -235,6 +238,7 @@ export default class RadonViewsService {
       );
       return { data: Array.from(data), width, height };
     });
+
     const canvas = createCanvas(pixels.width, pixels.height);
     const ctx = canvas.getContext("2d");
 

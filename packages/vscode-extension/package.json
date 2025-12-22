@@ -22,7 +22,7 @@
     "workspaceContains:**/app.config.ts",
     "onWebviewPanel:RadonIDETabPanel"
   ],
-  "version": "1.13.0",
+  "version": "1.14.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -283,6 +283,11 @@
         "title": "Toggle device appearance (light/dark mode)",
         "category": "Radon IDE",
         "enablement": "RNIDE.extensionIsActive && RNIDE.panelIsOpen"
+      },
+      {
+        "command": "RNIDE.removeLicense",
+        "title": "Remove license",
+        "category": "Radon IDE"
       }
     ],
     "keybindings": [
@@ -404,6 +409,12 @@
             "scope": "window",
             "default": true,
             "description": "Shows device frame in the IDE panel."
+          },
+          "RadonIDE.userInterface.festiveMode": {
+            "type": "boolean",
+            "scope": "window",
+            "default": false,
+            "description": "Enables festive mode in the IDE panel."
           }
         }
       },
@@ -541,6 +552,13 @@
             "default": true,
             "scope": "window",
             "description": "Enables the Radon AI functionality in the extension."
+          },
+          "RadonIDE.radonAI.enableChatParticipant": {
+            "type": "boolean",
+            "default": false,
+            "scope": "window",
+            "markdownDescription": "**[deprecated]** Enables `@radon` AI chat participant.",
+            "description": "[deprecated] Enables `@radon` AI chat participant."
           }
         }
       }
@@ -872,6 +890,10 @@
               "disableNativeBuildStaleChecks": {
                 "type": "boolean",
                 "description": "When set to true, Radon will not run fingerprint checks on reloads and after file changes that would detect whether the native code needs to be rebuilt."
+              },
+              "useNativeNetworkInspector": {
+                "type": "boolean",
+                "description": "When set to true, Radon will use the Native (\"Fusebox\") Network Inspector implementation introduced in 0.83.0. Note that this is only supported on React Native 0.83.0 and newer, and might not intercept network messages on earlier versions."
               }
             }
           }
@@ -1177,6 +1199,7 @@
     },
     "chatParticipants": [
       {
+        "when": "RNIDE.chatParticipantEnabled",
         "id": "chat.radon-ai",
         "fullName": "Radon AI",
         "name": "radon",
@@ -1340,7 +1363,8 @@
     "vscode-test": "^1.6.1",
     "ws": "^8.18.1",
     "xml2js": "^0.6.2",
-    "zod": "^3.25.32"
+    "zod": "^3.25.32",
+    "react-snowfall": "^2.4.0"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.40.0"

@@ -72,6 +72,7 @@ import {
 import { AdminRestrictedFunctionalityError, PaywalledFunctionalityError } from "../common/Errors";
 import { Sentiment } from "../common/types";
 import { FeedbackGenerator } from "./feedbackGenerator";
+import { EditorType, getEditorType } from "../utilities/editorType";
 
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 
@@ -476,6 +477,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         status: LicenseStatus.Inactive,
         featuresAvailability: DefaultFeaturesAvailability,
       });
+
+      this.telemetry.sendTelemetry("license:detected", {
+        licenseStatus: LicenseStatus.Inactive,
+      });
+
       return;
     }
 
@@ -491,6 +497,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
 
     this.licenseStateManager.updateState(newState);
+
+    this.telemetry.sendTelemetry("license:detected", {
+      licenseStatus: newState.status,
+    });
   };
 
   // #endregion License
@@ -794,9 +804,19 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   addToChatContext(...filePaths: string[]): void {
     try {
-      commands.executeCommand("copilot-chat.focus").then(async () => {
+      const editor = getEditorType();
+
+      let focusCommand = "copilot-chat.focus";
+      let attachFileCommand = "workbench.action.chat.attachFile";
+
+      if (editor === EditorType.CURSOR) {
+        focusCommand = "composer.startComposerPrompt";
+        attachFileCommand = "composer.addfilestocomposer";
+      }
+
+      commands.executeCommand(focusCommand).then(async () => {
         for (const filePath of filePaths) {
-          await commands.executeCommand("workbench.action.chat.attachFile", Uri.file(filePath));
+          await commands.executeCommand(attachFileCommand, Uri.file(filePath));
         }
       });
     } catch (e) {

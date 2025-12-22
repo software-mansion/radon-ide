@@ -5,7 +5,7 @@ import assert from "assert";
 import { v4 as uuidv4 } from "uuid";
 import { Disposable } from "vscode";
 import { REBOOT_TIMEOUT } from "./DeviceBase";
-import { cancellableRetry } from "../utilities/retry";
+import { cancellableRetry, retry } from "../utilities/retry";
 import { getAppCachesDir, getNativeABI, getOldAppCachesDir } from "../utilities/common";
 import { ANDROID_HOME } from "../utilities/android";
 import { ChildProcess, exec, lineReader } from "../utilities/subprocess";
@@ -379,6 +379,7 @@ export class AndroidEmulatorDevice extends AndroidDevice {
         if (line.includes("Advertising in:")) {
           const match = line.match(/Advertising in: (\S+)/);
           const iniFile = match![1];
+          await waitForAvdIniFileToExist(iniFile);
           const emulatorInfo = await parseAvdIniFile(iniFile);
           const emulatorSerial = `emulator-${emulatorInfo.serialPort}`;
           try {
@@ -673,6 +674,17 @@ async function parseAvdConfigIniFile(filePath: string) {
   }
 
   return { displayName, modelId, systemImageDir };
+}
+
+async function waitForAvdIniFileToExist(filePath: string) {
+  // Wait for emulator to write the ini file to disk
+  await retry(
+    async () => {
+      await fs.promises.access(filePath, fs.constants.R_OK);
+    },
+    5,
+    1000
+  );
 }
 
 async function parseAvdIniFile(filePath: string) {

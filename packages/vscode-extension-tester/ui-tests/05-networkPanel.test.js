@@ -5,7 +5,6 @@ import { WebView, BottomBarPanel } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { safeDescribe } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
-import { response } from "express";
 
 safeDescribe("5 - Network panel tests", () => {
   let driver,

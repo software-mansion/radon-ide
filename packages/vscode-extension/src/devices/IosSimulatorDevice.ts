@@ -317,92 +317,6 @@ export class IosSimulatorDevice extends DeviceBase {
     return true;
   }
 
-  async configureMetroPort(bundleID: string, metroPort: number) {
-    const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
-    const { stdout: appDataLocation } = await exec("xcrun", [
-      "simctl",
-      "--set",
-      deviceSetLocation,
-      "get_app_container",
-      this.deviceUDID,
-      bundleID,
-      "data",
-    ]);
-    const userDefaultsLocation = path.join(
-      appDataLocation,
-      "Library",
-      "Preferences",
-      `${bundleID}.plist`
-    );
-    Logger.debug(`Defaults location ${userDefaultsLocation}`);
-    await exec(
-      "/usr/libexec/PlistBuddy",
-      [
-        "-c",
-        "Delete :RCT_jsLocation",
-        "-c",
-        `Add :RCT_jsLocation string localhost:${metroPort}`,
-        userDefaultsLocation,
-      ],
-      { allowNonZeroExit: true, reject: false }
-    );
-
-    // Simulator may keep the defaults in memory with cfprefsd, we restart the daemon to make sure
-    // it reads the latest values from disk.
-    // We'd normally try to use defaults command that would write the updates via the daemon, however
-    // for some reason that doesn't work with custom device sets.
-    await exec(
-      "xcrun",
-      [
-        "simctl",
-        "--set",
-        deviceSetLocation,
-        "spawn",
-        this.deviceUDID,
-        "launchctl",
-        "stop",
-        "com.apple.cfprefsd.xpc.daemon",
-      ],
-      { reject: false }
-    );
-
-    // Restarting cfprefsd breaks the SpringBoard process which in particular controls things like
-    // the appearance settings. We need to restart it following the cfprefsd reset.
-    await exec(
-      "xcrun",
-      [
-        "simctl",
-        "--set",
-        deviceSetLocation,
-        "spawn",
-        this.deviceUDID,
-        "launchctl",
-        "kickstart",
-        "-k",
-        "system/com.apple.SpringBoard",
-      ],
-      { reject: false }
-    );
-
-    // Restarting SpringBoard process breaks the backboardd which in particular controls things like
-    // the rotation settings. We need to restart it following the cfprefsd springboard reset.
-    await exec(
-      "xcrun",
-      [
-        "simctl",
-        "--set",
-        deviceSetLocation,
-        "spawn",
-        this.deviceUDID,
-        "launchctl",
-        "kickstart",
-        "-k",
-        "system/com.apple.backboardd",
-      ],
-      { reject: false }
-    );
-  }
-
   async terminateApp(bundleID: string) {
     const deviceSetLocation = getOrCreateDeviceSet(this.deviceUDID);
 
@@ -551,8 +465,12 @@ export class IosSimulatorDevice extends DeviceBase {
       }
     } else {
       Logger.info("Launching app using bundle ID without deeplink");
-      await this.configureMetroPort(build.bundleID, metroPort);
-      await this.launchWithBuild(build, launchArguments);
+      const launchArgsWithJsLocation = [
+        ...launchArguments,
+        "-RCT_jsLocation",
+        `localhost:${metroPort}`,
+      ];
+      await this.launchWithBuild(build, launchArgsWithJsLocation);
     }
   }
 

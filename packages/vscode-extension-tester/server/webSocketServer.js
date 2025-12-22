@@ -259,11 +259,15 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+export function resetAppWebsocket() {
+  appWebsocket = null;
+}
+
 export function getAppWebsocket() {
   return appWebsocket;
 }
 
-export function waitForMessage(id, timeoutMs = 5000) {
+export function waitForMessage(id, timeoutMs = 10000) {
   return new Promise((resolve, reject) => {
     const currentWs = getAppWebsocket();
     if (!currentWs) {

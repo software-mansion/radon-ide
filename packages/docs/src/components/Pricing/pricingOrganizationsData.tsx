@@ -31,7 +31,7 @@ export const pricingOrganizationsData: PricingPlanCardProps[] = [
     featuresTeamManagement: [
       { label: "Multiple license management" },
       { label: "Centralized team billing" },
-      // { label: "Insights Dashboard with usage stats" },
+      { label: "Insights Dashboard with usage stats" },
     ],
     featuresSupport: [
       { label: "Early access to new features" },
@@ -50,6 +50,10 @@ export const pricingOrganizationsData: PricingPlanCardProps[] = [
         info: "You only pay for the number of seats that your employees are actually using",
       },
       { label: "Single sign-on for the Radon Portal" },
+      {
+        label: "Admin-enforced feature gating",
+        info: "Enable / disable features for all users in your organization",
+      },
       { label: "Service-level agreement (SLA)" },
       { label: "Dedicated payment method and invoicing" },
       { label: "Onboarding meeting" },

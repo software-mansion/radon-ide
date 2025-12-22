@@ -12,6 +12,7 @@ import {
   initServer,
   getAppWebsocket,
   closeServer,
+  resetAppWebsocket,
 } from "../server/webSocketServer.js";
 import initServices from "../services/index.js";
 import startRecording from "../utils/screenRecording.js";
@@ -69,6 +70,7 @@ export const cleanUpAfterTest = async () => {
   await bottomBar.toggle(false);
   await new EditorView().closeAllEditors();
   await driver.switchTo().defaultContent();
+  resetAppWebsocket();
 
   await vscodeHelperService.openCommandLineAndExecute(
     "Developer: Reload Window"

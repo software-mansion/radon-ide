@@ -10,6 +10,7 @@ function Debugger() {
       <div className="debugger-button-group">
         <IconButton
           onClick={() => project.resumeDebugger()}
+          dataTest="debug-resume"
           tooltip={{
             label: "Resume execution",
             side: "bottom",
@@ -18,6 +19,7 @@ function Debugger() {
         </IconButton>
         <IconButton
           onClick={() => project.stepOverDebugger()}
+          dataTest="debug-step-over"
           tooltip={{
             label: "Step over",
             side: "bottom",
@@ -26,6 +28,7 @@ function Debugger() {
         </IconButton>
         <IconButton
           onClick={() => project.stepIntoDebugger()}
+          dataTest="debug-step-into"
           tooltip={{
             label: "Step into",
             side: "bottom",
@@ -34,6 +37,7 @@ function Debugger() {
         </IconButton>
         <IconButton
           onClick={() => project.stepOutDebugger()}
+          dataTest="debug-step-out"
           tooltip={{
             label: "Step out",
             side: "bottom",

@@ -74,7 +74,10 @@ async function getDeviceModels(refetchIfNotOnList?: string): Promise<DeviceModel
   if (json) {
     await writeCacheFile(json);
   }
-  fetchModelsPromise = null;
+  // NOTE: even if `fetchModelsPromise` resolves to null, we don't want to reset it,
+  // in order to avoid attempting refetching the models list over and over.
+  // Instead, we rely on it only being called once per extension activation here,
+  // so the list can be re-fetched only after restart.
   return json;
 }
 
