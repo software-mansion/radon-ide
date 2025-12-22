@@ -235,7 +235,6 @@
       "status": 200,
       "headers": {
         "connection": "keep-alive",
-        "content-encoding": "gzip",
         "content-type": "application/json; charset=utf-8",
         "keep-alive": "timeout=5",
         "transfer-encoding": "Identity",
@@ -369,10 +368,12 @@
       "method": "GET"
     },
     "response": {
-      "userId": 1,
-      "id": 1,
-      "title": "delectus aut autem",
-      "completed": false
+      "body": {
+        "userId": 1,
+        "id": 1,
+        "title": "delectus aut autem",
+        "completed": false
+      }
     }
   },
   "api/error/client-error": {
@@ -416,62 +417,5 @@
       },
       "body": "\n        <html>\n            <body>\n                <h1>503 Service Unavailable</h1>\n                <p>The upstream server is currently unavailable.</p>\n                <hr>\n                <address>Nginx/1.18.0</address>\n            </body>\n        </html>\n    "
     }
-  },
-  "api/error/truncated": {
-    "request": {
-      "url": "http://localhost:8080/api/error/truncated",
-      "method": "GET",
-      "headers": {},
-      "query": {}
-    },
-    "response": {
-      "status": 200,
-      "headers": {
-        "connection": "keep-alive",
-        "content-length": "1024",
-        "content-type": "application/json",
-        "keep-alive": "timeout=5",
-        "x-powered-by": "Express"
-      }
-    },
-    "error": "Invalid response body while trying to fetch http://localhost:8080/api/error/truncated: aborted"
-  },
-  "api/error/json": {
-    "request": {
-      "url": "http://localhost:8080/api/error/json",
-      "method": "GET",
-      "headers": {},
-      "query": {}
-    },
-    "response": {
-      "status": 200,
-      "headers": {
-        "connection": "keep-alive",
-        "content-length": "44",
-        "content-type": "application/json; charset=utf-8",
-        "keep-alive": "timeout=5",
-        "x-powered-by": "Express"
-      }
-    },
-    "error": "Unterminated string in JSON at position 44 (line 1 column 45)"
-  },
-  "api/error/protocol": {
-    "request": {
-      "url": "http://localhost:8080/api/error/protocol",
-      "method": "GET",
-      "headers": {},
-      "query": {}
-    },
-    "error": "request to http://localhost:8080/api/error/protocol failed, reason: Parse Error: Expected HTTP/, RTSP/ or ICE/"
-  },
-  "api/error/hang": {
-    "request": {
-      "url": "http://localhost:8080/api/error/hang",
-      "method": "GET",
-      "headers": {},
-      "query": {}
-    },
-    "error": "Request timed out",
-    "delay_ms": 5000
   }
 }

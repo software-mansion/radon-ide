@@ -94,10 +94,7 @@ safeDescribe("5 - Network panel tests", () => {
     const expectedResponseHeaders = data[endpoint].response?.headers;
     const expectedDelayMs = data[endpoint].delay_ms;
     const url = IS_ANDROID
-      ? data[endpoint].request.url.replace(
-          "http://localhost",
-          "http://10.0.2.2"
-        )
+      ? data[endpoint].request.url.replace("localhost", "10.0.2.2")
       : data[endpoint].request.url;
 
     appWebsocket.send(
@@ -143,11 +140,6 @@ safeDescribe("5 - Network panel tests", () => {
       assert.equal(await methodElement.getText(), expectedMethod);
     }
 
-    if (expectedDelayMs) {
-      console.log("Checking delay...");
-      console.log(expectedDelayMs);
-    }
-
     await elementHelperService.findAndClickElementByTag(
       `network-panel-tab-header-response`
     );
@@ -190,15 +182,10 @@ safeDescribe("5 - Network panel tests", () => {
           ? expectedRequestBody
           : JSON.stringify(expectedRequestBody);
 
-      try {
-        assert.include(
-          payload.replace(/\s/g, ""),
-          expectedRequestBodyString.replace(/\s/g, "")
-        );
-      } catch (e) {
-        console.error(e);
-        await driver.sleep(1000000);
-      }
+      assert.include(
+        payload.replace(/\s/g, ""),
+        expectedRequestBodyString.replace(/\s/g, "")
+      );
     }
 
     await elementHelperService.findAndClickElementByTag(
