@@ -254,7 +254,6 @@ function PreviewView() {
 
   const isReplayAdminDisabled = useIsFeatureAdminDisabled(Feature.ScreenReplay);
 
-
   async function handleReplay() {
     try {
       await project.captureReplay();
@@ -377,7 +376,7 @@ function PreviewView() {
           </ToolsDropdown>
           {showRecordingButton && (
             <IconButton
-              proFeature={Feature.ScreenRecording}
+              feature={Feature.ScreenRecording}
               className={isRecording ? "button-recording-on" : ""}
               tooltip={{
                 label: isRecording ? "Stop screen recording" : "Start screen recording",
@@ -403,7 +402,7 @@ function PreviewView() {
               dataTest="radon-top-bar-show-replay-button"
               onClick={handleReplay}
               disabled={!navBarButtonsActive || isReplayAdminDisabled}
-              proFeature={Feature.ScreenReplay}>
+              feature={Feature.ScreenReplay}>
               <ReplayIcon />
             </IconButton>
           )}
@@ -415,7 +414,7 @@ function PreviewView() {
               onClick={captureScreenshot}
               disabled={!navBarButtonsActive || isScreenshotAdminDisabled}
               dataTest="capture-screenshot-button"
-              proFeature={Feature.Screenshot}>
+              feature={Feature.Screenshot}>
               <span slot="start" className="codicon codicon-device-camera" />
             </IconButton>
           )}

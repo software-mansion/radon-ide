@@ -4,7 +4,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import classnames from "classnames";
 import { useStore } from "../../providers/storeProvider";
 import { usePaywalledCallback } from "../../hooks/usePaywalledCallback";
-import { Feature } from "../../../common/License";
+import { Feature, isFeaturePaywalled } from "../../../common/License";
 import * as DropdownMenuComponents from "../shared/DropdownMenuComponents";
 
 import "./PaywallDropdownMenu.css";
@@ -22,55 +22,48 @@ function ProBadge({ style }: ProBadgeProps) {
 }
 
 interface PaywallItemProps extends DropdownMenu.DropdownMenuItemProps {
-  proFeature?: Feature;
-  proFeatureDependencies?: unknown[];
+  feature: Feature;
+  paywallCallbackDependencies?: unknown[];
   children: React.ReactNode;
-  ref?: React.Ref<HTMLDivElement>;
 }
 
 export function Item({
   children,
   className,
   onSelect = () => {},
-  proFeature,
-  proFeatureDependencies = [],
+  feature,
+  paywallCallbackDependencies = [],
   ...props
 }: PaywallItemProps) {
   const store$ = useStore();
-  const licenseStatus = use$(store$.license.status);
-  const isLocked =
-    proFeature !== undefined && (licenseStatus === "free" || licenseStatus === "inactive");
+  const featuresAvailability = use$(store$.license.featuresAvailability);
+  const isPaywalled = isFeaturePaywalled(featuresAvailability, feature);
 
-  const wrappedOnSelect = proFeature
-    ? usePaywalledCallback(onSelect, proFeature, proFeatureDependencies)
-    : onSelect;
+  const wrappedOnSelect = usePaywalledCallback(onSelect, feature, paywallCallbackDependencies);
 
   return (
     <DropdownMenu.Item
       onSelect={wrappedOnSelect}
-      className={classnames(className, "paywall-dropdown-menu-item", isLocked && "locked")}
+      className={classnames(className, isPaywalled && "paywalled")}
       {...props}>
       {children}
-      {isLocked && <ProBadge />}
+      {isPaywalled && <ProBadge />}
     </DropdownMenu.Item>
   );
 }
 
 interface PaywallSub extends DropdownMenu.DropdownMenuSubProps {
-  proFeature?: Feature;
-  proFeatureDependencies?: unknown[];
+  feature: Feature;
+  paywallCallbackDependencies?: unknown[];
   children: React.ReactNode;
 }
 
-export function Sub({ proFeature, proFeatureDependencies = [], children, ...props }: PaywallSub) {
+export function Sub({ feature, paywallCallbackDependencies = [], children, ...props }: PaywallSub) {
   const store$ = useStore();
-  const licenseStatus = use$(store$.license.status);
-  const isLocked =
-    proFeature !== undefined && (licenseStatus === "free" || licenseStatus === "inactive");
+  const featuresAvailability = use$(store$.license.featuresAvailability);
+  const isPaywalled = isFeaturePaywalled(featuresAvailability, feature);
 
-  const handlePaywallCheck = proFeature
-    ? usePaywalledCallback(() => {}, proFeature, proFeatureDependencies)
-    : undefined;
+  const handlePaywallCheck = usePaywalledCallback(() => {}, feature, paywallCallbackDependencies);
 
   // Enhance SubTrigger with paywall styling and behavior if it exists in children
   const enhancedChildren = useMemo(() => {
@@ -82,16 +75,12 @@ export function Sub({ proFeature, proFeatureDependencies = [], children, ...prop
         return React.cloneElement(
           child as React.ReactElement<DropdownMenu.DropdownMenuSubTriggerProps>,
           {
-            className: classnames(
-              originalClassName,
-              proFeature && "paywall-dropdown-menu-sub",
-              isLocked && "locked"
-            ),
-            onClick: proFeature ? handlePaywallCheck : originalOnClick,
+            className: classnames(originalClassName, isPaywalled && "paywalled"),
+            onClick: feature ? handlePaywallCheck : originalOnClick,
             children: (
               <>
                 {childProps.children}
-                {proFeature && <ProBadge />}
+                {feature && <ProBadge />}
               </>
             ),
           }
@@ -100,50 +89,47 @@ export function Sub({ proFeature, proFeatureDependencies = [], children, ...prop
 
       return child;
     });
-  }, [children, isLocked, proFeature, handlePaywallCheck]);
+  }, [children, isPaywalled, feature, handlePaywallCheck]);
 
   return (
-    <DropdownMenu.Sub open={!isLocked} {...props}>
+    <DropdownMenu.Sub open={!isPaywalled} {...props}>
       {enhancedChildren}
     </DropdownMenu.Sub>
   );
 }
 
 interface PaywallSwitchItemProps extends DropdownMenuComponents.SwitchItemProps {
-  proFeature?: Feature;
-  proFeatureDependencies?: unknown[];
+  feature: Feature;
+  paywallCallbackDependencies?: unknown[];
 }
 
 export function SwitchItem({
   onClick = () => {},
   children,
   className,
-  proFeature,
-  proFeatureDependencies = [],
+  feature,
+  paywallCallbackDependencies = [],
   ...props
 }: PaywallSwitchItemProps) {
   const store$ = useStore();
-  const licenseStatus = use$(store$.license.status);
-  const isLocked =
-    proFeature !== undefined && (licenseStatus === "free" || licenseStatus === "inactive");
+  const featuresAvailability = use$(store$.license.featuresAvailability);
+  const isPaywalled = isFeaturePaywalled(featuresAvailability, feature);
 
-  const wrappedOnClick = proFeature
-    ? usePaywalledCallback(
-        onClick as (...args: any[]) => Promise<void> | void,
-        proFeature,
-        proFeatureDependencies
-      )
-    : onClick;
+  const wrappedOnClick = usePaywalledCallback(
+    onClick as (...args: any[]) => Promise<void> | void,
+    feature,
+    paywallCallbackDependencies
+  );
 
   return (
     <>
       <DropdownMenuComponents.SwitchItem
-        className={classnames("paywall-dropdown-menu-item", isLocked && "locked", className)}
+        className={classnames(className, isPaywalled && "paywalled")}
         onClick={wrappedOnClick}
-        disabled={isLocked}
+        disabled={isPaywalled}
         {...props}>
         {children}
-        {isLocked && <ProBadge style={{ right: "50px" }} />}
+        {isPaywalled && <ProBadge style={{ right: "50px" }} />}
       </DropdownMenuComponents.SwitchItem>
     </>
   );

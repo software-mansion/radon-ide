@@ -6,7 +6,7 @@ import Tooltip from "./Tooltip";
 import { usePing } from "../../hooks/usePing";
 import { PropsWithDataTest } from "../../../common/types";
 import { useStore } from "../../providers/storeProvider";
-import { Feature } from "../../../common/License";
+import { Feature, isFeaturePaywalled } from "../../../common/License";
 import { usePaywalledCallback } from "../../hooks/usePaywalledCallback";
 
 export interface IconButtonProps {
@@ -16,8 +16,8 @@ export interface IconButtonProps {
   disableTooltip?: boolean;
   counter?: number;
   counterMode?: "full" | "compact";
-  proFeature?: Feature;
-  proFeatureDependencies?: unknown[];
+  feature?: Feature;
+  paywallCallbackDependencies?: unknown[];
   active?: boolean;
   type?: "primary" | "secondary";
   side?: "left" | "right" | "center";
@@ -47,20 +47,21 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
       className = "",
       shouldDisplayLabelWhileDisabled = false,
       dataTest,
-      proFeature,
-      proFeatureDependencies = [],
+      feature,
+      paywallCallbackDependencies = [],
       ...rest
     } = props;
 
     const store$ = useStore();
-    const licenseStatus = use$(store$.license.status);
+    const featuresAvailability = use$(store$.license.featuresAvailability);
 
-    const isProFeature = proFeature !== undefined;
-    const isLocked = isProFeature && (licenseStatus === "free" || licenseStatus === "inactive");
+    const isPaywalled = isFeaturePaywalled(featuresAvailability, feature);
+    const isProFeature = feature !== undefined;
 
-    const wrappedOnClick = proFeature
-      ? usePaywalledCallback(onClick, proFeature, proFeatureDependencies)
-      : onClick;
+    const wrappedOnClick =
+      feature && isPaywalled
+        ? usePaywalledCallback(onClick, feature, paywallCallbackDependencies)
+        : onClick;
 
     const shouldPing = usePing(counter ?? 0, counterMode);
     const showCounter = Boolean(counter);
@@ -76,14 +77,14 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
           size === "small" && "icon-button-small",
           side === "left" && "icon-button-left",
           side === "right" && "icon-button-right",
-          isLocked && "locked",
+          isPaywalled && "paywalled",
           className
         )}
         data-testid={dataTest}
         {...rest}
         ref={ref}>
         {children}
-        {isLocked && <span className={"pro-feature-badge"}>Pro</span>}
+        {isPaywalled && <span className={"pro-feature-badge"}>Pro</span>}
         {!isProFeature && counterMode === "full" && counter !== null && (
           <span className={classnames("icon-button-counter", showCounter && "visible")}>
             {counter}

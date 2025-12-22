@@ -48,6 +48,7 @@ button {
 }
 
 .dropdown-menu-item {
+  position: relative;
   font-size: 13px;
   line-height: 1;
   color: var(--swm-default-text);

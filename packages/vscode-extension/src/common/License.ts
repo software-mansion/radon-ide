@@ -71,6 +71,10 @@ export enum Feature {
   StorybookIntegration = "StorybookIntegration",
 }
 
+// #endregion Features
+
+// #region Feature Names Map
+
 export const FeatureNamesMap: { [F in Feature]: string } = {
   [Feature.AndroidSmartphoneEmulators]: "Android Smartphone Emulators",
   [Feature.AndroidTabletEmulators]: "Android Tablet Emulators",
@@ -103,7 +107,7 @@ export const FeatureNamesMap: { [F in Feature]: string } = {
   [Feature.StorybookIntegration]: "Storybook Integration",
 };
 
-// #endregion Features
+// #endregion Feature Names Map
 
 // #region Default Features Availability
 
@@ -140,3 +144,13 @@ export const DefaultFeaturesAvailability = {
 };
 
 // #endregion Feature By License
+
+export function isFeaturePaywalled(
+  featuresAvailability: Record<string, string> | undefined,
+  feature: Feature | undefined
+): boolean {
+  if (!featuresAvailability || !feature) {
+    return false;
+  }
+  return featuresAvailability[feature] === FeatureAvailabilityStatus.PAYWALLED;
+}

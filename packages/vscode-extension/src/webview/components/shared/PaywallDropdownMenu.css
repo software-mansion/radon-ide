@@ -1,13 +1,15 @@
-.paywall-dropdown-menu-item {
-  position: relative;
-
-  &.locked,
-  &.locked:hover {
+.dropdown-menu-item {
+  &.paywalled,
+  &.paywalled:hover {
     color: var(--swm-button-disabled);
 
     .switch-root {
       cursor: unset;
       pointer-events: none;
+    }
+
+    .codicon-chevron-right {
+      display: none;
     }
   }
 }
@@ -31,28 +33,14 @@
   transition-delay: 0ms;
 }
 
-.locked:hover .paywall-dropdown-menu-badge {
+.paywalled:hover .paywall-dropdown-menu-badge {
   opacity: 1;
   transition-delay: 250ms;
 }
 
-.paywall-dropdown-menu-sub {
-  position: relative;
-
-  &.locked,
-  &.locked:hover {
+.dropdown-menu-sub {
+  &.paywalled,
+  &.paywalled:hover {
     color: var(--swm-button-disabled);
   }
-
-  & .codicon-chevron-right {
-    display: none;
-  }
-}
-
-.paywall-dropdown-menu-sub-indicator {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 10;
-  pointer-events: none;
 }

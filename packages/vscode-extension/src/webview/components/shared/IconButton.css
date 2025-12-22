@@ -38,7 +38,7 @@
   color: var(--swm-button-disabled);
 }
 
-.icon-button.locked {
+.icon-button.paywalled {
   color: var(--swm-button-disabled);
 
   &:hover {
@@ -100,9 +100,9 @@
   transition-delay: 0ms;
 }
 
-.icon-button.locked:hover .pro-feature-badge {
+.icon-button.paywalled:hover .pro-feature-badge {
   opacity: 1;
-  transition-delay: 200ms;
+  transition-delay: 250ms;
 }
 
 .icon-button-counter {

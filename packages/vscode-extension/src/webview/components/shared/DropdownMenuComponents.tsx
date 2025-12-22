@@ -3,9 +3,7 @@ import classNames from "classnames";
 
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Switch from "@radix-ui/react-switch";
-import * as PaywallDropdownMenu from "./PaywallDropdownMenu";
 
-import { Feature } from "../../../common/License";
 import { KeybindingInfo } from "./KeybindingInfo";
 import { PropsWithDataTest } from "../../../common/types";
 
@@ -54,25 +52,19 @@ export function CommandItem({
   icon,
   disabled = false,
   dataTest,
-  proFeature,
-  proFeatureDependencies,
 }: PropsWithDataTest<{
   onSelect: () => void;
   commandName: string;
   label: string;
   icon: string;
   disabled?: boolean;
-  proFeature?: Feature;
-  proFeatureDependencies?: unknown[];
 }>) {
   return (
-    <PaywallDropdownMenu.Item
+    <DropdownMenu.Item
       className="dropdown-menu-item"
       onSelect={onSelect}
       disabled={disabled}
-      data-testid={dataTest}
-      proFeature={proFeature}
-      proFeatureDependencies={proFeatureDependencies}>
+      data-testid={dataTest}>
       <span className="dropdown-menu-item-wraper">
         <span className={`codicon codicon-${icon}`} />
         <div className="dropdown-menu-item-content">
@@ -80,7 +72,7 @@ export function CommandItem({
           <KeybindingInfo commandName={commandName} />
         </div>
       </span>
-    </PaywallDropdownMenu.Item>
+    </DropdownMenu.Item>
   );
 }
 
