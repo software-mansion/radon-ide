@@ -1,11 +1,13 @@
+import { PropsWithChildren, useEffect, useState } from "react";
+import classNames from "classnames";
+
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import * as Switch from "@radix-ui/react-switch";
-import { PropsWithChildren, useEffect, useState } from "react";
 import * as PaywallDropdownMenu from "./PaywallDropdownMenu";
+
+import { Feature } from "../../../common/License";
 import { KeybindingInfo } from "./KeybindingInfo";
 import { PropsWithDataTest } from "../../../common/types";
-import { Feature } from "../../../common/License";
-import classNames from "classnames";
 
 interface DropdownMenuRootProps extends PropsWithChildren {
   open?: boolean;

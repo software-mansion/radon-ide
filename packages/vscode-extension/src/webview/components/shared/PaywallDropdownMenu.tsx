@@ -9,6 +9,18 @@ import * as DropdownMenuComponents from "../shared/DropdownMenuComponents";
 
 import "./PaywallDropdownMenu.css";
 
+interface ProBadgeProps {
+  style?: React.CSSProperties;
+}
+
+function ProBadge({ style }: ProBadgeProps) {
+  return (
+    <span className="paywall-dropdown-menu-badge" style={style}>
+      Pro
+    </span>
+  );
+}
+
 interface PaywallItemProps extends DropdownMenu.DropdownMenuItemProps {
   proFeature?: Feature;
   proFeatureDependencies?: unknown[];
@@ -41,7 +53,7 @@ export function Item({
       className={classnames(className, "paywall-dropdown-menu-item", isLocked && "locked")}
       {...props}>
       {children}
-      {isLocked && <span className="paywall-dropdown-menu-badge">PRO</span>}
+      {isLocked && <ProBadge />}
     </DropdownMenu.Item>
   );
 }
@@ -81,7 +93,7 @@ export function Sub({ proFeature, proFeatureDependencies = [], children, ...prop
             children: (
               <>
                 {childProps.children}
-                {proFeature && <span className="paywall-dropdown-menu-badge">PRO</span>}
+                {proFeature && <ProBadge />}
               </>
             ),
           }
@@ -133,11 +145,7 @@ export function SwitchItem({
         disabled={isLocked}
         {...props}>
         {children}
-        {isLocked && (
-          <span className="paywall-dropdown-menu-badge" style={{ right: "50px" }}>
-            PRO
-          </span>
-        )}
+        {isLocked && <ProBadge style={{ right: "50px" }} />}
       </DropdownMenuComponents.SwitchItem>
     </>
   );

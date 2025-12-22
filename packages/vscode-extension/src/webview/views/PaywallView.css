@@ -145,8 +145,8 @@
 }
 
 .benefits-badge {
-  border-radius: 999px;
-  padding: 2px 8px;
+  border-radius: 4px;
+  padding: 2px 6px;
   font-size: 11px;
   line-height: 18px;
 }

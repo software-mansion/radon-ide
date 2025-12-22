@@ -83,7 +83,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
         {...rest}
         ref={ref}>
         {children}
-        {isLocked && <span className={"pro-feature-badge"}>PRO</span>}
+        {isLocked && <span className={"pro-feature-badge"}>Pro</span>}
         {!isProFeature && counterMode === "full" && counter !== null && (
           <span className={classnames("icon-button-counter", showCounter && "visible")}>
             {counter}
