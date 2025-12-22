@@ -261,7 +261,7 @@ function PaywallView({ title, proFeature }: PaywallViewProps) {
         </h1>
         {proFeature && (
           <p className="paywall-feature-description">
-            <b>{FeatureNamesMap[proFeature]}</b> feature is available with <b>Radon IDE Pro plan</b>
+            <b>{FeatureNamesMap[proFeature]}</b> feature is available with <b>Radon IDE Pro</b>
           </p>
         )}
 

@@ -33,7 +33,7 @@
 
 .locked:hover .paywall-dropdown-menu-badge {
   opacity: 1;
-  transition-delay: 200ms;
+  transition-delay: 250ms;
 }
 
 .paywall-dropdown-menu-sub {
