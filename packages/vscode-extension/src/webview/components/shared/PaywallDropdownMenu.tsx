@@ -58,10 +58,17 @@ interface PaywallSub extends DropdownMenu.DropdownMenuSubProps {
   children: React.ReactNode;
 }
 
-export function Sub({ feature, paywallCallbackDependencies = [], children, ...props }: PaywallSub) {
+export function Sub({
+  feature,
+  paywallCallbackDependencies = [],
+  children,
+  open,
+  ...props
+}: PaywallSub) {
   const store$ = useStore();
   const featuresAvailability = use$(store$.license.featuresAvailability);
   const isPaywalled = isFeaturePaywalled(featuresAvailability, feature);
+  const isOpen = isPaywalled ? false : open;
 
   const handlePaywallCheck = usePaywalledCallback(() => {}, feature, paywallCallbackDependencies);
 
@@ -92,7 +99,7 @@ export function Sub({ feature, paywallCallbackDependencies = [], children, ...pr
   }, [children, isPaywalled, feature, handlePaywallCheck]);
 
   return (
-    <DropdownMenu.Sub open={!isPaywalled} {...props}>
+    <DropdownMenu.Sub open={isOpen} {...props}>
       {enhancedChildren}
     </DropdownMenu.Sub>
   );

@@ -11,14 +11,16 @@ import { useAdminBlock } from "./useAdminBlock";
 
 function withPaywallGuard<F extends (...args: any[]) => Promise<void> | void>(
   fn: F,
-  feature: Feature,
+  feature: Feature | undefined,
   featuresAvailability: FeaturesAvailability
 ): (...args: Parameters<F>) => Promise<void> {
   const { openPaywall } = usePaywall();
   const { openAdminBlock } = useAdminBlock();
 
   return async (...args: Parameters<F>): Promise<void> => {
-    const featureAvailability = featuresAvailability[feature];
+    const featureAvailability = feature
+      ? featuresAvailability[feature]
+      : FeatureAvailabilityStatus.AVAILABLE;
     switch (featureAvailability) {
       case FeatureAvailabilityStatus.AVAILABLE:
         break;
@@ -51,7 +53,7 @@ function withPaywallGuard<F extends (...args: any[]) => Promise<void> | void>(
 
 export function usePaywalledCallback<F extends (...args: any[]) => Promise<void> | void>(
   fn: F,
-  feature: Feature,
+  feature: Feature | undefined,
   dependencies: unknown[]
 ) {
   const store$ = useStore();
