@@ -4,11 +4,31 @@ const {
   overrideModuleFromAppDependency,
 } = require("../metro_helpers");
 
-const { gte } = require("../third-party/semver");
-
 const EXPO_CLI_VERSION = requireFromAppDependency("expo", "@expo/cli/package.json").version;
 
 const MINIMUM_RESOLVE_CONFIG_OVERRIDE_VERSION = "54.0.20";
+
+function gte(version1, version2) {
+  function normalize(v) {
+    v = String(v || "").trim();
+    // Strip any non-digit prefix (e.g., "v", "version-")
+    v = v.replace(/^[^0-9]+/, "");
+    // Drop prerelease/build metadata (e.g., "-rc.1", "+build.5")
+    v = v.split(/[-+]/)[0];
+    const parts = v.split(".");
+    const major = Number.parseInt(parts[0]) || 0;
+    const minor = Number.parseInt(parts[1]) || 0;
+    const patch = Number.parseInt(parts[2]) || 0;
+    return [major, minor, patch];
+  }
+
+  const [major1, minor1, patch1] = normalize(version1);
+  const [major2, minor2, patch2] = normalize(version2);
+
+  if (major1 !== major2) return major1 > major2;
+  if (minor1 !== minor2) return minor1 > minor2;
+  return patch1 >= patch2;
+}
 
 function requireGetDefaultConfig() {
   try {
@@ -33,12 +53,12 @@ function createRadonLoadConfig(original) {
 function createRadonResolveConfig(original) {
   return async (expoConfig, projectRoot, ...rest) => {
     const originalResolvedConfig = await original(expoConfig, projectRoot, ...rest);
-    const getDefaultConfig = requireGetDefaultConfig();
-    if (getDefaultConfig === undefined) {
-      return originalResolvedConfig;
-    }
     let config;
     if (originalResolvedConfig.isEmpty) {
+      const getDefaultConfig = requireGetDefaultConfig();
+      if (getDefaultConfig === undefined) {
+        return originalResolvedConfig;
+      }
       config = getDefaultConfig(projectRoot);
     }
     else {
