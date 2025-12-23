@@ -1,7 +1,6 @@
 const ORIGINAL_TRANSFORMER_PATH = process.env.RADON_IDE_ORIG_BABEL_TRANSFORMER_PATH;
 const path = require("path");
 const fs = require("fs");
-const { gte, lt, satisfies } = require("./third-party/semver");
 const {
   requireFromAppDir,
   doesModuleExist,
@@ -16,7 +15,8 @@ const RN_VERSION = requireFromAppDir("react-native/package.json").version;
 // in many setup the transform is misconfigured and does not produce the desirable output that we can later access.
 // In addition, on versions between 0.74 and 0.79 we patch the React renderer in order to make the source information
 // being added and passed down to the fiber nodes (more on that below).
-if (lt(RN_VERSION, "0.80.0", { includePrerelease: true })) {
+// Radon IDE only supports RN 0.74+ so it is ok to only check for 0.7 prefix (hopefully we will never reach 0.700)
+if (RN_VERSION.startsWith("0.7")) {
   // In some configurations, React Native may pull several different version of JSX transform plugins:
   // plugin-transform-react-jsx-self, plugin-transform-react-jsx-source, plugin-transform-react-jsx and
   // plugin-transform-react-jsx-development. For line and column numbers to be added to components, we
@@ -90,13 +90,13 @@ function transformWrapper({ filename, src, ...rest }) {
   } else if (isTransforming("node_modules/expo-router/entry.js")) {
     // expo-router v2 and v3 integration
     const { version } = requireFromAppDir("expo-router/package.json");
-    if (satisfies(version, ">=2.0.0 <3.0.0")) {
+    if (version.startsWith("2.")) {
       src = `${src};require("__RNIDE_lib__/expo_router/expo_router_v2_plugin.js");`;
-    } else if (satisfies(version, ">=3.0.0 <5.0.0")) {
+    } else if (version.startsWith("3.") || version.startsWith("4.")) {
       src = `${src};require("__RNIDE_lib__/expo_router/expo_router_plugin.js");`;
-    } else if (satisfies(version, ">=5.0.0 <6.0.0")) {
+    } else if (version.startsWith("5.")) {
       src = `${src};require("__RNIDE_lib__/expo_router/expo_router_v5_plugin.js");`;
-    } else if (gte(version, "6.0.0")) {
+    } else if (version.startsWith("6.")) {
       src = `${src};require("__RNIDE_lib__/expo_router/expo_router_v6_plugin.js");`;
     }
   } else if (
@@ -148,7 +148,10 @@ function transformWrapper({ filename, src, ...rest }) {
     const { version: reactNativeVersion } = requireFromAppDir("react-native/package.json");
     const rendererFileName = filename.split(path.sep).pop();
     if (
-      satisfies(reactNativeVersion, ">=0.74 <0.78", { includePrerelease: true })
+      reactNativeVersion.startsWith("0.74") ||
+      reactNativeVersion.startsWith("0.75") ||
+      reactNativeVersion.startsWith("0.76") ||
+      reactNativeVersion.startsWith("0.77")
     ) {
       const rendererFilePath = path.join(
         process.env.RADON_IDE_LIB_PATH,
@@ -161,8 +164,8 @@ function transformWrapper({ filename, src, ...rest }) {
     }
     const { version: reactVersion } = requireFromAppDir("react/package.json");
     if (
-      satisfies(reactNativeVersion, ">=0.78.0 <0.80.0", { includePrerelease: true }) &&
-      satisfies(reactVersion, ">=19.0.0 <19.1.0", { includePrerelease: true })
+      (reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) &&
+      reactVersion.startsWith("19.0")
     ) {
       const rendererFilePath = path.join(
         process.env.RADON_IDE_LIB_PATH,
@@ -178,8 +181,8 @@ function transformWrapper({ filename, src, ...rest }) {
     const jsxRuntimeFileName = filename.split(path.sep).pop();
     const reactVersion = requireFromAppDir("react/package.json").version;
     if (
-      satisfies(reactNativeVersion, ">=0.78.0 <0.80.0", { includePrerelease: true }) &&
-      satisfies(reactVersion, ">=19.0.0 <19.1.0", { includePrerelease: true })
+      (reactNativeVersion.startsWith("0.78") || reactNativeVersion.startsWith("0.79")) &&
+      reactVersion.startsWith("19.0")
     ) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}");`;
     }
