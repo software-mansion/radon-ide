@@ -27,6 +27,8 @@ import { DevicePlatform, DeviceRotation, DeviceSettings } from "../../common/Sta
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { Feature } from "../../common/License";
 
+// #region Constants
+
 const contentSizes = [
   "xsmall",
   "small",
@@ -85,6 +87,10 @@ const setOrientationOptions: Array<{
     rotation: "90deg",
   },
 ];
+
+// #endregion Constants
+
+// #region Device Appearance
 
 function DeviceAppearanceSettings() {
   const store$ = useStore();
@@ -160,6 +166,11 @@ function DeviceAppearanceSettings() {
   );
 }
 
+// #endregion Appearance Settings
+
+// #region Submenus
+
+// RotateSettingsSubmenu
 function RotateSettingsSubmenu() {
   const store$ = useStore();
 
@@ -228,6 +239,7 @@ function RotateSettingsSubmenu() {
   );
 }
 
+// PermissionsSubmenu
 function PermissionsSubmenu({ platform }: { platform: DevicePlatform | undefined }) {
   const resetOptions = platform === DevicePlatform.IOS ? resetOptionsIOS : resetOptionsAndroid;
   const { project } = useProject();
@@ -257,6 +269,10 @@ function PermissionsSubmenu({ platform }: { platform: DevicePlatform | undefined
     </PaywallDropdownMenu.Sub>
   );
 }
+
+// #endregion Submenus
+
+// #region Main Dropdown
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const store$ = useStore();
@@ -288,7 +304,11 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           data-testid="device-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
+
+          {/* Device Appearance Settings */}
           {!isPhysicalAndroid && <DeviceAppearanceSettings />}
+
+          {/* Home Button */}
           <DropdownMenuComponents.CommandItem
             onSelect={() => project.dispatchHomeButtonPress()}
             commandName="RNIDE.deviceHomeButtonPress"
@@ -296,6 +316,8 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             icon="home"
             dataTest="press-home-button"
           />
+
+          {/* App Switch Button */}
           <DropdownMenuComponents.CommandItem
             onSelect={() => project.dispatchAppSwitchButtonPress()}
             commandName="RNIDE.deviceAppSwitchButtonPress"
@@ -303,8 +325,14 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             icon="chrome-restore"
             dataTest="open-app-switcher-button"
           />
+
+          {/* Rotate Settings Submenu */}
           <RotateSettingsSubmenu />
+
+          {/* Biometrics (iOS only) */}
           {platform === DevicePlatform.IOS && <BiometricsItem />}
+
+          {/* Send File */}
           <PaywallDropdownMenu.Item
             feature={Feature.SendFile}
             className="dropdown-menu-item"
@@ -313,6 +341,8 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             <span className="codicon codicon-share" />
             Send File
           </PaywallDropdownMenu.Item>
+
+          {/* LocationItem, LocalizationItem, VolumeItem (non-physical only) */}
           {!isPhysicalAndroid && (
             <>
               <LocationItem />
@@ -321,10 +351,13 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             </>
           )}
 
+          {/* CameraItem (Android emulator only) */}
           {platform === DevicePlatform.Android && deviceInfo?.emulator && <CameraItem />}
 
+          {/* PermissionsSubmenu (non-physical only) */}
           {!isPhysicalAndroid && <PermissionsSubmenu platform={platform} />}
 
+          {/* Open DeepLink */}
           <PaywallDropdownMenu.Item
             feature={Feature.OpenDeepLink}
             className="dropdown-menu-item"
@@ -333,6 +366,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Open Deep Link
           </PaywallDropdownMenu.Item>
 
+          {/* Screen Replay Switch */}
           <PaywallDropdownMenu.SwitchItem
             icon={<ReplayIcon />}
             feature={Feature.ScreenReplay}
@@ -345,6 +379,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Enable Replays
           </PaywallDropdownMenu.SwitchItem>
 
+          {/* Show Touches Switch */}
           <DropdownMenuComponents.SwitchItem
             icon={<span className="codicon codicon-record" />}
             checked={deviceSettings.showTouches}
@@ -356,6 +391,7 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
             Show Touches
           </DropdownMenuComponents.SwitchItem>
 
+          {/* Show Device Frame Switch (non-physical only) */}
           {!isPhysicalAndroid && (
             <DropdownMenuComponents.SwitchItem
               icon={<span className="codicon codicon-device-mobile" />}
@@ -375,6 +411,11 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
   );
 }
 
+// #endregion Main Dropdown
+
+// #region Individual Menu Items
+
+// Location
 const LocationItem = () => {
   const { openModal } = useModal();
   return (
@@ -389,6 +430,7 @@ const LocationItem = () => {
   );
 };
 
+// Localization
 const LocalizationItem = () => {
   const { openModal } = useModal();
 
@@ -404,6 +446,7 @@ const LocalizationItem = () => {
   );
 };
 
+// Biometrics
 const BiometricsItem = () => {
   const store$ = useStore();
 
@@ -464,6 +507,7 @@ const BiometricsItem = () => {
   );
 };
 
+// Camera
 const CameraItem = () => {
   const { openModal } = useModal();
 
@@ -479,6 +523,7 @@ const CameraItem = () => {
   );
 };
 
+// VolumeItem
 const VolumeItem = () => {
   const { project } = useProject();
 
@@ -531,5 +576,7 @@ const VolumeItem = () => {
     </div>
   );
 };
+
+// #endregion Individual Menu Items
 
 export default DeviceSettingsDropdown;
