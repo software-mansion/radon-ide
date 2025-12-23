@@ -6,6 +6,8 @@ import {
   useIsFeatureAvailable,
   useIsFeaturePaywalled,
 } from "../../hooks/useFeatureAvailabilityCheck";
+import { usePaywall } from "../../hooks/usePaywall";
+import { useAdminBlock } from "../../hooks/useAdminBlock";
 import { usePaywalledCallback } from "../../hooks/usePaywalledCallback";
 import * as DropdownMenuComponents from "../shared/DropdownMenuComponents";
 
@@ -108,31 +110,37 @@ export function Sub({
 
 interface PaywallSwitchItemProps extends DropdownMenuComponents.SwitchItemProps {
   feature: Feature;
-  paywallCallbackDependencies?: unknown[];
 }
 
 export function SwitchItem({
-  onClick = () => {},
   children,
   className,
+  onClick = () => {},
   feature,
-  paywallCallbackDependencies = [],
   ...props
 }: PaywallSwitchItemProps) {
+  const openPaywall = usePaywall().openPaywall;
+  const openAdminBlock = useAdminBlock().openAdminBlock;
   const isPaywalled = useIsFeaturePaywalled(feature);
   const isAvailable = useIsFeatureAvailable(feature);
 
-  const wrappedOnClick = usePaywalledCallback(
-    onClick as (...args: any[]) => Promise<void> | void,
-    feature,
-    paywallCallbackDependencies
-  );
+  const openPaywallOnClick = () => {
+    if (isPaywalled) {
+      openPaywall(undefined, feature);
+      return;
+    }
+    if (!isAvailable) {
+      openAdminBlock();
+      return;
+    }
+    onClick();
+  };
 
   return (
     <>
       <DropdownMenuComponents.SwitchItem
         className={classnames(className, !isAvailable && "paywalled")}
-        onClick={wrappedOnClick}
+        onClick={openPaywallOnClick}
         disabled={!isAvailable}
         {...props}>
         {children}
