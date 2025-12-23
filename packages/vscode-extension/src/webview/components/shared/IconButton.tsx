@@ -1,12 +1,11 @@
 import React from "react";
 import classnames from "classnames";
 import "./IconButton.css";
-import { use$ } from "@legendapp/state/react";
 import Tooltip from "./Tooltip";
 import { usePing } from "../../hooks/usePing";
 import { PropsWithDataTest } from "../../../common/types";
-import { useStore } from "../../providers/storeProvider";
-import { Feature, isFeaturePaywalled } from "../../../common/License";
+import { Feature } from "../../../common/License";
+import { useIsFeaturePaywalled } from "../../hooks/useFeatureAvailabilityCheck";
 import { usePaywalledCallback } from "../../hooks/usePaywalledCallback";
 
 export interface IconButtonProps {
@@ -52,10 +51,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
       ...rest
     } = props;
 
-    const store$ = useStore();
-    const featuresAvailability = use$(store$.license.featuresAvailability);
-
-    const isPaywalled = isFeaturePaywalled(featuresAvailability, feature);
+    const isPaywalled = useIsFeaturePaywalled(feature);
     const isProFeature = feature !== undefined;
 
     const wrappedOnClick = usePaywalledCallback(onClick, feature, paywallCallbackDependencies);

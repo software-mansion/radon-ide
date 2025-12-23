@@ -1,10 +1,9 @@
 import React, { useMemo } from "react";
-import { use$ } from "@legendapp/state/react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import classnames from "classnames";
-import { useStore } from "../../providers/storeProvider";
+import { Feature } from "../../../common/License";
+import { useIsFeaturePaywalled } from "../../hooks/useFeatureAvailabilityCheck";
 import { usePaywalledCallback } from "../../hooks/usePaywalledCallback";
-import { Feature, isFeaturePaywalled } from "../../../common/License";
 import * as DropdownMenuComponents from "../shared/DropdownMenuComponents";
 
 import "./PaywallDropdownMenu.css";
@@ -35,9 +34,7 @@ export function Item({
   paywallCallbackDependencies = [],
   ...props
 }: PaywallItemProps) {
-  const store$ = useStore();
-  const featuresAvailability = use$(store$.license.featuresAvailability);
-  const isPaywalled = isFeaturePaywalled(featuresAvailability, feature);
+  const isPaywalled = useIsFeaturePaywalled(feature);
 
   const wrappedOnSelect = usePaywalledCallback(onSelect, feature, paywallCallbackDependencies);
 
@@ -65,9 +62,7 @@ export function Sub({
   open,
   ...props
 }: PaywallSub) {
-  const store$ = useStore();
-  const featuresAvailability = use$(store$.license.featuresAvailability);
-  const isPaywalled = isFeaturePaywalled(featuresAvailability, feature);
+  const isPaywalled = useIsFeaturePaywalled(feature);
   const isOpen = isPaywalled ? false : open;
 
   const handlePaywallCheck = usePaywalledCallback(() => {}, feature, paywallCallbackDependencies);
@@ -118,9 +113,7 @@ export function SwitchItem({
   paywallCallbackDependencies = [],
   ...props
 }: PaywallSwitchItemProps) {
-  const store$ = useStore();
-  const featuresAvailability = use$(store$.license.featuresAvailability);
-  const isPaywalled = isFeaturePaywalled(featuresAvailability, feature);
+  const isPaywalled = useIsFeaturePaywalled(feature);
 
   const wrappedOnClick = usePaywalledCallback(
     onClick as (...args: any[]) => Promise<void> | void,

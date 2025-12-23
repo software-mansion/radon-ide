@@ -26,7 +26,7 @@ import { useStore } from "../providers/storeProvider";
 import { DevicePlatform, DeviceRotation, DeviceSettings } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { Feature, FeatureAvailabilityStatus } from "../../common/License";
-import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
+import { useIsFeatureAdminDisabled } from "../hooks/useFeatureAvailabilityCheck";
 
 const contentSizes = [
   "xsmall",

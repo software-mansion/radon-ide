@@ -144,13 +144,3 @@ export const DefaultFeaturesAvailability = {
 };
 
 // #endregion Feature By License
-
-export function isFeaturePaywalled(
-  featuresAvailability: Record<string, string> | undefined,
-  feature: Feature | undefined
-): boolean {
-  if (!featuresAvailability || !feature) {
-    return false;
-  }
-  return featuresAvailability[feature] === FeatureAvailabilityStatus.PAYWALLED;
-}

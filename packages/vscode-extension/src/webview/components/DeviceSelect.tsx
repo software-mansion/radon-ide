@@ -16,7 +16,7 @@ import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { Feature } from "../../common/License";
 import { useDevices } from "../hooks/useDevices";
 import { PropsWithDataTest } from "../../common/types";
-import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
+import { useIsFeatureAdminDisabled } from "../hooks/useFeatureAvailabilityCheck";
 
 enum DeviceSection {
   IosSimulator = "IosSimulator",

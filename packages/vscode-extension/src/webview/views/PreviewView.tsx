@@ -33,7 +33,7 @@ import Button from "../components/shared/Button";
 import { ActivateLicenseView } from "./ActivateLicenseView";
 import { Feature, LicenseStatus } from "../../common/License";
 import { useDevices } from "../hooks/useDevices";
-import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
+import { useIsFeatureAdminDisabled } from "../hooks/useFeatureAvailabilityCheck";
 
 import FestiveSnow from "../components/festive/FestiveSnow";
 

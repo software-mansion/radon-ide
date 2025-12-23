@@ -8,3 +8,12 @@ export function useIsFeatureAdminDisabled(feature: Feature) {
 
   return featuresAvailability[feature] === FeatureAvailabilityStatus.ADMIN_DISABLED;
 }
+
+export function useIsFeaturePaywalled(feature: Feature | undefined): boolean {
+  const store$ = useStore();
+  const featuresAvailability = use$(store$.license.featuresAvailability);
+  if (!featuresAvailability || !feature) {
+    return false;
+  }
+  return featuresAvailability[feature] === FeatureAvailabilityStatus.PAYWALLED;
+}
