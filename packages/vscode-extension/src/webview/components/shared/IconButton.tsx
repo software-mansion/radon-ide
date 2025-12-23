@@ -70,7 +70,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
           size === "small" && "icon-button-small",
           side === "left" && "icon-button-left",
           side === "right" && "icon-button-right",
-          isPaywalled && "paywalled",
+          isPaywalled && "unavailable",
           className
         )}
         data-testid={dataTest}

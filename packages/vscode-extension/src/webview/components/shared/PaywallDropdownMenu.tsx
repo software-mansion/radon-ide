@@ -6,8 +6,6 @@ import {
   useIsFeatureAvailable,
   useIsFeaturePaywalled,
 } from "../../hooks/useFeatureAvailabilityCheck";
-import { usePaywall } from "../../hooks/usePaywall";
-import { useAdminBlock } from "../../hooks/useAdminBlock";
 import { usePaywalledCallback } from "../../hooks/usePaywalledCallback";
 import * as DropdownMenuComponents from "../shared/DropdownMenuComponents";
 
@@ -42,11 +40,11 @@ export function Item({
   const isPaywalled = useIsFeaturePaywalled(feature);
   const isAvailable = useIsFeatureAvailable(feature);
 
-  const wrappedOnSelect = usePaywalledCallback(onSelect, feature, paywallCallbackDependencies);
+  const handleSelect = usePaywalledCallback(onSelect, feature, paywallCallbackDependencies);
 
   return (
     <DropdownMenu.Item
-      onSelect={wrappedOnSelect}
+      onSelect={handleSelect}
       className={classnames(className, !isAvailable && "unavailable")}
       {...props}>
       {children}
@@ -73,7 +71,8 @@ export function Sub({
 
   const isOpen = isAvailable ? open : false;
 
-  const handlePaywallCheck = usePaywalledCallback(() => {}, feature, paywallCallbackDependencies);
+  const handleOnClick = (f: React.MouseEventHandler<HTMLDivElement> | undefined) =>
+    usePaywalledCallback(f ?? (() => {}), feature, paywallCallbackDependencies);
 
   // Enhance SubTrigger with paywall styling and behavior if it exists in children
   const enhancedChildren = useMemo(() => {
@@ -86,7 +85,7 @@ export function Sub({
           child as React.ReactElement<DropdownMenu.DropdownMenuSubTriggerProps>,
           {
             className: classnames(originalClassName, !isAvailable && "unavailable"),
-            onClick: feature ? handlePaywallCheck : originalOnClick,
+            onClick: handleOnClick(originalOnClick),
             children: (
               <>
                 {childProps.children}
@@ -99,7 +98,7 @@ export function Sub({
 
       return child;
     });
-  }, [children, isPaywalled, feature, handlePaywallCheck]);
+  }, [children, isPaywalled, feature]);
 
   return (
     <DropdownMenu.Sub open={isOpen} {...props}>
@@ -112,35 +111,17 @@ interface PaywallSwitchItemProps extends DropdownMenuComponents.SwitchItemProps 
   feature: Feature;
 }
 
-export function SwitchItem({
-  children,
-  className,
-  onClick = () => {},
-  feature,
-  ...props
-}: PaywallSwitchItemProps) {
-  const openPaywall = usePaywall().openPaywall;
-  const openAdminBlock = useAdminBlock().openAdminBlock;
+export function SwitchItem({ children, className, feature, ...props }: PaywallSwitchItemProps) {
   const isPaywalled = useIsFeaturePaywalled(feature);
   const isAvailable = useIsFeatureAvailable(feature);
 
-  const openPaywallOnClick = () => {
-    if (isPaywalled) {
-      openPaywall(undefined, feature);
-      return;
-    }
-    if (!isAvailable) {
-      openAdminBlock();
-      return;
-    }
-    onClick();
-  };
+  const handleOnClick = usePaywalledCallback(() => {}, feature, []);
 
   return (
     <>
       <DropdownMenuComponents.SwitchItem
         className={classnames(className, !isAvailable && "unavailable")}
-        onClick={openPaywallOnClick}
+        onMenuItemClick={handleOnClick}
         disabled={!isAvailable}
         {...props}>
         {children}

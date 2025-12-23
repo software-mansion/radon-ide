@@ -80,7 +80,7 @@ export interface SwitchItemProps extends Switch.SwitchProps {
   icon: React.ReactNode;
   checked: boolean;
   onCheckedChange?: (checked: boolean) => void;
-  onClick?: () => void;
+  onMenuItemClick?: (e: React.MouseEvent<HTMLDivElement> | undefined) => void;
   dataTestId: string;
   id: string;
 }
@@ -88,8 +88,8 @@ export interface SwitchItemProps extends Switch.SwitchProps {
 export function SwitchItem({
   icon,
   checked,
+  onMenuItemClick,
   onCheckedChange,
-  onClick = () => {},
   dataTestId,
   id,
   children,
@@ -97,7 +97,7 @@ export function SwitchItem({
   ...props
 }: SwitchItemProps) {
   return (
-    <div className={classNames("dropdown-menu-item", className)} onClick={onClick}>
+    <div className={classNames("dropdown-menu-item", className)} onClick={onMenuItemClick}>
       {icon}
       {children}
       <Switch.Root
