@@ -71,8 +71,11 @@ export function Sub({
 
   const isOpen = isAvailable ? open : false;
 
-  const handleOnClick = (f: React.MouseEventHandler<HTMLDivElement> | undefined) =>
-    usePaywalledCallback(f ?? (() => {}), feature, paywallCallbackDependencies);
+  const handleOnClick = usePaywalledCallback(
+    (f: () => void | undefined) => f?.(),
+    feature,
+    paywallCallbackDependencies
+  );
 
   // Enhance SubTrigger with paywall styling and behavior if it exists in children
   const enhancedChildren = useMemo(() => {
@@ -85,7 +88,7 @@ export function Sub({
           child as React.ReactElement<DropdownMenu.DropdownMenuSubTriggerProps>,
           {
             className: classnames(originalClassName, !isAvailable && "unavailable"),
-            onClick: handleOnClick(originalOnClick),
+            onClick: (e) => handleOnClick(() => originalOnClick?.(e)),
             children: (
               <>
                 {childProps.children}
