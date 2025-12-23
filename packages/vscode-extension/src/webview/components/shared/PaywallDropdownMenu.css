@@ -1,6 +1,6 @@
 .dropdown-menu-item {
-  &.paywalled,
-  &.paywalled:hover {
+  &.unavailable,
+  &.unavailable:hover {
     color: var(--swm-button-disabled);
 
     .switch-root {
@@ -33,14 +33,14 @@
   transition-delay: 0ms;
 }
 
-.paywalled:hover .paywall-dropdown-menu-badge {
+.unavailable:hover .paywall-dropdown-menu-badge {
   opacity: 1;
   transition-delay: 250ms;
 }
 
 .dropdown-menu-sub {
-  &.paywalled,
-  &.paywalled:hover {
+  &.unavailable,
+  &.unavailable:hover {
     color: var(--swm-button-disabled);
   }
 }

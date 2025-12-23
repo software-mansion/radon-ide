@@ -47,7 +47,7 @@ export function Item({
   return (
     <DropdownMenu.Item
       onSelect={wrappedOnSelect}
-      className={classnames(className, !isAvailable && "paywalled")}
+      className={classnames(className, !isAvailable && "unavailable")}
       {...props}>
       {children}
       {isPaywalled && <ProBadge />}
@@ -85,7 +85,7 @@ export function Sub({
         return React.cloneElement(
           child as React.ReactElement<DropdownMenu.DropdownMenuSubTriggerProps>,
           {
-            className: classnames(originalClassName, !isAvailable && "paywalled"),
+            className: classnames(originalClassName, !isAvailable && "unavailable"),
             onClick: feature ? handlePaywallCheck : originalOnClick,
             children: (
               <>
@@ -139,7 +139,7 @@ export function SwitchItem({
   return (
     <>
       <DropdownMenuComponents.SwitchItem
-        className={classnames(className, !isAvailable && "paywalled")}
+        className={classnames(className, !isAvailable && "unavailable")}
         onClick={openPaywallOnClick}
         disabled={!isAvailable}
         {...props}>
