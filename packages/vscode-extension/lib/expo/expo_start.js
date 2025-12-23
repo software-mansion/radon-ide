@@ -4,15 +4,85 @@ const {
   overrideModuleFromAppDependency,
 } = require("../metro_helpers");
 
+const EXPO_CLI_VERSION = requireFromAppDependency("expo", "@expo/cli/package.json").version;
+
+const MINIMUM_RESOLVE_CONFIG_OVERRIDE_VERSION = "54.0.20";
+
+function gte(version1, version2) {
+  function normalize(v) {
+    v = String(v || "").trim();
+    // Strip any non-digit prefix (e.g., "v", "version-")
+    v = v.replace(/^[^0-9]+/, "");
+    // Drop prerelease/build metadata (e.g., "-rc.1", "+build.5")
+    v = v.split(/[-+]/)[0];
+    const parts = v.split(".");
+    const major = Number.parseInt(parts[0]) || 0;
+    const minor = Number.parseInt(parts[1]) || 0;
+    const patch = Number.parseInt(parts[2]) || 0;
+    return [major, minor, patch];
+  }
+
+  const [major1, minor1, patch1] = normalize(version1);
+  const [major2, minor2, patch2] = normalize(version2);
+
+  if (major1 !== major2) return major1 > major2;
+  if (minor1 !== minor2) return minor1 > minor2;
+  return patch1 >= patch2;
+}
+
+function requireGetDefaultConfig() {
+  try {
+    const metroConfig = requireFromAppDependency("expo", "@expo/metro-config");
+    return metroConfig.getDefaultConfig
+  } catch {
+    // metro-config is only available on newer expo versions, 
+    // so we just fall back to undefined. Note that this path
+    // should be unreachable as we check for expo version before 
+    // ever using getDefaultConfig. 
+    return undefined;
+  }
+}
+
+function createRadonLoadConfig(original) {
+  return async (...args) => {
+    const config = await original(...args);
+    return adaptMetroConfig(config);
+  }
+}
+
+function createRadonResolveConfig(original) {
+  return async (expoConfig, projectRoot, ...rest) => {
+    const originalResolvedConfig = await original(expoConfig, projectRoot, ...rest);
+    let config;
+    if (originalResolvedConfig.isEmpty) {
+      const getDefaultConfig = requireGetDefaultConfig();
+      if (getDefaultConfig === undefined) {
+        return originalResolvedConfig;
+      }
+      config = getDefaultConfig(projectRoot);
+    }
+    else {
+      config = (typeof originalResolvedConfig.config === "function")
+        ? await originalResolvedConfig.config()
+        : originalResolvedConfig.config;
+    }
+    return {
+      ...originalResolvedConfig,
+      isEmpty: false,
+      config: adaptMetroConfig(config)
+    }
+  }
+}
+
 function createMetroConfigProxy(metroConfig) {
   return new Proxy(metroConfig, {
     get(_target, prop, _receiver) {
       const original = Reflect.get(...arguments);
       if (prop === "loadConfig") {
-        return async function (...args) {
-          const config = await original(...args);
-          return adaptMetroConfig(config);
-        };
+        return createRadonLoadConfig(original);
+      }
+      if (prop == "resolveConfig" && gte(EXPO_CLI_VERSION, MINIMUM_RESOLVE_CONFIG_OVERRIDE_VERSION)) {
+        return createRadonResolveConfig(original);
       }
       return original;
     },
