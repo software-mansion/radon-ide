@@ -161,7 +161,7 @@ function transformWrapper({ filename, src, ...rest }) {
     }
     const { version: reactVersion } = requireFromAppDir("react/package.json");
     if (
-      satisfies(reactNativeVersion, ">=0.78 <0.80", { includePrerelease: true }) &&
+      satisfies(reactNativeVersion, ">=0.78.0 <0.80.0", { includePrerelease: true }) &&
       satisfies(reactVersion, ">=19.0.0 <19.1.0", { includePrerelease: true })
     ) {
       const rendererFilePath = path.join(
@@ -178,7 +178,7 @@ function transformWrapper({ filename, src, ...rest }) {
     const jsxRuntimeFileName = filename.split(path.sep).pop();
     const reactVersion = requireFromAppDir("react/package.json").version;
     if (
-      satisfies(reactNativeVersion, ">=0.78 <0.80", { includePrerelease: true }) &&
+      satisfies(reactNativeVersion, ">=0.78.0 <0.80.0", { includePrerelease: true }) &&
       satisfies(reactVersion, ">=19.0.0 <19.1.0", { includePrerelease: true })
     ) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}");`;
