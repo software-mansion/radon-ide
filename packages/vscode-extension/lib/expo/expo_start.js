@@ -17,7 +17,7 @@ function requireGetDefaultConfig() {
   } catch {
     // metro-config is only available on newer expo versions, 
     // so we just fall back to undefined. Note that this path
-    // should be unreachachanbe  as we check for expo version before 
+    // should be unreachable as we check for expo version before 
     // ever using getDefaultConfig. 
     return undefined;
   }
