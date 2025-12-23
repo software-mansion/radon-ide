@@ -192,8 +192,9 @@ export abstract class AndroidDevice extends DeviceBase implements Disposable {
     ]);
   }
 
-  public async forwardDevicePort(port: number) {
-    await exec(ADB_PATH, ["-s", this.serial, "reverse", `tcp:${port}`, `tcp:${port}`]);
+  public async forwardDevicePort(hostPort: number, devicePort?: number) {
+    devicePort ??= hostPort;
+    await exec(ADB_PATH, ["-s", this.serial, "reverse", `tcp:${devicePort}`, `tcp:${hostPort}`]);
   }
 
   public setUpKeyboard() {

@@ -7,14 +7,19 @@ REAL_XCRUN=$(PATH="${PATH//$SCRIPT_DIR:/}" command -v xcrun)
 
 # If --set is specified respect that and pass through unchanged
 for arg in "$@"; do
-    if [[ "$arg" == "--set" ]]; then
-        exec "$REAL_XCRUN" "$@"
-    fi
+	if [[ "$arg" == "--set" ]]; then
+		exec "$REAL_XCRUN" "$@"
+	fi
 done
 
-# If the subcommand is 'simctl', inject --set <CUSTOM_DEVICE_SET> after 'simctl'
+# If the subcommand is 'simctl', inject --set $__RADON_CUSTOM_DEVICE_SET after 'simctl'
 if [[ "$1" == "simctl" ]]; then
-    exec "$REAL_XCRUN" "$1" --set "$CUSTOM_DEVICE_SET" "${@:2}"
+	# When launching the app, we may need to pass the metro port as well
+	if [[ $2 == "launch" && "$*" == *"$__RADON_APP_ID"* ]]; then
+		exec "$REAL_XCRUN" "$1" --set "$__RADON_CUSTOM_DEVICE_SET" "${@:2}" $__RADON_LAUNCH_ARGS
+	else
+		exec "$REAL_XCRUN" "$1" --set "$__RADON_CUSTOM_DEVICE_SET" "${@:2}"
+	fi
 else
-    exec "$REAL_XCRUN" "$@"
+	exec "$REAL_XCRUN" "$@"
 fi
