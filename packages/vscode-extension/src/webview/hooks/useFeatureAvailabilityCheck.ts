@@ -2,18 +2,22 @@ import { use$ } from "@legendapp/state/react";
 import { Feature, FeatureAvailabilityStatus } from "../../common/License";
 import { useStore } from "../providers/storeProvider";
 
-export function useIsFeatureAdminDisabled(feature: Feature) {
+function useFeaturesAvailability() {
   const store$ = useStore();
-  const featuresAvailability = use$(store$.license.featuresAvailability);
+  return use$(store$.license.featuresAvailability);
+}
 
-  return featuresAvailability[feature] === FeatureAvailabilityStatus.ADMIN_DISABLED;
+export function useIsFeatureAdminDisabled(feature: Feature | undefined): boolean {
+  const featuresAvailability = useFeaturesAvailability();
+  return !!feature && featuresAvailability[feature] === FeatureAvailabilityStatus.ADMIN_DISABLED;
 }
 
 export function useIsFeaturePaywalled(feature: Feature | undefined): boolean {
-  const store$ = useStore();
-  const featuresAvailability = use$(store$.license.featuresAvailability);
-  if (!featuresAvailability || !feature) {
-    return false;
-  }
-  return featuresAvailability[feature] === FeatureAvailabilityStatus.PAYWALLED;
+  const featuresAvailability = useFeaturesAvailability();
+  return !!feature && featuresAvailability[feature] === FeatureAvailabilityStatus.PAYWALLED;
+}
+
+export function useIsFeatureAvailable(feature: Feature | undefined): boolean {
+  const featuresAvailability = useFeaturesAvailability();
+  return !!feature && featuresAvailability[feature] === FeatureAvailabilityStatus.AVAILABLE;
 }

@@ -2,7 +2,10 @@ import React, { useMemo } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import classnames from "classnames";
 import { Feature } from "../../../common/License";
-import { useIsFeaturePaywalled } from "../../hooks/useFeatureAvailabilityCheck";
+import {
+  useIsFeatureAvailable,
+  useIsFeaturePaywalled,
+} from "../../hooks/useFeatureAvailabilityCheck";
 import { usePaywalledCallback } from "../../hooks/usePaywalledCallback";
 import * as DropdownMenuComponents from "../shared/DropdownMenuComponents";
 
@@ -35,13 +38,14 @@ export function Item({
   ...props
 }: PaywallItemProps) {
   const isPaywalled = useIsFeaturePaywalled(feature);
+  const isAvailable = useIsFeatureAvailable(feature);
 
   const wrappedOnSelect = usePaywalledCallback(onSelect, feature, paywallCallbackDependencies);
 
   return (
     <DropdownMenu.Item
       onSelect={wrappedOnSelect}
-      className={classnames(className, isPaywalled && "paywalled")}
+      className={classnames(className, !isAvailable && "paywalled")}
       {...props}>
       {children}
       {isPaywalled && <ProBadge />}
@@ -63,7 +67,9 @@ export function Sub({
   ...props
 }: PaywallSub) {
   const isPaywalled = useIsFeaturePaywalled(feature);
-  const isOpen = isPaywalled ? false : open;
+  const isAvailable = useIsFeatureAvailable(feature);
+
+  const isOpen = isAvailable ? open : false;
 
   const handlePaywallCheck = usePaywalledCallback(() => {}, feature, paywallCallbackDependencies);
 
@@ -77,12 +83,12 @@ export function Sub({
         return React.cloneElement(
           child as React.ReactElement<DropdownMenu.DropdownMenuSubTriggerProps>,
           {
-            className: classnames(originalClassName, isPaywalled && "paywalled"),
+            className: classnames(originalClassName, !isAvailable && "paywalled"),
             onClick: feature ? handlePaywallCheck : originalOnClick,
             children: (
               <>
                 {childProps.children}
-                {feature && <ProBadge />}
+                {isPaywalled && <ProBadge />}
               </>
             ),
           }
@@ -114,6 +120,7 @@ export function SwitchItem({
   ...props
 }: PaywallSwitchItemProps) {
   const isPaywalled = useIsFeaturePaywalled(feature);
+  const isAvailable = useIsFeatureAvailable(feature);
 
   const wrappedOnClick = usePaywalledCallback(
     onClick as (...args: any[]) => Promise<void> | void,
@@ -124,9 +131,9 @@ export function SwitchItem({
   return (
     <>
       <DropdownMenuComponents.SwitchItem
-        className={classnames(className, isPaywalled && "paywalled")}
+        className={classnames(className, !isAvailable && "paywalled")}
         onClick={wrappedOnClick}
-        disabled={isPaywalled}
+        disabled={!isAvailable}
         {...props}>
         {children}
         {isPaywalled && <ProBadge style={{ right: "50px" }} />}
