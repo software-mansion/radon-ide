@@ -10,7 +10,7 @@ import DoctorIcon from "./icons/DoctorIcon";
 import { KeybindingInfo } from "./shared/KeybindingInfo";
 import "./shared/SwitchGroup.css";
 import { SendFeedbackItem } from "./SendFeedbackItem";
-import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import { DropdownMenuRoot } from "./shared/DropdownMenuComponents";
 import { useStore } from "../providers/storeProvider";
 import { ActivateLicenseView } from "../views/ActivateLicenseView";
 import { LicenseStatus } from "../../common/License";

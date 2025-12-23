@@ -37,7 +37,7 @@ import {
 } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { ActivateLicenseMessage } from "./ActivateLicenseMessage";
-import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
+import { useIsFeatureAdminDisabled } from "../hooks/useFeatureAvailabilityCheck";
 import { Feature } from "../../common/License";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {

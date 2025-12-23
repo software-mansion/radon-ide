@@ -10,7 +10,7 @@ import { use$ } from "@legendapp/state/react";
 import { observable } from "@legendapp/state";
 import { useProject } from "../providers/ProjectProvider";
 import IconButton from "./shared/IconButton";
-import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import { DropdownMenuRoot } from "./shared/DropdownMenuComponents";
 import Label from "./shared/Label";
 import { ProjectInterface } from "../../common/Project";
 import Tooltip from "./shared/Tooltip";

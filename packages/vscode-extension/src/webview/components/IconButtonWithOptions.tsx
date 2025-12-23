@@ -3,7 +3,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import classNames from "classnames";
 import IconButton, { IconButtonProps } from "./shared/IconButton";
 import "./IconButtonWithOptions.css";
-import { DropdownMenuRoot } from "./DropdownMenuRoot";
+import { DropdownMenuRoot } from "./shared/DropdownMenuComponents";
 import { PropsWithDataTest } from "../../common/types";
 
 interface IconButtonWithOptionsProps extends IconButtonProps {

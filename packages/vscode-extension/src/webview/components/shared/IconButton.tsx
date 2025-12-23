@@ -4,6 +4,9 @@ import "./IconButton.css";
 import Tooltip from "./Tooltip";
 import { usePing } from "../../hooks/usePing";
 import { PropsWithDataTest } from "../../../common/types";
+import { Feature } from "../../../common/License";
+import { useIsFeaturePaywalled } from "../../hooks/useFeatureAvailabilityCheck";
+import { usePaywalledCallback } from "../../hooks/usePaywalledCallback";
 
 export interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -12,6 +15,8 @@ export interface IconButtonProps {
   disableTooltip?: boolean;
   counter?: number;
   counterMode?: "full" | "compact";
+  feature?: Feature;
+  paywallCallbackDependencies?: unknown[];
   active?: boolean;
   type?: "primary" | "secondary";
   side?: "left" | "right" | "center";
@@ -31,7 +36,7 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
       counter,
       counterMode = "full",
       children,
-      onClick,
+      onClick = () => {},
       tooltip,
       disabled,
       active,
@@ -41,15 +46,21 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
       className = "",
       shouldDisplayLabelWhileDisabled = false,
       dataTest,
+      feature,
+      paywallCallbackDependencies = [],
       ...rest
     } = props;
 
-    const shouldPing = usePing(counter ?? 0, counterMode);
+    const isPaywalled = useIsFeaturePaywalled(feature);
+    const isProFeature = feature !== undefined && isPaywalled;
 
+    const handleOnClick = usePaywalledCallback(onClick, feature, paywallCallbackDependencies);
+
+    const shouldPing = usePing(counter ?? 0, counterMode);
     const showCounter = Boolean(counter);
     const button = (
       <button
-        onClick={onClick}
+        onClick={handleOnClick}
         disabled={disabled}
         className={classnames(
           "icon-button",
@@ -59,13 +70,15 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
           size === "small" && "icon-button-small",
           side === "left" && "icon-button-left",
           side === "right" && "icon-button-right",
+          isPaywalled && "unavailable",
           className
         )}
         data-testid={dataTest}
         {...rest}
         ref={ref}>
         {children}
-        {counterMode === "full" && counter !== null && (
+        {isPaywalled && <span className={"pro-feature-badge"}>Pro</span>}
+        {!isProFeature && counterMode === "full" && counter !== null && (
           <span className={classnames("icon-button-counter", showCounter && "visible")}>
             {counter}
           </span>

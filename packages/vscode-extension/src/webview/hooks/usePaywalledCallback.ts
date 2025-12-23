@@ -1,6 +1,6 @@
+import { useCallback } from "react";
 import { use$ } from "@legendapp/state/react";
 import { useStore } from "../providers/storeProvider";
-import { useCallback } from "react";
 import { Feature, FeatureAvailabilityStatus, FeaturesAvailability } from "../../common/License";
 import { usePaywall } from "./usePaywall";
 import {
@@ -11,19 +11,21 @@ import { useAdminBlock } from "./useAdminBlock";
 
 function withPaywallGuard<F extends (...args: any[]) => Promise<void> | void>(
   fn: F,
-  feature: Feature,
+  feature: Feature | undefined,
   featuresAvailability: FeaturesAvailability
 ): (...args: Parameters<F>) => Promise<void> {
   const { openPaywall } = usePaywall();
   const { openAdminBlock } = useAdminBlock();
 
   return async (...args: Parameters<F>): Promise<void> => {
-    const featureAvailability = featuresAvailability[feature];
+    const featureAvailability = feature
+      ? featuresAvailability[feature]
+      : FeatureAvailabilityStatus.AVAILABLE;
     switch (featureAvailability) {
       case FeatureAvailabilityStatus.AVAILABLE:
         break;
       case FeatureAvailabilityStatus.PAYWALLED:
-        openPaywall();
+        openPaywall(undefined, feature);
         return;
       // Note: this should never happen as we disable Restricted functionalities but if a user finds a way
       // We inform them that restriction was placed by their administration.
@@ -51,7 +53,7 @@ function withPaywallGuard<F extends (...args: any[]) => Promise<void> | void>(
 
 export function usePaywalledCallback<F extends (...args: any[]) => Promise<void> | void>(
   fn: F,
-  feature: Feature,
+  feature: Feature | undefined,
   dependencies: unknown[]
 ) {
   const store$ = useStore();
