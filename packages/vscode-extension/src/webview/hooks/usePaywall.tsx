@@ -9,7 +9,7 @@ export function usePaywall() {
 
   const openPaywall = (title?: string, proFeature?: Feature) => {
     project.sendTelemetry("paywall:open");
-    openModal(<PaywallView title={title} proFeature={proFeature} />, { fullscreen: true });
+    openModal(<PaywallView title={title} feature={proFeature} />, { fullscreen: true });
   };
 
   return { openPaywall };

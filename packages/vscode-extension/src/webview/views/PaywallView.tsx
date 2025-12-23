@@ -48,7 +48,7 @@ const freeBenefits = [
 
 type PaywallViewProps = {
   title?: string;
-  proFeature?: Feature;
+  feature?: Feature;
 };
 
 function BenefitsList({ items }: { items: string[] }) {
@@ -245,7 +245,7 @@ function ActivateLicenseButton() {
   );
 }
 
-function PaywallView({ title, proFeature }: PaywallViewProps) {
+function PaywallView({ title, feature }: PaywallViewProps) {
   const store$ = useStore();
 
   const licenseState = use$(store$.license.status);
@@ -259,9 +259,9 @@ function PaywallView({ title, proFeature }: PaywallViewProps) {
         <h1 className="paywall-title">
           {title ?? (isLicenseInactive ? "Get Radon IDE License" : "Unlock Radon IDE Pro")}
         </h1>
-        {proFeature && (
+        {feature && (
           <p className="paywall-feature-description">
-            <b>{FeatureNamesMap[proFeature]}</b> feature is available with <b>Radon IDE Pro</b>
+            <b>{FeatureNamesMap[feature]}</b> feature is available with <b>Radon IDE Pro</b>
           </p>
         )}
 
