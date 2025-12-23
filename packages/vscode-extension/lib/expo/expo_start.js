@@ -4,15 +4,65 @@ const {
   overrideModuleFromAppDependency,
 } = require("../metro_helpers");
 
+const { gte } = require("../third-party/semver");
+
+const EXPO_CLI_VERSION = requireFromAppDependency("expo", "@expo/cli/package.json").version;
+
+const MINIMUM_RESOLVE_CONFIG_OVERRIDE_VERSION = "54.0.20";
+
+function requireGetDefaultConfig() {
+  try {
+    const metroConfig = requireFromAppDependency("expo", "@expo/metro-config");
+    return metroConfig.getDefaultConfig
+  } catch {
+    // metro-config is only available on newer expo versions, 
+    // so we just fall back to undefined. Note that this path
+    // should be unreachachanbe  as we check for expo version before 
+    // ever using getDefaultConfig. 
+    return undefined;
+  }
+}
+
+function createRadonLoadConfig(original) {
+  return async (...args) => {
+    const config = await original(...args);
+    return adaptMetroConfig(config);
+  }
+}
+
+function createRadonResolveConfig(original) {
+  return async (expoConfig, projectRoot, ...rest) => {
+    const originalResolvedConfig = await original(expoConfig, projectRoot, ...rest);
+    const getDefaultConfig = requireGetDefaultConfig();
+    if (getDefaultConfig === undefined) {
+      return originalResolvedConfig;
+    }
+    let config;
+    if (originalResolvedConfig.isEmpty) {
+      config = getDefaultConfig(projectRoot);
+    }
+    else {
+      config = (typeof originalResolvedConfig.config === "function")
+        ? await originalResolvedConfig.config()
+        : originalResolvedConfig.config;
+    }
+    return {
+      ...originalResolvedConfig,
+      isEmpty: false,
+      config: adaptMetroConfig(config)
+    }
+  }
+}
+
 function createMetroConfigProxy(metroConfig) {
   return new Proxy(metroConfig, {
     get(_target, prop, _receiver) {
       const original = Reflect.get(...arguments);
       if (prop === "loadConfig") {
-        return async function (...args) {
-          const config = await original(...args);
-          return adaptMetroConfig(config);
-        };
+        return createRadonLoadConfig(original);
+      }
+      if (prop == "resolveConfig" && gte(EXPO_CLI_VERSION, MINIMUM_RESOLVE_CONFIG_OVERRIDE_VERSION)) {
+        return createRadonResolveConfig(original);
       }
       return original;
     },
