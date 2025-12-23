@@ -100,7 +100,7 @@
   transition-delay: 0ms;
 }
 
-.icon-button.paywalled:hover .pro-feature-badge {
+.icon-button.unavailable:hover .pro-feature-badge {
   opacity: 1;
   transition-delay: 250ms;
 }
