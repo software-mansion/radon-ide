@@ -288,6 +288,18 @@
         "command": "RNIDE.removeLicense",
         "title": "Remove license",
         "category": "Radon IDE"
+      },
+      {
+        "enablement": "!RNIDE.MCPToolTestsRunning",
+        "command": "RNIDE.testChatToolUsage",
+        "title": "Test AI tool usage",
+        "category": "Radon IDE"
+      },
+      {
+        "enablement": "RNIDE.MCPToolTestsRunning",
+        "command": "RNIDE.terminateChatToolTest",
+        "title": "Terminate MCP tool tests",
+        "category": "Radon IDE"
       }
     ],
     "keybindings": [
