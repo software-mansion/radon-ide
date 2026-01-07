@@ -31,9 +31,9 @@ import {
 import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
 import { ActivateLicenseView } from "./ActivateLicenseView";
-import { Feature, LicenseStatus } from "../../common/License";
+import { Feature, FeatureAvailabilityStatus, LicenseStatus } from "../../common/License";
 import { useDevices } from "../hooks/useDevices";
-import { useIsFeatureAdminDisabled } from "../hooks/useFeatureAvailabilityCheck";
+import { useFeatureAvailability } from "../hooks/useFeatureAvailability";
 import PaywallIconButton from "../components/shared/PaywallIconButton";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
@@ -220,7 +220,8 @@ function PreviewView() {
     };
   }, []);
 
-  const isRecordingAdminDisabled = useIsFeatureAdminDisabled(Feature.ScreenRecording);
+  const isRecordingAdminDisabled =
+    useFeatureAvailability(Feature.ScreenRecording) === FeatureAvailabilityStatus.ADMIN_DISABLED;
 
   const showRecordingButton = !isRecordingAdminDisabled;
 
@@ -250,7 +251,8 @@ function PreviewView() {
     project.stopMaestroTest();
   }
 
-  const isReplayAdminDisabled = useIsFeatureAdminDisabled(Feature.ScreenReplay);
+  const isReplayAdminDisabled =
+    useFeatureAvailability(Feature.ScreenReplay) === FeatureAvailabilityStatus.ADMIN_DISABLED;
 
   async function handleReplay() {
     try {
@@ -260,7 +262,8 @@ function PreviewView() {
     }
   }
 
-  const isScreenshotAdminDisabled = useIsFeatureAdminDisabled(Feature.Screenshot);
+  const isScreenshotAdminDisabled =
+    useFeatureAvailability(Feature.Screenshot) === FeatureAvailabilityStatus.ADMIN_DISABLED;
 
   const showScreenshotButton = !isScreenshotAdminDisabled;
 

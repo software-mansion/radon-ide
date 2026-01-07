@@ -37,8 +37,8 @@ import {
 } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { ActivateLicenseMessage } from "./ActivateLicenseMessage";
-import { useIsFeatureAdminDisabled } from "../hooks/useFeatureAvailabilityCheck";
-import { Feature } from "../../common/License";
+import { useFeatureAvailability } from "../hooks/useFeatureAvailability";
+import { Feature, FeatureAvailabilityStatus } from "../../common/License";
 
 function TouchPointIndicator({ isPressing }: { isPressing: boolean }) {
   return <div className={`touch-indicator ${isPressing ? "pressed" : ""}`}></div>;
@@ -131,7 +131,8 @@ function Preview({
 
   const isRunning = selectedDeviceSessionStatus === "running";
 
-  const isSendFilesAdminDisabled = useIsFeatureAdminDisabled(Feature.SendFile);
+  const isSendFilesAdminDisabled =
+    useFeatureAvailability(Feature.SendFile) === FeatureAvailabilityStatus.ADMIN_DISABLED;
 
   const isRefreshing = use$(() =>
     isRunning ? selectedDeviceSessionState.applicationSession.isRefreshing.get() : false

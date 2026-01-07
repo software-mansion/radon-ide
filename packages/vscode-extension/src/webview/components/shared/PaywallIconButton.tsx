@@ -1,7 +1,7 @@
 import classnames from "classnames";
-import { Feature } from "../../../common/License";
+import { Feature, FeatureAvailabilityStatus } from "../../../common/License";
 import { PropsWithDataTest } from "../../../common/types";
-import { useIsFeaturePaywalled } from "../../hooks/useFeatureAvailabilityCheck";
+import { useFeatureAvailability } from "../../hooks/useFeatureAvailability";
 import { usePaywalledCallback } from "../../hooks/usePaywalledCallback";
 import IconButton, { type IconButtonProps } from "./IconButton";
 
@@ -17,7 +17,7 @@ const PaywallIconButton = ({
   onClick = () => {},
   ...props
 }: PaywallIconButtonProps) => {
-  const isPaywalled = useIsFeaturePaywalled(feature);
+  const isPaywalled = useFeatureAvailability(feature) === FeatureAvailabilityStatus.PAYWALLED;
   const badge = isPaywalled ? <span className={"pro-feature-badge"}>Pro</span> : null;
 
   const handleOnClick = usePaywalledCallback(onClick, feature, [onClick]);

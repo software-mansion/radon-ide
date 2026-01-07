@@ -1,11 +1,8 @@
 import React, { useMemo } from "react";
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import classnames from "classnames";
-import { Feature } from "../../../common/License";
-import {
-  useIsFeatureAvailable,
-  useIsFeaturePaywalled,
-} from "../../hooks/useFeatureAvailabilityCheck";
+import { Feature, FeatureAvailabilityStatus } from "../../../common/License";
+import { useFeatureAvailability } from "../../hooks/useFeatureAvailability";
 import { usePaywalledCallback } from "../../hooks/usePaywalledCallback";
 import * as DropdownMenuComponents from "../shared/DropdownMenuComponents";
 
@@ -36,8 +33,8 @@ export function Item({
   feature,
   ...props
 }: PaywallItemProps) {
-  const isPaywalled = useIsFeaturePaywalled(feature);
-  const isAvailable = useIsFeatureAvailable(feature);
+  const isPaywalled = useFeatureAvailability(feature) === FeatureAvailabilityStatus.PAYWALLED;
+  const isAvailable = useFeatureAvailability(feature) === FeatureAvailabilityStatus.AVAILABLE;
 
   const handleSelect = usePaywalledCallback(onSelect, feature, [onSelect]);
 
@@ -59,8 +56,8 @@ interface PaywallSubProps extends DropdownMenu.DropdownMenuSubProps {
 }
 
 export function Sub({ feature, children, open, ...props }: PaywallSubProps) {
-  const isPaywalled = useIsFeaturePaywalled(feature);
-  const isAvailable = useIsFeatureAvailable(feature);
+  const isPaywalled = useFeatureAvailability(feature) === FeatureAvailabilityStatus.PAYWALLED;
+  const isAvailable = useFeatureAvailability(feature) === FeatureAvailabilityStatus.AVAILABLE;
 
   const isOpen = isAvailable ? open : false;
 
@@ -104,8 +101,8 @@ interface PaywallSwitchItemProps extends DropdownMenuComponents.SwitchItemProps 
 }
 
 export function SwitchItem({ children, className, feature, ...props }: PaywallSwitchItemProps) {
-  const isPaywalled = useIsFeaturePaywalled(feature);
-  const isAvailable = useIsFeatureAvailable(feature);
+  const isPaywalled = useFeatureAvailability(feature) === FeatureAvailabilityStatus.PAYWALLED;
+  const isAvailable = useFeatureAvailability(feature) === FeatureAvailabilityStatus.AVAILABLE;
 
   const handleOnClick = usePaywalledCallback(() => {}, feature, []);
 
