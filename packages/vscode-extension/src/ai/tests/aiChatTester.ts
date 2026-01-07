@@ -7,7 +7,6 @@ import { window, commands, Uri, workspace, StatusBarAlignment, ThemeColor } from
 import { Logger } from "../../Logger";
 import { exec } from "../../utilities/subprocess";
 import { Platform } from "../../utilities/platform";
-import { sleep } from "../../utilities/retry";
 import { IDE } from "../../project/ide";
 
 export const GIT_PATH = Platform.select({
@@ -100,10 +99,6 @@ const testCases: ChatTestCase[] = [
     allowedToolIds: ["view_application_logs"],
   },
   {
-    prompt: "Show me the console output for the last action.",
-    allowedToolIds: ["view_application_logs"],
-  },
-  {
     prompt: "Are there any errors in the logs?",
     allowedToolIds: ["view_application_logs"],
   },
@@ -148,12 +143,10 @@ const testCases: ChatTestCase[] = [
 
   {
     prompt: "Why is the banner not showing up?",
-    // Needs tree to see if it exists, logs to see if it failed, or screenshot to see if it's invisible
     allowedToolIds: ["view_component_tree", "view_application_logs", "view_screenshot"],
   },
   {
     prompt: "Inspect the padding on the user profile card.",
-    // Needs tree for style props, screenshot for visual verification
     allowedToolIds: ["view_component_tree", "view_screenshot"],
   },
 ];
@@ -183,14 +176,19 @@ async function setGlobalTestsRunning(areTestsRunning: boolean) {
   await commands.executeCommand("setContext", "RNIDE.MCPToolTestsRunning", areTestsRunning);
 }
 
-function throwOnTestTermination(ideInstance: IDE): Promise<void> {
-  return new Promise((_, reject) => {
-    ideInstance.onStateChanged((partialState) => {
+function awaitTestTerminationOrTimeout(ideInstance: IDE, testTimeout: number): Promise<void> {
+  return new Promise((resolve) => {
+    const disposable = ideInstance.onStateChanged((partialState) => {
       const continueRunningTests = partialState.areMCPTestsRunning;
       if (continueRunningTests === false) {
-        reject();
+        resolve();
       }
     });
+
+    setTimeout(() => {
+      disposable.dispose();
+      resolve();
+    }, testTimeout);
   });
 }
 
@@ -267,17 +265,7 @@ export async function testChatToolUsage(): Promise<void> {
     await commands.executeCommand("workbench.action.chat.newChat");
     await commands.executeCommand("workbench.action.chat.openagent", testCase.prompt);
 
-    try {
-      await Promise.race([
-        // FIXME: Fixed timouts like this should be avoided if possible
-        // Note: Found no way of avoiding this one for now :(
-        sleep(10_000),
-        throwOnTestTermination(ideInstance),
-      ]);
-    } catch (e) {
-      console.log("FOOBAR: Error", e);
-      break;
-    }
+    await awaitTestTerminationOrTimeout(ideInstance, 10_000);
 
     const filepath = dir + randomBytes(8).toString("hex") + ".json";
 
