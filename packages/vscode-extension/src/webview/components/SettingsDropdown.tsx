@@ -16,8 +16,6 @@ import { ActivateLicenseView } from "../views/ActivateLicenseView";
 import { LicenseStatus } from "../../common/License";
 import ExportLogsView from "../views/ExportLogsView";
 
-import { ChristmasModeToggle } from "./christmas/ChristmasModeToggle";
-
 interface SettingsDropdownProps {
   children: React.ReactNode;
   isDeviceRunning: boolean;
@@ -168,7 +166,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           </DropdownMenu.Item>
           {telemetryEnabled && <SendFeedbackItem />}
           {shouldShowActivateLicenseItem && <ActivateLicenseItem />}
-          <ChristmasModeToggle />
           <div className="dropdown-menu-item device-settings-version-text">
             Radon IDE version: {extensionVersion}
           </div>
