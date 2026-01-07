@@ -19,7 +19,7 @@ export function DropdownMenuRoot({
 }: DropdownMenuRootProps) {
   const [openInternal, setOpenInternal] = useState(false);
 
-  const open = openExternal !== undefined ? openExternal : openInternal;
+  const open = openExternal ?? openInternal;
 
   const handleSetOpen = (e: boolean) => {
     if (onOpenChange) {

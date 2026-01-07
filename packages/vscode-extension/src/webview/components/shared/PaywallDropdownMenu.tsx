@@ -59,7 +59,7 @@ export function Sub({ feature, children, open, ...props }: PaywallSubProps) {
   const isPaywalled = useFeatureAvailability(feature) === FeatureAvailabilityStatus.PAYWALLED;
   const isAvailable = useFeatureAvailability(feature) === FeatureAvailabilityStatus.AVAILABLE;
 
-  const isOpen = isAvailable ? open : false;
+  const isOpen = isAvailable && open;
 
   const handleOnClick = usePaywalledCallback((f: () => void | undefined) => f?.(), feature, []);
 

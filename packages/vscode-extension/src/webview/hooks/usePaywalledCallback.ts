@@ -22,7 +22,7 @@ function withPaywallGuard<F extends (...args: any[]) => Promise<void> | void>(
       case FeatureAvailabilityStatus.AVAILABLE:
         break;
       case FeatureAvailabilityStatus.PAYWALLED:
-        openPaywall(undefined, feature);
+        openPaywall({ feature });
         return;
       // Note: this should never happen as we disable Restricted functionalities but if a user finds a way
       // We inform them that restriction was placed by their administration.

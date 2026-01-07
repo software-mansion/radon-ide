@@ -224,7 +224,7 @@ export function useFatalErrorAlert(errorDescriptor: FatalErrorDescriptor | undef
     errorAlert = createMetroErrorAlert(errorDescriptor);
   } else if (errorDescriptor?.kind === "preview") {
     if (errorDescriptor.reason === PreviewErrorReason.NoAccess) {
-      openPaywall("Activate Radon Now");
+      openPaywall({title: "Activate Radon Now"});
       shouldShowAlert = false;
     } else {
       errorAlert = createPreviewErrorAlert(errorDescriptor);
