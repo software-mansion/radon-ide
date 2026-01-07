@@ -47,14 +47,13 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
       shouldDisplayLabelWhileDisabled = false,
       dataTest,
       feature,
-      paywallCallbackDependencies = [],
       ...rest
     } = props;
 
     const isPaywalled = useIsFeaturePaywalled(feature);
     const isProFeature = feature !== undefined && isPaywalled;
 
-    const handleOnClick = usePaywalledCallback(onClick, feature, paywallCallbackDependencies);
+    const handleOnClick = usePaywalledCallback(onClick, feature, [onClick]);
 
     const shouldPing = usePing(counter ?? 0, counterMode);
     const showCounter = Boolean(counter);

@@ -34,13 +34,12 @@ export function Item({
   className,
   onSelect = () => {},
   feature,
-  paywallCallbackDependencies = [],
   ...props
 }: PaywallItemProps) {
   const isPaywalled = useIsFeaturePaywalled(feature);
   const isAvailable = useIsFeatureAvailable(feature);
 
-  const handleSelect = usePaywalledCallback(onSelect, feature, paywallCallbackDependencies);
+  const handleSelect = usePaywalledCallback(onSelect, feature, [onSelect]);
 
   return (
     <DropdownMenu.Item
@@ -59,23 +58,13 @@ interface PaywallSub extends DropdownMenu.DropdownMenuSubProps {
   children: React.ReactNode;
 }
 
-export function Sub({
-  feature,
-  paywallCallbackDependencies = [],
-  children,
-  open,
-  ...props
-}: PaywallSub) {
+export function Sub({ feature, children, open, ...props }: PaywallSub) {
   const isPaywalled = useIsFeaturePaywalled(feature);
   const isAvailable = useIsFeatureAvailable(feature);
 
   const isOpen = isAvailable ? open : false;
 
-  const handleOnClick = usePaywalledCallback(
-    (f: () => void | undefined) => f?.(),
-    feature,
-    paywallCallbackDependencies
-  );
+  const handleOnClick = usePaywalledCallback((f: () => void | undefined) => f?.(), feature, []);
 
   // Enhance SubTrigger with paywall styling and behavior if it exists in children
   const enhancedChildren = useMemo(() => {
