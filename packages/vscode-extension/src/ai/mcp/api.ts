@@ -8,8 +8,6 @@ const BACKEND_URL = "https://radon-ai-backend.swmansion.com/";
 
 export const AI_API_PLACEHOLDER_ID = "3241"; // This placeholder is needed by the API, but the value doesn't matter
 
-export const AI_LOG = "[AI]";
-
 export class ServerUnreachableError extends Error {
   constructor(message: string, cause: Error) {
     super(message, { cause });
