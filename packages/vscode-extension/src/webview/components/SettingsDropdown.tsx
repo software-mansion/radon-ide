@@ -32,7 +32,7 @@ function ActivateLicenseItem() {
       onSelect={() => {
         openModal(<ActivateLicenseView />, { title: "Activate License" });
       }}>
-      <span className="dropdown-menu-item-wraper">
+      <span className="dropdown-menu-item-wrapper">
         <span className="codicon codicon-key" />
         <div className="dropdown-menu-item-content" data-testid="settings-report-issue">
           Activate License
@@ -92,7 +92,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             onSelect={() => {
               project.openDevMenu();
             }}>
-            <span className="dropdown-menu-item-wraper">
+            <span className="dropdown-menu-item-wrapper">
               <span className="codicon codicon-code" />
               <div className="dropdown-menu-item-content">
                 Open dev menu
@@ -145,7 +145,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             onSelect={() => {
               project.reportIssue();
             }}>
-            <span className="dropdown-menu-item-wraper">
+            <span className="dropdown-menu-item-wrapper">
               <span className="codicon codicon-report" />
               <div className="dropdown-menu-item-content" data-testid="settings-report-issue">
                 Report Issue
@@ -157,7 +157,7 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
             onSelect={async () => {
               openModal(<ExportLogsView />, { title: "Export Radon Logs" });
             }}>
-            <span className="dropdown-menu-item-wraper">
+            <span className="dropdown-menu-item-wrapper">
               <span className="codicon codicon-share" />
               <div className="dropdown-menu-item-content" data-testid="settings-report-issue">
                 Export Diagnostics Report

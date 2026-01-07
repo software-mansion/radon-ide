@@ -65,7 +65,7 @@ export function CommandItem({
       onSelect={onSelect}
       disabled={disabled}
       data-testid={dataTest}>
-      <span className="dropdown-menu-item-wraper">
+      <span className="dropdown-menu-item-wrapper">
         <span className={`codicon codicon-${icon}`} />
         <div className="dropdown-menu-item-content">
           {label}

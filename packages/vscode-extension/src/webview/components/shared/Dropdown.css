@@ -71,7 +71,7 @@ button {
   color: var(--swm-default-text);
 }
 
-.dropdown-menu-item-wraper {
+.dropdown-menu-item-wrapper {
   display: flex;
   width: 100%;
   align-items: center;
