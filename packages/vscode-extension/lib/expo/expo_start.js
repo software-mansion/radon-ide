@@ -8,6 +8,8 @@ const EXPO_CLI_VERSION = requireFromAppDependency("expo", "@expo/cli/package.jso
 
 const MINIMUM_RESOLVE_CONFIG_OVERRIDE_VERSION = "54.0.20";
 
+const MINIMUM_RESOLVE_CONFIG_OVERRIDE_DATE = 20251218;
+
 function gte(version1, version2) {
   function normalize(v) {
     v = String(v || "").trim();
@@ -28,6 +30,26 @@ function gte(version1, version2) {
   if (major1 !== major2) return major1 > major2;
   if (minor1 !== minor2) return minor1 > minor2;
   return patch1 >= patch2;
+}
+
+function extractCanaryDate(v) {
+  v = String(v || "").trim();
+  // Match pattern like "55.0.0-canary-20251216-3f01dbf"
+  const canaryMatch = v.match(/-canary-(\d{8})-/);
+  return canaryMatch ? Number.parseInt(canaryMatch[1]) : null;
+}
+
+function shouldOverrideResolveConfig(cliVersion) {
+  if (!gte(cliVersion, MINIMUM_RESOLVE_CONFIG_OVERRIDE_VERSION)) {
+    return false;
+  }
+
+  const canaryDate = extractCanaryDate(cliVersion);
+  if (canaryDate && canaryDate < MINIMUM_RESOLVE_CONFIG_OVERRIDE_DATE) {
+    return false;
+  }
+
+  return true;
 }
 
 function requireGetDefaultConfig() {
@@ -81,7 +103,7 @@ function createMetroConfigProxy(metroConfig) {
       if (prop === "loadConfig") {
         return createRadonLoadConfig(original);
       }
-      if (prop == "resolveConfig" && gte(EXPO_CLI_VERSION, MINIMUM_RESOLVE_CONFIG_OVERRIDE_VERSION)) {
+      if (prop == "resolveConfig" && shouldOverrideResolveConfig(EXPO_CLI_VERSION)) {
         return createRadonResolveConfig(original);
       }
       return original;
