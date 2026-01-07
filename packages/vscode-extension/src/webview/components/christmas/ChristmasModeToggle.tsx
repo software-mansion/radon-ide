@@ -1,21 +1,21 @@
 import * as Switch from "@radix-ui/react-switch";
 import { use$ } from "@legendapp/state/react";
 import { useStore } from "../../providers/storeProvider";
-export function FestiveModeToggle() {
+export function ChristmasModeToggle() {
   const store$ = useStore();
-  const festiveMode = use$(store$.workspaceConfiguration.userInterface.festiveMode);
+  const christmasMode = use$(store$.workspaceConfiguration.userInterface.christmasMode);
   return (
     <div className="dropdown-menu-item">
       <span className="codicon codicon-sparkle" />
-      Festive Mode
+      Christmas Mode
       <Switch.Root
         className="switch-root small-switch"
-        id="festive-mode"
-        data-testid="settings-dropdown-festive-mode-switch"
+        id="christmas-mode"
+        data-testid="settings-dropdown-christmas-mode-switch"
         onCheckedChange={(checked) =>
-          store$.workspaceConfiguration.userInterface.festiveMode.set(checked)
+          store$.workspaceConfiguration.userInterface.christmasMode.set(checked)
         }
-        defaultChecked={festiveMode}
+        defaultChecked={christmasMode}
         style={{ marginLeft: "auto" }}>
         <Switch.Thumb className="switch-thumb" />
       </Switch.Root>

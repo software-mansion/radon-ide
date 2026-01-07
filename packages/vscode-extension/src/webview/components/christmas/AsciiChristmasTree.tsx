@@ -36,7 +36,7 @@ function AsciiChristmasTree({ width = 46, height = 19 }: { width?: number; heigh
   }, []);
 
   const treeImage = useMemo(() => {
-    return generateFestiveScene(width, height, baubleColors);
+    return generateChristmasScene(width, height, baubleColors);
   }, [width, height, baubleColors]);
 
   return (
@@ -60,7 +60,7 @@ function AsciiChristmasTree({ width = 46, height = 19 }: { width?: number; heigh
   );
 }
 
-function generateFestiveScene(width: number, _height: number, baubleColors: string[]): Pixel[][] {
+function generateChristmasScene(width: number, _height: number, baubleColors: string[]): Pixel[][] {
   // Generate single centered tree with fixed size
   const treeWidth = 21;
   const tree = generateTree(treeWidth, baubleColors, 0);

@@ -410,7 +410,7 @@
             "default": true,
             "description": "Shows device frame in the IDE panel."
           },
-          "RadonIDE.userInterface.festiveMode": {
+          "RadonIDE.userInterface.christmasMode": {
             "type": "boolean",
             "scope": "window",
             "default": false,
