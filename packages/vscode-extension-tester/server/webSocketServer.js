@@ -143,24 +143,6 @@ app.get("/api/error/server-error", (req, res) => {
     `);
 });
 
-app.post("/api/graphql", (req, res) => {
-  const { operationName, variables } = req.body;
-
-  let data = {};
-  if (operationName === "GetUserProfile") {
-    data = {
-      user: {
-        id: variables?.id || "1",
-        name: "GraphQL User",
-      },
-    };
-  } else {
-    data = { message: "Unknown operation" };
-  }
-
-  res.json({ data: data });
-});
-
 app.get("/api/stream-xhr", (req, res) => {
   res.setHeader("Content-Type", "text/plain; charset=utf-8");
   res.setHeader("Transfer-Encoding", "chunked");
@@ -196,21 +178,6 @@ app.get("/api/error/truncated", (req, res) => {
     console.log("error: Destroying socket for /truncated");
     req.socket.destroy();
   }, 100);
-});
-
-app.get("/api/error/json", (req, res) => {
-  res.setHeader("Content-Type", "application/json");
-  res.send('{ "status": "ok", "data": [1, 2, 3, "oops...');
-});
-
-app.get("/api/error/protocol", (req, res) => {
-  const socket = req.socket;
-  console.log("error: Sending garbage protocol data");
-  socket.write("BAD_PROTOCOL 999 WHAT?\r\n");
-  socket.write("Content-Type: ?????\r\n");
-  socket.write("\r\n");
-  socket.write("Some raw data");
-  socket.end();
 });
 
 app.get("/api/error/hang", (req, res) => {
