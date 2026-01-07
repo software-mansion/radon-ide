@@ -34,6 +34,7 @@ import { ActivateLicenseView } from "./ActivateLicenseView";
 import { Feature, LicenseStatus } from "../../common/License";
 import { useDevices } from "../hooks/useDevices";
 import { useIsFeatureAdminDisabled } from "../hooks/useFeatureAvailabilityCheck";
+import PaywallIconButton from "../components/shared/PaywallIconButton";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -371,7 +372,7 @@ function PreviewView() {
             </IconButton>
           </ToolsDropdown>
           {showRecordingButton && (
-            <IconButton
+            <PaywallIconButton
               feature={Feature.ScreenRecording}
               className={isRecording ? "button-recording-on" : ""}
               tooltip={{
@@ -388,10 +389,10 @@ function PreviewView() {
               ) : (
                 <RecordingIcon />
               )}
-            </IconButton>
+            </PaywallIconButton>
           )}
           {showReplayButton && (
-            <IconButton
+            <PaywallIconButton
               tooltip={{
                 label: "Replay the last few seconds of the app",
               }}
@@ -400,10 +401,10 @@ function PreviewView() {
               disabled={!navBarButtonsActive || isReplayAdminDisabled}
               feature={Feature.ScreenReplay}>
               <ReplayIcon />
-            </IconButton>
+            </PaywallIconButton>
           )}
           {showScreenshotButton && (
-            <IconButton
+            <PaywallIconButton
               tooltip={{
                 label: "Capture a screenshot of the app",
               }}
@@ -412,7 +413,7 @@ function PreviewView() {
               dataTest="capture-screenshot-button"
               feature={Feature.Screenshot}>
               <span slot="start" className="codicon codicon-device-camera" />
-            </IconButton>
+            </PaywallIconButton>
           )}
           <IconButton
             counter={logCounter}
