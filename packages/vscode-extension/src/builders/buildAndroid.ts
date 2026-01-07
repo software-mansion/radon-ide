@@ -89,7 +89,7 @@ async function getNamespaceFromGradle(projectRoot: string): Promise<string | nul
   }
 
   // The namespace field in build.gradle defines the Java package name for the app's code.
-  const matchResult = gradleBuild.contents.match(/namespace\s+['"].*['"]/);
+  const matchResult = gradleBuild.contents.match(/namespace\s+['"](.*)['"]/);
   return matchResult?.[1] ?? null;
 }
 
