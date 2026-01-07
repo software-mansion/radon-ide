@@ -16,8 +16,6 @@ import { ActivateLicenseView } from "../views/ActivateLicenseView";
 import { LicenseStatus } from "../../common/License";
 import ExportLogsView from "../views/ExportLogsView";
 
-import { FestiveModeToggle } from "./festive/FestiveModeToggle";
-
 interface SettingsDropdownProps {
   children: React.ReactNode;
   isDeviceRunning: boolean;
@@ -168,7 +166,6 @@ function SettingsDropdown({ project, isDeviceRunning, children, disabled }: Sett
           </DropdownMenu.Item>
           {telemetryEnabled && <SendFeedbackItem />}
           {shouldShowActivateLicenseItem && <ActivateLicenseItem />}
-          <FestiveModeToggle />
           <div className="dropdown-menu-item device-settings-version-text">
             Radon IDE version: {extensionVersion}
           </div>

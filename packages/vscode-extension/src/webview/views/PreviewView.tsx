@@ -36,8 +36,6 @@ import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { useDevices } from "../hooks/useDevices";
 import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
 
-import FestiveSnow from "../components/festive/FestiveSnow";
-
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
   [InspectorAvailabilityStatus.UnavailableEdgeToEdge]:
@@ -160,7 +158,6 @@ function PreviewView() {
   const radonConnectEnabled = projectState.connectState.enabled;
   const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
   const zoomLevel = use$(store$.projectState.previewZoom);
-  const festiveMode = use$(store$.workspaceConfiguration.userInterface.festiveMode);
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
       store$.projectState.previewZoom.set(zoom);
@@ -363,7 +360,6 @@ function PreviewView() {
 
   return (
     <div className="panel-view" data-testid="radon-panel-view">
-      {festiveMode && <FestiveSnow />}
       <div className="button-group-top">
         <div className="button-group-top-left">
           <UrlBar disabled={!selectedProjectDevice} />

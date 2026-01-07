@@ -97,7 +97,6 @@ export type RadonAISettings = {
 export type UserInterfaceSettings = {
   panelLocation: PanelLocation;
   showDeviceFrame: boolean;
-  festiveMode?: boolean;
 };
 
 export type DeviceControlSettings = {
@@ -628,7 +627,6 @@ export const initialState: State = {
     userInterface: {
       panelLocation: "tab",
       showDeviceFrame: true,
-      festiveMode: false,
     },
     deviceSettings: {
       deviceRotation: DeviceRotation.Portrait,
