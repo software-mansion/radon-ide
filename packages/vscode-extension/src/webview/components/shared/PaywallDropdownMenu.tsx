@@ -52,13 +52,13 @@ export function Item({
   );
 }
 
-interface PaywallSub extends DropdownMenu.DropdownMenuSubProps {
+interface PaywallSubProps extends DropdownMenu.DropdownMenuSubProps {
   feature: Feature;
   paywallCallbackDependencies?: unknown[];
   children: React.ReactNode;
 }
 
-export function Sub({ feature, children, open, ...props }: PaywallSub) {
+export function Sub({ feature, children, open, ...props }: PaywallSubProps) {
   const isPaywalled = useIsFeaturePaywalled(feature);
   const isAvailable = useIsFeatureAvailable(feature);
 
