@@ -145,6 +145,10 @@ export abstract class DeviceBase implements Disposable {
     return this.preview?.hideTouches();
   }
 
+  public copyLastScreenshotToClipboard() {
+    return this.preview?.copyLastScreenshotToClipboard();
+  }
+
   public startRecording() {
     if (!this.preview) {
       throw new Error("Preview not started");

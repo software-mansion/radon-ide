@@ -287,6 +287,15 @@ export class Preview implements Disposable {
     });
   }
 
+  public copyLastScreenshotToClipboard() {
+    this.sendCommand(`clipboard\n`, (err) => {
+      if (err) {
+        Logger.error("sim-server: Error copying screenshot to clipboard:", err);
+        throw new Error(`Failed to copy screenshot to clipboard: ${err.message}`);
+      }
+    });
+  }
+
   public startRecording() {
     this.sendCommandOrThrow(`video recording start -b 2000\n`); // 2000MB buffer for on-disk video
   }

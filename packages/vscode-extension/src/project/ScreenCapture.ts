@@ -70,7 +70,7 @@ export class ScreenCapture implements Disposable {
     const screenshot = await this.device.captureScreenshot(
       this.applicationContext.workspaceConfiguration.deviceSettings.deviceRotation
     );
-    await this.saveMultimedia(screenshot);
+    return await this.saveMultimedia(screenshot);
   }
 
   public async getScreenshot() {
