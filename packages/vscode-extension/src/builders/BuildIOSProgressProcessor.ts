@@ -22,16 +22,7 @@ export class BuildIOSProgressProcessor implements BuildProgressProcessor {
     }
 
     return new Promise<fs.ReadStream>((res, rej) => {
-      const watcher = fs.watch(this.buildDescriptionPath, (eventType, filename) => {
-        // eventType is either 'rename' or 'change'.
-        // On most platforms (includeing macOS), 'rename' is emitted whenever a filename appears or disappears in the directory.
-        // for more information refer to https://nodejs.org/docs/latest/api/fs.html#fswatchfilename-options-listener
-        if (eventType === "rename" && filename === "task-store.msgpack") {
-          watcher.close();
-          res(fs.createReadStream(taskStorePath));
-        }
-      });
-      setTimeout(() => {
+      const timeout = setTimeout(() => {
         watcher.close();
         rej(
           new Error(
@@ -39,30 +30,42 @@ export class BuildIOSProgressProcessor implements BuildProgressProcessor {
           )
         );
       }, CREATE_READ_STREAM_TIMEOUT);
+
+      const watcher = fs.watch(this.buildDescriptionPath, async (eventType, filename) => {
+        // eventType is either 'rename' or 'change'.
+        // On most platforms (includeing macOS), 'rename' is emitted whenever a filename appears or disappears in the directory.
+        // for more information refer to https://nodejs.org/docs/latest/api/fs.html#fswatchfilename-options-listener
+        if (eventType === "rename" && filename === "task-store.msgpack") {
+          clearTimeout(timeout);
+          watcher.close();
+          res(fs.createReadStream(taskStorePath));
+        }
+      });
     });
   }
+
+  
 
   private async countTasksToComplete() {
     try {
       let buildDescriptionPathReadStream = await this.openTasksStoreIfExists();
       const tasksStream = decodeArrayStream(buildDescriptionPathReadStream);
-      let tasksToComplete = 0;
+      this.tasksToComplete = 0;
       for await (const task of tasksStream) {
         // task-store stores information about actual tasks and "virtual nodes" of the build graph,
         // the first item in a task array seems to be dedicated to the location of a script to be called so it is empty for virtual nodes that we don't want to count.
         if (isArray(task) && !task[0]) {
           continue;
         }
-        tasksToComplete++;
+        this.tasksToComplete++;
       }
-      this.tasksToComplete = tasksToComplete;
     } catch (err: any) {
       Logger.warn(`Build iOS progress processor: ${err}`);
     }
   }
 
   private async updateProgress() {
-    if (!this.tasksToComplete) {
+    if (this.tasksToComplete < 1000) {
       return;
     }
     // the 0.999 max value is here to prevent situations in which users see 100% indiction,
