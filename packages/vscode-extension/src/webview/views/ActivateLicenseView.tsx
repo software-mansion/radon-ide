@@ -7,6 +7,8 @@ import { useModal } from "../providers/ModalProvider";
 import { ActivateDeviceResult } from "../../common/Project";
 import { Input } from "../components/shared/Input";
 
+const RADON_IDE_SSO_URL = "https://localhost:3000/authorize";
+
 export function ActivateLicenseView() {
   const { project } = useProject();
   const { closeModal } = useModal();
@@ -125,6 +127,15 @@ export function ActivateLicenseView() {
         />
       )}
       <div className="submit-row">
+        <a
+          className="sso-link"
+          href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            project.openExternalUrl(RADON_IDE_SSO_URL);
+          }}>
+          Login with SSO
+        </a>
         {activateDeviceResult !== ActivateDeviceResult.succeeded ? (
           <Button
             type="secondary"
