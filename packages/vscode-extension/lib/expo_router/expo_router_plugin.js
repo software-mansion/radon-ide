@@ -1,11 +1,7 @@
 import { useSyncExternalStore, useEffect, useRef } from "react";
 import { useRouter } from "expo-router";
 import { store } from "expo-router/build/global-state/router-store.js";
-import {
-  computeRouteIdentifier,
-  extractNestedRouteList,
-  sendNavigationChange,
-} from "./expo_router_helpers.js";
+import { extractNestedRouteList, sendNavigationChange } from "./expo_router_helpers.js";
 
 function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   const router = useRouter();
@@ -28,7 +24,9 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   }, [store.routeNode]);
 
   useEffect(() => {
-    sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange, router.canGoBack());
+    if (router.navigationRef) {
+      sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange, router.canGoBack());
+    }
   }, [pathname, params]);
 
   function requestNavigationChange({ pathname, params }) {
@@ -48,15 +46,6 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   }
 
   return {
-    getCurrentNavigationDescriptor: () => {
-      const snapshot = store.routeInfoSnapshot();
-      return {
-        name: snapshot.pathname,
-        pathname: snapshot.pathname,
-        params: snapshot.params,
-        id: computeRouteIdentifier(snapshot.pathname, snapshot.params),
-      };
-    },
     requestNavigationChange: (navigationDescriptor) => {
       if (store.navigationRef?.isReady()) {
         requestNavigationChange(navigationDescriptor);

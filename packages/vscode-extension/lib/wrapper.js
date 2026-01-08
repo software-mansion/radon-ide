@@ -73,7 +73,6 @@ function getCurrentScene() {
 
 function defaultNavigationHook({ onNavigationChange }) {
   return {
-    getCurrentNavigationDescriptor: () => undefined,
     requestNavigationChange: (navigationDescriptor) => {
       if (navigationDescriptor.id === "__BACK__" || navigationDescriptor.id === "__HOME__") {
         // default navigator doesn't support back, for back/home navigation we send empty navigation

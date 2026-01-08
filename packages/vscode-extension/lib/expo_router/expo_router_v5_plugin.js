@@ -28,7 +28,9 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   }, [store.routeNode]);
 
   useEffect(() => {
-    sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange, router.canGoBack());
+    if (router.navigationRef) {
+      sendNavigationChange(previousRouteInfo, routeInfo, onNavigationChange, router.canGoBack());
+    }
   }, [pathname, params]);
 
   function requestNavigationChange({ pathname, params }) {
@@ -50,15 +52,6 @@ function useRouterPluginMainHook({ onNavigationChange, onRouteListChange }) {
   }
 
   return {
-    getCurrentNavigationDescriptor: () => {
-      const snapshot = store.getRouteInfo();
-      return {
-        name: snapshot.pathname,
-        pathname: snapshot.pathname,
-        params: snapshot.params,
-        id: computeRouteIdentifier(snapshot.pathname, snapshot.params),
-      };
-    },
     requestNavigationChange: (navigationDescriptor) => {
       if (store.navigationRef?.isReady()) {
         requestNavigationChange(navigationDescriptor);
