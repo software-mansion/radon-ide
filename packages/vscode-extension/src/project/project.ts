@@ -284,7 +284,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       [Feature.DeviceFontSizeSettings]: "contentSize",
       [Feature.DeviceLocalizationSettings]: "locale",
       [Feature.LocationSimulation]: "location",
-    };
+    } as const;
 
     const configState = this.workspaceStateManager.getState();
     const deviceSettings = configState.deviceSettings;
