@@ -1,0 +1,21 @@
+.screenshot-copied-to-clipboard-box {
+  position: absolute;
+  top: 35px;
+  z-index: 1000;
+
+  pointer-events: none;
+  background-color: var(--dimensions-box-background);
+  color: var(--swm-tooltip-primary);
+
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 200ms ease-in-out,
+    delay 300ms,
+    visibility 200ms;
+
+  &.open {
+    opacity: 1;
+    visibility: visible;
+  }
+}

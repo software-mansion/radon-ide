@@ -909,6 +909,7 @@ export class DeviceSession implements Disposable {
       const rotation = this.applicationContext.workspaceConfiguration.deviceSettings.deviceRotation;
       this.device.copyLastScreenshotToClipboard(rotation);
     }
+    return wasSaved;
   }
 
   public async getScreenshot() {

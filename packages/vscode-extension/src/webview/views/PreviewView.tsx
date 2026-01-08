@@ -35,6 +35,7 @@ import { Feature, LicenseStatus } from "../../common/License";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
 import { useDevices } from "../hooks/useDevices";
 import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
+import ScreenshotCopiedToClipboardBox from "../components/ScreenshotCopiedToClipboardBox";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -149,6 +150,7 @@ function PreviewView() {
   const [isInspecting, setIsInspecting] = useState(false);
   const [inspectFrame, setInspectFrame] = useState<Frame | null>(null);
   const [inspectStackData, setInspectStackData] = useState<InspectStackData | null>(null);
+  const [screenshotCopiedBoxVisible, setScreenshotCopiedBoxVisible] = useState(false);
 
   const devices = useDevices(store$);
   const fps = use$(useSelectedDeviceSessionState().frameReporting.frameReport.fps);
@@ -282,7 +284,10 @@ function PreviewView() {
 
   const paywalledCaptureScreenshot = usePaywalledCallback(
     async () => {
-      await project.captureScreenshot();
+      const wasSaved = await project.captureScreenshot();
+      if (wasSaved) {
+        setScreenshotCopiedBoxVisible(true);
+      }
     },
     Feature.Screenshot,
     []
@@ -434,6 +439,10 @@ function PreviewView() {
               disabled={!navBarButtonsActive || isScreenshotAdminDisabled}
               dataTest="capture-screenshot-button">
               <span slot="start" className="codicon codicon-device-camera" />
+              <ScreenshotCopiedToClipboardBox
+                isOpen={screenshotCopiedBoxVisible}
+                onClose={() => setScreenshotCopiedBoxVisible(false)}
+              />
             </IconButton>
           )}
           <IconButton

@@ -1,5 +1,6 @@
 .dimensions-box {
   background-color: var(--dimensions-box-background);
+  border: var(--swm-dropdown-border);
   position: absolute;
   left: var(--left);
   top: var(--top);
@@ -16,6 +17,7 @@
 }
 
 .arrow {
+  border: var(--swm-dropdown-border);
   background-color: var(--dimensions-box-background);
   position: absolute;
   left: var(--left);

@@ -153,7 +153,7 @@ export interface ProjectInterface {
 
   toggleRecording(): void;
   captureReplay(): void;
-  captureScreenshot(): void;
+  captureScreenshot(): Promise<boolean>;
   saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
 
   startReportingFrameRate(): void;
