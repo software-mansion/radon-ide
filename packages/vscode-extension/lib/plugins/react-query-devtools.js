@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/query-core";
 import { register } from "./expo_dev_plugins";
 import { PluginMessageBridge } from "./PluginMessageBridge";
 import { stringify } from "../third-party/flatted/esm.js";
@@ -95,13 +95,17 @@ function broadcastQueryClient(queryClient) {
   });
 }
 
-const origMount = QueryClient.prototype.mount;
+try {
+  const origMount = QueryClient.prototype.mount;
 
-QueryClient.prototype.mount = function (...args) {
-  broadcastQueryClient(this);
-  return origMount.apply(this, args);
-};
+  QueryClient.prototype.mount = function (...args) {
+    broadcastQueryClient(this);
+    return origMount.apply(this, args);
+  };
 
-// We try to register the plugin here, but if registration fails here,
-// it will be registered when the first QueryClient is mounted.
-register("react-query");
+  // We try to register the plugin here, but if registration fails here,
+  // it will be registered when the first QueryClient is mounted.
+  register("react-query");
+} catch (e) {
+  // TODO: the error should be reported to Radon and logged by the extension
+}
