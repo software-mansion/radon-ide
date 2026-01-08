@@ -118,6 +118,53 @@ export async function activateDevice(
   }
 }
 
+export async function activateDeviceWithSSO(
+  authCode: string,
+  username: string
+): Promise<ActivateDeviceResult> {
+  const url = new URL("/api/sso/create-token", BASE_CUSTOMER_PORTAL_URL);
+
+  let deviceFingerprint;
+
+  try {
+    deviceFingerprint = await generateDeviceFingerprint();
+  } catch (e) {
+    Logger.error("Error generating device fingerprint", e);
+    return ActivateDeviceResult.unableToVerify;
+  }
+
+  const body = {
+    fingerprint: deviceFingerprint,
+    name: username,
+    code: authCode,
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
+    const errorCode = await saveTokenIfValid(response);
+    switch (errorCode) {
+      case ServerResponseStatusCode.success:
+        return ActivateDeviceResult.succeeded;
+      case ServerResponseStatusCode.noSubscription:
+        return ActivateDeviceResult.keyVerificationFailed;
+      case ServerResponseStatusCode.allSeatTaken:
+        return ActivateDeviceResult.notEnoughSeats;
+      case ServerResponseStatusCode.badRequest:
+      default:
+        return ActivateDeviceResult.unableToVerify;
+    }
+  } catch (e) {
+    Logger.warn("Creating license token with SSO code failed", e);
+    return ActivateDeviceResult.connectionFailed;
+  }
+}
+
 export function refreshTokenPeriodically() {
   const refreshIfNeeded = throttleAsync(async () => {
     const lastRefreshTimestamp = extensionContext.globalState.get<number>(TOKEN_KEY_TIMESTAMP) || 0;

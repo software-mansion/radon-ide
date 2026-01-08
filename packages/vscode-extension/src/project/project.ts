@@ -5,6 +5,7 @@ import { env, Disposable, commands, workspace, window, Uri } from "vscode";
 import _ from "lodash";
 import { TelemetryEventProperties } from "@vscode/extension-telemetry";
 import {
+  ActivateDeviceResult,
   AppPermissionType,
   DeviceButtonType,
   DeviceId,
@@ -23,12 +24,14 @@ import { DeviceManager } from "../devices/DeviceManager";
 import { extensionContext } from "../utilities/extensionContext";
 import {
   activateDevice,
+  activateDeviceWithSSO,
   watchLicenseTokenChange,
   getLicenseToken,
   refreshTokenPeriodically,
   checkLicenseToken,
   SimServerLicenseValidationStatus,
 } from "../utilities/license";
+import { startSsoAuthFlow } from "../auth/SsoAuthServer";
 import { getTelemetryReporter } from "../utilities/telemetry";
 import { ToolKey } from "./tools";
 import { ApplicationContext } from "./ApplicationContext";
@@ -459,9 +462,24 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region License
 
+  private static readonly SSO_BASE_URL = "https://portal.ide.swmansion.com/sso/authorize";
+
   public async activateLicense(activationKey: string) {
     const computerName = os.hostname();
     const activated = await activateDevice(activationKey, computerName);
+    return activated;
+  }
+
+  public async loginWithSSO() {
+    const result = await startSsoAuthFlow(Project.SSO_BASE_URL);
+
+    if (!result) {
+      // Timeout or user closed the browser
+      return ActivateDeviceResult.ssoTimeout;
+    }
+
+    const computerName = os.hostname();
+    const activated = await activateDeviceWithSSO(result.code, computerName);
     return activated;
   }
 

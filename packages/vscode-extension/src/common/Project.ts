@@ -86,6 +86,7 @@ export enum ActivateDeviceResult {
   keyVerificationFailed,
   unableToVerify,
   connectionFailed,
+  ssoTimeout,
 }
 
 export interface ProjectEventMap {
@@ -142,6 +143,7 @@ export interface ProjectInterface {
   openDevMenu(): Promise<void>;
 
   activateLicense(activationKey: string): Promise<ActivateDeviceResult>;
+  loginWithSSO(): Promise<ActivateDeviceResult>;
 
   resetAppPermissions(permissionType: AppPermissionType): Promise<void>;
 

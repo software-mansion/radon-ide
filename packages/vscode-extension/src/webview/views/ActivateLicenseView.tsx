@@ -7,14 +7,13 @@ import { useModal } from "../providers/ModalProvider";
 import { ActivateDeviceResult } from "../../common/Project";
 import { Input } from "../components/shared/Input";
 
-const RADON_IDE_SSO_URL = "https://localhost:3000/authorize";
-
 export function ActivateLicenseView() {
   const { project } = useProject();
   const { closeModal } = useModal();
   const { register, handleSubmit } = useForm();
 
   const [isLoading, setIsLoading] = useState(false);
+  const [isSsoLoading, setIsSsoLoading] = useState(false);
   const [disableSubmit, setDisableSubmit] = useState(true);
   const [activateDeviceResult, setActivateDeviceResult] = useState<ActivateDeviceResult | null>(
     null
@@ -31,6 +30,18 @@ export function ActivateLicenseView() {
       setActivateDeviceResult(activationResult);
       setIsLoading(false);
     });
+  };
+
+  const onSsoLogin = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsSsoLoading(true);
+
+    try {
+      const result = await project.loginWithSSO();
+      setActivateDeviceResult(result);
+    } finally {
+      setIsSsoLoading(false);
+    }
   };
 
   const onChange = () => {
@@ -111,6 +122,19 @@ export function ActivateLicenseView() {
             </a>
           </div>
         )}
+        {activateDeviceResult === ActivateDeviceResult.ssoTimeout && (
+          <div className="error-text">
+            SSO login timed out. Please try again. If you continue to have issues, please consult
+            the{" "}
+            <a
+              href="https://ide.swmansion.com/docs/guides/activation-manual"
+              target="_blank"
+              rel="noopener noreferrer">
+              license activation instructions
+            </a>
+            .
+          </div>
+        )}
         {activateDeviceResult === ActivateDeviceResult.succeeded && (
           <div className="info-text">Your license has been successfully activated.</div>
         )}
@@ -130,16 +154,17 @@ export function ActivateLicenseView() {
         <a
           className="sso-link"
           href="#"
-          onClick={(e) => {
-            e.preventDefault();
-            project.openExternalUrl(RADON_IDE_SSO_URL);
+          onClick={onSsoLogin}
+          style={{
+            pointerEvents: isSsoLoading ? "none" : "auto",
+            opacity: isSsoLoading ? 0.5 : 1,
           }}>
-          Login with SSO
+          {isSsoLoading ? "Waiting for SSO..." : "Login with SSO"}
         </a>
         {activateDeviceResult !== ActivateDeviceResult.succeeded ? (
           <Button
             type="secondary"
-            disabled={disableSubmit || isLoading}
+            disabled={disableSubmit || isLoading || isSsoLoading}
             dataTest="activate-license-button">
             Activate
           </Button>
