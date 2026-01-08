@@ -287,8 +287,8 @@ export class Preview implements Disposable {
     });
   }
 
-  public copyLastScreenshotToClipboard() {
-    this.sendCommand(`clipboard\n`, (err) => {
+  public copyLastScreenshotToClipboard(rotation: DeviceRotation) {
+    this.sendCommand(`clipboard -r ${rotation}\n`, (err) => {
       if (err) {
         Logger.error("sim-server: Error copying screenshot to clipboard:", err);
         throw new Error(`Failed to copy screenshot to clipboard: ${err.message}`);

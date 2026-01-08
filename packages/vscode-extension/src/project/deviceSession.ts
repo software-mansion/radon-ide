@@ -905,10 +905,10 @@ export class DeviceSession implements Disposable {
 
   public async captureScreenshot() {
     const wasSaved = await this.screenCapture.captureScreenshot();
-    if (wasSaved) { 
-      this.device.copyLastScreenshotToClipboard();
+    if (wasSaved) {
+      const rotation = this.applicationContext.workspaceConfiguration.deviceSettings.deviceRotation;
+      this.device.copyLastScreenshotToClipboard(rotation);
     }
-
   }
 
   public async getScreenshot() {
