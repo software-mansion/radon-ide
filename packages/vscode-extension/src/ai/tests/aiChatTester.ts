@@ -322,7 +322,17 @@ export async function testChatToolUsage(): Promise<void> {
   statusBar.hide();
   statusBar.dispose();
 
-  // TODO: Move results to modal
-  const response = `\n=== AI TEST RESULTS ===\n${runStatus.map((v) => `${v.success ? " OK " : "FAIL"}${v.cause !== null ? ` | Error: ${v.cause}` : ""}`).join("\n")}`;
+  const failReasons = runStatus
+    .map((v) => `${v.success ? " OK " : "FAIL"}${v.cause !== null ? ` | Error: ${v.cause}` : ""}`)
+    .join("\n");
+
+  const correctCount = runStatus
+    .map((v) => (v.success ? 1 : 0) as number)
+    .reduce((v, acc) => v + acc);
+
+  const totalCount = runStatus.length;
+  const correctPercent = ((correctCount / totalCount) * 100).toFixed(1);
+
+  const response = `\n=== AI TEST RESULTS ===\n${failReasons}\n# TOTAL CORRECT: ${correctCount}/${totalCount} (${correctPercent}%)`;
   Logger.log(response);
 }
