@@ -89,8 +89,6 @@ export function InspectDataMenu({
   const onReferenceInChat = usePaywalledCallback(
     (e) => {
       if (inspectedItems.length === 0) {
-        // Silently aborting when `inspectedItems` is empty.
-        // This case should never occur, but it's certainly possible (e.g. CDP communication failure).
         e.preventDefault();
         return;
       }
@@ -126,6 +124,8 @@ export function InspectDataMenu({
       store$.workspaceConfiguration.radonAI.enableRadonAI.get() &&
       store$.license.featuresAvailability.RadonAI.get() === FeatureAvailabilityStatus.AVAILABLE
   );
+
+  const displayAIButton = radonAIEnabled && inspectedItems.length > 0;
 
   return (
     <DropdownMenu.Root
@@ -174,7 +174,7 @@ export function InspectDataMenu({
                 </DropdownMenu.Label>
               </DropdownMenu.Item>
             )}
-            {radonAIEnabled && (
+            {displayAIButton && (
               <DropdownMenu.Item
                 className="inspect-data-menu-item inspector-button"
                 key={"ask-ai"}

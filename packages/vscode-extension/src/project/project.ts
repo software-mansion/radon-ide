@@ -477,6 +477,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         status: LicenseStatus.Inactive,
         featuresAvailability: DefaultFeaturesAvailability,
       });
+
+      this.telemetry.sendTelemetry("license:detected", {
+        licenseStatus: LicenseStatus.Inactive,
+      });
+
       return;
     }
 
@@ -492,6 +497,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
 
     this.licenseStateManager.updateState(newState);
+
+    this.telemetry.sendTelemetry("license:detected", {
+      licenseStatus: newState.status,
+    });
   };
 
   // #endregion License
