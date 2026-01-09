@@ -19,8 +19,8 @@ const TOKEN_KEY = "RNIDE_license_token_key";
 const TOKEN_KEY_TIMESTAMP = "RNIDE_license_token_key_timestamp";
 export const BASE_CUSTOMER_PORTAL_URL = "http://localhost:3000/";
 
-const LICENCE_TOKEN_REFRESH_INTERVAL = 1000 * 60 * 60 * 24; // 24 hours – how often to refresh the token (given successful token verification)
-const LICENCE_TOKEN_REFRESH_RETRY_INTERVAL = 1000 * 60; // 1 minute – how often to retry refreshing the token
+const LICENSE_TOKEN_REFRESH_INTERVAL = 1000 * 60 * 60 * 24; // 24 hours – how often to refresh the token (given successful token verification)
+const LICENSE_TOKEN_REFRESH_RETRY_INTERVAL = 1000 * 60; // 1 minute – how often to retry refreshing the token
 
 export enum ServerResponseStatusCode {
   success = "S001",
@@ -169,14 +169,14 @@ export function refreshTokenPeriodically() {
   const refreshIfNeeded = throttleAsync(async () => {
     const lastRefreshTimestamp = extensionContext.globalState.get<number>(TOKEN_KEY_TIMESTAMP) || 0;
     const timeSinceLastRefresh = Date.now() - lastRefreshTimestamp;
-    if (timeSinceLastRefresh > LICENCE_TOKEN_REFRESH_INTERVAL) {
+    if (timeSinceLastRefresh > LICENSE_TOKEN_REFRESH_INTERVAL) {
       const token = await getLicenseToken();
       if (token) {
         await refreshToken(token);
       }
     }
   }, 1);
-  const intervalId = setInterval(refreshIfNeeded, LICENCE_TOKEN_REFRESH_RETRY_INTERVAL);
+  const intervalId = setInterval(refreshIfNeeded, LICENSE_TOKEN_REFRESH_RETRY_INTERVAL);
   refreshIfNeeded(); // trigger initial call as setInterval will wait for the first interval to pass
   return {
     dispose: () => {
