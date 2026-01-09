@@ -533,6 +533,7 @@ export type State = {
   projectState: ProjectStore;
   telemetry: TelemetryState;
   workspaceConfiguration: WorkspaceConfiguration;
+  areMCPTestsRunning: boolean; // FIXME: Move
 };
 
 export type StateListener = (state: RecursivePartial<State>) => void;
@@ -588,6 +589,7 @@ const initialDeviceSessionStore: DeviceSessionStore = {
 };
 
 export const initialState: State = {
+  areMCPTestsRunning: false, // FIXME: Move
   applicationRoots: [],
   devicesState: {
     devicesByType: {
