@@ -3,6 +3,7 @@ import { assert } from "chai";
 import { WebView, Key } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { describeIf } from "../utils/helpers.js";
+import { TIMEOUTS } from "../utils/timeouts.js";
 import { get } from "./setupTest.js";
 
 const raw = fs.readFileSync("./data/react-native-app/package.json");
@@ -46,7 +47,7 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
-    }, 5000);
+    }, TIMEOUTS.DEFAULT);
 
     await appManipulationService.hideExpoOverlay(appWebsocket);
 
@@ -76,7 +77,7 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
     await driver.wait(async () => {
       const url = await urlInput.getAttribute("value");
       return url === "/explore";
-    }, 5000);
+    }, TIMEOUTS.DEFAULT);
   });
 
   it("should navigate to different view when url is changed", async () => {
@@ -85,6 +86,8 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
     );
     await urlInput.click();
     await urlInput.sendKeys("/explore", Key.ENTER);
+
+    await driver.sleep(TIMEOUTS.SHORT);
 
     const position = await driver.wait(async () => {
       try {
@@ -96,7 +99,7 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
       } catch {
         return false;
       }
-    }, 10000);
+    }, TIMEOUTS.LONG);
 
     const message = await appManipulationService.clickInPhoneAndWaitForMessage(
       position
@@ -113,7 +116,7 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
     await urlInput.sendKeys("/notExistingRoute", Key.ENTER);
 
     // this view changes
-    await driver.sleep(1000);
+    await driver.sleep(TIMEOUTS.SHORT);
 
     const position = await driver.wait(async () => {
       try {
@@ -124,7 +127,7 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
       } catch {
         return false;
       }
-    }, 10000);
+    }, TIMEOUTS.LONG);
 
     const message = await appManipulationService.clickInPhoneAndWaitForMessage(
       position
@@ -150,7 +153,7 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
       } catch {
         return false;
       }
-    }, 10000);
+    }, TIMEOUTS.LONG);
     await appManipulationService.clickInsidePhoneScreen(position);
 
     const urlInput = await elementHelperService.findAndWaitForElementByTag(
@@ -160,7 +163,7 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
     await driver.wait(async () => {
       const url = await urlInput.getAttribute("value");
       return url === "/notExisting?not-found=notExisting";
-    }, 5000);
+    }, TIMEOUTS.DEFAULT);
   });
 
   it("should show modal in path", async () => {
@@ -180,7 +183,8 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
       } catch {
         return false;
       }
-    }, 10000);
+    }, TIMEOUTS.LONG);
+
     await appManipulationService.clickInsidePhoneScreen(position);
 
     const urlInput = await elementHelperService.findAndWaitForElementByTag(
@@ -190,7 +194,7 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
     await driver.wait(async () => {
       const url = await urlInput.getAttribute("value");
       return url === "/modal";
-    }, 5000);
+    }, TIMEOUTS.DEFAULT);
   });
 
   it("should open modal using url bar", async () => {
@@ -201,7 +205,7 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
     await urlInput.sendKeys("/modal", Key.ENTER);
 
     // modal has slide in animation
-    await driver.sleep(1000);
+    await driver.sleep(TIMEOUTS.SHORT);
 
     const position = await driver.wait(async () => {
       try {
@@ -213,7 +217,8 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
       } catch {
         return false;
       }
-    }, 10000);
+    }, TIMEOUTS.LONG);
+
     const message = await appManipulationService.clickInPhoneAndWaitForMessage(
       position
     );

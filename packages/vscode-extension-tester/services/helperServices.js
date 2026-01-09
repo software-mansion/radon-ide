@@ -114,6 +114,8 @@ export class VSCodeHelperService {
       .sendKeys(fullPath)
       .sendKeys(Key.ENTER)
       .perform();
+
+    await this.driver.sleep(TIMEOUTS.SHORT);
   }
 
   async getCursorLineInEditor() {

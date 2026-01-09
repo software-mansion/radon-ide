@@ -41,16 +41,9 @@ export default class ManagingDevicesService {
       "creating-device-form-device-type-select"
     );
 
-    const { IS_ANDROID, IS_GITHUB_ACTIONS } = getConfiguration();
+    const { IS_ANDROID } = getConfiguration();
 
     let device = IS_ANDROID ? "pixel" : "com.apple";
-    if (IS_GITHUB_ACTIONS) {
-      device = "com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro";
-    }
-
-    const systemImage = IS_GITHUB_ACTIONS
-      ? "com.apple.CoreSimulator.SimRuntime.iOS-18-5"
-      : "";
 
     const selectedDevice =
       await this.elementHelperService.findAndWaitForElement(
@@ -68,7 +61,7 @@ export default class ManagingDevicesService {
     const selectedSystemImage =
       await this.elementHelperService.findAndWaitForElement(
         By.css(
-          `[data-testid^="creating-device-form-system-image-select-item-${systemImage}"]:not(.select-item-marked)`
+          `[data-testid^="creating-device-form-system-image-select-item-"]:not(.select-item-marked)`
         ),
         "Timed out waiting for an element matching from system image list"
       );
