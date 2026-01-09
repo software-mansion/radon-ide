@@ -3,6 +3,7 @@ import http from "node:http";
 import express from "express";
 import { Disposable, env, Uri } from "vscode";
 import { Logger } from "../Logger";
+import { BASE_CUSTOMER_PORTAL_URL } from "../utilities/license";
 
 const SSO_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -40,7 +41,7 @@ export class SsoAuthServer implements Disposable {
   private initializeHttpServer(): http.Server {
     const app = express();
 
-    app.get("/callback", (req: express.Request, res: express.Response) => {
+    app.get("/auth/callback", (req: express.Request, res: express.Response) => {
       const code = req.query.code as string | undefined;
 
       if (!code) {
@@ -73,9 +74,7 @@ export class SsoAuthServer implements Disposable {
   }
 
   /**
-   * Wait for a callback with a code parameter.
-   * Uses Promise.race to implement a timeout.
-   * @returns The authorization code from the callback, or null if timed out
+   * @returns The authorization code from the callback, or null if timed out after 5 minutes
    */
   public async waitForCallback(): Promise<SsoAuthResult | null> {
     const callbackPromise = new Promise<SsoAuthResult>((resolve, reject) => {
@@ -149,15 +148,15 @@ export class SsoAuthServer implements Disposable {
  * Creates a temporary HTTP server to receive the callback, opens the SSO URL in the browser,
  * and waits for the callback or timeout.
  *
- * @param ssoBaseUrl - The base URL for the SSO provider
  * @returns The authorization code if successful, null if timed out or failed
  */
-export async function startSsoAuthFlow(ssoBaseUrl: string): Promise<SsoAuthResult | null> {
+export async function startSsoAuthFlow(): Promise<SsoAuthResult | null> {
   const server = new SsoAuthServer();
 
   try {
     const port = await server.getPort();
-    const redirectUri = `http://127.0.0.1:${port}/callback`;
+    const ssoBaseUrl = new URL("/sso/authorize", BASE_CUSTOMER_PORTAL_URL).toString();
+    const redirectUri = `http://127.0.0.1:${port}/auth/callback`;
     const ssoUrl = `${ssoBaseUrl}?redirect_uri=${encodeURIComponent(redirectUri)}`;
 
     Logger.info(`[SSO] Opening SSO URL: ${ssoUrl}`);

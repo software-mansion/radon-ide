@@ -17,7 +17,7 @@ import {
 
 const TOKEN_KEY = "RNIDE_license_token_key";
 const TOKEN_KEY_TIMESTAMP = "RNIDE_license_token_key_timestamp";
-const BASE_CUSTOMER_PORTAL_URL = "https://portal.ide.swmansion.com/";
+export const BASE_CUSTOMER_PORTAL_URL = "http://localhost:3000/";
 
 const LICENCE_TOKEN_REFRESH_INTERVAL = 1000 * 60 * 60 * 24; // 24 hours – how often to refresh the token (given successful token verification)
 const LICENCE_TOKEN_REFRESH_RETRY_INTERVAL = 1000 * 60; // 1 minute – how often to retry refreshing the token

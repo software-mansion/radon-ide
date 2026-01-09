@@ -462,8 +462,6 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region License
 
-  private static readonly SSO_BASE_URL = "https://portal.ide.swmansion.com/sso/authorize";
-
   public async activateLicense(activationKey: string) {
     const computerName = os.hostname();
     const activated = await activateDevice(activationKey, computerName);
@@ -471,7 +469,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
   }
 
   public async loginWithSSO() {
-    const result = await startSsoAuthFlow(Project.SSO_BASE_URL);
+    const result = await startSsoAuthFlow();
 
     if (!result) {
       // Timeout or user closed the browser
