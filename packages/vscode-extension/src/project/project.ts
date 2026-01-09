@@ -799,16 +799,20 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
       let focusCommand = "copilot-chat.focus";
       let attachFileCommand = "workbench.action.chat.attachFile";
+      let attachNoteCommand = "workbench.action.chat.attachContext";
 
       if (editor === EditorType.CURSOR) {
         focusCommand = "composer.startComposerPrompt";
         attachFileCommand = "composer.addfilestocomposer";
+        attachNoteCommand = "";
       }
 
       commands.executeCommand(focusCommand).then(async () => {
         for (const filePath of attachedFilenames) {
           await commands.executeCommand(attachFileCommand, Uri.file(filePath));
         }
+
+        await commands.executeCommand(attachNoteCommand, targetPath);
       });
     } catch (e) {
       const msg =
