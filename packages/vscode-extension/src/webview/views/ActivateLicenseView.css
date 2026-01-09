@@ -30,8 +30,15 @@
 .submit-row {
   width: 100%;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   align-items: center;
+}
+
+.sso-link {
+  color: var(--swm-default-text);
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 14px;
 }
 
 .error-text {
