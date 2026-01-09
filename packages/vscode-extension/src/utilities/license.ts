@@ -120,6 +120,7 @@ export async function activateDevice(
 
 export async function activateDeviceWithSSO(
   authCode: string,
+  codeVerifier: string,
   username: string
 ): Promise<ActivateDeviceResult> {
   const url = new URL("/api/sso/create-token", BASE_CUSTOMER_PORTAL_URL);
@@ -137,6 +138,7 @@ export async function activateDeviceWithSSO(
     fingerprint: deviceFingerprint,
     name: username,
     code: authCode,
+    code_verifier: codeVerifier,
   };
 
   try {

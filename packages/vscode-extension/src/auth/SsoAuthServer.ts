@@ -4,18 +4,24 @@ import express from "express";
 import { Disposable, env, Uri } from "vscode";
 import { Logger } from "../Logger";
 import { BASE_CUSTOMER_PORTAL_URL } from "../utilities/license";
+import { generateCodeChallenge, generateCodeVerifier } from "./pkce";
 
 const SSO_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
+interface SsoCallbackResult {
+  code: string;
+}
+
 export interface SsoAuthResult {
   code: string;
+  codeVerifier: string;
 }
 
 export class SsoAuthServer implements Disposable {
   private expressServer: http.Server | null = null;
   private serverPort: Promise<number>;
   private resolveServerPort!: (port: number) => void;
-  private callbackResolver: ((result: SsoAuthResult) => void) | null = null;
+  private callbackResolver: ((result: SsoCallbackResult) => void) | null = null;
   private callbackRejecter: ((error: Error) => void) | null = null;
 
   constructor() {
@@ -69,8 +75,8 @@ export class SsoAuthServer implements Disposable {
   /**
    * @returns The authorization code from the callback, or null if timed out after 5 minutes
    */
-  public async waitForCallback(): Promise<SsoAuthResult | null> {
-    const callbackPromise = new Promise<SsoAuthResult>((resolve, reject) => {
+  public async waitForCallback(): Promise<SsoCallbackResult | null> {
+    const callbackPromise = new Promise<SsoCallbackResult>((resolve, reject) => {
       this.callbackResolver = resolve;
       this.callbackRejecter = reject;
     });
@@ -94,11 +100,11 @@ export class SsoAuthServer implements Disposable {
 }
 
 /**
- * Starts an SSO authentication flow.
+ * Starts an SSO authentication flow with PKCE.
  * Creates a temporary HTTP server to receive the callback, opens the SSO URL in the browser,
  * and waits for the callback or timeout.
  *
- * @returns The authorization code if successful, null if timed out or failed
+ * @returns The authorization code and code verifier if successful, null if timed out or failed
  */
 export async function startSsoAuthFlow(): Promise<SsoAuthResult | null> {
   const server = new SsoAuthServer();
@@ -106,8 +112,17 @@ export async function startSsoAuthFlow(): Promise<SsoAuthResult | null> {
   try {
     const port = await server.getPort();
     const redirectUri = `http://127.0.0.1:${port}/auth/callback`;
-    const ssoUrl = new URL("/sso/authorize", BASE_CUSTOMER_PORTAL_URL);
-    ssoUrl.searchParams.set("redirect_uri", redirectUri);
+
+    // Generate PKCE code verifier and challenge
+    const codeVerifier = generateCodeVerifier();
+    const codeChallenge = generateCodeChallenge(codeVerifier);
+
+    const params = new URLSearchParams({
+      redirect_uri: redirectUri,
+      code_challenge: codeChallenge,
+      code_challenge_method: "S256",
+    });
+    const ssoUrl = new URL(`/sso/authorize?${params}`, BASE_CUSTOMER_PORTAL_URL);
 
     Logger.info(`[SSO] Opening SSO URL: ${ssoUrl}`);
 
@@ -117,7 +132,10 @@ export async function startSsoAuthFlow(): Promise<SsoAuthResult | null> {
     // Wait for callback or timeout
     const result = await server.waitForCallback();
 
-    return result;
+    if (result) {
+      return { ...result, codeVerifier };
+    }
+    return null;
   } catch (error) {
     Logger.error("[SSO] Error during SSO auth flow:", error);
     server.dispose();

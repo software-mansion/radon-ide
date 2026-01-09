@@ -477,7 +477,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
 
     const computerName = os.hostname();
-    const activated = await activateDeviceWithSSO(result.code, computerName);
+    const activated = await activateDeviceWithSSO(result.code, result.codeVerifier, computerName);
     return activated;
   }
 
