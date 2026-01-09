@@ -211,7 +211,7 @@ app.get("/api/delay", (req, res) => {
 });
 
 app.get("/api/image", (req, res) => {
-  res.sendFile(path.join(__dirname, "img", "img.png"));
+  res.sendFile(path.join(__dirname, "img", "img.jpg"));
 });
 
 app.get("/api/large-image", (req, res) => {

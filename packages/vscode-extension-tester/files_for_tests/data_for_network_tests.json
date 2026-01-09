@@ -332,8 +332,8 @@
         "accept-ranges": "bytes",
         "cache-control": "public, max-age=0",
         "connection": "keep-alive",
-        "content-length": "687864",
-        "content-type": "image/png",
+        "content-length": "54181",
+        "content-type": "image/jpeg",
         "keep-alive": "timeout=5",
         "x-powered-by": "Express"
       },
