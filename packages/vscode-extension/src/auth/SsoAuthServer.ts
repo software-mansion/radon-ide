@@ -45,21 +45,14 @@ export class SsoAuthServer implements Disposable {
       const code = req.query.code as string | undefined;
 
       if (!code) {
-        res.status(400).send(this.generateHtmlResponse("Error", "Missing authorization code."));
+        res.redirect(new URL("/sso/failure", BASE_CUSTOMER_PORTAL_URL).toString());
         if (this.callbackRejecter) {
           this.callbackRejecter(new Error("Missing authorization code"));
         }
         return;
       }
 
-      res
-        .status(200)
-        .send(
-          this.generateHtmlResponse(
-            "Success",
-            "Authorization successful! You can close this window."
-          )
-        );
+      res.redirect(new URL("/sso/success", BASE_CUSTOMER_PORTAL_URL).toString());
 
       if (this.callbackResolver) {
         this.callbackResolver({ code });
@@ -98,49 +91,6 @@ export class SsoAuthServer implements Disposable {
       this.dispose();
     }
   }
-
-  private generateHtmlResponse(title: string, message: string): string {
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>${title} - Radon IDE</title>
-          <style>
-            body {
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-              display: flex;
-              justify-content: center;
-              align-items: center;
-              height: 100vh;
-              margin: 0;
-              background-color: #1e1e1e;
-              color: #ffffff;
-            }
-            .container {
-              text-align: center;
-              padding: 40px;
-              background-color: #252526;
-              border-radius: 8px;
-              box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            }
-            h1 {
-              margin-bottom: 16px;
-              color: ${title === "Success" ? "#4ec9b0" : "#f48771"};
-            }
-            p {
-              color: #cccccc;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <h1>${title}</h1>
-            <p>${message}</p>
-          </div>
-        </body>
-      </html>
-    `;
-  }
 }
 
 /**
@@ -155,14 +105,14 @@ export async function startSsoAuthFlow(): Promise<SsoAuthResult | null> {
 
   try {
     const port = await server.getPort();
-    const ssoBaseUrl = new URL("/sso/authorize", BASE_CUSTOMER_PORTAL_URL).toString();
     const redirectUri = `http://127.0.0.1:${port}/auth/callback`;
-    const ssoUrl = `${ssoBaseUrl}?redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const ssoUrl = new URL("/sso/authorize", BASE_CUSTOMER_PORTAL_URL);
+    ssoUrl.searchParams.set("redirect_uri", redirectUri);
 
     Logger.info(`[SSO] Opening SSO URL: ${ssoUrl}`);
 
     // Open the SSO URL in the default browser
-    await env.openExternal(Uri.parse(ssoUrl));
+    await env.openExternal(Uri.parse(ssoUrl.toString()));
 
     // Wait for callback or timeout
     const result = await server.waitForCallback();
