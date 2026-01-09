@@ -839,22 +839,26 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
 
   // #region Chat
 
-  addToChatContext(...filePaths: string[]): void {
+  addToChatContext(targetPath: string, ...attachedFilenames: string[]): void {
     try {
       const editor = getEditorType();
 
       let focusCommand = "copilot-chat.focus";
       let attachFileCommand = "workbench.action.chat.attachFile";
+      let attachNoteCommand = "workbench.action.chat.attachContext";
 
       if (editor === EditorType.CURSOR) {
         focusCommand = "composer.startComposerPrompt";
         attachFileCommand = "composer.addfilestocomposer";
+        attachNoteCommand = "";
       }
 
       commands.executeCommand(focusCommand).then(async () => {
-        for (const filePath of filePaths) {
+        for (const filePath of attachedFilenames) {
           await commands.executeCommand(attachFileCommand, Uri.file(filePath));
         }
+
+        await commands.executeCommand(attachNoteCommand, targetPath);
       });
     } catch (e) {
       const msg =
