@@ -44,8 +44,6 @@ export class BuildIOSProgressProcessor implements BuildProgressProcessor {
     });
   }
 
-  
-
   private async countTasksToComplete() {
     try {
       let buildDescriptionPathReadStream = await this.openTasksStoreIfExists();
