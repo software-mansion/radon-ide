@@ -110,7 +110,7 @@ export function InspectDataMenu({
 
       const targetPath = inspectedItems
         .toReversed()
-        .map((element) => element.componentName)
+        .map((element) => `<${element.componentName}>`)
         .join(" -> ");
 
       project.addToChatContext(targetPath, childFilename, parentFilename);
