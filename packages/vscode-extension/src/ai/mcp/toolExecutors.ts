@@ -2,6 +2,7 @@ import { readFileSync } from "fs";
 import { Store } from "react-devtools-inline";
 import { IDE } from "../../project/ide";
 import {
+  findTreeEntryPoint,
   getDevtoolsElementByID,
   pngToToolContent,
   textToToolContent,
@@ -10,8 +11,9 @@ import {
 import { Output } from "../../common/OutputChannel";
 import { DevicePlatform } from "../../common/State";
 import { ReloadAction } from "../../project/DeviceSessionsManager";
-import printComponentTree from "./printComponentTree";
 import { ImageContent, TextContent, ToolResponse } from "./models";
+import findInComponentTree from "./findInComponentTree";
+import printComponentTree from "./printComponentTree";
 
 export function tryGetTreeRoot(store: Store) {
   const treeRoot = getDevtoolsElementByID(store.roots[0], store);
@@ -39,6 +41,54 @@ export async function screenshotToolExec(): Promise<ToolResponse> {
   return {
     content: [pngToToolContent(contents)],
   };
+}
+
+export interface TouchElementRequest {
+  // Limiting the reload options to these three basic methods,
+  // as others require too much nuance and domain specific knowledge from the AI.
+  elementText: string;
+}
+
+export async function touchElementExec(input: TouchElementRequest): Promise<ToolResponse> {
+  const project = IDE.getInstanceIfExists()?.project;
+
+  if (!project?.deviceSession?.devtoolsStore) {
+    return textToToolResponse(
+      "Could not press the element!\n" +
+        "The development device is likely turned off.\n" +
+        "Please turn on the Radon IDE emulator before proceeding."
+    );
+  }
+
+  try {
+    const store = project.deviceSession.devtoolsStore;
+    const root = tryGetTreeRoot(store);
+
+    const entryPoint = findTreeEntryPoint(store, root);
+
+    if (!entryPoint) {
+      return textToToolResponse("Element could not be found! [**THIS IS A PLACEHOLDER**]");
+    }
+
+    const element = await findInComponentTree(
+      project.deviceSession,
+      store,
+      root,
+      input.elementText
+    );
+
+    if (!element) {
+      return textToToolResponse("Element could not be found! [**THIS IS A PLACEHOLDER**]");
+    }
+
+    return textToToolResponse("You pressed the element! [**THIS IS A PLACEHOLDER**]");
+  } catch {
+    return textToToolResponse(
+      "Could not press the element!\n" +
+        "The component tree is corrupted, which means the app is most likely turned off.\n" +
+        "Please turn on the Radon IDE emulator and the developed app before proceeding."
+    );
+  }
 }
 
 export interface AppReloadRequest {
