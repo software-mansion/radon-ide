@@ -164,7 +164,7 @@ async function clearEdits() {
   const gitUri = workspace.workspaceFolders?.[0].uri;
 
   if (!gitUri) {
-    // This case will never occur when tests are being run in a test up.
+    // This case should never occur when a test app is loaded.
     return;
   }
 
@@ -181,11 +181,13 @@ function awaitTestTerminationOrTimeout(ideInstance: IDE, testTimeout: number): P
     const disposable = ideInstance.onStateChanged((partialState) => {
       const continueRunningTests = partialState.areMCPTestsRunning;
       if (continueRunningTests === false) {
+        disposable.dispose();
+        clearTimeout(timeout);
         resolve(false);
       }
     });
 
-    setTimeout(() => {
+    const timeout = setTimeout(() => {
       disposable.dispose();
       resolve(true);
     }, testTimeout);
@@ -200,14 +202,13 @@ async function setTestStatus(areTestsRunning: boolean, ideInstance: IDE) {
 }
 
 function getIdeInstance() {
-  const stateManager = IDE.getInstanceIfExists();
+  const ide = IDE.getInstanceIfExists();
 
-  if (!stateManager) {
-    // TODO: Use `throw` or just `return`?
-    throw Error();
+  if (!ide) {
+    throw new Error("IDE instance is not initialized. Ensure the Radon IDE panel is open.");
   }
 
-  return stateManager;
+  return ide;
 }
 
 /**
@@ -221,7 +222,7 @@ export async function terminateChatToolTest() {
 
 /**
  * Executor for `RNIDE.testChatToolUsage` VSCode command.
- * Temporarily takes control over the AI chat tab, testing it's responses to various prompts.
+ * Temporarily takes control over the AI chat tab, testing its responses to various prompts.
  * Running this command may interfere with other VSCode functionalities as well.
  */
 export async function testChatToolUsage(): Promise<void> {
@@ -246,9 +247,9 @@ export async function testChatToolUsage(): Promise<void> {
     });
   };
 
-  // - `showInformationMessage` cannot be programatically dismissed
+  // - `showInformationMessage` cannot be programmatically dismissed
   // - `showQuickPick` is a list-selection - does not look right
-  // - `createStatusBarItem` looks good, and can be dismissed both programatically and by the user
+  // - `createStatusBarItem` looks good, and can be dismissed both programmatically and by the user
   const statusBar = window.createStatusBarItem(StatusBarAlignment.Left, 0);
   statusBar.command = "RNIDE.terminateChatToolTest";
   statusBar.text = "$(debug-stop) MCP tests running — Terminate";
@@ -260,7 +261,7 @@ export async function testChatToolUsage(): Promise<void> {
   const dir = await mkdtemp(path.join(tmpdir(), "radon-chat-exports-"));
 
   for (const testCase of testCases) {
-    clearEdits();
+    await clearEdits();
 
     await commands.executeCommand("workbench.action.chat.newChat");
     await commands.executeCommand("workbench.action.chat.openagent", testCase.prompt);
@@ -272,7 +273,7 @@ export async function testChatToolUsage(): Promise<void> {
       break;
     }
 
-    const filepath = dir + randomBytes(8).toString("hex") + ".json";
+    const filepath = path.join(dir, randomBytes(8).toString("hex") + ".json");
 
     await commands.executeCommand("workbench.action.chat.export", Uri.parse(filepath));
 
@@ -286,7 +287,7 @@ export async function testChatToolUsage(): Promise<void> {
     }
 
     if (chatData.requests.length === 0) {
-      fail(testCase, "Internal error: `workbench.action.chat.open` did not work.");
+      fail(testCase, "Internal error: `workbench.action.chat.openagent` did not work.");
       continue;
     }
 
@@ -333,7 +334,7 @@ export async function testChatToolUsage(): Promise<void> {
 
   const correctCount = runStatus
     .map((v) => (v.success ? 1 : 0) as number)
-    .reduce((v, acc) => v + acc);
+    .reduce((acc, v) => v + acc);
 
   const totalCount = runStatus.length;
   const correctPercent = ((correctCount / totalCount) * 100).toFixed(1);
