@@ -120,11 +120,10 @@ export class VSCodeHelperService {
     const fileName = path.basename(filePath);
 
     const editorView = new EditorView();
-    if (
-      (await editorView.getOpenEditorTitles(0)).includes(
-        path.basename(fileName)
-      )
-    ) {
+    const isFileOpen = (await editorView.getOpenEditorTitles(0)).includes(
+      path.basename(fileName)
+    );
+    if (isFileOpen) {
       const editor = await editorView.openEditor(fileName);
       return editor;
     }
