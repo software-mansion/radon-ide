@@ -8,7 +8,6 @@ import { Logger } from "../../Logger";
 import { exec } from "../../utilities/subprocess";
 import { Platform } from "../../utilities/platform";
 import { IDE } from "../../project/ide";
-import { REMOVE } from "../../common/State";
 
 export const GIT_PATH = Platform.select({
   macos: "git",
@@ -179,18 +178,16 @@ async function setGlobalTestsRunning(areTestsRunning: boolean) {
 
 function awaitTestTerminationOrTimeout(ideInstance: IDE, testTimeout: number): Promise<boolean> {
   return new Promise((resolve) => {
-    const disposable = ideInstance.onStateChanged((partialState) => {
-      const workspaceConfiguration = partialState.workspaceConfiguration;
-      if (workspaceConfiguration && workspaceConfiguration !== REMOVE) {
-        const radonAI = workspaceConfiguration.radonAI;
-        if (radonAI && radonAI !== REMOVE) {
-          if (radonAI.areMCPTestsRunning === false) {
-            disposable.dispose();
-            clearTimeout(timeout);
-            resolve(false);
-          }
+    const disposable = ideInstance.onStateChanged(() => {
+      // Using partial state here is much more cumbersome and less readable.
+      ideInstance.getState().then((state) => {
+        const testsRunning = state.workspaceConfiguration.radonAI.areMCPTestsRunning;
+        if (testsRunning === false) {
+          disposable.dispose();
+          clearTimeout(timeout);
+          resolve(false);
         }
-      }
+      });
     });
 
     const timeout = setTimeout(() => {
