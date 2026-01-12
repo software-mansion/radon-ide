@@ -146,6 +146,8 @@ export default class AppManipulationService {
       .pause(TIMEOUTS.PRESS_DELAY)
       .release(button)
       .perform();
+
+    await this.driver.sleep(TIMEOUTS.SHORT);
   }
 
   async clickInPhoneAndWaitForMessage(position) {

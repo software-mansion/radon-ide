@@ -13,7 +13,7 @@ on:
         description: Project app name to test
         type: choice
         required: true
-        default: "react-native-81"
+        default: "react-native-83"
         options:
           - "react-native-74"
           - "react-native-75"
@@ -24,6 +24,7 @@ on:
           - "react-native-80"
           - "react-native-81"
           - "react-native-82"
+          - "react-native-83"
           - "react-native-84"
           - "react-native-81-additional-libs"
           - "expo-51"
@@ -62,7 +63,7 @@ on:
         default: "latest"
 
   schedule:
-    - cron: "27 1 * * *"
+    - cron: "0 23 * * *"
 
 jobs:
   set-matrix:
@@ -123,16 +124,8 @@ jobs:
           distribution: "temurin"
           java-version: "17"
 
-      - name: Install Ruby and Bundler
-        shell: bash
-        run: |
-          brew install ruby
-          echo "/opt/homebrew/opt/ruby/bin" >> $GITHUB_PATH
-          echo "/opt/homebrew/lib/ruby/gems/3.4.0/bin" >> $GITHUB_PATH
-          export PATH="/opt/homebrew/opt/ruby/bin:$PATH"
-          ruby -v
-          gem -v
-          gem install bundler -v 2.5.3
+      - name: Test Ruby version
+        run: ruby -v
 
       - name: Install dependencies (extension)
         run: npm ci
@@ -174,6 +167,7 @@ jobs:
           IS_ANDROID: ${{ matrix.isAndroid }}
           RADON_IDE_LICENSE_KEY: ${{ secrets.RADON_IDE_LICENSE_KEY }}
           ALLOW_ENVIRONMENT_MODIFICATIONS: "true"
+          IS_GITHUB_ACTIONS: "true"
 
       - name: Upload test output artifact
         if: always()
@@ -186,7 +180,7 @@ jobs:
 
       - name: make video
         if: ${{ always() && matrix.isRecording == 'true' }}
-        timeout-minutes: 1
+        timeout-minutes: 2
         run: ffmpeg -framerate 10 -i frame-%04d.png -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
         working-directory: packages/vscode-extension-tester/videos
 
@@ -222,7 +216,7 @@ jobs:
         timeout-minutes: 1
         with:
           name: radon-screenshot-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}-${{ matrix.isAndroid && 'android' || 'ios' }}
-          path: packages/vscode-extension-tester/data/screenshotTest..png
+          path: packages/vscode-extension-tester/data/screenshotTest.png
           retention-days: 7
 
       - name: Upload recording made by radon
@@ -231,7 +225,7 @@ jobs:
         timeout-minutes: 1
         with:
           name: radon-recording-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}-${{ matrix.isAndroid && 'android' || 'ios' }}
-          path: packages/vscode-extension-tester/data/recordingTest..mp4
+          path: packages/vscode-extension-tester/data/recordingTest.mp4
           retention-days: 7
 
   summarize:

@@ -8,6 +8,7 @@ import {
 import { assert } from "chai";
 import initServices from "../services/index.js";
 import { safeDescribe } from "../utils/helpers.js";
+import { TIMEOUTS } from "../utils/timeouts.js";
 import { get } from "./setupTest.js";
 
 safeDescribe("4 - App interaction tests", () => {
@@ -63,10 +64,17 @@ safeDescribe("4 - App interaction tests", () => {
   });
 
   async function prepareBreakpoints(breakpoints = [1, 2, 3]) {
-    await vscodeHelperService.openFileInEditor(
+    let editor = await vscodeHelperService.openFileInEditor(
       "/data/react-native-app/shared/automatedTests.tsx"
     );
-    const editor = new TextEditor();
+
+    // Reopen the file in case first attempt didn't work
+    if (!editor) {
+      editor = await vscodeHelperService.openFileInEditor(
+        "/data/react-native-app/shared/automatedTests.tsx"
+      );
+    }
+
     const breakpointLines = [];
     for (const breakpoint of breakpoints) {
       breakpointLines.push(
@@ -91,8 +99,12 @@ safeDescribe("4 - App interaction tests", () => {
     );
     await appManipulationService.clickInsidePhoneScreen(position);
 
+    await driver.sleep(TIMEOUTS.DEFAULT);
+
     await driver.switchTo().defaultContent();
     await radonViewsService.openRadonIDEPanel();
+
+    await driver.sleep(TIMEOUTS.SHORT);
 
     return {
       breakpointLines,

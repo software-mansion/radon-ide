@@ -1,7 +1,7 @@
 {
   "include": [
     {
-      "testApp": "react-native-81",
+      "testApp": "react-native-83",
       "node": "22",
       "isRecording": "true",
       "testsToRun": "",
@@ -9,7 +9,24 @@
       "codeVersion": "latest"
     },
     {
-      "testApp": "expo-53",
+      "testApp": "react-native-83",
+      "node": "22",
+      "isRecording": "true",
+      "testsToRun": "",
+      "isAndroid": "true",
+      "testsToExclude": "",
+      "codeVersion": "latest"
+    },
+    {
+      "testApp": "react-native-83",
+      "node": "22",
+      "isRecording": "true",
+      "testsToRun": "",
+      "testsToExclude": "",
+      "codeVersion": "1.105.1"
+    },
+    {
+      "testApp": "expo-54",
       "node": "22",
       "isRecording": "true",
       "testsToRun": "",
@@ -21,22 +38,6 @@
       "node": "22",
       "isRecording": "true",
       "testsToRun": "",
-      "testsToExclude": "",
-      "codeVersion": "latest"
-    },
-    {
-      "testApp": "react-native-81",
-      "node": "22",
-      "isRecording": "true",
-      "testsToRun": "",
-      "testsToExclude": "",
-      "codeVersion": "1.99.1"
-    },
-    {
-      "testApp": "react-native-81",
-      "node": "22",
-      "isRecording": "true",
-      "testsToRun": "",
       "isAndroid": "true",
       "testsToExclude": "",
       "codeVersion": "latest"
@@ -46,7 +47,6 @@
       "node": "22",
       "isRecording": "true",
       "testsToRun": "",
-      "isAndroid": "true",
       "testsToExclude": "",
       "codeVersion": "latest"
     },

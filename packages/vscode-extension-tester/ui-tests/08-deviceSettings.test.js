@@ -202,6 +202,8 @@ safeDescribe("8 - Device Settings", () => {
       await driver.sleep(100);
     }
 
+    await driver.sleep(1000);
+
     const start = Date.now();
     const firstOrientation =
       await appManipulationService.sendMessageAndWaitForResponse(
