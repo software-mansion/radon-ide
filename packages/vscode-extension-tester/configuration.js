@@ -1,5 +1,5 @@
 const defaultConfig = {
-  IS_RECORDING: false,
+  IS_RECORDING: true,
 
   // Android devices do not work on github actions macOS runners nor local macOS VMs
   // This is possibly caused by the lack of support for hardware acceleration in virtualized environments (HVF error: HV_UNSUPPORTED)

@@ -1,8 +1,12 @@
 import path from "path";
 import fs from "fs";
 
-export default function startRecording(driver, options = {}) {
-  const screenshotsDir = path.join(process.cwd(), "videos");
+export default function startRecording(
+  driver,
+  directoryName = "test",
+  options = {}
+) {
+  const screenshotsDir = path.join(process.cwd(), "videos", directoryName);
   if (fs.existsSync(screenshotsDir)) {
     fs.rmSync(screenshotsDir, { recursive: true, force: true });
   }

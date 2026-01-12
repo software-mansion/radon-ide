@@ -13,7 +13,7 @@ on:
         description: Project app name to test
         type: choice
         required: true
-        default: "react-native-81"
+        default: "react-native-83"
         options:
           - "react-native-74"
           - "react-native-75"
@@ -179,9 +179,15 @@ jobs:
 
       - name: make video
         if: ${{ always() && matrix.isRecording == 'true' }}
-        timeout-minutes: 2
-        run: ffmpeg -framerate 10 -i frame-%04d.png -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p vscode-ui-recording.mp4
+        timeout-minutes: 5
         working-directory: packages/vscode-extension-tester/videos
+        run: |
+          for dir in */; do
+            dirname="${dir%/}"
+            if [ -d "$dirname" ]; then
+              ffmpeg -framerate 10 -i "$dirname/frame-%04d.png" -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -c:v libx264 -pix_fmt yuv420p "${dirname}.mp4"
+            fi
+          done
 
       - name: Upload screenshots on failure
         if: failure()
@@ -206,7 +212,7 @@ jobs:
         timeout-minutes: 1
         with:
           name: vscode-ui-recording-${{ github.run_id }}-${{matrix.testApp}}-${{matrix.codeVersion}}-${{ matrix.isAndroid && 'android' || 'ios' }}
-          path: packages/vscode-extension-tester/videos/vscode-ui-recording.mp4
+          path: packages/vscode-extension-tester/videos/*.mp4
           retention-days: 7
 
       - name: Upload screenshot made by radon

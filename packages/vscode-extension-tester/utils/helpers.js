@@ -1,4 +1,6 @@
 import { cleanUpAfterTest } from "../ui-tests/setupTest.js";
+import startRecording from "./screenRecording.js";
+import { get } from "../ui-tests/setupTest.js";
 
 let globalRetryCount = 0;
 const GLOBAL_RETRY_LIMIT = 10;
@@ -31,6 +33,10 @@ export function itIf(condition, title, fn) {
 export function safeDescribe(title, fn) {
   describe(title, function () {
     this.retries(2);
+    before(() => {
+      const { driver } = get();
+      this.recorder = startRecording(driver, title.split(" ")[0] || "test");
+    });
     beforeEach(function () {
       if (this.currentTest && this.currentTest.currentRetry() > 0) {
         globalRetryCount++;
@@ -40,6 +46,7 @@ export function safeDescribe(title, fn) {
       }
     });
     after(async () => {
+      this.recorder.stop();
       await cleanUpAfterTest();
     });
 
