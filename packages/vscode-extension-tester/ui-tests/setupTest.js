@@ -18,10 +18,7 @@ import initServices from "../services/index.js";
 import getConfiguration from "../configuration.js";
 import { texts } from "../utils/constants.js";
 
-const { IS_RECORDING } = getConfiguration();
-
 let driver, workbench, view, browser;
-let recorder;
 const failedTests = [];
 
 before(async function () {

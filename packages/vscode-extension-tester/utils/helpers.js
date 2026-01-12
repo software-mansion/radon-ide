@@ -1,6 +1,6 @@
 import { cleanUpAfterTest } from "../ui-tests/setupTest.js";
-import startRecording from "./screenRecording.js";
 import { get } from "../ui-tests/setupTest.js";
+import startRecording from "./screenRecording.js";
 
 let globalRetryCount = 0;
 const GLOBAL_RETRY_LIMIT = 10;
@@ -35,7 +35,10 @@ export function safeDescribe(title, fn) {
     this.retries(2);
     before(() => {
       const { driver } = get();
-      this.recorder = startRecording(driver, title.split(" ")[0] || "test");
+      this.recorder = startRecording(
+        driver,
+        title.replace(/\s+/g, "_") || "test"
+      );
     });
     beforeEach(function () {
       if (this.currentTest && this.currentTest.currentRetry() > 0) {
