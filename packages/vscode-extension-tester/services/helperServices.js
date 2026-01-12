@@ -3,6 +3,7 @@ import { until } from "selenium-webdriver";
 import {
   By,
   TextEditor,
+  EditorView,
   WebView,
   ActivityBar,
   Key,
@@ -116,6 +117,17 @@ export class VSCodeHelperService {
       .perform();
 
     await this.driver.sleep(TIMEOUTS.SHORT);
+    const fileName = path.basename(filePath);
+
+    const editorView = new EditorView();
+    if (
+      (await editorView.getOpenEditorTitles(0)).includes(
+        path.basename(fileName)
+      )
+    ) {
+      const editor = await editorView.openEditor(fileName);
+      return editor;
+    }
   }
 
   async getCursorLineInEditor() {

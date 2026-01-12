@@ -64,17 +64,15 @@ safeDescribe("4 - App interaction tests", () => {
   });
 
   async function prepareBreakpoints(breakpoints = [1, 2, 3]) {
-    await vscodeHelperService.openFileInEditor(
+    let editor = await vscodeHelperService.openFileInEditor(
       "/data/react-native-app/shared/automatedTests.tsx"
     );
-    let editor = new TextEditor();
 
     // Reopen the file in case first attempt didn't work
     if ((await editor.getTitle()) !== "automatedTests.tsx") {
-      await vscodeHelperService.openFileInEditor(
+      editor = await vscodeHelperService.openFileInEditor(
         "/data/react-native-app/shared/automatedTests.tsx"
       );
-      editor = new TextEditor();
     }
 
     const breakpointLines = [];
