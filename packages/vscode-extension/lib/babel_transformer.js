@@ -87,17 +87,17 @@ function transformWrapper({ filename, src, ...rest }) {
   const { transform } = require(ORIGINAL_TRANSFORMER_PATH);
   if (isTransforming("node_modules/react-native/Libraries/Core/InitializeCore.js")) {
     src = `${src};require("__RNIDE_lib__/runtime.js");`;
-  } else if (isTransforming("node_modules/expo-router/build/qualified-entry.js")) {
+  } else if (isTransforming("node_modules/expo-router/entry.js")) {
     // expo-router v2 and v3 integration
     const { version } = requireFromAppDir("expo-router/package.json");
     if (version.startsWith("2.")) {
-      src = `${src};\nrequire("__RNIDE_lib__/expo_router/expo_router_v2_plugin.js");`;
+      src = `${src};require("__RNIDE_lib__/expo_router/expo_router_v2_plugin.js");`;
     } else if (version.startsWith("3.") || version.startsWith("4.")) {
-      src = `${src};\nrequire("__RNIDE_lib__/expo_router/expo_router_plugin.js");`;
+      src = `${src};require("__RNIDE_lib__/expo_router/expo_router_plugin.js");`;
     } else if (version.startsWith("5.")) {
-      src = `${src};\nrequire("__RNIDE_lib__/expo_router/expo_router_v5_plugin.js");`;
+      src = `${src};require("__RNIDE_lib__/expo_router/expo_router_v5_plugin.js");`;
     } else if (version.startsWith("6.")) {
-      src = `${src};\nrequire("__RNIDE_lib__/expo_router/expo_router_v6_plugin.js");`;
+      src = `${src};require("__RNIDE_lib__/expo_router/expo_router_v6_plugin.js");`;
     }
   } else if (
     isTransforming("node_modules/react-native-ide/index.js") || // using react-native-ide for compatibility with old NPM package name
@@ -198,10 +198,17 @@ function transformWrapper({ filename, src, ...rest }) {
     isTransforming("node_modules/@tanstack/react-query/build/legacy/index") ||
     isTransforming("node_modules/@tanstack/react-query/build/modern/index")
   ) {
+    const pluginPath = path.join(
+      process.env.RADON_IDE_LIB_PATH,
+      "plugins",
+      "react-query-devtools.js"
+    );
+
+    let pluginSrc = fs.readFileSync(pluginPath);
     // note: react-query-devtools integration has to be done after the QueryClient class is required
     // which is why the src needs to come before it. Also we need to ensure that we don't
     // attach our code in the line containing a comment so we need to add a new line beforehand.
-    src = `${src};\nrequire("__RNIDE_lib__/plugins/react-query-devtools.js");`;
+    src = `${src};\n${pluginSrc}`;
   } else if (isTransforming("/lib/rn-internals/rn-internals.js")) {
     const { version } = requireFromAppDir("react-native/package.json");
     const majorMinorVersion = version.split(".").slice(0, 2).join(".");

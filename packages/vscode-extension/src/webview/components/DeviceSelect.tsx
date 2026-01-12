@@ -13,10 +13,10 @@ import { useStore } from "../providers/storeProvider";
 import { DeviceInfo, DevicePlatform, DeviceType } from "../../common/State";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
-import { Feature } from "../../common/License";
+import { Feature, FeatureAvailabilityStatus } from "../../common/License";
 import { useDevices } from "../hooks/useDevices";
 import { PropsWithDataTest } from "../../common/types";
-import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
+import { useFeatureAvailability } from "../hooks/useFeatureAvailability";
 
 enum DeviceSection {
   IosSimulator = "IosSimulator",
@@ -211,7 +211,9 @@ function DeviceSelect() {
   };
 
   const isAdminDisabledDeviceSections = (section: DeviceSection): boolean => {
-    const isRemoteAndroidAdminDisabled = useIsFeatureAdminDisabled(Feature.AndroidPhysicalDevice);
+    const isRemoteAndroidAdminDisabled =
+      useFeatureAvailability(Feature.AndroidPhysicalDevice) ===
+      FeatureAvailabilityStatus.ADMIN_DISABLED;
     return !(section === DeviceSection.PhysicalAndroid && isRemoteAndroidAdminDisabled);
   };
 

@@ -38,6 +38,14 @@
   color: var(--swm-button-disabled);
 }
 
+.icon-button.unavailable {
+  color: var(--swm-button-disabled);
+
+  &:hover {
+    color: var(--swm-button-disabled);
+  }
+}
+
 .icon-button:hover {
   color: var(--swm-icon-button-hover);
   background-color: var(--swm-icon-button-hover-background);
@@ -70,6 +78,31 @@
 
 .icon-button-secondary:hover {
   background-color: var(--swm-button-secondary-hover);
+}
+
+.pro-feature-badge {
+  border: 0px solid transparent;
+  border-radius: 3px;
+  color: var(--swm-button-counter);
+  background-color: var(--swm-button-counter-background);
+  border: 1px solid var(--swm-button-counter-border);
+  padding: 2px 2px;
+  font-size: 10px;
+  position: absolute;
+  top: 25%;
+  font-size: 7px;
+  right: 0px;
+  transform: translateY(-50%);
+  opacity: 0;
+  transition:
+    left 200ms ease-in-out,
+    opacity 200ms ease-in-out;
+  transition-delay: 0ms;
+}
+
+.icon-button.unavailable:hover .pro-feature-badge {
+  opacity: 1;
+  transition-delay: 250ms;
 }
 
 .icon-button-counter {
