@@ -10,7 +10,12 @@ import { useProject } from "../providers/ProjectProvider";
 import { useStore } from "../providers/storeProvider";
 import { ActivateLicenseView } from "./ActivateLicenseView";
 import { useModal } from "../providers/ModalProvider";
-import { Feature, FeatureNamesMap, LicenseStatus } from "../../common/License";
+import {
+  Feature,
+  FeatureAvailabilityStatus,
+  FeatureNamesMap,
+  LicenseStatus,
+} from "../../common/License";
 
 import "./PaywallView.css";
 
@@ -249,15 +254,20 @@ function PaywallView({ title, feature }: PaywallViewProps) {
   const store$ = useStore();
 
   const licenseState = use$(store$.license.status);
+  const featuresAvailability = use$(store$.license.featuresAvailability);
 
   const isLicenseInactive = licenseState === LicenseStatus.Inactive;
+  const isFeaturePaywalled =
+    feature && featuresAvailability[feature] === FeatureAvailabilityStatus.PAYWALLED;
+
+  const showGetProMessage = isFeaturePaywalled || !isLicenseInactive;
 
   return (
     <div className="paywall-view">
       <RadonBackgroundImage className="paywall-background-image" />
       <div className="paywall-container">
         <h1 className="paywall-title">
-          {title ?? (isLicenseInactive ? "Get Radon IDE License" : "Unlock Radon IDE Pro")}
+          {title ?? (showGetProMessage ? "Unlock Radon IDE Pro" : "Get Radon IDE License")}
         </h1>
         {feature && (
           <p className="paywall-feature-description">
@@ -265,7 +275,7 @@ function PaywallView({ title, feature }: PaywallViewProps) {
           </p>
         )}
 
-        {isLicenseInactive ? <InactiveLicenseDescription /> : <FreeLicenseDescription />}
+        {showGetProMessage ? <FreeLicenseDescription /> : <InactiveLicenseDescription />}
 
         <ActivateLicenseButton />
       </div>
