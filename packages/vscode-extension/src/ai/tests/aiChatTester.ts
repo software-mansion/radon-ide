@@ -176,18 +176,18 @@ async function setGlobalTestsRunning(areTestsRunning: boolean) {
   await commands.executeCommand("setContext", "RNIDE.MCPToolTestsRunning", areTestsRunning);
 }
 
-function awaitTestTerminationOrTimeout(ideInstance: IDE, testTimeout: number): Promise<void> {
+function awaitTestTerminationOrTimeout(ideInstance: IDE, testTimeout: number): Promise<boolean> {
   return new Promise((resolve) => {
     const disposable = ideInstance.onStateChanged((partialState) => {
       const continueRunningTests = partialState.areMCPTestsRunning;
       if (continueRunningTests === false) {
-        resolve();
+        resolve(false);
       }
     });
 
     setTimeout(() => {
       disposable.dispose();
-      resolve();
+      resolve(true);
     }, testTimeout);
   });
 }
@@ -265,7 +265,12 @@ export async function testChatToolUsage(): Promise<void> {
     await commands.executeCommand("workbench.action.chat.newChat");
     await commands.executeCommand("workbench.action.chat.openagent", testCase.prompt);
 
-    await awaitTestTerminationOrTimeout(ideInstance, 10_000);
+    const shouldContinue = await awaitTestTerminationOrTimeout(ideInstance, 10_000);
+
+    if (!shouldContinue) {
+      fail(testCase, "User input: Test was terminated early.");
+      break;
+    }
 
     const filepath = dir + randomBytes(8).toString("hex") + ".json";
 
