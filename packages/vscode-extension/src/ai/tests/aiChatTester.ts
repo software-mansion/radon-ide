@@ -1,6 +1,6 @@
 import { randomBytes } from "crypto";
 import { readFileSync } from "fs";
-import { mkdtemp } from "fs/promises";
+import { mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
 import path from "path";
 import { window, commands, Uri, workspace, StatusBarAlignment, ThemeColor } from "vscode";
@@ -327,6 +327,10 @@ export async function testChatToolUsage(): Promise<void> {
 
   statusBar.hide();
   statusBar.dispose();
+
+  rm(dir, { recursive: true }).catch((_e) => {
+    // silence the errors, it's fine
+  });
 
   const failReasons = runStatus
     .map((v) => `${v.success ? " OK " : "FAIL"}${v.cause !== null ? ` | Error: ${v.cause}` : ""}`)
