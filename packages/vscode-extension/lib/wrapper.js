@@ -12,7 +12,7 @@ const {
   Dimensions,
   DevSettings,
 } = require("react-native");
-const { storybookPreview } = require("./storybook_helper");
+const { storybookPreview } = require("./storybook/storybook_helper");
 require("./react_devtools_agent"); // needs to be loaded before inspector_bridge is used
 const inspectorBridge = require("./inspector_bridge");
 const DimensionsObserver = require("./dimensions_observer");

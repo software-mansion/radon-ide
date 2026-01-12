@@ -14,6 +14,7 @@ import { getOpenPort } from "../utilities/common";
 import { shouldUseExpoCLI } from "../utilities/expoCli";
 import { openFileAtPosition } from "../utilities/editorOpeners";
 import { createRefCounted, RefCounted } from "../utilities/refCounted";
+import { getStorybookConfiguration } from "../utilities/storybook";
 
 export class MetroError extends Error {
   constructor(message: string) {
@@ -46,7 +47,7 @@ export class UniqueMetroProvider implements MetroProvider {
   constructor(
     private readonly launchConfiguration: ResolvedLaunchConfig,
     private readonly devtoolsPort: Promise<number | undefined> = Promise.resolve(undefined)
-  ) {}
+  ) { }
 
   public async getMetroSession(options: {
     resetCache: boolean;
@@ -133,48 +134,48 @@ export interface CDPTargetDescription {
 
 type MetroEvent =
   | {
-      type: "bundle_build_failed"; // related to bundleError status
-    }
+    type: "bundle_build_failed"; // related to bundleError status
+  }
   | {
-      type: "bundling_error"; // related to incrementalBundleError status
+    type: "bundling_error"; // related to incrementalBundleError status
+    message: string;
+    stack: string;
+    error: {
       message: string;
-      stack: string;
-      error: {
-        message: string;
-        filename?: string;
-        lineNumber?: number;
-        columnNumber?: number;
-        originModulePath: string;
-        targetModuleName: string;
-        errors: {
-          description: string;
-        }[];
-      };
-    }
+      filename?: string;
+      lineNumber?: number;
+      columnNumber?: number;
+      originModulePath: string;
+      targetModuleName: string;
+      errors: {
+        description: string;
+      }[];
+    };
+  }
   | {
-      type: "bundle_transform_progressed";
-      transformedFileCount: number;
-      totalFileCount: number;
-    }
+    type: "bundle_transform_progressed";
+    transformedFileCount: number;
+    totalFileCount: number;
+  }
   | { type: "RNIDE_expo_env_prelude_lines"; lineCount: number }
   | {
-      type: "initialize_done";
-      port: number;
-    }
+    type: "initialize_done";
+    port: number;
+  }
   | {
-      type: "RNIDE_watch_folders";
-      watchFolders: string[];
-    }
+    type: "RNIDE_watch_folders";
+    watchFolders: string[];
+  }
   | {
-      type: "client_log";
-      level: "error";
-      data: [
-        string, // message
-        string, // bundle
-        string, // todo: ensure what this field means
-        string, // todo: ensure what this field means
-      ];
-    };
+    type: "client_log";
+    level: "error";
+    data: [
+      string, // message
+      string, // bundle
+      string, // todo: ensure what this field means
+      string, // todo: ensure what this field means
+    ];
+  };
 
 interface BundleErrorEvent {
   message: string;
@@ -207,6 +208,9 @@ async function launchMetro({
   if (launchConfiguration.metroConfigPath) {
     metroConfigPath = findCustomMetroConfig(launchConfiguration.metroConfigPath);
   }
+
+  const storybookConfiguration = await getStorybookConfiguration(launchConfiguration, metroConfigPath);
+
   const isExtensionDev = extensionContext.extensionMode === ExtensionMode.Development;
 
   port = port ?? (await getOpenPort());
@@ -223,6 +227,7 @@ async function launchMetro({
     RADON_IDE_LIB_PATH: libPath,
     RADON_IDE_VERSION: extensionContext.extension.packageJSON.version,
     REACT_EDITOR: fakeEditorPath,
+    ...(storybookConfiguration.installed ? { RADON_STORYBOOK_CONFIG_PATH: storybookConfiguration.configPath } : {}),
     // NOTE: At least as of version 52, Expo uses a different mechanism to open stack frames in the editor,
     // which doesn't allow passing a path to the EDITOR executable.
     // Instead, we pass it a fake editor name and inspect the debug logs to extract the file path to open.
@@ -302,7 +307,7 @@ export class Metro implements MetroSession, Disposable {
 
         return listJson;
       }
-    } catch {}
+    } catch { }
     return [];
   }
 
@@ -449,7 +454,7 @@ class SubprocessMetroSession extends Metro implements Disposable {
         const event = JSON.parse(line) as MetroEvent;
         this.handleMetroEvent(event);
         return;
-      } catch {}
+      } catch { }
 
       Logger.debug("Metro", line);
 

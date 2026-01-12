@@ -144,6 +144,7 @@ function adaptMetroConfig(config) {
     __RNIDE_lib__: extensionLib,
     __REACT_NATIVE_INTERNALS__: reactNativePath,
     __APPDIR__: appRoot,
+    ...(process.env.RADON_STORYBOOK_CONFIG_PATH ? { __RADON_STORYBOOK_CONFIG_PATH__: process.env.RADON_STORYBOOK_CONFIG_PATH } : {}),
   };
 
   // This code is needed to resolve modules that the extension lib files import.

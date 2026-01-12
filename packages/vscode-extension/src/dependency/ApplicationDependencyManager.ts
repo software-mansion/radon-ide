@@ -1,6 +1,6 @@
 import path from "path";
 import { Disposable, OutputChannel } from "vscode";
-import semver, { SemVer } from "semver";
+import semver from "semver";
 import { Logger } from "../Logger";
 import { exec } from "../utilities/subprocess";
 import { isExpoGoProject } from "../builders/expoGo";
@@ -23,6 +23,8 @@ import { BuildError, BuildOptions } from "../builders/BuildManager";
 import { Prebuild } from "./prebuild";
 import { FingerprintProvider } from "../project/FingerprintProvider";
 import { checkNativeDirectoryExists } from "../utilities/checkNativeDirectoryExists";
+import { isApplicationDependencyInstalled } from "../utilities/applicationDependencies";
+import { isStorybookInstalled } from "../utilities/storybook";
 
 export class ApplicationDependencyManager implements Disposable {
   private disposables: Disposable[] = [];
@@ -92,7 +94,7 @@ export class ApplicationDependencyManager implements Disposable {
 
     this.stateManager.updateState({
       reactNative: {
-        status: npmPackageVersionCheck("react-native", appRoot, MinSupportedVersion.reactNative),
+        status: isApplicationDependencyInstalled("react-native", appRoot, MinSupportedVersion.reactNative) ? "installed" : "notInstalled",
         isOptional: false,
       },
     });
@@ -103,7 +105,7 @@ export class ApplicationDependencyManager implements Disposable {
 
     this.stateManager.updateState({
       expo: {
-        status: npmPackageVersionCheck("expo", appRoot, MinSupportedVersion.expo),
+        status: isApplicationDependencyInstalled("expo", appRoot, MinSupportedVersion.expo) ? "installed" : "notInstalled",
         isOptional: !shouldUseExpoCLI(this.launchConfiguration),
       },
     });
@@ -238,7 +240,7 @@ export class ApplicationDependencyManager implements Disposable {
   public async checkProjectUsesExpoRouter() {
     const appRoot = this.launchConfiguration.absoluteAppRoot;
     const dependsOnExpoRouter = appDependsOnExpoRouter(appRoot);
-    const hasExpoRouterInstalled = npmPackageVersionCheck("expo-router", appRoot);
+    const hasExpoRouterInstalled = isApplicationDependencyInstalled("expo-router", appRoot) ? "installed" : "notInstalled";
 
     this.stateManager.updateState({
       expoRouter: {
@@ -252,19 +254,15 @@ export class ApplicationDependencyManager implements Disposable {
 
   public async checkProjectUsesStorybook() {
     const appRoot = this.launchConfiguration.absoluteAppRoot;
-    const hasStotybookInstalled = npmPackageVersionCheck(
-      "@storybook/react-native",
-
-      appRoot,
-      MinSupportedVersion.storybook
-    );
+    const hasStorybookInstalled = isStorybookInstalled(appRoot);
+    const status = hasStorybookInstalled ? "installed" : "notInstalled";
     this.stateManager.updateState({
       storybook: {
-        status: hasStotybookInstalled,
+        status, 
         isOptional: true,
       },
     });
-    return hasStotybookInstalled;
+    return status;
   }
 
   public async installNodeModules(
@@ -403,34 +401,6 @@ export class ApplicationDependencyManager implements Disposable {
     });
     return;
   }
-}
-
-function npmPackageVersionCheck(
-  dependency: string,
-  appRoot: string,
-  minVersion?: string | semver.SemVer
-) {
-  try {
-    const module = requireNoCache(path.join(dependency, "package.json"), {
-      paths: [appRoot],
-    });
-
-    if (!minVersion) {
-      return "installed";
-    }
-
-    const version = semver.coerce(module.version);
-    minVersion = new SemVer(minVersion);
-
-    const isSupported = version ? semver.gte(version, minVersion) : false;
-    // if not supported, we treat it as not installed
-    if (isSupported) {
-      return "installed";
-    }
-  } catch (_error) {
-    // ignore if not installed
-  }
-  return "notInstalled";
 }
 
 function appDependsOnExpoRouter(appRoot: string) {

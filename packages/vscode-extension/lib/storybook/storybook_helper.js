@@ -5,7 +5,7 @@ async function isStoryIdValid(storyId) {
 
 export async function storybookPreview(componentTitle, storyName) {
   try {
-    const { view } = require("__APPDIR__/.storybook/storybook.requires");
+    const { view } = require("__RADON_STORYBOOK_CONFIG_PATH__/storybook.requires");
     const { toId, storyNameFromExport } = require("__APPDIR__/node_modules/@storybook/csf");
     if (view === undefined) {
       throw new Error("Storybook view is undefined.");
