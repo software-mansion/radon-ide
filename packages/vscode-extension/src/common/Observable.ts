@@ -32,5 +32,6 @@ export class Observable<T> {
 
   public set(value: T) {
     this.value = value;
+    this.listeners.forEach((cb) => cb(value));
   }
 }
