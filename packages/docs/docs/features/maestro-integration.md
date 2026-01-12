@@ -24,12 +24,22 @@ The extension detects YAML files with Maestro syntax and allows to run them in t
 
 Use the `Start Maestro test(s)` option from the `Tools` menu to select multiple files and folders to run tests from. Maestro will automatically choose valid flow files, conduct tests on the device and report the results in the output console.
 
-
 <video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/ide_maestro_select.mp4" type="video/mp4" />
 </video>
+
 ## Aborting flows
 
 When a flow is started, an indicator button appears on the Radon toolbar. Click this button to abort the test, exiting the Maestro process gracefully.
 
 <img width="200" src="/img/docs/ide_maestro_abort.png" className="shadow-image"/>
+
+## Troubleshooting
+
+### Flows using `clearState` fail on Android
+
+On Android, maestro flows which use the [`clearState` command](https://docs.maestro.dev/api-reference/commands/clearstate)
+or set the `clearState` flag in the [`launchApp` command](https://docs.maestro.dev/api-reference/commands/launchapp)
+may fail to connect to the Metro server.
+In that case, you can set the `metroPort` to `"8081"` in your Radon [launch configuration](/docs/guides/configuration)
+to ensure the Metro server runs on the default port the application tries to connect to.
