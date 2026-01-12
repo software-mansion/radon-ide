@@ -25,6 +25,7 @@ on:
           - "react-native-81"
           - "react-native-82"
           - "react-native-83"
+          - "react-native-84"
           - "react-native-81-additional-libs"
           - "expo-51"
           - "expo-52-prebuild-with-plugins"

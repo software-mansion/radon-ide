@@ -73,6 +73,7 @@ import { AdminRestrictedFunctionalityError, PaywalledFunctionalityError } from "
 import { Sentiment } from "../common/types";
 import { FeedbackGenerator } from "./feedbackGenerator";
 import { EditorType, getEditorType } from "../utilities/editorType";
+import { initialState } from "../common/State";
 
 const DEEP_LINKS_HISTORY_KEY = "deep_links_history";
 
@@ -83,6 +84,8 @@ type ProjectMethodParameters<K extends keyof Project> = Project[K] extends (
 ) => unknown
   ? P
   : never;
+
+type DeviceSettingsConfigurationKey = keyof WorkspaceConfiguration["deviceSettings"];
 
 /**
  * Checks if the current license status allows access to the specified feature.
@@ -220,7 +223,9 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       },
     };
 
-    this.updateLicenseState();
+    this.updateLicenseState().then(() => {
+      this.updatePaywalledDeviceSettingsState();
+    });
 
     this.maybeStartInitialDeviceSession();
 
@@ -268,6 +273,38 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (!Connector.getInstance().isEnabled && !this.deviceSessionsManager.selectedDeviceSession) {
       this.deviceSessionsManager.findInitialDeviceAndStartSession();
     }
+  }
+
+  private updatePaywalledDeviceSettingsState() {
+    const CONFIGURATION_FEATURE_MAP: Partial<Record<Feature, DeviceSettingsConfigurationKey>> = {
+      [Feature.Biometrics]: "hasEnrolledBiometrics",
+      [Feature.DeviceRotation]: "deviceRotation",
+      [Feature.ScreenReplay]: "replaysEnabled",
+      [Feature.DeviceAppearanceSettings]: "appearance",
+      [Feature.DeviceFontSizeSettings]: "contentSize",
+      [Feature.DeviceLocalizationSettings]: "locale",
+      [Feature.LocationSimulation]: "location",
+    } as const;
+
+    const configState = this.workspaceStateManager.getState();
+    const deviceSettings = configState.deviceSettings;
+    const updatedDeviceSettings = { ...deviceSettings };
+
+    for (const [feature, configKey] of Object.entries(CONFIGURATION_FEATURE_MAP) as Array<
+      [Feature, DeviceSettingsConfigurationKey]
+    >) {
+      const isAvailable =
+        this.licenseState.featuresAvailability[feature] === FeatureAvailabilityStatus.AVAILABLE;
+
+      (updatedDeviceSettings[configKey] as any) = isAvailable
+        ? deviceSettings[configKey]
+        : initialState.workspaceConfiguration.deviceSettings[configKey];
+    }
+
+    this.workspaceStateManager.updateState({
+      ...configState,
+      deviceSettings: updatedDeviceSettings,
+    });
   }
 
   @guardFeatureAccess(Feature.AndroidSmartphoneEmulators)
@@ -477,6 +514,11 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
         status: LicenseStatus.Inactive,
         featuresAvailability: DefaultFeaturesAvailability,
       });
+
+      this.telemetry.sendTelemetry("license:detected", {
+        licenseStatus: LicenseStatus.Inactive,
+      });
+
       return;
     }
 
@@ -492,6 +534,10 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
 
     this.licenseStateManager.updateState(newState);
+
+    this.telemetry.sendTelemetry("license:detected", {
+      licenseStatus: newState.status,
+    });
   };
 
   // #endregion License
