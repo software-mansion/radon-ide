@@ -13,7 +13,7 @@ on:
         description: Project app name to test
         type: choice
         required: true
-        default: "react-native-81"
+        default: "react-native-83"
         options:
           - "react-native-74"
           - "react-native-75"
