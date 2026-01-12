@@ -306,19 +306,24 @@ export async function testChatToolUsage(): Promise<void> {
     }
 
     const otherCalledTools = [];
+    let wasExpectedToolCalled = false;
+
     for (const toolCall of toolCalls) {
       if (testCase.allowedToolIds.includes(toolCall.toolId)) {
+        wasExpectedToolCalled = true;
         success(testCase);
-        continue;
+        break;
       }
 
       otherCalledTools.push(toolCall.toolId);
     }
 
-    const expected = `Expected: ${testCase.allowedToolIds.join(" | ")}`;
-    const received = `Received: ${otherCalledTools.join(", ")}`;
-    const cause = `${expected}. ${received}`;
-    fail(testCase, cause);
+    if (!wasExpectedToolCalled) {
+      const expected = `Expected: ${testCase.allowedToolIds.join(" | ")}`;
+      const received = `Received: ${otherCalledTools.join(", ")}`;
+      const cause = `${expected}. ${received}`;
+      fail(testCase, cause);
+    }
   }
 
   await setTestStatus(false, ideInstance);
