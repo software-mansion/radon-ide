@@ -8,7 +8,7 @@ import { Logger } from "../../Logger";
 import { exec } from "../../utilities/subprocess";
 import { Platform } from "../../utilities/platform";
 import { IDE } from "../../project/ide";
-import { Observable } from "../../common/Observable";
+import { REMOVE } from "../../common/State";
 
 export const GIT_PATH = Platform.select({
   macos: "git",
@@ -180,11 +180,16 @@ async function setGlobalTestsRunning(areTestsRunning: boolean) {
 function awaitTestTerminationOrTimeout(ideInstance: IDE, testTimeout: number): Promise<boolean> {
   return new Promise((resolve) => {
     const disposable = ideInstance.onStateChanged((partialState) => {
-      const continueRunningTests = partialState.areMCPTestsRunning;
-      if (continueRunningTests === false) {
-        disposable.dispose();
-        clearTimeout(timeout);
-        resolve(false);
+      const workspaceConfiguration = partialState.workspaceConfiguration;
+      if (workspaceConfiguration && workspaceConfiguration !== REMOVE) {
+        const radonAI = workspaceConfiguration.radonAI;
+        if (radonAI && radonAI !== REMOVE) {
+          if (radonAI.areMCPTestsRunning === false) {
+            disposable.dispose();
+            clearTimeout(timeout);
+            resolve(false);
+          }
+        }
       }
     });
 
@@ -195,9 +200,15 @@ function awaitTestTerminationOrTimeout(ideInstance: IDE, testTimeout: number): P
   });
 }
 
-async function setTestStatus(areTestsRunning: boolean, testsRunning: Observable<boolean>) {
+async function setTestStatus(areTestsRunning: boolean, ideInstance: IDE) {
   await setGlobalTestsRunning(areTestsRunning);
-  testsRunning.set(areTestsRunning);
+  await ideInstance.updateState({
+    workspaceConfiguration: {
+      radonAI: {
+        areMCPTestsRunning: areTestsRunning,
+      },
+    },
+  });
 }
 
 function getIdeInstance() {
@@ -225,10 +236,10 @@ export async function terminateChatToolTest() {
  * Running this command may interfere with other VSCode functionalities as well.
  */
 export async function testChatToolUsage(): Promise<void> {
+  const ideInstance = getIdeInstance();
   const runStatus: ChatTestResult[] = [];
-  const testsRunning = new Observable(false);
 
-  await setTestStatus(true, testsRunning);
+  await setTestStatus(true, ideInstance);
 
   const fail = (testCase: ChatTestCase, cause: string) => {
     runStatus.push({
