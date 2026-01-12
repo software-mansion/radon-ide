@@ -323,14 +323,14 @@ export async function testChatToolUsage(): Promise<void> {
 
   await setTestStatus(false, ideInstance);
 
-  clearEdits();
-
   statusBar.hide();
   statusBar.dispose();
 
   rm(dir, { recursive: true }).catch((_e) => {
     // silence the errors, it's fine
   });
+
+  await clearEdits();
 
   const failReasons = runStatus
     .map((v) => `${v.success ? " OK " : "FAIL"}${v.cause !== null ? ` | Error: ${v.cause}` : ""}`)
