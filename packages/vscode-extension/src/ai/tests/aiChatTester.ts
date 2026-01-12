@@ -8,6 +8,7 @@ import { Logger } from "../../Logger";
 import { exec } from "../../utilities/subprocess";
 import { Platform } from "../../utilities/platform";
 import { IDE } from "../../project/ide";
+import { Observable } from "../../common/Observable";
 
 export const GIT_PATH = Platform.select({
   macos: "git",
@@ -194,11 +195,9 @@ function awaitTestTerminationOrTimeout(ideInstance: IDE, testTimeout: number): P
   });
 }
 
-async function setTestStatus(areTestsRunning: boolean, ideInstance: IDE) {
+async function setTestStatus(areTestsRunning: boolean, testsRunning: Observable<boolean>) {
   await setGlobalTestsRunning(areTestsRunning);
-  await ideInstance.updateState({
-    areMCPTestsRunning: areTestsRunning,
-  });
+  testsRunning.set(areTestsRunning);
 }
 
 function getIdeInstance() {
@@ -226,10 +225,10 @@ export async function terminateChatToolTest() {
  * Running this command may interfere with other VSCode functionalities as well.
  */
 export async function testChatToolUsage(): Promise<void> {
-  const ideInstance = getIdeInstance();
   const runStatus: ChatTestResult[] = [];
+  const testsRunning = new Observable(false);
 
-  await setTestStatus(true, ideInstance);
+  await setTestStatus(true, testsRunning);
 
   const fail = (testCase: ChatTestCase, cause: string) => {
     runStatus.push({
