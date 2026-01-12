@@ -195,7 +195,7 @@ function awaitTestTerminationOrTimeout(ideInstance: IDE, testTimeout: number): P
 async function setTestStatus(areTestsRunning: boolean, ideInstance: IDE) {
   await setGlobalTestsRunning(areTestsRunning);
   await ideInstance.updateState({
-    areMCPTestsRunning: !areTestsRunning,
+    areMCPTestsRunning: areTestsRunning,
   });
 }
 
