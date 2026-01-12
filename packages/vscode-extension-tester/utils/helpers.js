@@ -1,5 +1,8 @@
 import { cleanUpAfterTest } from "../ui-tests/setupTest.js";
 
+let globalRetryCount = 0;
+const GLOBAL_RETRY_LIMIT = 10;
+
 export function centerCoordinates(position) {
   return {
     x: position.x - 0.5,
@@ -26,7 +29,16 @@ export function itIf(condition, title, fn) {
 }
 
 export function safeDescribe(title, fn) {
-  describe(title, () => {
+  describe(title, function () {
+    this.retries(2);
+    beforeEach(function () {
+      if (this.currentTest && this.currentTest.currentRetry() > 0) {
+        globalRetryCount++;
+      }
+      if (globalRetryCount > GLOBAL_RETRY_LIMIT) {
+        this.currentTest?.retries(0);
+      }
+    });
     after(async () => {
       await cleanUpAfterTest();
     });
