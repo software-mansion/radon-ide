@@ -69,7 +69,7 @@ safeDescribe("4 - App interaction tests", () => {
     );
 
     // Reopen the file in case first attempt didn't work
-    if ((await editor.getTitle()) !== "automatedTests.tsx") {
+    if (!editor) {
       editor = await vscodeHelperService.openFileInEditor(
         "/data/react-native-app/shared/automatedTests.tsx"
       );

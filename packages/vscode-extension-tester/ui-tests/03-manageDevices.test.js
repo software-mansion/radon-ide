@@ -270,6 +270,8 @@ safeDescribe("3 - Adding device tests", () => {
     await elementHelperService.findAndClickElementByTag("modal-close-button");
     await appManipulationService.waitForAppToLoad();
 
+    console.log("0");
+
     await managingDevicesService.addNewDevice(deviceName2);
     await elementHelperService.findAndClickElementByTag(
       `device-row-start-button-device-${deviceName2}`
@@ -278,10 +280,14 @@ safeDescribe("3 - Adding device tests", () => {
       "device-select-value-text"
     );
 
+    console.log("1");
+
     await driver.wait(async () => {
       const text = await chosenDevice.getText();
       return text === deviceName2;
     }, 5000);
+
+    console.log("2");
 
     await appManipulationService.waitForAppToLoad();
     await driver
@@ -293,14 +299,20 @@ safeDescribe("3 - Adding device tests", () => {
       .keyUp(Key.COMMAND)
       .perform();
 
+    console.log("3");
+
     await driver.wait(async () => {
       const text = await chosenDevice.getText();
       return text === deviceName1;
     }, 5000);
 
+    console.log("4");
+
     await appManipulationService.waitForAppToLoad();
 
     await checkIfNameInDebugNameChanges(deviceName1);
+
+    console.log("5");
 
     await driver
       .actions()
@@ -312,5 +324,7 @@ safeDescribe("3 - Adding device tests", () => {
       .perform();
 
     await checkIfNameInDebugNameChanges(deviceName2);
+
+    console.log("6");
   });
 });
