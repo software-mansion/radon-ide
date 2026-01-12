@@ -1,11 +1,6 @@
-import { useEffect, useState } from "react";
 import { use$ } from "@legendapp/state/react";
-import { PricePreviewResponse } from "@paddle/paddle-js";
-import classNames from "classnames";
 import Button from "../components/shared/Button";
-import SubscriptionOption from "../components/shared/SubscriptionOption";
 import RadonBackgroundImage from "../components/RadonBackgroundImage";
-import usePaddle from "../hooks/usePaddle";
 import { useProject } from "../providers/ProjectProvider";
 import { useStore } from "../providers/storeProvider";
 import { ActivateLicenseView } from "./ActivateLicenseView";
@@ -14,18 +9,7 @@ import { Feature, FeatureNamesMap, LicenseStatus } from "../../common/License";
 
 import "./PaywallView.css";
 
-type SubscriptionPlan = "monthly" | "yearly";
-
-// FIXME: Add production Paddle price IDs when ready
-const RadonIDEProMonthlyPriceID = window.RNIDE_isDev
-  ? "pri_01k1g12g3y3tqvpzw8tcyrsd1y"
-  : "pri_01k8aqbvbzyz1stf8wbaf9z04y";
-const RadonIDEProYearlyPriceID = window.RNIDE_isDev
-  ? "pri_01k1g8d3h0mhbtr5hfd9e4n8yg"
-  : "pri_01k8aqd6hs0fsj84vdk9y512tm";
-
 const proBenefits = [
-  "All the Free features",
   "Replays and Screen Recordings",
   "Device Screenshots",
   "Location settings",
@@ -34,6 +18,7 @@ const proBenefits = [
   "Radon AI assistant",
   "Remote Android Devices Integration",
   "Early access to new features",
+  "All the Free features",
 ];
 
 const freeBenefits = [
@@ -84,130 +69,15 @@ function BenefitsSection({
   );
 }
 
-function SelectProPlan() {
-  const { project } = useProject();
-
-  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlan>("yearly");
-  const paddle = usePaddle();
-  const [prices, setPrices] = useState<PricePreviewResponse | null>(null);
-  const [isLoadingPrices, setIsLoadingPrices] = useState(false);
-  const [pricesError, setPricesError] = useState<string | null>(null);
-
-  async function getPrices() {
-    setIsLoadingPrices(true);
-    setPricesError(null);
-
-    try {
-      const response = await paddle?.PricePreview({
-        items: [
-          { quantity: 1, priceId: RadonIDEProMonthlyPriceID },
-          { quantity: 1, priceId: RadonIDEProYearlyPriceID },
-        ],
-        address: {
-          countryCode: "US",
-        },
-      });
-
-      if (!response) {
-        throw new Error("Failed to fetch prices from Paddle - no response received");
-      }
-
-      setPrices(response);
-    } catch (error) {
-      console.error("Failed to fetch prices from Paddle:", error);
-      setPricesError(error instanceof Error ? error.message : "Failed to load pricing information");
-    } finally {
-      setIsLoadingPrices(false);
-    }
-  }
-
-  useEffect(() => {
-    if (paddle) {
-      getPrices();
-    }
-  }, [paddle]);
-
-  const radonProMonthlyPrice = prices?.data.details.lineItems.find(
-    (item) => item.price.id === RadonIDEProMonthlyPriceID
-  );
-  const radonProYearlyPrice = prices?.data.details.lineItems.find(
-    (item) => item.price.id === RadonIDEProYearlyPriceID
-  );
-
-  const isPriceReady = !!prices && !isLoadingPrices && !pricesError;
-
-  const handleContinue = () => {
-    project.openExternalUrl("https://ide.swmansion.com/pricing");
-  };
-
-  return (
-    <>
-      <div>
-        <p className="subscription-options-caption">Start with 2 week trial then:</p>
-
-        <div className="subscription-options">
-          <SubscriptionOption
-            planType="yearly"
-            planName="Yearly Plan"
-            planPrice={radonProYearlyPrice?.formattedTotals.total || ""}
-            planDescription="Billed annually"
-            showSaving={true}
-            savingText="Save 16%"
-            isSelected={selectedPlan === "yearly"}
-            onClick={() => setSelectedPlan("yearly")}
-          />
-
-          <SubscriptionOption
-            planType="monthly"
-            planName="Monthly Plan"
-            planPrice={radonProMonthlyPrice?.formattedTotals.total || ""}
-            planDescription="Billed monthly"
-            isSelected={selectedPlan === "monthly"}
-            onClick={() => setSelectedPlan("monthly")}
-          />
-        </div>
-      </div>
-
-      <p
-        className={classNames(
-          "recurring-billing-label",
-          isPriceReady ? "with-prices" : "no-prices"
-        )}>
-        Recurring billing. Cancel anytime.
-      </p>
-
-      {pricesError && (
-        <p className="pricing-error" role="alert">
-          {pricesError}
-        </p>
-      )}
-
-      <div
-        className={classNames(
-          "continue-button-container",
-          isPriceReady ? "with-prices" : "no-prices"
-        )}>
-        <Button
-          className="continue-button"
-          onClick={handleContinue}
-          disabled={isLoadingPrices || !prices}>
-          Try Free
-        </Button>
-      </div>
-    </>
-  );
-}
-
 function FreeLicenseDescription() {
   return (
     <>
       <BenefitsSection title="Pro Features" items={proBenefits} variant="pro" />
-      <SelectProPlan />
     </>
   );
 }
 
-function GetLicenseButton() {
+function GetLicenseButton({ label = "Get Your License" }) {
   const { project } = useProject();
   return (
     <Button
@@ -215,7 +85,7 @@ function GetLicenseButton() {
       onClick={() => {
         project.openExternalUrl("https://ide.swmansion.com/pricing");
       }}>
-      {"Get Your Free License"}
+      {label}
     </Button>
   );
 }
@@ -223,9 +93,8 @@ function GetLicenseButton() {
 function InactiveLicenseDescription() {
   return (
     <>
-      <BenefitsSection title="Free Features" items={freeBenefits} variant="free" />
       <BenefitsSection title="Pro Features" items={proBenefits} variant="pro" />
-      <GetLicenseButton />
+      <BenefitsSection title="Free Features" items={freeBenefits} variant="free" />
     </>
   );
 }
@@ -249,25 +118,30 @@ function PaywallView({ title, feature }: PaywallViewProps) {
   const store$ = useStore();
 
   const licenseState = use$(store$.license.status);
-
   const isLicenseInactive = licenseState === LicenseStatus.Inactive;
 
   return (
     <div className="paywall-view">
       <RadonBackgroundImage className="paywall-background-image" />
       <div className="paywall-container">
-        <h1 className="paywall-title">
-          {title ?? (isLicenseInactive ? "Get Radon IDE License" : "Unlock Radon IDE Pro")}
-        </h1>
-        {feature && (
-          <p className="paywall-feature-description">
-            <b>{FeatureNamesMap[feature]}</b> feature is available with <b>Radon IDE Pro</b>
-          </p>
-        )}
+        <div>
+          <h1 className="paywall-title">
+            {title ?? (isLicenseInactive ? "Get Radon IDE License" : "Unlock Radon IDE Pro")}
+          </h1>
+          {feature && (
+            <p className="paywall-feature-description">
+              <b>{FeatureNamesMap[feature]}</b> feature is available with <b>Radon IDE Pro</b>
+            </p>
+          )}
+          {isLicenseInactive ? <InactiveLicenseDescription /> : <FreeLicenseDescription />}
+        </div>
 
-        {isLicenseInactive ? <InactiveLicenseDescription /> : <FreeLicenseDescription />}
-
-        <ActivateLicenseButton />
+        <div>
+          <GetLicenseButton
+            label={isLicenseInactive ? "Get Your License" : "Start Free 14-Day Pro Trial"}
+          />
+          <ActivateLicenseButton />
+        </div>
       </div>
     </div>
   );
