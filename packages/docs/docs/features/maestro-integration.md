@@ -32,7 +32,7 @@ Use the `Start Maestro test(s)` option from the `Tools` menu to select multiple 
 
 When a flow is started, an indicator button appears on the Radon toolbar. Click this button to abort the test, exiting the Maestro process gracefully.
 
-<img width="200" src="/img/docs/ide_maestro_abort.png" className="shadow-image"/>
+<img width="600" src="/img/docs/ide_maestro_abort.png" className="shadow-image"/>
 
 ## Troubleshooting
 
