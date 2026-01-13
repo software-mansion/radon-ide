@@ -114,7 +114,7 @@ after(async function () {
   console.log(
     `==== Summary app: ${texts.expectedProjectName} | code version: ${
       process.env["CODE_VERSION"] || "latest"
-    } ${getConfiguration().IS_ANDROID ? "android" : "ios"} ====`
+    } | os: ${getConfiguration().IS_ANDROID ? "android" : "ios"} ====`
   );
   // console log additional informations after standard mocha report
   setTimeout(() => {

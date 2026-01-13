@@ -252,7 +252,12 @@ jobs:
         run: |
           mkdir -p packages/vscode-extension-tester/combined
           find ./all_results -type f -name "test-output-*.txt" -exec cat {} + > packages/vscode-extension-tester/combined/all_results.txt
-          python3 packages/vscode-extension-tester/scripts/make_summary.py packages/vscode-extension-tester/combined/all_results.txt
+
+          python3 packages/vscode-extension-tester/scripts/make_summary.py packages/vscode-extension-tester/combined/all_results.txt > summary_log.txt
+
+          cat summary_log.txt
+
+          python3 packages/vscode-extension-tester/scripts/make_summary_table.py summary_log.txt
 
       - name: Upload combined results
         uses: actions/upload-artifact@v4

@@ -56,7 +56,7 @@ for match in matches:
         for line in clean_lines[1:]:
             if "passing" in line:
                 print(f"  [PASSING]: {passing}")
-            if "pending" in line:
+            elif "pending" in line:
                 print(f"  [SKIPPED]: {actual_pending}")
             elif "failing" in line:
                 print(f"  [FAILS]: {failing}")
