@@ -35,12 +35,11 @@ for match in matches:
     
     if total > 0:
         critical_rate = (passing / total) * 100
-        soft_rate = ((passing) / total + soft_count) * 100
+        soft_rate = ((passing) / (total + soft_count)) * 100
     else:
         critical_rate = 0.0
         soft_rate = 0.0
 
-    info_line = f"Info: Critical Success Rate: {critical_rate:.2f}% | With Soft Fails: {soft_rate:.2f}%"
 
     lines = match.splitlines()
     clean_lines = []
@@ -50,21 +49,24 @@ for match in matches:
 
     if clean_lines:
         print(clean_lines[0])
-        print(info_line)
+        print(f"  [CRITICAL PASSING PERCENTAGE]: {critical_rate:.2f}%")
+        print(f"  [PASSING PERCENTAGE WITH SOFT FAILS]: {soft_rate:.2f}%")
         
         soft_printed = False
         for line in clean_lines[1:]:
+            if "passing" in line:
+                print(f"  [PASSING]: {passing}")
             if "pending" in line:
-                print(f"  {actual_pending} pending")
+                print(f"  [SKIPPED]: {actual_pending}")
             elif "failing" in line:
-                print(line)
-                print(f"  {soft_count} soft failing")
+                print(f"  [FAILS]: {failing}")
+                print(f"  [SOFT FAILS]: {soft_count}")
                 soft_printed = True
             else:
                 print(line)
         
         if not soft_printed and soft_count > 0:
-             print(f"  {soft_count} soft failing")
+             print(f"  [SOFT FAILS]: {soft_count}")
 
     print()
 
