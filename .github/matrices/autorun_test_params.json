@@ -4,7 +4,7 @@
       "testApp": "react-native-83",
       "node": "22",
       "isRecording": "true",
-      "testsToRun": "",
+      "testsToRun": "1",
       "testsToExclude": "",
       "codeVersion": "latest"
     },
@@ -12,66 +12,8 @@
       "testApp": "react-native-83",
       "node": "22",
       "isRecording": "true",
-      "testsToRun": "",
+      "testsToRun": "2",
       "isAndroid": "true",
-      "testsToExclude": "",
-      "codeVersion": "latest"
-    },
-    {
-      "testApp": "react-native-83",
-      "node": "22",
-      "isRecording": "true",
-      "testsToRun": "",
-      "testsToExclude": "",
-      "codeVersion": "1.105.1"
-    },
-    {
-      "testApp": "expo-54",
-      "node": "22",
-      "isRecording": "true",
-      "testsToRun": "",
-      "testsToExclude": "",
-      "codeVersion": "latest"
-    },
-    {
-      "testApp": "expo-54",
-      "node": "22",
-      "isRecording": "true",
-      "testsToRun": "",
-      "isAndroid": "true",
-      "testsToExclude": "",
-      "codeVersion": "latest"
-    },
-    {
-      "testApp": "expo-53",
-      "node": "22",
-      "isRecording": "true",
-      "testsToRun": "",
-      "testsToExclude": "",
-      "codeVersion": "latest"
-    },
-    {
-      "testApp": "expo-52-prebuild-with-plugins",
-      "node": "22",
-      "isRecording": "true",
-      "testsToRun": "16",
-      "testsToExclude": "",
-      "codeVersion": "latest"
-    },
-    {
-      "testApp": "expo-54-prebuild-with-plugins",
-      "node": "22",
-      "isRecording": "true",
-      "testsToRun": "16",
-      "testsToExclude": "",
-      "codeVersion": "latest"
-    },
-    {
-      "testApp": "react-native-81-additional-libs",
-      "node": "22",
-      "isRecording": "true",
-      "testsToRun": "8",
-      "isAndroid": "false",
       "testsToExclude": "",
       "codeVersion": "latest"
     }
