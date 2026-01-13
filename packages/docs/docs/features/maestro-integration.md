@@ -16,17 +16,11 @@ For this functionality to work, you need to have Maestro installed and available
 
 The extension detects YAML files with Maestro syntax and allows to run them in the device preview right from the code. The file will be auto-saved on start.
 
-<video autoPlay loop width="700" controls className="shadow-image">
-  <source src="/video/ide_maestro_editor.mp4" type="video/mp4" />
-</video>
+<img width="600" src="/img/docs/ide_maestro_codelens.png" className="shadow-image"/>
 
 ## Running multiple flows
 
 Use the `Start Maestro test(s)` option from the `Tools` menu to select multiple files and folders to run tests from. Maestro will automatically choose valid flow files, conduct tests on the device and report the results in the output console.
-
-<video autoPlay loop width="700" controls className="shadow-image">
-  <source src="/video/ide_maestro_select.mp4" type="video/mp4" />
-</video>
 
 ## Aborting flows
 
