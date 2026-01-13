@@ -3,7 +3,6 @@ import { By } from "vscode-extension-tester";
 import { texts } from "../utils/constants.js";
 import initServices from "../services/index.js";
 import { safeDescribe } from "../utils/helpers.js";
-import { softIt } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
 safeDescribe("1 - Smoke tests Radon IDE", () => {
