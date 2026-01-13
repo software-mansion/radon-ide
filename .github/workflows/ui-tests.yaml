@@ -259,6 +259,8 @@ jobs:
 
           python3 packages/vscode-extension-tester/scripts/make_summary_table.py summary_log.txt
 
+          python3 packages/vscode-extension-tester/scripts/review_failing_tests.py summary_log.txt
+
       - name: Upload combined results
         uses: actions/upload-artifact@v4
         with:

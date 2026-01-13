@@ -36,7 +36,6 @@ def parse_and_generate_markdown(file_path):
         if not block.strip():
             continue
 
-        # Parse header: app: name | code version: ver | os: ios ====
         header_pattern = r"app:\s*(.*?)\s*\|\s*code version:\s*(.*?)\s*\|\s*os:\s*(.*?)\s*===="
         header_match = re.search(header_pattern, block)
 
@@ -47,7 +46,6 @@ def parse_and_generate_markdown(file_path):
         code_version = header_match.group(2).strip()
         os_name = header_match.group(3).strip()
 
-        # Parse metrics
         crit_match = re.search(r'\[CRITICAL PASSING PERCENTAGE\]:\s*([\d\.]+)%', block)
         soft_perc_match = re.search(r'\[PASSING PERCENTAGE WITH SOFT FAILS\]:\s*([\d\.]+)%', block)
         pass_match = re.search(r'\[PASSING\]:\s*(\d+)', block)
@@ -60,11 +58,9 @@ def parse_and_generate_markdown(file_path):
         failing = fail_match.group(1) if fail_match else '0'
         soft_fails = soft_match.group(1) if soft_match else '0'
 
-        # Determine icons for percentages
         crit_icon = get_status_icon(crit_perc)
         soft_icon = get_status_icon(soft_perc)
 
-        # Build row
         row = f"| {app_name} | {code_version} | {os_name} | {passing} | {failing} | {soft_fails} | {crit_icon} {crit_perc}% | {soft_icon} {soft_perc}% |"
         markdown += row + "\n"
         rows_count += 1
