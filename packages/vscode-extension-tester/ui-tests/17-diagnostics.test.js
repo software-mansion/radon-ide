@@ -6,7 +6,7 @@ import { assert } from "chai";
 import getConfiguration from "../configuration.js";
 import initServices from "../services/index.js";
 import { describeIf, itIf } from "../utils/helpers.js";
-import { TIMEOUT } from "../utils/timeouts.js";
+import { TIMEOUTS } from "../utils/timeouts.js";
 import { get } from "./setupTest.js";
 
 const raw = fs.readFileSync("./data/react-native-app/package.json");
@@ -67,7 +67,7 @@ describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
   ) {
     await elementHelperService.findAndWaitForElementByTag(
       `diagnostic-icon-${name}-installed`,
-      TIMEOUT.LONG
+      TIMEOUTS.LONG
     );
     await damageFunction();
     try {
@@ -77,7 +77,7 @@ describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
       console.log(`Testing ${name} diagnostic`);
       await elementHelperService.findAndWaitForElementByTag(
         `diagnostic-icon-${name}-notInstalled`,
-        TIMEOUT.LONG
+        TIMEOUTS.LONG
       );
       if (errorMessage) {
         const errorElement =
@@ -97,7 +97,7 @@ describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
       );
       await elementHelperService.findAndWaitForElementByTag(
         `diagnostic-icon-${name}-installed`,
-        TIMEOUT.LONG
+        TIMEOUTS.LONG
       );
     }
   }

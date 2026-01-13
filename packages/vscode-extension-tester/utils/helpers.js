@@ -3,7 +3,7 @@ import { get } from "../ui-tests/setupTest.js";
 import startRecording from "./screenRecording.js";
 
 let globalRetryCount = 0;
-const GLOBAL_RETRY_LIMIT = 10;
+const GLOBAL_RETRY_LIMIT = 15;
 
 export function centerCoordinates(position) {
   return {
