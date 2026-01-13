@@ -94,7 +94,13 @@ export class ApplicationDependencyManager implements Disposable {
 
     this.stateManager.updateState({
       reactNative: {
-        status: isApplicationDependencyInstalled("react-native", appRoot, MinSupportedVersion.reactNative) ? "installed" : "notInstalled",
+        status: isApplicationDependencyInstalled(
+          "react-native",
+          appRoot,
+          MinSupportedVersion.reactNative
+        )
+          ? "installed"
+          : "notInstalled",
         isOptional: false,
       },
     });
@@ -105,7 +111,9 @@ export class ApplicationDependencyManager implements Disposable {
 
     this.stateManager.updateState({
       expo: {
-        status: isApplicationDependencyInstalled("expo", appRoot, MinSupportedVersion.expo) ? "installed" : "notInstalled",
+        status: isApplicationDependencyInstalled("expo", appRoot, MinSupportedVersion.expo)
+          ? "installed"
+          : "notInstalled",
         isOptional: !shouldUseExpoCLI(this.launchConfiguration),
       },
     });
@@ -240,7 +248,9 @@ export class ApplicationDependencyManager implements Disposable {
   public async checkProjectUsesExpoRouter() {
     const appRoot = this.launchConfiguration.absoluteAppRoot;
     const dependsOnExpoRouter = appDependsOnExpoRouter(appRoot);
-    const hasExpoRouterInstalled = isApplicationDependencyInstalled("expo-router", appRoot) ? "installed" : "notInstalled";
+    const hasExpoRouterInstalled = isApplicationDependencyInstalled("expo-router", appRoot)
+      ? "installed"
+      : "notInstalled";
 
     this.stateManager.updateState({
       expoRouter: {
@@ -258,7 +268,7 @@ export class ApplicationDependencyManager implements Disposable {
     const status = hasStorybookInstalled ? "installed" : "notInstalled";
     this.stateManager.updateState({
       storybook: {
-        status, 
+        status,
         isOptional: true,
       },
     });

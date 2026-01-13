@@ -1,4 +1,4 @@
-const { overrideModuleFromAppDependency, requireFromAppDependency } = require("../metro_helpers");
+const { requireFromAppDependency, requireFromAppDir, overrideModuleFromAppDir } = require("../metro_helpers");
 
 const { loadConfig } = requireFromAppDependency("react-native", "metro-config");
 
@@ -17,7 +17,7 @@ const newWithStorybook = (_config, options) => {
   process.exit(0);
 }
 
-const oldWithStorybookModule = requireFromAppDependency("@storybook/react-native", "metro/withStorybook");
+const oldWithStorybookModule = requireFromAppDir("@storybook/react-native/metro/withStorybook");
 
 let newWithStorybookModule = newWithStorybook;
 
@@ -27,7 +27,7 @@ if (oldWithStorybookModule?.withStorybook) {
   newWithStorybookModule = { withStorybook: newWithStorybook }
 }
 
-overrideModuleFromAppDependency("@storybook/react-native", "metro/withStorybook", newWithStorybookModule);
+overrideModuleFromAppDir("@storybook/react-native/metro/withStorybook", newWithStorybookModule);
 
 async function main() {
   const customMetroConfigPath = process.env.RN_IDE_METRO_CONFIG_PATH;
