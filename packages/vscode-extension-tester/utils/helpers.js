@@ -34,7 +34,7 @@ export function softIt(title, fn) {
 
       if (currentAttempt < maxRetries) throw error;
 
-      console.error(`[SOFT FAIL] "${title}" | error: ${error.message}`);
+      console.log(`[SOFT FAIL] "${title}" | error: ${error.message}`);
       this.skip();
     }
   });

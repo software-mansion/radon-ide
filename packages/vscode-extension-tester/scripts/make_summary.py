@@ -30,12 +30,12 @@ for match in matches:
     failing = int(f_match.group(1)) if f_match else 0
     pending = int(pen_match.group(1)) if pen_match else 0
     
-    total = passing + failing + pending
+    total = passing + failing
     actual_pending = pending - soft_count
     
     if total > 0:
         critical_rate = (passing / total) * 100
-        soft_rate = ((passing + soft_count) / total) * 100
+        soft_rate = ((passing) / total + soft_count) * 100
     else:
         critical_rate = 0.0
         soft_rate = 0.0
