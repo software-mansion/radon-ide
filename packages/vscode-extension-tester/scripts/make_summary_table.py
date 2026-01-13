@@ -2,12 +2,17 @@ import sys
 import re
 import os
 
-def get_status_icon(percentage_val):
-    if percentage_val == 100:
+def get_status_icon(percentage_str):
+    try:
+        val = float(percentage_str)
+    except ValueError:
+        return ""
+    
+    if val == 100:
         return "🟢"
-    elif percentage_val > 90:
+    elif val > 90:
         return "🟡"
-    elif percentage_val > 80:
+    elif val > 80:
         return "🟠"
     else:
         return "🔴"
@@ -19,7 +24,7 @@ def parse_and_generate_markdown(file_path):
     except FileNotFoundError:
         return "Error: Input file not found."
 
-    blocks = content.split('============')
+    blocks = content.split('==== Summary')
     
     markdown = "### Test Results Overview\n\n"
     markdown += "| App | Version | OS | Passing | Failing | Soft Fails | Critical % | Soft % |\n"
@@ -31,6 +36,7 @@ def parse_and_generate_markdown(file_path):
         if not block.strip():
             continue
 
+        # Parse header: app: name | code version: ver | os: ios ====
         header_pattern = r"app:\s*(.*?)\s*\|\s*code version:\s*(.*?)\s*\|\s*os:\s*(.*?)\s*===="
         header_match = re.search(header_pattern, block)
 
@@ -41,35 +47,25 @@ def parse_and_generate_markdown(file_path):
         code_version = header_match.group(2).strip()
         os_name = header_match.group(3).strip()
 
-        soft_fails = block.count("[SOFT FAIL]")
+        # Parse metrics
+        crit_match = re.search(r'\[CRITICAL PASSING PERCENTAGE\]:\s*([\d\.]+)%', block)
+        soft_perc_match = re.search(r'\[PASSING PERCENTAGE WITH SOFT FAILS\]:\s*([\d\.]+)%', block)
+        pass_match = re.search(r'\[PASSING\]:\s*(\d+)', block)
+        fail_match = re.search(r'\[FAILS\]:\s*(\d+)', block)
+        soft_match = re.search(r'\[SOFT FAILS\]:\s*(\d+)', block)
 
-        pass_match = re.search(r'\s(\d+)\s+passing', block)
-        fail_match = re.search(r'\s(\d+)\s+failing', block)
+        crit_perc = crit_match.group(1) if crit_match else '0'
+        soft_perc = soft_perc_match.group(1) if soft_perc_match else '0'
+        passing = pass_match.group(1) if pass_match else '0'
+        failing = fail_match.group(1) if fail_match else '0'
+        soft_fails = soft_match.group(1) if soft_match else '0'
 
-        passing = int(pass_match.group(1)) if pass_match else 0
-        failing = int(fail_match.group(1)) if fail_match else 0
-        
-        total = passing + failing
-        crit_perc = 0.0
-        soft_perc = 0.0
-
-        if total > 0:
-            crit_perc = (passing / total) * 100
-            
-            safe_passing = passing - soft_fails
-            if safe_passing < 0: safe_passing = 0
-            soft_perc = (safe_passing / total) * 100
-
-        crit_perc_str = "{:.2f}".format(crit_perc)
-        soft_perc_str = "{:.2f}".format(soft_perc)
-
+        # Determine icons for percentages
         crit_icon = get_status_icon(crit_perc)
         soft_icon = get_status_icon(soft_perc)
 
-        fail_display = f"🔴 {failing}" if failing > 0 else str(failing)
-        soft_display = f"🟡 {soft_fails}" if soft_fails > 0 else str(soft_fails)
-
-        row = f"| {app_name} | {code_version} | {os_name} | {passing} | {fail_display} | {soft_display} | {crit_icon} {crit_perc_str}% | {soft_icon} {soft_perc_str}% |"
+        # Build row
+        row = f"| {app_name} | {code_version} | {os_name} | {passing} | {failing} | {soft_fails} | {crit_icon} {crit_perc}% | {soft_icon} {soft_perc}% |"
         markdown += row + "\n"
         rows_count += 1
 
