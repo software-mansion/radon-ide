@@ -14,9 +14,7 @@ safeDescribe("1 - Smoke tests Radon IDE", () => {
     ({ elementHelperService, radonViewsService } = initServices(driver));
   });
 
-  softIt("should open Radon IDE view using command line", async function () {
-    console.log("test 1");
-    throw new Error("Not implemented yet");
+  it("should open Radon IDE view using command line", async function () {
     await workbench.executeCommand("RNIDE.openPanel");
 
     const webview = await elementHelperService.findAndWaitForElement(
@@ -33,7 +31,6 @@ safeDescribe("1 - Smoke tests Radon IDE", () => {
   });
 
   it("should open Radon IDE webview using Radon IDE button", async function () {
-    throw new Error("Not implemented yet");
     await radonViewsService.openRadonIDEPanel();
   });
 
