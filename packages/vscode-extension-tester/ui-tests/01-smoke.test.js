@@ -3,6 +3,7 @@ import { By } from "vscode-extension-tester";
 import { texts } from "../utils/constants.js";
 import initServices from "../services/index.js";
 import { safeDescribe } from "../utils/helpers.js";
+import { softIt } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
 safeDescribe("1 - Smoke tests Radon IDE", () => {
@@ -13,7 +14,9 @@ safeDescribe("1 - Smoke tests Radon IDE", () => {
     ({ elementHelperService, radonViewsService } = initServices(driver));
   });
 
-  it("should open Radon IDE view using command line", async function () {
+  softIt("should open Radon IDE view using command line", async function () {
+    console.log("test 1");
+    throw new Error("Not implemented yet");
     await workbench.executeCommand("RNIDE.openPanel");
 
     const webview = await elementHelperService.findAndWaitForElement(

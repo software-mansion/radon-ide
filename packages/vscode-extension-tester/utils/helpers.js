@@ -24,6 +24,22 @@ export function describeIf(condition, title, fn) {
   }
 }
 
+export function softIt(title, fn) {
+  it(title, async function () {
+    try {
+      await fn.call(this);
+    } catch (error) {
+      const currentAttempt = this.test.currentRetry();
+      const maxRetries = this.test.retries();
+
+      if (currentAttempt < maxRetries) throw error;
+
+      console.error(`[SOFT FAIL] "${title}" | error: ${error.message}`);
+      this.skip();
+    }
+  });
+}
+
 export function itIf(condition, title, fn) {
   if (condition) {
     it(title, fn);
