@@ -1,9 +1,11 @@
 import React from "react";
-import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import { use$ } from "@legendapp/state/react";
+
 import * as RadioGroup from "@radix-ui/react-radio-group";
 import * as Slider from "@radix-ui/react-slider";
-import * as Switch from "@radix-ui/react-switch";
-import { use$ } from "@legendapp/state/react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import * as PaywallDropdownMenu from "./shared/PaywallDropdownMenu";
+import * as DropdownMenuComponents from "./shared/DropdownMenuComponents";
 
 import "./shared/Dropdown.css";
 import "./shared/RadioGroup.css";
@@ -16,19 +18,16 @@ import { useProject } from "../providers/ProjectProvider";
 import { AppPermissionType, DeviceRotationDirection } from "../../common/Project";
 import { DeviceLocationView } from "../views/DeviceLocationView";
 import { useModal } from "../providers/ModalProvider";
-import { KeybindingInfo } from "./shared/KeybindingInfo";
 import { DeviceLocalizationView } from "../views/DeviceLocalizationView";
 import { OpenDeepLinkView } from "../views/OpenDeepLinkView";
 import { CameraSettingsView } from "../views/CameraSettingsView";
 import ReplayIcon from "./icons/ReplayIcon";
-import { DropdownMenuRoot } from "./DropdownMenuRoot";
 import { useStore } from "../providers/storeProvider";
 import { DevicePlatform, DeviceRotation, DeviceSettings } from "../../common/State";
-import { PropsWithDataTest } from "../../common/types";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
-import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
-import { Feature, FeatureAvailabilityStatus } from "../../common/License";
-import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
+import { Feature } from "../../common/License";
+
+// #region Constants
 
 const contentSizes = [
   "xsmall",
@@ -88,6 +87,10 @@ const setOrientationOptions: Array<{
     rotation: "90deg",
   },
 ];
+
+// #endregion Constants
+
+// #region Device Appearance
 
 function DeviceAppearanceSettings() {
   const store$ = useStore();
@@ -163,36 +166,27 @@ function DeviceAppearanceSettings() {
   );
 }
 
+// #endregion Appearance Settings
+
+// #region Submenus
+
+// RotateSettingsSubmenu
 function RotateSettingsSubmenu() {
   const store$ = useStore();
 
   const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
-  const isDeviceRotationAvailable = use$(() => {
-    return (
-      store$.license.featuresAvailability.DeviceRotation.get() ===
-      FeatureAvailabilityStatus.AVAILABLE
-    );
-  });
 
   const { project } = useProject();
-  const handleRotateDevice = usePaywalledCallback(
-    (direction: DeviceRotationDirection) => {
-      project.rotateDevices(direction);
-    },
-    Feature.DeviceRotation,
-    []
-  );
+  const handleRotateDevice = (direction: DeviceRotationDirection) => {
+    project.rotateDevices(direction);
+  };
 
-  const handleSetRotateDevice = usePaywalledCallback(
-    (deviceRotation: DeviceRotation) => {
-      store$.workspaceConfiguration.deviceSettings.deviceRotation.set(deviceRotation);
-    },
-    Feature.DeviceRotation,
-    []
-  );
+  const handleSetRotateDevice = (deviceRotation: DeviceRotation) => {
+    store$.workspaceConfiguration.deviceSettings.deviceRotation.set(deviceRotation);
+  };
 
   return (
-    <DropdownMenu.Sub>
+    <PaywallDropdownMenu.Sub feature={Feature.DeviceRotation}>
       <DropdownMenu.SubTrigger
         className="dropdown-menu-item"
         data-testid="device-settings-rotate-device-menu-trigger">
@@ -207,14 +201,14 @@ function RotateSettingsSubmenu() {
           sideOffset={2}
           alignOffset={-5}>
           <Label>Rotate</Label>
-          <CommandItem
+          <DropdownMenuComponents.CommandItem
             onSelect={() => handleRotateDevice(DeviceRotationDirection.Clockwise)}
             commandName={"RNIDE.rotateDeviceClockwise"}
             label={"Clockwise"}
             dataTest={`device-settings-set-orientation-clockwise`}
             icon={"refresh"}
           />
-          <CommandItem
+          <DropdownMenuComponents.CommandItem
             onSelect={() => handleRotateDevice(DeviceRotationDirection.Anticlockwise)}
             commandName={"RNIDE.rotateDeviceAnticlockwise"}
             label={"Anticlockwise"}
@@ -230,7 +224,6 @@ function RotateSettingsSubmenu() {
               className="dropdown-menu-item"
               data-testid={`device-settings-set-orientation-${option.label.trim().toLowerCase().replace(/\s+/g, "-")}`}
               key={index}
-              disabled={!isDeviceRotationAvailable && option.value !== DeviceRotation.Portrait}
               onSelect={() => handleSetRotateDevice(option.value)}>
               <span
                 className={`codicon codicon-${option.icon}`}
@@ -242,15 +235,16 @@ function RotateSettingsSubmenu() {
           ))}
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
-    </DropdownMenu.Sub>
+    </PaywallDropdownMenu.Sub>
   );
 }
 
+// PermissionsSubmenu
 function PermissionsSubmenu({ platform }: { platform: DevicePlatform | undefined }) {
   const resetOptions = platform === DevicePlatform.IOS ? resetOptionsIOS : resetOptionsAndroid;
   const { project } = useProject();
   return (
-    <DropdownMenu.Sub>
+    <PaywallDropdownMenu.Sub feature={Feature.Permissions}>
       <DropdownMenu.SubTrigger className="dropdown-menu-item">
         <span className="codicon codicon-redo" />
         Reset Permissions
@@ -272,9 +266,13 @@ function PermissionsSubmenu({ platform }: { platform: DevicePlatform | undefined
           ))}
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
-    </DropdownMenu.Sub>
+    </PaywallDropdownMenu.Sub>
   );
 }
+
+// #endregion Submenus
+
+// #region Main Dropdown
 
 function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownProps) {
   const store$ = useStore();
@@ -294,16 +292,8 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
 
   const isPhysicalAndroid = platform === DevicePlatform.Android && !deviceInfo?.emulator;
 
-  const isSendFilesAdminDisabled = useIsFeatureAdminDisabled(Feature.SendFile);
-
-  const openSendFileDialog = usePaywalledCallback(
-    () => project.openSendFileDialog(),
-    Feature.SendFile,
-    []
-  );
-
   return (
-    <DropdownMenuRoot>
+    <DropdownMenuComponents.DropdownMenuRoot>
       <DropdownMenu.Trigger asChild disabled={disabled}>
         {children}
       </DropdownMenu.Trigger>
@@ -314,33 +304,45 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
           data-testid="device-settings-dropdown-menu"
           onCloseAutoFocus={(e) => e.preventDefault()}>
           <h4 className="device-settings-heading">Device Settings</h4>
+
+          {/* Device Appearance Settings */}
           {!isPhysicalAndroid && <DeviceAppearanceSettings />}
-          <CommandItem
+
+          {/* Home Button */}
+          <DropdownMenuComponents.CommandItem
             onSelect={() => project.dispatchHomeButtonPress()}
             commandName="RNIDE.deviceHomeButtonPress"
             label="Press Home Button"
             icon="home"
             dataTest="press-home-button"
           />
-          <CommandItem
+
+          {/* App Switch Button */}
+          <DropdownMenuComponents.CommandItem
             onSelect={() => project.dispatchAppSwitchButtonPress()}
             commandName="RNIDE.deviceAppSwitchButtonPress"
             label="Open App Switcher"
             icon="chrome-restore"
             dataTest="open-app-switcher-button"
           />
+
+          {/* Rotate Settings Submenu */}
           <RotateSettingsSubmenu />
+
+          {/* Biometrics (iOS only) */}
           {platform === DevicePlatform.IOS && <BiometricsItem />}
-          {!isSendFilesAdminDisabled && (
-            <DropdownMenu.Item
-              className="dropdown-menu-item"
-              data-testid="device-settings-send-file"
-              disabled={isSendFilesAdminDisabled}
-              onSelect={openSendFileDialog}>
-              <span className="codicon codicon-share" />
-              Send File
-            </DropdownMenu.Item>
-          )}
+
+          {/* Send File */}
+          <PaywallDropdownMenu.Item
+            feature={Feature.SendFile}
+            className="dropdown-menu-item"
+            data-testid="device-settings-send-file"
+            onSelect={() => project.openSendFileDialog()}>
+            <span className="codicon codicon-share" />
+            Send File
+          </PaywallDropdownMenu.Item>
+
+          {/* LocationItem, LocalizationItem, VolumeItem (non-physical only) */}
           {!isPhysicalAndroid && (
             <>
               <LocationItem />
@@ -348,176 +350,123 @@ function DeviceSettingsDropdown({ children, disabled }: DeviceSettingsDropdownPr
               <VolumeItem />
             </>
           )}
+
+          {/* CameraItem (Android emulator only) */}
           {platform === DevicePlatform.Android && deviceInfo?.emulator && <CameraItem />}
+
+          {/* PermissionsSubmenu (non-physical only) */}
           {!isPhysicalAndroid && <PermissionsSubmenu platform={platform} />}
-          <DropdownMenu.Item
+
+          {/* Open DeepLink */}
+          <PaywallDropdownMenu.Item
+            feature={Feature.OpenDeepLink}
             className="dropdown-menu-item"
             onSelect={() => openModal(<OpenDeepLinkView />, { title: "Open Deep Link" })}>
             <span className="codicon codicon-link" />
             Open Deep Link
-          </DropdownMenu.Item>
-          <div className="dropdown-menu-item">
-            <ReplayIcon />
+          </PaywallDropdownMenu.Item>
+
+          {/* Screen Replay Switch */}
+          <PaywallDropdownMenu.SwitchItem
+            icon={<ReplayIcon />}
+            feature={Feature.ScreenReplay}
+            checked={deviceSettings.replaysEnabled}
+            onCheckedChange={(checked) =>
+              store$.workspaceConfiguration.deviceSettings.replaysEnabled.set(checked)
+            }
+            dataTestId="device-settings-enable-replays-switch"
+            id="enable-replays">
             Enable Replays
-            <Switch.Root
-              className="switch-root small-switch"
-              data-testid="device-settings-enable-replays-switch"
-              id="enable-replays"
-              onCheckedChange={(checked) =>
-                store$.workspaceConfiguration.deviceSettings.replaysEnabled.set(checked)
-              }
-              defaultChecked={deviceSettings.replaysEnabled}
-              style={{ marginLeft: "auto" }}>
-              <Switch.Thumb className="switch-thumb" />
-            </Switch.Root>
-          </div>
-          <div className="dropdown-menu-item">
-            <span className="codicon codicon-record" />
+          </PaywallDropdownMenu.SwitchItem>
+
+          {/* Show Touches Switch */}
+          <DropdownMenuComponents.SwitchItem
+            icon={<span className="codicon codicon-record" />}
+            checked={deviceSettings.showTouches}
+            onCheckedChange={(checked) =>
+              store$.workspaceConfiguration.deviceSettings.showTouches.set(checked)
+            }
+            dataTestId="device-settings-show-touches-switch"
+            id="show-touches">
             Show Touches
-            <Switch.Root
-              className="switch-root small-switch"
-              data-testid="device-settings-show-touches-switch"
-              id="show-touches"
-              onCheckedChange={(checked) =>
-                store$.workspaceConfiguration.deviceSettings.showTouches.set(checked)
-              }
-              defaultChecked={deviceSettings.showTouches}
-              style={{ marginLeft: "auto" }}>
-              <Switch.Thumb className="switch-thumb" />
-            </Switch.Root>
-          </div>
+          </DropdownMenuComponents.SwitchItem>
+
+          {/* Show Device Frame Switch (non-physical only) */}
           {!isPhysicalAndroid && (
-            <div className="dropdown-menu-item">
-              <span className="codicon codicon-device-mobile" />
+            <DropdownMenuComponents.SwitchItem
+              icon={<span className="codicon codicon-device-mobile" />}
+              checked={showDeviceFrame}
+              onCheckedChange={(checked) =>
+                store$.workspaceConfiguration.userInterface.showDeviceFrame.set(checked)
+              }
+              dataTestId="device-settings-show-device-frame-switch"
+              id="show-device-frame">
               Show Device Frame
-              <Switch.Root
-                className="switch-root small-switch"
-                id="show-device-frame"
-                data-testid="device-settings-show-device-frame-switch"
-                onCheckedChange={(checked) =>
-                  store$.workspaceConfiguration.userInterface.showDeviceFrame.set(checked)
-                }
-                defaultChecked={showDeviceFrame}
-                style={{ marginLeft: "auto" }}>
-                <Switch.Thumb className="switch-thumb" />
-              </Switch.Root>
-            </div>
+            </DropdownMenuComponents.SwitchItem>
           )}
           <DropdownMenu.Arrow className="dropdown-menu-arrow" />
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
-    </DropdownMenuRoot>
+    </DropdownMenuComponents.DropdownMenuRoot>
   );
 }
 
-const LocationItem = () => {
-  const isLocationAdminDisabled = useIsFeatureAdminDisabled(Feature.LocationSimulation);
+// #endregion Main Dropdown
 
+// #region Individual Menu Items
+
+// Location
+const LocationItem = () => {
   const { openModal } = useModal();
-  const handleOpenLocationView = usePaywalledCallback(
-    () => {
-      openModal(<DeviceLocationView />, { title: "Location" });
-    },
-    Feature.LocationSimulation,
-    []
-  );
   return (
-    <DropdownMenu.Item
+    <PaywallDropdownMenu.Item
       className="dropdown-menu-item"
       data-testid="device-settings-location"
-      disabled={isLocationAdminDisabled}
-      onSelect={handleOpenLocationView}>
+      onSelect={() => openModal(<DeviceLocationView />, { title: "Location" })}
+      feature={Feature.LocationSimulation}>
       <span className="codicon codicon-location" />
       Location
-    </DropdownMenu.Item>
+    </PaywallDropdownMenu.Item>
   );
 };
 
+// Localization
 const LocalizationItem = () => {
-  const isLocalizationAdminDisabled = useIsFeatureAdminDisabled(Feature.DeviceLocalizationSettings);
   const { openModal } = useModal();
 
-  const handleOpenLocalizationView = usePaywalledCallback(
-    () => {
-      openModal(<DeviceLocalizationView />, { title: "Localization" });
-    },
-    Feature.DeviceLocalizationSettings,
-    []
-  );
-
   return (
-    <DropdownMenu.Item
+    <PaywallDropdownMenu.Item
       className="dropdown-menu-item"
-      disabled={isLocalizationAdminDisabled}
-      onSelect={handleOpenLocalizationView}
-      data-testid="device-settings-localization">
+      onSelect={() => openModal(<DeviceLocalizationView />, { title: "Localization" })}
+      data-testid="device-settings-localization"
+      feature={Feature.DeviceLocalizationSettings}>
       <span className="codicon codicon-globe" />
       Localization
-    </DropdownMenu.Item>
+    </PaywallDropdownMenu.Item>
   );
 };
 
-function CommandItem({
-  onSelect,
-  commandName,
-  label,
-  icon,
-  disabled = false,
-  dataTest,
-}: PropsWithDataTest<{
-  onSelect: () => void;
-  commandName: string;
-  label: string;
-  icon: string;
-  disabled?: boolean;
-}>) {
-  return (
-    <DropdownMenu.Item
-      className="dropdown-menu-item"
-      onSelect={onSelect}
-      disabled={disabled}
-      data-testid={dataTest}>
-      <span className="dropdown-menu-item-wraper">
-        <span className={`codicon codicon-${icon}`} />
-        <div className="dropdown-menu-item-content">
-          {label}
-          <KeybindingInfo commandName={commandName} />
-        </div>
-      </span>
-    </DropdownMenu.Item>
-  );
-}
-
+// Biometrics
 const BiometricsItem = () => {
   const store$ = useStore();
-
-  const isBiometricsAdminDisabled = useIsFeatureAdminDisabled(Feature.Biometrics);
 
   const deviceSettings = use$(store$.workspaceConfiguration.deviceSettings);
 
   const { project } = useProject();
 
-  const handleToggleBiometricsEnrolment = usePaywalledCallback(
-    () => {
-      store$.workspaceConfiguration.deviceSettings.hasEnrolledBiometrics.set(
-        !deviceSettings.hasEnrolledBiometrics
-      );
-    },
-    Feature.Biometrics,
-    []
-  );
+  const handleToggleBiometricsEnrolment = () => {
+    store$.workspaceConfiguration.deviceSettings.hasEnrolledBiometrics.set(
+      !deviceSettings.hasEnrolledBiometrics
+    );
+  };
 
-  const handleSendBiometricAuthorization = usePaywalledCallback(
-    async (isMatching: boolean) => {
-      await project.sendBiometricAuthorization(isMatching);
-    },
-    Feature.Biometrics,
-    []
-  );
+  const handleSendBiometricAuthorization = async (isMatching: boolean) => {
+    await project.sendBiometricAuthorization(isMatching);
+  };
 
   return (
-    <DropdownMenu.Sub>
-      <DropdownMenu.SubTrigger disabled={isBiometricsAdminDisabled} className="dropdown-menu-item">
+    <PaywallDropdownMenu.Sub feature={Feature.Biometrics}>
+      <DropdownMenu.SubTrigger className="dropdown-menu-item">
         <span className="codicon codicon-layout" />
         Biometrics
         <span className="codicon codicon-chevron-right right-slot" />
@@ -527,7 +476,6 @@ const BiometricsItem = () => {
         <DropdownMenu.SubContent className="dropdown-menu-subcontent">
           <DropdownMenu.Item
             className="dropdown-menu-item"
-            disabled={isBiometricsAdminDisabled}
             onSelect={handleToggleBiometricsEnrolment}>
             <span className="codicon codicon-layout-sidebar-left" />
             Enrolled
@@ -535,30 +483,31 @@ const BiometricsItem = () => {
               <span className="codicon codicon-check right-slot" />
             )}
           </DropdownMenu.Item>
-          <CommandItem
+          <DropdownMenuComponents.CommandItem
             onSelect={() => {
               handleSendBiometricAuthorization(true);
             }}
             commandName="RNIDE.performBiometricAuthorization"
             label="Matching ID"
             icon="layout-sidebar-left"
-            disabled={!deviceSettings.hasEnrolledBiometrics || isBiometricsAdminDisabled}
+            disabled={!deviceSettings.hasEnrolledBiometrics}
           />
-          <CommandItem
+          <DropdownMenuComponents.CommandItem
             onSelect={() => {
               handleSendBiometricAuthorization(false);
             }}
             commandName="RNIDE.performFailedBiometricAuthorization"
             label="Non-Matching ID"
             icon="layout-sidebar-left"
-            disabled={!deviceSettings.hasEnrolledBiometrics || isBiometricsAdminDisabled}
+            disabled={!deviceSettings.hasEnrolledBiometrics}
           />
         </DropdownMenu.SubContent>
       </DropdownMenu.Portal>
-    </DropdownMenu.Sub>
+    </PaywallDropdownMenu.Sub>
   );
 };
 
+// Camera
 const CameraItem = () => {
   const { openModal } = useModal();
 
@@ -574,6 +523,7 @@ const CameraItem = () => {
   );
 };
 
+// VolumeItem
 const VolumeItem = () => {
   const { project } = useProject();
 
@@ -626,5 +576,7 @@ const VolumeItem = () => {
     </div>
   );
 };
+
+// #endregion Individual Menu Items
 
 export default DeviceSettingsDropdown;

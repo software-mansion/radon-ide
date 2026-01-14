@@ -48,6 +48,7 @@ button {
 }
 
 .dropdown-menu-item {
+  position: relative;
   font-size: 13px;
   line-height: 1;
   color: var(--swm-default-text);
@@ -70,7 +71,7 @@ button {
   color: var(--swm-default-text);
 }
 
-.dropdown-menu-item-wraper {
+.dropdown-menu-item-wrapper {
   display: flex;
   width: 100%;
   align-items: center;

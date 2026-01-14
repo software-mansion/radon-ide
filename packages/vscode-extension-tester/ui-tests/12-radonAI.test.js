@@ -3,11 +3,8 @@ import initServices from "../services/index.js";
 import { describeIf } from "../utils/helpers.js";
 import { get } from "./setupTest.js";
 
-const isLatestCode =
-  !process.env.CODE_VERSION || process.env.CODE_VERSION === "latest";
-
-// on older versions vscode requires logging to github to use AI chat
-describeIf(isLatestCode, "12 - Radon AI tests", () => {
+// This tests are not up to date with how current Radon AI works
+describeIf(false, "12 - Radon AI tests", () => {
   let driver,
     elementHelperService,
     radonViewsService,

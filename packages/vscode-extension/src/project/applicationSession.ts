@@ -246,7 +246,11 @@ export class ApplicationSession implements Disposable {
     this.disposables.push(this.toolsManager);
     this.disposables.push(this.stateManager);
 
-    this.maestroTestRunner = new MaestroTestRunner(this.device);
+    this.maestroTestRunner = new MaestroTestRunner(
+      this.device,
+      this.metro.port,
+      this.packageNameOrBundleId
+    );
     this.disposables.push(this.maestroTestRunner);
   }
 

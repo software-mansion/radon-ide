@@ -22,7 +22,7 @@
     "workspaceContains:**/app.config.ts",
     "onWebviewPanel:RadonIDETabPanel"
   ],
-  "version": "1.14.0",
+  "version": "1.15.0",
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -409,12 +409,6 @@
             "scope": "window",
             "default": true,
             "description": "Shows device frame in the IDE panel."
-          },
-          "RadonIDE.userInterface.festiveMode": {
-            "type": "boolean",
-            "scope": "window",
-            "default": false,
-            "description": "Enables festive mode in the IDE panel."
           }
         }
       },
@@ -1363,8 +1357,7 @@
     "vscode-test": "^1.6.1",
     "ws": "^8.18.1",
     "xml2js": "^0.6.2",
-    "zod": "^3.25.32",
-    "react-snowfall": "^2.4.0"
+    "zod": "^3.25.32"
   },
   "optionalDependencies": {
     "@rollup/rollup-linux-x64-gnu": "4.40.0"

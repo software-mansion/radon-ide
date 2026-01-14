@@ -31,12 +31,10 @@ import {
 import { useModal } from "../providers/ModalProvider";
 import Button from "../components/shared/Button";
 import { ActivateLicenseView } from "./ActivateLicenseView";
-import { Feature, LicenseStatus } from "../../common/License";
-import { usePaywalledCallback } from "../hooks/usePaywalledCallback";
+import { Feature, FeatureAvailabilityStatus, LicenseStatus } from "../../common/License";
 import { useDevices } from "../hooks/useDevices";
-import { useIsFeatureAdminDisabled } from "../hooks/useIsFeatureAdminDisabled";
-
-import FestiveSnow from "../components/festive/FestiveSnow";
+import { useFeatureAvailability } from "../hooks/useFeatureAvailability";
+import PaywallIconButton from "../components/shared/PaywallIconButton";
 
 const INSPECTOR_AVAILABILITY_MESSAGES = {
   [InspectorAvailabilityStatus.Available]: "Select an element to inspect it",
@@ -160,7 +158,6 @@ function PreviewView() {
   const radonConnectEnabled = projectState.connectState.enabled;
   const rotation = use$(store$.workspaceConfiguration.deviceSettings.deviceRotation);
   const zoomLevel = use$(store$.projectState.previewZoom);
-  const festiveMode = use$(store$.workspaceConfiguration.userInterface.festiveMode);
   const onZoomChanged = useCallback(
     (zoom: ZoomLevelType) => {
       store$.projectState.previewZoom.set(zoom);
@@ -223,21 +220,14 @@ function PreviewView() {
     };
   }, []);
 
-  const isRecordingAdminDisabled = useIsFeatureAdminDisabled(Feature.ScreenRecording);
+  const isRecordingAdminDisabled =
+    useFeatureAvailability(Feature.ScreenRecording) === FeatureAvailabilityStatus.ADMIN_DISABLED;
 
   const showRecordingButton = !isRecordingAdminDisabled;
 
-  const paywalledToggleRecording = usePaywalledCallback(
-    async () => {
-      await project.toggleRecording();
-    },
-    Feature.ScreenRecording,
-    []
-  );
-
-  function toggleRecording() {
+  async function toggleRecording() {
     try {
-      paywalledToggleRecording();
+      await project.toggleRecording();
     } catch (e) {
       if (isRecording) {
         project.showDismissableError("Failed to capture recording");
@@ -261,39 +251,25 @@ function PreviewView() {
     project.stopMaestroTest();
   }
 
-  const isReplayAdminDisabled = useIsFeatureAdminDisabled(Feature.ScreenReplay);
-
-  const paywalledCaptureReplay = usePaywalledCallback(
-    async () => {
-      await project.captureReplay();
-    },
-    Feature.ScreenReplay,
-    []
-  );
+  const isReplayAdminDisabled =
+    useFeatureAvailability(Feature.ScreenReplay) === FeatureAvailabilityStatus.ADMIN_DISABLED;
 
   async function handleReplay() {
     try {
-      await paywalledCaptureReplay();
+      await project.captureReplay();
     } catch (e) {
       project.showDismissableError("Failed to capture replay");
     }
   }
 
-  const isScreenshotAdminDisabled = useIsFeatureAdminDisabled(Feature.Screenshot);
+  const isScreenshotAdminDisabled =
+    useFeatureAvailability(Feature.Screenshot) === FeatureAvailabilityStatus.ADMIN_DISABLED;
 
   const showScreenshotButton = !isScreenshotAdminDisabled;
 
-  const paywalledCaptureScreenshot = usePaywalledCallback(
-    async () => {
-      await project.captureScreenshot();
-    },
-    Feature.Screenshot,
-    []
-  );
-
   async function captureScreenshot() {
     try {
-      await paywalledCaptureScreenshot();
+      await project.captureScreenshot();
     } catch (e) {
       project.showDismissableError("Failed to capture screenshot");
     }
@@ -363,7 +339,6 @@ function PreviewView() {
 
   return (
     <div className="panel-view" data-testid="radon-panel-view">
-      {festiveMode && <FestiveSnow />}
       <div className="button-group-top">
         <div className="button-group-top-left">
           <UrlBar disabled={!selectedProjectDevice} />
@@ -400,7 +375,8 @@ function PreviewView() {
             </IconButton>
           </ToolsDropdown>
           {showRecordingButton && (
-            <IconButton
+            <PaywallIconButton
+              feature={Feature.ScreenRecording}
               className={isRecording ? "button-recording-on" : ""}
               tooltip={{
                 label: isRecording ? "Stop screen recording" : "Start screen recording",
@@ -416,29 +392,31 @@ function PreviewView() {
               ) : (
                 <RecordingIcon />
               )}
-            </IconButton>
+            </PaywallIconButton>
           )}
           {showReplayButton && (
-            <IconButton
+            <PaywallIconButton
               tooltip={{
                 label: "Replay the last few seconds of the app",
               }}
               dataTest="radon-top-bar-show-replay-button"
               onClick={handleReplay}
-              disabled={!navBarButtonsActive || isReplayAdminDisabled}>
+              disabled={!navBarButtonsActive || isReplayAdminDisabled}
+              feature={Feature.ScreenReplay}>
               <ReplayIcon />
-            </IconButton>
+            </PaywallIconButton>
           )}
           {showScreenshotButton && (
-            <IconButton
+            <PaywallIconButton
               tooltip={{
                 label: "Capture a screenshot of the app",
               }}
               onClick={captureScreenshot}
               disabled={!navBarButtonsActive || isScreenshotAdminDisabled}
-              dataTest="capture-screenshot-button">
+              dataTest="capture-screenshot-button"
+              feature={Feature.Screenshot}>
               <span slot="start" className="codicon codicon-device-camera" />
-            </IconButton>
+            </PaywallIconButton>
           )}
           <IconButton
             counter={logCounter}
