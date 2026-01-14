@@ -87,7 +87,8 @@ safeDescribe("5 - Network panel tests", () => {
 
   async function testDetails(endpoint) {
     const expectedMethod = data[endpoint].request.method;
-    const expectedRequestBody = data[endpoint].request.body;
+    const expectedRequestBody = data[endpoint].request.body || "";
+    const expectedQuery = data[endpoint].request.query || "";
     const expectedStatus = data[endpoint].response?.status;
     const expectedResponseBody = data[endpoint].response?.body
       ? data[endpoint].response.body
@@ -171,7 +172,7 @@ safeDescribe("5 - Network panel tests", () => {
       );
     }
 
-    if (expectedRequestBody) {
+    if (expectedRequestBody || expectedQuery) {
       await elementHelperService.findAndClickElementByTag(
         `network-panel-tab-header-payload`
       );
@@ -189,6 +190,16 @@ safeDescribe("5 - Network panel tests", () => {
       assert.include(
         payload.replace(/\s/g, ""),
         expectedRequestBodyString.replace(/\s/g, "")
+      );
+
+      const expectedRequestQueryString =
+        typeof expectedQuery === "string"
+          ? expectedQuery
+          : JSON.stringify(expectedQuery);
+
+      assert.include(
+        payload.replace(/\s/g, ""),
+        expectedRequestQueryString.replace(/\s/g, "")
       );
     }
 

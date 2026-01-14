@@ -5,7 +5,7 @@
       "method": "GET",
       "headers": {},
       "query": {
-        "page": 2,
+        "page": "2",
         "sort": "desc"
       }
     },
@@ -46,7 +46,6 @@
       "headers": {
         "Content-Type": "application/json"
       },
-      "query": {},
       "body": {
         "name": "Alice",
         "email": "alice@example.com"
@@ -78,7 +77,6 @@
       "headers": {
         "Content-Type": "application/json"
       },
-      "query": {},
       "body": {
         "name": "Johnny"
       }
@@ -100,7 +98,6 @@
       "headers": {
         "Content-Type": "application/json"
       },
-      "query": {},
       "body": {
         "name": "Janette",
         "email": "janette@example.com"
@@ -129,8 +126,7 @@
     "request": {
       "url": "http://localhost:8080/api/delete/1",
       "method": "DELETE",
-      "headers": {},
-      "query": {}
+      "headers": {}
     },
     "response": {
       "status": 200,
@@ -144,6 +140,44 @@
       "body": {
         "message": "Delete request successful",
         "deletedId": 1
+      }
+    }
+  },
+  "api/query-and-body": {
+    "request": {
+      "url": "http://localhost:3000/api/query-and-body?dataRequest=3&dataRequest2=4",
+      "method": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "query": {
+        "dataRequest": "3",
+        "dataRequest2": "4"
+      },
+      "body": {
+        "dataRequestBody": "C",
+        "dataRequestBody2": "D"
+      }
+    },
+    "response": {
+      "status": 200,
+      "headers": {
+        "connection": "keep-alive",
+        "content-length": "148",
+        "content-type": "application/json; charset=utf-8",
+        "keep-alive": "timeout=5",
+        "x-powered-by": "Express"
+      },
+      "body": {
+        "received_query": {
+          "data": "1",
+          "data2": "2"
+        },
+        "received_body": {
+          "bodyData": "A",
+          "bodyData2": "B"
+        },
+        "message": "Query params and body received successfully"
       }
     }
   },
@@ -186,7 +220,6 @@
       "headers": {
         "Content-Type": "application/x-www-form-urlencoded"
       },
-      "query": {},
       "body": "username=testuser&password=1234"
     },
     "response": {
@@ -209,8 +242,7 @@
     "request": {
       "url": "http://localhost:8080/api/binary",
       "method": "GET",
-      "headers": {},
-      "query": {}
+      "headers": {}
     },
     "response": {
       "status": 200,
@@ -228,8 +260,7 @@
     "request": {
       "url": "http://localhost:8080/api/compress",
       "method": "GET",
-      "headers": {},
-      "query": {}
+      "headers": {}
     },
     "response": {
       "status": 200,
@@ -248,8 +279,7 @@
     "request": {
       "url": "http://localhost:8080/api/redirect",
       "method": "GET",
-      "headers": {},
-      "query": {}
+      "headers": {}
     },
     "response": {
       "status": 200,
@@ -281,8 +311,7 @@
     "request": {
       "url": "http://localhost:8080/api/delay",
       "method": "GET",
-      "headers": {},
-      "query": {}
+      "headers": {}
     },
     "response": {
       "status": 200,
@@ -304,8 +333,7 @@
     "request": {
       "url": "http://localhost:8080/api/large-body",
       "method": "GET",
-      "headers": {},
-      "query": {}
+      "headers": {}
     },
     "response": {
       "status": 200,
@@ -323,8 +351,7 @@
     "request": {
       "url": "http://localhost:8080/api/image",
       "method": "GET",
-      "headers": {},
-      "query": {}
+      "headers": {}
     },
     "response": {
       "status": 200,
@@ -344,8 +371,7 @@
     "request": {
       "url": "http://localhost:8080/api/stream-xhr",
       "method": "GET",
-      "headers": {},
-      "query": {}
+      "headers": {}
     },
     "response": {
       "status": 200,
@@ -380,8 +406,7 @@
     "request": {
       "url": "http://localhost:8080/api/error/client-error",
       "method": "GET",
-      "headers": {},
-      "query": {}
+      "headers": {}
     },
     "response": {
       "status": 403,
@@ -403,8 +428,7 @@
     "request": {
       "url": "http://localhost:8080/api/error/server-error",
       "method": "GET",
-      "headers": {},
-      "query": {}
+      "headers": {}
     },
     "response": {
       "status": 503,
