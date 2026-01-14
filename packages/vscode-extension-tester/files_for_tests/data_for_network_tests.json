@@ -145,7 +145,7 @@
   },
   "api/query-and-body": {
     "request": {
-      "url": "http://localhost:3000/api/query-and-body?dataRequest=3&dataRequest2=4",
+      "url": "http://localhost:8080/api/query-and-body?dataRequest=3&dataRequest2=4",
       "method": "POST",
       "headers": {
         "Content-Type": "application/json"
