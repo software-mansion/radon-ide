@@ -1,9 +1,11 @@
 import React from "react";
+import { JSX } from "react";
 import classnames from "classnames";
 import "./IconButton.css";
 import Tooltip from "./Tooltip";
 import { usePing } from "../../hooks/usePing";
 import { PropsWithDataTest } from "../../../common/types";
+import { Feature } from "../../../common/License";
 
 export interface IconButtonProps {
   onClick?: React.MouseEventHandler<HTMLButtonElement>;
@@ -12,6 +14,8 @@ export interface IconButtonProps {
   disableTooltip?: boolean;
   counter?: number;
   counterMode?: "full" | "compact";
+  feature?: Feature;
+  paywallCallbackDependencies?: unknown[];
   active?: boolean;
   type?: "primary" | "secondary";
   side?: "left" | "right" | "center";
@@ -23,6 +27,7 @@ export interface IconButtonProps {
   };
   className?: string;
   shouldDisplayLabelWhileDisabled?: boolean;
+  badge?: JSX.Element | null;
 }
 
 const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconButtonProps>>(
@@ -31,7 +36,6 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
       counter,
       counterMode = "full",
       children,
-      onClick,
       tooltip,
       disabled,
       active,
@@ -40,16 +44,15 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
       side = "center",
       className = "",
       shouldDisplayLabelWhileDisabled = false,
+      badge = null,
       dataTest,
       ...rest
     } = props;
 
     const shouldPing = usePing(counter ?? 0, counterMode);
-
     const showCounter = Boolean(counter);
     const button = (
       <button
-        onClick={onClick}
         disabled={disabled}
         className={classnames(
           "icon-button",
@@ -65,7 +68,8 @@ const IconButton = React.forwardRef<HTMLButtonElement, PropsWithDataTest<IconBut
         {...rest}
         ref={ref}>
         {children}
-        {counterMode === "full" && counter !== null && (
+        {badge}
+        {!badge && counterMode === "full" && counter !== null && (
           <span className={classnames("icon-button-counter", showCounter && "visible")}>
             {counter}
           </span>

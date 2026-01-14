@@ -1,6 +1,6 @@
+import { useCallback } from "react";
 import { use$ } from "@legendapp/state/react";
 import { useStore } from "../providers/storeProvider";
-import { useCallback } from "react";
 import { Feature, FeatureAvailabilityStatus, FeaturesAvailability } from "../../common/License";
 import { usePaywall } from "./usePaywall";
 import {
@@ -18,12 +18,11 @@ function withPaywallGuard<F extends (...args: any[]) => Promise<void> | void>(
   const { openAdminBlock } = useAdminBlock();
 
   return async (...args: Parameters<F>): Promise<void> => {
-    const featureAvailability = featuresAvailability[feature];
-    switch (featureAvailability) {
+    switch (featuresAvailability[feature]) {
       case FeatureAvailabilityStatus.AVAILABLE:
         break;
       case FeatureAvailabilityStatus.PAYWALLED:
-        openPaywall();
+        openPaywall({ feature });
         return;
       // Note: this should never happen as we disable Restricted functionalities but if a user finds a way
       // We inform them that restriction was placed by their administration.

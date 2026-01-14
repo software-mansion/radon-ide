@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import "./PaywallView.css";
+import { use$ } from "@legendapp/state/react";
 import { PricePreviewResponse } from "@paddle/paddle-js";
 import classNames from "classnames";
 import Button from "../components/shared/Button";
@@ -8,10 +8,11 @@ import RadonBackgroundImage from "../components/RadonBackgroundImage";
 import usePaddle from "../hooks/usePaddle";
 import { useProject } from "../providers/ProjectProvider";
 import { useStore } from "../providers/storeProvider";
-import { use$ } from "@legendapp/state/react";
 import { ActivateLicenseView } from "./ActivateLicenseView";
 import { useModal } from "../providers/ModalProvider";
-import { LicenseStatus } from "../../common/License";
+import { Feature, FeatureNamesMap, LicenseStatus } from "../../common/License";
+
+import "./PaywallView.css";
 
 type SubscriptionPlan = "monthly" | "yearly";
 
@@ -47,6 +48,7 @@ const freeBenefits = [
 
 type PaywallViewProps = {
   title?: string;
+  feature?: Feature;
 };
 
 function BenefitsList({ items }: { items: string[] }) {
@@ -243,7 +245,7 @@ function ActivateLicenseButton() {
   );
 }
 
-function PaywallView({ title }: PaywallViewProps) {
+function PaywallView({ title, feature }: PaywallViewProps) {
   const store$ = useStore();
 
   const licenseState = use$(store$.license.status);
@@ -257,6 +259,11 @@ function PaywallView({ title }: PaywallViewProps) {
         <h1 className="paywall-title">
           {title ?? (isLicenseInactive ? "Get Radon IDE License" : "Unlock Radon IDE Pro")}
         </h1>
+        {feature && (
+          <p className="paywall-feature-description">
+            <b>{FeatureNamesMap[feature]}</b> feature is available with <b>Radon IDE Pro</b>
+          </p>
+        )}
 
         {isLicenseInactive ? <InactiveLicenseDescription /> : <FreeLicenseDescription />}
 
