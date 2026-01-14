@@ -164,6 +164,10 @@ safeDescribe("5 - Network panel tests", () => {
         expectedString.replace(/\s/g, "")
       );
     } else {
+      // check if response for image is not empty
+      assert.notInclude(responseText, "No response body");
+      assert.notEqual(responseText, "");
+
       await elementHelperService.findAndClickElementByTag(
         `network-panel-tab-header-preview`
       );

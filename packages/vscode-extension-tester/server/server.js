@@ -1,5 +1,7 @@
 import { fileURLToPath } from "url";
 import path from "path";
+import { join } from "path";
+import { readFileSync } from "fs";
 import express from "express";
 import multer from "multer";
 import compression from "compression";
@@ -9,6 +11,13 @@ const __dirname = path.dirname(__filename);
 
 export const app = express();
 
+const filePath = join(
+  process.cwd(),
+  "files_for_tests/data_for_network_tests.json"
+);
+const fileContent = readFileSync(filePath, "utf-8");
+const data = JSON.parse(fileContent);
+
 app.use(express.static("."));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -17,25 +26,11 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 app.get("/api/get", (req, res) => {
   res.setHeader("Content-Type", "application/json");
-  res.json({
-    meta: {
-      page: "2",
-      sort: "desc",
-      total: 2,
-    },
-    data: [
-      { id: 1, name: "John Doe", email: "john@example.com" },
-      { id: 2, name: "Jane Doe", email: "jane@example.com" },
-    ],
-  });
+  res.json(data["api/get"].response.body);
 });
 
 app.post("/api/post", (req, res) => {
-  res.status(201).json({
-    message: "Post request successful",
-    userId: 3,
-    captured_data: req.body,
-  });
+  res.status(201).json(data["api/post"].response.body);
 });
 
 app.patch("/api/patch/:id", (req, res) => {
@@ -43,45 +38,23 @@ app.patch("/api/patch/:id", (req, res) => {
 });
 
 app.put("/api/put/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  res.status(200).json({
-    message: "Put request successful",
-    user: {
-      id: id,
-      ...req.body,
-    },
-  });
+  res.status(200).json(data["api/put/2"].response.body);
 });
 
 app.delete("/api/delete/:id", (req, res) => {
-  const id = parseInt(req.params.id);
-  res.json({
-    message: "Delete request successful",
-    deletedId: id,
-  });
+  res.json(data["api/delete/1"].response.body);
 });
 
 app.post("/api/multipart", upload.single("multipart_data"), (req, res) => {
   if (!req.file) {
     return res.status(400).send("No file uploaded.");
   }
-  const description = req.body.description;
 
-  res.json({
-    filename: req.file.originalname,
-    mimetype: req.file.mimetype,
-    size: req.file.size,
-    metadata_received: description,
-  });
+  res.json(data["api/multipart"].response.body);
 });
 
 app.post("/api/form", (req, res) => {
-  const { username } = req.body;
-  res.json({
-    type: "Legacy Form",
-    received_user: username,
-    login_status: "active",
-  });
+  res.json(data["api/form"].response.body);
 });
 
 app.get("/api/binary", (req, res) => {
@@ -102,11 +75,7 @@ app.get("/api/compress", compression(), (req, res) => {
 });
 
 app.post("/api/query-and-body", (req, res) => {
-  res.json({
-    received_query: { data: "1", data2: "2" },
-    received_body: { bodyData: "A", bodyData2: "B" },
-    message: "Query params and body received successfully",
-  });
+  res.json(data["api/query-and-body"].response.body);
 });
 
 app.get("/api/redirect", (req, res) => {
@@ -114,24 +83,11 @@ app.get("/api/redirect", (req, res) => {
 });
 
 app.get("/api/error/client-error", (req, res) => {
-  res.status(403).json({
-    error: "Forbidden",
-    message: "Invalid Token provided",
-    code: 403,
-  });
+  res.status(403).json(data["api/error/client-error"].response.body);
 });
 
 app.get("/api/error/server-error", (req, res) => {
-  res.status(503).send(`
-        <html>
-            <body>
-                <h1>503 Service Unavailable</h1>
-                <p>The upstream server is currently unavailable.</p>
-                <hr>
-                <address>Nginx/1.18.0</address>
-            </body>
-        </html>
-    `);
+  res.status(503).send(data["api/error/server-error"].response.body);
 });
 
 app.get("/api/stream-xhr", (req, res) => {
@@ -157,24 +113,6 @@ app.get("/api/stream-xhr", (req, res) => {
   }, 1000);
 });
 
-app.get("/api/error/truncated", (req, res) => {
-  res.writeHead(200, {
-    "Content-Type": "application/json",
-    "Content-Length": "1024",
-  });
-  res.write(
-    '{ "message": "This is the start of a valid JSON object, but it will die soon..."'
-  );
-  setTimeout(() => {
-    console.log("error: Destroying socket for /truncated");
-    req.socket.destroy();
-  }, 100);
-});
-
-app.get("/api/error/hang", (req, res) => {
-  console.log("error: Hanging connection intentionally (Zombie Request)...");
-});
-
 app.get("/api/large-body", (req, res) => {
   const targetSizeMB = 5;
   const dummyString = "X ".repeat(1024);
@@ -191,10 +129,7 @@ app.get("/api/delay", (req, res) => {
   const delay = 3000;
 
   setTimeout(() => {
-    res.json({
-      message: "Response received after delay",
-      delay_ms: delay,
-    });
+    res.json(data["api/delay"].response.body);
   }, delay);
 });
 
@@ -208,8 +143,4 @@ app.get("/api/large-image", (req, res) => {
 
 app.use((req, res) => {
   res.status(404).json({ error: "Not Found", endpoint: req.originalUrl });
-});
-
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
 });
