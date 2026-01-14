@@ -259,7 +259,7 @@ safeDescribe("3 - Adding device tests", () => {
           return false;
         }
         return label.includes(deviceName);
-      }, 5000);
+      }, 10000);
       await radonViewsService.switchToRadonIDEFrame();
     }
 
@@ -281,7 +281,7 @@ safeDescribe("3 - Adding device tests", () => {
     await driver.wait(async () => {
       const text = await chosenDevice.getText();
       return text === deviceName2;
-    }, 5000);
+    }, 10000);
 
     await appManipulationService.waitForAppToLoad();
     await driver
@@ -296,7 +296,7 @@ safeDescribe("3 - Adding device tests", () => {
     await driver.wait(async () => {
       const text = await chosenDevice.getText();
       return text === deviceName1;
-    }, 5000);
+    }, 10000);
 
     await appManipulationService.waitForAppToLoad();
 

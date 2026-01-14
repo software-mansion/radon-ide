@@ -239,13 +239,18 @@ export class ApplicationSession implements Disposable {
       this.applicationContext,
       devtoolsInspectorBridge,
       this.networkBridge,
-      this.metro.port
+      this.metro.port,
+      this.shouldEnableNativeNetworkInspector()
     );
 
     this.disposables.push(this.toolsManager);
     this.disposables.push(this.stateManager);
 
-    this.maestroTestRunner = new MaestroTestRunner(this.device);
+    this.maestroTestRunner = new MaestroTestRunner(
+      this.device,
+      this.metro.port,
+      this.packageNameOrBundleId
+    );
     this.disposables.push(this.maestroTestRunner);
   }
 
@@ -315,6 +320,32 @@ export class ApplicationSession implements Disposable {
   }
 
   // #region Tools
+
+  private shouldEnableNativeNetworkInspector(): boolean {
+    const launchConfig = this.applicationContext.launchConfig;
+    const useNativeNetworkInspectorFlag = launchConfig.useNativeNetworkInspector;
+
+    const explicitlyEnabled = useNativeNetworkInspectorFlag === true;
+    const explicitlyDisabled = useNativeNetworkInspectorFlag === false;
+
+    if (explicitlyEnabled) {
+      return true;
+    }
+    if (explicitlyDisabled) {
+      return false;
+    }
+
+    const reactNativeVersion = this.applicationContext.reactNativeVersion;
+    const meetsMinimumVersion = (reactNativeVersion?.compare("0.83.0") ?? -1) >= 0;
+    const isAndroid = this.device.platform === DevicePlatform.Android;
+
+    // Android has known issues with native network inspector
+    if (isAndroid) {
+      return false;
+    }
+
+    return meetsMinimumVersion;
+  }
 
   public async updateToolEnabledState(toolName: ToolKey, enabled: boolean) {
     return this.toolsManager.updateToolEnabledState(toolName, enabled);

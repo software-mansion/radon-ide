@@ -2,7 +2,7 @@ import * as Select from "@radix-ui/react-select";
 import "./AppRootSelect.css";
 import "./shared/Dropdown.css";
 import _ from "lodash";
-import React, { PropsWithChildren, useEffect, useMemo } from "react";
+import React, { PropsWithChildren, useEffect, useMemo, useState } from "react";
 import { use$ } from "@legendapp/state/react";
 import { useProject } from "../providers/ProjectProvider";
 import { LaunchConfiguration, LaunchConfigurationKind } from "../../common/LaunchConfig";
@@ -46,6 +46,8 @@ function renderLaunchConfigurations(
   prefix: string,
   customLaunchConfigurations: LaunchConfiguration[],
   selectedValue: string | undefined,
+  isExpanded: boolean,
+  onToggleExpand: () => void,
   onEditConfig?: (config: LaunchConfiguration, isSelected: boolean) => void
 ) {
   if (customLaunchConfigurations.length === 0) {
@@ -54,33 +56,46 @@ function renderLaunchConfigurations(
 
   return (
     <Select.Group>
-      <Select.Label className="approot-select-label">{groupLabel}</Select.Label>
-      {customLaunchConfigurations.map((config, idx) => (
-        <RichSelectItem
-          value={`${prefix}:${idx}`}
-          key={idx}
-          data-testid={`approot-select-item-${config.name || config.appRoot}`}
-          icon={<span className="codicon codicon-folder" />}
-          title={displayNameForConfig(config) ?? config.appRoot ?? "./"}
-          subtitle={displayNameForConfig(config) ? config.appRoot : undefined}
-          isSelected={selectedValue === `${prefix}:${idx}`}>
-          {onEditConfig && (
-            <ConfigureButton
-              dataTest={`edit-launch-config-button-${config.name || idx}`}
-              onClick={() =>
-                onEditConfig(config as LaunchConfiguration, selectedValue === `${prefix}:${idx}`)
-              }
-            />
-          )}
-        </RichSelectItem>
-      ))}
+      <div className="approot-select-label-collapsible" onClick={onToggleExpand}>
+        <span
+          className={`codicon ${isExpanded ? "codicon-chevron-down" : "codicon-chevron-right"}`}
+        />
+        <Select.Label
+          className="approot-select-label"
+          data-testid={`approot-collapsible-${groupLabel.toLowerCase().replace(/\s+/g, "-")}`}
+          data-expanded={isExpanded}>
+          {groupLabel}
+        </Select.Label>
+      </div>
+      {isExpanded &&
+        customLaunchConfigurations.map((config, idx) => (
+          <RichSelectItem
+            value={`${prefix}:${idx}`}
+            key={idx}
+            data-testid={`approot-select-item-${config.name || config.appRoot}`}
+            icon={<span className="codicon codicon-folder" />}
+            title={displayNameForConfig(config) ?? config.appRoot ?? "./"}
+            subtitle={displayNameForConfig(config) ? config.appRoot : undefined}
+            isSelected={selectedValue === `${prefix}:${idx}`}>
+            {onEditConfig && (
+              <ConfigureButton
+                dataTest={`edit-launch-config-button-${config.name || idx}`}
+                onClick={() =>
+                  onEditConfig(config as LaunchConfiguration, selectedValue === `${prefix}:${idx}`)
+                }
+              />
+            )}
+          </RichSelectItem>
+        ))}
     </Select.Group>
   );
 }
 
 function renderDetectedLaunchConfigurations(
   detectedConfigurations: LaunchConfiguration[],
-  selectedValue: string | undefined
+  selectedValue: string | undefined,
+  isExpanded: boolean,
+  onToggleExpand: () => void
 ) {
   if (detectedConfigurations.length === 0) {
     return null;
@@ -90,13 +105,17 @@ function renderDetectedLaunchConfigurations(
     "Detected applications",
     "detected",
     detectedConfigurations,
-    selectedValue
+    selectedValue,
+    isExpanded,
+    onToggleExpand
   );
 }
 
 function renderCustomLaunchConfigurations(
   customLaunchConfigurations: LaunchConfiguration[],
   selectedValue: string | undefined,
+  isExpanded: boolean,
+  onToggleExpand: () => void,
   onEditConfig: (config: LaunchConfiguration, isSelected: boolean) => void
 ) {
   if (customLaunchConfigurations.length === 0) {
@@ -108,6 +127,8 @@ function renderCustomLaunchConfigurations(
     "custom",
     customLaunchConfigurations,
     selectedValue,
+    isExpanded,
+    onToggleExpand,
     onEditConfig
   );
 }
@@ -148,6 +169,11 @@ function AppRootSelect() {
   const selectedAppRootPath = projectState.appRootPath;
   const selectedAppRoot = applicationRoots.find((root) => root.path === selectedAppRootPath);
   const { openModal } = useModal();
+
+  const [expandedSections, setExpandedSections] = useState<{ detected: boolean; custom: boolean }>({
+    detected: false,
+    custom: false,
+  });
 
   function onEditConfig(config: LaunchConfiguration, isSelected: boolean) {
     openModal(<LaunchConfigurationView launchConfig={config} isCurrentConfig={isSelected} />, {
@@ -199,6 +225,14 @@ function AppRootSelect() {
     }
   })();
 
+  useEffect(() => {
+    if (!projectInitialized) return;
+    setExpandedSections({
+      detected: selectedConfiguration.kind === LaunchConfigurationKind.Detected,
+      custom: selectedConfiguration.kind === LaunchConfigurationKind.Custom,
+    });
+  }, [projectInitialized, selectedConfiguration.kind]);
+
   useUnknownConfigurationAlert(projectInitialized && selectedValue === "unknown");
 
   const configurationsCount = detectedConfigurations.length + customConfigurations.length;
@@ -232,8 +266,19 @@ function AppRootSelect() {
             <span className="codicon codicon-chevron-up" />
           </Select.ScrollUpButton>
           <Select.Viewport className="approot-select-viewport">
-            {renderDetectedLaunchConfigurations(detectedConfigurations, selectedValue)}
-            {renderCustomLaunchConfigurations(customConfigurations, selectedValue, onEditConfig)}
+            {renderDetectedLaunchConfigurations(
+              detectedConfigurations,
+              selectedValue,
+              expandedSections.detected,
+              () => setExpandedSections((prev) => ({ ...prev, detected: !prev.detected }))
+            )}
+            {renderCustomLaunchConfigurations(
+              customConfigurations,
+              selectedValue,
+              expandedSections.custom,
+              () => setExpandedSections((prev) => ({ ...prev, custom: !prev.custom })),
+              onEditConfig
+            )}
             {configurationsCount > 0 && <Select.Separator className="approot-select-separator" />}
             <SelectItem value="manage" data-testid="add-launch-config-button">
               <span className="codicon codicon-add" />

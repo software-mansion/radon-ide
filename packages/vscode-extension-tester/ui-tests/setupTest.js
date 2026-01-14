@@ -12,16 +12,13 @@ import {
   initServer,
   getAppWebsocket,
   closeServer,
+  resetAppWebsocket,
 } from "../server/webSocketServer.js";
 import initServices from "../services/index.js";
-import startRecording from "../utils/screenRecording.js";
 import getConfiguration from "../configuration.js";
 import { texts } from "../utils/constants.js";
 
-const { IS_RECORDING } = getConfiguration();
-
 let driver, workbench, view, browser;
-let recorder;
 const failedTests = [];
 
 before(async function () {
@@ -53,9 +50,6 @@ before(async function () {
 
   await radonViewsService.activateRadonIDELicense();
   await driver.switchTo().defaultContent();
-  if (IS_RECORDING) {
-    recorder = startRecording(driver, { interval: 100 });
-  }
 });
 
 export const cleanUpAfterTest = async () => {
@@ -69,6 +63,7 @@ export const cleanUpAfterTest = async () => {
   await bottomBar.toggle(false);
   await new EditorView().closeAllEditors();
   await driver.switchTo().defaultContent();
+  resetAppWebsocket();
 
   await vscodeHelperService.openCommandLineAndExecute(
     "Developer: Reload Window"
@@ -115,9 +110,6 @@ afterEach(async function () {
 });
 
 after(async function () {
-  if (IS_RECORDING && recorder) {
-    await recorder.stop();
-  }
   closeServer();
   console.log(
     `==== Summary app: ${texts.expectedProjectName} | code version: ${

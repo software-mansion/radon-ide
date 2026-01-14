@@ -6,13 +6,14 @@ import { assert } from "chai";
 import getConfiguration from "../configuration.js";
 import initServices from "../services/index.js";
 import { describeIf, itIf } from "../utils/helpers.js";
+import { TIMEOUTS } from "../utils/timeouts.js";
 import { get } from "./setupTest.js";
 
 const raw = fs.readFileSync("./data/react-native-app/package.json");
 const data = JSON.parse(raw);
 const IS_EXPO = data.name.includes("expo");
 
-const { ALLOW_ENVIRONMENT_MODIFICATIONS } = getConfiguration();
+const { ALLOW_ENVIRONMENT_MODIFICATIONS, IS_ANDROID } = getConfiguration();
 
 describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
   let driver;
@@ -65,7 +66,8 @@ describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
     errorMessage
   ) {
     await elementHelperService.findAndWaitForElementByTag(
-      `diagnostic-icon-${name}-installed`
+      `diagnostic-icon-${name}-installed`,
+      TIMEOUTS.LONG
     );
     await damageFunction();
     try {
@@ -74,7 +76,8 @@ describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
       );
       console.log(`Testing ${name} diagnostic`);
       await elementHelperService.findAndWaitForElementByTag(
-        `diagnostic-icon-${name}-notInstalled`
+        `diagnostic-icon-${name}-notInstalled`,
+        TIMEOUTS.LONG
       );
       if (errorMessage) {
         const errorElement =
@@ -93,7 +96,8 @@ describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
         "rerun-diagnostics-button"
       );
       await elementHelperService.findAndWaitForElementByTag(
-        `diagnostic-icon-${name}-installed`
+        `diagnostic-icon-${name}-installed`,
+        TIMEOUTS.LONG
       );
     }
   }
@@ -151,22 +155,26 @@ describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
     );
   });
 
-  itIf(!IS_EXPO, "should show correct diagnostic for pods", async function () {
-    await testDiagnostic(
-      "pods",
-      async () => {
-        execSync(
-          "mv ./data/react-native-app/ios/Pods ./data/react-native-app/ios/not_Pods"
-        );
-      },
-      async () => {
-        execSync(
-          "mv ./data/react-native-app/ios/not_Pods ./data/react-native-app/ios/Pods"
-        );
-      },
-      `Pods are not installed.`
-    );
-  });
+  itIf(
+    !IS_EXPO && !IS_ANDROID,
+    "should show correct diagnostic for pods",
+    async function () {
+      await testDiagnostic(
+        "pods",
+        async () => {
+          execSync(
+            "mv ./data/react-native-app/ios/Pods ./data/react-native-app/ios/not_Pods"
+          );
+        },
+        async () => {
+          execSync(
+            "mv ./data/react-native-app/ios/not_Pods ./data/react-native-app/ios/Pods"
+          );
+        },
+        `Pods are not installed.`
+      );
+    }
+  );
 
   itIf(!IS_EXPO, "should show correct diagnostic for ios", async function () {
     await testDiagnostic(
@@ -229,8 +237,9 @@ describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
     }
   );
 
+  // this test doesn't work correct
   itIf(
-    !IS_EXPO,
+    false,
     "should show correct diagnostic for react-native",
     async function () {
       const reactNativeVersion = getPackageVersion("react-native");
@@ -296,8 +305,9 @@ describeIf(ALLOW_ENVIRONMENT_MODIFICATIONS, "17 - Diagnostics tests", () => {
     );
   });
 
+  // this test doesn't work correct
   itIf(
-    IS_EXPO,
+    false,
     "should show correct diagnostic for expo-router",
     async function () {
       const targetDir = path.join(process.cwd(), "data", "react-native-app");

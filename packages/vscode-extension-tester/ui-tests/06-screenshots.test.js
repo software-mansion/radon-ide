@@ -9,14 +9,14 @@ import { get } from "./setupTest.js";
 const DEFAULT_VIDEO_DURATION_SECS = 4;
 
 safeDescribe("6 - screenshots tests", () => {
-  let driver,
-    view,
-    appWebsocket,
+  let driver, view, appWebsocket;
+  let {
     elementHelperService,
     radonViewsService,
     managingDevicesService,
     appManipulationService,
-    radonSettingsService;
+    radonSettingsService,
+  } = initServices(driver);
   const cwd = process.cwd() + "/data";
 
   before(async () => {
@@ -48,10 +48,7 @@ safeDescribe("6 - screenshots tests", () => {
   });
 
   it("Should take a screenshot", async () => {
-    // VSCode for some reason puts two dots in file name, but it's not an issue
-    // it only happens in vscode instance opened by vscode-extension-tester which uses different save file dialog
-    // regular VSCode instance use macOS default save file dialog
-    const filePath = path.join(cwd, "screenshotTest..png");
+    const filePath = path.join(cwd, "screenshotTest.png");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
@@ -74,7 +71,7 @@ safeDescribe("6 - screenshots tests", () => {
   });
 
   it("Should take a screenshot using shortcut", async () => {
-    const filePath = path.join(cwd, "screenshotTestShortcut..png");
+    const filePath = path.join(cwd, "screenshotTestShortcut.png");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
@@ -101,7 +98,7 @@ safeDescribe("6 - screenshots tests", () => {
   });
 
   it("Should record screen", async () => {
-    const filePath = path.join(cwd, "recordingTest..mp4");
+    const filePath = path.join(cwd, "recordingTest.mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
@@ -129,7 +126,7 @@ safeDescribe("6 - screenshots tests", () => {
   });
 
   it("Should record screen using shortcut", async () => {
-    const filePath = path.join(cwd, "recordingTest..mp4");
+    const filePath = path.join(cwd, "recordingTestShortcut.mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
 
@@ -153,7 +150,7 @@ safeDescribe("6 - screenshots tests", () => {
       .keyUp(Key.COMMAND)
       .perform();
 
-    await radonViewsService.findAndFillSaveFileForm("recordingTest");
+    await radonViewsService.findAndFillSaveFileForm("recordingTestShortcut");
 
     await driver.wait(
       async () => {
@@ -174,10 +171,7 @@ safeDescribe("6 - screenshots tests", () => {
       "radon-top-bar-show-replay-button"
     );
 
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
+    await elementHelperService.findAndWaitForElementByTag("replay-overlay");
   });
 
   it("Should open replay overlay using shortcut", async () => {
@@ -193,14 +187,11 @@ safeDescribe("6 - screenshots tests", () => {
       .keyUp(Key.COMMAND)
       .perform();
 
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
+    await elementHelperService.findAndWaitForElementByTag("replay-overlay");
   });
 
   it("Should save replay", async () => {
-    const filePath = path.join(cwd, "replayTest..mp4");
+    const filePath = path.join(cwd, "replayTest.mp4");
 
     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     await radonSettingsService.setEnableReplays(true);
@@ -226,10 +217,7 @@ safeDescribe("6 - screenshots tests", () => {
       "radon-top-bar-show-replay-button"
     );
 
-    await elementHelperService.findAndWaitForElementByTag(
-      "replay-overlay",
-      "Timed out waiting for replay overlay to appear"
-    );
+    await elementHelperService.findAndWaitForElementByTag("replay-overlay");
 
     await elementHelperService.findAndClickElementByTag("replay-save-button");
     await radonViewsService.findAndFillSaveFileForm("replayTest");

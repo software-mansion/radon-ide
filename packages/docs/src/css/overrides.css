@@ -244,10 +244,6 @@ a.menu__link {
   font-weight: 400;
 }
 
-p code {
-  background-color: var(--radon-border) !important;
-}
-
 [class*="menu__list-item-collapsible"] a {
   color: var(--ifm-color-primary) !important;
 }
