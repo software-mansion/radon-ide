@@ -6,6 +6,10 @@ sidebar_position: 11
 
 Radon AI is a set of tools enhancing your editor's Agent, with among other things - up-to-date knowledge about the React Native ecosystem, comprehensive set of debugging data, that isn't otherwise available, and app interaction abilities. You can find the full set of tools available to it: [here](/docs/features/radon-ai#available-tools).
 
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/ide_radon_ai_preview.mp4" type="video/mp4"/>
+</video>
+
 We index all of the popular React Native libraries to match questions to relevant pieces of documentation, providing additional, accurate context to your conversation.
 
 Our knowledge database is updated daily to provide the most up-to-date information.
