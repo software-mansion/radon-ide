@@ -4,6 +4,10 @@ title: Maestro integration
 sidebar_position: 10
 ---
 
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/ide_maestro.mp4" type="video/mp4"/>
+</video>
+
 Radon IDE integrates with [Maestro](https://maestro.dev/), enabling you to run your test flows straight from the editor, and instantly see the results both on the simulator and in the console.
 
 <img width="200" src="/img/docs/ide_maestro_run.png" className="shadow-image"/>
