@@ -60,7 +60,12 @@ function renderLaunchConfigurations(
         <span
           className={`codicon ${isExpanded ? "codicon-chevron-down" : "codicon-chevron-right"}`}
         />
-        <Select.Label className="approot-select-label">{groupLabel}</Select.Label>
+        <Select.Label
+          className="approot-select-label"
+          data-testid={`approot-collapsible-${groupLabel.toLowerCase().replace(/\s+/g, "-")}`}
+          data-expanded={isExpanded}>
+          {groupLabel}
+        </Select.Label>
       </div>
       {isExpanded &&
         customLaunchConfigurations.map((config, idx) => (

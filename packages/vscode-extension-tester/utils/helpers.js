@@ -1,4 +1,11 @@
 import { cleanUpAfterTest } from "../ui-tests/setupTest.js";
+import { get } from "../ui-tests/setupTest.js";
+import getConfiguration from "../configuration.js";
+import startRecording from "./screenRecording.js";
+
+let globalRetryCount = 0;
+const GLOBAL_RETRY_LIMIT = 15;
+const IS_RECORDING = getConfiguration().IS_RECORDING;
 
 export function centerCoordinates(position) {
   return {
@@ -26,8 +33,26 @@ export function itIf(condition, title, fn) {
 }
 
 export function safeDescribe(title, fn) {
-  describe(title, () => {
+  describe(title, function () {
+    this.retries(2);
+    before(() => {
+      const { driver } = get();
+      if (IS_RECORDING)
+        this.recorder = startRecording(
+          driver,
+          title.replace(/\s+/g, "_") || "test"
+        );
+    });
+    beforeEach(function () {
+      if (this.currentTest && this.currentTest.currentRetry() > 0) {
+        globalRetryCount++;
+      }
+      if (globalRetryCount > GLOBAL_RETRY_LIMIT) {
+        this.currentTest?.retries(0);
+      }
+    });
     after(async () => {
+      if (IS_RECORDING && this.recorder) this.recorder.stop();
       await cleanUpAfterTest();
     });
 

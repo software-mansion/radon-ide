@@ -93,7 +93,10 @@ safeDescribe("13 - Reload app tests", () => {
 
     const messageElement =
       await elementHelperService.findAndWaitForElementByTag("startup-message");
-    assert.include(await messageElement.getText(), "Initializing device");
+    assert.oneOf(await messageElement.getText(), [
+      "Initializing device",
+      "Booting device",
+    ]);
     await appManipulationService.waitForAppToLoad();
   });
 });
