@@ -8,6 +8,7 @@ import {
   ActivityBar,
   Key,
   Workbench,
+  BottomBarPanel,
 } from "vscode-extension-tester";
 import { TIMEOUTS } from "../utils/timeouts.js";
 
@@ -184,6 +185,23 @@ export class VSCodeHelperService {
       .perform();
     await this.driver.actions().sendKeys(command).perform();
     await this.driver.actions().sendKeys(Key.ENTER).perform();
+  }
+
+  // I experienced tests failing on CI during hiding bottom bar panel
+  async hideBottomBarPanelSafely() {
+    await this.driver.switchTo().defaultContent();
+    try {
+      const bottomBar = new BottomBarPanel();
+      await bottomBar.toggle(false);
+    } catch (error) {
+      if (error.name === "StaleElementReferenceError") {
+        const retryBottomBar = new BottomBarPanel();
+        await retryBottomBar.toggle(false);
+      } else {
+        throw error;
+      }
+    }
+    await this.driver.switchTo().defaultContent();
   }
 
   async hideSecondarySideBar() {

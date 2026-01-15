@@ -1,8 +1,9 @@
 import * as fs from "fs";
 import { assert } from "chai";
-import { WebView, BottomBarPanel, Key, By } from "vscode-extension-tester";
+import { WebView, Key, By } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { describeIf } from "../utils/helpers.js";
+import { TIMEOUTS } from "../utils/timeouts.js";
 import { get } from "./setupTest.js";
 
 const raw = fs.readFileSync("./data/react-native-app/package.json");
@@ -28,6 +29,7 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
       radonViewsService,
       managingDevicesService,
       appManipulationService,
+      vscodeHelperService,
     } = initServices(driver));
 
     await managingDevicesService.deleteAllDevices();
@@ -42,15 +44,13 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
 
   beforeEach(async function () {
     await driver.switchTo().defaultContent();
-    const bottomBar = new BottomBarPanel();
-    await bottomBar.toggle(false);
     ({ driver } = get());
     await radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
-    }, 5000);
+    }, TIMEOUTS.DEFAULT);
   });
 
   it("Should open Redux DevTools in bottom panel", async function () {
@@ -73,7 +73,7 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
         "dev-tool-redux-devtools-open-button"
       );
     }
-    await driver.sleep(1000);
+    await driver.sleep(TIMEOUTS.SHORT);
     const reduxIFrame = await radonViewsService.findWebViewIFrame(
       "Radon Redux DevTools"
     );
@@ -107,7 +107,7 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
         "dev-tool-react-query-devtools-open-button"
       );
     }
-    await driver.sleep(1000);
+    await driver.sleep(TIMEOUTS.SHORT);
     const reactQueryIFrame = await radonViewsService.findWebViewIFrame(
       "Radon React Query DevTools"
     );
@@ -141,7 +141,7 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
         "dev-tool-react-query-devtools-open-button"
       );
     }
-    await driver.sleep(1000);
+    await driver.sleep(TIMEOUTS.SHORT);
     const reactQueryIFrame = await radonViewsService.findWebViewIFrame(
       "Radon React Query DevTools"
     );
@@ -171,7 +171,7 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
     await driver.wait(async () => {
       const newValue = await dataElement.getAttribute("value");
       return newValue !== value;
-    }, 5000);
+    }, TIMEOUTS.DEFAULT);
   });
 
   it("should make changes in Redux DevTools", async function () {
@@ -201,7 +201,7 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
         "dev-tool-redux-devtools-open-button"
       );
     }
-    await driver.sleep(1000);
+    await driver.sleep(TIMEOUTS.SHORT);
 
     const reduxIFrame = await radonViewsService.findWebViewIFrame(
       "Radon Redux DevTools"
