@@ -112,7 +112,7 @@
     "define-lazy-prop": "^3.0.0",
     "delayed-stream": "^1.0.0",
     "detect-libc": "^2.0.4",
-    "diff": "^7.0.0",
+    "diff": "^8.0.3",
     "dom-serializer": "^2.0.0",
     "domelementtype": "^2.3.0",
     "domhandler": "^5.0.3",
