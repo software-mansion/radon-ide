@@ -57,6 +57,8 @@ safeDescribe("4 - App interaction tests", () => {
   });
 
   afterEach(async function () {
+    await driver.switchTo().defaultContent();
+    await new EditorView().closeAllEditors();
     await driver.sleep(TIMEOUTS.SHORT);
     await vscodeHelperService.openCommandLineAndExecute(
       "Remove All Breakpoints"
