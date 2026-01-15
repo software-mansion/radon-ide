@@ -132,7 +132,7 @@ export default class AppManipulationService {
       (centeredPosition.x + centeredPosition.width / 2) * rect.width
     );
     const targetY = Math.floor(
-      (centeredPosition.y + 0.2 + centeredPosition.height / 2) * rect.height
+      (centeredPosition.y + centeredPosition.height / 2) * rect.height
     );
 
     const actions = this.driver.actions({ bridge: true });

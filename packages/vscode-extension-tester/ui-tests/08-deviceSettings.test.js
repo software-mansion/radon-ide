@@ -366,6 +366,18 @@ safeDescribe("8 - Device Settings", () => {
         await elementHelperService.findAndClickElementByTag(
           "device-settings-location"
         );
+
+        // in case location is disabled in radon
+        const locationEnableSwitch =
+          await elementHelperService.findAndWaitForElementByTag(
+            "enable-location-switch"
+          );
+        if (
+          (await locationEnableSwitch.getAttribute("data-state")) !== "checked"
+        ) {
+          await locationEnableSwitch.click();
+        }
+
         const locationInput =
           await elementHelperService.findAndWaitForElementByTag(
             "coordinates-input"

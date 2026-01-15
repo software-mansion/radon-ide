@@ -118,6 +118,7 @@ export function DeviceLocationView() {
         <Switch.Root
           className="switch-root"
           id="enable-location"
+          data-testid="enable-location-switch"
           onCheckedChange={handleEnableLocation}
           defaultChecked={!deviceSettings.location.isDisabled}>
           <Switch.Thumb className="switch-thumb" />
