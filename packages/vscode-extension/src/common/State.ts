@@ -602,6 +602,7 @@ export const initialState: State = {
   license: {
     status: LicenseStatus.Inactive,
     featuresAvailability: DefaultFeaturesAvailability,
+    planName: null,
   },
   projectState: {
     applicationContext: {

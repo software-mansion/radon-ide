@@ -492,6 +492,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
       this.licenseStateManager.updateState({
         status: LicenseStatus.Inactive,
         featuresAvailability: DefaultFeaturesAvailability,
+        planName: null,
       });
 
       this.telemetry.sendTelemetry("license:detected", {
@@ -505,12 +506,13 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     const newState: LicenseState = {
       status: LicenseStatus.Inactive,
       featuresAvailability: DefaultFeaturesAvailability,
+      planName: null,
     };
 
     if (validationResult.status === SimServerLicenseValidationStatus.Success) {
       newState.status = validationResult.licensePlan;
       newState.featuresAvailability = validationResult.featuresAvailability;
-      newState.planName = validationResult.planName;
+      newState.planName = validationResult.planName ?? null;
     }
 
     this.licenseStateManager.updateState(newState);
