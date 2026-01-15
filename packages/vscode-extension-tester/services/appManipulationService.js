@@ -115,7 +115,11 @@ export default class AppManipulationService {
     );
   }
 
-  async clickInsidePhoneScreen(position, rightClick = false) {
+  async clickInsidePhoneScreen(
+    position,
+    rightClick = false,
+    actionCallback = undefined
+  ) {
     const phoneScreen = await this.elementHelperService.findAndWaitForElement(
       By.css(`[data-testid="phone-screen"]`),
       "Timed out waiting for phone-screen"
@@ -128,7 +132,7 @@ export default class AppManipulationService {
       (centeredPosition.x + centeredPosition.width / 2) * rect.width
     );
     const targetY = Math.floor(
-      (centeredPosition.y + centeredPosition.height / 2) * rect.height
+      (centeredPosition.y + 0.2 + centeredPosition.height / 2) * rect.height
     );
 
     const actions = this.driver.actions({ bridge: true });
@@ -144,8 +148,13 @@ export default class AppManipulationService {
       // The .click() method does not trigger the "show touch" visual on the phone screen
       .press(button)
       .pause(TIMEOUTS.PRESS_DELAY)
-      .release(button)
       .perform();
+
+    try {
+      if (actionCallback) await actionCallback();
+    } finally {
+      await actions.release(button).perform();
+    }
 
     await this.driver.sleep(TIMEOUTS.SHORT);
   }
