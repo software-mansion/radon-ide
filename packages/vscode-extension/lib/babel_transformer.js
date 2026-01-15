@@ -187,6 +187,10 @@ function transformWrapper({ filename, src, ...rest }) {
       src = `module.exports = require("__RNIDE_lib__/JSXRuntime/react-native-78-79/${jsxRuntimeFileName}");`;
     }
   } else if (
+    // Apollo Client v4
+    isTransforming("node_modules/@apollo/client/core/index") ||
+    isTransforming("node_modules/@apollo/client/__cjs/core/index") ||
+    // Apollo Client v3
     isTransforming("node_modules/@apollo/client/index") ||
     isTransforming("node_modules/@apollo/client/main") ||
     isTransforming("node_modules/@apollo/client/apollo-client")
