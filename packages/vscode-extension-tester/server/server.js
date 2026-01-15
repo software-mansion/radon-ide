@@ -137,10 +137,6 @@ app.get("/api/image", (req, res) => {
   res.sendFile(path.join(__dirname, "img", "img.jpg"));
 });
 
-app.get("/api/large-image", (req, res) => {
-  res.sendFile(path.join(__dirname, "img", "large_img.jpg"));
-});
-
 app.use((req, res) => {
   res.status(404).json({ error: "Not Found", endpoint: req.originalUrl });
 });
