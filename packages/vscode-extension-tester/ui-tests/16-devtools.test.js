@@ -29,7 +29,6 @@ describeIf(IS_CORRECT_APP, "16 - devTools Tests", () => {
       radonViewsService,
       managingDevicesService,
       appManipulationService,
-      vscodeHelperService,
     } = initServices(driver));
 
     await managingDevicesService.deleteAllDevices();
