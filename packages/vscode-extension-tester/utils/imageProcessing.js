@@ -17,86 +17,17 @@ export function cropCanvas(canvas, position) {
 }
 
 export function compareImages(canvas1, canvas2) {
-  const width1 = canvas1.width;
-  const height1 = canvas1.height;
-  const width2 = canvas2.width;
-  const height2 = canvas2.height;
-
-  console.log(
-    `[CompareImages] Checking dimensions: ${width1}x${height1} vs ${width2}x${height2}`
-  );
-
-  if (width1 !== width2 || height1 !== height2) {
-    console.error(`[CompareImages] FAILED: Dimension mismatch.`);
+  if (canvas1.width !== canvas2.width || canvas1.height !== canvas2.height)
     return false;
-  }
 
   const ctx1 = canvas1.getContext("2d");
   const ctx2 = canvas2.getContext("2d");
+  const data1 = ctx1.getImageData(0, 0, canvas1.width, canvas1.height).data;
+  const data2 = ctx2.getImageData(0, 0, canvas2.width, canvas2.height).data;
 
-  const imgData1 = ctx1.getImageData(0, 0, width1, height1);
-  const imgData2 = ctx2.getImageData(0, 0, width2, height2);
-
-  const data1 = imgData1.data;
-  const data2 = imgData2.data;
-
-  let diffCount = 0;
-  let firstDiffInfo = null;
-
-  // Total bytes = width * height * 4 (RGBA)
   for (let i = 0; i < data1.length; i++) {
-    if (Math.abs(data1[i] - data2[i]) > 2) {
-      diffCount++;
-
-      if (!firstDiffInfo) {
-        const pixelIndex = Math.floor(i / 4);
-        const x = pixelIndex % width1;
-        const y = Math.floor(pixelIndex / width1);
-        const channelIndex = i % 4;
-        const channels = ["Red", "Green", "Blue", "Alpha"];
-
-        firstDiffInfo = {
-          byteIndex: i,
-          pixelIndex,
-          x,
-          y,
-          channel: channels[channelIndex],
-          val1: data1[i],
-          val2: data2[i],
-        };
-      }
-    }
+    if (data1[i] !== data2[i]) return false;
   }
-
-  if (diffCount > 0) {
-    console.error(
-      `[CompareImages] FAILED: Found ${diffCount} differing bytes out of ${data1.length}.`
-    );
-    console.error(
-      `[CompareImages] First difference at Pixel(x:${firstDiffInfo.x}, y:${firstDiffInfo.y}), Channel: ${firstDiffInfo.channel}`
-    );
-    console.error(
-      `[CompareImages] Expected: ${firstDiffInfo.val1}, Actual: ${firstDiffInfo.val2}`
-    );
-
-    // Save images for inspection
-    const timestamp = Date.now();
-    fs.writeFileSync(
-      `diff_fail_expected_${timestamp}.png`,
-      canvas1.toBuffer("image/png")
-    );
-    fs.writeFileSync(
-      `diff_fail_actual_${timestamp}.png`,
-      canvas2.toBuffer("image/png")
-    );
-    console.log(
-      `[CompareImages] Saved debugging images: diff_fail_expected_${timestamp}.png and diff_fail_actual_${timestamp}.png`
-    );
-
-    return false;
-  }
-
-  console.log(`[CompareImages] SUCCESS: Images are identical.`);
   return true;
 }
 
