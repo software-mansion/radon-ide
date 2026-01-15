@@ -81,8 +81,9 @@ export class SsoAuthServer implements Disposable {
       this.callbackRejecter = reject;
     });
 
+    let timeoutId: NodeJS.Timeout;
     const timeoutPromise = new Promise<null>((resolve) => {
-      setTimeout(() => {
+      timeoutId = setTimeout(() => {
         Logger.info("[SSO] Auth server timed out after 5 minutes");
         resolve(null);
       }, SSO_TIMEOUT_MS);
@@ -94,6 +95,7 @@ export class SsoAuthServer implements Disposable {
     } finally {
       this.callbackResolver = null;
       this.callbackRejecter = null;
+      clearTimeout(timeoutId!);
       this.dispose();
     }
   }
