@@ -130,6 +130,17 @@ safeDescribe("5 - Network panel tests", () => {
       "network-panel-log-details-tabs"
     );
 
+    const size = await elementHelperService.findAndWaitForElementByTag(
+      `network-panel-row-${name}-size`
+    );
+    const sizeText = await size.getText();
+
+    // check if size is not negative
+    if (!sizeText.toLowerCase().includes("pending")) {
+      const numericValue = parseFloat(sizeText);
+      assert.isAtLeast(numericValue, 0, `Size for ${name} is negative`);
+    }
+
     if (expectedStatus) {
       const status = await elementHelperService.findAndWaitForElementByTag(
         `network-panel-row-${name}-status`
