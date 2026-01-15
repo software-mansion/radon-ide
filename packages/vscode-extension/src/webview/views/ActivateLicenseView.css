@@ -51,6 +51,10 @@
   color: var(--swm-default-text);
 }
 
+.info-text-capitalized {
+  text-transform: capitalize;
+}
+
 .info-text a,
 .error-text a {
   color: var(--swm-default-text);

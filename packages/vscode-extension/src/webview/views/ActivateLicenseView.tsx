@@ -141,7 +141,10 @@ export function ActivateLicenseView() {
           </div>
         )}
         {activateDeviceResult === ActivateDeviceResult.succeeded && (
-          <div className="info-text">Your license has been successfully activated.</div>
+          <div className="info-text">
+            Your <span className="info-text-capitalized">{planName}</span> license has been
+            successfully activated.
+          </div>
         )}
       </div>
       {activateDeviceResult !== ActivateDeviceResult.succeeded && (
@@ -182,7 +185,7 @@ export function ActivateLicenseView() {
           </Button>
         ) : (
           <Button type="secondary" onClick={closeModal} dataTest="activate-license-confirm-button">
-            Ok
+            Continue
           </Button>
         )}
       </div>
