@@ -171,6 +171,7 @@ function PreviewTab({ networkLog, responseBodyData, isActive }: PreviewTabProps)
         <img
           ref={imageRef}
           src={imageUrl}
+          data-testid="network-panel-preview-image"
           style={{ display: loading || error ? "none" : "block" }}
           alt="Response preview"
           className="preview-tab-image"
