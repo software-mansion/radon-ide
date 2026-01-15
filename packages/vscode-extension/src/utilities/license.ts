@@ -46,6 +46,7 @@ export type SimServerLicenseValidationResult =
       status: SimServerLicenseValidationStatus.Success;
       licensePlan: LicenseStatus;
       featuresAvailability: FeaturesAvailability;
+      planName?: string;
     }
   | {
       status: Exclude<SimServerLicenseValidationStatus, SimServerLicenseValidationStatus.Success>;
@@ -284,6 +285,7 @@ export async function checkLicenseToken(
       status: SimServerLicenseValidationStatus.Success,
       licensePlan: getLicenseStatusFromString(licensePlan),
       featuresAvailability,
+      planName: tokenPayload?.cp_plan,
     };
   } else {
     try {

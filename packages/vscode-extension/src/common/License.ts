@@ -15,6 +15,7 @@ export type FeaturesAvailability = { [F in Feature]: FeatureAvailabilityStatus }
 export type LicenseState = {
   status: LicenseStatus;
   featuresAvailability: FeaturesAvailability;
+  planName?: string;
 };
 
 export enum LicenseStatus {

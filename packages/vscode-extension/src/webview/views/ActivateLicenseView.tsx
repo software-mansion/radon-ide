@@ -6,11 +6,16 @@ import { useProject } from "../providers/ProjectProvider";
 import { useModal } from "../providers/ModalProvider";
 import { ActivateDeviceResult } from "../../common/Project";
 import { Input } from "../components/shared/Input";
+import { use$ } from "@legendapp/state/react";
+import { useStore } from "../providers/storeProvider";
 
 export function ActivateLicenseView() {
   const { project } = useProject();
   const { closeModal } = useModal();
   const { register, handleSubmit } = useForm();
+
+  const store$ = useStore();
+  const planName = use$(store$.license.planName);
 
   const [isLoading, setIsLoading] = useState(false);
   const [isSsoLoading, setIsSsoLoading] = useState(false);
@@ -151,16 +156,23 @@ export function ActivateLicenseView() {
         />
       )}
       <div className="submit-row">
-        <a
-          className="sso-link"
-          href="#"
-          onClick={onSsoLogin}
-          style={{
-            pointerEvents: isSsoLoading ? "none" : "auto",
-            opacity: isSsoLoading ? 0.5 : 1,
-          }}>
-          {isSsoLoading ? "Waiting for SSO..." : "Login with SSO"}
-        </a>
+        {planName ? (
+          <span className="plan-active">
+            <span className="plan-status-dot" />
+            {planName} active
+          </span>
+        ) : (
+          <a
+            className="sso-link"
+            href="#"
+            onClick={onSsoLogin}
+            style={{
+              pointerEvents: isSsoLoading ? "none" : "auto",
+              opacity: isSsoLoading ? 0.5 : 1,
+            }}>
+            {isSsoLoading ? "Waiting for SSO..." : "Login with SSO"}
+          </a>
+        )}
         {activateDeviceResult !== ActivateDeviceResult.succeeded ? (
           <Button
             type="secondary"

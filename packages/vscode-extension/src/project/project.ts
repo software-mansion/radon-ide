@@ -502,7 +502,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     }
 
     const validationResult = await checkLicenseToken(token);
-    const newState = {
+    const newState: LicenseState = {
       status: LicenseStatus.Inactive,
       featuresAvailability: DefaultFeaturesAvailability,
     };
@@ -510,6 +510,7 @@ export class Project implements Disposable, ProjectInterface, DeviceSessionsMana
     if (validationResult.status === SimServerLicenseValidationStatus.Success) {
       newState.status = validationResult.licensePlan;
       newState.featuresAvailability = validationResult.featuresAvailability;
+      newState.planName = validationResult.planName;
     }
 
     this.licenseStateManager.updateState(newState);

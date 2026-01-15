@@ -56,3 +56,20 @@
   color: var(--swm-default-text);
   text-decoration: underline;
 }
+
+.plan-active {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--swm-default-text);
+  text-transform: capitalize;
+}
+
+.plan-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--green-light-100);
+  margin-top: 2px;
+}
