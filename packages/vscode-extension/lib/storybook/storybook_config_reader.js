@@ -2,7 +2,7 @@ const { requireFromAppDependency, requireFromAppDir, overrideModuleFromAppDir } 
 
 const { loadConfig } = requireFromAppDependency("react-native", "metro-config");
 
-const newWithStorybook = (_config, options) => {
+const overrideWithStorybook = (_config, options) => {
   if (!options?.configPath) {
     process.exit(1);
   }
@@ -17,17 +17,17 @@ const newWithStorybook = (_config, options) => {
   process.exit(0);
 }
 
-const oldWithStorybookModule = requireFromAppDir("@storybook/react-native/metro/withStorybook");
-
-let newWithStorybookModule = newWithStorybook;
+const originalWithStorybookModule = requireFromAppDir("@storybook/react-native/metro/withStorybook");
 
 // since Storybook 10 the module export has changed so we need to override it correctly 
 // https://github.com/storybookjs/react-native/pull/786
-if (oldWithStorybookModule?.withStorybook) {
-  newWithStorybookModule = { withStorybook: newWithStorybook }
-}
+const usesDefaultExport = originalWithStorybookModule?.withStorybook === undefined;
 
-overrideModuleFromAppDir("@storybook/react-native/metro/withStorybook", newWithStorybookModule);
+if (usesDefaultExport) {
+  overrideModuleFromAppDir("@storybook/react-native/metro/withStorybook", overrideWithStorybook);
+} else {
+  overrideModuleFromAppDir("@storybook/react-native/metro/withStorybook", { withStorybook: overrideWithStorybook });
+}
 
 async function main() {
   const customMetroConfigPath = process.env.RN_IDE_METRO_CONFIG_PATH;
