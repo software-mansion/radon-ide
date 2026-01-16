@@ -27,7 +27,7 @@ def parse_and_generate_markdown(file_path):
     blocks = content.split('==== Summary')
     
     markdown = "### Test Results Overview\n\n"
-    markdown += "| App | Version | OS | Passing | Failing | Soft Fails | Critical % | Soft % |\n"
+    markdown += "| App | VS Code Version | OS | Passing | Failing | Soft Fails | Critical % | Soft % |\n"
     markdown += "| :--- | :--- | :--- | :---: | :---: | :---: | :---: | :---: |\n"
 
     rows_count = 0
