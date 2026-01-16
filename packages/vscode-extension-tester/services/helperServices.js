@@ -182,6 +182,7 @@ export class VSCodeHelperService {
       .keyUp(Key.SHIFT)
       .keyUp(MODIFIER_KEY)
       .perform();
+    await this.driver.sleep(TIMEOUTS.SHORT);
     await this.driver.actions().sendKeys(command).perform();
     await this.driver.actions().sendKeys(Key.ENTER).perform();
   }

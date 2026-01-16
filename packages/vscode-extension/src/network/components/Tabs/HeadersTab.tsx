@@ -1,6 +1,8 @@
 import "./HeadersTab.css";
 import { VscodeCollapsible } from "@vscode-elements/react-elements";
 import { NetworkLog } from "../../types/networkLog";
+import { PropsWithDataTest } from "../../../common/types";
+
 interface HeadersTabProps {
   networkLog: NetworkLog;
 }
@@ -67,14 +69,16 @@ function StatusDot({ status }: StatusDotProps) {
   return <span className={`status-dot ${getStatusColor(status)}`} />;
 }
 
-function Section({ data }: SectionProps) {
+function Section({ data, dataTest }: PropsWithDataTest<SectionProps>) {
   return (
     <table>
       {data &&
         Object.entries(data).map(([key, value]) => (
           <tr key={key}>
             <td className="network-log-request-header">{key}:</td>
-            <td className="network-log-request-header-value">
+            <td
+              className="network-log-request-header-value"
+              data-testid={`network-log-${dataTest}-${key.toLowerCase().replace(/ /g, "-")}-value`}>
               {key === STATUS_CODE_KEY && <StatusDot status={value} />}
               {String(value)}
             </td>
@@ -96,14 +100,14 @@ const HeadersTab = ({ networkLog }: HeadersTabProps) => {
 
   return (
     <>
-      <VscodeCollapsible title="General" open>
-        <Section data={general} />
+      <VscodeCollapsible title="General" data-testid="general-collapsible" open>
+        <Section data={general} dataTest="general" />
       </VscodeCollapsible>
-      <VscodeCollapsible title="Request Headers">
-        <Section data={sortedRequestHeaders} />
+      <VscodeCollapsible title="Request Headers" data-testid="request-headers-collapsible" open>
+        <Section data={sortedRequestHeaders} dataTest="request-headers" />
       </VscodeCollapsible>
-      <VscodeCollapsible title="Response Headers" open>
-        <Section data={sortedResponseHeaders} />
+      <VscodeCollapsible title="Response Headers" data-testid="response-headers-collapsible" open>
+        <Section data={sortedResponseHeaders} dataTest="response-headers" />
       </VscodeCollapsible>
     </>
   );
