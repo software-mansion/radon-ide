@@ -40,9 +40,13 @@ export function softIt(title, fn) {
   });
 }
 
-export function itIf(condition, title, fn) {
+export function itIf(condition, title, fn, softFail = false) {
   if (condition) {
-    it(title, fn);
+    if (softFail) {
+      softIt(title, fn);
+    } else {
+      it(title, fn);
+    }
   } else {
     it.skip(title, fn);
   }

@@ -59,9 +59,9 @@ export const cleanUpAfterTest = async () => {
   const { vscodeHelperService } = initServices(driver);
   view = new WebView();
   await view.switchBack();
+  await new EditorView().closeAllEditors();
   let bottomBar = new BottomBarPanel();
   await bottomBar.toggle(false);
-  await new EditorView().closeAllEditors();
   await driver.switchTo().defaultContent();
   resetAppWebsocket();
 

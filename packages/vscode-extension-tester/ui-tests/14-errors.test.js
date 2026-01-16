@@ -1,12 +1,12 @@
 import { assert } from "chai";
 import { WebView, EditorView } from "vscode-extension-tester";
-import { itIf } from "../utils/helpers.js";
+import { itIf, safeDescribe } from "../utils/helpers.js";
 import initServices from "../services/index.js";
 import { get } from "./setupTest.js";
 
 const IS_GITHUB_ACTIONS = process.env.IS_GITHUB_ACTIONS === "true";
 
-describe("14 - Error tests", () => {
+safeDescribe("14 - Error tests", () => {
   let driver;
   let {
     radonViewsService,

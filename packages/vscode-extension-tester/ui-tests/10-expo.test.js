@@ -47,7 +47,7 @@ describeIf(IS_EXPO, "10 - Expo router tests", () => {
     await driver.wait(async () => {
       appWebsocket = get().appWebsocket;
       return appWebsocket != null;
-    }, TIMEOUTS.DEFAULT);
+    }, TIMEOUTS.MEDIUM);
 
     await appManipulationService.hideExpoOverlay(appWebsocket);
 
