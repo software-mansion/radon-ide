@@ -4,7 +4,6 @@ import {
   By,
   EditorView,
   WebView,
-  BottomBarPanel,
   TextEditor,
   Key,
 } from "vscode-extension-tester";
@@ -344,11 +343,6 @@ safeDescribe("7 - Radon tools tests", () => {
     let canvas = await radonViewsService.getPhoneScreenSnapshot();
     let button = cropCanvas(canvas, position);
 
-    fs.writeFileSync(
-      `debug_crop_before_click_${Date.now()}.png`,
-      button.toBuffer("image/png")
-    );
-
     await radonSettingsService.setShowTouches(true);
 
     let buttonAfterClick = null;
@@ -359,11 +353,6 @@ safeDescribe("7 - Radon tools tests", () => {
       async () => {
         canvas = await radonViewsService.getPhoneScreenSnapshot();
         buttonAfterClick = cropCanvas(canvas, position);
-
-        fs.writeFileSync(
-          `debug_crop_during_click_${Date.now()}.png`,
-          buttonAfterClick.toBuffer("image/png")
-        );
       }
     );
 

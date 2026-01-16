@@ -1,10 +1,4 @@
-import {
-  By,
-  WebView,
-  BottomBarPanel,
-  TextEditor,
-  EditorView,
-} from "vscode-extension-tester";
+import { By, WebView, TextEditor, EditorView } from "vscode-extension-tester";
 import { assert } from "chai";
 import initServices from "../services/index.js";
 import { safeDescribe } from "../utils/helpers.js";

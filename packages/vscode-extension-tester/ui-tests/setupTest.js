@@ -5,7 +5,6 @@ import {
   WebView,
   Workbench,
   EditorView,
-  BottomBarPanel,
   Key,
 } from "vscode-extension-tester";
 import {
