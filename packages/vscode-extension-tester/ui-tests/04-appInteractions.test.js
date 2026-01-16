@@ -180,8 +180,7 @@ safeDescribe("4 - App interaction tests", () => {
       "console.log"
     );
 
-    const bottomBar = new BottomBarPanel();
-    await bottomBar.toggle(false);
+    await vscodeHelperService.closeBottomBarPanel();
 
     const editor = new TextEditor();
     await editor.toggleBreakpoint(lineNumber);
@@ -218,8 +217,7 @@ safeDescribe("4 - App interaction tests", () => {
       "console.log"
     );
 
-    const bottomBar = new BottomBarPanel();
-    await bottomBar.toggle(false);
+    await vscodeHelperService.closeBottomBarPanel();
 
     const editor = new TextEditor();
     await editor.toggleBreakpoint(lineNumber);

@@ -4,7 +4,7 @@
       "testApp": "react-native-83",
       "node": "22",
       "isRecording": "true",
-      "testsToRun": "1",
+      "testsToRun": "",
       "testsToExclude": "",
       "codeVersion": "latest"
     },
@@ -12,7 +12,7 @@
       "testApp": "react-native-83",
       "node": "22",
       "isRecording": "true",
-      "testsToRun": "2",
+      "testsToRun": "",
       "isAndroid": "true",
       "testsToExclude": "",
       "codeVersion": "latest"

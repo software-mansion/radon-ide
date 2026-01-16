@@ -1,6 +1,7 @@
 import * as path from "path";
 import { until } from "selenium-webdriver";
 import {
+  BottomBarPanel,
   By,
   TextEditor,
   EditorView,
@@ -169,6 +170,29 @@ export class VSCodeHelperService {
     }
 
     return undefined;
+  }
+
+  // In some situations on CI closing bottom bar cause StaleElementReferenceError
+  // this method handles it by retrying the action
+  async closeBottomBarPanel() {
+    await this.driver.switchTo().defaultContent();
+    await this.driver.wait(
+      async () => {
+        try {
+          const bottomBar = new BottomBarPanel();
+          await bottomBar.toggle(false);
+          return true;
+        } catch (err) {
+          if (err.name === "StaleElementReferenceError") {
+            return false;
+          }
+          throw err;
+        }
+      },
+      TIMEOUTS.DEFAULT,
+      "Could not toggle bottom bar due to stale element"
+    );
+    await this.driver.switchTo().defaultContent();
   }
 
   // In some situations, workbench.executeCommand() does not work properly

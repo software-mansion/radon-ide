@@ -49,8 +49,7 @@ safeDescribe("7 - Radon tools tests", () => {
   });
 
   beforeEach(async () => {
-    const bottomBar = new BottomBarPanel();
-    await bottomBar.toggle(false);
+    await vscodeHelperService.closeBottomBarPanel();
     await workbench.executeCommand("Remove All Breakpoints");
     radonViewsService.openRadonIDEPanel();
     await appManipulationService.waitForAppToLoad();

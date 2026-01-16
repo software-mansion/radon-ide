@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { assert } from "chai";
-import { WebView, BottomBarPanel } from "vscode-extension-tester";
+import { WebView } from "vscode-extension-tester";
 import initServices from "../services/index.js";
 import { safeDescribe } from "../utils/helpers.js";
 import getConfiguration from "../configuration.js";
@@ -17,7 +17,8 @@ safeDescribe("5 - Network panel tests", () => {
     elementHelperService,
     radonViewsService,
     managingDevicesService,
-    appManipulationService;
+    appManipulationService,
+    vscodeHelperService;
 
   const filePath = join(
     process.cwd(),
@@ -33,6 +34,7 @@ safeDescribe("5 - Network panel tests", () => {
       radonViewsService,
       managingDevicesService,
       appManipulationService,
+      vscodeHelperService,
     } = initServices(driver));
 
     await managingDevicesService.deleteAllDevices();
@@ -71,10 +73,8 @@ safeDescribe("5 - Network panel tests", () => {
       );
     }
 
-    view = new WebView();
-    await view.switchBack();
-    const bottomBar = new BottomBarPanel();
-    await bottomBar.toggle(false);
+    await vscodeHelperService.closeBottomBarPanel();
+
     await radonViewsService.openRadonIDEPanel();
 
     // ensure app is loaded

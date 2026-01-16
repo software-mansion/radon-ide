@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { By, BottomBarPanel, Key } from "vscode-extension-tester";
 import { createCanvas } from "canvas";
 import { TIMEOUTS } from "../utils/timeouts.js";
-import { ElementHelperService } from "./helperServices.js";
+import { ElementHelperService, VSCodeHelperService } from "./helperServices.js";
 import AppManipulationService from "./appManipulationService.js";
 
 dotenv.config();
@@ -17,6 +17,7 @@ export default class RadonViewsService {
     this.driver = driver;
     this.elementHelperService = new ElementHelperService(driver);
     this.appManipulationService = new AppManipulationService(driver);
+    this.vscodeHelperService = new VSCodeHelperService(driver);
   }
 
   async openRadonIDEPanel() {
@@ -168,8 +169,7 @@ export default class RadonViewsService {
       .keyUp(MODIFIER_KEY)
       .perform();
 
-    const bottomBar = new BottomBarPanel();
-    await bottomBar.toggle(false);
+    await this.vscodeHelperService.closeBottomBarPanel();
   }
 
   async findAndFillSaveFileForm(filename) {
