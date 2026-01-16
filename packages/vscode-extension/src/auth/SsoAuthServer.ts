@@ -4,7 +4,7 @@ import express from "express";
 import { Disposable, env, Uri } from "vscode";
 import { Logger } from "../Logger";
 import { BASE_CUSTOMER_PORTAL_URL } from "../utilities/license";
-import { generateCodeChallenge, generateCodeVerifier } from "./pkce";
+import { generatePKCE } from "./pkce";
 
 const SSO_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
@@ -21,8 +21,9 @@ export class SsoAuthServer implements Disposable {
   private expressServer: http.Server | null = null;
   private serverPort: Promise<number>;
   private resolveServerPort!: (port: number) => void;
-  private callbackResolver: ((result: SsoCallbackResult) => void) | null = null;
-  private callbackRejecter: ((error: Error) => void) | null = null;
+  private callbackResolve: ((result: SsoCallbackResult) => void) | null = null;
+  private callbackReject: ((error: Error) => void) | null = null;
+  private expectedState: string | null = null;
 
   constructor() {
     const { promise, resolve } = Promise.withResolvers<number>();
@@ -44,24 +45,37 @@ export class SsoAuthServer implements Disposable {
     return this.serverPort;
   }
 
+  public setExpectedState(state: string): void {
+    this.expectedState = state;
+  }
+
   private initializeHttpServer(): http.Server {
     const app = express();
 
     app.get("/auth/callback", (req: express.Request, res: express.Response) => {
       const code = req.query.code as string | undefined;
+      const state = req.query.state as string | undefined;
 
-      if (!code) {
+      if (!code || !state) {
         res.redirect(new URL("/sso/failure", BASE_CUSTOMER_PORTAL_URL).toString());
-        if (this.callbackRejecter) {
-          this.callbackRejecter(new Error("Missing authorization code"));
+        if (this.callbackReject) {
+          this.callbackReject(new Error("Missing authorization code or state"));
+        }
+        return;
+      }
+
+      if (state !== this.expectedState) {
+        res.redirect(new URL("/sso/failure", BASE_CUSTOMER_PORTAL_URL).toString());
+        if (this.callbackReject) {
+          this.callbackReject(new Error("State mismatch - potential CSRF attack"));
         }
         return;
       }
 
       res.redirect(new URL("/sso/success", BASE_CUSTOMER_PORTAL_URL).toString());
 
-      if (this.callbackResolver) {
-        this.callbackResolver({ code });
+      if (this.callbackResolve) {
+        this.callbackResolve({ code });
       }
     });
 
@@ -75,14 +89,15 @@ export class SsoAuthServer implements Disposable {
   /**
    * @returns The authorization code from the callback, or null if timed out after 5 minutes
    */
-  public async waitForCallback(): Promise<SsoCallbackResult | null> {
-    const callbackPromise = new Promise<SsoCallbackResult>((resolve, reject) => {
-      this.callbackResolver = resolve;
-      this.callbackRejecter = reject;
+  public async waitForAuthorizationCode(): Promise<SsoCallbackResult | null> {
+    const callback = new Promise<SsoCallbackResult>((resolve, reject) => {
+      this.callbackResolve = resolve;
+      this.callbackReject = reject;
     });
 
+    // Timeout after 5 minutes
     let timeoutId: NodeJS.Timeout;
-    const timeoutPromise = new Promise<null>((resolve) => {
+    const timeout = new Promise<null>((resolve) => {
       timeoutId = setTimeout(() => {
         Logger.info("[SSO] Auth server timed out after 5 minutes");
         resolve(null);
@@ -90,11 +105,11 @@ export class SsoAuthServer implements Disposable {
     });
 
     try {
-      const result = await Promise.race([callbackPromise, timeoutPromise]);
+      const result = await Promise.race([callback, timeout]);
       return result;
     } finally {
-      this.callbackResolver = null;
-      this.callbackRejecter = null;
+      this.callbackResolve = null;
+      this.callbackReject = null;
       clearTimeout(timeoutId!);
       this.dispose();
     }
@@ -113,26 +128,18 @@ export async function startSsoAuthFlow(): Promise<SsoAuthResult | null> {
 
   try {
     const port = await server.getPort();
-    const redirectUri = `http://127.0.0.1:${port}/auth/callback`;
 
-    // Generate PKCE code verifier and challenge
-    const codeVerifier = generateCodeVerifier();
-    const codeChallenge = generateCodeChallenge(codeVerifier);
+    const { codeVerifier, codeChallenge, state } = generatePKCE();
+    server.setExpectedState(state);
 
-    const params = new URLSearchParams({
-      redirect_uri: redirectUri,
-      code_challenge: codeChallenge,
-      code_challenge_method: "S256",
-    });
-    const ssoUrl = new URL(`/sso/authorize?${params}`, BASE_CUSTOMER_PORTAL_URL);
-
-    Logger.info(`[SSO] Opening SSO URL: ${ssoUrl}`);
+    const ssoAuthUrl = buildSsoAuthorizationUrl(port, codeChallenge, state);
 
     // Open the SSO URL in the default browser
-    await env.openExternal(Uri.parse(ssoUrl.toString()));
+    Logger.info(`[SSO] Opening SSO URL: ${ssoAuthUrl}`);
+    await env.openExternal(Uri.parse(ssoAuthUrl));
 
     // Wait for callback or timeout
-    const result = await server.waitForCallback();
+    const result = await server.waitForAuthorizationCode();
 
     if (result) {
       return { ...result, codeVerifier };
@@ -143,4 +150,18 @@ export async function startSsoAuthFlow(): Promise<SsoAuthResult | null> {
     server.dispose();
     return null;
   }
+}
+
+function buildSsoAuthorizationUrl(port: number, codeChallenge: string, state: string): string {
+  const redirectUri = `http://127.0.0.1:${port}/auth/callback`;
+
+  const params = new URLSearchParams({
+    redirect_uri: redirectUri,
+    code_challenge: codeChallenge,
+    code_challenge_method: "S256",
+    state: state,
+  });
+  const ssoUrl = new URL(`/sso/authorize?${params}`, BASE_CUSTOMER_PORTAL_URL);
+
+  return ssoUrl.toString();
 }
