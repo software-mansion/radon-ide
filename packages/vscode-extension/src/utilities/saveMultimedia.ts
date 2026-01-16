@@ -1,11 +1,11 @@
 import path from "path";
-import { MultimediaData } from "../common/State";
+import { CaptureResult, MultimediaData } from "../common/State";
 import { saveFile } from "./saveFile";
 
 export async function saveMultimedia(
   multimediaData: MultimediaData,
   defaultSavingLocation?: string
-) {
+): Promise<CaptureResult> {
   const extension = path.extname(multimediaData.tempFileLocation);
   const baseFileName = multimediaData.fileName.substring(
     0,
@@ -19,5 +19,5 @@ export async function saveMultimedia(
     filterLabel: "Video Files",
   });
 
-  return savedUri !== undefined;
+  return savedUri !== undefined ? CaptureResult.Saved : CaptureResult.Canceled;
 }

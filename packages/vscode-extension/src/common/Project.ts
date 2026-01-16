@@ -4,6 +4,7 @@ import { LaunchConfiguration } from "./LaunchConfig";
 import { Output } from "./OutputChannel";
 import {
   AndroidSystemImageInfo,
+  CaptureResult,
   DeviceInfo,
   DeviceRotation,
   IOSDeviceTypeInfo,
@@ -153,8 +154,8 @@ export interface ProjectInterface {
 
   toggleRecording(): void;
   captureReplay(): void;
-  captureScreenshot(): Promise<boolean>;
-  saveMultimedia(multimediaData: MultimediaData): Promise<boolean>;
+  captureScreenshot(): Promise<CaptureResult>;
+  saveMultimedia(multimediaData: MultimediaData): Promise<CaptureResult>;
 
   startReportingFrameRate(): void;
   stopReportingFrameRate(): void;

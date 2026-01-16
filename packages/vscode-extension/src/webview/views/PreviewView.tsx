@@ -23,6 +23,7 @@ import RadonConnectView from "./RadonConnectView";
 import { useStore } from "../providers/storeProvider";
 import { useSelectedDeviceSessionState } from "../hooks/selectedSession";
 import {
+  CaptureResult,
   InspectorAvailabilityStatus,
   MaestroTestState,
   ProfilingState,
@@ -272,8 +273,8 @@ function PreviewView() {
 
   const paywalledCaptureScreenshot = usePaywalledCallback(
     async () => {
-      const wasSaved = await project.captureScreenshot();
-      if (wasSaved) {
+      const captureResult = await project.captureScreenshot();
+      if (captureResult === CaptureResult.Saved) {
         setScreenshotCopiedBoxVisible(true);
       }
     },

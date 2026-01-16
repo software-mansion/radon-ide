@@ -364,6 +364,11 @@ export type NavigationState = {
   navigationRouteList: NavigationRoute[];
 };
 
+export enum CaptureResult {
+  Saved = "saved",
+  Canceled = "canceled",
+}
+
 // #endregion Navigation
 
 // #region Startup Messages

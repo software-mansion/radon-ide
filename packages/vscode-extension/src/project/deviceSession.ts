@@ -33,6 +33,7 @@ import {
   RecursivePartial,
   REMOVE,
   StartupMessage,
+  CaptureResult,
 } from "../common/State";
 import { ReloadAction } from "./DeviceSessionsManager";
 import { StateManager } from "./StateManager";
@@ -904,12 +905,12 @@ export class DeviceSession implements Disposable {
   }
 
   public async captureScreenshot() {
-    const wasSaved = await this.screenCapture.captureScreenshot();
-    if (wasSaved) {
+    const captureResult = await this.screenCapture.captureScreenshot();
+    if (captureResult === CaptureResult.Saved) {
       const rotation = this.applicationContext.workspaceConfiguration.deviceSettings.deviceRotation;
       this.device.copyLastScreenshotToClipboard(rotation);
     }
-    return wasSaved;
+    return captureResult;
   }
 
   public async getScreenshot() {
