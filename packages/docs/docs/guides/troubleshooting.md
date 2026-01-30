@@ -78,7 +78,7 @@ Note: iOS Simulator Logs currently doesn't work on Expo Go and Expo Dev Client p
 There are two locations on the disk where Radon IDE stores its information.
 
 1. The installation directory is located under `~/.vscode/extensions/swmansion.radon-ide-*` – with a suffix of current version + CPU architecture
-2. Emulator and simulator instance storage is located under `~/Library/Caches/com.swmansion.radon-ide` and `~/Library/Caches/com.swmansion.radon-ide`
+2. Emulator and simulator instance storage is located under `~/Library/Caches/com.swmansion.radon-ide`
 
 If you'd like to perform a clean installation, you can delete both of those folders, restart VSCode and install the extension again from the marketplace.
 
@@ -118,5 +118,5 @@ If you have a problem installing a compatible node version, we recommend using a
 
 ### -sec-num- Force-enable Element Inspector
 
-[Element Inspector](/docs/features/element-inspector.md) is disabled by default in apps that don't support edge-to-edge mode due to inconsistent behavior. If needed, the tool can be activated regardless of these limitations using the `RadonIDE.enableExperimentalElementInspector` setting in your editor. 
+[Element Inspector](/docs/features/element-inspector.md) is disabled by default in apps that don't support edge-to-edge mode due to inconsistent behavior. If needed, the tool can be activated regardless of these limitations using the `RadonIDE.enableExperimentalElementInspector` setting in your editor.
 Note that while the tool will be operational, its behavior might be unpredictable.
