@@ -187,7 +187,9 @@ Example:
       "request": "launch",
       "name": "Radon IDE panel",
       "customBuild": {
-        "android": { "buildCommand": "npm run build:ftp-fetch-android" }
+        "android": {
+          "buildCommand": "npm run build:ftp-fetch-android"
+        },
         "ios": {
           "buildCommand": "npm run build:ftp-fetch-ios",
           "fingerprintCommand": "date '+%Y-%m-%d'"
