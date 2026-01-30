@@ -56,11 +56,6 @@
       "permanent": true
     },
     {
-      "source": "/docs/development",
-      "destination": "/docs/guides/development",
-      "permanent": true
-    },
-    {
       "source": "/privacy-policy",
       "destination": "/legal/privacy-policy",
       "permanent": true

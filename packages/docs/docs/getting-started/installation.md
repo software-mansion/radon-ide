@@ -8,8 +8,6 @@ sidebar_position: 2
 
 The marketplace in [VSCode](https://code.visualstudio.com/), [Cursor](https://www.cursor.com/), or [Windsurf](https://codeium.com/windsurf) is the default way for you to obtain Radon IDE.
 
-If you wish to build the extension from source in order to make modifications, head to the [development](/docs/guides/development) instructions instead.
-
 ## -sec-num- Installing the Radon IDE extension from marketplace
 
 Search for `Radon IDE` on the extension page or use the following link depending on the editor you use:

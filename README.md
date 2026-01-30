@@ -4,6 +4,8 @@
 
 [Radon IDE](https://ide.swmansion.com) is an extension for VSCode and Cursor that turns your code editors into fully-featured IDEs for developing React Native and Expo apps.
 
+This repository is for issue tracking and discussion only.
+
 ### 💽 Installation and Usage
 
 You can install Radon IDE using extension marketplace in VSCode, Cursor, or Windsurf.
@@ -63,10 +65,6 @@ Visit the [Feature Highlights](https://ide.swmansion.com/docs/getting-started/fe
 ### 🐛 Troubleshooting
 
 For troubleshooting and a guide on reporting issues, please visit our [Troubleshooting Docs](https://ide.swmansion.com/docs/guides/troubleshooting).
-
-### ⚒️ Extension Development
-
-If you want to develop the extension and contribute updates, head to the [Development Guide](https://ide.swmansion.com/docs/guides/development).
 
 ### 🔗 Links
 
