@@ -7,7 +7,9 @@ import clsx from "clsx";
 import useInstallCount from "@site/src/hooks/useInstallCount";
 
 const LearnMoreFooter = () => {
-  const { data: summaryInstalls, isLoading } = useInstallCount({ defaultValue: "45,000+" });
+  const { data: installCountData, isLoading } = useInstallCount();
+  const installCount =
+    installCountData !== null ? installCountData.toLocaleString("en-US") : "45,000+";
   const { isLanding } = usePageType();
   const trackFrom = isLanding ? "Landing bottom" : "Features bottom";
 
@@ -24,7 +26,7 @@ const LearnMoreFooter = () => {
           isLanding ? styles.containerLanding : styles.containerFeature
         )}>
         <h2>
-          Join <span>{summaryInstalls} developers</span>
+          Join <span>{installCount} developers</span>
           <br /> using Radon for faster,
           <br /> more efficient app development
         </h2>

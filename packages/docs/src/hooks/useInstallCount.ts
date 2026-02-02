@@ -33,30 +33,14 @@ async function fetchInstallCount(): Promise<number | null> {
   }
 }
 
-function formatInstallCount(count: number, roundToThousands = false): string {
-  if (roundToThousands) {
-    const thousands = Math.floor(count / 1000);
-    return `${thousands}K+`;
-  }
-  return count.toLocaleString("en-US");
-}
-
-interface UseInstallCountOptions {
-  defaultValue: string;
-  roundToThousands?: boolean;
-}
-
 interface UseInstallCountResult {
-  data: string;
+  data: number | null;
   error: Error | null;
   isLoading: boolean;
 }
 
-export default function useInstallCount({
-  defaultValue,
-  roundToThousands = false,
-}: UseInstallCountOptions): UseInstallCountResult {
-  const [data, setData] = useState(defaultValue);
+export default function useInstallCount(): UseInstallCountResult {
+  const [data, setData] = useState<number | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -65,7 +49,7 @@ export default function useInstallCount({
       try {
         const count = await fetchInstallCount();
         if (count !== null) {
-          setData(formatInstallCount(count, roundToThousands));
+          setData(count);
         }
       } catch (err) {
         setError(err instanceof Error ? err : new Error("Failed to fetch install count"));
@@ -74,7 +58,7 @@ export default function useInstallCount({
       }
     }
     fetchData();
-  }, [roundToThousands]);
+  }, []);
 
   return { data, error, isLoading };
 }

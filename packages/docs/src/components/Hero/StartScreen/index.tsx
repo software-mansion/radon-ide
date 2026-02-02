@@ -13,10 +13,11 @@ const StartScreen = () => {
   // i need the state to have the iframe unmouted when the dialog is closed to prevent google to track the video
   // and unnecessarily load a heavy iframe
   const [isOpen, setOpen] = React.useState(false);
-  const { data: installCount, isLoading } = useInstallCount({
-    defaultValue: "45K+",
-    roundToThousands: true,
-  });
+  const { data: installCountData, isLoading } = useInstallCount();
+
+  const installCount =
+    installCountData !== null ? `${Math.floor(installCountData / 1000)}K+` : "45K+";
+
   React.useEffect(() => {
     if (dialogRef.current?.open && !isOpen) {
       dialogRef.current?.close();
