@@ -7,7 +7,7 @@ sidebar_position: 11
 Radon AI is a MCP server that provides a set of tools that enhances your editor’s Agent.
 It provides up-to-date knowledge of the React Native ecosystem, access to a comprehensive set of debugging data that is otherwise unavailable, and the ability to interact directly with your app.
 
-We index most of the React Native libraries along with their relevant documentation, versions, APIs, configuration details, and usage patterns to provide additional and accurate context for your Agents.
+We index most React Native libraries along with their relevant documentation, versions, APIs, configuration details and usage patterns to provide additional and accurate context for your Agents.
 
 Our knowledge database is updated daily to provide the most up-to-date information.
 
