@@ -4,13 +4,16 @@ title: Radon AI
 sidebar_position: 11
 ---
 
-Radon AI is a dedicated React Native AI assistant enhanced with up-to-date information about the React Native ecosystem. At its heart is our extensive React Native knowledge database, which is queried before answering your question.
+Radon AI is a MCP server that provides a set of tools that enhances your editor’s Agent.
+It provides up-to-date knowledge of the React Native ecosystem, access to a comprehensive set of debugging data that is otherwise unavailable, and the ability to interact directly with your app.
 
-We index all of the popular React Native libraries to match questions to relevant pieces of documentation, providing additional, accurate context to your conversation.
+We index most React Native libraries along with their relevant documentation, versions, APIs, configuration details and usage patterns to provide additional and accurate context for your Agents.
 
 Our knowledge database is updated daily to provide the most up-to-date information.
 
-<img width="550" src="/img/docs/ide_chat_response.png" className="shadow-image"/>
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/radon_ai_query_database.mp4" type="video/mp4"/>
+</video>
 
 ## Pre-requisites
 
@@ -20,31 +23,11 @@ Our knowledge database is updated daily to provide the most up-to-date informati
 
 ## Usage in Visual Studio Code
 
-You can use Radon AI in Visual Studio Code as a [GitHub Copilot Chat participant](https://docs.github.com/en/copilot/using-github-copilot/copilot-chat/asking-github-copilot-questions-in-your-ide#chat-participants) or via [Model Context Protocol (MCP)](https://modelcontextprotocol.io/introduction) in the [agent mode](https://code.visualstudio.com/docs/copilot/chat/chat-agent-mode).
+Radon AI assistant integrates with VSCode's `agent mode`.
 
-### Use Radon AI as Copilot Chat participant
+To access `agent mode` in Visual Studio Code use `Ctrl + Shift + I` or `Cmd + Shift + I`.
 
-To start chatting with Radon AI open the GitHub Copilot Chat panel.
-
-Open the vscode command palette (Ctrl+Shift+P or Cmd+Shift+P) and type "Chat: Open Chat" or "Radon IDE: Chat with Radon AI" and select the command.
-
-**Messages that you want to send to Radon AI need to be started with `@radon` prefix.**
-
-<video autoPlay loop width="700" controls className="shadow-image">
-  <source src="/video/ide_chat.mp4" type="video/mp4"/>
-</video>
-
-Radon AI has the context of the history of previous messages sent in the chat window started with `@radon`. This allows you to send additional follow-up questions.
-
-To start a new conversation open a new chat window.
-
-### Use Radon AI in agent mode
-
-Radon IDE automatically configures and activates Radon AI MCP tools for you.
-
-To access agent mode in Visual Studio code use Ctrl+Shift+I or Cmd+Shift+I.
-
-Alternatively, open vscode command palette (Ctrl+Shift+P or Cmd+Shift+P) and type "Chat: Open Chat" then select agent mode.
+Alternatively, open VSCode Command Palette (`Ctrl + Shift + P` or `Cmd + Shift + P`) and type `Chat: Open Chat`, then select `agent mode`.
 
 <img width="550" src="/img/docs/ai_vscode_agent_mode.png" className="shadow-image"/>
 
@@ -65,14 +48,14 @@ Radon AI assistant integrates with Cursor's `agent mode`.
 The Radon IDE automatically registers Radon AI tools in Cursor.
 You configure the Radon AI MCP tools from Cursor Settings. There, you can choose which tools are enabled or disable the MCP Radon toolset completely.
 
-1. In Cursor, open `Cursor Settings` (Ctrl+Shift+J or Cmd+Shift+J).
+1. In Cursor, open `Cursor Settings` (`Ctrl + Shift + J` or `Cmd + Shift + J`).
 2. Navigate to the `Tools & Integrations`.
 3. Find the `MCP Tools` section.
 4. Select `Radon AI` from the list of available toolsets.
 
 <img width="550" src="/img/docs/ai_cursor_mcp_settings.png" className="shadow-image"/>
 
-Alternatively, you can type and run "View: Open MCP Settings" from the Command Palette (Ctrl+Shift+P or Cmd+Shift+P).
+Alternatively, you can type and run `View: Open MCP Settings` from the Command Palette (`Ctrl + Shift + P` or `Cmd + Shift + P`).
 
 ## Available tools
 
@@ -85,23 +68,25 @@ The AI models automatically discover and invoke tools when they decide it will b
 - `view_screenshot` Captures a device preview screenshot. Can help the agent with debugging issues and making UI adjustments. Currently only supported in GPT, Gemini and Claude models.
 - `view_component_tree` Displays the component tree of the running app. This tool allows the agent to gain a broad understanding of the project's structure.
 
+<video autoPlay loop width="700" controls className="shadow-image">
+  <source src="/video/radon_ai_preview.mp4" type="video/mp4"/>
+</video>
+
 ## Limitations
 
-1. Radon AI will refuse answering questions outside of the React Native and Expo domain.
+1. Like any technology based on large language models, responses augmented by Radon AI are still prone to errors. Make sure to check important information before making decisions.
 
-2. Like any technology based on large language models, Radon AI is prone to errors. Make sure to check important information before making decisions.
+2. The knowledge base used by Radon AI contains only documentation files. While some documentation pages contain code snippets, we do not index the full source code of the libraries.
 
-3. Currently (June 2025), the knowledge base used by Radon AI contains only documentation files. While some documentation pages contain code snippets, we do not index the full source code of the libraries. For this reason, the React Native code generated by Radon AI may not be accurate.
-
-4. GitHub Copilot Free is limited to 50 chat messages per month. When you reach this limit, you can upgrade to Copilot Pro to continue using Radon AI.
+3. Both GitHub Copilot and Cursor offer limited free plans that allow you to try Radon AI. Once you reach certain limits, you will need to upgrade to paid plans to continue using Radon AI.
 
 ## Disabling Radon AI
 
 To disable Radon AI assistant navigate to the editor settings.
 
-You can type "Preferences: Open User Settings" in the command palette (Ctrl+Shift+P or Cmd+Shift+P).
+You can type `Preferences: Open User Settings` in the Command Palette (`Ctrl + Shift + P` or `Cmd + Shift + P`).
 
-Within editor settings, type "Radon AI: Enabled", press the first result and select `Disabled`.
+Within editor settings, type `Radon AI: Enabled`, press the first result and select `Disabled`.
 
 ## Privacy
 
