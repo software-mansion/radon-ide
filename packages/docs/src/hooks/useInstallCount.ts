@@ -35,7 +35,7 @@ async function fetchInstallCount(): Promise<number | null> {
 
 function formatInstallCount(count: number, roundToThousands = false): string {
   if (roundToThousands) {
-    const thousands = Math.round(count / 1000);
+    const thousands = Math.floor(count / 1000);
     return `${thousands}K+`;
   }
   return count.toLocaleString("en-US");
