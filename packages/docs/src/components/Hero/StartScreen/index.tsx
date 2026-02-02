@@ -6,12 +6,18 @@ import CloseIcon from "../../CloseIcon";
 import DownloadButtons from "@site/src/components/DownloadButtons";
 import ThemedImage from "@theme/ThemedImage";
 import useBaseUrl from "@docusaurus/useBaseUrl";
+import useInstallCount from "@site/src/hooks/useInstallCount";
 
 const StartScreen = () => {
   const dialogRef = React.useRef<HTMLDialogElement>(null);
   // i need the state to have the iframe unmouted when the dialog is closed to prevent google to track the video
   // and unnecessarily load a heavy iframe
   const [isOpen, setOpen] = React.useState(false);
+  const { data: installCountData, isLoading } = useInstallCount();
+
+  const installCount =
+    installCountData !== null ? `${Math.floor(installCountData / 1000)}K+` : "45K+";
+
   React.useEffect(() => {
     if (dialogRef.current?.open && !isOpen) {
       dialogRef.current?.close();
@@ -43,9 +49,9 @@ const StartScreen = () => {
     <>
       <section className={styles.hero}>
         <div className={styles.heading}>
-          <p className={styles.preheadingLabel}>
+          <p className={`${styles.preheadingLabel} ${!isLoading ? styles.fadeIn : ""}`}>
             <span className={styles.left}>Trusted by</span>
-            <span className={styles.center}>35K+ engineers</span>
+            <span className={styles.center}>{installCount} engineers</span>
           </p>
           <h1 className={styles.headingLabel}>
             Build better <span className={styles.headingRN}>React Native & Expo</span> apps with
@@ -56,7 +62,7 @@ const StartScreen = () => {
             enjoy using
             <span className={styles.dot}>.</span>{" "}
             <p>
-              Trusted by <span>35K+ engineers</span>.
+              Trusted by <span>{installCount} engineers</span>.
             </p>
           </h2>
           <div className={styles.buttonContainer}>

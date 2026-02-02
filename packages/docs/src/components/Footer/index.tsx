@@ -13,6 +13,7 @@ export default function Footer() {
   const {
     footer: { copyright },
   } = useThemeConfig();
+  const currentYear = new Date().getFullYear();
   return (
     <footer className={styles.containerWrapper}>
       <div className={clsx(styles.container, "border-layout")}>
@@ -21,7 +22,7 @@ export default function Footer() {
             <Logo className={styles.logo} />
             <div className={styles.brandInfo}>
               <div className={styles.brand}>
-                © 2025 <a href="https://swmansion.com/">Software Mansion</a>
+                © {currentYear} <a href="https://swmansion.com/">Software Mansion</a>
               </div>
               <p className={styles.copyright}>{copyright}</p>
             </div>
