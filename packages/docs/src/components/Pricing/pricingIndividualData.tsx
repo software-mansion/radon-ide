@@ -24,7 +24,6 @@ export const pricingIndividualData: PricingPlanCardProps[] = [
       { label: "Connect mode" },
       { label: "Expo Router integration" },
       { label: "Network inspector" },
-      { label: "Early access to new features" },
       { label: "Support via GitHub issues" },
     ],
   },
