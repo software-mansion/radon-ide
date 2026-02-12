@@ -45,7 +45,7 @@ function PricingCard({ planData, isMonthly, href, onButtonClick, children }: Pri
         </div>
         {featuresSupport && (
           <div className={styles.cardFeatures}>
-            <p>Support & Updates</p>
+            <p>Support</p>
             <PricingFeaturesList featuresList={featuresSupport} />
           </div>
         )}
