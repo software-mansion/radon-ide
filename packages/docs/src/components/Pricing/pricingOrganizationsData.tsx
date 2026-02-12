@@ -33,10 +33,7 @@ export const pricingOrganizationsData: PricingPlanCardProps[] = [
       { label: "Centralized team billing" },
       { label: "Insights Dashboard with usage stats" },
     ],
-    featuresSupport: [
-      { label: "Early access to new features" },
-      { label: "Priority support via email" },
-    ],
+    featuresSupport: [{ label: "Priority support via email" }],
   },
   {
     plan: "ENTERPRISE",
