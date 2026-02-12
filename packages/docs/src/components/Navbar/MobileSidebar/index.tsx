@@ -12,6 +12,7 @@ interface NavbarMobileSidebarProps {
 }
 
 const DEFAULT_DOC_SUBITEMS = [
+  { label: "Intro", to: "/docs/intro" },
   { label: "Getting started", to: "/docs/category/getting-started" },
   { label: "Features", to: "/docs/category/features" },
   { label: "Guides", to: "/docs/category/guides" },
@@ -54,7 +55,7 @@ export default function NavbarMobileSidebar({ navbarItems, onOpen }: NavbarMobil
         }
       });
 
-      const items: any[] = [];
+      const items: any[] = [{ label: "Intro", to: "/docs/intro" }];
       Object.values(categories).forEach((category) => {
         if (category.docs.length > 0) {
           items.push({

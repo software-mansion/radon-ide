@@ -441,3 +441,81 @@ button {
     padding: 40px 24px;
   }
 }
+
+/* Sidebar Toggle Implementation */
+.swm-doc-sidebar-toggle {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 100px; /* Below navbar */
+  z-index: 200;
+  background: var(--swm-background)!important;
+  border: 1px solid var(--radon-border);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+  padding: 0;
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--ifm-color-primary);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  aspect-ratio: 1;
+  width: 40px;
+  justify-content: center;
+  align-items: center;
+}
+
+.swm-doc-sidebar-toggle.open {
+  left: min(var(--doc-sidebar-width), 250px);
+}
+
+@media (max-width: 996px) {
+  .swm-doc-sidebar-toggle {
+    display: flex;
+  }
+  
+  /* Ensure sidebar container is hidden by default on small screens unless opened */
+  .swm-doc-sidebar-container > div {
+    display: none;
+    position: fixed;
+  }
+
+  .swm-doc-sidebar-container.open > div {
+    display: block;
+    overflow-y: hidden;
+    padding-top: 0;
+    background: var(--swm-background)!important;
+    height: calc(100% - 80px);
+    z-index: 1;
+
+    nav.menu{
+      height: 100%;
+      overflow-y: auto;
+    }
+  }
+
+  [class*=menu__list-item-collapsible] a {
+    margin: 8px 0!important;
+  }
+  
+  /* Override default docusaurus/theme hiding behavior if needed */
+  [class*="docSidebarContainer"] {
+    display: block !important;
+    width: 0 !important; /* Let our container handle width */
+  }
+
+  /* Fix for sidebar styling on mobile (override t-rex-ui media query) */
+  .swm-doc-sidebar-container [class*="_menu_"] {
+    padding: .5rem 0 .5rem 2rem;
+    scrollbar-gutter: stable;
+    flex-grow: 1;
+  }
+}
+
+@media (max-width: 830px) {
+  .swm-doc-sidebar-container {
+    top: 72px;
+  }
+  .swm-doc-sidebar-toggle {
+    top: 92px; /* 72px navbar + 20px spacing */
+  }
+}

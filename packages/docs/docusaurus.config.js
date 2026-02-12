@@ -69,7 +69,7 @@ const config = {
             label: "Pricing",
           },
           {
-            to: "docs/category/getting-started",
+            to: "/docs/intro",
             activeBasePath: "docs",
             label: "Docs",
           },

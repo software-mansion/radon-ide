@@ -1,0 +1,38 @@
+    {
+      type: "category",
+      label: "Documentation",
+      className: "hidden",
+      link: { type: "generated-index", slug: "/" },
+      items: [
+        {
+          
+          type: "link",
+          label: "Getting started",
+          href: "/docs/category/getting-started",
+          description: "Installation, setup, and first steps with Radon",
+          className: "hidden",
+          "customProps": {"key": "value"},
+        },
+        {
+          type: "link",
+          label: "Features",
+          href: "/docs/category/features",
+          description: "Explore all Radon capabilities and tools",
+          className: "hidden",
+        },
+        {
+          type: "link",
+          label: "Guides",
+          href: "/docs/category/guides",
+          description: "In-depth tutorials and configuration guides",
+          className: "hidden",
+        },
+        {
+          type: "link",
+          label: "Changelog",
+          href: "/docs/getting-started/changelog",
+          description: "Release notes and version history",
+          className: "hidden",
+        },
+      ],
+    },
