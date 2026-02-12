@@ -468,6 +468,11 @@ button {
   left: min(var(--doc-sidebar-width), 250px);
 }
 
+  .swm-doc-sidebar-container  {
+    height: 100%!important;
+    background-color: blue;
+  }
+
 @media (max-width: 996px) {
   .swm-doc-sidebar-toggle {
     display: flex;
@@ -477,6 +482,12 @@ button {
   .swm-doc-sidebar-container > div {
     display: none;
     position: fixed;
+    height: 100%;
+
+    nav.menu{
+      height: 100%;
+      overflow-y: auto;
+    }
   }
 
   .swm-doc-sidebar-container.open > div {
@@ -484,13 +495,8 @@ button {
     overflow-y: hidden;
     padding-top: 0;
     background: var(--swm-background)!important;
-    height: calc(100% - 80px);
+    height: calc(100% - var(--ifm-navbar-height));
     z-index: 1;
-
-    nav.menu{
-      height: 100%;
-      overflow-y: auto;
-    }
   }
 
   [class*=menu__list-item-collapsible] a {
