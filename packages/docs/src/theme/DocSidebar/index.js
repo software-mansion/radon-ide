@@ -1,7 +1,5 @@
 import React from "react";
 import useBaseUrl from "@docusaurus/useBaseUrl";
-// import { DocSidebar } from "@swmansion/t-rex-ui";
-// Bypass t-rex-ui responsive logic to force desktop sidebar on mobile
 import DocSidebarDesktop from "@swmansion/t-rex-ui/dist/components/DocSidebar/Desktop/index.js";
 import CloseIcon from "../../components/CloseIcon";
 import ChevronDownIcon from "../../components/ChevronDownIcon";
