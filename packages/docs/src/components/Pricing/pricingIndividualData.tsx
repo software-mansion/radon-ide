@@ -44,6 +44,7 @@ export const pricingIndividualData: PricingPlanCardProps[] = [
       { label: "Storybook integration" },
       { label: "Maestro testing integration" },
       { label: "Radon AI assistant" },
+      { label: "Early access to new features" },
       { label: "Priority support via email" },
     ],
   },
