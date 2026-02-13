@@ -42,55 +42,6 @@
   transition: color 0.2s;
 }
 
-.docsItem {
-  display: flex;
-  flex-direction: column;
-}
-
-.docsButton {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--ifm-color-primary);
-  font-size: 32px;
-  font-weight: 400;
-  cursor: pointer;
-  text-align: left;
-  transition: color 0.2s;
-}
-
-.docsButton[aria-expanded="true"] {
-  color: var(--radon-active-tab);
-}
-
-.docsSubmenu {
-  list-style: none;
-  padding: 16px 0 0 20px;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.categoryHeader {
-  font-weight: 500 !important;
-  font-size: 26px !important;
-  margin-top: 8px;
-  display: block;
-}
-
-.subItem {
-  padding-left: 20px;
-}
-
-.subItem a {
-  font-size: 20px !important;
-  font-weight: 300;
-}
-
 @media (min-width: 830px) {
   .container {
     display: none;
