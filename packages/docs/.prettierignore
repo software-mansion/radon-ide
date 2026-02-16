@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Build output
+build/
+.docusaurus/
+dist/
+
+# Generated files
+.cache/
+*.min.js
+*.min.css
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
