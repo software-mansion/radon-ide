@@ -16,16 +16,11 @@ export default function DocSidebarWrapper(props) {
       <button
         className={`swm-doc-sidebar-toggle ${isOpen ? "open" : ""}`}
         onClick={() => setIsOpen(!isOpen)}
-        aria-label="Toggle Sidebar"
-      >
+        aria-label="Toggle Sidebar">
         {isOpen ? (
           <CloseIcon width={20} height={20} />
         ) : (
-          <ChevronDownIcon
-            width={20}
-            height={20}
-            style={{ transform: "rotate(-90deg)" }}
-          />
+          <ChevronDownIcon width={20} height={20} style={{ transform: "rotate(-90deg)" }} />
         )}
       </button>
       <div className={`swm-doc-sidebar-container ${isOpen ? "open" : ""}`}>
