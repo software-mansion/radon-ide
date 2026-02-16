@@ -11,6 +11,7 @@ on:
 
 jobs:
   format-check:
+    if: github.repository == 'software-mansion/radon-ide'
     runs-on: ubuntu-latest
     
     steps:
