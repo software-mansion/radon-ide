@@ -19,19 +19,19 @@ Before you can change any of the options you'll need to create a launch configur
 
 ### Creating and updating `launch.json` using Radon IDE's panel
 
-In order to create a new project configuration, open `Launch Configuration Selector` and select `Add custom launch config option`. The wizard will guide you through configuring the options in a GUI environment.  
+In order to create a new project configuration, open `Launch Configuration Selector` and select `Add custom launch config option`. The wizard will guide you through configuring the options in a GUI environment.
 
 <img width="400" src="/img/docs/ide_add_custom_launch_config.png" className="shadow-image"/>
 
-The wizard provides simple means to generate and edit `launch.json`. If necessary, you can use the `Edit in launch.json` button to jump to the file itself and make changes manually.  
+The wizard provides simple means to generate and edit `launch.json`. If necessary, you can use the `Edit in launch.json` button to jump to the file itself and make changes manually.
 
-After filling out the options, click the `Save` button to create the `launch.json` configuration file (if it does not exist yet) and write your launch configuration to it. You can then select created configuration from the `Launch Configuration Selector`.  
+After filling out the options, click the `Save` button to create the `launch.json` configuration file (if it does not exist yet) and write your launch configuration to it. You can then select created configuration from the `Launch Configuration Selector`.
 
-You should consider adding the `launch.json` file to your project's version control system (e.g. `git`) as it carries configuration that is specific to your project setup rather than user specific editor settings.  
+You should consider adding the `launch.json` file to your project's version control system (e.g. `git`) as it carries configuration that is specific to your project setup rather than user specific editor settings.
 
 <img width="400" src="/img/docs/ide_launch_config_window.png" className="shadow-image"/>
 
-You can edit or delete existing custom launch configuration by clicking on the cog icon next to its name in `Launch Configuration Selector`.  
+You can edit or delete existing custom launch configuration by clicking on the cog icon next to its name in `Launch Configuration Selector`.
 
 <img width="300" src="/img/docs/ide_edit_launch_config.png" className="shadow-image"/>
 
