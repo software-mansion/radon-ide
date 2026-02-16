@@ -14,7 +14,7 @@ In a such case, you can still Radon IDE but we also recommend [submitting an iss
 
 ## Supported editors
 
-Radon IDE works with [Visual Studio Code](https://code.visualstudio.com/) 1.86 or higher and [Cursor](https://www.cursor.com/) 0.32 or higher.
+Radon IDE works with [Visual Studio Code](https://code.visualstudio.com/) 1.90.0 or higher and [Cursor](https://www.cursor.com/) 0.40.0 or higher.
 
 ## Supported project setups
 
