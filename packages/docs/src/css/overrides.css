@@ -1,7 +1,9 @@
 :root {
   --swm-expandable-transition: transform 200ms ease;
+  --swm-expand-sidebar-transition: left 300ms ease;
   --swm-logo-height: 36px;
   --swm-sidebar-header-height: 68px;
+  --swm-sidebar-actual-width: min(var(--doc-sidebar-width), 250px);
 }
 
 table {
@@ -125,6 +127,7 @@ table thead tr {
 [class*="navbar__item"] {
   display: flex !important;
 }
+
 [class*="navbar__item"] {
   justify-content: center;
 }
@@ -217,9 +220,11 @@ main[class*="docMainContainer"] .row {
   margin: 0;
   justify-content: space-between;
 }
+
 main[class*="docMainContainer"] .row .col {
   padding: 0;
 }
+
 main[class*="docMainContainer"] .row .col--6 {
   padding: 10px;
 }
@@ -375,9 +380,11 @@ div[class*="hireUsContainer"] p {
   [class*="docSidebarContainer"] {
     width: 100% !important;
   }
+
   [class*="docMainContainer"] {
     max-width: calc(100% - 250px) !important;
   }
+
   [class*="generatedIndexPage"][class*="generatedIndexPage"] {
     padding: 40px;
     max-width: none !important;
@@ -436,8 +443,101 @@ button {
     flex: initial;
   }
 }
+
 @media (max-width: 800px) {
   [class*="mdxPageWrapper"] > .col--8 {
     padding: 40px 24px;
+  }
+}
+
+/* Sidebar Toggle Implementation */
+.swm-doc-sidebar-toggle {
+  display: none;
+  position: fixed;
+  width: 40px;
+  aspect-ratio: 1;
+  z-index: 200;
+
+  left: 0;
+  top: 100px;
+  padding: 0;
+  justify-content: center;
+  align-items: center;
+
+  border: 1px solid var(--radon-border);
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+
+  cursor: pointer;
+  background: var(--swm-background) !important;
+
+  transition: var(--swm-expand-sidebar-transition);
+}
+
+.swm-doc-sidebar-toggle.open {
+  left: var(--swm-sidebar-actual-width);
+}
+
+.swm-doc-sidebar-container {
+  height: 100%;
+}
+
+@media (max-width: 996px) {
+  /* Override default docusaurus/theme hiding behavior if needed */
+  [class*="docSidebarContainer"] {
+    display: block !important;
+  }
+
+  [class*="menu__list-item-collapsible"] a {
+    margin: 8px 0 !important;
+  }
+
+  .swm-doc-sidebar-toggle {
+    display: flex;
+  }
+
+  .swm-doc-sidebar-container {
+    position: fixed;
+    top: 80px;
+    left: calc(-1 * var(--swm-sidebar-actual-width));
+    z-index: 199;
+    background: var(--swm-background) !important;
+    transition: var(--swm-expand-sidebar-transition);
+  }
+
+  /* Fix for sidebar styling on mobile (override t-rex-ui media query) */
+  .swm-doc-sidebar-container [class*="_menu_"] {
+    padding: 0.5rem 0 0.5rem 2rem;
+    scrollbar-gutter: stable;
+    flex-grow: 1;
+  }
+
+  .swm-doc-sidebar-container.open {
+    left: 0;
+  }
+
+  .swm-doc-sidebar-container > div nav.menu {
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .swm-doc-sidebar-container.open > div {
+    display: block;
+    overflow-y: hidden;
+    padding-top: 0;
+    background: var(--swm-background) !important;
+    height: calc(100% - var(--ifm-navbar-height));
+    z-index: 1;
+  }
+}
+
+@media (max-width: 830px) {
+  .swm-doc-sidebar-container {
+    top: 72px;
+  }
+
+  .swm-doc-sidebar-toggle {
+    top: 92px;
+    /* 72px navbar + 20px spacing */
   }
 }
