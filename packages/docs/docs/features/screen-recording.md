@@ -79,4 +79,4 @@ To configure where screenshots and screen recordings are saved:
 
 - Navigate to your editor settings
 - Look up `Radon IDE`
-- The `Default Multimedia Saving Location` option will allow you to configure the default saving path. 
+- The `Default Multimedia Saving Location` option will allow you to configure the default saving path.

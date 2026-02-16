@@ -75,7 +75,7 @@ table thead tr {
   width: 100%;
   margin-bottom: 32px;
   flex-wrap: wrap;
-  gap: 16px; 
+  gap: 16px;
 }
 
 .phone-table {
@@ -85,7 +85,7 @@ table thead tr {
   width: 100%;
   min-width: 300px;
   flex: 1 0 300px;
-  max-width: 500px; 
+  max-width: 500px;
 }
 
 .phone-table table {
