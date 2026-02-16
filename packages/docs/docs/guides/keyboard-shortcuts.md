@@ -6,19 +6,19 @@ sidebar_position: 4
 
 Radon IDE lets you perform some repetitive actions through keyboard shortcuts.
 
-| Result                                 | macOS                        | Windows                   |
-| -------------------------------------- | ---------------------------- | ------------------------- |
-| Open developer menu                    | Command + Control + Z        | Control + Alt + Z         |
-| Capture replay                         | Command + Shift + R          | Control + Shift + R       |
-| Toggle recording                       | Command + Shift + E          | Control + Shift + E       |
-| Capture screenshot                     | Command + Shift + A          | Control + Shift + A       |
-| Perform biometric authorization        | Command + Shift + M          | Control + Shift + M       |
-| Perform failed biometric authorization | Option + Command + Shift + M | Control + Alt + Shift + M |
-| Close IDE Panel with confirmation      | Command + W                  | Control + W               |
-| Switch to next running device          | Command + Shift + \)         | Control + Shift + \)      |
-| Switch to previous running device      | Command + Shift + \(         | Control + Shift + \(      |
-| Rotate device clockwise                | Control + Option + 0         | Control + Alt + 0         |
-| Rotate device anticlockwise            | Control + Option + 9         | Control + Alt + 9         |
+| Result                                 | macOS                        |
+| -------------------------------------- | ---------------------------- |
+| Open developer menu                    | Command + Control + Z        |
+| Capture replay                         | Command + Shift + R          |
+| Toggle recording                       | Command + Shift + E          |
+| Capture screenshot                     | Command + Shift + A          |
+| Perform biometric authorization        | Command + Shift + M          |
+| Perform failed biometric authorization | Option + Command + Shift + M |
+| Close IDE Panel with confirmation      | Command + W                  |
+| Switch to next running device          | Command + Shift + \)         |
+| Switch to previous running device      | Command + Shift + \(         |
+| Rotate device clockwise                | Control + Option + 0         |
+| Rotate device anticlockwise            | Control + Option + 9         |
 
 ## Customize shortcuts
 
