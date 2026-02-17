@@ -95,8 +95,8 @@ const config = {
       footer: {
         style: "light",
         links: [
-          { to: "/legal/privacy-policy", label: "Privacy" },
-          { to: "/legal", label: "Legal" },
+          { to: "https://swmansion.com/privacy/policy", label: "Privacy" },
+          { to: "https://swmansion.com/legal/radon/team-license-terms", label: "Legal" },
           { to: "https://portal.ide.swmansion.com/", label: "Customer Portal" },
           { to: "/docs/getting-started/changelog", label: "Changelog" },
           { to: "/contact", label: "Contact" },

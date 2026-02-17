@@ -57,27 +57,37 @@
     },
     {
       "source": "/privacy-policy",
-      "destination": "/legal/privacy-policy",
+      "destination": "https://swmansion.com/privacy/policy",
       "permanent": true
     },
     {
       "source": "/terms-of-use",
-      "destination": "/legal/early-terms-of-use",
+      "destination": "https://swmansion.com/legal/radon/team-license-terms",
       "permanent": true
     },
     {
       "source": "/refund-policy",
-      "destination": "/legal/refund-policy",
+      "destination": "https://swmansion.com/legal/radon/refund-terms",
       "permanent": true
     },
     {
       "source": "/purchase-terms",
-      "destination": "/legal/purchase-terms",
+      "destination": "https://swmansion.com/legal/radon/purchase-terms",
       "permanent": true
     },
     {
       "source": "/supporter-terms",
-      "destination": "/legal/supporter-terms",
+      "destination": "https://swmansion.com/legal/radon/team-license-terms",
+      "permanent": true
+    },
+    {
+      "source": "/legal",
+      "destination": "https://swmansion.com/legal/radon/team-license-terms",
+      "permanent": true
+    },
+    {
+      "source": "/legal/:path*",
+      "destination": "https://swmansion.com/legal/radon/team-license-terms",
       "permanent": true
     }
   ]
