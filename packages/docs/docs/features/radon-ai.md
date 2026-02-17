@@ -67,6 +67,8 @@ The AI models automatically discover and invoke tools when they decide it will b
 - `view_application_logs` Returns all the build, bundling and runtime logs available to Radon IDE. If the app builds and launches successfully, this tool will also attach a screenshot of the app.
 - `view_screenshot` Captures a device preview screenshot. Can help the agent with debugging issues and making UI adjustments. Currently only supported in GPT, Gemini and Claude models.
 - `view_component_tree` Displays the component tree of the running app. This tool allows the agent to gain a broad understanding of the project's structure.
+- `view_network_logs` Shows all network requests your app makes. Helps the agent debug API issues and verify backend communication.
+- `view_network_request_details` Inspects full details of a specific network request. Enables the agent to investigate why an API endpoint is failing or returning unexpected data.
 
 <video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/radon_ai_preview.mp4" type="video/mp4"/>
