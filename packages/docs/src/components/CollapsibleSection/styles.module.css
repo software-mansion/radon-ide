@@ -1,0 +1,45 @@
+.collapsible {
+  border: 1px solid var(--swm-border, #e0e0e0);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.collapsible:hover {
+  border-color: var(--swm-tab-active, #4caf50);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  width: 100%;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ifm-font-color-base);
+  user-select: none;
+  gap: 10px;
+}
+
+.header:hover {
+  background: var(--ifm-hover-overlay, rgba(0, 0, 0, 0.03));
+}
+
+.chevron {
+  font-size: 0.7rem;
+  transition: transform 0.2s ease;
+  color: var(--ifm-color-emphasis-600, #666);
+  flex-shrink: 0;
+}
+
+.chevronOpen {
+  transform: rotate(90deg);
+}
+
+.content {
+  padding: 0 16px 16px 16px;
+}
