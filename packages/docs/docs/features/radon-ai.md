@@ -59,14 +59,14 @@ Alternatively, you can type and run `View: Open MCP Settings` from the Command P
 
 ## Usage in external Agent CLIs
 
-You can connect external agent CLI tools to Radon IDE's MCP server using the [`radon-mcp`](https://www.npmjs.com/package/radon-mcp) proxy package. This gives tools like Claude Code, Codex, OpenCode, and Gemini CLI access to the same Radon AI toolset available in VS Code and Cursor.
+You can connect external agent CLI tools to Radon IDE's MCP server using the [`radon-mcp`](https://www.npmjs.com/package/radon-mcp) proxy package. This gives tools like Claude Code, Codex, OpenCode, and Gemini CLI access to directly interact with your Radon IDE instance and the for a given workspace.
 
-The workspace path argument is optional, if omitted, the proxy uses the current working directory.
+The workspace path argument is optional. If omitted, the proxy uses the current working directory. If you run the agent from your project folder, you don't need to supply it.
 
 <details>
 <summary>Claude Code</summary>
 
-Run `claude mcp add radon -- npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to your `.mcp.json` or `~/.claude.json`:
+Run `claude mcp add --transport stdio radon -- npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to your `.mcp.json` or `~/.claude.json`:
 
 ```json
 {
@@ -115,7 +115,60 @@ Add the following to your `opencode.json` or `opencode.jsonc`:
 <details>
 <summary>Gemini CLI</summary>
 
-Run `gemini mcp add radon npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to `~/.gemini/settings.json`:
+Run `gemini mcp add radon npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to `.gemini/settings.json` (project scope) or `~/.gemini/settings.json` (user scope):
+
+```json
+{
+  "mcpServers": {
+    "radon": {
+      "command": "npx",
+      "args": ["-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>Goose</summary>
+
+Add the following to `~/.config/goose/config.yaml`:
+
+```yaml
+extensions:
+  radon:
+    name: Radon
+    cmd: npx
+    args: [-y, radon-mcp@latest, /path/to/your/react-native/project]
+    enabled: true
+    type: stdio
+```
+
+</details>
+
+<details>
+<summary>Amp</summary>
+
+Run `amp mcp add radon -- npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to `~/.config/amp/settings.json`:
+
+```json
+{
+  "amp.mcpServers": {
+    "radon": {
+      "command": "npx",
+      "args": ["-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>Kiro CLI</summary>
+
+Run `kiro-cli mcp add --name radon --command npx --args "-y radon-mcp@latest /path/to/your/react-native/project"`, or add the following to `~/.kiro/settings/mcp.json` (global) or `<project-root>/.kiro/settings/mcp.json` (workspace):
 
 ```json
 {
