@@ -59,7 +59,7 @@ Alternatively, you can type and run `View: Open MCP Settings` from the Command P
 
 ## Usage in external Agent CLIs
 
-You can connect external agent CLI tools to Radon IDE's MCP server using the [`radon-mcp`](https://www.npmjs.com/package/radon-mcp) proxy package. This gives tools like Claude Code, Codex, OpenCode, and Gemini CLI access to directly interact with your Radon IDE instance and the for a given workspace.
+You can connect external agent CLI tools to Radon IDE's MCP server using the [`radon-mcp`](https://www.npmjs.com/package/radon-mcp) proxy package. This gives tools like Claude Code, Codex, OpenCode, and Gemini CLI access to directly interact with your Radon IDE instance, as well as all the AI tools it comes with.
 
 The workspace path argument is optional. If omitted, the proxy uses the current working directory. If you run the agent from your project folder, you don't need to supply it.
 
