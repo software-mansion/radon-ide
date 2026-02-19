@@ -57,6 +57,79 @@ You configure the Radon AI MCP tools from Cursor Settings. There, you can choose
 
 Alternatively, you can type and run `View: Open MCP Settings` from the Command Palette (`Ctrl + Shift + P` or `Cmd + Shift + P`).
 
+## Usage in external Agent CLIs
+
+You can connect external agent CLI tools to Radon IDE's MCP server using the [`radon-mcp`](https://www.npmjs.com/package/radon-mcp) proxy package. This gives tools like Claude Code, Codex, OpenCode, and Gemini CLI access to the same Radon AI toolset available in VS Code and Cursor.
+
+The workspace path argument is optional, if omitted, the proxy uses the current working directory.
+
+<details>
+<summary>Claude Code</summary>
+
+Run `claude mcp add radon -- npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to your `.mcp.json` or `~/.claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "radon": {
+      "command": "npx",
+      "args": ["-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>Codex</summary>
+
+Run `codex mcp add radon -- npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.radon]
+command = "npx"
+args = ["-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
+```
+
+</details>
+
+<details>
+<summary>OpenCode</summary>
+
+Add the following to your `opencode.json` or `opencode.jsonc`:
+
+```json
+{
+  "mcp": {
+    "radon": {
+      "type": "local",
+      "command": ["npx", "-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary>Gemini CLI</summary>
+
+Run `gemini mcp add radon npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to `~/.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "radon": {
+      "command": "npx",
+      "args": ["-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
+    }
+  }
+}
+```
+
+</details>
+
 ## Available tools
 
 The AI models automatically discover and invoke tools when they decide it will be useful. You can query the agent to use the tool by mentioning it's name in the prompt. These are currently available tools in Radon AI:
