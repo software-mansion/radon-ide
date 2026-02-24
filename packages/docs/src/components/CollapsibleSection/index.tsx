@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useCollapsible, Collapsible } from "@docusaurus/theme-common";
 import styles from "./styles.module.css";
 
@@ -16,7 +16,6 @@ export default function CollapsibleSection({
   const { collapsed, setCollapsed } = useCollapsible({
     initialState: !defaultOpen,
   });
-  const [open, setOpen] = useState(defaultOpen);
 
   return (
     <div className={styles.collapsible}>
@@ -25,7 +24,6 @@ export default function CollapsibleSection({
         onClick={() => {
           if (collapsed) {
             setCollapsed(false);
-            setOpen(true);
           } else {
             setCollapsed(true);
           }
@@ -40,7 +38,6 @@ export default function CollapsibleSection({
         disableSSRStyle
         onCollapseTransitionEnd={(newCollapsed) => {
           setCollapsed(newCollapsed);
-          setOpen(!newCollapsed);
         }}>
         <div className={styles.content}>{children}</div>
       </Collapsible>
