@@ -1,6 +1,8 @@
 import React from "react";
 import { useCollapsible, Collapsible } from "@docusaurus/theme-common";
 import styles from "./styles.module.css";
+import PlusIcon from "../PlusIcon";
+import MinusIcon from "../MinusIcon";
 
 interface CollapsibleSectionProps {
   title: string;
@@ -25,8 +27,8 @@ export default function CollapsibleSection({
           setCollapsed(!collapsed);
         }}
         type="button">
-        <span className={`${styles.chevron} ${!collapsed ? styles.chevronOpen : ""}`}>&#9654;</span>
         {title}
+        {collapsed ? <PlusIcon /> : <MinusIcon />}
       </button>
       <Collapsible
         lazy={false}

@@ -3,6 +3,15 @@
   margin-bottom: 0.5rem;
 }
 
+.collapsible button {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
 .header {
   display: flex;
   align-items: center;
