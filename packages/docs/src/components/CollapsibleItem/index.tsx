@@ -4,17 +4,17 @@ import styles from "./styles.module.css";
 import PlusIcon from "../PlusIcon";
 import MinusIcon from "../MinusIcon";
 
-interface CollapsibleSectionProps {
+interface CollapsibleItemProps {
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
 }
 
-export default function CollapsibleSection({
+export default function CollapsibleItem({
   title,
   children,
   defaultOpen = false,
-}: CollapsibleSectionProps) {
+}: CollapsibleItemProps) {
   const { collapsed, setCollapsed } = useCollapsible({
     initialState: !defaultOpen,
   });

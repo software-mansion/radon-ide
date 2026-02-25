@@ -4,7 +4,7 @@ title: Radon AI
 sidebar_position: 11
 ---
 
-import CollapsibleSection from "@site/src/components/CollapsibleSection";
+import CollapsibleItem from "@site/src/components/CollapsibleItem";
 
 Radon AI is a MCP server that provides a set of tools that enhances your editor’s Agent.
 It provides up-to-date knowledge of the React Native ecosystem, access to a comprehensive set of debugging data that is otherwise unavailable, and the ability to interact directly with your app.
@@ -67,7 +67,7 @@ The workspace path argument is optional. If omitted, the proxy uses the current 
 
 #### Installation instructions:
 
-<CollapsibleSection title="Claude Code">
+<CollapsibleItem title="Claude Code">
 
 Run `claude mcp add --transport stdio radon -- npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to your `.mcp.json` or `~/.claude.json`:
 
@@ -82,9 +82,9 @@ Run `claude mcp add --transport stdio radon -- npx -y radon-mcp@latest /path/to/
 }
 ```
 
-</CollapsibleSection>
+</CollapsibleItem>
 
-<CollapsibleSection title="Codex">
+<CollapsibleItem title="Codex">
 
 Run `codex mcp add radon -- npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to `~/.codex/config.toml`:
 
@@ -94,9 +94,9 @@ command = "npx"
 args = ["-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
 ```
 
-</CollapsibleSection>
+</CollapsibleItem>
 
-<CollapsibleSection title="OpenCode">
+<CollapsibleItem title="OpenCode">
 
 Add the following to your `opencode.json` or `opencode.jsonc`:
 
@@ -111,9 +111,9 @@ Add the following to your `opencode.json` or `opencode.jsonc`:
 }
 ```
 
-</CollapsibleSection>
+</CollapsibleItem>
 
-<CollapsibleSection title="Gemini CLI">
+<CollapsibleItem title="Gemini CLI">
 
 Run `gemini mcp add radon npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to `.gemini/settings.json` (project scope) or `~/.gemini/settings.json` (user scope):
 
@@ -128,9 +128,9 @@ Run `gemini mcp add radon npx -y radon-mcp@latest /path/to/your/react-native/pro
 }
 ```
 
-</CollapsibleSection>
+</CollapsibleItem>
 
-<CollapsibleSection title="Goose">
+<CollapsibleItem title="Goose">
 
 Add the following to `~/.config/goose/config.yaml`:
 
@@ -144,9 +144,9 @@ extensions:
     type: stdio
 ```
 
-</CollapsibleSection>
+</CollapsibleItem>
 
-<CollapsibleSection title="Amp">
+<CollapsibleItem title="Amp">
 
 Run `amp mcp add radon -- npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to `~/.config/amp/settings.json`:
 
@@ -161,9 +161,9 @@ Run `amp mcp add radon -- npx -y radon-mcp@latest /path/to/your/react-native/pro
 }
 ```
 
-</CollapsibleSection>
+</CollapsibleItem>
 
-<CollapsibleSection title="Kiro CLI">
+<CollapsibleItem title="Kiro CLI">
 
 Run `kiro-cli mcp add --name radon --command npx --args "-y radon-mcp@latest /path/to/your/react-native/project"`, or add the following to `~/.kiro/settings/mcp.json` (global) or `<project-root>/.kiro/settings/mcp.json` (workspace):
 
@@ -178,7 +178,7 @@ Run `kiro-cli mcp add --name radon --command npx --args "-y radon-mcp@latest /pa
 }
 ```
 
-</CollapsibleSection>
+</CollapsibleItem>
 
 ## Available tools
 
