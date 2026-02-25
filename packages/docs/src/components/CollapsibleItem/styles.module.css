@@ -27,21 +27,6 @@
   gap: 10px;
 }
 
-.header:hover {
-  background: var(--ifm-hover-overlay, rgba(0, 0, 0, 0.03));
-}
-
-.chevron {
-  font-size: 0.7rem;
-  transition: transform 0.2s ease;
-  color: var(--ifm-color-emphasis-600, #666);
-  flex-shrink: 0;
-}
-
-.chevronOpen {
-  transform: rotate(90deg);
-}
-
 .content {
   padding: 8px 16px;
 }
