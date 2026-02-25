@@ -1,13 +1,6 @@
 .collapsible {
-  border: 1px solid var(--swm-border, #e0e0e0);
-  border-radius: 8px;
-  margin-bottom: 8px;
-  overflow: hidden;
-  transition: border-color 0.2s;
-}
-
-.collapsible:hover {
-  border-color: var(--swm-tab-active, #4caf50);
+  border-bottom: 1px solid var(--radon-border-grid-subtle);
+  margin-bottom: 0.5rem;
 }
 
 .header {
