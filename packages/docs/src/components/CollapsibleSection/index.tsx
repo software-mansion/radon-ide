@@ -22,11 +22,7 @@ export default function CollapsibleSection({
       <button
         className={styles.header}
         onClick={() => {
-          if (collapsed) {
-            setCollapsed(false);
-          } else {
-            setCollapsed(true);
-          }
+          setCollapsed(!collapsed);
         }}
         type="button">
         <span className={`${styles.chevron} ${!collapsed ? styles.chevronOpen : ""}`}>&#9654;</span>
@@ -36,9 +32,7 @@ export default function CollapsibleSection({
         lazy={false}
         collapsed={collapsed}
         disableSSRStyle
-        onCollapseTransitionEnd={(newCollapsed) => {
-          setCollapsed(newCollapsed);
-        }}>
+        onCollapseTransitionEnd={setCollapsed}>
         <div className={styles.content}>{children}</div>
       </Collapsible>
     </div>
