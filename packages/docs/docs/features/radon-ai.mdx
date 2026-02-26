@@ -4,6 +4,8 @@ title: Radon AI
 sidebar_position: 11
 ---
 
+import CollapsibleItem from "@site/src/components/CollapsibleItem";
+
 Radon AI is a MCP server that provides a set of tools that enhances your editor’s Agent.
 It provides up-to-date knowledge of the React Native ecosystem, access to a comprehensive set of debugging data that is otherwise unavailable, and the ability to interact directly with your app.
 
@@ -12,7 +14,7 @@ We index most React Native libraries along with their relevant documentation, ve
 Our knowledge database is updated daily to provide the most up-to-date information.
 
 <video autoPlay loop width="700" controls className="shadow-image">
-  <source src="/video/radon_ai_query_database.mp4" type="video/mp4"/>
+  <source src="/video/radon_ai_query_database.mp4" type="video/mp4" />
 </video>
 
 ## Pre-requisites
@@ -29,21 +31,21 @@ To access `agent mode` in Visual Studio Code use `Ctrl + Shift + I` or `Cmd + Sh
 
 Alternatively, open VSCode Command Palette (`Ctrl + Shift + P` or `Cmd + Shift + P`) and type `Chat: Open Chat`, then select `agent mode`.
 
-<img width="550" src="/img/docs/ai_vscode_agent_mode.png" className="shadow-image"/>
+<img width="550" src="/img/docs/ai_vscode_agent_mode.png" className="shadow-image" />
 
 To adjust the configuration of the MCP tools exposed by Radon - choose `Configure Tools...` menu.
 
-<img width="550" src="/img/docs/ai_vscode_choose_tools.png" className="shadow-image"/>
+<img width="550" src="/img/docs/ai_vscode_choose_tools.png" className="shadow-image" />
 
 There you can adjust which tools are enabled or disable the Radon AI MCP toolset completely.
 
-<img width="600" src="/img/docs/ai_vscode_mcp_tools.png" className="shadow-image"/>
+<img width="600" src="/img/docs/ai_vscode_mcp_tools.png" className="shadow-image" />
 
 ## Usage in Cursor
 
 Radon AI assistant integrates with Cursor's `agent mode`.
 
-<img width="550" src="/img/docs/ai_cursor_chat_response.png" className="shadow-image"/>
+<img width="550" src="/img/docs/ai_cursor_chat_response.png" className="shadow-image" />
 
 The Radon IDE automatically registers Radon AI tools in Cursor.
 You configure the Radon AI MCP tools from Cursor Settings. There, you can choose which tools are enabled or disable the MCP Radon toolset completely.
@@ -53,9 +55,130 @@ You configure the Radon AI MCP tools from Cursor Settings. There, you can choose
 3. Find the `MCP Tools` section.
 4. Select `Radon AI` from the list of available toolsets.
 
-<img width="550" src="/img/docs/ai_cursor_mcp_settings.png" className="shadow-image"/>
+<img width="550" src="/img/docs/ai_cursor_mcp_settings.png" className="shadow-image" />
 
 Alternatively, you can type and run `View: Open MCP Settings` from the Command Palette (`Ctrl + Shift + P` or `Cmd + Shift + P`).
+
+## Usage in external Agent CLIs
+
+For tools that don't read VS Code or Cursor MCP configurations, you can manually connect to Radon IDE's MCP server using the [`radon-mcp`](https://www.npmjs.com/package/radon-mcp) proxy package. The proxy locates the correct MCP server instance running in Radon IDE for a given workspace.
+
+The workspace path argument is optional. If omitted, the proxy uses the current working directory. If you run the agent from your project folder, you don't need to supply it.
+
+#### Installation instructions:
+
+<CollapsibleItem title="Claude Code">
+
+Run `claude mcp add --transport stdio radon -- npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to your `.mcp.json` or `~/.claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "radon": {
+      "command": "npx",
+      "args": ["-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
+    }
+  }
+}
+```
+
+</CollapsibleItem>
+
+<CollapsibleItem title="Codex">
+
+Run `codex mcp add radon -- npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.radon]
+command = "npx"
+args = ["-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
+```
+
+</CollapsibleItem>
+
+<CollapsibleItem title="OpenCode">
+
+Add the following to your `opencode.json` or `opencode.jsonc`:
+
+```json
+{
+  "mcp": {
+    "radon": {
+      "type": "local",
+      "command": ["npx", "-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
+    }
+  }
+}
+```
+
+</CollapsibleItem>
+
+<CollapsibleItem title="Gemini CLI">
+
+Run `gemini mcp add radon npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to `.gemini/settings.json` (project scope) or `~/.gemini/settings.json` (user scope):
+
+```json
+{
+  "mcpServers": {
+    "radon": {
+      "command": "npx",
+      "args": ["-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
+    }
+  }
+}
+```
+
+</CollapsibleItem>
+
+<CollapsibleItem title="Goose">
+
+Add the following to `~/.config/goose/config.yaml`:
+
+```yaml
+extensions:
+  radon:
+    name: Radon
+    cmd: npx
+    args: [-y, radon-mcp@latest, /path/to/your/react-native/project]
+    enabled: true
+    type: stdio
+```
+
+</CollapsibleItem>
+
+<CollapsibleItem title="Amp">
+
+Run `amp mcp add radon -- npx -y radon-mcp@latest /path/to/your/react-native/project`, or add the following to `~/.config/amp/settings.json`:
+
+```json
+{
+  "amp.mcpServers": {
+    "radon": {
+      "command": "npx",
+      "args": ["-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
+    }
+  }
+}
+```
+
+</CollapsibleItem>
+
+<CollapsibleItem title="Kiro CLI">
+
+Run `kiro-cli mcp add --name radon --command npx --args "-y radon-mcp@latest /path/to/your/react-native/project"`, or add the following to `~/.kiro/settings/mcp.json` (global) or `<project-root>/.kiro/settings/mcp.json` (workspace):
+
+```json
+{
+  "mcpServers": {
+    "radon": {
+      "command": "npx",
+      "args": ["-y", "radon-mcp@latest", "/path/to/your/react-native/project"]
+    }
+  }
+}
+```
+
+</CollapsibleItem>
 
 ## Available tools
 
@@ -69,7 +192,7 @@ The AI models automatically discover and invoke tools when they decide it will b
 - `view_component_tree` Displays the component tree of the running app. This tool allows the agent to gain a broad understanding of the project's structure.
 
 <video autoPlay loop width="700" controls className="shadow-image">
-  <source src="/video/radon_ai_preview.mp4" type="video/mp4"/>
+  <source src="/video/radon_ai_preview.mp4" type="video/mp4" />
 </video>
 
 ## Limitations

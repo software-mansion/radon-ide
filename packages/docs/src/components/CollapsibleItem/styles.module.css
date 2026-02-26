@@ -1,0 +1,32 @@
+.collapsible {
+  border-bottom: 1px solid var(--radon-border-grid-subtle);
+  margin-bottom: 0.5rem;
+}
+
+.collapsible button {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  width: 100%;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ifm-font-color-base);
+  user-select: none;
+  gap: 10px;
+}
+
+.content {
+  padding: 8px 16px;
+}
