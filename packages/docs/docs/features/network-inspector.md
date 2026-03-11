@@ -4,7 +4,7 @@ title: Network Inspector
 sidebar_position: 8
 ---
 
-Radon IDE comes with a Network Inspector panel allowing you to inspect network traffic. The tool captures all network requests initiated by `fetch` and `XMLHttpRequest` and supports the native implementation of the React Native's Network Inspector for version 0.83.0 and newer.
+Radon IDE comes with a Network Inspector panel allowing you to inspect network traffic.
 
 <video autoPlay loop width="700" controls className="shadow-image">
   <source src="/video/ide_network_inspector_new.mp4" type="video/mp4"/>
@@ -64,13 +64,31 @@ Clicking on the network log shows more details about the contents of the request
 
 Right clicking on the network log opens **Context Menu**, allowing for sorting and filtering the logs, copying the request details, refetching and opening responses in the editor's tab.
 
+## Network Throttling (iOS Simulator only)
+
+When connected to an iOS Simulator, the Network Inspector allows you to throttle or turn off the network connection on the device.
+You can choose one of the presets in the drop-down and see how your application behaves
+in a network constrained environment
+or when disconnected from the Internet entirely.
+
+<img width="550" src="/img/docs/ide_network_inspector_throttle.png" className="shadow-image"/>
+
 ## Network Events Coverage
 
 Current caveats and limitations:
 
+### iOS
+
+The network inspector on iOS intercepts all network calls by overriding the behaviour of `NSUrlSession` class, used by React Native and most iOS libraries for network calls.
+This means you should be able to see all of the HTTP requests made by your application, with WebSocket support planned in the future.
+
+### Android
+
+On Android, the tool captures all network requests initiated by `fetch` and `XMLHttpRequest`. This means that:
+
 - `Image` components requests and WebSocket traffic are not tracked and will not appear in the inspector.
 - Some external network-related libraries and polyfills may be incompatible, as their implementations may bypass our interception layer. Currently, the inspector provides explicit support for the [`react-native-fetch-api`](https://www.npmjs.com/package/react-native-fetch-api).
 
-For **React Native versions 0.83.0 and newer**, the native implementation of the React Native's Network Inspector is enabled by default and may address some of the limitations above. You can also explicitly enable the native Network Inspector via the [Launch Configuration](/docs/guides/configuration.md), however, for versions prior to 0.83.0, it will not function properly without additional setup.
+For **React Native versions 0.83.0 and newer**, the native implementation of the React Native's Network Inspector can be used to address some of the limitations above. You can explicitly enable it via the [Launch Configuration](/docs/guides/configuration.md). However, for versions prior to 0.83.0, it will not function properly without additional setup.
 
-The native Network Inspector tracks all network requests officially supported by React Native DevTools. You may read more about the native implementation [here](https://reactnative.dev/blog/2025/12/10/react-native-0.83).
+The native Network Inspector tracks all network requests officially supported by React Native DevTools. You may read more about it [here](https://reactnative.dev/blog/2025/12/10/react-native-0.83).
