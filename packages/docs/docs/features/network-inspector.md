@@ -71,18 +71,19 @@ You can choose one of the presets in the drop-down and see how your application 
 in a network constrained environment
 or when disconnected from the Internet entirely.
 
-<img width="550" src="/img/docs/ide_network_inspector_throttle.png" className="shadow-image"/>
+<img width="550" src="/img/docs/ide_network_inspector_throttle_1.png" className="shadow-image"/>
+<img width="550" src="/img/docs/ide_network_inspector_throttle_2.png" className="shadow-image"/>
 
 ## Network Events Coverage
 
 Current caveats and limitations:
 
-### iOS
+#### iOS
 
 The network inspector on iOS intercepts all network calls by overriding the behaviour of `NSUrlSession` class, used by React Native and most iOS libraries for network calls.
 This means you should be able to see all of the HTTP requests made by your application, with WebSocket support planned in the future.
 
-### Android
+#### Android
 
 On Android, the tool captures all network requests initiated by `fetch` and `XMLHttpRequest`. This means that:
 
