@@ -12,7 +12,7 @@ Click the screenshot button to capture what's currently visible on the device pr
 
 <img width="300" src="/img/docs/ide_screenshot_button.png" className="shadow-image" />
 
-The IDE will open a file dialog to choose where to save the screenshot. The screenshot will be saved as `.png` file.
+The IDE will open a file dialog to choose where to save the screenshot. The screenshot will be saved as `.png` file and automatically copied to clipboard.
 
 <img width="450" src="/img/docs/ide_screenshot_where.png" className="shadow-image" />
 
@@ -79,4 +79,4 @@ To configure where screenshots and screen recordings are saved:
 
 - Navigate to your editor settings
 - Look up `Radon IDE`
-- The `Default Multimedia Saving Location` option will allow you to configure the default saving path. 
+- The `Default Multimedia Saving Location` option will allow you to configure the default saving path.

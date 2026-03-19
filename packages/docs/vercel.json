@@ -57,38 +57,38 @@
     },
     {
       "source": "/privacy-policy",
-      "destination": "/legal/privacy-policy",
+      "destination": "https://swmansion.com/privacy/policy",
       "permanent": true
     },
     {
       "source": "/terms-of-use",
-      "destination": "/legal/early-terms-of-use",
+      "destination": "https://swmansion.com/legal/radon/team-license-terms",
       "permanent": true
     },
     {
       "source": "/refund-policy",
-      "destination": "/legal/refund-policy",
+      "destination": "https://swmansion.com/legal/radon/refund-terms",
       "permanent": true
     },
     {
       "source": "/purchase-terms",
-      "destination": "/legal/purchase-terms",
+      "destination": "https://swmansion.com/legal/radon/purchase-terms",
       "permanent": true
     },
     {
       "source": "/supporter-terms",
-      "destination": "/legal/supporter-terms",
+      "destination": "https://swmansion.com/legal/radon/team-license-terms",
       "permanent": true
-    }
-  ],
-  "rewrites": [
-    {
-      "source": "/rnide-PsHg/static/(.*)",
-      "destination": "https://eu-assets.i.posthog.com/static/$1"
     },
     {
-      "source": "/rnide-PsHg/(.*)",
-      "destination": "https://eu.i.posthog.com/$1"
+      "source": "/legal",
+      "destination": "https://swmansion.com/legal/radon/team-license-terms",
+      "permanent": true
+    },
+    {
+      "source": "/legal/:path*",
+      "destination": "https://swmansion.com/legal/radon/team-license-terms",
+      "permanent": true
     }
   ]
 }

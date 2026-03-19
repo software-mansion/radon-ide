@@ -226,7 +226,7 @@
 
   /* Main site settings */
   --swm-background: var(--radon-background-page-light);
-  --swm-off-background: var(---radon-background-page-light);
+  --swm-off-background: var(--radon-background-page-light);
 
   --ifm-background-color: var(--swm-background);
   --ifm-navbar-background-color: var(--swm-background);

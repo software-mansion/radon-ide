@@ -1,10 +1,37 @@
-import React from "react";
+import { useState, useEffect } from "react";
 import useBaseUrl from "@docusaurus/useBaseUrl";
-import { DocSidebar } from "@swmansion/t-rex-ui";
+import { useLocation } from "@docusaurus/router";
+import DocSidebarDesktop from "@swmansion/t-rex-ui/dist/components/DocSidebar/Desktop/index.js";
+import CloseIcon from "../../components/CloseIcon";
+import ChevronDownIcon from "../../components/ChevronDownIcon";
 
 export default function DocSidebarWrapper(props) {
   const heroImages = {
     logo: useBaseUrl("/img/logo.svg"),
   };
-  return <DocSidebar heroImages={heroImages} {...props} />;
+
+  const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
+
+  return (
+    <>
+      <button
+        className={`swm-doc-sidebar-toggle ${isOpen ? "open" : ""}`}
+        onClick={() => setIsOpen(!isOpen)}
+        aria-label="Toggle Sidebar">
+        {isOpen ? (
+          <CloseIcon width={20} height={20} />
+        ) : (
+          <ChevronDownIcon width={20} height={20} style={{ transform: "rotate(-90deg)" }} />
+        )}
+      </button>
+      <div className={`swm-doc-sidebar-container ${isOpen ? "open" : ""}`}>
+        <DocSidebarDesktop heroImages={heroImages} {...props} />
+      </div>
+    </>
+  );
 }

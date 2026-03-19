@@ -1,9 +1,8 @@
-import React from "react";
 import clsx from "clsx";
 import styles from "./styles.module.css";
 import { useRef } from "react";
-import PlusIcon from "../PlusIcon";
-import MinusIcon from "../MinusIcon";
+import PlusIcon from "../../PlusIcon";
+import MinusIcon from "../../MinusIcon";
 
 export interface ActiveItem {
   index: number;

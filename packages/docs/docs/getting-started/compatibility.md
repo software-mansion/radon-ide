@@ -14,7 +14,7 @@ In a such case, you can still Radon IDE but we also recommend [submitting an iss
 
 ## Supported editors
 
-Radon IDE works with [Visual Studio Code](https://code.visualstudio.com/) 1.86 or higher and [Cursor](https://www.cursor.com/) 0.32 or higher.
+Radon IDE works with [Visual Studio Code](https://code.visualstudio.com/) 1.90.0 or higher and [Cursor](https://www.cursor.com/) 0.40.0 or higher.
 
 ## Supported project setups
 
@@ -68,16 +68,15 @@ Due to the complexity and a non-standard nature of the brownfield development th
 
 ## Supported operating systems
 
+Radon IDE officially supports macOS only. Due to our team's limited capacity, we are unable to support Windows and Linux at this time.
+
 <div className="compatibility">
 
-|         | iOS    | Android                  |
-| ------- | ------ | ------------------------ |
-| macOS   | <Yes/> | <Yes/>                   |
-| Linux   | <No/>  | <Maybe label="In Beta"/> |
-| Windows | <No/>  | <Maybe label="In Beta"/> |
+|       | iOS    | Android |
+| ----- | ------ | ------- |
+| macOS | <Yes/> | <Yes/>  |
 
 </div>
-You can use Radon IDE on Windows and Linux using free Beta license.
 
 ## Supported Devices
 

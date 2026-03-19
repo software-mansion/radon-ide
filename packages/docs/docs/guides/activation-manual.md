@@ -5,7 +5,7 @@ sidebar_position: 1
 ---
 
 Radon IDE is available under a commercial license.
-You can use our Free Trial License to evaluate the extension for your project and use cases, or use it on Windows under the Free Beta license.
+You can use our Free Trial License to evaluate the extension for your project and use cases.
 
 In this page, we explain how to obtain and activate the license key in Radon IDE on Mac.
 

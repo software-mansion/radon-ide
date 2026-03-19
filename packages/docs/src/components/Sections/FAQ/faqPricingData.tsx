@@ -22,7 +22,7 @@ export const faqPricingData = [
   },
   {
     topic: "Who can use the Free plan?",
-    answer: `Radon’s Free plan was created for those who are starting their React Native adventure - mainly students and hobbyists. If you’re a professional React Native developer working in commercial projects, according to our <a href="/legal/personal-license-terms" target="_blank">Subscription Agreement</a>, you should use the Pro tier.
+    answer: `Radon’s Free plan was created for those who are starting their React Native adventure - mainly students and hobbyists. If you’re a professional React Native developer working in commercial projects, according to our <a href="https://swmansion.com/legal/radon/pro-license-terms" target="_blank">Subscription Agreement</a>, you should use the Pro tier.
     `,
   },
   {

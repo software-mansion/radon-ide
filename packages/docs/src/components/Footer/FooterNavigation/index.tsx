@@ -32,8 +32,8 @@ const footerLinks: FooterProps[] = [
   {
     title: "Legal",
     links: [
-      { label: "Privacy", to: "/legal/privacy-policy" },
-      { label: "Legal", to: "/legal" },
+      { label: "Privacy", to: "https://swmansion.com/privacy/policy" },
+      { label: "Legal", to: "https://swmansion.com/legal/radon/team-license-terms" },
     ],
   },
 ];

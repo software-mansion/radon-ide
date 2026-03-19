@@ -87,7 +87,7 @@ const StartScreen = () => {
             width="1280"
             height="720"
             loading="lazy"
-            src="https://www.youtube.com/embed/07Un9EfE8D4?si=h1-7o5e3StOjRZf8"
+            src="https://www.youtube.com/embed/CIlrfQSSkyc?si=F5T4UYXZxb3eVOq1"
             title="YouTube video player"
             // @ts-ignore it's a valid attribute & type, typescript is wrong
             allowFullScreen="1"
