@@ -1,7 +1,7 @@
 ---
 id: maestro-integration
 title: Maestro integration
-sidebar_position: 10
+sidebar_position: 11
 ---
 
 Radon IDE integrates with [Maestro](https://maestro.dev/), enabling you to run your test flows straight from the editor, and instantly see the results both on the simulator and in the console.
