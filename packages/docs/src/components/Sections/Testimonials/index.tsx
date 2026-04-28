@@ -19,7 +19,8 @@ const leftColumn: Testimonial[] = [
     handle: "@mironcatalin",
     body: `
     In my opinion, the must have Extension for React Native developers.`,
-    avatar: "https://pbs.twimg.com/profile_images/1276570366555684865/7J55FrYi_400x400.jpg",
+    avatar:
+      "https://web.archive.org/web/20260427112105im_/https://pbs.twimg.com/profile_images/2047308332818399232/YnLcDnm__400x400.jpg",
   },
   {
     type: "x",
@@ -27,7 +28,8 @@ const leftColumn: Testimonial[] = [
     author: "Evan Bacon 🥓",
     handle: "@Baconbrix",
     body: "Magic debugging experience in Expo Router 🪄",
-    avatar: "https://pbs.twimg.com/profile_images/1576625400205250561/wGfn72X__400x400.jpg",
+    avatar:
+      "https://web.archive.org/web/20260423114822im_/https://pbs.twimg.com/profile_images/1576625400205250561/wGfn72X__400x400.jpg",
   },
   {
     type: "x",
@@ -35,7 +37,8 @@ const leftColumn: Testimonial[] = [
     author: "David Nemes",
     handle: "@_davidnemes",
     body: "Radon IDE by @swmansion is the React Native IDE we've all been waiting for! 🚀 The setup was incredibly simple, and it has everything you need to build amazing apps. https://ide.swmansion.com #ReactNative #devtools",
-    avatar: "https://pbs.twimg.com/profile_images/1518484915381223426/eqsKVMxQ_400x400.jpg",
+    avatar:
+      "https://web.archive.org/web/20260423114823im_/https://pbs.twimg.com/profile_images/1518484915381223426/eqsKVMxQ_400x400.jpg",
   },
 ];
 const middleColumn: Testimonial[] = [
@@ -45,7 +48,8 @@ const middleColumn: Testimonial[] = [
     author: "Luke Czyszczonik",
     handle: "@czystyl",
     body: "This improves the workflow by 10x!",
-    avatar: "https://pbs.twimg.com/profile_images/1152544743890522112/v4QNbxbn_400x400.jpg",
+    avatar:
+      "https://web.archive.org/web/20260423114822im_/https://pbs.twimg.com/profile_images/1152544743890522112/v4QNbxbn_400x400.jpg",
   },
   {
     type: "producthunt",
@@ -54,7 +58,7 @@ const middleColumn: Testimonial[] = [
     handle: "@sebastienlorber",
     body: "Awesome to finally have an IDE for React Native!",
     avatar:
-      "https://ph-avatars.imgix.net/968504/original.jpeg?auto=compress&codec=mozjpeg&cs=strip&auto=format&w=120&h=120&fit=crop&dpr=1",
+      "http://web.archive.org/web/20260427114619im_/https://ph-avatars.imgix.net/968504/original.jpeg",
   },
   {
     type: "producthunt",
@@ -63,7 +67,7 @@ const middleColumn: Testimonial[] = [
     handle: "@enzomanuelmangano",
     body: "Truly a product that makes a difference and adds innovation to the React Native ecosystem. It is beyond measure the value that Software Mansion has brought to React Native already with Reanimated, Gesture Handler, React Native Screens and more...Radon IDE is the icing on the cake. And what of an icing 🤌🤌",
     avatar:
-      "https://ph-avatars.imgix.net/6047108/original.jpeg?auto=compress&codec=mozjpeg&cs=strip&auto=format&w=120&h=120&fit=crop&dpr=1",
+      "http://web.archive.org/web/20250515061552im_/https://ph-avatars.imgix.net/6047108/original.jpeg",
   },
 ];
 const rightColumn: Testimonial[] = [
@@ -73,7 +77,8 @@ const rightColumn: Testimonial[] = [
     author: "felippe",
     handle: "@felippe",
     body: "Amazing DX 🙌",
-    avatar: "https://pbs.twimg.com/profile_images/1889709082241597440/tVDwrG3C_400x400.jpg",
+    avatar:
+      "http://web.archive.org/web/20260423114823im_/https://pbs.twimg.com/profile_images/1889709082241597440/tVDwrG3C_400x400.jpg",
   },
   {
     type: "x",
@@ -81,7 +86,8 @@ const rightColumn: Testimonial[] = [
     author: "Vadim Savin @notJust.dev",
     handle: "@VadimNotJustDev",
     body: "Radon IDE is a game changer for building RN apps without leaving vscode (or cursor)",
-    avatar: "https://pbs.twimg.com/profile_images/1501105735584956417/fdwpCup5_400x400.jpg",
+    avatar:
+      "http://web.archive.org/web/20260423114823im_/https://pbs.twimg.com/profile_images/1501105735584956417/fdwpCup5_400x400.jpg",
   },
 
   {
@@ -91,7 +97,7 @@ const rightColumn: Testimonial[] = [
     handle: "@alecdhansen",
     body: "Congrats SM team. I find Radon especially useful for hopping in an unfamiliar codebase. Tap a component, get taken right to the code. Saves a ton of time!",
     avatar:
-      "https://media.licdn.com/dms/image/v2/D4E03AQFy_VU4VjIe8A/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1712089763617?e=1762387200&v=beta&t=OnWkhJa3nS1xT4qJuGGkZS7x9bJO2edmFBlW-V-dUhg",
+      "https://web.archive.org/web/20260427105901im_/https://media.licdn.com/dms/image/v2/D4E03AQFy_VU4VjIe8A/profile-displayphoto-shrink_800_800/profile-displayphoto-shrink_800_800/0/1712089763617?e=1778716800&v=beta&t=NREOSF4SgWaqnEmEBX1VqSmHEexbzGF8rWEXRbq8R9c",
   },
 ];
 
