@@ -78,18 +78,19 @@ or when disconnected from the Internet entirely.
 
 Current caveats and limitations:
 
-#### iOS
+### iOS
 
-The network inspector on iOS intercepts all network calls by overriding the behaviour of `NSUrlSession` class, used by React Native and most iOS libraries for network calls.
-This means you should be able to see all of the HTTP requests made by your application, with WebSocket support planned in the future.
+The network inspector on iOS intercepts all network calls by overriding the behaviour of `NSUrlSession` class, used by React Native and most iOS libraries for network calls. This means you should be able to see all of the HTTP requests made by your application, with WebSocket support planned in the future.
 
-#### Android
+### Android
 
-On Android, the tool captures all network requests initiated by `fetch` and `XMLHttpRequest`. This means that:
+The network inspector on Android intercepts network traffic by hooking into `OkHttp`, the HTTP client used by React Native and most Android libraries. This means you should be able to see:
 
-- `Image` components requests and WebSocket traffic are not tracked and will not appear in the inspector.
-- Some external network-related libraries and polyfills may be incompatible, as their implementations may bypass our interception layer. Currently, the inspector provides explicit support for the [`react-native-fetch-api`](https://www.npmjs.com/package/react-native-fetch-api).
+- HTTP requests made via `fetch` and `XMLHttpRequest`
+- `Image` component requests
+- Requests from most third-party libraries
 
-For **React Native versions 0.83.0 and newer**, the native implementation of the React Native's Network Inspector can be used to address some of the limitations above. You can explicitly enable it via the [Launch Configuration](/docs/guides/configuration.md). However, for versions prior to 0.83.0, it will not function properly without additional setup.
+Currently unsupported are:
 
-The native Network Inspector tracks all network requests officially supported by React Native DevTools. You may read more about it [here](https://reactnative.dev/blog/2025/12/10/react-native-0.83).
+- WebSocket connections
+- Network requests from libraries that bypass OkHttp entirely
