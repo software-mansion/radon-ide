@@ -6,6 +6,17 @@
   --swm-sidebar-actual-width: min(var(--doc-sidebar-width), 250px);
 }
 
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 2rem;
+}
+
+@media (min-width: 64rem) {
+  html {
+    scroll-padding-top: 2.5rem;
+  }
+}
+
 table {
   display: table;
   width: 100%;

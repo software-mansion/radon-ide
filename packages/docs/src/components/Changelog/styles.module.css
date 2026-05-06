@@ -1,3 +1,13 @@
+html:has(.changelogContainer) {
+  scroll-padding-top: 7rem;
+}
+
+@media (min-width: 64rem) {
+  html:has(.changelogContainer) {
+    scroll-padding-top: 7.625rem;
+  }
+}
+
 .changelogContainer {
   padding: 32px;
   max-width: 1300px;
