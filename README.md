@@ -1,7 +1,7 @@
 ![RadonIDE banner](https://github.com/user-attachments/assets/14fd4413-c518-4ead-915a-2020c4f4f981)
-[![Ad](https://swm-delivery.com/www/images/zone-gh-radon-ide-1?n=1)](https://swm-delivery.com/www/delivery/ck.php?zoneid=zone-gh-radon-ide-1&n=1)
-[![Ad](https://swm-delivery.com/www/images/zone-gh-radon-ide-2?n=1)](https://swm-delivery.com/www/delivery/ck.php?zoneid=zone-gh-radon-ide-2&n=1)
-[![Ad](https://swm-delivery.com/www/images/zone-gh-radon-ide-3?n=1)](https://swm-delivery.com/www/delivery/ck.php?zoneid=zone-gh-radon-ide-3&n=1)
+[![Ad](https://swm-delivery.com/www/images/zone-gh-radon-ide-1?n=1)](https://swm-delivery.com/www/delivery/ck-slug.php?zoneid=zone-gh-radon-ide-1&n=1)
+[![Ad](https://swm-delivery.com/www/images/zone-gh-radon-ide-2?n=1)](https://swm-delivery.com/www/delivery/ck-slug.php?zoneid=zone-gh-radon-ide-2&n=1)
+[![Ad](https://swm-delivery.com/www/images/zone-gh-radon-ide-3?n=1)](https://swm-delivery.com/www/delivery/ck-slug.php?zoneid=zone-gh-radon-ide-3&n=1)
 
 # [Radon IDE](https://ide.swmansion.com)
 
