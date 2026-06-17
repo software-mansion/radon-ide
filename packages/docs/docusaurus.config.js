@@ -4,6 +4,9 @@
 const lightCodeTheme = require("./src/theme/CodeBlock/highlighting-light.js");
 const darkCodeTheme = require("./src/theme/CodeBlock/highlighting-dark.js");
 const autoNum = require("./src/remark/auto-num.js");
+const {
+  topBarBannerHeadScript,
+} = require("./src/components/TopBarBanner/headScript.js");
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -19,6 +22,16 @@ const config = {
 
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
+
+  // Reserve the cached top-bar banner height on <html> before the body paints,
+  // so reloads don't shift content. Must match TopBarBanner's first zone.
+  headTags: [
+    {
+      tagName: "script",
+      attributes: {},
+      innerHTML: topBarBannerHeadScript,
+    },
+  ],
 
   i18n: {
     defaultLocale: "en",
