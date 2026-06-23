@@ -66,8 +66,9 @@ Radon IDE keeps track of your app's build logs. You can access them by going to 
 
 ## Handling runtime errors
 
-Whenever a runtime error occurs in JavaScript code, the Radon IDE displays an error overlay and highlights the exact line of code where the error occurred.
+Whenever a runtime error occurs in JavaScript code, a dialog appears above the device offering two actions:
 
-<img width="700" src="/img/docs/ide_uncaught_exception.png" className="shadow-image"/>
+- **Copy error** - copies the full error message and stack trace to your clipboard.
+- **Fix in chat** - sends the error message and stack trace as a context to VS Code Copilot Chat or Cursor Composer so you can ask an AI agent for help right away.
 
-You can click the `Uncaught exception >` button on the error overlay to resume code execution. Radon IDE will try to recover from the error whenever possible.
+<img className="shadow-image" src="/img/docs/ide_handling_runtime_errors.png" className="shadow-image" />
