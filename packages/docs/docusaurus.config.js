@@ -13,7 +13,7 @@ const config = {
   title: "Radon – the Best IDE for React Native & Expo",
   favicon: "img/favicon.png",
 
-  url: "https://ide.swmansion.com",
+  url: "https://radon.swmansion.com",
 
   baseUrl: "/",
 
