@@ -57,7 +57,7 @@ const config = {
       }),
     ],
   ],
-  plugins: ["./src/plugins/changelog"],
+  plugins: ["./src/plugins/changelog", "./src/plugins/swm-geo"],
 
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
