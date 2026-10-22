@@ -26,13 +26,15 @@ Radon IDE supports Expo projects starting from Expo SDK 50.
 
 <div className="compatibility">
 
-|                 | Expo SDK 50 | Expo SDK 51 | Expo SDK 52 | Expo SDK 53 | Expo SDK 54 |
-| --------------- | ----------- | ----------- | ----------- | ----------- | ----------- |
-| Expo Dev Client | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      |
-| Expo Prebuild   | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      |
-| Expo Go         | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      | <Yes/>      |
+|                 | Expo SDK 50–55 | Expo SDK 56–57             | Expo SDK 58 |
+| --------------- | -------------- | -------------------------- | ----------- |
+| Expo Dev Client | <Yes/>         | <Yes/>                     | <Yes/>      |
+| Expo Prebuild   | <Yes/>         | <Yes/>                     | <Yes/>      |
+| Expo Go         | <Yes/>         | <Maybe label="iOS only" /> | <Yes/>      |
 
 </div>
+
+Expo Go for SDK 56–57 can't be debugged on Android, so use a development build with [`expo-dev-client`](https://docs.expo.dev/develop/development-builds/introduction/) instead.
 
 ### React Native projects
 
@@ -40,9 +42,9 @@ Radon IDE supports projects bootstrapped with the [React Native Community CLI](h
 
 <div className="compatibility">
 
-| 0.72  | 0.73   | 0.74   | 0.75   | 0.76   | 0.77   | 0.78   | 0.79   | 0.80   | 0.81   | 0.82   | 0.83   |
-| ----- | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ | ------ |
-| <No/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> | <Yes/> |
+| 0.72  | 0.73–0.88 |
+| ----- | --------- |
+| <No/> | <Yes/>    |
 
 </div>
 
@@ -54,9 +56,11 @@ If your project doesn't work out-of-the-box because of modifications made in the
 
 | Nx     | yarn workspaces | npm workspaces | pnpm workspaces | bun workspaces |
 | ------ | --------------- | -------------- | --------------- | -------------- |
-| <Yes/> | <Yes/>          | <No/>          | <Yes/>          | <No/>          |
+| <Yes/> | <Yes/>          | <Yes/>         | <Yes/>          | <Yes/>         |
 
 </div>
+
+With bun, Radon IDE runs `bun install` every time it launches your app.
 
 We constantly improve the range of supported monorepo project structures. If you want to help us support your setup – [submit an issue](https://github.com/software-mansion/radon-ide/issues/new/choose).
 
@@ -94,6 +98,7 @@ Radon IDE supports usage of iOS simulators and Android emulators, managing its i
     | iPhone SE (3rd generation)        |
     | iPhone 17 Pro                     |
     | iPhone Air                        |
+    | iPhone Duo                        |
     | iPad (A16)                        |
     | iPad Pro 11-inch (4th generation) |
     

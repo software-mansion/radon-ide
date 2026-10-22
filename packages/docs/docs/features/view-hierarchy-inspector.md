@@ -34,6 +34,8 @@ You can control the inspector using the two toolbar buttons:
 1. **Pick element** — activates pick mode, letting you tap on the device preview to select a view and reveal it in the tree.
 2. **Reload hierarchy** — re-fetches the view tree from the running app and refreshes the panel.
 
+When the device rotates or the app reloads, the tree may go out of date. If reading the hierarchy is quick, as in smaller apps, the inspector refreshes it on its own and keeps the expanded nodes and the selection. Otherwise it dims the tree and shows a notice with a _Refresh_ button.
+
 ## Exploring the view tree
 
 The inspector displays the native view hierarchy as a collapsible tree. Each node represents a single `UIView` and shows:
