@@ -103,6 +103,19 @@ If you need to install an older version of an IDE, you can do so by navigating t
 
 If you are using alternative Xcode version ( e.g. xcode-beta, ["xcodes"](https://www.xcodes.app/) ios simulators will only work if xcode-select points to the correct directory to set it up run: `xcode-select --switch ${PathToYourXCode}/Contents/Developer`
 
+To build your app with a different Xcode than the one `xcode-select` points to, set `DEVELOPER_DIR` in the `env` of your [launch configuration](/docs/guides/configuration). This applies to `xcodebuild` and `pod install`:
+
+```json
+{
+  "type": "radon-ide",
+  "request": "launch",
+  "name": "Radon IDE panel",
+  "env": {
+    "DEVELOPER_DIR": "/Applications/Xcode-27.1.app/Contents/Developer"
+  }
+}
+```
+
 ### -sec-num- IDE looks bad with my theme
 
 Radon IDE supports a wide range of themes, but it's not possible to support all of them.

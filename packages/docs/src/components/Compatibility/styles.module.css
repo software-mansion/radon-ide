@@ -18,7 +18,6 @@
   color: var(--swm-compatibility-text-color);
   background-color: var(--swm-compatibility-maybe-background);
   text-align: center;
-  text-transform: capitalize;
   padding: 12px;
 }
 
